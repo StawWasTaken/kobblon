@@ -420,7 +420,7 @@ export default function CreateAds() {
           <EmptyState
             mood="emptyBox"
             title="No campaigns yet"
-            body={`A campaign is some ${currency.plural} and a month at most. Put ads in it, point them at your Spaces, communities, events or Marketplace work, and they are shown across Kobblon.`}
+            body={`A campaign is some ${currency.plural} and a month at most. Put ads in it, point them at your Worlds, communities, events or Marketplace work, and they are shown across Kobblon.`}
             action={<Button icon={faRectangleAd} onClick={() => setStarting(true)}>Start one</Button>}
           />
         </Card>

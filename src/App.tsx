@@ -45,7 +45,7 @@ const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const SupportTicket = lazyPage(() => import('@/pages/SupportTicket'))
 const Download = lazyPage(() => import('@/pages/Download'))
-const ExperiencePage = lazyPage(() => import('@/pages/ExperiencePage'))
+const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
 const Library = lazyPage(() => import('@/pages/Library'))
 const Style = lazyPage(() => import('@/pages/Style'))
@@ -113,10 +113,10 @@ export default function App() {
               <Route element={<AppShell />}>
                 {/* open to guests so a shared link works logged out */}
                 <Route path="/discover" element={<Discover />} />
-                {/* An experience is readable by anybody; playing it needs the
+                {/* A World is readable by anybody; playing it needs the
                     Launcher. Not /e/, which community events already own. */}
-                <Route path="/experiences/:id" element={<ExperiencePage />} />
-                <Route path="/experiences/:id/:slug" element={<ExperiencePage />} />
+                <Route path="/worlds/:id" element={<WorldPage />} />
+                <Route path="/worlds/:id/:slug" element={<WorldPage />} />
                 <Route path="/create" element={<CreateHub />}>
                   <Route index element={<CreateOverview />} />
                   <Route path="spaces" element={<CreateSpaces />} />
@@ -128,7 +128,7 @@ export default function App() {
                   <Route path="creator/:username" element={<CreatorPage />} />
                   {/* Configuring a Space is Create's business; building one is
                       its own screen, so it keeps its own address. */}
-                  <Route path="spaces/:spaceId/edit" element={<EditSpace />} />
+                  <Route path="worlds/:spaceId/edit" element={<EditSpace />} />
                   <Route path=":tag" element={<AssetPage />} />
                 </Route>
                 <Route path="/people" element={<People />} />

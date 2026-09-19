@@ -104,7 +104,7 @@ export default function Library() {
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Library</h1>
           <p className="mt-1.5 text-muted">
             Everything you made and everything you saved.
-            {visits > 0 && ` ${formatCount(visits)} visits to your Spaces so far.`}
+            {visits > 0 && ` ${formatCount(visits)} visits to your Worlds so far.`}
           </p>
         </div>
       </header>
@@ -145,10 +145,10 @@ export default function Library() {
             }
             body={
               shelf === 'Published'
-                ? 'Spaces are being replaced by experiences, built in Creator and played in the Launcher.'
+                ? 'Worlds are being replaced by experiences, built in Creator and played in the Launcher.'
                 : shelf === 'Drafts'
-                  ? 'A Space you have not published yet waits here.'
-                  : 'Star a Space and it lands here so you can find it again.'
+                  ? 'A World you have not published yet waits here.'
+                  : 'Star a World and it lands here so you can find it again.'
             }
             action={
               shelf === 'Saved'

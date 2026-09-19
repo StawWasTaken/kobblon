@@ -141,14 +141,14 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
             </h1>
             <p className="mt-5 max-w-md text-lg leading-relaxed text-white/60">
               {claiming
-                ? 'Keep the account you are using. The Spaces you entered, the people you met and anything you collected stay exactly where they are.'
-                : 'A Space is your corner of the internet. Build it out of whatever you like, open the door, and see who walks in.'}
+                ? 'Keep the account you are using. The Worlds you entered, the people you met and anything you collected stay exactly where they are.'
+                : 'A World is your corner of the internet. Build it out of whatever you like, open the door, and see who walks in.'}
             </p>
 
             <ul className="mt-9 max-w-md space-y-5">
               <Promise_
                 icon={faLayerGroup}
-                title="Your own Space"
+                title="Your own World"
                 body="Built the way you want it, published when you say so, visited by whoever you share it with."
               />
               <Promise_

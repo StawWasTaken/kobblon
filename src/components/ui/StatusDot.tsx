@@ -25,7 +25,7 @@ const tone: Record<Presence, string> = {
 
 export const presenceWords: Record<Presence, string> = {
   online: 'Online',
-  'in-space': 'In a Space',
+  'in-space': 'In a World',
   building: 'Building',
   offline: 'Offline',
 }

@@ -147,6 +147,18 @@ contrast and sensible touch targets.
 
 Every step leaves the site working. Small piece, tested, committed, next.
 
+## Worlds
+
+What somebody builds is a **World**. Not a Space, which is what the 2D website
+builder made and is gone, and not an experience, which is another platform's
+word. One World, many Worlds, you play a World, you build a World.
+
+The word lives in `src/lib/naming.ts` and nothing hardcodes it, the way the
+currency does. If it ever changes again it is one file.
+
+The old 2D Spaces are kept as an archive so nobody's work disappears and old
+links keep answering. They are not Worlds and they never become Worlds.
+
 ## The four surfaces
 
 Settled, and it replaces looser wording elsewhere in this document:

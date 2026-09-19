@@ -8,6 +8,20 @@ of truth for all of it.
 Read `docs/engine.md` and `docs/direction.md` in that repository before you
 write anything.
 
+## The word: Worlds
+
+What people build and play is a **World**. Not a Space and not an experience.
+This is settled and it applies to both apps, their copy, their code and their
+metadata.
+
+In the database, `experiences` is now `worlds`, and the two functions the
+Launcher reads are `world_to_play(uuid)` and `world_started(uuid)`. The old
+names, `experience_to_play` and `experience_started`, still answer and are
+thin wrappers, so nothing breaks the moment this lands. They are a courtesy
+and will be deleted: move to the new pair.
+
+The website addresses a World at `/worlds/:id/:slug`.
+
 ## What Kobblon is: four surfaces
 
 Settled by Staw, and this is the version that counts:
@@ -188,10 +202,10 @@ enough to stay honest about what it is.
 
 ### What the website gives it
 
-- `experience_to_play(uuid)`, one read, published rows only, granted to
+- `world_to_play(uuid)`, one read, published rows only, granted to
   signed-out callers, returning exactly `id`, `name`, `creator_name`,
   `cover_url`, `manifest_url` and `runtime_version`.
-- `experience_started(uuid)` to count a visit once the runtime has the thing.
+- `world_started(uuid)` to count a visit once the runtime has the thing.
 - A Play button that opens the protocol link and offers `/download` when
   nothing happens.
 

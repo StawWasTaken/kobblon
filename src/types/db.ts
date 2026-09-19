@@ -594,9 +594,9 @@ export type TicketMessage = {
   created_at: string
 }
 
-// ------------------------------------------------------------- experiences
+// ------------------------------------------------------------------ worlds
 
-export type Experience = {
+export type World = {
   id: string
   content_id: number
   slug: string

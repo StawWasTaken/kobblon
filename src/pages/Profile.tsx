@@ -601,10 +601,10 @@ export default function Profile() {
               <Card>
                 <EmptyState
                   mood="emptyBox"
-                  title={isMe ? 'Nothing made yet' : 'No Spaces yet'}
+                  title={isMe ? 'Nothing made yet' : 'No Worlds yet'}
                   body={
                     isMe
-                      ? 'A Space can be a page about your cat. That is a completely valid use of this website.'
+                      ? 'A World can be a page about your cat. That is a completely valid use of this website.'
                       : `${user.display_name} has not published anything yet.`
                   }
                   action={undefined}
@@ -795,7 +795,7 @@ export default function Profile() {
               <br />
               <Fact icon={faCubes}>
                 {formatCount(spaces.data?.length ?? 0)}{' '}
-                {spaces.data?.length === 1 ? 'Space' : 'Spaces'}
+                {spaces.data?.length === 1 ? 'World' : 'Worlds'}
               </Fact>
               <br />
               <Fact icon={faEye}>{formatCount(visits)} visits to them</Fact>

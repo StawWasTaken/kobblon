@@ -61,7 +61,7 @@ function drawIcon() {
 
 /**
  * Wear a mark while this page is on screen: Create's own on every page of
- * Create, a Space's emblem inside that Space, and Kobblon's everywhere
+ * Create, a Space's emblem inside that World, and Kobblon's everywhere
  * else. Passing nothing means the plain Kobblon mark.
  */
 export function useFavicon(url?: string | null) {

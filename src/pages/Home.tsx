@@ -201,7 +201,7 @@ export default function Home() {
           <EmptyState
             mood="construction"
             title="Nothing to suggest yet"
-            body="When people publish Spaces, the ones worth a look land here."
+            body="When people publish Worlds, the ones worth a look land here."
             action={<Button to="/discover" icon={faCompass}>See what there is</Button>}
           />
         </Card>
@@ -214,7 +214,7 @@ export default function Home() {
       )}
 
       {!!mine.data?.length && (
-        <Row title="Your Spaces" more={{ to: '/library', label: 'All of them' }}>
+        <Row title="Your Worlds" more={{ to: '/library', label: 'All of them' }}>
           {mine.data.map((space) => <EmblemTile key={space.id} space={space} />)}
         </Row>
       )}

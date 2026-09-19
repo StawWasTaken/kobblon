@@ -42,10 +42,10 @@ export function eventLink(event: { content_id: number | null; title: string }) {
 }
 
 /**
- * An experience: /experiences/1042/first-ground.
+ * A World: /worlds/1042/first-ground.
  *
  * Not /e/, which community events had first. Two kinds of content at one
  * prefix is a bug that only shows up once both exist.
  */
-export const experienceLink = (one: { content_id: number; slug?: string | null; name: string }) =>
-  `/experiences/${one.content_id}/${one.slug || slugify(one.name)}`
+export const worldLink = (one: { content_id: number; slug?: string | null; name: string }) =>
+  `/worlds/${one.content_id}/${one.slug || slugify(one.name)}`

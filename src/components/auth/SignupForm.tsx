@@ -132,7 +132,7 @@ export function SignupForm({
             ? 'Checking that name'
             : usernameState === 'ok'
               ? 'That one is free'
-              : '3 to 20 characters, no spaces'
+              : '3 to 20 characters, no worlds'
         }
       />
 

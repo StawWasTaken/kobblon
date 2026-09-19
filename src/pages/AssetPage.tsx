@@ -173,7 +173,7 @@ function UsePanel({ asset, onChanged }: { asset: AssetPageItem; onChanged: () =>
   const copy = () => {
     void navigator.clipboard?.writeText(tag)
     void recordAssetEvent(asset.id, 'use')
-    toast(`${tag} copied. Paste it into your Space.`, 'success')
+    toast(`${tag} copied. Paste it into your World.`, 'success')
     onChanged()
   }
 
@@ -548,7 +548,7 @@ export default function AssetPage() {
         description={
           asset.price > 0
             ? `You paid ${currency.amount(asset.price)} for this. Removing it does not refund them, and taking it again would cost the same.`
-            : 'Any Space already using it keeps working. You would have to take it again to use it somewhere new.'
+            : 'Any World already using it keeps working. You would have to take it again to use it somewhere new.'
         }
         footer={
           <>

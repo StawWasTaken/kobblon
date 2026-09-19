@@ -31,7 +31,7 @@ const groups: { heading: string; permissions: { key: keyof CommunityRank; label:
     heading: 'Community',
     permissions: [
       { key: 'can_manage_community', label: 'Edit the Community and its affiliates' },
-      { key: 'can_manage_spaces', label: 'Link and unlink Spaces' },
+      { key: 'can_manage_spaces', label: 'Link and unlink Worlds' },
     ],
   },
 ]

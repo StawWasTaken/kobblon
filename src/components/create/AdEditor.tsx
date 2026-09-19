@@ -21,7 +21,7 @@ import type { OwnAsset } from '@/types/db'
 
 /** What an ad may be for, and what each of those looks like in a list. */
 export const targetLook: Record<AdTarget, { icon: IconDefinition; label: string }> = {
-  space: { icon: faCubes, label: 'Spaces' },
+  space: { icon: faCubes, label: 'Worlds' },
   community: { icon: faUsers, label: 'Communities' },
   event: { icon: faCalendarDay, label: 'Events' },
   asset: { icon: faShapes, label: 'Marketplace' },

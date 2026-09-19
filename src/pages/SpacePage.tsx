@@ -134,7 +134,7 @@ export default function SpacePage() {
         <Card>
           <EmptyState
             mood="noResults"
-            title="No Space here"
+            title="No World here"
             body={`@${username} does not have a Space called "${slug}", or it is not published yet.`}
             action={<Button to="/discover">Discover Spaces</Button>}
           />
@@ -208,7 +208,7 @@ export default function SpacePage() {
               </p>
 
               <div className="mt-3 flex items-start justify-center gap-5">
-                <Tooltip label={numbers?.i_favorite ? 'Saved' : 'Save this Space'} side="top">
+                <Tooltip label={numbers?.i_favorite ? 'Saved' : 'Save this World'} side="top">
                   <button
                     onClick={() => flag('space_favorites', !numbers?.i_favorite)}
                     disabled={!profile}
@@ -223,7 +223,7 @@ export default function SpacePage() {
                   </button>
                 </Tooltip>
 
-                <Tooltip label="Get told when this Space is updated" side="top">
+                <Tooltip label="Get told when this World is updated" side="top">
                   <button
                     onClick={() => flag('space_watchers', !numbers?.i_watch)}
                     disabled={!profile}
@@ -263,7 +263,7 @@ export default function SpacePage() {
         <Tabs
           look="line"
           className="mt-8"
-          label="Which part of this Space"
+          label="Which part of this World"
           value={tab}
           onChange={setTab}
           options={tabs.map((name) => ({ value: name, label: name }))}
@@ -314,7 +314,7 @@ export default function SpacePage() {
                 <EmptyState
                   mood="emptyBox"
                   title="No badges here"
-                  body="This Space does not hand any out yet."
+                  body="This World does not hand any out yet."
                 />
               </Card>
             )}

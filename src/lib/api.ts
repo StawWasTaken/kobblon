@@ -10,7 +10,7 @@ import type {
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
-  Experience,
+  World,
 } from '@/types/db'
 
 const SPACE_FIELDS =
@@ -2079,31 +2079,31 @@ export async function getAppeal(violationId: number): Promise<Appeal | null> {
   return (data as Appeal | null) ?? null
 }
 
-// ------------------------------------------------------------- experiences
+// ------------------------------------------------------------------ worlds
 
-const EXPERIENCE_FIELDS =
+const WORLD_FIELDS =
   'id, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, published_at'
 
-export async function listExperiences(limit = 24): Promise<Experience[]> {
+export async function listWorlds(limit = 24): Promise<World[]> {
   const { data, error } = await supabase
-    .from('experiences')
-    .select(EXPERIENCE_FIELDS)
+    .from('worlds')
+    .select(WORLD_FIELDS)
     .eq('is_published', true)
     .eq('is_removed', false)
     .order('published_at', { ascending: false })
     .limit(limit)
   if (error) throw new Error(error.message)
-  return (data ?? []) as Experience[]
+  return (data ?? []) as World[]
 }
 
 /** By the number in its address, which is how the website links to one. */
-export async function getExperience(contentId: number): Promise<Experience | null> {
+export async function getWorld(contentId: number): Promise<World | null> {
   const { data, error } = await supabase
-    .from('experiences')
-    .select(EXPERIENCE_FIELDS)
+    .from('worlds')
+    .select(WORLD_FIELDS)
     .eq('content_id', contentId)
     .eq('is_removed', false)
     .maybeSingle()
   if (error) throw new Error(error.message)
-  return (data as Experience | null) ?? null
+  return (data as World | null) ?? null
 }

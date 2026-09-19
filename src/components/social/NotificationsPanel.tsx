@@ -42,8 +42,8 @@ function words(n: Notification) {
   switch (n.kind) {
     case 'friend_request': return { who, rest: 'sent you a friend request' }
     case 'friend_accepted': return { who, rest: 'accepted your friend request' }
-    case 'space_like': return { who, rest: `liked ${n.space?.name ?? 'your Space'}` }
-    case 'space_visit': return { who, rest: `walked into ${n.space?.name ?? 'your Space'}` }
+    case 'space_like': return { who, rest: `liked ${n.space?.name ?? 'your World'}` }
+    case 'space_visit': return { who, rest: `walked into ${n.space?.name ?? 'your World'}` }
     case 'message': return { who, rest: 'sent you a message' }
     default: return { who: null, rest: n.body ?? 'Something happened' }
   }
@@ -232,7 +232,7 @@ export function NotificationsPanel({
               body={
                 tab === 'unread'
                   ? 'You have read everything. The rest is under All.'
-                  : 'When people add you, message you or walk into your Spaces, it turns up here.'
+                  : 'When people add you, message you or walk into your Worlds, it turns up here.'
               }
             />
           )}

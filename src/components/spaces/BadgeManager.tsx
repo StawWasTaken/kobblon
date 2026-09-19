@@ -121,7 +121,7 @@ export function BadgeManager({
         open={adding}
         onClose={() => setAdding(false)}
         title="New badge"
-        description="Badges are yours to design. People earn them for doing things in your Space."
+        description="Badges are yours to design. People earn them for doing things in your World."
         footer={
           <>
             <Button variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>

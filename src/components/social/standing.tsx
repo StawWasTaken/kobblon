@@ -80,7 +80,7 @@ export const ruleWord: Record<string, string> = {
 export const categoryWord: Record<string, string> = {
   message: 'Chat',
   profile: 'Your behaviour',
-  space: 'A Space of yours',
+  space: 'A World of yours',
   asset: 'Something you uploaded',
   style_item: 'A Style item of yours',
   comment: 'A comment you left',
@@ -93,7 +93,7 @@ export const categoryOf = (one: Violation) =>
 export const headlineOf = (one: Violation) => {
   if (one.target_type === 'message') return 'Something you sent in chat broke the rules'
   if (one.target_type === 'comment') return 'A comment you left broke the rules'
-  if (one.target_type === 'space') return 'A Space of yours broke the rules'
+  if (one.target_type === 'space') return 'A World of yours broke the rules'
   if (one.target_type === 'asset' || one.target_type === 'style_item') {
     return 'Something you uploaded broke the rules'
   }
@@ -109,7 +109,7 @@ export const blockWord: Record<string, string> = {
   upload: 'uploading',
   sell: 'selling',
   chat: 'chat',
-  publish: 'publishing Spaces',
+  publish: 'publishing Worlds',
   trade: 'buying and selling',
 }
 

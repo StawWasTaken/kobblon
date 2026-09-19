@@ -149,9 +149,9 @@ export function CreateOverview() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Tile icon={kindIcons.model} label="Spaces" value={formatCount(spaces.data?.length ?? 0)} to="/create/spaces" />
+        <Tile icon={kindIcons.model} label="Worlds" value={formatCount(spaces.data?.length ?? 0)} to="/create/spaces" />
         <Tile icon={faUpload} label="Uploads" value={formatCount(mine.data?.length ?? 0)} to="/create/uploads" />
-        <Tile icon={faEye} label="Visits to your Spaces" value={formatCount(visits)} />
+        <Tile icon={faEye} label="Visits to your Worlds" value={formatCount(visits)} />
         <Tile icon={faHandPointUp} label="Uses of your content" value={formatCount(uses)} to="/create/analytics" />
         <Tile icon={faBoxOpen} label="In your inventory" value={formatCount(inventory.data?.length ?? 0)} to="/create/inventory" />
       </div>
@@ -201,7 +201,7 @@ export function CreateOverview() {
 /* ----------------------------------------------------------------- spaces */
 
 export function CreateSpaces() {
-  useTitle('My Spaces', CREATE)
+  useTitle('My Worlds', CREATE)
   const { profile } = useAuth()
   const { target } = useWorkingAs()
   const spaces = useAsync(
@@ -236,7 +236,7 @@ export function CreateSpaces() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title={target ? `${target.name}'s Spaces` : 'My Spaces'}
+        title={target ? `${target.name}'s Spaces` : 'My Worlds'}
         lead="Yours to build, and the ones you were invited onto."
       />
 
@@ -246,8 +246,8 @@ export function CreateSpaces() {
         <Card>
           <EmptyState
             mood="emptyBox"
-            title="No Spaces yet"
-            body="Spaces are being replaced by experiences, built in Creator and played in the Launcher. The ones you already have stay here."
+            title="No Worlds yet"
+            body="Worlds are being replaced by experiences, built in Creator and played in the Launcher. The ones you already have stay here."
             action={<Button variant="subtle" to="/download">About the Launcher</Button>}
           />
         </Card>
@@ -569,7 +569,7 @@ export function CreateInventory() {
       <PageHeader
         title="Inventory"
         lead={"Your own work and everything you have taken from the marketplace, Kobblon's "
-          + 'included. Copy an id and paste it into a Space.'}
+          + 'included. Copy an id and paste it into a World.'}
       />
 
       <Choices

@@ -123,7 +123,7 @@ export function Collaborators({ spaceId, ownerId, viewerId }: {
               <span className="block truncate text-xs text-muted">@{member.username}</span>
             </span>
             {(isOwner || member.user_id === viewerId) && (
-              <Tooltip label={member.user_id === viewerId ? 'Leave this Space' : 'Remove'} side="top">
+              <Tooltip label={member.user_id === viewerId ? 'Leave this World' : 'Remove'} side="top">
                 <Button
                   size="sm"
                   variant="ghost"

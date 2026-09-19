@@ -36,7 +36,7 @@ export function SpaceChat({ space }: { space: Space }) {
 
   useEffect(() => {
     const channel = supabase
-      .channel(`space-chat:${space.id}`)
+      .channel(`world-chat:${space.id}`)
       .on('postgres_changes',
         {
           event: 'INSERT', schema: 'public', table: 'space_messages',

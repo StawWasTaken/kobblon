@@ -94,8 +94,8 @@ export default function Discover() {
           icon={faMagnifyingGlass}
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search Spaces by name"
-          aria-label="Search Spaces"
+          placeholder="Search Worlds by name"
+          aria-label="Search Worlds"
         />
         <div className="flex flex-wrap items-center gap-2">
           {!browsing && (
@@ -105,7 +105,7 @@ export default function Discover() {
             </>
           )}
           <Choices
-            label="What kind of Space"
+            label="What kind of World"
             tone="soft"
             value={category}
             options={categories.map((c) => ({

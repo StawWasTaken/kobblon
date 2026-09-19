@@ -58,7 +58,7 @@ const fromQuery: Record<string, Tab> = {
 }
 
 const presenceWord: Record<Presence, string> = {
-  'in-space': 'In a Space',
+  'in-space': 'In a World',
   building: 'Building something',
   online: 'Online',
   offline: 'Offline',
@@ -269,7 +269,7 @@ export default function Friends() {
     },
     Requests: { title: 'Nothing waiting', body: 'Nobody has asked, and you have not asked anybody.' },
     Followers: { title: 'No followers yet', body: 'Publish something and people start following you.' },
-    Following: { title: 'Not following anybody', body: 'Following somebody puts their new Spaces in front of you.' },
+    Following: { title: 'Not following anybody', body: 'Following somebody puts their new Worlds in front of you.' },
     Ignored: { title: 'Nobody ignored', body: 'Ignoring somebody keeps them as a friend and keeps them quiet.' },
     Blocked: { title: 'Nobody blocked', body: 'Blocking ends everything between you and somebody, both ways.' },
   }

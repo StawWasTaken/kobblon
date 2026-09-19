@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn'
 
 /** The same tabs the search page opens on, so the two always agree. */
 export const searchScopes: { tab: string; label: string; icon: IconDefinition }[] = [
-  { tab: 'spaces', label: 'Spaces', icon: faLayerGroup },
+  { tab: 'spaces', label: 'Worlds', icon: faLayerGroup },
   { tab: 'people', label: 'People', icon: faUser },
   { tab: 'create', label: 'Creator Marketplace', icon: faShapes },
   { tab: 'style', label: 'Style', icon: faShirt },

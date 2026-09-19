@@ -30,15 +30,15 @@ const terms: StorySection[] = [
     body: [
       'You need to be 15 or over. We ask for your birthday when you sign up and we act on the answer.',
       'One account per person. Do not share it, sell it, or hand it to someone under 15.',
-      'A guest account is a real account that we treat as temporary. Guests can look around and enter Spaces. Guests that have not been seen for a day are cleared out, so if you want to keep anything, turn yours into a proper account first.',
+      'A guest account is a real account that we treat as temporary. Guests can look around and enter Worlds. Guests that have not been seen for a day are cleared out, so if you want to keep anything, turn yours into a proper account first.',
     ],
   },
   {
     id: 'yours',
     heading: 'What you make stays yours',
     body: [
-      'Your Spaces and your uploads belong to you. By putting them on Kobblon you let us store them, show them to other people, and let others use what you publish to Create.',
-      'Take something down whenever you want. Copies other people already built with may stay in their Spaces.',
+      'Your Worlds and your uploads belong to you. By putting them on Kobblon you let us store them, show them to other people, and let others use what you publish to Create.',
+      'Take something down whenever you want. Copies other people already built with may stay in their Worlds.',
       'Content on the Creator Marketplace is used by its number rather than copied, so whoever made a thing stays attached to it wherever it turns up.',
     ],
   },
@@ -47,7 +47,7 @@ const terms: StorySection[] = [
     heading: `${currency.plural} and buying things`,
     body: [
       `${currency.plural} are a number on your account for use inside Kobblon. They are not money, they cannot be cashed out, and they have no value off the platform.`,
-      'Getting something from the Creator Marketplace puts it in your inventory and lets you use its number in your Spaces. It does not give you the file to keep, and it is not a resale right.',
+      'Getting something from the Creator Marketplace puts it in your inventory and lets you use its number in your Worlds. It does not give you the file to keep, and it is not a resale right.',
       `An account removed for breaking the rules loses whatever is on it. We do not refund ${currency.plural} spent before that.`,
     ],
   },
@@ -65,7 +65,7 @@ const terms: StorySection[] = [
     heading: 'What we cannot promise',
     body: [
       'Kobblon is free and small. Things will break sometimes and data can be lost. Keep your own copy of anything you would be upset to lose.',
-      'Nothing here is a promise that a feature will keep existing, that your Space will be visited, or that a number on the site will only go up.',
+      'Nothing here is a promise that a feature will keep existing, that your World will be visited, or that a number on the site will only go up.',
     ],
   },
   {
@@ -73,7 +73,7 @@ const terms: StorySection[] = [
     heading: 'Leaving',
     body: [
       'You can stop using Kobblon whenever you like. Ask us and your account goes with everything on it.',
-      'Some things survive on purpose: a Space somebody else built with your published upload keeps working, and moderation records of a removed account are kept so the same behaviour is not simply restarted.',
+      'Some things survive on purpose: a World somebody else built with your published upload keeps working, and moderation records of a removed account are kept so the same behaviour is not simply restarted.',
     ],
   },
 ]
@@ -98,10 +98,10 @@ const guidelines: StorySection[] = [
   },
   {
     id: 'spaces',
-    heading: 'Spaces and what goes in them',
+    heading: 'Worlds and what goes in them',
     body: [
-      'A Space is yours to build, and it is still on Kobblon. Everything in this page applies inside one.',
-      'A Space cannot be used to collect passwords, pretend to be a login page, or push people somewhere that does. Every Space runs shut off from the rest of the site, and trying to get around that is a reason to lose the account rather than a clever trick.',
+      'A World is yours to build, and it is still on Kobblon. Everything in this page applies inside one.',
+      'A World cannot be used to collect passwords, pretend to be a login page, or push people somewhere that does. Every World runs shut off from the rest of the site, and trying to get around that is a reason to lose the account rather than a clever trick.',
     ],
   },
   {
@@ -125,7 +125,7 @@ const guidelines: StorySection[] = [
     id: 'reporting',
     heading: 'Reporting',
     body: [
-      'Use the flag on any profile, Space or message. Reports are private and the person you report is not told who sent it.',
+      'Use the flag on any profile, World or message. Reports are private and the person you report is not told who sent it.',
       'Reporting things that are fine, over and over, to bother someone, is also against the rules.',
     ],
   },
@@ -138,7 +138,7 @@ const privacy: StorySection[] = [
     heading: 'What Kobblon keeps',
     body: [
       'An account: your username, your display name, your password in a hashed form we cannot read back, your email if you gave one, and your birthday, which decides whether you are old enough to be here.',
-      'What you make and do: Spaces, uploads, Catalog items, communities, posts, messages, friendships, blocks, reports, and what you own and are wearing.',
+      'What you make and do: Worlds, uploads, Catalog items, communities, posts, messages, friendships, blocks, reports, and what you own and are wearing.',
       `Your ${currency.plural} and everything that has moved on your account, which is what the transactions page shows you.`,
       'Being here: whether you are online, what you are doing in broad terms, and when you were last seen. This is what the dot beside your picture is drawn from.',
       'Technical records kept by the services Kobblon runs on, including addresses your browser connects from, which exist so we can keep the place working and deal with abuse.',
@@ -166,9 +166,9 @@ const privacy: StorySection[] = [
     id: 'who-sees',
     heading: 'Who can see what',
     body: [
-      'Public: your profile, your username, your picture and avatar, your published Spaces, what you have made, your communities, your badges, and whether you are around.',
+      'Public: your profile, your username, your picture and avatar, your published Worlds, what you have made, your communities, your badges, and whether you are around.',
       'Private: your email, your birthday, your messages, your reports, and anything you have not published. Moderators can see reports and what was reported.',
-      'Other people on Kobblon see what you have published and nothing else. A Space or a game you go into never receives your account: it gets whatever narrow thing it has been given permission to ask for, and no more.',
+      'Other people on Kobblon see what you have published and nothing else. A World or a game you go into never receives your account: it gets whatever narrow thing it has been given permission to ask for, and no more.',
     ],
   },
   {
@@ -314,10 +314,10 @@ const money: StorySection[] = [
 const experiences: StorySection[] = [
   {
     id: 'sandbox',
-    heading: 'A Space runs shut off',
+    heading: 'A World runs shut off',
     body: [
-      'Everything somebody builds runs sealed away from the rest of Kobblon. A Space cannot read your account, your messages, your friends or your balance.',
-      'What a Space can ask for, it asks for plainly, and you answer. Nothing is handed over because a Space says it needs it.',
+      'Everything somebody builds runs sealed away from the rest of Kobblon. A World cannot read your account, your messages, your friends or your balance.',
+      'What a World can ask for, it asks for plainly, and you answer. Nothing is handed over because a World says it needs it.',
       'Trying to get around that seal is a reason to lose the account. It is not a puzzle we have left out for people to solve.',
     ],
   },
@@ -325,16 +325,16 @@ const experiences: StorySection[] = [
     id: 'rules-inside',
     heading: 'The rules apply inside',
     body: [
-      'What you may not post on a profile, you may not build into a Space. The Guidelines do not stop at the door.',
-      'A Space that exists to collect passwords, imitate a login, or move people somewhere that does either is removed on sight.',
-      'Chat inside a Space is screened like chat anywhere else, and the person who owns the Space can clear what still lands badly.',
+      'What you may not post on a profile, you may not build into a World. The Guidelines do not stop at the door.',
+      'A World that exists to collect passwords, imitate a login, or move people somewhere that does either is removed on sight.',
+      'Chat inside a World is screened like chat anywhere else, and the person who owns the World can clear what still lands badly.',
     ],
   },
   {
     id: 'yours',
     heading: 'What you build stays yours',
     body: [
-      'A Space belongs to whoever made it. Publishing it lets us store it and show it to people.',
+      'A World belongs to whoever made it. Publishing it lets us store it and show it to people.',
       'Unpublishing takes it off the site. What other people built with your published Catalog items keeps working, because they used the number rather than a copy.',
     ],
   },
@@ -369,7 +369,7 @@ const moderation: StorySection[] = [
     heading: 'Seeing where you stand',
     body: [
       'Your standing page lists every decision against your account, what it stopped, and when it ends. It is the same list a moderator sees, without the notes they wrote to each other.',
-      'Kobblon writes to you in your inbox when a decision is made. That is a separate place from notifications on purpose, because a decision cannot be allowed to scroll past behind six people liking a Space.',
+      'Kobblon writes to you in your inbox when a decision is made. That is a separate place from notifications on purpose, because a decision cannot be allowed to scroll past behind six people liking a World.',
     ],
   },
   {
@@ -404,7 +404,7 @@ const copyright: StorySection[] = [
     id: 'reuse',
     heading: 'Using other people’s work here',
     body: [
-      'A Catalog item published by somebody else is yours to use in your Spaces by its number. That is the permission, and it is the whole permission.',
+      'A Catalog item published by somebody else is yours to use in your Worlds by its number. That is the permission, and it is the whole permission.',
       'It is not permission to re-upload it as your own, to sell it, or to take the file elsewhere.',
     ],
   },
@@ -480,10 +480,10 @@ export const policies: Policy[] = [
   },
   {
     slug: 'spaces',
-    title: 'Spaces and experiences',
+    title: 'Worlds and experiences',
     eyebrow: 'What runs here',
-    blurb: 'What a Space may do, and what it can never reach.',
-    intro: 'What somebody else’s Space is allowed to do while you are inside it, and what it can never get to.',
+    blurb: 'What a World may do, and what it can never reach.',
+    intro: 'What somebody else’s World is allowed to do while you are inside it, and what it can never get to.',
     updated: '2026-09-19',
     sections: experiences,
   },

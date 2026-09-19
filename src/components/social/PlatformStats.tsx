@@ -78,8 +78,8 @@ export function PlatformStats({ className }: { className?: string }) {
 
   return (
     <div className={cn('grid grid-cols-2 gap-3 lg:grid-cols-4', className)}>
-      <Tile icon={faEye} label="Visits to Spaces" value={data.total_visits} />
-      <Tile icon={faLayerGroup} label="Published Spaces" value={data.published_spaces} />
+      <Tile icon={faEye} label="Visits to Worlds" value={data.total_visits} />
+      <Tile icon={faLayerGroup} label="Published Worlds" value={data.published_spaces} />
       <Tile icon={faPenToSquare} label="Updates made" value={data.total_updates} />
       <Tile icon={faUsers} label="People here" value={data.total_accounts} accent />
     </div>

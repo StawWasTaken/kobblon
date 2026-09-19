@@ -130,7 +130,7 @@ export default function EditSpace() {
             file={emblem}
             existing={space.data.emblem_url}
             onChange={setEmblem}
-            note="The badge for this Space: the tab icon and the mark beside its name. It is never used as a picture of the Space."
+            note="The badge for this World: the tab icon and the mark beside its name. It is never used as a picture of the World."
           />
 
           <div>

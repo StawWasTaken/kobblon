@@ -27,7 +27,7 @@ export function RatingBar({
         onClick={onLike}
         disabled={disabled}
         aria-pressed={iLike}
-        aria-label="Like this Space"
+        aria-label="Like this World"
         className={cn(
           'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold transition-colors disabled:opacity-40',
           iLike ? 'text-space-bright' : 'text-white/60 hover:text-white',
@@ -57,7 +57,7 @@ export function RatingBar({
         onClick={onDislike}
         disabled={disabled}
         aria-pressed={iDislike}
-        aria-label="Dislike this Space"
+        aria-label="Dislike this World"
         className={cn(
           'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold transition-colors disabled:opacity-40',
           iDislike ? 'text-danger' : 'text-white/60 hover:text-white',
