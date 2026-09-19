@@ -120,12 +120,87 @@ The company is **Kobblon SAS**. It goes in:
 
 - `package.json` author and the electron-builder `publish`/`copyright` fields
 - the installer publisher name
-- the About window: app name, version, the engine version it carries,
-  "© <year> Kobblon SAS", and a link to the website
+- the file's own metadata, which is where the About information belongs:
+  Windows `VERSIONINFO` (CompanyName, ProductName, FileDescription,
+  LegalCopyright) through electron-builder, `Info.plist` on macOS
+  (`CFBundleName`, `NSHumanReadableCopyright`), and the desktop entry on
+  Linux. Right-clicking the executable and opening its properties is how
+  somebody reads it
 - the eventual code signing certificate subject
 
 Do not put a model name, an AI tool name or a generated-by note anywhere in
 either app, its installer, its metadata or its repository.
+
+## Same design as the website, without being the website
+
+The Launcher must look like Kobblon. It must not *be* Kobblon in a window:
+no webview pointed at kobblon.com, no embedded browser rendering site pages,
+no iframe of anything. Every screen is built natively in the app.
+
+That leaves the question of how the app stays in step when the website
+changes, and the answer is to split it three ways:
+
+```
+Data      lives on the server    reaches the app immediately, no release
+Design    lives in the repo      shipped with the app, and see below
+Layout    lives in the app       changes with an app release
+```
+
+- **Data** is everything real: experiences, the Catalog, friends, profiles,
+  prices, badges, announcements, account standing. The app reads it from the
+  same Supabase API the website reads, under the same Row Level Security. A
+  price changed on the website is changed in the app the moment it is
+  refetched. Nothing about this needs a release.
+- **Design** is the token set: the colours, the surfaces, the radii, the
+  brand assets. They live in the repository and ship with the app, so the app
+  works before it has talked to anything. If you want a token change to reach
+  installed apps without a release, fetch a small signed token file at launch,
+  validate it against a schema, cache it, and fall back to the bundled copy
+  when the fetch fails or the file does not parse. That is the only thing the
+  app may take from the network to decide how it looks. It may never fetch
+  markup, components, layout or code.
+- **Layout** is the app's own: its screens, its navigation, its chrome. New
+  screens come with app releases, which is what releases are for.
+
+Ask me for a tokens endpoint when you are ready for one and I will publish it
+from the site repository. Do not scrape the stylesheet off kobblon.com.
+
+## Taking from the Roblox Player
+
+Worth taking, because it is the shape of this kind of app:
+
+- it opens to something to play, not to a menu
+- a slim chrome that gets out of the way, with the content doing the work
+- one obvious route from choosing a thing to being inside it
+- a real joining screen with progress, rather than a frozen window
+- an in-experience overlay on Escape: resume, settings, leave, with leaving
+  returning to the Launcher rather than quitting
+- graphics and performance settings that a player can actually find
+- no About dialog anywhere in the interface
+
+Not worth taking:
+
+- the Player is not a shop and not a social network. Kobblon's website is the
+  place to browse, buy, read profiles and manage the account. The Launcher
+  shows what you own and what you play, and sends the rest to the website.
+- do not copy Roblox's visual design, icons, wording or layout pixel for
+  pixel. Take the shape of the thing; the surface is Kobblon's own.
+
+## Cursors
+
+Staw has given you `cursor1` and `cursor2`. Use them rather than the system
+cursor throughout the app and inside an experience.
+
+- `cursor1` is the normal pointer, `cursor2` the active or pressed state.
+  Check with Staw if the files say otherwise; do not guess and ship it.
+- Set them in CSS with a keyword fallback always present
+  (`cursor: url(cursor1.png) 4 4, default`), keep the image at 32 pixels or
+  under, and give the hotspot coordinates deliberately rather than letting
+  them default to the corner.
+- Leave the OS cursor alone where the OS is right: a text caret in a field, a
+  resize cursor on a window edge.
+- The cursor is part of the chrome, so it comes from the repository like the
+  rest of the assets once Staw has put the files there.
 
 ## Updates
 
