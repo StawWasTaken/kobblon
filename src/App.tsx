@@ -46,6 +46,8 @@ const StandingItem = lazyPage(() => import('@/pages/StandingItem'))
 const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const SupportTicket = lazyPage(() => import('@/pages/SupportTicket'))
+const Download = lazyPage(() => import('@/pages/Download'))
+const ExperiencePage = lazyPage(() => import('@/pages/ExperiencePage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
 const Library = lazyPage(() => import('@/pages/Library'))
 const Style = lazyPage(() => import('@/pages/Style'))
@@ -99,6 +101,7 @@ export default function App() {
               <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/policies" element={<PolicyHub />} />
+              <Route path="/download" element={<Download />} />
               <Route path="/policies/:slug" element={<PolicyPage />} />
 
               <Route path="/login" element={<Auth mode="login" />} />
@@ -112,6 +115,10 @@ export default function App() {
               <Route element={<AppShell />}>
                 {/* open to guests so a shared link works logged out */}
                 <Route path="/discover" element={<Discover />} />
+                {/* An experience is readable by anybody; playing it needs the
+                    Launcher. Not /e/, which community events already own. */}
+                <Route path="/experiences/:id" element={<ExperiencePage />} />
+                <Route path="/experiences/:id/:slug" element={<ExperiencePage />} />
                 <Route path="/create" element={<CreateHub />}>
                   <Route index element={<CreateOverview />} />
                   <Route path="spaces" element={<CreateSpaces />} />

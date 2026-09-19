@@ -40,3 +40,12 @@ export function eventLink(event: { content_id: number | null; title: string }) {
   if (!event.content_id) return '#'
   return `/e/${event.content_id}/${slugPart(slugify(event.title).slice(0, 40) || 'event')}`
 }
+
+/**
+ * An experience: /experiences/1042/first-ground.
+ *
+ * Not /e/, which community events had first. Two kinds of content at one
+ * prefix is a bug that only shows up once both exist.
+ */
+export const experienceLink = (one: { content_id: number; slug?: string | null; name: string }) =>
+  `/experiences/${one.content_id}/${one.slug || slugify(one.name)}`

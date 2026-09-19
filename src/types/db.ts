@@ -593,3 +593,19 @@ export type TicketMessage = {
   body: string
   created_at: string
 }
+
+// ------------------------------------------------------------- experiences
+
+export type Experience = {
+  id: string
+  content_id: number
+  slug: string
+  name: string
+  description: string | null
+  creator_name: string | null
+  cover_url: string | null
+  runtime_version: number
+  visit_count: number
+  like_count: number
+  published_at: string | null
+}
