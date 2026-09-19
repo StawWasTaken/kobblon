@@ -8,29 +8,63 @@ of truth for all of it.
 Read `docs/engine.md` and `docs/direction.md` in that repository before you
 write anything.
 
-## What Kobblon is
+## What Kobblon is: four surfaces
 
-One platform, three clients:
+Settled by Staw, and this is the version that counts:
 
 ```
-Web        social, discovery, profiles, Catalog, account, experience pages
-Launcher   plays experiences                              holds the engine
-Creator    makes and tests experiences                    holds the same engine
+Kobblon website      every page: social, discovery, profiles, Catalog,
+                     inventory, account, and Create
+Kobblon Create       not a separate product. The creation pages of the same
+                     website: uploads, Catalog listings, Spaces, ads
+Kobblon Launcher     the app that plays experiences. A player, nothing else
+Kobblon Creator      the app that makes experiences. Name not final
 ```
 
-Experiences do not run on the website. The website points at them; the
-Launcher runs them. That is the whole reason these apps exist.
+Two of those are the website and two are desktop applications. Create stays
+on the web and is not moving into an app: it is where somebody uploads a
+decal, lists a Style item, or manages what they have made, and it is meant to
+be quick and social. Creator is for building 3D experiences, which is the work
+a web page cannot do.
 
-## The two apps
+### What that means for each app
 
-**Kobblon** (the Launcher) is the player. Somebody opens it to play something.
+**The Launcher is a player.** It opens when somebody presses Play on the
+website, shows a loading screen for that experience, and puts them in it. No
+rail, no Home, no Discover, no account screens, no webview of the site.
+Everything social stays on the website.
 
-**Creator** is the creation environment. The final name is not decided, so use
-`Creator` internally and do not brand it "Kobblon Studio" anywhere.
+**Creator is a workspace.** Native, with panels inside one window the way an
+editor has always worked:
 
-The Launcher shows the website for everything social and keeps the engine
-native; see the architecture section below, which Staw has settled. Creator is
-native throughout, because an editor is not a web page.
+```
+Viewport      the scene, running the engine
+Explorer      what is in the scene, as a tree
+Properties    the selected thing: transform, colour, and the id of a decal
+              or a sound it uses
+Catalog       the Creator Marketplace, browsable without leaving the app
+Assets        what you own and what you have uploaded
+```
+
+The important rule, and it is the one that is easy to get wrong:
+
+> Uploading from inside Creator is the same upload as uploading on the
+> website. Same table, same automatic screening, same person looking at
+> anything the check is unsure about, same content id, and it lands in the
+> same inventory and the same list of your uploads. Creator is another way in
+> to Create, not a second Create.
+
+So Creator calls the same API a browser calls, as the signed-in person, under
+the same Row Level Security. It gets no privileged path, no separate bucket
+and no way to publish something that skips review. If uploading needs
+something the web does not have, that goes in the shared API and the website
+gets it too.
+
+The Catalog panel reads the same Catalog the website shows. Build it natively
+against the same API rather than embedding a page: a panel inside an editor
+has to behave like a panel, and a web page in a dock is how you get a
+scrollbar inside a scrollbar. If a panel ever does embed a Kobblon page, the
+lockdown rules for a webview elsewhere in this document apply in full.
 
 ## Non-negotiables
 
@@ -131,75 +165,47 @@ The company is **Kobblon SAS**. It goes in:
 Do not put a model name, an AI tool name or a generated-by note anywhere in
 either app, its installer, its metadata or its repository.
 
-## How the Launcher is built: the site inside, the engine native
+## How the Launcher is built
 
-Staw has decided this, and it replaces what this document said before: **the
-Launcher shows kobblon.com for everything social, and the engine is native.**
+Settled, after an embedded website was tried and dropped: **the Launcher is a
+player and shows no website at all.**
 
 ```
 Kobblon Launcher
-├─ native shell      window, chrome, updates, protocol handler, settings
-├─ embedded site     kobblon.com, for browsing, profiles, friends, Catalog
-└─ native engine     the runtime from src/engine, full window, no webview
+├─ native shell    window, chrome, cursors, updates, protocol handler
+├─ loading screen  the experience's cover, its name, progress
+└─ native engine   the runtime from src/engine, full window
 ```
 
-It is the right trade for where this is: the app is the same product as the
-website on the day it ships, a change to the site reaches every install with
-no release, and nobody maintains two versions of the same screen. What it
-costs is an app that needs the network for its interface, and a webview that
-has to be locked down properly. Both are handled below.
+It opens on `kobblon://play/<experienceId>`, asks the server what that id is,
+loads it, and runs it. Escape gives the overlay: resume, settings, leave.
+Leaving returns to the Launcher, not to a browser.
 
-### The rules for the embedded site
+There is no rail, no Home, no Discover, no profile and no account screen in
+it. Anything somebody wants to browse, buy, read or manage happens on
+kobblon.com. That keeps one copy of every screen and keeps the app small
+enough to stay honest about what it is.
 
-The webview is a door into the app. Treat it like one.
+### What the website gives it
 
-- `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. No
-  exceptions, not even in development.
-- Lock navigation to Kobblon's own origins. A link anywhere else opens in the
-  person's real browser through `openOutside`, never inside the app.
-  Everything else is cancelled.
-- The preload script exposes exactly the bridge in `src/lib/app.ts` and
-  nothing more: `client`, `version`, `play(experienceId)`, `openOutside(url)`.
-  No filesystem, no shell, no arbitrary IPC, no `require`.
-- Validate `experienceId` in the main process before the engine touches it.
-  It arrives from a web page, so it is untrusted input: check it against the
-  id format, never build a path with it, never pass it to a shell.
+- `experience_to_play(uuid)`, one read, published rows only, granted to
+  signed-out callers, returning exactly `id`, `name`, `creator_name`,
+  `cover_url`, `manifest_url` and `runtime_version`.
+- `experience_started(uuid)` to count a visit once the runtime has the thing.
+- A Play button that opens the protocol link and offers `/download` when
+  nothing happens.
 
-### What has to be native
+### The rules that go with it
 
-- The window, its chrome and the cursors.
-- Updates, the protocol handler and settings.
-- A real offline screen. An app whose interface lives on the network must say
-  "Kobblon is unreachable" with a retry, not show a white rectangle. Build
-  this before you need it.
-- The loading state before the site has painted, in Kobblon's colours, so
-  starting the app never looks like a broken browser.
-- Everything from the moment an experience starts: the joining screen, the
-  engine, the Escape overlay, leaving back to the app.
-
-### What I do on the website side
-
-`src/lib/app.ts` already exists and defines the bridge, so both sides compile
-against the same contract. Tell me when you need:
-
-- an app mode that hides anything meaningless inside the app, such as a
-  prompt to download the Launcher
-- Play buttons that call `play(experienceId)` instead of opening a link
-- anything on a page that should differ in the app
-
-I will build those on the site. Do not work around a website problem inside
-the app: ask, and it gets fixed in one place for everyone.
-
-### Still true
-
-- One engine, imported from the repository, never copied or reimplemented.
-- An experience update never needs an app update.
-- No secrets in the app: the publishable key only, never the service-role key
-  and never the database password.
-- The design system in `design/` is still how the native parts are styled, so
-  the offline screen, the loading state and the in-experience overlay match
-  the site rather than approximating it. `public/brand/tokens.json` has the
-  same values as data.
+- `experienceId` must match `[A-Za-z0-9_-]{1,64}`, validated in the main
+  process before anything touches it. It arrives from a link, so it is
+  untrusted: never build a path with it, never hand it to a shell.
+- `manifest_url` is checked in the database against Kobblon's own hosts over
+  https, and checked again in the app. Two checks, because a runtime that
+  fetches whatever it is told is a way to make every player fetch anything.
+- Nothing personal in a protocol link. No token, no session, no key. They end
+  up in shell history, process lists and crash logs.
+- A second launch hands its link to the player already running.
 
 ## Taking from the Roblox Player
 

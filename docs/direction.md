@@ -146,3 +146,21 @@ contrast and sensible touch targets.
    platform behind it.
 
 Every step leaves the site working. Small piece, tested, committed, next.
+
+## The four surfaces
+
+Settled, and it replaces looser wording elsewhere in this document:
+
+- **Kobblon website**, every page: social, discovery, profiles, Catalog,
+  inventory, account.
+- **Kobblon Create**, not a separate product but the creation pages of that
+  same website: uploads, listings, Spaces, ads. It stays on the web.
+- **Kobblon Launcher**, the application that plays experiences, and nothing
+  else.
+- **Kobblon Creator**, the application that builds them, with its panels for
+  the scene, the explorer, properties, the Catalog and your assets. Name not
+  final.
+
+Uploading from inside Creator is the same upload as uploading in Create: same
+screening, same content id, same inventory. Creator is another way in to
+Create rather than a second one.
