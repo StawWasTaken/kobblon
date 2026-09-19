@@ -28,9 +28,9 @@ Launcher runs them. That is the whole reason these apps exist.
 **Creator** is the creation environment. The final name is not decided, so use
 `Creator` internally and do not brand it "Kobblon Studio" anywhere.
 
-Both are proper desktop applications. Neither is the website in a window. If a
-screen in either app would be better as a browser tab, it does not belong in
-the app.
+The Launcher shows the website for everything social and keeps the engine
+native; see the architecture section below, which Staw has settled. Creator is
+native throughout, because an editor is not a web page.
 
 ## Non-negotiables
 
@@ -131,69 +131,75 @@ The company is **Kobblon SAS**. It goes in:
 Do not put a model name, an AI tool name or a generated-by note anywhere in
 either app, its installer, its metadata or its repository.
 
-## Same design as the website, without being the website
+## How the Launcher is built: the site inside, the engine native
 
-The Launcher should feel like the website with experiences in it. Same rail,
-same top bar, same cards, same type, same spacing, same words: somebody moving
-between the two should not notice they have changed application, except that
-this one plays things.
-
-Build that by using the website's own design system rather than by
-reproducing its screens from a screenshot. It must not *be* Kobblon in a
-window:
-no webview pointed at kobblon.com, no embedded browser rendering site pages,
-no iframe of anything. Every screen is built natively in the app.
-
-That leaves the question of how the app stays in step when the website
-changes, and the answer is to split it three ways:
+Staw has decided this, and it replaces what this document said before: **the
+Launcher shows kobblon.com for everything social, and the engine is native.**
 
 ```
-Data      lives on the server    reaches the app immediately, no release
-Design    lives in the repo      shipped with the app, and see below
-Layout    lives in the app       changes with an app release
+Kobblon Launcher
+├─ native shell      window, chrome, updates, protocol handler, settings
+├─ embedded site     kobblon.com, for browsing, profiles, friends, Catalog
+└─ native engine     the runtime from src/engine, full window, no webview
 ```
 
-- **Data** is everything real: experiences, the Catalog, friends, profiles,
-  prices, badges, announcements, account standing. The app reads it from the
-  same Supabase API the website reads, under the same Row Level Security. A
-  price changed on the website is changed in the app the moment it is
-  refetched. Nothing about this needs a release.
-- **Design** is the token set: the colours, the surfaces, the radii, the
-  brand assets. They live in the repository and ship with the app, so the app
-  works before it has talked to anything. If you want a token change to reach
-  installed apps without a release, fetch a small signed token file at launch,
-  validate it against a schema, cache it, and fall back to the bundled copy
-  when the fetch fails or the file does not parse. That is the only thing the
-  app may take from the network to decide how it looks. It may never fetch
-  markup, components, layout or code.
-- **Layout** is the app's own: its screens, its navigation, its chrome. New
-  screens come with app releases, which is what releases are for.
+It is the right trade for where this is: the app is the same product as the
+website on the day it ships, a change to the site reaches every install with
+no release, and nobody maintains two versions of the same screen. What it
+costs is an app that needs the network for its interface, and a webview that
+has to be locked down properly. Both are handled below.
 
-### What the site repository now gives you
+### The rules for the embedded site
 
-Three things, so that neither app has to copy anything:
+The webview is a door into the app. Treat it like one.
 
-```
-design/tokens.css     the surfaces, as CSS variables, for both themes
-design/preset.js      the Tailwind preset: brand blue, Space green, the one
-                      red, the type, the radii, the shadows, the motion
-public/brand/tokens.json   the same values as data, served at
-                           https://kobblon.com/brand/tokens.json
-```
+- `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. No
+  exceptions, not even in development.
+- Lock navigation to Kobblon's own origins. A link anywhere else opens in the
+  person's real browser through `openOutside`, never inside the app.
+  Everything else is cancelled.
+- The preload script exposes exactly the bridge in `src/lib/app.ts` and
+  nothing more: `client`, `version`, `play(experienceId)`, `openOutside(url)`.
+  No filesystem, no shell, no arbitrary IPC, no `require`.
+- Validate `experienceId` in the main process before the engine touches it.
+  It arrives from a web page, so it is untrusted input: check it against the
+  id format, never build a path with it, never pass it to a shell.
 
-The website's own `tailwind.config.js` is now nothing but
-`presets: [kobblon]`, so if you extend the same preset and import the same
-tokens file, the app is styled by the same source the site is styled by. Not a
-matching copy: the same file. That is the answer to the app looking like a
-different product.
+### What has to be native
 
-`tokens.json` is generated from those two files by `node tools/design/tokens.mjs`,
-so it cannot drift from them. Ship a copy inside the app, fetch this at launch
-to pick up changes, validate `format` before using it, and fall back to the
-bundled copy if the fetch fails or the file does not parse.
+- The window, its chrome and the cursors.
+- Updates, the protocol handler and settings.
+- A real offline screen. An app whose interface lives on the network must say
+  "Kobblon is unreachable" with a retry, not show a white rectangle. Build
+  this before you need it.
+- The loading state before the site has painted, in Kobblon's colours, so
+  starting the app never looks like a broken browser.
+- Everything from the moment an experience starts: the joining screen, the
+  engine, the Escape overlay, leaving back to the app.
 
-Do not scrape the stylesheet off kobblon.com, and do not hand-copy any value
-out of these files into the app.
+### What I do on the website side
+
+`src/lib/app.ts` already exists and defines the bridge, so both sides compile
+against the same contract. Tell me when you need:
+
+- an app mode that hides anything meaningless inside the app, such as a
+  prompt to download the Launcher
+- Play buttons that call `play(experienceId)` instead of opening a link
+- anything on a page that should differ in the app
+
+I will build those on the site. Do not work around a website problem inside
+the app: ask, and it gets fixed in one place for everyone.
+
+### Still true
+
+- One engine, imported from the repository, never copied or reimplemented.
+- An experience update never needs an app update.
+- No secrets in the app: the publishable key only, never the service-role key
+  and never the database password.
+- The design system in `design/` is still how the native parts are styled, so
+  the offline screen, the loading state and the in-experience overlay match
+  the site rather than approximating it. `public/brand/tokens.json` has the
+  same values as data.
 
 ## Taking from the Roblox Player
 
@@ -299,16 +305,20 @@ Both apps must read as the same product as the website.
 Do not generate a large codebase before anything runs. In this order, and
 verify each one actually works before moving on:
 
-1. Electron shell that opens, with the chrome and the tokens. Screenshot it.
-2. The engine imported from the repo, rendering `first-ground.json`, with K6
-   walking, jumping and animating inside the app window.
-3. Launcher shell: Home, Discover, Library, Friends, Profile, Settings, with
-   real data from Supabase. Empty where there is nothing.
-4. Auto-update working end to end against a real release. Prove it by
+1. Electron shell that opens on kobblon.com, locked down as above, with the
+   native chrome, the cursors and a loading state in Kobblon's colours.
+   Screenshot it.
+2. The offline screen, proved by starting the app with the network off.
+3. The engine imported from the repo, rendering `first-ground.json` full
+   window, with K6 walking, jumping and animating. Escape returns to the site.
+4. The bridge end to end: a Play call from a page in the webview starts that
+   experience in the native runtime.
+5. Auto-update working end to end against a real release. Prove it by
    shipping 0.1.0, publishing 0.1.1, and watching a real install update.
-5. `kobblon://` deep link opening an experience from the website.
-6. Creator V1: new experience, a scene, place and move boxes, place K6, save
-   the manifest, and Play using the same engine.
+6. `kobblon://` deep link starting an experience from a browser outside the
+   app.
+7. Creator V1, native: new experience, a scene, place and move boxes, place
+   K6, save the manifest, and Play using the same engine.
 
 ## How to verify
 
