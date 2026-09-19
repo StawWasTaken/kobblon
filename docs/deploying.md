@@ -118,3 +118,42 @@ are wrong:
 If logging in works but you want it going through the function, deploy it and
 try again: the function is tried first every time, and the database is only
 asked when it does not answer.
+
+## The edge functions
+
+`supabase/functions` holds the server side: signing an application in,
+linking Discord, the login helper, the link cards. They deploy from
+`.github/workflows/functions.yml` whenever one of them changes on main, or on
+demand from the Actions tab.
+
+That workflow needs two repository secrets, under Settings, Secrets and
+variables, Actions:
+
+| Secret | What it is |
+| --- | --- |
+| `SUPABASE_ACCESS_TOKEN` | A personal access token from supabase.com/dashboard/account/tokens |
+| `SUPABASE_PROJECT_REF` | The project reference, the part before `.supabase.co` |
+
+The workflow fails loudly when either is missing rather than passing with
+nothing deployed, because a green tick that deployed nothing is worse than a
+red one.
+
+**The functions also need their own secrets**, set on the project rather than
+in the repository, under Edge Functions, Secrets:
+
+| Secret | Used by | What it is |
+| --- | --- | --- |
+| `SUPABASE_SERVICE_ROLE_KEY` | `app-signin` | Set by Supabase itself; nothing to do |
+| `DISCORD_CLIENT_ID` | `discord` | From the Discord developer portal |
+| `DISCORD_CLIENT_SECRET` | `discord` | The same, and never anywhere else |
+| `DISCORD_STATE_SECRET` | `discord` | Any long random string of your own |
+
+To deploy one by hand:
+
+```
+supabase functions deploy app-signin --project-ref <ref>
+```
+
+`verify_jwt` comes from `supabase/config.toml`, so it does not need a flag.
+`app-signin` is `false` there on purpose: the application calling it has not
+signed in yet, and the code it sends is the credential.

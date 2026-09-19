@@ -1,0 +1,58 @@
+name: Deploy edge functions
+
+# The functions in supabase/functions are the server side of Kobblon: signing
+# an application in, linking Discord, the login helper. They live in this
+# repository and they were being deployed by hand, which is how app-signin
+# came to exist in main and answer NOT_FOUND on the site.
+#
+# This runs only when one of them changes, and only from main.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+      - '.github/workflows/functions.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Check the secrets are there
+        env:
+          TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          missing=""
+          [ -z "$TOKEN" ] && missing="$missing SUPABASE_ACCESS_TOKEN"
+          [ -z "$PROJECT" ] && missing="$missing SUPABASE_PROJECT_REF"
+          if [ -n "$missing" ]; then
+            echo "Missing repository secrets:$missing"
+            echo "Add them under Settings, Secrets and variables, Actions."
+            exit 1
+          fi
+
+      # Every function in the folder, so none of them can be the one somebody
+      # forgot. verify_jwt comes from supabase/config.toml.
+      - name: Deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          for path in supabase/functions/*/; do
+            name=$(basename "$path")
+            echo "::group::$name"
+            supabase functions deploy "$name" \
+              --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+            echo "::endgroup::"
+          done
