@@ -6,7 +6,7 @@ import { ReportDialog } from '@/components/social/ReportDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { assetUrl, pickAd, recordAdClick } from '@/lib/api'
 import type { AdSize, ShownAd } from '@/lib/api'
-import { AD_SIZES } from '@/lib/blocks'
+import { AD_SIZES } from '@/lib/ads'
 import { cn } from '@/lib/cn'
 import { overlayChip, overlayButton } from '@/lib/overlay'
 

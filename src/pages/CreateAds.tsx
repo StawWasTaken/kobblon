@@ -23,7 +23,7 @@ import {
 } from '@/lib/api'
 import type { Campaign, CampaignAd } from '@/lib/api'
 import { currency } from '@/lib/currency'
-import { AD_SIZES } from '@/lib/blocks'
+import { AD_SIZES } from '@/lib/ads'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 

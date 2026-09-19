@@ -76,33 +76,8 @@ export async function getSpace(username: string, slug: string): Promise<Space | 
   return (data as Space | null) ?? null
 }
 
-export async function createSpace(input: {
-  ownerId: string
-  name: string
-  slug: string
-  description: string
-  category: SpaceCategory
-  publish: boolean
-}): Promise<Space> {
-  return unwrap(
-    await supabase.from('spaces').insert({
-      owner_id: input.ownerId,
-      name: input.name,
-      slug: input.slug,
-      description: input.description || null,
-      category: input.category,
-      is_published: input.publish,
-    }).select(SPACE_FIELDS).single(),
-  ) as Space
-}
-
 export async function logSpaceUpdate(spaceId: string, note: string) {
   unwrap(await supabase.from('space_updates').insert({ space_id: spaceId, note: note || null }).select('id').single())
-}
-
-export async function enterSpace(spaceId: string): Promise<{ visit_counted: boolean; visits: number }> {
-  const rows = unwrap(await supabase.rpc('enter_space', { target: spaceId }))
-  return (Array.isArray(rows) ? rows[0] : rows) as { visit_counted: boolean; visits: number }
 }
 
 export async function leaveSpace() {
@@ -1935,37 +1910,6 @@ export async function unlistForSale(assetId: string): Promise<number> {
 /** Giving Brix to whoever made a Space. Returns what is left. */
 export async function donateToSpace(spaceId: string, amount: number): Promise<number> {
   return unwrap(await supabase.rpc('donate_to_space', { space: spaceId, amount })) as number
-}
-
-// ------------------------------------------------------------ space files
-
-export type SpaceFile = { path: string; content: string; updated_at: string }
-
-/**
- * The files a Space is made of. The draft is what the editor works on and
- * only its builders can read it; the live copy is what visitors get.
- */
-export async function listSpaceFiles(
-  spaceId: string, channel: 'draft' | 'live' = 'draft',
-): Promise<SpaceFile[]> {
-  return (unwrap(await supabase.rpc('space_files_of', { space: spaceId, want: channel })) as SpaceFile[]) ?? []
-}
-
-export async function saveSpaceFile(spaceId: string, path: string, content: string) {
-  unwrap(await supabase.rpc('save_space_file', { space: spaceId, file_path: path, body: content }))
-}
-
-export async function deleteSpaceFile(spaceId: string, path: string) {
-  unwrap(await supabase.rpc('delete_space_file', { space: spaceId, file_path: path }))
-}
-
-/** Puts the draft live, keeping what was live in case it was a mistake. */
-export async function publishSpaceFiles(spaceId: string): Promise<number> {
-  return unwrap(await supabase.rpc('publish_space_files', { space: spaceId })) as number
-}
-
-export async function revertSpaceFiles(spaceId: string): Promise<number> {
-  return unwrap(await supabase.rpc('revert_space_files', { space: spaceId })) as number
 }
 
 // ------------------------------------------------------------- affiliates

@@ -192,3 +192,53 @@ experiences that the `spaces` table cannot describe.
 website we have, plus somewhere for an experience manifest to live. Not
 before: an experience today is a file, and it should stay a file until Creator
 is writing them.
+
+## 14. The 2D Space runtime has gone, and its pages have not caught up (done, with a follow-on)
+
+**Done:** the web builder, the block format, the compiler, the sandboxed
+frame and the viewer are deleted, along with every route and button that led
+to them. Nothing on the site makes or runs a 2D Space any more. Ads kept the
+one thing they used from the old page format, `AD_SIZES`, which now lives in
+`src/lib/ads.ts`.
+
+**Left standing on purpose:** the `spaces` table and the Spaces people made.
+They are readable, they keep their addresses, and their overview pages still
+answer. Deleting other people's work is not a refactor.
+
+**Still to do:**
+
+1. **Redesign the overview.** `/s/1002/kobblon-hq` is a page built around a
+   button that no longer exists. It wants rebuilding as what it is now: the
+   page for a thing you go and play, with the cover doing the work, the
+   creator, what it is, how many have been, and a Play that hands it to the
+   Launcher. The experience page at `/experiences/:id/:slug` is the shape to
+   converge on, and the two should end up as one page rather than two that
+   look similar.
+2. **Settle the name.** Spaces are becoming either Worlds or Experiences.
+   Whichever it is, it is one word everywhere: the pages, the database, the
+   addresses, the policies, the Catalog, the apps. `src/lib/currency.ts` is
+   the pattern to follow, so the word lives in one file and the site reads it
+   from there.
+3. **Retire the tables** once the overview has moved: `space_files`,
+   `space_file_versions` and whatever else only the builder wrote to. One
+   migration, after the pages stop reading them, not before.
+
+## 15. Three clients that have to agree
+
+The website, the Launcher and Creator are being built in two sessions and
+have to end up as one product. What that needs, in the order it will be
+needed:
+
+- **Play, end to end.** Built on this side: `experience_to_play`, the Play
+  button, the protocol link, `/download`. Needs the Launcher released to be
+  real.
+- **Creator publishing an experience.** Creator writes a manifest, the
+  website gets a row in `experiences`, and the thing appears where people can
+  find it. Nothing of this exists yet; Creator has not been started.
+- **One upload path.** Uploading from inside Creator is the same upload as
+  uploading in Create: same screening, same content id, same inventory. If
+  that ever forks, the Catalog forks with it.
+- **One avatar.** K6 is worn on the website, played in the Launcher and
+  placed in Creator, from one record on the account.
+- **One word for everything.** Whatever a thing is called, all three call it
+  that.

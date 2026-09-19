@@ -1,1 +1,0 @@
-import{Xn as e,qn as t}from"./format-B2lNGIzK.js";import{t as n}from"./useSignedUrl-CLyhCw-S.js";var r=e();function i({value:e,alt:i,className:a,fallback:o,style:s}){let c=n(e)??o??null;return c?(0,r.jsx)(`img`,{src:c,alt:i,loading:`lazy`,draggable:!1,onContextMenu:e=>e.preventDefault(),style:s,className:t(`select-none`,a)}):null}export{i as t};

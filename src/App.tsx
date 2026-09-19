@@ -31,9 +31,7 @@ const EventPage = lazyPage(() => import('@/pages/EventPage'))
 const People = lazyPage(() => import('@/pages/People'))
 const Communities = lazyPage(() => import('@/pages/Communities'))
 const CommunityPage = lazyPage(() => import('@/pages/CommunityPage'))
-const NewSpace = lazyPage(() => import('@/pages/NewSpace'))
 const EditSpace = lazyPage(() => import('@/pages/EditSpace'))
-const BuildSpace = lazyPage(() => import('@/pages/BuildSpace'))
 const CreateAds = lazyPage(() => import('@/pages/CreateAds'))
 const ConfigureCommunity = lazyPage(() => import('@/pages/ConfigureCommunity'))
 const Terms = lazyPage(() => import('@/pages/Policies').then((m) => ({ default: m.Terms })))
@@ -159,12 +157,10 @@ export default function App() {
 
                 <Route element={<RequireAuth />}>
                   <Route path="/home" element={<Home />} />
-                  <Route path="/spaces/new" element={<NewSpace />} />
                   <Route
                     path="/spaces/:spaceId/edit"
                     element={<LegacyEditRedirect />}
                   />
-                  <Route path="/spaces/:spaceId/build" element={<BuildSpace />} />
                   <Route element={<CommunityShell />}>
                     <Route path="/c/:slug/configure" element={<ConfigureCommunity />} />
                   </Route>

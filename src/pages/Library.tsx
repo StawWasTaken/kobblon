@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { faStar, faPenToSquare, faPlus, faHammer } from '@fortawesome/free-solid-svg-icons'
+import { faStar, faPenToSquare, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -108,7 +107,6 @@ export default function Library() {
             {visits > 0 && ` ${formatCount(visits)} visits to your Spaces so far.`}
           </p>
         </div>
-        <Button to="/spaces/new" icon={faPlus}>New Space</Button>
       </header>
 
       {/* Three shelves, one at a time, rather than three stacked sections you
@@ -147,7 +145,7 @@ export default function Library() {
             }
             body={
               shelf === 'Published'
-                ? 'Make a Space and publish it so people can come and visit.'
+                ? 'Spaces are being replaced by experiences, built in Creator and played in the Launcher.'
                 : shelf === 'Drafts'
                   ? 'A Space you have not published yet waits here.'
                   : 'Star a Space and it lands here so you can find it again.'
@@ -155,7 +153,7 @@ export default function Library() {
             action={
               shelf === 'Saved'
                 ? <Button variant="subtle" to="/discover" icon={faStar}>Go find some</Button>
-                : <Button to="/spaces/new" icon={faPlus}>Make a Space</Button>
+                : <Button to="/download" icon={faPlus}>About the Launcher</Button>
             }
           />
         </Card>
@@ -169,14 +167,6 @@ export default function Library() {
 
               {shelf !== 'Saved' && (
                 <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/tile:opacity-100">
-                  <Link
-                    to={`/spaces/${space.id}/build`}
-                    aria-label={`Build ${space.name}`}
-                    title="Build"
-                    className={cn('h-8 w-8', overlayButton)}
-                  >
-                    <FontAwesomeIcon icon={faHammer} />
-                  </Link>
                   {space.is_published && (
                     <button
                       onClick={() => setUpdating(space)}

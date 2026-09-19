@@ -586,7 +586,7 @@ export default function Profile() {
           <section>
             <Heading
               icon={faCubes}
-              aside={isMe ? <Button size="sm" variant="subtle" to="/spaces/new">New Space</Button> : undefined}
+              aside={undefined}
             >
               Spaces
             </Heading>
@@ -607,7 +607,7 @@ export default function Profile() {
                       ? 'A Space can be a page about your cat. That is a completely valid use of this website.'
                       : `${user.display_name} has not published anything yet.`
                   }
-                  action={isMe ? <Button to="/spaces/new">Make a Space</Button> : undefined}
+                  action={undefined}
                 />
               </Card>
             )}

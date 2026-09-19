@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faPlay, faBell, faStar, faFlag, faPenToSquare, faHammer,
+  faBell, faStar, faFlag, faPenToSquare,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -17,7 +17,6 @@ import { BadgeTile } from '@/components/spaces/BadgeGrid'
 import { BadgeManager } from '@/components/spaces/BadgeManager'
 import { RatingBar } from '@/components/spaces/RatingBar'
 import { Carousel } from '@/components/spaces/Carousel'
-import { SpaceViewer } from '@/components/spaces/SpaceViewer'
 import { categoryLabels } from '@/components/spaces/SpaceCard'
 import { RefImage } from '@/components/create/RefImage'
 import { profileLink, spaceLink } from '@/lib/links'
@@ -26,7 +25,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useExactTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  addressNow, enterSpace, getSpace, getSpaceStats, leaveSpace, listSpaceBadges, spaceById,
+  addressNow, getSpace, getSpaceStats, listSpaceBadges, spaceById,
   toggleSpaceFlag,
 } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
@@ -97,33 +96,10 @@ export default function SpacePage() {
   )
 
   const [tab, setTab] = useState<Tab>('About')
-  const [inside, setInside] = useState(false)
-  const [entering, setEntering] = useState(false)
+
   const [reporting, setReporting] = useState(false)
 
-  useEffect(() => {
-    if (!inside) return
-    const onUnload = () => leaveSpace()
-    window.addEventListener('pagehide', onUnload)
-    return () => {
-      window.removeEventListener('pagehide', onUnload)
-      leaveSpace()
-    }
-  }, [inside])
 
-  const onEnter = async () => {
-    if (!space) return
-    setEntering(true)
-    try {
-      await enterSpace(space.id)
-      setInside(true)
-      stats.reload()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not enter this Space.', 'error')
-    } finally {
-      setEntering(false)
-    }
-  }
 
   const flag = async (
     table: 'space_likes' | 'space_dislikes' | 'space_favorites' | 'space_watchers',
@@ -165,10 +141,6 @@ export default function SpacePage() {
         </Card>
       </Page>
     )
-  }
-
-  if (inside) {
-    return <SpaceViewer space={space} onLeave={() => { setInside(false); leaveSpace() }} />
   }
 
   const owner = space.owner
@@ -226,18 +198,14 @@ export default function SpacePage() {
             </div>
 
             <div className="mt-auto pt-8">
-              <Button
-                variant="enter"
-                size="lg"
-                block
-                icon={faPlay}
-                loading={entering}
-                onClick={onEnter}
-                disabled={!profile}
-                className="h-14 text-base"
-              >
-                {entering ? 'Entering' : 'Enter Space'}
-              </Button>
+              {/* There is nothing to enter any more: the 2D Space runtime
+                  has gone, and what replaces it is an experience played in
+                  the Launcher. This page is the overview until then. */}
+              <p className="rounded-2xl border border-ink-line bg-ink-raised px-4 py-3 text-center text-sm leading-relaxed text-muted">
+                Kobblon Spaces are being replaced by experiences, which are
+                built in Creator and played in the Launcher. This one is kept
+                here to read.
+              </p>
 
               <div className="mt-3 flex items-start justify-center gap-5">
                 <Tooltip label={numbers?.i_favorite ? 'Saved' : 'Save this Space'} side="top">
@@ -283,9 +251,6 @@ export default function SpacePage() {
 
               {isOwner && (
                 <div className="mt-4 grid gap-2">
-                  <Button variant="subtle" block icon={faHammer} to={`/spaces/${space.id}/build`}>
-                    Build this Space
-                  </Button>
                   <Button variant="ghost" block icon={faPenToSquare} to={`/create/spaces/${space.id}/edit`}>
                     Configure
                   </Button>

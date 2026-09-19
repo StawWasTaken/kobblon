@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faPlus, faEllipsis, faBan, faChevronLeft, faChevronRight, faEye, faThumbsUp,
+  faCompass, faEllipsis, faBan, faChevronLeft, faChevronRight, faEye, faThumbsUp,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -202,7 +202,7 @@ export default function Home() {
             mood="construction"
             title="Nothing to suggest yet"
             body="When people publish Spaces, the ones worth a look land here."
-            action={<Button to="/spaces/new" icon={faPlus}>Make the first one</Button>}
+            action={<Button to="/discover" icon={faCompass}>See what there is</Button>}
           />
         </Card>
       )}

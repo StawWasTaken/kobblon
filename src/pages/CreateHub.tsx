@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useOutletContext, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faUpload, faPlus, faMagnifyingGlass, faCircleCheck,
+  faUpload, faMagnifyingGlass, faCircleCheck,
   faEye, faHandPointUp, faBoxOpen, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -145,7 +145,6 @@ export function CreateOverview() {
           <GuestGate action="upload">
             <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
           </GuestGate>
-          <Button variant="subtle" icon={faPlus} to="/spaces/new">New Space</Button>
         </div>
       </header>
 
@@ -231,7 +230,6 @@ export function CreateSpaces() {
         </span>
       </span>
       <Button size="sm" variant="ghost" to={`/create/spaces/${space.id}/edit`}>{action}</Button>
-      <Button size="sm" variant="subtle" to={`/spaces/${space.id}/build`}>Build</Button>
     </li>
   )
 
@@ -240,7 +238,6 @@ export function CreateSpaces() {
       <PageHeader
         title={target ? `${target.name}'s Spaces` : 'My Spaces'}
         lead="Yours to build, and the ones you were invited onto."
-        aside={<Button icon={faPlus} to="/spaces/new">New Space</Button>}
       />
 
       {spaces.loading && <Skeleton className="h-32" />}
@@ -250,8 +247,8 @@ export function CreateSpaces() {
           <EmptyState
             mood="emptyBox"
             title="No Spaces yet"
-            body="A Space is the thing you build. Start one and it appears here."
-            action={<Button to="/spaces/new">Make a Space</Button>}
+            body="Spaces are being replaced by experiences, built in Creator and played in the Launcher. The ones you already have stay here."
+            action={<Button variant="subtle" to="/download">About the Launcher</Button>}
           />
         </Card>
       )}
