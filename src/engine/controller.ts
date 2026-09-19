@@ -41,6 +41,8 @@ const STEP = 1.4
  * height becomes a wall.
  */
 const SKIN = 0.02
+/** Below this, there is no World left to be in. */
+const VOID = -200
 
 export class Controller {
   readonly state: ControllerState = {
@@ -56,7 +58,27 @@ export class Controller {
   private jumpReady = true
   private box = new THREE.Box3()
 
+  /** Where this World puts somebody, and where it puts them back. */
+  private spawn = { at: new THREE.Vector3(), facing: 0 }
+
+  /** Set when the body left the world, for the engine to act on and clear. */
+  fellOut = false
+
   constructor(private solids: Solid[] = []) {}
+
+  /** The World says where its ground is; nothing here guesses. */
+  setSpawn(x: number, y: number, z: number, facing = 0) {
+    this.spawn.at.set(x, y, z)
+    this.spawn.facing = facing
+  }
+
+  /** Back to the spawn, standing still. */
+  respawn() {
+    this.state.position.copy(this.spawn.at)
+    this.state.velocity.set(0, 0, 0)
+    this.state.facing = this.spawn.facing
+    this.state.grounded = false
+  }
 
   setSolids(solids: Solid[]) {
     this.solids = solids
@@ -197,7 +219,17 @@ export class Controller {
 
       position.copy(next)
       this.state.grounded = false
-      if (position.y < -200) this.respawn()
+      /*
+       * Out of the World. This is a death rather than a correction: the
+       * engine puts the body back at the spawn and says so, so the Launcher
+       * can tell the player and Creator can tell a creator their World has a
+       * hole in it. Nothing outside could see this: the fall and the
+       * correction happen inside one step.
+       */
+      if (position.y < VOID) {
+        this.fellOut = true
+        this.respawn()
+      }
       return
     }
 
@@ -212,9 +244,4 @@ export class Controller {
     this.state.velocity.y = 0
   }
 
-  /** Falling out of the world is a bug in a scene, not a death. */
-  private respawn() {
-    this.state.position.set(0, 20, 0)
-    this.state.velocity.set(0, 0, 0)
-  }
 }

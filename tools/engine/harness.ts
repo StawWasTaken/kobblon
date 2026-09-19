@@ -13,6 +13,13 @@ const hud = document.getElementById('hud') as HTMLElement
 const engine = new Engine({ canvas, avatarUrl: '/k6/k6.glb' })
 addEventListener('resize', () => engine.resize())
 
+// What the engine says happened, kept for a test to read. Listening starts
+// before the first World is opened, so the first one counts.
+const said: { died: number; opened: number } = { died: 0, opened: 0 }
+engine.on('died', () => { said.died += 1 })
+engine.on('opened', () => { said.opened += 1 })
+Object.assign(window, { said })
+
 const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
 await engine.open(manifest)
 
@@ -38,7 +45,7 @@ const loop = (now: number) => {
   if (!forced.intent) engine.tick(dt, undefined)
   const s = engine.status
   hud.textContent = [
-    `experience  ${s.experience}`,
+    `world       ${s.world}`,
     `parts       ${s.parts.length}  ${s.parts.join(' ')}`,
     `position    ${s.position.map((n) => n.toFixed(1)).join(', ')}`,
     `grounded    ${s.grounded}   speed ${s.speed}`,

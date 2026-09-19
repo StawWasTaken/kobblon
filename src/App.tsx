@@ -45,6 +45,7 @@ const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const SupportTicket = lazyPage(() => import('@/pages/SupportTicket'))
 const Download = lazyPage(() => import('@/pages/Download'))
+const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
 const Library = lazyPage(() => import('@/pages/Library'))
@@ -100,6 +101,13 @@ export default function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
+              {/* Where a Kobblon application sends somebody to sign in. Named
+                  one at a time rather than by pattern: /anything/sign-in
+                  should be nothing, not a sign-in page for an app that does
+                  not exist. Outside the app shell, because this is a step in
+                  somebody else's flow rather than a page of the website. */}
+              <Route path="/creator/sign-in" element={<AppSignIn />} />
+              <Route path="/launcher/sign-in" element={<AppSignIn />} />
               <Route path="/policies/:slug" element={<PolicyPage />} />
 
               <Route path="/login" element={<Auth mode="login" />} />

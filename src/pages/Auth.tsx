@@ -1,66 +1,20 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowLeft, faLock, faUser, faLayerGroup, faShapes, faUsers, faCircleCheck,
+  faArrowLeft, faLayerGroup, faShapes, faUsers, faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Kobby } from '@/components/brand/Kobby'
 import { PixelField } from '@/components/brand/PixelField'
 import { SignupForm } from '@/components/auth/SignupForm'
+import { LoginForm } from '@/components/auth/LoginForm'
 import { useAuth } from '@/hooks/useAuth'
 import { useForceDark } from '@/hooks/useTheme'
 import { useTitle } from '@/hooks/useTitle'
 import { cn } from '@/lib/cn'
-
-function LoginForm() {
-  const { signInWithName } = useAuth()
-  const [params] = useSearchParams()
-  const [username, setUsername] = useState(params.get('username') ?? '')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setPending(true)
-    setError(null)
-    try {
-      await signInWithName(username.trim(), password)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Wrong username or password.')
-    } finally {
-      setPending(false)
-    }
-  }
-
-  return (
-    <form onSubmit={submit} className="space-y-4">
-      <Input
-        label="Username"
-        icon={faUser}
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        autoComplete="username"
-        required
-      />
-      <Input
-        label="Password"
-        icon={faLock}
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        autoComplete="current-password"
-        required
-        error={error}
-      />
-      <Button type="submit" size="lg" block loading={pending}>Log In</Button>
-    </form>
-  )
-}
 
 /** One line about what an account is for, beside the form that makes one. */
 function Promise_({ icon, title, body }: { icon: IconDefinition; title: string; body: string }) {

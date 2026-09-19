@@ -1,0 +1,1 @@
+import{Gn as e,Rn as t,qn as n,zn as r}from"./free-solid-svg-icons-BkqE9VSy.js";var i=n(e(),1);function a(e){let{pathname:n,search:a,hash:o}=t(),s=r();(0,i.useEffect)(()=>{e&&decodeURIComponent(n).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,n,a,o,s])}export{a as t};

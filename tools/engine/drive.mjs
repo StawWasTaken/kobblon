@@ -30,7 +30,7 @@ const check = (name, pass, detail) => {
 
 // -- 1. the experience and the avatar are actually there
 const start = await p.evaluate(() => { window.drive({}); return window.stepFrames(30) })
-check('experience loads', start.experience === 'First Ground', start.experience)
+check('the World loads', start.world === 'First Ground', start.world)
 check('K6 has exactly six parts', start.parts.length === 6, start.parts.join(','))
 
 // -- 2. gravity puts it on the spawn pad rather than through it
@@ -115,6 +115,56 @@ const motions = await p.evaluate(async () => {
 })
 check('speed drives the motion', motions.still < 0.5 && motions.walking > 8 && motions.running > 18,
   JSON.stringify(motions))
+
+// -- 9. falling out of the World is a death, at this World's spawn
+const fell = await p.evaluate(() => {
+  window.said.died = 0
+  window.engine.controller.placeAt(0, -260, 0)
+  window.drive({})
+  const after = window.stepFrames(4)
+  return { after, died: window.said.died }
+})
+check('falling out is a death', fell.died === 1, `died fired ${fell.died} time(s)`)
+check('and it puts you at this World spawn, not the origin',
+  Math.abs(fell.after.position[0] - 0) < 0.01 && Math.abs(fell.after.position[2] - 18) < 0.01,
+  `back at ${fell.after.position.map((n) => n.toFixed(1)).join(', ')}, spawn is 0, 6, 18`)
+
+// -- 10. groups: a part inside a moved group lands where the group put it
+const grouped = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 'g', name: 'Grouped', spawn: { at: [0, 30, 0] },
+    blocks: [
+      { kind: 'box', at: [0, -1, 0], size: [200, 2, 200] },
+      {
+        kind: 'group', id: 'tower', at: [40, 0, 0], turn: 0,
+        parts: [{ id: 'top', kind: 'box', at: [0, 10, 0], size: [8, 20, 8] }],
+      },
+    ],
+  })
+  window.drive({})
+  window.engine.controller.placeAt(40, 40, 0)
+  const landed = window.stepFrames(120)
+  return { landed, opened: window.said.opened }
+})
+check('a part inside a group is where the group put it',
+  Math.abs(grouped.landed.position[1] - 20) < 0.02 && grouped.landed.grounded,
+  `stood at y=${grouped.landed.position[1].toFixed(2)}, the group puts its top at 20`)
+check('opening a World says so', grouped.opened >= 2, `opened fired ${grouped.opened} time(s)`)
+
+// -- 11. quality is something a player can actually change
+const quality = await p.evaluate(() => {
+  window.engine.setQuality(0.5)
+  const low = window.engine.status.frame
+  window.engine.setQuality(1)
+  return { ok: typeof low === 'number' }
+})
+check('render quality can be set', quality.ok, 'setQuality accepted 0.5 and 1')
+
+// -- back to the first World for the picture
+await p.evaluate(async () => {
+  const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
+  await window.engine.open(manifest)
+})
 
 // -- a picture, for a human to look at
 await p.evaluate(() => {

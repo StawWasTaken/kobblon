@@ -2107,3 +2107,15 @@ export async function getWorld(contentId: number): Promise<World | null> {
   if (error) throw new Error(error.message)
   return (data as World | null) ?? null
 }
+
+// ------------------------------------------- signing in to an application
+
+/**
+ * A code for a Kobblon application, minted for whoever is signed in here.
+ *
+ * Worth one exchange and two minutes. It travels through a protocol link, so
+ * it is never a session and never a token: those end up in shell history.
+ */
+export async function mintAppCode(client: 'launcher' | 'creator'): Promise<string> {
+  return unwrap(await supabase.rpc('mint_app_code', { which: client })) as string
+}

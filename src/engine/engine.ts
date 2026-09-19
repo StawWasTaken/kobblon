@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Controller } from './controller'
 import { Keyboard, stillIntent, type Intent } from './input'
 import { K6, loadK6Source, type K6Look } from './k6'
-import { buildExperience, readManifest, type BuiltExperience } from './experience'
+import { buildWorld, readManifest, type BuiltWorld, type WorldManifest } from './experience'
 import { K6_HEIGHT } from './units'
 
 /**
@@ -26,6 +26,23 @@ export type EngineOptions = {
   /** Off for a test or a thumbnail, on for a player. */
   listen?: boolean
   look?: K6Look
+  /**
+   * Turns a Catalog id into something the runtime can load.
+   *
+   * The engine never resolves an id itself and a manifest never carries an
+   * address: whoever is running the World decides what an id means, checks
+   * it, and hands back a URL. Creator can answer with a local file for
+   * something not published yet.
+   */
+  resolveAsset?: (id: string) => Promise<string | null>
+}
+
+/** Things the engine says happened, for a client to act on. */
+export type EngineEvents = {
+  /** The body left the World and was put back at its spawn. */
+  died: { reason: 'void' }
+  /** A World finished loading and is being run. */
+  opened: { world: WorldManifest }
 }
 
 export class Engine {
@@ -40,7 +57,8 @@ export class Engine {
   private running = false
 
   private avatar: K6 | null = null
-  private experience: BuiltExperience | null = null
+  private world: BuiltWorld | null = null
+  private listeners = new Map<keyof EngineEvents, Set<(data: never) => void>>()
 
   /** Where the camera sits behind the avatar, dragged by the player. */
   private orbit = { yaw: 0, pitch: 0.22, distance: 34 }
@@ -65,20 +83,35 @@ export class Engine {
     this.camera.updateProjectionMatrix()
   }
 
-  /** Puts an experience in the world, replacing whatever was there. */
+  /** Somebody who wants to know when something happens. */
+  on<K extends keyof EngineEvents>(event: K, listener: (data: EngineEvents[K]) => void) {
+    const set = this.listeners.get(event) ?? new Set()
+    set.add(listener as (data: never) => void)
+    this.listeners.set(event, set)
+    return () => set.delete(listener as (data: never) => void)
+  }
+
+  private say<K extends keyof EngineEvents>(event: K, data: EngineEvents[K]) {
+    for (const listener of this.listeners.get(event) ?? []) {
+      (listener as (d: EngineEvents[K]) => void)(data)
+    }
+  }
+
+  /** Puts a World in the scene, replacing whatever was there. */
   async open(raw: unknown) {
     const manifest = readManifest(raw)
 
-    if (this.experience) {
-      this.scene.remove(this.experience.group)
+    if (this.world) {
+      this.scene.remove(this.world.group)
     }
 
-    const built = buildExperience(manifest)
-    this.experience = built
+    const built = buildWorld(manifest)
+    this.world = built
     this.scene.add(built.group)
     this.controller.setSolids(built.solids)
 
     this.light(manifest)
+    void this.dressSky(manifest)
 
     if (!this.avatar) {
       const source = await loadK6Source(this.options.avatarUrl ?? '/k6/k6.glb')
@@ -88,13 +121,78 @@ export class Engine {
     }
 
     const { at, facing = 0 } = manifest.spawn
-    this.controller.placeAt(at[0], at[1], at[2], (facing * Math.PI) / 180)
+    this.controller.setSpawn(at[0], at[1], at[2], (facing * Math.PI) / 180)
+    this.controller.respawn()
     this.orbit.yaw = this.controller.state.facing
 
+    this.say('opened', { world: manifest })
     return built
   }
 
-  private light(manifest: ReturnType<typeof readManifest>) {
+  /** Back to where this World starts people. */
+  respawn() {
+    this.controller.respawn()
+    this.orbit.yaw = this.controller.state.facing
+  }
+
+  /**
+   * How hard the machine is being asked to work.
+   *
+   * The pixel ratio is the one setting that actually moves the frame rate on
+   * a machine that is struggling, so it is the one a player is offered.
+   */
+  setQuality(quality: number) {
+    const held = Math.max(0.25, Math.min(1, quality))
+    this.renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio ?? 1, 2) * held)
+    this.resize()
+  }
+
+  /**
+   * The sky, when a World names one.
+   *
+   * A horizontal cross is one image holding six faces, which is how somebody
+   * draws a sky by hand. It is cut up here rather than asking a creator to
+   * upload six files.
+   */
+  private async dressSky(manifest: WorldManifest) {
+    const id = manifest.sky?.decal
+    if (!id || !this.options.resolveAsset) return
+
+    const url = await this.options.resolveAsset(id).catch(() => null)
+    if (!url) return
+
+    const image = await new Promise<HTMLImageElement | null>((done) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => done(img)
+      img.onerror = () => done(null)
+      img.src = url
+    })
+    if (!image) return
+
+    // A cross is four wide and three tall; each face is a quarter by a third.
+    const face = Math.floor(image.width / 4)
+    const at: Record<string, [number, number]> = {
+      px: [2, 1], nx: [0, 1], py: [1, 0], ny: [1, 2], pz: [1, 1], nz: [3, 1],
+    }
+
+    const sides = ['px', 'nx', 'py', 'ny', 'pz', 'nz'].map((name) => {
+      const canvas = document.createElement('canvas')
+      canvas.width = face
+      canvas.height = face
+      const paint = canvas.getContext('2d')
+      const [col, row] = at[name]
+      paint?.drawImage(image, col * face, row * face, face, face, 0, 0, face, face)
+      return canvas
+    })
+
+    const sky = new THREE.CubeTexture(sides)
+    sky.needsUpdate = true
+    sky.colorSpace = THREE.SRGBColorSpace
+    this.scene.background = sky
+  }
+
+  private light(manifest: WorldManifest) {
     this.scene.background = new THREE.Color(manifest.sky?.colour ?? '#0f1016')
     if (manifest.sky?.fog) {
       this.scene.fog = new THREE.Fog(manifest.sky.colour ?? '#0f1016', 40, manifest.sky.fog)
@@ -119,6 +217,14 @@ export class Engine {
     this.orbit.pitch = Math.max(-0.6, Math.min(1.1, this.orbit.pitch + intent.pitch))
 
     const state = this.controller.step(intent, this.orbit.yaw, step)
+
+    // The fall and the correction both happen inside that step, so the only
+    // way anybody hears about it is if the engine says so.
+    if (this.controller.fellOut) {
+      this.controller.fellOut = false
+      this.orbit.yaw = state.facing
+      this.say('died', { reason: 'void' })
+    }
 
     if (this.avatar) {
       this.avatar.object.position.copy(state.position)
@@ -179,7 +285,7 @@ export class Engine {
       grounded: this.controller.state.grounded,
       speed: Number(this.controller.state.speed.toFixed(2)),
       parts: this.avatar ? [...this.avatar.parts.keys()] : [],
-      experience: this.experience?.manifest.name ?? null,
+      world: this.world?.manifest.name ?? null,
     }
   }
 

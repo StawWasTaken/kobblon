@@ -19,3 +19,9 @@ verify_jwt = false
 # back it trusts the note it signed rather than the caller.
 [functions.discord]
 verify_jwt = false
+
+# The application sends a code it was given through a protocol link, and is
+# not signed in yet when it does. The code is the credential; the function
+# checks it against the database.
+[functions.app-signin]
+verify_jwt = false

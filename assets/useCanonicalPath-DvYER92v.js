@@ -1,1 +1,0 @@
-import{Bn as e,Vn as t,Yn as n,qn as r}from"./format-OeY8svOv.js";var i=n(r(),1);function a(n){let{pathname:r,search:a,hash:o}=e(),s=t();(0,i.useEffect)(()=>{n&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(n).replace(/\/+$/,``)&&s(`${n}${a}${o}`,{replace:!0})},[n,r,a,o,s])}export{a as t};
