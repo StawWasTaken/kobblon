@@ -2119,3 +2119,26 @@ export async function getWorld(contentId: number): Promise<World | null> {
 export async function mintAppCode(client: 'launcher' | 'creator'): Promise<string> {
   return unwrap(await supabase.rpc('mint_app_code', { which: client })) as string
 }
+
+// --------------------------------------------------------- making a World
+
+/**
+ * A new World, empty and unpublished.
+ *
+ * Creator calls this, uploads the manifest to `<id>/manifest.json` in the
+ * `worlds` bucket, then publishes. The manifest is a file rather than a
+ * column: it is fetched at the start of every session and it only grows.
+ */
+export async function createWorld(name: string): Promise<World> {
+  return unwrap(await supabase.rpc('create_world', { called: name })) as World
+}
+
+/** Puts a World out, or takes it back in. */
+export async function publishWorld(id: string, out = true): Promise<World> {
+  return unwrap(await supabase.rpc('publish_world', { which: id, out_now: out })) as World
+}
+
+/** Everything somebody has built, published or not. */
+export async function myWorlds(): Promise<World[]> {
+  return (unwrap(await supabase.rpc('my_worlds')) as World[]) ?? []
+}

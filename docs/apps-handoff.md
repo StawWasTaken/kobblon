@@ -200,6 +200,26 @@ it. Anything somebody wants to browse, buy, read or manage happens on
 kobblon.com. That keeps one copy of every screen and keeps the app small
 enough to stay honest about what it is.
 
+### Publishing a World from Creator
+
+Built, and the shape is three steps:
+
+1. `create_world(called)` makes an empty, unpublished World owned by the
+   caller and returns the row, including `manifest_url`, which names that
+   World's own folder.
+2. Creator uploads the manifest to `<world id>/manifest.json` in the `worlds`
+   storage bucket, through the ordinary storage API as the signed-in person.
+   Only that World's owner may write in that folder.
+3. `publish_world(which, out_now)` puts it out, or takes it back in.
+
+`my_worlds()` lists everything somebody has built, published or not.
+
+Rows cannot be inserted directly: insert and delete are revoked, so every
+World comes through the function that checks who is asking. A guest cannot
+build, and an account switched off from publishing cannot publish. The
+manifest is a file rather than a column because the engine fetches it at the
+start of every session and it only grows.
+
 ### What the website gives it
 
 - `world_to_play(uuid)`, one read, published rows only, granted to
