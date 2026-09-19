@@ -133,7 +133,14 @@ either app, its installer, its metadata or its repository.
 
 ## Same design as the website, without being the website
 
-The Launcher must look like Kobblon. It must not *be* Kobblon in a window:
+The Launcher should feel like the website with experiences in it. Same rail,
+same top bar, same cards, same type, same spacing, same words: somebody moving
+between the two should not notice they have changed application, except that
+this one plays things.
+
+Build that by using the website's own design system rather than by
+reproducing its screens from a screenshot. It must not *be* Kobblon in a
+window:
 no webview pointed at kobblon.com, no embedded browser rendering site pages,
 no iframe of anything. Every screen is built natively in the app.
 
@@ -162,8 +169,31 @@ Layout    lives in the app       changes with an app release
 - **Layout** is the app's own: its screens, its navigation, its chrome. New
   screens come with app releases, which is what releases are for.
 
-Ask me for a tokens endpoint when you are ready for one and I will publish it
-from the site repository. Do not scrape the stylesheet off kobblon.com.
+### What the site repository now gives you
+
+Three things, so that neither app has to copy anything:
+
+```
+design/tokens.css     the surfaces, as CSS variables, for both themes
+design/preset.js      the Tailwind preset: brand blue, Space green, the one
+                      red, the type, the radii, the shadows, the motion
+public/brand/tokens.json   the same values as data, served at
+                           https://kobblon.com/brand/tokens.json
+```
+
+The website's own `tailwind.config.js` is now nothing but
+`presets: [kobblon]`, so if you extend the same preset and import the same
+tokens file, the app is styled by the same source the site is styled by. Not a
+matching copy: the same file. That is the answer to the app looking like a
+different product.
+
+`tokens.json` is generated from those two files by `node tools/design/tokens.mjs`,
+so it cannot drift from them. Ship a copy inside the app, fetch this at launch
+to pick up changes, validate `format` before using it, and fall back to the
+bundled copy if the fetch fails or the file does not parse.
+
+Do not scrape the stylesheet off kobblon.com, and do not hand-copy any value
+out of these files into the app.
 
 ## Taking from the Roblox Player
 

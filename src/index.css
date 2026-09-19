@@ -1,47 +1,10 @@
+@import './../design/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root,
-  :root[data-theme='dark'] {
-    color-scheme: dark;
-    --ink: 16 16 18;
-    --ink-raised: 22 22 26;
-    --ink-card: 26 26 32;
-    --ink-hover: 33 33 40;
-    --ink-line: 42 42 51;
-    --fg: 255 255 255;
-    --muted: 139 139 153;
-    --link: 159 173 255;
-    --bubble: 38 38 47;
-    --on-bubble: 255 255 255;
-    --chrome: 22 35 130;
-    --media: 13 19 73;
-    --field: 11 17 63;
-    --on-chrome: 255 255 255;
-  }
-
-  /* The same interface in daylight. Brand blue and Space green are
-     untouched, so what a colour means never depends on the theme. */
-  :root[data-theme='light'] {
-    color-scheme: light;
-    --ink: 242 243 247;
-    --ink-raised: 255 255 255;
-    --ink-card: 255 255 255;
-    --ink-hover: 234 236 243;
-    --ink-line: 214 218 228;
-    --fg: 16 16 18;
-    --muted: 92 97 112;
-    --link: 27 52 232;
-    --bubble: 24 25 32;
-    --on-bubble: 255 255 255;
-    --chrome: 214 230 255;
-    --media: 226 232 244;
-    --field: 255 255 255;
-    --on-chrome: 16 22 64;
-  }
-
   html {
     -webkit-tap-highlight-color: transparent;
   }
