@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowUpRightFromSquare, faImage, faPlus, faTrash, faUpload, faVideo,
+  faArrowUpRightFromSquare, faCheck, faCopy, faImage, faLink, faPlus, faTrash,
+  faUpload, faVideo,
 } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { Card } from '@/components/ui/Card'
@@ -68,6 +69,7 @@ export default function CreateWorld() {
   const [genre, setGenre] = useState('')
   const [maturity, setMaturity] = useState<WorldMaturity>('everyone')
   const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const emblemInput = useRef<HTMLInputElement>(null)
   const shotInput = useRef<HTMLInputElement>(null)
@@ -93,9 +95,23 @@ export default function CreateWorld() {
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">
           Either that number is not one of yours, or it has been taken down.
         </p>
-        <Button className="mt-5" variant="subtle" to="/create/spaces">Back to my Worlds</Button>
+        <Button className="mt-5" variant="subtle" to="/create/worlds">Back to my Worlds</Button>
       </Card>
     )
+  }
+
+  const here = worldLink(world)
+  const address = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}${here}`
+
+  /** Copying is offered, and told plainly when the browser refuses it. */
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast('Your browser would not let Kobblon copy that. Select it and copy it yourself.')
+    }
   }
 
   const run = async (what: () => Promise<unknown>, said: string) => {
@@ -144,16 +160,34 @@ export default function CreateWorld() {
           {world.is_published ? 'Published' : 'Not published'}
         </Badge>
         {world.content_id ? <Badge tone="neutral">WLD-{world.content_id}</Badge> : null}
-        {world.is_published && (
-          <button
-            onClick={() => navigate(worldLink(world))}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
-          >
-            See the page
-            <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px]" />
-          </button>
-        )}
       </div>
+
+      {/*
+        * Where this World lives, in full, because the thing somebody wants
+        * from this page more than anything else is the link to send people.
+        */}
+      <Card className="flex flex-wrap items-center gap-3 p-4">
+        <FontAwesomeIcon icon={faLink} className="text-muted" />
+        <code className="min-w-0 flex-1 truncate rounded-lg bg-ink-raised px-3 py-2 text-xs text-white/80">
+          {address}
+        </code>
+        <Button
+          size="sm"
+          variant="subtle"
+          icon={copied ? faCheck : faCopy}
+          onClick={() => void copy()}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </Button>
+        <Button size="sm" variant="ghost" icon={faArrowUpRightFromSquare} onClick={() => navigate(here)}>
+          Open
+        </Button>
+        {!world.is_published && (
+          <p className="w-full text-xs text-muted">
+            This address only answers for you until the World is published.
+          </p>
+        )}
+      </Card>
 
       <Card className="space-y-4 p-5">
         <SectionHeader title="What it is" />

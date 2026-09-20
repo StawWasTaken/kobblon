@@ -5,10 +5,9 @@ import { faCalendarDay } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { EmptyState, ErrorState, Skeleton, SpaceCardSkeleton } from '@/components/ui/States'
+import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { ReportDialog } from '@/components/social/ReportDialog'
-import { SpaceCard } from '@/components/spaces/SpaceCard'
 import { CommunityHeader } from '@/components/community/CommunityHeader'
 import { CommunityWall } from '@/components/community/CommunityWall'
 import { CommunityMembers } from '@/components/community/CommunityMembers'
@@ -22,7 +21,7 @@ import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   addressNow, communitySlugById, getCommunity, getCommunityOverview, joinCommunity, leaveCommunity,
-  listCommunityAssets, listCommunityEvents, listCommunitySpaces, listRelations,
+  listCommunityAssets, listCommunityEvents, listRelations,
   setEventAttendance,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
@@ -75,7 +74,6 @@ export default function CommunityPage() {
     },
     [group?.owner_id],
   )
-  const spaces = useAsync(async () => (group ? listCommunitySpaces(group.id) : []), [group?.id])
   const events = useAsync(
     async () => (group ? listCommunityEvents(group.id) : []),
     [group?.id],
@@ -213,22 +211,6 @@ export default function CommunityPage() {
               </section>
             )}
 
-            <section>
-              <h2 className="mb-3 font-display text-xl font-extrabold">Spaces</h2>
-              {spaces.loading && (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  {[0, 1, 2].map((i) => <SpaceCardSkeleton key={i} />)}
-                </div>
-              )}
-              {!spaces.loading && !spaces.data?.length && (
-                <p className="text-sm text-muted">No Spaces linked to this Community yet.</p>
-              )}
-              {!!spaces.data?.length && (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  {spaces.data.map((space) => <SpaceCard key={space.id} space={space} />)}
-                </div>
-              )}
-            </section>
             {!!store.data?.length && (
               <section>
                 <h2 className="mb-3 font-display text-xl font-extrabold">

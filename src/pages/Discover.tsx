@@ -7,35 +7,32 @@ import { Choices } from '@/components/ui/Choices'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Input } from '@/components/ui/Input'
 import { EmptyState, ErrorState, SpaceCardSkeleton } from '@/components/ui/States'
-import { categoryLabels } from '@/components/spaces/SpaceCard'
-import { SiteCard } from '@/components/spaces/SiteCard'
+import { WorldCard } from '@/components/worlds/WorldCard'
 import { useAsync } from '@/hooks/useAsync'
-import { listSpaces } from '@/lib/api'
-import type { SpaceSort } from '@/lib/api'
-import type { Space, SpaceCategory } from '@/types/db'
+import { listWorlds, worldGenres } from '@/lib/api'
+import type { WorldSort } from '@/lib/api'
+import type { World } from '@/types/db'
 import { useTitle } from '@/hooks/useTitle'
 import { AdBanner } from '@/components/ads/AdBanner'
 
-const sorts: { value: SpaceSort; label: string }[] = [
+const sorts: { value: WorldSort; label: string }[] = [
   { value: 'trending', label: 'Trending' },
   { value: 'new', label: 'New' },
   { value: 'popular', label: 'Most liked' },
 ]
-
-const categories: (SpaceCategory | 'all')[] =
-  ['all', 'personal', 'community', 'interactive', 'experiment', 'story', 'fan']
 
 /**
  * A section of the directory: a heading and a grid under it, rather than a
  * rail you push sideways. Looking through what people have made should feel
  * like looking through a shelf, not operating a carousel.
  */
-function Shelf({ title, spaces, loading }: {
+function Shelf({ title, worlds, genres, loading }: {
   title: string
-  spaces: Space[] | null
+  worlds: World[] | null
+  genres: Awaited<ReturnType<typeof worldGenres>> | null
   loading: boolean
 }) {
-  if (!loading && !spaces?.length) return null
+  if (!loading && !worlds?.length) return null
 
   return (
     <section className="mb-9">
@@ -43,7 +40,9 @@ function Shelf({ title, spaces, loading }: {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {loading
           ? [0, 1, 2, 3].map((i) => <SpaceCardSkeleton key={i} />)
-          : (spaces ?? []).slice(0, 8).map((space) => <SiteCard key={space.id} space={space} />)}
+          : (worlds ?? []).slice(0, 8).map((world) => (
+            <WorldCard key={world.id} world={world} genres={genres ?? undefined} />
+          ))}
       </div>
     </section>
   )
@@ -54,8 +53,9 @@ export default function Discover() {
   const [params, setParams] = useSearchParams()
   const [term, setTerm] = useState(params.get('q') ?? '')
   const [debounced, setDebounced] = useState(term)
-  const [sort, setSort] = useState<SpaceSort>('trending')
-  const [category, setCategory] = useState<SpaceCategory | 'all'>('all')
+  const [sort, setSort] = useState<WorldSort>('trending')
+  const [genre, setGenre] = useState<string>('all')
+  const genres = useAsync(worldGenres, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -68,24 +68,24 @@ export default function Discover() {
   // With nothing typed and nothing filtered, Discover reads as rows to
   // browse. The moment you search or pick a category it becomes a grid of
   // results, because then you are looking for something specific.
-  const browsing = !debounced && category === 'all'
+  const browsing = !debounced && genre === 'all'
 
   const { data, error, loading, reload } = useAsync(
-    async () => (browsing ? [] : listSpaces({ sort, category, search: debounced, limit: 36 })),
-    [sort, category, debounced, browsing],
+    async () => (browsing ? [] : listWorlds({ sort, genre, search: debounced, limit: 36 })),
+    [sort, genre, debounced, browsing],
   )
   const trending = useAsync(
-    async () => (browsing ? listSpaces({ sort: 'trending', limit: 18 }) : []),
+    async () => (browsing ? listWorlds({ sort: 'trending', limit: 18 }) : []),
     [browsing],
   )
-  const fresh = useAsync(async () => (browsing ? listSpaces({ sort: 'new', limit: 18 }) : []), [browsing])
-  const liked = useAsync(async () => (browsing ? listSpaces({ sort: 'popular', limit: 18 }) : []), [browsing])
+  const fresh = useAsync(async () => (browsing ? listWorlds({ sort: 'new', limit: 18 }) : []), [browsing])
+  const liked = useAsync(async () => (browsing ? listWorlds({ sort: 'popular', limit: 18 }) : []), [browsing])
 
   return (
     <Page>
       <header className="mb-6">
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Discover</h1>
-        <p className="mt-1.5 text-muted">What people are building right now.</p>
+        <p className="mt-1.5 text-muted">What people are building and playing right now.</p>
       </header>
 
 
@@ -107,12 +107,12 @@ export default function Discover() {
           <Choices
             label="What kind of World"
             tone="soft"
-            value={category}
-            options={categories.map((c) => ({
-              value: c,
-              label: c === 'all' ? 'Everything' : categoryLabels[c],
-            }))}
-            onChange={setCategory}
+            value={genre}
+            options={[
+              { value: 'all', label: 'Everything' },
+              ...(genres.data ?? []).map((one) => ({ value: one.id, label: one.label })),
+            ]}
+            onChange={setGenre}
           />
         </div>
       </div>
@@ -128,9 +128,9 @@ export default function Discover() {
 
       {browsing && (
         <>
-          <Shelf title="Being visited right now" spaces={trending.data} loading={trending.loading} />
-          <Shelf title="Just published" spaces={fresh.data} loading={fresh.loading} />
-          <Shelf title="Most liked" spaces={liked.data} loading={liked.loading} />
+          <Shelf title="Being played right now" worlds={trending.data} genres={genres.data} loading={trending.loading} />
+          <Shelf title="Just published" worlds={fresh.data} genres={genres.data} loading={fresh.loading} />
+          <Shelf title="Most liked" worlds={liked.data} genres={genres.data} loading={liked.loading} />
           {!trending.loading && !trending.data?.length && (
             <Card>
               <EmptyState
@@ -158,7 +158,7 @@ export default function Discover() {
             title={debounced ? 'Kobby couldn’t find anything' : 'Nothing published yet'}
             body={
               debounced
-                ? `No Space matches "${debounced}". Try a shorter word, or look at everything.`
+                ? `No World matches "${debounced}". Try a shorter word, or look at everything.`
                 : 'Be the first person to publish something here.'
             }
           />
@@ -167,7 +167,9 @@ export default function Discover() {
 
       {!browsing && !!data?.length && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {data.map((space) => <SiteCard key={space.id} space={space} />)}
+          {data.map((world) => (
+            <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
+          ))}
         </div>
       )}
         </div>

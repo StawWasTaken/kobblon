@@ -2092,14 +2092,64 @@ export async function getAppeal(violationId: number): Promise<Appeal | null> {
 
 const WORLD_FIELDS = 'id, owner_id, is_published, updated_at, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
 
-export async function listWorlds(limit = 24): Promise<World[]> {
-  const { data, error } = await supabase
+export type WorldSort = 'trending' | 'new' | 'popular'
+
+/**
+ * Worlds to look through.
+ *
+ * The same shape the Space directory had, because the job is the same one:
+ * what is being played, what is new, what people liked.
+ */
+export async function listWorlds(options: {
+  sort?: WorldSort
+  genre?: string | 'all'
+  search?: string
+  limit?: number
+} | number = {}): Promise<World[]> {
+  // The old call took a count. Anything still doing that keeps working.
+  const settings = typeof options === 'number' ? { limit: options } : options
+  const { sort = 'new', genre = 'all', search, limit = 24 } = settings
+
+  let query = supabase
     .from('worlds')
     .select(WORLD_FIELDS)
     .eq('is_published', true)
     .eq('is_removed', false)
-    .order('published_at', { ascending: false })
     .limit(limit)
+
+  if (genre !== 'all') query = query.eq('genre', genre)
+  if (search?.trim()) query = query.ilike('name', `%${search.trim()}%`)
+
+  query = sort === 'new'
+    ? query.order('published_at', { ascending: false })
+    : sort === 'popular'
+      ? query.order('like_count', { ascending: false })
+      : query.order('visit_count', { ascending: false })
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []) as World[]
+}
+
+/** The Worlds somebody kept. */
+export async function listFavouriteWorlds(userId: string): Promise<World[]> {
+  const { data, error } = await supabase
+    .from('world_favourites')
+    .select(`world:worlds (${WORLD_FIELDS})`)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  return ((data ?? []) as unknown as { world: World | null }[])
+    .map((row) => row.world)
+    .filter(Boolean) as World[]
+}
+
+/** What somebody has out, for their profile. */
+export async function listWorldsByOwner(ownerId: string, includeDrafts = false): Promise<World[]> {
+  let query = supabase.from('worlds').select(WORLD_FIELDS)
+    .eq('owner_id', ownerId).eq('is_removed', false)
+  if (!includeDrafts) query = query.eq('is_published', true)
+  const { data, error } = await query.order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as World[]
 }

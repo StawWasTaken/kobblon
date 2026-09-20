@@ -9,7 +9,6 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { Logomark } from '@/components/brand/Wordmark'
-import { useParams } from 'react-router-dom'
 import Landing from '@/pages/Landing'
 import Auth from '@/pages/Auth'
 import Home from '@/pages/Home'
@@ -17,12 +16,11 @@ import Discover from '@/pages/Discover'
 import NotFound from '@/pages/NotFound'
 
 // Everything behind the front door loads on demand.
-const SpacePage = lazyPage(() => import('@/pages/SpacePage'))
 const CreateHub = lazyPage(() => import('@/pages/CreateHub'))
 const AssetPage = lazyPage(() => import('@/pages/AssetPage'))
 const CreateOverview = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateOverview })))
 const CreateWorld = lazyPage(() => import('@/pages/CreateWorld'))
-const CreateSpaces = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateSpaces })))
+const CreateWorlds = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateWorlds })))
 const CreateUploads = lazyPage(() => import('@/pages/CreateUploads'))
 const CreateMarketplace = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateMarketplace })))
 const CreateInventory = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateInventory })))
@@ -32,7 +30,6 @@ const EventPage = lazyPage(() => import('@/pages/EventPage'))
 const People = lazyPage(() => import('@/pages/People'))
 const Communities = lazyPage(() => import('@/pages/Communities'))
 const CommunityPage = lazyPage(() => import('@/pages/CommunityPage'))
-const EditSpace = lazyPage(() => import('@/pages/EditSpace'))
 const CreateAds = lazyPage(() => import('@/pages/CreateAds'))
 const ConfigureCommunity = lazyPage(() => import('@/pages/ConfigureCommunity'))
 const Terms = lazyPage(() => import('@/pages/Policies').then((m) => ({ default: m.Terms })))
@@ -80,12 +77,6 @@ function RootRoute() {
   return session ? <Navigate to="/home" replace /> : <Landing />
 }
 
-/** Configuring a Space used to live on its own. It lives in Create now. */
-function LegacyEditRedirect() {
-  const { spaceId = '' } = useParams()
-  return <Navigate to={`/create/spaces/${spaceId}/edit`} replace />
-}
-
 export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
@@ -128,16 +119,16 @@ export default function App() {
                 <Route path="/worlds/:id/:slug" element={<WorldPage />} />
                 <Route path="/create" element={<CreateHub />}>
                   <Route index element={<CreateOverview />} />
-                  <Route path="spaces" element={<CreateSpaces />} />
+                  <Route path="worlds" element={<CreateWorlds />} />
+                  {/* Create said /spaces for as long as Worlds were called
+                      Spaces. Anything written down then still lands. */}
+                  <Route path="spaces" element={<Navigate to="/create/worlds" replace />} />
                   <Route path="uploads" element={<CreateUploads />} />
                   <Route path="marketplace" element={<CreateMarketplace />} />
                   <Route path="inventory" element={<CreateInventory />} />
                   <Route path="analytics" element={<CreateAnalytics />} />
                   <Route path="ads" element={<CreateAds />} />
                   <Route path="creator/:username" element={<CreatorPage />} />
-                  {/* Configuring a Space is Create's business; building one is
-                      its own screen, so it keeps its own address. */}
-                  <Route path="worlds/:spaceId/edit" element={<EditSpace />} />
                   {/* Setting a World up: the same job Creator does on the
                       desktop, through the same function. */}
                   <Route path="worlds/:id" element={<CreateWorld />} />
@@ -162,17 +153,15 @@ export default function App() {
                 {/* Somebody's people, on the same page yours is on. */}
                 <Route path="/u/:id/:name/friends" element={<Friends />} />
                 <Route path="/u/:username" element={<Profile />} />
-                <Route path="/s/:id/:name" element={<SpacePage />} />
+                {/* The 2D Spaces are gone. Their addresses land on the
+                    Worlds that replaced them rather than nowhere. */}
+                <Route path="/s/:id/:name" element={<Navigate to="/discover" replace />} />
+                <Route path="/s/:id" element={<Navigate to="/discover" replace />} />
                 <Route path="/e/:id/:name" element={<EventPage />} />
                 <Route path="/e/:id" element={<EventPage />} />
-                <Route path="/u/:username/:slug" element={<SpacePage />} />
 
                 <Route element={<RequireAuth />}>
                   <Route path="/home" element={<Home />} />
-                  <Route
-                    path="/spaces/:spaceId/edit"
-                    element={<LegacyEditRedirect />}
-                  />
                   <Route element={<CommunityShell />}>
                     <Route path="/c/:slug/configure" element={<ConfigureCommunity />} />
                   </Route>

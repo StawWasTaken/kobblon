@@ -1,32 +1,27 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCompass, faEllipsis, faBan, faChevronLeft, faChevronRight, faEye, faThumbsUp,
+  faCompass, faChevronLeft, faChevronRight, faEye,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { FriendsRail } from '@/components/social/FriendsRail'
-import { EmblemTile } from '@/components/spaces/EmblemTile'
-import { coverFor, fallbackFor } from '@/components/spaces/SpaceCard'
+import { worldIcon } from '@/lib/naming'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { useAssetRef } from '@/hooks/useSignedUrl'
 import { useTitle } from '@/hooks/useTitle'
-import { useToast } from '@/components/ui/Toast'
 import {
-  hideSpace, listFavoriteSpaces, listMemberCommunities, listRecentlyVisited, listRecommended,
-  listSpacesByOwner,
+  listFavouriteWorlds, listMemberCommunities, listWorlds, myWorlds,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
-import { communityLink, spaceLink } from '@/lib/links'
+import { communityLink, worldLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 import { Emblem } from '@/components/community/Emblem'
-import type { Space } from '@/types/db'
-import { overlayButton } from '@/lib/overlay'
+import type { World } from '@/types/db'
 
 /** A row that slides, with the arrows only where there is a mouse to use them. */
 function Row({ title, children, more }: {
@@ -74,66 +69,36 @@ function Row({ title, children, more }: {
 }
 
 /**
- * A Space being suggested: the picture of the place rather than its badge,
- * because somewhere you have never been is a picture, not a mark you know.
- * The one thing you can do to a suggestion is refuse it.
+ * A World being suggested: its emblem, its name, and how many have been.
+ *
+ * The emblem is what a World chose to be known by, so it is what a rail of
+ * them shows. Nothing here is a judgement about the World; it is a shelf.
  */
-function Suggestion({ space, onNotInterested }: {
-  space: Space
-  onNotInterested: () => void
-}) {
-  const picture = useAssetRef(coverFor(space)) ?? fallbackFor(space)
-  const [menu, setMenu] = useState(false)
-  const up = space.like_count ?? 0
-  const down = space.dislike_count ?? 0
-  const score = up + down ? Math.round((up / (up + down)) * 100) : null
-
+function Suggestion({ world }: { world: World }) {
   return (
-    <article className="group relative w-64 shrink-0 sm:w-72">
+    <article className="w-64 shrink-0 sm:w-72">
       <Link
-        to={spaceLink(space)}
-        className="block aspect-[16/9] overflow-hidden rounded-xl bg-media ring-1 ring-ink-line transition-[transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:ring-brand/70"
+        to={worldLink(world)}
+        className="block aspect-[16/9] overflow-hidden rounded-xl border border-ink-line bg-media"
       >
-        <img src={picture} alt="" loading="lazy" className="h-full w-full object-cover" />
-      </Link>
-
-      <p className="mt-1.5 truncate text-sm font-bold">{space.name}</p>
-      <p className="flex items-center gap-3 text-[11px] font-bold text-muted">
-        {score !== null && (
-          <span className="inline-flex items-center gap-1">
-            <FontAwesomeIcon icon={faThumbsUp} />
-            {score}%
+        {world.cover_url ? (
+          <img
+            src={world.cover_url}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+          />
+        ) : (
+          <span className="grid h-full w-full place-items-center">
+            <FontAwesomeIcon icon={worldIcon} className="text-2xl text-white/20" />
           </span>
         )}
-        <span className="inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faEye} />
-          {formatCount(space.visit_count ?? 0)}
-        </span>
+      </Link>
+      <p className="mt-1.5 truncate text-sm font-bold">{world.name}</p>
+      <p className="flex items-center gap-1.5 text-xs text-muted">
+        <FontAwesomeIcon icon={faEye} />
+        {formatCount(world.visit_count ?? 0)}
       </p>
-
-      <button
-        onClick={() => setMenu((was) => !was)}
-        aria-label={`Options for ${space.name}`}
-        className={cn(
-          'absolute right-2 top-2 h-7 w-7 text-xs opacity-0',
-          'focus-visible:opacity-100 group-hover:opacity-100',
-          overlayButton,
-        )}
-      >
-        <FontAwesomeIcon icon={faEllipsis} />
-      </button>
-
-      {menu && (
-        <div className="absolute right-2 top-10 z-20 w-44 overflow-hidden rounded-xl border border-ink-line bg-ink-card shadow-pop">
-          <button
-            onClick={() => { setMenu(false); onNotInterested() }}
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-bold text-white/80 hover:bg-ink-hover hover:text-white"
-          >
-            <FontAwesomeIcon icon={faBan} />
-            Not interested
-          </button>
-        </div>
-      )}
     </article>
   )
 }
@@ -141,19 +106,16 @@ function Suggestion({ space, onNotInterested }: {
 export default function Home() {
   useTitle('Home')
   const { profile } = useAuth()
-  const toast = useToast()
 
-  const mine = useAsync(
-    async () => (profile ? listSpacesByOwner(profile.id, true) : []),
-    [profile?.id],
-  )
-  const suggested = useAsync(() => listRecommended(24), [profile?.id])
-  const visited = useAsync(
-    async () => (profile ? listRecentlyVisited(14) : []),
-    [profile?.id],
-  )
+  const mine = useAsync(async () => (profile ? myWorlds() : []), [profile?.id])
+  /*
+   * What is being played, until there is something worth calling a
+   * recommendation. A shelf that says "trending" and means it beats a
+   * personalised one that has nothing to personalise from.
+   */
+  const suggested = useAsync(() => listWorlds({ sort: 'trending', limit: 24 }), [profile?.id])
   const saved = useAsync(
-    async () => (profile ? listFavoriteSpaces(profile.id) : []),
+    async () => (profile ? listFavouriteWorlds(profile.id) : []),
     [profile?.id],
   )
   const communities = useAsync(
@@ -161,20 +123,7 @@ export default function Home() {
     [profile?.id],
   )
 
-  const [refused, setRefused] = useState<string[]>([])
-
-  const notInterested = async (space: Space) => {
-    setRefused((all) => [...all, space.id])
-    try {
-      await hideSpace(space.id)
-      toast(`${space.name} will not be suggested again.`, 'info')
-    } catch {
-      setRefused((all) => all.filter((id) => id !== space.id))
-      toast('That did not save.', 'error')
-    }
-  }
-
-  const shown = (suggested.data ?? []).filter((space) => !refused.includes(space.id))
+  const shown = suggested.data ?? []
   const first = shown.slice(0, 8)
   const rest = shown.slice(8, 24)
 
@@ -184,16 +133,14 @@ export default function Home() {
 
       <FriendsRail />
 
-      <Row title="Recommended for you" more={{ to: '/discover', label: 'Discover more' }}>
+      <Row title="Being played right now" more={{ to: '/discover', label: 'Discover more' }}>
         {suggested.loading
           ? [0, 1, 2, 3].map((i) => (
             <div key={i} className="w-64 shrink-0 sm:w-72">
               <Skeleton className="aspect-[16/9] rounded-xl" />
             </div>
           ))
-          : first.map((space) => (
-            <Suggestion key={space.id} space={space} onNotInterested={() => notInterested(space)} />
-          ))}
+          : first.map((world) => <Suggestion key={world.id} world={world} />)}
       </Row>
 
       {!suggested.loading && !shown.length && (
@@ -207,15 +154,9 @@ export default function Home() {
         </Card>
       )}
 
-      {!!visited.data?.length && (
-        <Row title="Recently visited" more={{ to: '/library', label: 'Your library' }}>
-          {visited.data.map((space) => <EmblemTile key={space.id} space={space} />)}
-        </Row>
-      )}
-
       {!!mine.data?.length && (
-        <Row title="Your Worlds" more={{ to: '/library', label: 'All of them' }}>
-          {mine.data.map((space) => <EmblemTile key={space.id} space={space} />)}
+        <Row title="Your Worlds" more={{ to: '/create/worlds', label: 'All of them' }}>
+          {mine.data.map((world) => <Suggestion key={world.id} world={world} />)}
         </Row>
       )}
 
@@ -224,16 +165,12 @@ export default function Home() {
       {rest.length > 0 && (
         <>
           <Row title="More to look at">
-            {rest.slice(0, 8).map((space) => (
-              <Suggestion key={space.id} space={space} onNotInterested={() => notInterested(space)} />
-            ))}
+            {rest.slice(0, 8).map((world) => <Suggestion key={world.id} world={world} />)}
           </Row>
 
           {rest.length > 8 && (
             <Row title="Still more">
-              {rest.slice(8).map((space) => (
-                <Suggestion key={space.id} space={space} onNotInterested={() => notInterested(space)} />
-              ))}
+              {rest.slice(8).map((world) => <Suggestion key={world.id} world={world} />)}
             </Row>
           )}
         </>
@@ -241,7 +178,7 @@ export default function Home() {
 
       {!!saved.data?.length && (
         <Row title="Saved" more={{ to: '/library', label: 'Your library' }}>
-          {saved.data.map((space) => <EmblemTile key={space.id} space={space} />)}
+          {saved.data.map((world) => <Suggestion key={world.id} world={world} />)}
         </Row>
       )}
 

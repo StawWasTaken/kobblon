@@ -27,8 +27,8 @@ import { worldIcon } from '@/lib/naming'
 /** Everything under Create names itself inside Create, not inside the site. */
 const CREATE = 'Kobblon Create'
 import {
-  communityAnalytics, creatorAnalytics, listAssets, listCommunitySpacesManaged,
-  listCommunityUploads, listInventory, listOwnAssets, listSharedSpaces, listSpacesByOwner,
+  communityAnalytics, creatorAnalytics, listAssets,
+  listCommunityUploads, listInventory, listOwnAssets,
   myWorlds,
 } from '@/lib/api'
 import type { AssetSort } from '@/lib/api'
@@ -107,10 +107,8 @@ export function CreateOverview() {
     async () => (target ? listCommunityUploads(target.id) : profile ? listOwnAssets(profile.id) : []),
     [profile?.id, target?.id],
   )
-  const spaces = useAsync(
-    async () => (target
-      ? listCommunitySpacesManaged(target.id)
-      : profile ? listSpacesByOwner(profile.id, true) : []),
+  const worlds = useAsync(
+    async () => (profile && !target ? myWorlds() : []),
     [profile?.id, target?.id],
   )
   const rows = useAsync(
@@ -126,7 +124,7 @@ export function CreateOverview() {
     return () => window.removeEventListener('kobblon:uploaded', reload)
   }, [mine])
 
-  const visits = (spaces.data ?? []).reduce((sum, space) => sum + (space.visit_count ?? 0), 0)
+  const visits = (worlds.data ?? []).reduce((sum, world) => sum + (world.visit_count ?? 0), 0)
   const uses = (rows.data ?? []).reduce((sum, row) => sum + Number(row.uses ?? 0), 0)
   const views = (rows.data ?? []).reduce((sum, row) => sum + Number(row.views ?? 0), 0)
 
@@ -151,7 +149,7 @@ export function CreateOverview() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Tile icon={kindIcons.model} label="Worlds" value={formatCount(spaces.data?.length ?? 0)} to="/create/spaces" />
+        <Tile icon={worldIcon} label="Worlds" value={formatCount(worlds.data?.length ?? 0)} to="/create/worlds" />
         <Tile icon={faUpload} label="Uploads" value={formatCount(mine.data?.length ?? 0)} to="/create/uploads" />
         <Tile icon={faEye} label="Visits to your Worlds" value={formatCount(visits)} />
         <Tile icon={faHandPointUp} label="Uses of your content" value={formatCount(uses)} to="/create/analytics" />
@@ -202,42 +200,14 @@ export function CreateOverview() {
 
 /* ----------------------------------------------------------------- spaces */
 
-export function CreateSpaces() {
+export function CreateWorlds() {
   useTitle('My Worlds', CREATE)
   const { profile } = useAuth()
   const { target } = useWorkingAs()
 
-  /* What Creator published: the real thing, built on the desktop. */
-  const worlds = useAsync(async () => (profile && !target ? myWorlds() : []), [profile?.id, target?.id])
-
-  /* And the old 2D Spaces, which are an archive rather than a workspace. */
-  const spaces = useAsync(
-    async () => (target
-      ? listCommunitySpacesManaged(target.id)
-      : profile ? listSpacesByOwner(profile.id, true) : []),
+  const worlds = useAsync(
+    async () => (profile && !target ? myWorlds() : []),
     [profile?.id, target?.id],
-  )
-  const shared = useAsync(
-    async () => (target || !profile ? [] : listSharedSpaces()),
-    [profile?.id, target?.id],
-  )
-
-  const row = (space: { id: string; name: string; emblem_url?: string | null; content_id?: number | null; is_published?: boolean }, action: string) => (
-    <li key={space.id} className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0">
-      <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink text-xs">
-        {space.emblem_url
-          ? <img src={space.emblem_url} alt="" className="h-full w-full object-cover" />
-          : space.name.slice(0, 2).toUpperCase()}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-bold">{space.name}</span>
-        <span className="block text-xs text-muted">
-          {space.content_id ? `SPC-${space.content_id}` : 'No number yet'}
-          {space.is_published === false ? ' · draft' : ''}
-        </span>
-      </span>
-      <Button size="sm" variant="ghost" to={`/create/spaces/${space.id}/edit`}>{action}</Button>
-    </li>
   )
 
   return (
@@ -249,13 +219,15 @@ export function CreateSpaces() {
 
       {worlds.loading && <Skeleton className="h-32" />}
 
-      {!worlds.loading && !worlds.data?.length && !target && (
+      {!worlds.loading && !worlds.data?.length && (
         <Card>
           <EmptyState
             mood="emptyBox"
-            title="No Worlds yet"
-            body="Worlds are built in Kobblon Creator on the desktop. Publish one there and it appears here, ready to be set up and put in front of people."
-            action={<Button variant="subtle" to="/download">Get Creator</Button>}
+            title={target ? 'Nothing here yet' : 'No Worlds yet'}
+            body={target
+              ? 'A World belongs to the person who built it. Working as a Community does not show theirs.'
+              : 'Worlds are built in Kobblon Creator on the desktop. Publish one there and it appears here, ready to be set up and put in front of people.'}
+            action={target ? undefined : <Button variant="subtle" to="/download">Get Creator</Button>}
           />
         </Card>
       )}
@@ -287,28 +259,6 @@ export function CreateSpaces() {
             ))}
           </ul>
         </Card>
-      )}
-
-      {(!!spaces.data?.length || !!shared.data?.length) && (
-        <section className="pt-2">
-          <SectionHeader title="Classic Spaces" />
-          <p className="mb-3 mt-1 text-sm text-muted">
-            The old 2D pages. They are kept so nothing anybody made disappears, and they
-            are not built any more.
-          </p>
-
-          {!!spaces.data?.length && (
-            <Card className="mt-3 overflow-hidden">
-              <ul>{spaces.data.map((space) => row(space, 'Configure'))}</ul>
-            </Card>
-          )}
-
-          {!!shared.data?.length && (
-            <Card className="mt-3 overflow-hidden">
-              <ul>{shared.data.map((space) => row(space, 'Open'))}</ul>
-            </Card>
-          )}
-        </section>
       )}
     </div>
   )

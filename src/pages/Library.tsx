@@ -1,93 +1,36 @@
 import { useState } from 'react'
-import { faStar, faPenToSquare, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { Link } from 'react-router-dom'
+import { faStar, faSliders, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { StatTile } from '@/components/ui/StatTile'
-import { Dialog } from '@/components/ui/Dialog'
-import { Input } from '@/components/ui/Input'
 import { EmptyState, ErrorState, SpaceCardSkeleton } from '@/components/ui/States'
-import { useToast } from '@/components/ui/Toast'
-import { SiteCard } from '@/components/spaces/SiteCard'
+import { WorldCard } from '@/components/worlds/WorldCard'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { listFavoriteSpaces, listSpacesByOwner, logSpaceUpdate } from '@/lib/api'
-import type { Space } from '@/types/db'
+import { listFavouriteWorlds, myWorlds, worldGenres } from '@/lib/api'
 import { useTitle } from '@/hooks/useTitle'
 import { overlayButton } from '@/lib/overlay'
-
-function UpdateDialog({
-  space, onClose, onLogged,
-}: {
-  space: Space | null
-  onClose: () => void
-  onLogged: () => void
-}) {
-  const toast = useToast()
-  const [note, setNote] = useState('')
-  const [pending, setPending] = useState(false)
-
-  const save = async () => {
-    if (!space) return
-    setPending(true)
-    try {
-      await logSpaceUpdate(space.id, note.trim())
-      toast('Update posted.', 'success')
-      setNote('')
-      onLogged()
-      onClose()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'That did not save.', 'error')
-    } finally {
-      setPending(false)
-    }
-  }
-
-  return (
-    <Dialog
-      open={Boolean(space)}
-      onClose={onClose}
-      title={space ? `Post an update to ${space.name}` : ''}
-      description="Updates show on the public activity feed and count towards the platform total."
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button loading={pending} onClick={save}>Post update</Button>
-        </>
-      }
-    >
-      <Input
-        label="What changed?"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        maxLength={200}
-        placeholder="Added a guestbook"
-      />
-    </Dialog>
-  )
-}
 
 export default function Library() {
   useTitle('Library')
   const { profile } = useAuth()
-  const [updating, setUpdating] = useState<Space | null>(null)
   const [shelf, setShelf] = useState<'Published' | 'Drafts' | 'Saved'>('Published')
 
-  const mine = useAsync(
-    async () => (profile ? listSpacesByOwner(profile.id, true) : []),
-    [profile?.id],
-  )
+  const mine = useAsync(async () => (profile ? myWorlds() : []), [profile?.id])
   const saved = useAsync(
-    async () => (profile ? listFavoriteSpaces(profile.id) : []),
+    async () => (profile ? listFavouriteWorlds(profile.id) : []),
     [profile?.id],
   )
+  const genres = useAsync(worldGenres, [])
 
   const drafts = (mine.data ?? []).filter((s) => !s.is_published)
   const published = (mine.data ?? []).filter((s) => s.is_published)
-  const visits = published.reduce((sum, space) => sum + (space.visit_count ?? 0), 0)
+  const visits = published.reduce((sum, world) => sum + (world.visit_count ?? 0), 0)
 
   const shelves = {
     Published: published,
@@ -145,7 +88,7 @@ export default function Library() {
             }
             body={
               shelf === 'Published'
-                ? 'Worlds are being replaced by experiences, built in Creator and played in the Launcher.'
+                ? 'A World you have published shows up here. They are built in Creator and played in the Launcher.'
                 : shelf === 'Drafts'
                   ? 'A World you have not published yet waits here.'
                   : 'Star a World and it lands here so you can find it again.'
@@ -153,7 +96,7 @@ export default function Library() {
             action={
               shelf === 'Saved'
                 ? <Button variant="subtle" to="/discover" icon={faStar}>Go find some</Button>
-                : <Button to="/download" icon={faPlus}>About the Launcher</Button>
+                : <Button to="/download" icon={faPlus}>Get Creator</Button>
             }
           />
         </Card>
@@ -161,22 +104,20 @@ export default function Library() {
 
       {!!shown.length && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {shown.map((space) => (
-            <div key={space.id} className="group/tile relative">
-              <SiteCard space={space} />
+          {shown.map((world) => (
+            <div key={world.id} className="group/tile relative">
+              <WorldCard world={world} genres={genres.data ?? undefined} />
 
               {shelf !== 'Saved' && (
                 <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/tile:opacity-100">
-                  {space.is_published && (
-                    <button
-                      onClick={() => setUpdating(space)}
-                      aria-label={`Post an update about ${space.name}`}
-                      title="Post an update"
-                      className={cn('h-8 w-8', overlayButton)}
-                    >
-                      <FontAwesomeIcon icon={faPenToSquare} />
-                    </button>
-                  )}
+                  <Link
+                    to={`/create/worlds/${world.id}`}
+                    aria-label={`Configure ${world.name}`}
+                    title="Configure"
+                    className={cn('grid h-8 w-8 place-items-center', overlayButton)}
+                  >
+                    <FontAwesomeIcon icon={faSliders} />
+                  </Link>
                 </div>
               )}
             </div>
@@ -184,7 +125,6 @@ export default function Library() {
         </div>
       )}
 
-      <UpdateDialog space={updating} onClose={() => setUpdating(null)} onLogged={mine.reload} />
     </Page>
   )
 }

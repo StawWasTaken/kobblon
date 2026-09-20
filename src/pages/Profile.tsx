@@ -15,11 +15,12 @@ import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { EmptyState, ErrorState, SpaceCardSkeleton, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { ReportDialog } from '@/components/social/ReportDialog'
-import { SpaceCard } from '@/components/spaces/SpaceCard'
-import { BadgeTile } from '@/components/spaces/BadgeGrid'
+import { WorldCard } from '@/components/worlds/WorldCard'
+import { BadgeTile } from '@/components/social/BadgeGrid'
 import { AssetTile } from '@/components/create/AssetTile'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
+import { worldIcon } from '@/lib/naming'
 import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Tabs } from '@/components/ui/Tabs'
@@ -35,7 +36,7 @@ import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   addressNow, discordHandleOf, getProfileByUsername, getProfileOverview, isFollowing, listEarnedBadges, peopleList,
-  listMemberCommunities, listSpacesByOwner, sendFriendRequest, setFollowing, standingWith,
+  listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
   usernameHistory, usernameById, listAssetsByCreator, updateProfile, uploadAvatar,
 } from '@/lib/api'
@@ -150,7 +151,7 @@ export default function Profile() {
 
   const overview = useAsync(async () => (user ? getProfileOverview(user.id) : null), [user?.id])
   const spaces = useAsync(
-    async () => (user ? listSpacesByOwner(user.id, Boolean(isMe)) : []),
+    async () => (user ? listWorldsByOwner(user.id, Boolean(isMe)) : []),
     [user?.id, isMe],
   )
   const made = useAsync(async () => (user ? listAssetsByCreator(user.id) : []), [user?.id])
@@ -332,7 +333,7 @@ export default function Profile() {
             mood="noResults"
             title="Nobody here"
             body={`There is no @${username} on Kobblon.`}
-            action={<Button to="/discover">Discover Spaces</Button>}
+            action={<Button to="/discover">Discover Worlds</Button>}
           />
         </Card>
       </Page>
@@ -341,7 +342,7 @@ export default function Profile() {
 
   const standing = relationship.data
   const stats = overview.data
-  const visits = (spaces.data ?? []).reduce((sum, space) => sum + (space.visit_count ?? 0), 0)
+  const visits = (spaces.data ?? []).reduce((sum, world) => sum + (world.visit_count ?? 0), 0)
 
   return (
     <Page
@@ -585,10 +586,10 @@ export default function Profile() {
         <div className="space-y-10">
           <section>
             <Heading
-              icon={faCubes}
+              icon={worldIcon}
               aside={undefined}
             >
-              Spaces
+              Worlds
             </Heading>
 
             {spaces.loading && (
@@ -604,7 +605,7 @@ export default function Profile() {
                   title={isMe ? 'Nothing made yet' : 'No Worlds yet'}
                   body={
                     isMe
-                      ? 'A World can be a page about your cat. That is a completely valid use of this website.'
+                      ? 'Build one in Kobblon Creator and publish it, and it shows up here.'
                       : `${user.display_name} has not published anything yet.`
                   }
                   action={undefined}
@@ -614,7 +615,7 @@ export default function Profile() {
 
             {!!spaces.data?.length && (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {spaces.data.map((space) => <SpaceCard key={space.id} space={space} />)}
+                {spaces.data.map((world) => <WorldCard key={world.id} world={world} />)}
               </div>
             )}
           </section>

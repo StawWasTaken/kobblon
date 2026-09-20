@@ -17,7 +17,7 @@ export const createSections: {
   note: string
 }[] = [
   { to: '/create', label: 'Overview', icon: faGaugeHigh, end: true, note: 'Everything at a glance' },
-  { to: '/create/spaces', label: 'My Worlds', icon: worldIcon, note: 'The Worlds you build' },
+  { to: '/create/worlds', label: 'My Worlds', icon: worldIcon, note: 'The Worlds you build' },
   { to: '/create/uploads', label: 'My Uploads', icon: faUpload, note: 'What you have put into Create' },
   { to: '/create/marketplace', label: 'Marketplace', icon: faShapes, note: 'Everything anybody can build with' },
   { to: '/create/inventory', label: 'Inventory', icon: faBoxOpen, note: 'Everything you can build with' },

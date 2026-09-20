@@ -10,14 +10,14 @@ import { Wordmark } from '@/components/brand/Wordmark'
 import { Signature } from '@/components/brand/Signature'
 import { Kobby } from '@/components/brand/Kobby'
 import { JoinPanel } from '@/components/landing/JoinPanel'
-import { SpaceStage } from '@/components/landing/SpaceStage'
+import { WorldStage } from '@/components/landing/WorldStage'
 import { CreatorShelf } from '@/components/landing/CreatorShelf'
 import { CommunityRow } from '@/components/landing/CommunityRow'
 import { StyleShelf } from '@/components/landing/StyleShelf'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useForceDark } from '@/hooks/useTheme'
-import { getPlatformStats, listAssets, listCommunities, listSpaces, styleShop } from '@/lib/api'
+import { getPlatformStats, listAssets, listCommunities, listWorlds, styleShop } from '@/lib/api'
 import { currency } from '@/lib/currency'
 import { asset } from '@/lib/asset'
 import { formatCount } from '@/lib/format'
@@ -105,7 +105,7 @@ export default function Landing() {
   }
 
   const stats = useAsync(getPlatformStats, [])
-  const spaces = useAsync(() => listSpaces({ sort: 'trending', limit: 5 }), [])
+  const spaces = useAsync(() => listWorlds({ sort: 'trending', limit: 5 }), [])
   /*
    * A shelf of one kind of thing is not a shelf, it is a shelf of fonts.
    * Each kind is asked for on its own and they are dealt out in turn, so what
@@ -218,12 +218,12 @@ export default function Landing() {
             <div className="flex items-center gap-5 rounded-[1.75rem] border border-white/10 bg-ink-card p-6">
               <Kobby mood="construction" size="sm" bob={false} />
               <p className="text-sm text-white/55">
-                Nobody has published a Space yet. Yours would be the first one here.
+                Nobody has published a World yet. Yours would be the first one here.
               </p>
             </div>
           ) : (
-            <SpaceStage
-              spaces={(spaces.data ?? []).slice(0, 3)}
+            <WorldStage
+              worlds={(spaces.data ?? []).slice(0, 3)}
               loading={spaces.loading || !spaces.data?.length}
             />
           )}
