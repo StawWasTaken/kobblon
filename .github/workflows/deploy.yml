@@ -32,6 +32,11 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # The rules the database has taught us, checked before anything else,
+      # because a bad migration is the expensive kind of mistake.
+      - run: node scripts/check-migrations.mjs
+
       - run: npm run build
 
       # A card for everything that is already public. Reads with the same

@@ -13,7 +13,8 @@
     "k6:build": "node tools/k6/build-k6.mjs",
     "k6:look": "vite --config vite.k6.config.mjs",
     "engine:dev": "vite --config vite.engine.config.mjs",
-    "engine:check": "node tools/engine/drive.mjs"
+    "engine:check": "node tools/engine/drive.mjs",
+    "check:migrations": "node scripts/check-migrations.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",

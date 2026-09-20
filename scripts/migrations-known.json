@@ -1,0 +1,787 @@
+{
+  "0001_init.sql": {
+    "create-table-not-idempotent": [
+      "public.profiles",
+      "public.spaces",
+      "public.space_visits",
+      "public.space_updates",
+      "public.space_likes",
+      "public.friendships",
+      "public.conversations",
+      "public.conversation_members",
+      "public.messages",
+      "public.notifications",
+      "public.reports",
+      "public.moderation_actions",
+      "public.activity_events"
+    ],
+    "create-index-not-idempotent": [
+      "profiles_username_idx",
+      "profiles_online_idx",
+      "spaces_published_idx",
+      "spaces_trending_idx",
+      "space_visits_space_idx",
+      "space_updates_space_idx",
+      "friendships_addressee_idx",
+      "friendships_requester_idx",
+      "conversation_members_user_idx",
+      "messages_conversation_idx",
+      "notifications_user_idx",
+      "reports_status_idx",
+      "activity_events_recent_idx"
+    ]
+  },
+  "0002_policies.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ],
+    "policy-without-drop": [
+      "profiles_read",
+      "profiles_insert_self",
+      "profiles_update_self",
+      "spaces_read_published",
+      "spaces_insert_own",
+      "spaces_update_own",
+      "spaces_delete_own",
+      "space_updates_read",
+      "space_updates_insert_owner",
+      "space_visits_read_owner",
+      "space_likes_read",
+      "space_likes_write_self",
+      "space_likes_delete_self",
+      "friendships_read",
+      "friendships_request",
+      "friendships_respond",
+      "friendships_delete",
+      "conversations_read",
+      "conversation_members_read",
+      "conversation_members_update_self",
+      "messages_read",
+      "messages_send",
+      "notifications_read_self",
+      "notifications_update_self",
+      "reports_insert_self",
+      "reports_read",
+      "moderation_actions_read",
+      "activity_events_read"
+    ]
+  },
+  "0003_functions.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ],
+    "trigger-without-drop": [
+      "on_auth_user_created",
+      "spaces_before_write",
+      "space_updates_after_insert",
+      "space_likes_change",
+      "messages_after_insert",
+      "friendships_after_change"
+    ]
+  },
+  "0005_accounts_and_create.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ],
+    "create-table-not-idempotent": [
+      "public.assets"
+    ],
+    "create-index-not-idempotent": [
+      "assets_public_idx",
+      "assets_creator_idx",
+      "assets_queue_idx"
+    ],
+    "policy-without-drop": [
+      "assets_read_approved",
+      "assets_insert_own",
+      "assets_delete_own",
+      "assets_update_own_metadata"
+    ]
+  },
+  "0006_storage_and_review.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ],
+    "policy-without-drop": [
+      "uploads_insert_own",
+      "uploads_read",
+      "uploads_delete_own"
+    ]
+  },
+  "0007_avatars.sql": {
+    "policy-without-drop": [
+      "avatars_read",
+      "avatars_insert_own",
+      "avatars_update_own",
+      "avatars_delete_own"
+    ]
+  },
+  "0008_badges_communities_pixels.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ],
+    "create-table-not-idempotent": [
+      "public.follows",
+      "public.space_favorites",
+      "public.space_badges",
+      "public.badge_awards",
+      "public.communities",
+      "public.community_members",
+      "public.pixel_transactions"
+    ],
+    "create-index-not-idempotent": [
+      "follows_following_idx",
+      "space_favorites_user_idx",
+      "space_badges_space_idx",
+      "badge_awards_user_idx",
+      "communities_public_idx",
+      "community_members_user_idx",
+      "pixel_transactions_user_idx"
+    ],
+    "policy-without-drop": [
+      "follows_read",
+      "follows_insert_self",
+      "follows_delete_self",
+      "space_favorites_read",
+      "space_favorites_insert_self",
+      "space_favorites_delete_self",
+      "space_badges_read",
+      "space_badges_write_owner",
+      "badge_awards_read",
+      "communities_read",
+      "communities_insert_own",
+      "communities_update_own",
+      "community_members_read",
+      "community_members_join",
+      "community_members_leave",
+      "pixel_transactions_read_self"
+    ],
+    "trigger-without-drop": [
+      "space_favorites_change",
+      "communities_after_insert",
+      "community_members_change",
+      "profiles_after_insert_pixels"
+    ]
+  },
+  "0009_guests_and_views.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0010_fix_publish_event.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0011_automated_review.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ],
+    "create-table-not-idempotent": [
+      "public.moderation_terms"
+    ],
+    "policy-without-drop": [
+      "moderation_terms_read"
+    ],
+    "trigger-without-drop": [
+      "profiles_screen",
+      "spaces_screen",
+      "assets_review",
+      "messages_screen"
+    ]
+  },
+  "0012_space_chat.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ],
+    "create-table-not-idempotent": [
+      "public.space_messages"
+    ],
+    "create-index-not-idempotent": [
+      "space_messages_recent_idx"
+    ],
+    "policy-without-drop": [
+      "space_messages_read",
+      "space_messages_send",
+      "space_messages_remove"
+    ],
+    "trigger-without-drop": [
+      "space_messages_screen"
+    ]
+  },
+  "0013_guest_limits.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ],
+    "create-table-not-idempotent": [
+      "public.guest_signups"
+    ],
+    "create-index-not-idempotent": [
+      "guest_signups_recent_idx"
+    ],
+    "trigger-without-drop": [
+      "profiles_guest_rate"
+    ]
+  },
+  "0014_group_chats.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0015_communities.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ],
+    "create-table-not-idempotent": [
+      "public.community_ranks",
+      "public.community_join_requests",
+      "public.community_bans",
+      "public.community_posts",
+      "public.community_spaces",
+      "public.community_audit"
+    ],
+    "create-index-not-idempotent": [
+      "community_ranks_community_idx",
+      "community_posts_recent_idx",
+      "community_audit_recent_idx"
+    ]
+  },
+  "0016_community_policies.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ],
+    "policy-without-drop": [
+      "community_ranks_read",
+      "community_ranks_write",
+      "community_requests_read",
+      "community_requests_cancel",
+      "community_bans_read",
+      "community_bans_lift",
+      "community_posts_read",
+      "community_posts_write",
+      "community_posts_remove",
+      "community_spaces_read",
+      "community_spaces_write",
+      "community_audit_read",
+      "community_members_leave_only"
+    ],
+    "trigger-without-drop": [
+      "community_posts_screen",
+      "communities_screen"
+    ]
+  },
+  "0017_review_fix_and_ids.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0018_message_edits.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0019_space_presentation.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0020_affiliates.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0021_create_hub.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0022_username_changes.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0023_protected_content.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0024_numbers_in_links.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0025_asset_ratings.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0026_marketplace.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0027_inventory.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0028_community_events.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0029_community_creation.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0030_id_enforcement.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0031_announcements.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0032_community_create.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0033_take_everything.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0034_community_lifecycle.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0035_community_money_and_posts.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0036_rivalries_show_both_ways.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0037_guest_becomes_a_person.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0038_link_preview.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0039_username_lookup.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0041_space_files.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0042_ads_and_donations.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0043_blocks_only.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0044_ads_need_permission.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0045_ads_run_for_a_while.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0046_ad_names_answer_properly.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0047_deleting_and_reporting.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0048_the_economy.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0049_campaigns.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0050_delete_asset_knows_campaigns.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0051_ads_are_visible_to_everybody.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0052_two_slots_two_ads.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0054_presence_that_works.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0055_better_embeds.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0056_home_that_knows_you.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0057_a_month_of_ads.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0058_people_and_campaign_length.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0059_announcements_and_events.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0060_more_like_this.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0061_previews_that_can_be_seen.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0062_friends_blocks_and_ignores.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0063_lists_know_a_guest.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0064_style_shop.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0065_a_page_for_a_style_item.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0066_codes_and_transactions.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0067_addresses_follow_names.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0068_kobblon.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0070_discord.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0071_discord_names.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0072_standing_appeals_and_mail.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0073_experiences.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0074_worlds.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public",
+      "public",
+      "public"
+    ]
+  },
+  "0075_app_sign_in.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public"
+    ]
+  },
+  "0076_publishing_worlds.sql": {
+    "search-path-misses-extensions": [
+      "public",
+      "public",
+      "public"
+    ]
+  }
+}
