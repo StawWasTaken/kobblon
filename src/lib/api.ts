@@ -2164,12 +2164,16 @@ export async function getWorld(contentId: number): Promise<World | null> {
   const { data, error } = await supabase
     .from('worlds')
     /*
-     * The join is named by nothing: worlds has exactly one way to reach
-     * profiles, so this resolves on its own. Naming the constraint was how
-     * this broke, because renaming experiences to worlds left the keys
-     * called experiences_* and the name did not exist.
+     * Named by the column, which is the only form that is both unambiguous
+     * and safe from a rename.
+     *
+     * There are three ways from a World to a person, not one: owner_id, and
+     * the two junctions world_opinions and world_favourites, which each
+     * point at worlds and at profiles and so read as many-to-many. Asking
+     * for `profiles` on its own is ambiguous, and asking for a constraint by
+     * name breaks the day somebody renames a table.
      */
-    .select(`${WORLD_FIELDS}, owner:profiles (id, username, display_name, avatar_url, is_admin, is_guest)`)
+    .select(`${WORLD_FIELDS}, owner:profiles!owner_id (id, username, display_name, avatar_url, is_admin, is_guest)`)
     .eq('content_id', contentId)
     .eq('is_removed', false)
     .maybeSingle()
