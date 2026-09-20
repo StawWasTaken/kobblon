@@ -54,6 +54,15 @@ engine.on('died', () => { said.died += 1 })
 engine.on('opened', () => { said.opened += 1 })
 Object.assign(window, { said })
 
+// A test needs the built World, not only the engine's summary of it.
+let latest: Awaited<ReturnType<typeof engine.open>> | null = null
+const open = engine.open.bind(engine)
+engine.open = async (raw: unknown) => {
+  latest = await open(raw)
+  return latest
+}
+Object.assign(window, { built: () => latest })
+
 const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
 await engine.open(manifest)
 

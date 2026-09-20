@@ -2,7 +2,9 @@ import * as THREE from 'three'
 import { Controller } from './controller'
 import { Keyboard, stillIntent, type Intent } from './input'
 import { K6, loadK6Source, type K6Look } from './k6'
-import { buildWorld, readManifest, type BuiltWorld, type WorldManifest } from './experience'
+import {
+  applyDecals, buildWorld, readManifest, type BuiltWorld, type WorldManifest,
+} from './experience'
 import { buildSky, type ResolveAsset } from './sky'
 import { K6_HEIGHT } from './units'
 
@@ -113,6 +115,8 @@ export class Engine {
 
     this.light(manifest)
     void this.dressSky(manifest)
+    // The World is standing before its pictures arrive, rather than after.
+    void applyDecals(built, this.options.resolveAsset)
 
     if (!this.avatar) {
       const source = await loadK6Source(this.options.avatarUrl ?? '/k6/k6.glb')

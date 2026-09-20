@@ -139,6 +139,42 @@ scene with its own camera puts up the same background the runtime will
 without borrowing the engine to do it. A picture that will not load never
 stops a World opening: the colour is the fallback, always.
 
+## What a part can be
+
+```
+shape         box, wedge, cylinder, sphere
+material      plastic, wood, metal, brick, grass, sand, concrete, glass, neon
+colour        the creator's; the material decides how it answers light
+transparency  0 solid, 1 invisible
+reflectance   0 flat, 1 a mirror
+decal         { id, face } — a Catalog id, never an address
+```
+
+A material is an enum rather than a texture library on purpose: a creator
+picks from a list they can hold in their head, every World costs the same to
+load, and there is nothing there to moderate. Glass is see-through on its own
+and neon carries its own light, so a creator gets both without knowing what a
+shader is.
+
+Decals are a pass of their own, `applyDecals(built, resolveAsset)`, because a
+World should appear and then have its pictures arrive rather than wait for
+them. On a box the picture goes on the named face and the other five keep the
+plain material; on any other shape it wraps, which is what somebody means by
+putting a decal on a sphere. An editor calls the same function with its own
+resolver, so a picture shows before it is published.
+
+## What collides, and what only looks like it
+
+**Every shape collides as its bounding box.** A wedge looks like a ramp and
+stops you like a step. A sphere rolls nowhere and blocks a square. This is
+worth knowing before building a World around a ramp.
+
+It is not an oversight to be patched in the controller: an upright box that
+slides along axes cannot describe a slope, and bolting one special case on
+buys a ramp that works and a cylinder that still does not. What fixes it is a
+real solver, which is the same work that makes a part fall when it is not
+anchored. Both are in the same decision, and it has not been made yet.
+
 ## What is not built yet
 
 In the order it is likely to be needed: scripting, sound, shadows, a Creator

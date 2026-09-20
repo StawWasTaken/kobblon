@@ -200,6 +200,65 @@ const dressed = await p.evaluate(async () => {
 check('a World that names a sky gets the sky', dressed.cube && dressed.images === 6,
   `cube texture with ${dressed.images} faces`)
 
+// -- 13. shapes, materials, transparency and decals
+const dressed2 = await p.evaluate(async () => {
+  const id = window.fakeSky('decal-1')
+  await window.engine.open({
+    format: 1, id: 'parts', name: 'Parts', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [80, 2, 80], material: 'grass' },
+      { id: 'ramp', kind: 'box', shape: 'wedge', at: [-10, 2, 0], size: [8, 4, 12], material: 'concrete' },
+      { id: 'pipe', kind: 'box', shape: 'cylinder', at: [0, 4, 0], size: [5, 8, 5], material: 'metal' },
+      { id: 'ball', kind: 'box', shape: 'sphere', at: [10, 4, 0], size: [7, 7, 7], material: 'neon', colour: '#25D68C' },
+      { id: 'pane', kind: 'box', at: [0, 4, 12], size: [16, 8, 0.5], material: 'glass' },
+      { id: 'signed', kind: 'box', at: [18, 4, 0], size: [8, 8, 1], decal: { id, face: 'front' } },
+      { id: 'faded', kind: 'box', at: [-20, 4, 0], size: [6, 6, 6], transparency: 0.5 },
+      { id: 'shiny', kind: 'box', at: [-28, 4, 0], size: [6, 6, 6], reflectance: 1 },
+    ],
+  })
+  await new Promise((done) => setTimeout(done, 500))
+
+  const of = (name) => {
+    for (const [object, part] of window.engine.status && window.built().partOf) {
+      if (part.id === name) return { object, part }
+    }
+    return null
+  }
+
+  const shapes = {}
+  for (const name of ['ramp', 'pipe', 'ball', 'floor']) {
+    shapes[name] = of(name)?.object.geometry.type ?? null
+  }
+
+  const glass = of('pane').object.material
+  const faded = of('faded').object.material
+  const shiny = of('shiny').object.material
+  const neon = of('ball').object.material
+  const signed = of('signed').object.material
+
+  return {
+    shapes,
+    glassSeeThrough: glass.transparent === true && glass.opacity < 1,
+    fadedHalf: Math.abs(faded.opacity - 0.5) < 0.01,
+    shinyIsMetal: shiny.metalness > 0.5 && shiny.roughness < 0.3,
+    neonGlows: neon.emissiveIntensity > 0,
+    decalOnOneFace: Array.isArray(signed) && signed.length === 6
+      && signed.filter((m) => m.map).length === 1,
+  }
+})
+check('a wedge is a wedge, a cylinder a cylinder, a sphere a sphere',
+  dressed2.shapes.ramp === 'BufferGeometry'
+  && dressed2.shapes.pipe === 'CylinderGeometry'
+  && dressed2.shapes.ball === 'SphereGeometry'
+  && dressed2.shapes.floor === 'BoxGeometry',
+  JSON.stringify(dressed2.shapes))
+check('glass is see through on its own', dressed2.glassSeeThrough, 'the material decides')
+check('transparency is a number a part sets', dressed2.fadedHalf, 'half at 0.5')
+check('reflectance turns a part to metal', dressed2.shinyIsMetal, 'metalness up, roughness down')
+check('neon carries its own light', dressed2.neonGlows, 'emissive')
+check('a decal lands on one face of a box', dressed2.decalOnOneFace,
+  'six materials, one with a picture')
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())

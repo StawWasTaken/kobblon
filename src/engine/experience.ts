@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import type { Solid } from './controller'
+import { geometryFor, isShape, type Shape } from './shapes'
+import { isMaterial, materialFor, type Material } from './materials'
 
 /**
  * What a World is.
@@ -16,15 +18,34 @@ import type { Solid } from './controller'
 
 export type Vec3 = [number, number, number]
 
+/** Which side of a part a picture goes on. */
+export type Face = 'top' | 'bottom' | 'front' | 'back' | 'left' | 'right'
+
+export const FACES: Face[] = ['top', 'bottom', 'front', 'back', 'left', 'right']
+
 export type WorldBlock = {
   /** A name a script can look it up by, later. */
   id?: string
   kind: 'box'
+  /** What it is. A box when a World does not say. */
+  shape?: Shape
   at: Vec3
   size: Vec3
   /** Turn around Y, in degrees, because a person is going to type this. */
   turn?: number
   colour?: string
+  /** How the colour answers light. Plastic when a World does not say. */
+  material?: Material
+  /** 0 is solid, 1 is invisible. */
+  transparency?: number
+  /** 0 is flat, 1 is a mirror. */
+  reflectance?: number
+  /**
+   * A picture on one side, named by Catalog id. An id rather than an
+   * address, for the same reason the sky is: a World that can name any host
+   * is a World that can make every player fetch anything.
+   */
+  decal?: { id: string; face: Face }
   /** False for decoration you can walk through. */
   solid?: boolean
 }
@@ -118,13 +139,27 @@ export function readManifest(raw: unknown): WorldManifest {
       }
     }
 
+    const held = (value: unknown) => THREE.MathUtils.clamp(number(value, 0), 0, 1)
+
+    const decal = part.decal && typeof part.decal === 'object'
+      && typeof part.decal.id === 'string'
+      && /^[A-Za-z0-9_-]{1,64}$/.test(part.decal.id)
+      && FACES.includes(part.decal.face)
+      ? { id: part.decal.id as string, face: part.decal.face as Face }
+      : undefined
+
     return {
       id: part.id ? String(part.id) : undefined,
       kind: 'box',
+      shape: isShape(part.shape) ? part.shape : 'box',
       at: vec(part.at, [0, 0, 0]),
       size: vec(part.size, [1, 1, 1]),
       turn: number(part.turn, 0),
       colour: typeof part.colour === 'string' ? part.colour : '#6c7080',
+      material: isMaterial(part.material) ? part.material : 'plastic',
+      transparency: held(part.transparency),
+      reflectance: held(part.reflectance),
+      decal,
       solid: part.solid !== false,
     }
   }
@@ -178,9 +213,11 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
   const named = new Map<string, THREE.Object3D>()
   const partOf = new Map<THREE.Object3D, WorldPart>()
 
-  // One geometry, many meshes: a World of boxes should cost one buffer.
-  const unit = new THREE.BoxGeometry(1, 1, 1)
-  const materials = new Map<string, THREE.MeshStandardMaterial>()
+  /*
+   * One geometry per shape and one material per combination, shared by every
+   * part that wants them. A World of ten thousand bricks holds one brick.
+   */
+  const materials = new Map<string, THREE.Material>()
 
   const place = (part: WorldPart, into: THREE.Object3D) => {
     if (part.kind === 'group') {
@@ -194,14 +231,14 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       return
     }
 
-    const colour = part.colour ?? '#6c7080'
-    let material = materials.get(colour)
-    if (!material) {
-      material = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.85 })
-      materials.set(colour, material)
-    }
+    const material = materialFor({
+      colour: part.colour ?? '#6c7080',
+      material: part.material ?? 'plastic',
+      transparency: part.transparency ?? 0,
+      reflectance: part.reflectance ?? 0,
+    }, materials)
 
-    const mesh = new THREE.Mesh(unit, material)
+    const mesh = new THREE.Mesh(geometryFor(part.shape ?? 'box'), material)
     mesh.position.set(...part.at)
     mesh.scale.set(...part.size)
     if (part.turn) mesh.rotation.y = (part.turn * Math.PI) / 180
@@ -223,6 +260,66 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
   for (const part of manifest.blocks) place(part, root)
 
   return { manifest, group: root, solids, named, partOf }
+}
+
+/**
+ * Puts the pictures on.
+ *
+ * A separate pass because a decal has to be fetched and building a World does
+ * not wait for the network: a World appears, then its pictures arrive. An
+ * editor calls this too, with its own resolver, so a decal shows before it
+ * has been published.
+ */
+export async function applyDecals(
+  built: BuiltWorld,
+  resolveAsset?: (id: string) => Promise<string | null>,
+) {
+  if (!resolveAsset) return
+
+  const loader = new THREE.TextureLoader()
+  loader.setCrossOrigin('anonymous')
+
+  /** Three's box faces are +x, -x, +y, -y, +z, -z, in that order. */
+  const SIDE: Record<Face, number> = {
+    right: 0, left: 1, top: 2, bottom: 3, front: 4, back: 5,
+  }
+
+  const jobs: Promise<void>[] = []
+
+  for (const [object, part] of built.partOf) {
+    if (part.kind === 'group' || !part.decal) continue
+    const mesh = object as THREE.Mesh
+    const wanted = part.decal
+
+    jobs.push((async () => {
+      const url = await resolveAsset(wanted.id).catch(() => null)
+      if (!url) return
+
+      const picture = await loader.loadAsync(url).catch(() => null)
+      if (!picture) return
+      picture.colorSpace = THREE.SRGBColorSpace
+
+      const plain = mesh.material as THREE.Material
+      const faced = (plain as THREE.MeshStandardMaterial).clone()
+      faced.map = picture
+      faced.needsUpdate = true
+
+      /*
+       * A picture on one face means six materials, one of which carries it.
+       * Only a box has six faces to address; on anything else the picture
+       * wraps the whole shape, which is what a creator means by putting a
+       * decal on a sphere.
+       */
+      if ((part.shape ?? 'box') === 'box') {
+        mesh.material = Array.from({ length: 6 }, (_, at) =>
+          (at === SIDE[wanted.face] ? faced : plain))
+      } else {
+        mesh.material = faced
+      }
+    })())
+  }
+
+  await Promise.all(jobs)
 }
 
 /** The old name, while anything still says it. */
