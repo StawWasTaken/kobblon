@@ -5,7 +5,7 @@ import { K6, loadK6Source, type K6Look } from './k6'
 import {
   applyDecals, buildWorld, readManifest, type BuiltWorld, type WorldManifest,
 } from './experience'
-import { buildSky, type ResolveAsset } from './sky'
+import { buildSky, type ResolveAsset, type Skybox } from './sky'
 import { K6_HEIGHT } from './units'
 
 /**
@@ -61,6 +61,7 @@ export class Engine {
 
   private avatar: K6 | null = null
   private world: BuiltWorld | null = null
+  private sky: Skybox | null = null
   private listeners = new Map<keyof EngineEvents, Set<(data: never) => void>>()
 
   /** Where the camera sits behind the avatar, dragged by the player. */
@@ -134,6 +135,11 @@ export class Engine {
     return built
   }
 
+  /** The sky in the scene, for anybody who needs to look at it. */
+  get skybox() {
+    return this.sky
+  }
+
   /** Back to where this World starts people. */
   respawn() {
     this.controller.respawn()
@@ -159,19 +165,28 @@ export class Engine {
    * put up the same background without borrowing the whole engine.
    */
   private async dressSky(manifest: WorldManifest) {
-    const background = await buildSky(manifest, this.options.resolveAsset)
+    const sky = await buildSky(manifest, this.options.resolveAsset)
     // A World opened while this was loading has already set its own.
-    if (this.world?.manifest !== manifest) return
+    if (this.world?.manifest !== manifest) {
+      sky.box?.dispose()
+      return
+    }
 
-    this.scene.background = background
+    this.sky?.dispose()
+    this.sky = sky.box
+
+    this.scene.background = sky.colour
+    if (sky.box) {
+      sky.box.follow(this.camera)
+      this.scene.add(sky.box.object)
+    }
+
     /*
      * A sky is also the only thing in a World for metal to reflect. Without
      * this, anything shiny renders black and a creator thinks the material
      * is broken.
      */
-    this.scene.environment = (background as THREE.CubeTexture).isCubeTexture
-      ? (background as THREE.CubeTexture)
-      : null
+    this.scene.environment = sky.environment
   }
 
   private light(manifest: WorldManifest) {
@@ -221,6 +236,8 @@ export class Engine {
     }
 
     this.aimCamera(state.position)
+    // The sky travels with whoever is looking, sitting below their eye.
+    this.sky?.follow(this.camera)
     this.renderer.render(this.scene, this.camera)
     this.frame += 1
   }

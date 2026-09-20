@@ -173,16 +173,16 @@ const skies = await p.evaluate(async () => {
   const drawn = await window.buildSky({ sky: { decal: id } }, window.resolveFake)
 
   return {
-    plain: plain.isColor === true && plain.getHexString() === '123456',
-    missing: missing.isColor === true,
-    editor: drawn.isCubeTexture === true && drawn.image?.length === 6,
+    plain: plain.colour.getHexString() === '123456' && plain.box === null,
+    missing: missing.colour.getHexString() === '123456' && missing.box === null,
+    editor: !!drawn.box && drawn.environment?.image?.length === 6,
   }
 })
 check('a World with no sky gets its colour', skies.plain, 'colour honoured')
 check('a sky that cannot be had falls back to the colour', skies.missing,
   'a picture that will not load never stops a World opening')
 check('an editor can build the same sky without the engine', skies.editor,
-  'buildSky returned a cube texture with six faces')
+  'a box to add to a scene, and a cube for reflections')
 
 // and through the engine, which is how an app gets one
 const dressed = await p.evaluate(async () => {
@@ -192,13 +192,27 @@ const dressed = await p.evaluate(async () => {
     sky: { colour: '#123456', decal: 'sky-2' },
     blocks: [{ kind: 'box', at: [0, -1, 0], size: [40, 2, 40] }],
   })
-  // the picture is fetched, so give it a moment
-  await new Promise((done) => setTimeout(done, 400))
-  const background = window.engine.scene.background
-  return { cube: background?.isCubeTexture === true, images: background?.image?.length ?? 0 }
+  // The picture is fetched, so wait for it rather than guessing how long a
+  // machine takes: a fixed sleep is a test that fails on a slow morning.
+  const waited = Date.now()
+  while (!window.engine.skybox && Date.now() - waited < 5000) {
+    await new Promise((done) => setTimeout(done, 50))
+  }
+  const sky = window.engine.skybox?.object
+  const camera = window.engine.camera
+  return {
+    inTheScene: !!sky,
+    faces: Array.isArray(sky?.material) ? sky.material.length : 0,
+    // the horizon is lower because the sky sits below the eye
+    belowTheEye: !!sky && sky.position.y < camera.position.y - 100,
+    reflects: window.engine.scene.environment?.isCubeTexture === true,
+  }
 })
-check('a World that names a sky gets the sky', dressed.cube && dressed.images === 6,
-  `cube texture with ${dressed.images} faces`)
+check('a World that names a sky gets the sky',
+  dressed.inTheScene && dressed.faces === 6, `a box with ${dressed.faces} faces`)
+check('the sky sits below the eye, so the horizon is lower', dressed.belowTheEye,
+  'the box is placed, not painted on the background')
+check('and metal has the sky to reflect', dressed.reflects, 'scene.environment')
 
 // -- 13. shapes, materials, transparency and decals
 const dressed2 = await p.evaluate(async () => {
@@ -211,7 +225,10 @@ const dressed2 = await p.evaluate(async () => {
       { id: 'pipe', kind: 'box', shape: 'cylinder', at: [0, 4, 0], size: [5, 8, 5], material: 'metal' },
       { id: 'ball', kind: 'box', shape: 'sphere', at: [10, 4, 0], size: [7, 7, 7], material: 'neon', colour: '#25D68C' },
       { id: 'pane', kind: 'box', at: [0, 4, 12], size: [16, 8, 0.5], material: 'glass' },
-      { id: 'signed', kind: 'box', at: [18, 4, 0], size: [8, 8, 1], decal: { id, face: 'front' } },
+      { id: 'signed', kind: 'box', at: [18, 4, 0], size: [8, 8, 1],
+        children: [{ id: 'poster', kind: 'decal', picture: id, face: 'front' }] },
+      // written the old way, which has to keep opening
+      { id: 'legacy', kind: 'box', at: [26, 4, 0], size: [8, 8, 1], decal: { id, face: 'front' } },
       { id: 'faded', kind: 'box', at: [-20, 4, 0], size: [6, 6, 6], transparency: 0.5 },
       { id: 'shiny', kind: 'box', at: [-28, 4, 0], size: [6, 6, 6], reflectance: 1 },
     ],
@@ -244,6 +261,25 @@ const dressed2 = await p.evaluate(async () => {
     neonGlows: neon.emissiveIntensity > 0,
     // Every face carries the material's own pattern now, so the decal is the
     // one whose map is a different picture from the other five.
+    // the decal is in the tree, selectable, rather than hidden in a field
+    // A decal has no body, so it lives in the tree rather than in the scene:
+    // an editor finds it by walking the World, which is what an Explorer is.
+    decalInTree: (() => {
+      const walk = (parts) => parts.some((one) =>
+        (one.kind === 'decal' && one.id === 'poster' && one.face === 'front')
+        || (one.kind === 'group' && walk(one.parts))
+        || (one.kind === 'box' && walk(one.children ?? [])))
+      return walk(window.built().manifest.blocks)
+    })(),
+    oldFileStillOpens: (() => {
+      for (const [object, part] of window.built().partOf) {
+        if (part.id === 'legacy') {
+          const kids = part.children ?? []
+          return kids.length === 1 && kids[0].kind === 'decal' && Array.isArray(object.material)
+        }
+      }
+      return false
+    })(),
     decalOnOneFace: (() => {
       if (!Array.isArray(signed) || signed.length !== 6) return false
       const maps = signed.map((m) => m.map?.uuid ?? null)
@@ -265,6 +301,10 @@ check('reflectance turns a part to metal', dressed2.shinyIsMetal, 'metalness up,
 check('neon carries its own light', dressed2.neonGlows, 'emissive')
 check('a decal lands on one face of a box', dressed2.decalOnOneFace,
   'six faces, five with the material and one with the picture')
+check('a decal is its own thing in the tree', dressed2.decalInTree,
+  'selectable, with its own face')
+check('a World written the old way still opens', dressed2.oldFileStillOpens,
+  'the field is read as the child it always meant')
 
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {

@@ -134,10 +134,27 @@ can answer with a file that has not been published yet.
 The art is a horizontal cross: four faces in a row, top above the second and
 bottom below it, corners unused.
 
-`buildSky(manifest, resolveAsset)` is exported, so an editor drawing its own
-scene with its own camera puts up the same background the runtime will
-without borrowing the engine to do it. A picture that will not load never
-stops a World opening: the colour is the fallback, always.
+`buildSky(manifest, resolveAsset)` is exported and returns a `Sky`:
+
+```
+colour        what to paint when there is no picture
+box           a Skybox to add to a scene, or null
+environment   the same picture as a cube, for scene.environment
+```
+
+It is a box in the scene rather than a background on purpose. A background
+cube is centred on the camera, which puts the horizon exactly at eye level
+wherever you stand. A box can be placed, and this one sits below the eye and
+travels with it, so the horizon is lower and there is more sky above: what
+standing outdoors actually looks like. `Skybox.follow(camera)` is what keeps
+it there, and an editor calls it from its own loop.
+
+The mesh is named `kobblon:sky` rather than `Sky`, because a creator is
+allowed to call their World Sky and then looking the sky up by name finds
+their World. `engine.skybox` is the accessor.
+
+A picture that will not load never stops a World opening: the colour is the
+fallback, always.
 
 ## What a part can be
 
@@ -147,7 +164,7 @@ material      plastic, wood, metal, brick, grass, sand, concrete, glass, neon
 colour        the creator's; the material decides how it answers light
 transparency  0 solid, 1 invisible
 reflectance   0 flat, 1 a mirror
-decal         { id, face } — a Catalog id, never an address
+children      decals: pictures on one face each
 ```
 
 A material is an enum rather than a texture library on purpose: a creator
@@ -184,12 +201,31 @@ sky becomes the scene's environment, so metal reflects it. `reflectance` is
 separate and goes further, because a creator asking for a mirror is asking on
 purpose.
 
-Decals are a pass of their own, `applyDecals(built, resolveAsset)`, because a
-World should appear and then have its pictures arrive rather than wait for
-them. On a box the picture goes on the named face and the other five keep the
-plain material; on any other shape it wraps, which is what somebody means by
-putting a decal on a sphere. An editor calls the same function with its own
-resolver, so a picture shows before it is published.
+### A decal is a thing, not a field
+
+```
+{ kind: 'decal', picture: '<catalog id>', face: 'front',
+  transparency?: 0, colour?: '#ffffff' }
+```
+
+Decals are children of a part rather than a property of one, because that is
+what they are: a picture has a face, a tint and a transparency, and somebody
+has to be able to see it in the tree, select it, and delete it without
+deleting the wall underneath. A field holds one picture and cannot be
+selected. A part may carry up to twelve.
+
+A World written the old way, with `decal: { id, face }` on the part, still
+opens: it is read as the one child it always meant.
+
+A decal has no body of its own, so it is in the World's tree and not in the
+scene. An editor finds it by walking the World, which is what an Explorer
+does anyway.
+
+They are applied in a pass of their own, `applyDecals(built, resolveAsset)`,
+because a World should appear and then have its pictures arrive rather than
+wait for them. On a box each decal takes the face it names and the others
+keep the plain material; on any other shape the last one wraps it, which is
+what somebody means by putting a picture on a sphere.
 
 ## What collides, and what only looks like it
 

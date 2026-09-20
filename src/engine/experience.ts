@@ -41,14 +41,37 @@ export type WorldBlock = {
   transparency?: number
   /** 0 is flat, 1 is a mirror. */
   reflectance?: number
-  /**
-   * A picture on one side, named by Catalog id. An id rather than an
-   * address, for the same reason the sky is: a World that can name any host
-   * is a World that can make every player fetch anything.
-   */
-  decal?: { id: string; face: Face }
   /** False for decoration you can walk through. */
   solid?: boolean
+  /**
+   * What is on this part. Decals, today.
+   *
+   * A picture is a thing in its own right rather than a field, because that
+   * is what it is: it has a face, it will have a colour and a transparency
+   * and an offset, and somebody has to be able to see it in the tree, select
+   * it, and delete it without deleting the wall. A field can hold one
+   * picture and cannot be selected.
+   */
+  children?: WorldDecal[]
+}
+
+/**
+ * A picture on one face of a part.
+ *
+ * Named by Catalog id, never by address, for the same reason the sky is: a
+ * World that can name any host is a World that can make every player fetch
+ * anything.
+ */
+export type WorldDecal = {
+  id?: string
+  kind: 'decal'
+  /** The Catalog id of the picture. */
+  picture: string
+  face: Face
+  /** 0 is solid, 1 is invisible. */
+  transparency?: number
+  /** Tints the picture. White leaves it alone. */
+  colour?: string
 }
 
 /**
@@ -70,7 +93,7 @@ export type WorldGroup = {
   parts: WorldPart[]
 }
 
-export type WorldPart = WorldBlock | WorldGroup
+export type WorldPart = WorldBlock | WorldGroup | WorldDecal
 
 /** The old name, while anything still says it. */
 export type ExperienceBlock = WorldBlock
@@ -142,12 +165,35 @@ export function readManifest(raw: unknown): WorldManifest {
 
     const held = (value: unknown) => THREE.MathUtils.clamp(number(value, 0), 0, 1)
 
-    const decal = part.decal && typeof part.decal === 'object'
-      && typeof part.decal.id === 'string'
-      && /^[A-Za-z0-9_-]{1,64}$/.test(part.decal.id)
-      && FACES.includes(part.decal.face)
-      ? { id: part.decal.id as string, face: part.decal.face as Face }
-      : undefined
+    /*
+     * A decal used to be a field on the part. Files written that way still
+     * open: it is read as the one child it always meant.
+     */
+    const asChild = (raw: any): WorldDecal | null => {
+      if (!raw || typeof raw !== 'object') return null
+      const picture = typeof raw.picture === 'string' ? raw.picture
+        : typeof raw.id === 'string' ? raw.id
+        : null
+      if (!picture || !/^[A-Za-z0-9_-]{1,64}$/.test(picture)) return null
+      if (!FACES.includes(raw.face)) return null
+      return {
+        // An old file's `id` was the picture, not a name for the decal.
+        id: typeof raw.picture === 'string' && raw.id ? String(raw.id) : undefined,
+        kind: 'decal',
+        picture,
+        face: raw.face as Face,
+        transparency: THREE.MathUtils.clamp(number(raw.transparency, 0), 0, 1),
+        colour: typeof raw.colour === 'string' ? raw.colour : '#ffffff',
+      }
+    }
+
+    const children = [
+      ...(Array.isArray(part.children) ? part.children : []),
+      ...(part.decal ? [part.decal] : []),
+    ]
+      .map(asChild)
+      .filter(Boolean)
+      .slice(0, 12) as WorldDecal[]
 
     return {
       id: part.id ? String(part.id) : undefined,
@@ -160,8 +206,8 @@ export function readManifest(raw: unknown): WorldManifest {
       material: isMaterial(part.material) ? part.material : 'plastic',
       transparency: held(part.transparency),
       reflectance: held(part.reflectance),
-      decal,
       solid: part.solid !== false,
+      children,
     }
   }
 
@@ -232,6 +278,13 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       return
     }
 
+    /*
+     * A decal has no body of its own: it is a picture on the part it belongs
+     * to, put there by applyDecals once it has been fetched. It is in the
+     * tree so an editor can select it; it is not in the scene on its own.
+     */
+    if (part.kind === 'decal') return
+
     const material = materialFor({
       colour: part.colour ?? '#6c7080',
       material: part.material ?? 'plastic',
@@ -292,35 +345,46 @@ export async function applyDecals(
   const jobs: Promise<void>[] = []
 
   for (const [object, part] of built.partOf) {
-    if (part.kind === 'group' || !part.decal) continue
+    if (part.kind !== 'box' || !part.children?.length) continue
     const mesh = object as THREE.Mesh
-    const wanted = part.decal
+    const plain = mesh.material as THREE.Material
+    const shape = part.shape ?? 'box'
+
+    /*
+     * A box has six faces to address, so its materials become an array and
+     * each decal replaces the one it names. Anything else has a single
+     * surface, so the last decal wraps it, which is what somebody means by
+     * putting a picture on a sphere.
+     */
+    const faces: THREE.Material[] = shape === 'box'
+      ? Array.from({ length: 6 }, () => plain)
+      : [plain]
+
+    let painted = false
 
     jobs.push((async () => {
-      const url = await resolveAsset(wanted.id).catch(() => null)
-      if (!url) return
+      for (const decal of part.children ?? []) {
+        const url = await resolveAsset(decal.picture).catch(() => null)
+        if (!url) continue
 
-      const picture = await loader.loadAsync(url).catch(() => null)
-      if (!picture) return
-      picture.colorSpace = THREE.SRGBColorSpace
+        const picture = await loader.loadAsync(url).catch(() => null)
+        if (!picture) continue
+        picture.colorSpace = THREE.SRGBColorSpace
 
-      const plain = mesh.material as THREE.Material
-      const faced = (plain as THREE.MeshStandardMaterial).clone()
-      faced.map = picture
-      faced.needsUpdate = true
+        const faced = (plain as THREE.MeshStandardMaterial).clone()
+        faced.map = picture
+        if (decal.colour && decal.colour !== '#ffffff') faced.color.set(decal.colour)
+        if (decal.transparency) {
+          faced.transparent = true
+          faced.opacity = 1 - decal.transparency
+        }
+        faced.needsUpdate = true
 
-      /*
-       * A picture on one face means six materials, one of which carries it.
-       * Only a box has six faces to address; on anything else the picture
-       * wraps the whole shape, which is what a creator means by putting a
-       * decal on a sphere.
-       */
-      if ((part.shape ?? 'box') === 'box') {
-        mesh.material = Array.from({ length: 6 }, (_, at) =>
-          (at === SIDE[wanted.face] ? faced : plain))
-      } else {
-        mesh.material = faced
+        faces[shape === 'box' ? SIDE[decal.face] : 0] = faced
+        painted = true
       }
+
+      if (painted) mesh.material = shape === 'box' ? faces : faces[0]
     })())
   }
 

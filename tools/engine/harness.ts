@@ -20,7 +20,7 @@ const drawn = new Map<string, string>()
 const engine = new Engine({
   canvas,
   avatarUrl: '/k6/k6.glb',
-  resolveAsset: async (id) => drawn.get(id) ?? null,
+  resolveAsset: async (id) => drawn.get(id) ?? (window as unknown as { engineResolve?: string }).engineResolve ?? null,
 })
 
 Object.assign(window, {

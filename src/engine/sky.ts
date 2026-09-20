@@ -40,13 +40,13 @@ function fetchImage(url: string) {
   })
 }
 
-/** Cuts a cross into the six faces a cube texture wants. */
-export function cutCross(image: HTMLImageElement | HTMLCanvasElement): THREE.CubeTexture {
+/** Cuts a cross into the six faces, in the order a cube wants them. */
+export function cutCross(image: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement[] {
   const across = Math.floor(image.width / 4)
   const down = Math.floor(image.height / 3)
   const face = Math.min(across, down)
 
-  const sides = FACES.map(([, column, row]) => {
+  return FACES.map(([, column, row]) => {
     const canvas = document.createElement('canvas')
     canvas.width = face
     canvas.height = face
@@ -54,23 +54,88 @@ export function cutCross(image: HTMLImageElement | HTMLCanvasElement): THREE.Cub
     paint?.drawImage(image, column * across, row * down, across, down, 0, 0, face, face)
     return canvas
   })
+}
 
-  const sky = new THREE.CubeTexture(sides)
-  sky.needsUpdate = true
-  sky.colorSpace = THREE.SRGBColorSpace
-  return sky
+/** How far the sky sits below the eye, as a share of its own size. */
+const DROP = 0.22
+
+/** How big the box is. Inside the camera's far plane, outside any World. */
+const SPAN = 3000
+
+/**
+ * The sky, as something in the scene rather than as a background.
+ *
+ * A background cube is centred on the camera, which puts the horizon exactly
+ * at eye level wherever you stand. A box you can place is not: sitting it
+ * below the eye drops the horizon and shows more sky above, which is what
+ * standing outdoors actually looks like.
+ */
+export class Skybox {
+  readonly object: THREE.Mesh
+
+  constructor(faces: HTMLCanvasElement[]) {
+    const materials = faces.map((face) => {
+      const texture = new THREE.CanvasTexture(face)
+      texture.colorSpace = THREE.SRGBColorSpace
+      return new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.BackSide,
+        // It is behind everything and it is not lit by anything.
+        depthWrite: false,
+        fog: false,
+      })
+    })
+
+    this.object = new THREE.Mesh(new THREE.BoxGeometry(SPAN, SPAN, SPAN), materials)
+    /*
+     * Not "Sky": a creator is allowed to call their World that, and then
+     * looking the sky up by name finds their World instead. This name cannot
+     * be typed into Creator.
+     */
+    this.object.name = 'kobblon:sky'
+    this.object.renderOrder = -1
+    this.object.frustumCulled = false
+  }
+
+  /** Keeps the sky around whoever is looking, and below their eye. */
+  follow(camera: THREE.Camera) {
+    this.object.position.set(
+      camera.position.x,
+      camera.position.y - SPAN * DROP,
+      camera.position.z,
+    )
+  }
+
+  dispose() {
+    this.object.removeFromParent()
+    this.object.geometry.dispose()
+    for (const material of this.object.material as THREE.Material[]) material.dispose()
+  }
+}
+
+export type Sky = {
+  /** What to paint behind everything when there is no picture. */
+  colour: THREE.Color
+  /** The sky itself, to add to a scene. Null when the World names none. */
+  box: Skybox | null
+  /**
+   * The same picture as a cube, for `scene.environment`, so that metal has
+   * something to reflect. Null when the World names no sky.
+   */
+  environment: THREE.CubeTexture | null
 }
 
 /**
- * The background a World asks for: its sky if it names one, its colour if it
- * does not, and its colour again if the sky cannot be had. A World must never
- * fail to open because a picture would not load.
+ * The sky a World asks for: its picture if it names one, its colour if it
+ * does not, and its colour again if the picture cannot be had. A World must
+ * never fail to open because a background would not load.
  */
 export async function buildSky(
   manifest: WorldManifest,
   resolveAsset?: ResolveAsset,
-): Promise<THREE.CubeTexture | THREE.Color> {
-  const plain = new THREE.Color(manifest.sky?.colour ?? '#0f1016')
+): Promise<Sky> {
+  const colour = new THREE.Color(manifest.sky?.colour ?? '#0f1016')
+  const plain: Sky = { colour, box: null, environment: null }
 
   const id = manifest.sky?.decal
   if (!id || !resolveAsset) return plain
@@ -81,5 +146,11 @@ export async function buildSky(
   const image = await fetchImage(url)
   if (!image || !image.width || !image.height) return plain
 
-  return cutCross(image)
+  const faces = cutCross(image)
+
+  const environment = new THREE.CubeTexture(faces)
+  environment.needsUpdate = true
+  environment.colorSpace = THREE.SRGBColorSpace
+
+  return { colour, box: new Skybox(faces), environment }
 }
