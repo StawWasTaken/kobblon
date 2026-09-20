@@ -104,5 +104,5 @@ around.
 - **Collision.** Every shape still collides as its bounding box, so a wedge
   is not a ramp and nothing is anchored. A rigid body solver is the one
   decision that fixes both. Waiting on Staw.
-- **Migrations `0080` to `0082` and the `app-signin` function** have to be
-  applied and deployed before any of the above answers in production.
+- **Migrations `0080` to `0082`** have to be applied before any of the above
+  answers in production. `app-signin` is deployed.

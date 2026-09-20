@@ -205,7 +205,16 @@ one thing they used from the old page format, `AD_SIZES`, which now lives in
 They are readable, they keep their addresses, and their overview pages still
 answer. Deleting other people's work is not a refactor.
 
+**Done:** the 2D Spaces are out. The overview page, the builder, the cards
+and the rails are gone, Worlds stand where they stood, and the old
+addresses land on Discover. The tables are still there, because deleting
+what people made is not a refactor, and retiring them is its own migration.
+
 **Still to do:**
+
+0. **Two things dropped rather than faked**, both worth rebuilding on
+   Worlds: a visit log per person, which is what "recently visited" needs,
+   and posting an update to a World, which used to write to `space_updates`.
 
 1. **Redesign the overview.** `/s/1002/kobblon-hq` is a page built around a
    button that no longer exists. It wants rebuilding as what it is now: the
