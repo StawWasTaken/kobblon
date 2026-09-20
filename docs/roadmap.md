@@ -228,6 +228,10 @@ what the page holds is a catalogue and "Style" says nothing about it.
 Not a rename exercise: most of these want the page to exist first. The order
 above is the thing to hold on to.
 
+**`docs/decided.md` holds the answers to the five big ones**: collision,
+Community Worlds, badges, the shop and servers. Read it before starting any
+of them.
+
 ## Three tabs on a World that need something behind them
 
 The World page has About, Badges, Shop and Servers, in that order. Only
