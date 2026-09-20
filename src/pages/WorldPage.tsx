@@ -31,6 +31,7 @@ import { play } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
+import { asset } from '@/lib/asset'
 
 /*
  * A World, on the website.
@@ -66,14 +67,14 @@ function Stat({ label, value }: { label: string; value: string }) {
  * The small window that says what is happening when Play is pressed.
  *
  * Pressing Play in a browser looks like nothing happening: the page stays
- * still and a desktop application takes a moment to come up. This is the
- * only thing standing between that and somebody pressing Play four times.
+ * still while a desktop application takes a moment to come up. This is the
+ * only thing standing between that and somebody pressing Play four times,
+ * so it says one thing and gets out of the way.
  */
 function Handover({
-  state, name, onClose,
+  state, onClose,
 }: {
   state: 'off' | 'opening' | 'missing'
-  name: string
   onClose: () => void
 }) {
   if (state === 'off') return null
@@ -89,32 +90,27 @@ function Handover({
           <FontAwesomeIcon icon={faXmark} />
         </button>
 
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand text-xl text-onbrand shadow-lg shadow-brand/30">
-          <FontAwesomeIcon icon={worldIcon} />
-        </span>
+        {/* Kobblon's own mark, not a stand-in for one. */}
+        <img
+          src={asset('/brand/favicon.png')}
+          alt=""
+          className="mx-auto h-14 w-14 rounded-2xl"
+        />
 
         {state === 'opening' ? (
           <>
             <p className="mt-5 font-display text-lg font-extrabold leading-snug">
-              Kobblon is opening {name}.
-              <br />
-              Get ready!
+              Kobblon is opening. Get ready!
             </p>
-            <div className="mt-5 grid h-11 place-items-center rounded-xl bg-space text-white">
+            {/* Blue: the green is Play's and nothing else's. */}
+            <div className="mt-5 grid h-11 place-items-center rounded-xl bg-brand text-white">
               <FontAwesomeIcon icon={faSpinner} spin />
             </div>
-            <p className="mt-3 text-xs text-muted">
-              Nothing happening? The Launcher may not be installed yet.
-            </p>
           </>
         ) : (
           <>
             <p className="mt-5 font-display text-lg font-extrabold leading-snug">
               Get the Kobblon Launcher to play Worlds
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-muted">
-              Worlds run in the Launcher rather than in a browser. If you have it
-              already, give it a moment and press Play again.
             </p>
             <Button block icon={faDownload} to="/download" className="mt-5">
               Get the Launcher
@@ -207,7 +203,7 @@ export default function WorldPage() {
 
   if (world.loading) {
     return (
-      <Page>
+      <Page width="narrow">
         <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <Skeleton className="aspect-[16/9] rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
@@ -337,8 +333,13 @@ export default function WorldPage() {
 
   return (
     <>
-      <Page>
-        <div className="grid gap-6 lg:grid-cols-[1.65fr_1fr]">
+      {/*
+        * Narrow on purpose. Stretched across a wide screen the emblem is a
+        * billboard and the column beside it is mostly air; this is a page
+        * about one thing and it reads better held together.
+        */}
+      <Page width="narrow">
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
           <WorldGallery shots={shots} name={thing.name} />
 
           {/*
@@ -479,7 +480,7 @@ export default function WorldPage() {
         <AdBanner className="mt-10" quiet />
       </Page>
 
-      <Handover state={handing} name={thing.name} onClose={() => setHanding('off')} />
+      <Handover state={handing} onClose={() => setHanding('off')} />
 
       <ReportDialog
         open={reporting}
