@@ -2,11 +2,22 @@
 
 You are building the two Kobblon desktop applications in the `F-Kobblon Apps`
 folder. This document is the brief. The website, the engine and the avatar
-already exist in the `StawWasTaken/kobbleston` repository and are the source
+already exist in the `StawWasTaken/kobblon` repository and are the source
 of truth for all of it.
 
 Read `docs/engine.md` and `docs/direction.md` in that repository before you
 write anything.
+
+## Where this lives
+
+The repository is **`StawWasTaken/kobblon`**, at
+`https://github.com/StawWasTaken/kobblon`. It was `kobbleston` until the
+rebrand. GitHub still redirects the old name for git, so a clone made against
+it keeps working, but point your remote at the real one:
+
+```
+git remote set-url origin https://github.com/StawWasTaken/kobblon
+```
 
 ## The word: Worlds
 
