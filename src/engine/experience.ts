@@ -52,7 +52,7 @@ export type WorldBlock = {
    * it, and delete it without deleting the wall. A field can hold one
    * picture and cannot be selected.
    */
-  children?: WorldDecal[]
+  children?: (WorldDecal | WorldSound)[]
 }
 
 /**
@@ -72,6 +72,45 @@ export type WorldDecal = {
   transparency?: number
   /** Tints the picture. White leaves it alone. */
   colour?: string
+  /**
+   * How big the picture is on the face, as a multiple of its fitted size.
+   *
+   * A picture keeps its own proportions by default: a square picture on a
+   * wall forty stons by eight is a square picture, not a smear forty stons
+   * wide. One fills the face in its longest direction; two is twice that and
+   * hangs over the edges; `[2, 1]` is deliberately stretched, which is a
+   * thing somebody sometimes wants.
+   */
+  scale?: [number, number]
+  /** Where it sits on the face, in face widths. 0 is the middle. */
+  offset?: [number, number]
+}
+
+/**
+ * A sound.
+ *
+ * As a child of a part it comes from that part and fades with distance. In a
+ * World's own list it is everywhere at once, which is what ambience is.
+ */
+export type WorldSound = {
+  id?: string
+  kind: 'sound'
+  /** The Catalog id, such as SND-1064. */
+  sound: string
+  /** 0 is silent, 1 is as recorded. */
+  volume?: number
+  loop?: boolean
+  /**
+   * Whether it should be playing once it has loaded.
+   *
+   * Loaded and playing are deliberately two things. A World fetches what it
+   * needs when it opens; what is audible at a given moment is a separate
+   * question, and it is the one a script will answer later. Bolting that
+   * split on afterwards means every sound in every World is already wrong.
+   */
+  playing?: boolean
+  /** How far away it can still be heard, in stons. Positional sounds only. */
+  reach?: number
 }
 
 /**
@@ -93,7 +132,7 @@ export type WorldGroup = {
   parts: WorldPart[]
 }
 
-export type WorldPart = WorldBlock | WorldGroup | WorldDecal
+export type WorldPart = WorldBlock | WorldGroup | WorldDecal | WorldSound
 
 /** The old name, while anything still says it. */
 export type ExperienceBlock = WorldBlock
@@ -117,11 +156,44 @@ export type WorldManifest = {
     decal?: string
   }
   light?: { sun?: number; ambient?: number; from?: Vec3 }
+  /**
+   * How far a player may pull the camera back.
+   *
+   * A World decides how much of itself is seen at once: a corridor is not a
+   * hillside. The near end is the engine's, because it is where the camera
+   * enters somebody's head and that is not a creative decision.
+   */
+  camera?: { zoom?: { most?: number } }
+  /** Sounds that are not anywhere in particular. Ambience. */
+  sounds?: WorldSound[]
   blocks: WorldPart[]
 }
 
 /** The old name, while anything still says it. */
 export type ExperienceManifest = WorldManifest
+
+/** What a Catalog id is allowed to look like. Never an address. */
+const NAMED = /^[A-Za-z0-9_-]{1,64}$/
+
+/** A sound out of a file, believing none of it. */
+function readSound(raw: any): WorldSound | null {
+  if (!raw || typeof raw !== 'object') return null
+  const sound = typeof raw.sound === 'string' ? raw.sound : null
+  if (!sound || !NAMED.test(sound)) return null
+  const number = (value: unknown, fallback: number) =>
+    (Number.isFinite(value) ? Number(value) : fallback)
+  return {
+    id: raw.id ? String(raw.id) : undefined,
+    kind: 'sound',
+    sound,
+    volume: THREE.MathUtils.clamp(number(raw.volume, 1), 0, 1),
+    loop: raw.loop === true,
+    // Silent until something says otherwise: a World that opens shouting is
+    // a World nobody keeps open.
+    playing: raw.playing === true,
+    reach: THREE.MathUtils.clamp(number(raw.reach, 40), 1, 4000),
+  }
+}
 
 /** Nothing here trusts the file: a manifest is user content like any other. */
 export function readManifest(raw: unknown): WorldManifest {
@@ -149,6 +221,8 @@ export function readManifest(raw: unknown): WorldManifest {
     counted += 1
     if (counted > MOST) throw new Error('That World is too big to open.')
 
+    if (part.kind === 'sound') return readSound(part)
+
     if (part.kind === 'group') {
       if (depth >= DEEP) return null
       const parts = Array.isArray(part.parts)
@@ -165,16 +239,28 @@ export function readManifest(raw: unknown): WorldManifest {
 
     const held = (value: unknown) => THREE.MathUtils.clamp(number(value, 0), 0, 1)
 
+    /** Two numbers, or nothing, which is not the same as two zeroes. */
+    const pair = (value: unknown, least: number, most: number): [number, number] | undefined => {
+      if (!Array.isArray(value) || value.length !== 2) return undefined
+      if (!value.every((one) => Number.isFinite(one))) return undefined
+      return [
+        THREE.MathUtils.clamp(Number(value[0]), least, most),
+        THREE.MathUtils.clamp(Number(value[1]), least, most),
+      ]
+    }
+
     /*
      * A decal used to be a field on the part. Files written that way still
      * open: it is read as the one child it always meant.
      */
-    const asChild = (raw: any): WorldDecal | null => {
+    const asChild = (raw: any): WorldDecal | WorldSound | null => {
       if (!raw || typeof raw !== 'object') return null
+      if (raw.kind === 'sound') return readSound(raw)
+
       const picture = typeof raw.picture === 'string' ? raw.picture
         : typeof raw.id === 'string' ? raw.id
         : null
-      if (!picture || !/^[A-Za-z0-9_-]{1,64}$/.test(picture)) return null
+      if (!picture || !NAMED.test(picture)) return null
       if (!FACES.includes(raw.face)) return null
       return {
         // An old file's `id` was the picture, not a name for the decal.
@@ -184,6 +270,8 @@ export function readManifest(raw: unknown): WorldManifest {
         face: raw.face as Face,
         transparency: THREE.MathUtils.clamp(number(raw.transparency, 0), 0, 1),
         colour: typeof raw.colour === 'string' ? raw.colour : '#ffffff',
+        scale: pair(raw.scale, 0.01, 20),
+        offset: pair(raw.offset, -10, 10),
       }
     }
 
@@ -193,7 +281,7 @@ export function readManifest(raw: unknown): WorldManifest {
     ]
       .map(asChild)
       .filter(Boolean)
-      .slice(0, 12) as WorldDecal[]
+      .slice(0, 12) as (WorldDecal | WorldSound)[]
 
     return {
       id: part.id ? String(part.id) : undefined,
@@ -229,6 +317,18 @@ export function readManifest(raw: unknown): WorldManifest {
         : undefined,
     },
     light: data.light ?? {},
+    camera: {
+      zoom: {
+        // A World may pull the camera further back, never further in.
+        most: Number.isFinite(data.camera?.zoom?.most)
+          ? THREE.MathUtils.clamp(Number(data.camera?.zoom?.most), ZOOM_NEAR, 400)
+          : undefined,
+      },
+    },
+    sounds: (Array.isArray(data.sounds) ? data.sounds : [])
+      .map((one) => readSound(one))
+      .filter(Boolean)
+      .slice(0, 32) as WorldSound[],
     blocks: data.blocks.map((one) => readPart(one, 0)).filter(Boolean) as WorldPart[],
   }
 }
@@ -259,7 +359,26 @@ const DECAL_FACE = new THREE.PlaneGeometry(1, 1)
 const GAP = 0.02
 
 /**
- * Puts a decal against one side of the part that owns it.
+ * How close the camera may come, and how far it goes when a World is quiet.
+ *
+ * The near end is the engine's rather than the World's: it is the distance
+ * at which the camera is inside somebody's head, and that is arithmetic, not
+ * a creative decision.
+ */
+export const ZOOM_NEAR = 0.5
+export const ZOOM_FAR = 34
+
+/** Which of a part's sizes run across a face, and which run up it. */
+function faceAxes(face: Face, size: Vec3): [number, number] {
+  const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), 0.001))
+  if (face === 'front' || face === 'back') return [sx, sy]
+  if (face === 'left' || face === 'right') return [sz, sy]
+  return [sx, sz]
+}
+
+/**
+ * Puts a decal against one side of the part that owns it, at the size it
+ * should be.
  *
  * Just off the surface rather than on it, because two surfaces in the same
  * place fight over which is in front and the loser disappears. The gap is a
@@ -267,11 +386,23 @@ const GAP = 0.02
  * so the same local offset on a thin part is a thousandth of a ston, which
  * is below what a depth buffer can tell apart. Dividing by the part's own
  * size is what keeps the gap the same wherever it is used.
+ *
+ * The size is the other half of the same problem. A decal is a child of the
+ * part, so it is stretched by the part's scale, and a square picture on a
+ * wall forty stons by eight came out forty stons wide. So the plane is
+ * counter-scaled: the picture is fitted to the face in world units at the
+ * picture's own proportions, and then divided back through the part's scale.
+ * `scale` multiplies that fit, which is how somebody asks for a stretch on
+ * purpose, and `offset` slides it across the face in face widths.
  */
-function faceUp(picture: THREE.Mesh, face: Face, size: Vec3) {
+export function layDecal(picture: THREE.Mesh, decal: WorldDecal, size: Vec3, aspect = 1) {
   const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), 0.001))
   const half = Math.PI / 2
 
+  picture.position.set(0, 0, 0)
+  picture.rotation.set(0, 0, 0)
+
+  const face = decal.face
   if (face === 'front') picture.position.z = 0.5 + GAP / sz
   else if (face === 'back') {
     picture.position.z = -(0.5 + GAP / sz)
@@ -289,6 +420,24 @@ function faceUp(picture: THREE.Mesh, face: Face, size: Vec3) {
     picture.position.y = -(0.5 + GAP / sy)
     picture.rotation.x = half
   }
+
+  // The face in world stons, and the longest of it, which is what a picture
+  // fills when nobody has said otherwise.
+  const [across, up] = faceAxes(face, size)
+  const longest = Math.max(across, up)
+  const ratio = aspect > 0 ? aspect : 1
+  const wide = ratio >= 1
+  const worldWidth = wide ? longest : longest * ratio
+  const worldHeight = wide ? longest / ratio : longest
+
+  const [times, tall] = decal.scale ?? [1, 1]
+  picture.scale.set((worldWidth / across) * times, (worldHeight / up) * tall, 1)
+
+  const [right, above] = decal.offset ?? [0, 0]
+  // In the picture's own frame, so that it slides across the face it is on
+  // rather than along the World.
+  if (right) picture.translateX(right)
+  if (above) picture.translateY(above)
 }
 
 /** Turns a manifest into something in a scene. */
@@ -320,6 +469,20 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
     // A decal is placed by its part, below, because it belongs to one.
     if (part.kind === 'decal') return
 
+    /*
+     * A sound is not a shape. It is still somewhere: an empty that rides the
+     * part it belongs to, so that whatever ends up making the noise has a
+     * position to read and moves when the part moves.
+     */
+    if (part.kind === 'sound') {
+      const here = new THREE.Object3D()
+      here.name = part.id ?? 'Sound'
+      into.add(here)
+      partOf.set(here, part)
+      if (part.id) named.set(part.id, here)
+      return
+    }
+
     const material = materialFor({
       colour: part.colour ?? '#6c7080',
       material: part.material ?? 'plastic',
@@ -350,7 +513,12 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
      * cannot do that, and a material can hold one picture per face, and a
      * material cannot be selected, renamed or deleted in an Explorer.
      */
-    for (const decal of part.children ?? []) {
+    for (const child of part.children ?? []) {
+      if (child.kind === 'sound') {
+        place(child, mesh)
+        continue
+      }
+      const decal = child
       const picture = new THREE.Mesh(
         DECAL_FACE,
         new THREE.MeshStandardMaterial({
@@ -369,7 +537,7 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       // different flags, and the picture never appears.
       picture.visible = false
       picture.name = decal.id ?? 'Decal'
-      faceUp(picture, decal.face, part.size)
+      layDecal(picture, decal, part.size)
       mesh.add(picture)
 
       partOf.set(picture, decal)
@@ -429,6 +597,15 @@ export async function applyDecals(
       const material = picture.material as THREE.MeshStandardMaterial
       material.map = image
       material.needsUpdate = true
+
+      /*
+       * Only now is the picture's shape known, so only now can it be fitted.
+       * The part's scale is on the parent mesh, which is where the stretch
+       * this undoes comes from.
+       */
+      const size = (picture.parent?.scale.toArray() ?? [1, 1, 1]) as Vec3
+      const aspect = (image.image?.width ?? 1) / Math.max(image.image?.height ?? 1, 1)
+      layDecal(picture, part, size, aspect)
       // Nothing was shown while it loaded, rather than a blank white square.
       picture.visible = true
     })())

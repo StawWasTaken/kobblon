@@ -26,6 +26,17 @@ const engine = new Engine({
 Object.assign(window, {
   buildSky,
   resolveFake: async (id: string) => drawn.get(id) ?? null,
+  /** A plain picture of a given shape, for checking how a decal is fitted. */
+  fakePicture(id: string, width: number, height: number) {
+    const sheet = document.createElement('canvas')
+    sheet.width = width
+    sheet.height = height
+    const paint = sheet.getContext('2d')!
+    paint.fillStyle = '#ffffff'
+    paint.fillRect(0, 0, width, height)
+    drawn.set(id, sheet.toDataURL('image/png'))
+    return id
+  },
   /** Makes a horizontal cross with a different colour on each face. */
   fakeSky(id: string) {
     const face = 64

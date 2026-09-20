@@ -3,10 +3,12 @@ import { Controller } from './controller'
 import { Keyboard, stillIntent, type Intent } from './input'
 import { K6, loadK6Source, type K6Look } from './k6'
 import {
-  applyDecals, buildWorld, readManifest, type BuiltWorld, type WorldManifest,
+  applyDecals, buildWorld, readManifest, ZOOM_FAR, ZOOM_NEAR,
+  type BuiltWorld, type WorldManifest,
 } from './experience'
 import { buildSky, type ResolveAsset, type Skybox } from './sky'
 import { K6_HEIGHT } from './units'
+import { SoundService } from './sound'
 
 /**
  * The Kobblon Engine, the first useful slice of it.
@@ -62,10 +64,15 @@ export class Engine {
   private avatar: K6 | null = null
   private world: BuiltWorld | null = null
   private sky: Skybox | null = null
+  /** Everything this World makes a noise with. */
+  readonly sound = new SoundService()
   private listeners = new Map<keyof EngineEvents, Set<(data: never) => void>>()
 
   /** Where the camera sits behind the avatar, dragged by the player. */
-  private orbit = { yaw: 0, pitch: 0.22, distance: 34 }
+  private orbit = { yaw: 0, pitch: 0.22, distance: ZOOM_FAR }
+  /** How far back this World lets the camera go. */
+  private zoomMost = ZOOM_FAR
+  private onWheel: ((event: WheelEvent) => void) | null = null
 
   constructor(private options: EngineOptions) {
     this.renderer = new THREE.WebGLRenderer({ canvas: options.canvas, antialias: true })
@@ -74,7 +81,16 @@ export class Engine {
     this.camera = new THREE.PerspectiveCamera(58, 1, 0.5, 4000)
     this.scene.add(this.camera)
 
-    if (options.listen !== false) this.keyboard = new Keyboard(options.canvas)
+    if (options.listen !== false) {
+      this.keyboard = new Keyboard(options.canvas)
+      this.onWheel = (event) => {
+        event.preventDefault()
+        // A notch is a notch whichever machine sent it, so the sign is read
+        // and the size is the engine's.
+        this.zoom(Math.sign(event.deltaY) * 2)
+      }
+      options.canvas.addEventListener('wheel', this.onWheel, { passive: false })
+    }
     this.resize()
   }
 
@@ -116,6 +132,11 @@ export class Engine {
 
     this.light(manifest)
     void this.dressSky(manifest)
+    // A World decides how much of itself is seen at once: a corridor is not
+    // a hillside. Pulling back further than it allows is not offered.
+    this.zoomMost = manifest.camera?.zoom?.most ?? ZOOM_FAR
+    this.orbit.distance = Math.min(this.orbit.distance, this.zoomMost)
+    void this.sound.load(built, this.camera, this.options.resolveAsset)
     // The World is standing before its pictures arrive, rather than after.
     void applyDecals(built, this.options.resolveAsset)
 
@@ -133,6 +154,22 @@ export class Engine {
 
     this.say('opened', { world: manifest })
     return built
+  }
+
+  /**
+   * In and out, between the engine's near end and the World's far one.
+   *
+   * Public so that a Launcher's own controls, or a test, can do what the
+   * wheel does without inventing a wheel event.
+   */
+  zoom(by: number) {
+    this.orbit.distance = Math.max(ZOOM_NEAR, Math.min(this.zoomMost, this.orbit.distance + by))
+    return this.orbit.distance
+  }
+
+  /** Where the camera is, for anybody who needs to know. */
+  get distance() {
+    return this.orbit.distance
   }
 
   /** The sky in the scene, for anybody who needs to look at it. */
@@ -233,6 +270,12 @@ export class Engine {
         emote: intent.emote,
       }, step)
       this.avatar.update(step)
+      /*
+       * At the near end the camera is inside the head. Not faded and not
+       * clipped: half a head drawn across the middle of the screen is worse
+       * than no head, so it is not drawn.
+       */
+      this.avatar.object.visible = this.orbit.distance > ZOOM_NEAR + 0.5
     }
 
     this.aimCamera(state.position)
@@ -291,12 +334,16 @@ export class Engine {
       speed: Number(this.controller.state.speed.toFixed(2)),
       parts: this.avatar ? [...this.avatar.parts.keys()] : [],
       world: this.world?.manifest.name ?? null,
+      distance: Number(this.orbit.distance.toFixed(2)),
+      drawn: this.avatar?.object.visible ?? false,
     }
   }
 
   dispose() {
     this.stop()
     this.keyboard?.dispose()
+    if (this.onWheel) this.options.canvas.removeEventListener('wheel', this.onWheel)
+    this.sound.dispose()
     this.avatar?.dispose()
     this.renderer.dispose()
   }

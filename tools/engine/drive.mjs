@@ -410,6 +410,119 @@ check('a face is tiled by its own two dimensions, not the part',
   `top ${textured.floorTop.toFixed(2)} across, side ${textured.floorSide.toFixed(2)}`)
 check('glass carries none, because glass has no pattern', textured.glassHasNone, 'no map')
 
+// -- 17. a picture keeps its own proportions unless it is told not to
+const fitted = await p.evaluate(async () => {
+  const square = window.fakePicture('pic-square', 128, 128)
+  const wide = window.fakePicture('pic-wide', 400, 100)
+
+  const world = (picture, extra) => ({
+    format: 1, id: 'f', name: 'Fitted', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'wall', kind: 'box', at: [0, 5, 0], size: [40, 8, 1],
+        colour: '#0000ff', transparency: 0.5,
+        children: [{ id: 'sign', kind: 'decal', picture, face: 'front', ...extra }] },
+    ],
+  })
+
+  const Vector3 = Object.getPrototypeOf(window.engine.camera.position).constructor
+
+  const shown = async (picture, extra) => {
+    await window.engine.open(world(picture, extra))
+    let sign = null
+    for (const [object, part] of window.built().partOf) if (part.kind === 'decal') sign = object
+    // applyDecals is a separate pass on purpose, so this waits for it rather
+    // than for a fixed time.
+    for (let i = 0; i < 200 && !sign.material.map; i += 1) {
+      await new Promise((r) => setTimeout(r, 20))
+    }
+    window.engine.scene.updateMatrixWorld(true)
+    const size = sign.getWorldScale(new Vector3())
+    return {
+      across: size.x, up: size.y,
+      colour: sign.material.color.getHexString(),
+      opacity: sign.material.opacity,
+      own: sign.material !== sign.parent.material,
+    }
+  }
+
+  return {
+    square: await shown(square, {}),
+    wide: await shown(wide, {}),
+    stretched: await shown(square, { scale: [2, 1] }),
+    moved: await shown(square, { offset: [0.25, 0] }),
+    where: (() => {
+      let sign = null
+      for (const [object, part] of window.built().partOf) if (part.kind === 'decal') sign = object
+      return sign.position.x
+    })(),
+  }
+})
+check('a square picture on a long wall stays square',
+  Math.abs(fitted.square.across - fitted.square.up) < 0.01,
+  `${fitted.square.across.toFixed(2)} by ${fitted.square.up.toFixed(2)} stons on a wall 40 by 8`)
+check('a wide picture is as wide as it is',
+  Math.abs(fitted.wide.across / fitted.wide.up - 4) < 0.02,
+  `4:1 came out ${(fitted.wide.across / fitted.wide.up).toFixed(2)}:1`)
+check('and stretching it is something a World asks for',
+  Math.abs(fitted.stretched.across / fitted.square.across - 2) < 0.02,
+  `scale [2, 1] is ${(fitted.stretched.across / fitted.square.across).toFixed(2)} times as wide`)
+check('an offset slides it across the face it is on',
+  Math.abs(fitted.where - 0.25) < 0.001, `x ${fitted.where.toFixed(2)} of a face width`)
+
+// -- 18. the part's colour and transparency are the part's, not the picture's
+check('a decal has a material of its own',
+  fitted.square.own && fitted.square.colour === 'ffffff' && fitted.square.opacity === 1,
+  `blue half see through wall, #${fitted.square.colour} decal at opacity ${fitted.square.opacity}`)
+
+// -- 19. the wheel, between the engine's near end and the World's far one
+const zoomed = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 'z', name: 'Zoomed', spawn: { at: [0, 6, 0] },
+    camera: { zoom: { most: 20 } },
+    blocks: [{ id: 'floor', kind: 'box', at: [0, 0, 0], size: [40, 2, 40] }],
+  })
+  const out = window.engine.zoom(1000)
+  window.stepFrames(2)
+  const drawnFar = window.engine.status.drawn
+  const near = window.engine.zoom(-1000)
+  window.stepFrames(2)
+  return { out, near, drawnFar, drawnNear: window.engine.status.drawn }
+})
+check('a World says how far back the camera may go', zoomed.out === 20, `${zoomed.out} stons, as the manifest asked`)
+check('and the near end is the engine’s', Math.abs(zoomed.near - 0.5) < 0.001, `${zoomed.near} stons`)
+check('at the near end K6 is not drawn at all',
+  zoomed.drawnFar === true && zoomed.drawnNear === false, 'not faded, not clipped, not drawn')
+
+// -- 20. sound: everywhere, or somewhere, and loaded is not playing
+const heard = await p.evaluate(async () => {
+  window.fakePicture('SND-1064', 8, 8) // a file that is there; not a real sound
+  await window.engine.open({
+    format: 1, id: 's', name: 'Heard', spawn: { at: [0, 6, 0] },
+    sounds: [{ id: 'wind', kind: 'sound', sound: 'SND-1064', loop: true, playing: true }],
+    blocks: [
+      { id: 'radio', kind: 'box', at: [0, 4, 0], size: [2, 2, 2],
+        children: [{ id: 'tune', kind: 'sound', sound: 'SND-1064', reach: 30 }] },
+    ],
+  })
+  const all = window.engine.sound.all
+  const tune = window.engine.sound.get('tune')
+  const wind = window.engine.sound.get('wind')
+  return {
+    count: all.length,
+    ambientEverywhere: wind ? wind.at === null : false,
+    childRidesThePart: tune ? tune.at?.parent?.name === 'radio' || tune.at?.parent === window.built().named.get('radio') : false,
+    quietUntilAsked: tune ? tune.wanted === false : false,
+    ambientWanted: wind ? wind.wanted === true : false,
+    asked: window.engine.sound.play('tune') && window.engine.sound.get('tune').wanted === true,
+  }
+})
+check('a World’s own sounds are everywhere and a part’s are somewhere',
+  heard.count === 2 && heard.ambientEverywhere && heard.childRidesThePart,
+  'ambience has no position, a part’s sound rides the part')
+check('loaded and playing are two things',
+  heard.quietUntilAsked && heard.ambientWanted && heard.asked,
+  'silent until asked, and asking works whether or not the file is here')
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
@@ -418,6 +531,8 @@ await p.evaluate(async () => {
 
 // -- a picture, for a human to look at
 await p.evaluate(() => {
+  // the zoom check left the camera at the near end, where K6 is not drawn
+  window.engine.zoom(1000)
   window.engine.controller.placeAt(6, 1, 10, 3.1)
   window.drive({ z: 1, run: true })
   window.stepFrames(40)
