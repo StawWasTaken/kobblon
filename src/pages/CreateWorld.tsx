@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowUpRightFromSquare, faCheck, faCopy, faImage, faLink, faPlus, faTrash,
-  faUpload, faVideo,
+  faArrowUpRightFromSquare, faBell, faCheck, faCopy, faImage, faLink, faPlus,
+  faTrash, faUpload, faVideo,
 } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { Card } from '@/components/ui/Card'
@@ -19,8 +19,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle, CREATE_ICON, useFavicon } from '@/hooks/useTitle'
 import {
-  addWorldMedium, configureWorld, myWorlds, publishWorld, removeWorldMedium,
-  uploadWorldFile, worldFileUrl, worldGenres, worldMedia,
+  addWorldMedium, announceWorldUpdate, configureWorld, myWorlds, publishWorld,
+  removeWorldMedium, uploadWorldFile, worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
 import { worldLink } from '@/lib/links'
 import type { WorldMaturity } from '@/types/db'
@@ -70,6 +70,7 @@ export default function CreateWorld() {
   const [maturity, setMaturity] = useState<WorldMaturity>('everyone')
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [announcement, setAnnouncement] = useState('')
 
   const emblemInput = useRef<HTMLInputElement>(null)
   const shotInput = useRef<HTMLInputElement>(null)
@@ -322,6 +323,38 @@ export default function CreateWorld() {
           />
         </div>
       </Card>
+
+      {world.is_published && (
+        <Card className="space-y-4 p-5">
+          <SectionHeader title="Tell people it changed" />
+          <p className="text-sm text-muted">
+            Everybody who pressed Notify on this World gets one notification, and it
+            takes them here. Once every six hours, because a World that announces
+            itself all day is a World people switch off.
+          </p>
+          <Input
+            label="What changed"
+            labelNote="Left empty, it just says the World was updated"
+            value={announcement}
+            maxLength={200}
+            onChange={(e) => setAnnouncement(e.target.value)}
+          />
+          <div className="flex justify-end">
+            <Button
+              icon={faBell}
+              variant="subtle"
+              disabled={busy}
+              onClick={() => void run(async () => {
+                const told = await announceWorldUpdate(world.id, announcement)
+                setAnnouncement('')
+                return told
+              }, 'Everybody watching has been told.')}
+            >
+              Announce an update
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card className="flex flex-wrap items-center gap-4 p-5">
         <div className="min-w-0 flex-1">

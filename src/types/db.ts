@@ -237,14 +237,17 @@ export type Message = {
 export type Notification = {
   id: number
   user_id: string
-  kind: 'friend_request' | 'friend_accepted' | 'space_like' | 'space_visit' | 'message' | 'system'
+  kind: 'friend_request' | 'friend_accepted' | 'space_like' | 'space_visit' | 'message'
+    | 'system' | 'event_started' | 'world_updated'
   actor_id: string | null
   space_id: string | null
+  world_id?: string | null
   body: string | null
   is_read: boolean
   created_at: string
   actor?: Pick<Profile, 'username' | 'display_name' | 'avatar_url'> | null
   space?: Pick<Space, 'name' | 'slug'> | null
+  world?: Pick<World, 'name' | 'slug' | 'content_id'> | null
 }
 
 export type SpaceBadge = {
@@ -616,6 +619,8 @@ export type World = {
   is_published?: boolean
   owner_id?: string | null
   updated_at?: string | null
+  /** Set when it has been put away. Not the same as unpublished. */
+  archived_at?: string | null
   /** Whoever built it, when the page asked for them. */
   owner?: Pick<Profile, 'id' | 'username' | 'display_name' | 'avatar_url' | 'is_admin'> | null
 }

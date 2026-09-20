@@ -10,12 +10,12 @@ import { textureFor } from './textures'
  * to light, and the colour stays the creator's.
  */
 export type Material =
-  | 'plastic' | 'stons' | 'wood' | 'planks' | 'metal' | 'brick'
-  | 'grass' | 'sand' | 'concrete' | 'glass' | 'neon'
+  | 'plastic' | 'stons' | 'wood' | 'planks' | 'metal' | 'plate' | 'brick'
+  | 'grass' | 'sand' | 'pebble' | 'marble' | 'concrete' | 'glass' | 'neon'
 
 export const MATERIALS: Material[] = [
-  'plastic', 'stons', 'wood', 'planks', 'metal', 'brick',
-  'grass', 'sand', 'concrete', 'glass', 'neon',
+  'plastic', 'stons', 'wood', 'planks', 'metal', 'plate', 'brick',
+  'grass', 'sand', 'pebble', 'marble', 'concrete', 'glass', 'neon',
 ]
 
 type Look = {
@@ -52,9 +52,15 @@ const LOOKS: Record<Material, Look> = {
    * because the engine hands the sky to the scene as its environment.
    */
   metal: { roughness: 0.35, metalness: 0.55 },
+  /** Tread plate. The same metal, rougher, because it is made not to be slid on. */
+  plate: { roughness: 0.5, metalness: 0.5 },
   brick: { roughness: 0.95, metalness: 0 },
   grass: { roughness: 1, metalness: 0 },
   sand: { roughness: 0.98, metalness: 0 },
+  /** Small stones set in something. Rough, and never shiny. */
+  pebble: { roughness: 1, metalness: 0 },
+  /** Polished stone: the one rough material that answers light. */
+  marble: { roughness: 0.22, metalness: 0.1 },
   concrete: { roughness: 0.9, metalness: 0.05 },
   glass: { roughness: 0.08, metalness: 0.1, transparency: 0.75 },
   neon: { roughness: 0.4, metalness: 0, emissive: 0.9 },

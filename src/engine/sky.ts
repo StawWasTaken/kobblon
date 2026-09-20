@@ -119,10 +119,51 @@ export type Sky = {
   /** The sky itself, to add to a scene. Null when the World names none. */
   box: Skybox | null
   /**
-   * The same picture as a cube, for `scene.environment`, so that metal has
-   * something to reflect. Null when the World names no sky.
+   * Something for `scene.environment`, so that metal has something to
+   * reflect: the sky's picture as a cube when it has one, and six faces
+   * built from its colour when it does not.
    */
   environment: THREE.CubeTexture | null
+}
+
+/**
+ * Something for metal to reflect when a World names no sky.
+ *
+ * A metal with nothing around it renders black, and most Worlds set a
+ * colour rather than a picture, so most Worlds had black metal. Six small
+ * faces built from that colour, the top lighter and the bottom darker, are
+ * enough: metal picks up a sky above and a ground below and reads as metal.
+ * It is not a reflection of the World, and it is not pretending to be.
+ *
+ * Sixty four square, and that size is not arbitrary. Eight square renders
+ * as no environment at all: the faces upload, the cube is on the scene, and
+ * nothing reflects. Measured rather than reasoned about.
+ */
+function skyFromColour(colour: THREE.Color): THREE.CubeTexture | null {
+  if (typeof document === 'undefined') return null
+
+  const SIDE = 64
+
+  const face = (shade: number) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = SIDE
+    canvas.height = SIDE
+    const paint = canvas.getContext('2d')
+    if (!paint) return canvas
+    const tinted = colour.clone()
+    // Towards white above, towards black below, around the colour itself.
+    tinted.lerp(new THREE.Color(shade > 0 ? 0xffffff : 0x000000), Math.abs(shade))
+    paint.fillStyle = `#${tinted.getHexString()}`
+    paint.fillRect(0, 0, SIDE, SIDE)
+    return canvas
+  }
+
+  // The order three.js wants: +x, -x, +y, -y, +z, -z.
+  const sides = [face(0), face(0), face(0.45), face(-0.55), face(0), face(0)]
+  const cube = new THREE.CubeTexture(sides as unknown as HTMLImageElement[])
+  cube.needsUpdate = true
+  cube.colorSpace = THREE.SRGBColorSpace
+  return cube
 }
 
 /**
@@ -135,7 +176,7 @@ export async function buildSky(
   resolveAsset?: ResolveAsset,
 ): Promise<Sky> {
   const colour = new THREE.Color(manifest.sky?.colour ?? '#0f1016')
-  const plain: Sky = { colour, box: null, environment: null }
+  const plain: Sky = { colour, box: null, environment: skyFromColour(colour) }
 
   const id = manifest.sky?.decal
   if (!id || !resolveAsset) return plain

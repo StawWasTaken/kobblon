@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useOutletContext, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faUpload, faMagnifyingGlass, faCircleCheck,
+  faUpload, faMagnifyingGlass, faCircleCheck, faBoxArchive, faTrash, faEllipsis,
   faEye, faHandPointUp, faBoxOpen, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Choices } from '@/components/ui/Choices'
+import { Menu } from '@/components/ui/Menu'
+import { Confirm } from '@/components/ui/Confirm'
+import { useToast } from '@/components/ui/Toast'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -28,13 +31,13 @@ import { worldIcon } from '@/lib/naming'
 const CREATE = 'Kobblon Create'
 import {
   communityAnalytics, creatorAnalytics, listAssets,
-  listCommunityUploads, listInventory, listOwnAssets,
+  archiveWorld, deleteWorld, listCommunityUploads, listInventory, listOwnAssets,
   myWorlds,
 } from '@/lib/api'
-import type { AssetSort } from '@/lib/api'
+import type { AssetSort, WorldShelf } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
-import type { AssetKind } from '@/types/db'
+import type { AssetKind, World } from '@/types/db'
 
 type HubContext = {
   openUpload: () => void
@@ -200,15 +203,35 @@ export function CreateOverview() {
 
 /* ----------------------------------------------------------------- spaces */
 
+const shelves: { value: WorldShelf; label: string }[] = [
+  { value: 'active', label: 'In use' },
+  { value: 'published', label: 'Published' },
+  { value: 'drafts', label: 'Drafts' },
+  { value: 'archived', label: 'Archived' },
+]
+
 export function CreateWorlds() {
   useTitle('My Worlds', CREATE)
   const { profile } = useAuth()
   const { target } = useWorkingAs()
+  const toast = useToast()
+  const [shelf, setShelf] = useState<WorldShelf>('active')
+  const [removing, setRemoving] = useState<World | null>(null)
 
   const worlds = useAsync(
-    async () => (profile && !target ? myWorlds() : []),
-    [profile?.id, target?.id],
+    async () => (profile && !target ? myWorlds(shelf) : []),
+    [profile?.id, target?.id, shelf],
   )
+
+  const run = async (what: () => Promise<unknown>, said: string) => {
+    try {
+      await what()
+      await worlds.reload()
+      toast(said)
+    } catch (err) {
+      toast((err as Error).message)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -217,56 +240,120 @@ export function CreateWorlds() {
         lead="Built in Creator, played in the Launcher, and set up here or there."
       />
 
-      {worlds.loading && <Skeleton className="h-32" />}
-
-      {!worlds.loading && !worlds.data?.length && (
+      {/*
+        * A World belongs to the person who built it. Until a World can be
+        * handed to a Community, working as one has nothing to show, and
+        * saying so beats an empty list that looks broken.
+        */}
+      {target ? (
         <Card>
           <EmptyState
             mood="emptyBox"
-            title={target ? 'Nothing here yet' : 'No Worlds yet'}
-            body={target
-              ? 'A World belongs to the person who built it. Working as a Community does not show theirs.'
-              : 'Worlds are built in Kobblon Creator on the desktop. Publish one there and it appears here, ready to be set up and put in front of people.'}
-            action={target ? undefined : <Button variant="subtle" to="/download">Get Creator</Button>}
+            title="Worlds are not handed to Communities yet"
+            body={`A World belongs to whoever built it. Switch back to yourself to see yours.`}
           />
         </Card>
+      ) : (
+        <>
+          <Choices
+            label="Which of your Worlds"
+            value={shelf}
+            options={shelves}
+            onChange={(value) => setShelf(value as WorldShelf)}
+          />
+
+          {worlds.loading && <Skeleton className="h-32" />}
+
+          {!worlds.loading && !worlds.data?.length && (
+            <Card>
+              <EmptyState
+                mood="emptyBox"
+                title={shelf === 'archived' ? 'Nothing put away' : 'No Worlds yet'}
+                body={shelf === 'archived'
+                  ? 'A World you archive waits here. It still opens for anybody holding its link.'
+                  : 'Worlds are built in Kobblon Creator on the desktop. Publish one there and it appears here, ready to be set up and put in front of people.'}
+                action={shelf === 'archived'
+                  ? undefined
+                  : <Button variant="subtle" to="/download">Get Creator</Button>}
+              />
+            </Card>
+          )}
+
+          {!!worlds.data?.length && (
+            <Card className="overflow-hidden">
+              <ul>
+                {worlds.data.map((world) => (
+                  <li
+                    key={world.id}
+                    className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink">
+                      {world.cover_url
+                        ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
+                        : <FontAwesomeIcon icon={worldIcon} className="text-white/50" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold">{world.name}</span>
+                      {/*
+                        * The same six things Creator shows in its own list,
+                        * in the same order, read from the same my_worlds():
+                        * a World that looks like one thing on the desktop
+                        * and another here is two products.
+                        */}
+                      <span className="block truncate text-xs text-muted">
+                        {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
+                        {world.is_published ? '' : ' · not published'}
+                        {world.archived_at ? ' · archived' : ''}
+                        {' · '}
+                        {formatCount(world.visit_count)} {world.visit_count === 1 ? 'visit' : 'visits'}
+                        {world.updated_at ? ` · saved ${timeAgo(world.updated_at)}` : ''}
+                      </span>
+                    </span>
+
+                    <Button size="sm" variant="ghost" to={`/create/worlds/${world.id}`}>Configure</Button>
+
+                    <Menu
+                      label={`More for ${world.name}`}
+                      trigger={<FontAwesomeIcon icon={faEllipsis} />}
+                      items={[
+                        {
+                          label: world.archived_at ? 'Take out of the archive' : 'Archive',
+                          icon: faBoxArchive,
+                          onSelect: () => void run(
+                            () => archiveWorld(world.id, !world.archived_at),
+                            world.archived_at ? 'Back in use.' : 'Put away.',
+                          ),
+                        },
+                        {
+                          label: 'Delete',
+                          icon: faTrash,
+                          danger: true,
+                          onSelect: () => setRemoving(world),
+                        },
+                      ]}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </>
       )}
 
-      {!!worlds.data?.length && (
-        <Card className="overflow-hidden">
-          <ul>
-            {worlds.data.map((world) => (
-              <li
-                key={world.id}
-                className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
-              >
-                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink">
-                  {world.cover_url
-                    ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
-                    : <FontAwesomeIcon icon={worldIcon} className="text-white/50" />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold">{world.name}</span>
-                  {/*
-                    * The same six things Creator shows in its own list, in
-                    * the same order, read from the same my_worlds(): a World
-                    * that looks like one thing on the desktop and another
-                    * here is two products.
-                    */}
-                  <span className="block truncate text-xs text-muted">
-                    {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
-                    {world.is_published ? '' : ' · not published'}
-                    {' · '}
-                    {formatCount(world.visit_count)} {world.visit_count === 1 ? 'visit' : 'visits'}
-                    {world.updated_at ? ` · saved ${timeAgo(world.updated_at)}` : ''}
-                  </span>
-                </span>
-                <Button size="sm" variant="ghost" to={`/create/worlds/${world.id}`}>Configure</Button>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      <Confirm
+        open={Boolean(removing)}
+        onClose={() => setRemoving(null)}
+        title={removing ? `Delete ${removing.name}?` : ''}
+        lead="Its pictures and its manifest go with it, and that cannot be undone. Archiving puts a World away without destroying anything."
+        confirmText="Delete it"
+        icon={faTrash}
+        tone="danger"
+        onConfirm={() => {
+          const world = removing
+          setRemoving(null)
+          if (world) void run(() => deleteWorld(world.id), `${world.name} is gone.`)
+        }}
+      />
     </div>
   )
 }

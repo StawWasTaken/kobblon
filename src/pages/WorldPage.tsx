@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faPlay, faStar, faFlag, faSliders, faAward, faBagShopping, faServer,
+  faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
   faXmark, faSpinner, faDownload,
 } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
@@ -24,8 +24,8 @@ import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  favouriteWorld, getWorld, myWorldStanding, setWorldOpinion, worldFileUrl, worldGenres,
-  worldMedia,
+  doIWatchWorld, favouriteWorld, getWorld, myWorldStanding, setWorldOpinion, watchWorld,
+  worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
 import { play } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
@@ -163,6 +163,10 @@ export default function WorldPage() {
     async () => (thing && profile ? myWorldStanding(thing.id) : null),
     [thing?.id, profile?.id],
   )
+  const watching = useAsync(
+    async () => (thing && profile ? doIWatchWorld(thing.id) : false),
+    [thing?.id, profile?.id],
+  )
 
   const [tab, setTab] = useState<Tab>('About')
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
@@ -176,6 +180,7 @@ export default function WorldPage() {
    */
   const [opinion, setOpinion] = useState<boolean | null>(null)
   const [favourited, setFavourited] = useState(false)
+  const [notify, setNotify] = useState(false)
   const [counts, setCounts] = useState({ likes: 0, dislikes: 0, favourites: 0 })
 
   useEffect(() => {
@@ -191,6 +196,10 @@ export default function WorldPage() {
     setOpinion(standing.data?.opinion ?? null)
     setFavourited(Boolean(standing.data?.favourited))
   }, [standing.data])
+
+  useEffect(() => {
+    setNotify(Boolean(watching.data))
+  }, [watching.data])
 
   useCanonicalPath(thing?.content_id === number ? worldLink(thing) : null)
   useTitle(thing?.name ?? 'World')
@@ -326,6 +335,15 @@ export default function WorldPage() {
     )
   }
 
+  const tell = () => {
+    const want = !notify
+    void say(
+      () => setNotify(want),
+      () => setNotify(!want),
+      () => watchWorld(thing.id, profile!.id, want),
+    )
+  }
+
   const start = () => {
     setHanding('opening')
     play(thing.id, () => setHanding('missing'))
@@ -401,6 +419,29 @@ export default function WorldPage() {
                   >
                     <FontAwesomeIcon icon={faStar} className="text-base" />
                     {formatCount(counts.favourites)}
+                  </button>
+                </Tooltip>
+
+                <Tooltip
+                  label={profile
+                    ? (notify
+                      ? 'You will be told when this World changes'
+                      : 'Get told when this World changes')
+                    : 'Sign in to be told'}
+                  side="top"
+                >
+                  <button
+                    onClick={tell}
+                    disabled={!profile}
+                    aria-pressed={notify}
+                    className={cn(
+                      'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold',
+                      'transition-colors disabled:opacity-40',
+                      notify ? 'text-link' : 'text-white/60 hover:text-white',
+                    )}
+                  >
+                    <FontAwesomeIcon icon={faBell} className="text-base" />
+                    Notify
                   </button>
                 </Tooltip>
 

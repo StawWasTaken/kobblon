@@ -222,8 +222,19 @@ export class Engine {
      * A sky is also the only thing in a World for metal to reflect. Without
      * this, anything shiny renders black and a creator thinks the material
      * is broken.
+     *
+     * The sky arrives after the World is already standing and already
+     * drawn, and a material that was compiled without an environment does
+     * not pick one up on its own. Every material in the scene is told to
+     * build itself again, once, which is the difference between metal and
+     * a dark grey box.
      */
     this.scene.environment = sky.environment
+    this.scene.traverse((thing) => {
+      const material = (thing as THREE.Mesh).material
+      if (!material) return
+      for (const one of Array.isArray(material) ? material : [material]) one.needsUpdate = true
+    })
   }
 
   private light(manifest: WorldManifest) {

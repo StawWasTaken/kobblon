@@ -470,8 +470,8 @@ export async function markConversationRead(conversationId: string, userId: strin
 
 export async function listNotifications(userId: string): Promise<Notification[]> {
   return (unwrap(await supabase.from('notifications')
-    .select('*, actor:profiles!notifications_actor_id_fkey (username, display_name, avatar_url, is_guest), ' +
-      'space:spaces!notifications_space_id_fkey (name, slug)')
+    .select('*, actor:profiles!actor_id (username, display_name, avatar_url, is_guest), ' +
+      'space:spaces!space_id (name, slug), world:worlds!world_id (name, slug, content_id)')
     .eq('user_id', userId).order('created_at', { ascending: false }).limit(40)) as unknown as Notification[]) ?? []
 }
 
@@ -2090,7 +2090,7 @@ export async function getAppeal(violationId: number): Promise<Appeal | null> {
 
 // ------------------------------------------------------------------ worlds
 
-const WORLD_FIELDS = 'id, owner_id, is_published, updated_at, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
+const WORLD_FIELDS = 'id, owner_id, is_published, archived_at, updated_at, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
 
 export type WorldSort = 'trending' | 'new' | 'popular'
 
@@ -2211,9 +2211,32 @@ export async function publishWorld(id: string, out = true): Promise<World> {
   return unwrap(await supabase.rpc('publish_world', { which: id, out_now: out })) as World
 }
 
-/** Everything somebody has built, published or not. */
-export async function myWorlds(): Promise<World[]> {
-  return (unwrap(await supabase.rpc('my_worlds')) as World[]) ?? []
+/** Which pile of somebody's Worlds to look at. */
+export type WorldShelf = 'active' | 'published' | 'drafts' | 'archived' | 'all'
+
+/**
+ * Everything somebody has built.
+ *
+ * Archived Worlds are left out unless asked for: putting something away
+ * should mean not seeing it.
+ */
+export async function myWorlds(shelf: WorldShelf = 'active'): Promise<World[]> {
+  return (unwrap(await supabase.rpc('my_worlds', { shelf })) as World[]) ?? []
+}
+
+/** Putting a World away, or taking it back out. Not the same as unpublishing. */
+export async function archiveWorld(id: string, away = true): Promise<World> {
+  return unwrap(await supabase.rpc('archive_world', { which: id, away })) as World
+}
+
+/**
+ * Getting rid of a World for good.
+ *
+ * The files go with it. What people thought of it is kept, because a
+ * moderator looking into a report needs the thing the report is about.
+ */
+export async function deleteWorld(id: string) {
+  unwrap(await supabase.rpc('delete_world', { which: id }))
 }
 
 /**
@@ -2266,6 +2289,33 @@ export async function myWorldStanding(worldId: string): Promise<WorldStanding> {
 /** Liking a World, not liking it, or taking either back with `null`. */
 export async function setWorldOpinion(worldId: string, think: boolean | null) {
   unwrap(await supabase.rpc('set_world_opinion', { which: worldId, think }))
+}
+
+/** Whether this person has asked to be told when a World changes. */
+export async function doIWatchWorld(worldId: string): Promise<boolean> {
+  return Boolean(unwrap(await supabase.rpc('do_i_watch_world', { which: worldId })))
+}
+
+/** Asking to be told, or asking to stop being told. */
+export async function watchWorld(worldId: string, userId: string, on: boolean) {
+  const result = on
+    ? await supabase.from('world_watchers').insert({ world_id: worldId, user_id: userId })
+    : await supabase.from('world_watchers').delete()
+        .eq('world_id', worldId).eq('user_id', userId)
+  if (result.error) throw new Error(result.error.message)
+}
+
+/**
+ * The owner saying their World changed, which tells everybody watching.
+ *
+ * Deliberately a thing somebody does rather than something every save sets
+ * off: a platform that says eleven times a day that a wall moved is one
+ * whose notifications get switched off.
+ */
+export async function announceWorldUpdate(worldId: string, note: string) {
+  return unwrap(await supabase.rpc('announce_world_update', {
+    which: worldId, note: note.trim() || null,
+  })) as number
 }
 
 /** Keeping a World, or letting it go. */

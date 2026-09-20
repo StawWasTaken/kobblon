@@ -533,11 +533,15 @@ const surfaced = await p.evaluate(async () => {
       { id: 'wall',   kind: 'box', at: [0, 4, 0],   size: [8, 8, 2],   material: 'brick',  colour: '#b8563a' },
       { id: 'beam',   kind: 'box', at: [12, 4, 0],  size: [8, 8, 2],   material: 'wood',   colour: '#a3703c' },
       { id: 'deck',   kind: 'box', at: [24, 4, 0],  size: [8, 8, 2],   material: 'planks', colour: '#c09a68' },
+      { id: 'tread',  kind: 'box', at: [36, 4, 0],  size: [8, 8, 2],   material: 'plate',  colour: '#9aa3ad' },
+      { id: 'pipe',   kind: 'box', at: [48, 4, 0],  size: [8, 8, 2],   material: 'metal',  colour: '#b9c0c8' },
+      { id: 'path',   kind: 'box', at: [60, 4, 0],  size: [8, 8, 2],   material: 'pebble', colour: '#9c968c' },
+      { id: 'pillar', kind: 'box', at: [72, 4, 0],  size: [8, 8, 2],   material: 'marble', colour: '#e8e6e2' },
     ],
   })
 
   const of = (name) => window.built().named.get(name)
-  const names = ['lawn', 'stonewall', 'wall', 'beam', 'deck']
+  const names = ['lawn', 'stonewall', 'wall', 'beam', 'deck', 'tread', 'pipe', 'path', 'pillar']
 
   // Every one of these is fetched, so this waits for the files rather than
   // for a fixed number of milliseconds.

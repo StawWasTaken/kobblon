@@ -14,9 +14,12 @@ import type { Material } from './materials'
  *   recognises: grass, stons, brick, wood, planks. Drawing convincing grass
  *   on a canvas is a losing game, and these were made for Kobblon rather
  *   than taken from a texture site, so there is no licence to honour.
- * - **Drawn on a canvas**, for the rest. Metal, sand, concrete and plastic
- *   are a noise and a direction, they cost nothing to download and there is
- *   no seam to get wrong.
+ * - **Drawn on a canvas**, for the rest. Sand, concrete and plastic are a
+ *   noise and a direction, they cost nothing to download and there is no
+ *   seam to get wrong.
+ *
+ * Glass carries no pattern at all, and that is the right answer for it: a
+ * pane reads as a pane because you can see through it.
  *
  * Either way a pattern is greyscale and multiplies the colour the creator
  * chose, so brick in Kobblon blue is still recognisably brick.
@@ -40,7 +43,9 @@ export function setTextureBase(where: string) {
   }
 }
 
-export const PICTURED: Material[] = ['grass', 'stons', 'brick', 'wood', 'planks']
+export const PICTURED: Material[] = [
+  'grass', 'stons', 'brick', 'wood', 'planks', 'plate', 'metal', 'pebble', 'marble',
+]
 
 /** A repeatable random, so a pattern is the same every time it is drawn. */
 function seeded(seed: number) {
@@ -91,25 +96,6 @@ function speckle(
 }
 
 const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
-  metal() {
-    const { canvas, paint } = sheet()
-    const random = seeded(13)
-    paint.fillStyle = grey(0.92)
-    paint.fillRect(0, 0, SIZE, SIZE)
-
-    // Brushed, so the highlight travels along the grain.
-    for (let i = 0; i < 400; i += 1) {
-      const y = random() * SIZE
-      paint.strokeStyle = grey(0.82 + random() * 0.18, 0.35)
-      paint.lineWidth = 0.5 + random()
-      paint.beginPath()
-      paint.moveTo(0, y)
-      paint.lineTo(SIZE, y)
-      paint.stroke()
-    }
-    return canvas
-  },
-
   sand() {
     const { canvas, paint } = sheet()
     const random = seeded(19)
@@ -162,14 +148,22 @@ const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
  * World look wrong without anybody being able to say why.
  */
 export const TILES_PER_STON: Record<Material, number> = {
-  brick: 0.18,
-  wood: 0.12,
-  planks: 0.08,
-  metal: 0.12,
-  grass: 0.18,
-  sand: 0.22,
-  concrete: 0.14,
-  plastic: 0.1,
+  /*
+   * Roughly half what these were. A pattern repeating every few stons reads
+   * as noise from a distance and as wallpaper up close; bigger, and a brick
+   * is a brick and a pebble is a pebble.
+   */
+  brick: 0.1,
+  wood: 0.07,
+  planks: 0.05,
+  metal: 0.07,
+  plate: 0.09,
+  grass: 0.1,
+  sand: 0.12,
+  pebble: 0.1,
+  marble: 0.055,
+  concrete: 0.08,
+  plastic: 0.06,
   /*
    * A quarter of a tile per ston, and the picture holds four across, which
    * puts exactly one ston on every ston. That is the whole point of the
