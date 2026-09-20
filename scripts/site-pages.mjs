@@ -107,6 +107,22 @@ export const pages = [
     description: 'What to do when somebody else has put your work here, and what to do when yours went wrongly.',
   },
   {
+    /*
+     * Where an application sends somebody to sign in. These are real pages
+     * rather than addresses the 404 handler happens to render: an application
+     * opening a link that answers 404 is an application that looks broken,
+     * and the query string it carries is the whole point of the visit.
+     */
+    path: 'creator/sign-in',
+    title: 'Open Kobblon World Creator',
+    description: 'Sign in on Kobblon to open World Creator. Kobblon applications never ask for your password.',
+  },
+  {
+    path: 'launcher/sign-in',
+    title: 'Open the Kobblon Launcher',
+    description: 'Sign in on Kobblon to open the Launcher. Kobblon applications never ask for your password.',
+  },
+  {
     path: 'support',
     title: 'Support - Kobblon',
     description: 'Write to a person at Kobblon. Everything you send and everything we say back stays in one place.',
