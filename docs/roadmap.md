@@ -237,7 +237,7 @@ are empty, which is honest but is not finished.
 - **Badges.** Things a World hands out for doing something in it. Needs a
   `world_badges` table, a place in Configure to make them, and a way for a
   World to award one, which means it waits on scripting.
-- **Shop.** Passes and items a World sells, bought with Pixels through the
+- **Shop.** Passes and items a World sells, bought with Brix through the
   transaction ledger that already exists. The buying is buildable now; what
   a pass then *does* inside a World waits on scripting too.
 - **Servers.** Who is playing right now and joining a particular one. This

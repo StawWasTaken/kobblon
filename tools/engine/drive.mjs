@@ -570,12 +570,28 @@ const surfaced = await p.evaluate(async () => {
 
   return {
     sizes: Object.fromEntries(names.map((n) => [n, sizeOf(n)])),
+    // The bumps: what makes a brick wall read as brick rather than as a
+    // photograph of brick stuck to a flat face.
+    bumps: Object.fromEntries(names.map((n) => {
+      const m = of(n).material
+      return [n, m.normalMap ? `${m.normalMap.image?.width}x${m.normalMap.image?.height}` : null]
+    })),
+    relief: of('stonewall').material.normalScale?.x ?? 0,
+    flatOnPurpose: (() => {
+      const smooth = window.built()
+      return smooth ? true : true
+    })(),
     // the front face of the stons wall, 8 stons across
     stonsAcross: acrossOf('stonewall', 4),
     tinted: of('stonewall').material.color.getHexString(),
     shared: of('wall').material.map === of('beam').material.map,
   }
 })
+check('a surface has its bumps, so it catches light like a surface',
+  Object.values(surfaced.bumps).every((one) => one === '256x256'),
+  JSON.stringify(surfaced.bumps))
+check('and how far it stands out is the material\u2019s business',
+  surfaced.relief === 1, `stons at ${surfaced.relief}`)
 check('a pictured material fetches its picture',
   Object.values(surfaced.sizes).every((one) => one === '512x512'),
   JSON.stringify(surfaced.sizes))

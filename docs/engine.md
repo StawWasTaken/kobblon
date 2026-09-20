@@ -160,8 +160,8 @@ fallback, always.
 
 ```
 shape         box, wedge, cylinder, sphere
-material      plastic, stons, wood, planks, metal, brick, grass, sand,
-              concrete, glass, neon
+material      smooth, plastic, stons, wood, planks, metal, plate, brick,
+              grass, sand, pebble, slate, marble, concrete, glass, neon
 colour        the creator's; the material decides how it answers light
 transparency  0 solid, 1 invisible
 reflectance   0 flat, 1 a mirror

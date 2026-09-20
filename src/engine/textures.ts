@@ -41,10 +41,15 @@ export function setTextureBase(where: string) {
     texture?.dispose()
     loaded.delete(material)
   }
+  for (const [material, texture] of bumps) {
+    texture?.dispose()
+    bumps.delete(material)
+  }
 }
 
 export const PICTURED: Material[] = [
-  'grass', 'stons', 'brick', 'wood', 'planks', 'plate', 'metal', 'pebble', 'marble',
+  'grass', 'stons', 'brick', 'wood', 'planks', 'plate', 'metal', 'pebble',
+  'slate', 'marble', 'sand',
 ]
 
 /** A repeatable random, so a pattern is the same every time it is drawn. */
@@ -96,28 +101,6 @@ function speckle(
 }
 
 const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
-  sand() {
-    const { canvas, paint } = sheet()
-    const random = seeded(19)
-    paint.fillStyle = grey(0.95)
-    paint.fillRect(0, 0, SIZE, SIZE)
-    speckle(paint, random, 3000, 1.1, 0.35)
-
-    // Ripples, faint, the way wind leaves it.
-    for (let i = 0; i < 14; i += 1) {
-      const y = (i / 14) * SIZE
-      paint.strokeStyle = grey(0.86, 0.35)
-      paint.lineWidth = 2 + random() * 2
-      paint.beginPath()
-      paint.moveTo(0, y)
-      for (let x = 0; x <= SIZE; x += 16) {
-        paint.lineTo(x, y + Math.sin((x / SIZE) * Math.PI * 4 + i) * 3)
-      }
-      paint.stroke()
-    }
-    return canvas
-  },
-
   concrete() {
     const { canvas, paint } = sheet()
     const random = seeded(23)
@@ -159,11 +142,14 @@ export const TILES_PER_STON: Record<Material, number> = {
   metal: 0.07,
   plate: 0.09,
   grass: 0.1,
-  sand: 0.12,
+  sand: 0.07,
   pebble: 0.1,
+  slate: 0.06,
   marble: 0.055,
   concrete: 0.08,
   plastic: 0.06,
+  /** Nothing on it, so nothing to repeat. */
+  smooth: 0,
   /*
    * A quarter of a tile per ston, and the picture holds four across, which
    * puts exactly one ston on every ston. That is the whole point of the
@@ -184,6 +170,57 @@ function dress(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 4
   return texture
+}
+
+/**
+ * How far the surface stands out of the face, per material.
+ *
+ * The normal map says which way the surface points; this says how much to
+ * believe it. A stud stands proud of a part and a polished slab barely
+ * does, and the difference between them is what stops every material
+ * looking like the same lumpy rubber.
+ */
+const RELIEF: Partial<Record<Material, number>> = {
+  stons: 1,
+  plate: 0.9,
+  pebble: 0.85,
+  brick: 0.8,
+  planks: 0.7,
+  grass: 0.6,
+  slate: 0.55,
+  sand: 0.5,
+  wood: 0.4,
+  marble: 0.25,
+  metal: 0.2,
+}
+
+const bumps = new Map<Material, THREE.Texture | null>()
+
+/**
+ * The bumps for a material: the same picture read as a height, worked out
+ * ahead of time by tools/engine/bumps.py.
+ *
+ * This is the whole reason a brick wall looks like brick rather than like a
+ * photograph of brick stuck to a flat face. Without it every surface in a
+ * World catches light identically, which is what makes a blocky World look
+ * like paper.
+ */
+export function bumpFor(material: Material): THREE.Texture | null {
+  if (bumps.has(material)) return bumps.get(material) ?? null
+  if (!PICTURED.includes(material) || !RELIEF[material]) {
+    bumps.set(material, null)
+    return null
+  }
+  const texture = dress(pictures.load(`${base}${material}-bump.webp`))
+  // A normal map is directions, not colour, and must not be gamma corrected.
+  texture.colorSpace = THREE.NoColorSpace
+  bumps.set(material, texture)
+  return texture
+}
+
+/** How much of the bump to believe, for whoever is building the material. */
+export function reliefFor(material: Material) {
+  return RELIEF[material] ?? 0
 }
 
 /**

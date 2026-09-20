@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { textureFor } from './textures'
+import { bumpFor, reliefFor, textureFor } from './textures'
 
 /**
  * What a part is made of.
@@ -10,12 +10,13 @@ import { textureFor } from './textures'
  * to light, and the colour stays the creator's.
  */
 export type Material =
-  | 'plastic' | 'stons' | 'wood' | 'planks' | 'metal' | 'plate' | 'brick'
-  | 'grass' | 'sand' | 'pebble' | 'marble' | 'concrete' | 'glass' | 'neon'
+  | 'smooth' | 'plastic' | 'stons' | 'wood' | 'planks' | 'metal' | 'plate'
+  | 'brick' | 'grass' | 'sand' | 'pebble' | 'slate' | 'marble' | 'concrete'
+  | 'glass' | 'neon'
 
 export const MATERIALS: Material[] = [
-  'plastic', 'stons', 'wood', 'planks', 'metal', 'plate', 'brick',
-  'grass', 'sand', 'pebble', 'marble', 'concrete', 'glass', 'neon',
+  'smooth', 'plastic', 'stons', 'wood', 'planks', 'metal', 'plate', 'brick',
+  'grass', 'sand', 'pebble', 'slate', 'marble', 'concrete', 'glass', 'neon',
 ]
 
 type Look = {
@@ -33,6 +34,12 @@ type Look = {
  * is a different job from being physically right.
  */
 const LOOKS: Record<Material, Look> = {
+  /*
+   * Plastic with nothing on it. Not an oversight: a clean face is a thing
+   * somebody wants, and the way to get it is a material that says so rather
+   * than a texture everybody has to remember to turn off.
+   */
+  smooth: { roughness: 0.38, metalness: 0 },
   plastic: { roughness: 0.55, metalness: 0 },
   /*
    * Plastic with a ston on every ston.
@@ -59,6 +66,8 @@ const LOOKS: Record<Material, Look> = {
   sand: { roughness: 0.98, metalness: 0 },
   /** Small stones set in something. Rough, and never shiny. */
   pebble: { roughness: 1, metalness: 0 },
+  /** Split stone. Flat, matte, and darker in its hollows than marble is. */
+  slate: { roughness: 0.88, metalness: 0.04 },
   /** Polished stone: the one rough material that answers light. */
   marble: { roughness: 0.22, metalness: 0.1 },
   concrete: { roughness: 0.9, metalness: 0.05 },
@@ -98,6 +107,15 @@ export function materialFor(look: PartLook, cache: Map<string, THREE.Material>) 
    */
   const pattern = textureFor(look.material)
 
+  /*
+   * And the bumps. A picture on a flat face is a flat face with a picture on
+   * it; the normal map is what makes the hollows catch light differently
+   * from the faces, which is the whole difference between a brick wall and a
+   * photograph of one.
+   */
+  const bumps = bumpFor(look.material)
+  const relief = reliefFor(look.material)
+
   const material = new THREE.MeshStandardMaterial({
     color: look.colour,
     roughness: THREE.MathUtils.clamp(base.roughness * (1 - look.reflectance * 0.85), 0.02, 1),
@@ -113,6 +131,7 @@ export function materialFor(look: PartLook, cache: Map<string, THREE.Material>) 
     // A pane you can see through should still be a pane from behind.
     side: clear > 0.001 ? THREE.DoubleSide : THREE.FrontSide,
     ...(pattern ? { map: pattern } : {}),
+    ...(bumps ? { normalMap: bumps, normalScale: new THREE.Vector2(relief, relief) } : {}),
   })
 
   if (base.emissive) {
