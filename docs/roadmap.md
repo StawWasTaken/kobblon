@@ -206,3 +206,41 @@ gets its own list:
 - Avatar and profile customisation, which is its own marketplace.
 - Notifications that group sensibly.
 - Keyboard shortcuts.
+
+## Navigation, once there is enough to navigate
+
+The rail and the topbar grew a page at a time and it shows. What they should
+end up as, when the pages behind them exist:
+
+**In the sidebar**, in this order: Home, Profile, Inbox, Friends, Avatar,
+Inventory, Communities, Library.
+
+- **Avatar** is a K6 you dress once and wear in every World, the way it works
+  everywhere else people expect it to. It is not the Creator's avatar and it
+  is not a picture: it is the record the engine reads when somebody joins.
+- **Inventory** is what a person owns, which is not what a creator uploaded.
+  Accessories, badges, passes, clothing. The Create inventory stays where it
+  is and stays separate.
+
+**In the topbar**: Discover, Catalog, Create. Catalog replaces Style, because
+what the page holds is a catalogue and "Style" says nothing about it.
+
+Not a rename exercise: most of these want the page to exist first. The order
+above is the thing to hold on to.
+
+## Kobblon in the places people already are
+
+A World somebody is playing should be visible outside Kobblon.
+
+- **Discord Rich Presence, through the Launcher.** "Playing Kobblon", the
+  Kobblon logo as the large image, and the World underneath it: its emblem,
+  its name, who built it, and its numbers, players, visits and likes. That
+  is the whole advert, and it costs a friends list.
+- **Twitch.** The same thing where Twitch shows what a streamer is running,
+  so a stream of a World says Kobblon rather than a blank.
+
+Both are the Launcher's to send and the website's to supply: a World already
+has an emblem, a creator, a description and its counts, and the presence
+payload is those fields and nothing new. Worth doing once a World can be
+published, played and looked at, and not before: presence for an empty
+platform advertises an empty platform.

@@ -11,6 +11,7 @@ import type {
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
+  WorldGenre, WorldMedium, WorldMaturity, WorldStanding,
 } from '@/types/db'
 
 const SPACE_FIELDS =
@@ -854,9 +855,17 @@ export async function uploadAsset(input: {
   const extension = input.file.name.split('.').pop()?.toLowerCase() ?? 'bin'
   const path = `${input.userId}/${crypto.randomUUID()}.${extension}`
 
+  /*
+   * A Kobblon part file is .kbfl, which no browser has a type for, so it
+   * arrives with an empty one and the bucket refuses it. It is JSON, and
+   * saying so here is the difference between an upload and a shrug.
+   */
+  const contentType = input.file.type
+    || (extension === 'kbfl' ? 'application/json' : 'application/octet-stream')
+
   const uploaded = await supabase.storage
     .from(assetBucket)
-    .upload(path, input.file, { contentType: input.file.type, upsert: false })
+    .upload(path, input.file, { contentType, upsert: false })
   if (uploaded.error) throw new Error(uploaded.error.message)
 
   try {
@@ -2081,8 +2090,7 @@ export async function getAppeal(violationId: number): Promise<Appeal | null> {
 
 // ------------------------------------------------------------------ worlds
 
-const WORLD_FIELDS =
-  'id, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, published_at'
+const WORLD_FIELDS = 'id, owner_id, is_published, updated_at, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
 
 export async function listWorlds(limit = 24): Promise<World[]> {
   const { data, error } = await supabase
@@ -2141,4 +2149,106 @@ export async function publishWorld(id: string, out = true): Promise<World> {
 /** Everything somebody has built, published or not. */
 export async function myWorlds(): Promise<World[]> {
   return (unwrap(await supabase.rpc('my_worlds')) as World[]) ?? []
+}
+
+/**
+ * Everything about a World that is not its scene.
+ *
+ * One function, called by the Create pages here and by Creator on the
+ * desktop, because two signatures would mean two sets of rules about who may
+ * change what. Leaving a field out leaves it alone.
+ */
+export async function configureWorld(id: string, changes: {
+  name?: string
+  description?: string
+  genre?: string | null
+  maturity?: WorldMaturity
+  /** A path inside this World's own folder, or '' to take the emblem off. */
+  cover?: string
+}): Promise<World> {
+  return unwrap(await supabase.rpc('configure_world', {
+    which: id,
+    called: changes.name ?? null,
+    about: changes.description ?? null,
+    genre: changes.genre ?? null,
+    maturity: changes.maturity ?? null,
+    cover: changes.cover ?? null,
+  })) as World
+}
+
+/** The genres, in the order they are shown. One list, shared by both clients. */
+export async function worldGenres(): Promise<WorldGenre[]> {
+  return (unwrap(await supabase.rpc('world_genre_list')) as WorldGenre[]) ?? []
+}
+
+/** What a World shows of itself, in the order it chose. */
+export async function worldMedia(worldId: string): Promise<WorldMedium[]> {
+  const { data, error } = await supabase
+    .from('world_media')
+    .select('id, world_id, position, kind, path, created_at')
+    .eq('world_id', worldId)
+    .order('position')
+  if (error) throw new Error(error.message)
+  return (data ?? []) as WorldMedium[]
+}
+
+/** What the person reading the page has already said about this World. */
+export async function myWorldStanding(worldId: string): Promise<WorldStanding> {
+  const rows = unwrap(await supabase.rpc('my_world_standing', { which: worldId })) as WorldStanding[]
+  return rows?.[0] ?? { opinion: null, favourited: false }
+}
+
+/** Liking a World, not liking it, or taking either back with `null`. */
+export async function setWorldOpinion(worldId: string, think: boolean | null) {
+  unwrap(await supabase.rpc('set_world_opinion', { which: worldId, think }))
+}
+
+/** Keeping a World, or letting it go. */
+export async function favouriteWorld(worldId: string, userId: string, on: boolean) {
+  const result = on
+    ? await supabase.from('world_favourites').insert({ world_id: worldId, user_id: userId })
+    : await supabase.from('world_favourites').delete()
+        .eq('world_id', worldId).eq('user_id', userId)
+  if (result.error) throw new Error(result.error.message)
+}
+
+/** Where a World's own files answer from. Public: they are what it shows. */
+export function worldFileUrl(path: string) {
+  const base = import.meta.env.VITE_SUPABASE_URL ?? ''
+  return `${base}/storage/v1/object/public/worlds/${path}`
+}
+
+/**
+ * A file into a World's own folder.
+ *
+ * The bucket's policies already say only the owner of that World may write
+ * there, so this is not where that is decided; it is only where the path is
+ * built, in one place, so that every client agrees on the shape of it.
+ */
+export async function uploadWorldFile(worldId: string, file: File, as: string) {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
+  const path = `${worldId}/${as}-${crypto.randomUUID()}.${extension}`
+  const { error } = await supabase.storage
+    .from('worlds')
+    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+  if (error) throw new Error(error.message)
+  return path
+}
+
+/** Something a World shows of itself, added to the end of what it shows. */
+export async function addWorldMedium(
+  worldId: string, kind: 'image' | 'video', path: string, position: number,
+) {
+  const { error } = await supabase
+    .from('world_media')
+    .insert({ world_id: worldId, kind, path, position })
+  if (error) throw new Error(error.message)
+}
+
+/** And taken off again, file and row together. */
+export async function removeWorldMedium(medium: WorldMedium) {
+  const { error } = await supabase.from('world_media').delete().eq('id', medium.id)
+  if (error) throw new Error(error.message)
+  // A row with no file is a broken picture; a file with no row is litter.
+  await supabase.storage.from('worlds').remove([medium.path]).catch(() => null)
 }

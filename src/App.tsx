@@ -21,6 +21,7 @@ const SpacePage = lazyPage(() => import('@/pages/SpacePage'))
 const CreateHub = lazyPage(() => import('@/pages/CreateHub'))
 const AssetPage = lazyPage(() => import('@/pages/AssetPage'))
 const CreateOverview = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateOverview })))
+const CreateWorld = lazyPage(() => import('@/pages/CreateWorld'))
 const CreateSpaces = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateSpaces })))
 const CreateUploads = lazyPage(() => import('@/pages/CreateUploads'))
 const CreateMarketplace = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateMarketplace })))
@@ -137,6 +138,9 @@ export default function App() {
                   {/* Configuring a Space is Create's business; building one is
                       its own screen, so it keeps its own address. */}
                   <Route path="worlds/:spaceId/edit" element={<EditSpace />} />
+                  {/* Setting a World up: the same job Creator does on the
+                      desktop, through the same function. */}
+                  <Route path="worlds/:id" element={<CreateWorld />} />
                   <Route path=":tag" element={<AssetPage />} />
                 </Route>
                 <Route path="/people" element={<People />} />

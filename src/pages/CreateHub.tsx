@@ -22,12 +22,14 @@ import { UploadDialog } from '@/components/create/UploadDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { CREATE_ICON, useFavicon, useTitle } from '@/hooks/useTitle'
+import { worldIcon } from '@/lib/naming'
 
 /** Everything under Create names itself inside Create, not inside the site. */
 const CREATE = 'Kobblon Create'
 import {
   communityAnalytics, creatorAnalytics, listAssets, listCommunitySpacesManaged,
   listCommunityUploads, listInventory, listOwnAssets, listSharedSpaces, listSpacesByOwner,
+  myWorlds,
 } from '@/lib/api'
 import type { AssetSort } from '@/lib/api'
 import { formatCount } from '@/lib/format'
@@ -204,6 +206,11 @@ export function CreateSpaces() {
   useTitle('My Worlds', CREATE)
   const { profile } = useAuth()
   const { target } = useWorkingAs()
+
+  /* What Creator published: the real thing, built on the desktop. */
+  const worlds = useAsync(async () => (profile && !target ? myWorlds() : []), [profile?.id, target?.id])
+
+  /* And the old 2D Spaces, which are an archive rather than a workspace. */
   const spaces = useAsync(
     async () => (target
       ? listCommunitySpacesManaged(target.id)
@@ -236,42 +243,76 @@ export function CreateSpaces() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title={target ? `${target.name}'s Spaces` : 'My Worlds'}
-        lead="Yours to build, and the ones you were invited onto."
+        title={target ? `${target.name}'s Worlds` : 'My Worlds'}
+        lead="Built in Creator, played in the Launcher, and set up here or there."
       />
 
-      {spaces.loading && <Skeleton className="h-32" />}
+      {worlds.loading && <Skeleton className="h-32" />}
 
-      {!spaces.loading && !spaces.data?.length && (
+      {!worlds.loading && !worlds.data?.length && !target && (
         <Card>
           <EmptyState
             mood="emptyBox"
             title="No Worlds yet"
-            body="Worlds are being replaced by experiences, built in Creator and played in the Launcher. The ones you already have stay here."
-            action={<Button variant="subtle" to="/download">About the Launcher</Button>}
+            body="Worlds are built in Kobblon Creator on the desktop. Publish one there and it appears here, ready to be set up and put in front of people."
+            action={<Button variant="subtle" to="/download">Get Creator</Button>}
           />
         </Card>
       )}
 
-      {!!spaces.data?.length && (
+      {!!worlds.data?.length && (
         <Card className="overflow-hidden">
-          <ul>{spaces.data.map((space) => row(space, 'Configure'))}</ul>
+          <ul>
+            {worlds.data.map((world) => (
+              <li
+                key={world.id}
+                className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink">
+                  {world.cover_url
+                    ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
+                    : <FontAwesomeIcon icon={worldIcon} className="text-white/50" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold">{world.name}</span>
+                  <span className="block text-xs text-muted">
+                    {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
+                    {world.is_published ? '' : ' · not published'}
+                    {' · '}
+                    {formatCount(world.visit_count)} {world.visit_count === 1 ? 'visit' : 'visits'}
+                  </span>
+                </span>
+                <Button size="sm" variant="ghost" to={`/create/worlds/${world.id}`}>Configure</Button>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 
-      {!!shared.data?.length && (
-        <section>
-          <h2 className="mb-2 text-sm font-extrabold">Shared with me</h2>
-          <Card className="overflow-hidden">
-            <ul>{shared.data.map((space) => row(space, 'Open'))}</ul>
-          </Card>
+      {(!!spaces.data?.length || !!shared.data?.length) && (
+        <section className="pt-2">
+          <SectionHeader title="Classic Spaces" />
+          <p className="mb-3 mt-1 text-sm text-muted">
+            The old 2D pages. They are kept so nothing anybody made disappears, and they
+            are not built any more.
+          </p>
+
+          {!!spaces.data?.length && (
+            <Card className="mt-3 overflow-hidden">
+              <ul>{spaces.data.map((space) => row(space, 'Configure'))}</ul>
+            </Card>
+          )}
+
+          {!!shared.data?.length && (
+            <Card className="mt-3 overflow-hidden">
+              <ul>{shared.data.map((space) => row(space, 'Open'))}</ul>
+            </Card>
+          )}
         </section>
       )}
     </div>
   )
 }
-
-/* ------------------------------------------------------------ marketplace */
 
 const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'model']
 

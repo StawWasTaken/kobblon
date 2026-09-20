@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCubes, faUsers, faCalendarDay, faShapes, faGlobe, faLock,
+  faUsers, faCalendarDay, faShapes, faGlobe, faLock,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import { worldIcon } from '@/lib/naming'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
@@ -21,7 +22,7 @@ import type { OwnAsset } from '@/types/db'
 
 /** What an ad may be for, and what each of those looks like in a list. */
 export const targetLook: Record<AdTarget, { icon: IconDefinition; label: string }> = {
-  space: { icon: faCubes, label: 'Worlds' },
+  space: { icon: worldIcon, label: 'Worlds' },
   community: { icon: faUsers, label: 'Communities' },
   event: { icon: faCalendarDay, label: 'Events' },
   asset: { icon: faShapes, label: 'Marketplace' },

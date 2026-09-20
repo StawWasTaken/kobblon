@@ -607,5 +607,46 @@ export type World = {
   runtime_version: number
   visit_count: number
   like_count: number
+  dislike_count?: number
+  favourite_count?: number
   published_at: string | null
+  /** One of `world_genres`, or nothing while nobody has said. */
+  genre?: string | null
+  maturity?: WorldMaturity
+  is_published?: boolean
+  owner_id?: string | null
+  updated_at?: string | null
+}
+
+/** What one person has already said about a World. */
+export type WorldStanding = {
+  /** True for a like, false for a dislike, nothing for no opinion. */
+  opinion: boolean | null
+  favourited: boolean
+}
+
+/** How grown up a World is, in the same four words the rest of the site uses. */
+export type WorldMaturity = 'everyone' | 'mild' | 'moderate' | 'strong'
+
+export type WorldGenre = {
+  id: string
+  label: string
+  position: number
+}
+
+/**
+ * A picture or a clip a World shows of itself.
+ *
+ * Not a Marketplace upload: this belongs to the World rather than to
+ * anybody who might reuse it, so it lives in the World's own folder and
+ * never gets a content id.
+ */
+export type WorldMedium = {
+  id: string
+  world_id: string
+  position: number
+  kind: 'image' | 'video'
+  /** A path inside the `worlds` bucket, never an address. */
+  path: string
+  created_at: string
 }

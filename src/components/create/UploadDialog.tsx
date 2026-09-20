@@ -19,7 +19,9 @@ const accepts: Record<AssetKind, string> = {
   audio: 'audio/mpeg,audio/ogg,application/ogg,audio/wav,audio/aac,audio/flac,.mp3,.ogg,.wav,.flac,.aac',
   video: 'video/mp4,video/webm,video/ogg,.mp4,.webm',
   font: 'font/woff2,font/woff,font/ttf,font/otf,.woff2,.woff,.ttf,.otf',
-  model: 'model/gltf-binary,model/gltf+json,.glb,.gltf',
+  // Kobblon's own part file is JSON with a .kbfl name, which no browser has
+  // a type for, so the extension has to be offered explicitly.
+  model: '.kbfl,application/json,model/gltf-binary,model/gltf+json,.glb,.gltf',
 }
 
 const kinds = Object.keys(kindLabels) as AssetKind[]

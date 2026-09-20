@@ -10,6 +10,15 @@
  * a variable called `spaceId` is nobody's problem, a button that says the
  * wrong word is.
  */
+/**
+ * The mark a World wears, everywhere.
+ *
+ * Europe rather than the Atlantic: a globe turned to the middle of an ocean
+ * with the Americas on it says something about where a site thinks it is,
+ * every time it appears, and Kobblon is not an American site.
+ */
+export { faEarthEurope as worldIcon } from '@fortawesome/free-solid-svg-icons'
+
 export const world = {
   one: 'World',
   many: 'Worlds',

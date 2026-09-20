@@ -6,7 +6,7 @@
  * key: it sends a code it was handed through its protocol link and gets back
  * something it can exchange with Supabase Auth in the ordinary way.
  *
- * The code was minted by the website for a signed-in person, is good for two
+ * The code was minted by the website for a signed-in person, is good for ten
  * minutes, and is spent by the first caller. Everything else about it is
  * enforced in the database rather than here.
  */
@@ -62,8 +62,22 @@ Deno.serve(async (request) => {
   })
 
   const row = Array.isArray(claimed) ? claimed[0] : null
-  if (error || !row?.email) {
+  if (error || !row?.user_id) {
     return answer({ error: 'That sign in link is no longer good.' }, 400)
+  }
+
+  /*
+   * A guest has no address on it, so there is nothing to sign in with. That
+   * is a different thing from a spent code and is said differently: telling
+   * somebody their link expired when the truth is that their account is not
+   * finished sends them round the same loop for ever.
+   */
+  if (!row.email) {
+    return answer({
+      error: row.is_guest
+        ? 'Finish your Kobblon account on the website first, then sign in here.'
+        : 'That account has no email address on it, so it cannot sign in to an app yet.',
+    }, 400)
   }
 
   /*
