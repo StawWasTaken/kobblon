@@ -242,8 +242,15 @@ const dressed2 = await p.evaluate(async () => {
     fadedHalf: Math.abs(faded.opacity - 0.5) < 0.01,
     shinyIsMetal: shiny.metalness > 0.5 && shiny.roughness < 0.3,
     neonGlows: neon.emissiveIntensity > 0,
-    decalOnOneFace: Array.isArray(signed) && signed.length === 6
-      && signed.filter((m) => m.map).length === 1,
+    // Every face carries the material's own pattern now, so the decal is the
+    // one whose map is a different picture from the other five.
+    decalOnOneFace: (() => {
+      if (!Array.isArray(signed) || signed.length !== 6) return false
+      const maps = signed.map((m) => m.map?.uuid ?? null)
+      const counts = new Map()
+      for (const map of maps) counts.set(map, (counts.get(map) ?? 0) + 1)
+      return counts.size === 2 && [...counts.values()].sort().join(',') === '1,5'
+    })(),
   }
 })
 check('a wedge is a wedge, a cylinder a cylinder, a sphere a sphere',
@@ -257,7 +264,59 @@ check('transparency is a number a part sets', dressed2.fadedHalf, 'half at 0.5')
 check('reflectance turns a part to metal', dressed2.shinyIsMetal, 'metalness up, roughness down')
 check('neon carries its own light', dressed2.neonGlows, 'emissive')
 check('a decal lands on one face of a box', dressed2.decalOnOneFace,
-  'six materials, one with a picture')
+  'six faces, five with the material and one with the picture')
+
+// -- 14. a material is a pattern, and the pattern is the size of the world
+const textured = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 't', name: 'Tiling', spawn: { at: [0, 6, 30] },
+    blocks: [
+      { id: 'small', kind: 'box', at: [-20, 5, 0], size: [10, 10, 2], material: 'brick' },
+      { id: 'big', kind: 'box', at: [20, 20, 0], size: [40, 40, 2], material: 'brick' },
+      { id: 'floor', kind: 'box', at: [0, 0, 0], size: [40, 2, 40], material: 'grass' },
+      { id: 'pane', kind: 'box', at: [0, 5, 10], size: [4, 4, 1], material: 'glass' },
+    ],
+  })
+
+  const of = (name) => {
+    for (const [object, part] of window.built().partOf) if (part.id === name) return object
+    return null
+  }
+
+  const uvSpan = (mesh, face) => {
+    const uv = mesh.geometry.getAttribute('uv')
+    let acrossMost = 0
+    let downMost = 0
+    for (let corner = 0; corner < 4; corner += 1) {
+      acrossMost = Math.max(acrossMost, uv.getX(face * 4 + corner))
+      downMost = Math.max(downMost, uv.getY(face * 4 + corner))
+    }
+    return { across: acrossMost, down: downMost }
+  }
+
+  const small = of('small')
+  const big = of('big')
+
+  return {
+    // the front face of each wall: +z is face 4
+    smallAcross: uvSpan(small, 4).across,
+    bigAcross: uvSpan(big, 4).across,
+    brickHasPattern: !!small.material.map,
+    // a floor is not the same on its top as on its side
+    // A floor 40 across and 2 thick: forty of something on top, two on the edge.
+    floorTop: uvSpan(of('floor'), 2).down,
+    floorSide: uvSpan(of('floor'), 4).down,
+    glassHasNone: !of('pane').material.map,
+  }
+})
+check('a big wall shows more bricks than a small one, in proportion',
+  Math.abs(textured.bigAcross / textured.smallAcross - 4) < 0.01,
+  `four times the wall, ${(textured.bigAcross / textured.smallAcross).toFixed(2)} times the bricks`)
+check('a material carries a pattern', textured.brickHasPattern, 'brick has a map')
+check('a face is tiled by its own two dimensions, not the part',
+  Math.abs(textured.floorTop - textured.floorSide) > 0.01,
+  `top ${textured.floorTop.toFixed(2)} across, side ${textured.floorSide.toFixed(2)}`)
+check('glass carries none, because glass has no pattern', textured.glassHasNone, 'no map')
 
 // -- back to the first World for the picture
 await p.evaluate(async () => {

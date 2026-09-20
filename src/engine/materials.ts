@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { textureFor } from './textures'
 
 /**
  * What a part is made of.
@@ -33,7 +34,13 @@ type Look = {
 const LOOKS: Record<Material, Look> = {
   plastic: { roughness: 0.55, metalness: 0 },
   wood: { roughness: 0.82, metalness: 0 },
-  metal: { roughness: 0.28, metalness: 0.9 },
+  /*
+   * Not fully metal on purpose. A metal with nothing to reflect renders
+   * black, and a World is not guaranteed to have a sky. This keeps the
+   * highlight and the colour; a World with a sky gets the reflection too,
+   * because the engine hands the sky to the scene as its environment.
+   */
+  metal: { roughness: 0.35, metalness: 0.55 },
   brick: { roughness: 0.95, metalness: 0 },
   grass: { roughness: 1, metalness: 0 },
   sand: { roughness: 0.98, metalness: 0 },
@@ -67,14 +74,28 @@ export function materialFor(look: PartLook, cache: Map<string, THREE.Material>) 
   const base = LOOKS[look.material] ?? LOOKS.plastic
   const clear = Math.max(look.transparency, base.transparency ?? 0)
 
+  /*
+   * The pattern is what makes a material read as itself. It is greyscale and
+   * multiplies the colour the creator chose, so brick in Kobblon blue is
+   * still recognisably brick.
+   */
+  const pattern = textureFor(look.material)
+
   const material = new THREE.MeshStandardMaterial({
     color: look.colour,
     roughness: THREE.MathUtils.clamp(base.roughness * (1 - look.reflectance * 0.85), 0.02, 1),
-    metalness: THREE.MathUtils.clamp(base.metalness + look.reflectance * 0.6, 0, 1),
+    /*
+     * The material's own metalness is kept moderate so that metal is not
+     * black in a World with nothing to reflect. Reflectance is different:
+     * a creator asking for a mirror gets one, and a mirror in a dark room
+     * being dark is correct rather than broken.
+     */
+    metalness: THREE.MathUtils.clamp(base.metalness + look.reflectance * 0.7, 0, 0.95),
     transparent: clear > 0.001,
     opacity: 1 - clear,
     // A pane you can see through should still be a pane from behind.
     side: clear > 0.001 ? THREE.DoubleSide : THREE.FrontSide,
+    ...(pattern ? { map: pattern } : {}),
   })
 
   if (base.emissive) {

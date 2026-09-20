@@ -161,7 +161,17 @@ export class Engine {
   private async dressSky(manifest: WorldManifest) {
     const background = await buildSky(manifest, this.options.resolveAsset)
     // A World opened while this was loading has already set its own.
-    if (this.world?.manifest === manifest) this.scene.background = background
+    if (this.world?.manifest !== manifest) return
+
+    this.scene.background = background
+    /*
+     * A sky is also the only thing in a World for metal to reflect. Without
+     * this, anything shiny renders black and a creator thinks the material
+     * is broken.
+     */
+    this.scene.environment = (background as THREE.CubeTexture).isCubeTexture
+      ? (background as THREE.CubeTexture)
+      : null
   }
 
   private light(manifest: WorldManifest) {

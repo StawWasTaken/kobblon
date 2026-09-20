@@ -15,6 +15,7 @@ export {
   type Face, type ExperienceManifest, type ExperienceBlock, type BuiltExperience,
 } from './experience'
 export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from './materials'
-export { SHAPES, isShape, geometryFor, type Shape } from './shapes'
+export { SHAPES, isShape, geometryFor, tiledGeometry, type Shape } from './shapes'
+export { textureFor, TILES_PER_STON } from './textures'
 export { buildSky, cutCross, type ResolveAsset } from './sky'
 export { STON, GRAVITY, K6_HEIGHT, K6_RADIUS } from './units'

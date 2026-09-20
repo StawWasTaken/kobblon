@@ -156,6 +156,34 @@ load, and there is nothing there to moderate. Glass is see-through on its own
 and neon carries its own light, so a creator gets both without knowing what a
 shader is.
 
+**Each one carries a pattern, drawn rather than downloaded.** Nine materials
+that differ only in how shiny they are are nine coloured boxes with different
+highlights: a material reads as itself because you can see the courses in the
+brick. `textures.ts` draws a small greyscale pattern per material on a canvas
+at load, which buys three things a texture pack does not: nothing to
+download, no seam to get wrong, and no licence to honour. The last matters,
+because Kobblon redistributes every file it ships and most free texture sites
+permit use but not redistribution.
+
+The pattern is greyscale and multiplies the creator's colour, so brick in
+Kobblon blue is still recognisably brick.
+
+**The repeat is per part, and it is the part that decides whether a World
+looks right.** `TILES_PER_STON` says how often a pattern repeats across one
+ston, and the repeat is folded into the UVs when the geometry is scaled
+rather than into the texture. So one texture serves every part, and a box
+gets it right on each face separately: a floor forty stons across and two
+thick shows forty of something on top and two on its edge. A pattern
+stretched to fit would say how big a part is instead of what it is made of,
+and a wall of four bricks beside a wall of four hundred is what makes a World
+look wrong without anybody being able to say why.
+
+Metal keeps a moderate metalness because a metal with nothing to reflect
+renders black, and a World is not required to have a sky. When one does, the
+sky becomes the scene's environment, so metal reflects it. `reflectance` is
+separate and goes further, because a creator asking for a mirror is asking on
+purpose.
+
 Decals are a pass of their own, `applyDecals(built, resolveAsset)`, because a
 World should appear and then have its pictures arrive rather than wait for
 them. On a box the picture goes on the named face and the other five keep the

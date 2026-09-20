@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import type { Solid } from './controller'
-import { geometryFor, isShape, type Shape } from './shapes'
+import { isShape, tiledGeometry, type Shape } from './shapes'
 import { isMaterial, materialFor, type Material } from './materials'
+import { TILES_PER_STON } from './textures'
 
 /**
  * What a World is.
@@ -238,7 +239,11 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       reflectance: part.reflectance ?? 0,
     }, materials)
 
-    const mesh = new THREE.Mesh(geometryFor(part.shape ?? 'box'), material)
+    const shape = part.shape ?? 'box'
+    const mesh = new THREE.Mesh(
+      tiledGeometry(shape, part.size, TILES_PER_STON[part.material ?? 'plastic'] ?? 0),
+      material,
+    )
     mesh.position.set(...part.at)
     mesh.scale.set(...part.size)
     if (part.turn) mesh.rotation.y = (part.turn * Math.PI) / 180
