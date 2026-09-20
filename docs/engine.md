@@ -217,9 +217,21 @@ selected. A part may carry up to twelve.
 A World written the old way, with `decal: { id, face }` on the part, still
 opens: it is read as the one child it always meant.
 
-A decal has no body of its own, so it is in the World's tree and not in the
-scene. An editor finds it by walking the World, which is what an Explorer
-does anyway.
+A decal is a mesh parented to the part, sitting just off the face it names.
+That is the point of parenting rather than painting: **a child inherits its
+parent's scale, so resizing a wall resizes what is written on it.** A
+material cannot do that, a material holds one picture per face, and a
+material cannot be selected, renamed or deleted in an Explorer.
+
+The gap between the picture and the surface is a fixed distance in the World,
+converted into the part's own space by dividing by its size. The same local
+offset on a thin part is a thousandth of a ston, which is below what a depth
+buffer can tell apart, and the picture disappears.
+
+**An id is whatever the Catalog calls a thing.** The engine never resolves one
+itself, so it takes either shape: the content tag the Create pages show,
+`IMG-1070`, or the row's uuid underneath. Which one a client holds is the
+client's business.
 
 They are applied in a pass of their own, `applyDecals(built, resolveAsset)`,
 because a World should appear and then have its pictures arrive rather than

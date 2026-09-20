@@ -246,16 +246,22 @@ export class Engine {
     const head = at.clone()
     head.y += K6_HEIGHT * 0.75
 
-    // The yaw points the way the player is looking, so the camera sits the
-    // other side of the head from it.
+    /*
+     * Behind the head by the yaw, and above it by the pitch.
+     *
+     * The two are not the same sign: back is the opposite of where the
+     * player is looking, but up is up. Multiplying the whole vector by minus
+     * the distance put the camera below the head, which is why every view
+     * was taken from knee height.
+     */
     const { yaw, pitch, distance } = this.orbit
-    const back = new THREE.Vector3(
-      Math.sin(yaw) * Math.cos(pitch),
-      Math.sin(pitch),
-      Math.cos(yaw) * Math.cos(pitch),
-    ).multiplyScalar(-distance)
+    const flat = Math.cos(pitch) * distance
 
-    this.camera.position.copy(head).add(back)
+    this.camera.position.set(
+      head.x - Math.sin(yaw) * flat,
+      head.y + Math.sin(pitch) * distance,
+      head.z - Math.cos(yaw) * flat,
+    )
     this.camera.lookAt(head)
   }
 

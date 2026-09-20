@@ -252,6 +252,45 @@ export type BuiltWorld = {
 /** The old name, while anything still says it. */
 export type BuiltExperience = BuiltWorld
 
+/** One plane, shared by every decal: they differ by where they are put. */
+const DECAL_FACE = new THREE.PlaneGeometry(1, 1)
+
+/** How far off the surface a picture sits, in stons. */
+const GAP = 0.02
+
+/**
+ * Puts a decal against one side of the part that owns it.
+ *
+ * Just off the surface rather than on it, because two surfaces in the same
+ * place fight over which is in front and the loser disappears. The gap is a
+ * fixed distance in the World, not a fraction of the part: a part is scaled,
+ * so the same local offset on a thin part is a thousandth of a ston, which
+ * is below what a depth buffer can tell apart. Dividing by the part's own
+ * size is what keeps the gap the same wherever it is used.
+ */
+function faceUp(picture: THREE.Mesh, face: Face, size: Vec3) {
+  const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), 0.001))
+  const half = Math.PI / 2
+
+  if (face === 'front') picture.position.z = 0.5 + GAP / sz
+  else if (face === 'back') {
+    picture.position.z = -(0.5 + GAP / sz)
+    picture.rotation.y = Math.PI
+  } else if (face === 'right') {
+    picture.position.x = 0.5 + GAP / sx
+    picture.rotation.y = half
+  } else if (face === 'left') {
+    picture.position.x = -(0.5 + GAP / sx)
+    picture.rotation.y = -half
+  } else if (face === 'top') {
+    picture.position.y = 0.5 + GAP / sy
+    picture.rotation.x = -half
+  } else {
+    picture.position.y = -(0.5 + GAP / sy)
+    picture.rotation.x = half
+  }
+}
+
 /** Turns a manifest into something in a scene. */
 export function buildWorld(manifest: WorldManifest): BuiltWorld {
   const root = new THREE.Group()
@@ -278,11 +317,7 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       return
     }
 
-    /*
-     * A decal has no body of its own: it is a picture on the part it belongs
-     * to, put there by applyDecals once it has been fetched. It is in the
-     * tree so an editor can select it; it is not in the scene on its own.
-     */
+    // A decal is placed by its part, below, because it belongs to one.
     if (part.kind === 'decal') return
 
     const material = materialFor({
@@ -306,6 +341,40 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
 
     partOf.set(mesh, part)
     if (part.id) named.set(part.id, mesh)
+
+    /*
+     * Pictures, as things sitting on the part rather than as its material.
+     *
+     * Parenting is the whole point: a child of the part inherits the part's
+     * scale, so resizing a wall resizes what is written on it. A material
+     * cannot do that, and a material can hold one picture per face, and a
+     * material cannot be selected, renamed or deleted in an Explorer.
+     */
+    for (const decal of part.children ?? []) {
+      const picture = new THREE.Mesh(
+        DECAL_FACE,
+        new THREE.MeshStandardMaterial({
+          transparent: true,
+          opacity: 1 - (decal.transparency ?? 0),
+          color: decal.colour ?? '#ffffff',
+          // It sits on a surface, so it must win the depth test against it
+          // without being pushed into the part behind.
+          polygonOffset: true,
+          polygonOffsetFactor: -1,
+          polygonOffsetUnits: -1,
+        }),
+      )
+      // Nothing to show until its picture arrives. On the mesh rather than
+      // the material: hiding the material and revealing the mesh is two
+      // different flags, and the picture never appears.
+      picture.visible = false
+      picture.name = decal.id ?? 'Decal'
+      faceUp(picture, decal.face, part.size)
+      mesh.add(picture)
+
+      partOf.set(picture, decal)
+      if (decal.id) named.set(decal.id, picture)
+    }
 
     if (part.solid) {
       // A group's transform is in here too, which is why this waits until
@@ -337,59 +406,35 @@ export async function applyDecals(
   const loader = new THREE.TextureLoader()
   loader.setCrossOrigin('anonymous')
 
-  /** Three's box faces are +x, -x, +y, -y, +z, -z, in that order. */
-  const SIDE: Record<Face, number> = {
-    right: 0, left: 1, top: 2, bottom: 3, front: 4, back: 5,
-  }
-
   const jobs: Promise<void>[] = []
 
   for (const [object, part] of built.partOf) {
-    if (part.kind !== 'box' || !part.children?.length) continue
-    const mesh = object as THREE.Mesh
-    const plain = mesh.material as THREE.Material
-    const shape = part.shape ?? 'box'
-
-    /*
-     * A box has six faces to address, so its materials become an array and
-     * each decal replaces the one it names. Anything else has a single
-     * surface, so the last decal wraps it, which is what somebody means by
-     * putting a picture on a sphere.
-     */
-    const faces: THREE.Material[] = shape === 'box'
-      ? Array.from({ length: 6 }, () => plain)
-      : [plain]
-
-    let painted = false
+    if (part.kind !== 'decal') continue
+    const picture = object as THREE.Mesh
 
     jobs.push((async () => {
-      for (const decal of part.children ?? []) {
-        const url = await resolveAsset(decal.picture).catch(() => null)
-        if (!url) continue
+      /*
+       * An id is whatever the Catalog calls a thing. That is a content tag
+       * like IMG-1070 on the site, and a row's uuid underneath, and the
+       * engine takes either: resolving one is the client's business, and the
+       * client is the only thing that knows which it has.
+       */
+      const url = await resolveAsset(part.picture).catch(() => null)
+      if (!url) return
 
-        const picture = await loader.loadAsync(url).catch(() => null)
-        if (!picture) continue
-        picture.colorSpace = THREE.SRGBColorSpace
+      const image = await loader.loadAsync(url).catch(() => null)
+      if (!image) return
 
-        const faced = (plain as THREE.MeshStandardMaterial).clone()
-        faced.map = picture
-        if (decal.colour && decal.colour !== '#ffffff') faced.color.set(decal.colour)
-        if (decal.transparency) {
-          faced.transparent = true
-          faced.opacity = 1 - decal.transparency
-        }
-        faced.needsUpdate = true
-
-        faces[shape === 'box' ? SIDE[decal.face] : 0] = faced
-        painted = true
-      }
-
-      if (painted) mesh.material = shape === 'box' ? faces : faces[0]
+      image.colorSpace = THREE.SRGBColorSpace
+      const material = picture.material as THREE.MeshStandardMaterial
+      material.map = image
+      material.needsUpdate = true
+      // Nothing was shown while it loaded, rather than a blank white square.
+      picture.visible = true
     })())
   }
 
   await Promise.all(jobs)
 }
-
 /** The old name, while anything still says it. */
 export const buildExperience = buildWorld

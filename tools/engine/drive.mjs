@@ -275,17 +275,26 @@ const dressed2 = await p.evaluate(async () => {
       for (const [object, part] of window.built().partOf) {
         if (part.id === 'legacy') {
           const kids = part.children ?? []
-          return kids.length === 1 && kids[0].kind === 'decal' && Array.isArray(object.material)
+          // read as a child, and standing on the part as a child mesh
+          return kids.length === 1 && kids[0].kind === 'decal' && object.children.length === 1
         }
       }
       return false
     })(),
-    decalOnOneFace: (() => {
-      if (!Array.isArray(signed) || signed.length !== 6) return false
-      const maps = signed.map((m) => m.map?.uuid ?? null)
-      const counts = new Map()
-      for (const map of maps) counts.set(map, (counts.get(map) ?? 0) + 1)
-      return counts.size === 2 && [...counts.values()].sort().join(',') === '1,5'
+    // A decal is a thing standing on the part, not a face of its material.
+    decalIsItsOwnMesh: (() => {
+      for (const [object, part] of window.built().partOf) {
+        if (part.kind === 'decal' && part.id === 'poster') {
+          const holder = object.parent
+          if (!object.isMesh || !holder?.isMesh) return false
+          // Just off the surface, measured in the World rather than in the
+          // part's own space: the same local offset on a thin part is a
+          // thousandth of a ston and the picture loses the depth test.
+          const gap = object.position.z * holder.scale.z - holder.scale.z / 2
+          return Math.abs(gap - 0.02) < 0.001 && object.visible === true
+        }
+      }
+      return false
     })(),
   }
 })
@@ -299,12 +308,55 @@ check('glass is see through on its own', dressed2.glassSeeThrough, 'the material
 check('transparency is a number a part sets', dressed2.fadedHalf, 'half at 0.5')
 check('reflectance turns a part to metal', dressed2.shinyIsMetal, 'metalness up, roughness down')
 check('neon carries its own light', dressed2.neonGlows, 'emissive')
-check('a decal lands on one face of a box', dressed2.decalOnOneFace,
-  'six faces, five with the material and one with the picture')
+check('a decal stands on the part rather than being its material',
+  dressed2.decalIsItsOwnMesh, 'a mesh, parented, and a fifth of a ston off the face')
 check('a decal is its own thing in the tree', dressed2.decalInTree,
   'selectable, with its own face')
 check('a World written the old way still opens', dressed2.oldFileStillOpens,
   'the field is read as the child it always meant')
+
+// -- 13a. the camera stands behind the head and above it, not below
+const eye = await p.evaluate(() => {
+  window.engine.controller.placeAt(0, 1, 18)
+  window.drive({})
+  window.stepFrames(5)
+  return {
+    camera: window.engine.camera.position.toArray(),
+    feet: window.engine.status.position,
+  }
+})
+check('the camera looks from above the avatar, not from its knees',
+  eye.camera[1] > eye.feet[1] + 10,
+  `feet at y=${eye.feet[1].toFixed(1)}, camera at y=${eye.camera[1].toFixed(1)}`)
+
+// -- 13b. the point of parenting: a decal is resized by the part it is on
+const sized = await p.evaluate(async () => {
+  const id = window.fakeSky('decal-size')
+  const world = (wide) => ({
+    format: 1, id: 'd', name: 'Sized', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'wall', kind: 'box', at: [0, 5, 0], size: [wide, 6, 1],
+        children: [{ id: 'sign', kind: 'decal', picture: id, face: 'front' }] },
+    ],
+  })
+
+  const widthOf = async (wide) => {
+    await window.engine.open(world(wide))
+    for (const [object, part] of window.built().partOf) {
+      if (part.kind === 'decal') {
+        window.engine.scene.updateMatrixWorld(true)
+        return object.getWorldScale(new (Object.getPrototypeOf(object.position).constructor)()).x
+      }
+    }
+    return null
+  }
+
+  return { small: await widthOf(6), big: await widthOf(24) }
+})
+check('a decal is resized by the part it is on',
+  sized.small !== null && Math.abs(sized.big / sized.small - 4) < 0.01,
+  `a wall four times as wide carries a sign ${(sized.big / sized.small).toFixed(2)} times as wide`)
 
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
