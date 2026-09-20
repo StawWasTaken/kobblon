@@ -160,6 +160,46 @@ const quality = await p.evaluate(() => {
 })
 check('render quality can be set', quality.ok, 'setQuality accepted 0.5 and 1')
 
+// -- 12. the sky: a colour when a World names none, its picture when it does
+const skies = await p.evaluate(async () => {
+  const plain = await window.buildSky({ sky: { colour: '#123456' } }, undefined)
+  const missing = await window.buildSky(
+    { sky: { colour: '#123456', decal: 'nope' } },
+    async () => null,
+  )
+
+  // the same builder an editor would call, with a picture it has not published
+  const id = window.fakeSky('sky-loose')
+  const drawn = await window.buildSky({ sky: { decal: id } }, window.resolveFake)
+
+  return {
+    plain: plain.isColor === true && plain.getHexString() === '123456',
+    missing: missing.isColor === true,
+    editor: drawn.isCubeTexture === true && drawn.image?.length === 6,
+  }
+})
+check('a World with no sky gets its colour', skies.plain, 'colour honoured')
+check('a sky that cannot be had falls back to the colour', skies.missing,
+  'a picture that will not load never stops a World opening')
+check('an editor can build the same sky without the engine', skies.editor,
+  'buildSky returned a cube texture with six faces')
+
+// and through the engine, which is how an app gets one
+const dressed = await p.evaluate(async () => {
+  window.fakeSky('sky-2')
+  await window.engine.open({
+    format: 1, id: 's', name: 'Sky', spawn: { at: [0, 4, 0] },
+    sky: { colour: '#123456', decal: 'sky-2' },
+    blocks: [{ kind: 'box', at: [0, -1, 0], size: [40, 2, 40] }],
+  })
+  // the picture is fetched, so give it a moment
+  await new Promise((done) => setTimeout(done, 400))
+  const background = window.engine.scene.background
+  return { cube: background?.isCubeTexture === true, images: background?.image?.length ?? 0 }
+})
+check('a World that names a sky gets the sky', dressed.cube && dressed.images === 6,
+  `cube texture with ${dressed.images} faces`)
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())

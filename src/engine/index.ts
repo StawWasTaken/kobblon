@@ -14,4 +14,5 @@ export {
   type WorldManifest, type WorldBlock, type WorldGroup, type WorldPart, type BuiltWorld,
   type ExperienceManifest, type ExperienceBlock, type BuiltExperience,
 } from './experience'
+export { buildSky, cutCross, type ResolveAsset } from './sky'
 export { STON, GRAVITY, K6_HEIGHT, K6_RADIUS } from './units'

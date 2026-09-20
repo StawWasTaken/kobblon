@@ -3,6 +3,7 @@ import { Controller } from './controller'
 import { Keyboard, stillIntent, type Intent } from './input'
 import { K6, loadK6Source, type K6Look } from './k6'
 import { buildWorld, readManifest, type BuiltWorld, type WorldManifest } from './experience'
+import { buildSky, type ResolveAsset } from './sky'
 import { K6_HEIGHT } from './units'
 
 /**
@@ -34,7 +35,7 @@ export type EngineOptions = {
    * it, and hands back a URL. Creator can answer with a local file for
    * something not published yet.
    */
-  resolveAsset?: (id: string) => Promise<string | null>
+  resolveAsset?: ResolveAsset
 }
 
 /** Things the engine says happened, for a client to act on. */
@@ -148,48 +149,15 @@ export class Engine {
   }
 
   /**
-   * The sky, when a World names one.
+   * The sky, once whoever is running this has said what the id means.
    *
-   * A horizontal cross is one image holding six faces, which is how somebody
-   * draws a sky by hand. It is cut up here rather than asking a creator to
-   * upload six files.
+   * The cutting lives in sky.ts so that an editor drawing its own scene can
+   * put up the same background without borrowing the whole engine.
    */
   private async dressSky(manifest: WorldManifest) {
-    const id = manifest.sky?.decal
-    if (!id || !this.options.resolveAsset) return
-
-    const url = await this.options.resolveAsset(id).catch(() => null)
-    if (!url) return
-
-    const image = await new Promise<HTMLImageElement | null>((done) => {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.onload = () => done(img)
-      img.onerror = () => done(null)
-      img.src = url
-    })
-    if (!image) return
-
-    // A cross is four wide and three tall; each face is a quarter by a third.
-    const face = Math.floor(image.width / 4)
-    const at: Record<string, [number, number]> = {
-      px: [2, 1], nx: [0, 1], py: [1, 0], ny: [1, 2], pz: [1, 1], nz: [3, 1],
-    }
-
-    const sides = ['px', 'nx', 'py', 'ny', 'pz', 'nz'].map((name) => {
-      const canvas = document.createElement('canvas')
-      canvas.width = face
-      canvas.height = face
-      const paint = canvas.getContext('2d')
-      const [col, row] = at[name]
-      paint?.drawImage(image, col * face, row * face, face, face, 0, 0, face, face)
-      return canvas
-    })
-
-    const sky = new THREE.CubeTexture(sides)
-    sky.needsUpdate = true
-    sky.colorSpace = THREE.SRGBColorSpace
-    this.scene.background = sky
+    const background = await buildSky(manifest, this.options.resolveAsset)
+    // A World opened while this was loading has already set its own.
+    if (this.world?.manifest === manifest) this.scene.background = background
   }
 
   private light(manifest: WorldManifest) {

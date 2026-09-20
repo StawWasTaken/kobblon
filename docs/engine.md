@@ -124,6 +124,21 @@ the experience loads, K6 has six parts, gravity lands it on the spawn pad,
 walking holds walking speed, running is faster, a wall stops it, a jump leaves
 the ground and comes back, and the stairs get climbed rather than bumped into.
 
+## The sky
+
+A World names its sky by Catalog id, never by address: a manifest that can
+name any host is a manifest that can point every player at anything. Whoever
+runs the World decides what an id means, through `resolveAsset`, so Creator
+can answer with a file that has not been published yet.
+
+The art is a horizontal cross: four faces in a row, top above the second and
+bottom below it, corners unused.
+
+`buildSky(manifest, resolveAsset)` is exported, so an editor drawing its own
+scene with its own camera puts up the same background the runtime will
+without borrowing the engine to do it. A picture that will not load never
+stops a World opening: the colour is the fallback, always.
+
 ## What is not built yet
 
 In the order it is likely to be needed: scripting, sound, shadows, a Creator

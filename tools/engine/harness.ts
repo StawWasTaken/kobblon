@@ -5,12 +5,46 @@
  * do not run on the web. It exists so the runtime can be driven and looked at
  * while it is being built, and so a test can step it frame by frame.
  */
-import { Engine, stillIntent, type Intent } from '@/engine'
+import { Engine, buildSky, stillIntent, type Intent } from '@/engine'
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement
 const hud = document.getElementById('hud') as HTMLElement
 
-const engine = new Engine({ canvas, avatarUrl: '/k6/k6.glb' })
+/*
+ * A stand-in for the Catalog. The Launcher answers this from the platform and
+ * Creator answers it from whatever is on disk, including something not
+ * published yet; here it draws a cross so the sky can be checked without one.
+ */
+const drawn = new Map<string, string>()
+
+const engine = new Engine({
+  canvas,
+  avatarUrl: '/k6/k6.glb',
+  resolveAsset: async (id) => drawn.get(id) ?? null,
+})
+
+Object.assign(window, {
+  buildSky,
+  resolveFake: async (id: string) => drawn.get(id) ?? null,
+  /** Makes a horizontal cross with a different colour on each face. */
+  fakeSky(id: string) {
+    const face = 64
+    const sheet = document.createElement('canvas')
+    sheet.width = face * 4
+    sheet.height = face * 3
+    const paint = sheet.getContext('2d')!
+    const where: [string, number, number][] = [
+      ['#ff0000', 2, 1], ['#00ff00', 0, 1], ['#0000ff', 1, 0],
+      ['#ffff00', 1, 2], ['#ff00ff', 1, 1], ['#00ffff', 3, 1],
+    ]
+    for (const [colour, column, row] of where) {
+      paint.fillStyle = colour
+      paint.fillRect(column * face, row * face, face, face)
+    }
+    drawn.set(id, sheet.toDataURL('image/png'))
+    return id
+  },
+})
 addEventListener('resize', () => engine.resize())
 
 // What the engine says happened, kept for a test to read. Listening starts
