@@ -228,6 +228,24 @@ what the page holds is a catalogue and "Style" says nothing about it.
 Not a rename exercise: most of these want the page to exist first. The order
 above is the thing to hold on to.
 
+## Three tabs on a World that need something behind them
+
+The World page has About, Badges, Shop and Servers, in that order. Only
+About holds anything; the other three say what they are for and that they
+are empty, which is honest but is not finished.
+
+- **Badges.** Things a World hands out for doing something in it. Needs a
+  `world_badges` table, a place in Configure to make them, and a way for a
+  World to award one, which means it waits on scripting.
+- **Shop.** Passes and items a World sells, bought with Pixels through the
+  transaction ledger that already exists. The buying is buildable now; what
+  a pass then *does* inside a World waits on scripting too.
+- **Servers.** Who is playing right now and joining a particular one. This
+  waits on the Launcher running more than one person at a time.
+
+Badges and Shop are the two worth building first, because the website can
+own both ends of them except for the moment the World reacts.
+
 ## Kobblon in the places people already are
 
 A World somebody is playing should be visible outside Kobblon.

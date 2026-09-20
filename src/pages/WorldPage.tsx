@@ -1,22 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faPlay, faDesktop, faStar, faFlag, faArrowRight, faSliders,
+  faPlay, faStar, faFlag, faSliders, faAward, faBagShopping, faServer,
+  faXmark, faSpinner, faDownload,
 } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Dialog } from '@/components/ui/Dialog'
 import { Tabs } from '@/components/ui/Tabs'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
+import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { Verified, isVerified } from '@/components/brand/Verified'
 import { RatingBar } from '@/components/worlds/RatingBar'
-import { ReportDialog } from '@/components/social/ReportDialog'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
+import { ReportDialog } from '@/components/social/ReportDialog'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -27,7 +28,7 @@ import {
   worldMedia,
 } from '@/lib/api'
 import { play } from '@/lib/app'
-import { worldLink } from '@/lib/links'
+import { profileLink, worldLink } from '@/lib/links'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
@@ -39,18 +40,17 @@ import { cn } from '@/lib/cn'
  * nothing here pretends a browser tab can.
  *
  * Everything on this page is a real number somebody can change. A page that
- * draws a likes bar nothing writes to is a picture of a page.
+ * draws a likes bar nothing writes to is a drawing of a page.
  */
 
-const tabs = ['About', 'Details'] as const
+const tabs = ['About', 'Badges', 'Shop', 'Servers'] as const
 type Tab = (typeof tabs)[number]
 
-/** How grown up a World says it is, in words rather than a rating code. */
-const maturities: Record<string, string> = {
-  everyone: 'Everyone',
-  mild: 'Mild',
-  moderate: 'Moderate',
-  strong: 'Strong',
+const tabIcons: Record<Tab, typeof faAward> = {
+  About: worldIcon,
+  Badges: faAward,
+  Shop: faBagShopping,
+  Servers: faServer,
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -59,6 +59,96 @@ function Stat({ label, value }: { label: string; value: string }) {
       <p className="text-xs text-muted">{label}</p>
       <p className="mt-1 text-sm font-semibold tabular-nums text-white/90">{value}</p>
     </div>
+  )
+}
+
+/**
+ * The small window that says what is happening when Play is pressed.
+ *
+ * Pressing Play in a browser looks like nothing happening: the page stays
+ * still and a desktop application takes a moment to come up. This is the
+ * only thing standing between that and somebody pressing Play four times.
+ */
+function Handover({
+  state, name, onClose,
+}: {
+  state: 'off' | 'opening' | 'missing'
+  name: string
+  onClose: () => void
+}) {
+  if (state === 'off') return null
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-sm rounded-2xl border border-ink-line bg-ink-card p-7 text-center shadow-pop animate-pop-in">
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-lg text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <FontAwesomeIcon icon={faXmark} />
+        </button>
+
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand text-xl text-onbrand shadow-lg shadow-brand/30">
+          <FontAwesomeIcon icon={worldIcon} />
+        </span>
+
+        {state === 'opening' ? (
+          <>
+            <p className="mt-5 font-display text-lg font-extrabold leading-snug">
+              Kobblon is opening {name}.
+              <br />
+              Get ready!
+            </p>
+            <div className="mt-5 grid h-11 place-items-center rounded-xl bg-space text-white">
+              <FontAwesomeIcon icon={faSpinner} spin />
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              Nothing happening? The Launcher may not be installed yet.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="mt-5 font-display text-lg font-extrabold leading-snug">
+              Get the Kobblon Launcher to play Worlds
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Worlds run in the Launcher rather than in a browser. If you have it
+              already, give it a moment and press Play again.
+            </p>
+            <Button block icon={faDownload} to="/download" className="mt-5">
+              Get the Launcher
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** A tab that has nothing in it yet, saying what will be in it. */
+function Waiting({ tab, name }: { tab: Tab; name: string }) {
+  const words: Record<string, { title: string; body: string }> = {
+    Badges: {
+      title: 'No badges yet',
+      body: `Badges are things ${name} hands out for doing something in it. Whoever built it has not made any.`,
+    },
+    Shop: {
+      title: 'Nothing for sale',
+      body: `Passes and items ${name} sells would be here. This one sells nothing.`,
+    },
+    Servers: {
+      title: 'No servers running',
+      body: `Where people are playing ${name} right now. Nobody is in it at the moment.`,
+    },
+  }
+  const said = words[tab]
+  if (!said) return null
+
+  return (
+    <Card className="mt-6">
+      <EmptyState mood="emptyBox" title={said.title} body={said.body} />
+    </Card>
   )
 }
 
@@ -79,9 +169,32 @@ export default function WorldPage() {
   )
 
   const [tab, setTab] = useState<Tab>('About')
-  const [missing, setMissing] = useState(false)
+  const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
   const [reporting, setReporting] = useState(false)
-  const [busy, setBusy] = useState(false)
+
+  /*
+   * What this person has said, held here rather than read back from the
+   * server after every press. Pressing like should colour the thumb and
+   * move the number, now; reloading the whole page to find out what you
+   * just did is the page arguing with you.
+   */
+  const [opinion, setOpinion] = useState<boolean | null>(null)
+  const [favourited, setFavourited] = useState(false)
+  const [counts, setCounts] = useState({ likes: 0, dislikes: 0, favourites: 0 })
+
+  useEffect(() => {
+    if (!thing) return
+    setCounts({
+      likes: thing.like_count ?? 0,
+      dislikes: thing.dislike_count ?? 0,
+      favourites: thing.favourite_count ?? 0,
+    })
+  }, [thing?.id, thing?.like_count, thing?.dislike_count, thing?.favourite_count])
+
+  useEffect(() => {
+    setOpinion(standing.data?.opinion ?? null)
+    setFavourited(Boolean(standing.data?.favourited))
+  }, [standing.data])
 
   useCanonicalPath(thing?.content_id === number ? worldLink(thing) : null)
   useTitle(thing?.name ?? 'World')
@@ -123,6 +236,7 @@ export default function WorldPage() {
   }
 
   const mine = Boolean(profile && thing.owner_id && profile.id === thing.owner_id)
+  const owner = thing.owner
 
   /* The emblem leads, because it is what a World chose to be known by. */
   const shots: Shot[] = [
@@ -136,64 +250,137 @@ export default function WorldPage() {
 
   const genre = genres.data?.find((one) => one.id === thing.genre)
 
-  /** Nothing is written until the database has agreed to it. */
-  const say = async (what: () => Promise<void>) => {
+  /**
+   * A press moves the page first and tells the database after.
+   *
+   * If the database refuses, what was on screen is put back, because a
+   * number that stays wrong is worse than one that flickers.
+   */
+  const say = async (change: () => void, undo: () => void, write: () => Promise<void>) => {
     if (!profile) return
-    setBusy(true)
+    change()
     try {
-      await what()
-      await Promise.all([standing.reload(), world.reload()])
+      await write()
     } catch (err) {
+      undo()
       toast((err as Error).message)
-    } finally {
-      setBusy(false)
     }
   }
 
-  const opinion = standing.data?.opinion ?? null
-  const favourited = Boolean(standing.data?.favourited)
+  const like = () => {
+    const was = opinion
+    const want = was === true ? null : true
+    void say(
+      () => {
+        setOpinion(want)
+        setCounts((n) => ({
+          ...n,
+          likes: n.likes + (want === true ? 1 : 0) - (was === true ? 1 : 0),
+          dislikes: n.dislikes - (was === false ? 1 : 0),
+        }))
+      },
+      () => {
+        setOpinion(was)
+        setCounts((n) => ({
+          ...n,
+          likes: n.likes - (want === true ? 1 : 0) + (was === true ? 1 : 0),
+          dislikes: n.dislikes + (was === false ? 1 : 0),
+        }))
+      },
+      () => setWorldOpinion(thing.id, want),
+    )
+  }
+
+  const dislike = () => {
+    const was = opinion
+    const want = was === false ? null : false
+    void say(
+      () => {
+        setOpinion(want)
+        setCounts((n) => ({
+          ...n,
+          dislikes: n.dislikes + (want === false ? 1 : 0) - (was === false ? 1 : 0),
+          likes: n.likes - (was === true ? 1 : 0),
+        }))
+      },
+      () => {
+        setOpinion(was)
+        setCounts((n) => ({
+          ...n,
+          dislikes: n.dislikes - (want === false ? 1 : 0) + (was === false ? 1 : 0),
+          likes: n.likes + (was === true ? 1 : 0),
+        }))
+      },
+      () => setWorldOpinion(thing.id, want),
+    )
+  }
+
+  const keep = () => {
+    const want = !favourited
+    void say(
+      () => {
+        setFavourited(want)
+        setCounts((n) => ({ ...n, favourites: n.favourites + (want ? 1 : -1) }))
+      },
+      () => {
+        setFavourited(!want)
+        setCounts((n) => ({ ...n, favourites: n.favourites + (want ? -1 : 1) }))
+      },
+      () => favouriteWorld(thing.id, profile!.id, want),
+    )
+  }
+
+  const start = () => {
+    setHanding('opening')
+    play(thing.id, () => setHanding('missing'))
+  }
 
   return (
     <>
       <Page>
-        <div className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.65fr_1fr]">
           <WorldGallery shots={shots} name={thing.name} />
 
-          <div className="flex flex-col">
-            <div className="flex items-start gap-3">
-              {thing.cover_url && (
-                <img
-                  src={thing.cover_url}
-                  alt=""
-                  className="h-14 w-14 shrink-0 rounded-xl border border-ink-line object-cover"
-                />
-              )}
-              <div className="min-w-0">
-                <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
-                  {thing.name}
-                </h1>
-                <p className="mt-1 text-sm text-white/70">
+          {/*
+            * Everything that decides whether somebody presses Play, in one
+            * column, with Play at the bottom of it where the thumb lands.
+            */}
+          <div className="flex flex-col gap-5">
+            <div>
+              <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+                {thing.name}
+              </h1>
+
+              {owner ? (
+                <Link
+                  to={profileLink(owner)}
+                  className="mt-2 inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
+                >
+                  <PersonAvatar person={owner} size="xs" />
+                  By <span className="font-bold text-white">{owner.display_name}</span>
+                  {isVerified(owner) && <Verified />}
+                </Link>
+              ) : (
+                <p className="mt-2 text-sm text-white/70">
                   By <span className="font-bold text-white">{thing.creator_name ?? 'Kobblon'}</span>
                 </p>
-              </div>
+              )}
+
+              {genre && (
+                <p className="mt-2 text-sm text-muted">{genre.label}</p>
+              )}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {genre && <Badge tone="brand">{genre.label}</Badge>}
-              <Badge tone="neutral">
-                Maturity: {maturities[thing.maturity ?? 'everyone'] ?? 'Everyone'}
-              </Badge>
-              {thing.content_id && <Badge tone="neutral">WLD-{thing.content_id}</Badge>}
-            </div>
+            {thing.description && (
+              <p className="line-clamp-3 text-sm leading-relaxed text-white/55">
+                {thing.description}
+              </p>
+            )}
 
-            <div className="mt-auto pt-8">
-              <Button
-                size="lg"
-                block
-                icon={faPlay}
-                onClick={() => play(thing.id, () => setMissing(true))}
-              >
-                Play
+            <div className="mt-auto">
+              <Button size="lg" block variant="enter" onClick={start}>
+                <FontAwesomeIcon icon={faPlay} />
+                <span className="font-display text-lg font-extrabold">Play</span>
               </Button>
 
               <div className="mt-4 flex items-start justify-center gap-6">
@@ -202,9 +389,8 @@ export default function WorldPage() {
                   side="top"
                 >
                   <button
-                    onClick={() => void say(() =>
-                      favouriteWorld(thing.id, profile!.id, !favourited))}
-                    disabled={!profile || busy}
+                    onClick={keep}
+                    disabled={!profile}
                     aria-pressed={favourited}
                     className={cn(
                       'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold',
@@ -213,20 +399,18 @@ export default function WorldPage() {
                     )}
                   >
                     <FontAwesomeIcon icon={faStar} className="text-base" />
-                    {formatCount(thing.favourite_count ?? 0)}
+                    {formatCount(counts.favourites)}
                   </button>
                 </Tooltip>
 
                 <RatingBar
-                  likes={thing.like_count}
-                  dislikes={thing.dislike_count ?? 0}
+                  likes={counts.likes}
+                  dislikes={counts.dislikes}
                   iLike={opinion === true}
                   iDislike={opinion === false}
-                  disabled={!profile || busy}
-                  onLike={() => void say(() =>
-                    setWorldOpinion(thing.id, opinion === true ? null : true))}
-                  onDislike={() => void say(() =>
-                    setWorldOpinion(thing.id, opinion === false ? null : false))}
+                  disabled={!profile}
+                  onLike={like}
+                  onDislike={dislike}
                 />
               </div>
 
@@ -251,23 +435,27 @@ export default function WorldPage() {
           label="Which part of this World"
           value={tab}
           onChange={setTab}
-          options={tabs.map((name) => ({ value: name, label: name }))}
+          options={tabs.map((name) => ({ value: name, label: name, icon: tabIcons[name] }))}
         />
 
         {tab === 'About' && (
           <div className="mt-6">
-            <h2 className="text-lg font-bold">Description</h2>
+            <h2 className="font-display text-lg font-extrabold">Description</h2>
             <p className="mt-2 max-w-3xl whitespace-pre-wrap leading-relaxed text-white/70">
               {thing.description || 'Whoever built this has not described it yet.'}
             </p>
 
             <div className="mt-6 flex flex-wrap border-y border-ink-line">
               <Stat label="Visits" value={formatCount(thing.visit_count)} />
-              <Stat label="Favourites" value={formatCount(thing.favourite_count ?? 0)} />
-              <Stat label="Likes" value={formatCount(thing.like_count)} />
+              <Stat label="Favourites" value={formatCount(counts.favourites)} />
+              <Stat label="Likes" value={formatCount(counts.likes)} />
               <Stat
                 label="Published"
                 value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
+              />
+              <Stat
+                label="Updated"
+                value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
               />
               <Stat label="Genre" value={genre?.label ?? 'Not set'} />
             </div>
@@ -286,53 +474,12 @@ export default function WorldPage() {
           </div>
         )}
 
-        {tab === 'Details' && (
-          <div className="mt-6 space-y-4">
-            <Card className="flex flex-wrap items-center gap-4 p-5">
-              <FontAwesomeIcon icon={worldIcon} className="text-lg text-brand-bright" />
-              <p className="min-w-0 flex-1 text-sm leading-relaxed text-muted">
-                Worlds run in the Kobblon Launcher, not in a browser tab. Pressing Play opens it.
-              </p>
-              <Link
-                to="/download"
-                className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
-              >
-                Get the Launcher
-                <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
-              </Link>
-            </Card>
-
-            <div className="flex flex-wrap border-y border-ink-line">
-              <Stat label="Number" value={`WLD-${thing.content_id}`} />
-              <Stat label="Engine" value={`Version ${thing.runtime_version}`} />
-              <Stat
-                label="Maturity"
-                value={maturities[thing.maturity ?? 'everyone'] ?? 'Everyone'}
-              />
-            </div>
-          </div>
-        )}
+        {tab !== 'About' && <Waiting tab={tab} name={thing.name} />}
 
         <AdBanner className="mt-10" quiet />
       </Page>
 
-      {/* Nothing happened, so say so rather than leaving somebody pressing. */}
-      <Dialog
-        open={missing}
-        onClose={() => setMissing(false)}
-        title="You need the Kobblon Launcher"
-      >
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-muted">
-            Worlds run in the Launcher rather than in a browser. If you have it already, it
-            may just be slow to open: give it a moment and press Play again.
-          </p>
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="ghost" onClick={() => setMissing(false)}>Close</Button>
-            <Button icon={faDesktop} to="/download">Get the Launcher</Button>
-          </div>
-        </div>
-      </Dialog>
+      <Handover state={handing} name={thing.name} onClose={() => setHanding('off')} />
 
       <ReportDialog
         open={reporting}

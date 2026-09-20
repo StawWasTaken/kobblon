@@ -616,6 +616,8 @@ export type World = {
   is_published?: boolean
   owner_id?: string | null
   updated_at?: string | null
+  /** Whoever built it, when the page asked for them. */
+  owner?: Pick<Profile, 'id' | 'username' | 'display_name' | 'avatar_url' | 'is_admin'> | null
 }
 
 /** What one person has already said about a World. */

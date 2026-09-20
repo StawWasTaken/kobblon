@@ -2154,11 +2154,16 @@ export async function listWorldsByOwner(ownerId: string, includeDrafts = false):
   return (data ?? []) as World[]
 }
 
-/** By the number in its address, which is how the website links to one. */
+/**
+ * By the number in its address, which is how the website links to one.
+ *
+ * The owner comes with it, because "By somebody" on a World's page should
+ * lead to that somebody rather than being a piece of text.
+ */
 export async function getWorld(contentId: number): Promise<World | null> {
   const { data, error } = await supabase
     .from('worlds')
-    .select(WORLD_FIELDS)
+    .select(`${WORLD_FIELDS}, owner:profiles!worlds_owner_id_fkey (id, username, display_name, avatar_url, is_admin, is_guest)`)
     .eq('content_id', contentId)
     .eq('is_removed', false)
     .maybeSingle()
