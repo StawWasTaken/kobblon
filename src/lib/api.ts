@@ -2163,7 +2163,13 @@ export async function listWorldsByOwner(ownerId: string, includeDrafts = false):
 export async function getWorld(contentId: number): Promise<World | null> {
   const { data, error } = await supabase
     .from('worlds')
-    .select(`${WORLD_FIELDS}, owner:profiles!worlds_owner_id_fkey (id, username, display_name, avatar_url, is_admin, is_guest)`)
+    /*
+     * The join is named by nothing: worlds has exactly one way to reach
+     * profiles, so this resolves on its own. Naming the constraint was how
+     * this broke, because renaming experiences to worlds left the keys
+     * called experiences_* and the name did not exist.
+     */
+    .select(`${WORLD_FIELDS}, owner:profiles (id, username, display_name, avatar_url, is_admin, is_guest)`)
     .eq('content_id', contentId)
     .eq('is_removed', false)
     .maybeSingle()
