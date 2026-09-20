@@ -11,7 +11,7 @@ import type { Material } from './materials'
  * Two kinds of pattern, for two different reasons:
  *
  * - **Pictures**, for the materials whose whole point is a surface somebody
- *   recognises: grass, studs, brick, wood, planks. Drawing convincing grass
+ *   recognises: grass, stons, brick, wood, planks. Drawing convincing grass
  *   on a canvas is a losing game, and these were made for Kobblon rather
  *   than taken from a texture site, so there is no licence to honour.
  * - **Drawn on a canvas**, for the rest. Metal, sand, concrete and plastic
@@ -40,7 +40,7 @@ export function setTextureBase(where: string) {
   }
 }
 
-export const PICTURED: Material[] = ['grass', 'studs', 'brick', 'wood', 'planks']
+export const PICTURED: Material[] = ['grass', 'stons', 'brick', 'wood', 'planks']
 
 /** A repeatable random, so a pattern is the same every time it is drawn. */
 function seeded(seed: number) {
@@ -171,11 +171,11 @@ export const TILES_PER_STON: Record<Material, number> = {
   concrete: 0.14,
   plastic: 0.1,
   /*
-   * A quarter of a tile per ston, and the picture holds four studs across,
-   * which puts exactly one stud on every ston. That is the whole point of
-   * the material: a part's size can be counted by looking at it.
+   * A quarter of a tile per ston, and the picture holds four across, which
+   * puts exactly one ston on every ston. That is the whole point of the
+   * material: a part's size can be counted by looking at it.
    */
-  studs: 0.25,
+  stons: 0.25,
   glass: 0,
   neon: 0,
 }

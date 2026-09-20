@@ -529,7 +529,7 @@ const surfaced = await p.evaluate(async () => {
     format: 1, id: 'm', name: 'Materials', spawn: { at: [0, 6, 20] },
     blocks: [
       { id: 'lawn',   kind: 'box', at: [0, -1, 0],  size: [40, 2, 40], material: 'grass',  colour: '#5bbf4a' },
-      { id: 'studded', kind: 'box', at: [-12, 4, 0], size: [8, 8, 2],  material: 'studs',  colour: '#4a6cff' },
+      { id: 'stonewall', kind: 'box', at: [-12, 4, 0], size: [8, 8, 2],  material: 'stons',  colour: '#4a6cff' },
       { id: 'wall',   kind: 'box', at: [0, 4, 0],   size: [8, 8, 2],   material: 'brick',  colour: '#b8563a' },
       { id: 'beam',   kind: 'box', at: [12, 4, 0],  size: [8, 8, 2],   material: 'wood',   colour: '#a3703c' },
       { id: 'deck',   kind: 'box', at: [24, 4, 0],  size: [8, 8, 2],   material: 'planks', colour: '#c09a68' },
@@ -537,7 +537,7 @@ const surfaced = await p.evaluate(async () => {
   })
 
   const of = (name) => window.built().named.get(name)
-  const names = ['lawn', 'studded', 'wall', 'beam', 'deck']
+  const names = ['lawn', 'stonewall', 'wall', 'beam', 'deck']
 
   // Every one of these is fetched, so this waits for the files rather than
   // for a fixed number of milliseconds.
@@ -566,18 +566,18 @@ const surfaced = await p.evaluate(async () => {
 
   return {
     sizes: Object.fromEntries(names.map((n) => [n, sizeOf(n)])),
-    // the front face of the studded wall, 8 stons across
-    studsAcross: acrossOf('studded', 4),
-    tinted: of('studded').material.color.getHexString(),
+    // the front face of the stons wall, 8 stons across
+    stonsAcross: acrossOf('stonewall', 4),
+    tinted: of('stonewall').material.color.getHexString(),
     shared: of('wall').material.map === of('beam').material.map,
   }
 })
 check('a pictured material fetches its picture',
   Object.values(surfaced.sizes).every((one) => one === '512x512'),
   JSON.stringify(surfaced.sizes))
-check('a stud is one ston, so a part can be counted by looking at it',
-  Math.abs(surfaced.studsAcross * 4 - 8) < 0.01,
-  `8 stons across shows ${(surfaced.studsAcross * 4).toFixed(2)} studs`)
+check('a ston is one ston, so a part can be counted by looking at it',
+  Math.abs(surfaced.stonsAcross * 4 - 8) < 0.01,
+  `8 stons across shows ${(surfaced.stonsAcross * 4).toFixed(2)} of them`)
 check('and the pattern multiplies the colour rather than replacing it',
   surfaced.tinted === '4a6cff', `#${surfaced.tinted}`)
 check('two materials are two patterns', !surfaced.shared, 'brick is not wood')

@@ -86,6 +86,36 @@ A guest genuinely cannot sign in to an application: there are no credentials
 to hand over. That is a thing to say plainly in the app, not a thing to work
 around.
 
+## My Worlds has to be the same list on both sides
+
+A World that looks like one thing on the desktop and another on the website
+is two products. So this is the contract, and the website already holds up
+its end of it:
+
+**One source.** `my_worlds()`, which returns whole `worlds` rows for
+`auth.uid()` that are not removed, **ordered by `updated_at` descending**.
+Not a table query, not a filter of your own: the same function on both
+sides, so a new column appears in both lists on the same day.
+
+**Six things per row, in this order:**
+
+1. The emblem, from `cover_url`, falling back to the World mark
+   (`earth-europe`) rather than an empty square.
+2. The name.
+3. `WLD-<content_id>`, or "No number yet" while it has none.
+4. Whether it is published. A World that is not out says so; one that is
+   says nothing, because that is the normal state.
+5. Visits, as `visit_count`.
+6. When it was last saved, from `updated_at`, relative ("saved 2 days ago").
+
+**One action per row: Configure.** On the website that opens
+`/create/worlds/<id>`; in Creator it opens your own panel. Both write
+through `configure_world` and `publish_world` and nothing else, so neither
+can set something the other cannot see.
+
+If Creator wants a seventh thing in that row, say so and it goes in both.
+What it must not do is show a different set and let the two drift.
+
 ## What the engine gained at the same time
 
 - A decal keeps its own proportions. `scale` stretches it on purpose,
@@ -93,6 +123,13 @@ around.
   own, so a blue half see through wall does not tint the picture on it.
 - Wheel zoom, between the engine's near end and `camera.zoom.most` from the
   manifest. At the near end K6 is not drawn at all.
+- Five materials are pictures now rather than canvas drawings: `grass`,
+  `stons`, `brick`, `wood`, `planks`. **`stons` is new** and it is the
+  important one: plastic with a ston on every ston, Kobblon's own version of
+  the square on top of a brick toy, which is what the unit is named after. A
+  part made of it can be measured by looking at it. `planks` is new too.
+  The files are in `public/engine/textures/`; an application shipping its
+  own copy calls `setTextureBase('...')` once at start up.
 - Sound: `manifest.sounds` for ambience, a `WorldSound` child of a part for
   something with a position, and loaded kept apart from playing so a script
   can answer the second question later. `SoundService` is exported.

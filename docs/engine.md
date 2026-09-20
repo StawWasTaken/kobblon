@@ -160,7 +160,7 @@ fallback, always.
 
 ```
 shape         box, wedge, cylinder, sphere
-material      plastic, studs, wood, planks, metal, brick, grass, sand,
+material      plastic, stons, wood, planks, metal, brick, grass, sand,
               concrete, glass, neon
 colour        the creator's; the material decides how it answers light
 transparency  0 solid, 1 invisible
@@ -174,11 +174,12 @@ load, and there is nothing there to moderate. Glass is see-through on its own
 and neon carries its own light, so a creator gets both without knowing what a
 shader is.
 
-**Studs** is plastic with a stud on every ston. That is the whole point of
-it: a part made of studs says how big it is without anybody having to click
-it. It is why the unit is called a ston.
+**Stons** is plastic with a ston on every ston: Kobblon's own version of the
+square a brick toy has on top. That is the whole point of it, and it is why
+the unit is called a ston. A part made of it says how big it is without
+anybody having to click it.
 
-Five of the materials are pictures rather than drawings: grass, studs,
+Five of the materials are pictures rather than drawings: grass, stons,
 brick, wood and planks are surfaces somebody recognises, and drawing
 convincing grass on a canvas is a losing game. They are greyscale and they
 multiply the colour a creator chose, so brick in Kobblon blue is still

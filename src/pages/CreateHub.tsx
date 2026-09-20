@@ -32,7 +32,7 @@ import {
   myWorlds,
 } from '@/lib/api'
 import type { AssetSort } from '@/lib/api'
-import { formatCount } from '@/lib/format'
+import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { AssetKind } from '@/types/db'
 
@@ -247,11 +247,18 @@ export function CreateWorlds() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-bold">{world.name}</span>
-                  <span className="block text-xs text-muted">
+                  {/*
+                    * The same six things Creator shows in its own list, in
+                    * the same order, read from the same my_worlds(): a World
+                    * that looks like one thing on the desktop and another
+                    * here is two products.
+                    */}
+                  <span className="block truncate text-xs text-muted">
                     {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
                     {world.is_published ? '' : ' · not published'}
                     {' · '}
                     {formatCount(world.visit_count)} {world.visit_count === 1 ? 'visit' : 'visits'}
+                    {world.updated_at ? ` · saved ${timeAgo(world.updated_at)}` : ''}
                   </span>
                 </span>
                 <Button size="sm" variant="ghost" to={`/create/worlds/${world.id}`}>Configure</Button>
