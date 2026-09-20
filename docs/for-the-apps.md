@@ -143,3 +143,106 @@ What it must not do is show a different set and let the two drift.
   decision that fixes both. Waiting on Staw.
 - **Migrations `0080` to `0082`** have to be applied before any of the above
   answers in production. `app-signin` is deployed.
+
+---
+
+# Second round
+
+## A picture on a thing is not a Marketplace item. Ever.
+
+This is a rule, not a preference, and it applies to both clients.
+
+An emblem, a thumbnail, a banner, a Community icon, a profile picture: these
+belong to the thing they are on. Setting one **must not** create a Decal, a
+content id, an inventory row, or anything anybody else can take and put on a
+part. They live in that thing's own folder and are recorded beside it:
+`worlds.cover_url` and `world_media` for a World.
+
+A Decal is made when somebody says they are making a Decal. Never as a side
+effect of setting a picture on something.
+
+What follows from that, for Creator: **put an upload button where the
+picture is set.** Sending somebody to the Create pages to make a Decal so
+they can then pick it as an emblem is the wrong shape and produces
+Marketplace content nobody asked for.
+
+The website side of this is done: `uploadWorldFile` writes into the
+`worlds` bucket, which as of `0084` accepts PNG, JPEG, WebP, GIF, AVIF, MP4
+and WebM. It previously accepted only `application/json`, which is where
+"mime type image/png is not supported" came from.
+
+## My Worlds: the shelves, and what is on a row
+
+`my_worlds(shelf text default 'active')` — **the signature changed**, and
+the old no-argument version is dropped, because a default argument does not
+overload it, it sits beside it and then nothing can tell which was meant.
+
+Shelves: `active` (not archived — the default), `published`, `drafts`,
+`archived`, `all`. Ordered by `updated_at` descending.
+
+A row shows six things, in this order: emblem (falling back to the World
+mark), name, `WLD-<content_id>`, whether it is published, visits, when it
+was last saved. Creator shows the same six from the same call.
+
+## Archive and delete
+
+Two different things, so two functions:
+
+- `archive_world(which uuid, away boolean default true)` — off the shelf,
+  **still published and still playable by link**. Reversible. This is "I am
+  done with this", not "nobody may see it".
+- `delete_world(which uuid)` — unpublished, unlisted, files removed from the
+  bucket, watchers and media rows dropped. The row itself stays marked
+  removed so that likes and a moderator's report still have something to
+  point at. Not reversible from the interface.
+- Unpublishing is a third thing and already exists: `publish_world(id,
+  false)`. A World can be unpublished and still be the one you work on daily.
+
+Offer all three and keep the words apart. Deleting when somebody meant to
+archive is the mistake worth designing against.
+
+## Notify
+
+`world_watchers` holds who asked. `do_i_watch_world(uuid)` draws the button.
+`announce_world_update(which uuid, note text)` is the owner saying something
+changed: it writes one notification per watcher, linking to the World, at
+most once every six hours.
+
+Deliberately not automatic on save. If Creator adds a "tell people" control,
+call the same function; do not fire it from a publish.
+
+## Configure, on both sides
+
+The panel should be the same panel. The website's is at `/create/worlds/:id`
+and holds, in this order:
+
+1. The World's own address, with a copy and an open.
+2. **What it is** — name, description, genre (from `world_genre_list()`),
+   maturity.
+3. **How it looks** — the emblem, then the thumbnails and clips, ordered.
+4. **Tell people it changed** — the announcement box, on a published World.
+5. **Publishing** — out, or back in.
+6. Archive and delete.
+
+Everything above writes through `configure_world`, `publish_world`,
+`announce_world_update`, `archive_world` and `delete_world`. No client
+should invent a seventh way to change a World.
+
+## Working as
+
+The website's Create pages have a "working as" switch between yourself and a
+Community you help run. Creator should have the same switch rather than a
+separate Communities section in its rail.
+
+**One honest gap:** a World belongs to the person who built it. There is no
+`community_id` on `worlds` yet, so switching to a Community shows nothing,
+and the website says exactly that rather than showing an empty list. Handing
+a World to a Community is a column, a policy change and a decision about who
+may then publish it. Worth doing; say the word and it is one migration.
+
+## Still open, engine side
+
+Textures are flat pictures on flat faces. Making them read as though the
+surface has depth — the way a brick wall does elsewhere — means normal maps
+alongside the colour maps, generated from the same greyscale. Noted, not
+built.
