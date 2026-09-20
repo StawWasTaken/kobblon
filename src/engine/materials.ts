@@ -10,11 +10,12 @@ import { textureFor } from './textures'
  * to light, and the colour stays the creator's.
  */
 export type Material =
-  | 'plastic' | 'wood' | 'metal' | 'brick'
+  | 'plastic' | 'studs' | 'wood' | 'planks' | 'metal' | 'brick'
   | 'grass' | 'sand' | 'concrete' | 'glass' | 'neon'
 
 export const MATERIALS: Material[] = [
-  'plastic', 'wood', 'metal', 'brick', 'grass', 'sand', 'concrete', 'glass', 'neon',
+  'plastic', 'studs', 'wood', 'planks', 'metal', 'brick',
+  'grass', 'sand', 'concrete', 'glass', 'neon',
 ]
 
 type Look = {
@@ -33,7 +34,17 @@ type Look = {
  */
 const LOOKS: Record<Material, Look> = {
   plastic: { roughness: 0.55, metalness: 0 },
+  /*
+   * Plastic with a stud on every ston.
+   *
+   * The same plastic underneath, and a surface you can count. A part made of
+   * this says how big it is without anybody having to click it, which is the
+   * thing the old brick-toy look was actually for.
+   */
+  studs: { roughness: 0.5, metalness: 0 },
   wood: { roughness: 0.82, metalness: 0 },
+  /** Boards, laid and nailed, rather than one piece of grain. */
+  planks: { roughness: 0.85, metalness: 0 },
   /*
    * Not fully metal on purpose. A metal with nothing to reflect renders
    * black, and a World is not guaranteed to have a sky. This keeps the

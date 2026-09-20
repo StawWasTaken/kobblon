@@ -160,7 +160,8 @@ fallback, always.
 
 ```
 shape         box, wedge, cylinder, sphere
-material      plastic, wood, metal, brick, grass, sand, concrete, glass, neon
+material      plastic, studs, wood, planks, metal, brick, grass, sand,
+              concrete, glass, neon
 colour        the creator's; the material decides how it answers light
 transparency  0 solid, 1 invisible
 reflectance   0 flat, 1 a mirror
@@ -172,6 +173,26 @@ picks from a list they can hold in their head, every World costs the same to
 load, and there is nothing there to moderate. Glass is see-through on its own
 and neon carries its own light, so a creator gets both without knowing what a
 shader is.
+
+**Studs** is plastic with a stud on every ston. That is the whole point of
+it: a part made of studs says how big it is without anybody having to click
+it. It is why the unit is called a ston.
+
+Five of the materials are pictures rather than drawings: grass, studs,
+brick, wood and planks are surfaces somebody recognises, and drawing
+convincing grass on a canvas is a losing game. They are greyscale and they
+multiply the colour a creator chose, so brick in Kobblon blue is still
+recognisably brick, and they live in `public/engine/textures/`. An
+application shipping the engine has its own copy and says where once:
+
+```ts
+import { setTextureBase } from '@kobblon/engine'
+setTextureBase('app://engine/textures/')
+```
+
+Metal, sand, concrete and plastic stay drawn on a canvas at load. They are a
+noise and a direction, they cost nothing to fetch, and there is no seam to
+get wrong.
 
 **Each one carries a pattern, drawn rather than downloaded.** Nine materials
 that differ only in how shiny they are are nine coloured boxes with different

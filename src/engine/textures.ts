@@ -2,19 +2,45 @@ import * as THREE from 'three'
 import type { Material } from './materials'
 
 /**
- * What a material looks like, drawn rather than downloaded.
+ * What a material looks like.
  *
- * Nine materials that differ only in how shiny they are are nine coloured
- * boxes with different highlights. A material reads as itself because of the
- * pattern on it: brick is brick because you can see the courses.
+ * Materials that differ only in how shiny they are are coloured boxes with
+ * different highlights. A material reads as itself because of the pattern on
+ * it: brick is brick because you can see the courses.
  *
- * Every pattern here is drawn on a canvas at load, greyscale, tiling by
- * construction, and multiplied against the colour the creator chose. That
- * buys three things a texture pack does not: nothing to download, no seam to
- * get wrong, and no licence to honour. The last one matters, because Kobblon
- * redistributes every file it ships and most free texture sites permit use
- * but not redistribution.
+ * Two kinds of pattern, for two different reasons:
+ *
+ * - **Pictures**, for the materials whose whole point is a surface somebody
+ *   recognises: grass, studs, brick, wood, planks. Drawing convincing grass
+ *   on a canvas is a losing game, and these were made for Kobblon rather
+ *   than taken from a texture site, so there is no licence to honour.
+ * - **Drawn on a canvas**, for the rest. Metal, sand, concrete and plastic
+ *   are a noise and a direction, they cost nothing to download and there is
+ *   no seam to get wrong.
+ *
+ * Either way a pattern is greyscale and multiplies the colour the creator
+ * chose, so brick in Kobblon blue is still recognisably brick.
  */
+
+/**
+ * Where the picture patterns are served from.
+ *
+ * The website serves them from its own `public`. An application shipping the
+ * engine has its own copy on disk and says so once, at start up, rather than
+ * every material asking where it is.
+ */
+let base = '/engine/textures/'
+
+export function setTextureBase(where: string) {
+  base = where.endsWith('/') ? where : `${where}/`
+  // Anything already handed out was fetched from the old place.
+  for (const [material, texture] of loaded) {
+    texture?.dispose()
+    loaded.delete(material)
+  }
+}
+
+export const PICTURED: Material[] = ['grass', 'studs', 'brick', 'wood', 'planks']
 
 /** A repeatable random, so a pattern is the same every time it is drawn. */
 function seeded(seed: number) {
@@ -65,61 +91,6 @@ function speckle(
 }
 
 const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
-  brick() {
-    const { canvas, paint } = sheet()
-    const random = seeded(7)
-    const rows = 8
-    const high = SIZE / rows
-    const wide = SIZE / 4
-    const mortar = 3
-
-    paint.fillStyle = grey(0.72) // the mortar behind everything
-    paint.fillRect(0, 0, SIZE, SIZE)
-
-    for (let row = 0; row < rows; row += 1) {
-      // Every other course is offset by half a brick, which is what makes a
-      // wall read as a wall rather than as a grid.
-      const shift = row % 2 === 0 ? 0 : wide / 2
-      for (let column = -1; column <= 4; column += 1) {
-        const x = column * wide + shift
-        paint.fillStyle = grey(0.93 - random() * 0.16)
-        paint.fillRect(x + mortar / 2, row * high + mortar / 2, wide - mortar, high - mortar)
-      }
-    }
-    return canvas
-  },
-
-  wood() {
-    const { canvas, paint } = sheet()
-    const random = seeded(11)
-    paint.fillStyle = grey(0.95)
-    paint.fillRect(0, 0, SIZE, SIZE)
-
-    // Grain: long wavering lines down the board.
-    for (let i = 0; i < 90; i += 1) {
-      const x = random() * SIZE
-      paint.strokeStyle = grey(0.78 - random() * 0.22, 0.5)
-      paint.lineWidth = 0.6 + random() * 1.8
-      paint.beginPath()
-      paint.moveTo(x, 0)
-      for (let y = 0; y <= SIZE; y += 16) {
-        paint.lineTo(x + Math.sin((y / SIZE) * Math.PI * 2 + i) * 3, y)
-      }
-      paint.stroke()
-    }
-
-    // The joins between boards, which is what says it is planks.
-    for (const x of [0, SIZE / 2]) {
-      paint.strokeStyle = grey(0.55, 0.8)
-      paint.lineWidth = 2
-      paint.beginPath()
-      paint.moveTo(x, 0)
-      paint.lineTo(x, SIZE)
-      paint.stroke()
-    }
-    return canvas
-  },
-
   metal() {
     const { canvas, paint } = sheet()
     const random = seeded(13)
@@ -134,28 +105,6 @@ const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
       paint.beginPath()
       paint.moveTo(0, y)
       paint.lineTo(SIZE, y)
-      paint.stroke()
-    }
-    return canvas
-  },
-
-  grass() {
-    const { canvas, paint } = sheet()
-    const random = seeded(17)
-    paint.fillStyle = grey(0.86)
-    paint.fillRect(0, 0, SIZE, SIZE)
-
-    // Blades, short and every which way.
-    for (let i = 0; i < 1600; i += 1) {
-      const x = random() * SIZE
-      const y = random() * SIZE
-      const length = 3 + random() * 6
-      const lean = (random() - 0.5) * 4
-      paint.strokeStyle = grey(0.6 + random() * 0.45, 0.6)
-      paint.lineWidth = 1
-      paint.beginPath()
-      paint.moveTo(x, y)
-      paint.lineTo(x + lean, y - length)
       paint.stroke()
     }
     return canvas
@@ -213,34 +162,59 @@ const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
  * World look wrong without anybody being able to say why.
  */
 export const TILES_PER_STON: Record<Material, number> = {
-  brick: 0.25,
-  wood: 0.18,
+  brick: 0.18,
+  wood: 0.12,
+  planks: 0.08,
   metal: 0.12,
-  grass: 0.3,
+  grass: 0.18,
   sand: 0.22,
   concrete: 0.14,
   plastic: 0.1,
+  /*
+   * A quarter of a tile per ston, and the picture holds four studs across,
+   * which puts exactly one stud on every ston. That is the whole point of
+   * the material: a part's size can be counted by looking at it.
+   */
+  studs: 0.25,
   glass: 0,
   neon: 0,
 }
 
-const drawn = new Map<Material, THREE.CanvasTexture | null>()
+const loaded = new Map<Material, THREE.Texture | null>()
+const pictures = new THREE.TextureLoader()
 
-/** The pattern for a material, drawn once and then handed out. */
-export function textureFor(material: Material): THREE.CanvasTexture | null {
-  if (drawn.has(material)) return drawn.get(material) ?? null
-
-  const draw = patterns[material]
-  if (!draw || typeof document === 'undefined') {
-    drawn.set(material, null)
-    return null
-  }
-
-  const texture = new THREE.CanvasTexture(draw())
+/** Everything a pattern needs whether it was drawn or fetched. */
+function dress(texture: THREE.Texture) {
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 4
-  drawn.set(material, texture)
+  return texture
+}
+
+/**
+ * The pattern for a material, made once and then handed out.
+ *
+ * A picture is returned before it has arrived: three.js hands back the
+ * texture immediately and fills it in when the file lands, so a World is
+ * standing while its surfaces are still loading rather than after.
+ */
+export function textureFor(material: Material): THREE.Texture | null {
+  if (loaded.has(material)) return loaded.get(material) ?? null
+
+  if (PICTURED.includes(material)) {
+    const texture = dress(pictures.load(`${base}${material}.webp`))
+    loaded.set(material, texture)
+    return texture
+  }
+
+  const draw = patterns[material]
+  if (!draw || typeof document === 'undefined') {
+    loaded.set(material, null)
+    return null
+  }
+
+  const texture = dress(new THREE.CanvasTexture(draw()))
+  loaded.set(material, texture)
   return texture
 }

@@ -523,6 +523,65 @@ check('loaded and playing are two things',
   heard.quietUntilAsked && heard.ambientWanted && heard.asked,
   'silent until asked, and asking works whether or not the file is here')
 
+// -- 21. the materials that are pictures actually arrive, and tile right
+const surfaced = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 'm', name: 'Materials', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'lawn',   kind: 'box', at: [0, -1, 0],  size: [40, 2, 40], material: 'grass',  colour: '#5bbf4a' },
+      { id: 'studded', kind: 'box', at: [-12, 4, 0], size: [8, 8, 2],  material: 'studs',  colour: '#4a6cff' },
+      { id: 'wall',   kind: 'box', at: [0, 4, 0],   size: [8, 8, 2],   material: 'brick',  colour: '#b8563a' },
+      { id: 'beam',   kind: 'box', at: [12, 4, 0],  size: [8, 8, 2],   material: 'wood',   colour: '#a3703c' },
+      { id: 'deck',   kind: 'box', at: [24, 4, 0],  size: [8, 8, 2],   material: 'planks', colour: '#c09a68' },
+    ],
+  })
+
+  const of = (name) => window.built().named.get(name)
+  const names = ['lawn', 'studded', 'wall', 'beam', 'deck']
+
+  // Every one of these is fetched, so this waits for the files rather than
+  // for a fixed number of milliseconds.
+  for (let i = 0; i < 300; i += 1) {
+    if (names.every((n) => of(n).material.map?.image)) break
+    await new Promise((r) => setTimeout(r, 20))
+  }
+
+  const sizeOf = (name) => {
+    const image = of(name).material.map?.image
+    return image ? `${image.width}x${image.height}` : null
+  }
+
+  /* How many times the pattern goes across a face, read off the UVs. */
+  const acrossOf = (name, face) => {
+    const uv = of(name).geometry.attributes.uv
+    const start = face * 4
+    let least = Infinity
+    let most = -Infinity
+    for (let i = start; i < start + 4; i += 1) {
+      least = Math.min(least, uv.getX(i))
+      most = Math.max(most, uv.getX(i))
+    }
+    return most - least
+  }
+
+  return {
+    sizes: Object.fromEntries(names.map((n) => [n, sizeOf(n)])),
+    // the front face of the studded wall, 8 stons across
+    studsAcross: acrossOf('studded', 4),
+    tinted: of('studded').material.color.getHexString(),
+    shared: of('wall').material.map === of('beam').material.map,
+  }
+})
+check('a pictured material fetches its picture',
+  Object.values(surfaced.sizes).every((one) => one === '512x512'),
+  JSON.stringify(surfaced.sizes))
+check('a stud is one ston, so a part can be counted by looking at it',
+  Math.abs(surfaced.studsAcross * 4 - 8) < 0.01,
+  `8 stons across shows ${(surfaced.studsAcross * 4).toFixed(2)} studs`)
+check('and the pattern multiplies the colour rather than replacing it',
+  surfaced.tinted === '4a6cff', `#${surfaced.tinted}`)
+check('two materials are two patterns', !surfaced.shared, 'brick is not wood')
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())

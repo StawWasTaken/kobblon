@@ -19,6 +19,6 @@ export {
 export { SoundService, type Playing } from './sound'
 export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from './materials'
 export { SHAPES, isShape, geometryFor, tiledGeometry, type Shape } from './shapes'
-export { textureFor, TILES_PER_STON } from './textures'
+export { textureFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'
 export { buildSky, cutCross, Skybox, type Sky, type ResolveAsset } from './sky'
 export { STON, GRAVITY, K6_HEIGHT, K6_RADIUS } from './units'
