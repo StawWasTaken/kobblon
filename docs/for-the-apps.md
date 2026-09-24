@@ -264,3 +264,142 @@ application is the Workspace; the person is a creator.
 The protocol scheme is untouched: `kobblon-creator://signin` still works and
 renaming it would break every link already handed out. A scheme is an
 address, not a name.
+
+---
+
+# Third round — everything since the textures handoff
+
+## Engine
+
+**Textures are halved again**, so roughly four times the size they were two
+handoffs ago. Re-read `TILES_PER_STON` if you cached it. `stons` stays at
+0.25 for ever: four across the picture is one ston on every ston, which is
+the point of that material.
+
+**New materials:** `cobble`. **Now pictures rather than canvas drawings:**
+`concrete`, `grass`, `sand`, `slate`, `metal`. Full list:
+
+    smooth, plastic, stons, wood, planks, metal, plate, brick, cobble,
+    grass, sand, pebble, slate, marble, concrete, glass, neon
+
+Build your picker from `MATERIALS` and it follows on its own.
+
+**Every pictured material has bumps** — a normal map generated from the same
+greyscale by `tools/engine/bumps.py`, shipped beside it as
+`<name>-bump.webp`. That is what makes a brick wall read as brick rather
+than a photograph of brick on a flat face. `public/engine/textures/` is 26
+files now: **copy the whole folder** if you ship your own, because a missing
+`-bump.webp` is a silently flat surface with no error. `bumpFor()` and
+`reliefFor()` are exported.
+
+**Metal is no longer black.** A World that set a sky colour rather than a
+sky picture had nothing for metal to reflect. The colour now builds six
+small faces to stand in for an environment. One measured detail if you ever
+do the same: **8x8 cube faces render as no environment at all**; 64x64 is
+the smallest that works.
+
+**K6 v.02 is being rebuilt** and is deliberately **not deployed**. The
+published avatar is still the old one. New primitives: `rounded` (a box with
+real rounded edges, by projection rather than faked normals), `ball`,
+`cylinder`. The rig has a cylinder neck and ball joints at the shoulders and
+hips, and **no hands and no feet** — there are none in Staw's drawing. Still
+six parts. Do not build against v.02 until Staw says it stands in.
+
+## Migrations 0090 and 0091
+
+**0090 — faces can be edited and deleted.** The shape matters beyond faces
+because World passes will hit it: deleting something ownable has **two
+outcomes and it is not a choice**. Nobody owns it, it is deleted, row and
+file. Somebody owns it, it comes off the shelf and the people who paid keep
+it. `delete_face` returns the file path when it really deleted and null when
+it retired.
+
+Two bugs my own tests caught and both are traps you can hit:
+
+- A path check used `{3,400}`. **Postgres will not take a repetition count
+  past 255**, so that is not a strict rule, it is an invalid expression that
+  refuses everything and looks like it works. Check any `~` with a count
+  over 255.
+- `my_faces()` filtered out removed rows, which would have taken a retired
+  face **out of the hands of everybody who owned one** — the exact thing
+  retiring exists to prevent. The same trap is anywhere "what is for sale"
+  and "what you own" read from one filtered list. They are two lists.
+
+**0091 — `friendships` is in the realtime publication.** It never was. The
+Launcher could not have received a live friend request at all, and our own
+sidebar badge had been silently broken since it was written. `replica
+identity full` is on, so the payload carries old values.
+
+## The in-game friend request — do not draw it
+
+`src/components/social/FriendRequestToast.tsx`. `FriendRequestCard` is the
+visual and `FriendRequestWatcher` is the subscription. It is live on the
+website so you can watch it behave. Copy it: the one in a World and the one
+on the website have to be the same card.
+
+How it works: subscribe to `friendships` INSERT filtered on
+`addressee_id=eq.<you>`, ignore rows whose status is not `pending`, then
+call **`request_from(request_id)`** for the name and the picture — realtime
+hands you two ids and a status, which is not enough to draw anybody. That
+function refuses a request that was not sent to you, so you do not check.
+Answer with `respondToFriendRequest(id, accept)`.
+
+## Two rules, both written down now
+
+**`docs/neoclassic.md`** — Staw's word, and it decides what gets built and
+what it looks like. The two lines that will change what you do:
+
+- **Copy the system, not the look.** Where Roblox has solved a social
+  problem, take the *mechanism* people already understand and draw it in
+  Kobblon's design. Staw was explicit: trying to describe a Roblox feeling
+  and build something "similar" just makes it worse. Match the system
+  closely; only the design is ours.
+- **Only what a week-old platform needs.** Not a feature because a big
+  platform has one.
+
+**Colour.** Blue is Kobblon — the chrome, the links, the marks, the thing
+somebody is standing inside. **Green is yes** — going into a World,
+something being live, something being yours, an answer that means
+agreement. If a green thing does not mean alive, yours or yes, it is the
+wrong colour. This replaces what I told you before about green being Play
+alone; that was me over-reading a note from Staw.
+
+## The application is Kobblon Workspace
+
+Not "Kobblon World Creator" and not "Creator". The website says Workspace
+everywhere it names the application.
+
+**Creator still means a person** who makes things here — the Creator
+Marketplace, a creator page, the Support topic. Different word, different
+job, unchanged.
+
+**The protocol scheme stays `kobblon-creator://signin`.** A scheme is an
+address, not a name, and renaming it breaks every link already handed out.
+
+## Faces, since they are new to you
+
+Kobblon-published only, enforced by policy. `face_catalogue()`,
+`buy_face()`, `my_faces()`, `wear_face()`, `all_faces()` for the publisher.
+`profiles.face_id` is the column the engine will read when the rig lands.
+Nothing draws them yet.
+
+## Still mine, still not done
+
+- **`WorldDecal.picture` is not renamed.** You are still telling that small
+  lie with `DecalContent`. Plan: `content` canonical, `picture` still read
+  for old files. Say if you want a different word.
+- **`worlds.community_id` is not added.** Staw gave the permission model —
+  members with a rank carrying the permission, access lost immediately on
+  leaving or losing rank, enforced by RLS with realtime as the courtesy —
+  but not who gets the Brix or what happens when a Community is deleted.
+- **A gameplay list Staw just handed me and I have not started:** jump
+  cooldown removed or shortened, camera collision against solids, walk speed
+  matched to Roblox with sprint removed, inverted right-click camera drag
+  fixed, and proper first person — pointer locked to the centre, zoom to the
+  head rather than the torso, body fading out then hidden for the person
+  playing. Assume none of it is true yet.
+
+## Migrations pending
+
+**0083 to 0091**, as far as I know. **0084 is the one that unbreaks emblem
+and thumbnail uploads.**
