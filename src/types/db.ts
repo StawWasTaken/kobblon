@@ -675,5 +675,8 @@ export type Face = {
   price: number
   /** Whether the person asking already has it. */
   owned?: boolean
+  /** On the shelf. Absent from the Catalog, where everything is. */
+  is_public?: boolean
+  is_removed?: boolean
   created_at: string
 }

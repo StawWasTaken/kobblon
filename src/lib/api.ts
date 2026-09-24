@@ -1668,6 +1668,58 @@ export function faceUrl(path: string) {
   return `${base}/storage/v1/object/public/faces/${path}`
 }
 
+/** Every face Kobblon has, including the ones off the shelf. */
+export async function allFaces(): Promise<Face[]> {
+  return (unwrap(await supabase.rpc('all_faces')) as Face[]) ?? []
+}
+
+/** Changing one. Leaving a field out leaves it alone. */
+export async function editFace(id: string, changes: {
+  name?: string
+  description?: string
+  price?: number
+  isPublic?: boolean
+  file?: File
+}): Promise<void> {
+  let picture: string | null = null
+
+  if (changes.file) {
+    const extension = changes.file.name.split('.').pop()?.toLowerCase() ?? 'png'
+    picture = `${crypto.randomUUID()}.${extension}`
+    const up = await supabase.storage.from('faces')
+      .upload(picture, changes.file, { contentType: changes.file.type || 'image/png' })
+    if (up.error) throw new Error(up.error.message)
+  }
+
+  const { error } = await supabase.rpc('edit_face', {
+    which: id,
+    called: changes.name ?? null,
+    about: changes.description ?? null,
+    cost: changes.price ?? null,
+    shown: changes.isPublic ?? null,
+    picture,
+  })
+  if (error) {
+    // A new picture that the row never accepted is litter.
+    if (picture) await supabase.storage.from('faces').remove([picture])
+    throw new Error(error.message)
+  }
+}
+
+/**
+ * Getting rid of one.
+ *
+ * Says which of the two things happened: a face nobody owns is deleted
+ * outright, and one somebody paid for is taken off the shelf and left in
+ * their hands. Destroying something people bought is not a tidy-up.
+ */
+export async function deleteFace(id: string): Promise<'deleted' | 'retired'> {
+  const path = unwrap(await supabase.rpc('delete_face', { which: id })) as string | null
+  if (!path) return 'retired'
+  await supabase.storage.from('faces').remove([path])
+  return 'deleted'
+}
+
 /**
  * Publishing one. Kobblon only, and that is enforced by the database
  * rather than by this function being hard to find.

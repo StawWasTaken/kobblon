@@ -1,15 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faFaceSmile, faPlus, faCheck, faLock } from '@fortawesome/free-solid-svg-icons'
+import {
+  faFaceSmile, faPlus, faCheck, faLock, faEllipsis, faPen, faTrash, faEyeSlash,
+} from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
+import { Menu } from '@/components/ui/Menu'
+import { Confirm } from '@/components/ui/Confirm'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { buyFace, faceCatalogue, faceUrl, publishFace } from '@/lib/api'
+import {
+  allFaces, buyFace, deleteFace, editFace, faceCatalogue, faceUrl, publishFace,
+} from '@/lib/api'
 import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -29,14 +35,23 @@ import type { Face } from '@/types/db'
 export function FacesShelf() {
   const { profile } = useAuth()
   const toast = useToast()
-  const faces = useAsync(() => faceCatalogue(), [])
-  const [busy, setBusy] = useState<string | null>(null)
-  const [adding, setAdding] = useState(false)
-
   /* Kobblon publishes these. The database says so too. */
   const mine = profile?.username
     ? ['kobblon', 'kobbleston'].includes(profile.username.toLowerCase())
     : false
+
+  /*
+   * Two different lists. The Catalog is what is for sale; whoever publishes
+   * them needs to see everything they have published, retired ones too.
+   */
+  const faces = useAsync(
+    async () => (mine ? allFaces() : faceCatalogue()),
+    [mine],
+  )
+  const [busy, setBusy] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState<Face | null>(null)
+  const [removing, setRemoving] = useState<Face | null>(null)
 
   const buy = async (face: Face) => {
     setBusy(face.id)
@@ -48,6 +63,16 @@ export function FacesShelf() {
       toast((err as Error).message)
     } finally {
       setBusy(null)
+    }
+  }
+
+  const run = async (what: () => Promise<unknown>, said: string) => {
+    try {
+      await what()
+      await faces.reload()
+      toast(said)
+    } catch (err) {
+      toast((err as Error).message)
     }
   }
 
@@ -91,17 +116,43 @@ export function FacesShelf() {
               key={face.id}
               className="flex flex-col overflow-hidden rounded-xl border border-ink-line bg-ink-card"
             >
-              <span className="grid aspect-square place-items-center bg-media p-3">
+              <span className="relative grid aspect-square place-items-center bg-media p-3">
                 <img
                   src={faceUrl(face.image_path)}
                   alt={face.name}
                   loading="lazy"
                   className="h-full w-full object-contain"
                 />
+
+                {mine && (
+                  <span className="absolute right-1.5 top-1.5">
+                    <Menu
+                      label={`More for ${face.name}`}
+                      trigger={<FontAwesomeIcon icon={faEllipsis} />}
+                      items={[
+                        { label: 'Edit', icon: faPen, onSelect: () => setEditing(face) },
+                        {
+                          label: face.is_public === false ? 'Put it back on the shelf' : 'Take it off the shelf',
+                          icon: faEyeSlash,
+                          onSelect: () => void run(
+                            () => editFace(face.id, { isPublic: face.is_public === false }),
+                            face.is_public === false ? 'Back on the shelf.' : 'Off the shelf.',
+                          ),
+                        },
+                        { label: 'Delete', icon: faTrash, danger: true, onSelect: () => setRemoving(face) },
+                      ]}
+                    />
+                  </span>
+                )}
               </span>
 
               <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
                 <p className="truncate text-sm font-bold">{face.name}</p>
+                {mine && face.is_public === false && (
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                    Off the shelf
+                  </p>
+                )}
                 {face.description && (
                   <p className="line-clamp-2 text-xs leading-relaxed text-white/50">
                     {face.description}
@@ -134,6 +185,33 @@ export function FacesShelf() {
       )}
 
       {mine && <PublishFace open={adding} onClose={() => setAdding(false)} onDone={faces.reload} />}
+
+      {mine && (
+        <EditFace
+          face={editing}
+          onClose={() => setEditing(null)}
+          onDone={faces.reload}
+        />
+      )}
+
+      <Confirm
+        open={Boolean(removing)}
+        onClose={() => setRemoving(null)}
+        title={removing ? `Delete ${removing.name}?` : ''}
+        lead="A face nobody owns is deleted outright. One somebody paid for comes off the shelf instead and stays in their hands, because destroying something people bought is not a tidy-up."
+        confirmText="Delete it"
+        icon={faTrash}
+        tone="danger"
+        onConfirm={() => {
+          const face = removing
+          setRemoving(null)
+          if (!face) return
+          void run(async () => {
+            const what = await deleteFace(face.id)
+            return what
+          }, `${face.name} is gone.`)
+        }}
+      />
     </div>
   )
 }
@@ -214,6 +292,95 @@ function PublishFace({
           <Button onClick={() => void send()} disabled={busy || !file || !name.trim()}>
             Publish
           </Button>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+/**
+ * Changing one that is already out.
+ *
+ * The picture is optional: most edits are a name or a price, and making
+ * somebody re-pick the file to fix a typo is how a form gets avoided.
+ */
+function EditFace({
+  face, onClose, onDone,
+}: { face: Face | null; onClose: () => void; onDone: () => void }) {
+  const toast = useToast()
+  const [name, setName] = useState('')
+  const [about, setAbout] = useState('')
+  const [price, setPrice] = useState('0')
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  // Start as what the face already says, not as blanks that would wipe it.
+  useEffect(() => {
+    if (!face) return
+    setName(face.name)
+    setAbout(face.description ?? '')
+    setPrice(String(face.price))
+    setFile(null)
+  }, [face?.id])
+
+  const save = async () => {
+    if (!face || !name.trim()) return
+    setBusy(true)
+    try {
+      await editFace(face.id, {
+        name,
+        description: about,
+        price: Number(price) || 0,
+        file: file ?? undefined,
+      })
+      onDone()
+      onClose()
+      toast('Saved.')
+    } catch (err) {
+      toast((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={Boolean(face)} onClose={onClose} title={face ? `Edit ${face.name}` : ''}>
+      <div className="space-y-4">
+        <Input label="Name" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
+        <Textarea
+          label="Description"
+          rows={3}
+          maxLength={300}
+          value={about}
+          onChange={(e) => setAbout(e.target.value)}
+        />
+        <Input
+          label={`Price in ${currency.plural}`}
+          labelNote="Nought is free"
+          type="number"
+          min={0}
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
+
+        <label
+          className={cn(
+            'flex h-20 cursor-pointer items-center justify-center rounded-xl border border-dashed',
+            'border-ink-line text-sm text-muted transition-colors hover:border-white/30 hover:text-white',
+          )}
+        >
+          {file ? file.name : 'Replace the picture (optional)'}
+          <input
+            type="file"
+            accept="image/png,image/webp,image/jpeg"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => void save()} disabled={busy || !name.trim()}>Save</Button>
         </div>
       </div>
     </Dialog>
