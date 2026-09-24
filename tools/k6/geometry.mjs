@@ -92,3 +92,89 @@ export function bind(geometry, bands) {
 
   return { joints, weights }
 }
+
+/**
+ * A ball.
+ *
+ * The v.02 head is a sphere rather than a cube, and the shoulders and hips
+ * are visible balls that a limb turns on. Kept coarse on purpose: this is a
+ * brick toy, not a figurine, and a head made of four hundred triangles
+ * reads no rounder at the size anybody sees it.
+ */
+export function ball({ at, radius, rings = 10, segments = 14 }) {
+  const [cx, cy, cz] = at
+  const positions = []
+  const normals = []
+  const indices = []
+
+  for (let ring = 0; ring <= rings; ring += 1) {
+    const phi = (ring / rings) * Math.PI
+    for (let seg = 0; seg <= segments; seg += 1) {
+      const theta = (seg / segments) * Math.PI * 2
+      const nx = Math.sin(phi) * Math.cos(theta)
+      const ny = Math.cos(phi)
+      const nz = Math.sin(phi) * Math.sin(theta)
+      positions.push(cx + nx * radius, cy + ny * radius, cz + nz * radius)
+      normals.push(nx, ny, nz)
+    }
+  }
+
+  const row = segments + 1
+  for (let ring = 0; ring < rings; ring += 1) {
+    for (let seg = 0; seg < segments; seg += 1) {
+      const a = ring * row + seg
+      const b = a + row
+      indices.push(a, b, a + 1, a + 1, b, b + 1)
+    }
+  }
+
+  return { positions, normals, indices }
+}
+
+/**
+ * A box with its edges taken off.
+ *
+ * "Chunky limb geometry" is the v.02 note, and what stops a chunky limb
+ * reading as a plank is that its edges catch light rather than ending in a
+ * line. Built as a box whose corner vertices are pulled in by `bevel` and
+ * given their own normals, which is the cheapest rounding that still reads:
+ * no extra faces, no smoothing group to get wrong.
+ */
+export function chunk({ at, size, bevel = 0.12, taper = 1 }) {
+  const [cx, cy, cz] = at
+  const [sx, sy, sz] = size
+  const positions = []
+  const normals = []
+  const indices = []
+
+  // How far in from each face the bevel starts, as a fraction of that side.
+  const inset = Math.min(Math.max(bevel, 0), 0.4)
+
+  for (const face of FACES) {
+    const first = positions.length / 3
+    for (const [x, y, z] of face.c) {
+      const narrow = y > 0 ? taper : 1
+      // Pull the corner in along the two axes the face does not point down.
+      const pull = (axis, value) => (face.n[axis] === 0 ? value * (1 - inset) : value)
+      positions.push(
+        cx + (pull(0, x) * sx * narrow) / 2,
+        cy + (pull(1, y) * sy) / 2,
+        cz + (pull(2, z) * sz * narrow) / 2,
+      )
+      /*
+       * The normal leans towards the corner it belongs to, so the edge
+       * between two faces catches a highlight instead of being a hard line.
+       */
+      const lean = [
+        face.n[0] + (face.n[0] === 0 ? x * inset * 2 : 0),
+        face.n[1] + (face.n[1] === 0 ? y * inset * 2 : 0),
+        face.n[2] + (face.n[2] === 0 ? z * inset * 2 : 0),
+      ]
+      const length = Math.hypot(...lean) || 1
+      normals.push(lean[0] / length, lean[1] / length, lean[2] / length)
+    }
+    indices.push(first, first + 1, first + 2, first, first + 2, first + 3)
+  }
+
+  return { positions, normals, indices }
+}
