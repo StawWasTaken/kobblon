@@ -22,6 +22,7 @@ DEPTH = {
     'stons': 9.0,
     'plate': 7.0,
     'brick': 5.0,
+    'cobble': 6.5,
     'planks': 4.0,
     'pebble': 6.0,
     'grass': 3.5,
@@ -29,6 +30,7 @@ DEPTH = {
     'sand': 3.0,
     'wood': 2.0,
     'marble': 1.2,
+    'concrete': 2.5,
     'metal': 1.0,
 }
 

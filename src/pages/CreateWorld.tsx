@@ -14,6 +14,7 @@ import { Select } from '@/components/ui/Select'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ErrorState, Skeleton } from '@/components/ui/States'
+import { Cropper } from '@/components/ui/Cropper'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -71,6 +72,12 @@ export default function CreateWorld() {
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
   const [announcement, setAnnouncement] = useState('')
+  /*
+   * An emblem is drawn square everywhere it appears, so something has to
+   * cut it. Better the person who chose the picture decides which part
+   * survives than the browser deciding for them.
+   */
+  const [cropping, setCropping] = useState<File | null>(null)
 
   const emblemInput = useRef<HTMLInputElement>(null)
   const shotInput = useRef<HTMLInputElement>(null)
@@ -271,7 +278,7 @@ export default function CreateWorld() {
             onChange={(e) => {
               const file = e.target.files?.[0]
               e.target.value = ''
-              if (file) void pickEmblem(file)
+              if (file) setCropping(file)
             }}
           />
         </div>
@@ -355,6 +362,17 @@ export default function CreateWorld() {
           </div>
         </Card>
       )}
+
+      <Cropper
+        file={cropping}
+        open={Boolean(cropping)}
+        aspect={1}
+        onCancel={() => setCropping(null)}
+        onDone={(cut) => {
+          setCropping(null)
+          void pickEmblem(cut)
+        }}
+      />
 
       <Card className="flex flex-wrap items-center gap-4 p-5">
         <div className="min-w-0 flex-1">

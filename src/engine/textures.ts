@@ -48,8 +48,8 @@ export function setTextureBase(where: string) {
 }
 
 export const PICTURED: Material[] = [
-  'grass', 'stons', 'brick', 'wood', 'planks', 'plate', 'metal', 'pebble',
-  'slate', 'marble', 'sand',
+  'grass', 'stons', 'brick', 'cobble', 'wood', 'planks', 'plate', 'metal',
+  'pebble', 'slate', 'marble', 'sand', 'concrete',
 ]
 
 /** A repeatable random, so a pattern is the same every time it is drawn. */
@@ -101,16 +101,6 @@ function speckle(
 }
 
 const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
-  concrete() {
-    const { canvas, paint } = sheet()
-    const random = seeded(23)
-    paint.fillStyle = grey(0.93)
-    paint.fillRect(0, 0, SIZE, SIZE)
-    speckle(paint, random, 220, 9, 0.16)
-    speckle(paint, random, 1400, 1.4, 0.3)
-    return canvas
-  },
-
   plastic() {
     const { canvas, paint } = sheet()
     const random = seeded(29)
@@ -132,22 +122,24 @@ const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
  */
 export const TILES_PER_STON: Record<Material, number> = {
   /*
-   * Roughly half what these were. A pattern repeating every few stons reads
-   * as noise from a distance and as wallpaper up close; bigger, and a brick
-   * is a brick and a pebble is a pebble.
+   * Halved once, then halved again. A pattern repeating every few stons
+   * reads as noise from a distance and as wallpaper up close; at this size
+   * a brick is a brick, a cobble is a stone you could stand on, and a face
+   * shows a surface rather than a fabric.
    */
-  brick: 0.1,
-  wood: 0.07,
-  planks: 0.05,
-  metal: 0.07,
-  plate: 0.09,
-  grass: 0.1,
-  sand: 0.07,
-  pebble: 0.1,
-  slate: 0.06,
-  marble: 0.055,
-  concrete: 0.08,
-  plastic: 0.06,
+  brick: 0.05,
+  cobble: 0.045,
+  wood: 0.035,
+  planks: 0.028,
+  metal: 0.035,
+  plate: 0.045,
+  grass: 0.05,
+  sand: 0.035,
+  pebble: 0.05,
+  slate: 0.03,
+  marble: 0.028,
+  concrete: 0.035,
+  plastic: 0.03,
   /** Nothing on it, so nothing to repeat. */
   smooth: 0,
   /*
@@ -182,6 +174,7 @@ function dress(texture: THREE.Texture) {
  */
 const RELIEF: Partial<Record<Material, number>> = {
   stons: 1,
+  cobble: 0.95,
   plate: 0.9,
   pebble: 0.85,
   brick: 0.8,
@@ -191,6 +184,7 @@ const RELIEF: Partial<Record<Material, number>> = {
   sand: 0.5,
   wood: 0.4,
   marble: 0.25,
+  concrete: 0.45,
   metal: 0.2,
 }
 

@@ -11,12 +11,13 @@ import { bumpFor, reliefFor, textureFor } from './textures'
  */
 export type Material =
   | 'smooth' | 'plastic' | 'stons' | 'wood' | 'planks' | 'metal' | 'plate'
-  | 'brick' | 'grass' | 'sand' | 'pebble' | 'slate' | 'marble' | 'concrete'
-  | 'glass' | 'neon'
+  | 'brick' | 'cobble' | 'grass' | 'sand' | 'pebble' | 'slate' | 'marble'
+  | 'concrete' | 'glass' | 'neon'
 
 export const MATERIALS: Material[] = [
   'smooth', 'plastic', 'stons', 'wood', 'planks', 'metal', 'plate', 'brick',
-  'grass', 'sand', 'pebble', 'slate', 'marble', 'concrete', 'glass', 'neon',
+  'cobble', 'grass', 'sand', 'pebble', 'slate', 'marble', 'concrete',
+  'glass', 'neon',
 ]
 
 type Look = {
@@ -62,6 +63,8 @@ const LOOKS: Record<Material, Look> = {
   /** Tread plate. The same metal, rougher, because it is made not to be slid on. */
   plate: { roughness: 0.5, metalness: 0.5 },
   brick: { roughness: 0.95, metalness: 0 },
+  /** Set stones with mortar between them. Rougher than brick and never flat. */
+  cobble: { roughness: 1, metalness: 0 },
   grass: { roughness: 1, metalness: 0 },
   sand: { roughness: 0.98, metalness: 0 },
   /** Small stones set in something. Rough, and never shiny. */

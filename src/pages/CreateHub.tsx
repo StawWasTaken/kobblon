@@ -307,6 +307,7 @@ export function CreateWorlds() {
                         {' · '}
                         {formatCount(world.visit_count)} {world.visit_count === 1 ? 'visit' : 'visits'}
                         {world.updated_at ? ` · saved ${timeAgo(world.updated_at)}` : ''}
+                        {` · ${formatCount(world.like_count ?? 0)} ${world.like_count === 1 ? 'like' : 'likes'}`}
                       </span>
                     </span>
 
