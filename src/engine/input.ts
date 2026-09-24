@@ -46,10 +46,21 @@ export class Keyboard {
     const keyUp = (e: KeyboardEvent) => this.down.delete(e.code)
     const blur = () => this.down.clear()
 
+    /*
+     * The right button turns the camera, and only the right button. Left is
+     * for pointing at things in a World, and a left drag that swung the view
+     * about would make clicking on anything a gamble.
+     */
     const pointerDown = (e: PointerEvent) => {
+      if (e.button !== 2) return
       this.dragging = true
       element.setPointerCapture(e.pointerId)
+      e.preventDefault()
     }
+
+    // Otherwise the menu opens on top of the World every time somebody looks
+    // to the right.
+    const contextMenu = (e: Event) => e.preventDefault()
     const pointerUp = () => { this.dragging = false }
     const pointerMove = (e: PointerEvent) => {
       /*
@@ -77,6 +88,7 @@ export class Keyboard {
     window.addEventListener('keyup', keyUp)
     window.addEventListener('blur', blur)
     element.addEventListener('pointerdown', pointerDown)
+    element.addEventListener('contextmenu', contextMenu)
     window.addEventListener('pointerup', pointerUp)
     window.addEventListener('pointermove', pointerMove)
     document.addEventListener('pointerlockchange', lockChanged)
@@ -86,6 +98,7 @@ export class Keyboard {
       () => window.removeEventListener('keyup', keyUp),
       () => window.removeEventListener('blur', blur),
       () => element.removeEventListener('pointerdown', pointerDown),
+      () => element.removeEventListener('contextmenu', contextMenu),
       () => window.removeEventListener('pointerup', pointerUp),
       () => window.removeEventListener('pointermove', pointerMove),
       () => document.removeEventListener('pointerlockchange', lockChanged),
@@ -107,7 +120,11 @@ export class Keyboard {
        * which is the one thing about a camera nobody forgives.
        */
       turn: this.dragX * 0.005,
-      pitch: -this.dragY * 0.005,
+      /*
+       * Dragging down looks down. Both axes were the wrong way round, and
+       * they are fixed one at a time because each was reported separately.
+       */
+      pitch: this.dragY * 0.005,
     }
     this.dragX = 0
     this.dragY = 0

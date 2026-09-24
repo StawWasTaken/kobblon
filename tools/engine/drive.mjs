@@ -648,6 +648,7 @@ check('zoomed all the way in, somebody is behind their own face',
 
 // -- 23. dragging right turns right
 const dragged = await p.evaluate(() => {
+  window.engine.zoom(1000)
   window.engine.controller.placeAt(0, 1, 18, 0)
   window.drive({})
   window.stepFrames(4)
@@ -660,6 +661,43 @@ const dragged = await p.evaluate(() => {
 check('dragging right turns the camera right',
   dragged.after > dragged.before,
   `camera x ${dragged.before} -> ${dragged.after}`)
+
+// -- 24. and dragging down looks down
+const tilted = await p.evaluate(() => {
+  // The zoom check left the camera in first person, where a pitch barely
+  // moves it at all; back out first so the rise is something to measure.
+  window.engine.zoom(1000)
+  window.engine.controller.placeAt(0, 1, 18, 0)
+  window.drive({})
+  window.stepFrames(4)
+  const before = window.engine.camera.position.y
+  // Positive movementY is a drag downwards.
+  window.drive({ pitch: 0.3 })
+  window.stepFrames(4)
+  return { before: Number(before.toFixed(2)), after: Number(window.engine.camera.position.y.toFixed(2)) }
+})
+check('dragging down looks down, so the camera rises',
+  tilted.after > tilted.before,
+  `camera y ${tilted.before} -> ${tilted.after}`)
+
+// -- 25. the wheel goes the way it was asked to go
+const wheeled = await p.evaluate(() => {
+  window.engine.zoom(1000)
+  const before = window.engine.distance
+  const roll = (deltaY) => document.getElementById('stage').dispatchEvent(
+    new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true }),
+  )
+  roll(1)
+  const pushed = window.engine.distance
+  roll(-1)
+  return { before, pushed, pulled: window.engine.distance }
+})
+check('rolling the wheel one way brings the camera in',
+  wheeled.pushed < wheeled.before,
+  `${wheeled.before} -> ${wheeled.pushed} stons`)
+check('and the other way takes it back out',
+  wheeled.pulled > wheeled.pushed,
+  `${wheeled.pushed} -> ${wheeled.pulled} stons`)
 
 // -- back to the first World for the picture
 await p.evaluate(async () => {

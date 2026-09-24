@@ -73,6 +73,7 @@ export class Engine {
   /** How far back this World lets the camera go. */
   private zoomMost = ZOOM_FAR
   private onWheel: ((event: WheelEvent) => void) | null = null
+  private onKey: ((event: KeyboardEvent) => void) | null = null
   private onClick: (() => void) | null = null
   /** Used every frame to ask what is between somebody and their camera. */
   private look = new THREE.Raycaster()
@@ -88,11 +89,31 @@ export class Engine {
       this.keyboard = new Keyboard(options.canvas)
       this.onWheel = (event) => {
         event.preventDefault()
-        // A notch is a notch whichever machine sent it, so the sign is read
-        // and the size is the engine's.
-        this.zoom(Math.sign(event.deltaY) * 2)
+        /*
+         * The wheel was going the wrong way round and is flipped here
+         * rather than argued with.
+         *
+         * The step grows with the distance: a notch that moves the camera
+         * two stons is a crawl at thirty stons out and a lurch at three,
+         * and classic Roblox's wheel feels the way it does because it
+         * takes a fraction of where you already are rather than a fixed
+         * amount.
+         */
+        const step = Math.max(1.5, this.orbit.distance * 0.22)
+        this.zoom(-Math.sign(event.deltaY) * step)
       }
       options.canvas.addEventListener('wheel', this.onWheel, { passive: false })
+
+      /*
+       * I and O zoom, the way they always have. Somebody on a trackpad,
+       * or on a laptop whose wheel does something clever, still gets to
+       * choose where the camera sits.
+       */
+      this.onKey = (event: KeyboardEvent) => {
+        if (event.code === 'KeyI') this.zoom(-Math.max(1.5, this.orbit.distance * 0.22))
+        else if (event.code === 'KeyO') this.zoom(Math.max(1.5, this.orbit.distance * 0.22))
+      }
+      window.addEventListener('keydown', this.onKey)
 
       /*
        * A browser only hands over the pointer on the back of something
@@ -284,7 +305,13 @@ export class Engine {
     const step = Math.min(dt, 1 / 20) // a slow frame must not teleport anybody
 
     this.orbit.yaw += intent.turn
-    this.orbit.pitch = Math.max(-0.6, Math.min(1.1, this.orbit.pitch + intent.pitch))
+    /*
+     * Almost all the way up and almost all the way down, about seventy five
+     * degrees each way. The old range let somebody look a little above the
+     * horizon and no further, which is why the camera felt like it was on
+     * rails; you cannot look up at a tower you are standing under.
+     */
+    this.orbit.pitch = Math.max(-1.3, Math.min(1.3, this.orbit.pitch + intent.pitch))
 
     const state = this.controller.step(intent, this.orbit.yaw, step)
 
@@ -344,7 +371,7 @@ export class Engine {
     this.camera.position.set(
       head.x - Math.sin(yaw) * flat,
       head.y + Math.sin(pitch) * wanted,
-      head.z - Math.cos(yaw) * wanted,
+      head.z - Math.cos(yaw) * flat,
     )
     this.camera.lookAt(head)
 
@@ -431,6 +458,7 @@ export class Engine {
     this.stop()
     this.keyboard?.dispose()
     if (this.onWheel) this.options.canvas.removeEventListener('wheel', this.onWheel)
+    if (this.onKey) window.removeEventListener('keydown', this.onKey)
     if (this.onClick) this.options.canvas.removeEventListener('click', this.onClick)
     this.sound.dispose()
     this.avatar?.dispose()
