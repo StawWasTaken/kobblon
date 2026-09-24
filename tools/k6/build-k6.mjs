@@ -36,9 +36,16 @@ const here = dirname(fileURLToPath(import.meta.url))
  * number below is a ston, so the avatar and the world are measured the same
  * way and nobody has to remember a scale factor.
  */
+/*
+ * Measured off Staw's drawing rather than guessed. In the sketch the head
+ * is a quarter of the whole figure and nearly as wide as the torso, the
+ * torso is a third, and the legs are the rest: short and thick. The first
+ * pass had a small head on long thin legs, which is why it read as a badly
+ * made copy of something else rather than as the drawing.
+ */
 const H = {
-  legTop: 4.4,
-  torsoTop: 8.0,
+  legTop: 3.7,
+  torsoTop: 7.1,
   headTop: 10.0,
 }
 
@@ -79,11 +86,13 @@ const shape = {
      * reads as a head on a body instead of a body swallowing a head.
      */
     rounded({
-      at: [0, H.torsoTop + 1.42, 0],
-      size: [2.4, 2.2, 2.3],
+      at: [0, H.torsoTop + 1.53, 0],
+      // Nearly as wide as the torso, which is what the drawing shows and
+      // what makes the whole figure read as a toy rather than a man.
+      size: [2.68, 2.5, 2.5],
       // Heavily rounded, but still a box: the corners are gone and the
       // faces are not.
-      radius: 0.86,
+      radius: 0.95,
       steps: 7,
     }),
   ]),
@@ -95,7 +104,7 @@ const shape = {
       steps: 5,
     }),
     // The neck, standing on the shoulders and holding up the head.
-    cylinder({ at: [0, H.torsoTop + 0.24, 0], radius: J.neck, height: 0.85 }),
+    cylinder({ at: [0, H.torsoTop + 0.16, 0], radius: J.neck, height: 0.7 }),
   ]),
   arm: (side) => join([
     /*
@@ -103,10 +112,11 @@ const shape = {
      * from it. The ball is inset so that half of it is inside the torso
      * and the socket cannot be seen into from any angle.
      */
-    ball({ at: [side * 1.58, H.torsoTop - 0.34, 0], radius: J.shoulder }),
+    ball({ at: [side * 1.56, H.torsoTop - 0.34, 0], radius: J.shoulder }),
+    // Long: in the drawing an arm reaches well past the bottom of the torso.
     rounded({
-      at: [side * 1.72, (H.torsoTop - 0.5 + 4.35) / 2, 0],
-      size: [0.98, H.torsoTop - 0.5 - 4.35, 0.98],
+      at: [side * 1.7, (H.torsoTop - 0.45 + 3.4) / 2, 0],
+      size: [1.02, H.torsoTop - 0.45 - 3.4, 1.02],
       radius: 0.3,
       steps: 5,
     }),
