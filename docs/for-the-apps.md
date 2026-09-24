@@ -403,3 +403,91 @@ Nothing draws them yet.
 
 **0083 to 0091**, as far as I know. **0084 is the one that unbreaks emblem
 and thumbnail uploads.**
+
+---
+
+# Fourth round — K6 v.02 is live, and movement is rewritten
+
+## K6 v.02 is deployed. Pull it.
+
+`public/k6/k6.glb` is the v.02 rig and it is the avatar now, not a proposal.
+Everything that loads K6 gets the new one on the next pull.
+
+- **Rounded boxes throughout.** Flat faces, softly rounded edges, nothing
+  spherical. Built by projection rather than by faking normals, which is
+  what caused the seams in the first attempt.
+- **A cylinder neck and ball joints** at the shoulders and hips. Not
+  decoration: a rounded box turning in a square socket opens a gap you can
+  see through, and a ball is round from every angle it can be turned to.
+- **No hands and no feet.** There are none in Staw's drawing.
+- **Proportions measured off that drawing**, not guessed: the head is a
+  quarter of the figure and nearly as wide as the torso, the legs are short
+  and thick. The earlier small head on long thin legs is gone.
+
+Still six parts, still sixteen bones, still the same seven animations, still
+the same part names. Nothing you bind to has changed.
+
+## Movement is rewritten, and the numbers are not arbitrary
+
+**Walking is 32 stons a second, up from 11.** A Roblox character is about
+five studs tall and walks sixteen studs a second, which is 3.2 of its own
+heights every second. K6 is ten stons tall, so the same walk is thirty two.
+The old number was a third of that: walking felt like wading and running
+felt slower than somebody else's walk.
+
+**There is no sprint.** `Intent.run` still exists so nothing built against
+the old shape falls over, but it is always false and changes nothing. Shift
+is not bound. If your app has a sprint control, take it out.
+
+**Acceleration is 260, up from 90**, because ninety was tuned against a walk
+of eleven and would take a third of a second to reach thirty two.
+
+**The jump was never on a cooldown** — it refused to fire again until the
+key was released, which reads as one. Holding the key bounces you across a
+World now. It also clears 1.27 of its own height, which is what a Roblox
+jump clears.
+
+## The camera
+
+**Dragging right turns the camera right.** It was inverted. If you built any
+compensation for that, remove it.
+
+**The camera stops at walls.** It casts from the head outwards rather than
+from the camera inwards, because a ray that starts inside a wall finds
+nothing and that is exactly the case that matters. What comes back is held
+short so the near plane does not slice into the brick. Decals and parts
+marked `solid: false` are ignored.
+
+**First person is real.** Zoom all the way in and:
+
+- the camera sits at the **eye**, not the chest;
+- the **pointer is locked** to the middle of the window, so the mouse turns
+  the head for ever instead of running out of screen;
+- the **body fades out and then is not drawn**, rather than blinking away.
+  Only for the person looking out of it. Everybody else's K6 stays solid.
+
+**What you have to do about the pointer lock:** a browser only grants it on
+the back of something somebody did, so the engine asks for it **on a click**
+while already in first person. In an Electron window that is the same rule.
+Zooming back out releases it. `engine.firstPerson` tells you which state it
+is in, and `engine.status` now carries `firstPerson` and `locked`.
+
+New on K6: **`fade(amount)`**, 0 to 1, which is what the engine uses to thin
+the body. Only ever call it on the avatar belonging to whoever is looking.
+
+## What this means for the Launcher
+
+The engine's own key handling covers all of it, so if you are letting
+`Engine` read the keyboard you get this for nothing. If you are feeding
+`Intent` yourself: stop sending `run`, and remember `turn` is now the raw
+drag rather than its negative.
+
+## Everything from the third round still stands
+
+Textures four times bigger, bumps on every pictured material, the friend
+request card, `request_from`, Kobblon Workspace, the colour rule, the two
+faces bugs. Migrations **0083 to 0091** are still pending as far as I know,
+and **0084 is the one that unbreaks emblem and thumbnail uploads**.
+
+Still mine and still not done: **`WorldDecal.picture` is not renamed**, and
+**`worlds.community_id` is not added**.
