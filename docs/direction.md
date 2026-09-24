@@ -176,3 +176,11 @@ Settled, and it replaces looser wording elsewhere in this document:
 Uploading from inside Creator is the same upload as uploading in Create: same
 screening, same content id, same inventory. Creator is another way in to
 Create rather than a second one.
+
+## Neoclassic
+
+The word that decides what Kobblon looks like and what gets built. Staw's,
+and written down in `docs/neoclassic.md`. Read it before designing
+anything: it is the difference between taking a mechanism people already
+understand and drawing it in our own hand, and inventing a novel one so as
+not to look like a copy.

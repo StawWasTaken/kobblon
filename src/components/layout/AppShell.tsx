@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { ChatDock } from '@/components/chat/ChatDock'
+import { FriendRequestWatcher } from '@/components/social/FriendRequestToast'
 import { mobileNav } from './nav'
 import { cn } from '@/lib/cn'
 import { AdsProvider } from '@/components/ads/AdBanner'
@@ -95,6 +96,9 @@ export function AppShell() {
           </ul>
         </nav>
       </div>
+
+      {/* A friend request that arrives while you are doing something else. */}
+      <FriendRequestWatcher />
     </ChatDock>
   )
 }
