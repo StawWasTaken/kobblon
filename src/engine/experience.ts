@@ -368,14 +368,6 @@ const GAP = 0.02
 export const ZOOM_NEAR = 0.5
 export const ZOOM_FAR = 34
 
-/** Which of a part's sizes run across a face, and which run up it. */
-function faceAxes(face: Face, size: Vec3): [number, number] {
-  const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), 0.001))
-  if (face === 'front' || face === 'back') return [sx, sy]
-  if (face === 'left' || face === 'right') return [sz, sy]
-  return [sx, sz]
-}
-
 /**
  * Puts a decal against one side of the part that owns it, at the size it
  * should be.
@@ -387,15 +379,18 @@ function faceAxes(face: Face, size: Vec3): [number, number] {
  * is below what a depth buffer can tell apart. Dividing by the part's own
  * size is what keeps the gap the same wherever it is used.
  *
- * The size is the other half of the same problem. A decal is a child of the
- * part, so it is stretched by the part's scale, and a square picture on a
- * wall forty stons by eight came out forty stons wide. So the plane is
- * counter-scaled: the picture is fitted to the face in world units at the
- * picture's own proportions, and then divided back through the part's scale.
- * `scale` multiplies that fit, which is how somebody asks for a stretch on
- * purpose, and `offset` slides it across the face in face widths.
+ * A decal covers the face it is on. The plane is a unit square parented to
+ * the part, so the part's own scale already stretches it across the whole
+ * face: a scale of one by one is exactly the face, whatever shape the face
+ * is and whatever shape the picture is.
+ *
+ * It used to counter-scale that away and hold the picture at its original
+ * proportions, which meant a sign stopped being a sign the moment somebody
+ * resized the thing it was painted on. A decal on a long wall is meant to
+ * come out long. `scale` multiplies the face, and `offset` slides it across
+ * in face widths.
  */
-export function layDecal(picture: THREE.Mesh, decal: WorldDecal, size: Vec3, aspect = 1) {
+export function layDecal(picture: THREE.Mesh, decal: WorldDecal, size: Vec3) {
   const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), 0.001))
   const half = Math.PI / 2
 
@@ -421,17 +416,9 @@ export function layDecal(picture: THREE.Mesh, decal: WorldDecal, size: Vec3, asp
     picture.rotation.x = half
   }
 
-  // The face in world stons, and the longest of it, which is what a picture
-  // fills when nobody has said otherwise.
-  const [across, up] = faceAxes(face, size)
-  const longest = Math.max(across, up)
-  const ratio = aspect > 0 ? aspect : 1
-  const wide = ratio >= 1
-  const worldWidth = wide ? longest : longest * ratio
-  const worldHeight = wide ? longest / ratio : longest
-
+  // One is the whole face. Anything else is somebody asking for it.
   const [times, tall] = decal.scale ?? [1, 1]
-  picture.scale.set((worldWidth / across) * times, (worldHeight / up) * tall, 1)
+  picture.scale.set(times, tall, 1)
 
   const [right, above] = decal.offset ?? [0, 0]
   // In the picture's own frame, so that it slides across the face it is on
@@ -603,9 +590,13 @@ export async function applyDecals(
        * The part's scale is on the parent mesh, which is where the stretch
        * this undoes comes from.
        */
+      /*
+       * The picture's own proportions are no longer anybody's business:
+       * it covers the face it is on. This still re-lays it, because a
+       * decal is hidden until its picture arrives.
+       */
       const size = (picture.parent?.scale.toArray() ?? [1, 1, 1]) as Vec3
-      const aspect = (image.image?.width ?? 1) / Math.max(image.image?.height ?? 1, 1)
-      layDecal(picture, part, size, aspect)
+      layDecal(picture, part, size)
       // Nothing was shown while it loaded, rather than a blank white square.
       picture.visible = true
     })())

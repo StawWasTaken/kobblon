@@ -361,6 +361,33 @@ check('a decal is resized by the part it is on',
   sized.small !== null && Math.abs(sized.big / sized.small - 4) < 0.01,
   `a wall four times as wide carries a sign ${(sized.big / sized.small).toFixed(2)} times as wide`)
 
+// -- 13c. a decal covers the face, whatever shape the picture is
+const stretched = await p.evaluate(async () => {
+  // A tall picture on a wide wall. It used to come out square.
+  const id = window.fakePicture('decal-stretch', 64, 256)
+  await window.engine.open({
+    format: 1, id: 'st', name: 'Stretch', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'wall', kind: 'box', at: [0, 5, 0], size: [30, 6, 1],
+        children: [{ id: 'sign', kind: 'decal', picture: id, face: 'front' }] },
+    ],
+  })
+  await window.applyDecals(window.built(), window.resolveFake)
+  window.engine.scene.updateMatrixWorld(true)
+
+  for (const [object, part] of window.built().partOf) {
+    if (part.kind !== 'decal') continue
+    const Vec = Object.getPrototypeOf(object.position).constructor
+    const scale = object.getWorldScale(new Vec())
+    return { wide: Number(scale.x.toFixed(2)), tall: Number(scale.y.toFixed(2)) }
+  }
+  return null
+})
+check('a decal is stretched by the part it is on, not held at its own shape',
+  stretched && Math.abs(stretched.wide - 30) < 0.01 && Math.abs(stretched.tall - 6) < 0.01,
+  `a tall picture on a 30x6 wall covers ${stretched?.wide}x${stretched?.tall}`)
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({
@@ -460,12 +487,19 @@ const fitted = await p.evaluate(async () => {
     })(),
   }
 })
-check('a square picture on a long wall stays square',
-  Math.abs(fitted.square.across - fitted.square.up) < 0.01,
+/*
+ * These two used to assert the opposite: that a picture kept its own
+ * proportions whatever it was painted on. That was the bug — a sign stopped
+ * being readable the moment somebody resized the wall — and the checks were
+ * holding it in place.
+ */
+check('a square picture on a long wall covers the long wall',
+  Math.abs(fitted.square.across - 40) < 0.01 && Math.abs(fitted.square.up - 8) < 0.01,
   `${fitted.square.across.toFixed(2)} by ${fitted.square.up.toFixed(2)} stons on a wall 40 by 8`)
-check('a wide picture is as wide as it is',
-  Math.abs(fitted.wide.across / fitted.wide.up - 4) < 0.02,
-  `4:1 came out ${(fitted.wide.across / fitted.wide.up).toFixed(2)}:1`)
+check('and so does a wide one: the face decides, not the picture',
+  Math.abs(fitted.wide.across - fitted.square.across) < 0.01
+  && Math.abs(fitted.wide.up - fitted.square.up) < 0.01,
+  `4:1 and 1:1 both come out ${fitted.wide.across.toFixed(2)} by ${fitted.wide.up.toFixed(2)}`)
 check('and stretching it is something a World asks for',
   Math.abs(fitted.stretched.across / fitted.square.across - 2) < 0.02,
   `scale [2, 1] is ${(fitted.stretched.across / fitted.square.across).toFixed(2)} times as wide`)

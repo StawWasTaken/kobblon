@@ -33,7 +33,9 @@ export function Tooltip({
   }>
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
-  const [placed, setPlaced] = useState<{ left: number; top: number; nib: number } | null>(null)
+  const [placed, setPlaced] = useState<
+    { left: number; top: number; nib: number; side: Side } | null
+  >(null)
   const bubble = useRef<HTMLDivElement>(null)
   const timer = useRef<number | undefined>(undefined)
   const id = useId()
@@ -59,23 +61,46 @@ export function Tooltip({
     const centreX = anchor.left + anchor.width / 2
     const centreY = anchor.top + anchor.height / 2
 
+    /*
+     * Whether a side has room for the bubble at all. A tooltip on the top
+     * strip asked for 'top', got clamped to the top edge, and ended up
+     * lying across the thing it was describing with its nib pointing at
+     * nothing. Clamping is for a few pixels; when a side has no room it is
+     * the wrong side, and the fix is to use the other one.
+     */
+    const room: Record<Side, number> = {
+      top: anchor.top - GAP - EDGE,
+      bottom: window.innerHeight - anchor.bottom - GAP - EDGE,
+      left: anchor.left - GAP - EDGE,
+      right: window.innerWidth - anchor.right - GAP - EDGE,
+    }
+    const opposite: Record<Side, Side> = {
+      top: 'bottom', bottom: 'top', left: 'right', right: 'left',
+    }
+    const needed = side === 'top' || side === 'bottom' ? box.height : box.width
+
+    // Only flip if the other side is actually better; squeezed both ways,
+    // the side that was asked for is the one somebody meant.
+    const other = opposite[side]
+    const put = room[side] < needed && room[other] > room[side] ? other : side
+
     let left = centreX - box.width / 2
     let top = anchor.top - box.height - GAP
 
-    if (side === 'bottom') top = anchor.bottom + GAP
-    if (side === 'left') { left = anchor.left - box.width - GAP; top = centreY - box.height / 2 }
-    if (side === 'right') { left = anchor.right + GAP; top = centreY - box.height / 2 }
+    if (put === 'bottom') top = anchor.bottom + GAP
+    if (put === 'left') { left = anchor.left - box.width - GAP; top = centreY - box.height / 2 }
+    if (put === 'right') { left = anchor.right + GAP; top = centreY - box.height / 2 }
 
     // Nudged back inside the window, with the nib following the trigger so it
     // keeps pointing at the right thing.
     const clampedLeft = Math.min(Math.max(left, EDGE), window.innerWidth - box.width - EDGE)
     const clampedTop = Math.min(Math.max(top, EDGE), window.innerHeight - box.height - EDGE)
 
-    const nib = side === 'top' || side === 'bottom'
+    const nib = put === 'top' || put === 'bottom'
       ? Math.min(Math.max(centreX - clampedLeft, 14), box.width - 14)
       : Math.min(Math.max(centreY - clampedTop, 14), box.height - 14)
 
-    setPlaced({ left: clampedLeft, top: clampedTop, nib })
+    setPlaced({ left: clampedLeft, top: clampedTop, nib, side: put })
   }, [anchor, side])
 
   useEffect(() => {
@@ -105,6 +130,8 @@ export function Tooltip({
   const nibStyle = (): React.CSSProperties => {
     if (!placed) return {}
     const rotate = 'rotate(45deg)'
+    // The side it ended up on, which is not always the side it asked for.
+    const side = placed.side
     if (side === 'top') {
       return { left: placed.nib, bottom: 0, transform: `translate(-50%, 50%) ${rotate}` }
     }

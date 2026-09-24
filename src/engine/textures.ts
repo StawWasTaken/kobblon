@@ -122,24 +122,25 @@ const patterns: Partial<Record<Material, () => HTMLCanvasElement>> = {
  */
 export const TILES_PER_STON: Record<Material, number> = {
   /*
-   * Halved once, then halved again. A pattern repeating every few stons
-   * reads as noise from a distance and as wallpaper up close; at this size
-   * a brick is a brick, a cobble is a stone you could stand on, and a face
-   * shows a surface rather than a fabric.
+   * Halved twice on the way out, and put back where they were on the way
+   * in: at a quarter of these numbers a brick was the size of a door and
+   * a cobble was a boulder. Grass is the exception and stays where the
+   * halving left it, because a lawn is the one surface that wants to be
+   * big enough to read as ground rather than as a pattern.
    */
-  brick: 0.05,
-  cobble: 0.045,
-  wood: 0.035,
-  planks: 0.028,
-  metal: 0.035,
-  plate: 0.045,
+  brick: 0.2,
+  cobble: 0.18,
+  wood: 0.14,
+  planks: 0.112,
+  metal: 0.14,
+  plate: 0.18,
   grass: 0.05,
-  sand: 0.035,
-  pebble: 0.05,
-  slate: 0.03,
-  marble: 0.028,
-  concrete: 0.035,
-  plastic: 0.03,
+  sand: 0.14,
+  pebble: 0.2,
+  slate: 0.12,
+  marble: 0.112,
+  concrete: 0.14,
+  plastic: 0.12,
   /** Nothing on it, so nothing to repeat. */
   smooth: 0,
   /*

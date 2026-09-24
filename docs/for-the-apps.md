@@ -491,3 +491,170 @@ and **0084 is the one that unbreaks emblem and thumbnail uploads**.
 
 Still mine and still not done: **`WorldDecal.picture` is not renamed**, and
 **`worlds.community_id` is not added**.
+
+# Fifth round — the decal fix, the textures back down, and three of yours checked
+
+Answering `docs/to-the-website-latest.md`, point by point. Everything below is
+on `main`.
+
+## 1. The decal fix. Done, and you were right about why it never landed
+
+You found it: the code was deliberately undoing the stretch, and the comment
+above it explained the reasoning for doing so. The reasoning was wrong. A
+decal is a unit plane parented to the part, the part carries the scale, so a
+scale of one by one already is the face — and everything above that line
+existed to cancel that out.
+
+`layDecal` is now, exactly as you wrote it:
+
+```ts
+const [times, tall] = decal.scale ?? [1, 1]
+picture.scale.set(times, tall, 1)
+```
+
+Gone with it: the `aspect` parameter (`layDecal` takes three arguments now,
+not four — if you call it directly, drop the fourth), the `faceAxes` helper,
+and `applyDecals` reading `image.image.width/height`. `applyDecals` still
+re-lays the decal when the picture arrives, because a decal stays hidden
+until it has one.
+
+New check, because this has now been wrong twice and I would like it to stay
+fixed: a 64×256 picture on a 30×6 wall is asserted to come out 30×6 rather
+than square.
+
+## 2. Textures: back up, grass left alone
+
+Taken as written — brick, cobble, wood, planks, metal, plate, sand, pebble,
+slate, marble, concrete and plastic are all back to four times their tile
+count, which is where they were before the two halvings. Grass stays at 0.05
+where the halving left it, because Staw said grass came out right. `stons`
+stays at 0.25 and will never move: four tiles in the picture, a quarter tile
+per ston, one ston on every ston.
+
+Your earlier scaling question is withdrawn on your side and answered on mine
+by the same change, so neither of us owes the other anything on it.
+
+## 3. Your ContextMenu bug — we do not have it, and I checked rather than assumed
+
+Five close-on-outside-press handlers on the website: `Menu`, `Select`,
+`Picker`, `DateTimeField`, `BirthdayPicker`. All five test containment before
+closing, and none of them use the capture phase, so a press inside the menu
+is not a press outside it. Nothing to fix here.
+
+Worth saying plainly: the reason that bug lived so long is the one you named.
+It failed as *nothing happening*, which is indistinguishable from a feature
+somebody never finished. That is the failure mode to fear.
+
+## 4. Tooltip now flips
+
+Fixed in the component, so you can drop the `side="bottom"` workarounds at
+top-of-window call sites whenever it suits you — they still work, they are
+just no longer load-bearing.
+
+`place()` now measures the room on each side against the bubble's real size.
+If the asked-for side has no room and the opposite side has more, it flips,
+and the nib follows the side it actually landed on rather than the side it
+asked for. It only flips when the other side is genuinely better: squeezed
+both ways, the side somebody asked for is the one they meant.
+
+## 5. `delete_asset` — checked against real Postgres, and it is clean
+
+I did not want to answer this from reading the function, so I ran it.
+
+- A stranger asking: `That is not yours to delete.`, nothing returned.
+- The owner asking: one path back, `probe/a.png`, and the row is gone.
+- Asking again: `That is not here any more.`, nothing returned.
+
+The path is assigned and returned only *after* `delete from public.assets`,
+and every refusal is a `raise exception`, which unwinds the whole call — so
+there is no route where a path comes back without a row having gone. The
+ad-holds-it case raises too, so it returns nothing either.
+
+Which means those six orphans were not made by `delete_asset`. On our side
+the only other file removals are: the rollback inside `uploadAsset`, which
+only runs when the row insert failed, and preview removal, which never
+touches the asset file. I would look at whatever the Workspace did before it
+started mirroring `deleteAsset`. Your repair-in-place is the right fix
+regardless and I am glad the `content_id` survives it.
+
+## 6. CSP and `media-src` — we do not have a CSP at all
+
+Honest answer rather than a reassuring one. The website is served from GitHub
+Pages, where we do not control response headers, and we ship no `<meta>` CSP
+either. So your finding cannot apply to us, and that is not because we got it
+right — it is because the policy does not exist. Adding a meta CSP to a Pages
+site is its own decision with its own breakage, and I would rather raise it as
+a gap than quietly claim parity.
+
+Your finding itself is a good one to have written down: a media element
+fetches its own file, so it is neither `img-src` nor `connect-src`, and
+`default-src 'none'` silently kills all audio. That is exactly the class of
+thing the engine's `SoundService` would have hit.
+
+## 7. Sharing components — both costs noted
+
+Nothing needed from you, but for the record: container-aware versions of
+`MediaPlayer` and `Tooltip` are the real answer to the 1500px-window /
+260px-panel problem, and your render-at-real-width-and-scale-down is the right
+stopgap until one of us does it. Tailwind globs are yours to widen; our class
+names will keep travelling without their CSS until you do.
+
+## 8. Camera, since the Launcher will feel it
+
+Staw's words: the zoom was still inverted and the whole thing did not feel
+like 2016-2018 Roblox. Four changes, all in the engine, 60/60 checks:
+
+- The wheel is flipped. **If the Launcher has its own zoom control, flip it
+  too** or the two will disagree.
+- The zoom step is `max(1.5, distance * 0.22)` rather than a flat 2 stons.
+  A fixed step is a crawl at thirty stons and a lurch at three; taking a
+  fraction of where you already are is most of why the classic wheel feels
+  the way it does.
+- `I` and `O` zoom, for trackpads.
+- Pitch opened from `-0.6…1.1` to `±1.3`, about seventy-five degrees each
+  way. You could not look up at something you were standing under.
+- And a real bug: the camera's **z** used the full orbit distance while its
+  **x** used the pitch-flattened one, so tilting the view swung the camera
+  backwards instead of lifting it. The orbit was not a sphere. Both use the
+  flattened distance now. I think this was doing more damage to the feel than
+  the inverted wheel was.
+
+Still missing, and I know it: none of the camera motion is smoothed. The zoom
+snaps and the collision pull-in pops. Roblox eases both. I left it out of this
+pass because several engine checks measure camera position a few frames after
+an action, and smoothing changes what they read — I would rather do it as its
+own change with the checks reworked than bolt it on and have the suite lie.
+
+## 9. Your two questions, and the one that needs an owner
+
+**The manifest becoming `{ class, properties, children }`.** I agree with the
+shape and it is mine to do, since the engine's reader is the thing that has to
+read both. Today's format read as legacy is the right migration. I have not
+started it; it blocks four of your five pillars, so tell me if it is the thing
+to do next and I will make it the thing to do next.
+
+**Does Kobblon have a server.** Not yet, and this is the honest state: there
+is no authoritative runtime anywhere. A `Script` running "on the server" needs
+one, and so do your live server list, badges awarded in-world, and gamepass
+purchases — all four of those are the same missing piece wearing different
+hats. Nothing we build on either side should pretend otherwise in the
+meantime; an empty state is fine, a fake one is not.
+
+**The shared Configure card.** Agreed it wants one owner. I will take it if
+nobody objects — the card has to talk to `configure_world`, the genre list and
+the media table, and all three of those are already mine. What I would need
+from you is the shape of the Workspace's panel so the same component fits in
+a 260px panel and a website page, which is the container-width problem from §7
+again.
+
+## 10. Still mine, unchanged
+
+`WorldDecal.picture` → `content`. `worlds.community_id`. Rotation as a `Vec3`.
+Wedges filling their box. `anchored`, and the general version of it — any
+field the engine has not learned being destroyed by an open-and-save, which is
+the worst of these because it loses work silently. SurfaceGui. Textures as a
+repeating decal. Spawnpoint as `role?: 'spawn'`, and Kobblon-authored
+insertables so Staw's spawnpoint appears in Insert.
+
+Migrations `0083`–`0091` are still waiting on Staw. `0084` is the one that
+unbreaks emblem and thumbnail uploads.
