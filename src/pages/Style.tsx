@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
+import { FacesShelf } from '@/components/avatar/FacesShelf'
 import { Choices } from '@/components/ui/Choices'
 import { Toolbar } from '@/components/ui/Toolbar'
 import { Dialog } from '@/components/ui/Dialog'
@@ -134,7 +135,7 @@ export default function Style() {
   const [term, setTerm] = useState(params.get('q') ?? '')
   const [search, setSearch] = useState(params.get('q') ?? '')
   const [slot, setSlot] = useState<StyleItem['slot'] | null>(null)
-  const [tab, setTab] = useState<'shop' | 'mine'>('shop')
+  const [tab, setTab] = useState<'shop' | 'mine' | 'faces'>('shop')
   const [busy, setBusy] = useState<string | null>(null)
 
   useEffect(() => {
@@ -320,6 +321,7 @@ export default function Style() {
             options={[
               { value: 'shop', label: 'The shop' },
               { value: 'mine', label: 'Yours', count: mine.data?.length ?? null },
+              { value: 'faces', label: 'Faces' },
             ]}
           />
 
@@ -347,15 +349,22 @@ export default function Style() {
         )}
       </Toolbar>
 
-      {source.error && <ErrorState message={source.error} onRetry={source.reload} />}
+      {/*
+        * Faces are their own thing: worn by an avatar in a World rather than
+        * drawn on the picture at the top of this page, and published by
+        * Kobblon rather than by anybody.
+        */}
+      {tab === 'faces' && <FacesShelf />}
 
-      {source.loading && (
+      {tab !== 'faces' && source.error && <ErrorState message={source.error} onRetry={source.reload} />}
+
+      {tab !== 'faces' && source.loading && (
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />)}
         </div>
       )}
 
-      {!shown.length && !source.loading && !source.error && (
+      {tab !== 'faces' && !shown.length && !source.loading && !source.error && (
         <Card>
           <EmptyState
             mood={search ? 'noResults' : 'emptyBox'}
@@ -378,7 +387,7 @@ export default function Style() {
         </Card>
       )}
 
-      {!!shown.length && (
+      {tab !== 'faces' && !!shown.length && (
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {shown.map((item) => (
             <div key={item.id} className="space-y-1.5">

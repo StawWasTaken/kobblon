@@ -238,7 +238,7 @@ export type Notification = {
   id: number
   user_id: string
   kind: 'friend_request' | 'friend_accepted' | 'space_like' | 'space_visit' | 'message'
-    | 'system' | 'event_started' | 'world_updated'
+    | 'system' | 'event_started' | 'world_updated' | 'content_removed'
   actor_id: string | null
   space_id: string | null
   world_id?: string | null
@@ -655,5 +655,25 @@ export type WorldMedium = {
   kind: 'image' | 'video'
   /** A path inside the `worlds` bucket, never an address. */
   path: string
+  created_at: string
+}
+
+/**
+ * A face: a flat picture worn on K6's head.
+ *
+ * Kobblon's own, and only Kobblon's. A face anybody could upload is a Decal
+ * with extra steps, and the Marketplace already has those.
+ */
+export type Face = {
+  id: string
+  content_id: number | null
+  name: string
+  description: string | null
+  /** A path in the faces bucket, never an address. */
+  image_path: string
+  /** In Brix. */
+  price: number
+  /** Whether the person asking already has it. */
+  owned?: boolean
   created_at: string
 }

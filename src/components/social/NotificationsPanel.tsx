@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay,
+  faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay, faGavel,
   faCheckDouble, faBell, faUserGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -38,6 +38,7 @@ const marks: Record<Notification['kind'], { icon: IconDefinition; tint: string; 
   system: { icon: faCircleInfo, tint: 'bg-ink-raised text-white/70', ring: 'ring-ink-line' },
   event_started: { icon: faCalendarDay, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
   world_updated: { icon: worldIcon, tint: 'bg-space text-white', ring: 'ring-space/40' },
+  content_removed: { icon: faGavel, tint: 'bg-danger text-white', ring: 'ring-danger/40' },
 }
 
 /** Said as a sentence, with whoever did it in bold at the front of it. */
@@ -49,6 +50,8 @@ function words(n: Notification) {
     case 'space_like': return { who, rest: `liked ${n.space?.name ?? 'your World'}` }
     case 'space_visit': return { who, rest: `walked into ${n.space?.name ?? 'your World'}` }
     case 'message': return { who, rest: 'sent you a message' }
+    // Kobblon did this, and the body already says which thing and why.
+    case 'content_removed': return { who: null, rest: n.body ?? 'Something was taken down' }
     case 'world_updated': return {
       who,
       rest: n.body?.trim()
@@ -63,6 +66,7 @@ function linkFor(n: Notification) {
   if (n.kind === 'friend_request') return '/friends?list=requests'
   if (n.kind === 'friend_accepted') return '/friends'
   if (n.kind === 'message') return '/friends'
+  if (n.kind === 'content_removed') return '/standing'
   // Told about a World, so it leads to that World.
   if (n.world?.content_id) return worldLink(n.world as Parameters<typeof worldLink>[0])
   if (n.space && n.actor) return `/u/${n.actor.username}/${n.space.slug}`

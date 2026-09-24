@@ -12,6 +12,7 @@ import type {
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding,
+  Face,
 } from '@/types/db'
 
 const SPACE_FIELDS =
@@ -1613,6 +1614,87 @@ export async function styleShop(
   return (unwrap(await supabase.rpc('style_shop', {
     search: search.trim() || null, slot_name: slot, wanted: limit,
   })) as StyleItem[]) ?? []
+}
+
+// ------------------------------------------------------------- moderation
+
+/** What Kobblon knows how to take down. */
+export type TakeDownKind = 'asset' | 'world' | 'space' | 'style' | 'face'
+
+/**
+ * Removing a piece of content, and telling whoever made it why.
+ *
+ * The reason is not optional and is shown to the person: "your thing was
+ * removed" with no reason is how a platform teaches people that moderation
+ * is arbitrary.
+ */
+export async function takeDown(what: TakeDownKind, which: string, reason: string) {
+  unwrap(await supabase.rpc('take_down', { what, which, reason }))
+}
+
+/** Undoing a removal. It does not republish: that stays the owner's call. */
+export async function putBack(what: TakeDownKind, which: string) {
+  unwrap(await supabase.rpc('put_back', { what, which }))
+}
+
+// ------------------------------------------------------------------ faces
+
+/**
+ * Faces: flat pictures worn on K6's head, the way the first brick-toy
+ * avatars wore theirs. Kobblon publishes them and nobody else does.
+ */
+export async function faceCatalogue(search = '', limit = 60): Promise<Face[]> {
+  return (unwrap(await supabase.rpc('face_catalogue', {
+    search: search.trim() || null, wanted: limit,
+  })) as Face[]) ?? []
+}
+
+export async function buyFace(id: string) {
+  unwrap(await supabase.rpc('buy_face', { which: id }))
+}
+
+export async function myFaces(): Promise<Face[]> {
+  return (unwrap(await supabase.rpc('my_faces')) as Face[]) ?? []
+}
+
+/** Null takes it off and puts K6 back to its own face. */
+export async function wearFace(id: string | null) {
+  unwrap(await supabase.rpc('wear_face', { which: id }))
+}
+
+/** Where a face answers from. Public: it is a thing in a shop window. */
+export function faceUrl(path: string) {
+  const base = import.meta.env.VITE_SUPABASE_URL ?? ''
+  return `${base}/storage/v1/object/public/faces/${path}`
+}
+
+/**
+ * Publishing one. Kobblon only, and that is enforced by the database
+ * rather than by this function being hard to find.
+ */
+export async function publishFace(input: {
+  file: File
+  name: string
+  description?: string
+  price?: number
+}): Promise<void> {
+  const extension = input.file.name.split('.').pop()?.toLowerCase() ?? 'png'
+  const path = `${crypto.randomUUID()}.${extension}`
+  const up = await supabase.storage.from('faces')
+    .upload(path, input.file, { contentType: input.file.type || 'image/png' })
+  if (up.error) throw new Error(up.error.message)
+
+  const { error } = await supabase.from('faces').insert({
+    name: input.name.trim(),
+    description: input.description?.trim() || null,
+    image_path: path,
+    price: Math.max(0, Math.round(input.price ?? 0)),
+  })
+  if (error) {
+    // Never leave a picture in the bucket with nothing pointing at it.
+    await supabase.storage.from('faces').remove([path])
+    throw new Error(error.message)
+  }
 }
 
 export async function myStyle(): Promise<StyleItem[]> {
