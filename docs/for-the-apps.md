@@ -246,3 +246,21 @@ Textures are flat pictures on flat faces. Making them read as though the
 surface has depth — the way a brick wall does elsewhere — means normal maps
 alongside the colour maps, generated from the same greyscale. Noted, not
 built.
+
+
+---
+
+## The application is Kobblon Workspace
+
+Not "Kobblon World Creator" and not "Creator". Staw renamed it, and the
+website says Workspace everywhere it names the application: the sign in
+page, the empty states in My Worlds and Library, the line on a profile.
+
+The word **Creator** still means a person who makes things on Kobblon --
+the Creator Marketplace, the creator page, the Support topic. That is a
+different word doing a different job and it has not changed. The
+application is the Workspace; the person is a creator.
+
+The protocol scheme is untouched: `kobblon-creator://signin` still works and
+renaming it would break every link already handed out. A scheme is an
+address, not a name.

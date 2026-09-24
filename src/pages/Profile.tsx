@@ -605,7 +605,7 @@ export default function Profile() {
                   title={isMe ? 'Nothing made yet' : 'No Worlds yet'}
                   body={
                     isMe
-                      ? 'Build one in Kobblon Creator and publish it, and it shows up here.'
+                      ? 'Build one in Kobblon Workspace and publish it, and it shows up here.'
                       : `${user.display_name} has not published anything yet.`
                   }
                   action={undefined}

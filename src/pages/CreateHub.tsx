@@ -271,10 +271,10 @@ export function CreateWorlds() {
                 title={shelf === 'archived' ? 'Nothing put away' : 'No Worlds yet'}
                 body={shelf === 'archived'
                   ? 'A World you archive waits here. It still opens for anybody holding its link.'
-                  : 'Worlds are built in Kobblon Creator on the desktop. Publish one there and it appears here, ready to be set up and put in front of people.'}
+                  : 'Worlds are built in Kobblon Workspace on the desktop. Publish one there and it appears here, ready to be set up and put in front of people.'}
                 action={shelf === 'archived'
                   ? undefined
-                  : <Button variant="subtle" to="/download">Get Creator</Button>}
+                  : <Button variant="subtle" to="/download">Get Workspace</Button>}
               />
             </Card>
           )}

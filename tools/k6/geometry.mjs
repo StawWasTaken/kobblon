@@ -211,3 +211,58 @@ export function rounded({ at, size, radius = 0.25, steps = 6 }) {
 
   return { positions, normals, indices }
 }
+
+/**
+ * A cylinder standing on its Y axis.
+ *
+ * The neck, and nothing else so far. It is a cylinder rather than a rounded
+ * box because a neck is the one part of K6 that turns: a round neck lets the
+ * head look left without a corner of it swinging out past the shoulders.
+ *
+ * Capped at both ends, because an open tube is a hole somebody will find.
+ */
+export function cylinder({ at, radius, height, segments = 14 }) {
+  const [cx, cy, cz] = at
+  const positions = []
+  const normals = []
+  const indices = []
+  const top = cy + height / 2
+  const bottom = cy - height / 2
+
+  // The wall. Its own ring of vertices so the caps stay hard edged.
+  for (let seg = 0; seg <= segments; seg += 1) {
+    const theta = (seg / segments) * Math.PI * 2
+    const nx = Math.cos(theta)
+    const nz = Math.sin(theta)
+    for (const y of [bottom, top]) {
+      positions.push(cx + nx * radius, y, cz + nz * radius)
+      normals.push(nx, 0, nz)
+    }
+  }
+
+  for (let seg = 0; seg < segments; seg += 1) {
+    const a = seg * 2
+    indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3)
+  }
+
+  // The two caps, each a fan around its own middle.
+  for (const [y, up] of [[top, 1], [bottom, -1]]) {
+    const middle = positions.length / 3
+    positions.push(cx, y, cz)
+    normals.push(0, up, 0)
+
+    const first = positions.length / 3
+    for (let seg = 0; seg <= segments; seg += 1) {
+      const theta = (seg / segments) * Math.PI * 2
+      positions.push(cx + Math.cos(theta) * radius, y, cz + Math.sin(theta) * radius)
+      normals.push(0, up, 0)
+    }
+
+    for (let seg = 0; seg < segments; seg += 1) {
+      if (up > 0) indices.push(middle, first + seg, first + seg + 1)
+      else indices.push(middle, first + seg + 1, first + seg)
+    }
+  }
+
+  return { positions, normals, indices }
+}

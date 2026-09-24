@@ -96,7 +96,7 @@ export default function Library() {
             action={
               shelf === 'Saved'
                 ? <Button variant="subtle" to="/discover" icon={faStar}>Go find some</Button>
-                : <Button to="/download" icon={faPlus}>Get Creator</Button>
+                : <Button to="/download" icon={faPlus}>Get Workspace</Button>
             }
           />
         </Card>

@@ -40,8 +40,8 @@ const apps = {
     scheme: 'kobblon',
   },
   creator: {
-    name: 'Kobblon World Creator',
-    short: 'Creator',
+    name: 'Kobblon Workspace',
+    short: 'Workspace',
     mark: '/brand/favicon-create.png',
     scheme: 'kobblon-creator',
   },

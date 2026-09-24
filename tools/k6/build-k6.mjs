@@ -24,7 +24,7 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Gltf } from './gltf.mjs'
-import { box, rounded, join, bind } from './geometry.mjs'
+import { box, ball, cylinder, rounded, join, bind } from './geometry.mjs'
 import { animations } from './animations.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -45,24 +45,41 @@ const H = {
 /*
  * The v.02 rig, from Staw's drawing.
  *
- * One shape language and one primitive: a box with flat faces and softly
- * rounded edges. The head is a rounded box, not a ball -- a sphere reads as
- * a marble balanced on a body, and what the drawing shows is a soft head
- * with a front to it. Limbs are the same primitive, rounded less, so an arm
- * is a chunky bar rather than a plank or a sausage.
+ * A shape language of three pieces, and each one is doing a job rather than
+ * a style:
  *
- * Six parts, and six is the whole avatar: there are no hands and no feet,
- * because there are none in the drawing. A limb ends where it ends.
+ *   Rounded boxes  -- the body. Flat faces, soft edges, nothing spherical.
+ *   A cylinder     -- the neck, because it is the one part that turns: a
+ *                     round neck lets the head look left without a corner
+ *                     swinging out past the shoulders.
+ *   Balls          -- where a limb meets the torso. Not decoration: a
+ *                     rounded box swinging in a square socket opens a gap
+ *                     you can see through, and a ball is round from every
+ *                     angle it can be turned to, so it never does.
+ *
+ * Six parts, and six is the whole avatar: no hands, no feet, because there
+ * are none in the drawing. Each ball belongs to the limb that turns on it,
+ * so it rotates with the limb and keeps the socket filled.
  */
+const J = {
+  /*
+   * Small enough to read as the thing a limb turns on rather than as a
+   * shoulder pad. Slightly wider than the limb, so the socket stays filled
+   * through a full swing, and no wider than that.
+   */
+  shoulder: 0.46,
+  hip: 0.56,
+  neck: 0.42,
+}
+
 const shape = {
   head: join([
     /*
-     * Sitting on the shoulders rather than sunk between them: the bottom of
-     * the head is exactly the top of the torso, so it reads as a head on a
-     * body instead of a body swallowing a head.
+     * Sitting on the neck rather than sunk between the shoulders: the head
+     * reads as a head on a body instead of a body swallowing a head.
      */
     rounded({
-      at: [0, H.torsoTop + 1.1, 0],
+      at: [0, H.torsoTop + 1.42, 0],
       size: [2.4, 2.2, 2.3],
       // Heavily rounded, but still a box: the corners are gone and the
       // faces are not.
@@ -73,28 +90,32 @@ const shape = {
   torso: join([
     rounded({
       at: [0, (H.legTop + H.torsoTop) / 2, 0],
-      size: [3.0, H.torsoTop - H.legTop, 1.55],
+      size: [2.95, H.torsoTop - H.legTop, 1.55],
+      radius: 0.3,
+      steps: 5,
+    }),
+    // The neck, standing on the shoulders and holding up the head.
+    cylinder({ at: [0, H.torsoTop + 0.24, 0], radius: J.neck, height: 0.85 }),
+  ]),
+  arm: (side) => join([
+    /*
+     * The shoulder, at the top corner of the torso, and the arm hanging
+     * from it. The ball is inset so that half of it is inside the torso
+     * and the socket cannot be seen into from any angle.
+     */
+    ball({ at: [side * 1.58, H.torsoTop - 0.34, 0], radius: J.shoulder }),
+    rounded({
+      at: [side * 1.72, (H.torsoTop - 0.5 + 4.35) / 2, 0],
+      size: [0.98, H.torsoTop - 0.5 - 4.35, 0.98],
       radius: 0.3,
       steps: 5,
     }),
   ]),
-  arm: (side) => join([
-    /*
-     * From the top of the torso to where a hand would be if K6 had one.
-     * It reaches the shoulder line so that raising the arm does not open a
-     * gap you can see straight through.
-     */
-    rounded({
-      at: [side * 1.82, (H.torsoTop + 4.3) / 2, 0],
-      size: [1.0, H.torsoTop - 4.3, 1.0],
-      radius: 0.26,
-      steps: 5,
-    }),
-  ]),
   leg: (side) => join([
+    ball({ at: [side * 0.7, H.legTop - 0.1, 0], radius: J.hip }),
     rounded({
-      at: [side * 0.72, H.legTop / 2, 0],
-      size: [1.3, H.legTop, 1.3],
+      at: [side * 0.7, (H.legTop - 0.3) / 2, 0],
+      size: [1.26, H.legTop - 0.3, 1.26],
       radius: 0.3,
       steps: 5,
     }),
