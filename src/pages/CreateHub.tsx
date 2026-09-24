@@ -301,6 +301,14 @@ export function CreateWorlds() {
                         * and another here is two products.
                         */}
                       <span className="block truncate text-xs text-muted">
+                        {/* Out in the world, so it is said in the colour
+                            Kobblon says alive in. */}
+                        {world.is_published && (
+                          <span className="mr-1.5 inline-flex items-center gap-1 font-bold text-space-bright">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-space-bright" />
+                            Live
+                          </span>
+                        )}
                         {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
                         {world.is_published ? '' : ' · not published'}
                         {world.archived_at ? ' · archived' : ''}

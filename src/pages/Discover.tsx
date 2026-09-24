@@ -26,17 +26,30 @@ const sorts: { value: WorldSort; label: string }[] = [
  * rail you push sideways. Looking through what people have made should feel
  * like looking through a shelf, not operating a carousel.
  */
-function Shelf({ title, worlds, genres, loading }: {
+function Shelf({ title, worlds, genres, loading, live }: {
   title: string
   worlds: World[] | null
   genres: Awaited<ReturnType<typeof worldGenres>> | null
   loading: boolean
+  /** A shelf about what is happening now wears the colour that means now. */
+  live?: boolean
 }) {
   if (!loading && !worlds?.length) return null
 
   return (
     <section className="mb-9">
-      <SectionHeader title={title} />
+      <SectionHeader
+        title={
+          live
+            ? (
+              <span className="flex items-center gap-2.5">
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-space-bright" />
+                {title}
+              </span>
+            )
+            : title
+        }
+      />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {loading
           ? [0, 1, 2, 3].map((i) => <SpaceCardSkeleton key={i} />)
@@ -128,7 +141,13 @@ export default function Discover() {
 
       {browsing && (
         <>
-          <Shelf title="Being played right now" worlds={trending.data} genres={genres.data} loading={trending.loading} />
+          <Shelf
+            title="Being played right now"
+            live
+            worlds={trending.data}
+            genres={genres.data}
+            loading={trending.loading}
+          />
           <Shelf title="Just published" worlds={fresh.data} genres={genres.data} loading={fresh.loading} />
           <Shelf title="Most liked" worlds={liked.data} genres={genres.data} loading={liked.loading} />
           {!trending.loading && !trending.data?.length && (

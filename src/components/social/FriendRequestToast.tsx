@@ -102,7 +102,7 @@ export function FriendRequestCard({
         <button
           onClick={() => void answer(true)}
           disabled={busy}
-          className="flex items-center justify-center gap-2 border-l border-ink-line bg-brand py-3 text-sm font-bold text-onbrand transition-colors hover:bg-brand-bright disabled:opacity-40"
+          className="flex items-center justify-center gap-2 border-l border-ink-line bg-space py-3 text-sm font-bold text-white transition-colors hover:bg-space-bright disabled:opacity-40"
         >
           <FontAwesomeIcon icon={faCheck} className="text-xs" />
           Accept

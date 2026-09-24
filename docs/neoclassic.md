@@ -35,6 +35,13 @@ hand, so it feels remembered and still native to Kobblon.
 - **Only what a week-old platform needs.** Features that would make sense
   on a platform that started last week and wants people to play and build.
   Not a feature because a big platform has one.
+- **Blue is Kobblon. Green is yes.** Blue is the platform: the chrome, the
+  links, the marks, what somebody is standing inside. Green is what Kobblon
+  says yes in — going into a World, something being live, something being
+  yours, an answer that means agreement. A screen that is only blue is a
+  screen with nothing happening on it, and that is the corporate look this
+  is meant to avoid. Green is not decoration: if a green thing does not
+  mean alive, yours or yes, it is the wrong colour.
 - **Nothing sterile.** Colour, a mascot, words written by a person. If a
   screen could be a settings page at a bank, it is wrong.
 - **No fake functionality, ever.** A button that does nothing is worse than

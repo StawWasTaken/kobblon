@@ -170,7 +170,7 @@ export function FacesShelf() {
                 ) : (
                   <Button
                     size="sm"
-                    variant="subtle"
+                    variant={profile ? 'enter' : 'subtle'}
                     className="mt-auto"
                     disabled={!profile || busy === face.id}
                     onClick={() => void buy(face)}

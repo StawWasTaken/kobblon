@@ -164,7 +164,7 @@ export default function CreateWorld() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={world.is_published ? 'brand' : 'warm'}>
+        <Badge tone={world.is_published ? 'space' : 'warm'}>
           {world.is_published ? 'Published' : 'Not published'}
         </Badge>
         {world.content_id ? <Badge tone="neutral">WLD-{world.content_id}</Badge> : null}
