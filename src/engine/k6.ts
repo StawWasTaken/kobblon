@@ -132,6 +132,25 @@ export class K6 {
     this.mixer.update(dt)
   }
 
+  /**
+   * How solid this K6 is drawn, for the person looking out of it.
+   *
+   * Coming in towards first person the body thins and then is not drawn at
+   * all, so that nobody ends up looking at the inside of their own chest.
+   * Only whoever is playing this avatar ever calls it: everybody else's K6
+   * stays solid.
+   */
+  fade(amount: number) {
+    const held = Math.max(0, Math.min(1, amount))
+    for (const mesh of this.parts.values()) {
+      const material = mesh.material as THREE.MeshStandardMaterial
+      material.transparent = held < 0.999
+      material.opacity = held
+      // A half see through body must not hide what is behind it.
+      material.depthWrite = held > 0.999
+    }
+  }
+
   dispose() {
     this.mixer.stopAllAction()
     this.object.removeFromParent()

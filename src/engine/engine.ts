@@ -73,6 +73,9 @@ export class Engine {
   /** How far back this World lets the camera go. */
   private zoomMost = ZOOM_FAR
   private onWheel: ((event: WheelEvent) => void) | null = null
+  private onClick: (() => void) | null = null
+  /** Used every frame to ask what is between somebody and their camera. */
+  private look = new THREE.Raycaster()
 
   constructor(private options: EngineOptions) {
     this.renderer = new THREE.WebGLRenderer({ canvas: options.canvas, antialias: true })
@@ -90,6 +93,16 @@ export class Engine {
         this.zoom(Math.sign(event.deltaY) * 2)
       }
       options.canvas.addEventListener('wheel', this.onWheel, { passive: false })
+
+      /*
+       * A browser only hands over the pointer on the back of something
+       * somebody did, so first person asks for it on a click rather than
+       * the moment the camera gets close enough.
+       */
+      this.onClick = () => {
+        if (this.firstPerson) this.keyboard?.setPointerLock(true)
+      }
+      options.canvas.addEventListener('click', this.onClick)
     }
     this.resize()
   }
@@ -164,7 +177,19 @@ export class Engine {
    */
   zoom(by: number) {
     this.orbit.distance = Math.max(ZOOM_NEAR, Math.min(this.zoomMost, this.orbit.distance + by))
+
+    /*
+     * Zooming all the way in is how somebody asks for first person, and
+     * zooming back out is how they ask to stop. The pointer follows that
+     * rather than needing its own control.
+     */
+    if (!this.firstPerson) this.keyboard?.setPointerLock(false)
     return this.orbit.distance
+  }
+
+  /** Whether the camera is inside the head rather than behind it. */
+  get firstPerson() {
+    return this.orbit.distance <= ZOOM_NEAR + 0.01
   }
 
   /** Where the camera is, for anybody who needs to know. */
@@ -281,12 +306,6 @@ export class Engine {
         emote: intent.emote,
       }, step)
       this.avatar.update(step)
-      /*
-       * At the near end the camera is inside the head. Not faded and not
-       * clipped: half a head drawn across the middle of the screen is worse
-       * than no head, so it is not drawn.
-       */
-      this.avatar.object.visible = this.orbit.distance > ZOOM_NEAR + 0.5
     }
 
     this.aimCamera(state.position)
@@ -297,8 +316,12 @@ export class Engine {
   }
 
   private aimCamera(at: THREE.Vector3) {
+    /*
+     * The eye, not the chest. Zooming all the way in should put somebody
+     * behind their own face rather than inside their ribcage.
+     */
     const head = at.clone()
-    head.y += K6_HEIGHT * 0.75
+    head.y += K6_HEIGHT * 0.88
 
     /*
      * Behind the head by the yaw, and above it by the pitch.
@@ -308,15 +331,67 @@ export class Engine {
      * the distance put the camera below the head, which is why every view
      * was taken from knee height.
      */
-    const { yaw, pitch, distance } = this.orbit
-    const flat = Math.cos(pitch) * distance
+    const { yaw, pitch } = this.orbit
+
+    /*
+     * Where the camera would sit if nothing were in the way, and then where
+     * it actually can. A camera that passes through a wall shows the inside
+     * of the World, which is worse than being close to somebody's back.
+     */
+    const wanted = this.freeDistance(head, this.orbit.distance)
+    const flat = Math.cos(pitch) * wanted
 
     this.camera.position.set(
       head.x - Math.sin(yaw) * flat,
-      head.y + Math.sin(pitch) * distance,
-      head.z - Math.cos(yaw) * flat,
+      head.y + Math.sin(pitch) * wanted,
+      head.z - Math.cos(yaw) * wanted,
     )
     this.camera.lookAt(head)
+
+    /*
+     * Fading out rather than blinking out. Coming in towards first person
+     * the body thins as the camera reaches it and is gone before the camera
+     * is inside it; only the person playing sees this, because only their
+     * own avatar is being drawn from the inside.
+     */
+    if (this.avatar) {
+      const fade = THREE.MathUtils.clamp((wanted - ZOOM_NEAR) / 3.5, 0, 1)
+      this.avatar.object.visible = fade > 0.02
+      this.avatar.fade(fade)
+    }
+  }
+
+  /**
+   * How far back the camera can actually go before something is in the way.
+   *
+   * Cast from the head outwards rather than from the camera inwards: a ray
+   * that starts inside a wall finds nothing, which is exactly the case that
+   * matters. What comes back is held a little short of whatever was hit, so
+   * the near plane does not slice into it.
+   */
+  private freeDistance(head: THREE.Vector3, wanted: number) {
+    if (!this.world) return wanted
+
+    const { yaw, pitch } = this.orbit
+    const away = new THREE.Vector3(
+      -Math.sin(yaw) * Math.cos(pitch),
+      Math.sin(pitch),
+      -Math.cos(yaw) * Math.cos(pitch),
+    ).normalize()
+
+    this.look.set(head, away)
+    this.look.far = wanted
+    const hits = this.look.intersectObject(this.world.group, true)
+
+    for (const hit of hits) {
+      // A decal is a picture on a wall, not a wall.
+      const part = this.world.partOf.get(hit.object)
+      if (part && part.kind !== 'box') continue
+      if (part && part.solid === false) continue
+      return Math.max(ZOOM_NEAR, hit.distance - 0.6)
+    }
+
+    return wanted
   }
 
   start() {
@@ -347,6 +422,8 @@ export class Engine {
       world: this.world?.manifest.name ?? null,
       distance: Number(this.orbit.distance.toFixed(2)),
       drawn: this.avatar?.object.visible ?? false,
+      firstPerson: this.firstPerson,
+      locked: this.keyboard?.pointerLocked ?? false,
     }
   }
 
@@ -354,6 +431,7 @@ export class Engine {
     this.stop()
     this.keyboard?.dispose()
     if (this.onWheel) this.options.canvas.removeEventListener('wheel', this.onWheel)
+    if (this.onClick) this.options.canvas.removeEventListener('click', this.onClick)
     this.sound.dispose()
     this.avatar?.dispose()
     this.renderer.dispose()

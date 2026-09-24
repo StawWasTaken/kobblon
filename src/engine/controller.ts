@@ -26,12 +26,36 @@ export type ControllerState = {
   rising: boolean
 }
 
-const WALK = 11
-const RUN = 22
-const JUMP = 26
+/*
+ * Speeds, taken from the platform everybody's hands already know rather
+ * than picked by feel.
+ *
+ * A Roblox character is about five studs tall and walks at sixteen studs a
+ * second, which is 3.2 of its own heights every second. K6 is ten stons
+ * tall, so the same walk is thirty two stons a second. The old eleven was a
+ * third of that, which is why walking felt like wading and running felt
+ * slower than somebody else's walk.
+ *
+ * There is no run. One speed, the way the classic platforms had it: a
+ * sprint key is a thing to hold down for ever, which is not a mechanic, it
+ * is a tax.
+ */
+const WALK = 32
+
+/*
+ * And the jump that goes with it. Roblox jumps about 1.27 of its own height;
+ * at Kobblon's gravity that is the speed you have to leave the ground at to
+ * get 12.7 stons up.
+ */
+const JUMP = 35.3
 /** How fast the body swings round to face where it is going. */
 const TURN = 12
-const ACCELERATE = 90
+/*
+ * Quick enough that a change of direction is instant at the new speed.
+ * Ninety was tuned against a walk of eleven and would take a third of a
+ * second to reach thirty two, which feels like ice.
+ */
+const ACCELERATE = 260
 const FRICTION = 14
 /** A step this size is walked up rather than bumped into. */
 const STEP = 1.4
@@ -55,7 +79,6 @@ export class Controller {
   }
 
   /** Whether the jump key has been let go since the last jump. */
-  private jumpReady = true
   private box = new THREE.Box3()
 
   /** Where this World puts somebody, and where it puts them back. */
@@ -124,8 +147,7 @@ export class Controller {
       wanted.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw)
     }
 
-    const top = intent.run ? RUN : WALK
-    const target = wanted.multiplyScalar(top)
+    const target = wanted.multiplyScalar(WALK)
 
     // -- accelerate towards it on the floor, drift in the air
     const grip = this.state.grounded ? 1 : 0.28
@@ -142,13 +164,18 @@ export class Controller {
     velocity.x = flat.x
     velocity.z = flat.z
 
-    // -- jumping, once per press, only with something underfoot
-    if (intent.jump && this.state.grounded && this.jumpReady) {
+    /*
+     * Jumping, whenever there is something underfoot.
+     *
+     * Held rather than tapped: letting somebody bounce across a World by
+     * holding the key is what the platforms this is built after do, and
+     * making them release and press again reads as a cooldown nobody asked
+     * for.
+     */
+    if (intent.jump && this.state.grounded) {
       velocity.y = JUMP
       this.state.grounded = false
-      this.jumpReady = false
     }
-    if (!intent.jump) this.jumpReady = true
 
     velocity.y -= GRAVITY * dt
 

@@ -45,7 +45,9 @@ const walked = await p.evaluate(() => {
   return window.stepFrames(60)
 })
 // the spawn faces 180, which in Kobblon means looking down -Z
-check('walk speed is held', Math.abs(walked.speed - 11) < 0.6, `${walked.speed}`)
+// 3.2 of its own height a second, which is what a Roblox character walks.
+check('walk speed is the one everybody\u2019s hands know',
+  Math.abs(walked.speed - 32) < 1.5, `${walked.speed} stons a second`)
 // and forward is the way it is facing: the spawn looks down -Z
 const forward = await p.evaluate(() => {
   window.engine.controller.placeAt(0, 1, 18, Math.PI)
@@ -56,13 +58,14 @@ const forward = await p.evaluate(() => {
 check('walks the way it is facing', forward.position[2] < 18 - 5,
   `z 18.0 -> ${forward.position[2].toFixed(1)}`)
 
-// -- 4. running is faster than walking
+// -- 4. there is one speed, and holding the old sprint key does not change it
 const ran = await p.evaluate(() => {
   window.engine.controller.placeAt(0, 1, 40)
   window.drive({ x: 1, run: true })
   return window.stepFrames(60)
 })
-check('runs faster than it walks', ran.speed > walked.speed + 6, `${walked.speed} -> ${ran.speed}`)
+check('there is one speed and no sprint',
+  Math.abs(ran.speed - walked.speed) < 0.5, `${walked.speed} and ${ran.speed}`)
 
 // -- 5. a wall stops it instead of letting it through
 const atWall = await p.evaluate(() => {
@@ -601,6 +604,62 @@ check('a ston is one ston, so a part can be counted by looking at it',
 check('and the pattern multiplies the colour rather than replacing it',
   surfaced.tinted === '4a6cff', `#${surfaced.tinted}`)
 check('two materials are two patterns', !surfaced.shared, 'brick is not wood')
+
+// -- 22. the camera does not go through walls, and first person is inside the head
+const looking = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 'c', name: 'Camera', spawn: { at: [0, 4, 0], facing: 180 },
+    sky: { colour: '#9fc4e8' },
+    blocks: [
+      { kind: 'box', at: [0, -1, 0], size: [80, 2, 80], material: 'grass', colour: '#63c04d' },
+      // A wall right where the camera would like to be.
+      { kind: 'box', at: [0, 6, 14], size: [40, 14, 2], material: 'brick', colour: '#b8563a' },
+    ],
+  })
+  await new Promise((r) => setTimeout(r, 400))
+  window.drive({})
+  window.engine.controller.placeAt(0, 1, 6, Math.PI)
+  window.engine.zoom(1000)
+  window.stepFrames(20)
+  const behindWall = window.engine.camera.position.z
+
+  window.engine.controller.placeAt(0, 1, -20, Math.PI)
+  window.stepFrames(20)
+  const inTheOpen = window.engine.camera.position.z + 20
+
+  window.engine.zoom(-1000)
+  window.stepFrames(10)
+  const inside = window.engine.status
+
+  return {
+    behindWall: Number(behindWall.toFixed(2)),
+    inTheOpen: Number(inTheOpen.toFixed(2)),
+    first: inside.firstPerson,
+    drawn: inside.drawn,
+  }
+})
+check('the camera stops at a wall rather than going through it',
+  looking.behindWall < 13 && looking.behindWall > 10,
+  `wall face at z=13, camera held at z=${looking.behindWall}`)
+check('and goes all the way back when nothing is in the way',
+  looking.inTheOpen > 30, `${looking.inTheOpen} stons behind`)
+check('zoomed all the way in, somebody is behind their own face',
+  looking.first && !looking.drawn, 'first person, body not drawn')
+
+// -- 23. dragging right turns right
+const dragged = await p.evaluate(() => {
+  window.engine.controller.placeAt(0, 1, 18, 0)
+  window.drive({})
+  window.stepFrames(4)
+  const before = window.engine.camera.position.x
+  // Positive movementX is a drag to the right.
+  window.drive({ turn: 0.6 })
+  window.stepFrames(4)
+  return { before: Number(before.toFixed(2)), after: Number(window.engine.camera.position.x.toFixed(2)) }
+})
+check('dragging right turns the camera right',
+  dragged.after > dragged.before,
+  `camera x ${dragged.before} -> ${dragged.after}`)
 
 // -- back to the first World for the picture
 await p.evaluate(async () => {
