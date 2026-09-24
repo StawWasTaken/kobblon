@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFaceSmile, faPlus, faCheck, faLock } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Input, Textarea } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -102,6 +102,11 @@ export function FacesShelf() {
 
               <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
                 <p className="truncate text-sm font-bold">{face.name}</p>
+                {face.description && (
+                  <p className="line-clamp-2 text-xs leading-relaxed text-white/50">
+                    {face.description}
+                  </p>
+                )}
                 <p className="text-xs text-muted">
                   {face.price > 0 ? `${formatCount(face.price)} ${currency.plural}` : 'Free'}
                 </p>
@@ -140,6 +145,7 @@ function PublishFace({
   const toast = useToast()
   const [file, setFile] = useState<File | null>(null)
   const [name, setName] = useState('')
+  const [about, setAbout] = useState('')
   const [price, setPrice] = useState('0')
   const [busy, setBusy] = useState(false)
 
@@ -147,9 +153,10 @@ function PublishFace({
     if (!file || !name.trim()) return
     setBusy(true)
     try {
-      await publishFace({ file, name, price: Number(price) || 0 })
+      await publishFace({ file, name, description: about, price: Number(price) || 0 })
       setFile(null)
       setName('')
+      setAbout('')
       setPrice('0')
       onDone()
       onClose()
@@ -185,6 +192,14 @@ function PublishFace({
         </label>
 
         <Input label="Name" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
+        <Textarea
+          label="Description"
+          labelNote="What it is, or where it came from"
+          rows={3}
+          maxLength={300}
+          value={about}
+          onChange={(e) => setAbout(e.target.value)}
+        />
         <Input
           label={`Price in ${currency.plural}`}
           labelNote="Nought is free"
