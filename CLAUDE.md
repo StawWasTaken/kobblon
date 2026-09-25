@@ -28,6 +28,30 @@ are not done as plainly as the things that are.
 - Report what happened, including when it failed. A check that was corrected
   to match a behaviour change is said out loud, not quietly rewritten.
 
+## The trap this project keeps falling into
+
+**A value captured before the thing that decides it exists.** It has worn
+three disguises here, cost four bugs between the two sessions, and every time
+it presented as "renders correctly, nothing throws, and it is wrong":
+
+- Four asynchronous passes held a `BuiltWorld` across an `await`, so a World
+  somebody had already left kept writing into itself — and started its
+  ambience on a sound service that had been cleared and never would be again.
+- `dressSky` compared the manifest to decide whether it was stale, which is a
+  value captured before the case that breaks it existed: opening the same
+  World twice, which is what a reload button is.
+- `export const supabase` was decided at import, before an application had
+  the chance to say which session it has. The Workspace's upload popup
+  mounted perfectly and would have uploaded as nobody.
+
+The shape to watch for: anything read once and kept, where the thing that
+decides it can change afterwards. The fix is always the same — ask at the
+moment of use, or carry a token that says whether the answer is still wanted.
+
+And the check that goes with it is never "is the current value right". It is
+**"does a call made afterwards actually reach the new thing"**, because the
+broken version passes the first question.
+
 ## Ethos
 
 `docs/neoclassic.md` holds it. The working rules that come out of it: copy the

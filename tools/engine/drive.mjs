@@ -1100,6 +1100,53 @@ check('and the picture is of the model rather than an empty frame',
 check('a Kobblon part file gets no picture rather than a wrong one',
   modelCard.ownFormat === null, 'nothing drawn for a .kbfl')
 
+// -- 13p. whose session the shared components talk to
+const whoseClient = await p.evaluate(async () => {
+  const asked = []
+
+  /*
+   * An application with its own session hands its own client over. The
+   * Workspace's lives in memory with its refresh token in the keychain, so
+   * it is never the one this module would have built.
+   */
+  const theirs = {
+    from(table) { asked.push(`from:${table}`); return { select: () => ({ data: [], error: null }) } },
+    storage: { from(bucket) { asked.push(`storage:${bucket}`); return {} } },
+    mine: true,
+  }
+
+  window.setSupabaseClient(theirs)
+  window.supabase.from('assets')
+  window.supabase.storage.from('uploads')
+  const during = { routed: [...asked], isTheirs: window.currentSupabase().mine === true }
+
+  /*
+   * And back, mid-session rather than at startup, then used again. The
+   * failure worth refusing is the one that keeps the old client quietly:
+   * it renders correctly, nothing throws, and every call goes to the wrong
+   * session. So this counts what the handed-over client hears afterwards,
+   * rather than only asking which client is current.
+   */
+  window.setSupabaseClient(null)
+  const heardBefore = asked.length
+  window.supabase.from('worlds')
+  const after = {
+    isTheirs: window.currentSupabase().mine === true,
+    stillWorks: typeof window.supabase.from === 'function',
+    oldClientHeardMore: asked.length > heardBefore,
+  }
+
+  return { during, after }
+})
+check('an application can hand the shared components its own client',
+  whoseClient.during.isTheirs
+  && whoseClient.during.routed.join() === 'from:assets,storage:uploads',
+  `routed ${whoseClient.during.routed.join(' and ')} to the client it was given`)
+check('and handing back null returns to the website\u2019s own, mid-session',
+  !whoseClient.after.isTheirs && whoseClient.after.stillWorks
+  && !whoseClient.after.oldClientHeardMore,
+  'a call after the hand-back does not reach the client that was handed over')
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({

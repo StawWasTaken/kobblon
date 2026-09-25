@@ -6,6 +6,7 @@
  * while it is being built, and so a test can step it frame by frame.
  */
 import { previewOf, canPreview } from '@/lib/preview'
+import { supabase, setSupabaseClient, currentSupabase } from '@/lib/supabase'
 import {
   Engine, applyDecals, applyMeshes, buildSky, buildWorld, geometryFor, tiledGeometry, readManifest,
   writeManifest, stillIntent,
@@ -32,6 +33,9 @@ const engine = new Engine({
 Object.assign(window, {
   previewOf,
   canPreview,
+  supabase,
+  setSupabaseClient,
+  currentSupabase,
   buildSky,
   applyDecals,
   applyMeshes,
