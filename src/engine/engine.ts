@@ -9,6 +9,9 @@ import {
 import { buildSky, type ResolveAsset, type Skybox } from './sky'
 import { K6_HEIGHT } from './units'
 import { SoundService } from './sound'
+import { ChatService, LocalEcho, muted, type ChatTransport } from './chat'
+import { ChatWindow } from './chatui'
+import { BubbleBoard } from './bubbles'
 
 /**
  * The Kobblon Engine, the first useful slice of it.
@@ -40,6 +43,15 @@ export type EngineOptions = {
    * something not published yet.
    */
   resolveAsset?: ResolveAsset
+  /**
+   * Talking, in this World.
+   *
+   * `false` leaves chat out entirely, which is what a thumbnail or a test
+   * wants. A transport is how a message reaches anybody else; without one
+   * it is a local echo, and the window says so rather than implying a room
+   * full of people who are not there.
+   */
+  chat?: false | { name?: string; transport?: ChatTransport; window?: boolean }
 }
 
 /** Things the engine says happened, for a client to act on. */
@@ -79,6 +91,16 @@ export class Engine {
   private sky: Skybox | null = null
   /** Everything this World makes a noise with. */
   readonly sound = new SoundService()
+  /**
+   * Talking. Null when chat was turned off, which a thumbnail does.
+   *
+   * The service is the whole of chat except carrying a message between two
+   * people; that is a transport, and until Kobblon has a server it is a
+   * local echo that says what it is.
+   */
+  readonly chat: ChatService | null = null
+  private chatWindow: ChatWindow | null = null
+  private bubbles: BubbleBoard | null = null
   private listeners = new Map<keyof EngineEvents, Set<(data: never) => void>>()
 
   /**
@@ -109,6 +131,26 @@ export class Engine {
 
     this.camera = new THREE.PerspectiveCamera(58, 1, 0.5, 4000)
     this.scene.add(this.camera)
+
+    /*
+     * Chat is set up before the keyboard, because the keyboard has to be
+     * able to ask whether somebody is typing before it decides that W means
+     * walk.
+     */
+    if (options.chat !== false) {
+      const asked = options.chat ?? {}
+      this.chat = new ChatService(asked.transport ?? new LocalEcho(asked.name ?? 'You'))
+      this.bubbles = new BubbleBoard(options.canvas)
+      this.chat.on('line', (line) => {
+        // Only somebody's own words go over a head. A system line is the
+        // client talking to you, and nobody said it out loud.
+        if (line.kind === 'system' || !this.avatar) return
+        this.bubbles?.add(this.avatar.object, line)
+      })
+      if (asked.window !== false && options.listen !== false) {
+        this.chatWindow = new ChatWindow(this.chat, options.canvas)
+      }
+    }
 
     if (options.listen !== false) {
       this.keyboard = new Keyboard(options.canvas)
@@ -352,8 +394,16 @@ export class Engine {
   }
 
   /** One frame. Public so a test can step the world without a clock. */
-  tick(dt: number, intent: Intent = stillIntent()) {
+  tick(dt: number, asked: Intent = stillIntent()) {
     const step = Math.min(dt, 1 / 20) // a slow frame must not teleport anybody
+
+    /*
+     * While somebody is typing, the keys are theirs. Without this, saying
+     * "wasd" walks you off a roof, and saying anything at all turns the
+     * camera. Applied to the intent rather than by unbinding keys, so a key
+     * held down when the window opened does not stay held for ever.
+     */
+    const intent = this.chat?.typing ? muted(asked) : asked
 
     this.orbit.yaw += intent.turn
     /*
@@ -388,6 +438,15 @@ export class Engine {
 
     this.easeCamera(step)
     this.aimCamera(state.position, step)
+
+    /*
+     * Bubbles after the camera, because they are placed by projecting
+     * through it: doing this first would put everything one frame behind
+     * the head it belongs to, which reads as the bubbles sliding about.
+     * Your own are not drawn over your own eyes in first person.
+     */
+    this.bubbles?.update(this.camera, this.firstPerson ? this.avatar?.object : undefined)
+    this.chatWindow?.update()
     // The sky travels with whoever is looking, sitting below their eye.
     this.sky?.follow(this.camera)
     this.renderer.render(this.scene, this.camera)
@@ -540,6 +599,9 @@ export class Engine {
     if (this.onKey) window.removeEventListener('keydown', this.onKey)
     if (this.onClick) this.options.canvas.removeEventListener('click', this.onClick)
     this.sound.dispose()
+    this.chatWindow?.dispose()
+    this.bubbles?.dispose()
+    this.chat?.dispose()
     this.avatar?.dispose()
     this.renderer.dispose()
   }

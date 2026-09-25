@@ -765,6 +765,168 @@ check('a World left before it finished loading does not keep making a noise',
   leftEarly.world === 'Quiet' && leftEarly.playing === 0,
   `${leftEarly.world} is open, ${leftEarly.playing} sounds asked to play`)
 
+// -- 13k. chat: what is said, and what is not allowed to be said
+const chatted = await p.evaluate(async () => {
+  const chat = window.engine.chat
+  const seen = []
+  const off = chat.on('line', (line) => seen.push(line))
+
+  /*
+   * Spaced out, because flood protection is real and this is not the check
+   * for it. Writing these back to back is how this check failed the first
+   * time: three went and the rest were refused, which was the service doing
+   * its job and the check not knowing about it.
+   */
+  const say = async (text) => {
+    const why = chat.send(text)
+    await new Promise((r) => setTimeout(r, 800))
+    return why
+  }
+
+  await say('hello world')
+  // Markup is text. It is never parsed, and the element proves it: the
+  // bubble holds the characters, not a tag.
+  await say('<script>alert(1)</script>')
+  await say('<b>bold</b>')
+  // Too long is trimmed rather than refused, counted in what a person sees.
+  await say('x'.repeat(400))
+  // An emoji is one character, not two.
+  await say('\u{1f600}'.repeat(250))
+  // Nothing is nothing, however it is spelt.
+  const empty = await say('   \u200b \u0000  ')
+
+  const said = seen.filter((one) => one.kind === 'said')
+
+  /*
+   * The markup one again, last, with the allowance let go first.
+   *
+   * Only three bubbles stack, so by now the markup one has been pushed out
+   * by the newer messages — the board doing its job. Asking again is how
+   * this check looks at the bubble it means rather than whichever three
+   * happen to be up, and the send is asserted rather than assumed: at
+   * 800ms apart these sit close enough to the rate limit that one was
+   * quietly refused and the check read the bubble before it.
+   */
+  await new Promise((r) => setTimeout(r, 2500))
+  const wentOut = chat.send('<script>alert(1)</script>') === null
+  await new Promise((r) => setTimeout(r, 80))
+  window.stepFrames(2)
+  const bubbles = [...document.querySelectorAll('.kob-bubble')]
+
+  return {
+    first: said[0]?.text,
+    markupIsText: said[1]?.text === '<script>alert(1)</script>',
+    wentOut,
+    // The element's own HTML shows the tag escaped, which is what
+    // textContent does: nothing was ever parsed as markup.
+    nothingParsed: bubbles.some((one) => one.innerHTML.includes('&lt;script&gt;'))
+      && !document.querySelector('.kob-bubble script'),
+    bubbleCount: bubbles.length,
+    newestBubble: bubbles[bubbles.length - 1]?.innerHTML.slice(0, 40),
+    trimmed: said[3]?.text.length,
+    emoji: said[4] ? [...said[4].text].length : null,
+    empty,
+    // A refusal is said out loud rather than swallowed.
+    refused: seen.some((one) => one.kind === 'system'),
+    off: typeof off,
+  }
+})
+check('what somebody says arrives as they said it', chatted.first === 'hello world',
+  `"${chatted.first}"`)
+check('markup is text, and nothing is ever parsed as markup',
+  chatted.markupIsText && chatted.nothingParsed && chatted.wentOut,
+  `sent: ${chatted.wentOut}, kept as text: ${chatted.markupIsText}, `
+  + `nothing parsed: ${chatted.nothingParsed}, bubbles: ${chatted.bubbleCount}, `
+  + `newest: ${JSON.stringify(chatted.newestBubble ?? null)}`)
+check('a message too long is trimmed to what a person can see',
+  chatted.trimmed === 200 && chatted.emoji === 200,
+  `${chatted.trimmed} characters, and ${chatted.emoji} emoji rather than half of one each`)
+check('there is no saying nothing', typeof chatted.empty === 'string',
+  `refused: ${chatted.empty}`)
+
+// -- 13l. flood protection, and typing instead of walking
+const flooded = await p.evaluate(async () => {
+  const chat = window.engine.chat
+  // Let the last check's allowance run out, so this measures the limit
+  // rather than the leftovers of the previous test.
+  await new Promise((r) => setTimeout(r, 2400))
+  const before = chat.lines.filter((one) => one.kind === 'said').length
+  const refusals = []
+  const off = chat.on('refused', (one) => refusals.push(one.why))
+
+  for (let i = 0; i < 10; i += 1) chat.send(`spam ${i}`)
+  await new Promise((r) => setTimeout(r, 30))
+  const after = chat.lines.filter((one) => one.kind === 'said').length
+  off()
+
+  return { got: after - before, refusals: refusals.length }
+})
+check('a burst is allowed and a flood is not',
+  flooded.got === 3 && flooded.refusals > 0,
+  `${flooded.got} of 10 went, ${flooded.refusals} refused`)
+
+const typing = await p.evaluate(() => {
+  const where = () => window.engine.controller.state.position.z
+  window.engine.controller.placeAt(0, 1, 0, 0)
+  window.drive({ z: 1 })
+  window.stepFrames(40)
+
+  const from = where()
+  window.stepFrames(40)
+  const walking = Math.abs(where() - from)
+
+  /*
+   * Now they are typing, with the same key still held. A body has weight,
+   * so it does not stop on the frame the window opens — it slides to a
+   * halt. The check is that it stops, not that it stops instantly: the
+   * first version demanded a dead stop within half a ston and failed on
+   * the deceleration, which is the controller being right.
+   */
+  window.engine.chat.setTyping(true)
+  window.stepFrames(40)
+  const settling = where()
+  window.stepFrames(40)
+  const typingMoved = Math.abs(where() - settling)
+
+  window.engine.chat.setTyping(false)
+  window.stepFrames(40)
+  const after = Math.abs(where() - settling)
+  window.drive({})
+
+  return {
+    walking: Number(walking.toFixed(2)),
+    typingMoved: Number(typingMoved.toFixed(2)),
+    after: Number(after.toFixed(2)),
+  }
+})
+check('while somebody is typing, the keys are theirs and not the World\u2019s',
+  typing.walking > 5 && typing.typingMoved < 0.1 && typing.after > 5,
+  `walked ${typing.walking}, moved ${typing.typingMoved} while typing, then ${typing.after} again`)
+
+// -- 13m. bubbles go, on their own
+const bubbling = await p.evaluate(async () => {
+  const chat = window.engine.chat
+  await new Promise((r) => setTimeout(r, 2400))
+  chat.send('over my head')
+  await new Promise((r) => setTimeout(r, 60))
+  window.stepFrames(2)
+  const up = document.querySelectorAll('.kob-bubble').length
+
+  // Four more, so the oldest is pushed out: three stacked, not a column.
+  for (const word of ['one', 'two', 'three', 'four']) {
+    chat.send(word)
+    await new Promise((r) => setTimeout(r, 800))
+  }
+  window.stepFrames(2)
+  const stacked = document.querySelectorAll('.kob-bubble').length
+
+  return { up, stacked }
+})
+check('what you say goes over your head', bubbling.up > 0,
+  `${bubbling.up} bubble(s)`)
+check('and no more than three stack up at once', bubbling.stacked <= 3,
+  `${bubbling.stacked} after five messages`)
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({

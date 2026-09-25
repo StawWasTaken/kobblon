@@ -25,6 +25,7 @@ const engine = new Engine({
   canvas,
   avatarUrl: '/k6/k6.glb',
   resolveAsset: async (id) => drawn.get(id) ?? (window as unknown as { engineResolve?: string }).engineResolve ?? null,
+  chat: { name: 'Staw' },
 })
 
 Object.assign(window, {

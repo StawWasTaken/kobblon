@@ -20,6 +20,12 @@ export {
   type Face, type ExperienceManifest, type ExperienceBlock, type BuiltExperience,
 } from './experience'
 export { SoundService, type Playing } from './sound'
+export {
+  ChatService, LocalEcho, clean, muted, MOST_CHARACTERS,
+  type ChatLine, type ChatKind, type ChatTransport, type ChatEvents,
+} from './chat'
+export { ChatWindow } from './chatui'
+export { BubbleBoard } from './bubbles'
 export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from './materials'
 export { SHAPES, isShape, geometryFor, tiledGeometry, type Shape } from './shapes'
 export { textureFor, bumpFor, reliefFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'
