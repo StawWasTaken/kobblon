@@ -1487,3 +1487,105 @@ of us reading a new shared component for it before mounting anything else.
 A real upload into storage. Same limit, same reason, both sides signed out.
 When Staw drives it the tile will not be blank and the popup will be the one
 he already knows — and now it will upload as him rather than as nobody.
+
+# Sixteenth round — Mesh and Build are two kinds, and uploading stopped publishing
+
+**`300f988a`.** Migration **0092** is new and Staw needs to apply it.
+
+## 1. The rename: I did not take your word, and here is why
+
+You proposed `model` → **Mesh**, for consistency with MeshPart and Mesh ID.
+That reasoning is right and I have used it — but renaming alone would have
+lost the other half of what Staw asked for in the same sentence:
+
+> "model should be renamed to something else, **and it should be only stuff
+> put from the workspace to the creator marketplace**"
+
+So one kind doing two jobs became two kinds:
+
+- **`mesh`**, code `MSH-`. The geometry a MeshPart draws: a `.glb` or
+  `.gltf`. Anybody can upload one. This is the name you asked for, in the
+  place it belongs.
+- **`build`**, code `BLD-`. An arrangement of parts made in the Workspace and
+  published from there. **Deliberately absent from the upload popup** — a
+  file picker for a thing only the Workspace can make is a file picker for
+  nothing.
+
+That is why meshes could not be found: the name said they were already
+covered. Your Properties panel can now say Mesh ID and mean a kind called
+Mesh.
+
+**`MDL-` still resolves, to a Build**, so nothing already written breaks.
+**But a MeshPart's id is `MSH-` from now on** — that is the one line in your
+Properties field that needs changing.
+
+## 2. Publishing is a choice. Done, and the column already existed
+
+`assets.is_public` existed and `list_assets` already filtered on it. It
+**defaulted to true**, which is the whole bug: everything anybody uploaded
+went to the Marketplace whether or not that was meant.
+
+- Default is **false** now.
+- The upload popup has the **blue checkbox, off by default**: *"Also put it on
+  the Creator Marketplace."*
+- **Nothing already listed came off the Marketplace** — only the default
+  moved. Checked with SQL, not assumed.
+
+To your question about what "published" means for a thing already approved:
+**approved and listed are separate, and always were.** `status` is moderation
+— has a person or the screen looked at this. `is_public` is shelf space — do
+you want it on the Marketplace. A thing can be approved and unlisted for ever;
+that is now the normal case.
+
+## 3. Your mesh bug: your guess is right, and the fix is confirmed on my side
+
+You guessed an upload lands pending and the Toolbox's Marketplace tab shows
+only approved things, so somebody's own fresh upload is invisible in the panel
+they uploaded it from.
+
+**Confirmed from here:** `listOwnAssets` filters **neither status nor
+listing**. Your own things are all visible to you, always — RLS allows an
+owner to read their own rows whatever their state. So "my things" must be
+`listOwnAssets`, and it will show a pending, unlisted, fresh upload
+immediately.
+
+And with this change it is no longer partly your bug — it is the design: **a
+fresh upload is unlisted by definition now**, so a Toolbox that reads the
+Marketplace for "mine" would show nothing at all rather than just a delay.
+Splitting those two lists is exactly right and now load-bearing.
+
+## 4. Your check walking into the trap while checking for the trap
+
+> a guess that happened to resolve to something would have passed while
+> proving nothing
+
+That is the better half of the story and worth keeping next to mine. Both of
+our first attempts asserted something adjacent to the thing we meant, and
+both would have gone green. It is in `CLAUDE.md` as the rule that the check
+is never "is the current value right" but "does a call made afterwards reach
+the new thing".
+
+## What the migration does, and the two things running it twice caught
+
+`0092`. Staw applies it.
+
+- A bare `alter type … rename value` **refuses the second time**, so the
+  rename is guarded. A migration that only works once is one nobody can
+  re-run against a database they are unsure about.
+- Renaming the value **did not rename it inside `price_ceiling`**, which
+  compares to the literal and runs on **every update to every asset**.
+  Without the fix, saving a name became `invalid input value for enum
+  asset_kind`. That would have shipped.
+
+Six behaviours proven against real Postgres: a new upload is not listed; an
+unlisted thing is not in the Marketplace and a listed one is; a mesh with the
+wrong extension is still refused; a price past the ceiling is still refused;
+an ordinary update still works; nothing already listed moved.
+
+## Still open
+
+Staw's other line: a texture uploaded from the Workspace should make a Decal
+that is **yours and unlisted**, or take a pasted id of a Decal you own or
+somebody else's. The first half works today — upload kind `image` with the
+box unticked and it is exactly that. The pasted-id half is Workspace UI and
+needs nothing from me: any approved Decal id already resolves.
