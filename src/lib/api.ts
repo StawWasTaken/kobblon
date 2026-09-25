@@ -861,7 +861,7 @@ export async function uploadAsset(input: {
    * arrives with an empty one and the bucket refuses it. It is JSON, and
    * saying so here is the difference between an upload and a shrug.
    */
-  const contentType = input.file.type
+  const contentType = typeOf(input.file)
     || (extension === 'kbfl' ? 'application/json' : 'application/octet-stream')
 
   const uploaded = await supabase.storage
@@ -915,7 +915,7 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(path, file, { contentType: file.type, upsert: true })
+    .upload(path, file, { contentType: typeOf(file), upsert: true })
   if (error) throw new Error(error.message)
 
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
@@ -1507,7 +1507,7 @@ export async function uploadCommunityImage(userId: string, file: File, kind: 'em
   const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `${userId}/community-${kind}-${Date.now()}.${extension}`
   const { error } = await supabase.storage
-    .from('avatars').upload(path, file, { contentType: file.type, upsert: true })
+    .from('avatars').upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: true })
   if (error) throw new Error(error.message)
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
 }
@@ -1568,7 +1568,7 @@ export async function uploadStyleImage(userId: string, file: File): Promise<stri
   const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `${userId}/style-${crypto.randomUUID()}.${extension}`
   const { error } = await supabase.storage
-    .from('avatars').upload(path, file, { contentType: file.type, upsert: false })
+    .from('avatars').upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: false })
   if (error) throw new Error(error.message)
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
 }
@@ -1687,7 +1687,7 @@ export async function editFace(id: string, changes: {
     const extension = changes.file.name.split('.').pop()?.toLowerCase() ?? 'png'
     picture = `${crypto.randomUUID()}.${extension}`
     const up = await supabase.storage.from('faces')
-      .upload(picture, changes.file, { contentType: changes.file.type || 'image/png' })
+      .upload(picture, changes.file, { contentType: typeOf(changes.file, 'image/png') })
     if (up.error) throw new Error(up.error.message)
   }
 
@@ -1733,7 +1733,7 @@ export async function publishFace(input: {
   const extension = input.file.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `${crypto.randomUUID()}.${extension}`
   const up = await supabase.storage.from('faces')
-    .upload(path, input.file, { contentType: input.file.type || 'image/png' })
+    .upload(path, input.file, { contentType: typeOf(input.file, 'image/png') })
   if (up.error) throw new Error(up.error.message)
 
   const { error } = await supabase.from('faces').insert({
@@ -2462,6 +2462,35 @@ export async function favouriteWorld(worldId: string, userId: string, on: boolea
 }
 
 /** Where a World's own files answer from. Public: they are what it shows. */
+/**
+ * What a file actually is, when the browser will not say.
+ *
+ * A `File` carries the type the operating system gave it, and sometimes that
+ * is an empty string: a file dragged from an archive, one whose extension the
+ * machine does not recognise, a few older Windows setups. Supabase then sends
+ * `application/octet-stream`, which no bucket of ours allows, and the error
+ * that comes back names the type the bucket refused — so somebody uploading a
+ * perfectly ordinary PNG is told that PNG is not supported.
+ *
+ * That message cost a round of confusion already. The extension is a worse
+ * source of truth than the file's own bytes, but it is a far better one than
+ * a blank, and the bucket still refuses anything it does not allow.
+ */
+const TYPES: Record<string, string> = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp',
+  gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml',
+  mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+  mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav', m4a: 'audio/mp4',
+  json: 'application/json', kbfl: 'application/json', glb: 'model/gltf-binary',
+  txt: 'text/plain',
+}
+
+export function typeOf(file: File, fallback = 'application/octet-stream') {
+  if (file.type) return file.type
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return TYPES[extension] ?? fallback
+}
+
 export function worldFileUrl(path: string) {
   const base = import.meta.env.VITE_SUPABASE_URL ?? ''
   return `${base}/storage/v1/object/public/worlds/${path}`
@@ -2479,7 +2508,7 @@ export async function uploadWorldFile(worldId: string, file: File, as: string) {
   const path = `${worldId}/${as}-${crypto.randomUUID()}.${extension}`
   const { error } = await supabase.storage
     .from('worlds')
-    .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+    .upload(path, file, { contentType: typeOf(file), upsert: false })
   if (error) throw new Error(error.message)
   return path
 }
