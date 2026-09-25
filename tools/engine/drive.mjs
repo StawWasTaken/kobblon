@@ -388,6 +388,173 @@ check('a decal is stretched by the part it is on, not held at its own shape',
   stretched && Math.abs(stretched.wide - 30) < 0.01 && Math.abs(stretched.tall - 6) < 0.01,
   `a tall picture on a 30x6 wall covers ${stretched?.wide}x${stretched?.tall}`)
 
+// -- 13d. the wedge is a solid, not an open box
+const solidWedge = await p.evaluate(() => {
+  const geometry = window.geometryFor('wedge')
+  const position = geometry.getAttribute('position')
+
+  // The centre of mass of the prism: the average of its six corners.
+  const corners = [
+    [-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, 0.5],
+    [0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5],
+  ]
+  const centre = [0, 1, 2].map((k) => corners.reduce((sum, one) => sum + one[k], 0) / 6)
+
+  let inward = 0
+  let triangles = 0
+  for (let i = 0; i < position.count; i += 3) {
+    const at = (n) => [position.getX(n), position.getY(n), position.getZ(n)]
+    const [a, b, c] = [at(i), at(i + 1), at(i + 2)]
+    const ab = b.map((v, k) => v - a[k])
+    const ac = c.map((v, k) => v - a[k])
+    // The triangle's own normal, from the order its corners are written in.
+    const n = [
+      ab[1] * ac[2] - ab[2] * ac[1],
+      ab[2] * ac[0] - ab[0] * ac[2],
+      ab[0] * ac[1] - ab[1] * ac[0],
+    ]
+    const mid = a.map((v, k) => (v + b[k] + c[k]) / 3)
+    const out = mid.map((v, k) => v - centre[k])
+    if (n.reduce((sum, v, k) => sum + v * out[k], 0) <= 0) inward += 1
+    triangles += 1
+  }
+
+  // And that it actually fills the box it is given.
+  geometry.computeBoundingBox()
+  const box = geometry.boundingBox
+  const fills = [box.min.x, box.min.y, box.min.z].every((v) => Math.abs(v + 0.5) < 1e-6)
+    && [box.max.x, box.max.y, box.max.z].every((v) => Math.abs(v - 0.5) < 1e-6)
+
+  return { inward, triangles, fills }
+})
+check('every face of the wedge faces outwards',
+  solidWedge.inward === 0 && solidWedge.triangles === 8,
+  `${solidWedge.triangles} triangles, ${solidWedge.inward} facing inward`)
+check('and the wedge fills its box', solidWedge.fills, 'corner to corner')
+
+// -- 13e. a Texture is a decal that repeats
+const tiled = await p.evaluate(async () => {
+  const id = window.fakePicture('decal-repeat', 64, 64)
+  const once = window.fakePicture('decal-once', 64, 64)
+  await window.engine.open({
+    format: 1, id: 'tx', name: 'Tiled', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'wall', kind: 'box', at: [0, 5, 0], size: [20, 6, 1], children: [
+        { id: 'tex', kind: 'decal', picture: id, face: 'front', repeat: [8, 3] },
+        { id: 'plain', kind: 'decal', picture: once, face: 'back' },
+      ] },
+    ],
+  })
+  await window.applyDecals(window.built(), window.resolveFake)
+
+  const found = {}
+  for (const [object, part] of window.built().partOf) {
+    if (part.kind !== 'decal') continue
+    const map = object.material.map
+    found[part.id] = map && {
+      repeat: [map.repeat.x, map.repeat.y],
+      wraps: map.wrapS === 1000 && map.wrapT === 1000, // RepeatWrapping
+    }
+  }
+  return found
+})
+check('a decal with a repeat tiles its picture',
+  tiled.tex && tiled.tex.repeat[0] === 8 && tiled.tex.repeat[1] === 3 && tiled.tex.wraps,
+  `8 by 3 across the face, and set to repeat rather than clamp`)
+check('and a decal without one is unchanged',
+  tiled.plain && tiled.plain.repeat[0] === 1 && tiled.plain.repeat[1] === 1 && !tiled.plain.wraps,
+  'once, clamped, exactly as before')
+
+// -- 13f. lights
+const lights = await p.evaluate(async () => {
+  const many = []
+  for (let i = 0; i < 40; i += 1) {
+    many.push({ id: `spare-${i}`, kind: 'light', light: 'point', brightness: 1 })
+  }
+  await window.engine.open({
+    format: 1, id: 'li', name: 'Lit', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'lamp', kind: 'box', at: [0, 5, 0], size: [2, 2, 2], children: [
+        { id: 'bulb', kind: 'light', light: 'point', colour: '#ff0000', brightness: 3, range: 25 },
+        { id: 'beam', kind: 'light', light: 'spot', angle: 30 },
+        { id: 'panel', kind: 'light', light: 'surface', brightness: 2 },
+        { id: 'dark', kind: 'light', light: 'point', on: false },
+      ] },
+      ...many,
+    ],
+  })
+
+  const kinds = {}
+  let burning = 0
+  for (const [object, part] of window.built().partOf) {
+    if (part.kind !== 'light') continue
+    if (part.id && !part.id.startsWith('spare-')) kinds[part.id] = object.type
+    if (object.isLight) burning += 1
+  }
+  const bulb = window.built().named.get('bulb')
+  return {
+    kinds,
+    burning,
+    most: window.MOST_LIGHTS,
+    colour: bulb?.color?.getHexString?.() ?? null,
+    range: bulb?.distance ?? null,
+    // A light rides the part it belongs to.
+    parented: window.built().named.get('beam')?.parent === window.built().named.get('lamp'),
+  }
+})
+check('one light node, three sorts of light',
+  lights.kinds.bulb === 'PointLight'
+  && lights.kinds.beam === 'SpotLight'
+  && lights.kinds.panel === 'RectAreaLight',
+  JSON.stringify(lights.kinds))
+check('a light that is off is still in the tree, and is not burning',
+  lights.kinds.dark === 'Object3D', 'an empty in the same place')
+check('a light belongs to the part it is on', lights.parented, 'it moves when the part moves')
+check('its colour and range are its own',
+  lights.colour === 'ff0000' && lights.range === 25, `#${lights.colour}, ${lights.range} stons`)
+check('and a World cannot light more than the runtime allows',
+  lights.burning === lights.most, `${lights.burning} burning, the cap is ${lights.most}`)
+
+// -- 13g. a part can be a model from the Catalog
+const modelled = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 'md', name: 'Modelled', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'statue', kind: 'box', mesh: 'MDL-1042', at: [0, 5, 0], size: [4, 10, 4],
+        colour: '#25D68C', material: 'marble' },
+      { id: 'missing', kind: 'box', mesh: 'MDL-nope', at: [8, 5, 0], size: [4, 4, 4] },
+    ],
+  })
+  const before = window.built().named.get('statue').geometry.type
+
+  // K6 stands in for a Catalog model: a real glTF, fetched by content id.
+  await window.applyMeshes(window.built(), async (id) => (id === 'MDL-1042' ? '/k6/k6.glb' : null))
+
+  const statue = window.built().named.get('statue')
+  statue.geometry.computeBoundingBox()
+  const span = statue.geometry.boundingBox.max.clone().sub(statue.geometry.boundingBox.min)
+
+  return {
+    before,
+    after: statue.geometry.type,
+    // Scaled into the unit box, which the part's own size then expands.
+    unit: Math.abs(span.x - 1) < 0.01 && Math.abs(span.y - 1) < 0.01,
+    material: statue.material.color.getHexString(),
+    // A part whose model cannot be fetched keeps its shape.
+    fallback: window.built().named.get('missing').geometry.type,
+  }
+})
+check('a part can be a model from the Catalog',
+  modelled.after === 'BufferGeometry' && modelled.unit,
+  `a box became a model, fitted to the part box`)
+check('and the part keeps its own colour, so one model is any colour',
+  modelled.material === '25d68c', `#${modelled.material}`)
+check('a model that cannot be fetched leaves the part as it was',
+  modelled.fallback === 'BoxGeometry', 'still a box, not a hole in the World')
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({

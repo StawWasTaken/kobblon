@@ -3,7 +3,7 @@ import { Controller } from './controller'
 import { Keyboard, stillIntent, type Intent } from './input'
 import { K6, loadK6Source, type K6Look } from './k6'
 import {
-  applyDecals, buildWorld, readManifest, ZOOM_FAR, ZOOM_NEAR,
+  applyDecals, applyMeshes, buildWorld, readManifest, ZOOM_FAR, ZOOM_NEAR,
   type BuiltWorld, type WorldManifest,
 } from './experience'
 import { buildSky, type ResolveAsset, type Skybox } from './sky'
@@ -200,6 +200,8 @@ export class Engine {
     void this.sound.load(built, this.camera, this.options.resolveAsset)
     // The World is standing before its pictures arrive, rather than after.
     void applyDecals(built, this.options.resolveAsset)
+    // Models arrive the same way pictures do: the World is open first.
+    void applyMeshes(built, this.options.resolveAsset)
 
     if (!this.avatar) {
       const source = await loadK6Source(this.options.avatarUrl ?? '/k6/k6.glb')

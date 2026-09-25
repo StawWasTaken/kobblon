@@ -1,4 +1,7 @@
 import * as THREE from 'three'
+import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { Solid } from './controller'
 import { isShape, tiledGeometry, type Shape } from './shapes'
 import { isMaterial, materialFor, type Material } from './materials'
@@ -44,6 +47,21 @@ export type WorldBlock = {
   /** False for decoration you can walk through. */
   solid?: boolean
   /**
+   * A model from the Catalog, by content id, such as `MDL-1042`.
+   *
+   * A field rather than a kind of its own, so that everything already
+   * written keeps working on it with no special case: it is placed, sized,
+   * turned, coloured, made solid and carries decals exactly like any other
+   * part, and `size` scales the loaded geometry to fill that box. A part
+   * that names a model nobody can fetch is still a part — it is drawn as
+   * its shape, which is the honest answer and not an empty space where
+   * somebody's building used to be.
+   *
+   * Resolved through `resolveAsset` like every other piece of content. A
+   * World never names an address.
+   */
+  mesh?: string
+  /**
    * What is on this part. Decals, today.
    *
    * A picture is a thing in its own right rather than a field, because that
@@ -52,7 +70,7 @@ export type WorldBlock = {
    * it, and delete it without deleting the wall. A field can hold one
    * picture and cannot be selected.
    */
-  children?: (WorldDecal | WorldSound)[]
+  children?: (WorldDecal | WorldSound | WorldLight)[]
 }
 
 /**
@@ -73,17 +91,32 @@ export type WorldDecal = {
   /** Tints the picture. White leaves it alone. */
   colour?: string
   /**
-   * How big the picture is on the face, as a multiple of its fitted size.
+   * How big the picture is on the face, as a multiple of the face itself.
    *
-   * A picture keeps its own proportions by default: a square picture on a
-   * wall forty stons by eight is a square picture, not a smear forty stons
-   * wide. One fills the face in its longest direction; two is twice that and
-   * hangs over the edges; `[2, 1]` is deliberately stretched, which is a
-   * thing somebody sometimes wants.
+   * A decal covers the face it is on, whatever shape either of them is: a
+   * picture on a wall forty stons by eight is forty stons by eight. One is
+   * the whole face, two is twice that and hangs over the edges, `[2, 1]` is
+   * wider than the wall and the right height.
    */
   scale?: [number, number]
   /** Where it sits on the face, in face widths. 0 is the middle. */
   offset?: [number, number]
+  /**
+   * How many times the picture repeats across the face, and up it.
+   *
+   * This is the whole of the difference between a Decal and a Texture:
+   * absent means once, which is a decal, and present means the picture
+   * tiles. A Texture is a decal that repeats — one node, one field, rather
+   * than a second kind that would have to learn everything a decal already
+   * knows about faces, offsets, tints and transparency.
+   *
+   * It is a count rather than a size on purpose: `[4, 2]` is four across
+   * and two up whatever the part is scaled to, so a wall that is stretched
+   * gets bigger bricks rather than more of them. A World that wants the
+   * other behaviour multiplies by the part's size itself, where it knows
+   * what it meant.
+   */
+  repeat?: [number, number]
 }
 
 /**
@@ -114,6 +147,45 @@ export type WorldSound = {
 }
 
 /**
+ * A light.
+ *
+ * One kind with a `light` on it rather than three kinds, because a person
+ * setting one up is changing what a light *is*, not deleting one thing and
+ * inserting another. Properties shows the fields the chosen sort uses and
+ * leaves the rest alone.
+ *
+ * A light belongs to a part the way a sound does: it sits where the part is,
+ * turns when the part turns, and goes when the part goes. In a World's own
+ * list it is the World's light rather than anybody's.
+ */
+export type WorldLight = {
+  id?: string
+  kind: 'light'
+  /**
+   * `point` throws light in every direction. `spot` throws a cone the way
+   * `turn` is pointing. `surface` is the face of the part it is on, glowing
+   * — a panel or a strip rather than a bulb.
+   */
+  light: 'point' | 'spot' | 'surface'
+  colour?: string
+  /** How hard it burns. 1 is a lamp; 0 is off without being off. */
+  brightness?: number
+  /** How far it carries, in stons. */
+  range?: number
+  /** The width of a spot's cone, in degrees. Ignored by the others. */
+  angle?: number
+  /** Which way a spot or a surface faces. */
+  turn?: Vec3
+  /** Which face a surface sits on. */
+  face?: Face
+  /**
+   * Off is off. A light that is off still exists, still has its colour and
+   * its place, and costs nothing until a script turns it on.
+   */
+  on?: boolean
+}
+
+/**
  * A thing made of things.
  *
  * A group has its own place and turn, and everything inside it is placed
@@ -132,7 +204,7 @@ export type WorldGroup = {
   parts: WorldPart[]
 }
 
-export type WorldPart = WorldBlock | WorldGroup | WorldDecal | WorldSound
+export type WorldPart = WorldBlock | WorldGroup | WorldDecal | WorldSound | WorldLight
 
 /** The old name, while anything still says it. */
 export type ExperienceBlock = WorldBlock
@@ -195,6 +267,44 @@ function readSound(raw: any): WorldSound | null {
   }
 }
 
+/**
+ * How many real lights a World may have burning at once.
+ *
+ * Every one of them costs every material that might be lit by it, so this
+ * is not a taste limit, it is the difference between a World that runs and
+ * one that does not. Said out loud here so the Workspace can show it and
+ * refuse the two hundred and first rather than shipping a World that
+ * crawls on somebody else's machine.
+ */
+export const MOST_LIGHTS = 32
+
+/** A light out of a file, believing none of it. */
+function readLight(raw: any): WorldLight | null {
+  if (!raw || typeof raw !== 'object') return null
+  const sorts = ['point', 'spot', 'surface']
+  const light = sorts.includes(raw.light) ? raw.light as WorldLight['light'] : 'point'
+  const number = (value: unknown, fallback: number) =>
+    (Number.isFinite(value) ? Number(value) : fallback)
+  const turn = Array.isArray(raw.turn) && raw.turn.length === 3
+    && raw.turn.every((one: unknown) => Number.isFinite(one))
+    ? [raw.turn[0], raw.turn[1], raw.turn[2]] as Vec3
+    : undefined
+  return {
+    id: raw.id ? String(raw.id) : undefined,
+    kind: 'light',
+    light,
+    colour: typeof raw.colour === 'string' ? raw.colour : '#ffffff',
+    brightness: THREE.MathUtils.clamp(number(raw.brightness, 1), 0, 20),
+    range: THREE.MathUtils.clamp(number(raw.range, 40), 0.1, 2000),
+    angle: THREE.MathUtils.clamp(number(raw.angle, 45), 1, 89),
+    turn,
+    face: FACES.includes(raw.face) ? raw.face as Face : 'front',
+    // On unless the file says otherwise: somebody who adds a light wants a
+    // light.
+    on: raw.on !== false,
+  }
+}
+
 /** Nothing here trusts the file: a manifest is user content like any other. */
 export function readManifest(raw: unknown): WorldManifest {
   const data = raw as Partial<WorldManifest>
@@ -222,6 +332,7 @@ export function readManifest(raw: unknown): WorldManifest {
     if (counted > MOST) throw new Error('That World is too big to open.')
 
     if (part.kind === 'sound') return readSound(part)
+    if (part.kind === 'light') return readLight(part)
 
     if (part.kind === 'group') {
       if (depth >= DEEP) return null
@@ -253,9 +364,10 @@ export function readManifest(raw: unknown): WorldManifest {
      * A decal used to be a field on the part. Files written that way still
      * open: it is read as the one child it always meant.
      */
-    const asChild = (raw: any): WorldDecal | WorldSound | null => {
+    const asChild = (raw: any): WorldDecal | WorldSound | WorldLight | null => {
       if (!raw || typeof raw !== 'object') return null
       if (raw.kind === 'sound') return readSound(raw)
+      if (raw.kind === 'light') return readLight(raw)
 
       const picture = typeof raw.picture === 'string' ? raw.picture
         : typeof raw.id === 'string' ? raw.id
@@ -272,6 +384,12 @@ export function readManifest(raw: unknown): WorldManifest {
         colour: typeof raw.colour === 'string' ? raw.colour : '#ffffff',
         scale: pair(raw.scale, 0.01, 20),
         offset: pair(raw.offset, -10, 10),
+        /*
+         * Capped at 512 across and up. A tile count is a number a person
+         * types, and a thousand of them across a wall is a moire pattern
+         * and a graphics card doing nothing useful.
+         */
+        repeat: pair(raw.repeat, 0.01, 512),
       }
     }
 
@@ -281,7 +399,7 @@ export function readManifest(raw: unknown): WorldManifest {
     ]
       .map(asChild)
       .filter(Boolean)
-      .slice(0, 12) as (WorldDecal | WorldSound)[]
+      .slice(0, 12) as (WorldDecal | WorldSound | WorldLight)[]
 
     return {
       id: part.id ? String(part.id) : undefined,
@@ -295,6 +413,9 @@ export function readManifest(raw: unknown): WorldManifest {
       transparency: held(part.transparency),
       reflectance: held(part.reflectance),
       solid: part.solid !== false,
+      // A Catalog id, never an address. Same rule as a decal, a sound and
+      // the sky.
+      mesh: typeof part.mesh === 'string' && NAMED.test(part.mesh) ? part.mesh : undefined,
       children,
     }
   }
@@ -427,6 +548,64 @@ export function layDecal(picture: THREE.Mesh, decal: WorldDecal, size: Vec3) {
   if (above) picture.translateY(above)
 }
 
+/**
+ * One light, of whichever sort it says it is.
+ *
+ * `surface` has no direct equivalent in three.js's forward renderer, so it
+ * is a RectAreaLight: a lit panel rather than a bulb, which is what somebody
+ * asking for a glowing face means. It is the one sort that ignores range,
+ * because an area light falls off by its own arithmetic.
+ *
+ * A light that is off, or past the World's budget, comes back as an empty in
+ * the same place. Nothing downstream has to know which it got.
+ */
+let areaLightsReady = false
+
+function lightFor(part: WorldLight, allowed: boolean): THREE.Object3D {
+  /*
+   * An area light is the one sort three.js will not draw without being
+   * handed its lookup tables first. Done once, and only if a World asks for
+   * one, because it is a couple of hundred kilobytes of numbers nobody who
+   * has not used a surface light should pay for.
+   */
+  if (part.light === 'surface' && !areaLightsReady) {
+    RectAreaLightUniformsLib.init()
+    areaLightsReady = true
+  }
+
+  const colour = new THREE.Color(part.colour ?? '#ffffff')
+  const brightness = part.brightness ?? 1
+  const range = part.range ?? 40
+  const off = part.on === false || !allowed || brightness <= 0
+
+  const here: THREE.Object3D = off ? new THREE.Object3D()
+    : part.light === 'spot' ? new THREE.SpotLight(
+      colour, brightness, range, ((part.angle ?? 45) * Math.PI) / 180, 0.4, 1.4)
+    : part.light === 'surface' ? new THREE.RectAreaLight(colour, brightness, 4, 4)
+    : new THREE.PointLight(colour, brightness, range, 1.4)
+
+  here.name = part.id ?? 'Light'
+
+  /*
+   * A spot and a panel both point somewhere. three.js aims a spot at a
+   * target object rather than by rotation, so it gets one, parented to
+   * itself so it travels with the part.
+   */
+  if (part.turn) {
+    here.rotation.set(
+      (part.turn[0] * Math.PI) / 180,
+      (part.turn[1] * Math.PI) / 180,
+      (part.turn[2] * Math.PI) / 180,
+    )
+  }
+  if (here instanceof THREE.SpotLight) {
+    here.target.position.set(0, 0, -1)
+    here.add(here.target)
+  }
+
+  return here
+}
+
 /** Turns a manifest into something in a scene. */
 export function buildWorld(manifest: WorldManifest): BuiltWorld {
   const root = new THREE.Group()
@@ -440,6 +619,9 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
    * part that wants them. A World of ten thousand bricks holds one brick.
    */
   const materials = new Map<string, THREE.Material>()
+
+  /** How many are actually burning, against MOST_LIGHTS. */
+  let lit = 0
 
   const place = (part: WorldPart, into: THREE.Object3D) => {
     if (part.kind === 'group') {
@@ -464,6 +646,20 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
     if (part.kind === 'sound') {
       const here = new THREE.Object3D()
       here.name = part.id ?? 'Sound'
+      into.add(here)
+      partOf.set(here, part)
+      if (part.id) named.set(part.id, here)
+      return
+    }
+
+    if (part.kind === 'light') {
+      /*
+       * Past the budget a light is still in the tree, still selectable,
+       * still saved — it simply is not burning. Dropping it would lose
+       * somebody's work; drawing it would lose everybody's frame rate.
+       */
+      const here = lightFor(part, lit < MOST_LIGHTS)
+      if (part.on !== false && lit < MOST_LIGHTS) lit += 1
       into.add(here)
       partOf.set(here, part)
       if (part.id) named.set(part.id, here)
@@ -501,7 +697,7 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
      * material cannot be selected, renamed or deleted in an Explorer.
      */
     for (const child of part.children ?? []) {
-      if (child.kind === 'sound') {
+      if (child.kind === 'sound' || child.kind === 'light') {
         place(child, mesh)
         continue
       }
@@ -545,6 +741,81 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
 }
 
 /**
+ * Puts the models on.
+ *
+ * A separate pass for the same reason the pictures are: a World appears and
+ * then its models arrive, rather than a blank screen while a megabyte of
+ * geometry is fetched. A part that names a model keeps its shape until the
+ * model is there, and keeps it for ever if the model never comes.
+ *
+ * The loaded geometry is scaled into the part's box, so a model resizes with
+ * the same gizmo as everything else and a decal on it still lands on the
+ * face it was put on. The part keeps its own material: a Kobblon part is
+ * coloured by its part, which is what makes a hundred of the same model in a
+ * hundred colours one download.
+ */
+export async function applyMeshes(
+  built: BuiltWorld,
+  resolveAsset?: (id: string) => Promise<string | null>,
+) {
+  if (!resolveAsset) return
+
+  const loader = new GLTFLoader()
+  const jobs: Promise<void>[] = []
+
+  for (const [object, part] of built.partOf) {
+    if (part.kind !== 'box' || !part.mesh) continue
+    const mesh = object as THREE.Mesh
+
+    jobs.push((async () => {
+      const url = await resolveAsset(part.mesh!).catch(() => null)
+      if (!url) return
+
+      const model = await loader.loadAsync(url).catch(() => null)
+      if (!model) return
+
+      /*
+       * Everything in the file as one geometry, in the file's own space,
+       * and then squeezed into the unit box the part's scale expands. A
+       * model that came out of Blender at two hundred units tall and one
+       * that came out at 0.4 both end up the size of the part, which is the
+       * only behaviour a person placing one expects.
+       */
+      const pieces: THREE.BufferGeometry[] = []
+      model.scene.updateMatrixWorld(true)
+      model.scene.traverse((one) => {
+        if (!(one instanceof THREE.Mesh)) return
+        const piece = one.geometry.clone()
+        piece.applyMatrix4(one.matrixWorld)
+        pieces.push(piece)
+      })
+      if (!pieces.length) return
+
+      const whole = mergeGeometries(pieces)
+      if (!whole) return
+      whole.computeBoundingBox()
+      const box = whole.boundingBox!
+      const span = new THREE.Vector3()
+      box.getSize(span)
+      const middle = new THREE.Vector3()
+      box.getCenter(middle)
+
+      whole.translate(-middle.x, -middle.y, -middle.z)
+      whole.scale(
+        1 / Math.max(span.x, 1e-6),
+        1 / Math.max(span.y, 1e-6),
+        1 / Math.max(span.z, 1e-6),
+      )
+      if (!whole.attributes.normal) whole.computeVertexNormals()
+
+      mesh.geometry = whole
+    })())
+  }
+
+  await Promise.all(jobs)
+}
+
+/**
  * Puts the pictures on.
  *
  * A separate pass because a decal has to be fetched and building a World does
@@ -581,6 +852,20 @@ export async function applyDecals(
       if (!image) return
 
       image.colorSpace = THREE.SRGBColorSpace
+
+      /*
+       * A Texture is a decal that repeats. Without a count the picture is
+       * laid once and clamped, which is a decal; with one it tiles, and
+       * clamping has to be turned off or the edge pixel smears instead of
+       * the picture starting again.
+       */
+      const [across, up] = part.repeat ?? [1, 1]
+      if (across !== 1 || up !== 1) {
+        image.wrapS = THREE.RepeatWrapping
+        image.wrapT = THREE.RepeatWrapping
+        image.repeat.set(Math.max(across, 0.001), Math.max(up, 0.001))
+      }
+
       const material = picture.material as THREE.MeshStandardMaterial
       material.map = image
       material.needsUpdate = true

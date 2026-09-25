@@ -10,10 +10,11 @@ export { Controller, type Solid, type ControllerState } from './controller'
 export { Keyboard, stillIntent, type Intent } from './input'
 export { K6, K6_PARTS, loadK6Source, forgetK6Source, type K6Part, type K6Look, type K6Motion } from './k6'
 export {
-  buildWorld, buildExperience, readManifest, applyDecals, layDecal, FACES,
+  buildWorld, buildExperience, readManifest, applyDecals, applyMeshes, layDecal, FACES,
   ZOOM_NEAR, ZOOM_FAR,
   type WorldManifest, type WorldBlock, type WorldGroup, type WorldPart, type BuiltWorld,
-  type WorldDecal, type WorldSound, type Vec3,
+  type WorldDecal, type WorldSound, type WorldLight, type Vec3,
+  MOST_LIGHTS,
   type Face, type ExperienceManifest, type ExperienceBlock, type BuiltExperience,
 } from './experience'
 export { SoundService, type Playing } from './sound'

@@ -16,27 +16,39 @@ export const isShape = (value: unknown): value is Shape =>
 
 /**
  * A wedge: a box with its top edge pulled to one side, so it is a ramp
- * rising towards +Z. Written by hand because three.js has no wedge, and as
- * six faces with hard normals so it reads as built rather than as moulded.
+ * rising towards +Z. Written by hand because three.js has no wedge.
+ *
+ * A triangular prism: the cross section is the triangle low at -Z, high at
+ * +Z, and it is closed by a sloped face, a tall back, a bottom and two side
+ * triangles. Eight triangles, five faces, filling its box exactly.
+ *
+ * Every one of those eight used to be wound the wrong way round. A triangle
+ * wound backwards is culled from outside and drawn from inside, so the wedge
+ * read as an open box: you saw through the slope to the inside of the far
+ * face. `computeVertexNormals` works off the winding too, so the normals
+ * were inward as well and the lighting was wrong on top of it. This is the
+ * whole of that bug — the shape was never the wrong size, it was inside out.
+ *
+ * Counter-clockwise seen from outside, which is what three.js calls front.
  */
 function wedge() {
   const geometry = new THREE.BufferGeometry()
 
   // Low edge at -Z, high edge at +Z, both at the part's full width.
   const positions = new Float32Array([
-    // sloped face
-    -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5,
-    -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
-    // back, the tall end
-    -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
-    -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5,
-    // bottom
-    -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5,
-    -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5,
-    // right triangle
-    0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5,
-    // left triangle
-    -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5,
+    // sloped face, facing up and towards -Z
+    -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5,
+    -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+    // back, the tall end, facing +Z
+    -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
+    -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5,
+    // bottom, facing down
+    -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5,
+    -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5,
+    // right triangle, facing +X
+    0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5,
+    // left triangle, facing -X
+    -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,
   ])
 
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))

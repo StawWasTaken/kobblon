@@ -5,7 +5,10 @@
  * do not run on the web. It exists so the runtime can be driven and looked at
  * while it is being built, and so a test can step it frame by frame.
  */
-import { Engine, applyDecals, buildSky, stillIntent, type Intent } from '@/engine'
+import {
+  Engine, applyDecals, applyMeshes, buildSky, geometryFor, stillIntent,
+  MOST_LIGHTS, type Intent,
+} from '@/engine'
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement
 const hud = document.getElementById('hud') as HTMLElement
@@ -26,6 +29,9 @@ const engine = new Engine({
 Object.assign(window, {
   buildSky,
   applyDecals,
+  applyMeshes,
+  geometryFor,
+  MOST_LIGHTS,
   resolveFake: async (id: string) => drawn.get(id) ?? null,
   /** A plain picture of a given shape, for checking how a decal is fitted. */
   fakePicture(id: string, width: number, height: number) {
