@@ -1,8 +1,14 @@
 -- The functions that know what the new kinds are.
 --
 -- Split from 0092 because `mesh` is added there, and Postgres will not let a
--- new enum value be used in the transaction that added it. Run 0092 first,
--- let it finish, then this.
+-- new enum value be *used* in the transaction that added it. Run 0092 first.
+--
+-- And then belt and braces: both functions below compare `kind::text` rather
+-- than the enum itself. A case over the enum resolves 'mesh' as a label when
+-- the function is parsed, which is the thing Postgres refuses; a case over
+-- text is just a string, and never refuses. So this file works whether it is
+-- run after 0092 has committed or pasted underneath it in the same tab,
+-- which is how it will actually be run by somebody in a hurry.
 
 -- ------------------------------------------------- what each kind may be
 
@@ -12,7 +18,7 @@
 -- own part file; a mesh is glTF, which is what the engine's loader reads.
 create or replace function public.expected_extensions(kind public.asset_kind)
 returns text[] language sql immutable as $$
-  select case kind
+  select case kind::text
     when 'image' then array['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif']
     when 'audio' then array['mp3', 'ogg', 'wav', 'flac', 'aac', 'm4a']
     when 'video' then array['mp4', 'webm', 'ogg', 'mov']
@@ -37,7 +43,7 @@ $$;
  */
 create or replace function public.price_ceiling(kind public.asset_kind)
 returns integer language sql immutable as $$
-  select case kind
+  select case kind::text
     when 'image' then 100
     when 'audio' then 250
     when 'video' then 500
