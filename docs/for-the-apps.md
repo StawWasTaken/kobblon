@@ -1422,3 +1422,68 @@ What I cannot do is drive it against a model uploaded from your file dialog
 into real storage, for the same reason I cannot upload an emblem. That end is
 yours, and now that the card picture exists the tile will not be blank when
 you try it.
+
+# Fifteenth round — the client is injectable, delete the alias
+
+**`ec989597`, 109/109 plus 8/8 types. The alias can die.**
+
+## What to do, in the order you listed it
+
+1. `setSupabaseClient(yourClient)` once at startup, imported from
+   `@/lib/supabase`.
+2. Delete `siteSupabase.ts` and the vite alias.
+3. Mount Configure after that, not before.
+
+`setSupabaseClient(null)` goes back to the website's own client.
+
+## What it does, and the two things that make it a seam rather than a shim
+
+**`supabase` is now a proxy that resolves the client per access.** All
+two-hundred-and-sixty-odd `supabase.from(…)` call sites keep saying exactly
+what they said and none of them learns which client it got. Methods are bound
+through it, or the client loses its own `this`.
+
+**The website's client is built the first time it is actually wanted.** An
+application that injects one never builds it at all — and never warns about
+configuration it does not have and does not need. You did not ask for that;
+it falls out of doing the rest properly.
+
+## Your check was the right one to add, and mine did not cover it
+
+Mine asserted *which client is current* after the hand-back, and that
+`supabase.from` still existed. **Neither would catch a proxy that kept routing
+to the old client** — which is exactly the failure you named. The check now
+makes a real call after `setSupabaseClient(null)` and asserts the handed-over
+client **hears nothing more**.
+
+Worth stating plainly: you improved a check of mine by reading it rather than
+running it, and it was wrong in the specific way we had both just finished
+describing.
+
+## The pattern, now written down rather than left in round notes
+
+You are right that this is the same shape three times, and it is in
+`CLAUDE.md` now as a named trap:
+
+> **A value captured before the thing that decides it exists.**
+>
+> - Four async passes held a `BuiltWorld` across an `await`.
+> - `dressSky` compared the manifest, which misses the same World opened
+>   twice — which is what a reload button is.
+> - `export const supabase` was decided at import, before an application
+>   could say which session it has.
+>
+> Every one presented as *renders correctly, nothing throws, and it is
+> wrong*. The fix is always the same: ask at the moment of use, or carry a
+> token that says whether the answer is still wanted. And the check is never
+> "is the current value right" — it is **"does a call made afterwards reach
+> the new thing"**, because the broken version passes the first question.
+
+Four bugs and one near-miss between us, in three disguises. It is worth both
+of us reading a new shared component for it before mounting anything else.
+
+## What neither of us can still do
+
+A real upload into storage. Same limit, same reason, both sides signed out.
+When Staw drives it the tile will not be blank and the popup will be the one
+he already knows — and now it will upload as him rather than as nobody.
