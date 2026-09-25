@@ -50,6 +50,19 @@ export type EngineEvents = {
   opened: { world: WorldManifest }
 }
 
+/*
+ * How quickly the camera catches up with where it has been asked to be, and
+ * how quickly it comes back out from behind something that was in the way.
+ *
+ * Both are the exponent of a decay, so they are "per second" rather than
+ * "per frame": at 14, a zoom is three quarters done in a fifth of a second
+ * and over before anybody would call it slow. Coming back out from a wall
+ * is deliberately half that, because the camera that pops back the instant
+ * a corner clears is worse than the one that takes a moment.
+ */
+const ZOOM_EASE = 14
+const WALL_EASE = 7
+
 export class Engine {
   readonly scene = new THREE.Scene()
   readonly camera: THREE.PerspectiveCamera
@@ -68,8 +81,18 @@ export class Engine {
   readonly sound = new SoundService()
   private listeners = new Map<keyof EngineEvents, Set<(data: never) => void>>()
 
-  /** Where the camera sits behind the avatar, dragged by the player. */
+  /**
+   * Where the camera sits behind the avatar, dragged by the player.
+   *
+   * `distance` is where it has been asked to be. The camera does not go
+   * there at once: `shown` chases it, and `held` is where it actually ends
+   * up once whatever is in the way has had its say. Three numbers rather
+   * than one is the whole of the smoothing, and it is why a wheel notch
+   * reads as the camera moving rather than as the World jumping.
+   */
   private orbit = { yaw: 0, pitch: 0.22, distance: ZOOM_FAR }
+  private shown = ZOOM_FAR
+  private held = ZOOM_FAR
   /** How far back this World lets the camera go. */
   private zoomMost = ZOOM_FAR
   private onWheel: ((event: WheelEvent) => void) | null = null
@@ -170,6 +193,10 @@ export class Engine {
     // a hillside. Pulling back further than it allows is not offered.
     this.zoomMost = manifest.camera?.zoom?.most ?? ZOOM_FAR
     this.orbit.distance = Math.min(this.orbit.distance, this.zoomMost)
+    // A new World starts with the camera where it belongs rather than
+    // gliding in from wherever the last one left it.
+    this.shown = this.orbit.distance
+    this.held = this.orbit.distance
     void this.sound.load(built, this.camera, this.options.resolveAsset)
     // The World is standing before its pictures arrive, rather than after.
     void applyDecals(built, this.options.resolveAsset)
@@ -335,14 +362,30 @@ export class Engine {
       this.avatar.update(step)
     }
 
-    this.aimCamera(state.position)
+    this.easeCamera(step)
+    this.aimCamera(state.position, step)
     // The sky travels with whoever is looking, sitting below their eye.
     this.sky?.follow(this.camera)
     this.renderer.render(this.scene, this.camera)
     this.frame += 1
   }
 
-  private aimCamera(at: THREE.Vector3) {
+  /**
+   * How a camera moves when somebody has asked it to be somewhere else.
+   *
+   * Exponential rather than linear: it leaves quickly and arrives softly,
+   * which is what every camera anybody has ever liked does, and it does not
+   * care about the frame rate the way a fixed step per frame would. The
+   * snap at the end is so that "all the way in" is exactly all the way in
+   * rather than a thousandth of a ston short of it for ever.
+   */
+  private easeCamera(step: number) {
+    const rate = 1 - Math.exp(-ZOOM_EASE * step)
+    this.shown += (this.orbit.distance - this.shown) * rate
+    if (Math.abs(this.shown - this.orbit.distance) < 0.01) this.shown = this.orbit.distance
+  }
+
+  private aimCamera(at: THREE.Vector3, step: number) {
     /*
      * The eye, not the chest. Zooming all the way in should put somebody
      * behind their own face rather than inside their ribcage.
@@ -365,7 +408,19 @@ export class Engine {
      * it actually can. A camera that passes through a wall shows the inside
      * of the World, which is worse than being close to somebody's back.
      */
-    const wanted = this.freeDistance(head, this.orbit.distance)
+    /*
+     * In at once, out slowly. A wall arriving between somebody and their
+     * camera has to be obeyed on the frame it arrives, or the camera spends
+     * that frame inside it; a wall leaving is nothing urgent, and easing
+     * back out is the difference between a camera and a yo-yo.
+     */
+    const free = this.freeDistance(head, this.shown)
+    this.held = free < this.held
+      ? free
+      : this.held + (free - this.held) * (1 - Math.exp(-WALL_EASE * step))
+    if (Math.abs(this.held - free) < 0.01) this.held = free
+
+    const wanted = this.held
     const flat = Math.cos(pitch) * wanted
 
     this.camera.position.set(

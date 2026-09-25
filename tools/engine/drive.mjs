@@ -519,16 +519,49 @@ const zoomed = await p.evaluate(async () => {
     blocks: [{ id: 'floor', kind: 'box', at: [0, 0, 0], size: [40, 2, 40] }],
   })
   const out = window.engine.zoom(1000)
-  window.stepFrames(2)
+  // The camera eases rather than teleports now, so these wait for it to
+  // arrive instead of reading it mid flight.
+  window.stepFrames(90)
   const drawnFar = window.engine.status.drawn
   const near = window.engine.zoom(-1000)
-  window.stepFrames(2)
+  window.stepFrames(90)
   return { out, near, drawnFar, drawnNear: window.engine.status.drawn }
 })
 check('a World says how far back the camera may go', zoomed.out === 20, `${zoomed.out} stons, as the manifest asked`)
 check('and the near end is the engine’s', Math.abs(zoomed.near - 0.5) < 0.001, `${zoomed.near} stons`)
 check('at the near end K6 is not drawn at all',
   zoomed.drawnFar === true && zoomed.drawnNear === false, 'not faded, not clipped, not drawn')
+
+// -- 19b. the camera eases rather than teleporting
+const eased = await p.evaluate(async () => {
+  await window.engine.open({
+    format: 1, id: 'e', name: 'Eased', spawn: { at: [0, 6, 0] },
+    blocks: [{ id: 'floor', kind: 'box', at: [0, 0, 0], size: [80, 2, 80] }],
+  })
+  window.drive({})
+  window.engine.zoom(-1000)
+  window.stepFrames(90)
+  const near = window.engine.camera.position.z
+
+  // Asked for all the way out, then looked at almost at once.
+  window.engine.zoom(1000)
+  window.stepFrames(1)
+  const oneFrame = window.engine.camera.position.z
+  window.stepFrames(120)
+  const settled = window.engine.camera.position.z
+
+  return {
+    moved: Math.abs(oneFrame - near) > 0.01,
+    partOfTheWay: Math.abs(oneFrame - near) < Math.abs(settled - near) * 0.5,
+    arrived: Math.abs(Math.abs(settled - near) - (34 - 0.5)) < 1.5,
+  }
+})
+check('the camera is already moving on the frame after a zoom', eased.moved,
+  'it starts at once rather than waiting')
+check('but it is nowhere near there yet: the zoom is eased, not a jump',
+  eased.partOfTheWay, 'less than half way after one frame')
+check('and it arrives where it was asked to go', eased.arrived,
+  'all the way out, in its own time')
 
 // -- 20. sound: everywhere, or somewhere, and loaded is not playing
 const heard = await p.evaluate(async () => {
@@ -654,15 +687,15 @@ const looking = await p.evaluate(async () => {
   window.drive({})
   window.engine.controller.placeAt(0, 1, 6, Math.PI)
   window.engine.zoom(1000)
-  window.stepFrames(20)
+  window.stepFrames(90)
   const behindWall = window.engine.camera.position.z
 
   window.engine.controller.placeAt(0, 1, -20, Math.PI)
-  window.stepFrames(20)
+  window.stepFrames(90)
   const inTheOpen = window.engine.camera.position.z + 20
 
   window.engine.zoom(-1000)
-  window.stepFrames(10)
+  window.stepFrames(90)
   const inside = window.engine.status
 
   return {
@@ -685,7 +718,7 @@ const dragged = await p.evaluate(() => {
   window.engine.zoom(1000)
   window.engine.controller.placeAt(0, 1, 18, 0)
   window.drive({})
-  window.stepFrames(4)
+  window.stepFrames(90)
   const before = window.engine.camera.position.x
   // Positive movementX is a drag to the right.
   window.drive({ turn: 0.6 })
@@ -703,7 +736,7 @@ const tilted = await p.evaluate(() => {
   window.engine.zoom(1000)
   window.engine.controller.placeAt(0, 1, 18, 0)
   window.drive({})
-  window.stepFrames(4)
+  window.stepFrames(90)
   const before = window.engine.camera.position.y
   // Positive movementY is a drag downwards.
   window.drive({ pitch: 0.3 })
