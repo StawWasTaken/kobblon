@@ -8,35 +8,19 @@ import { Input, Textarea } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { useMaybeAuth } from '@/hooks/useAuth'
 import { useWorkingAs, WorkingAsNote } from '@/components/create/WorkingAs'
-import { uploadAsset } from '@/lib/api'
-import { kindLabels, kindIcons } from './AssetTile'
+import { uploadAsset, decalBehind } from '@/lib/api'
+import { kindLabels, kindIcons, kindAccepts, uploadableKinds } from '@/lib/kinds'
 import type { AssetKind, OwnAsset } from '@/types/db'
 
 const MAX_BYTES = 25 * 1024 * 1024
 
-const accepts: Record<AssetKind, string> = {
-  image: 'image/png,image/jpeg,image/gif,image/webp,image/avif',
-  audio: 'audio/mpeg,audio/ogg,application/ogg,audio/wav,audio/aac,audio/flac,.mp3,.ogg,.wav,.flac,.aac',
-  video: 'video/mp4,video/webm,video/ogg,.mp4,.webm',
-  font: 'font/woff2,font/woff,font/ttf,font/otf,.woff2,.woff,.ttf,.otf',
-  mesh: 'model/gltf-binary,model/gltf+json,.glb,.gltf',
-  // Kobblon's own part file is JSON with a .kbfl name, which no browser has
-  // a type for, so the extension has to be offered explicitly.
-  build: '.kbfl,application/json',
-}
-
 /*
- * A Build is made rather than uploaded.
- *
- * It is an arrangement of parts, and the thing that arranges parts is
- * Kobblon Workspace, which publishes it from there. Offering a file picker
- * for one here would be offering somebody the chance to upload a file no
- * tool on this side can make.
+ * The words, the icons, the codes and the accepted extensions all come from
+ * one module, so the Workspace and the Create pages cannot drift into
+ * calling the same thing two names or accepting two different sets of files.
  */
-const madeElsewhere: AssetKind[] = ['build']
-
-const kinds = (Object.keys(kindLabels) as AssetKind[])
-  .filter((one) => !madeElsewhere.includes(one))
+const accepts = kindAccepts
+const kinds = uploadableKinds
 
 export function UploadDialog({
   open,
@@ -81,6 +65,15 @@ export function UploadDialog({
    * moment it is easiest to mean it.
    */
   const [list, setList] = useState(false)
+  /*
+   * What a mesh arrives wearing: a picture uploaded with it, or the id of a
+   * Decal that already exists. Held apart from the mesh's own file so that
+   * switching kind does not quietly carry a texture onto an audio upload.
+   */
+  const [texture, setTexture] = useState<File | null>(null)
+  const [decalId, setDecalId] = useState('')
+  const [decal, setDecal] = useState<{ id: string; name: string } | null>(null)
+  const textureInput = useRef<HTMLInputElement>(null)
 
   const reset = () => {
     setFile(null)
@@ -88,6 +81,9 @@ export function UploadDialog({
     setDescription('')
     setError(null)
     setList(false)
+    setTexture(null)
+    setDecalId('')
+    setDecal(null)
   }
 
   const pick = (chosen: File | null) => {
@@ -99,6 +95,20 @@ export function UploadDialog({
     setError(null)
     setFile(chosen)
     if (!name) setName(chosen.name.replace(/\.[^.]+$/, '').slice(0, 60))
+  }
+
+  /*
+   * A pasted id is looked up as it is typed, so somebody sees the name of
+   * the Decal they are about to use rather than finding out after the
+   * upload. Not finding one is said quietly: the difference between "no
+   * such Decal" and "not one you may use" is whether somebody's private
+   * upload exists, and an id box is not the place to answer that.
+   */
+  const lookUp = async (tag: string) => {
+    setDecalId(tag)
+    setDecal(null)
+    if (!tag.trim()) return
+    setDecal(await decalBehind(tag).catch(() => null))
   }
 
   const submit = async () => {
@@ -118,6 +128,9 @@ export function UploadDialog({
         // Whoever was named, or whoever the site says you are working as.
         communityId: uploadAs ? uploadAs.communityId ?? null : target?.id ?? null,
         listed: list,
+        texture: kind === 'mesh'
+          ? (texture ? { file: texture } : decal ? { id: decal.id } : undefined)
+          : undefined,
       })
       toast(
         created.status === 'approved'
@@ -205,6 +218,71 @@ export function UploadDialog({
           maxLength={400}
         />
       </div>
+
+      {kind === 'mesh' && (
+        <div className="mt-4 rounded-lg border border-ink-line bg-ink-raised p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-white/50">
+            Texture <span className="normal-case tracking-normal text-white/35">optional</span>
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-white/55">
+            What the mesh wears. Upload one and it becomes a Decal of yours, or use a
+            Decal that already exists — one of yours, or anybody else&rsquo;s that is on
+            the Marketplace.
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="subtle"
+              onClick={() => textureInput.current?.click()}
+            >
+              {texture ? 'Change picture' : 'Upload a picture'}
+            </Button>
+            {texture && (
+              <span className="text-xs text-white/65">
+                {texture.name}
+                <button
+                  type="button"
+                  className="ml-2 text-white/45 underline"
+                  onClick={() => setTexture(null)}
+                >
+                  remove
+                </button>
+              </span>
+            )}
+          </div>
+
+          <input
+            ref={textureInput}
+            type="file"
+            accept={kindAccepts.image}
+            className="sr-only"
+            onChange={(e) => {
+              const chosen = e.target.files?.[0] ?? null
+              if (chosen) { setTexture(chosen); setDecalId(''); setDecal(null) }
+            }}
+          />
+
+          {!texture && (
+            <div className="mt-3">
+              <Input
+                label="Or a Decal id"
+                labelNote="IMG-1042"
+                value={decalId}
+                onChange={(e) => void lookUp(e.target.value)}
+                maxLength={20}
+              />
+              {decalId.trim() !== '' && (
+                <p className="mt-1.5 text-xs text-white/55">
+                  {decal
+                    ? <>Wearing <span className="text-white/85">{decal.name}</span>.</>
+                    : 'No Decal you can use with that id.'}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-ink-line bg-ink-raised p-3">
         <input

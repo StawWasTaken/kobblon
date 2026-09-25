@@ -732,6 +732,29 @@ export async function listAssets(options: {
   })) ?? []
 }
 
+/**
+ * The Decal behind an id somebody typed, if they may use it.
+ *
+ * Takes `IMG-1042` or `1042`, because somebody copying a tag off a page gets
+ * the whole thing and somebody typing it from memory does not. What comes
+ * back is the row's real id, or null — and null covers both "no such Decal"
+ * and "not one you may use", deliberately: the difference between those two
+ * is whether a private upload exists, which is not a question an id box
+ * should answer.
+ */
+export async function decalBehind(tag: string): Promise<{ id: string; name: string } | null> {
+  const number = Number(String(tag).trim().replace(/^[A-Za-z]+-/, ''))
+  if (!Number.isFinite(number) || number <= 0) return null
+
+  const { data } = await supabase.from('assets')
+    .select('id, name, kind, status, is_public, creator_id')
+    .eq('content_id', number)
+    .maybeSingle()
+
+  if (!data || data.kind !== 'image') return null
+  return { id: data.id as string, name: data.name as string }
+}
+
 /** The most somebody may charge for each kind of thing. */
 export const priceCeilings: Record<AssetKind, number> = {
   image: 100, audio: 250, video: 500, font: 300, build: 750, mesh: 750,
@@ -861,6 +884,16 @@ export async function uploadAsset(input: {
    * decides it is worth sharing.
    */
   listed?: boolean
+  /**
+   * The Decal a mesh wears.
+   *
+   * Either a picture uploaded in the same breath — which becomes a Decal of
+   * its own, unlisted, owned by whoever uploaded the mesh — or the id of one
+   * that already exists. A mesh with no texture is a grey shape, and making
+   * somebody upload the shape, find the Decal page and come back is three
+   * steps for one thought.
+   */
+  texture?: { file: File } | { id: string }
 }): Promise<OwnAsset> {
   const extension = input.file.name.split('.').pop()?.toLowerCase() ?? 'bin'
   const path = `${input.userId}/${crypto.randomUUID()}.${extension}`
@@ -878,6 +911,37 @@ export async function uploadAsset(input: {
     .upload(path, input.file, { contentType, upsert: false })
   if (uploaded.error) throw new Error(uploaded.error.message)
 
+  /*
+   * The Decal first, if one is coming with it.
+   *
+   * Before the mesh rather than after, so a mesh never exists undressed: if
+   * the picture is refused, nothing has been made, and somebody tries again
+   * rather than finding a grey shape they have to go and fix. It is a Decal
+   * in its own right — its own page, its own owner, its own screening — and
+   * it is never listed on the Marketplace by being a texture. Whether the
+   * mesh goes on the Marketplace is the mesh's business.
+   */
+  let wearing: string | null = null
+  try {
+    if (input.texture && 'file' in input.texture) {
+      const decal = await uploadAsset({
+        userId: input.userId,
+        file: input.texture.file,
+        kind: 'image',
+        name: `${input.name.trim()} texture`.slice(0, 60),
+        description: '',
+        communityId: input.communityId ?? null,
+        listed: false,
+      })
+      wearing = decal.id
+    } else if (input.texture) {
+      wearing = input.texture.id
+    }
+  } catch (err) {
+    await supabase.storage.from(assetBucket).remove([path])
+    throw err
+  }
+
   try {
     const made = unwrap(await supabase.from('assets').insert({
       creator_id: input.userId,
@@ -888,6 +952,7 @@ export async function uploadAsset(input: {
       byte_size: input.file.size,
       community_id: input.communityId ?? null,
       is_public: input.listed === true,
+      texture_id: wearing,
     }).select('id, kind, name, description, file_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
       .single()) as unknown as OwnAsset
 

@@ -1,44 +1,25 @@
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faImage, faMusic, faVideo, faFont, faCube, faShapes,
   faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useSignedUrl } from '@/hooks/useSignedUrl'
 import { formatCount } from '@/lib/format'
 import { currency } from '@/lib/currency'
-import type { AssetKind, MarketAsset } from '@/types/db'
+import type { MarketAsset } from '@/types/db'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { overlayChip } from '@/lib/overlay'
 import { cn } from '@/lib/cn'
 
-export const kindIcons: Record<AssetKind, IconDefinition> = {
-  image: faImage,
-  audio: faMusic,
-  video: faVideo,
-  font: faFont,
-  build: faShapes,
-  mesh: faCube,
-}
-
-export const kindLabels: Record<AssetKind, string> = {
-  image: 'Decal',
-  audio: 'Audio',
-  video: 'Video',
-  font: 'Font',
-  build: 'Build',
-  mesh: 'Mesh',
-}
-
-const tagPrefix: Record<AssetKind, string> = {
-  image: 'IMG', audio: 'SND', video: 'VID', font: 'FNT', build: 'BLD', mesh: 'MSH',
-}
-
-/** The number every piece of content carries, with its kind in front. */
-export const contentTag = (kind: AssetKind, id: number | null) =>
-  id ? `${tagPrefix[kind]}-${id}` : ''
+/*
+ * The words themselves live in `@/lib/kinds`, so the Workspace can import
+ * them without importing a component. Re-exported here because every call
+ * site already says AssetTile, and moving a name is not worth touching
+ * thirty files for.
+ */
+export { kindIcons, kindLabels, contentTag } from '@/lib/kinds'
+import { kindIcons, kindLabels, contentTag } from '@/lib/kinds'
 
 export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean }) {
   const preview = useSignedUrl(item.thumbnail_path ?? (item.kind === 'image' ? item.file_path : null))
