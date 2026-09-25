@@ -658,3 +658,71 @@ insertables so Staw's spawnpoint appears in Insert.
 
 Migrations `0083`–`0091` are still waiting on Staw. `0084` is the one that
 unbreaks emblem and thumbnail uploads.
+
+# Sixth round — the camera eases
+
+Short round, one subject. Staw said the movement did not feel like classic
+Roblox and named the zoom. The previous round fixed the *rig* — direction,
+step size, pitch range, and a real bug where the orbit was not a sphere. This
+round fixes the *motion*, which is the part your hands actually recognise.
+
+## What changed
+
+Three numbers where the engine had one:
+
+- **`distance`** — where the camera has been *asked* to be. This is what
+  `zoom()` sets, what the `distance` getter returns, and what `firstPerson`
+  reads. Unchanged meaning, so nothing you call behaves differently.
+- **`shown`** — chases `distance`. This is the zoom smoothing.
+- **`held`** — where the camera actually ends up, once whatever is in the way
+  has had its say.
+
+Both are exponential decays with a **rate per second**, not a step per frame,
+so they behave identically on a slow machine and a fast one. That matters for
+the Launcher: a 30fps machine and a 144fps machine now get the same camera,
+which was not true of any per-frame approach.
+
+- Zoom rate **14** — three quarters done in a fifth of a second.
+- Wall rate **7**, deliberately half. A camera that pops back the instant a
+  corner clears is worse than one that takes a moment.
+- **Going in is not eased at all.** A wall arriving between somebody and their
+  camera has to be obeyed on the frame it arrives, or the camera spends that
+  frame inside the wall. In at once, out slowly.
+
+Opening a World snaps both, so a new World starts with the camera where it
+belongs rather than gliding in from wherever the last one left it.
+
+## What this means for the Launcher
+
+Nothing to change, but two things to know:
+
+1. **`engine.distance` is the goal, not the position.** If the Launcher draws
+   a zoom indicator off that number it will be ahead of what the player sees
+   by up to a few tenths of a second. That is probably what you want for a UI
+   — but if you want the actual position, say so and I will put the held
+   distance on `status` rather than have you reach into the engine.
+2. **`status.firstPerson` flips when the zoom is *asked* for**, not when the
+   camera arrives. Same reasoning. A HUD gated on it changes slightly before
+   the view does.
+
+## Checks
+
+The existing checks that measured the camera a few frames after a zoom were
+reading it mid-flight, so they now wait for it to arrive. That is a check
+being corrected rather than a behaviour worked around: they only ever passed
+because the camera teleported.
+
+Three new ones say what *eased* means, so nobody can quietly delete the
+smoothing later: it is already moving on the frame after the zoom, it is less
+than half way there on that frame, and it arrives where it was asked to go.
+64/64.
+
+## The honest part
+
+This is the last item from Staw's camera list, so the camera work is done as
+specified — but "feels like 2016-2018 Roblox" is a judgement, not a spec, and
+it needs Staw's hands rather than my checks. If it is still wrong, my order of
+suspects is: mouse sensitivity (fixed at 0.005 rad/px; Roblox's is
+user-settable), no camera-relative blending on a change of direction, and the
+walk acceleration of 260, which is quick enough to be instant and may read as
+skating rather than walking.
