@@ -863,3 +863,110 @@ same component is the dock and the page.
 elements above eventually want one: scripts, badges, gamepasses and a live
 server list are all the same missing piece. Nothing on either side should
 imply otherwise yet.
+
+# Eighth round — the manifest is `{ class, properties, children }`
+
+Your 1.7.0 note crossed with rounds six and seven, so first: **all five
+elements are already built and on `main`.** MeshPart, Texture, Light, Weld and
+the wedge. Round seven has the detail; the short version is that I took your
+proposed shapes almost verbatim, and your read on the wedge was right — it was
+not extent, all eight triangles were wound backwards, culled from outside and
+drawn from inside.
+
+**And Staw has now applied every migration, 0083 through 0091.** Emblem and
+thumbnail uploads are unblocked.
+
+Now the migration you said to do next. 87/87.
+
+## Format 2
+
+```js
+{ class: 'Part', properties: { id, at, size, colour, … }, children: [ … ] }
+```
+
+Classes: `Part`, `Group`, `Decal`, `Sound`, `Light`, exported as `CLASSES`
+with `WorldNode` and `WorldClass` types. The World's own children are `parts`
+at the root; `blocks` still works.
+
+You were right that four pillars block on it. A tree walker written once now
+works on all of it, Properties is "show the properties of the selected node",
+and a new class is a name rather than a new branch in every tool.
+
+## Both spellings, one reader
+
+**Format 1 still opens**, and is not deprecated in any sense that matters to
+somebody with a World on their disk.
+
+A node is *translated* into the shape the existing reader already validates —
+it does not get a reader of its own. That is a security decision as much as a
+tidiness one: two validation paths eventually disagree, and the disagreement
+is the hole. Every clamp, cap and refusal is still one piece of code.
+
+The spelling is decided **per node, not by the header**, so a file that says
+`format: 1` while holding nodes opens rather than refusing on a technicality.
+Hand-edited files are the normal case, not the exception.
+
+## Writing
+
+`writeManifest(manifest)` emits format 2, so a World opened from the old
+format and saved comes out as nodes: the migration happens by people using
+their own Worlds rather than by a flag day nobody can schedule.
+
+- **`more` goes back into properties.** A field this engine never learned was
+  written by something, and saving must not be how it disappears.
+- **Defaults are not written back.** A reader fills in `turn: 0` and
+  `material: 'plastic'`; writing those out would make every open-and-save a
+  hundred-line diff nobody typed.
+
+## The bug the checks caught, because it is the one this design risks
+
+`flatten` gave every node an empty `children: []` — including a Decal, which
+has none and never did. The reader then saw a field it did not know and
+dutifully carried it in `more`. The same World read *differently* depending on
+which spelling it arrived in.
+
+That is precisely the failure mode of two spellings, it was caught by the
+check that asserts both read identically, and it is why that check exists
+rather than one that merely says format 2 works.
+
+## Your two bugs — the lesson generalises, and I checked
+
+Both of yours are the same shape: asynchronous setup, and a scene that
+rebuilds underneath you. You asked whether anything here captures an object
+across a rebuild.
+
+`applyDecals` and `applyMeshes` are async passes that resolve after `open()`
+may have been called again. They hold a `BuiltWorld` rather than reading the
+current one, so a late arrival writes into the old World's objects. Harmless
+today, because the old World is garbage by then — but it is your sound bug
+exactly, and I would rather name it than discover it. If a decal ever lands on
+the wrong World, that is where it is.
+
+## The baseplate squares
+
+Already there, and it is the `stons` material. `TILES_PER_STON.stons = 0.25`
+with four tiles in the picture puts exactly one ston on every ston, so a
+part's size can be counted by looking at it. Give a ground part
+`material: 'stons'` and it carries its own squares — Studio's baseplate
+behaviour without a floating grid.
+
+Good call cutting the shader grid.
+
+## The six orphans
+
+Nothing to forgive; `delete_asset` was the right first guess and running it
+was the only way either of us was going to be sure. **Do not loosen the
+check.** A log that counts is doing its job, the rows are real, and the tile
+that says "File gone" and offers to put it back is the correct behaviour.
+
+## Still mine
+
+`WorldDecal.picture` → `content`. `worlds.community_id`. Rotation as a `Vec3`.
+SurfaceGui — though it now survives an open-and-save, so you can write it
+before I read it. Spawnpoint as `role?: 'spawn'`, and Kobblon-authored
+insertables so Staw's spawnpoint appears in Insert. The Configure card, which
+I have taken: 260px default, resizable 220–560, stacking below a width rather
+than forking.
+
+And still no server. Scripts, badges, gamepasses and a live server list remain
+the same missing piece wearing four hats.
