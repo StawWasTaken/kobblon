@@ -1589,3 +1589,85 @@ that is **yours and unlisted**, or take a pasted id of a Decal you own or
 somebody else's. The first half works today — upload kind `image` with the
 box unticked and it is exactly that. The pasted-id half is Workspace UI and
 needs nothing from me: any approved Decal id already resolves.
+
+# Seventeenth round — a mesh wears a Decal, and the words live in one file
+
+**`8439a122`.** Migration **0094** is new. `0092` and `0093` still need
+applying first — see the note at the end about why they kept failing.
+
+## 1. A mesh carries the Decal it wears
+
+Staw: uploading a mesh should let you upload its texture at the same time, or
+point at a Decal that already exists — one of yours, or somebody else's.
+
+`assets.texture_id` is that. **The id of a Decal, not a copy of the picture**,
+so two meshes can wear one Decal, somebody else's stays theirs with its own
+page and owner, and a Decal that goes away *undresses* the mesh rather than
+deleting it (`on delete set null`).
+
+`uploadAsset` takes `texture?: { file } | { id }`. A picture uploaded
+alongside becomes **a Decal of yours, unlisted** — being a texture never puts
+anything on the Marketplace; whether the *mesh* is listed is the mesh's own
+business. It is created **before** the mesh, so a refused picture leaves
+nothing behind rather than a grey shape somebody has to go back and fix.
+
+**What may be worn is decided in the database, not in the client.** Only a
+mesh wears one; only a Decal can be worn; and only a Decal the person can
+actually see — their own in any state, or one that is approved and listed.
+That last clause is not tidiness: without it a texture id box is a way of
+asking whether somebody's private upload exists, one refusal at a time.
+
+`decalBehind('IMG-1042')` resolves a tag or a bare number to a usable Decal,
+and returns null for both "no such Decal" and "not one you may use" —
+deliberately the same answer, for the reason above.
+
+## 2. The words now live in one file, which is your point as much as his
+
+`@/lib/kinds` holds the labels, the icons, the codes and **the accepted
+extensions**. They were inside component files, so the Workspace had to
+import a component to learn what a kind is called.
+
+That is how "Model" in one window and "Mesh" in the other happens. The
+version that actually bites is subtler and worth naming: **a list of accepted
+extensions copied into the Workspace, then a format added here and not
+there** — so a file Kobblon accepts is refused by Kobblon.
+
+```ts
+import {
+  kindLabels, kindIcons, kindCodes, kindAccepts,
+  uploadableKinds, madeElsewhere, contentTag,
+} from '@/lib/kinds'
+```
+
+`uploadableKinds` already excludes Build. `AssetTile` re-exports the old
+names, so nothing had to be touched thirty times.
+
+## 3. Why 0092 kept failing, since it cost Staw three goes
+
+`unsafe use of new value "mesh"`. Postgres will not let a new enum value be
+**used** in the transaction that added it, and the Supabase SQL editor runs a
+whole file as one transaction.
+
+It passed here because `psql -f` runs each statement in its own. **My check
+was measuring the wrong thing** — it proved the file was re-runnable and
+proved nothing about how it is actually applied. Two fixes: the file is split
+(`0092` adds the kinds, `0093` uses them), and both functions now compare
+`kind::text` rather than the enum, so no new label is resolved at parse time
+and it works however it is run. `CLAUDE.md` now requires wrapping each
+migration in a single `begin; … commit;` when checking it.
+
+The third failure was staler still: the error's line number said 60, and
+`when 'mesh'` sits at line 21 of the new file and line 60 of the old one — so
+what was running was the pre-split copy. Worth remembering that a line number
+identifies the file, not just the fault.
+
+## What this means for the Workspace
+
+- A mesh you read from the Catalog may have a **`texture_id`**. Applying it
+  to the part is yours: the engine draws what the manifest says, and the
+  manifest's decal is still a decal.
+- Your texture-upload flow and your paste-an-id flow are **the same two paths
+  this dialog now offers**, so if you mount `UploadDialog` with
+  `only="mesh"` you get both for free.
+- **Use `@/lib/kinds`** rather than your own copy of the words. That is the
+  whole point of it.
