@@ -1348,3 +1348,77 @@ mesh still real geometry. Climbable, not standable.
 
 Your palette row is unchanged by any of this. What changes is the sentence
 next to it: the bay is the rhythm in every direction, not just height.
+
+# Fourteenth round — model cards, one upload popup, and the MDL- path confirmed
+
+All three, pushed. **`d54fff89`, 107/107 plus 8/8 types.**
+
+## 1. A model gets a card picture, and it is the shared path
+
+`previewOf(file, 'model')` renders it. Same trick as the frame out of a
+video: the browser already has everything needed to look at the thing, so it
+looks once and keeps the picture. Three-quarter view from slightly above,
+camera pushed back off the model's own bounding sphere so a tall thing and a
+wide thing both fill the frame. 640 square, JPEG.
+
+**`canPreview('model')` is true now, which means `makeAssetPreview` already
+picks it up — neither side needs a new call.** The path you already use
+starts working. That is the answer to "if there's a shared path it should be
+the one both sides use": there was one, it just refused models.
+
+Two decisions in it:
+
+- **A `.kbfl` gets no picture rather than a wrong one.** Kobblon's own part
+  file is JSON and nothing on this side reads one. A generic icon would be a
+  claim to have looked.
+- **The renderer is disposed in a `finally`.** A browser allows a handful of
+  WebGL contexts at once; leaking one per upload means the fifth upload in a
+  session silently stops drawing and nothing errors.
+
+The checks measure the picture rather than its existence: 640×640, and
+**about eleven percent of the pixels are the model** rather than an empty
+frame the right size. I looked at it too — it is K6, three-quarter, framed.
+
+## 2. `UploadDialog` — it needed one seam, not three
+
+Good news: **two of the three providers already work without a provider.**
+`useToast` falls back to doing nothing and `useWorkingAs` falls back to
+uploading for yourself. Only `useAuth` threw, because throwing is right for a
+page and wrong for a shared component.
+
+So:
+
+- **`useMaybeAuth()`** returns null instead of throwing.
+- **`UploadDialog` takes `uploadAs?: { profileId, communityId? }`.**
+
+Mount it with **no providers at all**:
+
+```tsx
+<UploadDialog open={open} onClose={close} onUploaded={took}
+  only="model" uploadAs={{ profileId }} />
+```
+
+Left out, it behaves exactly as it does on the site today. That is the
+thinner seam — no provider tree to reproduce, nothing forked, one popup for
+decals, meshes, Configure World and everything after.
+
+You were right not to polish the Workspace's own upload in the meantime.
+
+## 3. The mesh resolves a `MDL-` id exactly like a decal
+
+Confirmed, and you were right to distrust "the field accepts text".
+
+There is a check that drives `applyMeshes` with a resolver mapping
+`MDL-1042` to a real `.glb`, and asserts the part's geometry actually changes
+from `BoxGeometry` to the loaded mesh, **fitted into the part's box** and
+**keeping the part's own colour**. A second asserts an id nobody can fetch
+leaves the part as its shape rather than a hole.
+
+Nothing about `MDL-` is special to the engine: it is the same
+`resolveAsset(id)` contract a decal uses, and the engine never knows whether
+an id is a picture or a model — it asks, and gets a URL or nothing.
+
+What I cannot do is drive it against a model uploaded from your file dialog
+into real storage, for the same reason I cannot upload an emblem. That end is
+yours, and now that the card picture exists the tile will not be blank when
+you try it.
