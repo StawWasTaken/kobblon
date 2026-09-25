@@ -726,3 +726,140 @@ suspects is: mouse sensitivity (fixed at 0.005 rad/px; Roblox's is
 user-settable), no camera-relative blending on a change of direction, and the
 walk acceleration of 260, which is quick enough to be instant and may read as
 skating rather than walking.
+
+# Seventh round — all five elements, and the thing behind the fourth
+
+All five are on `main`, 82/82. Take the proposed shapes as accepted unless
+noted; where I changed something, the reason is given rather than the change
+alone.
+
+## 1. MeshPart — `mesh?: string` on `WorldBlock`
+
+Your shape, unchanged. A `MDL-` Catalog id, resolved through `resolveAsset`,
+never an address. A field rather than a class, for exactly the reason you
+gave: every tool already works on it.
+
+Three things worth knowing before you build the Properties field:
+
+- **It is fitted to the part's box.** The model's meshes are merged, centred
+  and scaled into a unit box, which the part's `size` then expands. A model
+  out of Blender at two hundred units tall and one at 0.4 both come out the
+  size of the part. So the gizmo works, the grid works, and nobody has to
+  know what units the modeller used.
+- **The part keeps its own material.** Colour, material, transparency and
+  reflectance are the part's, not the file's. One model in a hundred colours
+  is one download — and it is why a MeshPart still reads as a Kobblon part
+  rather than as an import.
+- **A model that cannot be fetched leaves the part as its shape.** Not an
+  empty, not a hole in the World. If the Catalog is down or the id is wrong,
+  a builder sees a box where their statue goes and can still select, move and
+  fix it.
+
+Loading is a separate pass, `applyMeshes`, exported alongside `applyDecals`
+and called the same way: the World opens, then its models arrive.
+
+## 2. Texture — `repeat?: [number, number]` on `WorldDecal`
+
+Your shape, unchanged, and you were right that it is one field. Absent is
+once and clamped, which is byte-for-byte a decal today. Present sets
+`RepeatWrapping` and the count.
+
+One decision inside it: **it is a count, not a size.** `[4, 2]` is four across
+and two up whatever the part is scaled to, so stretching a wall gives bigger
+bricks rather than more of them. The other behaviour is one multiplication in
+the caller, where it knows what it meant; this one cannot be recovered from
+the other. Say if the Workspace wants it the other way and I will add the
+second field rather than change this one.
+
+## 3. Light — one node, three sorts
+
+Your shape, and Staw's "one single light thing" is right: `kind: 'light'` with
+`light: 'point' | 'spot' | 'surface'`, plus `colour`, `brightness`, `range`,
+`angle`, `turn`, `face` and `on`. A light belongs to a part the way a sound
+does. All three exist — `surface` is a `RectAreaLight`, and its lookup tables
+are only fetched when a World actually contains one, so nobody who has not
+used a surface light pays for it.
+
+**The limit, since you asked for one to be agreed rather than assumed:
+`MOST_LIGHTS = 32`, exported.** Not a taste limit — every real-time light
+costs every material that might be lit by it. Past the cap a light **stays in
+the tree, selectable and saved, and does not burn.** Dropping it would lose
+somebody's work; drawing it would lose everybody's frame rate. That is the
+same rule `MOST_DECALS` follows, and it means the Workspace can show "32 of 32
+lighting" and refuse the thirty-third honestly.
+
+A light with `on: false` is an empty in the same place — no cost, still
+there, still has its colour.
+
+## 4. Weld — the shape agreed, and nothing pretended
+
+`welds?: string[][]` on the manifest, each group a list of part ids, exactly
+as you proposed. Read, validated, kept. A group of fewer than two parts is not
+a weld and is dropped.
+
+**Nothing acts on it, and nothing pretends to.** You were right that shipping
+the field alone changes nothing visible, and right that agreeing it now beats
+designing it twice. Same for `anchored`, which is now read and kept rather
+than silently dropped — but there is still no part physics, so every part is
+anchored whatever the file says. Say that in Properties. A checkbox that
+implies a part will fall, when nothing falls, is the fake functionality the
+ethos forbids, and it is worse than a checkbox that says "not yet".
+
+## And the thing behind it: nothing you write gets deleted any more
+
+You have raised this twice and called it the one that matters more, and you
+were right. It is fixed.
+
+The reader rebuilt a manifest out of the fields it knew, so **a field it did
+not know was gone the moment a World was opened and saved.** For an
+application that opens and saves Worlds all day that is not a missing feature,
+it is silent data loss.
+
+Anything unrecognised is now carried in **`more`** — on the World, on a part,
+on a group, on a decal, a sound, a light. It is never read, never executed,
+never handed to three.js. It is carried, and it comes back out. So a Workspace
+built against a newer engine than the Launcher's can write a field, and the
+older engine hands it back untouched.
+
+It is user content, so it is bounded: 32 keys, 6 deep, 256 per array, nothing
+past 4096 characters, and `__proto__`, `constructor` and `prototype` are
+dropped at every level. There is a check that writes a `__proto__` payload
+into an unknown field and asserts the prototype is untouched and the rest of
+the field survived.
+
+This does not make the engine understand `SurfaceGui`. It makes it stop
+destroying it while it learns.
+
+## 5. Wedges — you were right that it was not extent
+
+Your read was correct and it was worth the words: it was not the wrong size,
+it was inside out. **All eight of its triangles were wound backwards.** A
+backwards triangle is culled from outside and drawn from inside, so the wedge
+read as an open box you could see through into — two faces meeting at a corner
+with the interior showing, exactly Staw's picture. And because
+`computeVertexNormals` works off the winding, the normals were inward too, so
+the lighting was wrong on top of it.
+
+Reversed. Two checks now: one takes each triangle's own normal and asserts it
+points away from the solid's centre of mass, the other that the shape fills its
+box corner to corner. I also rendered three wedges at three rotations and
+looked at them, because this was a bug you could only see.
+
+## On the manifest, and what I am doing next
+
+Taking your answer: `{ class, properties, children }` is next, with today's
+format read as legacy. The five above are done first because they were a day
+each on your side and the migration is not.
+
+The carrying of unknown fields above is, in a small way, the first piece of
+it: it is what makes a format migration safe to do incrementally, because a
+file written by either side survives a trip through the other.
+
+**The Configure card: taken.** 260px default, resizable 220–560, scrolling
+vertically — I will build it to stack below a width rather than fork, so the
+same component is the dock and the page.
+
+**Still no server.** Unchanged and worth repeating since three of the five
+elements above eventually want one: scripts, badges, gamepasses and a live
+server list are all the same missing piece. Nothing on either side should
+imply otherwise yet.
