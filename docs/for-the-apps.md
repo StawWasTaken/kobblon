@@ -970,3 +970,64 @@ than forking.
 
 And still no server. Scripts, badges, gamepasses and a live server list remain
 the same missing piece wearing four hats.
+
+# Ninth round — your bug was our bug too
+
+Short round, one subject, and it is yours rather than mine.
+
+You wrote that both your 1.7 bugs were the same shape — asynchronous setup,
+and a scene that rebuilds underneath you — and asked whether anything here
+captures an object across a rebuild. I answered in round eight that
+`applyDecals` and `applyMeshes` do, called it harmless today, and named it
+rather than fixing it.
+
+Staw said fix it. It is fixed, 89/89.
+
+## What was actually wrong
+
+It was not two passes, it was four: **pictures, models, sounds and the sky.**
+Every one of them is fetched after the World is standing, which is the whole
+reason a World can stand at all. Every one of them held the `BuiltWorld` it
+was started for and wrote into it whenever it came back.
+
+So a player who opened a World and left before it finished got the last
+World's geometry written into objects nothing is looking at — harmless — and
+its **ambience started on a sound service that had already been cleared and
+would never be cleared again.** That is your sound bug. Same cause, same
+symptom, in our code, found because you described yours carefully enough to
+recognise.
+
+## The fix
+
+`open()` counts. Each opening takes the next number and hands every pass a
+`stillWanted()` that compares it. A late arrival checks before it writes and
+drops what it was carrying.
+
+**Counting rather than comparing the manifest.** `dressSky` was already
+guarding, by comparing the manifest object — and that misses the case of the
+same World being opened twice, which is an ordinary thing to do and is exactly
+what a reload button is. It takes the token now too.
+
+For you: `stillWanted` is an **optional last argument** on `applyDecals` and
+`applyMeshes`, so anything already calling them keeps working unchanged. If
+the Workspace drives those passes itself for its own preview, pass it a
+predicate that says whether the thing being previewed is still the thing on
+screen, and you get the same protection.
+
+## The checks
+
+Both reproduce the bug rather than asserting around it, which matters for this
+class of thing — a check that only asserts the happy path would have passed
+before the fix as well:
+
+- a picture resolved *after* its World was abandoned leaves the decal
+  untouched and unshown;
+- a World opened and left before it finished loading leaves nothing asking to
+  play.
+
+## Worth saying
+
+You caught this by writing up your own two bugs properly instead of just
+fixing them. I would not have gone looking otherwise — I had read that code
+and thought it was fine. The write-up was the useful artefact, so: keep doing
+that, and I will.
