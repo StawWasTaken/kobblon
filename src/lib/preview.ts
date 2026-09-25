@@ -13,14 +13,24 @@
  * content that is listed in Create, which shows the same picture to anybody
  * who opens its page. Nothing about this makes the original file public.
  */
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { AssetKind } from '@/types/db'
 
 /** Big enough for a card at full width, small enough to be nothing much. */
 const WIDEST = 1280
 const QUALITY = 0.82
 
-/** The kinds that look like something. A sound has nothing to draw. */
-export const canPreview = (kind: AssetKind) => kind === 'image' || kind === 'video'
+/**
+ * The kinds that look like something. A sound has nothing to draw.
+ *
+ * A model looks like something too, but only once somebody has rendered it,
+ * which is what `fromModel` below is for. Without it a model uploaded from
+ * the Workspace is a blank tile, because the file dialog it came from cannot
+ * draw a picture of a `.glb`.
+ */
+export const canPreview = (kind: AssetKind) =>
+  kind === 'image' || kind === 'video' || kind === 'model'
 
 function fit(width: number, height: number) {
   const scale = Math.min(1, WIDEST / Math.max(width, height))
@@ -77,11 +87,89 @@ function fromFilm(src: string) {
   })
 }
 
+/**
+ * A picture of a model, by rendering it.
+ *
+ * The same trick as the video frame: the browser already has everything
+ * needed to look at the thing, so it looks at it once and keeps the picture.
+ * Three quarter view from slightly above, which is how a person picks a
+ * model up to look at it, and the camera is pushed back from the model's own
+ * bounding sphere so a tall thing and a wide thing both fill the frame.
+ *
+ * Kobblon's own part file is JSON rather than glTF, and there is no runtime
+ * here that reads one, so it gets no picture rather than a wrong one. That
+ * is the honest answer until the Workspace's format has a reader on this
+ * side.
+ */
+async function fromModel(src: string): Promise<Blob | null> {
+  const canvas = document.createElement('canvas')
+  canvas.width = 640
+  canvas.height = 640
+
+  let renderer: THREE.WebGLRenderer | null = null
+  try {
+    const model = await new GLTFLoader().loadAsync(src)
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color('#e9edf5')
+    scene.add(model.scene)
+
+    // Enough light to read a shape by: one from above and in front, and a
+    // soft fill so the side facing away is not a silhouette.
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8d95a6, 2.2))
+    const sun = new THREE.DirectionalLight(0xffffff, 2.4)
+    sun.position.set(6, 10, 8)
+    scene.add(sun)
+
+    const around = new THREE.Box3().setFromObject(model.scene)
+    const middle = around.getCenter(new THREE.Vector3())
+    const reach = Math.max(around.getBoundingSphere(new THREE.Sphere()).radius, 0.001)
+
+    const camera = new THREE.PerspectiveCamera(35, 1, reach / 100, reach * 100)
+    // Far enough that the whole sphere is inside the cone of vision, with a
+    // little air around it.
+    const away = (reach * 1.35) / Math.sin((camera.fov * Math.PI) / 360)
+    camera.position.set(
+      middle.x + away * 0.62,
+      middle.y + away * 0.48,
+      middle.z + away * 0.62,
+    )
+    camera.lookAt(middle)
+
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer.setSize(canvas.width, canvas.height, false)
+    renderer.render(scene, camera)
+
+    const drawn = await new Promise<Blob | null>((done) => {
+      canvas.toBlob(done, 'image/jpeg', QUALITY)
+    })
+
+    model.scene.traverse((one) => {
+      const mesh = one as THREE.Mesh
+      mesh.geometry?.dispose?.()
+      for (const material of [mesh.material].flat()) (material as THREE.Material)?.dispose?.()
+    })
+
+    return drawn
+  } catch {
+    return null
+  } finally {
+    // A renderer left alive holds a WebGL context, and a browser only allows
+    // a handful of those at once: leak them and the fifth upload in a
+    // session silently stops drawing anything.
+    renderer?.dispose()
+  }
+}
+
 /** From the file somebody is uploading, before it has gone anywhere. */
 export async function previewOf(file: File, kind: AssetKind): Promise<Blob | null> {
   if (!canPreview(kind)) return null
+  // A Kobblon part file is JSON, and nothing here reads one yet.
+  if (kind === 'model' && !/\.(glb|gltf)$/i.test(file.name)) return null
+
   const src = URL.createObjectURL(file)
   try {
+    if (kind === 'model') return await fromModel(src)
     return kind === 'video' ? await fromFilm(src) : await fromPicture(src)
   } catch {
     return null
@@ -94,6 +182,7 @@ export async function previewOf(file: File, kind: AssetKind): Promise<Blob | nul
 export async function previewOfUrl(url: string, kind: AssetKind): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   try {
+    if (kind === 'model') return await fromModel(url)
     return kind === 'video' ? await fromFilm(url) : await fromPicture(url)
   } catch {
     return null

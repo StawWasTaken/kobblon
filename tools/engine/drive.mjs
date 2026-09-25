@@ -1050,6 +1050,56 @@ check('letting go puts them back at the bottom rather than through the World',
   `back at y=${onTheTruss.landed}, grounded ${onTheTruss.grounded}, `
   + `holding ${onTheTruss.holding}`)
 
+// -- 13o. a model gets a card picture, by being looked at
+const modelCard = await p.evaluate(async () => {
+  // A real glTF, fetched and handed over as a file the way an upload does.
+  const bytes = await fetch('/k6/k6.glb').then((r) => r.blob())
+  const file = new File([bytes], 'k6.glb', { type: 'model/gltf-binary' })
+
+  const drawn = await window.previewOf(file, 'model')
+  if (!drawn) return { drew: false }
+
+  // Look at what came out: a card picture has to be a picture of something,
+  // not an empty frame the right size.
+  const picture = new Image()
+  picture.src = URL.createObjectURL(drawn)
+  await picture.decode()
+  const sheet = document.createElement('canvas')
+  sheet.width = picture.naturalWidth
+  sheet.height = picture.naturalHeight
+  const paint = sheet.getContext('2d')
+  paint.drawImage(picture, 0, 0)
+  const { data } = paint.getImageData(0, 0, sheet.width, sheet.height)
+
+  // The background is one colour; anything else is the model.
+  let model = 0
+  for (let i = 0; i < data.length; i += 4) {
+    const off = Math.abs(data[i] - 233) + Math.abs(data[i + 1] - 237) + Math.abs(data[i + 2] - 245)
+    if (off > 24) model += 1
+  }
+
+  const kbfl = new File(['{}'], 'part.kbfl', { type: 'application/json' })
+  return {
+    drew: true,
+    type: drawn.type,
+    bytes: drawn.size,
+    size: [picture.naturalWidth, picture.naturalHeight],
+    share: model / (data.length / 4),
+    saysModelsCanBeDrawn: window.canPreview('model'),
+    // Kobblon's own part file is not glTF and gets no picture rather than a
+    // wrong one.
+    ownFormat: await window.previewOf(kbfl, 'model'),
+  }
+})
+check('a model is drawn for its card, rather than left blank',
+  modelCard.drew && modelCard.saysModelsCanBeDrawn && modelCard.bytes > 2000,
+  `${modelCard.size?.join('x')} ${modelCard.type}, ${modelCard.bytes} bytes`)
+check('and the picture is of the model rather than an empty frame',
+  modelCard.share > 0.02 && modelCard.share < 0.9,
+  `${(modelCard.share * 100).toFixed(1)}% of it is the model`)
+check('a Kobblon part file gets no picture rather than a wrong one',
+  modelCard.ownFormat === null, 'nothing drawn for a .kbfl')
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Choices } from '@/components/ui/Choices'
 import { Input, Textarea } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
-import { useAuth } from '@/hooks/useAuth'
+import { useMaybeAuth } from '@/hooks/useAuth'
 import { useWorkingAs, WorkingAsNote } from '@/components/create/WorkingAs'
 import { uploadAsset } from '@/lib/api'
 import { kindLabels, kindIcons } from './AssetTile'
@@ -31,6 +31,7 @@ export function UploadDialog({
   onClose,
   onUploaded,
   only,
+  uploadAs,
 }: {
   open: boolean
   onClose: () => void
@@ -38,8 +39,19 @@ export function UploadDialog({
   onUploaded: (created?: OwnAsset) => void
   /** Limits the upload to one kind, for pickers that only take one. */
   only?: AssetKind
+  /**
+   * Who is uploading, when this is mounted outside the website.
+   *
+   * The Workspace shows this dialog with its own session and none of the
+   * site's providers above it. Given this, nothing here reads a context:
+   * `useToast` and `useWorkingAs` already fall back to doing nothing and to
+   * uploading for yourself, and `useMaybeAuth` returns null rather than
+   * throwing. Left out, it behaves exactly as it always has.
+   */
+  uploadAs?: { profileId: string; communityId?: string | null }
 }) {
-  const { profile } = useAuth()
+  const auth = useMaybeAuth()
+  const profile = uploadAs ? { id: uploadAs.profileId } : auth?.profile
   const { target } = useWorkingAs()
   const toast = useToast()
   const fileInput = useRef<HTMLInputElement>(null)
@@ -78,7 +90,13 @@ export function UploadDialog({
     setPending(true)
     try {
       const created = await uploadAsset({
-        userId: profile.id, file, kind, name, description, communityId: target?.id ?? null,
+        userId: profile.id,
+        file,
+        kind,
+        name,
+        description,
+        // Whoever was named, or whoever the site says you are working as.
+        communityId: uploadAs ? uploadAs.communityId ?? null : target?.id ?? null,
       })
       toast(
         created.status === 'approved'

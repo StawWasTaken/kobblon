@@ -41,6 +41,19 @@ export function useAuth() {
   return value
 }
 
+/**
+ * The same thing, for a component that might be mounted outside the site.
+ *
+ * `useAuth` throws when there is no provider, which is right for a page:
+ * a page with no session is a bug rather than a state. But the Workspace
+ * mounts a few of these components on its own, with its own session and no
+ * `AuthProvider` above them, and a throw there is the component refusing to
+ * be shared at all. Null means "nobody told me", not "signed out".
+ */
+export function useMaybeAuth() {
+  return useContext(AuthContext)
+}
+
 const PRESENCE_INTERVAL = 60_000
 
 /** Held when signup could not upload yet because no session existed. */
