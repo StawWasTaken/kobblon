@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faImage, faMusic, faVideo, faFont, faCube, faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
+  faImage, faMusic, faVideo, faFont, faCube, faShapes,
+  faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useSignedUrl } from '@/hooks/useSignedUrl'
@@ -18,7 +19,8 @@ export const kindIcons: Record<AssetKind, IconDefinition> = {
   audio: faMusic,
   video: faVideo,
   font: faFont,
-  model: faCube,
+  build: faShapes,
+  mesh: faCube,
 }
 
 export const kindLabels: Record<AssetKind, string> = {
@@ -26,11 +28,12 @@ export const kindLabels: Record<AssetKind, string> = {
   audio: 'Audio',
   video: 'Video',
   font: 'Font',
-  model: 'Model',
+  build: 'Build',
+  mesh: 'Mesh',
 }
 
 const tagPrefix: Record<AssetKind, string> = {
-  image: 'IMG', audio: 'SND', video: 'VID', font: 'FNT', model: 'MDL',
+  image: 'IMG', audio: 'SND', video: 'VID', font: 'FNT', build: 'BLD', mesh: 'MSH',
 }
 
 /** The number every piece of content carries, with its kind in front. */

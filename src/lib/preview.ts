@@ -24,13 +24,12 @@ const QUALITY = 0.82
 /**
  * The kinds that look like something. A sound has nothing to draw.
  *
- * A model looks like something too, but only once somebody has rendered it,
- * which is what `fromModel` below is for. Without it a model uploaded from
- * the Workspace is a blank tile, because the file dialog it came from cannot
- * draw a picture of a `.glb`.
+ * A mesh looks like something too, but only once somebody has rendered it,
+ * which is what `fromMesh` below is for. Without it a mesh uploaded from a
+ * file dialog is a blank tile, because a dialog cannot draw a `.glb`.
  */
 export const canPreview = (kind: AssetKind) =>
-  kind === 'image' || kind === 'video' || kind === 'model'
+  kind === 'image' || kind === 'video' || kind === 'mesh'
 
 function fit(width: number, height: number) {
   const scale = Math.min(1, WIDEST / Math.max(width, height))
@@ -96,12 +95,11 @@ function fromFilm(src: string) {
  * model up to look at it, and the camera is pushed back from the model's own
  * bounding sphere so a tall thing and a wide thing both fill the frame.
  *
- * Kobblon's own part file is JSON rather than glTF, and there is no runtime
- * here that reads one, so it gets no picture rather than a wrong one. That
- * is the honest answer until the Workspace's format has a reader on this
- * side.
+ * A Build is Kobblon's own part file, which is JSON rather than glTF and has
+ * no reader on this side, so it gets no picture rather than a wrong one. A
+ * mesh is glTF and is drawn.
  */
-async function fromModel(src: string): Promise<Blob | null> {
+async function fromMesh(src: string): Promise<Blob | null> {
   const canvas = document.createElement('canvas')
   canvas.width = 640
   canvas.height = 640
@@ -165,11 +163,11 @@ async function fromModel(src: string): Promise<Blob | null> {
 export async function previewOf(file: File, kind: AssetKind): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   // A Kobblon part file is JSON, and nothing here reads one yet.
-  if (kind === 'model' && !/\.(glb|gltf)$/i.test(file.name)) return null
+  if (kind === 'mesh' && !/\.(glb|gltf)$/i.test(file.name)) return null
 
   const src = URL.createObjectURL(file)
   try {
-    if (kind === 'model') return await fromModel(src)
+    if (kind === 'mesh') return await fromMesh(src)
     return kind === 'video' ? await fromFilm(src) : await fromPicture(src)
   } catch {
     return null
@@ -182,7 +180,7 @@ export async function previewOf(file: File, kind: AssetKind): Promise<Blob | nul
 export async function previewOfUrl(url: string, kind: AssetKind): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   try {
-    if (kind === 'model') return await fromModel(url)
+    if (kind === 'mesh') return await fromMesh(url)
     return kind === 'video' ? await fromFilm(url) : await fromPicture(url)
   } catch {
     return null

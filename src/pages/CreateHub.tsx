@@ -367,7 +367,7 @@ export function CreateWorlds() {
   )
 }
 
-const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'model']
+const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'mesh', 'build']
 
 export function CreateMarketplace() {
   useTitle('Creator Marketplace', CREATE)

@@ -734,7 +734,7 @@ export async function listAssets(options: {
 
 /** The most somebody may charge for each kind of thing. */
 export const priceCeilings: Record<AssetKind, number> = {
-  image: 100, audio: 250, video: 500, font: 300, model: 750,
+  image: 100, audio: 250, video: 500, font: 300, build: 750, mesh: 750,
 }
 
 export async function buyAsset(assetId: string) {
@@ -852,6 +852,15 @@ export async function uploadAsset(input: {
   description: string
   /** Set when the upload is being made for a Community rather than a person. */
   communityId?: string | null
+  /**
+   * Put it on the Creator Marketplace straight away.
+   *
+   * Off unless somebody says so. Uploading is not publishing: a texture made
+   * for one World should not end up in a shop because nobody found a switch,
+   * and a thing can be listed later from its own page whenever its maker
+   * decides it is worth sharing.
+   */
+  listed?: boolean
 }): Promise<OwnAsset> {
   const extension = input.file.name.split('.').pop()?.toLowerCase() ?? 'bin'
   const path = `${input.userId}/${crypto.randomUUID()}.${extension}`
@@ -878,6 +887,7 @@ export async function uploadAsset(input: {
       file_path: path,
       byte_size: input.file.size,
       community_id: input.communityId ?? null,
+      is_public: input.listed === true,
     }).select('id, kind, name, description, file_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
       .single()) as unknown as OwnAsset
 

@@ -19,12 +19,24 @@ const accepts: Record<AssetKind, string> = {
   audio: 'audio/mpeg,audio/ogg,application/ogg,audio/wav,audio/aac,audio/flac,.mp3,.ogg,.wav,.flac,.aac',
   video: 'video/mp4,video/webm,video/ogg,.mp4,.webm',
   font: 'font/woff2,font/woff,font/ttf,font/otf,.woff2,.woff,.ttf,.otf',
+  mesh: 'model/gltf-binary,model/gltf+json,.glb,.gltf',
   // Kobblon's own part file is JSON with a .kbfl name, which no browser has
   // a type for, so the extension has to be offered explicitly.
-  model: '.kbfl,application/json,model/gltf-binary,model/gltf+json,.glb,.gltf',
+  build: '.kbfl,application/json',
 }
 
-const kinds = Object.keys(kindLabels) as AssetKind[]
+/*
+ * A Build is made rather than uploaded.
+ *
+ * It is an arrangement of parts, and the thing that arranges parts is
+ * Kobblon Workspace, which publishes it from there. Offering a file picker
+ * for one here would be offering somebody the chance to upload a file no
+ * tool on this side can make.
+ */
+const madeElsewhere: AssetKind[] = ['build']
+
+const kinds = (Object.keys(kindLabels) as AssetKind[])
+  .filter((one) => !madeElsewhere.includes(one))
 
 export function UploadDialog({
   open,
@@ -62,12 +74,20 @@ export function UploadDialog({
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  /*
+   * Uploading is not publishing. What somebody makes is theirs until they
+   * say otherwise — a texture for their own World has no business appearing
+   * in a shop because nobody found a switch. This is that switch, at the
+   * moment it is easiest to mean it.
+   */
+  const [list, setList] = useState(false)
 
   const reset = () => {
     setFile(null)
     setName('')
     setDescription('')
     setError(null)
+    setList(false)
   }
 
   const pick = (chosen: File | null) => {
@@ -97,6 +117,7 @@ export function UploadDialog({
         description,
         // Whoever was named, or whoever the site says you are working as.
         communityId: uploadAs ? uploadAs.communityId ?? null : target?.id ?? null,
+        listed: list,
       })
       toast(
         created.status === 'approved'
@@ -121,7 +142,7 @@ export function UploadDialog({
       open={open}
       onClose={onClose}
       title="Upload to Create"
-      description="Decals, sounds, video, fonts and models. 25 MB per file."
+      description="Decals, sounds, video, fonts and meshes. 25 MB per file."
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -185,7 +206,24 @@ export function UploadDialog({
         />
       </div>
 
-      <p className="mt-4 flex items-start gap-2.5 rounded-lg border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/55">
+      <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-ink-line bg-ink-raised p-3">
+        <input
+          type="checkbox"
+          checked={list}
+          onChange={(e) => setList(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-bright"
+        />
+        <span className="text-xs leading-relaxed text-white/70">
+          <span className="font-semibold text-white/90">
+            Also put it on the Creator Marketplace
+          </span>
+          <br />
+          Off means it is yours: you can use it in your own Worlds, and list it later
+          from My Uploads whenever you decide it is worth sharing.
+        </span>
+      </label>
+
+      <p className="mt-3 flex items-start gap-2.5 rounded-lg border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/55">
         <FontAwesomeIcon icon={faShieldHalved} className="mt-0.5 shrink-0" />
         Uploads are checked automatically as soon as they arrive, so most go live straight
         away. Anything the check is unsure about waits for a person, and you will be told

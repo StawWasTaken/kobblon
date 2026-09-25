@@ -18,7 +18,7 @@ import type { AssetKind } from '@/types/db'
 import { Verified } from '@/components/brand/Verified'
 import { BackLink } from '@/components/ui/BackLink'
 
-const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'model']
+const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'mesh', 'build']
 
 /** Everything one person has published to the marketplace. */
 export default function CreatorPage() {

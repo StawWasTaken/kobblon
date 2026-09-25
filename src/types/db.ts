@@ -93,7 +93,16 @@ export type ActivityEvent = {
   space_slug: string | null
 }
 
-export type AssetKind = 'image' | 'audio' | 'video' | 'font' | 'model'
+/**
+ * What a piece of content is.
+ *
+ * `build` is an arrangement of parts made in Kobblon Workspace and published
+ * from it — it is not a file anybody uploads here. `mesh` is the geometry a
+ * MeshPart draws, a .glb somebody made in Blender. They used to be one kind
+ * called `model`, which is why meshes could not be found: the name said it
+ * was already covered.
+ */
+export type AssetKind = 'image' | 'audio' | 'video' | 'font' | 'build' | 'mesh'
 export type ModerationStatus = 'pending' | 'approved' | 'rejected'
 
 export type MarketAsset = {

@@ -25,7 +25,7 @@ import type { AssetKind, ModerationStatus } from '@/types/db'
 
 const CREATE = 'Kobblon Create'
 
-const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'model']
+const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'mesh', 'build']
 const states: (ModerationStatus | 'all')[] = ['all', 'approved', 'pending', 'rejected']
 
 /* ------------------------------------------------------------------ page */

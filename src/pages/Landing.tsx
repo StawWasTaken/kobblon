@@ -112,7 +112,7 @@ export default function Landing() {
    * runs along the page is a mix whatever people happened to upload last.
    */
   const assets = useAsync(async () => {
-    const kinds = ['image', 'audio', 'video', 'font', 'model'] as const
+    const kinds = ['image', 'audio', 'video', 'font', 'mesh', 'build'] as const
     const lots = await Promise.all(
       kinds.map((kind) => listAssets({ kind, limit: 6 }).catch(() => [])),
     )

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faImage, faMusic, faVideo, faFont, faCube } from '@fortawesome/free-solid-svg-icons'
+import { faImage, faMusic, faVideo, faFont, faCube, faShapes } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { Verified, isVerified } from '@/components/brand/Verified'
@@ -16,7 +16,8 @@ const look: Record<AssetKind, { icon: IconDefinition; word: string; wash: string
   audio: { icon: faMusic, word: 'Sound', wash: 'from-space/35' },
   video: { icon: faVideo, word: 'Video', wash: 'from-fuchsia-500/30' },
   font: { icon: faFont, word: 'Font', wash: 'from-amber-400/30' },
-  model: { icon: faCube, word: 'Model', wash: 'from-cyan-400/30' },
+  mesh: { icon: faCube, word: 'Mesh', wash: 'from-cyan-400/30' },
+  build: { icon: faShapes, word: 'Build', wash: 'from-emerald-400/30' },
 }
 
 const SAMPLE = 'Aa Bb Cc'
@@ -166,7 +167,7 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
       <span className="relative block transition-transform duration-300 group-hover:-translate-y-1.5">
         {item.kind === 'video' && <Clip src={file} />}
 
-        {(item.kind === 'image' || item.kind === 'model') && (
+        {(item.kind === 'image' || item.kind === 'mesh') && (
           <Picture src={cover} wash={kind.wash} />
         )}
 

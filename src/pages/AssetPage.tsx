@@ -41,7 +41,9 @@ import { Verified } from '@/components/brand/Verified'
 import { BackLink } from '@/components/ui/BackLink'
 
 const prefixes: Record<string, string> = {
-  IMG: 'image', SND: 'audio', VID: 'video', FNT: 'font', MDL: 'model',
+  IMG: 'image', SND: 'audio', VID: 'video', FNT: 'font', MSH: 'mesh', BLD: 'build',
+  // What a Build was called before it had its own name.
+  MDL: 'build',
 }
 
 const sizeLabel = (bytes: number) =>
