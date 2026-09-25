@@ -47,6 +47,24 @@ export type WorldBlock = {
   /** False for decoration you can walk through. */
   solid?: boolean
   /**
+   * Whether this part is held in place.
+   *
+   * **Nothing acts on this yet.** There is no part physics, so every part
+   * is anchored whatever this says. It is read and kept so that a World
+   * that means it does not lose it, and so that the day physics arrives
+   * nobody has to go back through their Worlds saying it again. Anything
+   * showing this to a person should say as much rather than implying a
+   * part will fall.
+   */
+  anchored?: boolean
+  /**
+   * Anything in the file this engine has not learned, carried rather than
+   * understood. See `keepUnknown`: it exists so that opening and saving a
+   * World in an application built against an older engine does not quietly
+   * delete what a newer one wrote.
+   */
+  more?: Record<string, unknown>
+  /**
    * A model from the Catalog, by content id, such as `MDL-1042`.
    *
    * A field rather than a kind of its own, so that everything already
@@ -101,6 +119,8 @@ export type WorldDecal = {
   scale?: [number, number]
   /** Where it sits on the face, in face widths. 0 is the middle. */
   offset?: [number, number]
+  /** Anything this engine has not learned, carried rather than understood. */
+  more?: Record<string, unknown>
   /**
    * How many times the picture repeats across the face, and up it.
    *
@@ -144,6 +164,8 @@ export type WorldSound = {
   playing?: boolean
   /** How far away it can still be heard, in stons. Positional sounds only. */
   reach?: number
+  /** Anything this engine has not learned, carried rather than understood. */
+  more?: Record<string, unknown>
 }
 
 /**
@@ -183,6 +205,8 @@ export type WorldLight = {
    * its place, and costs nothing until a script turns it on.
    */
   on?: boolean
+  /** Anything this engine has not learned, carried rather than understood. */
+  more?: Record<string, unknown>
 }
 
 /**
@@ -199,6 +223,8 @@ export type WorldLight = {
 export type WorldGroup = {
   id?: string
   kind: 'group'
+  /** Anything this engine has not learned, carried rather than understood. */
+  more?: Record<string, unknown>
   at: Vec3
   turn?: number
   parts: WorldPart[]
@@ -239,6 +265,23 @@ export type WorldManifest = {
   /** Sounds that are not anywhere in particular. Ambience. */
   sounds?: WorldSound[]
   blocks: WorldPart[]
+  /**
+   * Parts that move as one thing.
+   *
+   * Each group is a list of part ids. A weld is the one thing here that is
+   * not a field on a part, because it is a relationship between two of them
+   * rather than a property of either.
+   *
+   * **Nothing acts on this yet**, and it is written down rather than acted
+   * on deliberately: there is no part physics in the engine at all, so an
+   * unanchored part does not fall and a welded pair has nothing to fall
+   * together with. The shape is agreed now so that Worlds saved today still
+   * mean what they said when physics lands, rather than the field being
+   * designed twice and the first set of files being wrong.
+   */
+  welds?: string[][]
+  /** Anything this engine has not learned, carried rather than understood. */
+  more?: Record<string, unknown>
 }
 
 /** The old name, while anything still says it. */
@@ -264,6 +307,7 @@ function readSound(raw: any): WorldSound | null {
     // a World nobody keeps open.
     playing: raw.playing === true,
     reach: THREE.MathUtils.clamp(number(raw.reach, 40), 1, 4000),
+    more: keepUnknown(raw, ['id', 'kind', 'sound', 'volume', 'loop', 'playing', 'reach']),
   }
 }
 
@@ -302,7 +346,77 @@ function readLight(raw: any): WorldLight | null {
     // On unless the file says otherwise: somebody who adds a light wants a
     // light.
     on: raw.on !== false,
+    more: keepUnknown(raw, [
+      'id', 'kind', 'light', 'colour', 'brightness', 'range', 'angle', 'turn',
+      'face', 'on',
+    ]),
   }
+}
+
+/**
+ * Whatever a file said that this reader has not learned.
+ *
+ * The reader rebuilds a manifest out of the fields it knows, which means a
+ * field it does not know is gone the moment a World is opened and saved. For
+ * an application that opens and saves Worlds all day that is not a missing
+ * feature, it is silent data loss: somebody's work disappears and nothing
+ * says so.
+ *
+ * So anything unrecognised is kept to one side and handed back. It is never
+ * read, never executed, never given to three.js — it is carried. The caps
+ * are because this is user content like everything else here: a file cannot
+ * make the reader hold a megabyte of nonsense per part.
+ *
+ * Values are copied rather than referenced, so nothing downstream can reach
+ * back into the file's own objects.
+ */
+const MOST_UNKNOWN_KEYS = 32
+const DEEPEST_UNKNOWN = 6
+
+function keepUnknown(raw: any, known: string[]): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+
+  const copy = (value: unknown, depth: number): unknown => {
+    if (depth > DEEPEST_UNKNOWN) return undefined
+    if (value === null) return null
+    if (['string', 'number', 'boolean'].includes(typeof value)) {
+      // A string long enough to be a payload is not a property.
+      return typeof value === 'string' && value.length > 4096 ? undefined : value
+    }
+    if (Array.isArray(value)) {
+      return value.slice(0, 256).map((one) => copy(one, depth + 1)).filter((one) => one !== undefined)
+    }
+    if (typeof value === 'object') {
+      const out: Record<string, unknown> = {}
+      let count = 0
+      for (const [key, one] of Object.entries(value as object)) {
+        if (count >= MOST_UNKNOWN_KEYS) break
+        // Nothing that could reach a prototype travels.
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
+        const kept = copy(one, depth + 1)
+        if (kept === undefined) continue
+        out[key] = kept
+        count += 1
+      }
+      return out
+    }
+    // Functions, symbols and anything else a parser cannot have produced.
+    return undefined
+  }
+
+  const out: Record<string, unknown> = {}
+  let count = 0
+  for (const [key, value] of Object.entries(raw)) {
+    if (known.includes(key)) continue
+    if (count >= MOST_UNKNOWN_KEYS) break
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
+    const kept = copy(value, 0)
+    if (kept === undefined) continue
+    out[key] = kept
+    count += 1
+  }
+
+  return Object.keys(out).length ? out : undefined
 }
 
 /** Nothing here trusts the file: a manifest is user content like any other. */
@@ -345,6 +459,7 @@ export function readManifest(raw: unknown): WorldManifest {
         at: vec(part.at, [0, 0, 0]),
         turn: number(part.turn, 0),
         parts,
+        more: keepUnknown(part, ['id', 'kind', 'at', 'turn', 'parts']),
       }
     }
 
@@ -390,6 +505,10 @@ export function readManifest(raw: unknown): WorldManifest {
          * and a graphics card doing nothing useful.
          */
         repeat: pair(raw.repeat, 0.01, 512),
+        more: keepUnknown(raw, [
+          'id', 'kind', 'picture', 'face', 'transparency', 'colour', 'scale',
+          'offset', 'repeat',
+        ]),
       }
     }
 
@@ -416,7 +535,14 @@ export function readManifest(raw: unknown): WorldManifest {
       // A Catalog id, never an address. Same rule as a decal, a sound and
       // the sky.
       mesh: typeof part.mesh === 'string' && NAMED.test(part.mesh) ? part.mesh : undefined,
+      // Kept, not acted on. See the field.
+      anchored: part.anchored === undefined ? undefined : part.anchored !== false,
       children,
+      more: keepUnknown(part, [
+        'id', 'kind', 'shape', 'at', 'size', 'turn', 'colour', 'material',
+        'transparency', 'reflectance', 'solid', 'mesh', 'anchored', 'children',
+        'decal',
+      ]),
     }
   }
 
@@ -451,6 +577,23 @@ export function readManifest(raw: unknown): WorldManifest {
       .filter(Boolean)
       .slice(0, 32) as WorldSound[],
     blocks: data.blocks.map((one) => readPart(one, 0)).filter(Boolean) as WorldPart[],
+    /*
+     * Groups of part ids that move as one. Read and kept; nothing acts on
+     * them, because nothing falls yet. A group of fewer than two parts is
+     * not a weld, and the counts are capped for the same reason everything
+     * else here is: a file is somebody else's writing.
+     */
+    welds: (Array.isArray(data.welds) ? data.welds : [])
+      .filter((group: unknown) => Array.isArray(group))
+      .map((group: unknown[]) => group
+        .filter((one) => typeof one === 'string' && NAMED.test(one))
+        .slice(0, 256) as string[])
+      .filter((group: string[]) => group.length > 1)
+      .slice(0, 1024),
+    more: keepUnknown(data, [
+      'format', 'id', 'name', 'by', 'spawn', 'sky', 'light', 'camera',
+      'sounds', 'blocks', 'welds',
+    ]),
   }
 }
 

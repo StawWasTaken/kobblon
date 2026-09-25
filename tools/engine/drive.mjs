@@ -555,6 +555,61 @@ check('and the part keeps its own colour, so one model is any colour',
 check('a model that cannot be fetched leaves the part as it was',
   modelled.fallback === 'BoxGeometry', 'still a box, not a hole in the World')
 
+// -- 13h. welds, anchored, and fields this engine has not learned
+const carried = await p.evaluate(() => {
+  const written = {
+    format: 1, id: 'k', name: 'Kept', spawn: { at: [0, 4, 0] },
+    // Three things a newer Workspace might write that this engine does not
+    // know about. None of them should survive as behaviour; all of them
+    // should survive as data.
+    physics: { solver: 'rapier', steps: 4 },
+    welds: [['a', 'b'], ['c'], ['d', 'e', 'f']],
+    blocks: [
+      { id: 'a', kind: 'box', at: [0, 0, 0], size: [4, 4, 4], anchored: false,
+        surfaceGui: { text: 'hello', size: [2, 1] }, massKg: 12 },
+      { id: 'b', kind: 'box', at: [6, 0, 0], size: [4, 4, 4] },
+    ],
+  }
+  const read = window.readManifest(written)
+  const part = read.blocks.find((one) => one.id === 'a')
+
+  // And a file trying to reach a prototype through an unknown field.
+  const nasty = window.readManifest({
+    format: 1, id: 'n', name: 'N', spawn: { at: [0, 4, 0] },
+    blocks: [{ id: 'z', kind: 'box', at: [0, 0, 0], size: [1, 1, 1],
+      whatever: JSON.parse('{"__proto__": {"polluted": true}, "fine": 1}') }],
+  })
+
+  return {
+    welds: read.welds,
+    anchored: part.anchored,
+    kept: part.more,
+    worldKept: read.more,
+    // The known fields are still read as themselves, not swept into `more`.
+    notSwept: part.more?.size === undefined && part.more?.at === undefined,
+    nasty: nasty.blocks[0].more?.whatever,
+    polluted: ({}).polluted === true,
+  }
+})
+check('a weld is read and kept, and a group of one is not a weld',
+  carried.welds.length === 2
+  && carried.welds[0].join() === 'a,b'
+  && carried.welds[2] === undefined,
+  `${carried.welds.length} groups kept out of 3 written`)
+check('anchored is read and kept, though nothing acts on it yet',
+  carried.anchored === false, 'said, kept, and honestly not simulated')
+check('a field this engine has not learned survives being opened',
+  carried.kept?.surfaceGui?.text === 'hello' && carried.kept?.massKg === 12,
+  'opening and saving no longer deletes what a newer Workspace wrote')
+check('and so does one on the World itself',
+  carried.worldKept?.physics?.solver === 'rapier', 'carried, never read')
+check('while the fields it does know stay where they belong', carried.notSwept,
+  'size and at are read, not carried')
+check('a file cannot reach a prototype through a field nobody reads',
+  carried.polluted === false && carried.nasty?.fine === 1
+  && carried.nasty?.polluted === undefined,
+  'the dangerous key is dropped, the rest is kept')
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({
