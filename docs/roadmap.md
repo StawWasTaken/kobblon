@@ -10,6 +10,65 @@ website and its builder are the first generation and stay. `docs/audit.md`
 lists what in the architecture would make the rest awkward, and what to do
 about each of them.
 
+## The sweep — tomorrow, both sessions, before anything new
+
+Staw, after looking at the whole thing at once: there are parts of the old
+website creator still lying about, attempts at copying Roblox that half
+landed, and things that work badly and were left because something else was
+urgent. This is the day for that, across the website, the Workspace and the
+Launcher, and it comes before the next feature rather than after it.
+
+**Are we building what we said we were?** `docs/direction.md` and
+`docs/neoclassic.md` say what Kobblon is. Read both, then walk the product
+and name the places where it has drifted — not to redesign them, to list
+them. Copy the system, not the look; only what a week-old platform needs;
+nothing sterile; no fake functionality.
+
+**The leftovers.** The old Space creator, the abandoned halves, the things
+that only work if you hold them right. Each is one of three: finish it,
+delete it, or write down why it stays. Something left in place because
+deleting it felt rude is the worst of the three — it teaches everybody that
+broken things are normal here.
+
+**Coherence.** One name for one thing, in both windows: `@/lib/kinds` is the
+start of that and it should not be the end. The same words, the same icons,
+the same shape of dialog, the same idea of what publishing means. Two
+products that share a database are still two products.
+
+**The code reading as though a person wrote it.** No comment that explains
+the obvious, no comment that narrates the line beneath it, nothing that reads
+like it was generated to fill a space. A comment earns its place by saying
+*why*, or by warning the next person off a rake they would otherwise step on.
+The rest should be deleted. This applies to both repositories and it is worth
+doing with fresh eyes rather than by search.
+
+**Bugs and rough edges** in what already exists, before more is piled on top.
+`npm run engine:check`, `npm run types:check`, the migration rule in
+`CLAUDE.md`, and actually driving the things nobody has driven since they
+were written.
+
+**"Making sure people cannot steal our scripts" — the honest version.**
+Worth writing down plainly now so the day is not spent chasing it:
+
+- **Anything shipped to a browser or an application can be read.** Minifying
+  and bundling raise the cost of reading it; they do not make it private, and
+  no technique does. Anybody who tells you otherwise is selling something.
+- **So nothing that must stay secret goes in the client.** No service-role
+  key, no private API key, no signing secret. The publishable key is fine —
+  it is published on purpose and the row policies are what protect the data.
+- **What actually protects Kobblon is the server saying no.** Row Level
+  Security, the RPCs, the screening triggers, the checks in `check_texture`
+  and `guard_asset_update`. A rule enforced only in the client is a
+  suggestion, and it is exactly the class of thing this sweep should hunt
+  for: *is there anything we decided in JavaScript that the database does not
+  also decide?*
+- **What is worth doing:** keep the engine and the Workspace's own formats
+  documented and versioned so a copy is obvious; keep Worlds' assets resolved
+  by id through our own resolver rather than by address; and make sure a
+  World cannot reach anything private just by asking the engine nicely.
+
+That last bullet is the real work. The rest is hygiene.
+
 ## Big pieces
 
 ### The Spaces creator
