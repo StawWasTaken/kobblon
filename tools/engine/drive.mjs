@@ -931,7 +931,10 @@ check('and no more than three stack up at once', bubbling.stacked <= 3,
 const trussed = await p.evaluate(async () => {
   const bars = (geometry) => geometry.getAttribute('position').count / 24
   const short = window.tiledGeometry('truss', [4, 8, 4], 0)
+  const middling = window.tiledGeometry('truss', [4, 16, 4], 0)
   const tall = window.tiledGeometry('truss', [4, 24, 4], 0)
+  // Widened rather than lengthened: more truss beside itself.
+  const wide = window.tiledGeometry('truss', [12, 8, 4], 0)
 
   // The bar in the geometry, back in world stons: the unit box is divided
   // through by the size, so a bar of one thickness comes out the same
@@ -964,16 +967,30 @@ const trussed = await p.evaluate(async () => {
   const solids = window.built().solids
   return {
     shortBars: bars(short),
+    middlingBars: bars(middling),
     tallBars: bars(tall),
+    wideBars: bars(wide),
     shortBar: widthOf(short, [4, 8, 4]),
     tallBar: widthOf(tall, [4, 24, 4]),
     climbable: solids.filter((one) => one.climb).length,
     solidsTotal: solids.length,
   }
 })
-check('a truss three times as long has three times the lattice',
-  Math.abs(trussed.tallBars / trussed.shortBars - 3) < 0.35,
-  `${trussed.shortBars} bars at 8 stons, ${trussed.tallBars} at 24`)
+/*
+ * Each bay costs the same, which is what repeating means. Not three times
+ * the bars for three times the length: the legs are shared down the whole
+ * thing and a ring is shared between the bays either side of it, so the
+ * count grows by a fixed amount per bay rather than in proportion. The
+ * first version of this check asserted the proportion and was measuring
+ * the offset.
+ */
+check('every bay of a truss costs the same, so it repeats rather than stretches',
+  trussed.middlingBars - trussed.shortBars === trussed.tallBars - trussed.middlingBars
+  && trussed.tallBars > trussed.shortBars,
+  `${trussed.shortBars} bars at 8 stons, ${trussed.middlingBars} at 16, ${trussed.tallBars} at 24`)
+check('and a truss made wider is more truss beside itself',
+  trussed.wideBars > trussed.shortBars * 2,
+  `${trussed.shortBars} bars at 4 wide, ${trussed.wideBars} at 12`)
 check('and its bars are the same thickness at either length',
   Math.abs(trussed.shortBar - trussed.tallBar) < 0.01,
   `${trussed.shortBar} stons either way, rather than stretched`)

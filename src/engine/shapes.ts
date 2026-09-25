@@ -119,9 +119,19 @@ const TRUSS_BAR = 0.5
 function truss(size: [number, number, number]): THREE.BufferGeometry {
   const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), TRUSS_BAR * 2)) as [number, number, number]
 
-  // At least one bay: a part shorter than a bay is a stub of truss, not an
-  // empty box.
+  /*
+   * The bay repeats in all three directions, not only up.
+   *
+   * A truss made wider is more truss beside itself, the way a wall made
+   * wider is more bricks: the cross section stays the size it is and the
+   * count goes up. Stretching it sideways would give one fat tower whose
+   * bars grow with it, which is the same lie as a stretched texture.
+   */
+  const across = Math.max(1, Math.round(sx / TRUSS_BAY))
+  const deep = Math.max(1, Math.round(sz / TRUSS_BAY))
   const bays = Math.max(1, Math.round(sy / TRUSS_BAY))
+  const cellX = sx / across
+  const cellZ = sz / deep
   const bay = sy / bays
 
   const bars: THREE.BufferGeometry[] = []
@@ -139,42 +149,64 @@ function truss(size: [number, number, number]): THREE.BufferGeometry {
     bars.push(bar)
   }
 
-  const legX = (sx - TRUSS_BAR) / 2
-  const legZ = (sz - TRUSS_BAR) / 2
+  /* Where the grid lines fall, held in from the edge by half a bar so the
+   * legs sit inside the part rather than half outside it. */
+  const lineX = (i: number) => -sx / 2 + TRUSS_BAR / 2 + (i * (sx - TRUSS_BAR)) / across
+  const lineZ = (j: number) => -sz / 2 + TRUSS_BAR / 2 + (j * (sz - TRUSS_BAR)) / deep
 
-  // The four legs, corner to corner, the whole length.
-  for (const x of [-legX, legX]) {
-    for (const z of [-legZ, legZ]) put(TRUSS_BAR, sy, TRUSS_BAR, [x, 0, z])
+  // A leg at every crossing of the grid, the whole height.
+  for (let i = 0; i <= across; i += 1) {
+    for (let j = 0; j <= deep; j += 1) put(TRUSS_BAR, sy, TRUSS_BAR, [lineX(i), 0, lineZ(j)])
   }
 
-  for (let i = 0; i < bays; i += 1) {
-    const middle = -sy / 2 + bay * (i + 0.5)
-    const top = -sy / 2 + bay * (i + 1)
-
-    /*
-     * A diagonal across each of the four faces, alternating its lean bay by
-     * bay so the lattice zigzags rather than leaning one way for ever.
-     */
-    const lean = i % 2 === 0 ? 1 : -1
-    const flat = Math.hypot(sx - TRUSS_BAR, bay)
-    const deep = Math.hypot(sz - TRUSS_BAR, bay)
-    const angleX = Math.atan2(bay * lean, sx - TRUSS_BAR)
-    const angleZ = Math.atan2(bay * lean, sz - TRUSS_BAR)
-
-    for (const z of [-legZ, legZ]) {
-      put(flat, TRUSS_BAR, TRUSS_BAR, [0, middle, z], angleX - Math.PI / 2 + Math.PI / 2, 'z')
+  /*
+   * A ring at every bay line, including the two ends.
+   *
+   * The ends are the point: without them the legs run past the last
+   * diagonal and the truss finishes in four spikes, which is what a cut
+   * length of truss looks like rather than a finished one.
+   */
+  for (let k = 0; k <= bays; k += 1) {
+    const y = -sy / 2 + bay * k
+    for (let j = 0; j <= deep; j += 1) {
+      for (let i = 0; i < across; i += 1) {
+        put(cellX, TRUSS_BAR, TRUSS_BAR, [(lineX(i) + lineX(i + 1)) / 2, y, lineZ(j)])
+      }
     }
-    for (const x of [-legX, legX]) {
-      put(TRUSS_BAR, TRUSS_BAR, deep, [x, middle, 0], -angleZ, 'x')
+    for (let i = 0; i <= across; i += 1) {
+      for (let j = 0; j < deep; j += 1) {
+        put(TRUSS_BAR, TRUSS_BAR, cellZ, [lineX(i), y, (lineZ(j) + lineZ(j + 1)) / 2])
+      }
+    }
+  }
+
+  /*
+   * Diagonals, on the faces somebody can see: the outside of the block.
+   * An interior cell's bracing is hidden behind its neighbours and would
+   * only cost triangles. The lean alternates bay by bay, so the lattice
+   * zigzags rather than leaning one way for ever.
+   */
+  for (let k = 0; k < bays; k += 1) {
+    const middle = -sy / 2 + bay * (k + 0.5)
+    const lean = k % 2 === 0 ? 1 : -1
+
+    for (let i = 0; i < across; i += 1) {
+      const x = (lineX(i) + lineX(i + 1)) / 2
+      const span = Math.hypot(cellX, bay)
+      const tilt = Math.atan2(bay * lean, cellX)
+      for (const j of deep > 0 ? [0, deep] : [0]) {
+        if (j !== 0 && j !== deep) continue
+        put(span, TRUSS_BAR, TRUSS_BAR, [x, middle, lineZ(j)], tilt, 'z')
+      }
     }
 
-    // A ring at the top of every bay but the last, which the legs already
-    // close.
-    if (i < bays - 1) {
-      put(sx, TRUSS_BAR, TRUSS_BAR, [0, top, -legZ])
-      put(sx, TRUSS_BAR, TRUSS_BAR, [0, top, legZ])
-      put(TRUSS_BAR, TRUSS_BAR, sz, [-legX, top, 0])
-      put(TRUSS_BAR, TRUSS_BAR, sz, [legX, top, 0])
+    for (let j = 0; j < deep; j += 1) {
+      const z = (lineZ(j) + lineZ(j + 1)) / 2
+      const span = Math.hypot(cellZ, bay)
+      const tilt = Math.atan2(bay * lean, cellZ)
+      for (const i of [0, across]) {
+        put(TRUSS_BAR, TRUSS_BAR, span, [lineX(i), middle, z], -tilt, 'x')
+      }
     }
   }
 
