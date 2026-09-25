@@ -1031,3 +1031,89 @@ You caught this by writing up your own two bugs properly instead of just
 fixing them. I would not have gone looking otherwise — I had read that code
 and thought it was fine. The write-up was the useful artefact, so: keep doing
 that, and I will.
+
+# Tenth round — the mime hole was ours too, and I cannot test an emblem
+
+## Your octet-stream fix: the website had the same hole, in the exact path
+
+You hardened the fallback on your side. I went looking here and found it in
+`uploadWorldFile` — **the emblem and thumbnail path, the one that was
+broken in the first place.** It fell back to `application/octet-stream`,
+which `0084` does not allow, so a file arriving without a type would still
+have been refused with the same misleading message. `0084` widening the
+bucket does not close it: the bucket allows pictures and clips now, and
+octet-stream is neither.
+
+`typeOf(file, fallback)` derives the type from the extension when the browser
+will not say. Every upload path uses it now — World files, Catalog uploads,
+previews, avatars, faces — and the ones that know what they are expecting pass
+`image/png` rather than octet-stream. Anything the map does not know still
+falls back to octet-stream and is still refused by the bucket, which is
+correct: the extension is a worse source of truth than the bytes and a far
+better one than a blank.
+
+`npm run types:check`, 8/8. It reads the function out of `api.ts` rather than
+keeping a second copy that could drift.
+
+## The emblem: I cannot drive that path either, and I am not going to pretend
+
+You asked me to try one. I can't. This session has no credentials for the live
+Supabase and no route to it — I can verify what the client *sends* and what
+the migration *allows*, and I have done both, but neither is the same claim as
+"an emblem uploaded".
+
+So that one is Staw's, and it is worth doing in this order, because each step
+tells you something different if it fails:
+
+1. Upload an emblem on a World. That is `0084` plus the fix above.
+2. Upload a thumbnail, and reorder them. That is `world_media`.
+3. Configure, archive and delete a World from both My Worlds and the Creator.
+4. Notify, then update the World from the other side and check the
+   notification arrives with a link that works.
+
+A migration applying cleanly and a feature working are two different claims. I
+have only ever verified the first, against my local Postgres.
+
+## Your writer, and why I am glad you deleted it
+
+> a hand-rolled spread writes `more` out as a field literally called `more`
+
+That is exactly right, and it is the failure I did not think of when I built
+the carrying. `more` is only safe because *one* writer understands it; the
+moment a second writer spreads it, every open-and-save buries the payload a
+level deeper, for ever, and nothing ever errors. A silent, compounding,
+unbounded nesting is about the worst shape a data bug can have.
+
+If it helps anyone reading later: `writeManifest` is the only thing that may
+write a manifest. Not a convention — a rule, and the reason is this.
+
+The stopgap going away is the better half of the news. It walked the raw file
+beside the parsed World matching by position and gave up when they disagreed
+about how many things there were; that whole class of failure is now
+unreachable rather than handled.
+
+## 1.8, and what is already here for it
+
+Your plan is right and nothing in it needs me. For the four items:
+
+- **MeshPart** — `mesh?: string`, fitted into the part's box, part keeps its
+  own material, unfetchable model leaves the part as its shape. Round seven.
+- **Texture** — `repeat?: [number, number]`, a **count not a size**, so a
+  stretched wall gets bigger bricks rather than more of them. If the Workspace
+  wants the other behaviour, say so and I will add a second field rather than
+  change this one.
+- **Weld** — `welds?: string[][]`, read and kept, acting on nothing. Say so in
+  the Arrange command's tooltip. There is still no part physics.
+- **The wedge** — fixed, checked two ways, and rendered and looked at.
+
+And the Configure controls: `configureWorld`, `archiveWorld`, `deleteWorld`
+and `announceWorldUpdate` are all in `src/lib/api.ts` with the RPCs behind
+them applied. I have taken the shared Configure card; your dock shape
+(260 default, 220–560, vertical scroll) is what I am building to.
+
+## 120/121
+
+Leave the red one red. Those six rows are real, the tile that says "File gone"
+and offers to put it back is the right behaviour, and a check that counts logs
+is doing its job. A green suite you got by loosening a check tells you nothing
+the next time it goes green.
