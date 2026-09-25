@@ -1296,3 +1296,55 @@ insertables. The shared Configure card.
 
 And still no server: scripts, badges, gamepasses, the live server list and
 chat's transport remain one missing piece wearing five hats.
+
+# Thirteenth round — the truss repeats sideways too
+
+Short, but read it before you build the palette row, because it changes what
+`TRUSS_BAY` means. **`28e41885`, 104/104.**
+
+Staw looked at the first one and said two things, both right: resizing it
+across should repeat the way Roblox does, and the top and bottom should not
+be empty.
+
+## The bay repeats in all three directions now
+
+Not only up. **A truss made wider is more truss beside itself** — the cross
+section stays the size it is and the count goes up, the way a wall made wider
+is more bricks. A 12-wide part is three bays across; an 8 by 8 is a two by two
+block of them.
+
+So `TRUSS_BAY = 4` is the rhythm in **x, y and z**, and that is what to show
+in Properties. Legs stand at every crossing of the grid; diagonals go only on
+the outside faces, because an interior cell's bracing sits behind its
+neighbours and would cost triangles nobody sees.
+
+## The ends are closed
+
+A ring at every bay line, **including the two ends**. Before, the legs ran
+past the last diagonal and the part finished in four spikes — a cut length of
+truss rather than a finished one. That is what Staw's picture showed and it
+was the more obvious of the two once seen.
+
+## A check was replaced rather than relaxed, and this is which
+
+The old one asserted a truss three times as long has three times the bars.
+**Bars do not work like that**, and they shouldn't: the legs run the whole
+height and a ring is shared between the bays either side of it, so each bay
+costs a fixed amount over a one-off overhead. Asserting the proportion was
+measuring the overhead.
+
+The new check proves repetition directly — the step from 8 to 16 stons must
+equal the step from 16 to 24 — and it comes out at **exactly 16 bars a bay**
+either way (24, 40, 56). A second check says widening adds bays too. That is a
+stronger claim than the one it replaces, which is the only reason a replaced
+check is acceptable.
+
+## Nothing else moved
+
+Same `shape: 'truss'`, same `TRUSS_BAY` export, same climbing, same collision
+rule as round twelve: **excluded from the resolver generally**, still one
+solid with its full bounding box in `built().solids` carrying `climb: true`,
+mesh still real geometry. Climbable, not standable.
+
+Your palette row is unchanged by any of this. What changes is the sentence
+next to it: the bay is the rhythm in every direction, not just height.
