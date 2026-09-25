@@ -6,7 +6,7 @@
  * while it is being built, and so a test can step it frame by frame.
  */
 import {
-  Engine, applyDecals, applyMeshes, buildSky, geometryFor, readManifest, stillIntent,
+  Engine, applyDecals, applyMeshes, buildSky, geometryFor, readManifest, writeManifest, stillIntent,
   MOST_LIGHTS, type Intent,
 } from '@/engine'
 
@@ -32,6 +32,7 @@ Object.assign(window, {
   applyMeshes,
   geometryFor,
   readManifest,
+  writeManifest,
   MOST_LIGHTS,
   resolveFake: async (id: string) => drawn.get(id) ?? null,
   /** A plain picture of a given shape, for checking how a decal is fitted. */

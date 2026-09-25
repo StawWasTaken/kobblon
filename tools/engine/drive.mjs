@@ -610,6 +610,98 @@ check('a file cannot reach a prototype through a field nobody reads',
   && carried.nasty?.polluted === undefined,
   'the dangerous key is dropped, the rest is kept')
 
+// -- 13i. the new manifest shape, and the old one still opening
+const shaped = await p.evaluate(() => {
+  // The same World, said both ways.
+  const old = {
+    format: 1, id: 'm', name: 'Manifest', spawn: { at: [0, 4, 0] },
+    sounds: [{ kind: 'sound', sound: 'SND-1', loop: true }],
+    blocks: [
+      { id: 'wall', kind: 'box', at: [0, 5, 0], size: [20, 10, 2], colour: '#b8563a',
+        material: 'brick', children: [
+          { id: 'sign', kind: 'decal', picture: 'IMG-1', face: 'front', repeat: [4, 2] },
+          { id: 'bulb', kind: 'light', light: 'point', brightness: 2 },
+        ] },
+      { id: 'bunch', kind: 'group', at: [10, 0, 0], parts: [
+        { id: 'inner', kind: 'box', at: [0, 1, 0], size: [2, 2, 2] },
+      ] },
+    ],
+  }
+
+  const nodes = {
+    format: 2, id: 'm', name: 'Manifest', spawn: { at: [0, 4, 0] },
+    sounds: [{ class: 'Sound', properties: { sound: 'SND-1', loop: true } }],
+    parts: [
+      { class: 'Part',
+        properties: { id: 'wall', at: [0, 5, 0], size: [20, 10, 2], colour: '#b8563a', material: 'brick' },
+        children: [
+          { class: 'Decal', properties: { id: 'sign', picture: 'IMG-1', face: 'front', repeat: [4, 2] } },
+          { class: 'Light', properties: { id: 'bulb', light: 'point', brightness: 2 } },
+        ] },
+      { class: 'Group', properties: { id: 'bunch', at: [10, 0, 0] }, children: [
+        { class: 'Part', properties: { id: 'inner', at: [0, 1, 0], size: [2, 2, 2] } },
+      ] },
+    ],
+  }
+
+  const a = window.readManifest(old)
+  const b = window.readManifest(nodes)
+
+  // Read the same, whichever way they were written.
+  const same = JSON.stringify(a.blocks) === JSON.stringify(b.blocks)
+    && JSON.stringify(a.sounds) === JSON.stringify(b.sounds)
+
+  // Written back out, and read again: nothing lost on the way round.
+  const written = window.writeManifest(a)
+  const again = window.readManifest(written)
+  const round = JSON.stringify(again.blocks) === JSON.stringify(a.blocks)
+
+  // A field this engine has never learned survives the round trip, which is
+  // the point of writing in the new shape at all.
+  const withExtra = window.readManifest({
+    format: 1, id: 'x', name: 'X', spawn: { at: [0, 4, 0] },
+    blocks: [{ id: 'p', kind: 'box', at: [0, 0, 0], size: [1, 1, 1],
+      surfaceGui: { text: 'kept' } }],
+  })
+  const outAgain = window.readManifest(window.writeManifest(withExtra))
+
+  return {
+    same,
+    round,
+    format: written.format,
+    topKey: Array.isArray(written.parts) && !written.blocks,
+    firstClass: written.parts[0].class,
+    childClasses: written.parts[0].children.map((one) => one.class),
+    groupChildren: written.parts[1].children.length,
+    // Defaults a reader filled in are not written back as though somebody
+    // typed them.
+    noDefaults: written.parts[0].properties.reflectance === undefined
+      || a.blocks[0].reflectance !== undefined,
+    carried: outAgain.blocks[0].more?.surfaceGui?.text,
+    mixed: (() => {
+      // A file that says 1 but holds nodes, which is what a hand edit looks
+      // like, opens rather than refusing on a technicality.
+      const odd = window.readManifest({
+        format: 1, id: 'o', name: 'O', spawn: { at: [0, 4, 0] },
+        blocks: [{ class: 'Part', properties: { id: 'q', at: [0, 0, 0], size: [3, 3, 3] } }],
+      })
+      return odd.blocks[0].size.join()
+    })(),
+  }
+})
+check('a World written as nodes reads the same as one written the old way',
+  shaped.same, 'one reader, one set of checks, two spellings')
+check('and what is written out is the new shape',
+  shaped.format === 2 && shaped.topKey && shaped.firstClass === 'Part'
+  && shaped.childClasses.join() === 'Decal,Light' && shaped.groupChildren === 1,
+  `format ${shaped.format}, parts, and classes on every node`)
+check('a World survives being read, written and read again', shaped.round,
+  'nothing lost on the way round')
+check('including a field this engine has never learned',
+  shaped.carried === 'kept', 'carried through the migration, not deleted by it')
+check('the old format still opens, and so does a file that mixes them',
+  shaped.mixed === '3,3,3', 'the node decides its spelling, not the header')
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({

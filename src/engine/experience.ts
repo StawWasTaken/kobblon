@@ -307,7 +307,9 @@ function readSound(raw: any): WorldSound | null {
     // a World nobody keeps open.
     playing: raw.playing === true,
     reach: THREE.MathUtils.clamp(number(raw.reach, 40), 1, 4000),
-    more: keepUnknown(raw, ['id', 'kind', 'sound', 'volume', 'loop', 'playing', 'reach']),
+    more: keepUnknown(raw, [
+      'id', 'kind', 'sound', 'volume', 'loop', 'playing', 'reach', 'children', 'parts',
+    ]),
   }
 }
 
@@ -348,7 +350,7 @@ function readLight(raw: any): WorldLight | null {
     on: raw.on !== false,
     more: keepUnknown(raw, [
       'id', 'kind', 'light', 'colour', 'brightness', 'range', 'angle', 'turn',
-      'face', 'on',
+      'face', 'on', 'children', 'parts',
     ]),
   }
 }
@@ -419,12 +421,113 @@ function keepUnknown(raw: any, known: string[]): Record<string, unknown> | undef
   return Object.keys(out).length ? out : undefined
 }
 
+/**
+ * The shape a World is written in from now on.
+ *
+ * `{ class, properties, children }` — one shape for everything, rather than a
+ * `kind` on a part, a `parts` list on a group, a `children` list on a part and
+ * a `sounds` list on the World. A tree walker written once works on all of
+ * it, a Properties panel is "show the properties of the selected node", and a
+ * new class is a name rather than a new branch in every tool that touches a
+ * World.
+ *
+ * Today's format still opens, and is not deprecated in any sense that matters
+ * to somebody with a World saved on their disk. It is read into the same
+ * thing the new one is read into, by the same checks, and there is exactly
+ * one validation path because two would eventually disagree and the
+ * disagreement would be the security hole.
+ */
+export type WorldNode = {
+  class: WorldClass
+  properties?: Record<string, unknown>
+  children?: WorldNode[]
+}
+
+export type WorldClass = 'Part' | 'Group' | 'Decal' | 'Sound' | 'Light'
+
+/** What each class is called in the old format, and the other way round. */
+export const CLASSES: Record<WorldClass, string> = {
+  Part: 'box',
+  Group: 'group',
+  Decal: 'decal',
+  Sound: 'sound',
+  Light: 'light',
+}
+
+const CLASS_OF: Record<string, WorldClass> = {
+  box: 'Part', group: 'Group', decal: 'Decal', sound: 'Sound', light: 'Light',
+}
+
+/**
+ * A new-shape node, flattened into the shape the reader already validates.
+ *
+ * Deliberately a translation rather than a second reader. Everything a file
+ * can say still goes through one set of checks, one set of clamps and one set
+ * of refusals; this only decides which of two spellings it arrived in.
+ *
+ * A node's own children go where that class keeps them: a Group's in `parts`,
+ * everything else's in `children`. Bounded the same way the reader is,
+ * because a file that nests ten thousand deep is a file written to break
+ * something.
+ */
+function flatten(node: any, depth = 0): any {
+  if (!node || typeof node !== 'object') return null
+  if (depth > 16) return null
+
+  const kind = CLASSES[node.class as WorldClass]
+  if (!kind) return null
+
+  const properties = node.properties && typeof node.properties === 'object'
+    ? node.properties as Record<string, unknown>
+    : {}
+
+  const inside = Array.isArray(node.children)
+    ? node.children.slice(0, 20000).map((one: unknown) => flatten(one, depth + 1)).filter(Boolean)
+    : []
+
+  // `class`, `properties` and `children` are the shape; everything else a
+  // node says is a property, so a file written slightly wrong still opens.
+  const { class: _class, properties: _properties, children: _children, ...loose } = node
+
+  /*
+   * An empty list is not written. A decal has no children and never did;
+   * handing it `children: []` made the reader see a field it did not know
+   * and dutifully carry it, so the same World read two different ways
+   * depending on which spelling it arrived in.
+   */
+  const held = inside.length
+    ? (kind === 'group' ? { parts: inside } : { children: inside })
+    : {}
+
+  return { ...loose, ...properties, kind, ...held }
+}
+
+/** Whether anything in this file is written the new way. */
+const isNodes = (list: unknown[]) =>
+  list.some((one) => one && typeof one === 'object' && typeof (one as any).class === 'string')
+
 /** Nothing here trusts the file: a manifest is user content like any other. */
 export function readManifest(raw: unknown): WorldManifest {
   const data = raw as Partial<WorldManifest>
   if (!data || typeof data !== 'object') throw new Error('That World is not readable.')
-  if (data.format !== 1) throw new Error('That World was made for another version of Kobblon.')
-  if (!Array.isArray(data.blocks)) throw new Error('That World has nothing in it.')
+  /*
+   * 1 is the old shape, 2 is `{ class, properties, children }`. Both open,
+   * and a file that says 2 while holding old-shaped parts, or the other way
+   * round, opens too: the spelling is decided per node rather than by what
+   * the header claims, because the header is the part somebody hand-edits.
+   */
+  if (data.format !== 1 && data.format !== 2) {
+    throw new Error('That World was made for another version of Kobblon.')
+  }
+
+  // `parts` is what the new shape calls the World's own children. `blocks`
+  // is what the old one called them, and still works.
+  const top: unknown[] = Array.isArray((data as any).parts) ? (data as any).parts
+    : Array.isArray(data.blocks) ? data.blocks
+    : []
+  if (!top.length) throw new Error('That World has nothing in it.')
+
+  const written: any[] = isNodes(top) ? top.map((one) => flatten(one)).filter(Boolean) : top
 
   const vec = (value: unknown, fallback: Vec3): Vec3 => (
     Array.isArray(value) && value.length === 3 && value.every((n) => Number.isFinite(n))
@@ -459,7 +562,7 @@ export function readManifest(raw: unknown): WorldManifest {
         at: vec(part.at, [0, 0, 0]),
         turn: number(part.turn, 0),
         parts,
-        more: keepUnknown(part, ['id', 'kind', 'at', 'turn', 'parts']),
+        more: keepUnknown(part, ['id', 'kind', 'at', 'turn', 'parts', 'children']),
       }
     }
 
@@ -507,7 +610,7 @@ export function readManifest(raw: unknown): WorldManifest {
         repeat: pair(raw.repeat, 0.01, 512),
         more: keepUnknown(raw, [
           'id', 'kind', 'picture', 'face', 'transparency', 'colour', 'scale',
-          'offset', 'repeat',
+          'offset', 'repeat', 'children', 'parts',
         ]),
       }
     }
@@ -573,10 +676,11 @@ export function readManifest(raw: unknown): WorldManifest {
       },
     },
     sounds: (Array.isArray(data.sounds) ? data.sounds : [])
+      .map((one: any) => (one && typeof one.class === 'string' ? flatten(one) : one))
       .map((one) => readSound(one))
       .filter(Boolean)
       .slice(0, 32) as WorldSound[],
-    blocks: data.blocks.map((one) => readPart(one, 0)).filter(Boolean) as WorldPart[],
+    blocks: written.map((one) => readPart(one, 0)).filter(Boolean) as WorldPart[],
     /*
      * Groups of part ids that move as one. Read and kept; nothing acts on
      * them, because nothing falls yet. A group of fewer than two parts is
@@ -592,8 +696,58 @@ export function readManifest(raw: unknown): WorldManifest {
       .slice(0, 1024),
     more: keepUnknown(data, [
       'format', 'id', 'name', 'by', 'spawn', 'sky', 'light', 'camera',
-      'sounds', 'blocks', 'welds',
+      'sounds', 'blocks', 'parts', 'welds',
     ]),
+  }
+}
+
+/**
+ * A World, written back out in the new shape.
+ *
+ * The reader takes either spelling; this is the one that is written, so that
+ * a World opened from the old format and saved comes out as nodes, and the
+ * migration happens by people using their own Worlds rather than by a flag
+ * day nobody can schedule.
+ *
+ * Whatever was carried in `more` goes back into the node's properties, which
+ * is the whole point of having carried it: a field this engine never learned
+ * was written by something, and saving must not be how it disappears.
+ *
+ * Only what a part actually said is written. A reader fills in defaults, and
+ * writing those back would turn every open-and-save into a diff of a hundred
+ * lines nobody typed.
+ */
+export function writeManifest(manifest: WorldManifest): Record<string, unknown> {
+  const properties = (part: WorldPart): Record<string, unknown> => {
+    const { kind, more, ...rest } = part as Record<string, unknown> & { kind: string }
+    delete (rest as any).children
+    delete (rest as any).parts
+    const out: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(rest)) {
+      if (value !== undefined) out[key] = value
+    }
+    return { ...out, ...(more ?? {}) }
+  }
+
+  const node = (part: WorldPart): WorldNode => {
+    const children = part.kind === 'group' ? part.parts
+      : part.kind === 'box' ? part.children ?? []
+      : []
+    return {
+      class: CLASS_OF[part.kind] ?? 'Part',
+      properties: properties(part),
+      ...(children.length ? { children: children.map(node) } : {}),
+    }
+  }
+
+  const { blocks, sounds, more, format: _format, ...rest } = manifest
+
+  return {
+    format: 2,
+    ...rest,
+    ...(sounds?.length ? { sounds: sounds.map(node) } : {}),
+    parts: blocks.map(node),
+    ...(more ?? {}),
   }
 }
 
