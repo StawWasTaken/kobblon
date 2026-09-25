@@ -1054,6 +1054,13 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
 export async function applyMeshes(
   built: BuiltWorld,
   resolveAsset?: (id: string) => Promise<string | null>,
+  /*
+   * Whether the World these are for is still the one on screen. A model can
+   * take a while to arrive, and a player who has already left for another
+   * World should not have this one's geometry written into objects nothing
+   * is looking at.
+   */
+  stillWanted: () => boolean = () => true,
 ) {
   if (!resolveAsset) return
 
@@ -1069,7 +1076,7 @@ export async function applyMeshes(
       if (!url) return
 
       const model = await loader.loadAsync(url).catch(() => null)
-      if (!model) return
+      if (!model || !stillWanted()) return
 
       /*
        * Everything in the file as one geometry, in the file's own space,
@@ -1123,6 +1130,8 @@ export async function applyMeshes(
 export async function applyDecals(
   built: BuiltWorld,
   resolveAsset?: (id: string) => Promise<string | null>,
+  /** Whether the World these are for is still the one on screen. */
+  stillWanted: () => boolean = () => true,
 ) {
   if (!resolveAsset) return
 
@@ -1146,7 +1155,7 @@ export async function applyDecals(
       if (!url) return
 
       const image = await loader.loadAsync(url).catch(() => null)
-      if (!image) return
+      if (!image || !stillWanted()) return
 
       image.colorSpace = THREE.SRGBColorSpace
 

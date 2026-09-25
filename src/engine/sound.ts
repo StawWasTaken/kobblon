@@ -67,7 +67,12 @@ export class SoundService {
    * Loading does not make anything audible: a sound is heard when `playing`
    * said so, or when somebody asks afterwards.
    */
-  async load(built: BuiltWorld, camera: THREE.Camera, resolveAsset?: ResolveAsset) {
+  async load(
+    built: BuiltWorld,
+    camera: THREE.Camera,
+    resolveAsset?: ResolveAsset,
+    stillWanted: () => boolean = () => true,
+  ) {
     this.clear()
     const listener = this.listenFrom(camera)
 
@@ -98,6 +103,14 @@ export class SoundService {
       if (!url) return
       const buffer = await this.loader.loadAsync(url).catch(() => null)
       if (!buffer) return
+
+      /*
+       * The World this sound belongs to may have been closed while its file
+       * was coming. Starting it now would leave a World nobody is in making
+       * a noise, on a service that has already been cleared and will never
+       * be cleared again — which is a sound that plays for ever.
+       */
+      if (!stillWanted()) return
 
       const node = one.at
         ? new THREE.PositionalAudio(listener)

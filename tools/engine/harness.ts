@@ -6,7 +6,8 @@
  * while it is being built, and so a test can step it frame by frame.
  */
 import {
-  Engine, applyDecals, applyMeshes, buildSky, geometryFor, readManifest, writeManifest, stillIntent,
+  Engine, applyDecals, applyMeshes, buildSky, buildWorld, geometryFor, readManifest,
+  writeManifest, stillIntent,
   MOST_LIGHTS, type Intent,
 } from '@/engine'
 
@@ -30,11 +31,14 @@ Object.assign(window, {
   buildSky,
   applyDecals,
   applyMeshes,
+  buildWorld,
   geometryFor,
   readManifest,
   writeManifest,
   MOST_LIGHTS,
   resolveFake: async (id: string) => drawn.get(id) ?? null,
+  /** The data address a fake picture was stored at, for a slow resolver. */
+  drawnUrl: (id: string) => drawn.get(id) ?? null,
   /** A plain picture of a given shape, for checking how a decal is fitted. */
   fakePicture(id: string, width: number, height: number) {
     const sheet = document.createElement('canvas')

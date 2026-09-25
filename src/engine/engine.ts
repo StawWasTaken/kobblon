@@ -97,6 +97,8 @@ export class Engine {
   private zoomMost = ZOOM_FAR
   private onWheel: ((event: WheelEvent) => void) | null = null
   private onKey: ((event: KeyboardEvent) => void) | null = null
+  /** How many Worlds have been opened, so a late arrival knows it is late. */
+  private opening = 0
   private onClick: (() => void) | null = null
   /** Used every frame to ask what is between somebody and their camera. */
   private look = new THREE.Raycaster()
@@ -178,6 +180,22 @@ export class Engine {
   async open(raw: unknown) {
     const manifest = readManifest(raw)
 
+    /*
+     * Which opening this is.
+     *
+     * A World's pictures, models, sounds and sky are all fetched after it is
+     * standing, which is what lets it stand at all. That means every one of
+     * them can come back after somebody has already left for another World,
+     * and write into a World nobody is in — or, in the case of a sound,
+     * start one playing on a service that has already been cleared and will
+     * never be cleared again.
+     *
+     * A count rather than comparing the manifest, because opening the same
+     * World twice is an ordinary thing to do and would defeat that.
+     */
+    const opening = (this.opening += 1)
+    const stillWanted = () => this.opening === opening
+
     if (this.world) {
       this.scene.remove(this.world.group)
     }
@@ -188,7 +206,7 @@ export class Engine {
     this.controller.setSolids(built.solids)
 
     this.light(manifest)
-    void this.dressSky(manifest)
+    void this.dressSky(manifest, stillWanted)
     // A World decides how much of itself is seen at once: a corridor is not
     // a hillside. Pulling back further than it allows is not offered.
     this.zoomMost = manifest.camera?.zoom?.most ?? ZOOM_FAR
@@ -197,11 +215,11 @@ export class Engine {
     // gliding in from wherever the last one left it.
     this.shown = this.orbit.distance
     this.held = this.orbit.distance
-    void this.sound.load(built, this.camera, this.options.resolveAsset)
+    void this.sound.load(built, this.camera, this.options.resolveAsset, stillWanted)
     // The World is standing before its pictures arrive, rather than after.
-    void applyDecals(built, this.options.resolveAsset)
+    void applyDecals(built, this.options.resolveAsset, stillWanted)
     // Models arrive the same way pictures do: the World is open first.
-    void applyMeshes(built, this.options.resolveAsset)
+    void applyMeshes(built, this.options.resolveAsset, stillWanted)
 
     if (!this.avatar) {
       const source = await loadK6Source(this.options.avatarUrl ?? '/k6/k6.glb')
@@ -276,10 +294,14 @@ export class Engine {
    * The cutting lives in sky.ts so that an editor drawing its own scene can
    * put up the same background without borrowing the whole engine.
    */
-  private async dressSky(manifest: WorldManifest) {
+  private async dressSky(manifest: WorldManifest, stillWanted: () => boolean = () => true) {
     const sky = await buildSky(manifest, this.options.resolveAsset)
-    // A World opened while this was loading has already set its own.
-    if (this.world?.manifest !== manifest) {
+    /*
+     * A World opened while this was loading has already set its own. This
+     * used to compare the manifest, which misses the case of the same World
+     * being opened twice — an ordinary thing to do, and the reload button.
+     */
+    if (!stillWanted()) {
       sky.box?.dispose()
       return
     }

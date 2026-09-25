@@ -702,6 +702,69 @@ check('including a field this engine has never learned',
 check('the old format still opens, and so does a file that mixes them',
   shaped.mixed === '3,3,3', 'the node decides its spelling, not the header')
 
+// -- 13j. a World abandoned while it was still loading
+const abandoned = await p.evaluate(async () => {
+  const id = window.fakePicture('slow-decal', 32, 32)
+
+  // A resolver that takes its time, so a second World can be opened while
+  // the first one's pictures are still coming.
+  let waiting = null
+  const slow = (url) => new Promise((go) => { waiting = () => go(url) })
+
+  const world = (name, picture) => ({
+    format: 1, id: name, name, spawn: { at: [0, 4, 0] },
+    sounds: [{ id: 'ambience', kind: 'sound', sound: 'SND-1', loop: true, playing: true }],
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'wall', kind: 'box', at: [0, 4, 0], size: [10, 8, 1], children: [
+        { id: 'sign', kind: 'decal', picture, face: 'front' },
+      ] },
+    ],
+  })
+
+  const built = window.buildWorld(window.readManifest(world('first', id)))
+  const sign = [...built.partOf].find(([, part]) => part.kind === 'decal')[0]
+
+  // The first World's pictures start arriving...
+  const job = window.applyDecals(built, () => slow(window.drawnUrl(id)), () => false)
+  await new Promise((r) => setTimeout(r, 30))
+  // ...and the player leaves before they land.
+  if (waiting) waiting()
+  await job
+
+  return {
+    // Nothing was written into the World nobody is in.
+    untouched: sign.material.map === null && sign.visible === false,
+  }
+})
+check('a picture that arrives after its World was left is dropped',
+  abandoned.untouched,
+  'nothing is written into a World nobody is in')
+
+// The same thing through the engine, which is where it actually bites.
+const leftEarly = await p.evaluate(async () => {
+  const quiet = { format: 1, id: 'q', name: 'Quiet', spawn: { at: [0, 4, 0] },
+    blocks: [{ id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] }] }
+  const noisy = { format: 1, id: 'n', name: 'Noisy', spawn: { at: [0, 4, 0] },
+    sounds: [{ id: 'ambience', kind: 'sound', sound: 'SND-1', loop: true, playing: true }],
+    blocks: [{ id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] }] }
+
+  // Open the noisy World and leave for the quiet one without waiting.
+  const first = window.engine.open(noisy)
+  await window.engine.open(quiet)
+  await first
+
+  return {
+    world: window.engine.world?.manifest.name ?? window.built().manifest.name,
+    // The World on screen is the quiet one, so nothing of the noisy one's
+    // is still queued to start.
+    playing: window.engine.sound.all.filter((one) => one.wanted).length,
+  }
+})
+check('a World left before it finished loading does not keep making a noise',
+  leftEarly.world === 'Quiet' && leftEarly.playing === 0,
+  `${leftEarly.world} is open, ${leftEarly.playing} sounds asked to play`)
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({
