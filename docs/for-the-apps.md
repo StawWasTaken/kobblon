@@ -1117,3 +1117,95 @@ Leave the red one red. Those six rows are real, the tile that says "File gone"
 and offers to put it back is the right behaviour, and a check that counts logs
 is doing its job. A green suite you got by loosening a check tells you nothing
 the next time it goes green.
+
+# Eleventh round — in-World chat, and the part of it that does not exist
+
+Staw asked for chat: bubbles over heads and a window, heavily inspired by
+Roblox's system, Kobblon's design. Built, 97/97, rendered and looked at.
+
+**Your pre-emptive note was right and is the first thing to say back: yes,
+test mode wants `chat: false`.** `chat.typing` mutes the movement intent, so a
+stray keystroke in a test would silently kill WASD and nobody would file that
+as a chat bug. You worked that out before the code arrived. `chat: false`
+leaves the whole subsystem out.
+
+## The hole, first
+
+**Kobblon has no server, so there is nowhere for a message to go.** Everything
+here is real except the part carrying a message between two people, and that
+part is an interface — `ChatTransport` — with a local implementation that
+hears you say your own words back. The window's first line says *"There is no
+server yet, so this is you talking to yourself."*
+
+Write a transport against `ChatTransport` when there is a server and nothing
+else in chat changes. Fifth hat on the same missing piece.
+
+## The three pieces
+
+- **`ChatService`** — the rules. No DOM in it.
+- **`BubbleBoard`** — what somebody just said, over their head.
+- **`ChatWindow`** — the window. Plain DOM; the engine has no framework and
+  should not gain one to draw eleven elements.
+
+`new Engine({ chat: { name, transport } })` wires all three.
+`chat: { window: false }` keeps the service and the bubbles and lets **you
+draw your own window** against `ChatService` — which I expect you want, since
+your shell has a design and mine is eleven divs.
+
+## What is copied, because it is the system
+
+A keystroke opens it, `/` opens it with the slash typed. The window fades
+after 30s of quiet and returns the instant a line arrives. Bubbles go on their
+own after four seconds plus a moment a character. **Three stack per person**,
+older ones lifted, smaller and fainter. Past 140 stons a bubble is noise
+rather than news. Your own are not drawn over your own eyes in first person.
+The list only follows the bottom if you were already at the bottom. 200
+characters, counted in **code points**, so an emoji is one character.
+
+**Not copied: `/w`.** A whisper needs somebody to whisper to. It would be a
+command that looks like it works and does nothing.
+
+## The security, plainly
+
+Every message is written with `textContent`, never `innerHTML` — **the name
+too**, since that is the field somebody would try it on. `clean()` strips
+control characters and the zero-width and direction-override characters used
+to hide text inside other text, and it runs on **everything arriving**, not
+only on what this player types: a server is not trusted either.
+
+Flood protection is a burst of three then one every 750ms. **This is the
+client being polite to itself, not a defence.** When you write the real
+transport, the server enforces the rate, the length and the filtering, and
+enforces them again rather than trusting that this ran.
+
+There is no text filtering here at all. That is a gap, not a decision — Roblox
+filters every message server-side and Kobblon will have to. It cannot be done
+here.
+
+## If you draw your own window
+
+Call `chat.setTyping(true/false)` around your input's focus. Forget it and the
+World reads every keystroke as movement — the thing you already spotted.
+
+## Two things that went wrong, both worth having
+
+**The engine would not load at all.** `clean()`'s invisible-character list was
+written as a regular expression of `\uXXXX` escapes, and those escapes reached
+the file as *actual invisible characters*, so the expression was unterminated.
+It is numeric code-point comparisons now. The characters that function exists
+to remove are exactly the characters that do not survive being copied — worth
+knowing if you ever hand-copy such a list.
+
+**And my own flood protection ate my tests.** Three chat checks failed because
+they sent messages back to back: the service was doing its job and the checks
+did not know about it. If you write chat tests, space the sends or clear the
+allowance first.
+
+## Bubbles are timed off the wall clock
+
+Worth knowing before you debug something that is not broken: a bubble's life
+is real seconds, and it is only reaped inside `update()`. In a client ticking
+every frame that is invisible. In a harness that renders at half a second a
+frame, two messages "900ms apart" can land seven seconds apart, and the first
+bubble is correctly gone before the second appears. I spent a while proving
+that was slowness rather than a bug.
