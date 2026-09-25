@@ -1028,7 +1028,12 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       // A group's transform is in here too, which is why this waits until
       // the mesh is in the scene rather than reading the numbers.
       mesh.updateWorldMatrix(true, false)
-      solids.push({ box: new THREE.Box3().setFromObject(mesh) })
+      solids.push({
+        box: new THREE.Box3().setFromObject(mesh),
+        // A truss is solid to walk into and climbable from any side. Its
+        // bars are not each a solid: a tower would be hundreds of them.
+        climb: part.shape === 'truss' ? true : undefined,
+      })
     }
   }
 

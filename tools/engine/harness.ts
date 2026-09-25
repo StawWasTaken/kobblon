@@ -6,7 +6,7 @@
  * while it is being built, and so a test can step it frame by frame.
  */
 import {
-  Engine, applyDecals, applyMeshes, buildSky, buildWorld, geometryFor, readManifest,
+  Engine, applyDecals, applyMeshes, buildSky, buildWorld, geometryFor, tiledGeometry, readManifest,
   writeManifest, stillIntent,
   MOST_LIGHTS, type Intent,
 } from '@/engine'
@@ -34,6 +34,7 @@ Object.assign(window, {
   applyMeshes,
   buildWorld,
   geometryFor,
+  tiledGeometry,
   readManifest,
   writeManifest,
   MOST_LIGHTS,

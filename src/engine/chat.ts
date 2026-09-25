@@ -172,6 +172,15 @@ export class ChatService {
     return this.open
   }
 
+  /**
+   * Say whether the player is typing. **Not optional.**
+   *
+   * The engine mutes the movement intent while this is true, so a window
+   * that forgets to say it leaves every keystroke going to the World: "wasd"
+   * walks you off a roof, and the person it happens to does not report it as
+   * a chat bug, they report that the engine stopped responding. Anything
+   * drawing its own chat window calls this around its input's focus.
+   */
   setTyping(typing: boolean) {
     if (this.open === typing) return
     this.open = typing

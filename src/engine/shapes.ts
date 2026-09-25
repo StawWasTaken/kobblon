@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 /**
  * The shapes a part can be.
@@ -7,9 +8,9 @@ import * as THREE from 'three'
  * so those two matter most. Each is a unit shape, scaled by the part's size,
  * which keeps one geometry in memory however many parts use it.
  */
-export type Shape = 'box' | 'wedge' | 'cylinder' | 'sphere'
+export type Shape = 'box' | 'wedge' | 'cylinder' | 'sphere' | 'truss'
 
-export const SHAPES: Shape[] = ['box', 'wedge', 'cylinder', 'sphere']
+export const SHAPES: Shape[] = ['box', 'wedge', 'cylinder', 'sphere', 'truss']
 
 export const isShape = (value: unknown): value is Shape =>
   typeof value === 'string' && (SHAPES as string[]).includes(value)
@@ -88,6 +89,108 @@ function boxProject(geometry: THREE.BufferGeometry) {
 }
 
 /**
+ * How long one bay of a truss is, in stons, and how thick its bars are.
+ *
+ * Fixed rather than settable, and that is the point: two trusses standing
+ * beside each other line up, and a tower built out of three parts reads as
+ * one tower. Somebody who wants a different rhythm can ask later, and then
+ * it is a field; making it a field now means no two trusses ever match.
+ */
+export const TRUSS_BAY = 4
+const TRUSS_BAR = 0.5
+
+/**
+ * A truss: a lattice you can climb, that repeats rather than stretches.
+ *
+ * Every other shape here is a unit geometry that the part's own scale
+ * stretches. A truss cannot be, because the shape *is* the pattern: a
+ * stretched truss says how long the part is rather than what it is made of,
+ * which is the same mistake as a stretched brick texture and worse, because
+ * you can see through it.
+ *
+ * So this is built for the size it is asked for — a part ten stons tall gets
+ * two and a half bays, one twenty stons tall gets five — and then divided
+ * back through that size, because the mesh is still scaled by it. Bars keep
+ * one thickness whatever the part does; only the count changes.
+ *
+ * It runs up the Y axis, like a tower. Lay one on its side by turning the
+ * part, the way everything else here is turned.
+ */
+function truss(size: [number, number, number]): THREE.BufferGeometry {
+  const [sx, sy, sz] = size.map((one) => Math.max(Math.abs(one), TRUSS_BAR * 2)) as [number, number, number]
+
+  // At least one bay: a part shorter than a bay is a stub of truss, not an
+  // empty box.
+  const bays = Math.max(1, Math.round(sy / TRUSS_BAY))
+  const bay = sy / bays
+
+  const bars: THREE.BufferGeometry[] = []
+  const put = (
+    width: number, height: number, depth: number,
+    at: [number, number, number], turn = 0, axis: 'x' | 'z' = 'z',
+  ) => {
+    const bar = new THREE.BoxGeometry(width, height, depth)
+    if (turn) {
+      bar.applyMatrix4(axis === 'z'
+        ? new THREE.Matrix4().makeRotationZ(turn)
+        : new THREE.Matrix4().makeRotationX(turn))
+    }
+    bar.translate(at[0], at[1], at[2])
+    bars.push(bar)
+  }
+
+  const legX = (sx - TRUSS_BAR) / 2
+  const legZ = (sz - TRUSS_BAR) / 2
+
+  // The four legs, corner to corner, the whole length.
+  for (const x of [-legX, legX]) {
+    for (const z of [-legZ, legZ]) put(TRUSS_BAR, sy, TRUSS_BAR, [x, 0, z])
+  }
+
+  for (let i = 0; i < bays; i += 1) {
+    const middle = -sy / 2 + bay * (i + 0.5)
+    const top = -sy / 2 + bay * (i + 1)
+
+    /*
+     * A diagonal across each of the four faces, alternating its lean bay by
+     * bay so the lattice zigzags rather than leaning one way for ever.
+     */
+    const lean = i % 2 === 0 ? 1 : -1
+    const flat = Math.hypot(sx - TRUSS_BAR, bay)
+    const deep = Math.hypot(sz - TRUSS_BAR, bay)
+    const angleX = Math.atan2(bay * lean, sx - TRUSS_BAR)
+    const angleZ = Math.atan2(bay * lean, sz - TRUSS_BAR)
+
+    for (const z of [-legZ, legZ]) {
+      put(flat, TRUSS_BAR, TRUSS_BAR, [0, middle, z], angleX - Math.PI / 2 + Math.PI / 2, 'z')
+    }
+    for (const x of [-legX, legX]) {
+      put(TRUSS_BAR, TRUSS_BAR, deep, [x, middle, 0], -angleZ, 'x')
+    }
+
+    // A ring at the top of every bay but the last, which the legs already
+    // close.
+    if (i < bays - 1) {
+      put(sx, TRUSS_BAR, TRUSS_BAR, [0, top, -legZ])
+      put(sx, TRUSS_BAR, TRUSS_BAR, [0, top, legZ])
+      put(TRUSS_BAR, TRUSS_BAR, sz, [-legX, top, 0])
+      put(TRUSS_BAR, TRUSS_BAR, sz, [legX, top, 0])
+    }
+  }
+
+  const whole = mergeGeometries(bars, false) ?? new THREE.BoxGeometry(1, 1, 1)
+  for (const bar of bars) bar.dispose()
+
+  // Back into the unit box the part's scale will expand, so the bars come
+  // out the thickness they were built at.
+  whole.scale(1 / sx, 1 / sy, 1 / sz)
+  return whole
+}
+
+/** Trusses, by the size they were built for. */
+const trusses = new Map<string, THREE.BufferGeometry>()
+
+/**
  * One geometry per shape, shared by every part that wants it. Kept here
  * rather than made per World so opening a second World costs nothing.
  */
@@ -98,7 +201,10 @@ export function geometryFor(shape: Shape): THREE.BufferGeometry {
   if (had) return had
 
   const geometry =
-    shape === 'wedge' ? wedge()
+    // A truss has no one geometry; this is the one bay somebody gets for
+    // asking without a size, and tiledGeometry is where a real one is made.
+    shape === 'truss' ? truss([4, TRUSS_BAY, 4])
+    : shape === 'wedge' ? wedge()
     : shape === 'cylinder' ? new THREE.CylinderGeometry(0.5, 0.5, 1, 24)
     : shape === 'sphere' ? new THREE.SphereGeometry(0.5, 24, 16)
     : new THREE.BoxGeometry(1, 1, 1)
@@ -127,6 +233,22 @@ export function tiledGeometry(
   size: [number, number, number],
   tilesPerSton: number,
 ): THREE.BufferGeometry {
+  /*
+   * A truss is the one shape whose geometry depends on how big it is, so it
+   * is built here where the size is known rather than cached by name in
+   * geometryFor. Its own bars carry the pattern; a material laid over the
+   * top of them repeats per bar, which is what a painted girder looks like.
+   */
+  if (shape === 'truss') {
+    const [tx, ty, tz] = size.map((one) => Math.round(Math.abs(one) * 4) / 4)
+    const key = `truss|${tx}|${ty}|${tz}`
+    const had = trusses.get(key)
+    if (had) return had
+    const made = truss([tx, ty, tz])
+    trusses.set(key, made)
+    return made
+  }
+
   const plain = geometryFor(shape)
   if (tilesPerSton <= 0) return plain
 

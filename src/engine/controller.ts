@@ -14,6 +14,15 @@ import type { Intent } from './input'
 export type Solid = {
   /** In world stons, already accounting for the object's own transform. */
   box: THREE.Box3
+  /**
+   * Whether somebody can climb this rather than only walk into it.
+   *
+   * A truss. Its collision is still its box — a lattice is mostly holes and
+   * a tower made of its bars would be hundreds of solids — so it is solid to
+   * walk into and climbable from any side, which is what makes a truss tower
+   * a tower rather than a cloud of beams.
+   */
+  climb?: boolean
 }
 
 export type ControllerState = {
@@ -24,6 +33,8 @@ export type ControllerState = {
   grounded: boolean
   speed: number
   rising: boolean
+  /** On a truss, going up or down it rather than falling off it. */
+  climbing: boolean
 }
 
 /*
@@ -57,6 +68,18 @@ const TURN = 12
  */
 const ACCELERATE = 260
 const FRICTION = 14
+/**
+ * How fast somebody goes up a truss, and how far from one counts as holding
+ * on.
+ *
+ * Slower than walking, because climbing is. The reach is a little more than
+ * the skin so that touching a truss holds you to it rather than needing to
+ * be inside it, and so that letting go and pressing again does not drop you
+ * on the frame between.
+ */
+const CLIMB = 14
+const REACH = 0.6
+
 /** A step this size is walked up rather than bumped into. */
 const STEP = 1.4
 /**
@@ -76,6 +99,7 @@ export class Controller {
     grounded: false,
     speed: 0,
     rising: false,
+    climbing: false,
   }
 
   /** Whether the jump key has been let go since the last jump. */
@@ -121,11 +145,34 @@ export class Controller {
     )
   }
 
+  /** True while a jump off a truss is still carrying somebody away from it. */
+  private letGo = false
+
+  /** Whether there is something climbable within arm's reach. */
+  private climbable(at: THREE.Vector3) {
+    const box = this.boxAt(at, new THREE.Box3())
+    box.expandByScalar(REACH)
+    return this.solids.some((solid) => solid.climb && solid.box.intersectsBox(box))
+  }
+
+  /**
+   * What is in the way, which a truss never is.
+   *
+   * A climbable solid is a volume you are meant to be inside, so it is not
+   * collision at all: you grab it rather than bump into it, and the bars it
+   * is drawn from are mostly holes anyway. Anything else and the moment
+   * somebody lets go while inside one, the collision resolution has to put
+   * them somewhere they are not inside — which it did, by teleporting them
+   * out of the bottom of the tower, twenty stons in one frame.
+   *
+   * Walking into a truss still stops you, because touching one starts you
+   * climbing it before you are through it.
+   */
   private hits(at: THREE.Vector3) {
     const box = this.boxAt(at, new THREE.Box3())
     box.min.addScalar(SKIN)
     box.max.subScalar(SKIN)
-    return this.solids.filter((solid) => solid.box.intersectsBox(box))
+    return this.solids.filter((solid) => !solid.climb && solid.box.intersectsBox(box))
   }
 
   /**
@@ -146,6 +193,77 @@ export class Controller {
     if (wanted.lengthSq() > 0) {
       wanted.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw)
     }
+
+    /*
+     * A truss within reach means climbing, unless they have just jumped off
+     * it. Any side of it: a tower is approached from wherever somebody
+     * happens to be standing, and a ladder you can only mount from the north
+     * is a ladder people walk around.
+     */
+    const holding = this.climbable(position)
+    const climbing = !!holding && !this.letGo
+
+    if (this.state.climbing && !climbing) this.letGo = false
+    this.state.climbing = climbing
+
+    if (climbing) {
+      /*
+       * Up and down the truss, and nothing pulling down. Forward is up,
+       * which is what a hand on a ladder does; sideways still slides along
+       * it so somebody can move round a tower without dropping off.
+       */
+      /*
+       * Forward is up. Nothing drives them into the lattice, because a
+       * truss is not collision any more and pressing forward would walk
+       * them through it and out the far side. Left and right slide along
+       * it, so a tower can be worked round without letting go.
+       */
+      velocity.y = intent.z * CLIMB
+      const along = new THREE.Vector3(-intent.x, 0, 0)
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw)
+        .multiplyScalar(CLIMB * 0.6)
+      velocity.x = along.x
+      velocity.z = along.z
+
+      if (intent.jump) {
+        // Off, and away from it, rather than straight up into it again.
+        velocity.y = JUMP * 0.8
+        this.letGo = true
+        this.state.climbing = false
+      }
+
+      this.slide(position, new THREE.Vector3(velocity.x * dt, 0, 0), 'x')
+      this.slide(position, new THREE.Vector3(0, 0, velocity.z * dt), 'z')
+      /*
+       * Climbing moves straight up rather than through `fall`, so that the
+       * truss's own box does not stop somebody going up the inside of it —
+       * and at the top it steps onto whatever is up there instead of
+       * sliding back down, which is the difference between a ladder that
+       * works and one everybody avoids.
+       */
+      const above = position.clone()
+      above.y += velocity.y * dt
+      if (!this.hits(above).length) position.copy(above)
+
+      this.state.grounded = this.hits(
+        new THREE.Vector3(position.x, position.y - SKIN * 2, position.z),
+      ).length > 0
+      this.state.speed = Math.abs(velocity.y) + Math.hypot(velocity.x, velocity.z)
+      this.state.rising = velocity.y > 0
+
+      if (this.state.speed > 0.5 && wanted.lengthSq() > 0) {
+        const want = Math.atan2(wanted.x, wanted.z)
+        let turn = want - this.state.facing
+        while (turn > Math.PI) turn -= Math.PI * 2
+        while (turn < -Math.PI) turn += Math.PI * 2
+        this.state.facing += turn * Math.min(1, TURN * dt)
+      }
+
+      return this.state
+    }
+
+    // Back on the ground, the jump that left a truss is spent.
+    if (this.state.grounded) this.letGo = false
 
     const target = wanted.multiplyScalar(WALK)
 

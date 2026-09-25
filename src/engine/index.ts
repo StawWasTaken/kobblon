@@ -27,7 +27,7 @@ export {
 export { ChatWindow } from './chatui'
 export { BubbleBoard } from './bubbles'
 export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from './materials'
-export { SHAPES, isShape, geometryFor, tiledGeometry, type Shape } from './shapes'
+export { SHAPES, isShape, geometryFor, tiledGeometry, TRUSS_BAY, type Shape } from './shapes'
 export { textureFor, bumpFor, reliefFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'
 export { buildSky, cutCross, Skybox, type Sky, type ResolveAsset } from './sky'
 export { STON, GRAVITY, K6_HEIGHT, K6_RADIUS } from './units'

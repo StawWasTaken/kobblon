@@ -927,6 +927,112 @@ check('what you say goes over your head', bubbling.up > 0,
 check('and no more than three stack up at once', bubbling.stacked <= 3,
   `${bubbling.stacked} after five messages`)
 
+// -- 13n. a truss repeats rather than stretching, and can be climbed
+const trussed = await p.evaluate(async () => {
+  const bars = (geometry) => geometry.getAttribute('position').count / 24
+  const short = window.tiledGeometry('truss', [4, 8, 4], 0)
+  const tall = window.tiledGeometry('truss', [4, 24, 4], 0)
+
+  // The bar in the geometry, back in world stons: the unit box is divided
+  // through by the size, so a bar of one thickness comes out the same
+  // whatever the part does.
+  const widthOf = (geometry, size) => {
+    geometry.computeBoundingBox()
+    const leg = geometry.getAttribute('position')
+    let thinnest = Infinity
+    // The first box in the merge is a leg; its first eight points are its
+    // corners, so its x extent is the bar thickness.
+    let least = Infinity
+    let most = -Infinity
+    for (let i = 0; i < 8; i += 1) {
+      least = Math.min(least, leg.getX(i))
+      most = Math.max(most, leg.getX(i))
+    }
+    thinnest = (most - least) * size[0]
+    return Number(thinnest.toFixed(2))
+  }
+
+  await window.engine.open({
+    format: 2, id: 'tr', name: 'Truss', spawn: { at: [0, 4, 14] },
+    parts: [
+      { class: 'Part', properties: { id: 'floor', at: [0, -1, 0], size: [60, 2, 60] } },
+      { class: 'Part', properties: { id: 'tower', shape: 'truss', at: [0, 12, 0], size: [4, 24, 4], material: 'metal' } },
+      { class: 'Part', properties: { id: 'ledge', at: [4, 24, 0], size: [6, 1, 6] } },
+    ],
+  })
+
+  const solids = window.built().solids
+  return {
+    shortBars: bars(short),
+    tallBars: bars(tall),
+    shortBar: widthOf(short, [4, 8, 4]),
+    tallBar: widthOf(tall, [4, 24, 4]),
+    climbable: solids.filter((one) => one.climb).length,
+    solidsTotal: solids.length,
+  }
+})
+check('a truss three times as long has three times the lattice',
+  Math.abs(trussed.tallBars / trussed.shortBars - 3) < 0.35,
+  `${trussed.shortBars} bars at 8 stons, ${trussed.tallBars} at 24`)
+check('and its bars are the same thickness at either length',
+  Math.abs(trussed.shortBar - trussed.tallBar) < 0.01,
+  `${trussed.shortBar} stons either way, rather than stretched`)
+check('a truss is one solid, and it is the climbable one',
+  trussed.climbable === 1 && trussed.solidsTotal === 3,
+  `${trussed.climbable} climbable of ${trussed.solidsTotal} solids`)
+
+const onTheTruss = await p.evaluate(() => {
+  const at = () => window.engine.controller.state.position.clone()
+  // Standing at the foot of the tower, facing it.
+  window.drive({})
+  window.engine.controller.placeAt(0, 1, 3.2, Math.PI)
+  window.stepFrames(10)
+  const bottom = at()
+
+  // Forward, into it and then up it.
+  window.drive({ z: 1 })
+  window.stepFrames(90)
+  const up = at()
+  const state = { ...window.engine.controller.state }
+
+  // Down again.
+  window.drive({ z: -1 })
+  window.stepFrames(60)
+  const down = at()
+
+  // Let go, and gravity is back.
+  window.drive({ jump: true })
+  window.stepFrames(6)
+  window.drive({})
+  window.stepFrames(150)
+  const after = at()
+
+  return {
+    rose: Number((up.y - bottom.y).toFixed(1)),
+    climbing: state.climbing,
+    fell: Number((down.y - up.y).toFixed(1)),
+    landed: Number(after.y.toFixed(1)),
+    grounded: window.engine.controller.state.grounded,
+    holding: window.engine.controller.state.climbing,
+  }
+})
+check('somebody who walks into a truss climbs it',
+  onTheTruss.climbing && onTheTruss.rose > 8, `up ${onTheTruss.rose} stons, holding on`)
+check('and goes back down it the way they came up',
+  onTheTruss.fell < -4, `down ${onTheTruss.fell} stons`)
+/*
+ * Standing on the floor or holding on at the foot of it both count. Coming
+ * to rest on a truss with nothing pressed is what a truss is for, and the
+ * first version of this check demanded `grounded`, which called that a
+ * failure. What must never happen is the third thing: falling past the
+ * World, which is what a solid truss did when somebody let go inside it.
+ */
+check('letting go puts them back at the bottom rather than through the World',
+  onTheTruss.landed < 2 && onTheTruss.landed > -2
+  && (onTheTruss.grounded || onTheTruss.holding),
+  `back at y=${onTheTruss.landed}, grounded ${onTheTruss.grounded}, `
+  + `holding ${onTheTruss.holding}`)
+
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {
   await window.engine.open({
