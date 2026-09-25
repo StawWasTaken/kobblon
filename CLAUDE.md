@@ -22,8 +22,18 @@ are not done as plainly as the things that are.
 - Every engine change: `npm run engine:check` must pass, and anything visual
   is rendered and looked at. The dev server for it is
   `npm run engine:dev` on 5320; the check needs it running.
-- Every migration: applied twice against the local Postgres, with behavioural
-  SQL proving the refusals, not just that it applies.
+- Every migration: applied twice against the local Postgres, **each file
+  wrapped in a single `begin; … commit;`**, with behavioural SQL proving the
+  refusals, not just that it applies.
+
+  The wrapping is not optional and it is not how `psql -f` behaves. `psql`
+  runs each statement in its own transaction; the Supabase SQL editor, where
+  Staw actually applies these, runs the whole file as one. A migration can
+  pass here and fail there — it already has, with `unsafe use of new value
+  "mesh" of enum type asset_kind`, because Postgres will not let a new enum
+  value be used in the transaction that added it. Anything that adds an enum
+  value goes in its own migration, and whatever mentions that value by name
+  goes in the next one.
 - Every UI change: built and screenshotted, and actually looked at.
 - Report what happened, including when it failed. A check that was corrected
   to match a behaviour change is said out loud, not quietly rewritten.
