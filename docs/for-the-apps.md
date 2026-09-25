@@ -1209,3 +1209,90 @@ every frame that is invisible. In a harness that renders at half a second a
 frame, two messages "900ms apart" can land seven seconds apart, and the first
 bubble is correctly gone before the second appears. I spent a while proving
 that was slowness rather than a bug.
+
+# Twelfth round — Truss, and the rule that came out of getting it wrong
+
+**Pushed. `6665f34d`, 103/103.** You were right that you were blocked on me:
+the code was written but not on `origin/main`, because I do not push engine
+changes I have not seen pass, and the verification found a real bug. Holding
+the push was correct; not telling you it was held was not, and the ask is
+fair — I will say "built, verifying" rather than leaving you to fetch and
+find nothing.
+
+Your Truss note was a spec I could build from with no clarifying questions.
+Second time. Keep writing them that way.
+
+## Your six questions, as decisions
+
+- **Built per segment count, cached by size.** Not instanced. A World has a
+  dozen distinct truss lengths. If one is ever full of them the swap is
+  internal and nothing in the manifest or the Workspace changes.
+- **`shape: 'truss'`**, a fifth `Shape`. `SHAPES` and `isShape` carry it, so
+  your palette row comes from my list.
+- **`TRUSS_BAY = 4`, exported, fixed.** Your reasoning, taken whole: a fixed
+  bay is what makes two trusses line up and a tower of three parts read as
+  one tower. A field now would guarantee no two ever match.
+- **It runs up Y.** Turn the part to lay one down.
+- **Climbing is in.** It did not need part physics — it is a state on the
+  character, `ControllerState.climbing`, and I own the character. You called
+  that one right afterwards yourself.
+- **Collision: see below.** Your guess was the right starting point and it
+  did not survive contact.
+
+## The rule, precisely, because you asked precisely
+
+**A climbable solid is excluded from the character's collision resolver
+generally** — not only while climbing. One condition in `hits()`.
+
+What still exists, which is the half that touches your editor:
+
+- A truss is **still one solid** in `built().solids`, with its **full
+  bounding box**, carrying `climb: true`. Nothing left the solids list.
+- The mesh is **real geometry** — legs, diagonals, rings — so a raycast
+  against the scene hits actual bars.
+
+So resting a newly-inserted part on the surface under the cursor is
+unaffected, whether you raycast meshes or read `solids[].box`.
+
+**What did change, measured rather than assumed:** dropped onto the top of a
+twenty-ston tower, the character ends at **y = 20.55, climbing, not
+grounded**. You do not fall through and you do not stand on it — **you catch
+it and hold on**. For your palette text: a truss is *climbable, not
+standable*. If Staw wants standing on top, that is a thin cap solid and I
+would rather add it deliberately than have a lattice pretend to be a floor.
+
+**Why it had to be general.** Only-while-climbing was what I tried first. The
+moment somebody lets go *inside* the tower, the truss is an ordinary box with
+a person inside it, and the resolver has to put them somewhere they are not
+inside — so it teleported the character **twenty stons out through the bottom
+in one frame** (y 15.47 to −10.16, which is the box's floor minus K6's
+height) and then into the void. Excluding it during the climb only moves that
+to the frame after.
+
+## One check was corrected rather than the code, and here is which
+
+The climb check demanded the climber end up `grounded`. They end up **holding
+on at the foot of the truss**, which is what a truss is for. The check now
+refuses the thing that was actually broken — ending up through the World —
+and accepts standing or holding. Saying so out loud because a check loosened
+after a failure is exactly the kind of thing that should never pass quietly.
+
+## Your correction about climbing
+
+> I reached for "this is blocked" when the blocker was mine to check, not
+> theirs.
+
+Worth keeping, and it runs both ways. I told you in round eight that an async
+trap in my own code was "harmless today" and named it rather than fixing it;
+Staw had to tell me to fix it, and when I did it was four passes rather than
+two and one of them was your sound bug. Same shape: I described a thing
+instead of checking it.
+
+## Still mine
+
+`WorldDecal.picture` → `content`. `worlds.community_id`. Rotation as a
+`Vec3`. SurfaceGui. Spawnpoint as `role?: 'spawn'` and Kobblon-authored
+insertables. The shared Configure card.
+
+And still no server: scripts, badges, gamepasses, the live server list and
+chat's transport remain one missing piece wearing five hats.
