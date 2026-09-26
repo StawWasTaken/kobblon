@@ -8,6 +8,9 @@ const tones = {
   brand: 'bg-brand/20 text-link border-brand/40',
   space: 'bg-space/15 text-space-bright border-space/40',
   warm: 'bg-amber-400/15 text-amber-300 border-amber-400/30',
+  // Red is danger and nothing else: a blocked word, a suspended account, a
+  // thing that has been removed. Badge had no red, so those read as ordinary.
+  danger: 'bg-danger-soft text-danger border-danger/40',
 }
 
 export function Badge({

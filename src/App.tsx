@@ -54,6 +54,7 @@ const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
 const StyleItem = lazyPage(() => import('@/pages/StyleItem'))
 const Profile = lazyPage(() => import('@/pages/Profile'))
 const Settings = lazyPage(() => import('@/pages/Settings'))
+const Admin = lazyPage(() => import('@/pages/Admin'))
 
 function Booting() {
   return (
@@ -170,6 +171,9 @@ export default function App() {
                   <Route path="/brix/codes" element={<BrixCodes />} />
                   <Route path="/library" element={<Library />} />
                   <Route path="/settings" element={<Settings />} />
+                  {/* The page sends anybody who is not staff away, and
+                      every function it calls refuses them again. */}
+                  <Route path="/staff" element={<Admin />} />
                   <Route path="/standing" element={<Standing />} />
                   <Route path="/standing/:id" element={<StandingItem />} />
                   <Route path="/inbox" element={<Inbox />} />

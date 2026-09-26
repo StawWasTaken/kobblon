@@ -1964,3 +1964,114 @@ finished: `WorldDecal.picture` → `content`, `worlds.community_id`,
 rotation as a `Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`,
 Kobblon-authored insertables, and the shared Configure card. The avatar
 system is next on my side, at Staw's order, before any of those.
+
+# Twenty-first round — OBJ, a mesh you can turn, and a hole that was open all along
+
+Four things. The third is the one to read first if you only read one.
+
+## 1. A mesh may be an OBJ now
+
+`.obj` alongside `.glb` and `.gltf`. Staw's reason: it is what a lot of
+modelling software hands you first, and glTF was the only thing Kobblon took.
+
+There are three statements of that fact and they must not drift:
+
+| Where | What it is |
+| --- | --- |
+| `expected_extensions('mesh')` in the database | **the one that decides** |
+| `kindAccepts.mesh` in `@/lib/kinds` | what the file picker offers |
+| `meshFormats` in `@/lib/mesh` | what the reader will attempt |
+
+The database is the answer; the other two only say no earlier and more
+politely. If the Workspace keeps its own list anywhere, delete it and import
+`kindAccepts` — that is exactly the drift `@/lib/kinds` exists to stop.
+
+## 2. New shared module: `@/lib/mesh`
+
+Reading a mesh now lives in one place, because the upload card and the
+viewer were asking the same three questions and answering them separately.
+It has no provider, no router and no DOM beyond a canvas, so it travels.
+
+```ts
+import { loadMesh, formatOf, carriesMaterials, wearTexture,
+         frameMesh, lightForLooking, releaseMesh } from '@/lib/mesh'
+```
+
+Two things in there that will bite you if you write your own instead:
+
+**Never decide the format from the address.** `URL.createObjectURL` returns
+`blob:https://host/<uuid>` — no name, no extension — so every OBJ somebody
+uploads looks like glTF. A signed address can hide the name behind a query
+string too. Pass the format from the real filename; `formatOf` is only the
+fallback. This was a live bug in our own upload path for about twenty
+minutes.
+
+**`OBJLoader` does not throw on a file that is not an OBJ.** Text is text,
+and a file with no `v` lines parses to a group with nothing in it. Our
+viewer called that a success and drew an empty frame inviting you to drag
+it. `loadMesh` now refuses a model with no geometry.
+
+And an OBJ brings no materials, so a Decal is painted onto it; a glTF keeps
+its own and the Decal is *not* painted over them, because that would throw
+away what its author made. `carriesMaterials(format)` is that decision.
+
+## 3. Anybody could make themselves an admin — read this one
+
+Found this morning, fixed, pushed. Not a Workspace bug, but the shape of it
+is one you should check for on your side.
+
+`profiles_update_self` let a person update their own row and named no
+columns. So this worked, as an ordinary signed-in user, no exploit:
+
+```
+update profiles
+   set is_admin = true, is_moderator = true, is_verified = true,
+       pixels = 999999
+ where id = auth.uid()
+```
+
+All four took. Anybody with an account was one request from being staff,
+from wearing the verified badge, and from printing unlimited Brix.
+
+Why it survived this long is the part worth carrying across: **nothing in
+the website ever offers those fields.** The browser never asks for them, so
+nobody looking at the website would think to check. The browser was never
+the thing that had to refuse.
+
+Note that narrowing the policy would not have fixed it. A policy decides
+which *rows* may be written, not which *columns*, and `update ... set`
+reaches every column of a row the policy allows. The fix is a trigger that
+copies the old value back over standing, money, and site-assigned identity.
+
+**What this means for you:** any table the Workspace writes to where the
+person owns the row — anything with a `user_id = auth.uid()` policy — has
+the same shape. If there is a column on it the person should not set, a
+policy is not stopping them, and the Workspace not showing the field is not
+stopping them either. Worth an hour on your side.
+
+## 4. There is a staff panel now, at `/staff`
+
+For the Kobblon account: people (verify, moderator, suspend, Brix, delete),
+notifications to one person or everybody, and the flagged-word list that the
+whole moderation system reads — which until now could only be changed by a
+migration, so it was a build step rather than a moderation tool.
+
+Nothing in it is new mechanism you need to mirror, but two things touch you:
+
+- **Notifications use `kind = 'system'`**, which the table already allowed
+  and the Inbox already draws. No new kind, nothing to add on your side.
+- **`is_admin()` and `require_admin()` now exist** as database functions. If
+  the Workspace ever wants a staff-only affordance, call those rather than
+  reading `profile.is_admin` and trusting it — same reason as above.
+
+Every action refuses a non-admin and writes to `admin_log`, which is
+select-only to `authenticated` and gated to admins by policy. Rows are
+written by a security-definer function, so nobody can forge a record or
+erase one about themselves.
+
+## Still mine, still not done
+
+`WorldDecal.picture` → `content`, `worlds.community_id`, rotation as a
+`Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`, Kobblon-authored
+insertables, the shared Configure card. The avatar system is still next,
+at Staw's order.

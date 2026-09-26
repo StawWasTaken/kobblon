@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faGear, faShieldHalved, faRightFromBracket, faScroll, faRightLeft, faUserPlus,
+  faUserShield,
   faHeadset,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -36,6 +37,11 @@ export function UserMenu() {
     // way to do it sits at the top rather than buried on the front page.
     ...(profile?.is_guest
       ? [{ to: '/signup', label: 'Keep this account', icon: faUserPlus }]
+      : []),
+    // Staff first, because somebody opening this menu as staff is usually
+    // opening it to go there. Everyone else never sees the line.
+    ...(profile?.is_admin
+      ? [{ to: '/staff', label: 'Staff', icon: faUserShield }]
       : []),
     { to: '/settings', label: 'Settings', icon: faGear },
     ...(profile

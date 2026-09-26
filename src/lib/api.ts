@@ -2605,3 +2605,129 @@ export async function removeWorldMedium(medium: WorldMedium) {
   // A row with no file is a broken picture; a file with no row is litter.
   await supabase.storage.from('worlds').remove([medium.path]).catch(() => null)
 }
+
+// ------------------------------------------------------------------ staff
+
+/*
+ * The Kobblon account's panel.
+ *
+ * Every one of these is a thin call onto a function that refuses anybody who
+ * is not an admin and writes down what was done. Nothing here is a check:
+ * `is_admin` in the browser decides whether to draw a button, and the
+ * database decides whether anything happens. If these two ever disagree the
+ * database wins, which is the only arrangement worth having.
+ */
+
+export type StaffPerson = {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  content_id: number
+  pixels: number
+  is_verified: boolean
+  is_moderator: boolean
+  is_suspended: boolean
+  is_admin: boolean
+  is_guest: boolean
+  created_at: string
+}
+
+export type FlaggedTerm = {
+  id: number
+  pattern: string
+  decision: 'ok' | 'review' | 'block'
+  reason: string | null
+  scope: string
+  created_at: string
+}
+
+export type AdminLogEntry = {
+  id: number
+  admin_id: string | null
+  action: string
+  subject_id: string | null
+  subject_label: string | null
+  detail: Record<string, unknown>
+  created_at: string
+}
+
+export async function findPeopleAsStaff(search: string): Promise<StaffPerson[]> {
+  return unwrap(await supabase.rpc('admin_find_people', { search })) as StaffPerson[]
+}
+
+/** Any flag left undefined is left alone, rather than sent back as it was. */
+export async function setStanding(target: string, change: {
+  verified?: boolean
+  moderator?: boolean
+  suspended?: boolean
+  why?: string
+}) {
+  unwrap(await supabase.rpc('admin_set_standing', {
+    target,
+    verified: change.verified ?? null,
+    moderator: change.moderator ?? null,
+    suspended: change.suspended ?? null,
+    why: change.why ?? null,
+  }))
+}
+
+/** Negative takes. Returns the balance afterwards, which may not be what
+ *  was asked for: taking more than somebody has takes what they have. */
+export async function moveBrixAsStaff(target: string, amount: number, why?: string) {
+  return unwrap(await supabase.rpc('admin_move_brix', {
+    target, amount, why: why ?? null,
+  })) as number
+}
+
+export async function notifyAsStaff(target: string, message: string) {
+  unwrap(await supabase.rpc('admin_notify', { target, message }))
+}
+
+/** Returns how many it reached. Guests and suspended accounts are skipped. */
+export async function notifyEveryone(message: string) {
+  return unwrap(await supabase.rpc('admin_notify_everyone', { message })) as number
+}
+
+export async function deleteAccountAsStaff(target: string, why: string) {
+  unwrap(await supabase.rpc('admin_delete_account', { target, why }))
+}
+
+export async function listFlaggedTerms(): Promise<FlaggedTerm[]> {
+  return unwrap(await supabase.rpc('admin_terms')) as FlaggedTerm[]
+}
+
+export async function saveFlaggedTerm(term: {
+  id?: number | null
+  pattern: string
+  decision: FlaggedTerm['decision']
+  reason?: string | null
+  scope?: string
+}) {
+  return unwrap(await supabase.rpc('admin_save_term', {
+    term_id: term.id ?? null,
+    pattern: term.pattern,
+    decision: term.decision,
+    reason: term.reason ?? null,
+    scope: term.scope ?? 'all',
+  })) as number
+}
+
+export async function deleteFlaggedTerm(termId: number) {
+  unwrap(await supabase.rpc('admin_delete_term', { term_id: termId }))
+}
+
+/** Whether a pattern catches a piece of text, before it is saved. */
+export async function tryFlaggedTerm(pattern: string, sample: string) {
+  return unwrap(await supabase.rpc('admin_try_term', { pattern, sample })) as boolean
+}
+
+export async function listAdminLog(limit = 60): Promise<AdminLogEntry[]> {
+  return unwrap(
+    await supabase
+      .from('admin_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit),
+  ) as AdminLogEntry[]
+}
