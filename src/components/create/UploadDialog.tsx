@@ -159,7 +159,7 @@ export function UploadDialog({
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button loading={pending} disabled={!file} onClick={submit} icon={faUpload}>Upload</Button>
+          <Button variant="yes" loading={pending} disabled={!file} onClick={submit} icon={faUpload}>Upload</Button>
         </>
       }
     >

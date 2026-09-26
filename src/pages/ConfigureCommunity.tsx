@@ -365,7 +365,7 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
           >
             Undo
           </Button>
-          <Button loading={pending} onClick={save}>Save changes</Button>
+          <Button variant="yes" loading={pending} onClick={save}>Save changes</Button>
         </div>
       )}
     </div>
@@ -427,7 +427,7 @@ function SettingsSection({ group, onSaved }: { group: NonNullable<Awaited<Return
       </fieldset>
 
       <div className="flex justify-end">
-        <Button loading={pending} onClick={save}>Save</Button>
+        <Button variant="yes" loading={pending} onClick={save}>Save</Button>
       </div>
     </Card>
   )

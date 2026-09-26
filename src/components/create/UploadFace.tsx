@@ -123,7 +123,8 @@ export function UploadCard({ item }: { item: OwnAsset }) {
         <Preview item={item} />
 
         <span className={cn(
-          'absolute left-2 top-2 inline-flex items-center gap-1.5', overlayChip, 'rounded-full px-2 py-1 text-[10px]',
+          'absolute left-2 top-2 inline-flex items-center gap-1.5', overlayChip,
+          'rounded-full px-2 py-1 font-display text-[10px] uppercase tracking-wide',
           look.tone,
         )}>
           <span className={cn('h-1.5 w-1.5 rounded-full', look.pip)} />

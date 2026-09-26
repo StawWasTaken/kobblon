@@ -25,7 +25,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
+        <label htmlFor={inputId} className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wide text-muted">
           {label}
           {labelNote && <span className="ml-1.5 font-medium normal-case text-white/30">{labelNote}</span>}
         </label>
@@ -71,7 +71,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
+        <label htmlFor={inputId} className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wide text-muted">
           {label}
           {labelNote && <span className="ml-1.5 font-medium normal-case text-white/30">{labelNote}</span>}
         </label>

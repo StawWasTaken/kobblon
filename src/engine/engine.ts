@@ -378,9 +378,22 @@ export class Engine {
 
   private light(manifest: WorldManifest) {
     this.scene.background = new THREE.Color(manifest.sky?.colour ?? '#0f1016')
-    if (manifest.sky?.fog) {
-      this.scene.fog = new THREE.Fog(manifest.sky.colour ?? '#0f1016', 40, manifest.sky.fog)
-    }
+    /*
+     * Fog is how far you can see, in stons, and zero is a clear day.
+     *
+     * The near end used to be forty, whatever the far end was, so a World
+     * that asked to see thirty stons got a range running backwards — fog
+     * starting further away than it finished — and three.js draws that as
+     * nonsense. Anything under forty was broken and nobody had asked for
+     * one yet.
+     *
+     * A quarter of the distance instead: fog starts a quarter of the way
+     * out and is total at the number somebody typed, at every size.
+     */
+    const seeing = manifest.sky?.fog ?? 0
+    this.scene.fog = seeing > 0
+      ? new THREE.Fog(manifest.sky?.colour ?? '#0f1016', seeing * 0.25, seeing)
+      : null
 
     const old = this.scene.children.filter((child) => (child as THREE.Light).isLight)
     old.forEach((light) => this.scene.remove(light))

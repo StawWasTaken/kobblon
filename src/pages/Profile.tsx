@@ -739,7 +739,7 @@ export default function Profile() {
                   className="min-h-[7rem]"
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" loading={savingBio} onClick={saveBio}>Save</Button>
+                  <Button variant="yes" size="sm" loading={savingBio} onClick={saveBio}>Save</Button>
                   <Button
                     size="sm"
                     variant="ghost"

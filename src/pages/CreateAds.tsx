@@ -518,7 +518,7 @@ export default function CreateAds() {
         footer={
           <>
             <Button variant="ghost" onClick={() => setRenaming(null)}>Cancel</Button>
-            <Button loading={pending} onClick={rename}>Save</Button>
+            <Button variant="yes" loading={pending} onClick={rename}>Save</Button>
           </>
         }
       >

@@ -704,7 +704,7 @@ export default function AssetPage() {
                       )
                     })()}
                     <div className="flex gap-2">
-                      <Button loading={pending} onClick={save}>Save</Button>
+                      <Button variant="yes" loading={pending} onClick={save}>Save</Button>
                       <Button variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
                     </div>
                     <p className="text-xs text-muted">

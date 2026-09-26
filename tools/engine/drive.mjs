@@ -1056,7 +1056,7 @@ const modelCard = await p.evaluate(async () => {
   const bytes = await fetch('/k6/k6.glb').then((r) => r.blob())
   const file = new File([bytes], 'k6.glb', { type: 'model/gltf-binary' })
 
-  const drawn = await window.previewOf(file, 'model')
+  const drawn = await window.previewOf(file, 'mesh')
   if (!drawn) return { drew: false }
 
   // Look at what came out: a card picture has to be a picture of something,
@@ -1085,19 +1085,19 @@ const modelCard = await p.evaluate(async () => {
     bytes: drawn.size,
     size: [picture.naturalWidth, picture.naturalHeight],
     share: model / (data.length / 4),
-    saysModelsCanBeDrawn: window.canPreview('model'),
+    saysMeshesCanBeDrawn: window.canPreview('mesh'),
     // Kobblon's own part file is not glTF and gets no picture rather than a
     // wrong one.
-    ownFormat: await window.previewOf(kbfl, 'model'),
+    ownFormat: await window.previewOf(kbfl, 'build'),
   }
 })
-check('a model is drawn for its card, rather than left blank',
-  modelCard.drew && modelCard.saysModelsCanBeDrawn && modelCard.bytes > 2000,
+check('a mesh is drawn for its card, rather than left blank',
+  modelCard.drew && modelCard.saysMeshesCanBeDrawn && modelCard.bytes > 2000,
   `${modelCard.size?.join('x')} ${modelCard.type}, ${modelCard.bytes} bytes`)
-check('and the picture is of the model rather than an empty frame',
+check('and the picture is of the mesh rather than an empty frame',
   modelCard.share > 0.02 && modelCard.share < 0.9,
   `${(modelCard.share * 100).toFixed(1)}% of it is the model`)
-check('a Kobblon part file gets no picture rather than a wrong one',
+check('a Build gets no picture rather than a wrong one',
   modelCard.ownFormat === null, 'nothing drawn for a .kbfl')
 
 // -- 13p. whose session the shared components talk to
@@ -1146,6 +1146,36 @@ check('and handing back null returns to the website\u2019s own, mid-session',
   !whoseClient.after.isTheirs && whoseClient.after.stillWorks
   && !whoseClient.after.oldClientHeardMore,
   'a call after the hand-back does not reach the client that was handed over')
+
+// -- 13q. fog is a distance, and a near World is not fogged backwards
+const fogged = await p.evaluate(async () => {
+  const look = async (fog) => {
+    await window.engine.open({
+      format: 2, id: 'f', name: 'Fog', spawn: { at: [0, 4, 0] },
+      sky: { colour: '#9fc4e8', ...(fog === null ? {} : { fog }) },
+      parts: [{ class: 'Part', properties: { at: [0, -1, 0], size: [40, 2, 40] } }],
+    })
+    const one = window.engine.scene.fog
+    return one ? { near: one.near, far: one.far } : null
+  }
+
+  return {
+    clear: await look(null),
+    zero: await look(0),
+    // Under the old hard-coded near of 40, this was near 40 far 30: a range
+    // running backwards, which is what a small World always got.
+    small: await look(30),
+    big: await look(400),
+  }
+})
+check('no fog is no fog, and zero means the same',
+  fogged.clear === null && fogged.zero === null, 'a clear day either way')
+check('fog is a range that runs the right way round, however near it is',
+  fogged.small.near < fogged.small.far && fogged.big.near < fogged.big.far,
+  `30 stons gives ${fogged.small.near}..${fogged.small.far}, 400 gives ${fogged.big.near}..${fogged.big.far}`)
+check('and it is total at the distance somebody asked for',
+  fogged.small.far === 30 && fogged.big.far === 400,
+  'the number is how far you can see')
 
 // -- 14. a material is a pattern, and the pattern is the size of the world
 const textured = await p.evaluate(async () => {

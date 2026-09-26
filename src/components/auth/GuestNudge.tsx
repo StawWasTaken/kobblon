@@ -112,7 +112,7 @@ export function GuestNudge() {
         </ul>
 
         <div className="mt-6 space-y-2">
-          <Button to="/signup" size="lg" block onClick={close}>
+          <Button variant="yes" to="/signup" size="lg" block onClick={close}>
             Make it an account
           </Button>
           <Button variant="ghost" block onClick={close}>

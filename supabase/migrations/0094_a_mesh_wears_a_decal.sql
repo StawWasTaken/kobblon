@@ -32,7 +32,8 @@ create index if not exists assets_texture_idx on public.assets (texture_id)
  * refused, and you have read a row the policies would never have shown you.
  */
 create or replace function public.check_texture()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer
+  set search_path = public, extensions as $$
 declare wearing public.assets%rowtype;
 begin
   if new.texture_id is null then return new; end if;

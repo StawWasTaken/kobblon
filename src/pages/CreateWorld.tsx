@@ -241,7 +241,7 @@ export default function CreateWorld() {
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={save} disabled={busy || !name.trim()}>Save</Button>
+          <Button variant="yes" onClick={save} disabled={busy || !name.trim()}>Save</Button>
         </div>
       </Card>
 

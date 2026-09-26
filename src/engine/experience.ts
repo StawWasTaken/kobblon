@@ -245,6 +245,16 @@ export type WorldManifest = {
   spawn: { at: Vec3; facing?: number }
   sky?: {
     colour?: string
+    /**
+     * How far you can see, in stons. Absent or zero is a clear day.
+     *
+     * A distance rather than an amount, which is worth being exact about
+     * because it reads backwards otherwise: a bigger number is *less* fog.
+     * Anything showing this to a person should say "how far you can see"
+     * rather than "fog", or somebody will drag it up expecting soup.
+     *
+     * Fog begins a quarter of the way out and is total at this distance.
+     */
     fog?: number
     /**
      * A Catalog id for a sky, resolved by whoever is running this. The
