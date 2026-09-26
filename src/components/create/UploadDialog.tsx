@@ -289,7 +289,7 @@ export function UploadDialog({
           type="checkbox"
           checked={list}
           onChange={(e) => setList(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-bright"
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-space-bright"
         />
         <span className="text-xs leading-relaxed text-white/70">
           <span className="font-semibold text-white/90">

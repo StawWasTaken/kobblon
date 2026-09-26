@@ -6,12 +6,34 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
-type Variant = 'primary' | 'enter' | 'ghost' | 'subtle' | 'danger'
+/*
+ * `primary` is green, and that is the whole of the change Staw asked for.
+ *
+ * It used to be blue, and because it is also the default, every button
+ * nobody labelled came out blue — which is how a platform whose rule says
+ * "green is yes" ended up looking like a bank. Nothing had to say
+ * `variant="primary"` for that to happen; it happened by omission, which is
+ * the only way a default ever goes wrong.
+ *
+ * Green now means the thing you came to this screen to do: save, publish,
+ * upload, accept, play. That is an answer meaning yes, which is exactly what
+ * the rule always said green was for. Blue stays the platform — the chrome,
+ * the links, the marks — and `brand` is for the rare button that *is*
+ * Kobblon rather than an action: signing in, a mark of the platform itself.
+ */
+type Variant = 'primary' | 'brand' | 'enter' | 'ghost' | 'subtle' | 'danger'
 type Size = 'sm' | 'md' | 'lg'
 
 const variants: Record<Variant, string> = {
   primary:
+    'bg-space text-white hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+  brand:
     'bg-brand text-white hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
+  /*
+   * Going into a World. The same green as primary on purpose: it is the
+   * loudest yes Kobblon has, and it reads as the same promise as every other
+   * green button rather than a special case somebody has to learn.
+   */
   enter:
     'bg-space text-white hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   ghost:

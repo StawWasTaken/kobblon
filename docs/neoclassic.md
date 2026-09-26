@@ -42,6 +42,21 @@ hand, so it feels remembered and still native to Kobblon.
   screen with nothing happening on it, and that is the corporate look this
   is meant to avoid. Green is not decoration: if a green thing does not
   mean alive, yours or yes, it is the wrong colour.
+
+  Said as something you can act on, because the rule above was true and the
+  site still came out blue:
+
+  - **The button that does the thing is green.** Save, publish, upload,
+    accept, play, confirm. That is an answer meaning yes. `variant="primary"`
+    is green and it is the default, so a button nobody labelled is green.
+  - **Blue is what you are standing inside, not what you are doing.** Links,
+    the topbar, marks, the selected tab. `variant="brand"` exists for the
+    rare button that *is* Kobblon — signing in — rather than an action.
+  - **Red is danger and nothing else.** It was always this and stays.
+  - The old default was blue, and because it was the default, every button
+    nobody thought about came out blue. Watch for that shape elsewhere: a
+    rule can be right and lose anyway, in the gap between what a thing says
+    and what it does when nobody chooses.
 - **Nothing sterile.** Colour, a mascot, words written by a person. If a
   screen could be a settings page at a bank, it is wrong.
 - **No fake functionality, ever.** A button that does nothing is worse than

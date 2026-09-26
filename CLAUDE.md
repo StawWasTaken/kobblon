@@ -35,6 +35,14 @@ are not done as plainly as the things that are.
   value goes in its own migration, and whatever mentions that value by name
   goes in the next one.
 - Every UI change: built and screenshotted, and actually looked at.
+
+  **Screenshot a build, not the dev server's root.** GitHub Pages deploys
+  from the repository root, so `publish-to-root.mjs` leaves an `index.html`
+  there pointing at the last deployed bundle — and `vite dev` serving `/`
+  hands that to the browser instead of the working tree. A change can be
+  correct, served correctly, and invisible in the screenshot. It cost most of
+  an hour once: `npm run build`, serve `dist/`, look at that. A page mounted
+  on its own under `tools/site/` imports source directly and is fine.
 - Report what happened, including when it failed. A check that was corrected
   to match a behaviour change is said out loud, not quietly rewritten.
 
