@@ -22,12 +22,31 @@ import { describe, SITE } from './site-pages.mjs'
 const url = process.env.VITE_SUPABASE_URL
 const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-/** The prefix in a marketplace address: SND-1033 is a sound. */
-const tags = { image: 'IMG', audio: 'SND', video: 'VID', font: 'FNT', model: 'MDL' }
+/*
+ * The prefix in a marketplace address, and what a kind is called in a
+ * sentence.
+ *
+ * `kindCodes` is read out of `src/lib/kinds.ts` rather than written again
+ * here, because this file kept its own copy and the copy went stale the day
+ * `model` became `build` and `mesh` arrived: a mesh uploaded that afternoon
+ * previewed as `IMG-1122`, which is a different thing entirely. Node cannot
+ * import the TypeScript directly, so the one line that matters is read out
+ * of it — badly, on purpose, so that it breaks loudly if the shape changes
+ * rather than silently going back to a copy.
+ */
+const kindCodes = (() => {
+  const source = readFileSync(new URL('../src/lib/kinds.ts', import.meta.url), 'utf8')
+  const line = source.match(/kindCodes[^=]*=\s*\{([^}]*)\}/)
+  if (!line) throw new Error('kindCodes is not where write-item-pages expects it in src/lib/kinds.ts')
+  return Object.fromEntries(
+    [...line[1].matchAll(/(\w+)\s*:\s*'([^']+)'/g)].map(([, kind, code]) => [kind, code]),
+  )
+})()
 
-/** What that kind is called in a sentence. */
+/** What that kind is called in a sentence. A card reads as English. */
 const kindWords = {
-  image: 'A decal', audio: 'A sound', video: 'A video', font: 'A font', model: 'A model',
+  image: 'A decal', audio: 'A sound', video: 'A video', font: 'A font',
+  mesh: 'A mesh', build: 'A build',
 }
 
 const count = (n, one, many = `${one}s`) =>
@@ -115,8 +134,15 @@ export async function writeItemPages(into = 'dist') {
 
   const add = (path, page) => pages.push({ path, ...page })
 
-  const [spaces, communities, people, events, style, assets] = await Promise.all([
-    read('spaces', 'select=content_id,slug,name,description,cover_url,emblem_url,visit_count,like_count,dislike_count,owner:profiles!spaces_owner_id_fkey(username,display_name)&is_published=eq.true&is_removed=eq.false&limit=5000'),
+  const [worlds, communities, people, events, style, assets] = await Promise.all([
+    /*
+     * Worlds, which were Spaces and are read from `worlds` under their own
+     * names now. The address moved too: a World lives at /worlds/:id/:slug,
+     * and /s/:id/:slug redirects to Discover — so every card written at the
+     * old address promised a World and delivered a list, which is worse
+     * than no card.
+     */
+    read('worlds', 'select=content_id,slug,name,description,cover_url,emblem_url,visit_count,like_count,dislike_count,owner:profiles!worlds_owner_id_fkey(username,display_name)&is_published=eq.true&is_removed=eq.false&limit=5000'),
     read('communities', 'select=content_id,slug,name,description,icon_url,banner_url,member_count,owner:profiles!communities_owner_id_fkey(username,display_name)&is_public=eq.true&is_removed=eq.false&limit=5000'),
     read('profiles', 'select=content_id,username,display_name,bio,avatar_url,created_at&is_suspended=eq.false&limit=5000'),
     read('community_events', 'select=content_id,title,subtitle,description,cover_url,starts_at,attending_count,community:communities(name,icon_url,banner_url)&is_cancelled=eq.false&limit=5000'),
@@ -131,7 +157,7 @@ export async function writeItemPages(into = 'dist') {
     ),
   ])
 
-  for (const space of spaces) {
+  for (const space of worlds) {
     const by = space.owner?.username ? `@${space.owner.username}` : 'somebody'
     const votes = (space.like_count ?? 0) + (space.dislike_count ?? 0)
     const liked = votes ? `${Math.round(((space.like_count ?? 0) / votes) * 100)}% liked` : null
@@ -141,7 +167,7 @@ export async function writeItemPages(into = 'dist') {
       type: 'website',
       title: space.name,
       description: lines(
-        `A Space on Kobblon by ${by}.`,
+        `A World on Kobblon by ${by}.`,
         `${count(space.visit_count, 'visit')}${liked ? `, ${liked}` : ''}.`,
         shorten(space.description, 160),
       ),
@@ -149,7 +175,7 @@ export async function writeItemPages(into = 'dist') {
       square: !wide && !!picture(space.emblem_url),
       imageAlt: space.name,
     }
-    if (space.content_id) add(`s/${space.content_id}/${slug(space.slug)}`, page)
+    if (space.content_id) add(`worlds/${space.content_id}/${slug(space.slug)}`, page)
     if (space.owner?.username) add(`u/${slug(space.owner.username)}/${slug(space.slug)}`, page)
   }
 
@@ -246,7 +272,7 @@ export async function writeItemPages(into = 'dist') {
 
   for (const asset of assets) {
     if (!asset.content_id) continue
-    const tag = tags[asset.kind] ?? 'IMG'
+    const tag = kindCodes[asset.kind] ?? 'IMG'
     // The file itself is protected, so the card says what it is and who made
     // it and shows none of it.
     const by = asset.creator?.username ? `@${asset.creator.username}` : 'somebody'

@@ -6,7 +6,11 @@ import { pageRoots } from './site-pages.mjs'
 
 // The addresses that point at something get their own files too, written
 // by write-item-pages.mjs before this runs.
-const itemRoots = ['s', 'c', 'u', 'e', 'style']
+// `worlds`, not `s`: a World's address moved, write-item-pages writes cards
+// under the new one, and this list is what actually gets published - so
+// leaving `s` here published nothing for Worlds and kept the old cards,
+// which point at an address that redirects to Discover.
+const itemRoots = ['worlds', 'c', 'u', 'e', 'style']
 
 /** Roots that hold item cards as well as pages written from site-pages.mjs. */
 const itemBearing = [...itemRoots, 'create']

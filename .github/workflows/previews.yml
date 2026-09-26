@@ -1,0 +1,76 @@
+name: Link previews
+
+# A card for a Community made this afternoon is a file that has to exist by
+# this afternoon, and until now it was written by the deploy - behind a
+# migration check, a type check and a full build, any one of which failing
+# meant no cards at all. One did: `check-migrations` refused 0094 and every
+# run for most of a day stopped at step one, so kobblon.com/c/1127 pasted
+# into Discord as a bare link while the site itself was fine.
+#
+# So this writes them on its own. It needs no build: the shell it writes the
+# tags into is the index.html already published at the repository root, which
+# is the one people are actually served. Nothing here can fail the site, and
+# nothing failing elsewhere can stop the cards.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Its own group, so it never cancels a deploy and a deploy never cancels it.
+concurrency:
+  group: link-previews
+  cancel-in-progress: true
+
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Into the root rather than dist/, because there is no dist/ here. The
+      # script only ever adds and overwrites; clearing away a card for
+      # something deleted is still the deploy's job, which is the one run
+      # that knows the full set.
+      #
+      # It reads the same publishable key the browser carries, read the same way the
+      # build reads it, so this sees exactly what a stranger sees.
+      - name: Write a card for everything public
+        run: |
+          node --env-file-if-exists=.env --input-type=module -e "
+            const { writeItemPages } = await import('./scripts/write-item-pages.mjs')
+            await writeItemPages('.')
+          "
+
+      - name: Commit the cards
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Only where cards live. `git add -A` here would fight the deploy
+          # over the whole published site. The `|| true` is not decoration:
+          # the loop's last root may not exist yet, and under `bash -e` that
+          # alone fails the step.
+          for root in worlds c u e create style; do
+            if [ -d "$root" ]; then git add "$root" || true; fi
+          done
+          if git diff --staged --quiet; then
+            echo "Every public thing already has its card."
+            exit 0
+          fi
+          git commit -m "Link previews for what is new"
+          # The deploy pushes to main as well, so lose the race gracefully
+          # rather than failing and leaving the cards for another ten minutes.
+          for attempt in 1 2 3 4; do
+            git push && exit 0
+            sleep $((attempt * 2))
+            git pull --rebase origin main
+          done
+          exit 1
