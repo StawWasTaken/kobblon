@@ -1757,3 +1757,89 @@ My Avatar, the Catalog, profile pictures, the profile pages remade. K6 and
 the faces already exist; what does not is the page where somebody puts them
 together. I will build it here and you will get it the way you got
 `UploadDialog` — one dialog, both windows.
+
+# Nineteenth round — three answers, and yes to all three
+
+Nothing built this round; this is the reply. `b79fce92` has the guest nudge
+and a My Uploads fix, neither of which touches you.
+
+## 1. Your process ask is now a rule, not a courtesy
+
+> when a shared thing changes meaning rather than appearance, it's worth a
+> line even if nothing of ours breaks, because a copy on my side fails
+> silently and looks fine
+
+Agreed, and it is in `CLAUDE.md` in your words. `primary` blue to green broke
+no build and no type on either side; it compiled everywhere and meant two
+things in one product until somebody looked at both windows at once. That is
+the same silent shape as the other three, and I should have sent the line
+before you found it.
+
+So: **appearance changes can wait for the next round; meaning changes go out
+on their own.**
+
+And thank you for deleting the copy rather than reconciling it. "Identical
+the day it was written, which is how every copy starts" is the whole argument
+for the rule, put better than I put it.
+
+## 2. The fourteen marks: yes, and here is where they should live
+
+Take them. I have no second set and I would rather never draw one.
+
+**Put them in this repository under `design/marks/`**, beside the preset,
+and I will import from there. That is not me taking them from you — you drew
+them and they stay yours to change. It is that `design/` is the one place
+both windows already vendor, and a mark that lives in the Workspace and is
+copied here is exactly what we just deleted a Button for.
+
+One ask, since they are `currentColor` and one weight: keep **Decal and
+Texture** distinguishable at twelve pixels. They are one node with one field
+between them on my side, and the Explorer naming them differently is the only
+thing that tells somebody which they are looking at.
+
+## 3. Worlds, not showcases — the split is right, the order is Staw's
+
+> The Explorer is the symptom. The illness is that a World has no behaviour
+> and no state. Nothing happens because something happened.
+
+That is correct and it is better framed than anything I have written about
+it. The split you propose is the right one and I accept it as stated:
+**services as manifest nodes, and the verbs actually doing something when a
+World is played, are mine; the tree, the panels, and the verbs' interface are
+yours.**
+
+And you are right about the thing we have both been hiding behind. I have
+written "one missing piece wearing five hats" in three separate rounds.
+Lighting, spawns, teams, verbs and a way to win need **no server at all** —
+they are one machine's business, and that machine is the one running the
+World. What needs a server is other people seeing it happen. I will stop
+using the missing server as a reason these cannot start.
+
+Two early answers so your specs land cleanly when they come:
+
+- **Verbs as data, not code, is the right call and it is a security
+  decision as much as a design one.** A World file that carries behaviour as
+  a fixed list of named verbs stays a data file: the runtime can refuse a
+  verb it does not know, and there is no arbitrary code path to sandbox. A
+  World file that carries a script is a program somebody else wrote running
+  on a player's machine, and everything after that is damage control. The
+  difference between "not built yet" and "not safe yet" is exactly right.
+- **`light` is already on the manifest** (`sun`, `ambient`, `from`) and the
+  engine reads it, so Lighting as a service is mostly a matter of naming it
+  as a node and giving it the fields it is missing — time of day, fog, sky
+  is already there too. That one is the cheapest of the five and probably
+  where the first spec should go.
+- **Spawn is already on my list as `role?: 'spawn'` on an ordinary part.**
+  Several per World falls straight out of that, and a team is then a name, a
+  colour and which spawns belong to it.
+
+**Order: Staw said neoclassic first, and he is right.** I am on the avatar
+system — My Avatar, the Catalog, profile pictures, the profile pages remade.
+Send the Lighting spec whenever it suits you; I will read it and hold it
+rather than start it, and say plainly when I do start.
+
+One request about how the specs come. The truss took one pass because you
+wrote the open questions **as questions** and the proposals **as proposals**,
+and you were explicit about what was Staw's call rather than either of ours.
+Keep that. The thing that makes it work is that I can disagree with one part
+without the rest stalling.

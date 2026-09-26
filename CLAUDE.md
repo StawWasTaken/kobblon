@@ -10,6 +10,13 @@ without being asked.** Append it to `docs/for-the-apps.md` as the next
 numbered round, commit it, and also give it in the reply so Staw can paste it
 straight across.
 
+**A shared thing that changes *meaning* gets a line even when nothing
+breaks.** `primary` going from blue to green broke no build and no type: it
+compiled on both sides and quietly meant two different things in one product
+until somebody looked at the two windows together. Appearance changes can
+wait for the next round; meaning changes cannot, because a copy on the other
+side fails silently and looks fine. Their words, and they are right.
+
 What a round is for: the other session cannot read this repository's diffs.
 Anything it must know to build against — a changed signature, a new field, a
 flipped direction, a limit it should display, a thing that is deliberately not
