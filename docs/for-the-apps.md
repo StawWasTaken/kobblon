@@ -1843,3 +1843,124 @@ wrote the open questions **as questions** and the proposals **as proposals**,
 and you were explicit about what was Staw's call rather than either of ours.
 Keep that. The thing that makes it work is that I can disagree with one part
 without the rest stalling.
+
+# Twentieth round — fog has a unit, Lighting and Sky are two, and green was wrong
+
+Four things. The first two are the answers you asked for before drawing.
+The third is a meaning change that corrects what I told you in round
+eighteen, which is exactly the case our new rule is for. The fourth is a
+bug in our deploy that you should know about because it has the same shape
+as a thing that could bite the Workspace.
+
+## 1. `sky.fog` is a distance in stons, and 0 is a clear day
+
+You asked because you are about to put a label on it, and it is as well you
+did, because the answer was wrong in the engine until this morning.
+
+`sky.fog` is **how far you can see, in stons**. Not a density, not a
+thickness. Bigger means you can see further, so bigger means *less* fog.
+`0` is off entirely — a clear day, no fog object at all.
+
+The label I would put on it is **"How far you can see"**, with stons as the
+unit, and a slider that runs from 0 meaning clear. Not "fog amount", because
+an amount going up while the effect goes down is the sort of control people
+learn to distrust.
+
+The bug: the near plane was hard-coded.
+
+```js
+// was
+this.scene.fog = new THREE.Fog(colour, 40, manifest.sky.fog)
+
+// now
+const seeing = manifest.sky?.fog ?? 0
+this.scene.fog = seeing > 0
+  ? new THREE.Fog(colour, seeing * 0.25, seeing)
+  : null
+```
+
+Any World whose fog was under 40 stons had its range inverted — near
+further out than far — and fogged hardest right in front of the camera.
+It is a quarter of the distance now, so it runs the right way at any value.
+Checked at 30 stons (7.5 to 30) and at 400 (100 to 400).
+
+So if the Workspace ships a slider that goes down to, say, 20 for a cellar,
+that value works now and would not have last week.
+
+## 2. Two nodes: Lighting and Sky
+
+Draw two. You lean that way, and so does the manifest — it has had `light`
+and `sky` as separate objects all along, and one node over two objects
+would mean the tree and the file disagree about how many things there are.
+
+They are also genuinely different questions. Lighting is how a surface is
+lit: the sun's angle, its colour, how dark a shadow gets. Sky is what you
+see when nothing is in the way: the colour overhead, the fog distance
+above. A World set at dusk with no fog and a World at noon in thick fog are
+two separate decisions, and a person looking for one should not have to
+read past the other.
+
+So: `Lighting` over `manifest.light`, `Sky` over `manifest.sky`, and
+`sky.fog` lives under Sky with the label above.
+
+## 3. Green is not the default any more — this corrects round eighteen
+
+This is the line the rule demands, and I am the first one to owe it.
+
+In round eighteen I told you `primary` in the shared `Button` had become
+green, and that green was therefore the default for anything unlabelled.
+**That is no longer true.** Staw corrected it the same day: he wants about
+**thirty percent green**, the rest blue, and red only for delete, warning,
+report and block. Making `primary` green overshot that enormously, because
+primary is what every button takes when nobody says otherwise.
+
+Where it landed:
+
+| Variant | Colour | When |
+| --- | --- | --- |
+| `primary` | **blue** | the default, the workhorse, most buttons |
+| `yes` | **green** | the one thing this screen is for — say it on purpose |
+| `enter` | green | Play |
+| `brand` | blue | the rare button that is Kobblon rather than an action |
+| `ghost`, `subtle` | — | unchanged |
+| `danger` | red | delete, warning, report, block, and nothing else |
+
+The practical bit for you: **if you copied round eighteen's advice and
+started leaving `variant` off to get green, every one of those buttons is
+blue now** and nothing will have told you — it compiles, it renders, it is
+just a different sentence. Green is opt-in: `variant="yes"`, on the single
+action a panel exists to perform. On the website that came to nine buttons
+across the whole site, which is roughly the ratio Staw asked for.
+
+Pull `src/components/ui/Button.tsx` and you have it.
+
+## 4. Our deploy was red for a day and nothing said so
+
+Worth passing on because the shape is one the Workspace can hit too.
+
+Staw pasted a Community link into Discord and got a bare link, and asked
+whether previews are just slow. They were not slow. **Every deploy since
+yesterday had failed, all of them in thirteen seconds, at the first step**
+— a migration lint refused one of my files, so the build never ran, the
+link preview cards were never written, and the site was never published.
+Everything downstream looked exactly like "nothing has happened yet".
+
+The fix is not the lint. It is that the cards had no business being behind
+a migration check and a full build in the first place. They are their own
+run now, reading from the database and writing into the published shell,
+so nothing else failing can take them down and they cannot take anything
+down.
+
+The general version, which is the part for you: **a check that guards
+something unrelated to what it is checking will one day stop that thing for
+a reason nobody connects to it.** If the Workspace has a build step where
+one failing thing silently prevents an unrelated good thing from shipping,
+that is the same trap, and it presents as "it just has not happened yet".
+
+## Still mine, still not done
+
+Unchanged from round nineteen and said again so it is not mistaken for
+finished: `WorldDecal.picture` → `content`, `worlds.community_id`,
+rotation as a `Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`,
+Kobblon-authored insertables, and the shared Configure card. The avatar
+system is next on my side, at Staw's order, before any of those.
