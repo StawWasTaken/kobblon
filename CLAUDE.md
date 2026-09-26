@@ -17,6 +17,37 @@ built — exists for it only if the round says so. Write what changed, why, what
 it means for the applications, and what is still missing. Name the things that
 are not done as plainly as the things that are.
 
+## Who builds what
+
+Staw, to both sessions: **one builds the thing, the other uses the thing that
+was built.** Not two sides building their own version of the same idea and
+meeting in the middle — that is how "Model" here and "Mesh" there happens,
+and how two upload dialogs end up needing to be fixed twice.
+
+For anything shared, the website is where it is built and the applications
+import it:
+
+- **The design** — `design/preset.js`. Colours, type, spacing.
+- **The words** — `@/lib/kinds`. Labels, icons, codes, accepted extensions.
+- **The components** — `@/components/ui/*`, `UploadDialog`, `Cropper`,
+  `Tooltip`, `MediaPlayer`.
+- **The engine** — `@/engine`.
+- **Talking to the database** — `@/lib/api`, with `setSupabaseClient` for an
+  application that has its own session.
+
+So when something shared needs to change, it changes here and the Workspace
+pulls it. And the duty that comes with owning them: **they have to be
+mountable outside the website.** No provider it cannot supply, no router it
+does not have, no assumption that it is on a page. `tools/site/` holds bare
+pages that mount them with nothing around them — if one throws there, the
+Workspace finds out by a panel going blank, which is not a bug report
+anybody can act on.
+
+That has bitten three times already: `useAuth` throwing without its
+provider, `supabase` deciding its session at import, and `<Link>` outside a
+router. All three rendered perfectly in the website and took the panel down
+in the application.
+
 ## How work is verified here
 
 - Every engine change: `npm run engine:check` must pass, and anything visual

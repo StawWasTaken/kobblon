@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Hop } from '@/components/ui/Hop'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
@@ -110,7 +110,7 @@ export function Menu({
             const tone = item.danger ? 'text-danger' : 'text-white/80 hover:text-white'
 
             return item.to ? (
-              <Link
+              <Hop
                 key={item.label}
                 to={item.to}
                 role="menuitem"
@@ -118,7 +118,7 @@ export function Menu({
                 className={cn(itemClass, tone)}
               >
                 {body}
-              </Link>
+              </Hop>
             ) : (
               <button
                 key={item.label}

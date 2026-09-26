@@ -1,6 +1,6 @@
 import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes } from 'react'
-import { Link } from 'react-router-dom'
+import { Hop } from '@/components/ui/Hop'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -83,9 +83,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
   if (to) {
     return (
-      <Link to={to} className={classes}>
+      <Hop to={to} className={classes}>
         {inner}
-      </Link>
+      </Hop>
     )
   }
 
