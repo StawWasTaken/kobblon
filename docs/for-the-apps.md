@@ -1671,3 +1671,89 @@ identifies the file, not just the fault.
   `only="mesh"` you get both for free.
 - **Use `@/lib/kinds`** rather than your own copy of the words. That is the
   whole point of it.
+
+# Eighteenth round — green is the default, and the shared parts now mount outside the website
+
+**`a8240660`.** Two changes, and the second is the one that matters to you.
+
+## 1. Green is the default button
+
+Staw wants the website more neoclassical: more green, fewer blue buttons.
+The whole of it was one line.
+
+`primary` was blue, and `primary` is the **default** — so every button nobody
+labelled came out blue. Nothing had to say `variant="primary"` for that to
+happen. A rule can be right and lose anyway, in the gap between what it says
+and what happens when nobody chooses.
+
+The rule, now written in `neoclassic.md` as something you can act on:
+
+- **The button that does the thing is green.** Save, publish, upload, accept,
+  play, confirm. That is an answer meaning yes, which is what green always
+  was. `variant="primary"` is green and it is the default.
+- **Blue is what you are standing inside, not what you are doing.** Links,
+  chrome, marks, the selected tab. **`variant="brand"`** is new: the rare
+  button that *is* Kobblon rather than an action.
+- **Red is danger and nothing else.** Unchanged.
+
+For the Workspace: pull `design/preset.js` and the Button, and your green
+arrives with them. If something of yours hard-codes `bg-brand` on an action,
+that is now the thing to change.
+
+## 2. The shared components mount with nothing around them
+
+Staw, to both of us: **one builds the thing, the other uses the thing that was
+built.** So the duty that comes with owning the shared parts is that they
+actually work in your window.
+
+`<Link>` throws outside a router. So `<Button to=…>` and **every Menu item
+that links** would have taken your panel down — not rendered wrong, thrown.
+That is the **third** time in this exact shape:
+
+| | looked perfect here | in the Workspace |
+|---|---|---|
+| `useAuth` | fine | threw with no provider |
+| `supabase` | fine | uploaded as nobody |
+| `<Link>` | fine | throws with no router |
+
+`Hop` renders a `Link` inside a router and an **anchor** outside one — which
+in an application opens the address in the person's own browser. That is the
+right behaviour: the Workspace is not a browser for Kobblon.
+
+**`tools/site/shared-preview.tsx`** mounts the lot with no router, no
+providers and no site: every button variant, the chips, a field, a tooltip,
+and a menu whose items link. It renders. If you hit something that does not,
+that page is where to reproduce it in one screen, and it is my bug.
+
+## What you can import, so neither of us builds it twice
+
+- **Design** — `design/preset.js`
+- **Words** — `@/lib/kinds` (labels, icons, codes, accepted extensions)
+- **Components** — `@/components/ui/*`, `UploadDialog`, `Cropper`, `Tooltip`,
+  `MediaPlayer`
+- **Engine** — `@/engine`
+- **Database** — `@/lib/api`, with `setSupabaseClient` for your own session
+
+## Tomorrow, and it is both of us
+
+`docs/roadmap.md` opens with it now. The sweep: old creator leftovers,
+half-landed Roblox copies, things that work badly and were left. Each one
+gets **finish it, delete it, or write down why it stays** — something left
+because deleting felt rude teaches everybody that broken things are normal
+here. Plus coherence of names and shapes across both windows, and comments
+that read as though a person wrote them.
+
+One part written down honestly rather than as it was asked: **"make sure
+people cannot steal our scripts" cannot mean what it sounds like.** Anything
+shipped to a browser or a desktop application can be read; minifying raises
+the cost and nothing makes it private. What protects Kobblon is the server
+saying no — RLS, the RPCs, the screening triggers. The useful hunt is one
+question: **is there anything we decided in JavaScript that the database does
+not also decide?** Every yes is a rule that is currently a suggestion.
+
+## And the avatar system is next on my side
+
+My Avatar, the Catalog, profile pictures, the profile pages remade. K6 and
+the faces already exist; what does not is the page where somebody puts them
+together. I will build it here and you will get it the way you got
+`UploadDialog` — one dialog, both windows.
