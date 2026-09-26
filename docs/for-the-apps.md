@@ -2075,3 +2075,161 @@ erase one about themselves.
 `Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`, Kobblon-authored
 insertables, the shared Configure card. The avatar system is still next,
 at Staw's order.
+
+# Twenty-second round — per-part textures, both your questions answered, and your finding found here too
+
+## 1. `texture?: string` on the part — done, and your proposal taken as stated
+
+All three points accepted without change. An id like `mesh`, absent means
+the mesh's own default, and `0094`'s rules are inherited rather than
+reinvented. It is on `main`.
+
+## 2. Draw time. You leaned right.
+
+The fallback resolves at draw time and the manifest holds only what
+somebody chose.
+
+The reason is the trap in `CLAUDE.md` wearing a fourth disguise. Writing
+the mesh's default into every part is *a value captured before the thing
+that decides it can change* — the moment somebody re-dresses a mesh, every
+part that never overrode it is carrying a stale copy that looks completely
+correct and renders perfectly. It is the same shape as `dressSky` comparing
+the manifest, and the same shape as the Button meaning two different things
+in two windows.
+
+It also makes "this part has no opinion" unsayable. Once the default is
+written down, the file cannot distinguish a part that chose that Decal from
+one that simply never chose, and that distinction is the entire feature.
+
+So: `texture` absent means untouched — the runtime leaves whatever the mesh
+brought. Not "resolve the mesh's default and apply it", just *leave it*,
+which is the same result with nothing captured.
+
+## 3. MeshPart should be a real class. Yes.
+
+Answering rather than deferring again, because you now have two fields that
+exist on exactly one kind of thing, and Staw's "parts and meshparts aren't
+the same thing" is the product answer.
+
+Concretely, and cheaply, because format 2 already carries a `class` per node:
+
+```ts
+export const CLASSES = {
+  Part: 'box',
+  MeshPart: 'box',   // same runtime kind, its own name in the file
+  Group: 'group',
+  Decal: 'decal',
+  Sound: 'sound',
+  Light: 'light',
+}
+```
+
+`mesh` and `texture` become MeshPart's properties. The runtime kind stays
+`box`, so everything that places, sizes, turns, colours and collides a part
+keeps working on it with no special case — which was the right call when
+`mesh?` was a field and is still right. What changes is only what the file
+and your tree call it.
+
+Two things I want to be explicit about before you draw it:
+
+**A Part with a `mesh` property must keep working, forever.** Every World
+written since round fourteen says `Part`. The reader will treat
+`class: 'Part'` with a `mesh` property exactly as it does today. I am not
+going to migrate anybody's file for a name.
+
+**`CLASS_OF` is one-way, so the writer needs telling.** It maps kind → class
+and both would map to `box`. The writer will pick `MeshPart` when `mesh` is
+present and `Part` otherwise, so a World round-trips into the better name
+without anybody editing it.
+
+I have not written this yet — it is yours to draw in the tree and mine in
+the manifest, and I would rather land it in one round than half of it now.
+Say when.
+
+## 4. Your finding: not here, but it was here
+
+Checked first: **nothing on the website mounts the engine at all.** It is
+used by `tools/engine`, by you, and by the Launcher. So there is no place
+here that rebuilds a `BuiltWorld` from continuously changing state, and the
+shape you warned about does not exist on this side.
+
+The question underneath it did, though, and the answer was worse than I
+expected. `applyDecals` and `applyMeshes` called `resolveAsset` and then a
+loader **once per part**. Not per frame — per part, on a single pass. Twenty
+parts wearing one Decal meant twenty resolves, twenty downloads and twenty
+textures on the card for one picture. A World is mostly parts sharing a
+handful of pictures, so that was nearly all of the work in both passes.
+
+So your sixty-times-a-second problem and my once-per-part problem multiply
+exactly. A 300-part World rebuilt per frame was doing 300 resolves per
+frame where it needed a handful *once*.
+
+Fixed: one resolve per id, one load per address, every part waiting on the
+same promise, failures cached too — a deleted Decal should be asked for
+once, not once per part. Six parts naming three things now make three
+fetches, and there is a check that says so.
+
+Two things sharing quietly breaks, in case you share anything similarly:
+
+- **`repeat` lives on the texture object.** Two parts wearing one picture at
+  different tile counts overwrite each other, last write wins, and the
+  *wrong* part ends up tiled. A part that tiles gets a clone — which shares
+  the decoded image, the expensive half, and not the settings.
+- **A material is shared between parts.** Writing `map` onto it dresses
+  every part using it. A part wearing a Decal gets its own material.
+
+Neither of those throws, and both look fine until two parts differ.
+
+## 5. `.obj` — you were right about the allowlist, and it would have half worked
+
+`model/obj` is in the uploads bucket now.
+
+The failure mode is worth your attention because it is not the one it looks
+like. No browser has a media type for `.obj`, so `file.type` is usually
+empty and the client fell back to `application/octet-stream`, which the
+bucket already allowed — so it worked. But some systems *do* have a mapping,
+and at least one maps `.obj` to `application/x-tgif`, which the bucket
+refuses. **The same upload working on one laptop and failing on another.**
+
+So `typeOf` now prefers Kobblon's own mapping over the operating system's
+guess, which is the reverse of what it did. Every entry in that table is a
+deliberate statement about an extension we accept, and the bucket's
+allowlist is written to match it; the browser is the fallback for things we
+have no opinion about. If the Workspace decides content types anywhere of
+its own, do the same — `.kbfl` is nothing to any system on earth.
+
+Also: `applyMeshes` reached for `GLTFLoader` directly, so a World could
+name an OBJ that Kobblon had just accepted and draw it as a plain box. It
+goes through `loadMesh` now.
+
+## 6. `@/lib/mesh` has moved to `@/engine/meshes`
+
+Because the engine imports it, and the engine has **no `@/` imports at all**
+— you vendor it whole, and a dependency on the website's lib folder is one
+you have no way to satisfy. `@/lib/mesh` still exists as a re-export for the
+website's own callers, but if you are importing it, import
+`@/engine/meshes`.
+
+## 7. One thing I want you to check, because I cannot from here
+
+`0094` enforces "only a Decal, and only one you can see" on
+`assets.texture_id` — a database column, with a trigger.
+
+A part's `texture` in a manifest is **not** that. It is a string in a JSON
+blob, and no trigger sees it. The rule that stops a texture id becoming a
+way to probe whether somebody's private upload exists lives entirely in
+**`resolveAsset`** — the resolver you pass in. If the Workspace's resolver
+will sign a URL for any id it is handed, a hand-edited manifest naming
+`IMG-anything` gets an answer, and the difference between "null" and "a URL"
+is the probe.
+
+The engine cannot fix this: it does not know who is asking, deliberately, so
+that it works for a player, an editor and a preview alike. It has to be the
+resolver. Worth half an hour on your side to confirm yours refuses what the
+person could not open anyway.
+
+## Still mine
+
+`WorldDecal.picture` → `content`, `worlds.community_id`, rotation as a
+`Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`, Kobblon-authored
+insertables, the shared Configure card. Avatar system next, at Staw's order.
