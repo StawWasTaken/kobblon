@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { loadMesh, releaseMesh } from './meshes'
 import type { Solid } from './controller'
 import { isShape, tiledGeometry, type Shape } from './shapes'
 import { isMaterial, materialFor, type Material } from './materials'
@@ -79,6 +79,23 @@ export type WorldBlock = {
    * World never names an address.
    */
   mesh?: string
+
+  /**
+   * The Decal this MeshPart wears, overriding whatever the mesh itself
+   * carries. A Decal id, exactly like `mesh`.
+   *
+   * An override, never a replacement: absent means the mesh's own default,
+   * so two MeshParts of the same mesh look the same until somebody says
+   * otherwise. The fallback is resolved here at draw time rather than
+   * written into the manifest, so the manifest says only what somebody
+   * actually chose - and a mesh whose default changes tomorrow changes
+   * every part that never overrode it, which is what a default is for.
+   *
+   * Only meaningful beside `mesh`. A texture on a part that names no mesh
+   * is ignored rather than refused, because a manifest is somebody's file
+   * and the runtime is not the place to argue with it.
+   */
+  texture?: string
   /**
    * What is on this part. Decals, today.
    *
@@ -648,13 +665,19 @@ export function readManifest(raw: unknown): WorldManifest {
       // A Catalog id, never an address. Same rule as a decal, a sound and
       // the sky.
       mesh: typeof part.mesh === 'string' && NAMED.test(part.mesh) ? part.mesh : undefined,
+      // The Decal this MeshPart wears instead of the mesh's own. Also an id,
+      // checked the same way, and absent means the mesh's default rather
+      // than none.
+      texture: typeof part.texture === 'string' && NAMED.test(part.texture)
+        ? part.texture
+        : undefined,
       // Kept, not acted on. See the field.
       anchored: part.anchored === undefined ? undefined : part.anchored !== false,
       children,
       more: keepUnknown(part, [
         'id', 'kind', 'shape', 'at', 'size', 'turn', 'colour', 'material',
-        'transparency', 'reflectance', 'solid', 'mesh', 'anchored', 'children',
-        'decal',
+        'transparency', 'reflectance', 'solid', 'mesh', 'texture', 'anchored',
+        'children', 'decal',
       ]),
     }
   }
@@ -1066,6 +1089,41 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
  * coloured by its part, which is what makes a hundred of the same model in a
  * hundred colours one download.
  */
+/**
+ * Asking for the same thing twice, once.
+ *
+ * Both passes below used to call `resolveAsset` and then a loader once per
+ * part. Twenty parts wearing one Decal meant twenty resolves, twenty
+ * downloads and twenty textures on the card for one picture - and a World
+ * is mostly parts sharing a handful of pictures, so that was nearly all of
+ * the work. Per-part textures would have multiplied it again.
+ *
+ * So each id is resolved once and each address loaded once, and every part
+ * that asked waits on the same promise. Failures are remembered too: a
+ * Decal that has been deleted should be asked for once, not once per part.
+ */
+function askOnce<T>(work: (key: string) => Promise<T>) {
+  const seen = new Map<string, Promise<T>>()
+  return (key: string) => {
+    const already = seen.get(key)
+    if (already) return already
+    const fresh = work(key)
+    seen.set(key, fresh)
+    return fresh
+  }
+}
+
+/**
+ * Puts the models on.
+ *
+ * A separate pass for the same reason decals are: building a World does not
+ * wait for the network, so a World appears and then its models arrive.
+ *
+ * Reads glTF and OBJ, through the same `loadMesh` the upload card and the
+ * item page use. It used to reach for `GLTFLoader` directly, which meant a
+ * World could name an OBJ that Kobblon had happily accepted and then draw
+ * it as a plain box.
+ */
 export async function applyMeshes(
   built: BuiltWorld,
   resolveAsset?: (id: string) => Promise<string | null>,
@@ -1079,7 +1137,66 @@ export async function applyMeshes(
 ) {
   if (!resolveAsset) return
 
-  const loader = new GLTFLoader()
+  const address = askOnce((id: string) => resolveAsset(id).catch(() => null))
+
+  /*
+   * The finished geometry, shared. Every part of the same model gets the
+   * same squeezed-into-a-unit-box geometry, because the squeeze depends
+   * only on the model - the part's own scale is applied afterwards by the
+   * object's transform, not baked in here.
+   */
+  const shape = askOnce(async (url: string) => {
+    const model = await loadMesh(url).catch(() => null)
+    if (!model) return null
+
+    /*
+     * Everything in the file as one geometry, in the file's own space,
+     * and then squeezed into the unit box the part's scale expands. A
+     * model that came out of Blender at two hundred units tall and one
+     * that came out at 0.4 both end up the size of the part, which is the
+     * only behaviour a person placing one expects.
+     */
+    const pieces: THREE.BufferGeometry[] = []
+    model.updateMatrixWorld(true)
+    model.traverse((one) => {
+      if (!(one instanceof THREE.Mesh)) return
+      const piece = one.geometry.clone()
+      piece.applyMatrix4(one.matrixWorld)
+      pieces.push(piece)
+    })
+    releaseMesh(model)
+    if (!pieces.length) return null
+
+    const whole = mergeGeometries(pieces)
+    for (const piece of pieces) piece.dispose()
+    if (!whole) return null
+
+    whole.computeBoundingBox()
+    const box = whole.boundingBox!
+    const span = new THREE.Vector3()
+    box.getSize(span)
+    const middle = new THREE.Vector3()
+    box.getCenter(middle)
+
+    whole.translate(-middle.x, -middle.y, -middle.z)
+    whole.scale(
+      1 / Math.max(span.x, 1e-6),
+      1 / Math.max(span.y, 1e-6),
+      1 / Math.max(span.z, 1e-6),
+    )
+    if (!whole.attributes.normal) whole.computeVertexNormals()
+
+    return whole
+  })
+
+  const skin = askOnce(async (url: string) => {
+    const picture = await new THREE.TextureLoader().loadAsync(url).catch(() => null)
+    if (!picture) return null
+    picture.flipY = false
+    picture.colorSpace = THREE.SRGBColorSpace
+    return picture
+  })
+
   const jobs: Promise<void>[] = []
 
   for (const [object, part] of built.partOf) {
@@ -1087,47 +1204,42 @@ export async function applyMeshes(
     const mesh = object as THREE.Mesh
 
     jobs.push((async () => {
-      const url = await resolveAsset(part.mesh!).catch(() => null)
-      if (!url) return
-
-      const model = await loader.loadAsync(url).catch(() => null)
-      if (!model || !stillWanted()) return
-
       /*
-       * Everything in the file as one geometry, in the file's own space,
-       * and then squeezed into the unit box the part's scale expands. A
-       * model that came out of Blender at two hundred units tall and one
-       * that came out at 0.4 both end up the size of the part, which is the
-       * only behaviour a person placing one expects.
+       * The model and its picture are fetched together rather than one
+       * after the other. They do not depend on each other, and a World full
+       * of textured MeshParts would otherwise take twice as many round
+       * trips as it needs.
        */
-      const pieces: THREE.BufferGeometry[] = []
-      model.scene.updateMatrixWorld(true)
-      model.scene.traverse((one) => {
-        if (!(one instanceof THREE.Mesh)) return
-        const piece = one.geometry.clone()
-        piece.applyMatrix4(one.matrixWorld)
-        pieces.push(piece)
-      })
-      if (!pieces.length) return
+      const [modelUrl, textureUrl] = await Promise.all([
+        address(part.mesh!),
+        part.texture ? address(part.texture) : Promise.resolve(null),
+      ])
+      if (!modelUrl) return
 
-      const whole = mergeGeometries(pieces)
-      if (!whole) return
-      whole.computeBoundingBox()
-      const box = whole.boundingBox!
-      const span = new THREE.Vector3()
-      box.getSize(span)
-      const middle = new THREE.Vector3()
-      box.getCenter(middle)
-
-      whole.translate(-middle.x, -middle.y, -middle.z)
-      whole.scale(
-        1 / Math.max(span.x, 1e-6),
-        1 / Math.max(span.y, 1e-6),
-        1 / Math.max(span.z, 1e-6),
-      )
-      if (!whole.attributes.normal) whole.computeVertexNormals()
+      const [whole, picture] = await Promise.all([
+        shape(modelUrl),
+        textureUrl ? skin(textureUrl) : Promise.resolve(null),
+      ])
+      if (!whole || !stillWanted()) return
 
       mesh.geometry = whole
+
+      /*
+       * The part's own Decal, if it named one. Absent means the mesh keeps
+       * whatever it already had, which is the per-mesh default the site
+       * resolved when the World was written - an override, not a
+       * replacement.
+       *
+       * The texture is shared between every part using it, so the material
+       * is not: writing `map` onto a material two parts happen to share
+       * would dress both.
+       */
+      if (picture) {
+        const worn = (mesh.material as THREE.MeshStandardMaterial).clone()
+        worn.map = picture
+        worn.needsUpdate = true
+        mesh.material = worn
+      }
     })())
   }
 
@@ -1153,6 +1265,25 @@ export async function applyDecals(
   const loader = new THREE.TextureLoader()
   loader.setCrossOrigin('anonymous')
 
+  const address = askOnce((id: string) => resolveAsset(id).catch(() => null))
+
+  /*
+   * One download per picture, however many parts wear it.
+   *
+   * Shared as the loaded texture rather than as the finished one, because
+   * `repeat` is a property of the texture object: two parts wearing one
+   * picture at different tile counts would otherwise overwrite each other,
+   * last one winning, and the wrong part would end up tiled. So a part that
+   * tiles clones - which shares the uploaded image, the expensive half -
+   * and a part that does not use the shared texture as it stands.
+   */
+  const download = askOnce(async (url: string) => {
+    const image = await loader.loadAsync(url).catch(() => null)
+    if (!image) return null
+    image.colorSpace = THREE.SRGBColorSpace
+    return image
+  })
+
   const jobs: Promise<void>[] = []
 
   for (const [object, part] of built.partOf) {
@@ -1166,13 +1297,11 @@ export async function applyDecals(
        * engine takes either: resolving one is the client's business, and the
        * client is the only thing that knows which it has.
        */
-      const url = await resolveAsset(part.picture).catch(() => null)
+      const url = await address(part.picture)
       if (!url) return
 
-      const image = await loader.loadAsync(url).catch(() => null)
-      if (!image || !stillWanted()) return
-
-      image.colorSpace = THREE.SRGBColorSpace
+      const shared = await download(url)
+      if (!shared || !stillWanted()) return
 
       /*
        * A Texture is a decal that repeats. Without a count the picture is
@@ -1181,7 +1310,10 @@ export async function applyDecals(
        * the picture starting again.
        */
       const [across, up] = part.repeat ?? [1, 1]
-      if (across !== 1 || up !== 1) {
+      const tiles = across !== 1 || up !== 1
+      const image = tiles ? shared.clone() : shared
+      if (tiles) {
+        image.needsUpdate = true
         image.wrapS = THREE.RepeatWrapping
         image.wrapT = THREE.RepeatWrapping
         image.repeat.set(Math.max(across, 0.001), Math.max(up, 0.001))

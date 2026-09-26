@@ -555,6 +555,72 @@ check('and the part keeps its own colour, so one model is any colour',
 check('a model that cannot be fetched leaves the part as it was',
   modelled.fallback === 'BoxGeometry', 'still a box, not a hole in the World')
 
+// -- 13g2. one download however many parts want it, and a part's own Decal
+const shared = await p.evaluate(async () => {
+  window.fakePicture('seven', 64, 64)
+  window.fakePicture('eight', 32, 32)
+  await window.engine.open({
+    format: 1, id: 'sh', name: 'Shared', spawn: { at: [0, 6, 20] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      // Six parts, one model, two of them wearing their own Decal and one
+      // of those wearing the same Decal as the other.
+      { id: 'a', kind: 'box', mesh: 'MSH-1', at: [0, 5, 0], size: [2, 2, 2] },
+      { id: 'b', kind: 'box', mesh: 'MSH-1', at: [3, 5, 0], size: [2, 2, 2] },
+      { id: 'c', kind: 'box', mesh: 'MSH-1', at: [6, 5, 0], size: [2, 2, 2] },
+      { id: 'd', kind: 'box', mesh: 'MSH-1', at: [9, 5, 0], size: [2, 2, 2], texture: 'IMG-7' },
+      { id: 'e', kind: 'box', mesh: 'MSH-1', at: [12, 5, 0], size: [2, 2, 2], texture: 'IMG-7' },
+      { id: 'f', kind: 'box', mesh: 'MSH-1', at: [15, 5, 0], size: [2, 2, 2], texture: 'IMG-8' },
+    ],
+  })
+
+  const asked = []
+  await window.applyMeshes(window.built(), async (id) => {
+    asked.push(id)
+    if (id === 'MSH-1') return '/k6/k6.glb'
+    if (id === 'IMG-7') return window.drawnUrl('seven')
+    if (id === 'IMG-8') return window.drawnUrl('eight')
+    return null
+  })
+
+  const named = window.built().named
+  const at = (id) => named.get(id)
+  return {
+    // Six parts named the model and two named one Decal; three distinct ids.
+    asked: asked.length,
+    distinct: new Set(asked).size,
+    // Every part of the one model shares the one geometry.
+    oneGeometry: at('a').geometry === at('b').geometry && at('b').geometry === at('f').geometry,
+    // The two parts wearing the same Decal share the one texture...
+    oneTexture: at('d').material.map === at('e').material.map,
+    // ...and the part wearing a different one is not wearing theirs.
+    ownTexture: at('f').material.map !== at('d').material.map && !!at('f').material.map,
+    /*
+     * A part that named no Decal is left alone. Not "has no map": a plastic
+     * or marble part already carries that material's own surface texture,
+     * and the first version of this check asserted it was bare and caught
+     * that instead of catching a bug. What matters is that it is wearing
+     * neither of its neighbours' Decals.
+     */
+    bare: at('a').material.map !== at('d').material.map
+       && at('a').material.map !== at('f').material.map,
+    // The materials are not shared, or dressing one would dress them all.
+    ownMaterial: at('d').material !== at('a').material,
+
+  }
+})
+check('one model and one Decal are fetched once, however many parts want them',
+  shared.asked === 3 && shared.distinct === 3,
+  `${shared.asked} fetches for 6 parts naming 3 things`)
+check('and every part of one model shares the one geometry',
+  shared.oneGeometry, 'six parts, one BufferGeometry')
+check('two parts wearing one Decal share the one texture',
+  shared.oneTexture, 'loaded once, worn twice')
+check('a part wearing its own Decal wears that one',
+  shared.ownTexture, 'a per-part texture overrides')
+check('a part naming no Decal keeps the mesh default rather than a neighbour\'s',
+  shared.bare && shared.ownMaterial, 'an override, not a replacement')
+
 // -- 13h. welds, anchored, and fields this engine has not learned
 const carried = await p.evaluate(() => {
   const written = {

@@ -27,6 +27,17 @@ const cases = [
   [{ name: 'mystery', type: '' }, undefined, 'application/octet-stream', 'no extension falls back, and the bucket refuses it'],
   [{ name: 'mystery.zip', type: '' }, undefined, 'application/octet-stream', 'an extension we do not allow is not invented'],
   [{ name: 'face', type: '' }, 'image/png', 'image/png', 'a caller that knows what it is expecting says so'],
+  [{ name: 'statue.obj', type: '' }, undefined, 'model/obj', 'an OBJ, which no browser has a type for'],
+  [{ name: 'statue.gltf', type: '' }, undefined, 'model/gltf+json', 'a glTF written as JSON'],
+  /*
+   * The ordering that matters. Some systems map .obj to application/x-tgif,
+   * and the bucket refuses that - so the same upload worked on one laptop
+   * and failed on another. Our own mapping wins over the browser's guess
+   * for every extension we have an opinion about.
+   */
+  [{ name: 'statue.obj', type: 'application/x-tgif' }, undefined, 'model/obj', 'and a system that guesses wrongly is overruled'],
+  [{ name: 'part.kbfl', type: 'text/plain' }, undefined, 'application/json', 'same for Kobblon own file'],
+  [{ name: 'odd.xyz', type: 'application/x-thing' }, undefined, 'application/x-thing', 'but a type we have no opinion about is left alone'],
 ]
 
 let bad = 0

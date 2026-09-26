@@ -2556,14 +2556,28 @@ const TYPES: Record<string, string> = {
   gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml',
   mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
   mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav', m4a: 'audio/mp4',
-  json: 'application/json', kbfl: 'application/json', glb: 'model/gltf-binary',
+  json: 'application/json', kbfl: 'application/json',
+  glb: 'model/gltf-binary', gltf: 'model/gltf+json', obj: 'model/obj',
   txt: 'text/plain',
 }
 
+/**
+ * What to tell storage a file is.
+ *
+ * Our own mapping wins over the browser's, which is the opposite of what
+ * this did. `file.type` is whatever the operating system's media-type table
+ * says, and for the formats Kobblon invented or cares about that table is
+ * either empty or wrong: `.kbfl` is nothing anywhere, and some systems map
+ * `.obj` to `application/x-tgif`, which the bucket refuses. Trusting it
+ * meant the same upload working on one laptop and failing on another.
+ *
+ * Every entry in `TYPES` is a deliberate statement about an extension we
+ * accept, and the bucket's allowlist is written to match it. The browser is
+ * the fallback, for everything we have not got an opinion about.
+ */
 export function typeOf(file: File, fallback = 'application/octet-stream') {
-  if (file.type) return file.type
   const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-  return TYPES[extension] ?? fallback
+  return TYPES[extension] ?? (file.type || fallback)
 }
 
 export function worldFileUrl(path: string) {
