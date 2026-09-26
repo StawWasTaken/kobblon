@@ -57,7 +57,9 @@ export const kindAccepts: Record<AssetKind, string> = {
   audio: 'audio/mpeg,audio/ogg,application/ogg,audio/wav,audio/aac,audio/flac,.mp3,.ogg,.wav,.flac,.aac',
   video: 'video/mp4,video/webm,video/ogg,.mp4,.webm',
   font: 'font/woff2,font/woff,font/ttf,font/otf,.woff2,.woff,.ttf,.otf',
-  mesh: 'model/gltf-binary,model/gltf+json,.glb,.gltf',
+  // `.obj` is plain text and no browser has a type for it, so the
+  // extension has to be offered explicitly the same way `.kbfl` is.
+  mesh: 'model/gltf-binary,model/gltf+json,.glb,.gltf,.obj',
   build: '.kbfl,application/json',
 }
 

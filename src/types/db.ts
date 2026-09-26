@@ -138,6 +138,14 @@ export type AssetPageItem = MarketAsset & {
   review_note: string | null
   updated_at: string
   creator_id: string
+  /*
+   * What a mesh wears. Null for every other kind, for a mesh nobody has
+   * dressed, and - for the path alone - for a Decal this viewer is not
+   * allowed to see, which is why the name can be set while the path is not.
+   */
+  texture_content_id: number | null
+  texture_name: string | null
+  texture_path: string | null
 }
 
 export type AssetDay = { day: string; views: number; uses: number }

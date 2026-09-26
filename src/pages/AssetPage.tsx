@@ -15,8 +15,10 @@ import { Dialog } from '@/components/ui/Dialog'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
-import { contentTag, kindIcons, kindLabels } from '@/components/create/AssetTile'
+import { contentTag, kindCodes, kindIcons, kindLabels } from '@/lib/kinds'
 import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { MeshViewer } from '@/components/create/MeshViewer'
+import { formatOf } from '@/lib/mesh'
 import { FontPreview } from '@/components/create/FontPreview'
 import { AssetTile } from '@/components/create/AssetTile'
 import { Menu } from '@/components/ui/Menu'
@@ -54,12 +56,33 @@ const sizeLabel = (bytes: number) =>
  * shown: a decal whole rather than cropped, a sound as its square cover with
  * the player beside it, a clip in its own shape, a font set in itself.
  */
-function Stage({ asset, previewUrl, fileUrl }: {
+function Stage({ asset, previewUrl, fileUrl, textureUrl }: {
   asset: AssetPageItem
   previewUrl: string | null
   fileUrl: string | null
+  textureUrl: string | null
 }) {
   const [shape, setShape] = useState<{ w: number; h: number } | null>(null)
+
+  /*
+   * A mesh is a shape, and one angle of a shape is not a shape. The card
+   * picture stands in until the file itself has been signed for, so the
+   * frame is never empty and never jumps size when the model arrives.
+   */
+  if (asset.kind === 'mesh') {
+    if (!fileUrl) {
+      return (
+        <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
+          {previewUrl
+            ? <img src={previewUrl} alt={asset.name} draggable={false} className="h-full w-full select-none object-contain" />
+            : <FontAwesomeIcon icon={kindIcons.mesh} style={{ width: '34%', height: 'auto' }} className="animate-pulse text-white/25" />}
+        </div>
+      )
+    }
+    // From the stored path, which keeps its extension, rather than from
+    // the signed address, which need not.
+    return <MeshViewer src={fileUrl} format={formatOf(asset.file_path)} textureUrl={textureUrl} />
+  }
 
   if (asset.kind === 'video') {
     return <MediaPlayer src={fileUrl} kind="video" poster={previewUrl} />
@@ -287,10 +310,18 @@ export default function AssetPage() {
   // Sound and video play from a signed URL that expires; there is no link to
   // keep, and the player is told not to offer a download.
   const file = useSignedUrl(
-    asset && (asset.kind === 'audio' || asset.kind === 'video' || asset.kind === 'font')
+    asset && (asset.kind === 'audio' || asset.kind === 'video' || asset.kind === 'font'
+      || asset.kind === 'mesh')
       ? asset.file_path
       : null,
   )
+  /*
+   * The Decal a mesh wears. `texture_path` is only set when the server has
+   * decided this viewer may see that Decal, so asking for a signed address
+   * here cannot be a way around the policies - there is nothing to sign
+   * when the answer was no.
+   */
+  const texture = useSignedUrl(asset?.texture_path ?? null)
 
   useTitle(asset?.name, 'Kobblon Create')
 
@@ -604,7 +635,13 @@ export default function AssetPage() {
             : 'sm:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]',
       )}>
         <div className="space-y-3">
-          <Stage key={asset.id} asset={asset} previewUrl={previewUrl} fileUrl={fileUrl} />
+          <Stage
+            key={asset.id}
+            asset={asset}
+            previewUrl={previewUrl}
+            fileUrl={fileUrl}
+            textureUrl={texture}
+          />
 
           <Link
             to={`/create/creator/${asset.creator_username}`}
@@ -621,6 +658,36 @@ export default function AssetPage() {
 
         <div className="min-w-0 space-y-5">
           {asset.kind === 'audio' && <MediaPlayer src={fileUrl} kind="audio" />}
+
+          {/*
+            * What the mesh is wearing, with a way to get to it. A Decal is a
+            * piece of content with its own page and its own owner, and a
+            * mesh wearing somebody else's should credit them somewhere a
+            * person can actually see and follow.
+            *
+            * Shown whenever there is a Decal at all, including one this
+            * viewer may not see the picture of - "it wears something you
+            * cannot open" is true and useful, where silence reads as bare.
+            */}
+          {asset.kind === 'mesh' && asset.texture_content_id && (
+            <Link
+              to={`/create/${kindCodes.image}-${asset.texture_content_id}`}
+              className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-3 py-2.5 hover:border-brand"
+            >
+              <FontAwesomeIcon icon={kindIcons.image} className="text-white/40" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[10px] uppercase tracking-wider text-muted">
+                  Wearing
+                </span>
+                <span className="block truncate text-sm font-bold">
+                  {asset.texture_name ?? 'A Decal'}
+                </span>
+              </span>
+              <span className="shrink-0 font-mono text-xs text-muted">
+                {contentTag('image', asset.texture_content_id)}
+              </span>
+            </Link>
+          )}
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[

@@ -14,7 +14,10 @@
  * who opens its page. Nothing about this makes the original file public.
  */
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import {
+  formatOf, frameMesh, lightForLooking, loadMesh, meshFormats, releaseMesh,
+} from '@/lib/mesh'
+import type { MeshFormat } from '@/lib/mesh'
 import type { AssetKind } from '@/types/db'
 
 /** Big enough for a card at full width, small enough to be nothing much. */
@@ -99,34 +102,23 @@ function fromFilm(src: string) {
  * no reader on this side, so it gets no picture rather than a wrong one. A
  * mesh is glTF and is drawn.
  */
-async function fromMesh(src: string): Promise<Blob | null> {
+async function fromMesh(src: string, format: MeshFormat): Promise<Blob | null> {
   const canvas = document.createElement('canvas')
   canvas.width = 640
   canvas.height = 640
 
   let renderer: THREE.WebGLRenderer | null = null
+  let model: THREE.Object3D | null = null
   try {
-    const model = await new GLTFLoader().loadAsync(src)
+    model = await loadMesh(src, format)
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#e9edf5')
-    scene.add(model.scene)
+    scene.add(model)
+    lightForLooking(scene)
 
-    // Enough light to read a shape by: one from above and in front, and a
-    // soft fill so the side facing away is not a silhouette.
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x8d95a6, 2.2))
-    const sun = new THREE.DirectionalLight(0xffffff, 2.4)
-    sun.position.set(6, 10, 8)
-    scene.add(sun)
-
-    const around = new THREE.Box3().setFromObject(model.scene)
-    const middle = around.getCenter(new THREE.Vector3())
-    const reach = Math.max(around.getBoundingSphere(new THREE.Sphere()).radius, 0.001)
-
-    const camera = new THREE.PerspectiveCamera(35, 1, reach / 100, reach * 100)
-    // Far enough that the whole sphere is inside the cone of vision, with a
-    // little air around it.
-    const away = (reach * 1.35) / Math.sin((camera.fov * Math.PI) / 360)
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
+    const { middle, away } = frameMesh(model, camera)
     camera.position.set(
       middle.x + away * 0.62,
       middle.y + away * 0.48,
@@ -138,20 +130,13 @@ async function fromMesh(src: string): Promise<Blob | null> {
     renderer.setSize(canvas.width, canvas.height, false)
     renderer.render(scene, camera)
 
-    const drawn = await new Promise<Blob | null>((done) => {
+    return await new Promise<Blob | null>((done) => {
       canvas.toBlob(done, 'image/jpeg', QUALITY)
     })
-
-    model.scene.traverse((one) => {
-      const mesh = one as THREE.Mesh
-      mesh.geometry?.dispose?.()
-      for (const material of [mesh.material].flat()) (material as THREE.Material)?.dispose?.()
-    })
-
-    return drawn
   } catch {
     return null
   } finally {
+    if (model) releaseMesh(model)
     // A renderer left alive holds a WebGL context, and a browser only allows
     // a handful of those at once: leak them and the fifth upload in a
     // session silently stops drawing anything.
@@ -163,11 +148,13 @@ async function fromMesh(src: string): Promise<Blob | null> {
 export async function previewOf(file: File, kind: AssetKind): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   // A Kobblon part file is JSON, and nothing here reads one yet.
-  if (kind === 'mesh' && !/\.(glb|gltf)$/i.test(file.name)) return null
+  if (kind === 'mesh' && !meshFormats.test(file.name)) return null
 
   const src = URL.createObjectURL(file)
   try {
-    if (kind === 'mesh') return await fromMesh(src)
+    // From `file.name`, not from `src`: `src` is a blob address with no
+    // name on it, so sniffing it would send every OBJ to the glTF reader.
+    if (kind === 'mesh') return await fromMesh(src, formatOf(file.name))
     return kind === 'video' ? await fromFilm(src) : await fromPicture(src)
   } catch {
     return null
@@ -180,7 +167,7 @@ export async function previewOf(file: File, kind: AssetKind): Promise<Blob | nul
 export async function previewOfUrl(url: string, kind: AssetKind): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   try {
-    if (kind === 'mesh') return await fromMesh(url)
+    if (kind === 'mesh') return await fromMesh(url, formatOf(url))
     return kind === 'video' ? await fromFilm(url) : await fromPicture(url)
   } catch {
     return null
