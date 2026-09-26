@@ -5,6 +5,7 @@ import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { ChatDock } from '@/components/chat/ChatDock'
 import { FriendRequestWatcher } from '@/components/social/FriendRequestToast'
+import { GuestNudge } from '@/components/auth/GuestNudge'
 import { mobileNav } from './nav'
 import { cn } from '@/lib/cn'
 import { AdsProvider } from '@/components/ads/AdBanner'
@@ -99,6 +100,7 @@ export function AppShell() {
 
       {/* A friend request that arrives while you are doing something else. */}
       <FriendRequestWatcher />
+      <GuestNudge />
     </ChatDock>
   )
 }

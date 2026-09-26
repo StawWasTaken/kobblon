@@ -218,6 +218,15 @@ export type OwnAsset = {
   download_count: number
   is_public: boolean
   created_at: string
+  /**
+   * Who put it there, on a Community's list.
+   *
+   * `community_uploads` has always returned this and nothing showed it, which
+   * is how somebody ends up looking at a Decal a different account uploaded
+   * and wondering why their own things are missing. Absent on your own list,
+   * where the answer is you.
+   */
+  uploaded_by?: string | null
 }
 
 export type UsernameRecord = { username: string; changed_at: string }

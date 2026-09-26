@@ -151,6 +151,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
             </Link>
             <p className="truncate text-[11px] text-muted">
               {kindLabels[item.kind]} · {timeAgo(item.created_at)}
+              {item.uploaded_by && <> · by {item.uploaded_by}</>}
             </p>
           </div>
         </div>
@@ -199,7 +200,10 @@ export function UploadLine({ item }: { item: OwnAsset }) {
         <p className={cn('flex flex-wrap items-center gap-1.5 text-xs', look.tone)}>
           <FontAwesomeIcon icon={look.icon} />
           {look.label}
-          <span className="text-muted">· {kindLabels[item.kind]} · {timeAgo(item.created_at)}</span>
+          <span className="text-muted">
+            · {kindLabels[item.kind]} · {timeAgo(item.created_at)}
+            {item.uploaded_by && <> · by {item.uploaded_by}</>}
+          </span>
           {!item.is_public && (
             <span className="inline-flex items-center gap-1 text-muted">
               <FontAwesomeIcon icon={faLock} /> Unlisted
