@@ -76,14 +76,18 @@ export function Showcase() {
             *
             * The strip is there so the sentence is legible over sky or over
             * a building without darkening the whole picture to suit it.
+            *
+            * The logo gets a higher stacking order than the strip so the
+            * glow/bottom edge of the letters sits above it rather than
+            * being covered by it where the two overlap.
             */}
           <div className="w-full max-w-[400px]">
             <img
               src={asset('/brand/wordmark2.png')}
               alt="Kobblon"
-              className="block w-full select-none"
+              className="relative z-10 block w-full select-none"
             />
-            <p className="-mt-2.5 bg-ink/75 px-3 py-2 text-center font-display text-base text-white backdrop-blur-sm sm:text-lg">
+            <p className="relative z-0 -mt-2.5 bg-ink/75 px-3 py-2 text-center font-display text-base text-white backdrop-blur-sm sm:text-lg">
               The game built by players.
             </p>
           </div>
