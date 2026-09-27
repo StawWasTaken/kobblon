@@ -30,9 +30,16 @@ function PublicTopbar() {
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
         <Wordmark to="/" className="h-5" />
 
+        {/*
+          * The four places a stranger might be going. Communities and the
+          * Launcher were reachable only by scrolling the whole front page,
+          * which is a long way to go for a download link.
+          */}
         <nav className="hidden items-center gap-5 text-sm font-bold text-white/75 sm:flex">
-          <Link to="/discover" className="hover:text-white">Discover</Link>
+          <Link to="/discover" className="hover:text-white">Play</Link>
           <Link to="/create" className="hover:text-white">Create</Link>
+          <Link to="/communities" className="hover:text-white">Communities</Link>
+          <Link to="/download" className="hover:text-white">Download</Link>
         </nav>
 
         <form onSubmit={submit} className="ml-auto flex items-center gap-2">
@@ -57,6 +64,8 @@ function PublicTopbar() {
           />
           <Button type="submit" size="sm" variant="subtle" className="hidden md:inline-flex">Log In</Button>
           <Button size="sm" to="/login" className="md:hidden">Log In</Button>
+          {/* The one thing this bar is for, if you have not got an account. */}
+          <Button size="sm" to="/signup" variant="yes">Sign Up</Button>
           {failed && (
             <p role="alert" className="hidden text-xs text-danger lg:block">Wrong username or password</p>
           )}

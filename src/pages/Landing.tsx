@@ -1,20 +1,18 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faArrowRight, faShieldHalved, faStore, faEye, faUserAstronaut, faBolt, faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
-import { Wordmark } from '@/components/brand/Wordmark'
 import { Signature } from '@/components/brand/Signature'
 import { Kobby } from '@/components/brand/Kobby'
-import { JoinPanel } from '@/components/landing/JoinPanel'
+import { Showcase } from '@/components/landing/Showcase'
+import { Commercial } from '@/components/landing/Commercial'
 import { WorldStage } from '@/components/landing/WorldStage'
 import { CreatorShelf } from '@/components/landing/CreatorShelf'
 import { CommunityRow } from '@/components/landing/CommunityRow'
 import { StyleShelf } from '@/components/landing/StyleShelf'
-import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useForceDark } from '@/hooks/useTheme'
 import { getPlatformStats, listAssets, listCommunities, listWorlds, styleShop } from '@/lib/api'
@@ -86,24 +84,6 @@ function Ticker({ icon, value, label }: { icon: IconDefinition; value: string; l
 
 export default function Landing() {
   useForceDark()
-  const navigate = useNavigate()
-  const { signInAsGuest } = useAuth()
-  const [guestPending, setGuestPending] = useState(false)
-  const [guestError, setGuestError] = useState<string | null>(null)
-
-  const enterAsGuest = async () => {
-    setGuestPending(true)
-    setGuestError(null)
-    try {
-      await signInAsGuest()
-      navigate('/home')
-    } catch {
-      setGuestError('Guest mode is not switched on for this site yet.')
-    } finally {
-      setGuestPending(false)
-    }
-  }
-
   const stats = useAsync(getPlatformStats, [])
   const spaces = useAsync(() => listWorlds({ sort: 'trending', limit: 5 }), [])
   /*
@@ -133,53 +113,16 @@ export default function Landing() {
 
   return (
     <div className="bg-ink text-white">
-      {/* ------------------------------------------------------------ hero */}
-      <section className="relative overflow-hidden border-b-[6px] border-brand-ink">
-        <img
-          src={asset('/brand/banner3.png')}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-brand-deep/80 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-ink via-brand-ink/90 to-brand-ink/40" />
-        <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-brand-ink/95 to-transparent" />
+      {/*
+        * The picture and the sign-up, in the shape Staw asked for. The bar
+        * above it is PublicLayout's, which already carried the log-in
+        * fields - a second one here would have been two bars saying the
+        * same thing, which is what nearly happened.
+        */}
+      <Showcase />
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 py-20 sm:px-8 sm:py-28 lg:grid-cols-[1fr_24rem] lg:gap-20">
-          <div>
-            <Wordmark to={null} className="h-9 sm:h-12" />
-
-            {/* Sized so each line holds together instead of breaking after
-                "Make" once the form is beside it. */}
-            <h1 className="mt-8 font-display text-5xl font-extrabold leading-[0.86] sm:text-6xl xl:text-7xl">
-              <span className="block whitespace-nowrap">Make Something</span>
-              <span className="block whitespace-nowrap">Nobody Else Has</span>
-            </h1>
-
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/70">
-              Kobblon is a place to build your own corner of the internet, fill it with
-              whatever you want, and let people walk in.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Button size="lg" variant="subtle" to="/discover">Look around first</Button>
-              <button
-                onClick={enterAsGuest}
-                disabled={guestPending}
-                className="text-sm font-bold text-white/70 underline-offset-4 hover:text-white hover:underline disabled:opacity-60"
-              >
-                {guestPending ? 'One moment' : 'Or play as a guest'}
-              </button>
-            </div>
-            {guestError && <p className="mt-3 text-sm text-danger">{guestError}</p>}
-
-            <p className="mt-5 text-xs text-white/45">Free, and for people aged 15 and over.</p>
-          </div>
-
-          {/* The form itself, rather than a button that goes to a form. */}
-          <JoinPanel />
-        </div>
-      </section>
+      {/* The advert, under the fold, loaded only when asked for. */}
+      <Commercial />
 
       {/* ---------------------------------------------------------- numbers */}
       {!stats.loading && stats.data && (
