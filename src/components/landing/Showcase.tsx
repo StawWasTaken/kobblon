@@ -65,24 +65,28 @@ export function Showcase() {
 
       <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-12 lg:grid-cols-[1fr_390px] lg:py-16">
         <div className="max-w-xl self-center">
-          <img
-            src={asset('/brand/wordmark2.png')}
-            alt="Kobblon"
-            className="w-full max-w-[400px] select-none"
-          />
-
           {/*
-            * One line, in a dark strip under the wordmark, the way Roblox
-            * put "The Game Powered by Players." under theirs. The version
-            * before this was two sentences and a paragraph explaining them,
-            * which is three chances to stop reading before the point.
+            * The wordmark and one line under it, the way Roblox put "The
+            * Game Powered by Players." under theirs.
+            *
+            * The two share a width so the strip ends exactly where the
+            * wordmark does, and it is pulled up into the wordmark's own
+            * transparent edge so the two read as one mark rather than as a
+            * picture with a caption below it.
             *
             * The strip is there so the sentence is legible over sky or over
             * a building without darkening the whole picture to suit it.
             */}
-          <p className="mt-3 inline-block bg-ink/70 px-4 py-2 font-display text-lg text-white backdrop-blur-sm sm:text-xl">
-            Everything here is made by the players.
-          </p>
+          <div className="w-full max-w-[400px]">
+            <img
+              src={asset('/brand/wordmark2.png')}
+              alt="Kobblon"
+              className="block w-full select-none"
+            />
+            <p className="-mt-2.5 bg-ink/75 px-3 py-2 text-center font-display text-base text-white backdrop-blur-sm sm:text-lg">
+              The game built by players.
+            </p>
+          </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button to="/discover" size="lg" variant="brand">
