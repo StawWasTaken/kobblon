@@ -84,20 +84,32 @@ function Scrubber({
   )
 }
 
-function VolumeControl({ media }: { media: HTMLMediaElement | null }) {
+/*
+ * The volume, owned by the player rather than by this control.
+ *
+ * It used to keep its own `muted`, defaulting to false, and write it to the
+ * element whenever the element changed. Which meant two components owned one
+ * property: the player muted an ambient clip, this unmuted it a moment
+ * later, and the clip played with sound nobody asked for - or, once the
+ * browser refused that, did not play at all. Both halves were correct on
+ * their own, which is why it took a trace to see.
+ */
+function VolumeControl({ media, muted, onMuted }: {
+  media: HTMLMediaElement | null
+  muted: boolean
+  onMuted: (next: boolean) => void
+}) {
   const [volume, setVolume] = useState(1)
-  const [muted, setMuted] = useState(false)
 
   useEffect(() => {
     if (!media) return
     media.volume = volume
-    media.muted = muted
-  }, [media, volume, muted])
+  }, [media, volume])
 
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => setMuted((v) => !v)}
+        onClick={() => onMuted(!muted)}
         aria-label={muted ? 'Unmute' : 'Mute'}
         className="grid h-8 w-8 place-items-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white"
       >
@@ -109,7 +121,7 @@ function VolumeControl({ media }: { media: HTMLMediaElement | null }) {
         max={1}
         step={0.05}
         value={muted ? 0 : volume}
-        onChange={(e) => { setVolume(Number(e.target.value)); setMuted(false) }}
+        onChange={(e) => { setVolume(Number(e.target.value)); onMuted(false) }}
         aria-label="Volume"
         className="hidden h-1.5 w-20 cursor-pointer appearance-none rounded-full bg-white/15 accent-[#3A50FF] sm:block"
       />
@@ -123,12 +135,24 @@ function VolumeControl({ media }: { media: HTMLMediaElement | null }) {
  * from is a link that expires.
  */
 export function MediaPlayer({
-  src, kind, poster, className,
+  src, kind, poster, className, ambient = false,
 }: {
   src: string | null
   kind: 'audio' | 'video'
   poster?: string | null
   className?: string
+  /**
+   * Plays by itself, silently, on a loop, and a click turns the sound on
+   * rather than pausing it. For a clip that is there to be glanced at - the
+   * advert on the front page - where a still frame with a play button on it
+   * is an invitation most people decline.
+   *
+   * Silent is not a style choice: a browser will refuse to start a clip
+   * with sound that nobody asked for, and refusing is the whole reason a
+   * muted autoplay is allowed at all. So the sound is the thing the click
+   * buys, and until then the picture moves and says nothing.
+   */
+  ambient?: boolean
 }) {
   const media = useRef<HTMLVideoElement & HTMLAudioElement>(null)
   const [node, setNode] = useState<HTMLMediaElement | null>(null)
@@ -137,6 +161,7 @@ export function MediaPlayer({
   const [length, setLength] = useState(0)
   const [buffered, setBuffered] = useState(0)
   const [ended, setEnded] = useState(false)
+  const [muted, setMuted] = useState(ambient)
   // A clip is shown in its own shape rather than posted into a widescreen
   // box, so nothing is letterboxed that was never wide.
   const [shape, setShape] = useState<{ w: number; h: number } | null>(null)
@@ -144,6 +169,51 @@ export function MediaPlayer({
   useEffect(() => { setShape(null); setTime(0); setEnded(false) }, [src])
 
   useEffect(() => { setNode(media.current) }, [src])
+
+  /*
+   * An ambient clip starts when it comes into view and stops when it leaves.
+   * Not on load: the front page's advert is well below the fold, and a
+   * five-megabyte download that begins before anybody has scrolled to it is
+   * paid for by everybody who never does.
+   *
+   * It also stops when scrolled past, because a film playing to nobody in a
+   * background tab is somebody's battery.
+   */
+  useEffect(() => {
+    const element = media.current
+    if (!ambient || !element || !src) return
+
+    element.muted = true
+    const watcher = new IntersectionObserver(
+      ([seen]) => {
+        if (seen.isIntersecting) void element.play().catch(() => {})
+        else element.pause()
+      },
+      { threshold: 0.25 },
+    )
+    watcher.observe(element)
+    return () => watcher.disconnect()
+  }, [ambient, src])
+
+  /*
+   * Written to the element as well as rendered, because a clip that is not
+   * muted at the instant `play()` is called is refused outright - which
+   * shows up as autoplay quietly not happening, with nothing in the
+   * console to say why.
+   */
+  useEffect(() => {
+    if (media.current) media.current.muted = muted
+  }, [muted, src])
+
+  /** In ambient mode a click buys the sound; everywhere else it pauses. */
+  const press = () => {
+    if (!ambient) { toggle(); return }
+    const element = media.current
+    if (!element) return
+    setMuted((was) => !was)
+    // Unmuting something the browser had stopped should also start it.
+    if (element.paused) void element.play().catch(() => {})
+  }
 
   const toggle = () => {
     const element = media.current
@@ -154,7 +224,28 @@ export function MediaPlayer({
   const shared = {
     ref: media,
     src: src ?? undefined,
-    preload: 'metadata' as const,
+    /*
+     * An ambient clip fetches nothing until it is scrolled to, which is what
+     * the observer above is for. Everywhere else metadata is wanted up
+     * front, because that is where the duration on the scrubber comes from
+     * and a player showing 0:00 until you press it looks broken.
+     */
+    preload: ambient ? ('none' as const) : ('metadata' as const),
+    loop: ambient,
+    /*
+     * `muted` is written to the element and never read back into state.
+     *
+     * It was both for a while, and the two fought: React mounts the element
+     * unmuted, that fires a volumechange, the handler faithfully read "not
+     * muted" back into the state whose whole job was to mute it, and the
+     * effect then obediently unmuted the element. Everything worked exactly
+     * as written and the clip sat there unmuted with no prompt offering the
+     * sound - `loop` and `preload` proved ambient mode was on, which is how
+     * it was found.
+     *
+     * So this is one-way now. `press` is the only thing that changes it.
+     */
+    muted,
     onPlay: () => setPlaying(true),
     onPause: () => setPlaying(false),
     onEnded: () => { setPlaying(false); setEnded(true) },
@@ -204,7 +295,7 @@ export function MediaPlayer({
         {clock(length)}
       </span>
 
-      <VolumeControl media={node} />
+      <VolumeControl media={node} muted={muted} onMuted={setMuted} />
     </div>
   )
 
@@ -231,11 +322,29 @@ export function MediaPlayer({
           playsInline
           disablePictureInPicture
           controlsList="nodownload noplaybackrate"
-          onClick={toggle}
+          onClick={press}
           style={{ aspectRatio: shape ? `${shape.w} / ${shape.h}` : '16 / 9' }}
           className="w-full cursor-pointer select-none bg-black object-contain"
         />
-        {!playing && (
+        {/*
+          * In ambient mode the picture is already moving, so the overlay is
+          * a small note about the sound rather than a sheet over the whole
+          * clip with a play button on it - covering a playing film to tell
+          * somebody they could play it.
+          */}
+        {ambient && muted && (
+          <button
+            onClick={press}
+            aria-label="Turn the sound on"
+            onContextMenu={(e) => e.preventDefault()}
+            className="group absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-ink/75 px-3.5 py-2 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-brand"
+          >
+            <FontAwesomeIcon icon={faVolumeXmark} />
+            Tap for sound
+          </button>
+        )}
+
+        {!ambient && !playing && (
           <button
             onClick={toggle}
             aria-label="Play"

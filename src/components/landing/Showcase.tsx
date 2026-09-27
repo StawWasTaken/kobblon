@@ -71,18 +71,20 @@ export function Showcase() {
             className="w-full max-w-[400px] select-none"
           />
 
-          <p className="mt-6 font-display text-2xl leading-tight text-white sm:text-3xl">
-            Every world, every sound, every thing you can wear
-            <span className="block text-brand-bright">was made by someone playing it.</span>
+          {/*
+            * One line, in a dark strip under the wordmark, the way Roblox
+            * put "The Game Powered by Players." under theirs. The version
+            * before this was two sentences and a paragraph explaining them,
+            * which is three chances to stop reading before the point.
+            *
+            * The strip is there so the sentence is legible over sky or over
+            * a building without darkening the whole picture to suit it.
+            */}
+          <p className="mt-3 inline-block bg-ink/70 px-4 py-2 font-display text-lg text-white backdrop-blur-sm sm:text-xl">
+            Everything here is made by the players.
           </p>
 
-          <p className="mt-4 max-w-md text-base leading-relaxed text-white/70">
-            Kobblon does not make the games. People do, with the same tools you
-            get the moment you have a name — and everything they make is free
-            to play.
-          </p>
-
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button to="/discover" size="lg" variant="brand">
               <FontAwesomeIcon icon={faPlay} />
               Start playing
