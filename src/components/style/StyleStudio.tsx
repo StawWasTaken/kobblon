@@ -115,7 +115,15 @@ export function StyleStudio({
               role="button"
               aria-label="Drag to place, arrow keys to nudge"
               className={cn(
-                'absolute select-none outline-none',
+                /*
+                 * `max-w-none` for the same reason StyleLayer needs it, and
+                 * worse here: the studio lays the face into the middle 76%
+                 * of this box, so the preflight clamp bit at a different
+                 * width than it did everywhere else. A creator could drag
+                 * something to 1.2, watch it look right, publish it, and
+                 * have every other page on the site draw it at 1.0.
+                 */
+                'absolute max-w-none select-none outline-none',
                 dragging ? 'cursor-grabbing' : 'cursor-grab',
                 'ring-offset-2 ring-offset-ink-raised focus-visible:ring-2 focus-visible:ring-brand-bright',
               )}

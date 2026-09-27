@@ -55,6 +55,7 @@ const StyleItem = lazyPage(() => import('@/pages/StyleItem'))
 const Profile = lazyPage(() => import('@/pages/Profile'))
 const Settings = lazyPage(() => import('@/pages/Settings'))
 const Admin = lazyPage(() => import('@/pages/Admin'))
+const MyAvatar = lazyPage(() => import('@/pages/MyAvatar'))
 
 function Booting() {
   return (
@@ -137,6 +138,7 @@ export default function App() {
                 </Route>
                 <Route path="/people" element={<People />} />
                 <Route path="/d/:id" element={<DiscordJump />} />
+                {/* The Catalog: anybody may look, account or not. */}
                 <Route path="/style" element={<Style />} />
                 <Route path="/style/:tag" element={<StyleItem />} />
                 <Route element={<CommunityShell />}>
@@ -170,6 +172,10 @@ export default function App() {
                   <Route path="/brix" element={<Brix />} />
                   <Route path="/brix/codes" element={<BrixCodes />} />
                   <Route path="/library" element={<Library />} />
+                  {/* Your avatar is yours. Signed out there is nothing to
+                      show but an empty face and an @ with no name after it,
+                      which is how it looked before this moved in here. */}
+                  <Route path="/avatar" element={<MyAvatar />} />
                   <Route path="/settings" element={<Settings />} />
                   {/* The page sends anybody who is not staff away, and
                       every function it calls refuses them again. */}

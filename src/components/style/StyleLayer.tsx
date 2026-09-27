@@ -26,6 +26,15 @@ export function StyleLayer({ items, layer }: { items?: WornStyle[] | null; layer
           loading="lazy"
           className={cn(
             'pointer-events-none absolute select-none',
+            /*
+             * `max-w-none`, and it is not decoration. Tailwind's preflight
+             * gives every img `max-width: 100%`, so anything worn wider than
+             * the picture was silently clamped to exactly the picture - a
+             * frame placed at 125% drew at 100% and sat inside the face
+             * instead of around it. Nothing errored and nothing looked
+             * broken; it just quietly was not what its maker dragged.
+             */
+            'max-w-none',
             layer === 0 ? 'z-0' : 'z-[5]',
           )}
           style={{

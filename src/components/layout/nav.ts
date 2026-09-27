@@ -21,6 +21,10 @@ export const topNav: { to: string; label: string }[] = [
   { to: '/discover', label: 'Discover' },
   { to: '/create', label: 'Create' },
   { to: '/communities', label: 'Communities' },
+  // The Catalog is a place to browse, which by this file's own rule puts it
+  // up here. It sat in the rail as "Style" while the thing it changes - your
+  // avatar - had nowhere of its own at all.
+  { to: '/style', label: 'Catalog' },
 ]
 
 /**
@@ -33,7 +37,7 @@ export const sideNav: NavItem[] = [
   { to: '/profile', label: 'Profile', icon: faUser },
   { to: '/friends', label: 'Friends', icon: faUserGroup, badge: 'friends' },
   { to: '/people', label: 'People', icon: faUsers },
-  { to: '/style', label: 'Style', icon: faShirt },
+  { to: '/avatar', label: 'My Avatar', icon: faShirt },
   { to: '/library', label: 'Library', icon: faBookmark },
   { to: '/inbox', label: 'Inbox', icon: faEnvelope, badge: 'mail' },
   { to: '/settings', label: 'Settings', icon: faGear },

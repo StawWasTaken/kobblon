@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faGear, faShieldHalved, faRightFromBracket, faScroll, faRightLeft, faUserPlus,
-  faUserShield,
+  faUserShield, faShirt,
   faHeadset,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -42,6 +42,9 @@ export function UserMenu() {
     // opening it to go there. Everyone else never sees the line.
     ...(profile?.is_admin
       ? [{ to: '/staff', label: 'Staff', icon: faUserShield }]
+      : []),
+    ...(profile && !profile.is_guest
+      ? [{ to: '/avatar', label: 'My Avatar', icon: faShirt }]
       : []),
     { to: '/settings', label: 'Settings', icon: faGear },
     ...(profile
