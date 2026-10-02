@@ -135,3 +135,40 @@ The check that goes with it is not "is the guard there". It is **"name the
 events that should invalidate this, and show the guard changes on each of
 them"**. For the sound service that was three — another World opened, this
 service cleared, this service disposed — and the guard moved on one.
+
+## The third trap: a trusted write undone by a guard that only knows who asked
+
+The second trap is a guard watching the wrong event. This is a guard watching
+the right event and the wrong *subject*, and it cost the worst bug on this
+platform so far.
+
+`move_pixels` is `security definer`. It had the rights to move Brix and it
+moved them. `guard_profile_update` then pinned `pixels` back to its old value,
+because it asks `auth.uid()` who is doing this and `auth.uid()` is the caller
+— **`security definer` changes a function's rights, not who it reports as.**
+Buying, selling, creator payouts, ad spend and username changes all returned
+without error and moved nothing, for every ordinary signed-in person, for
+days. `guard_asset_update` was doing the same to `replace_mesh_file`.
+
+The shape: **a privileged function and a row-level guard over the same table,
+where the guard's test is identity.** Both are correct in isolation. Nothing
+throws, every RPC returns successfully, and the only symptom is a number that
+does not change. The fix here is always the transaction-local flag — the
+function raises it, writes, lowers it, and the guard honours that and nothing
+else.
+
+The check is not "does the function have the rights". It is **"read the row
+back after the statement, under a real signed-in identity, and show it holds
+the new value."**
+
+And the reason it survived its own migration's checks, which is the part to
+actually learn: **a check that runs anonymously proves nothing about a guard
+whose subject is identity.** With no JWT claim set, `auth.uid()` is null, the
+guard exempts the write, and the one case where the bug cannot happen is the
+case that was tested. Every check on a guard like this runs under at least two
+identities — the owner and a stranger — and fails if either is wrong.
+
+Related, same day, same cause: this schema's local `auth.uid()` reads
+`request.jwt.claim.sub`. A harness that sets `request.jwt.claims` as JSON is
+silently anonymous, and its "signed-in" assertions pass for the wrong reason.
+Before trusting any identity check, `select auth.uid()` and look at it.
