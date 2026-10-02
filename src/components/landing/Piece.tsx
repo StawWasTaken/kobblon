@@ -161,8 +161,14 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
     item.kind === 'video' || item.kind === 'font' ? item.file_path : null,
   )
 
+  // `draggable={false}` on the anchor: see the note in AssetTile.
   return (
-    <Link to={tag ? `/create/${tag}` : '/create/marketplace'} className={cn('group block shrink-0', width)}>
+    <Link
+      to={tag ? `/create/${tag}` : '/create/marketplace'}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
+      className={cn('group block shrink-0 select-none', width)}
+    >
       <span className="relative block transition-transform duration-300 group-hover:-translate-y-1.5">
         {item.kind === 'video' && <Clip src={file} />}
 

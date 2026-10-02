@@ -533,13 +533,15 @@ export async function makeAssetPreview(input: {
   url?: string | null
   /** For a mesh: the Decal it wears, so the card shows the dressed model. */
   skin?: string | null
+  /** For a mesh: the angle to take it from, when somebody has chosen one. */
+  angle?: { yaw: number; pitch: number } | null
 }): Promise<string | null> {
   if (!canPreview(input.kind)) return null
 
   const drawn = input.file
-    ? await previewOf(input.file, input.kind, input.skin)
+    ? await previewOf(input.file, input.kind, input.skin, input.angle)
     : input.url
-      ? await previewOfUrl(input.url, input.kind, input.skin)
+      ? await previewOfUrl(input.url, input.kind, input.skin, input.angle)
       : null
   if (!drawn) return null
 
@@ -1021,7 +1023,11 @@ async function skinUrl(decalId: string): Promise<string | null> {
  * Goes through `get_asset`, so the texture it draws with is the one the
  * server agrees this person may see.
  */
-export async function redrawMesh(assetId: string, userId: string): Promise<string | null> {
+export async function redrawMesh(
+  assetId: string,
+  userId: string,
+  angle?: { yaw: number; pitch: number } | null,
+): Promise<string | null> {
   const { data } = await supabase.from('assets')
     .select('content_id').eq('id', assetId).maybeSingle()
   const contentId = (data as { content_id?: number } | null)?.content_id
@@ -1038,7 +1044,7 @@ export async function redrawMesh(assetId: string, userId: string): Promise<strin
 
   const old = await assetPreviewPath(assetId)
   const path = await makeAssetPreview({
-    assetId, userId, kind: 'mesh', url, skin,
+    assetId, userId, kind: 'mesh', url, skin, angle,
   })
   // Only once the new one is saved, so a failure leaves the old card rather
   // than no card.

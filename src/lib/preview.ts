@@ -126,6 +126,7 @@ function fromFilm(src: string) {
  */
 async function fromMesh(
   src: string, format: MeshFormat, skin?: string | null,
+  angle?: { yaw: number; pitch: number } | null,
 ): Promise<Blob | null> {
   const canvas = document.createElement('canvas')
   canvas.width = 640
@@ -162,7 +163,7 @@ async function fromMesh(
 
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
     const { middle, away } = frameMesh(model, camera)
-    camera.position.copy(lookFrom(middle, away))
+    camera.position.copy(lookFrom(middle, away, angle?.yaw, angle?.pitch))
     camera.lookAt(middle)
 
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
@@ -187,6 +188,7 @@ async function fromMesh(
 /** From the file somebody is uploading, before it has gone anywhere. */
 export async function previewOf(
   file: File, kind: AssetKind, skin?: string | null,
+  angle?: { yaw: number; pitch: number } | null,
 ): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   // A Kobblon part file is JSON, and nothing here reads one yet.
@@ -196,7 +198,7 @@ export async function previewOf(
   try {
     // From `file.name`, not from `src`: `src` is a blob address with no
     // name on it, so sniffing it would send every OBJ to the glTF reader.
-    if (kind === 'mesh') return await fromMesh(src, formatOf(file.name), skin)
+    if (kind === 'mesh') return await fromMesh(src, formatOf(file.name), skin, angle)
     return kind === 'video' ? await fromFilm(src) : await fromPicture(src)
   } catch {
     return null
@@ -208,10 +210,11 @@ export async function previewOf(
 /** From something already uploaded, for work that predates previews. */
 export async function previewOfUrl(
   url: string, kind: AssetKind, skin?: string | null,
+  angle?: { yaw: number; pitch: number } | null,
 ): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   try {
-    if (kind === 'mesh') return await fromMesh(url, formatOf(url), skin)
+    if (kind === 'mesh') return await fromMesh(url, formatOf(url), skin, angle)
     return kind === 'video' ? await fromFilm(url) : await fromPicture(url)
   } catch {
     return null

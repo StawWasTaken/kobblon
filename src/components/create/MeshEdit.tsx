@@ -24,9 +24,16 @@ import {
 } from '@/lib/api'
 import type { AssetPageItem } from '@/types/db'
 
-export function MeshEdit({ asset, userId, onChanged }: {
+export function MeshEdit({ asset, userId, angle, onChanged }: {
   asset: AssetPageItem
   userId: string
+  /**
+   * Where the viewer above has been turned to, if anywhere.
+   *
+   * A ref rather than a value: it changes on every frame of a drag, and a
+   * panel that re-rendered each of those would fight the drag it is reading.
+   */
+  angle?: { current: { yaw: number; pitch: number } | null }
   onChanged: () => void
 }) {
   const say = useToast()
@@ -67,8 +74,13 @@ export function MeshEdit({ asset, userId, onChanged }: {
   const redraw = async () => {
     setBusy('redraw')
     try {
-      const drawn = await redrawMesh(asset.id, userId)
-      say(drawn ? 'Card redrawn.' : 'That could not be drawn.', drawn ? 'success' : 'error')
+      const drawn = await redrawMesh(asset.id, userId, angle?.current)
+      say(
+        drawn
+          ? angle?.current ? 'Card taken from this angle.' : 'Card redrawn.'
+          : 'That could not be drawn.',
+        drawn ? 'success' : 'error',
+      )
       if (drawn) onChanged()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
@@ -145,12 +157,14 @@ export function MeshEdit({ asset, userId, onChanged }: {
           onClick={() => void redraw()}
         >
           <FontAwesomeIcon icon={faRotate} />
-          Draw it again
+          Take the card from this angle
         </Button>
         <p className="text-xs text-muted">
-          Free. The card is drawn once, when the mesh is uploaded, so anything
-          dressed after that still shows the undressed model everywhere it is
-          listed. This takes the picture again from the model as it is now.
+          Free. Turn the model above to the side you want people to see, then
+          press this. A mesh file does not say which way it faces, so Kobblon
+          has to guess at first &mdash; you are the only one who actually
+          knows. It also takes the Decal into account, which the picture taken
+          at upload may predate.
         </p>
       </div>
 

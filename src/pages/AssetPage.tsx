@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -57,11 +57,12 @@ const sizeLabel = (bytes: number) =>
  * shown: a decal whole rather than cropped, a sound as its square cover with
  * the player beside it, a clip in its own shape, a font set in itself.
  */
-function Stage({ asset, previewUrl, fileUrl, textureUrl }: {
+function Stage({ asset, previewUrl, fileUrl, textureUrl, onTurn }: {
   asset: AssetPageItem
   previewUrl: string | null
   fileUrl: string | null
   textureUrl: string | null
+  onTurn?: (angle: { yaw: number; pitch: number }) => void
 }) {
   const [shape, setShape] = useState<{ w: number; h: number } | null>(null)
 
@@ -85,6 +86,7 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl }: {
         fileUrl={fileUrl}
         filePath={asset.file_path}
         textureUrl={textureUrl}
+        onTurn={onTurn}
       />
     )
   }
@@ -274,6 +276,14 @@ export default function AssetPage() {
   const [price, setPrice] = useState('0')
   const [pending, setPending] = useState(false)
   const [panel, setPanel] = useState<'Description' | 'Reviews' | 'Numbers'>('Description')
+
+  /*
+   * Where the owner has turned their model to, for taking the card from.
+   * A ref and not state: it changes every frame while somebody is dragging,
+   * and nothing on this page should redraw because of that - only the button
+   * that reads it when it is pressed.
+   */
+  const turned = useRef<{ yaw: number; pitch: number } | null>(null)
   // The picture tells us its own proportions once it loads.
   const [dropping, setDropping] = useState(false)
   const navigate = useNavigate()
@@ -661,6 +671,7 @@ export default function AssetPage() {
             previewUrl={previewUrl}
             fileUrl={fileUrl}
             textureUrl={texture}
+            onTurn={(angle) => { turned.current = angle }}
           />
 
           <Link
@@ -686,7 +697,12 @@ export default function AssetPage() {
             * when you came to change something.
             */}
           {mine && editing && asset.kind === 'mesh' && profile && (
-            <MeshEdit asset={asset} userId={profile.id} onChanged={item.reload} />
+            <MeshEdit
+              asset={asset}
+              userId={profile.id}
+              angle={turned}
+              onChanged={item.reload}
+            />
           )}
         </div>
 

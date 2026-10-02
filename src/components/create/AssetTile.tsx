@@ -69,13 +69,25 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
       */}
     <div className="relative">
       {!item.price && <FreeCorner />}
+    {/*
+      * `draggable={false}` on the link itself, not on what is inside it.
+      *
+      * A Link is an anchor, and an anchor is a drag source by default from
+      * anywhere inside it - so turning a model, or just pressing and moving
+      * on the picture, had the browser dragging the link and painting a
+      * ghost of the whole card under the cursor. Refusing `dragstart` on the
+      * children was not enough: the drag belongs to the anchor, and the only
+      * reliable answer is to say the anchor is not draggable.
+      */}
     <Link
       to={tag ? `/create/${tag}` : '/create'}
-      className="block overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
+      className="block select-none overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
         {item.kind === 'mesh' ? (
           <MeshView
-            className="h-full w-full [&>*]:rounded-none"
+            bare
             previewUrl={preview}
             fileUrl={model?.file}
             filePath={path ?? item.file_path}

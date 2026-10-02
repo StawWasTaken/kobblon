@@ -38,7 +38,9 @@ const FURTHEST = 2.4
 
 type State = 'loading' | 'shown' | 'failed'
 
-export function MeshViewer({ src, format, textureUrl, className }: {
+export function MeshViewer({
+  src, format, textureUrl, className, bare, onTurn,
+}: {
   /** The mesh file. A signed address is fine; it is only read once. */
   src: string | null
   /**
@@ -50,9 +52,35 @@ export function MeshViewer({ src, format, textureUrl, className }: {
   /** The Decal it wears, if it wears one and the viewer may see it. */
   textureUrl?: string | null
   className?: string
+  /**
+   * Without its own frame, for a caller that has already drawn one.
+   *
+   * `MeshView` shows this and a picture in turn, and they have to be the
+   * same shape: a viewer with its own border and background inside a tile
+   * that has its own made the 3D view a panel sitting inside the card while
+   * the picture filled it edge to edge, so switching changed the layout as
+   * well as the content.
+   */
+  bare?: boolean
+  /**
+   * The angle it is being looked from, as it changes. For a creator setting
+   * the angle their card is taken from - the only one who knows which side
+   * of their model is the front.
+   */
+  onTurn?: (angle: { yaw: number; pitch: number }) => void
 }) {
   const holder = useRef<HTMLDivElement>(null)
   const [state, setState] = useState<State>('loading')
+
+  /*
+   * Held in a ref rather than read from the closure. The effect below runs
+   * once per model and lives for as long as the model is on screen; a
+   * callback captured into it would be whichever one existed at mount - the
+   * value-captured-before-the-thing-that-decides-it trap, in the disguise it
+   * wears in React.
+   */
+  const told = useRef(onTurn)
+  told.current = onTurn
 
   useEffect(() => {
     const mount = holder.current
@@ -194,6 +222,13 @@ export function MeshViewer({ src, format, textureUrl, className }: {
           if (resting) turn.yaw += DRIFT * step
           place(middle, away)
           renderer?.render(scene, camera)
+          /*
+           * Only while somebody is turning it, not while it drifts. The
+           * angle this reports is meant to be one a person chose, and the
+           * turntable would otherwise overwrite it a moment later with
+           * wherever it happened to have spun to.
+           */
+          if (held) told.current?.({ yaw: turn.yaw, pitch: turn.pitch })
         }
         frame = requestAnimationFrame(tick)
 
@@ -220,7 +255,8 @@ export function MeshViewer({ src, format, textureUrl, className }: {
   return (
     <div
       className={cn(
-        'relative grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised',
+        'relative grid aspect-square w-full place-items-center overflow-hidden',
+        !bare && 'rounded-2xl border border-ink-line bg-ink-raised',
         className,
       )}
     >
@@ -253,7 +289,10 @@ export function MeshViewer({ src, format, textureUrl, className }: {
       )}
 
       {state === 'shown' && (
-        <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-ink-sunken/80 px-3 py-1 font-display text-[10px] uppercase tracking-wider text-white/40">
+        /* Left, not centred: the view switch sits bottom right, and a
+           centred hint ran straight into it once that switch had a word on
+           it. */
+        <span className="pointer-events-none absolute bottom-2 left-3 rounded-full bg-ink-sunken/80 px-3 py-1 font-display text-[10px] uppercase tracking-wider text-white/40">
           Drag to turn
         </span>
       )}

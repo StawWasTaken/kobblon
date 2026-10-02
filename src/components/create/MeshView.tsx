@@ -26,8 +26,8 @@ import { cn } from '@/lib/cn'
 export type MeshViewMode = '2d' | '3d'
 
 export function MeshView({
-  previewUrl, fileUrl, filePath, textureUrl, start = '2d', labelled, className,
-  onWant3d,
+  previewUrl, fileUrl, filePath, textureUrl, start = '2d', labelled, bare,
+  className, onWant3d, onTurn,
 }: {
   /** The drawn card picture. */
   previewUrl?: string | null
@@ -50,6 +50,17 @@ export function MeshView({
    * model it deliberately did not fetch while it was only a picture.
    */
   onWant3d?: () => void
+  /** The angle it is being turned to, for a creator setting their card. */
+  onTurn?: (angle: { yaw: number; pitch: number }) => void
+  /**
+   * Without the frame, for a caller that is already one - a card's tile has
+   * its own border and corners, and two of them is a box inside a box.
+   *
+   * A prop rather than a class passed in, because `cn` joins and does not
+   * merge: `rounded-none` next to `rounded-2xl` is decided by which lands
+   * later in the stylesheet, not by which was written last.
+   */
+  bare?: boolean
 }) {
   const [mode, setMode] = useState<MeshViewMode>(start)
 
@@ -60,24 +71,43 @@ export function MeshView({
   const canTurn = !!fileUrl || !!onWant3d
   const showing: MeshViewMode = mode === '3d' && !fileUrl && !onWant3d ? '2d' : mode
 
+  /*
+   * One frame, two contents.
+   *
+   * Both views used to draw their own: the viewer a bordered rounded panel,
+   * the picture an image filling whatever it was in. So pressing the switch
+   * changed the shape of the card as well as what was in it, and on an item
+   * page the model sat in a box the picture did not have. Staw: the preview
+   * and the real thing should look the same. They are the same frame now,
+   * and only what is inside it changes.
+   */
   return (
     <div
-      className={cn('relative select-none', className)}
+      className={cn(
+        'relative grid w-full select-none place-items-center overflow-hidden',
+        bare ? 'h-full' : 'aspect-square rounded-2xl border border-ink-line bg-ink-raised',
+        className,
+      )}
       draggable={false}
       onDragStart={(e) => e.preventDefault()}
     >
       {showing === '3d' ? (
         fileUrl ? (
-          <MeshViewer src={fileUrl} format={format} textureUrl={textureUrl} />
+          <MeshViewer
+            bare
+            className="absolute inset-0"
+            src={fileUrl}
+            format={format}
+            textureUrl={textureUrl}
+            onTurn={onTurn}
+          />
         ) : (
           /* Asked for, not arrived: the frame keeps its size and says so. */
-          <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
-            <FontAwesomeIcon
-              icon={kindIcons.mesh}
-              style={{ width: '28%', height: 'auto' }}
-              className="animate-pulse text-white/25"
-            />
-          </div>
+          <FontAwesomeIcon
+            icon={kindIcons.mesh}
+            style={{ width: '28%', height: 'auto' }}
+            className="animate-pulse text-white/25"
+          />
         )
       ) : previewUrl ? (
         <img
@@ -86,12 +116,10 @@ export function MeshView({
           loading="lazy"
           draggable={false}
           onContextMenu={(e) => e.preventDefault()}
-          className="h-full w-full select-none rounded-2xl object-cover"
+          className="absolute inset-0 h-full w-full select-none object-contain"
         />
       ) : (
-        <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
-          <FontAwesomeIcon icon={kindIcons.mesh} className="text-3xl text-white/35" />
-        </div>
+        <FontAwesomeIcon icon={kindIcons.mesh} className="text-3xl text-white/35" />
       )}
 
       {/*
