@@ -517,7 +517,16 @@ export default function AssetPage() {
                 : []),
               ...(mine
                 ? [
-                    { label: 'Edit details', icon: faPen, onSelect: () => setEditing(true) },
+                    {
+                      label: 'Edit',
+                      icon: faPen,
+                      /*
+                       * The description panel too, because that is where the
+                       * form is: choosing Edit from the Reviews tab used to
+                       * turn editing on somewhere the person could not see.
+                       */
+                      onSelect: () => { setEditing(true); setPanel('Description') },
+                    },
                     {
                       label: asset.is_public ? 'Take out of Create' : 'List in Create again',
                       icon: asset.is_public ? faLock : faLockOpen,
@@ -659,8 +668,14 @@ export default function AssetPage() {
           {/*
             * Under the thing it changes, so the result is in view while you
             * change it. Only a mesh, and only its owner's.
+            *
+            * Behind Edit, which is Staw's call and the right one: changing a
+            * model or its Decal costs Brix, and a panel with a file picker
+            * and a charge on it does not belong open on a page somebody came
+            * to in order to look at a shape. Edit is the thing you choose
+            * when you came to change something.
             */}
-          {mine && asset.kind === 'mesh' && profile && (
+          {mine && editing && asset.kind === 'mesh' && profile && (
             <MeshEdit asset={asset} userId={profile.id} onChanged={item.reload} />
           )}
         </div>

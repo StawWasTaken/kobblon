@@ -5,6 +5,8 @@
  * do not run on the web. It exists so the runtime can be driven and looked at
  * while it is being built, and so a test can step it frame by frame.
  */
+import * as THREE from 'three'
+import { wearTexture } from '@/engine/meshes'
 import { previewOf, canPreview } from '@/lib/preview'
 import { supabase, setSupabaseClient, currentSupabase } from '@/lib/supabase'
 import {
@@ -77,6 +79,39 @@ Object.assign(window, {
   },
   /** The data address a fake picture was stored at, for a slow resolver. */
   drawnUrl: (id: string) => drawn.get(id) ?? null,
+  /**
+   * What `wearTexture` actually does to a model, for the two things that
+   * made a Decal look like it never arrived: the wrong way up, and no
+   * texture coordinates to sample at all.
+   *
+   * The geometry has its `uv` attribute taken off deliberately, which is
+   * what an OBJ exported without `vt` lines gives you.
+   */
+  dressed(format: 'gltf' | 'obj', withUv: boolean) {
+    const geometry = new THREE.BoxGeometry(1, 1, 1)
+    if (!withUv) geometry.deleteAttribute('uv')
+    const part = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial())
+    const authored = withUv
+      ? Array.from((geometry.getAttribute('uv') as THREE.BufferAttribute).array)
+      : null
+
+    const picture = new THREE.Texture()
+    wearTexture(part, picture, format)
+
+    const uv = part.geometry.getAttribute('uv') as THREE.BufferAttribute | undefined
+    const numbers = uv ? Array.from(uv.array as Float32Array) : []
+    return {
+      flipY: picture.flipY,
+      hasUv: !!uv,
+      count: uv?.count ?? 0,
+      // Every coordinate a real number inside the picture.
+      sane: numbers.length > 0
+        && numbers.every((n) => Number.isFinite(n) && n >= 0 && n <= 1),
+      // An authored model's own coordinates are left exactly as they were.
+      untouched: authored ? JSON.stringify(authored) === JSON.stringify(numbers) : null,
+      mapped: (part.material as THREE.MeshStandardMaterial).map === picture,
+    }
+  },
   /** A plain picture of a given shape, for checking how a decal is fitted. */
   fakePicture(id: string, width: number, height: number) {
     const sheet = document.createElement('canvas')

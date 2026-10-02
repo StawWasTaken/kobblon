@@ -150,7 +150,7 @@ export function MeshViewer({ src, format, textureUrl, className }: {
         if (textureUrl) {
           const picture = await new THREE.TextureLoader().loadAsync(textureUrl)
           if (!wanted) { picture.dispose(); releaseMesh(loaded); model = null; return }
-          wearTexture(loaded, picture)
+          wearTexture(loaded, picture, kind)
         }
 
         scene.add(loaded)

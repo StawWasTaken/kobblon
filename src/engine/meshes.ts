@@ -124,24 +124,96 @@ export function hasSomethingToDraw(model: THREE.Object3D) {
 /**
  * Dresses every surface in a picture.
  *
- * Only for a model that brought no materials of its own. A glTF has its own,
- * and a Decal painted over them would throw away what its author made.
+ * A Decal somebody attached is an instruction, so this paints over whatever
+ * the file brought. `carriesMaterials` is not the test for calling it.
  *
- * `flipY` off because glTF and OBJ both count texture coordinates from the
- * bottom and three.js counts from the top, which is the difference between a
- * texture and the same texture upside down.
+ * Two things here are per-format, and getting either wrong looks like the
+ * texture never arrived.
+ *
+ * **Which way up.** glTF bakes its texture coordinates for WebGL, counting
+ * from the bottom, so a glTF texture must not be flipped. Everything else -
+ * OBJ among them - is read by three.js with the ordinary convention, where
+ * flipping is what makes it right. This file flipped *everything* off, so
+ * every OBJ wore its Decal upside down: a label on a can, a wrapper on a
+ * burger, both there and both unreadable, which reads as broken rather than
+ * as inverted.
+ *
+ * **Whether there are coordinates at all.** An OBJ exported without `vt`
+ * lines has no `uv` attribute, and a material with a map on geometry with no
+ * uv samples one corner of the picture for every pixel: the model turns a
+ * single flat colour. That is indistinguishable from "the texture did not
+ * load", and it was the more common of the two. So when a part has no
+ * coordinates, it is given some - see `projectUv`.
  */
-export function wearTexture(model: THREE.Object3D, picture: THREE.Texture) {
-  picture.flipY = false
+export function wearTexture(
+  model: THREE.Object3D,
+  picture: THREE.Texture,
+  format: MeshFormat = 'gltf',
+) {
+  picture.flipY = format !== 'gltf'
   picture.colorSpace = THREE.SRGBColorSpace
+  picture.needsUpdate = true
   model.traverse((one) => {
     const part = one as THREE.Mesh
     if (!part.isMesh) return
+    if (part.geometry && !part.geometry.getAttribute('uv')) projectUv(part.geometry)
     for (const old of [part.material].flat()) (old as THREE.Material)?.dispose?.()
     part.material = new THREE.MeshStandardMaterial({
       map: picture, roughness: 0.7, metalness: 0,
     })
   })
+}
+
+/**
+ * Texture coordinates for geometry that arrived with none.
+ *
+ * Box projection: each triangle is lit from whichever of the three axes its
+ * normal points along most, and its two remaining coordinates become the
+ * picture's. It is not what an artist would have authored - a seam shows
+ * where the dominant axis changes - but it wraps a picture round a shape
+ * recognisably, which is the whole difference between a textured model and a
+ * flat-coloured one.
+ *
+ * Deliberately not a guess at the author's intent. A model whose own `vt`
+ * lines exist is left completely alone; this only ever runs where the choice
+ * is between this and nothing.
+ */
+export function projectUv(geometry: THREE.BufferGeometry) {
+  const position = geometry.getAttribute('position')
+  if (!position || position.count === 0) return
+
+  geometry.computeBoundingBox()
+  const box = geometry.boundingBox
+  if (!box) return
+
+  const span = new THREE.Vector3().subVectors(box.max, box.min)
+  // A flat shape spans nothing on one axis; dividing by it gives NaN, and a
+  // NaN coordinate draws nothing at all.
+  const safe = (n: number) => (n > 1e-6 ? n : 1)
+
+  if (!geometry.getAttribute('normal')) geometry.computeVertexNormals()
+  const normal = geometry.getAttribute('normal')
+
+  const uv = new Float32Array(position.count * 2)
+  for (let i = 0; i < position.count; i += 1) {
+    const x = position.getX(i), y = position.getY(i), z = position.getZ(i)
+    const nx = Math.abs(normal.getX(i))
+    const ny = Math.abs(normal.getY(i))
+    const nz = Math.abs(normal.getZ(i))
+
+    let u: number, v: number
+    if (nx >= ny && nx >= nz) {
+      u = (z - box.min.z) / safe(span.z); v = (y - box.min.y) / safe(span.y)
+    } else if (ny >= nx && ny >= nz) {
+      u = (x - box.min.x) / safe(span.x); v = (z - box.min.z) / safe(span.z)
+    } else {
+      u = (x - box.min.x) / safe(span.x); v = (y - box.min.y) / safe(span.y)
+    }
+    uv[i * 2] = u
+    uv[i * 2 + 1] = v
+  }
+
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
 }
 
 /**

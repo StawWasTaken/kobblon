@@ -8,6 +8,6 @@
  */
 export {
   meshFormats, formatOf, carriesMaterials, loadMesh, hasSomethingToDraw,
-  wearTexture, frameMesh, lightForLooking, releaseMesh,
+  wearTexture, projectUv, frameMesh, lightForLooking, releaseMesh,
 } from '@/engine/meshes'
 export type { MeshFormat } from '@/engine/meshes'

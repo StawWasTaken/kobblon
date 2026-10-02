@@ -1771,6 +1771,27 @@ check('and the other way takes it back out',
   wheeled.pulled > wheeled.pushed,
   `${wheeled.pushed} -> ${wheeled.pulled} stons`)
 
+// -- what a Decal does to a mesh, which is where "textures dont work" lived
+const dress = await p.evaluate(() => ({
+  objBare: window.dressed('obj', false),
+  objAuthored: window.dressed('obj', true),
+  gltf: window.dressed('gltf', false),
+}))
+
+check('a glTF texture is not flipped',
+  dress.gltf.flipY === false, `flipY ${dress.gltf.flipY}`)
+check('an OBJ texture is flipped, which is what makes it the right way up',
+  dress.objBare.flipY === true, `flipY ${dress.objBare.flipY}`)
+check('geometry with no texture coordinates is given some',
+  dress.objBare.hasUv && dress.objBare.count === 24,
+  `${dress.objBare.count} coordinates`)
+check('and every one of them is a real number inside the picture',
+  dress.objBare.sane === true, `sane ${dress.objBare.sane}`)
+check('a model that authored its own coordinates keeps them exactly',
+  dress.objAuthored.untouched === true, `untouched ${dress.objAuthored.untouched}`)
+check('and the picture is the material\'s map either way',
+  dress.objBare.mapped && dress.objAuthored.mapped && dress.gltf.mapped, 'mapped')
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
