@@ -15,8 +15,7 @@ import type {
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding,
-  Face,
-} from '@/types/db'
+  Face, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,} from '@/types/db'
 
 const SPACE_FIELDS =
   'id, owner_id, slug, name, description, category, cover_url, is_published, visit_count, ' +
@@ -2903,4 +2902,119 @@ export async function replaceMeshFile(assetId: string, userId: string, file: Fil
     await supabase.storage.from(assetBucket).remove([path])
     throw err
   }
+}
+
+// ---------------------------------------------------------------- avatars
+
+/**
+ * The bucket pictures that are worn live in.
+ *
+ * Public, because a shirt is seen by everybody who sees the person wearing
+ * it. Wearing is publishing, and the item's own page shows the same picture
+ * at full size to anybody.
+ */
+export const catalogBucket = 'catalog'
+
+export function catalogUrl(path?: string | null): string | null {
+  if (!path) return null
+  return supabase.storage.from(catalogBucket).getPublicUrl(path).data.publicUrl
+}
+
+/** What each kind of avatar item costs to make, and who may make one. */
+export async function avatarRules(): Promise<AvatarRule[]> {
+  return (unwrap(await supabase.rpc('avatar_rules')) as AvatarRule[]) ?? []
+}
+
+/**
+ * Everything needed to draw one person: their colours and what they have on.
+ *
+ * Comes back as a row per worn thing. Somebody wearing nothing is a single
+ * row with a null slot rather than no rows, so "has no avatar" and "does not
+ * exist" stay different answers - a suspended person returns nothing at all.
+ */
+export async function avatarOf(userId: string): Promise<AvatarPiece[]> {
+  return (unwrap(await supabase.rpc('avatar_of', { target: userId })) as AvatarPiece[]) ?? []
+}
+
+/** What somebody has, to choose from when dressing. */
+export async function myAvatarItems(): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('my_avatar_items')) as AvatarItem[]) ?? []
+}
+
+/** What somebody has made, for their own Create page. */
+export async function myMadeAvatarItems(): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('my_made_avatar_items')) as AvatarItem[]) ?? []
+}
+
+/** The Catalog. `kind` of null is everything. */
+export async function avatarShelf(
+  kind?: AvatarKind | null, term?: string, howMany = 60,
+): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('avatar_shelf', {
+    of_kind: kind ?? null, term: term ?? null, how_many: howMany,
+  })) as AvatarItem[]) ?? []
+}
+
+export async function buyAvatarItem(id: string) {
+  unwrap(await supabase.rpc('buy_avatar_item', { target: id }))
+}
+
+export async function wearAvatarItem(id: string) {
+  unwrap(await supabase.rpc('wear_avatar_item', { target: id }))
+}
+
+export async function takeOffSlot(slot: AvatarSlot) {
+  unwrap(await supabase.rpc('take_off_slot', { which: slot }))
+}
+
+/** Null puts every part back to the colour the engine starts with. */
+export async function setBodyColours(colours: Record<string, string> | null) {
+  unwrap(await supabase.rpc('set_body_colours', { colours }))
+}
+
+export async function listAvatarItem(id: string, listed: boolean) {
+  unwrap(await supabase.rpc('list_avatar_item', { target: id, listed }))
+}
+
+/**
+ * Makes an avatar item. The server charges for it and decides whether this
+ * person may make one at all, so this passes the answer along rather than
+ * checking anything first.
+ */
+export async function createAvatarItem(input: {
+  kind: AvatarKind
+  slot: AvatarSlot
+  name: string
+  description?: string
+  price: number
+  imagePath?: string | null
+  meshId?: string | null
+  textureId?: string | null
+}): Promise<string> {
+  return unwrap(await supabase.rpc('create_avatar_item', {
+    item_kind: input.kind,
+    item_slot: input.slot,
+    item_name: input.name,
+    about: input.description ?? '',
+    cost: input.price,
+    picture: input.imagePath ?? null,
+    model: input.meshId ?? null,
+    texture: input.textureId ?? null,
+  })) as string
+}
+
+/**
+ * Puts a worn picture in the catalog bucket.
+ *
+ * Under the uploader's own folder, which is what the bucket's policy allows
+ * and nothing else - the same arrangement as previews, so one person cannot
+ * write over another's shirt by guessing a name.
+ */
+export async function uploadCatalogImage(userId: string, file: File): Promise<string> {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+  const path = `${userId}/${crypto.randomUUID()}.${extension}`
+  const put = await supabase.storage.from(catalogBucket)
+    .upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: false })
+  if (put.error) throw new Error(put.error.message)
+  return path
 }

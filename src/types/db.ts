@@ -727,3 +727,67 @@ export type Face = {
   is_removed?: boolean
   created_at: string
 }
+
+// ------------------------------------------------------------ the avatar
+
+/** What a thing you wear is. The slot a `face` goes in is also `face`. */
+export type AvatarKind = 'shirt' | 'trousers' | 'tdecal' | 'accessory' | 'hair' | 'face'
+
+export type AvatarSlot =
+  | 'shirt' | 'trousers' | 'tdecal' | 'face' | 'hair'
+  | 'hat' | 'front' | 'back' | 'neck' | 'waist' | 'leftHand' | 'rightHand'
+
+/** What each kind costs to make and the least it may be sold for. */
+export type AvatarRule = {
+  kind: AvatarKind
+  upload_cost: number
+  least_price: number
+  needs_verified: boolean
+  kobblon_only: boolean
+}
+
+/**
+ * One row of somebody's avatar: their colours, and one thing they wear.
+ *
+ * The colours repeat on every row because the server answers in one call
+ * rather than making a caller put two answers together to draw one person.
+ * A person wearing nothing comes back as a single row with a null slot.
+ */
+export type AvatarPiece = {
+  body: Record<string, string> | null
+  slot: AvatarSlot | null
+  kind: AvatarKind | null
+  item_id: string | null
+  content_id: number | null
+  item_name: string | null
+  image_path: string | null
+  mesh_path: string | null
+  mesh_format: string | null
+  texture_path: string | null
+}
+
+/** Something on a shelf, in the Catalog or in somebody's own things. */
+export type AvatarItem = {
+  id: string
+  content_id: number
+  kind: AvatarKind
+  slot: AvatarSlot
+  name: string
+  description?: string | null
+  price: number
+  image_path: string | null
+  mesh_path: string | null
+  texture_path: string | null
+  creator_id?: string
+  creator_username?: string
+  creator_display_name?: string
+  creator_is_verified?: boolean
+  created_at?: string
+  owned?: boolean
+  worn?: boolean
+  mine?: boolean
+  status?: ModerationStatus
+  review_note?: string | null
+  is_public?: boolean
+  taken?: number
+}
