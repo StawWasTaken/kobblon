@@ -9,6 +9,7 @@
 import { createRoot } from 'react-dom/client'
 import { FreeCorner, FreeBadge } from '@/components/brand/FreeBadge'
 import { BuyButton } from '@/components/money/BuyButton'
+import { Button } from '@/components/ui/Button'
 import '@/index.css'
 
 function Tile({ free, label }: { free: boolean; label: string }) {
@@ -44,6 +45,17 @@ createRoot(document.getElementById('root')!).render(
         <BuyButton price={250} />
         <BuyButton price={128400} />
         <BuyButton price={250} owned />
+      </div>
+
+      <p className="font-display text-xs uppercase tracking-wider text-muted">
+        Every variant, so red can be compared with the other two
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button>Primary</Button>
+        <Button variant="yes">Yes</Button>
+        <Button variant="danger">Remove it</Button>
+        <Button variant="subtle">Keep it</Button>
+        <Button variant="ghost">Ghost</Button>
       </div>
     </div>
 

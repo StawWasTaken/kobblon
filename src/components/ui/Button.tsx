@@ -42,8 +42,17 @@ const variants: Record<Variant, string> = {
     'bg-transparent text-white/80 hover:bg-white/10 hover:text-white border border-transparent',
   subtle:
     'bg-ink-hover text-white hover:bg-[#2c2c36] border border-ink-line',
+  /*
+   * Built exactly like primary and yes, in red. Staw: a red button should be
+   * just like a blue or a green one, only red.
+   *
+   * It was the one tinted outline button on the site, so "Remove it" - the
+   * press that most needs to look like a decision somebody made - read as
+   * fainter than "Keep it" beside it. Same weight now; the colour is what
+   * says it is different, which is the whole job of having one red.
+   */
   danger:
-    'bg-danger/15 text-danger hover:bg-danger/25 border border-danger/40 font-bold',
+    'bg-danger text-white hover:bg-danger-bright active:bg-danger border-b-[3px] border-danger-ink active:border-b-0 active:mt-[3px]',
 }
 
 const sizes: Record<Size, string> = {

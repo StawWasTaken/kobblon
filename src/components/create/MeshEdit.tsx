@@ -13,7 +13,7 @@
  */
 import { useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faImage, faCube, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faImage, faCube, faXmark, faRotate } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -59,6 +59,24 @@ export function MeshEdit({ asset, userId, onChanged }: {
     }
   }
 
+  /*
+   * Deliberately not part of `run`: there is nothing to pay and nothing on
+   * the server to change, so it says its own words rather than "Done. 0
+   * Brix." - which reads as a charge that happened to be free.
+   */
+  const redraw = async () => {
+    setBusy('redraw')
+    try {
+      const drawn = await redrawMesh(asset.id, userId)
+      say(drawn ? 'Card redrawn.' : 'That could not be drawn.', drawn ? 'success' : 'error')
+      if (drawn) onChanged()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const dress = async () => {
     const found = await decalBehind(tag.trim()).catch(() => null)
     if (!found) {
@@ -94,8 +112,7 @@ export function MeshEdit({ asset, userId, onChanged }: {
             disabled={!!busy || !tag.trim()}
             onClick={() => void dress()}
           >
-            <CurrencyMark />
-            {MESH_EDIT_PRICE}
+            Buy for <CurrencyMark className="mx-0.5" />{MESH_EDIT_PRICE}
           </Button>
           {asset.texture_content_id && (
             <Button
@@ -111,6 +128,29 @@ export function MeshEdit({ asset, userId, onChanged }: {
         </div>
         <p className="text-xs text-muted">
           Any Decal of yours, or one that is listed. Taking one off is free.
+        </p>
+      </div>
+
+      {/* ------------------------------------------------------ the card */}
+      <div className="space-y-2 border-t border-ink-line pt-4">
+        <p className="flex items-center gap-2 text-sm font-bold">
+          <FontAwesomeIcon icon={faImage} className="text-white/40" />
+          The card picture
+        </p>
+        <Button
+          size="sm"
+          variant="subtle"
+          loading={busy === 'redraw'}
+          disabled={!!busy}
+          onClick={() => void redraw()}
+        >
+          <FontAwesomeIcon icon={faRotate} />
+          Draw it again
+        </Button>
+        <p className="text-xs text-muted">
+          Free. The card is drawn once, when the mesh is uploaded, so anything
+          dressed after that still shows the undressed model everywhere it is
+          listed. This takes the picture again from the model as it is now.
         </p>
       </div>
 

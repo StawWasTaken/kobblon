@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
-import { useSignedUrl } from '@/hooks/useSignedUrl'
+import { usePictureUrl } from '@/hooks/useSignedUrl'
 import { MeshView } from '@/components/create/MeshView'
 import { getAsset, assetUrl } from '@/lib/api'
 import { formatCount } from '@/lib/format'
@@ -26,7 +26,7 @@ export { kindIcons, kindLabels, contentTag } from '@/lib/kinds'
 import { kindIcons, kindLabels, contentTag } from '@/lib/kinds'
 
 export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean }) {
-  const preview = useSignedUrl(item.thumbnail_path ?? (item.kind === 'image' ? item.file_path : null))
+  const preview = usePictureUrl(item)
   const tag = contentTag(item.kind, item.content_id)
 
   /*

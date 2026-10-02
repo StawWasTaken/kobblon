@@ -51,9 +51,20 @@ export default {
           deep: '#14855a',
         },
         muted: 'rgb(var(--muted) / <alpha-value>)',
-        /* The one red on Kobbleston: danger, and nothing else. */
+        /*
+         * The one red on Kobbleston: danger, and nothing else.
+         *
+         * `bright` and `deep` so a red button can be built exactly like a
+         * blue or a green one - same solid fill, same hover, same hard edge
+         * underneath that the press takes away. It used to be the only
+         * tinted outline button on the site, which made the one button that
+         * should look most deliberate look the least like the others.
+         */
         danger: {
           DEFAULT: '#ff0033',
+          bright: '#ff3355',
+          deep: '#a3001f',
+          ink: '#5c0012',
           soft: 'rgb(255 0 51 / 0.14)',
         },
       },

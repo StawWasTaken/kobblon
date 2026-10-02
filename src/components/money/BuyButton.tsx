@@ -18,6 +18,19 @@ import type { ComponentProps } from 'react'
  * label and not a sentence: it reads as what the thing costs, which the card
  * already said, instead of as the thing the button is about to do.
  *
+ * **One colour, whatever it costs.** This used to go green when a thing was
+ * free and blue when it was not, which Staw rejected and was right to: a
+ * button changing colour by price makes the colour mean price, and on this
+ * site blue means "where you are" and green means "yes, do it". Two
+ * identical rows of cards then came out two different colours for no reason
+ * a person could name.
+ *
+ * Blue, because taking something off the Marketplace or the Catalog is the
+ * ordinary action of that page rather than its one deliberate yes - there
+ * are twenty of these on a screen, and twenty greens is the ratio going the
+ * wrong way round again. Green stays for save, publish, upload, accept,
+ * play, and for going into a World.
+ *
  * Written as a component rather than written down as a rule, because a rule
  * about buttons is kept by whoever remembers it and the shop, the item page,
  * the Catalog row and the Marketplace were already saying "Get", "Take",
@@ -49,7 +62,7 @@ export function BuyButton({
   }
 
   if (price <= 0) {
-    return <Button variant="yes" {...rest}>{freeLabel}</Button>
+    return <Button {...rest}>{freeLabel}</Button>
   }
 
   return (

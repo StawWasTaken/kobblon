@@ -111,7 +111,17 @@ export type MarketAsset = {
   name: string
   description: string | null
   file_path: string
+  /**
+   * The old picture, in the private `uploads` bucket, so it is signed for.
+   * Nothing writes to it any more.
+   */
   thumbnail_path: string | null
+  /**
+   * The card drawn at upload, in the public `previews` bucket, so it is
+   * addressed directly. A different bucket from the one above, which is the
+   * whole reason they are two fields and not one.
+   */
+  preview_path?: string | null
   download_count: number
   content_id: number | null
   price?: number

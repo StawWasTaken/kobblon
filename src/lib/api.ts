@@ -833,6 +833,8 @@ export async function ensureAssetPreview(asset: {
   kind: AssetKind
   creator_id?: string | null
   file_path: string
+  /** For a mesh: the stored path of the Decal it wears, if any. */
+  texture_path?: string | null
 }, me: string): Promise<string | null> {
   if (!canPreview(asset.kind)) return null
   if (await assetPreviewPath(asset.id)) return null
@@ -840,7 +842,16 @@ export async function ensureAssetPreview(asset: {
   const url = await assetUrl(asset.file_path, 300)
   if (!url) return null
 
-  return makeAssetPreview({ assetId: asset.id, userId: me, kind: asset.kind, url })
+  /*
+   * Dressed, when it wears something. Drawing the card from the model alone
+   * gave a grey shape beside a textured viewer on the same page - one item,
+   * two pictures, and the card is the one that travels.
+   */
+  const skin = asset.kind === 'mesh' && asset.texture_path
+    ? await assetUrl(asset.texture_path, 300).catch(() => null)
+    : null
+
+  return makeAssetPreview({ assetId: asset.id, userId: me, kind: asset.kind, url, skin })
 }
 
 // ------------------------------------------------------- Space collaborators

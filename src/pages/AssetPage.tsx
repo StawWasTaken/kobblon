@@ -31,7 +31,7 @@ import {
   ensureAssetPreview,
   dropFromInventory, listForSale, unlistForSale, listingFee, PLATFORM_SHARE,
 } from '@/lib/api'
-import { useSignedUrl } from '@/hooks/useSignedUrl'
+import { useSignedUrl, usePictureUrl } from '@/hooks/useSignedUrl'
 import { useTitle } from '@/hooks/useTitle'
 import { avatarOf } from '@/lib/avatars'
 import { currency } from '@/lib/currency'
@@ -305,9 +305,13 @@ export default function AssetPage() {
     [asset?.creator_id, asset?.id],
   )
 
-  const preview = useSignedUrl(
-    asset ? asset.thumbnail_path ?? (asset.kind === 'image' ? asset.file_path : null) : null,
-  )
+  /*
+   * The card drawn at upload, the older cover, or a Decal's own file. Three
+   * places, two buckets, one hook that knows which is which - putting a
+   * `previews` path through the signer for `uploads` is what broke every
+   * picture on the site for a day.
+   */
+  const preview = usePictureUrl(asset ?? {})
   // Sound and video play from a signed URL that expires; there is no link to
   // keep, and the player is told not to offer a download.
   const file = useSignedUrl(
@@ -340,10 +344,15 @@ export default function AssetPage() {
   useEffect(() => {
     if (!asset || !mine || !profile || !asset.is_public) return
     void ensureAssetPreview(
-      { id: asset.id, kind: asset.kind, file_path: asset.file_path },
+      {
+        id: asset.id,
+        kind: asset.kind,
+        file_path: asset.file_path,
+        texture_path: asset.texture_path,
+      },
       profile.id,
     ).catch(() => null)
-  }, [asset?.id, mine, asset?.is_public, profile?.id])
+  }, [asset?.id, mine, asset?.is_public, profile?.id, asset?.texture_path])
 
   useEffect(() => {
     setName(asset?.name ?? '')

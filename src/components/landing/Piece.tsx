@@ -5,7 +5,7 @@ import { faImage, faMusic, faVideo, faFont, faCube, faShapes } from '@fortawesom
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { Verified, isVerified } from '@/components/brand/Verified'
-import { useSignedUrl } from '@/hooks/useSignedUrl'
+import { useSignedUrl, usePictureUrl } from '@/hooks/useSignedUrl'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { contentTag } from '@/components/create/AssetTile'
 import { cn } from '@/lib/cn'
@@ -153,10 +153,9 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
   const kind = look[item.kind]
   const tag = contentTag(item.kind, item.content_id)
 
-  // The thumbnail is the cover its maker uploaded; an image has itself.
-  const cover = useSignedUrl(
-    item.thumbnail_path ?? (item.kind === 'image' ? item.file_path : null),
-  )
+  // The card drawn at upload, the older cover, or - for a Decal - itself.
+  // Which of the three decides the bucket, so it goes through one place.
+  const cover = usePictureUrl(item)
   // Only the kinds that are played or set need the file itself.
   const file = useSignedUrl(
     item.kind === 'video' || item.kind === 'font' ? item.file_path : null,
