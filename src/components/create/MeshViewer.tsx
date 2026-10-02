@@ -5,10 +5,14 @@
  * angle, no texture, and no way to tell a good model from a bad one. Which
  * is the whole question somebody is on that page to answer.
  *
- * Drag to turn it, wheel to come closer. It turns by itself until touched,
- * because a still three-quarter view is what the card already is, and stops
- * for good once somebody takes hold - a thing that resumes spinning under
- * your hand is fighting you.
+ * Drag to turn it, wheel to come closer. It turns by itself, stops while
+ * somebody is handling it, and picks up again a moment after they let go.
+ *
+ * It used to stop for good on the first touch, on the reasoning that a thing
+ * resuming under your hand is fighting you. That half is right and is why
+ * the pause lasts until a little after the last input rather than until the
+ * pointer lifts - but stopping for ever meant one stray scroll left the
+ * model dead for the rest of the visit, which is worse.
  *
  * Mounted by the Workspace as well, so: no provider, no router, no reading
  * of the page it sits on. It is handed two addresses and a size.
@@ -25,6 +29,8 @@ import { cn } from '@/lib/cn'
 
 /** How fast it turns when nobody is holding it, in radians a second. */
 const DRIFT = 0.42
+/** How long after the last touch before it starts turning again, in seconds. */
+const SETTLE = 1.6
 /** How close and how far the wheel may take you, against the model's size. */
 const NEAREST = 0.35
 const FURTHEST = 2.4
@@ -72,7 +78,12 @@ export function MeshViewer({ src, format, textureUrl, className }: {
 
     const turn = { yaw: 0, pitch: 0.28, closeness: 1 }
     let held = false
-    let touched = false
+    /*
+     * When the last input was, rather than whether there has ever been one.
+     * `performance.now()` and not `Date.now()`: the clock the frame loop
+     * already reads, and one that cannot jump backwards.
+     */
+    let lastTouched = -Infinity
     let last = { x: 0, y: 0 }
 
     const place = (middle: THREE.Vector3, away: number) => {
@@ -88,12 +99,13 @@ export function MeshViewer({ src, format, textureUrl, className }: {
 
     const grab = (e: PointerEvent) => {
       held = true
-      touched = true
+      lastTouched = performance.now()
       last = { x: e.clientX, y: e.clientY }
       mount.setPointerCapture(e.pointerId)
     }
     const drag = (e: PointerEvent) => {
       if (!held) return
+      lastTouched = performance.now()
       turn.yaw -= (e.clientX - last.x) * 0.01
       // Stopped short of straight up and straight down: at the poles the
       // model spins around a point instead of turning, which reads as broken.
@@ -102,11 +114,12 @@ export function MeshViewer({ src, format, textureUrl, className }: {
     }
     const drop = (e: PointerEvent) => {
       held = false
+      lastTouched = performance.now()
       if (mount.hasPointerCapture(e.pointerId)) mount.releasePointerCapture(e.pointerId)
     }
     const roll = (e: WheelEvent) => {
       e.preventDefault()
-      touched = true
+      lastTouched = performance.now()
       // Proportional, so a step feels the same close up and far away.
       turn.closeness = Math.max(
         NEAREST,
@@ -173,7 +186,9 @@ export function MeshViewer({ src, format, textureUrl, className }: {
           frame = requestAnimationFrame(tick)
           const step = Math.min(0.1, (now - then) / 1000)
           then = now
-          if (!touched) turn.yaw += DRIFT * step
+          // Still while it is being handled, and for a moment afterwards.
+          const resting = !held && now - lastTouched > SETTLE * 1000
+          if (resting) turn.yaw += DRIFT * step
           place(middle, away)
           renderer?.render(scene, camera)
         }

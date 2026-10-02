@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/Toast'
 import { contentTag, kindCodes, kindIcons, kindLabels } from '@/lib/kinds'
 import { MediaPlayer } from '@/components/create/MediaPlayer'
 import { MeshViewer } from '@/components/create/MeshViewer'
+import { MeshEdit } from '@/components/create/MeshEdit'
 import { formatOf } from '@/lib/mesh'
 import { FontPreview } from '@/components/create/FontPreview'
 import { AssetTile } from '@/components/create/AssetTile'
@@ -654,6 +655,14 @@ export default function AssetPage() {
             />
             <span className="truncate">{asset.creator_display_name}</span>
           </Link>
+
+          {/*
+            * Under the thing it changes, so the result is in view while you
+            * change it. Only a mesh, and only its owner's.
+            */}
+          {mine && asset.kind === 'mesh' && profile && (
+            <MeshEdit asset={asset} userId={profile.id} onChanged={item.reload} />
+          )}
         </div>
 
         <div className="min-w-0 space-y-5">

@@ -2747,3 +2747,50 @@ export async function listAdminLog(limit = 60): Promise<AdminLogEntry[]> {
       .limit(limit),
   ) as AdminLogEntry[]
 }
+
+// --------------------------------------------- changing a mesh afterwards
+
+/** What changing a mesh's picture or its model costs, in Brix. */
+export const MESH_EDIT_PRICE = 10
+
+/**
+ * Dressing a mesh in a Decal, or taking one off.
+ *
+ * Returns what it cost, which is nothing when the Decal is being removed or
+ * when it was already wearing that one. The server decides both the price
+ * and whether the Decal may be worn at all; this only asks.
+ */
+export async function redressMesh(assetId: string, decalId: string | null) {
+  return unwrap(await supabase.rpc('redress_mesh', {
+    target: assetId, decal: decalId,
+  })) as number
+}
+
+/**
+ * Replacing the model itself.
+ *
+ * The file goes to storage first and the path is handed over, which is the
+ * shape every other upload has. The server checks the path is in the
+ * caller's own folder before believing it, and puts the asset back to
+ * pending - a new model has not been screened, and leaving it approved would
+ * make this the way around screening.
+ */
+export async function replaceMeshFile(assetId: string, userId: string, file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'glb'
+  const path = `${userId}/${crypto.randomUUID()}.${extension}`
+
+  const { error } = await supabase.storage
+    .from(assetBucket)
+    .upload(path, file, { contentType: typeOf(file), upsert: false })
+  if (error) throw new Error(error.message)
+
+  try {
+    return unwrap(await supabase.rpc('replace_mesh_file', {
+      target: assetId, new_path: path, new_size: file.size,
+    })) as number
+  } catch (err) {
+    // Never leave a file in storage that nothing points at.
+    await supabase.storage.from(assetBucket).remove([path])
+    throw err
+  }
+}
