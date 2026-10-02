@@ -80,6 +80,208 @@ Object.assign(window, {
   /** The data address a fake picture was stored at, for a slow resolver. */
   drawnUrl: (id: string) => drawn.get(id) ?? null,
   /**
+   * Where a worn thing actually ends up on the body, and whether it stays
+   * there once the body moves.
+   *
+   * The second half is the point. A hat parented to the right place but not
+   * to a *bone* sits correctly on a still avatar and is left behind the
+   * moment somebody walks - which is exactly the kind of wrong that looks
+   * fine in a screenshot.
+   */
+  async wornAt(point: string, steps = 0) {
+    const { K6, loadK6Source, K6_POINTS } = await import('@/engine/k6')
+    const source = await loadK6Source('/k6/k6.glb')
+    const body = new K6(source)
+
+    const thing = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.4, 0.4),
+      new THREE.MeshBasicMaterial(),
+    )
+    body.wear(point as keyof typeof K6_POINTS, thing)
+
+    // Into a scene, or nothing has a world matrix worth reading.
+    const scene = new THREE.Scene()
+    scene.add(body.object)
+
+    if (steps > 0) {
+      body.play('walk', 0)
+      for (let i = 0; i < steps; i += 1) body.update(1 / 60)
+    }
+    scene.updateMatrixWorld(true)
+
+    const at = thing.getWorldPosition(new THREE.Vector3())
+    const head = body.parts.get('Head')!
+    const headBox = new THREE.Box3().setFromObject(head)
+
+    const answer = {
+      at: at.toArray().map((n) => +n.toFixed(2)),
+      headTop: +headBox.max.y.toFixed(2),
+      headFront: +headBox.max.z.toFixed(2),
+      parented: thing.parent?.name ?? null,
+      wearing: body.wearing().size,
+    }
+    body.dispose()
+    return answer
+  },
+  /**
+   * Where a template lands on the body.
+   *
+   * Reported as numbers rather than looked at, because the thing that went
+   * wrong the first time - every face mirrored - looked completely fine
+   * until somebody read a letter on it. A letter is only legible to a human
+   * at one size; a sign is legible to a check at any.
+   */
+  async clothesWrap() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const { templateFor } = await import('@/engine/clothes')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+    body.dress('shirt', new THREE.Texture())
+
+    const torso = body.parts.get('Torso')!
+    const uv = torso.geometry.getAttribute('uv1') as THREE.BufferAttribute
+    const position = torso.geometry.getAttribute('position')
+    const normal = torso.geometry.getAttribute('normal')
+    const sheet = templateFor('shirt')
+
+    // The front panel, as a share of the whole sheet.
+    const front = sheet.regions['Torso.front']
+    const inFront = {
+      u0: front.x / sheet.width,
+      u1: (front.x + front.w) / sheet.width,
+      v0: 1 - (front.y + front.h) / sheet.height,
+      v1: 1 - front.y / sheet.height,
+    }
+
+    let rightMost = { x: -Infinity, u: 0 }
+    let leftMost = { x: Infinity, u: 0 }
+    let highest = { y: -Infinity, v: 0 }
+    let inside = 0
+    let facing = 0
+
+    for (let i = 0; i < position.count; i += 1) {
+      if (normal.getZ(i) < 0.9) continue
+      facing += 1
+      const u = uv.getX(i)
+      const v = uv.getY(i)
+      if (u >= inFront.u0 - 0.001 && u <= inFront.u1 + 0.001
+        && v >= inFront.v0 - 0.001 && v <= inFront.v1 + 0.001) inside += 1
+      const x = position.getX(i)
+      const y = position.getY(i)
+      if (x > rightMost.x) rightMost = { x, u }
+      if (x < leftMost.x) leftMost = { x, u }
+      if (y > highest.y) highest = { y, v }
+    }
+
+    const has = !!torso.geometry.getAttribute('uv')
+    body.dispose()
+    return {
+      facing,
+      allInsideFront: facing > 0 && inside === facing,
+      // +X is the avatar's left, which is on the right of the template as a
+      // person looks at the front of it.
+      notMirrored: rightMost.u > leftMost.u,
+      topIsHigh: highest.v > (inFront.v0 + inFront.v1) / 2,
+      keptItsOwnUv: has,
+      sheet: { w: sheet.width, h: sheet.height },
+    }
+  },
+
+  /**
+   * Where a template lands on the body.
+   *
+   * Reported as numbers rather than looked at, because the thing that went
+   * wrong the first time - every face mirrored - looked completely fine
+   * until somebody read a letter on it, and only at the right size. A sign
+   * is legible to a check at any size.
+   */
+  async clothesWrap() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const { templateFor } = await import('@/engine/clothes')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+    body.dress('shirt', new THREE.Texture())
+
+    const torso = body.parts.get('Torso')!
+    const uv = torso.geometry.getAttribute('uv1') as THREE.BufferAttribute
+    const position = torso.geometry.getAttribute('position')
+    const normal = torso.geometry.getAttribute('normal')
+    const sheet = templateFor('shirt')
+
+    const front = sheet.regions['Torso.front']
+    const edge = {
+      u0: front.x / sheet.width,
+      u1: (front.x + front.w) / sheet.width,
+      v0: 1 - (front.y + front.h) / sheet.height,
+      v1: 1 - front.y / sheet.height,
+    }
+
+    let rightMost = { x: -Infinity, u: 0 }
+    let leftMost = { x: Infinity, u: 0 }
+    let highest = { y: -Infinity, v: 0 }
+    let inside = 0
+    let facing = 0
+
+    for (let i = 0; i < position.count; i += 1) {
+      if (normal.getZ(i) < 0.9) continue
+      facing += 1
+      const u = uv.getX(i)
+      const v = uv.getY(i)
+      if (u >= edge.u0 - 0.001 && u <= edge.u1 + 0.001
+        && v >= edge.v0 - 0.001 && v <= edge.v1 + 0.001) inside += 1
+      const x = position.getX(i)
+      const y = position.getY(i)
+      if (x > rightMost.x) rightMost = { x, u }
+      if (x < leftMost.x) leftMost = { x, u }
+      if (y > highest.y) highest = { y, v }
+    }
+
+    const keptItsOwnUv = !!torso.geometry.getAttribute('uv')
+    body.dispose()
+    return {
+      facing,
+      allInsideFront: facing > 0 && inside === facing,
+      // +X is the avatar's left, which is the right of the template as a
+      // person looks at the front of it.
+      notMirrored: rightMost.u > leftMost.u,
+      topIsHigh: highest.v > (edge.v0 + edge.v1) / 2,
+      keptItsOwnUv,
+    }
+  },
+
+  /** Whether a face goes on, comes off, and leaves nothing behind. */
+  async faceOnOff() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+    const scene = new THREE.Scene()
+    scene.add(body.object)
+
+    const find = () => {
+      let found: THREE.Mesh | null = null
+      body.object.traverse((o) => { if (o.name === 'face') found = o as THREE.Mesh })
+      return found as THREE.Mesh | null
+    }
+
+    const before = !!find()
+    const picture = new THREE.Texture()
+    body.setFace(picture)
+    scene.updateMatrixWorld(true)
+
+    const on = find()
+    const headBox = new THREE.Box3().setFromObject(body.parts.get('Head')!)
+    const where = on ? on.getWorldPosition(new THREE.Vector3()) : null
+
+    body.setFace(null)
+    const after = !!find()
+    body.dispose()
+    return {
+      before,
+      on: !!on,
+      after,
+      mapped: on ? (on.material as THREE.MeshBasicMaterial).map === picture : false,
+      proud: where ? +(where.z - headBox.max.z).toFixed(3) : null,
+      height: where ? +where.y.toFixed(2) : null,
+    }
+  },
+  /**
    * What `wearTexture` actually does to a model, for the two things that
    * made a Decal look like it never arrived: the wrong way up, and no
    * texture coordinates to sample at all.

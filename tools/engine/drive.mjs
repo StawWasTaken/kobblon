@@ -1813,6 +1813,51 @@ check('and the two faces that look at each other read the same way round',
 check('and the picture is the material\'s map either way',
   dress.objBare.mapped && dress.objAuthored.mapped && dress.gltf.mapped, 'mapped')
 
+// -- what an avatar can wear, and whether it stays on
+const hat = await p.evaluate(() => window.wornAt('hat'))
+check('a hat sits on top of the head, not inside it',
+  Math.abs(hat.at[1] - hat.headTop) < 0.05 && Math.abs(hat.at[0]) < 0.05,
+  `hat at y ${hat.at[1]}, head top ${hat.headTop}`)
+check('and it hangs off a bone, so it is carried rather than placed',
+  hat.parented === 'socket:hat', `parent ${hat.parented}`)
+
+const hatWalking = await p.evaluate(() => window.wornAt('hat', 30))
+/*
+ * A tenth of a ston, not a twentieth. Walking tilts the head, and a tilted
+ * box's bounding box is taller than the box - its top corner lifts above the
+ * middle of its own lid. The hat is still exactly on the head; the thing
+ * being compared to it grew. 0.05 failed at 0.06 for that reason and not
+ * because anything had come loose.
+ */
+check('half a second into a walk the hat is still on the head',
+  Math.abs(hatWalking.at[1] - hatWalking.headTop) < 0.1,
+  `hat at y ${hatWalking.at[1]}, head top ${hatWalking.headTop}`)
+
+const hand = await p.evaluate(() => window.wornAt('rightHand'))
+check('and a slot on the other side of the body is on that side',
+  hand.at[0] < -1 && hand.parented === 'socket:rightHand',
+  `x ${hand.at[0]}, parent ${hand.parented}`)
+
+const shirtWrap = await p.evaluate(() => window.clothesWrap())
+check('a shirt lands in the template region meant for the front of the torso',
+  shirtWrap.allInsideFront, `${shirtWrap.facing} front vertices, all inside: ${shirtWrap.allInsideFront}`)
+check('and it is not mirrored, so lettering reads the right way round',
+  shirtWrap.notMirrored, `right-hand u above left-hand u: ${shirtWrap.notMirrored}`)
+check('and the top of the body is the top of the panel',
+  shirtWrap.topIsHigh, `top v in the upper half: ${shirtWrap.topIsHigh}`)
+check('the body keeps the coordinates it was modelled with',
+  shirtWrap.keptItsOwnUv, 'uv untouched, the template written to uv1')
+
+const faces = await p.evaluate(() => window.faceOnOff())
+check('a face goes on the front of the head and just in front of it',
+  faces.on && faces.proud > 0 && faces.proud < 0.1,
+  `${faces.proud} stons proud of the head`)
+check('it wears the picture it was given',
+  faces.mapped, `mapped ${faces.mapped}`)
+check('there is no face until one is put on, and none after it comes off',
+  faces.before === false && faces.after === false,
+  `before ${faces.before}, after ${faces.after}`)
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())

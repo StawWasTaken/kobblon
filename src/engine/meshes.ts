@@ -268,18 +268,25 @@ export function frameMesh(model: THREE.Object3D, camera: THREE.PerspectiveCamera
  * front is another's back. Anything that claims to find the front is
  * guessing.
  *
- * So this is a stated default rather than a discovery, chosen because it is
- * the one that fits Kobblon's own content, and it is the *same* default for
- * the card and for the viewer - which matters more than which way it points.
- * A card taken from one angle and a viewer that opens on another makes the
- * same model look like two models.
+ * So this is a stated default rather than a discovery. It points at +Z, and
+ * that is not a guess either: the engine already says "Kobblon's forward is
+ * +Z" in `controller.ts`, K6 is modelled facing that way, and every card
+ * drawn before this constant existed was taken from the +Z side and looked
+ * right. I set it to face -Z first, on the strength of an export convention
+ * rather than on anything in this codebase, and the next model uploaded came
+ * out backwards while every older one stayed correct - which is the whole
+ * argument, handed over by somebody looking at a page.
+ *
+ * It is the *same* default for the card and for the viewer, which matters as
+ * much as which way it points: a card taken from one angle beside a viewer
+ * that opens on another makes one model look like two.
  *
  * Where it matters, a creator sets it: the mesh panel takes the card from
  * whatever angle they have turned the model to. That is the only answer that
  * is actually right, because the only one who knows which side is the front
  * is the person who made it.
  */
-export const LOOK_YAW = Math.PI
+export const LOOK_YAW = 0
 export const LOOK_PITCH = 0.38
 
 /** The camera's place, from the middle of a model and how far back to stand. */
