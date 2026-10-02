@@ -47,6 +47,40 @@ export const PREVIEW_TYPE = 'image/webp'
 export const PREVIEW_EXTENSION = 'webp'
 
 /**
+ * Which generation of card-drawing made a card.
+ *
+ * A card is drawn once, at upload, and then it is a file sitting in a bucket
+ * for ever. So every time the drawing changes - the format gaining
+ * transparency, the camera turning round to face the front - everything
+ * already drawn keeps the old behaviour, and the fix is invisible on exactly
+ * the content somebody is complaining about.
+ *
+ * The extension answered that once, because the change was the format. It
+ * cannot answer "this was taken from the wrong side", since that card is a
+ * perfectly good WebP. So the mark goes in the name: a card is current when
+ * its path carries this, and anything else is redrawn the next time its
+ * owner opens it.
+ *
+ * **Bump this whenever the drawing changes in a way somebody would notice.**
+ * It costs one redraw per item and it is the only thing that makes a fix
+ * reach the pictures that already exist.
+ */
+export const CARD_MARK = 'k2'
+
+/**
+ * Whether a stored card was drawn by the drawing that runs today.
+ *
+ * A declared function rather than an arrow constant so that the checks in
+ * `tools/site/types-check.mjs` can read its body out of this file and run
+ * the real thing - which matters more here than anywhere, because a check
+ * holding its own copy of the mark would keep passing after somebody bumped
+ * it and updated only one of the two.
+ */
+export function cardIsCurrent(path?: string | null): boolean {
+  return !!path && path.toLowerCase().includes(`.${CARD_MARK}.`)
+}
+
+/**
  * The kinds that look like something. A sound has nothing to draw.
  *
  * A mesh looks like something too, but only once somebody has rendered it,

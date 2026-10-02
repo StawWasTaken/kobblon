@@ -131,3 +131,37 @@ export function blockify(root: THREE.Object3D) {
     mesh.frustumCulled = false
   })
 }
+
+/**
+ * Where a camera stands to take somebody's picture.
+ *
+ * Staw: a profile picture is a shot centred on the head, bigger, from the
+ * front. So it is framed off the head's own place in the body table rather
+ * than off the whole figure - a camera that framed the whole avatar and then
+ * zoomed would move every time somebody put on a hat.
+ *
+ * Returned rather than applied, because the engine, the website and the
+ * Workspace all want to take this picture and none of them should each
+ * invent their own idea of what a headshot is.
+ *
+ * `fov` is in degrees. `room` is how much air to leave around the head. The
+ * default takes in the top of the shoulders, which is what reads as a
+ * portrait; tighter than about 1.4 the head touches all four edges and looks
+ * like a mistake rather than a crop.
+ */
+export function headshot(fov = 30, room = 1.85) {
+  const head = BODY.Head
+  const place = PLACES.Head.middle
+  // A hat sits above the head and a face is drawn on its front, so the shot
+  // is centred a little above the middle of the head rather than on it.
+  const middle = new THREE.Vector3(place[0], place[1] + head.h * 0.08, place[2])
+  const reach = (Math.max(head.w, head.h) / 2) * room
+  const away = reach / Math.sin((fov * Math.PI) / 360)
+  return {
+    middle,
+    fov,
+    // Straight on and very slightly above, which is how a person holds a
+    // camera to somebody's face.
+    position: new THREE.Vector3(middle.x, middle.y + away * 0.08, middle.z + away),
+  }
+}

@@ -88,7 +88,20 @@ function bodyOf(source, name) {
    */
   let after = i + 1
   while (/\s/.test(source[after])) after += 1
+  /*
+   * Only skip a return annotation that is itself written in braces, like
+   * `: { direct, signed }`. A plain one such as `: boolean` needs no
+   * skipping, and treating it as braces walks straight into the body and
+   * out the other side - which came back as a function from somewhere else
+   * in the file complaining about a name it had never heard of.
+   */
+  let annotationIsBraces = false
   if (source[after] === ':') {
+    let k = after + 1
+    while (/\s/.test(source[k])) k += 1
+    annotationIsBraces = source[k] === '{'
+  }
+  if (annotationIsBraces) {
     const annotation = source.indexOf('{', after)
     let inside = 0
     for (let k = annotation; k < source.length; k += 1) {
@@ -108,6 +121,21 @@ function bodyOf(source, name) {
 
 const pictureFrom = new Function('item',
   `const PREVIEW_EXTENSION = 'webp';\n${bodyOf(psrc, 'pictureFrom')}`)
+
+/*
+ * Whether a stored card was drawn by the drawing that runs today.
+ *
+ * Read out of the file the same way, because the whole point of the mark is
+ * that a change to it reaches every picture already drawn - and a check that
+ * had its own copy of the mark would keep passing after somebody bumped it
+ * and forgot one of the two places.
+ */
+const markMatch = psrc.match(/export const CARD_MARK = '([^']+)'/)
+if (!markMatch) throw new Error('no CARD_MARK in preview.ts')
+const CARD_MARK = markMatch[1]
+const cardIsCurrent = new Function('path',
+  `const CARD_MARK = ${JSON.stringify(CARD_MARK)};\n${
+    bodyOf(psrc, 'cardIsCurrent').replace(/^\s*=>/, 'return').replace(/;?\s*$/, '')}`)
 
 const picked = [
   [{ kind: 'image', file_path: 'u/a.png', preview_path: 'p/a.webp' },
@@ -144,6 +172,20 @@ for (const [item, want, why] of picked) {
     `direct=${got.direct} signed=${got.signed}`)
 }
 
-const total = cases.length + picked.length
+const marks = [
+  [`me/abc.${CARD_MARK}.webp`, true, 'a card drawn by the drawing that runs today is current'],
+  ['me/abc.webp', false, 'one drawn before the mark existed is not, however good the format'],
+  ['me/abc.k1.webp', false, 'and nor is one from an earlier generation of the drawing'],
+  [null, false, 'no card at all is not a current card'],
+  [`me/ABC.${CARD_MARK.toUpperCase()}.WEBP`, true, 'the mark is read whatever its case'],
+]
+for (const [path, want, why] of marks) {
+  const got = !!cardIsCurrent(path)
+  const ok = got === want
+  if (!ok) bad += 1
+  console.log(ok ? 'PASS' : 'FAIL', why.padEnd(66), `${got}`)
+}
+
+const total = cases.length + picked.length + marks.length
 console.log(`${total - bad}/${total} checks passed`)
 process.exit(bad ? 1 : 0)

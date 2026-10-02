@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import {
   canPreview, previewOf, previewOfUrl, PREVIEW_TYPE, PREVIEW_EXTENSION,
+  CARD_MARK, cardIsCurrent,
 } from './preview'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
@@ -551,7 +552,7 @@ export async function makeAssetPreview(input: {
    * a cut-out Decal came out on a black rectangle; a file called .jpg served
    * as image/jpeg while holding WebP bytes is the next bug along.
    */
-  const path = `${input.userId}/${crypto.randomUUID()}.${PREVIEW_EXTENSION}`
+  const path = `${input.userId}/${crypto.randomUUID()}.${CARD_MARK}.${PREVIEW_EXTENSION}`
   const put = await supabase.storage
     .from(previewBucket)
     .upload(path, drawn, { contentType: drawn.type || PREVIEW_TYPE, upsert: false })
@@ -868,9 +869,12 @@ export async function ensureAssetPreview(asset: {
 }, me: string): Promise<string | null> {
   if (!canPreview(asset.kind)) return null
 
+  /*
+   * Current means drawn by today's drawing, not merely drawn. The mark in
+   * the name says which generation made it; see `CARD_MARK`.
+   */
   const had = await assetPreviewPath(asset.id)
-  const stale = !!had && !had.toLowerCase().endsWith(`.${PREVIEW_EXTENSION}`)
-  if (had && !stale) return null
+  if (had && cardIsCurrent(had)) return null
 
   const url = await assetUrl(asset.file_path, 300)
   if (!url) return null

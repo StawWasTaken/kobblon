@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import { listCommunityUploads, listOwnAssets, ensureAssetPreview } from '@/lib/api'
+import { cardIsCurrent } from '@/lib/preview'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { AssetKind, ModerationStatus } from '@/types/db'
@@ -86,7 +87,7 @@ export default function CreateUploads() {
     if (target || !profile || !mine.data) return
     const old = mine.data.filter(
       (one) => one.kind === 'image' && one.is_public && one.preview_path
-        && !one.preview_path.toLowerCase().endsWith('.webp'),
+        && !cardIsCurrent(one.preview_path),
     )
     if (old.length === 0) return
 
