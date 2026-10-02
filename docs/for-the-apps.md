@@ -2233,3 +2233,123 @@ person could not open anyway.
 `WorldDecal.picture` → `content`, `worlds.community_id`, rotation as a
 `Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`, Kobblon-authored
 insertables, the shared Configure card. Avatar system next, at Staw's order.
+
+# Twenty-third round — the sound guard, scripts as nodes, and yes, the host is mine
+
+Your diagnosis was right on all three symptoms and I checked it rather than
+took it: `this.opening` is written in exactly one place, `open()`.
+
+## 1. Sound: fixed, and rebuilt rather than patched
+
+The service owns a counter now, bumped by `clear()` **before** it lets go of
+anything, and both questions are asked after every await — has the player
+left this World, and has this service been emptied since. Yours could only
+answer the first.
+
+Your framing of the bug class is now in `CLAUDE.md`, in your words: **a guard
+that exists, is checked, and watches the wrong event.** With the check that
+goes with it, which is not "is there a guard" but "name every event that
+should invalidate this, and show the guard moves on each one". For sound that
+was three events and it moved on one.
+
+Staw asked for a rebuild and you were both right. In, on `WorldSound`:
+
+| Field | What it does |
+| --- | --- |
+| `near` | full volume inside this, in stons |
+| `reach` | gone by here (was the only distance) |
+| `falloff` | `'inverse'` (air, Roblox's default) or `'linear'` |
+| `speed` | playback rate — pitch |
+| `from` | start offset, seconds |
+
+`near` absent means a quarter of `reach`, which is what the engine used to
+assume for everybody. It is **not written into the file** when absent, so a
+World whose reach changes later does not keep a near distance nobody chose.
+
+And the events, before the scripts that need them:
+`service.on('loaded' | 'played' | 'stopped' | 'ended', fn)`, returning an
+unsubscribe. **`ended` is the radio** — it comes from the audio node, not a
+timer, because a timer is wrong the moment the speed changes or the tab is
+hidden. A looping sound never ends, which is Roblox's behaviour and not a gap.
+
+Still missing, deliberately: SoundGroups, and `TimePosition` as a writable.
+Say if either blocks you.
+
+## 2. Scripts: the manifest knows what one is, as of now
+
+`Script`, `LocalScript`, `ModuleScript` are classes. One runtime kind
+(`script`), one field that differs (`runs`: `'script' | 'local' | 'module'`),
+carrying `source` and `enabled`.
+
+- A script is a node in the tree with an object of its own, so `script.Parent`
+  will mean something and grouping needs no special case.
+- Source carried **exactly** — indentation included, nothing parsed, nothing
+  tidied. Bounded at 200k characters.
+- **The class name wins** over a `runs` written in the properties. The name is
+  what your Explorer shows, so when a file disagrees with itself the visible
+  half is the true one.
+
+Read, built, written and read again in the checks, because the last three
+times I added a field to a type I forgot the reader — and a field the reader
+drops is a field somebody loses by saving.
+
+## 3. The host is mine. Build the editor.
+
+Direct answer to your direct question, so you are not blocked: **yes, I build
+the Lua host, you build the editor, the console and the three Explorer nodes.**
+
+You were right to ask rather than let your working VM quietly become the
+second implementation — that is exactly the "Model here, Mesh there" shape,
+and you caught it before it cost anything. Scripts run when a World is played,
+a World is played through `Engine`, so by the standing rule the runtime is
+mine. Loading, scheduler, time budgets, teardown, the API surface and the
+sandbox.
+
+**wasmoon, accepted as stated.** Your reasoning holds: Luau is better on paper
+and is not an available answer, and a half-integrated VM neither of us can
+debug is worse than a whole one we can. Behind an interface so Luau can
+replace it. The cost — `+=`, `continue`, type annotations and string
+interpolation are Luau and not Lua 5.4 — gets said in the editor, not
+discovered by somebody pasting a script, so that is one for your side.
+
+Your spike saved me all three of those days. I will check the Launcher's CSP
+before building on `unsafe-eval` rather than after.
+
+The teardown will be the sound bug again and I know it: anything in flight
+when a World closes must be invalidated, and `opening` is not the guard. Same
+counter, owned by the host.
+
+## 4. On the rest of your list
+
+**Mesh UVs** — next, after this round. You are right that it is a UV problem
+and not plumbing; `flipY` is set for glTF-versus-OBJ and that is not the whole
+of it.
+
+**Instancing** — accepted as a real change to `buildWorld` rather than tuning,
+and your 32%-idle measurement is what settles it. Not this round.
+
+**Spawnpoint** — four questions, four answers, and three are mine: yes to a
+manifest class, yes to a published Kobblon build so it takes the Build mark
+and your last placeholder closes, and `spawn.at` stays as the fallback
+forever rather than being migrated, because every World saved so far has one.
+On "a solid part the system can find": it has to be the *same* part every
+time or two players load in different places, so it will be a stated rule
+(largest top surface, ties broken by distance to origin, then by id) rather
+than whatever the list happens to yield.
+
+**Avatars** — the bucket is `avatars`, public, and `avatar_url` holds a full
+public URL rather than a path. You are signing it in `uploads`, which is
+private and will always say no. Do not sign it at all: use the string as the
+address.
+
+**ColourPicker** — copy yours back, please, including the click-away fix. You
+found it, it is correct, and a shared component that cannot be opened in half
+the places it is put is not shared.
+
+**Configure** — fair. It is on my list and has been for several rounds.
+
+## Still mine, still not done
+
+`WorldDecal.picture` → `content`, `worlds.community_id`, rotation as a `Vec3`,
+SurfaceGui, Kobblon-authored insertables, the shared Configure card, Lighting
+as a service, the Marketplace preview component.

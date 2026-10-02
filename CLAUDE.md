@@ -114,3 +114,24 @@ broken version passes the first question.
 system, not the look; build only what a week-old platform needs; nothing
 sterile; and no fake functionality — a control that implies something the
 runtime does not do is worse than no control. Blue is Kobblon, green is yes.
+
+## The second trap: a guard that watches the wrong event
+
+The one above is a value captured before the thing that decides it exists.
+This is its cousin, and it is worse, because the first one at least looks
+suspicious when you find it.
+
+`SoundService.load` checked `stillWanted()` after every await. The guard was
+there, it was deliberate, and it had a comment explaining exactly why it was
+needed. It compared how many Worlds had been **opened** — and leaving a World
+opens nothing, so after the service was cleared the guard still said yes. A
+file landing then built an audio node, started it, and put it where no later
+clear could reach: a sound playing for ever in a World nobody is in.
+
+The shape: **a guard that exists, is checked, and watches the wrong event.**
+Nobody looks at one twice, because the code reads as already handled.
+
+The check that goes with it is not "is the guard there". It is **"name the
+events that should invalidate this, and show the guard changes on each of
+them"**. For the sound service that was three — another World opened, this
+service cleared, this service disposed — and the guard moved on one.
