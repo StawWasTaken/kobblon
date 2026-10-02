@@ -2485,3 +2485,108 @@ preview component, the Lua host — plus the six functions still saying Kubes.
 Next from Staw: a Catalog, with avatar items sold for Brix and their creation
 moved into Create. That will add tables and at least one new RPC, and I will
 send the shape before I build it rather than after.
+
+# Twenty-fifth round — the Marketplace moved under you, and Staw wants the Toolbox redesigned
+
+Two things from Staw directly, then what changed here that you build against.
+
+## 1. Staw: a full redesign of the Toolbox
+
+His words, so they are not filtered through me: he wants the Toolbox
+redesigned, in full. The screenshot he sent is the current one — Marketplace
+and Inventory tabs, a name-or-id search, kind filters, a two-column grid of
+cards, and the line at the bottom saying what a Decal needs to be put on.
+
+That is yours. What I can tell you is what the cards now have to work with,
+below, and the one rule he has restated twice this week about buttons.
+
+## 2. The Marketplace has been updated, and one change breaks a copy
+
+**Read this one before anything else if you cache or re-implement the asset
+row.** `assets` has two columns for a picture, and until today everything
+read the wrong one.
+
+- `thumbnail_path` — the old one, a file in the **private `uploads` bucket**,
+  so it has to be signed for. Nothing has written to it since 0061, when
+  `guard_asset_update` began pinning it.
+- `preview_path` — the card drawn at upload, a file in the **public
+  `previews` bucket**, addressed directly with `getPublicUrl`. This is what
+  everything actually writes.
+
+Every reader returned only the first, so every preview drawn since 0061 went
+somewhere nothing looks. It was invisible for Decals, which fall back to
+their own file because a Decal's file *is* the picture, and obvious for
+meshes and clips, which have no fallback.
+
+**0108 adds `preview_path` to the returned row** of `list_assets`,
+`my_inventory`, `similar_assets`, `assets_by_creator`, `community_assets` and
+`get_asset`. The return types changed, so those six were dropped and
+recreated and their grants re-issued.
+
+I got this wrong first: **0107 coalesced the two into one slot and broke
+every card on the site**, because it put a `previews` path through the signer
+for `uploads`. If you pulled 0107, pull 0108 — it undoes it. And the general
+form, which is the part to carry: **two paths are only the same kind of thing
+if they are in the same bucket.** Both columns are `text` and the type says
+nothing at all.
+
+On the website the decision lives in one place, `usePictureUrl` in
+`@/hooks/useSignedUrl`: `preview_path` directly, else `thumbnail_path`
+signed, else a Decal's own file. If the Workspace builds its own addresses,
+copy that order.
+
+## 3. Mesh previews are drawn dressed now
+
+`previewOf`, `previewOfUrl` and `makeAssetPreview` take an optional `skin` —
+a URL for the Decal the mesh wears — and draw the card wearing it. They never
+did, so a card showed a grey model beside a textured viewer on the same page:
+one item, two pictures, and the card is the one that travels into a link
+preview or a Toolbox grid.
+
+`ensureAssetPreview` also used to bail whenever *any* preview existed, so
+every mesh uploaded before today keeps its undressed card for ever. There is
+now a free **Draw it again** on the owner's mesh panel. If the Workspace
+shows mesh cards, expect the stock to be mixed for a while.
+
+**Still not previewable at all: builds.** `canPreview` excludes `build`, so a
+`.kbfl` has never had a card and does not have one now. Staw has asked for
+this — it means opening the manifest and rendering it, which is the engine's
+job and is a piece of work rather than a flag. Not done, named here so it is
+not mistaken for done.
+
+## 4. `wearTexture` gained a parameter last round and it matters here
+
+Repeating it because the Toolbox draws meshes: `wearTexture(model, picture,
+format)`. The format decides `flipY` — off for glTF, on for everything else —
+and geometry with no `uv` attribute is given box-projected coordinates, now
+flipped across for the faces pointing the other way along X and Z so a Decal
+with writing on it is not mirrored on one of each pair. Defaulting the
+parameter to `'gltf'` keeps old calls behaving as they did.
+
+## 5. Buttons, which Staw has now said twice
+
+**A button's colour does not depend on what it costs.** I had free go green
+and priced go blue; he rejected it. Blue means where you are, green means
+yes, and price is not either of those. Buy buttons are blue, free or not.
+Green stays for save, publish, upload, accept, play and entering a World —
+roughly 40% of buttons green, the rest blue, red only for danger.
+
+**Red is now built exactly like blue and green.** Solid fill, same hover,
+same 3px edge underneath that the press takes away. It used to be the only
+tinted outline button, which made the most deliberate press on the site look
+like the faintest. `design/preset.js` gained `danger.bright`, `danger.deep`
+and `danger.ink` for it — pull the preset.
+
+The wording rule is unchanged and lives in `@/components/money/BuyButton`:
+`Buy for` + the Brix mark + the number when it costs, the plain word when it
+does not, no mark on a free button ever.
+
+## Still mine, still not done
+
+Unchanged: `WorldDecal.picture` → `content`, `worlds.community_id`, rotation
+as a `Vec3`, SurfaceGui, Kobblon-authored insertables, the shared Configure
+card, Lighting as a service, the Marketplace preview component, the Lua host,
+the six functions still saying Kubes. Plus build previews, above.
+
+Next from Staw: the Catalog — avatar items sold for Brix, with their creation
+moved into Create. I will send the shape before I build it.
