@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
-import { canPreview, previewOf, previewOfUrl } from './preview'
+import {
+  canPreview, previewOf, previewOfUrl, PREVIEW_TYPE, PREVIEW_EXTENSION,
+} from './preview'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -541,10 +543,16 @@ export async function makeAssetPreview(input: {
       : null
   if (!drawn) return null
 
-  const path = `${input.userId}/${crypto.randomUUID()}.jpg`
+  /*
+   * Named and typed by what was actually drawn, rather than by what previews
+   * used to be. They are WebP now, because JPEG cannot say "transparent" and
+   * a cut-out Decal came out on a black rectangle; a file called .jpg served
+   * as image/jpeg while holding WebP bytes is the next bug along.
+   */
+  const path = `${input.userId}/${crypto.randomUUID()}.${PREVIEW_EXTENSION}`
   const put = await supabase.storage
     .from(previewBucket)
-    .upload(path, drawn, { contentType: 'image/jpeg', upsert: false })
+    .upload(path, drawn, { contentType: drawn.type || PREVIEW_TYPE, upsert: false })
   if (put.error) return null
 
   const saved = await supabase.from('assets')

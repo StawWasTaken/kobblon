@@ -1287,11 +1287,21 @@ const modelCard = await p.evaluate(async () => {
   paint.drawImage(picture, 0, 0)
   const { data } = paint.getImageData(0, 0, sheet.width, sheet.height)
 
-  // The background is one colour; anything else is the model.
+  /*
+   * A card has no background now, so "how much of it differs from the
+   * background colour" no longer means anything - every pixel differs from a
+   * colour that was never painted. What a card is made of is alpha: the
+   * model is where something was drawn, and the rest has to stay nothing.
+   *
+   * This check was rewritten because the behaviour changed on purpose, not
+   * because it was failing. The old one would pass on a completely empty
+   * transparent frame, which is the exact thing it exists to catch.
+   */
   let model = 0
+  let solid = 0
   for (let i = 0; i < data.length; i += 4) {
-    const off = Math.abs(data[i] - 233) + Math.abs(data[i + 1] - 237) + Math.abs(data[i + 2] - 245)
-    if (off > 24) model += 1
+    if (data[i + 3] > 8) model += 1
+    if (data[i + 3] > 247) solid += 1
   }
 
   const kbfl = new File(['{}'], 'part.kbfl', { type: 'application/json' })
@@ -1301,6 +1311,7 @@ const modelCard = await p.evaluate(async () => {
     bytes: drawn.size,
     size: [picture.naturalWidth, picture.naturalHeight],
     share: model / (data.length / 4),
+    opaque: solid / (data.length / 4),
     saysMeshesCanBeDrawn: window.canPreview('mesh'),
     // Kobblon's own part file is not glTF and gets no picture rather than a
     // wrong one.
@@ -1312,7 +1323,13 @@ check('a mesh is drawn for its card, rather than left blank',
   `${modelCard.size?.join('x')} ${modelCard.type}, ${modelCard.bytes} bytes`)
 check('and the picture is of the mesh rather than an empty frame',
   modelCard.share > 0.02 && modelCard.share < 0.9,
-  `${(modelCard.share * 100).toFixed(1)}% of it is the model`)
+  `${(modelCard.share * 100).toFixed(1)}% of it was drawn on`)
+check('and what is not the mesh is transparent, not a painted square',
+  modelCard.share - modelCard.opaque < 0.08 && modelCard.opaque < 0.9,
+  `${(modelCard.opaque * 100).toFixed(1)}% fully opaque`)
+check('a card keeps its transparency, so the format has to carry alpha',
+  modelCard.type === 'image/webp' || modelCard.type === 'image/png',
+  modelCard.type)
 check('a Build gets no picture rather than a wrong one',
   modelCard.ownFormat === null, 'nothing drawn for a .kbfl')
 

@@ -16,6 +16,7 @@
 import * as THREE from 'three'
 import {
   formatOf, frameMesh, lightForLooking, loadMesh, meshFormats, releaseMesh, wearTexture,
+  lookFrom,
 } from '@/lib/mesh'
 import type { MeshFormat } from '@/lib/mesh'
 import type { AssetKind } from '@/types/db'
@@ -23,6 +24,27 @@ import type { AssetKind } from '@/types/db'
 /** Big enough for a card at full width, small enough to be nothing much. */
 const WIDEST = 1280
 const QUALITY = 0.82
+
+/*
+ * WebP, not JPEG, and the reason is not the file size.
+ *
+ * **JPEG has no alpha.** A Decal drawn on nothing - which is most of them,
+ * every sun, every cut-out, every logo - came out on a black rectangle,
+ * because that is what a transparent pixel becomes when the format cannot
+ * say "transparent". It was invisible while nothing read these pictures;
+ * the moment the cards started being read, every transparent Decal on the
+ * site gained a black box.
+ *
+ * The same for a model: a mesh is a shape with nothing around it, and the
+ * nothing has to stay nothing or the card is a white square with a burger
+ * in the middle of it, sitting on a dark page.
+ *
+ * Every browser Kobblon runs on writes WebP, and `canvas.toBlob` falls back
+ * to PNG rather than failing if one somehow does not - which is still
+ * transparent, which is the part that matters.
+ */
+export const PREVIEW_TYPE = 'image/webp'
+export const PREVIEW_EXTENSION = 'webp'
 
 /**
  * The kinds that look like something. A sound has nothing to draw.
@@ -47,7 +69,7 @@ function draw(source: CanvasImageSource, width: number, height: number): Promise
   const brush = canvas.getContext('2d')
   if (!brush) return Promise.resolve(null)
   brush.drawImage(source, 0, 0, w, h)
-  return new Promise((done) => canvas.toBlob(done, 'image/jpeg', QUALITY))
+  return new Promise((done) => canvas.toBlob(done, PREVIEW_TYPE, QUALITY))
 }
 
 async function fromPicture(src: string) {
@@ -128,26 +150,28 @@ async function fromMesh(
       if (picture) wearTexture(model, picture, format)
     }
 
+    /*
+     * No background at all. The card sits on whatever page is showing it -
+     * dark in the Marketplace, dark in a Toolbox, light in a link preview -
+     * and a shape on nothing works on all of them where a painted square
+     * works on exactly one.
+     */
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#e9edf5')
     scene.add(model)
     lightForLooking(scene)
 
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
     const { middle, away } = frameMesh(model, camera)
-    camera.position.set(
-      middle.x + away * 0.62,
-      middle.y + away * 0.48,
-      middle.z + away * 0.62,
-    )
+    camera.position.copy(lookFrom(middle, away))
     camera.lookAt(middle)
 
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+    renderer.setClearColor(0x000000, 0)
     renderer.setSize(canvas.width, canvas.height, false)
     renderer.render(scene, camera)
 
     return await new Promise<Blob | null>((done) => {
-      canvas.toBlob(done, 'image/jpeg', QUALITY)
+      canvas.toBlob(done, PREVIEW_TYPE, QUALITY)
     })
   } catch {
     return null

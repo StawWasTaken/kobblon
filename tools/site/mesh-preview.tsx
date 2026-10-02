@@ -111,6 +111,7 @@ createRoot(document.getElementById('root')!).render(
         </p>
         <MeshView
           start="3d"
+          labelled
           previewUrl={textureUrl}
           fileUrl={objUrl}
           filePath="a.obj"

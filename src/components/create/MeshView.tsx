@@ -26,7 +26,8 @@ import { cn } from '@/lib/cn'
 export type MeshViewMode = '2d' | '3d'
 
 export function MeshView({
-  previewUrl, fileUrl, filePath, textureUrl, start = '2d', className, onWant3d,
+  previewUrl, fileUrl, filePath, textureUrl, start = '2d', labelled, className,
+  onWant3d,
 }: {
   /** The drawn card picture. */
   previewUrl?: string | null
@@ -38,6 +39,11 @@ export function MeshView({
   textureUrl?: string | null
   /** Which one it opens on. The item page says '3d'; everything else does not. */
   start?: MeshViewMode
+  /**
+   * With a word beside the icon. True on a page with room for one; false on
+   * a card, where a word takes space from the thing it is a card for.
+   */
+  labelled?: boolean
   className?: string
   /**
    * Told the first time somebody asks for 3D, so a card can go and fetch the
@@ -55,7 +61,11 @@ export function MeshView({
   const showing: MeshViewMode = mode === '3d' && !fileUrl && !onWant3d ? '2d' : mode
 
   return (
-    <div className={cn('relative', className)}>
+    <div
+      className={cn('relative select-none', className)}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
+    >
       {showing === '3d' ? (
         fileUrl ? (
           <MeshViewer src={fileUrl} format={format} textureUrl={textureUrl} />
@@ -85,40 +95,55 @@ export function MeshView({
       )}
 
       {/*
-        * Only when there is something to switch to. A switch offering a view
-        * that cannot be shown is the fake functionality this project does
-        * not do.
+        * One button that swaps, rather than two that argue.
         *
-        * The card is a link, so the press is stopped here: switching a view
-        * is not clicking through to the page.
+        * It was a pair of segments with the current one lit, which is a
+        * control for choosing among things you can see - and there are only
+        * two here, you are already looking at one of them, and the lit
+        * segment is the one that does nothing when pressed. So: a single
+        * button showing the view you are *not* in. The icon is the
+        * destination, which is the only thing worth saying.
+        *
+        * Only when there is something to swap to. A control that offers a
+        * view which cannot be shown is the fake functionality this project
+        * does not do.
+        *
+        * The card is a link, so the press is stopped here - and dragging is
+        * refused on the whole frame, because turning a model inside a link
+        * used to start the browser dragging the link and smear a ghost of
+        * the card across the page.
         */}
       {canTurn && previewUrl && (
-        <div
-          className="absolute bottom-2 right-2 flex overflow-hidden rounded-lg border border-white/15 bg-black/65 backdrop-blur-sm"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+        <button
+          type="button"
+          draggable={false}
+          title={showing === '3d' ? 'Show the picture' : 'Turn it'}
+          aria-label={showing === '3d' ? 'Show the picture' : 'Turn it'}
+          onDragStart={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setMode(showing === '3d' ? '2d' : '3d')
+          }}
+          /*
+           * The two shapes set `display` themselves rather than one being
+           * added on top of the other: `grid` and `flex` are the same
+           * property, and which one wins is the order they appear in the
+           * stylesheet, not the order they are written here. Written the
+           * other way, the labelled one stacked its word under its icon.
+           */
+          className={cn(
+            'absolute bottom-2 right-2 rounded-full',
+            'border border-white/20 bg-ink/80 text-white/75 backdrop-blur-sm',
+            'transition-colors hover:border-brand hover:bg-brand hover:text-white',
+            labelled
+              ? 'flex h-9 items-center gap-2 px-3.5 text-xs font-bold'
+              : 'grid h-8 w-8 place-items-center text-xs',
+          )}
         >
-          {([
-            ['2d', faImage, 'Picture'],
-            ['3d', faCube, 'Turn it'],
-          ] as const).map(([which, icon, label]) => (
-            <button
-              key={which}
-              type="button"
-              title={label}
-              aria-label={label}
-              aria-pressed={showing === which}
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMode(which) }}
-              className={cn(
-                'grid h-7 w-8 place-items-center text-xs transition-colors',
-                showing === which
-                  ? 'bg-brand text-white'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white',
-              )}
-            >
-              <FontAwesomeIcon icon={icon} />
-            </button>
-          ))}
-        </div>
+          <FontAwesomeIcon icon={showing === '3d' ? faImage : faCube} />
+          {labelled && <span>{showing === '3d' ? 'Picture' : '3D'}</span>}
+        </button>
       )}
     </div>
   )

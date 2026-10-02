@@ -9,5 +9,6 @@
 export {
   meshFormats, formatOf, carriesMaterials, loadMesh, hasSomethingToDraw,
   wearTexture, projectUv, frameMesh, lightForLooking, releaseMesh,
+  lookFrom, LOOK_YAW, LOOK_PITCH,
 } from '@/engine/meshes'
 export type { MeshFormat } from '@/engine/meshes'

@@ -259,6 +259,44 @@ export function frameMesh(model: THREE.Object3D, camera: THREE.PerspectiveCamera
   return { middle, reach, away }
 }
 
+/**
+ * Where to stand to look at a model, and the thing nobody can know.
+ *
+ * **A mesh file does not say which way it faces.** There is no field for it
+ * in OBJ and none in glTF, and the exporters disagree: Blender writes one
+ * forward axis by default and plenty of people change it, so one artist's
+ * front is another's back. Anything that claims to find the front is
+ * guessing.
+ *
+ * So this is a stated default rather than a discovery, chosen because it is
+ * the one that fits Kobblon's own content, and it is the *same* default for
+ * the card and for the viewer - which matters more than which way it points.
+ * A card taken from one angle and a viewer that opens on another makes the
+ * same model look like two models.
+ *
+ * Where it matters, a creator sets it: the mesh panel takes the card from
+ * whatever angle they have turned the model to. That is the only answer that
+ * is actually right, because the only one who knows which side is the front
+ * is the person who made it.
+ */
+export const LOOK_YAW = Math.PI
+export const LOOK_PITCH = 0.38
+
+/** The camera's place, from the middle of a model and how far back to stand. */
+export function lookFrom(
+  middle: THREE.Vector3,
+  away: number,
+  yaw = LOOK_YAW,
+  pitch = LOOK_PITCH,
+) {
+  const flat = Math.cos(pitch) * away
+  return new THREE.Vector3(
+    middle.x + Math.sin(yaw) * flat,
+    middle.y + Math.sin(pitch) * away,
+    middle.z + Math.cos(yaw) * flat,
+  )
+}
+
 /** Enough light to read a shape by, from above and in front, with a fill. */
 export function lightForLooking(scene: THREE.Scene) {
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8d95a6, 2.2))

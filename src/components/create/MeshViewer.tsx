@@ -23,6 +23,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import {
   formatOf, frameMesh, lightForLooking, loadMesh, releaseMesh, wearTexture,
+  lookFrom, LOOK_YAW, LOOK_PITCH,
 } from '@/lib/mesh'
 import type { MeshFormat } from '@/lib/mesh'
 import { cn } from '@/lib/cn'
@@ -76,7 +77,13 @@ export function MeshViewer({ src, format, textureUrl, className }: {
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
     lightForLooking(scene)
 
-    const turn = { yaw: 0, pitch: 0.28, closeness: 1 }
+    /*
+     * Opens where the card was taken from. The two used to be set
+     * independently - the card three-quarters from one side, the viewer
+     * square on from the other - so the same model looked like two models
+     * depending on whether you were looking at a grid or at its page.
+     */
+    const turn = { yaw: LOOK_YAW, pitch: LOOK_PITCH, closeness: 1 }
     let held = false
     /*
      * When the last input was, rather than whether there has ever been one.
@@ -87,12 +94,8 @@ export function MeshViewer({ src, format, textureUrl, className }: {
     let last = { x: 0, y: 0 }
 
     const place = (middle: THREE.Vector3, away: number) => {
-      const out = away * turn.closeness
-      const flat = Math.cos(turn.pitch) * out
-      camera.position.set(
-        middle.x + Math.sin(turn.yaw) * flat,
-        middle.y + Math.sin(turn.pitch) * out,
-        middle.z + Math.cos(turn.yaw) * flat,
+      camera.position.copy(
+        lookFrom(middle, away * turn.closeness, turn.yaw, turn.pitch),
       )
       camera.lookAt(middle)
     }
@@ -221,7 +224,18 @@ export function MeshViewer({ src, format, textureUrl, className }: {
         className,
       )}
     >
-      <div ref={holder} className="absolute inset-0 touch-none" />
+      {/*
+        * `select-none` and a refused dragstart: turning a model is a drag,
+        * and without these the browser treats it as dragging whatever the
+        * viewer sits inside - a link, on every card - and paints a ghost of
+        * the card under the cursor while the model turns behind it.
+        */}
+      <div
+        ref={holder}
+        draggable={false}
+        onDragStart={(e) => e.preventDefault()}
+        className="absolute inset-0 touch-none select-none"
+      />
 
       {state !== 'shown' && (
         <div className="pointer-events-none relative grid place-items-center gap-2 text-white/30">

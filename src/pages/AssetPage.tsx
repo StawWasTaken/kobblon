@@ -80,6 +80,7 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl }: {
     return (
       <MeshView
         start="3d"
+        labelled
         previewUrl={previewUrl}
         fileUrl={fileUrl}
         filePath={asset.file_path}
