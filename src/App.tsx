@@ -48,6 +48,7 @@ const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
 const Library = lazyPage(() => import('@/pages/Library'))
 const Catalog = lazyPage(() => import('@/pages/Catalog'))
+const CreateAvatarItems = lazyPage(() => import('@/pages/CreateAvatarItems'))
 const Style = lazyPage(() => import('@/pages/Style'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
@@ -131,6 +132,10 @@ export default function App() {
                   <Route path="inventory" element={<CreateInventory />} />
                   <Route path="analytics" element={<CreateAnalytics />} />
                   <Route path="ads" element={<CreateAds />} />
+                  {/* Things to wear, which the Catalog sells. Before the
+                      `:tag` route below, or a page called "avatar" would be
+                      read as somebody's content number. */}
+                  <Route path="avatar" element={<CreateAvatarItems />} />
                   <Route path="creator/:username" element={<CreatorPage />} />
                   {/* Setting a World up: the same job Creator does on the
                       desktop, through the same function. */}
