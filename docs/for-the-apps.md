@@ -2590,3 +2590,84 @@ the six functions still saying Kubes. Plus build previews, above.
 
 Next from Staw: the Catalog — avatar items sold for Brix, with their creation
 moved into Create. I will send the shape before I build it.
+
+# Twenty-sixth round — publishing a Build from the Workspace, and cards have no background now
+
+## 1. Staw: publishing Builds to the Marketplace from the Workspace
+
+His next ask, and it is yours to build. Everything on this side already
+exists — a Build is an ordinary asset of kind `build`, `uploadAsset` in
+`@/lib/api` takes it, and `expected_extensions('build')` is what the database
+will accept. `setSupabaseClient` is how the Workspace points that at its own
+session.
+
+Two things to know before you start:
+
+**A Build gets no card picture.** `canPreview` excludes `build`, so a `.kbfl`
+has never had one and still does not. It is JSON, not glTF, and drawing one
+means opening the manifest and rendering the World — the engine can do it,
+nobody has wired it. If you publish Builds without this, every Build in the
+Marketplace is a grey tile. Say whether you want to draw it in the Workspace
+at publish time (you have the World open, which is the cheapest moment it
+will ever be) or whether I should do it here. I would rather you did: the
+picture is better taken from a World that is already built than from one
+rebuilt in a browser to be photographed.
+
+**Screening applies.** `review_new_asset` runs on insert and a Build goes to
+`pending` like everything else, so the Workspace must show that state rather
+than implying the thing is live.
+
+## 2. Cards are transparent now — if you draw or show previews, read this
+
+**`previewOf`, `previewOfUrl` and `makeAssetPreview` write WebP, not JPEG,
+and mesh cards have no background at all.**
+
+Two bugs with one cause. JPEG cannot carry alpha, so every cut-out Decal — a
+sun, a logo, anything on nothing — came out on a black rectangle. And
+`fromMesh` painted `#e9edf5` behind the model, so a mesh card was a white
+square sitting on a dark page.
+
+Both are gone. A card is now a shape on nothing, which works on your dark
+Toolbox, on the dark Marketplace, and in a light link preview. **If anything
+in the Workspace composites a preview onto an assumed background, or writes
+one itself, it needs the same treatment** — `PREVIEW_TYPE` and
+`PREVIEW_EXTENSION` are exported from `@/lib/preview`, and the stored file's
+content type is taken from the blob rather than hard-coded.
+
+## 3. New engine exports: `lookFrom`, `LOOK_YAW`, `LOOK_PITCH`
+
+Staw: the 3D previews are always from behind.
+
+The honest finding is that **a mesh file does not say which way it faces.**
+There is no such field in OBJ or in glTF, and exporters disagree about the
+forward axis, so anything that claims to find a model's front is guessing.
+
+What was actually wrong is that the card and the viewer each picked their own
+angle, so one model looked like two things depending on whether you were
+looking at a grid or at a page. There is one stated default now, shared by
+both, exported from `@/engine/meshes`:
+
+```ts
+lookFrom(middle, away, yaw = LOOK_YAW, pitch = LOOK_PITCH): THREE.Vector3
+```
+
+`frameMesh` still gives you `middle` and `away`. **If the Toolbox places its
+own camera for a mesh thumbnail, use this**, or Kobblon will have three
+answers to the same question instead of two.
+
+## 4. Smaller
+
+- Turning a model inside a card used to start the browser dragging the link
+  it sits in, ghost image and all. The viewer surface refuses `dragstart`. If
+  you put `MeshViewer` inside anything draggable, you get this for free now.
+- The 2D/3D switch is one button showing the view you are *not* in, with an
+  optional word beside it (`labelled`). It was two lit segments; Staw did not
+  like it and he was right — one of the two did nothing when pressed.
+
+## Still mine, still not done
+
+Unchanged, plus Build previews above if you hand them back: `WorldDecal.picture`
+→ `content`, `worlds.community_id`, rotation as a `Vec3`, SurfaceGui,
+Kobblon-authored insertables, the shared Configure card, Lighting as a
+service, the Marketplace preview component, the Lua host, the six functions
+still saying Kubes.
