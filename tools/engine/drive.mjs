@@ -919,6 +919,68 @@ check('and how fast it plays is too',
 check('all three survive being saved and read back',
   soundShape.roundTrip, 'near, falloff and speed round-trip')
 
+// -- 13j3. scripts as nodes, which is all the manifest owes them yet
+const scripted = await p.evaluate(() => {
+  const world = {
+    format: 2, id: 'sc', name: 'Scripted', spawn: { at: [0, 4, 0] },
+    parts: [
+      { class: 'Part', properties: { id: 'floor', at: [0, -1, 0], size: [40, 2, 40] } },
+      { class: 'Script', properties: { id: 'main', source: 'print("hello")\n  indented()' } },
+      { class: 'LocalScript', properties: { id: 'ui', source: 'local a = 1' } },
+      { class: 'ModuleScript', properties: { id: 'lib', source: 'return {}' } },
+      { class: 'Part', properties: { id: 'radio', at: [0, 2, 0], size: [2, 2, 2] }, children: [
+        { class: 'Script', properties: { id: 'onRadio', source: 'while true do end' } },
+      ] },
+    ],
+  }
+
+  const read = window.readManifest(world)
+  const kinds = read.blocks.filter((b) => b.kind === 'script')
+  const built = window.buildWorld(read)
+  const written = window.writeManifest(read)
+  // Top level only; the one nested under a part is checked by `nested`.
+  const classes = written.parts.filter((n) => n.properties.source !== undefined).map((n) => n.class)
+  const main = written.parts.find((n) => n.properties.id === 'main')
+
+  // Read again, so a field lost on the way out is caught rather than a
+  // field lost on the way in.
+  const again = window.readManifest(written)
+  const mainAgain = again.blocks.find((b) => b.id === 'main')
+
+  return {
+    read: kinds.map((k) => k.runs).join(),
+    // A script is in the tree, selectable and nameable, like everything else.
+    inTree: !!built.named.get('main') && !!built.named.get('onRadio'),
+    // Written back under the three names rather than one.
+    classes: classes.join(),
+    // The source is somebody's file: carried exactly, indentation included.
+    exact: main.properties.source === 'print("hello")\n  indented()',
+    survives: mainAgain && mainAgain.source === 'print("hello")\n  indented()'
+      && mainAgain.runs === 'script',
+    // A script under a part belongs to that part, which is what
+    // script.Parent will have to mean.
+    nested: written.parts.find((n) => n.properties.id === 'radio').children[0].class,
+    /*
+     * The class name wins over a properties field disagreeing with it:
+     * the Explorer shows the name, so the name is the half that is true.
+     */
+    nameWins: window.readManifest({
+      format: 2, id: 'x', name: 'x', spawn: { at: [0, 1, 0] },
+      parts: [{ class: 'LocalScript', properties: { id: 'q', runs: 'module', source: '' } }],
+    }).blocks[0].runs,
+  }
+})
+check('a World can hold the three kinds of script',
+  scripted.read === 'script,local,module', scripted.read)
+check('and each is written back under its own class name',
+  scripted.classes === 'Script,LocalScript,ModuleScript', scripted.classes)
+check('a script is a node in the tree like anything else',
+  scripted.inTree && scripted.nested === 'Script', 'named, placed, and under its part')
+check('the source is carried exactly, indentation and all',
+  scripted.exact && scripted.survives, 'read, written and read again unchanged')
+check('the class name decides what a script runs as, not a field beside it',
+  scripted.nameWins === 'local', `LocalScript saying runs: module reads as ${scripted.nameWins}`)
+
 // -- 13k. chat: what is said, and what is not allowed to be said
 const chatted = await p.evaluate(async () => {
   const chat = window.engine.chat

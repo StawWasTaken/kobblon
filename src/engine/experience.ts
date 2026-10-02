@@ -105,7 +105,7 @@ export type WorldBlock = {
    * it, and delete it without deleting the wall. A field can hold one
    * picture and cannot be selected.
    */
-  children?: (WorldDecal | WorldSound | WorldLight)[]
+  children?: (WorldDecal | WorldSound | WorldLight | WorldScript)[]
 }
 
 /**
@@ -278,7 +278,60 @@ export type WorldGroup = {
   parts: WorldPart[]
 }
 
-export type WorldPart = WorldBlock | WorldGroup | WorldDecal | WorldSound | WorldLight
+/**
+ * Somebody's code, kept in the World that runs it.
+ *
+ * Three kinds rather than one, because the difference between them is who
+ * is allowed to run them and that is not a detail to add later:
+ *
+ * - `script` is the World's own. It owns what the World owns - moving
+ *   parts, deciding what happened - and in a Kobblon with a server it is
+ *   the one that would run there.
+ * - `local` is the player's. It may read the World and own what belongs to
+ *   the person at the keyboard: their camera, their interface, their input.
+ * - `module` runs nowhere by itself. It is required by the other two.
+ *
+ * Said plainly because it is not true yet: **there is no server.** A
+ * `script` today runs on the player's machine like everything else. Staw
+ * has confirmed that is fine for a first version, and the apps session is
+ * right that it is only fine if it is said out loud - a Script claiming
+ * authority while running on the player's machine is a lie that becomes a
+ * security model later. So the seam is drawn where the real one goes: a
+ * `local` must not touch what a `script` owns even though it physically
+ * could today, and nothing is rewritten when a server exists.
+ *
+ * The runtime that runs these does not exist yet either. This is the
+ * manifest knowing what a script is, so one can be written, saved, read
+ * back and shown in a tree - which is everything the Workspace needs
+ * before there is anything to run it with.
+ */
+/**
+ * How long one script may be, in characters.
+ *
+ * Roughly four thousand lines, which is far more than anything anybody
+ * should keep in one script and still a limit - a World has to refuse a
+ * file that is one script of a megabyte, or opening it is the attack.
+ */
+export const MOST_SOURCE = 200_000
+
+export type WorldScript = {
+  id?: string
+  kind: 'script'
+  /** Which of the three this is. */
+  runs: 'script' | 'local' | 'module'
+  /** The Lua itself. Text, carried as text; nothing here reads it. */
+  source: string
+  /**
+   * Off means it is in the World and not run. A script somebody is halfway
+   * through writing should not take the World down every time it is opened.
+   */
+  enabled?: boolean
+  /** Anything this engine has not learned, carried rather than understood. */
+  more?: Record<string, unknown>
+}
+
+export type WorldPart =
+  WorldBlock | WorldGroup | WorldDecal | WorldSound | WorldLight | WorldScript
 
 /** The old name, while anything still says it. */
 export type ExperienceBlock = WorldBlock
@@ -518,7 +571,9 @@ export type WorldNode = {
   children?: WorldNode[]
 }
 
-export type WorldClass = 'Part' | 'Group' | 'Decal' | 'Sound' | 'Light'
+export type WorldClass =
+  'Part' | 'Group' | 'Decal' | 'Sound' | 'Light'
+  | 'Script' | 'LocalScript' | 'ModuleScript'
 
 /** What each class is called in the old format, and the other way round. */
 export const CLASSES: Record<WorldClass, string> = {
@@ -527,10 +582,28 @@ export const CLASSES: Record<WorldClass, string> = {
   Decal: 'decal',
   Sound: 'sound',
   Light: 'light',
+  /*
+   * Three classes over one runtime kind, the same way a Light is one kind
+   * with a `light` on it. Everything that places, names, groups and saves a
+   * node works on all three with no special case, and `runs` is the one
+   * field that differs - which is also the field that will decide where
+   * each one executes once there is more than one place to execute.
+   */
+  Script: 'script',
+  LocalScript: 'script',
+  ModuleScript: 'script',
 }
+
+/** Which class a script node is written back as, by what it runs as. */
+const SCRIPT_CLASS = {
+  script: 'Script', local: 'LocalScript', module: 'ModuleScript',
+} as const
 
 const CLASS_OF: Record<string, WorldClass> = {
   box: 'Part', group: 'Group', decal: 'Decal', sound: 'Sound', light: 'Light',
+  // Overridden per node by `runs`; this is only the fallback for a script
+  // that somehow has none.
+  script: 'Script',
 }
 
 /**
@@ -551,6 +624,17 @@ function flatten(node: any, depth = 0): any {
 
   const kind = CLASSES[node.class as WorldClass]
   if (!kind) return null
+
+  /*
+   * Three class names share one runtime kind, so the name is the only thing
+   * that says which of the three it is. Put onto the properties before the
+   * reader sees them, which keeps one reader rather than a second one that
+   * knows about classes.
+   */
+  const runsAs = node.class === 'LocalScript' ? 'local'
+    : node.class === 'ModuleScript' ? 'module'
+    : node.class === 'Script' ? 'script'
+    : null
 
   const properties = node.properties && typeof node.properties === 'object'
     ? node.properties as Record<string, unknown>
@@ -574,7 +658,13 @@ function flatten(node: any, depth = 0): any {
     ? (kind === 'group' ? { parts: inside } : { children: inside })
     : {}
 
-  return { ...loose, ...properties, kind, ...held }
+  /*
+   * The class name wins over a `runs` written in the properties. The name
+   * is what the Explorer shows and what somebody chose when they inserted
+   * it; a properties field saying otherwise is a file disagreeing with
+   * itself, and the visible half should be the half that is true.
+   */
+  return { ...loose, ...properties, kind, ...(runsAs ? { runs: runsAs } : {}), ...held }
 }
 
 /** Whether anything in this file is written the new way. */
@@ -618,6 +708,31 @@ export function readManifest(raw: unknown): WorldManifest {
   const MOST = 20000
   const DEEP = 8
 
+  /**
+   * A script, read as text and nothing more.
+   *
+   * Nothing here parses Lua or tries to decide whether it is any good. The
+   * source is somebody's file: it is bounded so a World cannot be a
+   * megabyte of one script, and otherwise carried exactly as written,
+   * because a reader that tidies code is a reader that silently changes
+   * what somebody wrote.
+   */
+  const readScript = (raw: any): WorldScript | null => {
+    if (!raw || typeof raw !== 'object') return null
+    const runs = raw.runs === 'local' || raw.runs === 'module' ? raw.runs : 'script'
+    const source = typeof raw.source === 'string' ? raw.source : ''
+    return {
+      id: raw.id ? String(raw.id) : undefined,
+      kind: 'script',
+      runs,
+      // Generous, and a limit all the same: a World is not a place to keep
+      // a library, and something has to refuse a file that is all one line.
+      source: source.slice(0, MOST_SOURCE),
+      enabled: raw.enabled === false ? false : undefined,
+      more: keepUnknown(raw, ['id', 'kind', 'runs', 'source', 'enabled', 'children', 'parts']),
+    }
+  }
+
   const readPart = (part: any, depth: number): WorldPart | null => {
     if (!part || typeof part !== 'object') return null
     counted += 1
@@ -625,6 +740,7 @@ export function readManifest(raw: unknown): WorldManifest {
 
     if (part.kind === 'sound') return readSound(part)
     if (part.kind === 'light') return readLight(part)
+    if (part.kind === 'script') return readScript(part)
 
     if (part.kind === 'group') {
       if (depth >= DEEP) return null
@@ -657,10 +773,11 @@ export function readManifest(raw: unknown): WorldManifest {
      * A decal used to be a field on the part. Files written that way still
      * open: it is read as the one child it always meant.
      */
-    const asChild = (raw: any): WorldDecal | WorldSound | WorldLight | null => {
+    const asChild = (raw: any): WorldDecal | WorldSound | WorldLight | WorldScript | null => {
       if (!raw || typeof raw !== 'object') return null
       if (raw.kind === 'sound') return readSound(raw)
       if (raw.kind === 'light') return readLight(raw)
+      if (raw.kind === 'script') return readScript(raw)
 
       const picture = typeof raw.picture === 'string' ? raw.picture
         : typeof raw.id === 'string' ? raw.id
@@ -815,7 +932,9 @@ export function writeManifest(manifest: WorldManifest): Record<string, unknown> 
       : part.kind === 'box' ? part.children ?? []
       : []
     return {
-      class: CLASS_OF[part.kind] ?? 'Part',
+      class: part.kind === 'script'
+        ? SCRIPT_CLASS[part.runs] ?? 'Script'
+        : CLASS_OF[part.kind] ?? 'Part',
       properties: properties(part),
       ...(children.length ? { children: children.map(node) } : {}),
     }
@@ -1030,6 +1149,21 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
       return
     }
 
+    /*
+     * A script is a thing in the World without being a thing you can see.
+     * It gets an empty where it sits so the tree, selection, grouping and
+     * saving all work on it exactly as they do on everything else - and so
+     * `script.Parent` means something when there is a runtime to ask.
+     */
+    if (part.kind === 'script') {
+      const here = new THREE.Object3D()
+      here.name = part.id ?? 'Script'
+      into.add(here)
+      partOf.set(here, part)
+      if (part.id) named.set(part.id, here)
+      return
+    }
+
     if (part.kind === 'light') {
       /*
        * Past the budget a light is still in the tree, still selectable,
@@ -1075,7 +1209,7 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
      * material cannot be selected, renamed or deleted in an Explorer.
      */
     for (const child of part.children ?? []) {
-      if (child.kind === 'sound' || child.kind === 'light') {
+      if (child.kind === 'sound' || child.kind === 'light' || child.kind === 'script') {
         place(child, mesh)
         continue
       }
