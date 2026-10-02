@@ -2763,3 +2763,116 @@ the six functions still saying Kubes.
 In hand right now, so do not start them: copying a mesh render to the
 clipboard from its own context menu, and getting mesh renders to appear in
 link previews.
+
+# Twenty-eighth round — old cards redraw themselves, link previews carry the render, and a turn is not a press
+
+Everything here is shipped. Four things, and the first two change behaviour
+you may have copied.
+
+## 1. A card that cannot hold transparency is drawn again
+
+**If the Workspace stores or reads `preview_path`, it needs this rule.**
+
+Cards used to be written as JPEG. JPEG has no alpha, so every transparent
+Decal had its transparency flattened to black when its card was drawn, and
+every mesh was photographed on a painted square. Changing the format to WebP
+last round fixed nothing that had already been drawn — and because the
+readers had only just started returning these pictures, the black boxes
+appeared everywhere at once on content that had looked right for months.
+
+The rule, now in `ensureAssetPreview`:
+
+> a stored card whose path does not end in `.webp` was made by the code that
+> could not keep transparency, and is drawn again.
+
+That is a fact about the file rather than a guess about its age — there is no
+timestamp on a preview and none is needed. The old file is removed only once
+the new one is saved, so a failure leaves the card it had rather than none.
+
+It runs on the owner's own item page, and `CreateUploads` sweeps **Decals
+only**, one at a time. Deliberately not meshes in a list: a Decal is a resize,
+a mesh is a WebGL context, a download and a parse, and twenty of those because
+somebody opened a list is a page that stops answering. A mesh is redrawn on
+its own page, where exactly one is being drawn.
+
+`PREVIEW_TYPE` and `PREVIEW_EXTENSION` are exported from `@/lib/preview`.
+Compare against those rather than writing `'webp'` anywhere.
+
+## 2. 0109 — link previews carry the render
+
+`link_preview` returned `null` for the picture of anything on the
+Marketplace. Its own comment said why: the file is private, so a preview said
+what the thing was and showed nothing of it. That was correct when it was
+written — there was nothing public to point a robot at.
+
+There is now. The card lives in the public `previews` bucket, which is public
+precisely so something with no account can fetch it.
+
+**The column carries a storage path, not an address.** Building the address
+needs the project's host, which the database has no business knowing, so the
+`og` edge function does that part with `getPublicUrl`. If anything on your
+side consumes `link_preview`, it has to do the same — a bare path handed
+straight to an `<img>` is a broken picture.
+
+`wide` is false for a mesh and true otherwise. A mesh card is square and
+transparent, and a square picture in a wide card is letterboxed to a
+thumbnail with bars down both sides. The statically written item pages follow
+the same rule, so the two kinds of page cannot disagree about one item.
+
+My first version had that flag inverted and the behavioural check caught it,
+which is the argument for writing the check before believing the migration.
+
+## 3. `MeshViewer` gained `onSnapshot`, and a turn is not a press
+
+```ts
+onSnapshot?: (take: null | (() => Promise<Blob | null>)) => void
+```
+
+Handed up once the model is drawn, and **handed back as `null` when the
+viewer goes away** — a snapshot function outliving its renderer is a call
+into a WebGL context that no longer exists, which is this project's favourite
+trap wearing a new coat. If you take this, drop it on teardown.
+
+It renders and reads in one synchronous block, which is what makes it work
+without `preserveDrawingBuffer`. That flag would keep a second copy of every
+frame for the life of every viewer on the page to serve a button almost
+nobody presses.
+
+On the website it feeds a context menu with one item, *Copy the render*,
+replacing the browser's own — whose Save image as and Copy image address hand
+out a signed private-file URL. PNG goes on the clipboard whatever the card
+was, because a clipboard handed WebP is a paste that silently never arrives.
+
+**And the behaviour worth copying into the Toolbox:** a pointer going down
+and up on a card is a click however far it travelled in between, so letting
+go after turning a model opened the item's page. `onTurn` now fires only once
+the pointer has really moved — five pixels, because a hand is not steady
+enough for "moved at all" and a card would otherwise swallow the click meant
+to open it. Checked both ways: a still press counts, a turn does not, and
+nothing is left suppressed afterwards.
+
+## 4. Builds, for the third round running
+
+A `.kbfl` still has no picture anywhere — not in Create, not in the Toolbox,
+not in a link preview, where it falls back to the Kobblon card. Nothing draws
+one.
+
+Staw has now asked for Build publishing from the Workspace **and** for Build
+renders in embeds, and both wait on this one piece. My position is unchanged
+and I would like an answer this round rather than carrying it again: **draw
+it in the Workspace at publish time**, where the World is already built. If
+you would rather I did it here, say so and I will, but it means rebuilding a
+World in a browser purely to photograph it.
+
+Either way: WebP, alpha, no background, through `makeAssetPreview` to
+`preview_path` — the same as every other card.
+
+## Still mine, still not done
+
+`WorldDecal.picture` → `content`, `worlds.community_id`, rotation as a
+`Vec3`, SurfaceGui, Kobblon-authored insertables, the shared Configure card,
+Lighting as a service, the Marketplace preview component, the Lua host, the
+six functions still saying Kubes.
+
+Next from Staw, not started: the Catalog — avatar items sold for Brix with
+their creation moved into Create. I will send the shape before building it.
