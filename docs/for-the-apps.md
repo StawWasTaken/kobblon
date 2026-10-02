@@ -2671,3 +2671,95 @@ Unchanged, plus Build previews above if you hand them back: `WorldDecal.picture`
 Kobblon-authored insertables, the shared Configure card, Lighting as a
 service, the Marketplace preview component, the Lua host, the six functions
 still saying Kubes.
+
+# Twenty-seventh round — shared components got stricter, and a warning about `cn`
+
+Shorter round. One real trap, two component signatures that changed, and the
+state of the Build render you may be picking up.
+
+## 1. `cn` joins, it does not merge — and that bit twice in one day
+
+`@/lib/cn` is `parts.filter(Boolean).join(' ')`. Nothing more. It is **not**
+`tailwind-merge`, and it is easy to use as though it were.
+
+So passing `rounded-none` into a component whose own class list has
+`rounded-2xl` does not override it: both land on the element, and which wins
+is which rule appears later **in the stylesheet**, which is Tailwind's own
+ordering and nothing to do with the order you wrote them. It cost two bugs
+here in a day — a labelled button that stacked its word under its icon
+(`grid` and `flex` both setting `display`), and a card with a frame inside a
+frame.
+
+**If the Workspace restyles a shared component by passing classes, check it
+renders rather than assuming the later class wins.** Where a caller needs a
+genuinely different shape, the answer is a prop on the component, not a class
+from outside. Two now exist for exactly this:
+
+```ts
+<MeshViewer bare />   // no border, background or corners of its own
+<MeshView bare />     // same, for a caller that is already a frame
+```
+
+## 2. `MeshViewer` and `MeshView` signatures
+
+```ts
+MeshViewer({ src, format, textureUrl, className, bare, onTurn })
+MeshView({ previewUrl, fileUrl, filePath, textureUrl, start, labelled,
+           bare, className, onWant3d, onTurn })
+
+onTurn?: (angle: { yaw: number; pitch: number }) => void
+```
+
+`onTurn` fires **only while somebody is dragging**, not while the turntable
+drifts — the angle it reports is meant to be one a person chose. It fires per
+frame during a drag, so hold it in a ref; a parent that puts it in state will
+re-render against the drag. Inside `MeshViewer` the callback is itself held
+in a ref, because the frame loop outlives any one render.
+
+What it is for: a mesh file does not say which way it faces, so the card's
+angle is a guess. On the website a creator now turns the model and takes the
+card from exactly there. If the Workspace ever draws a mesh card, offer the
+same thing rather than inventing a second guess.
+
+## 3. A card is not draggable, and the reason is worth copying
+
+Turning a model inside a card used to make the browser drag the card. I fixed
+it twice; the first fix was in the wrong place and did nothing.
+
+**A `<Link>` is an `<a>`, and an anchor is a drag source from anywhere inside
+it.** The drag belongs to the anchor, not to the element under the pointer,
+so refusing `dragstart` on the children never had a chance. It needs
+`draggable={false}` on the anchor itself.
+
+Anywhere the Workspace puts a draggable 3D view inside a link or an item that
+the host treats as draggable, the same applies.
+
+## 4. Build renders — still nobody's, and Staw has now asked twice
+
+A `.kbfl` has no card picture anywhere: not in Create, not in the Toolbox, not
+in a link preview. `canPreview` excludes `build` and nothing draws one.
+
+Staw has now asked for Builds to be publishable from the Workspace *and* for
+their renders to show in link previews. Both need the same missing piece.
+
+My position, unchanged from last round and now with a second reason: **the
+Workspace should draw it at publish time.** You have the World already built,
+which is the cheapest moment the picture will ever be, and it is a render of
+a World rather than of a file — the engine's job, not a thumbnailer's. If you
+would rather I did it here, say so this round and I will, but it means
+rebuilding the World in a browser purely to photograph it.
+
+Whichever of us does it: the card must be **WebP with alpha, on no
+background**, like every other card since last round, and it goes to
+`preview_path` through `makeAssetPreview`.
+
+## Still mine, still not done
+
+Unchanged: `WorldDecal.picture` → `content`, `worlds.community_id`, rotation
+as a `Vec3`, SurfaceGui, Kobblon-authored insertables, the shared Configure
+card, Lighting as a service, the Marketplace preview component, the Lua host,
+the six functions still saying Kubes.
+
+In hand right now, so do not start them: copying a mesh render to the
+clipboard from its own context menu, and getting mesh renders to appear in
+link previews.
