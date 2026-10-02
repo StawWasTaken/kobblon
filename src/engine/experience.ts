@@ -179,8 +179,39 @@ export type WorldSound = {
    * split on afterwards means every sound in every World is already wrong.
    */
   playing?: boolean
-  /** How far away it can still be heard, in stons. Positional sounds only. */
+  /**
+   * How far away it can still be heard, in stons. Positional sounds only.
+   *
+   * This is the far end. `near` is the other one, and having only this was
+   * most of why Kobblon's sounds did not feel like Roblox's: one distance
+   * cannot say both "loud until here" and "gone by there".
+   */
   reach?: number
+  /**
+   * How close you have to be for it to be at full volume, in stons.
+   *
+   * Everything nearer is as loud as the recording; past it the sound falls
+   * away until `reach`. Absent is a quarter of `reach`, which is what the
+   * engine used to assume for everybody - a guess that was standing in for
+   * a field, so it is a field now and the guess is only the default.
+   */
+  near?: number
+  /**
+   * How it falls away between `near` and `reach`.
+   *
+   * `inverse` is how sound behaves in air and is what Roblox calls Inverse.
+   * `linear` fades evenly and reaches silence exactly at `reach`, which is
+   * easier to place a boundary with.
+   */
+  falloff?: 'inverse' | 'linear'
+  /**
+   * How fast it plays, as a multiple. 1 is as recorded, 2 is twice the speed
+   * and an octave up - the same knob Roblox calls PlaybackSpeed, and the one
+   * that makes an engine note or a sped-up voice possible at all.
+   */
+  speed?: number
+  /** Where to start from, in seconds. */
+  from?: number
   /** Anything this engine has not learned, carried rather than understood. */
   more?: Record<string, unknown>
 }
@@ -334,8 +365,25 @@ function readSound(raw: any): WorldSound | null {
     // a World nobody keeps open.
     playing: raw.playing === true,
     reach: THREE.MathUtils.clamp(number(raw.reach, 40), 1, 4000),
+    /*
+     * Absent rather than defaulted, deliberately. `near` left out means "a
+     * quarter of reach", and writing that quarter down here would turn a
+     * default into a decision - so a World whose reach changed later would
+     * keep a near distance nobody chose.
+     */
+    near: Number.isFinite(raw.near)
+      ? THREE.MathUtils.clamp(Number(raw.near), 0.1, 4000)
+      : undefined,
+    falloff: raw.falloff === 'linear' ? 'linear' : undefined,
+    // Floored rather than clamped to 1: half speed is a real thing to want,
+    // and zero is a sound that never advances.
+    speed: Number.isFinite(raw.speed)
+      ? THREE.MathUtils.clamp(Number(raw.speed), 0.05, 8)
+      : undefined,
+    from: Number.isFinite(raw.from) ? Math.max(Number(raw.from), 0) : undefined,
     more: keepUnknown(raw, [
-      'id', 'kind', 'sound', 'volume', 'loop', 'playing', 'reach', 'children', 'parts',
+      'id', 'kind', 'sound', 'volume', 'loop', 'playing', 'reach',
+      'near', 'falloff', 'speed', 'from', 'children', 'parts',
     ]),
   }
 }

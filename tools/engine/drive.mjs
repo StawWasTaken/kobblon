@@ -831,6 +831,94 @@ check('a World left before it finished loading does not keep making a noise',
   leftEarly.world === 'Quiet' && leftEarly.playing === 0,
   `${leftEarly.world} is open, ${leftEarly.playing} sounds asked to play`)
 
+/*
+ * The case the old guard could not see.
+ *
+ * It compared how many Worlds had been *opened*, and leaving one opens
+ * nothing - so after the service was cleared or disposed the guard still
+ * said yes, and a file landing then built a node, started it, and put it
+ * nowhere any later clear could reach. The apps session found this from
+ * three symptoms at once: a sound that plays for ever, a sound that plays
+ * twice, and "bad quality", which is two copies of one buffer a few hundred
+ * milliseconds apart comb-filtering through one AudioContext.
+ */
+const orphaned = await p.evaluate(async () => {
+  const service = window.engine.sound
+  let land = null
+  const quiet = window.quietSound()
+  const slow = () => new Promise((go) => { land = () => go(quiet) })
+
+  const noisy = {
+    format: 1, id: 'orph', name: 'Orphan', spawn: { at: [0, 4, 0] },
+    sounds: [{ id: 'ambience', kind: 'sound', sound: 'SND-1', loop: true, playing: true }],
+    blocks: [{ id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] }],
+  }
+  const built = window.buildWorld(window.readManifest(noisy))
+
+  // Loading starts, and the file is still in the air...
+  const job = service.load(built, window.engine.camera, slow, () => true)
+  await new Promise((r) => setTimeout(r, 30))
+
+  // ...and the player leaves. No other World is opened, which is exactly
+  // the case the engine's own counter cannot notice.
+  service.clear()
+  if (land) land()
+  await job
+
+  return {
+    listed: service.all.length,
+    // Nothing anywhere was built, so nothing anywhere can be playing.
+    sounding: service.all.filter((one) => one.node && one.node.isPlaying).length,
+  }
+})
+check('a sound arriving after the service was emptied is not started',
+  orphaned.listed === 0 && orphaned.sounding === 0,
+  'nothing is left playing in a World nobody is in')
+
+// -- 13j2. the sound fields that make one feel like Roblox's
+const soundShape = await p.evaluate(async () => {
+  const service = window.engine.sound
+  const world = {
+    format: 1, id: 'shape', name: 'Shaped', spawn: { at: [0, 4, 0] },
+    blocks: [
+      { id: 'floor', kind: 'box', at: [0, -1, 0], size: [40, 2, 40] },
+      { id: 'radio', kind: 'box', at: [0, 2, 0], size: [2, 2, 2], children: [
+        // 35 on purpose: a quarter of 80 is 20, so a check written with 20
+        // passes whether or not `near` is read at all - which is how the
+        // first version of this one did.
+        { id: 'song', kind: 'sound', sound: 'SND-1', reach: 80, near: 35,
+          falloff: 'linear', speed: 1.5 },
+      ] },
+    ],
+  }
+  const built = window.buildWorld(window.readManifest(world))
+  const quiet = window.quietSound()
+  await service.load(built, window.engine.camera, async () => quiet, () => true)
+
+  const one = service.get('song')
+  const node = one && one.node
+  const written = window.writeManifest(window.readManifest(world))
+  const saved = written.parts.find((n) => n.properties.id === 'radio').children[0].properties
+
+  return {
+    near: node ? node.getRefDistance() : null,
+    reach: node ? node.getMaxDistance() : null,
+    model: node ? node.panner.distanceModel : null,
+    speed: node ? node.getPlaybackRate() : null,
+    // A field the reader drops is a field somebody loses by saving.
+    roundTrip: saved.near === 35 && saved.falloff === 'linear' && saved.speed === 1.5,
+  }
+})
+check('a sound has two distances rather than one guessed from the other',
+  soundShape.near === 35 && soundShape.reach === 80,
+  `full volume to ${soundShape.near}, gone by ${soundShape.reach}`)
+check('and how it falls away between them is the World\'s choice',
+  soundShape.model === 'linear', soundShape.model)
+check('and how fast it plays is too',
+  soundShape.speed === 1.5, `${soundShape.speed}x`)
+check('all three survive being saved and read back',
+  soundShape.roundTrip, 'near, falloff and speed round-trip')
+
 // -- 13k. chat: what is said, and what is not allowed to be said
 const chatted = await p.evaluate(async () => {
   const chat = window.engine.chat

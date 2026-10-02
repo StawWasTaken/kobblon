@@ -46,6 +46,35 @@ Object.assign(window, {
   writeManifest,
   MOST_LIGHTS,
   resolveFake: async (id: string) => drawn.get(id) ?? null,
+  /**
+   * A short, real, silent sound, as an address.
+   *
+   * A real one rather than a stub: the thing being checked is what the audio
+   * nodes do, and a node is only built once a buffer actually decodes. Made
+   * here rather than kept in public/ because it is a fixture for the checks
+   * and not something the site serves.
+   */
+  quietSound(seconds = 0.2) {
+    const rate = 8000
+    const frames = Math.round(rate * seconds)
+    const bytes = 44 + frames * 2
+    const buffer = new ArrayBuffer(bytes)
+    const view = new DataView(buffer)
+    const text = (at: number, s: string) => {
+      for (let i = 0; i < s.length; i += 1) view.setUint8(at + i, s.charCodeAt(i))
+    }
+    text(0, 'RIFF'); view.setUint32(4, bytes - 8, true); text(8, 'WAVE')
+    text(12, 'fmt '); view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true); view.setUint16(22, 1, true)
+    view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true)
+    view.setUint16(32, 2, true); view.setUint16(34, 16, true)
+    text(36, 'data'); view.setUint32(40, frames * 2, true)
+    // Samples left at zero: silence, so a check never makes a noise.
+    let binary = ''
+    const raw = new Uint8Array(buffer)
+    for (let i = 0; i < raw.length; i += 1) binary += String.fromCharCode(raw[i])
+    return `data:audio/wav;base64,${btoa(binary)}`
+  },
   /** The data address a fake picture was stored at, for a slow resolver. */
   drawnUrl: (id: string) => drawn.get(id) ?? null,
   /** A plain picture of a given shape, for checking how a decal is fitted. */
