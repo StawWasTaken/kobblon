@@ -220,3 +220,38 @@ export async function previewOfUrl(
     return null
   }
 }
+
+/**
+ * Which of the three places a piece of content's picture should come from.
+ *
+ * Pulled out of the hook that used to decide it so that it can be checked
+ * without a browser, and so the Workspace can ask the same question. The
+ * hook turns the answer into an address; this only says which one.
+ *
+ *   * `direct` is a path in the public `previews` bucket, addressed with
+ *     `getPublicUrl`.
+ *   * `signed` is a path in the private `uploads` bucket, which has to be
+ *     signed for.
+ *
+ * At most one is ever set. Getting the two the wrong way round broke every
+ * picture on the site for a day, which is why they are named rather than
+ * returned as one string somebody has to guess about.
+ */
+export function pictureFrom(item: {
+  preview_path?: string | null
+  thumbnail_path?: string | null
+  file_path?: string | null
+  kind?: string | null
+}): { direct: string | null; signed: string | null } {
+  // A Decal's own file is the picture; nothing else's is.
+  const itself = item.kind === 'image' ? item.file_path ?? null : null
+
+  // A card that is not WebP was drawn by the code that could not hold
+  // transparency, so for a Decal it is worse than the file it was made from.
+  const flat = !!item.preview_path
+    && !item.preview_path.toLowerCase().endsWith(`.${PREVIEW_EXTENSION}`)
+
+  const card = flat && itself ? null : item.preview_path ?? null
+  if (card) return { direct: card, signed: null }
+  return { direct: null, signed: item.thumbnail_path ?? itself }
+}

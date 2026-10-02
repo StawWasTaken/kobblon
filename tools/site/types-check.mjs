@@ -47,5 +47,103 @@ for (const [file, fallback, want, why] of cases) {
   if (!ok) bad += 1
   console.log(ok ? 'PASS' : 'FAIL', why.padEnd(56), got)
 }
-console.log(`${cases.length - bad}/${cases.length} checks passed`)
+
+/*
+ * Where a card's picture comes from.
+ *
+ * Read out of preview.ts for the same reason as above: the thing that runs,
+ * not a copy of it. This one has broken the site twice - once by signing a
+ * public path against the private bucket, once by showing a card that had
+ * had its transparency flattened to black in preference to the file that
+ * still had it. Both were a wrong answer to "which of the three", and both
+ * were invisible until somebody looked at a page.
+ */
+const psrc = fs.readFileSync('src/lib/preview.ts', 'utf8')
+const pfrom = psrc.indexOf('export function pictureFrom(')
+/*
+ * Reading one function out of a TypeScript file and running it in node.
+ *
+ * Node has never heard of a type, so the signature has to go and the body
+ * has to stay. Counting brackets rather than matching a pattern: the
+ * parameter list here is an object type full of braces and pipes, and every
+ * expression that tried to describe that shape was wrong in a way that only
+ * showed up as a syntax error from `new Function`.
+ */
+function bodyOf(source, name) {
+  const at = source.indexOf(`export function ${name}(`)
+  if (at < 0) throw new Error(`no ${name} in that file`)
+
+  // The closing bracket of the parameter list.
+  let i = source.indexOf('(', at)
+  let depth = 0
+  for (; i < source.length; i += 1) {
+    if (source[i] === '(') depth += 1
+    else if (source[i] === ')') { depth -= 1; if (depth === 0) break }
+  }
+  /*
+   * Then the brace that opens the body - past the return type, which is
+   * itself written in braces here. Taking the first brace after the
+   * parameters gave `{ direct; signed }` as the whole function, which ran
+   * and threw about an undefined name rather than failing to parse.
+   */
+  let after = i + 1
+  while (/\s/.test(source[after])) after += 1
+  if (source[after] === ':') {
+    const annotation = source.indexOf('{', after)
+    let inside = 0
+    for (let k = annotation; k < source.length; k += 1) {
+      if (source[k] === '{') inside += 1
+      else if (source[k] === '}') { inside -= 1; if (inside === 0) { after = k + 1; break } }
+    }
+  }
+  const open = source.indexOf('{', after)
+  let braces = 0
+  let j = open
+  for (; j < source.length; j += 1) {
+    if (source[j] === '{') braces += 1
+    else if (source[j] === '}') { braces -= 1; if (braces === 0) break }
+  }
+  return source.slice(open + 1, j).replace(/: string \| null/g, '')
+}
+
+const pictureFrom = new Function('item',
+  `const PREVIEW_EXTENSION = 'webp';\n${bodyOf(psrc, 'pictureFrom')}`)
+
+const picked = [
+  [{ kind: 'image', file_path: 'u/a.png', preview_path: 'p/a.webp' },
+   { direct: 'p/a.webp', signed: null },
+   'a Decal with a card that can hold transparency uses the card'],
+  [{ kind: 'image', file_path: 'u/a.png', preview_path: 'p/a.jpg' },
+   { direct: null, signed: 'u/a.png' },
+   'a Decal whose card was flattened to black uses its own file instead'],
+  [{ kind: 'image', file_path: 'u/a.png' },
+   { direct: null, signed: 'u/a.png' },
+   'a Decal with no card at all uses its own file'],
+  [{ kind: 'mesh', file_path: 'u/a.obj', preview_path: 'p/a.jpg' },
+   { direct: 'p/a.jpg', signed: null },
+   'a mesh keeps an old card, because a model is not something an img shows'],
+  [{ kind: 'mesh', file_path: 'u/a.obj', preview_path: 'p/a.webp' },
+   { direct: 'p/a.webp', signed: null },
+   'and uses a new one when it has one'],
+  [{ kind: 'audio', file_path: 'u/a.mp3' },
+   { direct: null, signed: null },
+   'a sound has nothing to show and nothing is invented'],
+  [{ kind: 'image', file_path: 'u/a.png', thumbnail_path: 't/old.jpg' },
+   { direct: null, signed: 't/old.jpg' },
+   'the oldest column still wins over the file, for anything that has one'],
+  [{ kind: 'image', file_path: 'u/a.png', preview_path: 'p/A.WEBP' },
+   { direct: 'p/A.WEBP', signed: null },
+   'and the extension is read whatever its case'],
+]
+
+for (const [item, want, why] of picked) {
+  const got = pictureFrom(item)
+  const ok = got.direct === want.direct && got.signed === want.signed
+  if (!ok) bad += 1
+  console.log(ok ? 'PASS' : 'FAIL', why.padEnd(66),
+    `direct=${got.direct} signed=${got.signed}`)
+}
+
+const total = cases.length + picked.length
+console.log(`${total - bad}/${total} checks passed`)
 process.exit(bad ? 1 : 0)

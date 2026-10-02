@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { assetUrl, previewUrl, isAssetRef, resolveAssetRef } from '@/lib/api'
+import { pictureFrom } from '@/lib/preview'
 
 /**
  * Uploads are not publicly addressable, so a preview needs a signed URL that
@@ -58,6 +59,23 @@ export function useAssetRef(value?: string | null) {
  *
  * Preferring the newest is what makes a freshly drawn card appear; keeping
  * the other two is what stops everything older from going blank.
+ *
+ * **With one exception, and it is the whole reason this comment is long.**
+ *
+ * Cards used to be written as JPEG, and JPEG cannot say "transparent", so a
+ * cut-out Decal had its transparency flattened to black when its card was
+ * drawn. Every sun, every logo, every cut-out on the site.
+ *
+ * A Decal is the one kind where the card is not the only picture: its *file
+ * is* the picture, transparency and all. So for a Decal, a card that cannot
+ * hold transparency is not used at all - the file is shown instead, and it
+ * is right immediately, for everybody, with nothing redrawn and nobody
+ * waiting for an owner to open a page.
+ *
+ * Only a Decal can do this. A mesh's file is a model and a video's is a
+ * film; neither is something an `<img>` can show, so for those the old card
+ * is still better than no card, and `ensureAssetPreview` replaces it the
+ * next time its owner opens it.
  */
 export function usePictureUrl(item: {
   preview_path?: string | null
@@ -65,9 +83,8 @@ export function usePictureUrl(item: {
   file_path?: string | null
   kind?: string | null
 }) {
-  const direct = previewUrl(item.preview_path)
-  const signed = useSignedUrl(
-    direct ? null : item.thumbnail_path ?? (item.kind === 'image' ? item.file_path : null),
-  )
-  return direct ?? signed
+  const { direct, signed } = pictureFrom(item)
+  const url = useSignedUrl(direct ? null : signed)
+  const made = previewUrl(direct)
+  return made ?? url
 }
