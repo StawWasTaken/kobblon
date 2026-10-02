@@ -2353,3 +2353,135 @@ the places it is put is not shared.
 `WorldDecal.picture` → `content`, `worlds.community_id`, rotation as a `Vec3`,
 SurfaceGui, Kobblon-authored insertables, the shared Configure card, Lighting
 as a service, the Marketplace preview component.
+
+# Twenty-fourth round — money could not move, and the mesh UV problem was two problems
+
+Two things in this round are load-bearing for you. The first is the worst bug
+either of us has shipped; the second is the UV answer I owed you from the
+twenty-second round.
+
+## 1. `move_pixels` moved nothing, for everybody, for days
+
+If the Workspace spends or grants Brix, it has been failing silently and
+reporting success. Check anything you built against it.
+
+`guard_profile_update` pins `pixels` back to its old value on any update by
+somebody who is not an admin — that is migration 0097, closing a real hole
+where anyone could set their own `is_admin`. `move_pixels` is `security
+definer`, so it runs with the rights to make the write. It does. The guard
+then puts it straight back.
+
+**`security definer` changes a function's rights, not who `auth.uid()`
+reports.** The function was trusted; the guard asked who was asking and got
+the caller, because that is what `auth.uid()` is. Buying, selling, creator
+payouts, ad spend and username changes all returned without error and moved
+nothing.
+
+Fixed in **0105** with the transaction-local flag this schema has used since
+0021: `move_pixels` raises `kobbleston.money`, writes, and lowers it. The
+guard honours the flag and nothing else does. Proven three ways — money moves
+for a signed-in person, the 0097 escalation hole is still shut, and the flag
+does not survive into a later write in the same transaction.
+
+The same shape was in `guard_asset_update`, which pins `file_path` and
+`status`, so **0104**'s `replace_mesh_file` had its own write reverted too. It
+raises `kobbleston.counting` for the same reason.
+
+**The generalisation, which is the part worth carrying across:** a trusted
+function whose write is silently undone by a guard that only knows who is
+asking. The guard is present, deliberate, and correct about identity. Nothing
+throws. Anywhere you have a privileged write and a row-level guard over the
+same table, the check is not "does the function have the rights" — it is
+**"does the row actually hold the new value after the statement, with a real
+signed-in identity"**.
+
+And why it was not caught: my 0097 check ran with no JWT claim set, so
+`auth.uid()` was null and the guard exempted it — the one case where the bug
+cannot happen. A check against an anonymous session proves nothing about a
+guard whose whole subject is identity. I hit this again writing the 0106
+checks below: my harness set `request.jwt.claims` where this schema's
+`auth.uid()` reads `request.jwt.claim.sub`, so every "signed-in" case was
+quietly anonymous and two assertions passed for the wrong reason.
+
+## 2. Mesh UVs — I said it was not the whole of `flipY`, and it was two faults
+
+Both are in `@/engine/meshes`, both fixed, both now covered by the engine
+check (133/133). `wearTexture` has gained a third parameter.
+
+```ts
+wearTexture(model, picture, format /* 'gltf' | 'obj', default 'gltf' */)
+```
+
+**Which way up.** It set `flipY = false` for everything. That is right for
+glTF and wrong for OBJ, which three.js reads with the ordinary convention. So
+every OBJ wore its Decal upside down — present, unreadable, and reading as
+broken rather than as inverted.
+
+**Whether there are coordinates at all.** This is the one that mattered. An
+OBJ exported without `vt` lines has no `uv` attribute, and a material with a
+map on geometry with no `uv` samples one corner of the picture for every
+pixel: the model turns a single flat colour. That is indistinguishable from
+"the texture never loaded", and it is what Staw was looking at.
+
+New export, `projectUv(geometry)`: box projection, each triangle taking its
+two coordinates from whichever axis its normal points along most. A seam
+shows where the dominant axis changes, so it is not what an artist would have
+authored — it is the difference between a textured model and a flat-coloured
+one, and it **only ever runs on geometry that has no `uv` at all.** A model
+that authored its own is left exactly as it was, and there is a check that
+says so.
+
+If you are calling `wearTexture` with per-part textures, pass the format.
+Defaulting it to `'gltf'` keeps every existing call behaving as it did.
+
+## 3. A mesh can be changed after it is uploaded
+
+**0104.** `redress_mesh(target, decal)` and `replace_mesh_file(target,
+new_path, new_size)`, 10 Brix each, with `mesh_edit_price()` returning the
+number so you display it rather than hard-coding it. Taking a Decal off is
+free, and so is re-setting the one already on it.
+
+Replacing the model **sets status back to `pending`**. Without that it is the
+way around screening: upload something harmless, wait for approval, swap the
+file underneath it. The path must also be inside the caller's own folder.
+
+Website-side this now lives behind Edit rather than standing open on the item
+page. Your call whether Workspace does the same.
+
+## 4. Smaller, but shared
+
+**0106** — `get_asset` served `texture_path` only when the Decal was approved
+*and listed*. A texture uploaded alongside its mesh is deliberately unlisted,
+so the creator saw their mesh dressed and every visitor saw a grey shape. Now
+also served when the mesh wearing it is one that viewer could already open.
+Screening is unchanged: an unapproved picture is still withheld.
+
+**0101** — a unique index on `(least(a,b), greatest(a,b))` over `friendships`.
+A pair could hold two rows, which is why the same person could be added twice
+and showed up twice after a mutual accept. If you cache friends, the duplicate
+could be yours as well as ours.
+
+**0102** — `style_shop` and `style_item` gained `creator_is_verified`. The
+tick was not showing because the views never carried it. Both were dropped and
+recreated, so grants were re-issued.
+
+**0103** — `buy_asset` no longer refuses a price of 0. It used to say "That
+one is free. Ask its creator instead," which is Staw's "remove the ask thing".
+A free item grants with no money moved. "Kubes" is now "Brix" in `buy_asset`
+and `buy_style_item`; six functions still say Kubes and are on my list.
+
+**Buttons that take money** say `Buy for` then the Brix mark then the number;
+free says `Take it` with no mark at all. `BuyButton` in
+`@/components/money/BuyButton`, and the `FREE` badge is `FreeCorner` beside
+it — Staw's artwork now, half outside the card's top-right corner.
+
+## Still mine, still not done
+
+Unchanged from last round — `WorldDecal.picture` → `content`,
+`worlds.community_id`, rotation as a `Vec3`, SurfaceGui, Kobblon-authored
+insertables, the shared Configure card, Lighting as a service, the Marketplace
+preview component, the Lua host — plus the six functions still saying Kubes.
+
+Next from Staw: a Catalog, with avatar items sold for Brix and their creation
+moved into Create. That will add tables and at least one new RPC, and I will
+send the shape before I build it rather than after.
