@@ -8,7 +8,21 @@
 export { Engine, type EngineOptions, type EngineEvents } from './engine'
 export { Controller, type Solid, type ControllerState } from './controller'
 export { Keyboard, stillIntent, type Intent } from './input'
-export { K6, K6_PARTS, loadK6Source, forgetK6Source, type K6Part, type K6Look, type K6Motion } from './k6'
+export {
+  K6, K6_PARTS, K6_POINTS, K6_FACE_SIZE, loadK6Source, forgetK6Source,
+  type K6Part, type K6Look, type K6Motion, type K6Point,
+} from './k6'
+export { blockify, headshot, PLACES } from './body'
+export {
+  BODY, COVERS, SIDES, PIXELS_PER_STON, templateFor, wrapToTemplate,
+  drawTemplate, type BodyPart, type Clothing, type Side, type Template,
+  type Region,
+} from './clothes'
+export {
+  meshFormats, formatOf, carriesMaterials, loadMesh, hasSomethingToDraw,
+  wearTexture, projectUv, frameMesh, lightForLooking, releaseMesh,
+  lookFrom, LOOK_YAW, LOOK_PITCH, type MeshFormat,
+} from './meshes'
 export {
   buildWorld, buildExperience, readManifest, writeManifest, applyDecals, applyMeshes,
   layDecal, FACES, CLASSES,

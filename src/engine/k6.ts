@@ -122,6 +122,7 @@ export class K6 {
   private sockets = new Map<K6Point, THREE.Object3D>()
   private worn = new Map<K6Point, THREE.Object3D>()
   private face: THREE.Mesh | null = null
+  private decal: THREE.Mesh | null = null
   /** Which parts have been given template coordinates, so it is done once. */
   private wrapped = new Set<string>()
   private clothes = new Map<Clothing, THREE.Texture>()
@@ -287,6 +288,53 @@ export class K6 {
     this.redress()
   }
 
+  /**
+   * A tdecal: any picture, stuck straight onto the front of the torso.
+   *
+   * Staw's one that anybody can make. Not clothing - it does not go through
+   * a template and does not wrap round the sides - so it is a plane in front
+   * of the chest rather than a texture on the body, which is also what lets
+   * it sit over a shirt instead of fighting it for the torso's one map.
+   *
+   * Sized off the torso so it covers the readable part of a chest and no
+   * more; the picture's own shape is kept, so a wide logo stays wide.
+   */
+  stick(picture: THREE.Texture | null, shape = 1) {
+    if (!picture) {
+      if (this.decal) {
+        this.decal.removeFromParent()
+        ;(this.decal.material as THREE.Material).dispose()
+        this.decal.geometry.dispose()
+        this.decal = null
+      }
+      return
+    }
+
+    picture.colorSpace = THREE.SRGBColorSpace
+    const wide = BODY.Torso.w * 0.78
+    const tall = wide / Math.max(0.2, shape)
+
+    if (this.decal) {
+      this.decal.geometry.dispose()
+      this.decal.geometry = new THREE.PlaneGeometry(wide, tall)
+    } else {
+      const socket = this.sockets.get('front')
+      if (!socket) return
+      this.decal = new THREE.Mesh(
+        new THREE.PlaneGeometry(wide, tall),
+        new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }),
+      )
+      this.decal.name = 'tdecal'
+      // A hair in front of the chest, like the face is in front of the head.
+      this.decal.position.z = 0.02
+      socket.add(this.decal)
+    }
+
+    const material = this.decal.material as THREE.MeshBasicMaterial
+    material.map = picture
+    material.needsUpdate = true
+  }
+
   /** What is being worn as clothing, by layer. */
   wearingClothes(): ReadonlyMap<Clothing, THREE.Texture> {
     return this.clothes
@@ -421,6 +469,7 @@ export class K6 {
   dispose() {
     this.mixer.stopAllAction()
     this.setFace(null)
+    this.stick(null)
     for (const point of [...this.worn.keys()]) this.takeOff(point)
     this.object.removeFromParent()
   }
