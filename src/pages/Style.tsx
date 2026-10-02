@@ -100,7 +100,7 @@ function ItemTile({
           <span className="block truncate text-sm font-bold">{item.name}</span>
           <span className="flex items-center gap-1 truncate text-xs text-muted">
             @{item.creator_username}
-            <Verified className="text-[9px]" />
+            {item.creator_is_verified && <Verified className="text-[9px]" />}
           </span>
         </span>
       </Link>

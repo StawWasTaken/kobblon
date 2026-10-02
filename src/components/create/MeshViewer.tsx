@@ -18,8 +18,7 @@ import * as THREE from 'three'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import {
-  carriesMaterials, formatOf, frameMesh, lightForLooking, loadMesh, releaseMesh,
-  wearTexture,
+  formatOf, frameMesh, lightForLooking, loadMesh, releaseMesh, wearTexture,
 } from '@/lib/mesh'
 import type { MeshFormat } from '@/lib/mesh'
 import { cn } from '@/lib/cn'
@@ -121,7 +120,21 @@ export function MeshViewer({ src, format, textureUrl, className }: {
         if (!wanted) { releaseMesh(loaded); return }
         model = loaded
 
-        if (textureUrl && !carriesMaterials(kind)) {
+        /*
+         * An attached Decal wins, whatever the format.
+         *
+         * This used to skip glTF, on the reasoning that a model which brings
+         * its own materials should keep them. That reasoning is right for a
+         * default nobody chose and wrong for this: `texture_id` is somebody
+         * deliberately saying "dress it in this". So a .glb with a Decal
+         * attached stayed grey and the attaching looked broken - which is
+         * what Staw was seeing, and it was inconsistent too, because the
+         * engine has always painted an attached Decal onto any mesh.
+         *
+         * Roblox does the same thing: TextureID on a MeshPart overrides.
+         * A model with no Decal attached still keeps everything it brought.
+         */
+        if (textureUrl) {
           const picture = await new THREE.TextureLoader().loadAsync(textureUrl)
           if (!wanted) { picture.dispose(); releaseMesh(loaded); model = null; return }
           wearTexture(loaded, picture)

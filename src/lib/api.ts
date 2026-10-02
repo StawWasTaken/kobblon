@@ -1612,6 +1612,8 @@ export type StyleItem = {
   creator_id?: string
   creator_name?: string
   creator_username?: string
+  /** Whether Kobblon vouches for them. Absent means no, not unknown. */
+  creator_is_verified?: boolean
   owned?: boolean
   worn?: boolean
   owners?: number

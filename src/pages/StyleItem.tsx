@@ -200,7 +200,7 @@ export default function StyleItemPage() {
                 size="xs"
               />
               <span className="font-bold text-white">{thing.creator_name}</span>
-              <Verified className="text-[11px]" />
+              {thing.creator_is_verified && <Verified className="text-[11px]" />}
             </Link>
           </div>
 

@@ -54,9 +54,13 @@ export const formatOf = (nameOrUrl: string): MeshFormat =>
  * Whether a model brings its own materials.
  *
  * An OBJ carries geometry and nothing else: no materials, no texture, no
- * units. Worth knowing rather than guessing, because a model that arrives
- * with its own materials must not have them overwritten by the Decal it
- * wears, and one that arrives bare has nothing to overwrite.
+ * units. A glTF can carry all three.
+ *
+ * Worth knowing, and **not** the test for whether to apply a Decal. A Decal
+ * somebody attached is an instruction and wins over whatever the file
+ * brought; this only says what is there to begin with, which decides what a
+ * model with *no* Decal looks like. Getting those two confused is what made
+ * a .glb with a Decal attached render grey.
  */
 export const carriesMaterials = (format: MeshFormat) => format !== 'obj'
 
