@@ -39,7 +39,7 @@ const FURTHEST = 2.4
 type State = 'loading' | 'shown' | 'failed'
 
 export function MeshViewer({
-  src, format, textureUrl, className, bare, onTurn,
+  src, format, textureUrl, className, bare, onTurn, onSnapshot,
 }: {
   /** The mesh file. A signed address is fine; it is only read once. */
   src: string | null
@@ -68,6 +68,15 @@ export function MeshViewer({
    * of their model is the front.
    */
   onTurn?: (angle: { yaw: number; pitch: number }) => void
+  /**
+   * Hands up a way to take a picture of what is on screen right now.
+   *
+   * Called once the model is drawn, and with null when it goes away, so a
+   * caller never holds a snapshot function for a renderer that has been
+   * disposed - the trap this project keeps falling into, which here would be
+   * reading a WebGL context that no longer exists.
+   */
+  onSnapshot?: (take: null | (() => Promise<Blob | null>)) => void
 }) {
   const holder = useRef<HTMLDivElement>(null)
   const [state, setState] = useState<State>('loading')
@@ -81,6 +90,8 @@ export function MeshViewer({
    */
   const told = useRef(onTurn)
   told.current = onTurn
+  const handed = useRef(onSnapshot)
+  handed.current = onSnapshot
 
   useEffect(() => {
     const mount = holder.current
@@ -98,6 +109,7 @@ export function MeshViewer({
      */
     let wanted = true
     let frame = 0
+    const letGo = () => handed.current?.(null)
     let renderer: THREE.WebGLRenderer | null = null
     let model: THREE.Object3D | null = null
 
@@ -120,6 +132,14 @@ export function MeshViewer({
      */
     let lastTouched = -Infinity
     let last = { x: 0, y: 0 }
+    /*
+     * How far the pointer has travelled since it went down. A press that
+     * never really moved is a press, and a hand is not steady enough for
+     * "moved at all" to mean anything - a card would swallow the click that
+     * was meant to open it.
+     */
+    let travelled = 0
+    const A_TURN = 5
 
     const place = (middle: THREE.Vector3, away: number) => {
       camera.position.copy(
@@ -130,6 +150,7 @@ export function MeshViewer({
 
     const grab = (e: PointerEvent) => {
       held = true
+      travelled = 0
       lastTouched = performance.now()
       last = { x: e.clientX, y: e.clientY }
       mount.setPointerCapture(e.pointerId)
@@ -137,6 +158,7 @@ export function MeshViewer({
     const drag = (e: PointerEvent) => {
       if (!held) return
       lastTouched = performance.now()
+      travelled += Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y)
       turn.yaw -= (e.clientX - last.x) * 0.01
       // Stopped short of straight up and straight down: at the poles the
       // model spins around a point instead of turning, which reads as broken.
@@ -212,6 +234,25 @@ export function MeshViewer({
 
         setState('shown')
 
+        /*
+         * A picture of the view as it stands.
+         *
+         * Drawn and read in the same synchronous block, which is what makes
+         * it work without `preserveDrawingBuffer`: that flag would keep a
+         * second copy of every frame for the whole life of every viewer on
+         * the page, to serve a button almost nobody presses. The buffer is
+         * still there until the browser composites, and compositing cannot
+         * happen in the middle of this function.
+         *
+         * PNG rather than WebP: this one goes on the clipboard, and PNG is
+         * what every program that takes a pasted picture understands.
+         */
+        handed.current?.(() => new Promise<Blob | null>((done) => {
+          if (!renderer) { done(null); return }
+          renderer.render(scene, camera)
+          renderer.domElement.toBlob(done, 'image/png')
+        }))
+
         let then = performance.now()
         const tick = (now: number) => {
           frame = requestAnimationFrame(tick)
@@ -228,7 +269,9 @@ export function MeshViewer({
            * turntable would otherwise overwrite it a moment later with
            * wherever it happened to have spun to.
            */
-          if (held) told.current?.({ yaw: turn.yaw, pitch: turn.pitch })
+          if (held && travelled > A_TURN) {
+            told.current?.({ yaw: turn.yaw, pitch: turn.pitch })
+          }
         }
         frame = requestAnimationFrame(tick)
 
@@ -240,6 +283,9 @@ export function MeshViewer({
 
     return () => {
       wanted = false
+      // Before the renderer goes: a snapshot function outliving its context
+      // is a call into WebGL that no longer exists.
+      letGo()
       cancelAnimationFrame(frame)
       mount.removeEventListener('pointerdown', grab)
       mount.removeEventListener('pointermove', drag)

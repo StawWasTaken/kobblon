@@ -18,7 +18,7 @@ import { useHub } from '@/pages/CreateHub'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
-import { listCommunityUploads, listOwnAssets } from '@/lib/api'
+import { listCommunityUploads, listOwnAssets, ensureAssetPreview } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { AssetKind, ModerationStatus } from '@/types/db'
@@ -68,6 +68,42 @@ export default function CreateUploads() {
     window.addEventListener('kobblon:uploaded', reload)
     return () => window.removeEventListener('kobblon:uploaded', reload)
   }, [mine])
+
+  /*
+   * Cards drawn before previews could hold transparency, redrawn here.
+   *
+   * Decals only, and that is on purpose: a Decal is a resize, where a mesh is
+   * a WebGL context, a download and a parse. Doing twenty of those because
+   * somebody opened a list would make the page crawl, and a mesh gets the
+   * same treatment on its own page where exactly one is being drawn.
+   *
+   * One at a time rather than all at once, for the same reason the browser
+   * has a limit on anything: a dozen uploads and a dozen draws in parallel
+   * is a page that stops answering. Stops the moment the list changes, so
+   * leaving the page does not leave work running against it.
+   */
+  useEffect(() => {
+    if (target || !profile || !mine.data) return
+    const old = mine.data.filter(
+      (one) => one.kind === 'image' && one.is_public && one.preview_path
+        && !one.preview_path.toLowerCase().endsWith('.webp'),
+    )
+    if (old.length === 0) return
+
+    let live = true
+    void (async () => {
+      let drew = 0
+      for (const one of old) {
+        if (!live) return
+        const done = await ensureAssetPreview(
+          { id: one.id, kind: one.kind, file_path: one.file_path }, profile.id,
+        ).catch(() => null)
+        if (done) drew += 1
+      }
+      if (live && drew > 0) mine.reload()
+    })()
+    return () => { live = false }
+  }, [mine.data, profile?.id, target?.id])
 
   const all = mine.data ?? []
 

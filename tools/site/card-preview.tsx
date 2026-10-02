@@ -88,6 +88,26 @@ createRoot(document.getElementById('root')!).render(
           />
         </div>
       </div>
+
+      <h2 className="font-display text-sm uppercase tracking-wider text-muted">
+        A turn is not a press, and a press is still a press
+      </h2>
+      <a
+        href="#counted"
+        id="probe"
+        draggable={false}
+        onClick={(e) => {
+          e.preventDefault()
+          const at = document.getElementById('count')!
+          at.textContent = String(Number(at.textContent) + 1)
+        }}
+        className="block w-[240px]"
+      >
+        <MeshView start="3d" previewUrl={picture} fileUrl={objUrl} filePath="a.obj" />
+      </a>
+      <p className="text-sm">
+        clicks that got through: <span id="count">0</span>
+      </p>
     </div>
   </MemoryRouter>,
 )

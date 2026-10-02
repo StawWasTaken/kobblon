@@ -229,6 +229,8 @@ export type OwnAsset = {
   name: string
   description: string | null
   file_path: string
+  /** The card, so a list can tell which ones need drawing again. */
+  preview_path?: string | null
   status: ModerationStatus
   review_note: string | null
   content_id: number | null

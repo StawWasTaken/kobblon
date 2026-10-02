@@ -31,9 +31,27 @@ const escape = (value: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 
-/** A picture has to be somewhere a robot can reach, over https. */
-const pictureOf = (image: string | null) =>
-  image && /^https:\/\//.test(image) ? image : FALLBACK_IMAGE
+/**
+ * A picture has to be somewhere a robot can reach, over https.
+ *
+ * Two kinds come back. An avatar, an emblem or an event cover is stored as a
+ * full address already and is used as it is. A Marketplace card is stored as
+ * a **path inside the `previews` bucket** - the database has no business
+ * knowing this project's host, so it returns the path and the address is
+ * built here, where the host is.
+ *
+ * Anything else, and anything missing, falls back to Kobblon's own card. A
+ * robot handed a broken address shows a link with a grey box on it, which is
+ * worse than a link with the right logo on it.
+ */
+const pictureOf = (image: string | null) => {
+  if (!image) return FALLBACK_IMAGE
+  if (/^https:\/\//.test(image)) return image
+  const { data } = supabase.storage.from('previews').getPublicUrl(image)
+  return data?.publicUrl && /^https:\/\//.test(data.publicUrl)
+    ? data.publicUrl
+    : FALLBACK_IMAGE
+}
 
 const card = (
   { url, title, description, image, square }:
@@ -85,10 +103,15 @@ Deno.serve(async (request) => {
       title = `${found.title} - Kobblon`
       description = found.description ?? description
       image = pictureOf(found.image ?? null)
-      // An emblem and a picture of somebody are square, so a wide card would
-      // crop them to a stripe.
+      /*
+       * An emblem and a picture of somebody are square, so a wide card would
+       * crop them to a stripe. A mesh card is square too, and transparent -
+       * `link_preview` says which rows want the small card through `wide`,
+       * and this is the only place that knows what to do with the answer.
+       */
       square = image !== FALLBACK_IMAGE
-        && (found.kind === 'community' || found.kind === 'person')
+        && (found.kind === 'community' || found.kind === 'person'
+            || found.wide === false)
     }
   } catch {
     // A preview is never worth failing a page load over: the site's own card

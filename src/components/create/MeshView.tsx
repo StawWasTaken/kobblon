@@ -15,15 +15,42 @@
  *
  * Mountable with no provider and no router: the Workspace shows meshes too.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCube, faImage } from '@fortawesome/free-solid-svg-icons'
+import { faCube, faImage, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { MeshViewer } from '@/components/create/MeshViewer'
 import { formatOf, type MeshFormat } from '@/engine/meshes'
 import { kindIcons } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 
 export type MeshViewMode = '2d' | '3d'
+
+/**
+ * The same picture as a PNG.
+ *
+ * Only for the clipboard. A card is WebP because WebP can hold
+ * transparency at a sensible size; a clipboard handed WebP is a paste that
+ * fails in about half the places somebody would paste it, with no error
+ * anywhere - it simply does not arrive.
+ */
+async function asPng(blob: Blob): Promise<Blob> {
+  const picture = new Image()
+  picture.src = URL.createObjectURL(blob)
+  try {
+    await picture.decode()
+    const sheet = document.createElement('canvas')
+    sheet.width = picture.naturalWidth
+    sheet.height = picture.naturalHeight
+    const brush = sheet.getContext('2d')
+    if (!brush) return blob
+    brush.drawImage(picture, 0, 0)
+    return await new Promise<Blob>((done) => {
+      sheet.toBlob((made) => done(made ?? blob), 'image/png')
+    })
+  } finally {
+    URL.revokeObjectURL(picture.src)
+  }
+}
 
 export function MeshView({
   previewUrl, fileUrl, filePath, textureUrl, start = '2d', labelled, bare,
@@ -64,6 +91,85 @@ export function MeshView({
 }) {
   const [mode, setMode] = useState<MeshViewMode>(start)
 
+  /*
+   * A turn that ends is not a press.
+   *
+   * The card is a link, and a pointer going down and up on it is a click
+   * however far it travelled in between - so letting go after turning a
+   * model opened its page, which is the opposite of what the hand was
+   * doing. The viewer says when a turn actually happened, and the next
+   * click is swallowed.
+   *
+   * A ref and a single click rather than a flag with a timer: the click
+   * that follows a drag is the very next one, so there is nothing to time
+   * out, and nothing left set if that click never comes.
+   */
+  const turnedJustNow = useRef(false)
+
+  /*
+   * A menu of our own, with one thing on it.
+   *
+   * Staw: you should be able to copy the render, and only copy it. So this
+   * replaces the browser's menu rather than adding to it - the browser's
+   * offers Save image as, Open image in new tab and Copy image address, and
+   * on a signed address those are a private file's URL handed out with an
+   * expiry on it. One item, and it is the one he asked for.
+   *
+   * A picture is not a licence: copying the render of a mesh is the same as
+   * screenshotting the page, which nobody can prevent and this does not
+   * pretend to. The file itself still goes through the permission check.
+   */
+  const take = useRef<null | (() => Promise<Blob | null>)>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const [said, setSaid] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!menu) return
+    const shut = () => setMenu(null)
+    // Any press anywhere, any scroll, and Escape. A menu that outlives what
+    // opened it is the thing people report as "stuck".
+    window.addEventListener('pointerdown', shut)
+    window.addEventListener('scroll', shut, true)
+    window.addEventListener('blur', shut)
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') shut() }
+    window.addEventListener('keydown', key)
+    return () => {
+      window.removeEventListener('pointerdown', shut)
+      window.removeEventListener('scroll', shut, true)
+      window.removeEventListener('blur', shut)
+      window.removeEventListener('keydown', key)
+    }
+  }, [menu])
+
+  const copy = async () => {
+    setMenu(null)
+    try {
+      const picture = showing === '3d' && take.current
+        ? await take.current()
+        : previewUrl
+          ? await fetch(previewUrl).then((r) => r.blob())
+          : null
+      if (!picture) { setSaid('Nothing to copy yet.'); return }
+
+      /*
+       * PNG on the way out whatever it was on the way in: a card is WebP,
+       * and a clipboard that is handed WebP is a paste that fails in half
+       * the places somebody would paste it.
+       */
+      const png = picture.type === 'image/png' ? picture : await asPng(picture)
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })])
+      setSaid('Copied.')
+    } catch {
+      setSaid('Your browser would not let that be copied.')
+    }
+  }
+
+  useEffect(() => {
+    if (!said) return
+    const go = window.setTimeout(() => setSaid(null), 2200)
+    return () => window.clearTimeout(go)
+  }, [said])
+
   // Opening in 3D is still asking for 3D.
   useEffect(() => { if (mode === '3d') onWant3d?.() }, [mode])
 
@@ -90,6 +196,20 @@ export function MeshView({
       )}
       draggable={false}
       onDragStart={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        // Only where there is actually a render to copy.
+        if (showing === '3d' ? !take.current : !previewUrl) return
+        e.preventDefault()
+        e.stopPropagation()
+        const box = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        setMenu({ x: e.clientX - box.left, y: e.clientY - box.top })
+      }}
+      onClickCapture={(e) => {
+        if (!turnedJustNow.current) return
+        turnedJustNow.current = false
+        e.preventDefault()
+        e.stopPropagation()
+      }}
     >
       {showing === '3d' ? (
         fileUrl ? (
@@ -99,7 +219,8 @@ export function MeshView({
             src={fileUrl}
             format={format}
             textureUrl={textureUrl}
-            onTurn={onTurn}
+            onTurn={(angle) => { turnedJustNow.current = true; onTurn?.(angle) }}
+            onSnapshot={(fn) => { take.current = fn }}
           />
         ) : (
           /* Asked for, not arrived: the frame keeps its size and says so. */
@@ -172,6 +293,31 @@ export function MeshView({
           <FontAwesomeIcon icon={showing === '3d' ? faImage : faCube} />
           {labelled && <span>{showing === '3d' ? 'Picture' : '3D'}</span>}
         </button>
+      )}
+
+      {menu && (
+        <div
+          role="menu"
+          style={{ left: menu.x, top: menu.y }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute z-20 min-w-[11rem] overflow-hidden rounded-xl border border-ink-line bg-ink-raised py-1 shadow-pop"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); void copy() }}
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-ink-hover"
+          >
+            <FontAwesomeIcon icon={faCopy} className="text-white/40" />
+            Copy the render
+          </button>
+        </div>
+      )}
+
+      {said && (
+        <span className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-ink-sunken/90 px-3 py-1 text-[11px] font-bold text-white/80">
+          {said}
+        </span>
       )}
     </div>
   )

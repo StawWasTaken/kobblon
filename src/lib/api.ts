@@ -783,7 +783,7 @@ export async function getCreatorPage(username: string): Promise<CreatorPage | nu
 
 export async function listOwnAssets(userId: string): Promise<OwnAsset[]> {
   return (unwrap(await supabase.from('assets')
-    .select('id, kind, name, description, file_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
+    .select('id, kind, name, description, file_path, preview_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
     .eq('creator_id', userId)
     .order('created_at', { ascending: false })) as unknown as OwnAsset[]) ?? []
 }
@@ -834,9 +834,29 @@ export async function updateAsset(id: string, patch: {
 }
 
 /**
- * Makes sure a piece of content has a card picture, drawing one from the file
- * if it has none. Used for work uploaded before previews existed, and for
- * anything put back into Create.
+ * Makes sure a piece of content has a card picture, and that the one it has
+ * can say what it needs to say.
+ *
+ * Two reasons to draw one. The obvious: there is none, for work uploaded
+ * before previews existed and for anything put back into Create.
+ *
+ * The second one is mine to own. Cards used to be written as JPEG, and JPEG
+ * has no alpha - so every transparent Decal had its transparency flattened
+ * to black when its card was drawn, and every mesh was photographed on a
+ * painted square. That was invisible for as long as nothing read these
+ * pictures. The moment the readers started returning them, every one of
+ * those old cards appeared, black box and all, and a Decal that had always
+ * looked right by falling back to its own file suddenly did not.
+ *
+ * Changing the format fixed nothing already drawn. So the extension is the
+ * test: a stored card that is not `.webp` was made by the code that could
+ * not keep transparency, and is drawn again. That is a fact about the file,
+ * not a guess about its age - there is no timestamp on a preview and none is
+ * needed.
+ *
+ * Only its owner can do this, because only its owner is given the file. So
+ * it happens the next time they open their own page, and the old picture is
+ * taken down only once the new one is saved.
  */
 export async function ensureAssetPreview(asset: {
   id: string
@@ -847,7 +867,10 @@ export async function ensureAssetPreview(asset: {
   texture_path?: string | null
 }, me: string): Promise<string | null> {
   if (!canPreview(asset.kind)) return null
-  if (await assetPreviewPath(asset.id)) return null
+
+  const had = await assetPreviewPath(asset.id)
+  const stale = !!had && !had.toLowerCase().endsWith(`.${PREVIEW_EXTENSION}`)
+  if (had && !stale) return null
 
   const url = await assetUrl(asset.file_path, 300)
   if (!url) return null
@@ -861,7 +884,13 @@ export async function ensureAssetPreview(asset: {
     ? await assetUrl(asset.texture_path, 300).catch(() => null)
     : null
 
-  return makeAssetPreview({ assetId: asset.id, userId: me, kind: asset.kind, url, skin })
+  const drawn = await makeAssetPreview({
+    assetId: asset.id, userId: me, kind: asset.kind, url, skin,
+  })
+  // Only once the new one is saved: a failure here leaves the card it had
+  // rather than leaving it with none at all.
+  if (drawn && had && had !== drawn) await removeAssetPreview(had)
+  return drawn
 }
 
 // ------------------------------------------------------- Space collaborators
@@ -976,7 +1005,7 @@ export async function uploadAsset(input: {
       community_id: input.communityId ?? null,
       is_public: input.listed === true,
       texture_id: wearing,
-    }).select('id, kind, name, description, file_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
+    }).select('id, kind, name, description, file_path, preview_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
       .single()) as unknown as OwnAsset
 
     // The card picture, drawn from the file that is still in hand, and

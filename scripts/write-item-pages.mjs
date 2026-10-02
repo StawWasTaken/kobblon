@@ -295,7 +295,17 @@ export async function writeItemPages(into = 'dist') {
       // kept only while the content is listed. The file behind it stays
       // private, and a sound or a font falls back to whoever made it.
       image: shot ?? picture(asset.creator?.avatar_url),
-      square: !shot && !!picture(asset.creator?.avatar_url),
+      /*
+       * Small card for a mesh, wide for everything else.
+       *
+       * A mesh render is square and transparent; in a wide card it is
+       * letterboxed with bars down both sides and the model ends up a
+       * thumbnail in the middle of nothing. A decal or a video frame keeps
+       * whatever shape it was drawn in and is better off wide. Same rule as
+       * `link_preview` applies for the addresses the database serves, so the
+       * two kinds of page do not disagree about one item.
+       */
+      square: shot ? asset.kind === 'mesh' : !!picture(asset.creator?.avatar_url),
       imageAlt: shot
         ? asset.name
         : asset.creator?.display_name
