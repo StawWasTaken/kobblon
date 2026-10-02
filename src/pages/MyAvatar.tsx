@@ -1,89 +1,158 @@
 /*
- * Your avatar, in a room of its own.
+ * Your avatar, in three dimensions, which is the only kind there is now.
  *
- * It lived in the corner of the shop before: a picture the size of a stamp
- * beside a grid of things to buy. Which is the wrong way round - the avatar
- * is the thing, and the shop is where you go to change it. Staw asked for a
- * page for it and this is that page.
+ * It was a flat picture with things pasted onto it, and Staw asked for that
+ * gone completely. The avatar is a body: it has a colour per part, it wears
+ * clothes drawn into a template, and it hangs things off its head and back.
+ * So the page is the body at full size and the drawers you open to change
+ * it, rather than a stamp beside a grid.
  *
- * Nothing here is new machinery. The face, the wardrobe and what is worn are
- * the same calls the shop makes, and `FaceStage` is the same compositor that
- * draws a person on a card, a profile and a comment. So what you see on this
- * page is exactly what everybody else sees, rather than a preview of it.
+ * What is drawn here is `AvatarStage`, the same component a profile and a
+ * profile picture use. Not a preview of what everybody else will see - the
+ * thing everybody else sees.
  */
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faStore, faXmark, faFaceSmile, faCheck, faWandMagicSparkles,
+  faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette,
+  faCircleNotch, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Tabs } from '@/components/ui/Tabs'
-import { Badge } from '@/components/ui/Badge'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
-import { FaceStage } from '@/components/style/FaceStage'
+import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  faceUrl, myFaces, myStyle, styleImage, wearFace, wearStyleItem,
+  avatarOf, myAvatarItems, wearAvatarItem, takeOffSlot, setBodyColours,
+  catalogUrl, assetUrl,
 } from '@/lib/api'
-import type { StyleItem } from '@/lib/api'
-import type { Face, WornStyle } from '@/types/db'
+import { K6_PARTS } from '@/engine'
+import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
+import type { K6Part } from '@/engine'
 import { cn } from '@/lib/cn'
 
-/** The slots, in the order somebody thinks about them. */
-const slots: { value: StyleItem['slot']; label: string }[] = [
-  { value: 'hat', label: 'Hats' },
-  { value: 'hair', label: 'Hair' },
-  { value: 'face', label: 'Face' },
-  { value: 'accessory', label: 'Accessories' },
-  { value: 'frame', label: 'Frames' },
+/** The drawers, in the order somebody opens them. */
+const DRAWERS = [
+  { id: 'body', label: 'Body', icon: faPalette },
+  { id: 'clothing', label: 'Clothing', icon: faShirt },
+  { id: 'accessories', label: 'Accessories', icon: faHatCowboy },
+  { id: 'face', label: 'Face', icon: faFaceSmile },
+] as const
+
+type Drawer = (typeof DRAWERS)[number]['id']
+
+/** Which drawer each kind of thing lives in. */
+const DRAWER_OF: Record<string, Drawer> = {
+  shirt: 'clothing', trousers: 'clothing', tdecal: 'clothing',
+  accessory: 'accessories', hair: 'accessories', face: 'face',
+}
+
+/**
+ * The colours a body starts with, and a shelf of ones to choose from.
+ *
+ * A short list rather than a colour wheel: every avatar on Kobblon being
+ * one of thirty colours is a look, and every avatar being any of sixteen
+ * million is a muddle. Staw can lengthen it; nobody has to maintain a
+ * picker.
+ */
+const SKIN = ['#f2d08a', '#e8b878', '#d99a62', '#b9743f', '#8a5230', '#5e3620']
+const CLOTH = [
+  '#f4f6ff', '#c9cedb', '#8d95a6', '#4a5166', '#2a2f45', '#14161f',
+  '#1b34e8', '#3a50ff', '#1cae71', '#25d68c', '#ff0033', '#ff8a1b',
+  '#9b1be8', '#e8c91b', '#8a5230', '#0d1349',
 ]
 
-/** A style row turned into what `FaceStage` draws. */
-const asWorn = (item: StyleItem): WornStyle => ({
-  id: item.id,
-  name: item.name,
-  url: styleImage(item.image_path),
-  x: item.x,
-  y: item.y,
-  width: item.width,
-  rotation: item.rotation,
-  flipped: item.flipped,
-  layer: item.layer,
-})
+const DEFAULT_BODY: Record<string, string> = {
+  Head: '#f2d08a', Torso: '#1b34e8', LeftArm: '#f2d08a',
+  RightArm: '#f2d08a', LeftLeg: '#2a2f45', RightLeg: '#2a2f45',
+}
+
+const PART_LABELS: Record<K6Part, string> = {
+  Head: 'Head', Torso: 'Torso', LeftArm: 'Left arm',
+  RightArm: 'Right arm', LeftLeg: 'Left leg', RightLeg: 'Right leg',
+}
 
 export default function MyAvatar() {
-  const { profile, refreshProfile } = useAuth()
-  const say = useToast()
   useTitle('My Avatar')
+  const { profile } = useAuth()
+  const say = useToast()
 
-  const [tab, setTab] = useState<'wardrobe' | 'faces'>('wardrobe')
-  const [slot, setSlot] = useState<StyleItem['slot'] | null>(null)
+  const [drawer, setDrawer] = useState<Drawer>('clothing')
+  const [part, setPart] = useState<K6Part>('Torso')
   const [busy, setBusy] = useState<string | null>(null)
 
-  const wardrobe = useAsync(myStyle, [])
-  const faces = useAsync(myFaces, [])
+  const worn = useAsync(
+    async () => (profile ? avatarOf(profile.id) : []),
+    [profile?.id],
+  )
+  const owned = useAsync(
+    async () => (profile ? myAvatarItems() : []),
+    [profile?.id],
+  )
 
   /*
-   * What is worn is read from the wardrobe rather than kept beside it. A
-   * second copy would be a second thing to put right after every change,
-   * and the two would disagree the first time one of them failed.
+   * What the stage is handed, built from what the server says rather than
+   * from what this page thinks it just did. Every change reloads, so the
+   * body on screen is the body in the database - which is the difference
+   * between a page that shows your avatar and a page that shows its own
+   * idea of it.
    */
-  const owned = wardrobe.data ?? []
-  const wearing = owned.filter((one) => one.worn).map(asWorn)
-  const showing = slot ? owned.filter((one) => one.slot === slot) : owned
+  const look = useMemo<AvatarLook>(() => {
+    const pieces = (worn.data ?? [])
+      .filter((p): p is AvatarPiece & { slot: string } => !!p.slot)
+      .map((p) => ({
+        slot: p.slot,
+        kind: p.kind ?? '',
+        name: p.item_name,
+        imageUrl: catalogUrl(p.image_path),
+        meshUrl: null as string | null,
+        meshFormat: p.mesh_format,
+        textureUrl: null as string | null,
+      }))
+    return { body: worn.data?.[0]?.body ?? DEFAULT_BODY, pieces }
+  }, [worn.data])
 
-  const face = profile?.avatar_url ?? null
+  /*
+   * Models need signing for, which is a request each, so it happens after
+   * the body is already on screen rather than holding it back. A person with
+   * no accessories - most people - never waits for this at all.
+   */
+  const [models, setModels] = useState<Record<string, { mesh: string; skin: string | null }>>({})
+  useMemo(() => {
+    let live = true
+    void (async () => {
+      const wanted = (worn.data ?? []).filter((p) => p.mesh_path)
+      for (const piece of wanted) {
+        if (!live || !piece.slot || models[piece.slot]) continue
+        const [mesh, skin] = await Promise.all([
+          assetUrl(piece.mesh_path!).catch(() => null),
+          piece.texture_path ? assetUrl(piece.texture_path).catch(() => null) : null,
+        ])
+        if (live && mesh) setModels((had) => ({ ...had, [piece.slot!]: { mesh, skin } }))
+      }
+    })()
+    return () => { live = false }
+  }, [worn.data])
 
-  const change = async (what: string, run: () => Promise<void>) => {
+  const dressed = useMemo<AvatarLook>(() => ({
+    body: look.body,
+    pieces: look.pieces.map((piece) => {
+      const model = models[piece.slot]
+      return model ? { ...piece, meshUrl: model.mesh, textureUrl: model.skin } : piece
+    }),
+  }), [look, models])
+
+  const after = async (what: string, doIt: () => Promise<void>) => {
     setBusy(what)
     try {
-      await run()
-      await Promise.all([wardrobe.reload(), refreshProfile()])
+      await doIt()
+      worn.reload()
+      owned.reload()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
     } finally {
@@ -91,208 +160,152 @@ export default function MyAvatar() {
     }
   }
 
-  /*
-   * A guest has no wardrobe to show - nothing they take is kept past the
-   * browser they took it in. So this says that, rather than showing an empty
-   * page that reads as a fault.
-   */
-  if (profile?.is_guest) {
-    return (
-      <Page>
-        <EmptyState
-          title="An avatar needs an account"
-          body="A guest can look around, but there is nowhere to keep a face and a hat. Make an account and everything you pick stays yours."
-          action={<Button to="/signup" variant="yes">Make an account</Button>}
-        />
-      </Page>
-    )
+  const paint = (which: K6Part, colour: string) => {
+    const next = { ...(look.body ?? DEFAULT_BODY), [which]: colour }
+    void after(`paint:${which}`, () => setBodyColours(next))
   }
 
+  const onNow = useMemo(() => {
+    const by = new Map<string, string>()
+    for (const piece of worn.data ?? []) if (piece.slot && piece.item_id) by.set(piece.slot, piece.item_id)
+    return by
+  }, [worn.data])
+
+  const shelf = (owned.data ?? []).filter((item) => DRAWER_OF[item.kind] === drawer)
+
+  if (!profile) return null
+
   return (
-    <Page className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        {/* ------------------------------------------------------- you */}
-        <div className="space-y-4">
-          <Card className="space-y-4 p-6">
-            <div className="mx-auto w-full max-w-[18rem]">
-              <FaceStage
-                src={face}
-                name={profile?.display_name ?? 'You'}
-                items={wearing}
-                className="w-full"
-              />
-            </div>
+    <Page className="space-y-5">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl">My Avatar</h1>
+          <p className="text-sm text-muted">
+            Your body, what it wears, and the face on it.
+          </p>
+        </div>
+        <Button to="/catalog" icon={faStore}>The Catalog</Button>
+      </header>
 
-            <div className="text-center">
-              <p className="font-display text-lg">{profile?.display_name}</p>
-              <p className="text-sm text-muted">@{profile?.username}</p>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        {/* --------------------------------------------------- the person */}
+        <div className="space-y-3">
+          <Card className="overflow-hidden p-0">
+            <div className="bg-gradient-to-b from-[#1a1f3a] to-[#0f1120]">
+              {worn.loading
+                ? <Skeleton className="aspect-square w-full" />
+                : <AvatarStage look={dressed} />}
             </div>
-
-            <p className="text-center text-xs text-muted">
-              This is exactly how you appear to everybody else — on a card, on
-              a profile, beside anything you say.
-            </p>
           </Card>
 
-          {/* Taking things off, from the picture rather than from a list
-              somewhere else. */}
-          <Card className="space-y-3 p-4">
-            <h2 className="flex items-center gap-2 font-display text-sm uppercase tracking-wider">
-              <FontAwesomeIcon icon={faShirt} className="text-white/40" />
+          <Card className="space-y-2">
+            <p className="font-display text-xs uppercase tracking-wider text-muted">
               Wearing
-              <Badge>{wearing.length}</Badge>
-            </h2>
-
-            {wearing.length === 0 ? (
-              <p className="text-sm text-muted">
-                Nothing on yet. Put something on from your wardrobe, or go
-                and find something.
-              </p>
+            </p>
+            {onNow.size === 0 ? (
+              <p className="text-sm text-muted">Nothing yet.</p>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {owned.filter((one) => one.worn).map((item) => (
-                  <button
-                    key={item.id}
-                    disabled={busy === item.id}
-                    onClick={() => change(item.id, () => wearStyleItem(item.id, false))}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-ink-line bg-ink-raised px-2 py-1 text-xs font-bold text-white/75 transition-colors hover:border-danger/50 hover:text-white disabled:opacity-50"
-                  >
-                    {item.name}
-                    <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
-                  </button>
+              <ul className="space-y-1.5">
+                {(worn.data ?? []).filter((p) => p.slot).map((piece) => (
+                  <li key={piece.slot} className="flex items-center gap-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate">{piece.item_name}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      loading={busy === `off:${piece.slot}`}
+                      onClick={() => void after(
+                        `off:${piece.slot}`,
+                        () => takeOffSlot(piece.slot as AvatarSlot),
+                      )}
+                    >
+                      <FontAwesomeIcon icon={faXmark} />
+                    </Button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
-
-            <Button to="/style" variant="subtle" size="sm" className="w-full">
-              <FontAwesomeIcon icon={faStore} />
-              Find more in the Catalog
-            </Button>
           </Card>
         </div>
 
-        {/* -------------------------------------------- what you can put on */}
+        {/* --------------------------------------------------- the drawers */}
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="flex items-center gap-2 font-display text-2xl">
-                <FontAwesomeIcon icon={faWandMagicSparkles} className="text-brand-bright" />
-                My Avatar
-              </h1>
-              <p className="text-sm text-muted">
-                Everything you own, and every face you have.
-              </p>
-            </div>
-            <Tabs
-              look="line"
-              label="Wardrobe or faces"
-              value={tab}
-              onChange={setTab}
-              options={[
-                { value: 'wardrobe' as const, label: 'Wardrobe', count: owned.length || null },
-                { value: 'faces' as const, label: 'Faces', count: faces.data?.length ?? null },
-              ]}
-            />
-          </div>
+          <Tabs
+            value={drawer}
+            onChange={(next) => setDrawer(next as Drawer)}
+            options={DRAWERS.map((one) => ({ value: one.id, label: one.label }))}
+          />
 
-          {tab === 'wardrobe' && (
-            <>
+          {drawer === 'body' ? (
+            <Card className="space-y-4">
               <div className="flex flex-wrap gap-1.5">
-                <SlotChip label="Everything" on={slot === null} onPick={() => setSlot(null)} />
-                {slots.map((one) => (
-                  <SlotChip
-                    key={one.value}
-                    label={one.label}
-                    count={owned.filter((it) => it.slot === one.value).length}
-                    on={slot === one.value}
-                    onPick={() => setSlot(one.value)}
-                  />
+                {K6_PARTS.map((one) => (
+                  <button
+                    key={one}
+                    type="button"
+                    onClick={() => setPart(one)}
+                    className={cn(
+                      'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
+                      part === one
+                        ? 'bg-brand text-white'
+                        : 'bg-ink-hover text-white/70 hover:text-white',
+                    )}
+                  >
+                    {PART_LABELS[one]}
+                  </button>
                 ))}
               </div>
 
-              {wardrobe.loading && <Skeleton className="h-64" />}
-
-              {!wardrobe.loading && showing.length === 0 && (
-                <EmptyState
-                  title={slot ? 'Nothing of that kind yet' : 'Your wardrobe is empty'}
-                  body="Anything you take from the Catalog turns up here, ready to put on."
-                  action={<Button to="/style" variant="yes">Open the Catalog</Button>}
+              <div className="space-y-3">
+                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                  Skin
+                </p>
+                <Swatches
+                  colours={SKIN}
+                  current={look.body?.[part]}
+                  busy={busy === `paint:${part}`}
+                  onPick={(colour) => paint(part, colour)}
                 />
-              )}
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                {showing.map((item) => (
-                  <Card key={item.id} className="space-y-2 p-3">
-                    {/*
-                      * Shown on your own face rather than on its own, so
-                      * what you are looking at is the thing you would get
-                      * rather than a picture of it floating.
-                      */}
-                    <FaceStage
-                      src={face}
-                      name={profile?.display_name ?? 'You'}
-                      items={[asWorn(item)]}
-                      className="w-full"
-                    />
-                    <p className="truncate text-sm font-bold">{item.name}</p>
-                    <Button
-                      size="sm"
-                      variant={item.worn ? 'subtle' : 'yes'}
-                      disabled={busy === item.id}
-                      onClick={() => change(item.id, () => wearStyleItem(item.id, !item.worn))}
-                      className="w-full"
-                    >
-                      {item.worn ? (
-                        <><FontAwesomeIcon icon={faXmark} />Take off</>
-                      ) : (
-                        <><FontAwesomeIcon icon={faCheck} />Put on</>
-                      )}
-                    </Button>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-
-          {tab === 'faces' && (
-            <>
-              {faces.loading && <Skeleton className="h-64" />}
-
-              {!faces.loading && (faces.data?.length ?? 0) === 0 && (
-                <EmptyState
-                  title="No faces yet"
-                  body="A face is the picture underneath everything else. Yours is whatever you uploaded until you take one."
-                  action={<Button to="/style" variant="yes">Find a face</Button>}
+                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                  Everything else
+                </p>
+                <Swatches
+                  colours={CLOTH}
+                  current={look.body?.[part]}
+                  busy={busy === `paint:${part}`}
+                  onPick={(colour) => paint(part, colour)}
                 />
-              )}
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                {(faces.data ?? []).map((one: Face) => {
-                  const mine = face === faceUrl(one.image_path)
-                  return (
-                    <Card key={one.id} className="space-y-2 p-3">
-                      <FaceStage
-                        src={faceUrl(one.image_path)}
-                        name={one.name}
-                        items={wearing}
-                        className="w-full"
-                      />
-                      <p className="truncate text-sm font-bold">{one.name}</p>
-                      <Button
-                        size="sm"
-                        variant={mine ? 'subtle' : 'yes'}
-                        disabled={busy === one.id || mine}
-                        onClick={() => change(one.id, () => wearFace(one.id))}
-                        className="w-full"
-                      >
-                        <FontAwesomeIcon icon={mine ? faCheck : faFaceSmile} />
-                        {mine ? 'Wearing' : 'Wear it'}
-                      </Button>
-                    </Card>
-                  )
-                })}
               </div>
-            </>
+            </Card>
+          ) : owned.loading ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {Array.from({ length: 8 }, (_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-xl" />
+              ))}
+            </div>
+          ) : shelf.length === 0 ? (
+            <EmptyState
+              mood="emptyBox"
+              title="Nothing here yet"
+              body="Everything you take from the Catalog turns up in this drawer."
+              action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {shelf.map((item) => (
+                <WornTile
+                  key={item.id}
+                  item={item}
+                  on={onNow.get(item.slot) === item.id}
+                  busy={busy === `wear:${item.id}`}
+                  onToggle={() => void after(
+                    `wear:${item.id}`,
+                    () => (onNow.get(item.slot) === item.id
+                      ? takeOffSlot(item.slot)
+                      : wearAvatarItem(item.id)),
+                  )}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -300,24 +313,78 @@ export default function MyAvatar() {
   )
 }
 
-function SlotChip({ label, count, on, onPick }: {
-  label: string
-  count?: number
-  on: boolean
-  onPick: () => void
+function Swatches({ colours, current, busy, onPick }: {
+  colours: string[]
+  current?: string
+  busy?: boolean
+  onPick: (colour: string) => void
 }) {
   return (
+    <div className="flex flex-wrap gap-2">
+      {colours.map((colour) => (
+        <button
+          key={colour}
+          type="button"
+          disabled={busy}
+          onClick={() => onPick(colour)}
+          title={colour}
+          aria-label={colour}
+          className={cn(
+            'grid h-9 w-9 place-items-center rounded-lg border-2 transition-transform',
+            'hover:scale-110 disabled:opacity-50',
+            current?.toLowerCase() === colour.toLowerCase()
+              ? 'border-white'
+              : 'border-ink-line',
+          )}
+          style={{ background: colour }}
+        >
+          {current?.toLowerCase() === colour.toLowerCase() && (
+            <FontAwesomeIcon
+              icon={faCheck}
+              className="text-xs text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+            />
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function WornTile({ item, on, busy, onToggle }: {
+  item: AvatarItem
+  on: boolean
+  busy: boolean
+  onToggle: () => void
+}) {
+  const picture = catalogUrl(item.image_path)
+  return (
     <button
-      onClick={onPick}
+      type="button"
+      onClick={onToggle}
+      disabled={busy}
       className={cn(
-        'rounded-lg border px-3 py-1.5 font-display text-xs uppercase tracking-wide transition-colors',
-        on
-          ? 'border-brand bg-brand/15 text-link'
-          : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
+        'group overflow-hidden rounded-xl border bg-ink-card text-left transition-colors',
+        on ? 'border-brand' : 'border-ink-line hover:border-brand/60',
       )}
     >
-      {label}
-      {count !== undefined && <span className="ml-1.5 text-white/35">{count}</span>}
+      <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
+        {picture ? (
+          <img src={picture} alt="" draggable={false} className="h-full w-full object-contain" />
+        ) : (
+          <FontAwesomeIcon icon={faHatCowboy} className="text-2xl text-white/30" />
+        )}
+        {busy && (
+          <span className="absolute inset-0 grid place-items-center bg-ink/60">
+            <FontAwesomeIcon icon={faCircleNotch} className="animate-spin text-white/70" />
+          </span>
+        )}
+        {on && !busy && (
+          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-md bg-brand text-[11px] text-white">
+            <FontAwesomeIcon icon={faCheck} />
+          </span>
+        )}
+      </div>
+      <p className="truncate p-2.5 text-xs font-bold">{item.name}</p>
     </button>
   )
 }

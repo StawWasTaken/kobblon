@@ -47,6 +47,7 @@ const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
 const Library = lazyPage(() => import('@/pages/Library'))
+const Catalog = lazyPage(() => import('@/pages/Catalog'))
 const Style = lazyPage(() => import('@/pages/Style'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
@@ -139,6 +140,7 @@ export default function App() {
                 <Route path="/people" element={<People />} />
                 <Route path="/d/:id" element={<DiscordJump />} />
                 {/* The Catalog: anybody may look, account or not. */}
+                <Route path="/catalog" element={<Catalog />} />
                 <Route path="/style" element={<Style />} />
                 <Route path="/style/:tag" element={<StyleItem />} />
                 <Route element={<CommunityShell />}>
