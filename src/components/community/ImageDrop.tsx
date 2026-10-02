@@ -44,6 +44,17 @@ export function ImageDrop({
    * Anything chosen goes through the cropper first, so what is stored is
    * already the shape it will be shown in and nothing ends up squashed or
    * cut off at the top by the page.
+   *
+   * **Except a GIF.** Staw asked for animated banners and thumbnails, and
+   * they were already accepted here, already uploaded, and arrived dead: the
+   * cropper draws onto a canvas, and a canvas holds one frame. Every GIF
+   * anybody had ever used came out as its first frame, which is often the
+   * blank one an animation fades in from.
+   *
+   * So a GIF is kept whole. The shape is then whatever the person made,
+   * rather than what the cropper would have forced, and the frame it is
+   * shown in covers and centres it - which is the trade worth making, since
+   * a still banner that is the right shape is not the thing being asked for.
    */
   const take = (chosen: File | null | undefined) => {
     if (!chosen) return
@@ -56,6 +67,10 @@ export function ImageDrop({
       return
     }
     setError(null)
+    if (chosen.type === 'image/gif') {
+      onChange(chosen)
+      return
+    }
     setCropping(chosen)
   }
 
@@ -68,6 +83,11 @@ export function ImageDrop({
         {required && <span className="ml-1 text-danger">*</span>}
       </p>
       {note && <p className="mb-2 text-xs text-muted">{note}</p>}
+      {file?.type === 'image/gif' && (
+        <p className="mb-2 text-xs text-space-bright">
+          A GIF is kept as it is, so it keeps moving. It is not cropped.
+        </p>
+      )}
 
       <div
         onDragOver={(e) => { e.preventDefault(); setDragging(true) }}

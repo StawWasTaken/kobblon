@@ -132,6 +132,15 @@ export type MarketAsset = {
   creator_display_name: string
   creator_avatar_url: string | null
   creator_is_admin: boolean
+  /**
+   * Whether their name carries the tick: verified by staff, or staff.
+   *
+   * Separate from `creator_is_admin`, which is about rights. Somebody
+   * verified is not staff, and a card that decided the tick from `is_admin`
+   * showed it to staff and to nobody else - backwards from what verifying
+   * somebody is for.
+   */
+  creator_is_verified?: boolean | null
 }
 
 export type AssetPageItem = MarketAsset & {

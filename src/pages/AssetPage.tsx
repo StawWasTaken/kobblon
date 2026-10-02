@@ -40,7 +40,7 @@ import { cn } from '@/lib/cn'
 import type { AssetDay, AssetPageItem } from '@/types/db'
 import { timeAgo } from '@/lib/format'
 import { CurrencyMark } from '@/components/brand/Currency'
-import { Verified } from '@/components/brand/Verified'
+import { Verified, isVerified } from '@/components/brand/Verified'
 import { BackLink } from '@/components/ui/BackLink'
 
 const prefixes: Record<string, string> = {
@@ -51,6 +51,19 @@ const prefixes: Record<string, string> = {
 
 const sizeLabel = (bytes: number) =>
   bytes > 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
+
+/**
+ * Whether the person who made this carries the tick.
+ *
+ * Here rather than inline three times: this page asked `creator_is_admin` in
+ * each of those places, which is a different question - it is about rights,
+ * not about whether somebody has been verified. Staff showed a tick and a
+ * verified creator did not.
+ */
+const ticked = (asset: AssetPageItem) => isVerified({
+  is_admin: asset.creator_is_admin,
+  is_verified: asset.creator_is_verified,
+})
 
 /**
  * The thing itself, on the left, shown the way that kind of thing wants to be
@@ -214,7 +227,7 @@ function UsePanel({ asset, onChanged }: { asset: AssetPageItem; onChanged: () =>
       <div className="space-y-2">
         <Button block icon={faCopy} onClick={copy}>Copy ID</Button>
         <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
-          {asset.creator_is_admin ? (
+          {ticked(asset) ? (
             <Verified className="mt-0.5" />
           ) : (
             <FontAwesomeIcon icon={faShieldHalved} className="mt-0.5 shrink-0" />
@@ -222,7 +235,7 @@ function UsePanel({ asset, onChanged }: { asset: AssetPageItem; onChanged: () =>
           <span>
             {mine
               ? 'Yours, so you can use it anywhere.'
-              : asset.creator_is_admin
+              : ticked(asset)
                 ? 'In your inventory, and verified by Kobblon.'
                 : 'In your inventory.'}
           </span>
@@ -483,9 +496,7 @@ export default function AssetPage() {
               className="inline-flex items-center gap-1.5 hover:text-white"
             >
               By @{asset.creator_username}
-              {asset.creator_is_admin && (
-                <Verified className="text-xs" />
-              )}
+              {ticked(asset) && <Verified className="text-xs" />}
             </Link>
             <span className="h-3.5 w-px bg-ink-line" aria-hidden="true" />
             {asset.score === null ? (

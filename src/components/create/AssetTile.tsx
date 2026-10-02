@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
+  faThumbsUp, faHandPointUp, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { usePictureUrl } from '@/hooks/useSignedUrl'
 import { MeshView } from '@/components/create/MeshView'
@@ -12,6 +12,7 @@ import { formatCount } from '@/lib/format'
 import { currency } from '@/lib/currency'
 import type { MarketAsset } from '@/types/db'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Verified, isVerified } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { overlayChip } from '@/lib/overlay'
 import { cn } from '@/lib/cn'
@@ -120,14 +121,16 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
         <h3 className="truncate text-sm font-bold">{item.name}</h3>
         <span className="mt-1 flex items-center gap-1.5 text-xs text-muted">
           <span className="truncate">{item.creator_display_name}</span>
-          {item.creator_is_admin && (
-            <FontAwesomeIcon
-              icon={faCircleCheck}
-              className="shrink-0 text-[#4d68ff]"
-              title="Verified Kobblon upload"
-              aria-label="Verified"
-            />
-          )}
+          {/*
+            * Through the one rule, rather than this card's own reading of
+            * `is_admin`. Verified and staff are different things and the
+            * tick is for both; deciding it here is how a card came to show
+            * it to staff only.
+            */}
+          {isVerified({
+            is_admin: item.creator_is_admin,
+            is_verified: item.creator_is_verified,
+          }) && <Verified className="text-[11px]" />}
         </span>
         <p className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/40">
           {typeof item.score === 'number' && item.score !== null ? (

@@ -224,7 +224,10 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
 
       <span className="mt-0.5 flex items-center gap-1.5 text-sm text-white/45">
         {item.creator_display_name}
-        {isVerified({ is_admin: item.creator_is_admin }) && <Verified className="text-[10px]" />}
+        {isVerified({
+          is_admin: item.creator_is_admin,
+          is_verified: item.creator_is_verified,
+        }) && <Verified className="text-[10px]" />}
       </span>
     </Link>
   )

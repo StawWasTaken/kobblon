@@ -9,6 +9,7 @@
 import { createRoot } from 'react-dom/client'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { ImageDrop } from '@/components/community/ImageDrop'
 import { Menu } from '@/components/ui/Menu'
 import { Input } from '@/components/ui/Input'
 import { Choices } from '@/components/ui/Choices'
@@ -20,6 +21,7 @@ import '@/index.css'
 
 function Bare() {
   const [kind, setKind] = useState<AssetKind>('image')
+  const [cover, setCover] = useState<File | null>(null)
   return (
     <div className="min-h-screen space-y-5 bg-ink p-8 text-white">
       <h1 className="font-display text-xl">Shared, with no website around it</h1>
@@ -52,6 +54,27 @@ function Bare() {
           ]}
         />
         <Tooltip label="And a tooltip"><span className="text-white/60">hover me</span></Tooltip>
+      </div>
+
+      <h2 className="font-display text-sm uppercase tracking-wider text-muted">
+        A cover, and what happens to a GIF
+      </h2>
+      <div className="grid max-w-3xl gap-6 sm:grid-cols-2">
+        <ImageDrop
+          label="Cover"
+          note="Anything but a GIF goes through the cropper."
+          aspect="wide"
+          file={cover}
+          onChange={setCover}
+        />
+        <div className="text-sm text-muted">
+          <p id="state">
+            {cover ? `${cover.name} (${cover.type})` : 'nothing chosen'}
+          </p>
+          <p id="cropper">
+            {document.querySelector('[data-cropper]') ? 'cropper open' : 'no cropper'}
+          </p>
+        </div>
       </div>
     </div>
   )
