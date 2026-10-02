@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { FreeCorner } from '@/components/brand/FreeBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
@@ -30,6 +31,12 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
       label={item.price ? `${item.name} · ${currency.amount(item.price)}` : `${item.name} · free`}
       side="top"
     >
+    {/*
+      * The tile clips its corners, so the free badge goes on a wrapper that
+      * does not - the half that hangs off is the half a card cuts away.
+      */}
+    <div className="relative">
+      {!item.price && <FreeCorner />}
     <Link
       to={tag ? `/create/${tag}` : '/create'}
       className="block overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
@@ -92,6 +99,7 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
         </p>
       </div>
     </Link>
+    </div>
     </Tooltip>
   )
 }
