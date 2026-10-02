@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -5,6 +6,8 @@ import {
   faCircleCheck, faThumbsUp, faHandPointUp, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { useSignedUrl } from '@/hooks/useSignedUrl'
+import { MeshView } from '@/components/create/MeshView'
+import { getAsset, assetUrl } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { currency } from '@/lib/currency'
 import type { MarketAsset } from '@/types/db'
@@ -26,6 +29,35 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
   const preview = useSignedUrl(item.thumbnail_path ?? (item.kind === 'image' ? item.file_path : null))
   const tag = contentTag(item.kind, item.content_id)
 
+  /*
+   * A mesh can be turned on the card, and the model is fetched only when
+   * somebody asks for that. A grid that downloads twenty models to show
+   * twenty pictures is a grid nobody on a phone can open, and the great
+   * majority of cards are never switched.
+   *
+   * The Decal comes with it: `get_asset` is what decides whether this viewer
+   * may see the texture at all, so asking it is also the permission check.
+   */
+  const [model, setModel] = useState<{ file: string | null; skin: string | null } | null>(null)
+  const [wanted, setWanted] = useState(false)
+  const [path, setPath] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!wanted || item.kind !== 'mesh' || model || item.content_id == null) return
+    let live = true
+    void (async () => {
+      const full = await getAsset(item.content_id as number).catch(() => null)
+      if (!live || !full) return
+      setPath(full.file_path)
+      const [file, skin] = await Promise.all([
+        assetUrl(full.file_path).catch(() => null),
+        full.texture_path ? assetUrl(full.texture_path).catch(() => null) : null,
+      ])
+      if (live) setModel({ file, skin })
+    })()
+    return () => { live = false }
+  }, [wanted, item.kind, item.content_id])
+
   return (
     <Tooltip
       label={item.price ? `${item.name} · ${currency.amount(item.price)}` : `${item.name} · free`}
@@ -41,7 +73,16 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
       to={tag ? `/create/${tag}` : '/create'}
       className="block overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
-        {preview ? (
+        {item.kind === 'mesh' ? (
+          <MeshView
+            className="h-full w-full [&>*]:rounded-none"
+            previewUrl={preview}
+            fileUrl={model?.file}
+            filePath={path ?? item.file_path}
+            textureUrl={model?.skin}
+            onWant3d={() => setWanted(true)}
+          />
+        ) : preview ? (
           <img
             src={preview}
             alt=""

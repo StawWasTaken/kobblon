@@ -1789,6 +1789,10 @@ check('and every one of them is a real number inside the picture',
   dress.objBare.sane === true, `sane ${dress.objBare.sane}`)
 check('a model that authored its own coordinates keeps them exactly',
   dress.objAuthored.untouched === true, `untouched ${dress.objAuthored.untouched}`)
+check('and the two faces that look at each other read the same way round',
+  JSON.stringify(dress.objBare.acrossX.front) === JSON.stringify(dress.objBare.acrossX.back),
+  `${dress.objBare.acrossX.front.filter((_, i) => i % 2 === 0)} vs `
+  + `${dress.objBare.acrossX.back.filter((_, i) => i % 2 === 0)}`)
 check('and the picture is the material\'s map either way',
   dress.objBare.mapped && dress.objAuthored.mapped && dress.gltf.mapped, 'mapped')
 

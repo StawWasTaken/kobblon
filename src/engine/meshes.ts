@@ -201,14 +201,34 @@ export function projectUv(geometry: THREE.BufferGeometry) {
     const ny = Math.abs(normal.getY(i))
     const nz = Math.abs(normal.getZ(i))
 
+    /*
+     * Which way round each face goes.
+     *
+     * Two faces pointing opposite ways along one axis read the same two
+     * coordinates, so without this a picture with writing on it comes out
+     * backwards on one of them - which looks like a fault in the model
+     * rather than a property of flattening a box onto a picture.
+     *
+     * Whether to flip is not one rule for all three axes, it is whichever
+     * way the picture's left-to-right lands when you stand outside that face
+     * and look at it. From outside +X, the screen's right is -Z, so a `u`
+     * taken from +Z runs backwards and that face flips; from outside -X it
+     * already runs the right way. On Z it is the other way round. Y is left
+     * alone: a top and a bottom have no agreed reading direction, and a
+     * Decal with writing on it is not put on them on purpose.
+     */
     let u: number, v: number
+    let flip = false
     if (nx >= ny && nx >= nz) {
       u = (z - box.min.z) / safe(span.z); v = (y - box.min.y) / safe(span.y)
+      flip = normal.getX(i) > 0
     } else if (ny >= nx && ny >= nz) {
       u = (x - box.min.x) / safe(span.x); v = (z - box.min.z) / safe(span.z)
     } else {
       u = (x - box.min.x) / safe(span.x); v = (y - box.min.y) / safe(span.y)
+      flip = normal.getZ(i) < 0
     }
+    if (flip) u = 1 - u
     uv[i * 2] = u
     uv[i * 2 + 1] = v
   }

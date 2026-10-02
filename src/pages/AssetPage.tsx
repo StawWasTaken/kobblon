@@ -4,8 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCopy, faLock, faLockOpen, faPen, faTrash, faShieldHalved,
   faTriangleExclamation, faClock, faEllipsis,
-  faThumbsUp, faThumbsDown, faComment, faChevronRight, faTag, faBagShopping, faLink, faBoxOpen,
+  faThumbsUp, faThumbsDown, faComment, faChevronRight, faTag, faLink, faBoxOpen,
 } from '@fortawesome/free-solid-svg-icons'
+import { BuyButton } from '@/components/money/BuyButton'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Tabs } from '@/components/ui/Tabs'
@@ -16,10 +17,9 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { contentTag, kindCodes, kindIcons, kindLabels } from '@/lib/kinds'
+import { MeshView } from '@/components/create/MeshView'
 import { MediaPlayer } from '@/components/create/MediaPlayer'
-import { MeshViewer } from '@/components/create/MeshViewer'
 import { MeshEdit } from '@/components/create/MeshEdit'
-import { formatOf } from '@/lib/mesh'
 import { FontPreview } from '@/components/create/FontPreview'
 import { AssetTile } from '@/components/create/AssetTile'
 import { Menu } from '@/components/ui/Menu'
@@ -71,18 +71,21 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl }: {
    * frame is never empty and never jumps size when the model arrives.
    */
   if (asset.kind === 'mesh') {
-    if (!fileUrl) {
-      return (
-        <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
-          {previewUrl
-            ? <img src={previewUrl} alt={asset.name} draggable={false} className="h-full w-full select-none object-contain" />
-            : <FontAwesomeIcon icon={kindIcons.mesh} style={{ width: '34%', height: 'auto' }} className="animate-pulse text-white/25" />}
-        </div>
-      )
-    }
-    // From the stored path, which keeps its extension, rather than from
-    // the signed address, which need not.
-    return <MeshViewer src={fileUrl} format={formatOf(asset.file_path)} textureUrl={textureUrl} />
+    /*
+     * The one place that opens turning, because somebody asked for this
+     * thing in particular rather than being shown a wall of them. The
+     * picture is still a press away, and is what loads first while the
+     * model is still being signed for.
+     */
+    return (
+      <MeshView
+        start="3d"
+        previewUrl={previewUrl}
+        fileUrl={fileUrl}
+        filePath={asset.file_path}
+        textureUrl={textureUrl}
+      />
+    )
   }
 
   if (asset.kind === 'video') {
@@ -229,9 +232,10 @@ function UsePanel({ asset, onChanged }: { asset: AssetPageItem; onChanged: () =>
 
   return (
     <div className="space-y-2">
-      <Button
+      <BuyButton
         block
-        icon={paid ? undefined : faBagShopping}
+        price={asset.price}
+        freeLabel="Get"
         loading={pending}
         disabled={!profile || profile.is_guest}
         onClick={async () => {
@@ -249,11 +253,7 @@ function UsePanel({ asset, onChanged }: { asset: AssetPageItem; onChanged: () =>
             setPending(false)
           }
         }}
-      >
-        {paid ? (
-          <>Buy for <CurrencyMark className="mx-0.5" />{formatCount(asset.price)}</>
-        ) : 'Get'}
-      </Button>
+      />
       <p className="text-xs leading-relaxed text-muted">
         {paid
           ? `The ${currency.plural} go to ${asset.creator_display_name}. You get the right to use ${tag}, not the file.`

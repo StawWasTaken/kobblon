@@ -529,13 +529,15 @@ export async function makeAssetPreview(input: {
   kind: AssetKind
   file?: File
   url?: string | null
+  /** For a mesh: the Decal it wears, so the card shows the dressed model. */
+  skin?: string | null
 }): Promise<string | null> {
   if (!canPreview(input.kind)) return null
 
   const drawn = input.file
-    ? await previewOf(input.file, input.kind)
+    ? await previewOf(input.file, input.kind, input.skin)
     : input.url
-      ? await previewOfUrl(input.url, input.kind)
+      ? await previewOfUrl(input.url, input.kind, input.skin)
       : null
   if (!drawn) return null
 
@@ -956,9 +958,11 @@ export async function uploadAsset(input: {
     }).select('id, kind, name, description, file_path, status, review_note, byte_size, download_count, content_id, is_public, created_at')
       .single()) as unknown as OwnAsset
 
-    // The card picture, drawn from the file that is still in hand.
+    // The card picture, drawn from the file that is still in hand, and
+    // wearing whatever Decal was chosen a moment ago.
     await makeAssetPreview({
       assetId: made.id, userId: input.userId, kind: input.kind, file: input.file,
+      skin: wearing ? await skinUrl(wearing) : null,
     }).catch(() => null)
 
     return made
@@ -975,6 +979,54 @@ export async function uploadAsset(input: {
  * ad rather than failing silently. It hands back the stored file, which is
  * taken away afterwards.
  */
+/**
+ * A short-lived address for the Decal a mesh is about to wear, so the card
+ * can be drawn with it. Null rather than throwing: a card is worth having
+ * undressed, and never worth failing an upload over.
+ */
+async function skinUrl(decalId: string): Promise<string | null> {
+  const { data } = await supabase.from('assets')
+    .select('file_path').eq('id', decalId).maybeSingle()
+  const path = (data as { file_path?: string } | null)?.file_path
+  return path ? await assetUrl(path).catch(() => null) : null
+}
+
+/**
+ * Draws a mesh's card again, from whatever it is wearing now.
+ *
+ * The picture is normally taken at upload from the file in hand. Once the
+ * mesh can be redressed or its model replaced, that picture goes stale, and
+ * a stale card is the kind of wrong that nobody reports because it looks
+ * like a decision somebody made.
+ *
+ * Goes through `get_asset`, so the texture it draws with is the one the
+ * server agrees this person may see.
+ */
+export async function redrawMesh(assetId: string, userId: string): Promise<string | null> {
+  const { data } = await supabase.from('assets')
+    .select('content_id').eq('id', assetId).maybeSingle()
+  const contentId = (data as { content_id?: number } | null)?.content_id
+  if (!contentId) return null
+
+  const full = await getAsset(contentId)
+  if (!full || full.kind !== 'mesh') return null
+
+  const [url, skin] = await Promise.all([
+    assetUrl(full.file_path),
+    full.texture_path ? assetUrl(full.texture_path) : null,
+  ])
+  if (!url) return null
+
+  const old = await assetPreviewPath(assetId)
+  const path = await makeAssetPreview({
+    assetId, userId, kind: 'mesh', url, skin,
+  })
+  // Only once the new one is saved, so a failure leaves the old card rather
+  // than no card.
+  if (path && old && old !== path) await removeAssetPreview(old)
+  return path
+}
+
 export async function deleteAsset(id: string) {
   const picture = await assetPreviewPath(id)
   const path = unwrap(await supabase.rpc('delete_asset', { target: id })) as string

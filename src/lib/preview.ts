@@ -15,7 +15,7 @@
  */
 import * as THREE from 'three'
 import {
-  formatOf, frameMesh, lightForLooking, loadMesh, meshFormats, releaseMesh,
+  formatOf, frameMesh, lightForLooking, loadMesh, meshFormats, releaseMesh, wearTexture,
 } from '@/lib/mesh'
 import type { MeshFormat } from '@/lib/mesh'
 import type { AssetKind } from '@/types/db'
@@ -102,7 +102,9 @@ function fromFilm(src: string) {
  * no reader on this side, so it gets no picture rather than a wrong one. A
  * mesh is glTF and is drawn.
  */
-async function fromMesh(src: string, format: MeshFormat): Promise<Blob | null> {
+async function fromMesh(
+  src: string, format: MeshFormat, skin?: string | null,
+): Promise<Blob | null> {
   const canvas = document.createElement('canvas')
   canvas.width = 640
   canvas.height = 640
@@ -111,6 +113,20 @@ async function fromMesh(src: string, format: MeshFormat): Promise<Blob | null> {
   let model: THREE.Object3D | null = null
   try {
     model = await loadMesh(src, format)
+
+    /*
+     * Wearing its Decal, so the card is a picture of the thing people will
+     * actually get. An undressed card beside a dressed viewer reads as two
+     * different items, and it is the card that gets seen first - in the
+     * Marketplace, in a search, and in a link somebody pastes.
+     *
+     * A picture that will not load is not a reason to have no card at all,
+     * so the model is drawn undressed rather than nothing being drawn.
+     */
+    if (skin) {
+      const picture = await new THREE.TextureLoader().loadAsync(skin).catch(() => null)
+      if (picture) wearTexture(model, picture, format)
+    }
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#e9edf5')
@@ -145,7 +161,9 @@ async function fromMesh(src: string, format: MeshFormat): Promise<Blob | null> {
 }
 
 /** From the file somebody is uploading, before it has gone anywhere. */
-export async function previewOf(file: File, kind: AssetKind): Promise<Blob | null> {
+export async function previewOf(
+  file: File, kind: AssetKind, skin?: string | null,
+): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   // A Kobblon part file is JSON, and nothing here reads one yet.
   if (kind === 'mesh' && !meshFormats.test(file.name)) return null
@@ -154,7 +172,7 @@ export async function previewOf(file: File, kind: AssetKind): Promise<Blob | nul
   try {
     // From `file.name`, not from `src`: `src` is a blob address with no
     // name on it, so sniffing it would send every OBJ to the glTF reader.
-    if (kind === 'mesh') return await fromMesh(src, formatOf(file.name))
+    if (kind === 'mesh') return await fromMesh(src, formatOf(file.name), skin)
     return kind === 'video' ? await fromFilm(src) : await fromPicture(src)
   } catch {
     return null
@@ -164,10 +182,12 @@ export async function previewOf(file: File, kind: AssetKind): Promise<Blob | nul
 }
 
 /** From something already uploaded, for work that predates previews. */
-export async function previewOfUrl(url: string, kind: AssetKind): Promise<Blob | null> {
+export async function previewOfUrl(
+  url: string, kind: AssetKind, skin?: string | null,
+): Promise<Blob | null> {
   if (!canPreview(kind)) return null
   try {
-    if (kind === 'mesh') return await fromMesh(url, formatOf(url))
+    if (kind === 'mesh') return await fromMesh(url, formatOf(url), skin)
     return kind === 'video' ? await fromFilm(url) : await fromPicture(url)
   } catch {
     return null

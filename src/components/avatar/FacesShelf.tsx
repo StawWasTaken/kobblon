@@ -4,6 +4,7 @@ import {
   faFaceSmile, faPlus, faCheck, faLock, faEllipsis, faPen, faTrash, faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
+import { BuyButton } from '@/components/money/BuyButton'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
@@ -162,20 +163,29 @@ export function FacesShelf() {
                   {face.price > 0 ? `${formatCount(face.price)} ${currency.plural}` : 'Free'}
                 </p>
 
+                {/*
+                  * Through BuyButton rather than its own, which is how this
+                  * one came to have the rule backwards: a face that cost
+                  * Brix said "Take it" with no mark on it, and a free one
+                  * said "Get it". Exactly inverted, and no page that writes
+                  * its own version of a shared rule stays right for long.
+                  */}
                 {face.owned ? (
                   <span className="mt-auto flex items-center gap-1.5 text-xs font-bold text-space-bright">
                     <FontAwesomeIcon icon={faCheck} />
                     Yours
                   </span>
-                ) : (
-                  <Button
+                ) : profile ? (
+                  <BuyButton
                     size="sm"
-                    variant={profile ? 'enter' : 'subtle'}
                     className="mt-auto"
-                    disabled={!profile || busy === face.id}
+                    price={face.price}
+                    disabled={busy === face.id}
                     onClick={() => void buy(face)}
-                  >
-                    {profile ? (face.price > 0 ? 'Take it' : 'Get it') : 'Sign in'}
+                  />
+                ) : (
+                  <Button size="sm" variant="subtle" className="mt-auto" disabled>
+                    Sign in
                   </Button>
                 )}
               </div>

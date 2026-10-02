@@ -110,6 +110,15 @@ Object.assign(window, {
       // An authored model's own coordinates are left exactly as they were.
       untouched: authored ? JSON.stringify(authored) === JSON.stringify(numbers) : null,
       mapped: (part.material as THREE.MeshStandardMaterial).map === picture,
+      /*
+       * BoxGeometry lays its faces out +X, -X, +Y, -Y, +Z, -Z, four
+       * vertices each. So the two faces that look at each other along X are
+       * vertices 0-3 and 4-7, and whether a Decal reads the right way round
+       * on both is whether their `u` runs in opposite directions.
+       */
+      acrossX: uv
+        ? { front: numbers.slice(0, 8), back: numbers.slice(8, 16) }
+        : null,
     }
   },
   /** A plain picture of a given shape, for checking how a decal is fitted. */

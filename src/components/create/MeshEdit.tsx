@@ -20,7 +20,7 @@ import { CurrencyMark } from '@/components/brand/Currency'
 import { useToast } from '@/components/ui/Toast'
 import { kindAccepts } from '@/lib/kinds'
 import {
-  MESH_EDIT_PRICE, decalBehind, redressMesh, replaceMeshFile,
+  MESH_EDIT_PRICE, decalBehind, redressMesh, replaceMeshFile, redrawMesh,
 } from '@/lib/api'
 import type { AssetPageItem } from '@/types/db'
 
@@ -38,6 +38,17 @@ export function MeshEdit({ asset, userId, onChanged }: {
     setBusy(what)
     try {
       const paid = await doIt()
+      /*
+       * The card is redrawn too, or the Marketplace keeps showing the model
+       * as it was: the picture is taken once at upload, so changing the
+       * Decal or the file afterwards used to leave a card that no longer
+       * matched the thing on its own page.
+       *
+       * Best effort, and after the change rather than before. A card that
+       * failed to redraw is worth far less than a change that failed to
+       * save, so this never turns a successful edit into an error.
+       */
+      await redrawMesh(asset.id, userId).catch(() => null)
       say(paid > 0 ? `Done. ${paid} Brix.` : 'Done.', 'success')
       onChanged()
     } catch (error) {
