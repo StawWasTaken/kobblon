@@ -19,6 +19,8 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { GuestGate } from '@/components/ui/GuestGate'
 import { Price } from '@/components/brand/Currency'
+import { FreeCorner } from '@/components/brand/FreeBadge'
+import { BuyButton } from '@/components/money/BuyButton'
 import { Balance } from '@/components/money/Balance'
 import { Kobby } from '@/components/brand/Kobby'
 import { Verified } from '@/components/brand/Verified'
@@ -66,7 +68,14 @@ function ItemTile({
   onWear: () => void
 }) {
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-ink-line bg-ink-card transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/70 hover:shadow-pop">
+    /*
+     * The card clips its own corners, so the badge cannot live inside it -
+     * half of it would be cut off, which is the half that makes it read as
+     * stuck on. It goes on a wrapper that does not clip.
+     */
+    <div className="relative">
+      {!item.price && !item.owned && <FreeCorner />}
+      <article className="group relative overflow-hidden rounded-2xl border border-ink-line bg-ink-card transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/70 hover:shadow-pop">
       <Link to={`/style/${styleTag(item.content_id)}`} className="block">
         <span className="relative grid aspect-square place-items-center bg-ink-raised p-7">
           <FaceStage
@@ -111,13 +120,12 @@ function ItemTile({
           </Button>
         ) : (
           <GuestGate action="buy things">
-            <Button size="sm" disabled={busy} onClick={onGet}>
-              {item.price > 0 ? 'Get' : 'Take'}
-            </Button>
+            <BuyButton size="sm" price={item.price} disabled={busy} onClick={onGet} />
           </GuestGate>
         )}
       </div>
-    </article>
+      </article>
+    </div>
   )
 }
 

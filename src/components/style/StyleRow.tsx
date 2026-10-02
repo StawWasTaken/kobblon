@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Price } from '@/components/brand/Currency'
+import { FreeCorner } from '@/components/brand/FreeBadge'
 import { FaceStage } from '@/components/style/FaceStage'
 import { asWorn, styleTag } from '@/lib/api'
 import type { StyleItem } from '@/lib/api'
@@ -19,10 +20,13 @@ export function StyleRow({
   return (
     <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 kob-scroll">
       {items.map((item, i) => (
+        // The tile clips its corners, so the badge sits on a wrapper that
+        // does not - otherwise the half that hangs off is the half cut away.
+        <div key={item.id} className="relative shrink-0">
+          {!item.price && <FreeCorner />}
         <Link
-          key={item.id}
           to={`/style/${styleTag(item.content_id)}`}
-          className="group w-36 shrink-0 overflow-hidden rounded-2xl border border-ink-line bg-ink-raised transition-colors hover:border-brand/60"
+          className="group block w-36 overflow-hidden rounded-2xl border border-ink-line bg-ink-raised transition-colors hover:border-brand/60"
         >
           <span className="grid aspect-square place-items-center p-5">
             <FaceStage
@@ -37,6 +41,7 @@ export function StyleRow({
             <Price amount={item.price} className="mt-0.5 text-xs font-extrabold text-muted" />
           </span>
         </Link>
+        </div>
       ))}
     </div>
   )

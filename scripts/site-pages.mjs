@@ -11,15 +11,15 @@
  */
 
 export const SITE = 'https://kobblon.com'
-export const TAGLINE = 'make something nobody else has'
+export const TAGLINE = 'The Game Built By Players'
 /** The currency's name, kept in step with src/lib/currency.ts by hand. */
 const CURRENCY = 'Brix'
 
 export const pages = [
   {
     path: '',
-    title: 'Kobblon',
-    description: `${TAGLINE}. Build your own Space, fill it with whatever you want, and let people in.`,
+    title: 'Kobblon - The Game Built By Players',
+    description: 'Every world, every sound, every thing you can wear was made by somebody playing it. Free, and it always will be.',
   },
   {
     path: 'discover',
@@ -54,7 +54,7 @@ export const pages = [
   {
     path: 'signup',
     title: 'Make a Kobblon account',
-    description: `${TAGLINE}. Free, and it takes about a minute.`,
+    description: `Kobblon is ${TAGLINE}. Making an account is free and takes about a minute.`,
   },
   {
     path: 'terms',

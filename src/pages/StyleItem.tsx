@@ -7,6 +7,7 @@ import {
 import { Page } from '@/components/layout/AppShell'
 import { BackLink } from '@/components/ui/BackLink'
 import { Button } from '@/components/ui/Button'
+import { BuyButton } from '@/components/money/BuyButton'
 import { Card } from '@/components/ui/Card'
 import { Choices } from '@/components/ui/Choices'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -223,9 +224,7 @@ export default function StyleItemPage() {
                   </Button>
                 ) : (
                   <GuestGate action="buy things">
-                    <Button disabled={busy} onClick={get}>
-                      {thing.price > 0 ? 'Buy it' : 'Take it'}
-                    </Button>
+                    <BuyButton price={thing.price} disabled={busy} onClick={get} />
                   </GuestGate>
                 )}
 
