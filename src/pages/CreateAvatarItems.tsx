@@ -558,6 +558,7 @@ export default function CreateAvatarItems() {
               onChanged={() => made.reload()}
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
+              openEditor={!!wanted && String(one.content_id) === wanted}
             />
             </div>
           ))}
@@ -927,7 +928,9 @@ export default function CreateAvatarItems() {
  * else owns one - so the button is there and the refusal explains itself,
  * rather than this page hiding a rule it would have to keep in step.
  */
-function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScreen, me }: {
+export function MadeCard({
+  item, onChanged, onTrouble, onDone, rule, canLimit, canScreen, me, openEditor,
+}: {
   item: AvatarItem
   onChanged: () => void
   onTrouble: (message: string) => void
@@ -940,8 +943,27 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
   canScreen: boolean
   /** Whose folder a redrawn card is written into. */
   me: string
+  /**
+   * Open on the editor, for somebody who arrived here by pressing Edit on
+   * the thing's own page. Scrolling to the card and leaving it shut was
+   * taking them to the right place and then asking them to find it again,
+   * which is what Staw meant by "it doesnt actually open the editing card".
+   */
+  openEditor?: boolean
 }) {
   const [editing, setEditing] = useState(false)
+  /*
+   * Watched rather than read once at mount: the cards are drawn before the
+   * drawer has loaded, so a card that is told to open may be told after it
+   * already exists. Reading it once is the trap this project keeps falling
+   * into, in its smallest form.
+   *
+   * It opens when it is asked and never re-opens by itself, so closing it
+   * closes it.
+   */
+  useEffect(() => {
+    if (openEditor) setEditing(true)
+  }, [openEditor])
   const [name, setName] = useState(item.name)
   const [about, setAbout] = useState(item.description ?? '')
   const [price, setPrice] = useState(String(item.price))

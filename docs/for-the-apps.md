@@ -3637,3 +3637,58 @@ Things to Wear drawer, scrolled to one item.
 Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
+
+# Thirty-ninth round — the free face was a guess, and Edit opens the editor
+
+## The floor face is named now, not found (0155)
+
+Staw: everybody was given FACE-1103 where it should be FACE-1119.
+
+`floor_face()` was written as "whichever `starting_kit` row happens to be a
+face, lowest number first, limit one". That is not a rule, it is a guess that
+is right only while exactly one kit row is a face and nothing else in the kit
+ever turns out to be one. The kit has five rows now and grows.
+
+Worse, `give_starting_kit` walks the kit and wears one thing per slot, so with
+two faces in it **which one somebody ends up wearing is whichever the loop
+reached first** - nothing decides it. From outside that looks exactly like what
+was reported: most accounts right, some wrong.
+
+- `starting_kit.is_floor` says which row it is, with a unique index so only
+  one row can carry it. `floor_face()` reads the flag.
+- `give_starting_kit` wears the floor face and merely *owns* any other kit
+  face, rather than leaving it to the loop.
+- The repair moves anybody **wearing a face they do not own** onto the floor
+  face - that is the mark of a face that was put on somebody rather than
+  chosen - gives everybody the floor face in their inventory, and dresses
+  anybody wearing no face at all. A face somebody owns is left alone, always:
+  fixing our bug must not take somebody's face off them.
+
+Checked with two faces deliberately in the kit, which is the shape that breaks
+it: the floor face still wins, a new account wears it and owns the other, and
+the person who owns the other one keeps wearing it.
+
+**Said plainly: I could not reproduce 1103 from the code.** Neither
+`floor_face()` nor `give_starting_kit` can hand out a number that is not in
+`starting_kit`, and 1103 is not in it on any database I can see. The fix above
+removes the only mechanism in our code that picks a face by position, and
+repairs the accounts it would have affected; if 1103 came from somewhere else
+(an old Style-era row, a hand-run query) this will have put those accounts
+right anyway, because they are wearing something they do not own.
+
+## Edit it opens the editor
+
+Last round's "Edit it" scrolled to the card and left it shut, which is taking
+somebody to the right place and asking them to find it again. `MadeCard` takes
+an `openEditor` prop, watched rather than read once - the cards are drawn
+before the drawer has loaded, so the card may be told to open after it already
+exists. It opens when asked and never re-opens itself, so closing it closes it.
+
+`MadeCard` is exported now, and `tools/site/made-preview.html` mounts one with
+a made-up item, which is how that was looked at.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, editing a face by
+re-uploading its asset, the clothing render, reselling limiteds, the outfit
+UI, the rest of the redesigns.
