@@ -2876,3 +2876,171 @@ six functions still saying Kubes.
 
 Next from Staw, not started: the Catalog — avatar items sold for Brix with
 their creation moved into Create. I will send the shape before building it.
+
+# Twenty-ninth round — there is an avatar system now, and it is all shared
+
+This is a big one and it is late; it covers everything since round
+twenty-eight. The short version: Kobblon has avatars, clothing, a Catalog
+and a creation page for all of it, and every piece of that is in the engine
+or in `@/lib/api` where you can take it. Migrations 0112–0123.
+
+## The rig changed shape. This is the meaning change in this round
+
+`BODY` in `@/engine` (`src/engine/clothes.ts`) is the single source for the
+body's proportions, and Staw changed them:
+
+```ts
+Head:     { w: 2.6, h: 2.4, d: 2.6 }   // and the head is a rounded cylinder
+Torso:    { w: 3.6, h: 3.6, d: 1.8 }
+LeftArm / RightArm / LeftLeg / RightLeg: { w: 1.8, h: 3.7, d: 1.8 }
+```
+
+Arms and legs are now literally the same box. **Anything you have that holds
+its own numbers for the body is now wrong**, and wrong in the way this
+project keeps meeting: nothing throws, it just renders a body that is not
+the body. Read `BODY`, do not copy it.
+
+Two things follow from that and you need both:
+
+- **The clothing templates were redrawn.** `public/templates/*.png` describe
+  the new proportions. If you ship or link the old ones, people paint shirts
+  for a body that no longer exists. `tools/site/template-sheets.html` draws
+  them from `templateFor`, so there is no hand-kept file to forget.
+- **`CARD_MARK` is `k3`.** Every drawn card made against the old rig is
+  stale. `cardIsCurrent(path)` from `@/lib/preview` is the test; anything it
+  refuses should be redrawn the next time its owner opens it. If you draw
+  cards, read the mark from the export rather than holding your own copy —
+  a check with its own copy keeps passing after somebody bumps one of the
+  two.
+
+## What is new in the engine
+
+```ts
+import {
+  K6, K6_PARTS, K6_POINTS, K6_FACE_SIZE, loadK6Source, forgetK6Source,
+  fitToSocket, blockify, headshot, PLACES,
+  BODY, COVERS, templateFor, wrapToTemplate, drawTemplate, PIXELS_PER_STON,
+} from '@/engine'
+```
+
+- **`K6`** is one avatar: `wear(point, object)`, `takeOff(point)`,
+  `setFace(texture)`, `dress('shirt' | 'trousers', texture)`,
+  `stick(texture)` for a t-decal, `paint(colours)`.
+- **`fitToSocket(model, point)`** — new this round, and you want it.
+  An uploaded accessory is modelled at any size **and around any origin**.
+  Scaling alone was what we had, and it scales the offset too: a bicorne
+  came out correctly sized, correctly parented to the head socket, and a
+  full arm's length to the right of the body. This scales, re-measures,
+  centres on the socket and seats the thing against the part. Call it before
+  `wear`; do not write your own.
+- **`stick`** now covers the torso's whole front face and stretches the
+  picture to it. It used to keep the picture's aspect, which made a t-decal
+  a sticker on a shirt. Staw's correction: a t-decal *is* the torso front.
+- **`headshot(fov, room)`** returns the camera for a profile picture,
+  framed off the head's place in the body table so a hat does not move it.
+  Returned, not applied — three products want this shot and none of them
+  should invent their own.
+- **`blockify(root)`** replaces each skinned mesh with a rounded box (the
+  head with a rounded cylinder) and binds every vertex to one bone read from
+  *that mesh's own skeleton*. It runs on the clone, never on the loaded
+  source.
+
+Pass the **real** mesh format into `loadMesh` and `wearTexture` wherever you
+have the filename. `formatOf` is a fallback: a signed URL hides the
+extension behind a query string, so every OBJ sniffs as glTF and its texture
+comes out upside down. That was a live bug here.
+
+## The clothing system
+
+Shirts and trousers are a picture painted into a template, exactly like the
+place this all comes from. `templateFor(kind)` gives the region table,
+`wrapToTemplate` writes a second UV channel (`uv1`) onto a part and leaves
+the model's own `uv` alone, and the material reads `map.channel = 1`. The
+regions are laid out from `BODY`, so the template and the wrap cannot
+disagree.
+
+`COVERS` says what a kind covers: a shirt is torso and both arms, trousers
+are torso and both legs.
+
+Faces are a picture on a plane at the head's front socket. T-decals are a
+picture on a plane at the torso's front socket, over whatever clothing is
+there — which is why they are planes and not another texture fighting for
+the body's one map.
+
+## The database — 0112 to 0123
+
+Apply in order. 0115 onwards have not been applied to production as of
+writing; Staw has the list.
+
+- **0112** `avatar_items`, `avatar_owned`, `avatar_worn`, `profiles.body`,
+  `avatar_rules()`. RLS with **no insert or update policies at all** — every
+  write goes through a function.
+- **0113** `create_avatar_item`, `list_avatar_item`, `buy_avatar_item`,
+  `wear_avatar_item`, `take_off_slot`, `set_body_colours`.
+- **0114** readers: `avatar_of`, `my_avatar_items`, `avatar_shelf`,
+  `my_made_avatar_items`. The `catalog` bucket (public).
+- **0115** faces moved out of Style into the Catalog. **Style is gone from
+  the website.** Its tables still exist and still hold their rows; one
+  migration drops them when Staw is sure. If you read them, stop.
+- **0116** `image_bucket` on the readers, because a face's picture is in
+  `faces` and a new item's is in `catalog`. **Two paths are only the same
+  kind of thing if they are in the same bucket** — we broke every card on
+  the site once by coalescing a public path with a private one.
+- **0117** the shelf takes `made_by` and `sort_by`; `edit_avatar_item`,
+  `archive_avatar_item`, `delete_avatar_item`.
+- **0118** a maker owns what they made, with a backfill. Without it Kobblon
+  could not buy its own faces and `buy_avatar_item` refused with "That is
+  already yours".
+- **0119/0120** `preview_path` and every reader handing it back.
+- **0121** `sells_until` (limiteds), price optional at creation, price given
+  when listing, `set_limited`.
+- **0122** the readers hand back `sells_until`. Not `avatar_of`: what
+  somebody wears does not stop being worn when the shop stops selling it.
+- **0123** `set_body_colours` refuses a body whose six parts are all one
+  colour. Staw's rule, and it is a rule, not a page's opinion.
+
+Client calls for all of it are in `@/lib/api`: `avatarOf`, `avatarShelf`,
+`myAvatarItems`, `myMadeAvatarItems`, `buyAvatarItem`, `wearAvatarItem`,
+`takeOffSlot`, `setBodyColours`, `createAvatarItem`,
+`listAvatarItem(id, listed, price?)`, `setLimited`, `editAvatarItem`,
+`archiveAvatarItem`, `deleteAvatarItem`, `catalogUrl`, `cardFor`,
+`drawAvatarCard`, `refreshPortrait`. Use `setSupabaseClient` as always.
+
+## Two traps from this round, both the shape you already know
+
+**A migration that adds a parameter has to say goodbye to the arity it
+replaces.** 0121 gave `list_avatar_item` a third argument with a default,
+which *overloads* rather than replaces. `list_avatar_item(uuid, boolean)`
+then matched both and Postgres refused the call outright: "function
+public.list_avatar_item(unknown, boolean) is not unique". This would have
+broken listing in production. Drop the old arity by name.
+
+**A file that reads a column it did not create fails naming the column, not
+the file that was missed.** 0120 read `preview_path` on a database where
+0119 had not been applied, and the error says `column i.preview_path does
+not exist` with a hint pointing at an unrelated table. 0120 and 0122 now
+repeat the previous file's `add column if not exists`. If you write
+migrations for anything shared, do the same.
+
+## Still true, still worth repeating
+
+`cn()` joins, it does not merge. Two conflicting Tailwind classes are both
+emitted and the stylesheet's order decides. Do not pass an override and
+assume it wins.
+
+## What is not done, plainly
+
+- **The Catalog item page does not exist yet.** Cards do not open onto
+  anything. No cart, and the search filters are thin.
+- **2D/3D previews are half done.** Cards are drawn 2D everywhere; the
+  3D-on-the-item-page half waits on the item page.
+- `AvatarStage` has the drag/tilt/wheel handling but not the context menu
+  and switch that `MeshView` has. They should share one component and do
+  not yet.
+- The Build render for embeds is still unanswered from round twenty-eight,
+  and I am still asking you to draw it at publish time in the Workspace.
+- Still mine and still not done: `WorldDecal.picture` → `content`,
+  `worlds.community_id`, rotation as a `Vec3`, SurfaceGui, Kobblon-authored
+  insertables, the shared Configure card, Lighting as a service, the
+  Marketplace preview component, the Lua host, the six functions still
+  saying Kubes.
