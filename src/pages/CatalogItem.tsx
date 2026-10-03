@@ -37,7 +37,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
-  removeAvatarItem, avatarShelf,
+  removeAvatarItem, avatarShelf, avatarOf,
 } from '@/lib/api'
 import { avatarTag, avatarNumber } from '@/lib/kinds'
 import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
@@ -471,18 +471,37 @@ function MoreLikeThis({ item }: { item: AvatarItem }) {
  * picture flat, and go on a body only in 3D.
  */
 function ItemView({ item }: { item: AvatarItem }) {
-  const [mode, setMode] = useState<'2d' | '3d'>('2d')
-  const [model, setModel] = useState<{ mesh: string | null; skin: string | null } | null>(null)
-
-  const picture = cardFor(item)
+  const { profile } = useAuth()
 
   /*
-   * The model is fetched the first time somebody asks for 3D, not on the way
-   * in. A signed address is a request each, and most people look at the
-   * picture and leave.
+   * Three ways of looking at it, which is Staw's spec and not a flourish:
+   *
+   *   picture  - the drawn card. Flat, instant, and what a shelf shows.
+   *   body     - on a plain mannequin, so two people comparing the same
+   *              shirt are comparing the same picture.
+   *   me       - on the person looking at it, over what they already wear,
+   *              which is the only view that answers "does this suit me".
+   *
+   * `me` is offered only to somebody signed in, because there is nobody to
+   * put it on otherwise. It had regressed to a two-way switch that
+   * disappeared entirely for clothes and faces - I gated it on having a
+   * mesh, and a shirt has none.
+   */
+  const [mode, setMode] = useState<'picture' | 'body' | 'me'>('picture')
+  const [model, setModel] = useState<{ mesh: string | null; skin: string | null } | null>(null)
+
+  const flat = cardFor(item) ?? null
+
+  /** Whether it can be put on a body at all: a model, or a picture to lay on. */
+  const canRig = !!item.mesh_path || !!item.image_path
+
+  /*
+   * The model is fetched the first time somebody asks to see it worn, not on
+   * the way in. A signed address is a request each, and most people look at
+   * the picture and leave.
    */
   useEffect(() => {
-    if (mode !== '3d' || model || !item.mesh_path) return
+    if (mode === 'picture' || model || !item.mesh_path) return
     let live = true
     void (async () => {
       const [mesh, skin] = await Promise.all([
@@ -494,49 +513,81 @@ function ItemView({ item }: { item: AvatarItem }) {
     return () => { live = false }
   }, [mode, model, item.mesh_path, item.texture_path])
 
-  const look = useMemo<AvatarLook>(() => ({
-    body: MANNEQUIN,
-    pieces: [{
-      slot: item.slot,
-      kind: item.kind,
-      name: item.name,
-      imageUrl: item.mesh_path
-        ? null
-        : catalogUrl(item.image_path, item.image_bucket ?? undefined),
-      meshUrl: model?.mesh ?? null,
-      meshFormat: item.mesh_format ?? null,
-      textureUrl: model?.skin ?? null,
-      // Where its maker put it, not where the measuring did.
-      fit: item.fit ?? null,
-    }],
+  /** This item as a piece, whichever body it is going on. */
+  const asPiece = useMemo(() => ({
+    slot: item.slot,
+    kind: item.kind,
+    name: item.name,
+    imageUrl: item.mesh_path
+      ? null
+      : catalogUrl(item.image_path, item.image_bucket ?? undefined),
+    meshUrl: model?.mesh ?? null,
+    meshFormat: item.mesh_format ?? null,
+    textureUrl: model?.skin ?? null,
+    // Where its maker put it, not where the measuring did.
+    fit: item.fit ?? null,
   }), [item, model])
 
-  const ready = !item.mesh_path || !!model?.mesh
   /*
-   * Opening in 3D when there is no flat picture to open on.
-   *
-   * An accessory whose card has not been drawn yet had nothing to show, so
-   * the page drew a shirt icon in the middle of an enormous empty square -
-   * which reads as broken, and is the thing Staw saw. The model is right
-   * there and showing it is both honest and better. 2D stays the default
-   * wherever a picture exists, which is Staw's rule.
+   * The viewer's own avatar, fetched the first time they ask to see it on
+   * themselves. Their colours and everything they wear, with this item put
+   * on top - so a hat replaces the hat they have on rather than sitting
+   * beside it, which is what the slot does for free.
    */
-  const flat = picture ?? null
+  const mine = useAsync(
+    async () => (mode === 'me' && profile ? avatarOf(profile.id) : null),
+    [mode, profile?.id],
+  )
+
+  const onMe = useMemo<AvatarLook | null>(() => {
+    if (!mine.data) return null
+    const worn = mine.data
+      .filter((piece) => piece.slot && piece.slot !== item.slot && !piece.mesh_path)
+      .map((piece) => ({
+        slot: piece.slot!,
+        kind: piece.kind ?? '',
+        imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
+      }))
+    return {
+      body: mine.data[0]?.body ?? MANNEQUIN,
+      pieces: [...worn, asPiece],
+    }
+  }, [mine.data, asPiece, item.slot])
+
+  const look = useMemo<AvatarLook>(
+    () => ({ body: MANNEQUIN, pieces: [asPiece] }),
+    [asPiece],
+  )
+
+  const waiting = (!!item.mesh_path && !model?.mesh) || (mode === 'me' && mine.loading)
+
+  /*
+   * Opening on a body when there is no flat picture to open on. An accessory
+   * whose card has not been drawn had nothing to show, and a shirt icon in
+   * the middle of an enormous empty square reads as broken. 2D stays the
+   * default wherever a picture exists, which is Staw's rule.
+   */
   useEffect(() => {
-    if (!flat && item.mesh_path) setMode('3d')
-  }, [flat, item.mesh_path])
+    if (!flat && canRig) setMode('body')
+  }, [flat, canRig])
+
+  const showing = mode === 'me' ? (onMe ?? look) : look
+
+  const WAYS = [
+    { value: 'picture' as const, icon: faImage, label: 'Picture', on: !!flat },
+    { value: 'body' as const, icon: faCube, label: '3D', on: canRig },
+    { value: 'me' as const, icon: faUser, label: 'On me', on: canRig && !!profile && !profile.is_guest },
+  ].filter((one) => one.on)
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-ink-raised">
         {!item.price && <FreeCorner />}
 
-        {mode === '3d' ? (
-          ready ? (
-            <AvatarStage look={look} turning={false} handled className="h-full w-full" />
-          ) : (
-            <Skeleton className="h-full w-full" />
-          )
+        {mode !== 'picture' ? (
+          waiting
+            ? <Skeleton className="h-full w-full" />
+            : <AvatarStage look={showing} turning={false} handled className="h-full w-full" />
         ) : flat ? (
           <img
             src={flat}
@@ -545,11 +596,6 @@ function ItemView({ item }: { item: AvatarItem }) {
             className="h-full w-full select-none object-contain p-6"
           />
         ) : (
-          /*
-           * Nothing to draw at all: no card and no model. Said in words
-           * rather than as a lonely icon, because an icon in the middle of a
-           * large empty box reads as a page that failed to load.
-           */
           <p className="max-w-[18rem] px-6 text-center text-sm leading-relaxed text-muted">
             <FontAwesomeIcon icon={faShirt} className="mb-2 block text-2xl text-white/20" />
             No picture of this one yet. Its maker&rsquo;s card is drawn the next
@@ -558,26 +604,31 @@ function ItemView({ item }: { item: AvatarItem }) {
         )}
       </div>
 
-      {/* The switch `MeshView` has, in the same corner and the same shape. */}
       {/*
-        * Only when there are two things to switch between. A model with no
-        * card had a "Picture" button that showed an apology, and a picture
-        * with no model had a "3D" button that drew a bare mannequin.
+        * The three ways, in the corner `MeshView` puts its switch. A row of
+        * them rather than one cycling button: with three states a single
+        * button cannot say where it will take you.
         */}
-      {flat && item.mesh_path && (
-      <button
-        type="button"
-        aria-label={mode === '3d' ? 'Show the picture' : 'See it on a body'}
-        onClick={() => setMode(mode === '3d' ? '2d' : '3d')}
-        className={cn(
-          'absolute bottom-2 right-2 flex h-9 items-center gap-2 rounded-full px-3.5',
-          'border border-white/20 bg-ink/80 text-xs font-bold text-white/75 backdrop-blur-sm',
-          'transition-colors hover:border-brand hover:bg-brand hover:text-white',
-        )}
-      >
-        <FontAwesomeIcon icon={mode === '3d' ? faImage : faCube} />
-        <span>{mode === '3d' ? 'Picture' : '3D'}</span>
-      </button>
+      {WAYS.length > 1 && (
+        <div className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full border border-white/20 bg-ink/80 p-0.5 backdrop-blur-sm">
+          {WAYS.map((way) => (
+            <button
+              key={way.value}
+              type="button"
+              aria-pressed={mode === way.value}
+              onClick={() => setMode(way.value)}
+              className={cn(
+                'flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors',
+                mode === way.value
+                  ? 'bg-brand text-white'
+                  : 'text-white/65 hover:text-white',
+              )}
+            >
+              <FontAwesomeIcon icon={way.icon} />
+              <span>{way.label}</span>
+            </button>
+          ))}
+        </div>
       )}
     </div>
   )

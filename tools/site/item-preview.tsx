@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleCheck, faClock, faTrash, faEllipsis, faBasketShopping, faUser,
+  faImage, faCube,
 } from '@fortawesome/free-solid-svg-icons'
 import { Menu } from '@/components/ui/Menu'
 import { Card } from '@/components/ui/Card'
@@ -31,9 +32,27 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen bg-ink p-8">
     <div className="mx-auto grid w-full max-w-5xl items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <div className="overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
+      <div className="relative overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
         <div className="grid aspect-square place-items-center bg-ink-raised text-sm text-muted">
           the viewer
+        </div>
+        {/* The three ways, exactly as the page draws them. */}
+        <div className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full border border-white/20 bg-ink/80 p-0.5 backdrop-blur-sm">
+          {[
+            { label: 'Picture', icon: faImage, on: false },
+            { label: '3D', icon: faCube, on: true },
+            { label: 'On me', icon: faUser, on: false },
+          ].map((way) => (
+            <button
+              key={way.label}
+              type="button"
+              className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors ${
+                way.on ? 'bg-brand text-white' : 'text-white/65 hover:text-white'}`}
+            >
+              <FontAwesomeIcon icon={way.icon} />
+              <span>{way.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 

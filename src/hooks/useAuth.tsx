@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { claimGuestAccount, signInWithUsername, uploadAvatar } from '@/lib/api'
-import { randomAvatar } from '@/lib/avatars'
 import { clearAccountSession, rememberAccount, updateAccountSession } from '@/lib/accounts'
 import type { Profile } from '@/types/db'
 
@@ -196,9 +195,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             data: {
               username: details.username,
               display_name: details.displayName || details.username,
-              // No upload means one of the Kobby pictures, decided here so
-              // the account always has one.
-              avatar_url: details.avatarFile ? '' : randomAvatar(),
+              // Nothing. A profile picture is a shot of their own avatar
+              // now, drawn the first time they look at themselves - so an
+              // account starts without one rather than wearing somebody
+              // else's face until it notices.
+              avatar_url: '',
               birth_date: details.birthDate,
               gender: details.gender,
             },
@@ -241,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const avatarUrl = details.avatarFile
           ? await uploadAvatar(user.id, details.avatarFile)
-          : randomAvatar()
+          : null
 
         await claimGuestAccount({
           username: details.username,
