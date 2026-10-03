@@ -691,6 +691,7 @@ export default function AssetPage() {
           >
             <Avatar
               src={avatarOf({ avatar_url: asset.creator_avatar_url })}
+              personId={asset.creator_id}
               name={asset.creator_display_name}
               size="xs"
             />
@@ -868,7 +869,7 @@ export default function AssetPage() {
                 <ul className="space-y-4">
                   {reviews.data?.map((review) => (
                     <li key={review.id} className="flex gap-3">
-                      <Avatar src={avatarOf(review)} name={review.display_name} size="sm" />
+                      <Avatar src={avatarOf(review)} personId={review.user_id} name={review.display_name} size="sm" />
                       <div className="min-w-0 flex-1">
                         <p className="flex flex-wrap items-center gap-2 text-sm">
                           <Link to={`/u/${review.username}`} className="font-bold hover:underline">

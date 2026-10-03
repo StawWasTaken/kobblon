@@ -1800,6 +1800,23 @@ check('and gets its colour back when the clothing comes off',
 check('painting while dressed does not tint the clothing either',
   skinned.afterRepaint === 'ffffff', skinned.afterRepaint)
 
+// -- several accessories on one socket, which Staw asked for
+const stacked = await p.evaluate(() => window.twoOnOneSocket(30))
+
+check('two accessories can hang off one socket',
+  stacked.count === 2 && stacked.bothThere === true,
+  `${stacked.count} on the hat socket`)
+check('and both hang off the same bone, so neither is left behind walking',
+  stacked.sameParent === true && stacked.parented !== null,
+  `${stacked.parented}`)
+check('and they are in the same place, not one of them shoved aside',
+  stacked.together < 0.001, `${stacked.together.toFixed(4)} stons apart`)
+check('taking one off leaves the other on',
+  stacked.afterOneOff.count === 1 && stacked.afterOneOff.kept === true,
+  `${stacked.afterOneOff.count} left`)
+check('and emptying the slot hands back everything in it',
+  stacked.handedBack === 1, `${stacked.handedBack} handed back`)
+
 // -- fitting the same accessory twice, which is what switching one does
 const refitted = await p.evaluate(() => ({
   plain: window.fitTwice(1),

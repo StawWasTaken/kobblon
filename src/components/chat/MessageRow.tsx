@@ -76,7 +76,7 @@ export function MessageRow({
           className="shrink-0"
           aria-label={sender?.display_name ?? 'Profile'}
         >
-          <Avatar src={avatarOf(sender)} name={sender?.display_name ?? 'K'} size="xs" />
+          <Avatar src={avatarOf(sender)} personId={message.sender_id} name={sender?.display_name ?? 'K'} size="xs" />
         </Link>
       )}
 

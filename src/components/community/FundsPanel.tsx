@@ -152,6 +152,7 @@ export function FundsPanel({
               <p className="mt-2 flex items-center gap-2 text-xs text-muted">
                 <Avatar
                   src={avatarOf(roster.data?.find((m) => m.id === who))}
+                  personId={who}
                   name={roster.data?.find((m) => m.id === who)?.display_name ?? ''}
                   size="xs"
                 />

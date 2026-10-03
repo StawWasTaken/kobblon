@@ -280,7 +280,7 @@ export default function Friends() {
         <div className="flex items-center gap-3">
           {!isMe && who && (
             <Link to={profileLink(who)} className="shrink-0">
-              <Avatar src={avatarOf(who)} name={who.display_name} size="lg" className="rounded-2xl" />
+              <Avatar src={avatarOf(who)} personId={who.id} name={who.display_name} size="lg" className="rounded-2xl" />
             </Link>
           )}
           <div>

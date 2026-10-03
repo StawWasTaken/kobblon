@@ -95,7 +95,7 @@ export function PersonRow({ person, onChanged }: {
   return (
     <Card className="space-y-4 p-4">
       <div className="flex items-start gap-3">
-        <Avatar src={avatarOf(person)} name={person.display_name ?? person.username} size="sm" />
+        <Avatar src={avatarOf(person)} personId={person.id} name={person.display_name ?? person.username} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-1.5 text-sm font-bold">
             <span className="truncate">{person.display_name ?? person.username}</span>

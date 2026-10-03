@@ -84,6 +84,7 @@ export function PersonAvatar({
       >
         <Avatar
           src={avatarOf(person ?? undefined)}
+          personId={person?.id}
           name={person?.display_name ?? '?'}
           size="md"
           className={cn('h-full w-full', square ? 'rounded-xl' : 'rounded-full')}

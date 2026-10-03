@@ -135,7 +135,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
                   to={profileLink(profile)}
                   className="hidden items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-onbrand/15 sm:flex"
                 >
-                <Avatar src={avatarOf(profile)} name={profile.display_name} size="xs" />
+                <Avatar src={avatarOf(profile)} personId={profile.id} name={profile.display_name} size="xs" />
                   <span className="max-w-24 truncate text-sm font-bold text-onbrand">
                     {profile.display_name}
                   </span>

@@ -1,31 +1,27 @@
-import { asset } from './asset'
-
 /*
- * There are no stock pictures any more.
+ * There are no stock pictures any more, and that now includes guests.
  *
  * Eight Kobby pictures were handed out at random so that an account always
- * had something. A profile picture is now a shot of the person's own avatar,
- * drawn from the body they are wearing - so a stock picture is not a
- * fallback, it is a different person's face on their account until they
- * notice. Nothing has one, and `avatar_url` being empty is the ordinary
- * state rather than a gap to fill.
+ * had something, and a ninth - `guest-avatar.png` - stood in for everybody
+ * passing through. Both are gone for the same reason: a profile picture is a
+ * shot of the person's own avatar, so a stock picture is not a fallback, it
+ * is a different face sitting on their account until they notice. A guest
+ * has a real avatar - white body, the guest shirt, trousers and cap - and
+ * showing a stock face instead was showing somebody who does not exist.
+ *
+ * Nothing has one, `avatar_url` being empty is the ordinary state, and what
+ * fills it is `useHeadshot`, which draws the avatar there and then.
  */
-
-/** Guests all wear the same face, so it is obvious who is passing through. */
-export const guestAvatar = asset('/brand/guest-avatar.png')
 
 /**
- * The picture to show for somebody.
+ * The picture stored for somebody, if there is one.
  *
- * Whatever is stored, which is now a drawing of their own avatar. A guest
- * who has not had one drawn yet falls back to the guest face rather than to
- * nothing - but a guest who has one keeps it, because a guest has a real
- * avatar now and hiding it would be showing a face that is not theirs.
+ * Null is not a gap to paper over here - `Avatar` takes that null and draws
+ * the person instead, which is the whole of Staw's "if theres no pfp then
+ * the avatar must render IMMEDIATELY".
  */
 export function avatarOf(
-  person?: { avatar_url?: string | null; is_guest?: boolean | null } | null,
+  person?: { avatar_url?: string | null } | null,
 ): string | null {
-  if (!person) return null
-  if (person.avatar_url) return person.avatar_url
-  return person.is_guest ? guestAvatar : null
+  return person?.avatar_url || null
 }

@@ -245,7 +245,7 @@ export class K6 {
 
   /** The bone for each slot, found once, and what is hanging on each. */
   private sockets = new Map<K6Point, THREE.Object3D>()
-  private worn = new Map<K6Point, THREE.Object3D>()
+  private worn = new Map<K6Point, THREE.Object3D[]>()
   private face: THREE.Mesh | null = null
   private decal: THREE.Mesh | null = null
   /** Which parts have been given template coordinates, so it is done once. */
@@ -309,8 +309,13 @@ export class K6 {
   }
 
   /**
-   * Puts something on. Whatever was in that slot comes off first, because a
-   * slot holds one thing - two hats is a bug, not a style.
+   * Puts something on, on its own: whatever was hanging there comes off.
+   *
+   * Two hats was a bug for a year and is a style now - Staw asked for it -
+   * but a socket that *replaces* is still what most callers want, so that
+   * stayed the plain verb and adding got its own. A shirt, a face and a
+   * haircut can only ever be one, and nothing should have to remember to
+   * clear first to get that.
    *
    * The object is taken as it is and not scaled: a Catalog item is modelled
    * to fit K6, and an avatar that quietly resizes what it is given is an
@@ -321,21 +326,54 @@ export class K6 {
     if (!socket) return
     this.takeOff(point)
     socket.add(thing)
-    this.worn.set(point, thing)
+    this.worn.set(point, [thing])
   }
 
-  /** Takes off whatever is in a slot, and hands it back so a caller can free it. */
-  takeOff(point: K6Point): THREE.Object3D | null {
-    const had = this.worn.get(point) ?? null
-    if (had) {
-      had.removeFromParent()
-      this.worn.delete(point)
-    }
+  /**
+   * Puts something on **beside** what is already there.
+   *
+   * The same socket, so both are measured and seated the same way and both
+   * follow the bone. Two hats overlap, which is exactly what was asked for:
+   * "even if itll look ugly, its possible".
+   */
+  wearAlso(point: K6Point, thing: THREE.Object3D) {
+    const socket = this.sockets.get(point)
+    if (!socket) return
+    socket.add(thing)
+    this.worn.set(point, [...(this.worn.get(point) ?? []), thing])
+  }
+
+  /**
+   * Takes off everything in a slot, and hands it all back so a caller can
+   * free it.
+   *
+   * An array rather than one object, and it returns them all rather than the
+   * first: a caller that frees what it is given would otherwise leak every
+   * hat but one, which is the kind of leak nobody sees until a page has been
+   * open an hour.
+   */
+  takeOff(point: K6Point): THREE.Object3D[] {
+    const had = this.worn.get(point) ?? []
+    for (const one of had) one.removeFromParent()
+    this.worn.delete(point)
     return had
   }
 
+  /** Takes off one particular thing, wherever it is hanging. */
+  takeOffOne(thing: THREE.Object3D): boolean {
+    for (const [point, things] of this.worn) {
+      if (!things.includes(thing)) continue
+      thing.removeFromParent()
+      const left = things.filter((one) => one !== thing)
+      if (left.length) this.worn.set(point, left)
+      else this.worn.delete(point)
+      return true
+    }
+    return false
+  }
+
   /** What is in each slot, for anybody who needs to know without guessing. */
-  wearing(): ReadonlyMap<K6Point, THREE.Object3D> {
+  wearing(): ReadonlyMap<K6Point, readonly THREE.Object3D[]> {
     return this.worn
   }
 

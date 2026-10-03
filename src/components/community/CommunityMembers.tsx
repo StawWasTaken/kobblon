@@ -61,7 +61,7 @@ export function CommunityMembers({
                   key={person.id}
                   className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
                 >
-                  <Avatar src={avatarOf(person)} name={person.display_name} size="md" />
+                  <Avatar src={avatarOf(person)} personId={person.id} name={person.display_name} size="md" />
                   <div className="min-w-0 flex-1">
                     <Link to={profileLink(person)} className="block truncate font-bold hover:underline">
                       {person.display_name}
@@ -107,7 +107,7 @@ export function CommunityMembers({
                   className="flex flex-wrap items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
                 >
                   <Link to={profileLink(member)} className="shrink-0">
-                    <Avatar src={avatarOf(member)} name={member.display_name} size="md" />
+                    <Avatar src={avatarOf(member)} personId={member.id} name={member.display_name} size="md" />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <Link

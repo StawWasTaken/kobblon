@@ -210,7 +210,19 @@ export default function CreateAvatarItems() {
   )
 
   const verified = !!profile && (profile.is_verified || profile.is_admin)
-  const allowed = !rule || (!rule.needs_verified || verified) && !rule.kobblon_only
+  /*
+   * Kobblon's own kinds are Kobblon's to make, and Kobblon was being refused
+   * by its own page: `!rule.kobblon_only` with nothing after it meant faces
+   * were shut to everybody, the house included, so the form sat there
+   * saying "Only Kobblon makes those" to Kobblon.
+   *
+   * The server has said `kobblon_only and not is_admin` since 0113 and was
+   * right the whole time - this is the page disagreeing with it, which is
+   * the same shape as the trousers rule last week. The server still has the
+   * final say; a page is a suggestion.
+   */
+  const allowed = !rule
+    || ((!rule.needs_verified || verified) && (!rule.kobblon_only || !!profile?.is_admin))
   const isModel = kind === 'accessory' || kind === 'hair'
   const chosen = KINDS.find((one) => one.kind === kind)
 

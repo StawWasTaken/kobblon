@@ -25,7 +25,7 @@ export function SafetyNote({
   return (
     <div className={cn('rounded-xl border border-ink-line bg-ink-raised p-3', className)}>
       <Link to={profileLink(person)} className="flex items-center gap-2">
-        <Avatar src={avatarOf(person)} name={person.display_name} size="sm" />
+        <Avatar src={avatarOf(person)} personId={person.id} name={person.display_name} size="sm" />
         <span className="min-w-0">
           <span className="block truncate text-sm font-bold">{person.display_name}</span>
           <span className="block truncate text-xs text-muted">@{person.username}</span>

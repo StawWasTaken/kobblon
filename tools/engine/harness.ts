@@ -324,6 +324,59 @@ Object.assign(window, {
    * second fit land in the same place as the first", because the broken
    * version passes the first question.
    */
+  /**
+   * Several things on one socket, which the database now allows.
+   *
+   * The check is not "does a hat go on" - the broken version passes that.
+   * It is **"is the first one still there after the second"**, plus that
+   * both are parented to the same bone, because a second hat that replaces
+   * the first and a second hat that is left behind when the body walks are
+   * two different ways of losing it and both draw correctly standing still.
+   */
+  async twoOnOneSocket(steps = 0) {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+
+    const make = () => new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.4, 0.4),
+      new THREE.MeshBasicMaterial(),
+    )
+    const first = make()
+    const second = make()
+
+    body.wear('hat', first)
+    body.wearAlso('hat', second)
+
+    const scene = new THREE.Scene()
+    scene.add(body.object)
+    if (steps > 0) {
+      body.play('walk', 0)
+      for (let i = 0; i < steps; i += 1) body.update(1 / 60)
+    }
+    scene.updateMatrixWorld(true)
+
+    const onSocket = body.wearing().get('hat') ?? []
+    const answer = {
+      count: onSocket.length,
+      bothThere: onSocket.includes(first) && onSocket.includes(second),
+      sameParent: first.parent === second.parent,
+      parented: first.parent?.name ?? null,
+      together: first.getWorldPosition(new THREE.Vector3())
+        .distanceTo(second.getWorldPosition(new THREE.Vector3())),
+      // And taking one off leaves the other, which is what the cross on one
+      // row of "Wearing" does.
+      afterOneOff: (() => {
+        body.takeOffOne(first)
+        const left = body.wearing().get('hat') ?? []
+        return { count: left.length, kept: left[0] === second }
+      })(),
+      // And the slot door still empties the lot, handing all of them back so
+      // nothing is leaked.
+      handedBack: body.takeOff('hat').length,
+    }
+    body.dispose()
+    return answer
+  },
   fitTwice(grow: number) {
     const model = new THREE.Mesh(
       new THREE.BoxGeometry(10, 6, 10),

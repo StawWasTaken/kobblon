@@ -43,6 +43,12 @@ export type AvatarLook = {
   body: Record<string, string> | null
   pieces: {
     slot: string
+    /**
+     * Which item this is. A socket may hold several now, so "the hat" is no
+     * longer a name for one thing, and anything keeping something per worn
+     * piece - a signed address, a React key - keys on this.
+     */
+    itemId?: string | null
     kind: string
     name?: string | null
     /** Addresses, already resolved: this draws, it does not decide access. */
@@ -157,7 +163,10 @@ export function AvatarStage({
           // Sized and seated by the engine, so a hat sits where a hat sits
           // here, on a card and in the Workspace alike.
           fitToSocket(model, socket, piece.fit ?? null)
-          body.wear(socket, model)
+          // Beside whatever is already on that socket, not instead of it: the
+          // database allows two hats now, and a stage that replaces would
+          // draw one of them and quietly lose the other.
+          body.wearAlso(socket, model)
         }
 
         if (!wanted) return

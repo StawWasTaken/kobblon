@@ -29,12 +29,13 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  avatarOf, myAvatarItems, wearAvatarItem, takeOffSlot, setBodyColours,
+  avatarOf, myAvatarItems, wearAvatarItem, takeOffItem, setBodyColours,
   catalogUrl, assetUrl, refreshPortrait, cardFor,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
-import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
+import type { AvatarItem, AvatarPiece } from '@/types/db'
 import type { K6Part } from '@/engine'
+import { forgetHeadshot } from '@/lib/headshots'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
 import { Studio } from '@/components/avatar/Studio'
@@ -114,6 +115,7 @@ export default function MyAvatar() {
       .filter((p): p is AvatarPiece & { slot: string } => !!p.slot)
       .map((p) => ({
         slot: p.slot,
+        itemId: p.item_id,
         kind: p.kind ?? '',
         name: p.item_name,
         imageUrl: catalogUrl(p.image_path, p.image_bucket ?? undefined),
@@ -143,12 +145,15 @@ export default function MyAvatar() {
     void (async () => {
       const wanted = (worn.data ?? []).filter((p) => p.mesh_path)
       for (const piece of wanted) {
-        if (!live || !piece.slot || models[piece.slot]) continue
+        // Kept by item and not by slot. Two hats are two models, and a
+        // record keyed by "hat" holds one of them - so the second hat was
+        // drawn wearing the first one's mesh.
+        if (!live || !piece.item_id || models[piece.item_id]) continue
         const [mesh, skin] = await Promise.all([
           assetUrl(piece.mesh_path!).catch(() => null),
           piece.texture_path ? assetUrl(piece.texture_path).catch(() => null) : null,
         ])
-        if (live && mesh) setModels((had) => ({ ...had, [piece.slot!]: { mesh, skin } }))
+        if (live && mesh) setModels((had) => ({ ...had, [piece.item_id!]: { mesh, skin } }))
       }
     })()
     return () => { live = false }
@@ -157,7 +162,7 @@ export default function MyAvatar() {
   const dressed = useMemo<AvatarLook>(() => ({
     body: look.body,
     pieces: look.pieces.map((piece) => {
-      const model = models[piece.slot]
+      const model = piece.itemId ? models[piece.itemId] : undefined
       return model ? { ...piece, meshUrl: model.mesh, textureUrl: model.skin } : piece
     }),
   }), [look, models])
@@ -194,6 +199,14 @@ export default function MyAvatar() {
    */
   const takePortrait = async () => {
     if (!profile) return
+
+    /*
+     * Whatever was drawn for them in this browser is wrong from this moment
+     * on - it is the face from before they put the hat on. Forgotten here so
+     * the next picture of them draws again, which matters most for the
+     * account that has nothing stored at all and is being drawn on sight.
+     */
+    forgetHeadshot(profile.id)
 
     /*
      * The picture is taken from what the database says they are wearing, not
@@ -246,18 +259,30 @@ export default function MyAvatar() {
      * wrong; this one now matches the rule exactly, and the server still has
      * the final say because a page is a suggestion.
      */
-    if (readsAsBare(next) && !onNow.has('trousers')) {
+    if (readsAsBare(next) && !slotsOn.has('trousers')) {
       say('One colour from head to foot reads as wearing nothing. Put trousers on first, or keep a part different.', 'error')
       return
     }
     void after('paint', () => setBodyColours(next))
   }
 
-  const onNow = useMemo(() => {
-    const by = new Map<string, string>()
-    for (const piece of worn.data ?? []) if (piece.slot && piece.item_id) by.set(piece.slot, piece.item_id)
-    return by
-  }, [worn.data])
+  /*
+   * What is on, by item rather than by slot.
+   *
+   * It was a map of slot to item, which said what one slot held - and a
+   * socket holds as many as somebody likes now, so that map answered the
+   * wrong question and would have shown one of two hats as off while it was
+   * on. The slots are kept separately for the one thing that is still about
+   * slots: whether trousers are on.
+   */
+  const onNow = useMemo(
+    () => new Set((worn.data ?? []).map((piece) => piece.item_id).filter(Boolean) as string[]),
+    [worn.data],
+  )
+  const slotsOn = useMemo(
+    () => new Set((worn.data ?? []).map((piece) => piece.slot).filter(Boolean) as string[]),
+    [worn.data],
+  )
 
   const shelf = (owned.data ?? []).filter((item) => DRAWER_OF[item.kind] === drawer)
 
@@ -304,16 +329,19 @@ export default function MyAvatar() {
               <p className="text-sm text-muted">Nothing yet.</p>
             ) : (
               <ul className="space-y-1.5">
-                {(worn.data ?? []).filter((p) => p.slot).map((piece) => (
-                  <li key={piece.slot} className="flex items-center gap-2 text-sm">
+                {/* Keyed by the item, because two hats are two rows and a
+                    key of "hat" would make them one. The cross takes that
+                    one off rather than emptying the socket. */}
+                {(worn.data ?? []).filter((p) => p.slot && p.item_id).map((piece) => (
+                  <li key={piece.item_id} className="flex items-center gap-2 text-sm">
                     <span className="min-w-0 flex-1 truncate">{piece.item_name}</span>
                     <Button
                       size="sm"
                       variant="ghost"
-                      loading={busy === `off:${piece.slot}`}
+                      loading={busy === `off:${piece.item_id}`}
                       onClick={() => void after(
-                        `off:${piece.slot}`,
-                        () => takeOffSlot(piece.slot as AvatarSlot),
+                        `off:${piece.item_id}`,
+                        () => takeOffItem(piece.item_id!),
                       )}
                     >
                       <FontAwesomeIcon icon={faXmark} />
@@ -424,12 +452,12 @@ export default function MyAvatar() {
                 <WornTile
                   key={item.id}
                   item={item}
-                  on={onNow.get(item.slot) === item.id}
+                  on={onNow.has(item.id)}
                   busy={busy === `wear:${item.id}`}
                   onToggle={() => void after(
                     `wear:${item.id}`,
-                    () => (onNow.get(item.slot) === item.id
-                      ? takeOffSlot(item.slot)
+                    () => (onNow.has(item.id)
+                      ? takeOffItem(item.id)
                       : wearAvatarItem(item.id)),
                   )}
                 />

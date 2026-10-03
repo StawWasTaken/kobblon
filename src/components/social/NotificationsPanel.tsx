@@ -102,7 +102,7 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
       )}
 
       <span className="relative shrink-0">
-        <Avatar src={avatarOf(n.actor)} name={n.actor?.display_name ?? 'K'} size="md" />
+        <Avatar src={avatarOf(n.actor)} personId={n.actor_id} name={n.actor?.display_name ?? 'K'} size="md" />
         <span
           className={cn(
             'absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full text-[10px] ring-2 ring-ink-card',

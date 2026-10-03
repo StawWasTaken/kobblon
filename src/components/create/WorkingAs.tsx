@@ -89,7 +89,7 @@ export function WorkingAsMenu() {
         {target ? (
           <Emblem src={target.icon_url} name={target.name} className="h-8 w-8 text-[11px]" />
         ) : (
-          <Avatar src={avatarOf(profile)} name={profile.display_name} size="sm" className="rounded-lg" />
+          <Avatar src={avatarOf(profile)} personId={profile.id} name={profile.display_name} size="sm" className="rounded-lg" />
         )}
 
         <span className="min-w-0 flex-1">
@@ -118,7 +118,7 @@ export function WorkingAsMenu() {
             onClick={() => { setTarget(null); setOpen(false) }}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-ink-hover"
           >
-            <Avatar src={avatarOf(profile)} name={profile.display_name} size="xs" className="rounded-md" />
+            <Avatar src={avatarOf(profile)} personId={profile.id} name={profile.display_name} size="xs" className="rounded-md" />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold">
               {profile.display_name}
             </span>

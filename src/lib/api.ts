@@ -2979,6 +2979,19 @@ export async function takeOffSlot(slot: AvatarSlot) {
   unwrap(await supabase.rpc('take_off_slot', { which: slot }))
 }
 
+/**
+ * Takes off one particular thing.
+ *
+ * The door to use now that a socket may hold several: with two hats on,
+ * "take off the hat slot" names both of them, and a cross beside one row
+ * means that row. `takeOffSlot` is still right for emptying a whole slot on
+ * purpose, and keeps every rule - the guest lock, the face floor - because
+ * it goes through this one per row.
+ */
+export async function takeOffItem(id: string) {
+  unwrap(await supabase.rpc('take_off_item', { target: id }))
+}
+
 /** Null puts every part back to the colour the engine starts with. */
 export async function setBodyColours(colours: Record<string, string> | null) {
   unwrap(await supabase.rpc('set_body_colours', { colours }))

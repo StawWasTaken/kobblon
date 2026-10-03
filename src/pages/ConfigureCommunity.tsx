@@ -562,7 +562,7 @@ function MembersSection({
                 key={person.id}
                 className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
               >
-                <Avatar src={avatarOf(person)} name={person.display_name} size="md" />
+                <Avatar src={avatarOf(person)} personId={person.id} name={person.display_name} size="md" />
                 <div className="min-w-0 flex-1">
                   <Link to={profileLink(person)} className="block truncate font-bold hover:underline">
                     {person.display_name}

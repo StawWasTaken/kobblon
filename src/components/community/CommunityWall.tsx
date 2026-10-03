@@ -140,6 +140,7 @@ export function CommunityWall({
               <Link to={profileLink(authorOf(post))} className="shrink-0">
                 <Avatar
                   src={avatarOf(authorOf(post))}
+                  personId={post.author_id}
                   name={post.author_display_name}
                   size="lg"
                   className="rounded-xl"

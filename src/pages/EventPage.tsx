@@ -191,6 +191,7 @@ export default function EventPage() {
                     <Link to={profileLink(person)}>
                       <Avatar
                         src={avatarOf(person)}
+                        personId={person.user_id}
                         name={person.display_name}
                         size="md"
                         className="rounded-xl"

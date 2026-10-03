@@ -153,9 +153,8 @@ export function Announcements({
                   username: post.author_username, content_id: post.author_content_id,
                 })} className="shrink-0">
                   <Avatar
-                    src={avatarOf({
-                      avatar_url: post.author_avatar_url, is_guest: post.author_is_guest,
-                    })}
+                    src={avatarOf({ avatar_url: post.author_avatar_url })}
+                    personId={post.author_id}
                     name={post.author_display_name}
                     size="md"
                     className="rounded-xl"

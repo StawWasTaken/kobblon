@@ -138,7 +138,9 @@ export async function drawPortrait(
       // And where its maker put it. Drawing it where the measuring put it
       // is drawing a different hat from the one on the avatar.
       fitToSocket(model, socket, piece.fit ?? null)
-      body.wear(socket, model)
+      // Beside, not instead of - the same reason as the stage. A portrait
+      // that drops the second hat is a portrait of somebody else.
+      body.wearAlso(socket, model)
     }
 
     const scene = new THREE.Scene()

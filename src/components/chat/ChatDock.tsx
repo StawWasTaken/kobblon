@@ -228,7 +228,7 @@ function Window({
                   to={profileLink(member)}
                   className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-ink-hover"
                 >
-                  <Avatar src={avatarOf(member)} name={member.display_name} size="sm" />
+                  <Avatar src={avatarOf(member)} personId={member.id} name={member.display_name} size="sm" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold">{member.display_name}</span>
                     <LivePresenceLabel person={member} />

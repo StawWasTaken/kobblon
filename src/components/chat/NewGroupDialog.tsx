@@ -120,7 +120,7 @@ export function NewGroupDialog({
               aria-pressed={on}
               className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-ink-hover"
             >
-              <Avatar src={avatarOf(friend)} name={friend.display_name} size="sm" />
+              <Avatar src={avatarOf(friend)} personId={friend.id} name={friend.display_name} size="sm" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold">{friend.display_name}</span>
                 <LivePresenceLabel person={friend} />

@@ -1,3 +1,4 @@
+import { useHeadshot } from '@/hooks/useHeadshot'
 import { cn } from '@/lib/cn'
 
 const sizes = {
@@ -13,17 +14,28 @@ export type AvatarSize = keyof typeof sizes
 export function Avatar({
   src,
   name,
+  personId,
   size = 'md',
   className,
   style,
 }: {
   src?: string | null
   name: string
+  /**
+   * Whose face this is.
+   *
+   * With it and nothing stored, their avatar is drawn and appears here -
+   * which is every new account and every guest, who have a dressed avatar
+   * and no picture of it. Without it, initials, which is still right for
+   * the places that have a name and no person behind it.
+   */
+  personId?: string | null
   size?: AvatarSize
   className?: string
   style?: React.CSSProperties
 }) {
   const initials = name.slice(0, 2).toUpperCase()
+  const picture = useHeadshot(personId, src)
   return (
     <span
       className={cn(
@@ -34,7 +46,7 @@ export function Avatar({
       style={style}
       aria-hidden="true"
     >
-      {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : initials}
+      {picture ? <img src={picture} alt="" className="h-full w-full object-cover" loading="lazy" /> : initials}
     </span>
   )
 }

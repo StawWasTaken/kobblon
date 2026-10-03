@@ -446,6 +446,7 @@ export default function Settings() {
       <header className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink-line bg-ink-card p-4">
         <Avatar
           src={avatarOf(profile)}
+          personId={profile?.id}
           name={profile?.display_name ?? 'You'}
           size="lg"
           className="rounded-2xl"

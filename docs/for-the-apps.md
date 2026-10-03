@@ -3127,3 +3127,121 @@ no control. The eight-page redesign Staw named (landing, signup, home,
 profile, friends, discover, communities, settings) is on the roadmap and not
 started. Everything from round twenty-nine's "not done" list still stands
 except the Catalog item page, which exists now.
+
+# Thirty-first round — a socket holds more than one thing, and a face with nothing stored draws itself
+
+Three meaning changes in here. Two of them break a copy on your side
+silently, which is the kind this document exists for.
+
+## A slot is no longer one thing (0150)
+
+`avatar_worn`'s primary key was `(user_id, slot)` and is now
+`(user_id, item_id)`. Staw: "i want to be able to wear multiple accessories,
+even if itll look ugly, its possible". So:
+
+- **The sockets may hold several**: `hat`, `front`, `back`, `neck`, `waist`,
+  `leftHand`, `rightHand`.
+- **These still hold one**: `shirt`, `trousers`, `tdecal`, `face`, `hair` -
+  a picture laid on the body, and the head. Enforced by a partial unique
+  index, and `one_at_a_time(slot)` is the function that answers which is
+  which. Use it rather than writing the list again.
+- **Eight per socket** is the cap, and it is the renderer talking, not
+  taste: every accessory is a mesh and a texture in one WebGL context.
+  `wear_avatar_item` refuses the ninth with a message you can show as it is.
+
+What this means for you, and it is the silent part: **anything that keyed
+worn pieces by slot now drops one.** Signed addresses held in a
+`Record<slot, …>`, a React key of `piece.slot`, a map of slot to item - each
+of those shows one of two hats and loses the other without erroring. It bit
+exactly that way here, in My Avatar's mesh-signing cache. Key on `item_id`.
+
+New and changed doors:
+
+- **`take_off_item(target uuid)`** - new, and the one to use now. With two
+  hats on, "take off the hat slot" no longer names anything. It carries
+  every rule `take_off_slot` had: a guest keeps their locked kit, trousers
+  stay on a body that is one colour all over, and taking off a face puts the
+  free one back rather than leaving a hole.
+- **`take_off_slot(which)`** - still there, still exported, and now means
+  "everything in that slot". It calls `take_off_item` per row, so the rules
+  live in one place.
+- **`wear_outfit`** empties the sockets the outfit has something for before
+  it fills them. Without that, trying three outfits left somebody wearing
+  all three.
+- **`outfit_items`** got the same key change, so an outfit can save two hats.
+
+## The engine, same change (`@/engine/k6`)
+
+- **`wear(point, thing)`** is unchanged in meaning: it replaces whatever is
+  on that socket.
+- **`wearAlso(point, thing)`** is new: it hangs something beside what is
+  there. `AvatarStage` and `drawPortrait` both use it now, so a look with two
+  hats draws both.
+- **`takeOff(point)` now returns `THREE.Object3D[]`, not one object.** This
+  is a signature change and it will not compile on your side until you
+  follow it - which is the good case. The bad case would have been returning
+  the first and leaking the rest.
+- **`takeOffOne(thing)`** removes one particular object wherever it hangs.
+- **`wearing()`** hands back `ReadonlyMap<K6Point, readonly Object3D[]>`.
+
+## A face with nothing stored draws itself
+
+`guestAvatar` and `/brand/guest-avatar.png` are **gone**. `avatarOf(person)`
+now returns `person.avatar_url || null` and nothing else - no stock picture
+for guests, no stock picture for anybody. If you had the guest fallback,
+delete it.
+
+In its place, `Avatar` takes **`personId`**, and with an id and nothing
+stored it draws that person's avatar in the browser and shows it as soon as
+it is ready. New accounts and guests have a fully dressed avatar and no
+picture of it, and initials for a person whose avatar is sitting right there
+was the thing Staw was looking at.
+
+- `@/lib/headshots` is the shared piece if you want it outside a React
+  component: `askForHeadshot(id)`, `headshotFor(id)`, `watchHeadshots(fn)`,
+  `forgetHeadshot(id)`.
+- One draw per person, shared between every picture of them on the page, and
+  **one at a time** - each draw builds a WebGL context and a browser hands
+  out a handful.
+- It draws; it never writes. Writing another account's row is not something
+  a page may do. `refreshPortrait` is still what makes a picture permanent,
+  and only for the account that is looking.
+- It mounts with no providers - no auth, no router, no theme - and
+  `tools/site/face-preview.html` is the bare page that proves it. `api` is
+  imported inside the draw rather than at the top, so a panel that shows a
+  face does not pull the data layer in at import.
+
+## A guest no longer gets the Kobblon t-decal (0149)
+
+Reversing part of round thirty. `starting_kit.who` takes a third value,
+`'members'`, meaning signed-up accounts only, and TDCL-1196 is one of those.
+Guests get the face, the shirt, the trousers and the cap. Guests who already
+had the t-decal have had it taken off and un-owned by the migration itself.
+
+## Kobblon can make faces again
+
+Not a server change - the server has been right since 0113
+(`kobblon_only and not is_admin`). The create page wrote
+`&& !rule.kobblon_only` with nothing after it, so faces were shut to
+everybody including the house, and Kobblon's own form told Kobblon that only
+Kobblon makes those. If you have a maker UI, the rule is
+`!rule.kobblon_only || is_admin`. Faces stay hidden entirely from the kind
+picker for everybody else, which is what Staw asked for.
+
+## Said out loud
+
+`give_starting_kit` named the old key - `on conflict (user_id, slot)` - and
+0150 drops that key. The file applied cleanly twice and every new account
+would have failed at the door with "there is no unique or exclusion
+constraint matching the ON CONFLICT specification". It was caught by a
+behavioural check and not by applying the migration, because **applying a
+migration calls nothing**. If you change a constraint, grep every function
+body for its name.
+
+## Still not done
+
+Best friends, cancelling your own requests, the staff console's content
+review, editing a face by re-uploading its asset, the clothing render,
+reselling limiteds, the outfit UI, and the eight-page redesign. All of round
+thirty's "not done" list still stands apart from the accessory placement
+controls, which exist now.

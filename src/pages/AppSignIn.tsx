@@ -121,6 +121,7 @@ export default function AppSignIn() {
               <div className="flex items-center justify-center gap-2.5 text-sm">
                 <Avatar
                   src={avatarOf(profile)}
+                  personId={profile.id}
                   name={profile.display_name}
                   size="sm"
                   className="rounded-lg"

@@ -139,6 +139,7 @@ export default function SupportTicket() {
               ) : (
                 <Avatar
                   src={avatarOf(profile)}
+                  personId={profile?.id}
                   name={profile?.display_name ?? 'You'}
                   size="sm"
                   className="rounded-xl"
