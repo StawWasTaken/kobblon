@@ -19,16 +19,17 @@
  * different prices and different rules about who may make one, and a single
  * shop selling both would be a filter nobody can name.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faMagnifyingGlass, faPlus, faCircleCheck, faClock,
-  faBasketShopping, faCheck,
+  faBasketShopping, faCheck, faStar, faSliders,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
+import { Choices } from '@/components/ui/Choices'
 import { Select } from '@/components/ui/Select'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -37,7 +38,10 @@ import { FreeCorner } from '@/components/brand/FreeBadge'
 import { Verified, isVerified } from '@/components/brand/Verified'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { avatarShelf, buyAvatarItem, buyAvatarItems, wearAvatarItem, cardFor } from '@/lib/api'
+import {
+  avatarShelf, buyAvatarItem, buyAvatarItems, wearAvatarItem, cardFor,
+  myFavouriteAvatarItems,
+} from '@/lib/api'
 import { useBasket, putInBasket, takeOutOfBasket, emptyBasket } from '@/hooks/useBasket'
 import { BasketDialog } from '@/components/catalog/BasketDialog'
 import type { ShelfOrder } from '@/lib/api'
@@ -76,6 +80,19 @@ export function CatalogShelf({ onTook, compact }: {
   const [maker, setMaker] = useState('')
   const [makerDraft, setMakerDraft] = useState('')
   const [order, setOrder] = useState<ShelfOrder>('newest')
+  /*
+   * The narrowing beyond a name, folded away until somebody asks for it.
+   * Four controls on a shelf that most people scroll is four controls in
+   * the way; behind a press they are there for the person who came looking
+   * for a hat under forty Brix.
+   */
+  const [showFilters, setShowFilters] = useState(false)
+  const [least, setLeast] = useState('')
+  const [most, setMost] = useState('')
+  const [onlyLimited, setOnlyLimited] = useState(false)
+  const [onlyFree, setOnlyFree] = useState(false)
+  /** The favourites shelf is a different question, so it is a different read. */
+  const [starredOnly, setStarredOnly] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const basket = useBasket()
   const [showBasket, setShowBasket] = useState(false)
@@ -93,11 +110,22 @@ export function CatalogShelf({ onTook, compact }: {
 
   const by = maker.trim() || null
 
+  const filters = useMemo(() => ({
+    least: least.trim() === '' ? null : Math.max(0, Number(least) || 0),
+    most: most.trim() === '' ? null : Math.max(0, Number(most) || 0),
+    onlyLimited,
+    onlyFree,
+  }), [least, most, onlyLimited, onlyFree])
+
+  const narrowed = !!filters.least || !!filters.most || onlyLimited || onlyFree
+
   const things = useAsync(
-    async () => avatarShelf(
-      shelf === 'all' ? null : (shelf as AvatarKind), term, 60, by, order,
-    ),
-    [shelf, term, by, order],
+    async () => (starredOnly
+      ? myFavouriteAvatarItems()
+      : avatarShelf(
+        shelf === 'all' ? null : (shelf as AvatarKind), term, 60, by, order, filters,
+      )),
+    [shelf, term, by, order, filters, starredOnly],
   )
 
   /*
@@ -122,8 +150,41 @@ export function CatalogShelf({ onTook, compact }: {
 
   return (
     <div className="space-y-5">
+      {/*
+        * The basket and the favourites, where somebody looks for them:
+        * beside the shop rather than behind a page header, because both are
+        * things you collect while shopping and want back without leaving.
+        */}
+      {profile && !profile.is_guest && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={starredOnly ? 'primary' : 'subtle'}
+            icon={faStar}
+            onClick={() => setStarredOnly(!starredOnly)}
+            aria-pressed={starredOnly}
+          >
+            Favourites
+          </Button>
+          <Button
+            variant="subtle"
+            icon={faBasketShopping}
+            onClick={() => setShowBasket(true)}
+          >
+            Basket{basket.length ? ` (${basket.length})` : ''}
+          </Button>
+          {starredOnly && (
+            <span className="text-xs text-muted">
+              Showing what you have starred.
+            </span>
+          )}
+        </div>
+      )}
+
       {/* ------------------------------------------- who made it, and in what order */}
-      <div className="space-y-3 rounded-2xl border border-ink-line bg-ink-card p-4">
+      <div className={cn(
+        'space-y-3 rounded-2xl border border-ink-line bg-ink-card p-4',
+        starredOnly && 'pointer-events-none opacity-40',
+      )}>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wide text-muted">Made by</span>
 
@@ -202,7 +263,83 @@ export function CatalogShelf({ onTook, compact }: {
               { value: 'dearest', label: 'Dearest' },
             ]}
           />
+
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            aria-expanded={showFilters}
+            className={cn(
+              'inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors',
+              narrowed || showFilters
+                ? 'border-brand bg-brand/15 text-white'
+                : 'border-ink-line text-white/65 hover:text-white',
+            )}
+          >
+            <FontAwesomeIcon icon={faSliders} />
+            More
+            {narrowed && <span className="text-brand-bright">•</span>}
+          </button>
         </div>
+
+        {showFilters && (
+          <div className="flex flex-wrap items-end gap-3 border-t border-ink-line pt-3">
+            {/*
+              * Sized by a wrapper, not by a class on the Input.
+              *
+              * `cn` joins and does not merge, so `w-28` next to the field's
+              * own `w-full` is decided by which lands later in the
+              * stylesheet - and `w-full` won, which is why these two were
+              * the width of the card. The same trap that is written down in
+              * CLAUDE.md, in code written after reading it.
+              */}
+            <div className="w-28">
+              <Input
+                label="At least"
+                labelNote="Brix"
+                type="number"
+                min={0}
+                value={least}
+                onChange={(e) => setLeast(e.target.value)}
+              />
+            </div>
+            <div className="w-28">
+              <Input
+                label="At most"
+                labelNote="Brix"
+                type="number"
+                min={0}
+                value={most}
+                onChange={(e) => setMost(e.target.value)}
+              />
+            </div>
+            <Choices
+              label="Narrow it"
+              size="sm"
+              tone="soft"
+              value={onlyFree ? 'free' : onlyLimited ? 'limited' : 'any'}
+              onChange={(next) => {
+                setOnlyFree(next === 'free')
+                setOnlyLimited(next === 'limited')
+              }}
+              options={[
+                { value: 'any', label: 'Anything' },
+                { value: 'free', label: 'Free only' },
+                { value: 'limited', label: 'Limiteds only', icon: faClock },
+              ]}
+            />
+            {narrowed && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setLeast(''); setMost(''); setOnlyFree(false); setOnlyLimited(false)
+                }}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <Tabs

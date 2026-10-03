@@ -489,7 +489,7 @@ export async function markNotificationsRead(userId: string) {
 
 export async function submitReport(input: {
   reporterId: string
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
+  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style' | 'avatar_item'
   targetId: string
   reason: string
   details: string
@@ -2849,6 +2849,21 @@ export async function removeAvatarItem(id: string, note?: string): Promise<numbe
   })) as number
 }
 
+/**
+ * Stars something, or takes the star off. Hands back the new count, which is
+ * the server's rather than the page's guess at what its own press did.
+ */
+export async function favouriteAvatarItem(id: string, on: boolean): Promise<number> {
+  return unwrap(await supabase.rpc('favourite_avatar_item', {
+    target: id, on_off: on,
+  })) as number
+}
+
+/** Everything somebody has starred, newest first. */
+export async function myFavouriteAvatarItems(): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('my_favourite_avatar_items')) as AvatarItem[]) ?? []
+}
+
 /** What is waiting to be screened. Empty for anybody who may not screen. */
 export async function avatarReviewQueue(howMany = 50): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('avatar_review_queue', { how_many: howMany })) as AvatarItem[]) ?? []
@@ -2884,17 +2899,31 @@ export async function myMadeAvatarItems(): Promise<AvatarItem[]> {
 export type ShelfOrder = 'newest' | 'oldest' | 'cheapest' | 'dearest' | 'taken'
 
 /** The Catalog. `kind` of null is everything. */
+/** The narrowing somebody asked for beyond a name and a kind. */
+export type ShelfFilters = {
+  /** In Brix. Null either side means no bound on that side. */
+  least?: number | null
+  most?: number | null
+  onlyLimited?: boolean
+  onlyFree?: boolean
+}
+
 export async function avatarShelf(
   kind?: AvatarKind | null,
   term?: string,
   howMany = 60,
   madeBy?: string | null,
   order: ShelfOrder = 'newest',
+  filters: ShelfFilters = {},
 ): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('avatar_shelf', {
     of_kind: kind ?? null,
     term: term ?? null,
     how_many: howMany,
+    least_price: filters.least ?? null,
+    most_price: filters.most ?? null,
+    only_limited: filters.onlyLimited ?? false,
+    only_free: filters.onlyFree ?? false,
     made_by: madeBy ?? null,
     sort_by: order,
   })) as AvatarItem[]) ?? []

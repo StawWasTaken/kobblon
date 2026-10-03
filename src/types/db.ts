@@ -806,6 +806,10 @@ export type AvatarItem = {
    * closes. Null for everything that is simply on sale.
    */
   sells_until?: string | null
+  /** How many people have starred it. */
+  stars?: number
+  /** Whether the person looking has. */
+  starred?: boolean
   /**
    * How its maker placed it: `{p, r, s}`, applied on top of the automatic
    * fit. Null means untouched, which is not the same as all zeroes - it says

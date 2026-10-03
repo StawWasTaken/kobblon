@@ -18,13 +18,17 @@ import { useParams, Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faCube, faImage, faClock, faStore, faUser,
-  faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis,
+  faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis, faFlag,
+  faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { BackLink } from '@/components/ui/BackLink'
 import { Menu } from '@/components/ui/Menu'
+import { Confirm } from '@/components/ui/Confirm'
+import { ReportDialog } from '@/components/social/ReportDialog'
+import { formatCount } from '@/lib/format'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { BuyButton } from '@/components/money/BuyButton'
@@ -38,7 +42,7 @@ import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
   removeAvatarItem, avatarShelf, avatarOf,
-  mannequinFace,
+  mannequinFace, favouriteAvatarItem,
 } from '@/lib/api'
 import { avatarTag, avatarNumber } from '@/lib/kinds'
 import { MANNEQUIN_BODY } from '@/lib/mannequin'
@@ -92,6 +96,36 @@ export default function CatalogItem() {
    */
   const canRemove = !!profile?.is_admin || !!profile?.is_moderator
   const [sureRemove, setSureRemove] = useState(false)
+  const [reporting, setReporting] = useState(false)
+  /*
+   * Buying asks first. It spends Brix and cannot be undone, and the one
+   * thing worse than a slow purchase is a fast one somebody did not mean -
+   * a card with the price in it is half a second against that.
+   */
+  const [confirming, setConfirming] = useState(false)
+  /*
+   * The star, held here so a press shows immediately and the count comes
+   * from the server's answer rather than from this page adding one to a
+   * number it was given a minute ago.
+   */
+  const [stars, setStars] = useState(0)
+  const [starred, setStarred] = useState(false)
+  useEffect(() => {
+    setStars(item?.stars ?? 0)
+    setStarred(!!item?.starred)
+  }, [item?.id, item?.stars, item?.starred])
+
+  const star = async () => {
+    if (!item || !profile) return
+    const want = !starred
+    try {
+      setStarred(want)
+      setStars(await favouriteAvatarItem(item.id, want))
+    } catch (error) {
+      setStarred(!want)
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    }
+  }
   const put = !!item && basket.some((one) => one.id === item.id)
   useEffect(() => { setOwned(!!item?.owned) }, [item?.id, item?.owned])
 
@@ -176,6 +210,24 @@ export default function CatalogItem() {
                   </span>
                 )}
 
+                <button
+                  type="button"
+                  aria-label={starred ? 'Take the star off' : 'Star it'}
+                  aria-pressed={starred}
+                  disabled={!profile || profile.is_guest}
+                  onClick={() => void star()}
+                  className={cn(
+                    'inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-bold transition-colors',
+                    'disabled:cursor-not-allowed disabled:opacity-40',
+                    starred
+                      ? 'border-amber-400/50 bg-amber-400/15 text-amber-300'
+                      : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
+                  )}
+                >
+                  <FontAwesomeIcon icon={faStar} />
+                  {stars > 0 && <span>{formatCount(stars)}</span>}
+                </button>
+
                 {/* Everything that is not buying it. */}
                 <Menu
                   label="More"
@@ -188,6 +240,7 @@ export default function CatalogItem() {
                   items={[
                     ...(owned ? [{ label: 'Wear it on my avatar', icon: faUser, to: '/avatar' }] : []),
                     { label: 'See who made it', icon: faUser, to: `/u/${item.creator_username}` },
+                    { label: 'Report it', icon: faFlag, onSelect: () => setReporting(true) },
                     ...(canRemove ? [{
                       label: sureRemove ? 'Really take it down' : 'Take it down',
                       icon: faTrash,
@@ -289,7 +342,9 @@ export default function CatalogItem() {
                   freeLabel="Take it"
                   loading={busy}
                   disabled={!profile || profile.is_guest || !item.is_public}
-                  onClick={() => void take()}
+                  onClick={() => (owned || item.price <= 0
+                    ? void take()
+                    : setConfirming(true))}
                 />
               )}
 
@@ -380,6 +435,35 @@ export default function CatalogItem() {
       </div>
 
       <MoreLikeThis item={item} />
+
+      {/*
+        * Asked before the Brix move, and only when there are Brix to move:
+        * confirming a free thing is a dialog that teaches somebody to press
+        * through dialogs.
+        */}
+      <Confirm
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={async () => { setConfirming(false); await take() }}
+        title={`Buy ${item.name}?`}
+        lead={`It costs ${item.price} Brix, and it is yours to keep.`}
+        points={[
+          `You have ${formatCount(profile?.pixels ?? 0)} Brix.`,
+          ...(item.sells_until && !closed
+            ? [`A limited: it stops selling on ${new Date(item.sells_until).toLocaleDateString()}.`]
+            : []),
+        ]}
+        confirmText="Buy it"
+        tone="primary"
+      />
+
+      <ReportDialog
+        open={reporting}
+        onClose={() => setReporting(false)}
+        targetType="avatar_item"
+        targetId={item.id}
+        targetName={item.name}
+      />
     </Page>
   )
 }

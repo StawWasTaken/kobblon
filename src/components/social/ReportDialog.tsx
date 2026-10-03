@@ -22,7 +22,7 @@ export function ReportDialog({
 }: {
   open: boolean
   onClose: () => void
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
+  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style' | 'avatar_item'
   targetId: string
   targetName: string
 }) {
