@@ -3,7 +3,7 @@ import {
   canPreview, previewOf, previewOfUrl, PREVIEW_TYPE, PREVIEW_EXTENSION,
   CARD_MARK, cardIsCurrent,
 } from './preview'
-import { drawPortrait, type PortraitLook } from './portrait'
+import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -2676,6 +2676,26 @@ export function catalogUrl(
   return supabase.storage.from(bucket || catalogBucket).getPublicUrl(path).data.publicUrl
 }
 
+/**
+ * The picture to show for something you wear.
+ *
+ * The drawn card when there is one - the body wearing it for clothes, the
+ * model for an accessory - and the thing's own picture otherwise, which is
+ * right for a face and is what everything made before cards existed has.
+ *
+ * One function because three pages and a landing rail ask this, and the day
+ * one of them forgets the fallback is the day somebody's shirt is a blank
+ * square on one page and fine on the next.
+ */
+export function cardFor(item: {
+  preview_path?: string | null
+  image_path?: string | null
+  image_bucket?: string | null
+}): string | null {
+  if (item.preview_path) return catalogUrl(item.preview_path)
+  return catalogUrl(item.image_path, item.image_bucket ?? undefined)
+}
+
 /** What each kind of avatar item costs to make, and who may make one. */
 export async function avatarRules(): Promise<AvatarRule[]> {
   return (unwrap(await supabase.rpc('avatar_rules')) as AvatarRule[]) ?? []
@@ -2775,6 +2795,41 @@ export async function listAvatarItem(id: string, listed: boolean) {
  * person may make one at all, so this passes the answer along rather than
  * checking anything first.
  */
+/** Hangs a drawn card on something you made. */
+export async function setAvatarPreview(id: string, path: string | null) {
+  unwrap(await supabase.rpc('set_avatar_preview', { target: id, picture: path }))
+}
+
+/**
+ * Draws the card for something just made, and keeps it.
+ *
+ * After the thing exists rather than before: the card is a picture of the
+ * item, and an item that failed to be made should not leave a picture of
+ * itself in a bucket. Best effort - a card that did not draw leaves the
+ * item showing its own picture, which is right for a face and merely plain
+ * for a shirt.
+ */
+export async function drawAvatarCard(
+  id: string, userId: string,
+  item: { kind: string; slot: string; imageUrl?: string | null; meshUrl?: string | null; textureUrl?: string | null },
+): Promise<string | null> {
+  const drawn = await drawItemCard(item).catch(() => null)
+  if (!drawn) return null
+
+  const path = `${userId}/card-${crypto.randomUUID()}.webp`
+  const put = await supabase.storage.from(catalogBucket)
+    .upload(path, drawn, { contentType: 'image/webp', upsert: false })
+  if (put.error) return null
+
+  try {
+    await setAvatarPreview(id, path)
+  } catch {
+    await supabase.storage.from(catalogBucket).remove([path])
+    return null
+  }
+  return path
+}
+
 export async function createAvatarItem(input: {
   kind: AvatarKind
   slot: AvatarSlot

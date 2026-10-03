@@ -30,7 +30,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarOf, myAvatarItems, wearAvatarItem, takeOffSlot, setBodyColours,
-  catalogUrl, assetUrl, refreshPortrait,
+  catalogUrl, assetUrl, refreshPortrait, cardFor,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
 import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
@@ -80,7 +80,7 @@ const PART_LABELS: Record<K6Part, string> = {
 
 export default function MyAvatar() {
   useTitle('My Avatar')
-  const { profile } = useAuth()
+  const { profile, refreshProfile } = useAuth()
   const say = useToast()
 
   const [drawer, setDrawer] = useState<Drawer>('clothing')
@@ -190,10 +190,30 @@ export default function MyAvatar() {
       textureUrl: p.texture_path ? await assetUrl(p.texture_path).catch(() => null) : null,
     })))
 
-    await refreshPortrait(profile.id, {
+    const drawn = await refreshPortrait(profile.id, {
       body: now[0]?.body ?? DEFAULT_BODY,
       pieces,
     }).catch(() => null)
+
+    /*
+     * Telling the rest of the site. The picture was being saved and nothing
+     * on screen was being told, so every avatar - the top bar, the sidebar,
+     * every comment - kept the old one until the page was reloaded. Which
+     * read as "the picture does not update", and was really "the picture
+     * updated and nobody said".
+     */
+    if (drawn) {
+      await refreshProfile().catch(() => null)
+      return
+    }
+
+    /*
+     * And when it genuinely did not draw, that is said rather than
+     * swallowed. It is cosmetic and nothing else fails because of it, but a
+     * silent failure here is exactly what sent somebody looking for a bug in
+     * the avatar.
+     */
+    say('Your picture could not be redrawn. Your avatar is saved.', 'info')
   }
 
   const paint = (which: K6Part, colour: string) => {
@@ -389,7 +409,7 @@ function WornTile({ item, on, busy, onToggle }: {
   busy: boolean
   onToggle: () => void
 }) {
-  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
+  const picture = cardFor(item)
   return (
     <button
       type="button"

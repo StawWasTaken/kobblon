@@ -27,7 +27,7 @@ import { Verified, isVerified } from '@/components/brand/Verified'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
-import { avatarShelf, buyAvatarItem, wearAvatarItem, catalogUrl } from '@/lib/api'
+import { avatarShelf, buyAvatarItem, wearAvatarItem, cardFor } from '@/lib/api'
 import type { ShelfOrder } from '@/lib/api'
 import type { AvatarItem, AvatarKind } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -240,7 +240,7 @@ function ShelfCard({ item, busy, canTake, onTake }: {
   canTake: boolean
   onTake: () => void
 }) {
-  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
+  const picture = cardFor(item)
   return (
     <div className="relative">
       {!item.price && <FreeCorner />}

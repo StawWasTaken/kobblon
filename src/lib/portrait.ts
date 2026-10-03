@@ -16,6 +16,7 @@
 import * as THREE from 'three'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
+  frameMesh, lightForLooking, lookFrom,
   type K6Part, type K6Point,
 } from '@/engine'
 
@@ -53,6 +54,15 @@ export type PortraitLook = {
 export async function drawPortrait(
   look: PortraitLook,
   avatarUrl = '/k6/k6.glb',
+  /*
+   * How much of the person is in the picture.
+   *
+   * 'head' is the profile picture. 'body' is the whole figure, which is
+   * what a card for a shirt wants - a shirt photographed as a headshot is a
+   * picture of a head with a collar in it, which is what the first version
+   * of this produced and it was useless on sight.
+   */
+  frame: 'head' | 'body' = 'head',
 ): Promise<Blob | null> {
   let renderer: THREE.WebGLRenderer | null = null
   let body: K6 | null = null
@@ -114,10 +124,21 @@ export async function drawPortrait(
     renderer.setClearColor(0x000000, 0)
     renderer.setSize(SIDE, SIDE, false)
 
-    const shot = headshot()
-    const camera = new THREE.PerspectiveCamera(shot.fov, 1, 0.1, 200)
-    camera.position.copy(shot.position)
-    camera.lookAt(shot.middle)
+    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200)
+    if (frame === 'head') {
+      const shot = headshot()
+      camera.fov = shot.fov
+      camera.position.copy(shot.position)
+      camera.lookAt(shot.middle)
+    } else {
+      const whole = new THREE.Box3().setFromObject(body.object)
+      const middle = whole.getCenter(new THREE.Vector3())
+      const reach = whole.getBoundingSphere(new THREE.Sphere()).radius
+      const away = (reach * 1.12) / Math.sin((camera.fov * Math.PI) / 360)
+      camera.position.set(middle.x, middle.y + away * 0.05, middle.z + away)
+      camera.lookAt(middle)
+    }
+    camera.updateProjectionMatrix()
     renderer.render(scene, camera)
 
     return await new Promise<Blob | null>((done) => {
@@ -129,6 +150,97 @@ export async function drawPortrait(
     for (const one of borrowed) releaseMesh(one)
     for (const one of textures) one.dispose()
     body?.dispose()
+    renderer?.dispose()
+  }
+}
+
+/**
+ * A card for something you wear, drawn the way it will be seen.
+ *
+ * Staw's rule, and the reason this exists at all: **clothes go on a body.**
+ * A shirt laid out flat is its template - a cross of panels - and nobody
+ * looking at that can tell what the shirt is. An accessory is a model and is
+ * shown as the model. A face is already a picture of itself and needs
+ * nothing drawn.
+ *
+ * The body it goes on is bare and grey on purpose: a shirt photographed on
+ * somebody's own avatar would be a card that changes when they change their
+ * skin colour, and two shirts would be unreadable side by side.
+ */
+export async function drawItemCard(item: {
+  kind: string
+  slot: string
+  imageUrl?: string | null
+  meshUrl?: string | null
+  textureUrl?: string | null
+}, avatarUrl = '/k6/k6.glb'): Promise<Blob | null> {
+  // A face is its own card. Drawing a body to show one would hide it.
+  if (item.kind === 'face') return null
+
+  const plain = {
+    Head: '#c9cedb', Torso: '#aab0c2', LeftArm: '#c9cedb',
+    RightArm: '#c9cedb', LeftLeg: '#8d95a6', RightLeg: '#8d95a6',
+  }
+
+  /*
+   * Clothes on the body, everything else on its own. An accessory worn by a
+   * grey mannequin is a picture of a mannequin: the hat is a tenth of it,
+   * and twenty of those in a grid are twenty identical grey people.
+   */
+  const onBody = item.kind === 'shirt' || item.kind === 'trousers' || item.kind === 'tdecal'
+
+  if (onBody) {
+    return drawPortrait(
+      { body: plain, pieces: [{ slot: item.slot, imageUrl: item.imageUrl }] },
+      avatarUrl,
+      'body',
+    )
+  }
+
+  if (!item.meshUrl) return null
+  return drawModelCard(item.meshUrl, item.textureUrl ?? null)
+}
+
+/** A model on nothing, framed to fill the card. */
+async function drawModelCard(meshUrl: string, textureUrl: string | null): Promise<Blob | null> {
+  let renderer: THREE.WebGLRenderer | null = null
+  let model: THREE.Object3D | null = null
+  const textures: THREE.Texture[] = []
+  try {
+    model = await loadMesh(meshUrl, formatOf(meshUrl))
+    if (textureUrl) {
+      const skin = await new THREE.TextureLoader().loadAsync(textureUrl).catch(() => null)
+      if (skin) {
+        textures.push(skin)
+        wearTexture(model, skin, formatOf(meshUrl))
+      }
+    }
+
+    const scene = new THREE.Scene()
+    scene.add(model)
+    lightForLooking(scene)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = SIDE
+    canvas.height = SIDE
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+    renderer.setClearColor(0x000000, 0)
+    renderer.setSize(SIDE, SIDE, false)
+
+    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200)
+    const { middle, away } = frameMesh(model, camera)
+    camera.position.copy(lookFrom(middle, away))
+    camera.lookAt(middle)
+    renderer.render(scene, camera)
+
+    return await new Promise<Blob | null>((done) => {
+      canvas.toBlob(done, 'image/webp', 0.9)
+    })
+  } catch {
+    return null
+  } finally {
+    if (model) releaseMesh(model)
+    for (const one of textures) one.dispose()
     renderer?.dispose()
   }
 }

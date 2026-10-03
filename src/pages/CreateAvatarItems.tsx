@@ -32,7 +32,7 @@ import { useTitle } from '@/hooks/useTitle'
 import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
   uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
-  archiveAvatarItem, deleteAvatarItem,
+  archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -139,7 +139,7 @@ export default function CreateAvatarItems() {
         throw new Error('Choose one of your models first.')
       }
 
-      await createAvatarItem({
+      const newId = await createAvatarItem({
         kind,
         slot: isModel ? slot : (kind as AvatarSlot),
         name,
@@ -148,6 +148,26 @@ export default function CreateAvatarItems() {
         imagePath,
         meshId: isModel ? meshId : null,
       })
+
+      /*
+       * The card, drawn now while everything it needs is in hand. Clothes go
+       * on a body, because a shirt laid out flat is its template and nobody
+       * can tell what it is; an accessory is shown as the model; a face is
+       * already a picture of itself.
+       *
+       * Best effort and after the item exists: a thing that failed to be
+       * made should not leave a picture of itself behind, and an item whose
+       * card did not draw shows its own picture instead.
+       */
+      const mesh = isModel
+        ? (meshes.data ?? []).find((one) => one.id === meshId)
+        : undefined
+      void drawAvatarCard(newId, profile.id, {
+        kind,
+        slot: isModel ? slot : kind,
+        imageUrl: imagePath ? catalogUrl(imagePath) : null,
+        meshUrl: mesh ? await assetUrl(mesh.file_path).catch(() => null) : null,
+      }).then(() => made.reload())
 
       say(
         rule.upload_cost > 0
@@ -439,7 +459,7 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
     }
   }
 
-  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
+  const picture = cardFor(item)
   const archived = item.status === 'approved' && !item.is_public && !editing
 
   const state = item.status === 'approved'

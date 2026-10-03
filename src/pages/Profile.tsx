@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faComment, faFlag, faUserPlus, faClock, faUserCheck,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
-  faPalette, faPen, faCircleInfo,
+  faPalette, faPen, faCircleInfo, faShirt,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { Hop } from '@/components/ui/Hop'
 import { EmptyState, ErrorState, SpaceCardSkeleton, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { ReportDialog } from '@/components/social/ReportDialog'
@@ -38,7 +39,7 @@ import {
   addressNow, discordHandleOf, getProfileByUsername, getProfileOverview, isFollowing, listEarnedBadges, peopleList,
   listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
-  usernameHistory, usernameById, listAssetsByCreator, updateProfile, uploadAvatar,
+  usernameHistory, usernameById, listAssetsByCreator, updateProfile,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
@@ -134,8 +135,6 @@ export default function Profile() {
   const [writingBio, setWritingBio] = useState(false)
   const [savingBio, setSavingBio] = useState(false)
   const [picking, setPicking] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const picker = useRef<HTMLInputElement>(null)
 
   const person = useAsync(
     async () => {
@@ -221,23 +220,6 @@ export default function Profile() {
       toast(err instanceof Error ? err.message : 'That did not save.', 'error')
     } finally {
       setSavingBio(false)
-    }
-  }
-
-  /** A new picture, chosen and kept from the page it belongs to. */
-  const changeAvatar = async (file: File) => {
-    if (!user) return
-    setUploading(true)
-    try {
-      const url = await uploadAvatar(user.id, file)
-      await updateProfile(user.id, { avatar_url: url })
-      toast('That is you now.', 'success')
-      person.reload()
-      refreshProfile()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'That picture did not go up.', 'error')
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -371,8 +353,16 @@ export default function Profile() {
         </div>
 
         <div className="relative z-10 flex flex-col gap-5 p-5 sm:flex-row sm:p-7">
-          {/* The picture, with the dot on its edge, and a way to change it
-              when it is yours: your profile is where you edit your profile. */}
+          {/*
+            * The picture, which is nobody's to upload any more.
+            *
+            * It is a photograph of their avatar, taken again every time they
+            * change it. A picture somebody could also upload would be two
+            * answers to "what do you look like" - and whichever won, the
+            * other would be wrong somewhere on the site. So the way to
+            * change your picture is to change your avatar, and this says so
+            * and sends you there.
+            */}
           <div className="shrink-0">
             <PersonAvatar
               person={user}
@@ -380,26 +370,16 @@ export default function Profile() {
               className="h-28 w-28 sm:h-32 sm:w-32"
               frame={`0 0 0 3px ${accent}`}
               overlay={isMe ? (
-                <>
-                  <button
-                    onClick={() => picker.current?.click()}
-                    aria-label="Change your picture"
-                    className="absolute inset-0 grid place-items-center rounded-full bg-black/55 text-lg text-[#fff] opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
-                  >
-                    <PenIcon className={uploading ? 'animate-pulse' : undefined} />
-                  </button>
-                  <input
-                    ref={picker}
-                    type="file"
-                    accept="image/png,image/jpeg,image/gif,image/webp"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      e.target.value = ''
-                      if (file) void changeAvatar(file)
-                    }}
-                  />
-                </>
+                <Hop
+                  to="/avatar"
+                  aria-label="Change your avatar"
+                  className="absolute inset-0 grid place-items-center gap-1 rounded-full bg-black/55 text-[#fff] opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+                >
+                  <FontAwesomeIcon icon={faShirt} />
+                  <span className="text-[10px] font-bold uppercase tracking-wide">
+                    Avatar
+                  </span>
+                </Hop>
               ) : undefined}
             />
           </div>

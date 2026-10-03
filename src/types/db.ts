@@ -747,6 +747,7 @@ export type AvatarPiece = {
   item_name: string | null
   image_path: string | null
   image_bucket: string | null
+  preview_path: string | null
   mesh_path: string | null
   mesh_format: string | null
   texture_path: string | null
@@ -764,6 +765,12 @@ export type AvatarItem = {
   image_path: string | null
   /** Which bucket that picture is in: 'catalog', or 'faces' for an old one. */
   image_bucket?: string | null
+  /**
+   * A drawn card: the body wearing it for clothes, the model for an
+   * accessory. Null for a face, whose own picture is the card, and for
+   * anything made before cards were drawn.
+   */
+  preview_path?: string | null
   mesh_path: string | null
   texture_path: string | null
   creator_id?: string
