@@ -7,6 +7,7 @@
  */
 import * as THREE from 'three'
 import { wearTexture } from '@/engine/meshes'
+import { fitToSocket } from '@/engine/k6'
 import { previewOf, canPreview } from '@/lib/preview'
 import { supabase, setSupabaseClient, currentSupabase } from '@/lib/supabase'
 import {
@@ -122,6 +123,36 @@ Object.assign(window, {
     }
     body.dispose()
     return answer
+  },
+  /**
+   * What colour a part's material is: painted, dressed, undressed.
+   *
+   * three.js multiplies `map` by `color`, so a shirt on a torso painted navy
+   * came out navy-times-shirt - the body colour tinting the clothing, which
+   * Staw found by looking at it. The check is the sequence rather than one
+   * state, because the colour and the map change for different reasons and
+   * the bug lives in the case where only one of them changed.
+   */
+  async skinUnderClothes() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+    const hex = () => (body.parts.get('Torso')!.material as THREE.MeshStandardMaterial)
+      .color.getHexString()
+
+    body.paint({ Torso: '#1b34e8' })
+    const painted = hex()
+
+    body.dress('shirt', new THREE.Texture())
+    const dressed = hex()
+
+    body.dress('shirt', null)
+    const bare = hex()
+
+    body.dress('shirt', new THREE.Texture())
+    body.paint({ Torso: '#ff0033' })
+    const afterRepaint = hex()
+
+    return { painted, dressed, bare, afterRepaint }
   },
   /**
    * Where a template lands on the body.
@@ -279,6 +310,46 @@ Object.assign(window, {
       mapped: on ? (on.material as THREE.MeshBasicMaterial).map === picture : false,
       proud: where ? +(where.z - headBox.max.z).toFixed(3) : null,
       height: where ? +where.y.toFixed(2) : null,
+    }
+  },
+  /**
+   * Fitting the same model twice, which is what switching accessories does.
+   *
+   * `fitToSocket` multiplies the scale, and for a long time it reset the
+   * position and the rotation but not the scale - so the second fit
+   * multiplied again and the thing came out at the square of its size.
+   * Reported from a screenshot, which is the expensive way to find it.
+   *
+   * The check is not "is the size right after one fit". It is "does a
+   * second fit land in the same place as the first", because the broken
+   * version passes the first question.
+   */
+  fitTwice(grow: number) {
+    const model = new THREE.Mesh(
+      new THREE.BoxGeometry(10, 6, 10),
+      new THREE.MeshBasicMaterial(),
+    )
+    // Drawn off its own origin, as an uploaded accessory routinely is.
+    model.geometry.translate(6, 0, 0)
+
+    const placed = { p: [0, 0, 0] as const, r: [0, 0, 0] as const, s: grow }
+
+    fitToSocket(model, 'hat', placed)
+    const once = {
+      scale: +model.scale.x.toFixed(4),
+      at: model.position.toArray().map((n) => +n.toFixed(3)),
+    }
+
+    fitToSocket(model, 'hat', placed)
+    const twice = {
+      scale: +model.scale.x.toFixed(4),
+      at: model.position.toArray().map((n) => +n.toFixed(3)),
+    }
+
+    return {
+      once, twice,
+      same: once.scale === twice.scale
+        && once.at.every((n, i) => Math.abs(n - twice.at[i]) < 0.001),
     }
   },
   /**

@@ -40,13 +40,23 @@ export function FreeBadge({ className, label = 'Free' }: {
  * "half outside" is two offsets and a z-index that have to agree, and the
  * first card to get one of them wrong is the one nobody notices.
  */
-export function FreeCorner({ className }: { className?: string }) {
-  return (
-    <FreeBadge
-      className={cn(
-        'absolute -right-3 -top-3 z-10 h-11 w-11 sm:-right-3.5 sm:-top-3.5 sm:h-12 sm:w-12',
-        className,
-      )}
-    />
-  )
+/*
+ * Two sizes, chosen by name rather than by a class passed in.
+ *
+ * `cn` joins and does not merge, so an `h-20` handed to this would fight the
+ * `h-11` below and the winner would be whichever lands later in the
+ * stylesheet - not whichever was written last. A prop cannot lose that
+ * argument because only one of them is ever emitted.
+ */
+const CORNERS = {
+  card: 'absolute -right-3 -top-3 z-10 h-11 w-11 sm:-right-3.5 sm:-top-3.5 sm:h-12 sm:w-12',
+  page: 'absolute -right-5 -top-5 z-10 h-20 w-20 sm:-right-7 sm:-top-7 sm:h-28 sm:w-28',
+} as const
+
+export function FreeCorner({ size = 'card', className }: {
+  /** `card` on a shelf tile, `page` where the item is the whole subject. */
+  size?: keyof typeof CORNERS
+  className?: string
+}) {
+  return <FreeBadge className={cn(CORNERS[size], className)} />
 }

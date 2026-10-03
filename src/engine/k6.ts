@@ -156,8 +156,23 @@ export function fitToSocket(model: THREE.Object3D, point: K6Point, placed?: Worn
    * rotation does to where the geometry sits, the next line puts its middle
    * back on the socket.
    */
+  /*
+   * All three, and the third one is the bug Staw found.
+   *
+   * Position and rotation were reset and scale was not, while the line
+   * below *multiplies* the scale - so fitting the same model a second time
+   * multiplied again. Switching accessories does exactly that, and the
+   * thing came out at the square of the size it should be, or a sixteenth
+   * of it, depending which way the maker's resize went.
+   *
+   * The rule this breaks is the one worth naming: a function that puts an
+   * object somewhere must set every part of where it is, not the parts that
+   * happened to need setting the first time it was written. Two out of
+   * three is a function that works once.
+   */
   model.position.set(0, 0, 0)
   model.rotation.set(0, 0, 0)
+  model.scale.set(1, 1, 1)
   model.updateMatrixWorld(true)
 
   const first = new THREE.Box3().setFromObject(model)
@@ -236,6 +251,8 @@ export class K6 {
   /** Which parts have been given template coordinates, so it is done once. */
   private wrapped = new Set<string>()
   private clothes = new Map<Clothing, THREE.Texture>()
+  /** The colour each part was painted, under whatever it is wearing. */
+  private skin = new Map<K6Part, string>()
 
   constructor(source: THREE.Group & { animations: THREE.AnimationClip[] }) {
     this.object = cloneRigged(source) as THREE.Group
@@ -368,9 +385,12 @@ export class K6 {
       const mesh = this.parts.get(name)
       if (!mesh) continue
       const material = (mesh.material as THREE.MeshStandardMaterial).clone()
-      material.color.set(colour)
       mesh.material = material
+      // Remembered, because a part wearing clothing is drawn white and has
+      // to get its colour back when the clothing comes off.
+      this.skin.set(name, colour)
     }
+    this.redress()
   }
 
   /**
@@ -510,6 +530,26 @@ export class K6 {
           picture.colorSpace = THREE.SRGBColorSpace
           picture.needsUpdate = true
         }
+        material.needsUpdate = true
+      }
+
+      /*
+       * White under a picture, and the painted colour under nothing.
+       *
+       * three.js multiplies `map` by `color`, so a shirt on a torso painted
+       * navy came out navy-times-shirt - Staw: the body colour modifies the
+       * clothes and it should not. Skin is a colour; clothing is a picture;
+       * a picture tinted by what is underneath it is not the picture
+       * somebody drew.
+       *
+       * Set every time rather than only on a change of map, because the
+       * colour and the map change for different reasons - painting a part
+       * does not change what it wears, and that is exactly the case where
+       * the old colour would survive underneath.
+       */
+      const want = picture ? '#ffffff' : (this.skin.get(name) ?? null)
+      if (want && material.color.getHexString() !== want.replace('#', '')) {
+        material.color.set(want)
         material.needsUpdate = true
       }
     }

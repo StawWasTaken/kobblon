@@ -666,9 +666,20 @@ function ItemView({ item }: { item: AvatarItem }) {
   ].filter((one) => one.on)
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
-      <div className="relative grid aspect-square place-items-center overflow-hidden bg-ink-raised">
-        {!item.price && <FreeCorner />}
+    <div className="relative rounded-2xl border border-ink-line bg-ink-card">
+      {/*
+        * Outside the box that clips, which is where it has to be.
+        *
+        * `FreeCorner` sits half on and half off a corner, and its own
+        * comment says the card must not clip its overflow - and I put it
+        * inside a `overflow-hidden` media frame, so a third of it was sawn
+        * off. Bigger here than on a shelf card too: this is the page about
+        * one thing, and the badge is the headline on it.
+        */}
+      {!item.price && (
+        <FreeCorner size="page" />
+      )}
+      <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-ink-raised">
 
         {mode !== 'picture' ? (
           waiting

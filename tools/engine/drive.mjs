@@ -1788,6 +1788,34 @@ check('and the other way takes it back out',
   wheeled.pulled > wheeled.pushed,
   `${wheeled.pushed} -> ${wheeled.pulled} stons`)
 
+// -- the body colour under clothing, which was multiplying into it
+const skinned = await p.evaluate(() => window.skinUnderClothes())
+
+check('a painted part keeps its colour while it is bare',
+  skinned.painted === '1b34e8', skinned.painted)
+check('and is drawn white under clothing, so the clothing is its own colour',
+  skinned.dressed === 'ffffff', skinned.dressed)
+check('and gets its colour back when the clothing comes off',
+  skinned.bare === '1b34e8', skinned.bare)
+check('painting while dressed does not tint the clothing either',
+  skinned.afterRepaint === 'ffffff', skinned.afterRepaint)
+
+// -- fitting the same accessory twice, which is what switching one does
+const refitted = await p.evaluate(() => ({
+  plain: window.fitTwice(1),
+  grown: window.fitTwice(1.5),
+}))
+
+check('fitting an accessory twice leaves it the same size',
+  refitted.plain.same === true,
+  `${refitted.plain.once.scale} then ${refitted.plain.twice.scale}`)
+check('and the same is true of one the maker resized',
+  refitted.grown.same === true,
+  `${refitted.grown.once.scale} then ${refitted.grown.twice.scale}`)
+check('a resize of one and a half actually resizes by one and a half',
+  Math.abs(refitted.grown.once.scale / refitted.plain.once.scale - 1.5) < 0.001,
+  `${refitted.plain.once.scale} -> ${refitted.grown.once.scale}`)
+
 // -- what a Decal does to a mesh, which is where "textures dont work" lived
 const dress = await p.evaluate(() => ({
   objBare: window.dressed('obj', false),
