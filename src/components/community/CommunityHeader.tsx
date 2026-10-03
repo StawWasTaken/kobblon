@@ -20,13 +20,15 @@ import { Verified } from '@/components/brand/Verified'
  * over the join, and everything about it that is not a tab.
  */
 export function CommunityHeader({
-  group, rights, ownerName, pending, onJoin, onLeave, onReport,
+  group, rights, ownerName, pending, onJoin, onUnask, onLeave, onReport,
 }: {
   group: Community
   rights: CommunityOverview | null
   ownerName?: string
   pending: boolean
   onJoin: () => void
+  /** Taking back a request to join that nobody has answered. */
+  onUnask: () => void
   onLeave: () => void
   onReport: () => void
 }) {
@@ -89,7 +91,20 @@ export function CommunityHeader({
                 rights?.is_banned ? (
                   <Badge tone="warm">Banned</Badge>
                 ) : rights?.has_requested ? (
-                  <Button variant="subtle" icon={faClock} disabled>Requested</Button>
+                  /*
+                   * Yours to take back. It was a dead button that said
+                   * "Requested" and did nothing, which leaves somebody who
+                   * changed their mind with no way to say so - Staw: "add
+                   * that we can cancel your own request to join a community".
+                   */
+                  <Button
+                    variant="subtle"
+                    icon={faClock}
+                    loading={pending}
+                    onClick={onUnask}
+                  >
+                    Asked — take it back
+                  </Button>
                 ) : (
                   <Button icon={faUserPlus} loading={pending} onClick={onJoin}>
                     {group.join_policy === 'approval' ? 'Ask to Join' : 'Join'}

@@ -20,7 +20,8 @@ import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  addressNow, communitySlugById, getCommunity, getCommunityOverview, joinCommunity, leaveCommunity,
+  addressNow, cancelJoinRequest, communitySlugById, getCommunity, getCommunityOverview,
+  joinCommunity, leaveCommunity,
   listCommunityAssets, listCommunityEvents, listRelations,
   setEventAttendance,
 } from '@/lib/api'
@@ -113,6 +114,21 @@ export default function CommunityPage() {
     }
   }
 
+  /** Taking back a request nobody has answered yet. */
+  const unask = async () => {
+    if (!group) return
+    setPending(true)
+    try {
+      await cancelJoinRequest(group.id)
+      toast('Taken back.', 'success')
+      rights.reload()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'That did not work.', 'error')
+    } finally {
+      setPending(false)
+    }
+  }
+
   const leave = async () => {
     if (!group || !profile) return
     try {
@@ -159,6 +175,7 @@ export default function CommunityPage() {
         ownerName={owner.data ?? undefined}
         pending={pending}
         onJoin={join}
+        onUnask={unask}
         onLeave={leave}
         onReport={() => setReporting(true)}
       />

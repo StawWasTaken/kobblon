@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faComment, faFlag, faUserPlus, faClock, faUserCheck,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
-  faPalette, faPen, faCircleInfo, faShirt, faArrowRight,
+  faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -42,6 +42,7 @@ import {
   listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
   usernameHistory, usernameById, listAssetsByCreator, updateProfile, lookOf,
+  askBestFriend, answerBestFriend, unbestFriend, cancelFriendRequest,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
@@ -94,6 +95,8 @@ function Fact({ icon, children }: { icon: IconDefinition; children: React.ReactN
 
 type Face = {
   id: string
+  /** A best friend, who is first in the list and says so. */
+  best?: boolean
   username: string
   display_name: string
   avatar_url: string | null
@@ -127,7 +130,19 @@ function Faces({ people }: { people: Face[] }) {
               class while leaving the size at `3xl` left a dot sized for a
               picture twice as big sitting over the name. */}
           <PersonAvatar person={person} size="xl" className="mx-auto" />
-          <p className="mt-2 truncate text-sm font-bold">{person.display_name}</p>
+          <p className="mt-2 flex items-center justify-center gap-1 truncate text-sm font-bold">
+            {/* The heart says why they are first. A list that silently
+                reorders itself is a list somebody thinks is broken. */}
+            {person.best && (
+              <FontAwesomeIcon
+                icon={faHeart}
+                className="shrink-0 text-[10px]"
+                style={{ color: 'var(--me)' }}
+                title="Best friends"
+              />
+            )}
+            <span className="truncate">{person.display_name}</span>
+          </p>
           <p className="truncate text-[11px] text-muted">@{person.username}</p>
         </Link>
       ))}
@@ -293,6 +308,44 @@ export default function Profile() {
     } catch {
       setFollowingState(!next)
       toast('That did not save.', 'error')
+    }
+  }
+
+  /*
+   * Best friends, and taking a request back. One busy flag for both, because
+   * they are the same button in different states and two flags would let
+   * them both spin at once.
+   */
+  const [busyWith, setBusyWith] = useState<'best' | 'cancel' | null>(null)
+
+  const bestFriend = async (what: 'ask' | 'yes' | 'no' | 'unbest') => {
+    if (!user) return
+    setBusyWith('best')
+    try {
+      if (what === 'ask') await askBestFriend(user.id)
+      else if (what === 'yes') await answerBestFriend(user.id, true)
+      else if (what === 'no') await answerBestFriend(user.id, false)
+      else await unbestFriend(user.id)
+      relationship.reload()
+      friends.reload()
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusyWith(null)
+    }
+  }
+
+  const takeBackRequest = async () => {
+    if (!user) return
+    setBusyWith('cancel')
+    try {
+      await cancelFriendRequest(user.id)
+      toast('Taken back.', 'success')
+      relationship.reload()
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusyWith(null)
     }
   }
 
@@ -524,9 +577,71 @@ export default function Profile() {
                 ) : (
                   <>
                     {standing?.are_friends ? (
-                      <Button icon={faComment} onClick={message}>Chat</Button>
+                      <>
+                        <Button icon={faComment} onClick={message}>Chat</Button>
+                        {/*
+                          * Best friends, which is a step up from friends and
+                          * so lives beside Chat rather than in the menu: it
+                          * is something you do with a friend, not something
+                          * you do about them.
+                          */}
+                        {standing.are_best ? (
+                          <Button
+                            variant="subtle"
+                            icon={faHeart}
+                            loading={busyWith === 'best'}
+                            onClick={() => void bestFriend('unbest')}
+                          >
+                            Best friends
+                          </Button>
+                        ) : standing.best_asked_of_me ? (
+                          <>
+                            <Button
+                              icon={faHeart}
+                              loading={busyWith === 'best'}
+                              onClick={() => void bestFriend('yes')}
+                            >
+                              Be best friends
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              loading={busyWith === 'best'}
+                              onClick={() => void bestFriend('no')}
+                            >
+                              Not now
+                            </Button>
+                          </>
+                        ) : standing.best_asked_by_me ? (
+                          <Button
+                            variant="subtle"
+                            icon={faClock}
+                            loading={busyWith === 'best'}
+                            onClick={() => void bestFriend('unbest')}
+                          >
+                            Asked — take it back
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="subtle"
+                            icon={faHeart}
+                            loading={busyWith === 'best'}
+                            onClick={() => void bestFriend('ask')}
+                          >
+                            Ask to be best friends
+                          </Button>
+                        )}
+                      </>
                     ) : standing?.request_sent ? (
-                      <Button variant="subtle" icon={faClock} disabled>Request pending</Button>
+                      // Yours to take back, which is the thing somebody
+                      // actually wants from a request that is going nowhere.
+                      <Button
+                        variant="subtle"
+                        icon={faClock}
+                        loading={busyWith === 'cancel'}
+                        onClick={() => void takeBackRequest()}
+                      >
+                        Asked — take it back
+                      </Button>
                     ) : standing?.request_received ? (
                       <Button icon={faUserPlus} to="/friends?list=requests">Answer their request</Button>
                     ) : (

@@ -31,6 +31,7 @@ import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { NameMarks } from '@/components/brand/Verified'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 
 /*
@@ -92,6 +93,13 @@ function PersonLine({
 
       <div className="min-w-0 flex-1">
         <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">
+          {/* A best friend, who is also at the top of the list: the mark is
+              what stops that ordering reading as random. */}
+          {person.best && (
+            <Tooltip label="Best friends" side="top">
+              <FontAwesomeIcon icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
+            </Tooltip>
+          )}
           <span className="truncate text-sm font-bold">{person.display_name}</span>
           <NameMarks person={person} className="text-[11px]" />
           {person.i_ignore && (

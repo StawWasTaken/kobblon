@@ -3816,3 +3816,49 @@ home page and on a profile. "On me" keeps your accessories on.
 
 Best friends, cancelling your own requests, AI screening, the clothing render,
 reselling limiteds, the outfit UI, the rest of the redesigns.
+
+# Forty-second round — best friends, and taking back anything you asked for
+
+## Best friends (0158, 0159)
+
+A **column on `friendships`**, not a new status: `friendship_status` is an
+enum and this project has been bitten by using a new enum value in the
+transaction that added it - and more to the point, "best" is not a different
+kind of friendship, it is a friendship with something extra true about it.
+The day it became a status, every query asking "are these two friends" would
+have needed a second word for yes.
+
+- `friendships.best`, `best_asked_by` (who asked, where nobody has answered)
+  and `best_since`.
+- `ask_best_friend(target)` - friends only, because best friends is a step up
+  and there has to be a step to take. Asking somebody who already asked you
+  *is* accepting: the same answer said the long way round.
+- `answer_best_friend(target, yes)` - only the person who was asked. A no
+  clears the asking rather than recording a refusal; a no that is kept is
+  something somebody has to look at for ever.
+- `unbest_friend(target)` - back to ordinary friends, or taking your own
+  asking back. One door, because which of the two it means is a fact about
+  the row rather than a choice a page has to make correctly. Either person
+  may.
+- `standing_with` gains `are_best`, `best_asked_by_me`, `best_asked_of_me` -
+  three answers because they are three different buttons.
+- `people_list` gains `best` and **orders best friends first**, in the
+  database rather than in each page: four pages sorting the same list four
+  ways is four chances for one to forget.
+
+## Taking a request back
+
+- `cancel_friend_request(target)` - the row's policy already allowed it, but
+  "delete where I am the requester and it is still pending" is a sentence a
+  page should not have to write correctly, and one that gets it slightly
+  wrong unfriends somebody.
+- `cancel_join_request(community)`.
+
+Both are now offered where the request is visible: a profile you have asked
+says "Asked — take it back", and a Community you asked to join does too -
+that was a disabled button saying "Requested" and doing nothing.
+
+## Still not done
+
+AI screening (Groq), the clothing render, reselling limiteds, the outfit UI,
+the rest of the page redesigns.

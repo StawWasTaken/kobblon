@@ -316,6 +316,10 @@ export type Standing = {
   i_blocked: boolean
   they_blocked: boolean
   i_ignore: boolean
+  /** Best friends, and which way round anybody has asked. */
+  are_best: boolean
+  best_asked_by_me: boolean
+  best_asked_of_me: boolean
 }
 
 /** One person in one of the lists on the friends page. */
@@ -323,6 +327,8 @@ export type PersonRow = Profile & {
   since: string
   /** Guests wear the guest face, so the lists carry that too. */
   link_id: string | null
+  /** A best friend, which is why they are at the top of the list. */
+  best?: boolean
   i_ignore: boolean
 }
 
@@ -337,7 +343,38 @@ export async function standingWith(target: string): Promise<Standing> {
     are_friends: false, request_sent: false, request_received: false,
     request_id: null, friendship_id: null, i_follow: false, follows_me: false,
     i_blocked: false, they_blocked: false, i_ignore: false,
+    are_best: false, best_asked_by_me: false, best_asked_of_me: false,
   }
+}
+
+/**
+ * Best friends: asking, answering, and stepping back.
+ *
+ * Three doors because a request is three things somebody can do with it, and
+ * the fourth - refusing - is `answerBestFriend(target, false)`, which is the
+ * same row ending up in the same state as taking your own asking back.
+ */
+export async function askBestFriend(target: string) {
+  unwrap(await supabase.rpc('ask_best_friend', { target }))
+}
+
+export async function answerBestFriend(target: string, yes: boolean) {
+  unwrap(await supabase.rpc('answer_best_friend', { target, yes }))
+}
+
+/** Back to ordinary friends, or taking back the asking. Either person may. */
+export async function unbestFriend(target: string) {
+  unwrap(await supabase.rpc('unbest_friend', { target }))
+}
+
+/** Taking back a friend request you sent. */
+export async function cancelFriendRequest(target: string) {
+  unwrap(await supabase.rpc('cancel_friend_request', { target }))
+}
+
+/** Taking back a request to join a Community. */
+export async function cancelJoinRequest(community: string) {
+  unwrap(await supabase.rpc('cancel_join_request', { community }))
 }
 
 export async function peopleList(target: string, which: PeopleList): Promise<PersonRow[]> {
