@@ -2,7 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { claimGuestAccount, refreshPortrait, signInWithUsername, uploadAvatar } from '@/lib/api'
+import {
+  claimGuestAccount, endSession, refreshPortrait, setSessionCountry,
+  signInWithUsername, touchSession, uploadAvatar,
+} from '@/lib/api'
+import { myZone, placeOfZone } from '@/lib/places'
 import { clearAccountSession, rememberAccount, updateAccountSession } from '@/lib/accounts'
 import { portraitIsCurrent } from '@/lib/headshots'
 import type { Profile } from '@/types/db'
@@ -161,21 +165,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const beat = (online: boolean) => supabase.rpc('touch_presence', { online })
     beat(true)
+
+    /*
+     * And the session: when somebody arrived, when they were last really
+     * here, and roughly where from.
+     *
+     * The zone is the browser's own setting - nothing is asked of any
+     * service and no address is read - and it is sent once on arrival and
+     * kept warm by the same heartbeat, because a session that is never
+     * touched again says somebody left the moment they signed in.
+     *
+     * Quiet about failing on purpose: none of this is worth a message to
+     * somebody who only wanted to open a page.
+     */
+    const zone = myZone()
+    void touchSession(zone, navigator.userAgent).then(() => {
+      const place = placeOfZone(zone)
+      if (place) void setSessionCountry(place.country).catch(() => {})
+    }).catch(() => {})
     heartbeat.current = window.setInterval(() => {
       if (document.visibilityState === 'visible') beat(true)
     }, PRESENCE_INTERVAL)
 
     const onHidden = () => {
       if (document.visibilityState === 'hidden') beat(false)
-      else beat(true)
+      else { beat(true); void touchSession(myZone(), null).catch(() => {}) }
     }
     document.addEventListener('visibilitychange', onHidden)
-    window.addEventListener('pagehide', () => beat(false))
+    // Closing the tab is leaving, which is the other half of "what time did
+    // they log in and when did they leave".
+    window.addEventListener('pagehide', () => { beat(false); void endSession().catch(() => {}) })
 
     return () => {
       window.clearInterval(heartbeat.current)
       document.removeEventListener('visibilitychange', onHidden)
       beat(false)
+      void endSession().catch(() => {})
     }
   }, [userId])
 

@@ -3009,6 +3009,150 @@ export async function replaceAvatarPicture(id: string, picture: string) {
   unwrap(await supabase.rpc('replace_avatar_picture', { target: id, picture }))
 }
 
+// ------------------------------------------------------------ the console
+
+/**
+ * Somebody's comings and goings, and roughly where from.
+ *
+ * Staff only, decided in the database. The zone is **what the browser says**
+ * - a setting on somebody's own machine - so a console shows it as a hint
+ * and never as proof.
+ */
+export type AccountSession = {
+  id: string
+  started_at: string
+  last_seen_at: string
+  ended_at: string | null
+  zone: string | null
+  country: string | null
+  agent: string | null
+}
+
+export async function sessionsOf(target: string, howMany = 30): Promise<AccountSession[]> {
+  return (unwrap(await supabase.rpc('sessions_of', {
+    target, how_many: howMany,
+  })) as AccountSession[]) ?? []
+}
+
+/** Where people are, counted by zone rather than listed by person. */
+export async function wherePeopleAre(sinceDays = 30): Promise<
+  { zone: string; country: string | null; how_many: number }[]
+> {
+  return (unwrap(await supabase.rpc('where_people_are', {
+    since_days: sinceDays,
+  })) as { zone: string; country: string | null; how_many: number }[]) ?? []
+}
+
+/** Saying somebody is here, and keeping it warm. Quiet about failing. */
+export async function touchSession(zone: string | null, agent: string | null) {
+  await supabase.rpc('touch_session', { zone_name: zone, agent_text: agent })
+}
+
+export async function setSessionCountry(country: string) {
+  await supabase.rpc('set_session_country', { where_from: country })
+}
+
+export async function endSession() {
+  await supabase.rpc('end_session')
+}
+
+export type ReportRow = {
+  id: number
+  target_type: string
+  target_id: string
+  reason: string
+  details: string | null
+  status: string
+  created_at: string
+  reporter_id: string
+  reporter_username: string | null
+  about_name: string | null
+  about_username: string | null
+  about_id: string | null
+}
+
+export async function reportQueue(which = 'open', howMany = 100): Promise<ReportRow[]> {
+  return (unwrap(await supabase.rpc('report_queue', {
+    which, how_many: howMany,
+  })) as ReportRow[]) ?? []
+}
+
+export async function settleReport(id: number, how: 'actioned' | 'dismissed' | 'open') {
+  unwrap(await supabase.rpc('settle_report', { target: id, how }))
+}
+
+/**
+ * The notice across the top of the site.
+ *
+ * Text and an address, never markup: a notice is written by the house today
+ * and a line of text that is rendered as HTML is a line of text that can do
+ * anything tomorrow.
+ */
+export type SiteNotice = {
+  id: string
+  body: string
+  link: string | null
+  link_words: string | null
+  tone: 'good' | 'warn' | 'plain'
+  ends_at: string | null
+}
+
+/**
+ * The house account, so a word from Kobblon wears Kobblon's face.
+ *
+ * Asked once and kept: every notification in a list would otherwise ask
+ * again, and the answer is the same for everybody.
+ */
+let houseKnown: Promise<{
+  id: string; username: string; display_name: string
+  avatar_url: string | null; avatar_changed_at: string | null
+} | null> | null = null
+
+export function houseAccount() {
+  if (!houseKnown) {
+    houseKnown = (async () => {
+      try {
+        const answer = await supabase.rpc('house_account')
+        const rows = answer.data as {
+          id: string; username: string; display_name: string
+          avatar_url: string | null; avatar_changed_at: string | null
+        }[] | null
+        return rows?.[0] ?? null
+      } catch {
+        // A notification with no picture is a notification; a panel that
+        // throws because of one is not.
+        return null
+      }
+    })()
+  }
+  return houseKnown
+}
+
+export async function noticeNow(): Promise<SiteNotice | null> {
+  const rows = unwrap(await supabase.rpc('notice_now')) as SiteNotice[]
+  return rows?.[0] ?? null
+}
+
+export async function putUpNotice(input: {
+  words: string
+  link?: string | null
+  linkWords?: string | null
+  tone?: 'good' | 'warn' | 'plain'
+  until?: string | null
+}): Promise<string> {
+  return unwrap(await supabase.rpc('put_up_notice', {
+    words: input.words,
+    where_to: input.link ?? null,
+    link_label: input.linkWords ?? null,
+    mood: input.tone ?? 'good',
+    until: input.until ?? null,
+  })) as string
+}
+
+export async function takeDownNotice() {
+  unwrap(await supabase.rpc('take_down_notice'))
+}
+
 // ---------------------------------------------------------------- reselling
 
 /**

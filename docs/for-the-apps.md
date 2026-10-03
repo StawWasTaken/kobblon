@@ -3922,3 +3922,82 @@ thing that will say which.
 
 The staff console rebuild Staw has just asked for (people, reports, a map,
 Groq moderation, announcements), AI screening, the page redesigns.
+
+# Forty-fourth round — the console can see, and a word across the top
+
+The staff console Staw asked for, in its first half. The second half - Groq
+moderation - is next and is not here.
+
+## Where somebody is, and how honest we are about it (0161)
+
+`account_sessions`: when somebody arrived, when they were last really here,
+when they left, the time zone their browser reports and the country that zone
+is in.
+
+**Nothing is asked of any service and no address is read.** What is recorded
+is `Intl.DateTimeFormat().resolvedOptions().timeZone` - a setting on
+somebody's own machine. The console says so where it shows it. If you build
+anything on this, keep saying so: it is a hint, never proof.
+
+- `touch_session(zone, agent)` - one row per visit; arriving again within the
+  hour moves the row rather than making another, or a day of reloading is a
+  day of rows saying nothing. Kept warm by the same heartbeat as presence.
+- `end_session()` on sign-out and on the tab going.
+- `sessions_of(target)` and `where_people_are(days)` - **staff only, checked
+  inside the function**. An ordinary account cannot read these even about
+  itself; there is no door to its own record, on purpose.
+
+`@/lib/places` has the zone table, generated from the tz database's own
+public-domain `zone1970.tab` and `iso3166.tab`: `placeOfZone`, `myZone`,
+`countryName`.
+
+## The reports queue (0161)
+
+`report_queue(which)` and `settle_report(id, how)`, staff only. The queue
+carries who reported it, who it is about, and a way to open the thing -
+a list of reasons with no route to the thing is a list nobody works through.
+
+**Settling a report says what staff did; it does not do it.** Taking
+something down and suspending somebody are their own doors, deliberately.
+
+## A word across the top (0162)
+
+`site_notices` + `notice_now()`, `put_up_notice(...)`, `take_down_notice()`.
+**Kobblon only** - not a moderator: a notice is the platform speaking in its
+own voice to everybody at once.
+
+- **Text and an address, never markup.** The link is its own column so it can
+  be checked, and the check is "a path on this site or an https address" -
+  `javascript:` is the one that matters.
+- Closing it is remembered in the browser by the notice's id. A table of who
+  dismissed what is a row per person per notice to record something nobody
+  will ever ask about.
+
+`NoticeBar` renders it under the top bar. If your window has a chrome of its
+own, this is the piece to put under it.
+
+## Two smaller things Staw asked for
+
+- **A notification from Kobblon wears Kobblon's face.** `house_account()`
+  hands back the house profile, asked once per page; a notification with no
+  actor was sent by the platform, so the letter K is replaced by its picture.
+- **`Linkify`** (`@/components/ui/Linkify`) makes addresses in a line of text
+  clickable **without rendering markup**. `https://` and `kobblon.com/...`
+  only; our own addresses become in-site links. There is no
+  `dangerouslySetInnerHTML` in it and there must never be.
+
+## A map
+
+`WorldMap` draws `public/brand/world.svg` - land only, generated here from
+public-domain Natural Earth data at 1:110m, equirectangular, so a point is
+`lon + 180, 90 - lat` and nothing projects anything at runtime. One dot per
+zone, area with the count, title on hover. A map with a dot per account is a
+map that says where one person lives; this is not that.
+
+(There is a thin horizontal artefact in the outline near the poles from the
+source data's clipping rings. Cosmetic, not yet cleaned.)
+
+## Still not done
+
+Groq moderation and the AI's limits (warnings and suspensions only, never
+deleting an account), the console's design pass, the page redesigns.

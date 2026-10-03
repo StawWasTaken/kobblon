@@ -10,6 +10,8 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { PersonRow, AnnounceSection, WordsSection, ScreenRow } from '@/pages/Admin'
+import { WorldMap } from '@/components/staff/WorldMap'
+import { NoticeBar } from '@/components/layout/NoticeBar'
 import type { StaffPerson } from '@/lib/api'
 
 /*
@@ -51,6 +53,24 @@ createRoot(document.getElementById('root')!).render(
           * reason box open on the second - because the reason box is the
           * part that has to fit.
           */}
+        {/* Roughly where people are, with dots made up here: the shape of
+            the map is the thing that can be wrong, and it does not need a
+            database to be looked at. */}
+        <section className="space-y-3">
+          <h2 className="font-display text-lg">Map</h2>
+          <WorldMap
+            dots={[
+              { zone: 'Europe/Paris', country: 'FR', how_many: 42 },
+              { zone: 'America/New_York', country: 'US', how_many: 61 },
+              { zone: 'America/Sao_Paulo', country: 'BR', how_many: 18 },
+              { zone: 'Asia/Tokyo', country: 'JP', how_many: 9 },
+              { zone: 'Africa/Lagos', country: 'NG', how_many: 7 },
+              { zone: 'Australia/Sydney', country: 'AU', how_many: 4 },
+              { zone: 'Asia/Kolkata', country: 'IN', how_many: 23 },
+            ]}
+          />
+        </section>
+
         <section className="space-y-3">
           <h2 className="font-display text-lg">Screening</h2>
           <ScreenRow

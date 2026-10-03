@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
+import { NoticeBar } from './NoticeBar'
 import { ChatDock } from '@/components/chat/ChatDock'
 import { FriendRequestWatcher } from '@/components/social/FriendRequestToast'
 import { GuestNudge } from '@/components/auth/GuestNudge'
@@ -54,6 +55,8 @@ export function AppShell() {
         )}
 
         <main id="main" className="pb-20 pt-14 lg:pb-0 lg:pl-56">
+          {/* Under the real bar, across the page, and closeable. */}
+          <NoticeBar />
           {/* Pages put their own ad slots where they want them; this only
               makes sure two slots on one page do not land on one ad. */}
           <AdsProvider>

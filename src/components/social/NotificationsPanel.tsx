@@ -14,10 +14,11 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { Kobby } from '@/components/brand/Kobby'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { listNotifications, markNotificationsRead } from '@/lib/api'
+import { listNotifications, markNotificationsRead , houseAccount} from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import type { Notification } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
+import { Linkify } from '@/components/ui/Linkify'
 import { cn } from '@/lib/cn'
 
 /*
@@ -86,6 +87,18 @@ function whenGroup(iso: string) {
 function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
   const mark = marks[n.kind]
   const said = words(n)
+  /*
+   * The house, for the ones nobody sent. Asked once for the whole site and
+   * handed back from memory after that, so a list of twenty is one request.
+   */
+  type House = Awaited<ReturnType<typeof houseAccount>>
+  const [house, setHouse] = useState<House>(null)
+  useEffect(() => {
+    if (n.actor) return
+    let live = true
+    void houseAccount().then((found) => { if (live) setHouse(found) })
+    return () => { live = false }
+  }, [n.actor])
 
   return (
     <Link
@@ -102,7 +115,18 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
       )}
 
       <span className="relative shrink-0">
-        <Avatar src={avatarOf(n.actor)} personId={n.actor_id} name={n.actor?.display_name ?? 'K'} size="md" />
+        {/*
+          * A notification with no actor was sent by the platform, so it
+          * wears the platform's face rather than the letter K - which is
+          * what Staw was looking at.
+          */}
+        <Avatar
+          src={n.actor ? avatarOf(n.actor) : house?.avatar_url ?? null}
+          personId={n.actor_id ?? house?.id}
+          changedAt={n.actor ? undefined : house?.avatar_changed_at}
+          name={n.actor?.display_name ?? house?.display_name ?? 'Kobblon'}
+          size="md"
+        />
         <span
           className={cn(
             'absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full text-[10px] ring-2 ring-ink-card',
@@ -116,7 +140,9 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
       <span className="min-w-0 flex-1">
         <span className="block text-sm leading-snug text-white/90">
           {said.who && <span className="font-bold text-white">{said.who} </span>}
-          {said.rest}
+          {/* An address in the words is a link you can press, and nothing
+              here is ever rendered as markup. */}
+          {typeof said.rest === 'string' ? <Linkify>{said.rest}</Linkify> : said.rest}
         </span>
         <span className="mt-1 flex items-center gap-2 text-xs text-muted">
           {timeAgo(n.created_at)}

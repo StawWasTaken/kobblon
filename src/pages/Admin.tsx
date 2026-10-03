@@ -18,7 +18,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
-  faTag,
+  faTag, faFlag, faGlobe, faBullhorn,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate } from 'react-router-dom'
@@ -49,15 +49,21 @@ import {
   saveFlaggedTerm, setStanding, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
+  reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
 } from '@/lib/api'
-import type { AdminLogEntry, FlaggedTerm, StaffPerson } from '@/lib/api'
+import type { AdminLogEntry, FlaggedTerm, ReportRow, StaffPerson } from '@/lib/api'
+import { PersonSheet } from '@/components/staff/PersonSheet'
+import { WorldMap } from '@/components/staff/WorldMap'
 
-type Section = 'People' | 'Screening' | 'Sale' | 'Announce' | 'Words' | 'Record'
+type Section = 'People' | 'Reports' | 'Screening' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 const sections: { name: Section; icon: IconDefinition; blurb: string }[] = [
   { name: 'People', icon: faUserShield, blurb: 'Standing, Brix, and removing an account' },
+  { name: 'Reports', icon: faFlag, blurb: 'What people have reported, and what was done' },
   { name: 'Screening', icon: faCircleCheck, blurb: 'What people have made, waiting on a decision' },
   { name: 'Sale', icon: faTag, blurb: 'Everything in the Catalog, cheaper, for a while' },
+  { name: 'Map', icon: faGlobe, blurb: 'Roughly where people are, by the clock on their machine' },
+  { name: 'Notice', icon: faBullhorn, blurb: 'A line across the top of the site, which anybody can close' },
   { name: 'Announce', icon: faBell, blurb: 'A word from Kobblon, to one person or everybody' },
   { name: 'Words', icon: faFilter, blurb: 'What the moderation system catches' },
   { name: 'Record', icon: faScroll, blurb: 'What staff have done' },
@@ -284,6 +290,8 @@ export function PeopleSection() {
   const [search, setSearch] = useState('')
   const [people, setPeople] = useState<StaffPerson[] | null>(null)
   const [looking, setLooking] = useState(false)
+  /** Whoever is open, which is how a list of names becomes a console. */
+  const [open, setOpen] = useState<StaffPerson | null>(null)
 
   const look = useCallback(async (term: string) => {
     setLooking(true)
@@ -325,8 +333,163 @@ export function PeopleSection() {
         <p className="py-8 text-center text-sm text-muted">Nobody matches that.</p>
       )}
       {people?.map((person) => (
-        <PersonRow key={person.id} person={person} onChanged={() => void look(search)} />
+        <div key={person.id} className="space-y-2">
+          <PersonRow person={person} onChanged={() => void look(search)} />
+          <button
+            type="button"
+            onClick={() => setOpen(open?.id === person.id ? null : person)}
+            className="text-xs font-bold text-link hover:underline"
+          >
+            {open?.id === person.id ? 'Close the record' : 'Open the record'}
+          </button>
+          {open?.id === person.id && <PersonSheet person={person} />}
+        </div>
       ))}
+    </div>
+  )
+}
+
+/* --------------------------------------------------------------- reports */
+
+/**
+ * What people have reported, and settling it.
+ *
+ * Staff only, decided in the database. A report says what it is about and
+ * links to it, because a queue of reasons with no way to the thing is a
+ * queue nobody works through.
+ */
+export function ReportsSection() {
+  const say = useToast()
+  const [which, setWhich] = useState<'open' | 'actioned' | 'dismissed' | 'all'>('open')
+  const [busy, setBusy] = useState<number | null>(null)
+  const reports = useAsync(async () => reportQueue(which, 200), [which])
+
+  const settle = async (id: number, how: 'actioned' | 'dismissed') => {
+    setBusy(id)
+    try {
+      await settleReport(id, how)
+      say(how === 'actioned' ? 'Marked as dealt with.' : 'Dismissed.', 'success')
+      reports.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const whereIsIt = (row: ReportRow) => {
+    if (row.target_type === 'profile' && row.about_username) return `/u/${row.about_username}`
+    if (row.target_type === 'avatar_item') return '/catalog'
+    return null
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted">
+        What people have reported. Settling one says what staff did about it;
+        it does not do it - taking something down or suspending somebody are
+        their own doors, on purpose.
+      </p>
+
+      <Tabs
+        label="Which reports"
+        value={which}
+        onChange={(next) => setWhich(next as typeof which)}
+        options={[
+          { value: 'open', label: 'Open' },
+          { value: 'actioned', label: 'Dealt with' },
+          { value: 'dismissed', label: 'Dismissed' },
+          { value: 'all', label: 'Everything' },
+        ]}
+      />
+
+      {reports.loading ? <Skeleton className="h-40" /> : !reports.data?.length ? (
+        <p className="py-8 text-center text-sm text-muted">Nothing here.</p>
+      ) : reports.data.map((row) => {
+        const to = whereIsIt(row)
+        return (
+          <Card key={row.id} className="flex flex-wrap items-start gap-3 p-3">
+            <div className="min-w-0 flex-1">
+              <p className="flex flex-wrap items-center gap-2">
+                <Badge tone={row.status === 'open' ? 'warm' : 'neutral'}>{row.reason}</Badge>
+                <span className="text-sm font-bold">
+                  {row.about_name ?? row.target_type}
+                </span>
+                {row.about_username && (
+                  <span className="text-xs text-muted">@{row.about_username}</span>
+                )}
+                <span className="text-xs text-muted">{timeAgo(row.created_at)}</span>
+              </p>
+              {row.details && (
+                <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{row.details}</p>
+              )}
+              <p className="mt-1 text-xs text-muted">
+                Reported by{' '}
+                {row.reporter_username
+                  ? <Link to={`/u/${row.reporter_username}`} className="font-bold text-link hover:underline">@{row.reporter_username}</Link>
+                  : 'somebody'}
+                {to && (
+                  <> · <Link to={to} className="font-bold text-link hover:underline">Open it</Link></>
+                )}
+              </p>
+            </div>
+
+            {row.status === 'open' && (
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  size="sm"
+                  variant="yes"
+                  loading={busy === row.id}
+                  onClick={() => void settle(row.id, 'actioned')}
+                >
+                  Dealt with
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  loading={busy === row.id}
+                  onClick={() => void settle(row.id, 'dismissed')}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            )}
+          </Card>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------- map */
+
+/** Roughly where people are, and what that does and does not mean. */
+export function MapSection() {
+  const dots = useAsync(async () => wherePeopleAre(30), [])
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted">
+        A dot per time zone, sized by how many accounts have been seen there
+        in the last month. The zone is what a browser reports - a setting on
+        somebody's own machine - and a zone's coordinates are the zone's, not
+        the person's. Kobblon asks no service where anybody is.
+      </p>
+
+      {dots.loading
+        ? <Skeleton className="aspect-[2/1] w-full rounded-2xl" />
+        : <WorldMap dots={dots.data ?? []} />}
+
+      {!!dots.data?.length && (
+        <ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+          {dots.data.slice(0, 12).map((one) => (
+            <li key={one.zone} className="flex justify-between gap-3">
+              <span className="truncate text-muted">{one.zone}</span>
+              <span className="font-bold tabular-nums">{one.how_many}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -958,6 +1121,126 @@ export function SaleSection() {
   )
 }
 
+
+/* ------------------------------------------------------------- the notice */
+
+/**
+ * The green bar across the top of the site.
+ *
+ * Kobblon only, and the database says so - not a moderator. A notice is the
+ * platform speaking in its own voice to everybody at once, which is a
+ * different job from moderating.
+ *
+ * The link is its own field rather than something somebody writes into the
+ * words, because then it can be checked: a path here or an https address,
+ * and nothing else. The bar renders text and an anchor, never markup.
+ */
+export function NoticeSection() {
+  const say = useToast()
+  const live = useAsync(async () => noticeNow(), [])
+  const [words, setWords] = useState('')
+  const [link, setLink] = useState('')
+  const [label, setLabel] = useState('')
+  const [days, setDays] = useState('7')
+  const [busy, setBusy] = useState(false)
+
+  const put = async () => {
+    setBusy(true)
+    try {
+      await putUpNotice({
+        words: words.trim(),
+        link: link.trim() || null,
+        linkWords: label.trim() || null,
+        tone: 'good',
+        until: days
+          ? new Date(Date.now() + Number(days) * 24 * 60 * 60 * 1000).toISOString()
+          : null,
+      })
+      say('It is up.', 'success')
+      setWords('')
+      setLink('')
+      setLabel('')
+      live.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const down = async () => {
+    setBusy(true)
+    try {
+      await takeDownNotice()
+      say('Taken down.', 'success')
+      live.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted">
+        A line across the top of every page, under the bar. Anybody can close
+        it, and it stays closed for them.
+      </p>
+
+      {live.loading ? <Skeleton className="h-16" /> : live.data ? (
+        <Card className="flex flex-wrap items-center gap-3">
+          <Badge tone="space">Up now</Badge>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold">{live.data.body}</span>
+          {live.data.link && <span className="truncate text-xs text-muted">{live.data.link}</span>}
+          <Button variant="danger" size="sm" loading={busy} onClick={() => void down()}>
+            Take it down
+          </Button>
+        </Card>
+      ) : (
+        <Card className="space-y-3">
+          <Input
+            label="What it says"
+            value={words}
+            maxLength={300}
+            onChange={(e) => setWords(e.target.value)}
+            placeholder="Halloween is on. Everything is 30% off."
+          />
+          <div className="flex flex-wrap gap-3">
+            <Input
+              label="Where it goes (optional)"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="/catalog"
+              className="w-full sm:w-64"
+              hint="A path here, or an https address."
+            />
+            <Input
+              label="The link's words"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Open the Catalog"
+              className="w-full sm:w-56"
+            />
+            <Input
+              label="For how many days"
+              type="number"
+              min={1}
+              max={90}
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              className="w-36"
+            />
+          </div>
+          <Button variant="yes" loading={busy} disabled={!words.trim()} onClick={() => void put()}>
+            Put it up
+          </Button>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------- page */
 
 export default function Admin() {
@@ -997,8 +1280,11 @@ export default function Admin() {
       />
 
       {section === 'People' && <PeopleSection />}
+      {section === 'Reports' && <ReportsSection />}
       {section === 'Screening' && <ScreeningSection />}
+      {section === 'Map' && <MapSection />}
       {section === 'Sale' && <SaleSection />}
+      {section === 'Notice' && <NoticeSection />}
       {section === 'Announce' && <AnnounceSection />}
       {section === 'Words' && <WordsSection />}
       {section === 'Record' && <RecordSection />}
