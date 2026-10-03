@@ -17,14 +17,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShirt } from '@fortawesome/free-solid-svg-icons'
+import { faCube, faImage, faShirt } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/States'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { Studio } from '@/components/avatar/Studio'
+import { ViewSwitch } from '@/components/avatar/ViewSwitch'
 import { avatarTag, avatarKindLabels } from '@/lib/kinds'
 import { drawPortrait, type PortraitLook } from '@/lib/portrait'
-import { cn } from '@/lib/cn'
 
 /**
  * The flat one.
@@ -67,36 +67,16 @@ function useFlatPicture(look: PortraitLook | null, wanted: boolean) {
   return picture
 }
 
-function Switch({ mode, onPick }: { mode: '2D' | '3D'; onPick: (next: '2D' | '3D') => void }) {
-  return (
-    <div className="absolute right-2 top-2 z-10 flex overflow-hidden rounded-lg border border-ink-line bg-ink-card/85 text-xs font-bold backdrop-blur">
-      {(['2D', '3D'] as const).map((one) => (
-        <button
-          key={one}
-          onClick={() => onPick(one)}
-          aria-pressed={mode === one}
-          className={cn(
-            'px-2.5 py-1 transition-colors',
-            mode === one ? 'bg-brand text-white' : 'text-white/60 hover:text-white',
-          )}
-        >
-          {one}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export function WearingPanel({ look, loading }: {
   look: PortraitLook | null
   loading?: boolean
 }) {
   /*
-   * 3D first, because it is the thing worth showing - the flat one is for
-   * when somebody wants it to hold still.
+   * The figure first. The flat one is for when somebody wants it to hold
+   * still while they read the grid beside it.
    */
-  const [mode, setMode] = useState<'2D' | '3D'>('3D')
-  const flat = useFlatPicture(look, mode === '2D')
+  const [mode, setMode] = useState<'picture' | 'body'>('body')
+  const flat = useFlatPicture(look, mode === 'picture')
 
   // Only the pieces that have a page to go to. A thing taken down is still
   // worn and no longer has one.
@@ -109,8 +89,17 @@ export function WearingPanel({ look, loading }: {
           <Skeleton className="h-full w-full" />
         ) : (
           <>
-            <Switch mode={mode} onPick={setMode} />
-            {mode === '3D' ? (
+            {/* The Catalog's switch, which is the same control doing the
+                same job - "just use the same design we had for the catalog". */}
+            <ViewSwitch
+              ways={[
+                { value: 'picture' as const, icon: faImage, label: 'Picture' },
+                { value: 'body' as const, icon: faCube, label: '3D' },
+              ]}
+              value={mode}
+              onChange={setMode}
+            />
+            {mode === 'body' ? (
               <AvatarStage look={look as AvatarLook | null} handled />
             ) : flat ? (
               <img src={flat} alt="" className="h-full w-full object-contain" />

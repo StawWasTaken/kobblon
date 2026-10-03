@@ -3470,3 +3470,32 @@ and no WebGL context held while somebody reads the grid beside it.
 Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
+
+# Thirty-fifth round — one switch, not two
+
+`ViewSwitch` (`@/components/avatar/ViewSwitch`): the pill in the corner of a
+viewer that says which way you are looking at something - a picture of it, it
+in three dimensions, it on you.
+
+It was written on the Catalog item page, and when the profile grew its own
+2D/3D switch I drew a second one that looked nearly the same. Staw spotted it
+on sight: "for the 2d/3d bruh just use the same design we had for the
+catalog". So it is one component now, used by the item page and by
+`WearingPanel`, and it renders nothing when there is only one way to look -
+a switch with one setting is a label pretending to be a control.
+
+If you have a viewer with its own way of saying this, take this one.
+
+```tsx
+<ViewSwitch
+  ways={[
+    { value: 'picture', icon: faImage, label: 'Picture' },
+    { value: 'body', icon: faCube, label: '3D' },
+  ]}
+  value={mode}
+  onChange={setMode}
+/>
+```
+
+It positions itself in the bottom-right corner of whatever is `relative`
+around it, which is where `MeshView` has always put its own.

@@ -35,6 +35,7 @@ import { BuyButton } from '@/components/money/BuyButton'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
+import { ViewSwitch } from '@/components/avatar/ViewSwitch'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -719,28 +720,13 @@ function ItemView({ item }: { item: AvatarItem }) {
         * The three ways, in the corner `MeshView` puts its switch. A row of
         * them rather than one cycling button: with three states a single
         * button cannot say where it will take you.
+        *
+        * The control itself lives in `ViewSwitch` now, because the profile
+        * wanted the same one and a second copy of it came out looking
+        * nearly-but-not-quite the same.
         */}
-      {WAYS.length > 1 && (
-        <div className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full border border-white/20 bg-ink/80 p-0.5 backdrop-blur-sm">
-          {WAYS.map((way) => (
-            <button
-              key={way.value}
-              type="button"
-              aria-pressed={mode === way.value}
-              onClick={() => setMode(way.value)}
-              className={cn(
-                'flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors',
-                mode === way.value
-                  ? 'bg-brand text-white'
-                  : 'text-white/65 hover:text-white',
-              )}
-            >
-              <FontAwesomeIcon icon={way.icon} />
-              <span>{way.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <ViewSwitch ways={WAYS} value={mode} onChange={setMode} />
+
     </div>
   )
 }
