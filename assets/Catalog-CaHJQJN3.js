@@ -1,1 +1,0 @@
-import{a as e,m as t,t as n}from"./jsx-runtime-CarGG4zH.js";var r=n();function i(){let[n]=t(),i=new URLSearchParams(n);return i.set(`tab`,`marketplace`),(0,r.jsx)(e,{to:`/avatar?${i.toString()}`,replace:!0})}export{i as default};
