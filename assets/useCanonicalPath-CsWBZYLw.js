@@ -1,0 +1,1 @@
+import{d as e,g as t,u as n,v as r}from"./jsx-runtime-CarGG4zH.js";var i=r(t(),1);function a(t){let{pathname:r,search:a,hash:o}=n(),s=e();(0,i.useEffect)(()=>{t&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,r,a,o,s])}export{a as t};
