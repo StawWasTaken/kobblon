@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { BackLink } from '@/components/ui/BackLink'
 import { Menu } from '@/components/ui/Menu'
-import { Confirm } from '@/components/ui/Confirm'
+import { BuyDialog } from '@/components/catalog/BuyDialog'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { formatCount } from '@/lib/format'
 import { EmptyState, Skeleton } from '@/components/ui/States'
@@ -441,20 +441,19 @@ export default function CatalogItem() {
         * confirming a free thing is a dialog that teaches somebody to press
         * through dialogs.
         */}
-      <Confirm
+      <BuyDialog
         open={confirming}
         onClose={() => setConfirming(false)}
-        onConfirm={async () => { setConfirming(false); await take() }}
-        title={`Buy ${item.name}?`}
-        lead={`It costs ${item.price} Brix, and it is yours to keep.`}
-        points={[
-          `You have ${formatCount(profile?.pixels ?? 0)} Brix.`,
-          ...(item.sells_until && !closed
-            ? [`A limited: it stops selling on ${new Date(item.sells_until).toLocaleDateString()}.`]
-            : []),
-        ]}
-        confirmText="Buy it"
-        tone="primary"
+        onBuy={async () => { setConfirming(false); await take() }}
+        busy={busy}
+        name={item.name}
+        kind={KIND_WORDS[item.kind] ?? item.kind}
+        price={item.price}
+        picture={cardFor(item)}
+        balance={profile?.pixels ?? 0}
+        note={item.sells_until && !closed
+          ? `A limited: it stops selling on ${new Date(item.sells_until).toLocaleDateString()}.`
+          : undefined}
       />
 
       <ReportDialog
