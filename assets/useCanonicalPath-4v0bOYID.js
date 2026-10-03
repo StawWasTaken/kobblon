@@ -1,0 +1,1 @@
+import{Jn as e,er as t,qn as n,rr as r}from"./asset-vmRI07u3.js";var i=r(t(),1);function a(t){let{pathname:r,search:a,hash:o}=n(),s=e();(0,i.useEffect)(()=>{t&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,r,a,o,s])}export{a as t};
