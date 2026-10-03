@@ -8,7 +8,7 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -53,7 +53,7 @@ function PersonCard({
       <div className="min-w-0 flex-1">
         <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">
           <span className="truncate font-bold">{person.display_name}</span>
-          {isVerified(person) && <Verified className="text-[11px]" />}
+          <NameMarks person={person} className="text-[11px]" />
           {isYou && (
             <span className="shrink-0 rounded-md bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
               You

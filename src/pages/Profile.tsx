@@ -44,7 +44,7 @@ import {
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
 import { avatarOf } from '@/lib/avatars'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { PenIcon } from '@/components/brand/PenIcon'
 
 /** The colour somebody chose for their page, or the house one. */
@@ -387,7 +387,7 @@ export default function Profile() {
           <div className="min-w-0 flex-1">
             <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-4xl">
               {user.display_name}
-              {isVerified(user) && <Verified className="text-xl" />}
+              <NameMarks person={user} className="text-xl" />
               {user.is_guest && <Badge tone="neutral">Guest</Badge>}
             </h1>
 

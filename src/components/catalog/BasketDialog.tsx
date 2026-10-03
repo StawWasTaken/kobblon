@@ -39,7 +39,13 @@ export function BasketDialog({ open, onClose, lines, paying, onBuy }: {
         <>
           <Button variant="ghost" onClick={() => emptyBasket()}>Empty it</Button>
           <Button variant="yes" icon={faBasketShopping} loading={paying} onClick={onBuy}>
-            {total > 0 ? `Buy all for ${total} Brix` : 'Take all of them'}
+            {/*
+              * The mark, never the word. Staw: a button saying "for Brix"
+              * should not exist anywhere - the icon is the word.
+              */}
+            {total > 0
+              ? <>Buy all for <CurrencyMark className="mx-0.5" />{total}</>
+              : 'Take all of them'}
           </Button>
         </>
       ) : (

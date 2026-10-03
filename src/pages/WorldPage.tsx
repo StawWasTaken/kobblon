@@ -14,7 +14,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { RatingBar } from '@/components/worlds/RatingBar'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
 import { ReportDialog } from '@/components/social/ReportDialog'
@@ -377,7 +377,7 @@ export default function WorldPage() {
                 >
                   <PersonAvatar person={owner} size="xs" />
                   By <span className="font-bold text-white">{owner.display_name}</span>
-                  {isVerified(owner) && <Verified />}
+                  <NameMarks person={owner} />
                 </Link>
               ) : (
                 <p className="mt-2 text-sm text-white/70">

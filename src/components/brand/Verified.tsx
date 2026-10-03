@@ -1,34 +1,54 @@
 import { Tooltip } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/cn'
 
-/**
- * The verified mark: an account Kobblon vouches for, and the content it
- * publishes.
+/*
+ * The two marks that belong to a name.
  *
- * Kobblon's own shape, traced from the artwork into two paths: the badge,
- * and the tick cut out of it. The stepped edge is the artwork's, not a
- * tracing artefact, and it is kept because it matches the logo.
+ * Staw's rule, and it is about meaning rather than decoration: a mark is
+ * **part of the display name**, not an ornament beside it. Wherever a name
+ * is written - a profile, a card, "made by @somebody", a message, a list -
+ * the mark goes with it, and a place that writes the name without it is
+ * writing a different name.
  *
- * Drawn in currentColor, so it takes the colour of whatever it sits in at any
- * size with no bitmap involved. The source picture lives at
- * public/brand/verified.png if it ever needs tracing again.
+ * Both are Kobblon's own artwork, and never Font Awesome's tick. They are
+ * drawn as a CSS mask over `currentColor` rather than as an `<img>`: the
+ * files are a solid badge with the glyph knocked out of it, so masking gives
+ * the badge the colour of whatever it sits in and lets the glyph show the
+ * surface behind - which is what makes it read at twelve pixels beside a
+ * name. An `<img>` would be a white square, and tracing them into paths
+ * again would be a copy that drifts from the artwork.
  */
-const BADGE = 'M10.4 0L13.5 0L13.7 1.8L16.9 1.8L16.9 3.3L17.1 3.5L20.4 3.5L20.4 6.9L22.2 7L22.1 10.2L22.3 10.4L23.9 10.4L23.9 13.5L22.3 13.5L22.1 13.7L22.2 16.9L20.4 17L20.5 20.4L17.1 20.4L16.9 20.6L16.9 22.2L13.7 22.1L13.5 22.3L13.5 23.9L10.4 23.9L10.4 22.2L10.2 22.1L7 22.2L6.9 20.4L3.5 20.4L3.5 17L1.7 16.9L1.8 13.8L1.6 13.5L0.1 13.6L0 13.4L0.1 10.3L1.6 10.4L1.8 10.1L1.8 6.9L3.5 6.9L3.5 3.5L6.9 3.5L7 1.8L10.2 1.8L10.4 1.6L10.4 0.1Z'
-const TICK = 'M17.3 7.5L18.9 7.6L18.9 11.1L17.2 11.1L17.1 12.8L15.5 12.8L15.4 14.5L13.7 14.6L13.7 16.3L12.1 16.3L11.9 18L10.2 18L10.2 16.4L8.5 16.3L8.5 14.7L6.7 14.5L6.8 12.9L5 12.8L5 11.1L8.5 11.1L8.6 12.6L10.2 12.8L10.2 14.5L11.8 14.5L12 12.7L13.7 12.7L13.6 11.1L15.3 11.1L15.4 9.3L17.1 9.3L17.1 7.6L17.3 7.6Z'
+const MARKS = {
+  verified: '/brand/verified.png',
+  staff: '/brand/staff.png',
+} as const
 
-export function VerifiedMark({ className }: { className?: string }) {
+function Mark({ which, className }: { which: keyof typeof MARKS; className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
+    <span
       aria-hidden="true"
-      focusable="false"
-      className={cn('inline-block h-[1em] w-[1em] align-[-0.125em]', className)}
-    >
-      <path d={BADGE} fill="currentColor" />
-      <path d={TICK} fill="#fff" />
-    </svg>
+      className={cn('inline-block h-[1em] w-[1em] align-[-0.125em] bg-current', className)}
+      style={{
+        maskImage: `url(${MARKS[which]})`,
+        WebkitMaskImage: `url(${MARKS[which]})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+      }}
+    />
   )
 }
+
+/** The tick on its own, for a caller that is drawing its own surround. */
+export const VerifiedMark = ({ className }: { className?: string }) =>
+  <Mark which="verified" className={className} />
+
+/** The Kobblon k, which is what staff carry. */
+export const StaffMark = ({ className }: { className?: string }) =>
+  <Mark which="staff" className={className} />
 
 /**
  * Whether somebody's name should carry the tick. Being staff implies it;
@@ -38,6 +58,12 @@ export const isVerified = (person?: {
   is_verified?: boolean | null
   is_admin?: boolean | null
 } | null) => !!(person?.is_verified || person?.is_admin)
+
+/** Whether somebody's name should carry the k. */
+export const isStaff = (person?: {
+  is_admin?: boolean | null
+  is_moderator?: boolean | null
+} | null) => !!(person?.is_admin || person?.is_moderator)
 
 export function Verified({
   label = 'Verified by Kobblon',
@@ -53,4 +79,45 @@ export function Verified({
       </span>
     </Tooltip>
   )
+}
+
+export function Staff({
+  label = 'Kobblon staff',
+  className,
+}: {
+  label?: string
+  className?: string
+}) {
+  return (
+    <Tooltip label={label} side="top">
+      <span className="inline-flex shrink-0 align-middle text-white" aria-label={label}>
+        <StaffMark className={className} />
+      </span>
+    </Tooltip>
+  )
+}
+
+/**
+ * Everything that belongs after a name, in one place.
+ *
+ * Here so that "which marks does a name carry" is answered once. It was
+ * answered at twenty-one call sites, each deciding for itself whether staff
+ * counts as verified, and that is how one page ends up showing a tick where
+ * another shows nothing for the same person.
+ */
+export function NameMarks({ person, className }: {
+  person?: {
+    is_verified?: boolean | null
+    is_admin?: boolean | null
+    is_moderator?: boolean | null
+  } | null
+  className?: string
+}) {
+  if (!person) return null
+  const marks = [
+    isVerified(person) && <Verified key="v" className={className} />,
+    isStaff(person) && <Staff key="s" className={className} />,
+  ].filter(Boolean)
+  if (!marks.length) return null
+  return <span className="inline-flex shrink-0 items-center gap-1 align-middle">{marks}</span>
 }

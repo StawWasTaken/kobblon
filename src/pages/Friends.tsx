@@ -30,7 +30,7 @@ import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 
 /*
@@ -93,7 +93,7 @@ function PersonLine({
       <div className="min-w-0 flex-1">
         <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">
           <span className="truncate text-sm font-bold">{person.display_name}</span>
-          {isVerified(person) && <Verified className="text-[11px]" />}
+          <NameMarks person={person} className="text-[11px]" />
           {person.i_ignore && (
             <span
               title="You are ignoring this person"

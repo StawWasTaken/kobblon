@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserPlus, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
@@ -68,7 +68,7 @@ export function FriendRequestCard({
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 truncate font-display text-base font-extrabold">
             {asking.display_name}
-            {isVerified(asking) && <Verified className="text-[11px]" />}
+            <NameMarks person={asking} className="text-[11px]" />
           </p>
           {/* Not truncated: the sentence is the whole point of the card. */}
           <p className="flex items-center gap-1.5 text-sm leading-snug text-muted">

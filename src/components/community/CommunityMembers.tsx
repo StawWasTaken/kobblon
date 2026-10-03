@@ -17,7 +17,7 @@ import { timeAgo } from '@/lib/format'
 import type { CommunityOverview } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
 
 export function CommunityMembers({
@@ -115,7 +115,7 @@ export function CommunityMembers({
                       className="flex items-center gap-1.5 truncate font-bold hover:underline"
                     >
                       <span className="truncate">{member.display_name}</span>
-                      {isVerified(member) && <Verified className="text-xs" />}
+                      <NameMarks person={member} className="text-xs" />
                     </Link>
                     <LivePresenceLabel person={member} />
                   </div>

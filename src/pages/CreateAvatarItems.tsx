@@ -36,10 +36,12 @@ import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
   uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
-  setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard,
+  setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard, uploadAsset,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
+import { kindAccepts } from '@/lib/kinds'
+import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { formatOf } from '@/engine'
 
 const KINDS: { kind: AvatarKind; label: string; about: string; template?: string }[] = [
@@ -108,6 +110,17 @@ export default function CreateAvatarItems() {
    * the same two ways an uploaded mesh gets its texture.
    */
   const [textureId, setTextureId] = useState('')
+  /*
+   * Uploading the model here rather than somewhere else first. `fresh` says
+   * which of the two the form is on; the file goes through the same
+   * `uploadAsset` the Create dialog uses, so what comes out is an ordinary
+   * mesh of theirs with an ordinary Decal on it.
+   */
+  const [fresh, setFresh] = useState(true)
+  const [meshFile, setMeshFile] = useState<File | null>(null)
+  const [skinFile, setSkinFile] = useState<File | null>(null)
+  const meshPicked = useRef<HTMLInputElement>(null)
+  const skinPicked = useRef<HTMLInputElement>(null)
   const [decalTag, setDecalTag] = useState('')
   const [decal, setDecal] = useState<{ id: string; name: string } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -171,14 +184,112 @@ export default function CreateAvatarItems() {
   const isModel = kind === 'accessory' || kind === 'hair'
   const chosen = KINDS.find((one) => one.kind === kind)
 
+  /*
+   * Addresses for the preview, held apart from the form's own state because
+   * one of them is an object URL that has to be given back. A file the
+   * browser already has needs no round trip to storage; a model picked from
+   * what they own does, and that is one signing.
+   */
+  const [fitUrls, setFitUrls] = useState<{ mesh: string | null; skin: string | null }>(
+    { mesh: null, skin: null },
+  )
+
+  useEffect(() => {
+    if (!isModel) { setFitUrls({ mesh: null, skin: null }); return }
+
+    const made: string[] = []
+    let live = true
+
+    void (async () => {
+      let mesh: string | null = null
+      let skin: string | null = null
+
+      if (fresh && meshFile) {
+        mesh = URL.createObjectURL(meshFile)
+        made.push(mesh)
+      } else if (!fresh && meshId) {
+        const row = (meshes.data ?? []).find((one) => one.id === meshId)
+        mesh = row ? await assetUrl(row.file_path).catch(() => null) : null
+      }
+
+      if (skinFile) {
+        skin = URL.createObjectURL(skinFile)
+        made.push(skin)
+      } else if (textureId) {
+        const row = (decals.data ?? []).find((one) => one.id === textureId)
+        skin = row ? await assetUrl(row.file_path).catch(() => null) : null
+      }
+
+      if (live) setFitUrls({ mesh, skin })
+      else for (const one of made) URL.revokeObjectURL(one)
+    })()
+
+    return () => {
+      live = false
+      for (const one of made) URL.revokeObjectURL(one)
+    }
+  }, [isModel, fresh, meshFile, meshId, skinFile, textureId, meshes.data, decals.data])
+
+  /*
+   * A plain body wearing the one thing being made. Null while there is no
+   * model, so the panel says what it is waiting for rather than drawing an
+   * empty mannequin that looks like a fault.
+   */
+  const fitting = useMemo<AvatarLook | null>(() => {
+    if (!isModel || !fitUrls.mesh) return null
+    return {
+      body: {
+        Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
+        RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
+      },
+      pieces: [{
+        slot,
+        kind,
+        meshUrl: fitUrls.mesh,
+        meshFormat: fresh && meshFile ? formatOf(meshFile.name) : undefined,
+        textureUrl: fitUrls.skin,
+      }],
+    }
+  }, [isModel, fitUrls, slot, kind, fresh, meshFile])
+
+
   const make = async () => {
     if (!profile || !rule) return
     setBusy(true)
     try {
       let imagePath: string | null = null
+      let usingMesh = meshId
+      let usingTexture = textureId
+
       if (!isModel) {
         if (!picture) throw new Error('Choose a picture first.')
         imagePath = await uploadCatalogImage(profile.id, picture)
+      } else if (fresh) {
+        if (!meshFile) throw new Error('Choose a model file first.')
+        /*
+         * The same upload the Create dialog does, texture and all: it makes
+         * the Decal, attaches it and hands back the mesh. Doing it here
+         * rather than reaching into storage means an accessory's model is a
+         * model of theirs, listed or not, like everything else they own.
+         */
+        const made = await uploadAsset({
+          userId: profile.id,
+          file: meshFile,
+          kind: 'mesh',
+          name: name.trim() || meshFile.name,
+          description: about,
+          texture: skinFile
+            ? { file: skinFile }
+            : textureId ? { id: textureId } : undefined,
+        })
+        usingMesh = made.id
+        /*
+         * Left alone when a picture was uploaded with the model: the mesh
+         * row already wears that Decal, and 0130 makes `create_avatar_item`
+         * fall back to it. Asking the same question twice is how an
+         * accessory ended up grey while its own model was textured.
+         */
+        meshes.reload()
       } else if (!meshId) {
         throw new Error('Choose one of your models first.')
       }
@@ -189,8 +300,8 @@ export default function CreateAvatarItems() {
         name,
         description: about,
         imagePath,
-        meshId: isModel ? meshId : null,
-        textureId: isModel ? (textureId || null) : null,
+        meshId: isModel ? usingMesh : null,
+        textureId: isModel ? (usingTexture || null) : null,
       })
 
       /*
@@ -204,7 +315,7 @@ export default function CreateAvatarItems() {
        * card did not draw shows its own picture instead.
        */
       const mesh = isModel
-        ? (meshes.data ?? []).find((one) => one.id === meshId)
+        ? (meshes.data ?? []).find((one) => one.id === usingMesh)
         : undefined
       /*
        * The card wears the texture too. Drawing the model bare gives a grey
@@ -212,7 +323,7 @@ export default function CreateAvatarItems() {
        * bucket for ever - so the picture has to be in hand here, not later.
        */
       const skin = isModel
-        ? (decals.data ?? []).find((one) => one.id === textureId)
+        ? (decals.data ?? []).find((one) => one.id === usingTexture)
         : undefined
       void drawAvatarCard(newId, profile.id, {
         kind,
@@ -231,6 +342,7 @@ export default function CreateAvatarItems() {
       )
       setName(''); setAbout(''); setPicture(null); setMeshId('')
       setTextureId(''); setDecalTag(''); setDecal(null)
+      setMeshFile(null); setSkinFile(null)
       setMaking(false)
       made.reload()
     } catch (error) {
@@ -427,15 +539,63 @@ export default function CreateAvatarItems() {
 
           {isModel ? (
             <div className="space-y-2">
+              {/*
+                * A model comes from one of two places, and uploading one here
+                * was the missing half: making somebody leave, upload in My
+                * Uploads, and come back is three steps for one thought, and
+                * it is the same `uploadAsset` either way - so the model and
+                * its texture become ordinary Decals and meshes of theirs,
+                * rather than something only the Catalog can see.
+                */}
               <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-                Which of your models
+                The model
               </p>
-              {meshes.loading ? (
+              <Choices
+                label="Where the model comes from"
+                size="sm"
+                value={fresh ? 'new' : 'had'}
+                onChange={(next) => {
+                  setFresh(next === 'new')
+                  if (next === 'new') setMeshId('')
+                  else setMeshFile(null)
+                }}
+                options={[
+                  { value: 'new', label: 'Upload one', icon: faUpload },
+                  { value: 'had', label: 'One of mine', icon: faCube },
+                ]}
+              />
+
+              {fresh ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => meshPicked.current?.click()}
+                    className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                  >
+                    <FontAwesomeIcon icon={meshFile ? faCube : faUpload} className="text-xl text-white/40" />
+                    <span className="text-sm font-semibold">
+                      {meshFile ? meshFile.name : 'Choose a model file'}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {meshFile
+                        ? `${(meshFile.size / 1024 / 1024).toFixed(1)} MB`
+                        : '.obj, .glb or .gltf, 25 MB at most'}
+                    </span>
+                  </button>
+                  <input
+                    ref={meshPicked}
+                    type="file"
+                    accept={kindAccepts.mesh}
+                    className="hidden"
+                    onChange={(e) => { setMeshFile(e.target.files?.[0] ?? null); e.target.value = '' }}
+                  />
+                </>
+              ) : meshes.loading ? (
                 <Skeleton className="h-10 w-full rounded-xl" />
               ) : (meshes.data ?? []).length === 0 ? (
                 <p className="text-xs text-muted">
-                  You have not uploaded any models yet. Upload one in My Uploads
-                  first and it turns up here.
+                  You have not uploaded any models yet. Upload one above and it
+                  becomes one of yours.
                 </p>
               ) : (
                 <Choices
@@ -470,17 +630,46 @@ export default function CreateAvatarItems() {
               <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
                 What it wears
               </p>
-              <Choices
-                label="What it wears"
-                size="sm"
-                tone="soft"
-                value={textureId || null}
-                onChange={(next) => { setTextureId(next); setDecalTag(''); setDecal(null) }}
-                options={(decals.data ?? []).map((one) => ({
-                  value: one.id, label: one.name, icon: faImage,
-                }))}
-              />
-              {!textureId && (
+              {fresh && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => skinPicked.current?.click()}
+                    className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-6 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                  >
+                    <FontAwesomeIcon icon={faImage} className="text-lg text-white/40" />
+                    <span className="text-sm font-semibold">
+                      {skinFile ? skinFile.name : 'Upload a picture for it'}
+                    </span>
+                  </button>
+                  <input
+                    ref={skinPicked}
+                    type="file"
+                    accept="image/png,image/webp,image/jpeg"
+                    className="hidden"
+                    onChange={(e) => {
+                      const chosen = e.target.files?.[0] ?? null
+                      setSkinFile(chosen)
+                      if (chosen) { setTextureId(''); setDecalTag(''); setDecal(null) }
+                      e.target.value = ''
+                    }}
+                  />
+                </>
+              )}
+
+              {!skinFile && (
+                <Choices
+                  label="What it wears"
+                  size="sm"
+                  tone="soft"
+                  value={textureId || null}
+                  onChange={(next) => { setTextureId(next); setDecalTag(''); setDecal(null) }}
+                  options={(decals.data ?? []).map((one) => ({
+                    value: one.id, label: one.name, icon: faImage,
+                  }))}
+                />
+              )}
+              {!textureId && !skinFile && (
                 <Input
                   label="Or a Decal id"
                   labelNote="IMG-1042"
@@ -501,12 +690,42 @@ export default function CreateAvatarItems() {
                     : decal ? `Wearing ${decal.name}.` : 'No Decal you can use with that id.'}
                 />
               )}
-              {!textureId && !decal && (
+              {!textureId && !decal && !skinFile && (
                 <p className="text-[11px] leading-snug text-muted">
                   Without one it is flat grey, which reads as broken rather than
                   as plain.
                 </p>
               )}
+
+              {/*
+                * The thing itself, on a body, while it is being made.
+                *
+                * Staw asked to see it rather than find out after paying to
+                * make it, and he is right: an accessory is a model somebody
+                * drew at whatever size around whatever origin, and the only
+                * way to know it reads as a hat is to look at it on a head.
+                * It follows the slot, so changing where it goes moves it.
+                */}
+              <div className="space-y-2 pt-2">
+                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                  On a body
+                </p>
+                <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+                  {fitting ? (
+                    <AvatarStage
+                      look={fitting}
+                      turning={false}
+                      handled
+                      className="aspect-square w-full"
+                    />
+                  ) : (
+                    <p className="px-4 py-10 text-center text-xs text-muted">
+                      Choose a model and it is drawn here, worn, so you can turn
+                      it and see how it sits before you make it.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
@@ -569,7 +788,10 @@ export default function CreateAvatarItems() {
               disabled={!allowed || !name.trim()}
               onClick={() => void make()}
             >
-              Make it{rule && rule.upload_cost > 0 ? ` for ${rule.upload_cost} Brix` : ''}
+              {/* The mark rather than the word, everywhere a button names a price. */}
+              {rule && rule.upload_cost > 0
+                ? <>Make it for <CurrencyMark className="mx-0.5" />{rule.upload_cost}</>
+                : 'Make it'}
             </Button>
             <Button variant="ghost" onClick={() => setMaking(false)}>Cancel</Button>
           </div>
