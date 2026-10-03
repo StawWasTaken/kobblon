@@ -141,13 +141,41 @@ export function fitToSocket(model: THREE.Object3D, point: K6Point, placed?: Worn
   const fit = WORN_FIT[point]
   if (!fit) return model
 
+  /*
+   * Scale, then turn, then measure, then place. The order is the whole of
+   * it, and it is why there is no arithmetic correcting for anything here.
+   *
+   * The first version turned the model last, which turns it about its own
+   * origin - and a model's origin is wherever its author left it, which for
+   * an uploaded hat is routinely outside the hat. So a few degrees of turn
+   * swung the thing off the head in an arc. Staw's words: it should turn on
+   * itself.
+   *
+   * Measuring *after* the turn fixes that without a correction term,
+   * because the centring is then centring the turned shape. Whatever a
+   * rotation does to where the geometry sits, the next line puts its middle
+   * back on the socket.
+   */
   model.position.set(0, 0, 0)
+  model.rotation.set(0, 0, 0)
   model.updateMatrixWorld(true)
 
   const first = new THREE.Box3().setFromObject(model)
   const span = first.getSize(new THREE.Vector3())
   const widest = Math.max(span.x, span.y, span.z)
   if (widest > 1e-6) model.scale.multiplyScalar(fit.across / widest)
+
+  // The maker's resize multiplies what the measuring worked out rather than
+  // replacing it, so an accessory nobody has touched is exactly as before.
+  const grow = placed?.s ?? 1
+  if (grow !== 1 && Number.isFinite(grow) && grow > 0) model.scale.multiplyScalar(grow)
+
+  const [rx, ry, rz] = placed?.r ?? [0, 0, 0]
+  if (rx || ry || rz) {
+    const turn = Math.PI / 180
+    model.rotation.set(rx * turn, ry * turn, rz * turn)
+  }
+
   model.updateMatrixWorld(true)
 
   const box = new THREE.Box3().setFromObject(model)
@@ -160,36 +188,8 @@ export function fitToSocket(model: THREE.Object3D, point: K6Point, placed?: Worn
     (fit.out[2] * size.z) / 2,
   ))
 
-  /*
-   * The maker's own adjustment, last.
-   *
-   * The resize multiplies what the measuring worked out rather than
-   * replacing it, and it is applied about the thing's own middle - scaling
-   * an object three-dimensionally also scales its offset from the origin, so
-   * without the correction below, making a hat bigger walks it off the head.
-   * The same shape of mistake as the one that put a bicorne beside a body.
-   */
-  if (placed) {
-    const grow = placed.s ?? 1
-    if (grow !== 1 && Number.isFinite(grow) && grow > 0) {
-      model.scale.multiplyScalar(grow)
-      const around = new THREE.Vector3(
-        (fit.out[0] * size.x) / 2,
-        (fit.out[1] * size.y) / 2,
-        (fit.out[2] * size.z) / 2,
-      )
-      model.position.sub(around).multiplyScalar(grow).add(around)
-    }
-
-    const [rx, ry, rz] = placed.r ?? [0, 0, 0]
-    if (rx || ry || rz) {
-      const turn = Math.PI / 180
-      model.rotation.set(rx * turn, ry * turn, rz * turn)
-    }
-
-    const [px, py, pz] = placed.p ?? [0, 0, 0]
-    if (px || py || pz) model.position.add(new THREE.Vector3(px, py, pz))
-  }
+  const [px, py, pz] = placed?.p ?? [0, 0, 0]
+  if (px || py || pz) model.position.add(new THREE.Vector3(px, py, pz))
 
   return model
 }

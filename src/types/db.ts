@@ -785,6 +785,8 @@ export type AvatarItem = {
   creator_username?: string
   creator_display_name?: string
   creator_is_verified?: boolean
+  /** Staff: the Kobblon k. Separate from verified; they mean different things. */
+  creator_is_staff?: boolean
   created_at?: string
   owned?: boolean
   worn?: boolean

@@ -53,8 +53,21 @@ export function BuyButton({
   verb?: string
 } & Omit<ComponentProps<typeof Button>, 'children'>) {
   if (owned) {
+    /*
+     * Owned, and still a button when there is something to do.
+     *
+     * It was `disabled` unconditionally, which was right when "owned" only
+     * ever meant "you cannot buy this twice" - and wrong the moment the
+     * label became "Wear it": Kobblon owned a face and the control to put it
+     * on was greyed out. A button is disabled because there is nothing to
+     * do, never because of what it says.
+     */
     return (
-      <Button variant="subtle" {...rest} disabled>
+      <Button
+        variant="subtle"
+        {...rest}
+        disabled={rest.disabled ?? !rest.onClick}
+      >
         <FontAwesomeIcon icon={faCheck} />
         {ownedLabel}
       </Button>
