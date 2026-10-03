@@ -21,6 +21,7 @@ import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Tabs } from '@/components/ui/Tabs'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
@@ -212,15 +213,12 @@ export default function MyAvatar() {
 
   return (
     <Page className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl">My Avatar</h1>
-          <p className="text-sm text-muted">
-            Your body, what it wears, and the face on it.
-          </p>
-        </div>
-        <Button to="/catalog" icon={faStore}>The Catalog</Button>
-      </header>
+      <PageHeader
+        title="My Avatar"
+        lead="Your body, what it wears, and the face on it."
+        icon={faShirt}
+        actions={<Button to="/catalog" icon={faStore}>The Catalog</Button>}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         {/* --------------------------------------------------- the person */}

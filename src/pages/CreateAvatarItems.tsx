@@ -10,19 +10,20 @@
  * It also cannot decide whether somebody may make a thing. It asks, shows
  * the answer, and lets the server refuse: a page is a suggestion.
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faDownload, faImage, faCube, faLock, faCircleCheck, faPen,
-  faTrash, faBoxArchive, faEllipsis,
+  faShirt, faDownload, faImage, faCube, faLock, faPen,
+  faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
 import { Menu } from '@/components/ui/Menu'
-import { EmptyState, Skeleton } from '@/components/ui/States'
+import { Dialog } from '@/components/ui/Dialog'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { useAuth } from '@/hooks/useAuth'
@@ -92,6 +93,8 @@ export default function CreateAvatarItems() {
   const [about, setAbout] = useState('')
   const [price, setPrice] = useState('')
   const [picture, setPicture] = useState<File | null>(null)
+  const [making, setMaking] = useState(false)
+  const picked = useRef<HTMLInputElement>(null)
   const [meshId, setMeshId] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -153,6 +156,7 @@ export default function CreateAvatarItems() {
         'success',
       )
       setName(''); setAbout(''); setPrice(''); setPicture(null); setMeshId('')
+      setMaking(false)
       made.reload()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
@@ -163,29 +167,85 @@ export default function CreateAvatarItems() {
 
   if (!profile) return null
 
+  const mine = made.data ?? []
+
   return (
     <Page className="space-y-5">
-      <header>
-        <h1 className="font-display text-2xl">Make something to wear</h1>
-        <p className="text-sm text-muted">
-          Shirts, trousers, t-decals, accessories and hair, for the Catalog.
-        </p>
-      </header>
-
-      <Tabs
-        value={kind}
-        onChange={(next) => setKind(next as AvatarKind)}
-        options={tabs.map((one) => ({ value: one.kind, label: one.label }))}
+      <PageHeader
+        title="Things to Wear"
+        lead="Shirts, trousers, t-decals, accessories and hair, for the Catalog."
+        icon={faShirt}
+        actions={<Button to="/catalog" variant="subtle" icon={faStore}>The Catalog</Button>}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-        <Card className="space-y-4">
+      {/*
+        * Everything you have made, laid out as cards rather than a column of
+        * rows, with making a new one as the first tile. Staw's shape, and
+        * the right one: the page is a shelf of your own work, and making
+        * something is one more thing on that shelf rather than a form the
+        * shelf has to live beside.
+        */}
+      {made.loading ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 10 }, (_, i) => (
+            <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <button
+            type="button"
+            onClick={() => setMaking(true)}
+            className={cn(
+              'grid aspect-[3/4] place-items-center gap-2 rounded-xl border-2 border-dashed',
+              'border-ink-line bg-ink-card text-white/60 transition-colors',
+              'hover:border-brand hover:text-white',
+            )}
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-hover">
+              <FontAwesomeIcon icon={faPlus} className="text-lg" />
+            </span>
+            <span className="text-sm font-bold">Make something</span>
+            <span className="px-4 text-center text-[11px] leading-snug text-muted">
+              A shirt, trousers, a t-decal, an accessory or hair
+            </span>
+          </button>
+
+          {mine.map((one) => (
+            <MadeCard
+              key={one.id}
+              item={one}
+              onChanged={() => made.reload()}
+              onTrouble={(message) => say(message, 'error')}
+              onDone={(message) => say(message, 'success')}
+            />
+          ))}
+        </div>
+      )}
+
+      {!made.loading && mine.length === 0 && (
+        <p className="text-sm text-muted">
+          Nothing yet. What you make turns up here, with whether it has been screened.
+        </p>
+      )}
+
+      {/* ------------------------------------------------ making one */}
+      <Dialog
+        open={making}
+        onClose={() => setMaking(false)}
+        title="Make something to wear"
+        description="It goes through screening before anybody else can see it."
+        size="lg"
+      >
+        <div className="space-y-4">
+          <Tabs
+            value={kind}
+            onChange={(next) => setKind(next as AvatarKind)}
+            options={tabs.map((one) => ({ value: one.kind, label: one.label }))}
+          />
+
           <p className="text-sm text-muted">{chosen?.about}</p>
 
-          {/*
-            * What it costs, said before anybody commits to it, and read from
-            * the same function the charge is made from.
-            */}
           {rules.loading ? (
             <Skeleton className="h-16 w-full rounded-xl" />
           ) : rule && (
@@ -193,7 +253,9 @@ export default function CreateAvatarItems() {
               <p className="text-xs leading-relaxed text-muted">
                 Making one costs{' '}
                 <span className="font-bold text-white">
-                  {rule.upload_cost > 0 ? <><CurrencyMark className="mx-0.5" />{rule.upload_cost}</> : 'nothing'}
+                  {rule.upload_cost > 0
+                    ? <><CurrencyMark className="mx-0.5" />{rule.upload_cost}</>
+                    : 'nothing'}
                 </span>
                 . Putting it up for sale and taking it down again are free.
               </p>
@@ -215,7 +277,7 @@ export default function CreateAvatarItems() {
               <span>
                 {rule?.kobblon_only
                   ? 'Only Kobblon makes those.'
-                  : 'Only verified accounts can make these. Everything else on this page is open to you.'}
+                  : 'Only verified accounts can make these. Everything else here is open to you.'}
               </span>
             </p>
           )}
@@ -240,8 +302,8 @@ export default function CreateAvatarItems() {
                 <Skeleton className="h-10 w-full rounded-xl" />
               ) : (meshes.data ?? []).length === 0 ? (
                 <p className="text-xs text-muted">
-                  You have not uploaded any models yet. Upload one in Create first,
-                  then it turns up here.
+                  You have not uploaded any models yet. Upload one in My Uploads
+                  first and it turns up here.
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
@@ -290,18 +352,21 @@ export default function CreateAvatarItems() {
               <p className="font-display text-[10px] uppercase tracking-wider text-muted">
                 The picture
               </p>
+              <Button
+                variant="subtle"
+                icon={faImage}
+                onClick={() => picked.current?.click()}
+              >
+                {picture ? 'Choose another' : 'Choose a picture'}
+              </Button>
               <input
+                ref={picked}
                 type="file"
                 accept="image/png,image/webp,image/jpeg"
-                onChange={(e) => setPicture(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-white/70 file:mr-3 file:rounded-lg file:border-0 file:bg-ink-hover file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
+                className="hidden"
+                onChange={(e) => { setPicture(e.target.files?.[0] ?? null); e.target.value = '' }}
               />
-              {picture && (
-                <p className="flex items-center gap-2 text-xs text-muted">
-                  <FontAwesomeIcon icon={faImage} />
-                  {picture.name}
-                </p>
-              )}
+              {picture && <p className="text-xs text-muted">{picture.name}</p>}
             </div>
           )}
 
@@ -310,57 +375,30 @@ export default function CreateAvatarItems() {
           <Textarea label="Description" value={about} maxLength={400}
             onChange={(e) => setAbout(e.target.value)} />
           <Input
-            label={`Price in Brix`}
+            label="Price in Brix"
             type="number"
             min={rule?.least_price ?? 0}
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             hint={rule
-              ? rule.least_price > 0
-                ? `At least ${rule.least_price}.`
-                : 'Zero means free.'
+              ? rule.least_price > 0 ? `At least ${rule.least_price}.` : 'Zero means free.'
               : undefined}
-            className="max-w-xs"
+            className="max-w-[12rem]"
           />
 
-          <Button
-            variant="yes"
-            loading={busy}
-            disabled={!allowed || !name.trim()}
-            onClick={() => void make()}
-          >
-            Make it{rule && rule.upload_cost > 0 ? ` for ${rule.upload_cost} Brix` : ''}
-          </Button>
-          <p className="text-xs text-muted">
-            Everything goes through screening before anybody else can see it.
-          </p>
-        </Card>
-
-        {/* ------------------------------------------------ what you made */}
-        <div className="space-y-3">
-          <p className="font-display text-xs uppercase tracking-wider text-muted">
-            What you have made
-          </p>
-          {made.loading ? (
-            <Skeleton className="h-40 w-full rounded-xl" />
-          ) : (made.data ?? []).length === 0 ? (
-            <EmptyState mood="emptyBox" title="Nothing yet"
-              body="What you make turns up here, with whether it has been screened." />
-          ) : (
-            <ul className="space-y-2">
-              {(made.data ?? []).map((one) => (
-                <MadeRow
-                  key={one.id}
-                  item={one}
-                  onChanged={() => made.reload()}
-                  onTrouble={(message) => say(message, 'error')}
-                  onDone={(message) => say(message, 'success')}
-                />
-              ))}
-            </ul>
-          )}
+          <div className="flex gap-2">
+            <Button
+              variant="yes"
+              loading={busy}
+              disabled={!allowed || !name.trim()}
+              onClick={() => void make()}
+            >
+              Make it{rule && rule.upload_cost > 0 ? ` for ${rule.upload_cost} Brix` : ''}
+            </Button>
+            <Button variant="ghost" onClick={() => setMaking(false)}>Cancel</Button>
+          </div>
         </div>
-      </div>
+      </Dialog>
     </Page>
   )
 }
@@ -375,7 +413,7 @@ export default function CreateAvatarItems() {
  * else owns one - so the button is there and the refusal explains itself,
  * rather than this page hiding a rule it would have to keep in step.
  */
-function MadeRow({ item, onChanged, onTrouble, onDone }: {
+function MadeCard({ item, onChanged, onTrouble, onDone }: {
   item: AvatarItem
   onChanged: () => void
   onTrouble: (message: string) => void
@@ -404,83 +442,90 @@ function MadeRow({ item, onChanged, onTrouble, onDone }: {
   const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
   const archived = item.status === 'approved' && !item.is_public && !editing
 
+  const state = item.status === 'approved'
+    ? item.is_public ? 'In the Catalog' : 'Not listed'
+    : item.status === 'rejected' ? (item.review_note ?? 'Turned down')
+      : 'Waiting to be screened'
+
   return (
-    <li className="rounded-xl border border-ink-line bg-ink-card p-2.5">
-      <div className="flex items-center gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
-          {picture
-            ? <img src={picture} alt="" className="h-full w-full object-contain" />
-            : <FontAwesomeIcon icon={faShirt} className="text-white/30" />}
+    <article className="flex flex-col overflow-hidden rounded-xl border border-ink-line bg-ink-card">
+      <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
+        {picture
+          ? <img src={picture} alt="" loading="lazy" className="h-full w-full object-contain" />
+          : <FontAwesomeIcon icon={faShirt} className="text-3xl text-white/25" />}
+        <span className="absolute left-2 top-2 rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
+          {item.kind}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold">{item.name}</span>
-          <span className="block text-[11px] text-muted">
-            {item.status === 'approved'
-              ? item.is_public ? 'In the Catalog' : 'Approved, not listed'
-              : item.status === 'rejected' ? (item.review_note ?? 'Turned down')
-                : 'Waiting to be screened'}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-bold">{item.name}</h3>
+          <p className="truncate text-[11px] text-muted">
+            {state}
             {typeof item.taken === 'number' && item.taken > 0
-              && ` · ${item.taken} ${item.taken === 1 ? 'person has it' : 'people have it'}`}
-          </span>
-        </span>
+              && ` · ${item.taken} ${item.taken === 1 ? 'has it' : 'have it'}`}
+          </p>
+        </div>
 
-        {item.status === 'approved' && (
-          <Button
-            size="sm"
-            variant={item.is_public ? 'subtle' : 'yes'}
-            loading={busy === 'list'}
-            onClick={() => void run(
-              'list',
-              () => listAvatarItem(item.id, !item.is_public),
-              item.is_public ? 'Taken off the Catalog.' : 'In the Catalog.',
-            )}
-          >
-            {item.is_public
-              ? 'Take down'
-              : <><FontAwesomeIcon icon={faCircleCheck} />List it</>}
-          </Button>
-        )}
+        <div className="mt-auto flex items-center gap-2">
+          {item.status === 'approved' && (
+            <Button
+              size="sm"
+              className="flex-1"
+              variant={item.is_public ? 'subtle' : 'yes'}
+              loading={busy === 'list'}
+              onClick={() => void run(
+                'list',
+                () => listAvatarItem(item.id, !item.is_public),
+                item.is_public ? 'Taken off the Catalog.' : 'In the Catalog.',
+              )}
+            >
+              {item.is_public ? 'Take down' : 'List it'}
+            </Button>
+          )}
 
-        <Menu
-          label="More"
-          trigger={
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
-              <FontAwesomeIcon icon={faEllipsis} />
-            </span>
-          }
-          items={[
-            { label: editing ? 'Stop editing' : 'Edit', icon: faPen,
-              onSelect: () => setEditing(!editing) },
-            { label: archived ? 'Put it back' : 'Archive',
-              icon: faBoxArchive,
-              onSelect: () => void run(
-                'archive',
-                () => archiveAvatarItem(item.id, !archived),
-                archived
-                  ? 'Back. List it when you are ready.'
-                  : 'Archived. Anybody wearing it keeps it.',
-              ) },
-            { label: sure ? 'Really delete it' : 'Delete', icon: faTrash, danger: true,
-              onSelect: () => {
-                if (!sure) { setSure(true); return }
-                setSure(false)
-                void run('delete', () => deleteAvatarItem(item.id), 'Deleted.')
-              } },
-          ]}
-        />
+          <Menu
+            label="More"
+            align="right"
+            trigger={
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+                <FontAwesomeIcon icon={faEllipsis} />
+              </span>
+            }
+            items={[
+              { label: editing ? 'Stop editing' : 'Edit', icon: faPen,
+                onSelect: () => setEditing(!editing) },
+              { label: archived ? 'Put it back' : 'Archive', icon: faBoxArchive,
+                onSelect: () => void run(
+                  'archive',
+                  () => archiveAvatarItem(item.id, !archived),
+                  archived
+                    ? 'Back. List it when you are ready.'
+                    : 'Archived. Anybody wearing it keeps it.',
+                ) },
+              { label: sure ? 'Really delete it' : 'Delete', icon: faTrash, danger: true,
+                onSelect: () => {
+                  if (!sure) { setSure(true); return }
+                  setSure(false)
+                  void run('delete', () => deleteAvatarItem(item.id), 'Deleted.')
+                } },
+            ]}
+          />
+        </div>
       </div>
 
       {editing && (
-        <div className="mt-3 space-y-2 border-t border-ink-line pt-3">
+        <div className="space-y-2 border-t border-ink-line p-3">
           <Input label="Name" value={name} maxLength={60}
             onChange={(e) => setName(e.target.value)} />
           <Textarea label="Description" value={about} maxLength={400}
             onChange={(e) => setAbout(e.target.value)} />
-          <Input label="Price in Brix" type="number" min={0} className="max-w-[10rem]"
+          <Input label="Price" type="number" min={0} className="max-w-[8rem]"
             value={price} onChange={(e) => setPrice(e.target.value)} />
-          <p className="text-xs text-muted">
-            What it is and the picture on it stay as they are. Somebody who bought
-            this bought this.
+          <p className="text-[11px] leading-snug text-muted">
+            What it is and the picture on it stay as they are. Somebody who
+            bought this bought this.
           </p>
           <div className="flex gap-2">
             <Button
@@ -504,6 +549,6 @@ function MadeRow({ item, onChanged, onTrouble, onDone }: {
           </div>
         </div>
       )}
-    </li>
+    </article>
   )
 }

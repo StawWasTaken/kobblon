@@ -17,6 +17,8 @@ import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
+import { Select } from '@/components/ui/Select'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { BuyButton } from '@/components/money/BuyButton'
@@ -99,16 +101,17 @@ export default function Catalog() {
 
   return (
     <Page className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl">Catalog</h1>
-          <p className="text-sm text-muted">Everything you can put on an avatar.</p>
-        </div>
-        <div className="flex gap-2">
-          {profile && <Button to="/avatar" variant="subtle" icon={faUser}>My Avatar</Button>}
-          {profile && <Button to="/create/avatar" icon={faPlus}>Make one</Button>}
-        </div>
-      </header>
+      <PageHeader
+        title="Catalog"
+        lead="Everything you can put on an avatar."
+        icon={faShirt}
+        actions={profile ? (
+          <>
+            <Button to="/avatar" variant="subtle" icon={faUser}>My Avatar</Button>
+            <Button to="/create/avatar" icon={faPlus}>Make one</Button>
+          </>
+        ) : undefined}
+      />
 
       {/* ------------------------------------------- who made it, and in what order */}
       <div className="space-y-3 rounded-2xl border border-ink-line bg-ink-card p-4">
@@ -166,25 +169,30 @@ export default function Catalog() {
             value={term}
             onChange={(e) => settle(e.target.value)}
           />
-          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
-            Order
-            <select
-              value={order}
-              onChange={(e) => setOrder(e.target.value as ShelfOrder)}
-              className="h-9 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-xs font-bold text-white focus:border-brand-bright focus:outline-none"
-            >
-              {/*
-                * No "best rated". Nothing rates an avatar item yet, and a
-                * sort that quietly falls back to something else is worse
-                * than one that is not offered - it looks like it worked.
-                */}
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="taken">Most taken</option>
-              <option value="cheapest">Cheapest</option>
-              <option value="dearest">Dearest</option>
-            </select>
-          </label>
+          {/*
+            * The site's own Select, not a bare one. There is a dropdown in
+            * `@/components/ui` that every other shelf on Kobblon uses, and a
+            * browser's own select next to it is the thing that makes a page
+            * look like it was built by somebody else.
+            *
+            * No "best rated" in it: nothing rates an avatar item yet, and a
+            * sort that quietly falls back to something else is worse than
+            * one that is not offered, because it looks like it worked.
+            */}
+          <Select
+            label="Order"
+            value={order}
+            onChange={(next) => setOrder(next as ShelfOrder)}
+            className="w-40"
+            align="right"
+            options={[
+              { value: 'newest', label: 'Newest' },
+              { value: 'oldest', label: 'Oldest' },
+              { value: 'taken', label: 'Most taken' },
+              { value: 'cheapest', label: 'Cheapest' },
+              { value: 'dearest', label: 'Dearest' },
+            ]}
+          />
         </div>
       </div>
 
