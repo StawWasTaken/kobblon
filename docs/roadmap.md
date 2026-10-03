@@ -161,6 +161,28 @@ Switching accounts keeps the sessions it already has, so it never asks twice.
 A guest who decides to stay keeps the account they have been using. A failure
 says what actually went wrong rather than blaming the password for it.
 
+## The redesign pass Staw asked for
+
+Named by Staw, 3 October, as pages to redesign or modify. They are the ones
+somebody meets first and the ones they come back to, which is why they are
+listed together rather than scattered through the sections below: a platform
+is judged on the landing page and the home page before anybody sees a World.
+
+- **Landing page** — the first thing anybody sees, and the one page with no
+  second chance.
+- **Signup page** — the step between wanting an account and having one.
+- **Home** — still mostly rails, as the section below has said for a while.
+- **Profile** — now that an avatar is a body, a profile is a person standing
+  there rather than a row of counts.
+- **Friends**
+- **Discover** — rows and a filter; it should surface things worth finding.
+- **Communities (the home page of it)**
+- **Settings**
+
+Not started, and deliberately not begun in the middle of the Catalog work.
+Each one is its own pass: a page is done when it would survive somebody
+using it every day, not when it renders.
+
 ## Making the whole thing feel finished
 
 The standing complaint, and a fair one: some pages are thin. The rule for
