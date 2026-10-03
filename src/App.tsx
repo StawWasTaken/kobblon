@@ -49,11 +49,9 @@ const Friends = lazyPage(() => import('@/pages/Friends'))
 const Library = lazyPage(() => import('@/pages/Library'))
 const Catalog = lazyPage(() => import('@/pages/Catalog'))
 const CreateAvatarItems = lazyPage(() => import('@/pages/CreateAvatarItems'))
-const Style = lazyPage(() => import('@/pages/Style'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
 const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
-const StyleItem = lazyPage(() => import('@/pages/StyleItem'))
 const Profile = lazyPage(() => import('@/pages/Profile'))
 const Settings = lazyPage(() => import('@/pages/Settings'))
 const Admin = lazyPage(() => import('@/pages/Admin'))
@@ -146,8 +144,11 @@ export default function App() {
                 <Route path="/d/:id" element={<DiscordJump />} />
                 {/* The Catalog: anybody may look, account or not. */}
                 <Route path="/catalog" element={<Catalog />} />
-                <Route path="/style" element={<Style />} />
-                <Route path="/style/:tag" element={<StyleItem />} />
+                {/* Style was the flat avatar and its shop. The Catalog
+                    replaced both, and everything written down then - a link
+                    somebody pasted, a bookmark - still lands. */}
+                <Route path="/style" element={<Navigate to="/catalog" replace />} />
+                <Route path="/style/:tag" element={<Navigate to="/catalog" replace />} />
                 <Route element={<CommunityShell />}>
                   <Route path="/communities" element={<Communities />} />
                   <Route

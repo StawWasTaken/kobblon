@@ -135,7 +135,7 @@ function ShelfCard({ item, busy, canTake, onTake }: {
   canTake: boolean
   onTake: () => void
 }) {
-  const picture = catalogUrl(item.image_path)
+  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
   return (
     <div className="relative">
       {!item.price && <FreeCorner />}

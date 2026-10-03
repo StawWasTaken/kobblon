@@ -332,8 +332,8 @@ export default function CreateAvatarItems() {
               {(made.data ?? []).map((one) => (
                 <li key={one.id} className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-card p-2.5">
                   <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
-                    {catalogUrl(one.image_path)
-                      ? <img src={catalogUrl(one.image_path)!} alt="" className="h-full w-full object-contain" />
+                    {catalogUrl(one.image_path, one.image_bucket ?? undefined)
+                      ? <img src={catalogUrl(one.image_path, one.image_bucket ?? undefined)!} alt="" className="h-full w-full object-contain" />
                       : <FontAwesomeIcon icon={faShirt} className="text-white/30" />}
                   </span>
                   <span className="min-w-0 flex-1">

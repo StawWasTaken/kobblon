@@ -20,6 +20,23 @@ import {
 } from '@/engine'
 import { cn } from '@/lib/cn'
 
+/*
+ * The same handling a mesh has, because an avatar is a thing you look at in
+ * the same way. Staw asked for it and it is the right call: a body you can
+ * only see from the front is a body whose back nobody ever checks, and the
+ * person most likely to want to turn it is the one who just put something on
+ * its back.
+ *
+ * The numbers are `MeshViewer`'s. Not shared through a module, because what
+ * is shared is the *feel* and not an implementation - but written the same
+ * on purpose, so turning an avatar and turning a mesh are the same gesture
+ * at the same speed.
+ */
+const DRIFT = 0.42
+const SETTLE = 1.6
+const NEAREST = 0.45
+const FURTHEST = 1.9
+
 /** What the stage needs to draw one person. Shaped like `avatar_of`'s answer. */
 export type AvatarLook = {
   body: Record<string, string> | null
@@ -43,7 +60,8 @@ const SOCKETS: Record<string, K6Point> = {
 }
 
 export function AvatarStage({
-  look, avatarUrl = '/k6/k6.glb', portrait, turning = true, className,
+  look, avatarUrl = '/k6/k6.glb', portrait, turning = true, handled,
+  className,
 }: {
   look: AvatarLook | null
   avatarUrl?: string
@@ -51,6 +69,12 @@ export function AvatarStage({
   portrait?: boolean
   /** Slowly turning, which an editor wants and a thumbnail does not. */
   turning?: boolean
+  /**
+   * Draggable, like a mesh: turn it, tilt it, wheel to come closer. The
+   * editor wants this; a card showing somebody in a list does not, because
+   * there a drag is the list being scrolled.
+   */
+  handled?: boolean
   className?: string
 }) {
   const holder = useRef<HTMLDivElement>(null)
@@ -154,21 +178,77 @@ export function AvatarStage({
 
         const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200)
 
+        /*
+         * The camera turns around the body rather than the body turning
+         * under a fixed camera. Both look the same standing still and they
+         * are not the same thing: the body's own rotation is what a hat on
+         * its back is drawn relative to, and spinning that would spin the
+         * light with it.
+         */
+        const turn = { yaw: 0, pitch: 0.06, closeness: 1 }
+        let held = false
+        let lastTouched = -Infinity
+        let last = { x: 0, y: 0 }
+
         const place = () => {
           if (portrait) {
             const shot = headshot()
             camera.fov = shot.fov
             camera.position.copy(shot.position)
             camera.lookAt(shot.middle)
-          } else {
-            const whole = new THREE.Box3().setFromObject(body!.object)
-            const middle = whole.getCenter(new THREE.Vector3())
-            const reach = whole.getBoundingSphere(new THREE.Sphere()).radius
-            const away = (reach * 1.15) / Math.sin((camera.fov * Math.PI) / 360)
-            camera.position.set(middle.x, middle.y + away * 0.06, middle.z + away)
-            camera.lookAt(middle)
+            camera.updateProjectionMatrix()
+            return
           }
+          const whole = new THREE.Box3().setFromObject(body!.object)
+          const middle = whole.getCenter(new THREE.Vector3())
+          const reach = whole.getBoundingSphere(new THREE.Sphere()).radius
+          const away = ((reach * 1.15) / Math.sin((camera.fov * Math.PI) / 360))
+            * turn.closeness
+          const flat = Math.cos(turn.pitch) * away
+          camera.position.set(
+            middle.x + Math.sin(turn.yaw) * flat,
+            middle.y + Math.sin(turn.pitch) * away,
+            middle.z + Math.cos(turn.yaw) * flat,
+          )
+          camera.lookAt(middle)
           camera.updateProjectionMatrix()
+        }
+
+        const grab = (e: PointerEvent) => {
+          held = true
+          lastTouched = performance.now()
+          last = { x: e.clientX, y: e.clientY }
+          mount.setPointerCapture(e.pointerId)
+        }
+        const drag = (e: PointerEvent) => {
+          if (!held) return
+          lastTouched = performance.now()
+          turn.yaw -= (e.clientX - last.x) * 0.01
+          // Short of the poles, where a body spins around a point rather
+          // than turning and reads as broken.
+          turn.pitch = Math.max(-1.1, Math.min(1.1,
+            turn.pitch + (e.clientY - last.y) * 0.01))
+          last = { x: e.clientX, y: e.clientY }
+        }
+        const drop = (e: PointerEvent) => {
+          held = false
+          lastTouched = performance.now()
+          if (mount.hasPointerCapture(e.pointerId)) mount.releasePointerCapture(e.pointerId)
+        }
+        const roll = (e: WheelEvent) => {
+          e.preventDefault()
+          lastTouched = performance.now()
+          turn.closeness = Math.max(NEAREST, Math.min(FURTHEST,
+            turn.closeness * (1 + Math.sign(e.deltaY) * 0.12)))
+        }
+
+        if (handled && !portrait) {
+          mount.addEventListener('pointerdown', grab)
+          mount.addEventListener('pointermove', drag)
+          mount.addEventListener('pointerup', drop)
+          mount.addEventListener('pointercancel', drop)
+          mount.addEventListener('wheel', roll, { passive: false })
+          renderer.domElement.className = 'h-full w-full cursor-grab active:cursor-grabbing'
         }
 
         const fit = () => {
@@ -188,7 +268,16 @@ export function AvatarStage({
           const step = Math.min(0.1, (now - then) / 1000)
           then = now
           body?.update(step)
-          if (turning && !portrait) body!.object.rotation.y += step * 0.35
+          /*
+           * Still while it is being handled, and for a moment afterwards -
+           * the same settle a mesh has. A model that starts turning the
+           * instant you let go takes the angle you just chose away from you.
+           */
+          const resting = !held && now - lastTouched > SETTLE * 1000
+          if (turning && !portrait && (!handled || resting)) {
+            turn.yaw += (handled ? DRIFT : 0.35) * step
+          }
+          if (!portrait) place()
           renderer?.render(scene, camera)
         }
         frame = requestAnimationFrame(tick)
@@ -202,18 +291,23 @@ export function AvatarStage({
     return () => {
       wanted = false
       cancelAnimationFrame(frame)
+      mount.replaceChildren()
       for (const one of borrowed) releaseMesh(one)
       for (const one of textures) one.dispose()
       body?.dispose()
       renderer?.dispose()
       renderer?.domElement.remove()
     }
-  }, [look, avatarUrl, portrait, turning])
+  }, [look, avatarUrl, portrait, turning, handled])
 
   return (
     <div
       ref={holder}
-      className={cn('relative grid aspect-square w-full place-items-center', className)}
+      className={cn(
+        'relative grid aspect-square w-full place-items-center',
+        handled && !portrait && 'touch-none select-none',
+        className,
+      )}
     >
       {failed && (
         <FontAwesomeIcon icon={faUser} className="text-3xl text-white/25" />

@@ -12,10 +12,10 @@ import { Commercial } from '@/components/landing/Commercial'
 import { WorldStage } from '@/components/landing/WorldStage'
 import { CreatorShelf } from '@/components/landing/CreatorShelf'
 import { CommunityRow } from '@/components/landing/CommunityRow'
-import { StyleShelf } from '@/components/landing/StyleShelf'
+import { CatalogShelf } from '@/components/landing/CatalogShelf'
 import { useAsync } from '@/hooks/useAsync'
 import { useForceDark } from '@/hooks/useTheme'
-import { getPlatformStats, listAssets, listCommunities, listWorlds, styleShop } from '@/lib/api'
+import { getPlatformStats, listAssets, listCommunities, listWorlds, avatarShelf } from '@/lib/api'
 import { currency } from '@/lib/currency'
 import { asset } from '@/lib/asset'
 import { formatCount } from '@/lib/format'
@@ -105,7 +105,7 @@ export default function Landing() {
   }, [])
   const communities = useAsync(() => listCommunities(''), [])
   // Things to wear. The shop is open to anybody, logged in or not.
-  const style = useAsync(() => styleShop({ limit: 14 }).catch(() => []), [])
+  const style = useAsync(() => avatarShelf(null, undefined, 14).catch(() => []), [])
 
   const biggest = [...(communities.data ?? [])]
     .sort((a, b) => b.member_count - a.member_count)
@@ -241,7 +241,7 @@ export default function Landing() {
                 </p>
               </div>
             ) : (
-              <StyleShelf items={style.data ?? []} loading={style.loading} />
+              <CatalogShelf items={style.data ?? []} loading={style.loading} />
             )}
           </div>
 

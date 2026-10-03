@@ -22,8 +22,6 @@ export type Profile = {
   accent_color: string | null
   /** What they are doing, while they are here: around, or building. */
   activity: 'around' | 'building' | null
-  /** What they have on their picture, kept on the row so lists can draw it. */
-  style?: WornStyle[] | null
   /** The Discord account tied to this one, once Discord has vouched for it. */
   discord_id?: string | null
   /** What they call themselves on Discord, which their profile shows. */
@@ -31,19 +29,6 @@ export type Profile = {
   discord_visibility?: 'everyone' | 'friends' | 'nobody'
   discord_linked_at?: string | null
   created_at: string
-}
-
-/** One thing somebody is wearing on their picture, and where it sits. */
-export type WornStyle = {
-  id: string
-  name?: string
-  url: string
-  x: number
-  y: number
-  width: number
-  rotation?: number
-  flipped?: boolean
-  layer?: 0 | 1
 }
 
 export type Space = {
@@ -761,6 +746,7 @@ export type AvatarPiece = {
   content_id: number | null
   item_name: string | null
   image_path: string | null
+  image_bucket: string | null
   mesh_path: string | null
   mesh_format: string | null
   texture_path: string | null
@@ -776,6 +762,8 @@ export type AvatarItem = {
   description?: string | null
   price: number
   image_path: string | null
+  /** Which bucket that picture is in: 'catalog', or 'faces' for an old one. */
+  image_bucket?: string | null
   mesh_path: string | null
   texture_path: string | null
   creator_id?: string

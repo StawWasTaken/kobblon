@@ -29,7 +29,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarOf, myAvatarItems, wearAvatarItem, takeOffSlot, setBodyColours,
-  catalogUrl, assetUrl,
+  catalogUrl, assetUrl, refreshPortrait,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
 import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
@@ -109,7 +109,7 @@ export default function MyAvatar() {
         slot: p.slot,
         kind: p.kind ?? '',
         name: p.item_name,
-        imageUrl: catalogUrl(p.image_path),
+        imageUrl: catalogUrl(p.image_path, p.image_bucket ?? undefined),
         meshUrl: null as string | null,
         meshFormat: p.mesh_format,
         textureUrl: null as string | null,
@@ -153,11 +153,46 @@ export default function MyAvatar() {
       await doIt()
       worn.reload()
       owned.reload()
+      /*
+       * The profile picture is this avatar's head, so it is taken again
+       * whenever the avatar changes. Deliberately not awaited: it is a
+       * render and an upload, and nobody should watch a spinner for a
+       * picture of themselves they are not currently looking at.
+       *
+       * Nothing fails because of it either. A portrait that did not draw
+       * leaves the one they had, which is out of date for a moment rather
+       * than broken.
+       */
+      void takePortrait()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
     } finally {
       setBusy(null)
     }
+  }
+
+  /*
+   * Read fresh rather than from what is on screen: this runs right after a
+   * change, and the look held above is the one from before it. Asking the
+   * server is the difference between a portrait of what somebody just did
+   * and a portrait of what they had done before that.
+   */
+  const takePortrait = async () => {
+    if (!profile) return
+    const now = await avatarOf(profile.id).catch(() => null)
+    if (!now) return
+
+    const pieces = await Promise.all(now.filter((p) => p.slot).map(async (p) => ({
+      slot: p.slot!,
+      imageUrl: catalogUrl(p.image_path, p.image_bucket ?? undefined),
+      meshUrl: p.mesh_path ? await assetUrl(p.mesh_path).catch(() => null) : null,
+      textureUrl: p.texture_path ? await assetUrl(p.texture_path).catch(() => null) : null,
+    })))
+
+    await refreshPortrait(profile.id, {
+      body: now[0]?.body ?? DEFAULT_BODY,
+      pieces,
+    }).catch(() => null)
   }
 
   const paint = (which: K6Part, colour: string) => {
@@ -194,7 +229,7 @@ export default function MyAvatar() {
             <div className="bg-gradient-to-b from-[#1a1f3a] to-[#0f1120]">
               {worn.loading
                 ? <Skeleton className="aspect-square w-full" />
-                : <AvatarStage look={dressed} />}
+                : <AvatarStage look={dressed} handled />}
             </div>
           </Card>
 
@@ -356,7 +391,7 @@ function WornTile({ item, on, busy, onToggle }: {
   busy: boolean
   onToggle: () => void
 }) {
-  const picture = catalogUrl(item.image_path)
+  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
   return (
     <button
       type="button"

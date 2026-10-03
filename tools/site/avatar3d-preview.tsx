@@ -84,7 +84,7 @@ createRoot(document.getElementById('root')!).render(
       {([
         ['Nothing on', bare, false],
         ['Coloured', painted, false],
-        ['Dressed', dressed, false],
+        ['Dressed, and draggable', dressed, false],
         ['The profile picture', dressed, true],
       ] as const).map(([label, look, portrait]) => (
         <div key={label} className="space-y-2">
@@ -92,7 +92,12 @@ createRoot(document.getElementById('root')!).render(
             {label}
           </p>
           <div className="overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
-            <AvatarStage look={look} portrait={portrait} turning={false} />
+            <AvatarStage
+              look={look}
+              portrait={portrait}
+              turning={false}
+              handled={label.includes('draggable')}
+            />
           </div>
         </div>
       ))}

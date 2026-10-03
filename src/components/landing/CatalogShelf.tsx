@@ -1,10 +1,10 @@
 import { Skeleton } from '@/components/ui/States'
-import { StyleLayer } from '@/components/style/StyleLayer'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faShirt } from '@fortawesome/free-solid-svg-icons'
 import { Price } from '@/components/brand/Currency'
-import { defaultAvatars } from '@/lib/avatars'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { asWorn } from '@/lib/api'
-import type { StyleItem } from '@/lib/api'
+import { catalogUrl } from '@/lib/api'
+import type { AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
 
 /**
@@ -16,11 +16,13 @@ import { cn } from '@/lib/cn'
  * the top and bottom are faded with a mask rather than a painted gradient so
  * it sits on whatever is behind it.
  *
- * Each one is on a face, because a hat lying on its own tells nobody what it
- * looks like worn, and the faces are dealt round so it does not read as the
- * same picture over and over.
+ * It used to draw each thing on a face, because the old flat avatar was
+ * made of pasted layers and a hat lying on its own told nobody what it
+ * looked like worn. A Catalog item is a picture of itself - a shirt is the
+ * shirt - so it is shown as it is, and the thing it goes on is three
+ * dimensional now and far too heavy to draw fourteen of on a landing page.
  */
-export function StyleShelf({ items, loading }: { items: StyleItem[]; loading: boolean }) {
+export function CatalogShelf({ items, loading }: { items: AvatarItem[]; loading: boolean }) {
   const still = useReducedMotion()
 
   if (loading) {
@@ -42,7 +44,7 @@ export function StyleShelf({ items, loading }: { items: StyleItem[]; loading: bo
   const grid = (aria?: boolean) => (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4" aria-hidden={aria || undefined}>
       {run.map((item, i) => (
-        <Card key={`${aria ? 'again' : 'first'}-${item.id}-${i}`} item={item} face={i} />
+        <Card key={`${aria ? 'again' : 'first'}-${item.id}-${i}`} item={item} />
       ))}
     </div>
   )
@@ -75,23 +77,21 @@ export function StyleShelf({ items, loading }: { items: StyleItem[]; loading: bo
   )
 }
 
-function Card({ item, face }: { item: StyleItem; face: number }) {
+function Card({ item }: { item: AvatarItem }) {
+  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-ink-card">
-      <div className="grid aspect-square place-items-center bg-ink-raised p-6">
-        <span className="relative block h-full w-full">
-          <StyleLayer items={[asWorn(item)]} layer={0} />
-          <span className="relative block h-full w-full overflow-hidden rounded-full border border-white/10">
-            <img
-              src={defaultAvatars[face % defaultAvatars.length]}
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          </span>
-          <StyleLayer items={[asWorn(item)]} layer={1} />
-        </span>
+      <div className="grid aspect-square place-items-center overflow-hidden bg-ink-raised">
+        {picture ? (
+          <img
+            src={picture}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-contain p-4"
+          />
+        ) : (
+          <FontAwesomeIcon icon={faShirt} className="text-3xl text-white/25" />
+        )}
       </div>
 
       <div className="border-t border-white/10 p-3">

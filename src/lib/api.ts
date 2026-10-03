@@ -3,6 +3,7 @@ import {
   canPreview, previewOf, previewOfUrl, PREVIEW_TYPE, PREVIEW_EXTENSION,
   CARD_MARK, cardIsCurrent,
 } from './preview'
+import { drawPortrait, type PortraitLook } from './portrait'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -14,8 +15,7 @@ import type {
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
-  WorldGenre, WorldMedium, WorldMaturity, WorldStanding,
-  Face, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,} from '@/types/db'
+  WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,} from '@/types/db'
 
 const SPACE_FIELDS =
   'id, owner_id, slug, name, description, category, cover_url, is_published, visit_count, ' +
@@ -1699,273 +1699,18 @@ export async function uploadCommunityImage(userId: string, file: File, kind: 'em
 export const uploadSpaceImage = uploadCommunityImage
 
 
-// -------------------------------------------------------------- the Style shop
-
-/** One thing in the shop, or one thing you own. */
-export type StyleItem = {
-  id: string
-  creator_avatar?: string | null
-  content_id: number | null
-  name: string
-  description?: string | null
-  slot: 'hat' | 'hair' | 'face' | 'accessory' | 'frame'
-  image_path: string
-  x: number
-  y: number
-  width: number
-  rotation: number
-  flipped: boolean
-  layer: 0 | 1
-  price: number
-  created_at?: string
-  creator_id?: string
-  creator_name?: string
-  creator_username?: string
-  /** Whether Kobblon vouches for them. Absent means no, not unknown. */
-  creator_is_verified?: boolean
-  owned?: boolean
-  worn?: boolean
-  owners?: number
-  paid?: number
-  mine?: boolean
-  is_public?: boolean
-}
-
-/** Where a thing sits on a picture, in fractions of it. */
-export type Placement = {
-  x: number
-  y: number
-  width: number
-  rotation: number
-  flipped: boolean
-  layer: 0 | 1
-}
-
-/**
- * The picture for an accessory. It lives in the bucket that is already
- * public, because a hat has to be drawable by anybody looking at anybody.
- */
-export function styleImage(path: string): string {
-  if (/^https?:\/\//.test(path)) return path
-  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
-}
-
-export async function uploadStyleImage(userId: string, file: File): Promise<string> {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
-  const path = `${userId}/style-${crypto.randomUUID()}.${extension}`
-  const { error } = await supabase.storage
-    .from('avatars').upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: false })
-  if (error) throw new Error(error.message)
-  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
-}
-
-export async function publishStyleItem(input: {
-  name: string
-  description?: string | null
-  slot: StyleItem['slot']
-  image: string
-  place: Placement
-  price: number
-}): Promise<string> {
-  return unwrap(await supabase.rpc('publish_style_item', {
-    item_name: input.name.trim(),
-    about: input.description?.trim() ?? null,
-    slot_name: input.slot,
-    image: input.image,
-    place: input.place,
-    cost: Math.max(0, Math.round(input.price)),
-  })) as string
-}
-
-export async function placeStyleItem(id: string, place: Placement) {
-  unwrap(await supabase.rpc('place_style_item', { target: id, place }))
-}
-
-export async function retireStyleItem(id: string) {
-  unwrap(await supabase.rpc('retire_style_item', { target: id }))
-}
-
-export async function buyStyleItem(id: string) {
-  unwrap(await supabase.rpc('buy_style_item', { target: id }))
-}
-
-export async function wearStyleItem(id: string, on: boolean) {
-  unwrap(await supabase.rpc('wear_style_item', { target: id, on_me: on }))
-}
-
-export async function styleShop(
-  { search = '', slot = null, limit = 60 }:
-  { search?: string; slot?: StyleItem['slot'] | null; limit?: number } = {},
-): Promise<StyleItem[]> {
-  return (unwrap(await supabase.rpc('style_shop', {
-    search: search.trim() || null, slot_name: slot, wanted: limit,
-  })) as StyleItem[]) ?? []
-}
-
-// ------------------------------------------------------------- moderation
-
-/** What Kobblon knows how to take down. */
-export type TakeDownKind = 'asset' | 'world' | 'space' | 'style' | 'face'
-
-/**
- * Removing a piece of content, and telling whoever made it why.
+/*
+ * Style is gone.
  *
- * The reason is not optional and is shown to the person: "your thing was
- * removed" with no reason is how a platform teaches people that moderation
- * is arbitrary.
- */
-export async function takeDown(what: TakeDownKind, which: string, reason: string) {
-  unwrap(await supabase.rpc('take_down', { what, which, reason }))
-}
-
-/** Undoing a removal. It does not republish: that stays the owner's call. */
-export async function putBack(what: TakeDownKind, which: string) {
-  unwrap(await supabase.rpc('put_back', { what, which }))
-}
-
-// ------------------------------------------------------------------ faces
-
-/**
- * Faces: flat pictures worn on K6's head, the way the first brick-toy
- * avatars wore theirs. Kobblon publishes them and nobody else does.
- */
-export async function faceCatalogue(search = '', limit = 60): Promise<Face[]> {
-  return (unwrap(await supabase.rpc('face_catalogue', {
-    search: search.trim() || null, wanted: limit,
-  })) as Face[]) ?? []
-}
-
-export async function buyFace(id: string) {
-  unwrap(await supabase.rpc('buy_face', { which: id }))
-}
-
-export async function myFaces(): Promise<Face[]> {
-  return (unwrap(await supabase.rpc('my_faces')) as Face[]) ?? []
-}
-
-/** Null takes it off and puts K6 back to its own face. */
-export async function wearFace(id: string | null) {
-  unwrap(await supabase.rpc('wear_face', { which: id }))
-}
-
-/** Where a face answers from. Public: it is a thing in a shop window. */
-export function faceUrl(path: string) {
-  const base = import.meta.env.VITE_SUPABASE_URL ?? ''
-  return `${base}/storage/v1/object/public/faces/${path}`
-}
-
-/** Every face Kobblon has, including the ones off the shelf. */
-export async function allFaces(): Promise<Face[]> {
-  return (unwrap(await supabase.rpc('all_faces')) as Face[]) ?? []
-}
-
-/** Changing one. Leaving a field out leaves it alone. */
-export async function editFace(id: string, changes: {
-  name?: string
-  description?: string
-  price?: number
-  isPublic?: boolean
-  file?: File
-}): Promise<void> {
-  let picture: string | null = null
-
-  if (changes.file) {
-    const extension = changes.file.name.split('.').pop()?.toLowerCase() ?? 'png'
-    picture = `${crypto.randomUUID()}.${extension}`
-    const up = await supabase.storage.from('faces')
-      .upload(picture, changes.file, { contentType: typeOf(changes.file, 'image/png') })
-    if (up.error) throw new Error(up.error.message)
-  }
-
-  const { error } = await supabase.rpc('edit_face', {
-    which: id,
-    called: changes.name ?? null,
-    about: changes.description ?? null,
-    cost: changes.price ?? null,
-    shown: changes.isPublic ?? null,
-    picture,
-  })
-  if (error) {
-    // A new picture that the row never accepted is litter.
-    if (picture) await supabase.storage.from('faces').remove([picture])
-    throw new Error(error.message)
-  }
-}
-
-/**
- * Getting rid of one.
+ * It was the flat avatar - a picture with other pictures pasted over it at
+ * coordinates - and its shop. The Catalog and the three-dimensional avatar
+ * replaced both, so everything that read or wrote it has gone with it rather
+ * than being left as a second way to do the same thing that nothing calls.
  *
- * Says which of the two things happened: a face nobody owns is deleted
- * outright, and one somebody paid for is taken off the shelf and left in
- * their hands. Destroying something people bought is not a tidy-up.
+ * The tables are still there and still hold every row. Dropping them is one
+ * migration whenever Staw is sure nobody wants the old data back; the faces
+ * in them have already been carried across by 0115.
  */
-export async function deleteFace(id: string): Promise<'deleted' | 'retired'> {
-  const path = unwrap(await supabase.rpc('delete_face', { which: id })) as string | null
-  if (!path) return 'retired'
-  await supabase.storage.from('faces').remove([path])
-  return 'deleted'
-}
-
-/**
- * Publishing one. Kobblon only, and that is enforced by the database
- * rather than by this function being hard to find.
- */
-export async function publishFace(input: {
-  file: File
-  name: string
-  description?: string
-  price?: number
-}): Promise<void> {
-  const extension = input.file.name.split('.').pop()?.toLowerCase() ?? 'png'
-  const path = `${crypto.randomUUID()}.${extension}`
-  const up = await supabase.storage.from('faces')
-    .upload(path, input.file, { contentType: typeOf(input.file, 'image/png') })
-  if (up.error) throw new Error(up.error.message)
-
-  const { error } = await supabase.from('faces').insert({
-    name: input.name.trim(),
-    description: input.description?.trim() || null,
-    image_path: path,
-    price: Math.max(0, Math.round(input.price ?? 0)),
-  })
-  if (error) {
-    // Never leave a picture in the bucket with nothing pointing at it.
-    await supabase.storage.from('faces').remove([path])
-    throw new Error(error.message)
-  }
-}
-
-export async function myStyle(): Promise<StyleItem[]> {
-  return (unwrap(await supabase.rpc('my_style')) as StyleItem[]) ?? []
-}
-
-/** The number in a thing's address: STY-1042. */
-export const styleTag = (contentId?: number | null) => `STY-${contentId ?? 0}`
-
-export async function styleItem(contentId: number): Promise<StyleItem | null> {
-  const rows = unwrap(await supabase.rpc('style_item', { target_content: contentId }))
-  const row = (Array.isArray(rows) ? rows[0] : rows) as StyleItem | undefined
-  return row ?? null
-}
-
-export async function similarStyle(id: string, limit = 12): Promise<StyleItem[]> {
-  return (unwrap(await supabase.rpc('similar_style', { target: id, wanted: limit })) as StyleItem[]) ?? []
-}
-
-/** Turns a shop row into the shape a picture is drawn from. */
-export function asWorn(item: StyleItem) {
-  return {
-    id: item.id,
-    name: item.name,
-    url: styleImage(item.image_path),
-    x: item.x,
-    y: item.y,
-    width: item.width,
-    rotation: item.rotation,
-    flipped: item.flipped,
-    layer: item.layer,
-  }
-}
 
 // ------------------------------------------------------------ space detail
 
@@ -2915,9 +2660,20 @@ export async function replaceMeshFile(assetId: string, userId: string, file: Fil
  */
 export const catalogBucket = 'catalog'
 
-export function catalogUrl(path?: string | null): string | null {
+/**
+ * The address of a worn picture.
+ *
+ * Two buckets hold these: `catalog` for everything made since the Catalog
+ * existed, and `faces` for the ones that were in Style and were carried
+ * across without moving their files. The row says which, so nothing has to
+ * guess from a path - and guessing by age is the rule that works until
+ * somebody uploads a face.
+ */
+export function catalogUrl(
+  path?: string | null, bucket: string = catalogBucket,
+): string | null {
   if (!path) return null
-  return supabase.storage.from(catalogBucket).getPublicUrl(path).data.publicUrl
+  return supabase.storage.from(bucket || catalogBucket).getPublicUrl(path).data.publicUrl
 }
 
 /** What each kind of avatar item costs to make, and who may make one. */
@@ -3017,4 +2773,41 @@ export async function uploadCatalogImage(userId: string, file: File): Promise<st
     .upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: false })
   if (put.error) throw new Error(put.error.message)
   return path
+}
+
+/**
+ * Takes somebody's profile picture from their avatar, and keeps it.
+ *
+ * Called after anything that changes how they look. Nothing waits on it and
+ * nothing fails because of it: a portrait that did not draw leaves the one
+ * they had, which is wrong for a moment rather than broken.
+ *
+ * WebP with alpha, like every other picture Kobblon draws, so a head sits on
+ * whatever colour the page behind it is.
+ */
+export async function refreshPortrait(
+  userId: string, look: PortraitLook,
+): Promise<string | null> {
+  const drawn = await drawPortrait(look).catch(() => null)
+  if (!drawn) return null
+
+  /*
+   * A new name each time rather than writing over the old one. A picture
+   * served from a public bucket is cached by every browser and every chat
+   * that has ever shown it, and overwriting the file leaves all of them
+   * showing the old face for as long as their cache holds.
+   */
+  const path = `${userId}/portrait-${Date.now()}.webp`
+  const put = await supabase.storage.from('avatars')
+    .upload(path, drawn, { contentType: 'image/webp', upsert: false })
+  if (put.error) return null
+
+  const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+  const saved = await supabase.from('profiles')
+    .update({ avatar_url: url }).eq('id', userId).select('id').single()
+  if (saved.error) {
+    await supabase.storage.from('avatars').remove([path])
+    return null
+  }
+  return url
 }

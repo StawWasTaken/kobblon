@@ -24,7 +24,7 @@ export const topNav: { to: string; label: string }[] = [
   // The Catalog is a place to browse, which by this file's own rule puts it
   // up here. It sat in the rail as "Style" while the thing it changes - your
   // avatar - had nowhere of its own at all.
-  { to: '/style', label: 'Catalog' },
+  { to: '/catalog', label: 'Catalog' },
 ]
 
 /**
