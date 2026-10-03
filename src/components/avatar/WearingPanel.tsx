@@ -1,16 +1,20 @@
 /*
  * Somebody, standing there, and everything they have on beside them.
  *
+ * Laid out like the page Staw sent: the figure in a panel on the left with a
+ * 2D/3D switch over it, and the things themselves in a grid to the right -
+ * pictures, not names, because a grid of names is a list and he asked for
+ * the cards.
+ *
  * Its own component rather than markup inside the profile page, for the
  * reason everything else here is: a panel inside a page can only be looked
- * at by having the page, an account, and a database - and this one is the
- * part of the profile most likely to come out wrong, because it is a figure
- * and a grid sharing a row. `tools/site/face-preview.html` mounts it with
- * nothing around it.
+ * at by having the page, an account and a database, and this one is the part
+ * most likely to come out wrong, being a figure and a grid sharing a row.
+ * `tools/site/face-preview.html` mounts it with nothing around it.
  *
- * No provider and no router of its own: it is handed a look and draws it.
- * The Workspace shows people too.
+ * No provider of its own, and a router only because the tiles are links.
  */
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShirt } from '@fortawesome/free-solid-svg-icons'
@@ -19,22 +23,104 @@ import { Skeleton } from '@/components/ui/States'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { Studio } from '@/components/avatar/Studio'
 import { avatarTag, avatarKindLabels } from '@/lib/kinds'
-import type { PortraitLook } from '@/lib/portrait'
+import { drawPortrait, type PortraitLook } from '@/lib/portrait'
+import { cn } from '@/lib/cn'
+
+/**
+ * The flat one.
+ *
+ * 2D is a *picture* - that is the whole difference from 3D, and the reason
+ * it is worth having: it does not spin, it does not hold a WebGL context,
+ * and it is what somebody wants when they are looking at the eight tiles
+ * beside it rather than at the figure.
+ *
+ * Drawn once per look and kept for as long as the panel is open. Freed on
+ * the way out: a blob URL nobody revokes is a leak that only shows up after
+ * somebody has read twenty profiles.
+ */
+function useFlatPicture(look: PortraitLook | null, wanted: boolean) {
+  const [picture, setPicture] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!wanted || !look) return
+    let live = true
+    let made: string | null = null
+
+    void (async () => {
+      const drawn = await drawPortrait(look, '/k6/k6.glb', 'body').catch(() => null)
+      if (!drawn) return
+      made = URL.createObjectURL(drawn)
+      // The person being drawn can change while this is in flight, which is
+      // the trap this project keeps falling into. If it has, the picture is
+      // thrown away rather than shown over somebody else.
+      if (!live) { URL.revokeObjectURL(made); return }
+      setPicture(made)
+    })()
+
+    return () => {
+      live = false
+      if (made) URL.revokeObjectURL(made)
+      setPicture(null)
+    }
+  }, [look, wanted])
+
+  return picture
+}
+
+function Switch({ mode, onPick }: { mode: '2D' | '3D'; onPick: (next: '2D' | '3D') => void }) {
+  return (
+    <div className="absolute right-2 top-2 z-10 flex overflow-hidden rounded-lg border border-ink-line bg-ink-card/85 text-xs font-bold backdrop-blur">
+      {(['2D', '3D'] as const).map((one) => (
+        <button
+          key={one}
+          onClick={() => onPick(one)}
+          aria-pressed={mode === one}
+          className={cn(
+            'px-2.5 py-1 transition-colors',
+            mode === one ? 'bg-brand text-white' : 'text-white/60 hover:text-white',
+          )}
+        >
+          {one}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export function WearingPanel({ look, loading }: {
   look: PortraitLook | null
   loading?: boolean
 }) {
+  /*
+   * 3D first, because it is the thing worth showing - the flat one is for
+   * when somebody wants it to hold still.
+   */
+  const [mode, setMode] = useState<'2D' | '3D'>('3D')
+  const flat = useFlatPicture(look, mode === '2D')
+
   // Only the pieces that have a page to go to. A thing taken down is still
   // worn and no longer has one.
   const wearing = (look?.pieces ?? []).filter((piece) => piece.contentId)
 
   return (
-    <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+    <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
       <Studio className="relative aspect-square rounded-2xl border border-ink-line">
-        {loading
-          ? <Skeleton className="h-full w-full" />
-          : <AvatarStage look={look as AvatarLook | null} handled />}
+        {loading ? (
+          <Skeleton className="h-full w-full" />
+        ) : (
+          <>
+            <Switch mode={mode} onPick={setMode} />
+            {mode === '3D' ? (
+              <AvatarStage look={look as AvatarLook | null} handled />
+            ) : flat ? (
+              <img src={flat} alt="" className="h-full w-full object-contain" />
+            ) : (
+              <div className="grid h-full w-full place-items-center text-sm text-muted">
+                Drawing…
+              </div>
+            )}
+          </>
+        )}
       </Studio>
 
       {wearing.length === 0 ? (

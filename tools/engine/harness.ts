@@ -348,6 +348,23 @@ Object.assign(window, {
       furthest: radii.length ? +Math.max(...radii).toFixed(3) : null,
       nearest: radii.length ? +Math.min(...radii).toFixed(3) : null,
       height: faceBox ? +faceBox.getCenter(new THREE.Vector3()).y.toFixed(2) : null,
+      /*
+       * How much surface the picture is painted on, across and down. These
+       * two being equal is what "a square face is drawn square" means, and
+       * it is not the same as the box being square: the face is bent, so the
+       * surface across it is an arc and the box only sees its chord.
+       */
+      surfaceAcross: on
+        ? +(
+          Math.abs(
+            (on.geometry.parameters as { thetaLength: number }).thetaLength
+            * (on.geometry.parameters as { radiusTop: number }).radiusTop,
+          )
+        ).toFixed(3)
+        : null,
+      surfaceDown: on
+        ? +(on.geometry.parameters as { height: number }).height.toFixed(3)
+        : null,
     }
   },
 

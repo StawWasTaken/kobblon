@@ -10,6 +10,8 @@ type Somebody = {
   display_name: string
   /** What they have on: drawn over the picture, wherever it appears. */
   avatar_url?: string | null
+  /** When they last changed how they look, so an old picture is redrawn. */
+  avatar_changed_at?: string | null
   is_online?: boolean
   in_space_id?: string | null
   activity?: string | null
@@ -85,6 +87,7 @@ export function PersonAvatar({
         <Avatar
           src={avatarOf(person ?? undefined)}
           personId={person?.id}
+          changedAt={person?.avatar_changed_at}
           name={person?.display_name ?? '?'}
           size="md"
           className={cn('h-full w-full', square ? 'rounded-xl' : 'rounded-full')}

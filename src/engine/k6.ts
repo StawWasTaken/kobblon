@@ -95,9 +95,9 @@ export const K6_FACE_SIZE = Math.min(BODY.Head.w, BODY.Head.h) * 0.85
  * its own drawing - and the two multiplied. The crop is gone (see `setFace`)
  * and this is the whole of how big a face is now.
  *
- * `FACE_ACROSS` is the width as seen from the front, in stons. The surface
- * is curved, so the picture is wrapped over rather more than that: the arc
- * is worked out from the chord.
+ * `FACE_ACROSS` is measured along the curve, not across the front of it, so
+ * a square picture stays square. See `setFace` for why that is the number
+ * that matters.
  */
 const FACE_ACROSS = K6_FACE_SIZE * 1.2
 const FACE_TALL = K6_FACE_SIZE * 1.2
@@ -411,11 +411,11 @@ export class K6 {
    * centred on the head's own axis - which is why it is pushed back a radius
    * from the face socket, since that socket sits on the front surface.
    *
-   * The arc is the one whose *chord* is `FACE_ACROSS`: wrapping a picture
-   * over an arc of that length would draw a face wider than the head looks,
-   * because an arc is longer than the chord under it. This way a face is as
-   * wide from the front as it says it is, and the extra is spent curving
-   * away round the sides, which is what a face on a head does.
+   * `FACE_ACROSS` is how much *surface* a face covers, measured along the
+   * curve. It is deliberately not the width it reads as from the front: a
+   * picture is painted along the surface, so making the front-on width come
+   * out exactly right means stretching the picture over the longer arc
+   * underneath it, which is a face a third wider than it was drawn.
    *
    * The picture is drawn whole. A first go cropped each one to the part of
    * its file that was actually drawn on, so that two faces with different
@@ -444,8 +444,19 @@ export class K6 {
       if (!socket) return
 
       const radius = HEAD_RADIUS + FACE_GAP
-      // The angle whose chord is the width we want the face to read as.
-      const arc = 2 * Math.asin(Math.min(FACE_ACROSS / 2 / radius, 1))
+      /*
+       * The angle whose **arc** is the width, not the one whose chord is.
+       *
+       * Those are two different numbers and picking the wrong one is what
+       * Staw saw: "i dont like how stretched the faces are being". A picture
+       * is painted along the surface, so the surface it covers is the arc -
+       * and an arc whose chord is 2.45 stons is 3.13 stons long, so a square
+       * face was drawn a third wider than it is tall and every face came out
+       * fat. Measuring the arc instead costs a little apparent width - the
+       * face reads about 2.1 across the front rather than 2.45 - and that is
+       * the right trade, because the width was never the complaint.
+       */
+      const arc = FACE_ACROSS / radius
 
       /*
        * An open-ended cylinder, which is a curved sheet when you only ask

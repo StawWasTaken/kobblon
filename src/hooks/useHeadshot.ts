@@ -9,18 +9,28 @@
  */
 import { useEffect, useState } from 'react'
 import {
-  askForHeadshot, headshotFor, headshotKnown, watchHeadshots,
+  askForHeadshot, headshotFor, headshotKnown, portraitIsCurrent, watchHeadshots,
 } from '@/lib/headshots'
 
 export function useHeadshot(
   personId: string | null | undefined,
   stored: string | null | undefined,
+  /**
+   * When they last changed their avatar. With it, a stored picture taken
+   * before that is ignored and a current one drawn - which is the whole of
+   * Staw's "everytime you change avatars, it updates", for everybody looking
+   * rather than only for the account that happened to be on its own avatar
+   * page when it changed.
+   */
+  changedAt?: string | null,
 ): string | null {
   const [, nudge] = useState(0)
+  const current = portraitIsCurrent({ avatar_url: stored, avatar_changed_at: changedAt })
+  const usable = current ? stored : null
 
   useEffect(() => {
     // Nothing to draw, or nothing to draw it for.
-    if (stored || !personId) return
+    if (usable || !personId) return
 
     /*
      * The trap, in its usual clothes: the person being drawn can change
@@ -32,8 +42,8 @@ export function useHeadshot(
     const stop = watchHeadshots(() => nudge((n) => n + 1))
     if (!headshotKnown(personId)) void askForHeadshot(personId)
     return stop
-  }, [personId, stored])
+  }, [personId, usable])
 
-  if (stored) return stored
+  if (usable) return usable
   return personId ? headshotFor(personId) : null
 }

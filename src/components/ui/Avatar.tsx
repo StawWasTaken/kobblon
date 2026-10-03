@@ -15,6 +15,7 @@ export function Avatar({
   src,
   name,
   personId,
+  changedAt,
   size = 'md',
   className,
   style,
@@ -30,12 +31,17 @@ export function Avatar({
    * the places that have a name and no person behind it.
    */
   personId?: string | null
+  /**
+   * When that person last changed their avatar. A stored picture older than
+   * this is of who they used to be, so it is redrawn instead of shown.
+   */
+  changedAt?: string | null
   size?: AvatarSize
   className?: string
   style?: React.CSSProperties
 }) {
   const initials = name.slice(0, 2).toUpperCase()
-  const picture = useHeadshot(personId, src)
+  const picture = useHeadshot(personId, src, changedAt)
   return (
     <span
       className={cn(

@@ -30,6 +30,28 @@
  */
 import { drawPortrait } from './portrait'
 
+/**
+ * Whether the picture somebody has stored still shows who they are.
+ *
+ * A portrait is saved as `portrait-<when>.webp` - a new name each time,
+ * because a public bucket is cached by every browser that has ever shown it -
+ * and the database says when the avatar last changed. Older means the stored
+ * picture is of who they used to be.
+ *
+ * Anything else stored under `avatar_url` has no stamp to read and is left
+ * alone: unknown is not the same as old, and throwing away a picture nobody
+ * can date would be throwing away every picture from before this existed.
+ */
+export function portraitIsCurrent(person?: {
+  avatar_url?: string | null
+  avatar_changed_at?: string | null
+} | null): boolean {
+  if (!person?.avatar_url) return false
+  const stamp = /portrait-(\d+)\.webp/.exec(person.avatar_url)?.[1]
+  if (!stamp || !person.avatar_changed_at) return true
+  return Number(stamp) >= new Date(person.avatar_changed_at).getTime()
+}
+
 /** What has been drawn, by person. `null` means tried and could not. */
 const drawn = new Map<string, string | null>()
 /** What is being drawn, so twenty rows for one person are one draw. */

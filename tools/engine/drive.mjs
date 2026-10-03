@@ -1911,9 +1911,17 @@ check('and every part of it sits on the head, not off it',
  * A fifth bigger than the old square, which is what Staw asked for after
  * looking at the first attempt. The old one was 2.04 across.
  */
-check('a face is the old size and a fifth again',
-  Math.abs(faces.across - 2.04 * 1.2) < 0.02,
-  `${faces.across} across, from 2.04`)
+check('a face is the old size and a fifth again, measured along the head',
+  Math.abs(faces.surfaceAcross - 2.04 * 1.2) < 0.02,
+  `${faces.surfaceAcross} of surface, from 2.04`)
+/*
+ * The stretch Staw saw. A square picture painted on a surface wider than it
+ * is tall is a wide face, and the box being square says nothing about that -
+ * the box sees the chord, and the picture is painted on the arc.
+ */
+check('and a square face is drawn square, not stretched round the head',
+  Math.abs(faces.surfaceAcross - faces.surfaceDown) < 0.001,
+  `${faces.surfaceAcross} across the surface, ${faces.surfaceDown} down`)
 
 const twoFaces = await p.evaluate(() => window.twoFaces())
 check('two faces are the same size on a head whatever their pictures are',

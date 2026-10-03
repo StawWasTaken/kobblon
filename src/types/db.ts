@@ -20,6 +20,11 @@ export type Profile = {
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null
   content_id: number | null
+  /**
+   * When they last changed how their avatar looks. A profile picture drawn
+   * before this is out of date and is drawn again rather than shown.
+   */
+  avatar_changed_at?: string | null
   /** The colour somebody chose for their own page. */
   accent_color: string | null
   /** What they are doing, while they are here: around, or building. */
@@ -750,6 +755,8 @@ export type AvatarPiece = {
   image_path: string | null
   image_bucket: string | null
   preview_path: string | null
+  /** The card the Creator Hub drew for this item's model, if it has one. */
+  mesh_preview_path?: string | null
   mesh_path: string | null
   mesh_format: string | null
   texture_path: string | null

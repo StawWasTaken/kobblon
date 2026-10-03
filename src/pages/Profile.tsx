@@ -106,15 +106,18 @@ type Face = {
 
 function Faces({ people }: { people: Face[] }) {
   return (
-    <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
+    // Bigger faces, which is what Staw asked for and what the page he sent
+    // does: a friends row is people, and at twenty-four across nobody can
+    // tell which of their friends they are looking at.
+    <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
       {people.map((person) => (
         <Link
           key={person.id}
           to={profileLink(person)}
-          className="w-24 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
+          className="w-28 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
         >
-          <PersonAvatar person={person} size="lg" square />
-          <p className="mt-1.5 truncate text-xs font-bold">{person.display_name}</p>
+          <PersonAvatar person={person} size="3xl" className="mx-auto h-20 w-20" />
+          <p className="mt-2 truncate text-sm font-bold">{person.display_name}</p>
           <p className="truncate text-[11px] text-muted">@{person.username}</p>
         </Link>
       ))}
@@ -343,6 +346,7 @@ export default function Profile() {
 
   return (
     <Page
+      width="narrow"
       className="space-y-6 pt-6"
       /* Every accent on the page comes from here, so somebody's colour runs
          through their whole page rather than being dabbed on in places. */
@@ -424,6 +428,54 @@ export default function Profile() {
                   <span className="ml-1.5 text-white/60">{label}</span>
                 </Link>
               ))}
+            </div>
+
+            {/*
+              * A line or two of what they wrote, under the counts, with the
+              * rest behind Read more - which is where Staw wants it and
+              * where the page he sent puts it. The card it opens holds the
+              * whole bio and the numbers nobody needs on the way past.
+              */}
+            <div className="mt-3 max-w-2xl">
+              {user.bio ? (
+                <p className="line-clamp-2 whitespace-pre-wrap text-sm leading-relaxed text-white/75">
+                  {user.bio}
+                </p>
+              ) : (
+                <p className="text-sm text-muted">
+                  {isMe ? 'Say something about yourself.' : 'Nothing written yet.'}
+                </p>
+              )}
+              <div className="mt-1 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => { setAbout(true); if (isMe && !user.bio) setWritingBio(true) }}
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
+                >
+                  {isMe && !user.bio
+                    ? <><PenIcon className="text-xs" />Write your bio</>
+                    : <><FontAwesomeIcon icon={faCircleInfo} className="text-xs" />Read more</>}
+                </button>
+
+                {/* Somebody's Discord, when they have said which one is
+                    theirs and Discord has agreed. */}
+                {user.discord_display && (
+                  <Tooltip
+                    label={
+                      handle.data
+                        ? `@${handle.data} on Discord`
+                        : isMe
+                          ? 'Only you can see your handle. Change that in Settings.'
+                          : 'Their Discord handle is not shown to you.'
+                    }
+                    side="top"
+                  >
+                    <p className="inline-flex cursor-default items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1 text-xs font-bold">
+                      <FontAwesomeIcon icon={faDiscord} className="text-[#5865F2]" />
+                      {user.discord_display}
+                    </p>
+                  </Tooltip>
+                )}
+              </div>
             </div>
 
           </div>
@@ -600,53 +652,6 @@ export default function Profile() {
         </div>
       ) : (
         <div className="space-y-10">
-          {/* ------------------------------------------------------- about */}
-          <section>
-            <Heading icon={faCircleInfo}>About</Heading>
-            <Card className="space-y-3">
-              {user.bio ? (
-                <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-white/80">
-                  {user.bio}
-                </p>
-              ) : (
-                <p className="text-sm text-muted">
-                  {isMe ? 'Say something about yourself.' : 'Nothing written yet.'}
-                </p>
-              )}
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => { setAbout(true); if (isMe && !user.bio) setWritingBio(true) }}
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
-                >
-                  {isMe && !user.bio
-                    ? <><PenIcon className="text-xs" />Write your bio</>
-                    : <><FontAwesomeIcon icon={faCircleInfo} className="text-xs" />Read more</>}
-                </button>
-
-                {/* Somebody's Discord, when they have said which one is
-                    theirs and Discord has agreed. */}
-                {user.discord_display && (
-                  <Tooltip
-                    label={
-                      handle.data
-                        ? `@${handle.data} on Discord`
-                        : isMe
-                          ? 'Only you can see your handle. Change that in Settings.'
-                          : 'Their Discord handle is not shown to you.'
-                    }
-                    side="top"
-                  >
-                    <p className="inline-flex cursor-default items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1.5 text-xs font-bold">
-                      <FontAwesomeIcon icon={faDiscord} className="text-[#5865F2]" />
-                      {user.discord_display}
-                    </p>
-                  </Tooltip>
-                )}
-              </div>
-            </Card>
-          </section>
-
           {/* --------------------------------------------- currently wearing */}
           {/*
             * Them, standing there, and everything they have on beside them.
@@ -672,12 +677,12 @@ export default function Profile() {
                 See all
               </Link>
             }>
-              Friends
+              Friends{friends.data?.length ? ` (${friends.data.length})` : ''}
             </Heading>
 
             {friends.loading && (
-              <div className="flex gap-3">
-                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-24 rounded-xl" />)}
+              <div className="flex gap-4">
+                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-20 rounded-full" />)}
               </div>
             )}
 
@@ -693,20 +698,27 @@ export default function Profile() {
           {!!communities.data?.length && (
             <section>
               <Heading icon={faUsers}>Communities</Heading>
-              <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
+              {/*
+                * The emblem big and square with the name under it, which is
+                * how the page Staw sent shows a group: a community is a
+                * picture people recognise before it is a name.
+                */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {communities.data.map((community) => (
                   <Link
                     key={community.id}
                     to={communityLink(community)}
-                    className="w-40 shrink-0 rounded-2xl border border-ink-line bg-ink-card p-3 text-center transition-colors hover:border-brand/60"
+                    className="group rounded-2xl transition-colors"
                   >
                     <Emblem
                       src={community.icon_url}
                       name={community.name}
                       rounded="rounded-xl"
-                      className="mx-auto h-14 w-14 text-lg"
+                      className="aspect-square h-auto w-full text-3xl transition-colors group-hover:brightness-110"
                     />
-                    <p className="mt-2 truncate text-sm font-bold">{community.name}</p>
+                    <p className="mt-2 truncate text-sm font-bold group-hover:text-link">
+                      {community.name}
+                    </p>
                     <p className="text-xs text-muted">
                       {formatCount(community.member_count)} members
                     </p>
@@ -732,27 +744,6 @@ export default function Profile() {
               </div>
             </section>
           )}
-
-          {/* ---------------------------------------------------- statistics */}
-          {/*
-            * The two numbers worth printing: when they turned up, and how
-            * many times somebody has been into something they made. Said in
-            * words rather than stacked in a wall of tiles, which is what
-            * `Fact` is for.
-            */}
-          <section>
-            <Heading icon={faEye}>Statistics</Heading>
-            <Card className="flex flex-wrap gap-x-8 gap-y-2">
-              <Fact icon={faClock}>
-                Here since{' '}
-                {new Date(user.created_at).toLocaleDateString(undefined, {
-                  day: 'numeric', month: 'long', year: 'numeric',
-                })}
-              </Fact>
-              <Fact icon={faEye}>{formatCount(visits)} visits to their Worlds</Fact>
-              <Fact icon={faCubes}>{formatCount(spaces.data?.length ?? 0)} Worlds published</Fact>
-            </Card>
-          </section>
 
         </div>
       )}

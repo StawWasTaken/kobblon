@@ -3402,3 +3402,71 @@ square times 1.2, curved onto the head, and the picture is laid in it whole.
 Best friends, cancelling your own requests, AI screening (Groq, later -
 screening is manual today), editing a face by re-uploading its asset, the
 clothing render, reselling limiteds, the outfit UI, the rest of the redesigns.
+
+# Thirty-fourth round — faces were stretched, a picture that knows it is old, and the card an avatar never handed back
+
+## The face was a third too wide (`@/engine/k6`)
+
+Staw: "i dont like how stretched the faces are being". He is right and the
+arithmetic is the whole of it.
+
+A face is painted on a curved surface. Round thirty-two picked the arc whose
+**chord** is the face width - so a face would read exactly 2.45 stons across
+from the front - and the surface under that chord is **3.13 stons long**. The
+picture is painted along the surface, so a square face was drawn a third
+wider than it was tall. Every face came out fat and nothing in the geometry
+looked wrong, because the box was square.
+
+`FACE_ACROSS` is measured **along the curve** now. A face reads about 2.1
+across the front rather than 2.45, which is the right trade: the width was
+never the complaint. If you have copied `setFace`, the line is
+`arc = FACE_ACROSS / radius`, not `2 * asin(FACE_ACROSS / 2 / radius)`.
+
+The check that goes with it is not "is the box square" - that passed on the
+broken version. It is **"is the surface as wide as it is tall"**: the box sees
+the chord, the picture is painted on the arc.
+
+## `profiles.avatar_changed_at` (0153)
+
+A profile picture is drawn from the avatar, and it still went stale, because
+drawing it again happened in exactly one place: the account's own avatar page,
+after a change it watched. Anything else that changes how somebody looks - an
+outfit, a starting kit, a takedown that undressed them - left a picture of who
+they used to be, and there was no way to tell, because a URL looks exactly as
+current as it did the day it was written.
+
+So the database stamps it. Set by a trigger on `avatar_worn` and by a body
+colour change, with `clock_timestamp()` rather than `now()` - `now()` is when
+the *transaction* began, so two changes in one transaction stamp the same
+instant and the check could not tell them apart. It reads as the trigger not
+firing and it is the clock standing still.
+
+**How to use it:** a portrait is saved as `portrait-<when>.webp`. Older than
+`avatar_changed_at` means stale. On the website that means the stored picture
+is ignored and a current one drawn where it is shown (`portraitIsCurrent` in
+`@/lib/headshots`, and `Avatar` takes a `changedAt`), and the signed-in
+account redraws and saves its own once on the next page it opens. Nobody
+writes anybody else's row to do it.
+
+## `avatar_of` hands back `mesh_preview_path` (0152)
+
+0138 taught every reader to hand back the card the Creator Hub drew for an
+item's model. `avatar_of` was not one of them, because at the time nothing
+drew a card out of what somebody was wearing. So an accessory had a picture
+on the shelf, on its page and in a drawer, and no picture in the one place
+built out of `avatar_of` - which is exactly what makes it read as a bug
+rather than as a missing column. Additive; `lookOf` now carries `cardUrl`.
+
+## The profile, again
+
+Narrower column, the bio and Read more under the counts rather than in a
+section of their own, the numbers inside the Read more card, bigger friend
+faces, communities as big square emblems. `WearingPanel` has a **2D/3D
+switch**: 3D is the live figure, 2D is a drawn picture of it - no spinning
+and no WebGL context held while somebody reads the grid beside it.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, editing a face by
+re-uploading its asset, the clothing render, reselling limiteds, the outfit
+UI, the rest of the redesigns.

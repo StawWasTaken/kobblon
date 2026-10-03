@@ -2,8 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { claimGuestAccount, signInWithUsername, uploadAvatar } from '@/lib/api'
+import { claimGuestAccount, refreshPortrait, signInWithUsername, uploadAvatar } from '@/lib/api'
 import { clearAccountSession, rememberAccount, updateAccountSession } from '@/lib/accounts'
+import { portraitIsCurrent } from '@/lib/headshots'
 import type { Profile } from '@/types/db'
 
 type AuthValue = {
@@ -177,6 +178,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       beat(false)
     }
   }, [userId])
+
+  /*
+   * Your own picture, kept in step with your own avatar.
+   *
+   * It is drawn and saved by the avatar page when you change something
+   * there - and anything that changes how you look elsewhere (an outfit, a
+   * starting kit, a takedown that undressed you) leaves the saved picture
+   * showing who you used to be. The database stamps when your avatar last
+   * changed, so this notices on the next page you open and redraws once.
+   *
+   * Only ever for your own account: nobody may write to anybody else's row,
+   * and nobody should. Everybody else's stale picture is redrawn where it is
+   * shown, which costs nothing to save and asks nobody's permission.
+   */
+  useEffect(() => {
+    if (!profile || portraitIsCurrent(profile)) return
+
+    let live = true
+    void (async () => {
+      const drawn = await refreshPortrait(profile.id).catch(() => null)
+      // Quietly. A picture that did not draw leaves the one they had, which
+      // is out of date for a moment rather than broken - and nobody asked
+      // for this to happen, so nobody should be told it failed.
+      if (live && drawn) await loadProfile(profile.id).catch(() => {})
+    })()
+    return () => { live = false }
+  }, [profile?.id, profile?.avatar_changed_at, profile?.avatar_url])
 
   const value = useMemo<AuthValue>(
     () => ({
