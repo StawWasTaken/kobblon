@@ -3044,3 +3044,86 @@ assume it wins.
   insertables, the shared Configure card, Lighting as a service, the
   Marketplace preview component, the Lua host, the six functions still
   saying Kubes.
+
+# Thirtieth round — a name carries two marks, and nobody starts naked
+
+Shorter than the last one. Migrations 0124-0133.
+
+## The two marks on a name — this one reaches you
+
+Staw's rule: the verified tick and the Kobblon k are **part of a display
+name**, not an ornament beside it, and they go wherever the name goes. Never
+Font Awesome's tick, and never a traced copy.
+
+`@/components/brand/Verified` now exports `NameMarks`, `Verified`, `Staff`,
+`isVerified` and `isStaff`. The artwork is `public/brand/verified.png` and
+`public/brand/staff.png`, drawn as a **CSS mask over `currentColor`** - the
+files are a solid badge with the glyph knocked out, so masking gives the
+badge the colour it sits in and lets the glyph show the surface behind. An
+`<img>` would be a white square. If you draw names, use `NameMarks` and pass
+the person; it decides which marks apply, in one place.
+
+`avatar_shelf` and `avatar_item_page` now return **`creator_is_staff`**
+alongside `creator_is_verified`. They mean different things: verified is
+"Kobblon vouches for this account", staff is "this account is Kobblon". The
+old column folded admin into verified, which is why there was no way to know
+to draw the k.
+
+## Nobody starts naked, and nobody is faceless
+
+- **`starting_kit`** (0131) is a table of Catalog numbers a new account is
+  given and dressed in. It holds the free face and the Kobblon t-decal
+  today; the shirt, trousers and cap go in as rows when they exist, and no
+  code changes. Read it rather than hard-coding what a new person wears.
+- **A guest is white head to foot** and keeps what the kit locks.
+- **A face is not optional.** `take_off_slot('face')` puts the free face
+  back rather than removing one, so **"wearing no face" is a state that
+  cannot be reached**. If you have code that copes with a faceless avatar,
+  it is now dead code - but leave it, because an old row can still be
+  faceless until that account next touches its avatar.
+- One colour head to foot is allowed **while trousers are on** (0127), and
+  the trousers then cannot come off until a colour changes.
+
+## Buying, refunds and removal
+
+- **`buy_avatar_items(uuid[])`** (0126) buys a basket: every item or none.
+- **`avatar_owned.paid`** (0128) records what somebody actually paid.
+- **`remove_avatar_item(target, note)`** (0129) takes something down and
+  refunds every buyer **40% of what they paid, from Kobblon's account**, not
+  the maker's. They keep the record of the purchase; it comes off their body.
+- **`review_avatar_item`** and **`avatar_review_queue`** (0124): avatar items
+  could never leave `pending` before this. Moderator or admin only.
+- **`avatar_item_page(content_id)`** (0125): one item for its own page. It
+  finds a closed limited and a thing taken down, so an old link opens.
+
+## Two things for anything that renders an accessory
+
+- **`fitToSocket(model, point)`** from `@/engine`, before `wear`. A model is
+  drawn around whatever origin its author used, and scaling an off-centre
+  model scales the offset: correctly sized, correctly parented, an arm's
+  length to the side. Do not write your own.
+- **An item with no texture named wears its model's own Decal** (0130).
+  `assets.texture_id` already says what a mesh wears; asking a second time is
+  how accessories came out grey.
+
+A t-decal is now the torso's whole front face, stretched. Buttons name a
+price with the Brix mark and never the word "Brix".
+
+## Said out loud
+
+The first draft of 0130 retyped `create_avatar_item` from memory and in doing
+so dropped its suspended-account check and invented a column on
+`avatar_rules` that does not exist. It applied cleanly against a live
+database. The file now takes the body out of 0121 rather than retyping it. If
+you are ever replacing one of our functions, take its body from the migration
+that defined it.
+
+## Still not done
+
+The adjust-an-accessory controls (move, turn, resize and save the offsets)
+are **not built** - the create page draws the model on a body and nothing
+more, because a control that moves something and saves nothing is worse than
+no control. The eight-page redesign Staw named (landing, signup, home,
+profile, friends, discover, communities, settings) is on the roadmap and not
+started. Everything from round twenty-nine's "not done" list still stands
+except the Catalog item page, which exists now.
