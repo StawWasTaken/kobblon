@@ -9,7 +9,7 @@
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
-import { PersonRow, AnnounceSection, WordsSection } from '@/pages/Admin'
+import { PersonRow, AnnounceSection, WordsSection, ScreenRow } from '@/pages/Admin'
 import type { StaffPerson } from '@/lib/api'
 
 /*
@@ -44,6 +44,37 @@ createRoot(document.getElementById('root')!).render(
             <PersonRow key={person.id} person={person} onChanged={() => {}} />
           ))}
         </section>
+        {/*
+          * Screening, which is the one panel that cannot be seen by opening
+          * the console: it is empty until somebody uploads something the
+          * screener could not decide. Two rows, one of each kind, with the
+          * reason box open on the second - because the reason box is the
+          * part that has to fit.
+          */}
+        <section className="space-y-3">
+          <h2 className="font-display text-lg">Screening</h2>
+          <ScreenRow
+            picture={null}
+            name="Bone Chiller"
+            kind="Face"
+            description="A face for the spooky season."
+            maker="previewer"
+            makerLink="/u/previewer"
+            when="2026-10-02T10:00:00Z"
+            onDecide={async () => {}}
+          />
+          <ScreenRow
+            picture={null}
+            name="official looking decal"
+            kind="Decal"
+            description={'Visit my site\nwww.example.com'}
+            maker="troublemaker"
+            makerLink="/u/troublemaker"
+            when="2026-10-01T09:00:00Z"
+            onDecide={async () => {}}
+          />
+        </section>
+
         <section className="space-y-3">
           <h2 className="font-display text-lg">Announce</h2>
           <AnnounceSection />

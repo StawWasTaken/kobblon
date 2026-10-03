@@ -3317,3 +3317,88 @@ Unchanged from round thirty-one: best friends, cancelling your own requests,
 the staff console's content review, editing a face by re-uploading its asset,
 the clothing render, reselling limiteds, the outfit UI, and the rest of the
 page redesigns.
+
+# Thirty-third round — screening in the console, a hole at the screening door, and the profile again
+
+## `review_asset` would take an order from nobody (0151)
+
+Found while wiring screening into the staff console, and it is worth your
+reading even though it is our RPC, because the shape is one you can repeat:
+
+- **The guard exempted nobody-in-particular.** It read
+  `if auth.uid() is not null and not is_moderator() then refuse` - so a
+  caller with *no* identity passed it. That was meant to let a worker with no
+  session through, and "has no session" is not the same claim as "is our
+  worker".
+- **The revoke did not revoke.** `revoke execute ... from anon, authenticated`
+  leaves the `execute` that every function is created with for `public`
+  standing, and both roles are members of `public`. The ACL still read `=X`.
+
+What kept it from being a live hole was luck: `guard_asset_update` pins
+`status`, `review_note` and `reviewed_at` for anybody who is not a moderator,
+so the write went through the function and was undone by the trigger. The
+door was open onto a wall. It is closed at the door too now: a moderator, or
+a caller whose **verified JWT role claim** is `service_role`, and nobody else.
+
+One more trap inside the fix, which cost a round of checks: a first go tested
+`current_user in ('service_role', 'postgres')`, and inside a `security
+definer` function `current_user` is its **owner for every caller**. It let an
+ordinary signed-in account straight through, and the check caught it. A test
+of who the caller is has to read something the caller brought with them.
+
+`review_queue`, `review_avatar_item` and `avatar_review_queue` had the same
+ineffective revoke and are now `authenticated` only.
+
+## `screening_queue(how_many)` (new)
+
+What is waiting, with the maker on it: name, description, picture, size, when,
+and `creator_username` / `creator_display_name` / `creator_is_suspended`.
+`review_queue` hands back bare `assets` rows, so a console built on it shows a
+title and a uuid and asks somebody to judge blind.
+
+Empty for anybody who may not screen, decided in the function.
+
+**Worth knowing if you show upload state anywhere:** most uploads never reach
+this queue. The screener decides as they arrive - approved or rejected - and
+`pending` is only what it could not decide. The three `review` terms are
+scoped `identity` today, so in practice the Marketplace queue is usually
+empty. That is not a broken queue.
+
+## The staff console
+
+New **Screening** panel, two queues in one place - Catalog items and
+Marketplace uploads - with the count on each tab, because a queue you have to
+open to find out whether it is empty is a queue that fills up. Approve is
+green; rejecting asks for a reason first, since the note is the whole of what
+the maker is told.
+
+## The profile page, again
+
+Staw on the first attempt: "i absolutely DESPISE the new profile cuz almost
+nothing changed". Fair - it moved the picture and added a list. It is laid
+out on the old Roblox profile now, which is what he asked for:
+
+- the round picture is back in the header, with name, @name, the three counts
+  and the actions beside it;
+- **About** under the tabs holds the bio and the Discord line;
+- **Currently wearing** is the figure in a studio with a grid of what it has
+  on, each tile a link to the Catalog;
+- **Statistics** at the bottom: here since, visits, Worlds published.
+
+`WearingPanel` (`@/components/avatar/WearingPanel`) is the figure-and-grid as
+its own component, so you can put it in a panel too. It takes a `PortraitLook`
+and nothing else - no provider, a router only because the tiles are links.
+
+`lookOf` pieces now also carry `cardUrl`, the drawn card for each worn thing.
+
+## Faces, corrected
+
+Round thirty-two made them too big: a bigger box *and* each picture cropped to
+its own drawing, and the two multiplied. The crop is gone. A face is the old
+square times 1.2, curved onto the head, and the picture is laid in it whole.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening (Groq, later -
+screening is manual today), editing a face by re-uploading its asset, the
+clothing render, reselling limiteds, the outfit UI, the rest of the redesigns.

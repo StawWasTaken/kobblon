@@ -15,7 +15,8 @@ import { createRoot } from 'react-dom/client'
 import '@/index.css'
 import { Avatar } from '@/components/ui/Avatar'
 import { AvatarStage } from '@/components/avatar/AvatarStage'
-import { Studio } from '@/components/avatar/Studio'
+import { MemoryRouter } from 'react-router-dom'
+import { WearingPanel } from '@/components/avatar/WearingPanel'
 
 const face = (wide: number, high: number, margin: number) => {
   const eye = (at: number) =>
@@ -56,20 +57,22 @@ createRoot(document.getElementById('root')!).render(
       ))}
     </div>
 
-    {/* The profile page's figure at its own size, so the proportion of the
-        studio card is looked at rather than guessed. */}
-    <div className="flex gap-5">
-      <Studio className="aspect-[3/4] w-56 rounded-2xl border border-ink-line">
-        <AvatarStage
-          look={{ body, pieces: [{ slot: 'face', kind: 'face', imageUrl: looks[0].picture }] }}
-          turning={false}
-        />
-      </Studio>
-      <div className="min-w-0 flex-1">
-        <h1 className="font-display text-3xl font-extrabold">Somebody</h1>
-        <p className="mt-1.5 text-sm text-muted">@somebody</p>
-      </div>
-    </div>
+    {/* The profile page's Currently wearing panel, with nothing around it.
+        A router only because the tiles are links. */}
+    <MemoryRouter>
+      <WearingPanel
+        look={{
+          body,
+          pieces: [
+            { slot: 'face', kind: 'face', imageUrl: looks[0].picture, name: 'Spooked Jack', contentId: 1119 },
+            { slot: 'shirt', kind: 'shirt', name: 'Kobblon Shirt', contentId: 1221 },
+            { slot: 'trousers', kind: 'trousers', name: 'Kobblon Trousers', contentId: 1220 },
+            { slot: 'hat', kind: 'accessory', name: 'Kobblon Cap', contentId: 1212 },
+            { slot: 'tdecal', kind: 'tdecal', name: 'Kobblon Tdecal', contentId: 1196 },
+          ],
+        }}
+      />
+    </MemoryRouter>
 
     <div className="flex items-center gap-4">
       <Avatar personId="11111111-1111-1111-1111-111111111111" name="Nothing stored" size="xl" />

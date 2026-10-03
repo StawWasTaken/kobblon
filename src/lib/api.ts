@@ -2864,6 +2864,48 @@ export async function myFavouriteAvatarItems(): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('my_favourite_avatar_items')) as AvatarItem[]) ?? []
 }
 
+/**
+ * What somebody uploaded to the Marketplace and nobody has judged yet.
+ *
+ * Carries the maker with it, because screening is looking at the thing *and*
+ * at who made it - a queue of titles and uuids asks somebody to decide
+ * blind. Empty for anybody who may not screen, decided by the database.
+ */
+export type ScreeningAsset = {
+  id: string
+  kind: AssetKind
+  name: string
+  description: string | null
+  file_path: string
+  preview_path: string | null
+  thumbnail_path: string | null
+  byte_size: number
+  created_at: string
+  creator_id: string
+  creator_username: string
+  creator_display_name: string
+  creator_is_suspended: boolean
+}
+
+export async function screeningQueue(howMany = 50): Promise<ScreeningAsset[]> {
+  return (unwrap(await supabase.rpc('screening_queue', { how_many: howMany })) as ScreeningAsset[]) ?? []
+}
+
+/**
+ * Approves or rejects one, which only a moderator or an admin may do.
+ *
+ * A note on a rejection is the whole of what the maker is told, so the page
+ * asks for one. The server does not require it - a thing can be obvious -
+ * but a rejection with nothing said is somebody's work disappearing.
+ */
+export async function reviewAsset(
+  id: string, decision: 'approved' | 'rejected', note?: string,
+) {
+  unwrap(await supabase.rpc('review_asset', {
+    target: id, decision, note: note ?? null,
+  }))
+}
+
 /** What is waiting to be screened. Empty for anybody who may not screen. */
 export async function avatarReviewQueue(howMany = 50): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('avatar_review_queue', { how_many: howMany })) as AvatarItem[]) ?? []
@@ -3150,6 +3192,7 @@ export async function lookOf(userId: string): Promise<PortraitLook> {
       kind: piece.kind ?? '',
       name: piece.item_name,
       contentId: piece.content_id,
+      cardUrl: cardFor(piece),
       imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
       meshUrl: piece.mesh_path ? await assetUrl(piece.mesh_path).catch(() => null) : null,
       meshFormat: piece.mesh_format ?? (piece.mesh_path ? formatOf(piece.mesh_path) : null),

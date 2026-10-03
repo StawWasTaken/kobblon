@@ -354,11 +354,15 @@ Object.assign(window, {
   /**
    * The same face box whatever shape the picture is.
    *
-   * Staw: "when on a head theyre the same size". Two pictures, one wide and
-   * one tall, each with its drawing in a different part of its own file -
-   * which is the real reason two faces look different sizes on two bodies.
-   * What this asks is that the body does not care: same geometry, and the
-   * picture fitted into it rather than the other way round.
+   * Two pictures of different shapes, each with its drawing in a different
+   * part of its own file. The head does not care: one box, and a picture is
+   * laid in it whole.
+   *
+   * The second half of this check is a promise that was made and then taken
+   * back. Cropping each picture to the part of it that was drawn on did make
+   * two faces the same size on the nose - and multiplied with the bigger box
+   * until every face was far too big, which is what Staw saw. So `cropped`
+   * is now checked to be false: a face is its file.
    */
   async twoFaces() {
     const { K6, loadK6Source } = await import('@/engine/k6')

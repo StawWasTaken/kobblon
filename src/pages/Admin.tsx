@@ -17,10 +17,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
-  faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash,
+  faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -39,18 +39,23 @@ import { useTitle } from '@/hooks/useTitle'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { avatarOf } from '@/lib/avatars'
 import { formatCount, timeAgo } from '@/lib/format'
+import { avatarKindLabels, kindLabels } from '@/lib/kinds'
+import { useAsync } from '@/hooks/useAsync'
 import { cn } from '@/lib/cn'
 import {
   deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff, listAdminLog,
   listFlaggedTerms, moveBrixAsStaff, notifyAsStaff, notifyEveryone,
   saveFlaggedTerm, setStanding, tryFlaggedTerm,
+  avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
+  cardFor, previewUrl,
 } from '@/lib/api'
 import type { AdminLogEntry, FlaggedTerm, StaffPerson } from '@/lib/api'
 
-type Section = 'People' | 'Announce' | 'Words' | 'Record'
+type Section = 'People' | 'Screening' | 'Announce' | 'Words' | 'Record'
 
 const sections: { name: Section; icon: IconDefinition; blurb: string }[] = [
   { name: 'People', icon: faUserShield, blurb: 'Standing, Brix, and removing an account' },
+  { name: 'Screening', icon: faCircleCheck, blurb: 'What people have made, waiting on a decision' },
   { name: 'Announce', icon: faBell, blurb: 'A word from Kobblon, to one person or everybody' },
   { name: 'Words', icon: faFilter, blurb: 'What the moderation system catches' },
   { name: 'Record', icon: faScroll, blurb: 'What staff have done' },
@@ -647,6 +652,188 @@ export function RecordSection() {
   )
 }
 
+/* ---------------------------------------------------------------- screening */
+
+/**
+ * One thing waiting for a decision, Catalog or Marketplace.
+ *
+ * The two queues are different tables with different rules and the same job,
+ * so they are one row component taking what both have: a picture, a name, a
+ * maker, and the two buttons. Rejecting asks for a reason first - the note
+ * is the whole of what the maker is told, and a rejection with nothing said
+ * is somebody's work disappearing.
+ */
+export function ScreenRow({ picture, name, kind, description, maker, makerLink, when, onDecide }: {
+  picture: string | null
+  name: string
+  kind: string
+  description?: string | null
+  maker: string
+  makerLink: string
+  when?: string | null
+  onDecide: (decision: 'approved' | 'rejected', note?: string) => Promise<void>
+}) {
+  const say = useToast()
+  const [busy, setBusy] = useState<'approved' | 'rejected' | null>(null)
+  const [note, setNote] = useState('')
+  const [asking, setAsking] = useState(false)
+
+  const decide = async (decision: 'approved' | 'rejected', reason?: string) => {
+    setBusy(decision)
+    try {
+      await onDecide(decision, reason)
+      say(decision === 'approved' ? 'Approved.' : 'Rejected.', 'success')
+      setAsking(false)
+      setNote('')
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Card className="flex flex-wrap items-start gap-4 p-3 sm:flex-nowrap">
+      <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+        {picture
+          ? <img src={picture} alt="" className="h-full w-full object-contain" />
+          : <FontAwesomeIcon icon={faFileImage} className="text-white/25" />}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className="flex flex-wrap items-center gap-2">
+          <span className="truncate font-bold">{name}</span>
+          <Badge>{kind}</Badge>
+          {when && <span className="text-xs text-muted">{timeAgo(when)}</span>}
+        </p>
+        <p className="mt-0.5 text-sm text-muted">
+          by <Link to={makerLink} className="font-bold text-link hover:underline">@{maker}</Link>
+        </p>
+        {description && (
+          <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap text-sm text-white/70">
+            {description}
+          </p>
+        )}
+
+        {asking && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Why it is being turned down"
+              className="w-full sm:w-80"
+            />
+            <Button
+              variant="danger"
+              size="sm"
+              loading={busy === 'rejected'}
+              disabled={!note.trim()}
+              onClick={() => void decide('rejected', note.trim())}
+            >
+              Reject it
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setAsking(false)}>Cancel</Button>
+          </div>
+        )}
+      </div>
+
+      {!asking && (
+        <div className="flex shrink-0 gap-2">
+          {/* Green, because green is yes. */}
+          <Button
+            size="sm"
+            variant="yes"
+            icon={faCircleCheck}
+            loading={busy === 'approved'}
+            onClick={() => void decide('approved')}
+          >
+            Approve
+          </Button>
+          <Button size="sm" variant="danger" icon={faBan} onClick={() => setAsking(true)}>
+            Reject
+          </Button>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+/**
+ * The two queues.
+ *
+ * Staff asked for both in one place - "wether its for the catalog or for the
+ * creator marketplace" - and they genuinely are one job, so they are one
+ * panel with two lists rather than two pages somebody has to remember to
+ * check. The count on each tab is the point of the panel: a queue you have
+ * to open to find out whether it is empty is a queue that fills up.
+ */
+export function ScreeningSection() {
+  const [queue, setQueue] = useState<'Catalog' | 'Marketplace'>('Catalog')
+
+  const items = useAsync(async () => avatarReviewQueue(100), [])
+  const uploads = useAsync(async () => screeningQueue(100), [])
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted">
+        Everything a person has to look at. Most uploads never reach here -
+        the screener approves or refuses them as they arrive - so what is
+        waiting is what it could not decide.
+      </p>
+
+      <Tabs
+        label="Which queue"
+        value={queue}
+        onChange={(next) => setQueue(next as 'Catalog' | 'Marketplace')}
+        options={[
+          { value: 'Catalog', label: `Catalog (${items.data?.length ?? 0})` },
+          { value: 'Marketplace', label: `Marketplace (${uploads.data?.length ?? 0})` },
+        ]}
+      />
+
+      {queue === 'Catalog' ? (
+        items.loading ? <Skeleton className="h-40" />
+          : !items.data?.length ? (
+            <p className="py-8 text-center text-sm text-muted">Nothing waiting.</p>
+          ) : items.data.map((item) => (
+            <ScreenRow
+              key={item.id}
+              picture={cardFor(item)}
+              name={item.name}
+              kind={avatarKindLabels[item.kind] ?? item.kind}
+              description={item.description}
+              maker={item.creator_username ?? ''}
+              makerLink={`/u/${item.creator_username}`}
+              when={item.created_at}
+              onDecide={async (decision, note) => {
+                await reviewAvatarItem(item.id, decision, note)
+                items.reload()
+              }}
+            />
+          ))
+      ) : uploads.loading ? <Skeleton className="h-40" />
+        : !uploads.data?.length ? (
+          <p className="py-8 text-center text-sm text-muted">Nothing waiting.</p>
+        ) : uploads.data.map((one) => (
+          <ScreenRow
+            key={one.id}
+            picture={previewUrl(one.preview_path ?? one.thumbnail_path)}
+            name={one.name}
+            kind={kindLabels[one.kind] ?? one.kind}
+            description={one.description}
+            maker={one.creator_username}
+            makerLink={`/u/${one.creator_username}`}
+            when={one.created_at}
+            onDecide={async (decision, note) => {
+              await reviewAsset(one.id, decision, note)
+              uploads.reload()
+            }}
+          />
+        ))}
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------- page */
 
 export default function Admin() {
@@ -686,6 +873,7 @@ export default function Admin() {
       />
 
       {section === 'People' && <PeopleSection />}
+      {section === 'Screening' && <ScreeningSection />}
       {section === 'Announce' && <AnnounceSection />}
       {section === 'Words' && <WordsSection />}
       {section === 'Record' && <RecordSection />}

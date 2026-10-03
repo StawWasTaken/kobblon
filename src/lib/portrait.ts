@@ -43,6 +43,8 @@ export type PortraitLook = {
     name?: string | null
     /** Its Catalog number, so a list of what somebody is wearing can link to it. */
     contentId?: number | null
+    /** Its card, for a list that shows the things rather than naming them. */
+    cardUrl?: string | null
     imageUrl?: string | null
     meshUrl?: string | null
     /**

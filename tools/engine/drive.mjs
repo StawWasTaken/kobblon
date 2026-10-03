@@ -1907,16 +1907,20 @@ check('a face is bent round the head rather than hung in front of it',
 check('and every part of it sits on the head, not off it',
   faces.furthest - faces.nearest < 0.001,
   `${faces.nearest} to ${faces.furthest} stons from the head's middle`)
-check('and it is most of the width of the head',
-  faces.across > faces.headWide * 0.8 && faces.across <= faces.headWide,
-  `${faces.across} across a head of ${faces.headWide}`)
+/*
+ * A fifth bigger than the old square, which is what Staw asked for after
+ * looking at the first attempt. The old one was 2.04 across.
+ */
+check('a face is the old size and a fifth again',
+  Math.abs(faces.across - 2.04 * 1.2) < 0.02,
+  `${faces.across} across, from 2.04`)
 
 const twoFaces = await p.evaluate(() => window.twoFaces())
-check('two faces drawn differently are the same size on a head',
+check('two faces are the same size on a head whatever their pictures are',
   twoFaces.sameSize === true,
   `${twoFaces.full.across}x${twoFaces.full.tall} and ${twoFaces.inset.across}x${twoFaces.inset.tall}`)
-check('and the one drawn small inside its own file is shown closer in',
-  twoFaces.cropped === true,
+check('and a picture is laid in that box whole, not cropped to its drawing',
+  twoFaces.cropped === false,
   `window ${twoFaces.inset.window.join(' x ')}`)
 check('it wears the picture it was given',
   faces.mapped, `mapped ${faces.mapped}`)

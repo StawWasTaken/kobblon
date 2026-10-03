@@ -26,9 +26,8 @@ import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Tabs } from '@/components/ui/Tabs'
 import { Emblem } from '@/components/community/Emblem'
-import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
-import { Studio } from '@/components/avatar/Studio'
-import { avatarTag, avatarKindLabels } from '@/lib/kinds'
+import { WearingPanel } from '@/components/avatar/WearingPanel'
+
 import { usePersonActions } from '@/components/social/personActions'
 import { Dialog } from '@/components/ui/Dialog'
 import { Textarea } from '@/components/ui/Input'
@@ -92,16 +91,6 @@ function Fact({ icon, children }: { icon: IconDefinition; children: React.ReactN
     </span>
   )
 }
-
-/**
- * What a worn thing is called in a list of them.
- *
- * `KINDS` is the one place that names them, so this reads from it rather
- * than keeping a second list - two names for one kind is how "Model" here
- * and "Mesh" there happened.
- */
-const kindLabel = (kind?: string | null) =>
-  avatarKindLabels[kind ?? ''] ?? kind ?? ''
 
 type Face = {
   id: string
@@ -187,7 +176,6 @@ export default function Profile() {
    * do.
    */
   const look = useAsync(async () => (user ? lookOf(user.id) : null), [user?.id])
-  const wearing = (look.data?.pieces ?? []).filter((piece) => piece.contentId)
   const names = useAsync(async () => (user ? usernameHistory(user.id) : []), [user?.id])
 
   const friends = useAsync(
@@ -384,44 +372,30 @@ export default function Profile() {
             * The picture, which is nobody's to upload any more.
             *
             * It is a photograph of their avatar, taken again every time they
-            * change it. A picture somebody could also upload would be two
-            * answers to "what do you look like" - and whichever won, the
-            * other would be wrong somewhere on the site. So the way to
-            * change your picture is to change your avatar, and this says so
-            * and sends you there.
+            * change it, so the way to change it is to change your avatar -
+            * which is what the button over it does. The whole figure lives
+            * under About, in Currently Wearing, where there is room for it
+            * and for the list of what it has on; up here it was a tall card
+            * pushing everything else down the page.
             */}
-          {/*
-            * Them, standing there, rather than a thumbnail of their head.
-            *
-            * Staw asked for the whole avatar on this page and he is right:
-            * a profile picture is a crop of a thing that exists, and the
-            * thing that exists is what people actually recognise each other
-            * by. It turns, and you can take hold of it - the same gesture
-            * as everywhere else an avatar is shown.
-            *
-            * Still their own picture while it loads, so the page does not
-            * open on a hole where somebody's face goes.
-            */}
-          <div className="shrink-0 sm:w-56">
-            <Studio className="relative aspect-[3/4] w-40 rounded-2xl border border-ink-line sm:w-56">
-              {look.loading ? (
-                <div className="grid h-full w-full place-items-center">
-                  <PersonAvatar person={user} size="3xl" />
-                </div>
-              ) : (
-                <AvatarStage look={look.data as AvatarLook | null} handled />
-              )}
-
-              {isMe && (
+          <div className="shrink-0">
+            <PersonAvatar
+              person={user}
+              size="3xl"
+              className="h-24 w-24 sm:h-28 sm:w-28"
+              square
+              frame={`0 0 0 3px ${accent}`}
+              overlay={isMe ? (
                 <Hop
                   to="/avatar"
-                  className="absolute inset-x-2 bottom-2 z-10 flex items-center justify-center gap-2 rounded-xl border border-ink-line bg-ink-card/85 px-3 py-2 text-xs font-bold backdrop-blur transition-colors hover:bg-ink-hover"
+                  aria-label="Change your avatar"
+                  className="absolute inset-0 grid place-items-center gap-1 rounded-xl bg-black/55 text-[#fff] opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
                 >
                   <FontAwesomeIcon icon={faShirt} />
-                  Change your avatar
+                  <span className="text-[10px] font-bold uppercase tracking-wide">Avatar</span>
                 </Hop>
-              )}
-            </Studio>
+              ) : undefined}
+            />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -452,47 +426,6 @@ export default function Profile() {
               ))}
             </div>
 
-            {/* Somebody's Discord, when they have said which one is theirs
-                and Discord has agreed. */}
-            {user.discord_display && (
-              <Tooltip
-                label={
-                  handle.data
-                    ? `@${handle.data} on Discord`
-                    : isMe
-                      ? 'Only you can see your handle. Change that in Settings.'
-                      : 'Their Discord handle is not shown to you.'
-                }
-                side="top"
-              >
-                <p className="mt-3 inline-flex cursor-default items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1.5 text-xs font-bold">
-                  <FontAwesomeIcon icon={faDiscord} className="text-[#5865F2]" />
-                  {user.discord_display}
-                </p>
-              </Tooltip>
-            )}
-
-            {/* A line or two of the bio, with the rest behind About, the way
-                somebody reads a page rather than a form. */}
-            <div className="mt-4 max-w-2xl">
-              {user.bio ? (
-                <p className="line-clamp-2 whitespace-pre-wrap text-sm leading-relaxed text-white/75">
-                  {user.bio}
-                </p>
-              ) : (
-                <p className="text-sm text-muted">
-                  {isMe ? 'Say something about yourself.' : 'Nothing written yet.'}
-                </p>
-              )}
-              <button
-                onClick={() => { setAbout(true); if (isMe && !user.bio) setWritingBio(true) }}
-                className="mt-1 inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
-              >
-                {isMe && !user.bio
-                  ? <><PenIcon className="text-xs" />Write your bio</>
-                  : <><FontAwesomeIcon icon={faCircleInfo} className="text-xs" />More</>}
-              </button>
-            </div>
           </div>
 
           <div className="flex flex-wrap items-start gap-2">
@@ -667,42 +600,68 @@ export default function Profile() {
         </div>
       ) : (
         <div className="space-y-10">
-          {/*
-            * What they have on, each piece a link to its page in the
-            * Catalog.
-            *
-            * The other half of Staw's ask, and the half that makes the
-            * avatar above worth looking at: seeing a hat you like and
-            * having nowhere to go from it is a dead end. Names rather than
-            * drawn cards, because the cards are already standing in the
-            * studio next to this list wearing exactly these things.
-            */}
-          {!!wearing.length && (
-            <section>
-              <Heading icon={faShirt}>Wearing</Heading>
-              <div className="flex flex-wrap gap-2">
-                {wearing.map((piece) => (
-                  <Link
-                    key={piece.itemId ?? piece.contentId}
-                    to={`/catalog/${avatarTag(piece.kind ?? '', piece.contentId)}`}
-                    className="group flex items-center gap-2.5 rounded-xl border border-ink-line bg-ink-card px-3 py-2 transition-colors hover:border-brand/60 hover:bg-ink-hover"
+          {/* ------------------------------------------------------- about */}
+          <section>
+            <Heading icon={faCircleInfo}>About</Heading>
+            <Card className="space-y-3">
+              {user.bio ? (
+                <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-white/80">
+                  {user.bio}
+                </p>
+              ) : (
+                <p className="text-sm text-muted">
+                  {isMe ? 'Say something about yourself.' : 'Nothing written yet.'}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => { setAbout(true); if (isMe && !user.bio) setWritingBio(true) }}
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
+                >
+                  {isMe && !user.bio
+                    ? <><PenIcon className="text-xs" />Write your bio</>
+                    : <><FontAwesomeIcon icon={faCircleInfo} className="text-xs" />Read more</>}
+                </button>
+
+                {/* Somebody's Discord, when they have said which one is
+                    theirs and Discord has agreed. */}
+                {user.discord_display && (
+                  <Tooltip
+                    label={
+                      handle.data
+                        ? `@${handle.data} on Discord`
+                        : isMe
+                          ? 'Only you can see your handle. Change that in Settings.'
+                          : 'Their Discord handle is not shown to you.'
+                    }
+                    side="top"
                   >
-                    <span
-                      aria-hidden="true"
-                      className="h-8 w-1 shrink-0 rounded-full"
-                      style={{ background: 'var(--me)' }}
-                    />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold">{piece.name}</span>
-                      <span className="block text-[11px] uppercase tracking-wide text-muted">
-                        {kindLabel(piece.kind)}
-                      </span>
-                    </span>
-                  </Link>
-                ))}
+                    <p className="inline-flex cursor-default items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1.5 text-xs font-bold">
+                      <FontAwesomeIcon icon={faDiscord} className="text-[#5865F2]" />
+                      {user.discord_display}
+                    </p>
+                  </Tooltip>
+                )}
               </div>
-            </section>
-          )}
+            </Card>
+          </section>
+
+          {/* --------------------------------------------- currently wearing */}
+          {/*
+            * Them, standing there, and everything they have on beside them.
+            *
+            * This is the shape Staw asked for and it is the right one: the
+            * figure is the thing people recognise each other by, and a hat
+            * you like with nowhere to go from it is a dead end - so every
+            * piece is a link to its page in the Catalog. It sits under
+            * About rather than at the top, because at the top it was a tall
+            * card pushing the whole page down.
+            */}
+          <section>
+            <Heading icon={faShirt}>Currently wearing</Heading>
+            <WearingPanel look={look.data ?? null} loading={look.loading} />
+          </section>
 
           <section>
             <Heading icon={faUsers} aside={
@@ -773,6 +732,28 @@ export default function Profile() {
               </div>
             </section>
           )}
+
+          {/* ---------------------------------------------------- statistics */}
+          {/*
+            * The two numbers worth printing: when they turned up, and how
+            * many times somebody has been into something they made. Said in
+            * words rather than stacked in a wall of tiles, which is what
+            * `Fact` is for.
+            */}
+          <section>
+            <Heading icon={faEye}>Statistics</Heading>
+            <Card className="flex flex-wrap gap-x-8 gap-y-2">
+              <Fact icon={faClock}>
+                Here since{' '}
+                {new Date(user.created_at).toLocaleDateString(undefined, {
+                  day: 'numeric', month: 'long', year: 'numeric',
+                })}
+              </Fact>
+              <Fact icon={faEye}>{formatCount(visits)} visits to their Worlds</Fact>
+              <Fact icon={faCubes}>{formatCount(spaces.data?.length ?? 0)} Worlds published</Fact>
+            </Card>
+          </section>
+
         </div>
       )}
 
