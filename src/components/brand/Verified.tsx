@@ -59,11 +59,20 @@ export const isVerified = (person?: {
   is_admin?: boolean | null
 } | null) => !!(person?.is_verified || person?.is_admin)
 
-/** Whether somebody's name should carry the k. */
+/**
+ * Whether somebody's name should carry the k.
+ *
+ * Three ways to wear it and they are not the same thing: the badge is a
+ * mark somebody was given and carries no permission, while admin and
+ * moderator are power that brings the mark with it. The database answers
+ * this with `wears_staff_badge`; this is the same rule for a row already in
+ * hand, and the two must say the same thing.
+ */
 export const isStaff = (person?: {
   is_admin?: boolean | null
   is_moderator?: boolean | null
-} | null) => !!(person?.is_admin || person?.is_moderator)
+  has_staff_badge?: boolean | null
+} | null) => !!(person?.is_admin || person?.is_moderator || person?.has_staff_badge)
 
 export function Verified({
   label = 'Verified by Kobblon',
@@ -110,6 +119,7 @@ export function NameMarks({ person, className }: {
     is_verified?: boolean | null
     is_admin?: boolean | null
     is_moderator?: boolean | null
+    has_staff_badge?: boolean | null
   } | null
   className?: string
 }) {

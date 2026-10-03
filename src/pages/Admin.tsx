@@ -29,6 +29,7 @@ import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { StaffMark } from '@/components/brand/Verified'
 import { Dialog } from '@/components/ui/Dialog'
 import { Confirm } from '@/components/ui/Confirm'
 import { Skeleton } from '@/components/ui/States'
@@ -139,6 +140,28 @@ export function PersonRow({ person, onChanged }: {
         >
           <FontAwesomeIcon icon={faShieldHalved} />
           {person.is_moderator ? 'Remove mod' : 'Make mod'}
+        </Button>
+
+        {/*
+          * The badge on its own, which hands out no power at all. Kept
+          * beside the one that does, and worded so the difference is on the
+          * button rather than in somebody's memory: a moderator already
+          * wears the k, so this says so instead of offering to give them
+          * one they have.
+          */}
+        <Button
+          size="sm"
+          variant="subtle"
+          disabled={busy || person.is_moderator || person.is_admin}
+          onClick={() => run(
+            person.has_staff_badge ? 'Badge taken off.' : 'Badge given. It carries no power.',
+            () => setStanding(person.id, { staffBadge: !person.has_staff_badge }),
+          )}
+        >
+          <StaffMark className="text-[11px]" />
+          {person.is_moderator || person.is_admin
+            ? 'Wears the k'
+            : person.has_staff_badge ? 'Take the k' : 'Give the k'}
         </Button>
 
         <Button size="sm" variant="subtle" disabled={busy} onClick={() => setSaying(true)}>

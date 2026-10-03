@@ -2502,6 +2502,8 @@ export type StaffPerson = {
   is_moderator: boolean
   is_suspended: boolean
   is_admin: boolean
+  /** Wears the k without holding any keys. Power implies it either way. */
+  has_staff_badge: boolean
   is_guest: boolean
   created_at: string
 }
@@ -2534,6 +2536,8 @@ export async function setStanding(target: string, change: {
   verified?: boolean
   moderator?: boolean
   suspended?: boolean
+  /** The Kobblon k on its own. A mark, not a permission. */
+  staffBadge?: boolean
   why?: string
 }) {
   unwrap(await supabase.rpc('admin_set_standing', {
@@ -2542,6 +2546,7 @@ export async function setStanding(target: string, change: {
     moderator: change.moderator ?? null,
     suspended: change.suspended ?? null,
     why: change.why ?? null,
+    staff_badge: change.staffBadge ?? null,
   }))
 }
 
@@ -2692,10 +2697,20 @@ export function catalogUrl(
  */
 export function cardFor(item: {
   preview_path?: string | null
+  /** The card the Creator Hub already drew for this item's model. */
+  mesh_preview_path?: string | null
   image_path?: string | null
   image_bucket?: string | null
 }): string | null {
+  // Drawn for this item, then the model's own card, then the thing itself.
+  //
+  // The middle one is the answer to accessories showing nothing: a mesh in
+  // the Marketplace already has a picture, drawn at upload from the file the
+  // browser was holding, and an accessory *is* that mesh. Reaching for it
+  // costs no drawing, no signing and no WebGL context, any of which failing
+  // is what left a shirt icon on the shelf.
   if (item.preview_path) return catalogUrl(item.preview_path)
+  if (item.mesh_preview_path) return previewUrl(item.mesh_preview_path)
   return catalogUrl(item.image_path, item.image_bucket ?? undefined)
 }
 

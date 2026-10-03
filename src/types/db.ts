@@ -11,6 +11,8 @@ export type Profile = {
   last_seen_at: string
   in_space_id: string | null
   is_moderator: boolean
+  /** Wears the Kobblon k with no permission attached. Power implies it too. */
+  has_staff_badge?: boolean
   is_admin: boolean
   is_verified: boolean
   is_guest: boolean
@@ -777,6 +779,8 @@ export type AvatarItem = {
    * anything made before cards were drawn.
    */
   preview_path?: string | null
+  /** The card the Creator Hub drew for this item's model, if it has one. */
+  mesh_preview_path?: string | null
   mesh_path: string | null
   /** The real format, from the stored filename. The page must not sniff it. */
   mesh_format?: string | null

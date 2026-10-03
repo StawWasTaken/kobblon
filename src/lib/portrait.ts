@@ -18,6 +18,7 @@ import { MANNEQUIN_BODY } from './mannequin'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
   frameMesh, lightForLooking, lookFrom, fitToSocket,
+  COVERS, PLACES, BODY, type Clothing,
   type K6Part, type K6Point, type WornFit,
 } from '@/engine'
 
@@ -71,7 +72,15 @@ export async function drawPortrait(
    * picture of a head with a collar in it, which is what the first version
    * of this produced and it was useless on sight.
    */
-  frame: 'head' | 'body' = 'head',
+  /*
+   * 'head' is a profile picture, 'body' the whole figure, and a garment
+   * name frames the parts that garment covers - Staw's "take the shot
+   * centred on the piece of clothing on the mannequin". A shirt
+   * photographed from head to toe is a card where the shirt is a third of
+   * the picture and the legs are another third, next to nineteen other
+   * cards with the same legs in them.
+   */
+  frame: 'head' | 'body' | Clothing = 'head',
 ): Promise<Blob | null> {
   let renderer: THREE.WebGLRenderer | null = null
   let body: K6 | null = null
@@ -152,6 +161,23 @@ export async function drawPortrait(
       camera.fov = shot.fov
       camera.position.copy(shot.position)
       camera.lookAt(shot.middle)
+    } else if (frame === 'shirt' || frame === 'trousers') {
+      /*
+       * Framed on what the garment covers, read from the same table the
+       * wrapping reads - so a change to the body's proportions moves the
+       * camera with it rather than leaving a crop that was right once.
+       */
+      const covered = COVERS[frame]
+      const top = Math.max(...covered.map((part) => PLACES[part].middle[1] + BODY[part].h / 2))
+      const floor = Math.min(...covered.map((part) => PLACES[part].middle[1] - BODY[part].h / 2))
+      const wide = Math.max(...covered.map((part) => BODY[part].w)) * 2.6
+      const tall = top - floor
+
+      const middle = new THREE.Vector3(0, (top + floor) / 2, 0)
+      const reach = Math.max(wide, tall) / 2
+      const away = (reach * 1.15) / Math.sin((camera.fov * Math.PI) / 360)
+      camera.position.set(middle.x, middle.y, middle.z + away)
+      camera.lookAt(middle)
     } else {
       const whole = new THREE.Box3().setFromObject(body.object)
       const middle = whole.getCenter(new THREE.Vector3())
@@ -227,7 +253,9 @@ export async function drawItemCard(item: {
         ],
       },
       avatarUrl,
-      'body',
+      // Centred on the garment, except a t-decal, which is the torso's whole
+      // front and reads as itself from the front of the body.
+      item.kind === 'tdecal' ? 'shirt' : (item.kind as Clothing),
     )
   }
 
