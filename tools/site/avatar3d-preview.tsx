@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client'
 import { useState } from 'react'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { BodyPicker } from '@/components/avatar/BodyPicker'
+import { Studio } from '@/components/avatar/Studio'
 import type { BodyPart } from '@/engine'
 import { templateFor } from '@/engine'
 import { MANNEQUIN_BODY } from '@/lib/mannequin'
@@ -148,13 +149,13 @@ createRoot(document.getElementById('root')!).render(
           <p className="font-display text-[10px] uppercase tracking-wider text-muted">
             {label}
           </p>
-          <div className="overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
-            <AvatarStage
+          <div className="overflow-hidden rounded-2xl border border-ink-line">
+            <Studio><AvatarStage
               look={look}
               portrait={portrait}
               turning={false}
               handled={label.includes('draggable')}
-            />
+            /></Studio>
           </div>
         </div>
       ))}

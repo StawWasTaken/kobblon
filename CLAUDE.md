@@ -108,6 +108,26 @@ And the check that goes with it is never "is the current value right". It is
 **"does a call made afterwards actually reach the new thing"**, because the
 broken version passes the first question.
 
+## The fourth trap: a policy guarding a door nobody can reach
+
+A new table gets `enable row level security` and a policy, and no `grant`.
+
+The policy is the part that feels like the security work, so it is the part
+that gets written. But a policy decides *which rows* a role may see, and a
+grant decides whether the role may touch the table **at all** - and a new
+table has no grants. The result is a table that looks carefully protected
+and is simply unreachable: `permission denied for table <name>`.
+
+What makes it survive: every function that touches it is usually
+`security definer`, so the feature works. Only a page reading the table
+directly finds out, which is days later and reads as "the page is broken".
+
+It has happened twice - `outfit_folders`/`outfits`/`outfit_items`, and
+`starting_kit`, where the policy said "anybody may read this" for a fortnight
+while nobody could. **Every `create table` in this project is followed by its
+grants in the same file**, and a check that reads the table as
+`authenticated` rather than as the owner.
+
 ## Ethos
 
 `docs/neoclassic.md` holds it. The working rules that come out of it: copy the

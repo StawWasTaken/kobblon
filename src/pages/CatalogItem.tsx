@@ -387,7 +387,9 @@ export default function CatalogItem() {
               * showing.
               */}
             <dl className="divide-y divide-ink-line border-t border-ink-line text-sm">
-              <Fact label="Number" value={avatarTag(item.kind, item.content_id)} />
+              {/* An ID, which is what it is. "Number" was describing the
+                  digits rather than naming the thing. */}
+              <Fact label="ID" value={avatarTag(item.kind, item.content_id)} />
               <Fact label="Type" value={KIND_WORDS[item.kind] ?? item.kind} />
               <Fact label="Worn" value={WHERE_WORDS[item.slot] ?? item.slot} />
               {item.created_at && (

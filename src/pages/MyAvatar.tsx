@@ -37,6 +37,7 @@ import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
 import type { K6Part } from '@/engine'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
+import { Studio } from '@/components/avatar/Studio'
 
 /** The drawers, in the order somebody opens them. */
 const DRAWERS = [
@@ -235,8 +236,18 @@ export default function MyAvatar() {
     if (!parts.length) return
     const next = { ...(look.body ?? DEFAULT_BODY) }
     for (const which of parts) next[which] = colour
-    if (readsAsBare(next)) {
-      say('One colour from head to foot reads as wearing nothing. Keep a part different.', 'error')
+    /*
+     * Trousers on means any colour scheme, including one colour everywhere.
+     *
+     * 0127 made that the rule in the database and this page went on refusing
+     * it anyway - the server had been corrected and the page in front of it
+     * had not, so the feature was fixed and nobody could use it. A client
+     * check that is stricter than the server is a client check that is
+     * wrong; this one now matches the rule exactly, and the server still has
+     * the final say because a page is a suggestion.
+     */
+    if (readsAsBare(next) && !onNow.has('trousers')) {
+      say('One colour from head to foot reads as wearing nothing. Put trousers on first, or keep a part different.', 'error')
       return
     }
     void after('paint', () => setBodyColours(next))
@@ -277,11 +288,12 @@ export default function MyAvatar() {
           */}
         <div className="space-y-3 lg:sticky lg:top-20 lg:self-start">
           <Card className="overflow-hidden p-0">
-            <div className="bg-gradient-to-b from-[#1a1f3a] to-[#0f1120]">
+            {/* Standing in a studio rather than on a flat gradient. */}
+            <Studio>
               {worn.loading
                 ? <Skeleton className="aspect-square w-full" />
                 : <AvatarStage look={dressed} handled />}
-            </div>
+            </Studio>
           </Card>
 
           <Card className="space-y-2">
