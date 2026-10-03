@@ -41,15 +41,16 @@ export const PLACES: Record<BodyPart, { bone: string; middle: [number, number, n
    * inherited these from the old rounded model, and the head overlapped the
    * torso by a quarter of a ston, which looked like a neck and was not one.
    */
-  // legs 0 -> 3.7
-  LeftLeg: { bone: 'J_HipL', middle: [0.85, 1.85, 0] },
-  RightLeg: { bone: 'J_HipR', middle: [-0.85, 1.85, 0] },
-  // torso 3.7 -> 7.3
+  // Legs 0 -> 3.7, side by side, together exactly as wide as the torso.
+  LeftLeg: { bone: 'J_HipL', middle: [0.9, 1.85, 0] },
+  RightLeg: { bone: 'J_HipR', middle: [-0.9, 1.85, 0] },
+  // Torso 3.7 -> 7.3.
   Torso: { bone: 'J_Chest', middle: [0, 5.5, 0] },
-  // arms beside it, same top and bottom
-  LeftArm: { bone: 'J_ShoulderL', middle: [2.55, 5.5, 0] },
-  RightArm: { bone: 'J_ShoulderR', middle: [-2.55, 5.5, 0] },
-  // head 7.3 -> 9.7
+  // Arms beside it, hanging from the shoulder: the same box as a leg, so
+  // its top is at the torso's top and its bottom falls a tenth below.
+  LeftArm: { bone: 'J_ShoulderL', middle: [2.7, 5.45, 0] },
+  RightArm: { bone: 'J_ShoulderR', middle: [-2.7, 5.45, 0] },
+  // Head 7.3 -> 9.7.
   Head: { bone: 'J_Head', middle: [0, 8.5, 0] },
 }
 
@@ -63,6 +64,52 @@ export const PLACES: Record<BodyPart, { bone: string; middle: [number, number, n
  */
 const ROUNDING = 0.075
 const SEGMENTS = 3
+
+/**
+ * A cylinder with its rims taken off, which is what a head is.
+ *
+ * Staw asked for a rounded cylinder, and three.js has a cylinder and a
+ * capsule and nothing between them: a capsule's ends are hemispheres, which
+ * on a head this short is a pill. So the profile is drawn - straight up the
+ * side, a quarter circle into each flat end - and turned.
+ *
+ * `turns` is how many sides the circle has. Twenty-four is round at the size
+ * a head is drawn and cheap enough that a World full of people is not paying
+ * for it; at twelve the silhouette visibly has corners.
+ */
+function roundedCylinder(radius: number, height: number, corner: number, turns = 24) {
+  const r = Math.max(0.01, radius)
+  const h = Math.max(0.02, height)
+  const c = Math.max(0.001, Math.min(corner, Math.min(r, h / 2) - 0.001))
+
+  const profile: THREE.Vector2[] = []
+  const steps = 4
+
+  // Up from the middle of the flat bottom, round the bottom rim.
+  profile.push(new THREE.Vector2(0, -h / 2))
+  profile.push(new THREE.Vector2(r - c, -h / 2))
+  for (let i = 1; i <= steps; i += 1) {
+    const a = (Math.PI / 2) * (i / steps)
+    profile.push(new THREE.Vector2(
+      r - c + Math.sin(a) * c,
+      -h / 2 + c - Math.cos(a) * c,
+    ))
+  }
+  // Straight up the side, then round the top rim and in to the middle.
+  profile.push(new THREE.Vector2(r, h / 2 - c))
+  for (let i = 1; i <= steps; i += 1) {
+    const a = (Math.PI / 2) * (i / steps)
+    profile.push(new THREE.Vector2(
+      r - c + Math.cos(a) * c,
+      h / 2 - c + Math.sin(a) * c,
+    ))
+  }
+  profile.push(new THREE.Vector2(0, h / 2))
+
+  const turned = new THREE.LatheGeometry(profile, turns)
+  turned.computeVertexNormals()
+  return turned
+}
 
 /**
  * Replaces a rigged body's geometry with boxes, keeping its skeleton.
@@ -97,10 +144,16 @@ export function blockify(root: THREE.Object3D) {
     const index = mesh.skeleton.bones.findIndex((bone) => bone.name === place.bone)
     if (index < 0) return
 
-    const box = new RoundedBoxGeometry(
-      size.w, size.h, size.d, SEGMENTS,
-      Math.min(ROUNDING, Math.min(size.w, size.d) / 2 - 0.001),
-    )
+    /*
+     * The head is turned, everything else is a box. The one part people
+     * actually look at is the one worth a different shape.
+     */
+    const box = part === 'Head'
+      ? roundedCylinder(size.w / 2, size.h, ROUNDING * 2)
+      : new RoundedBoxGeometry(
+        size.w, size.h, size.d, SEGMENTS,
+        Math.min(ROUNDING, Math.min(size.w, size.d) / 2 - 0.001),
+      )
     box.translate(place.middle[0], place.middle[1], place.middle[2])
 
     /*

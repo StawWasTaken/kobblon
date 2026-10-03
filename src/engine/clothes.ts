@@ -52,12 +52,29 @@ export type Side = (typeof SIDES)[number]
  * discover which multiplier the head came out of.
  */
 export const BODY = {
-  Head: { w: 2.6, h: 2.4, d: 2.4 },
+  /*
+   * A cylinder rather than a box, so the numbers mean slightly different
+   * things: `w` and `d` are the two widths it is drawn across, and they are
+   * equal because a head is round. The template still reads them as the
+   * sides of a box, which is right - a face is laid onto the front, and
+   * wrapping a cylinder is the same job as wrapping the box it sits in.
+   */
+  Head: { w: 2.6, h: 2.4, d: 2.6 },
   Torso: { w: 3.6, h: 3.6, d: 1.8 },
-  LeftArm: { w: 1.5, h: 3.6, d: 1.5 },
-  RightArm: { w: 1.5, h: 3.6, d: 1.5 },
-  LeftLeg: { w: 1.7, h: 3.7, d: 1.7 },
-  RightLeg: { w: 1.7, h: 3.7, d: 1.7 },
+  /*
+   * Two legs are exactly as wide as the torso, which is what stops it
+   * looking heavy: at 1.7 each they came to 3.4 against a 3.6 torso, and
+   * that fifth of a ston of overhang reads as a belly rather than as a
+   * narrower stance.
+   *
+   * And the arms are the legs. Staw asked for them to be literally the
+   * same, and they are the same four numbers - one shape used twice rather
+   * than two shapes that have to be kept in step.
+   */
+  LeftArm: { w: 1.8, h: 3.7, d: 1.8 },
+  RightArm: { w: 1.8, h: 3.7, d: 1.8 },
+  LeftLeg: { w: 1.8, h: 3.7, d: 1.8 },
+  RightLeg: { w: 1.8, h: 3.7, d: 1.8 },
 } as const
 
 export type BodyPart = keyof typeof BODY
