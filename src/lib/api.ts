@@ -2702,13 +2702,51 @@ export async function myMadeAvatarItems(): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('my_made_avatar_items')) as AvatarItem[]) ?? []
 }
 
+/** How the Catalog may be ordered. There is no "best rated": nothing rates these yet. */
+export type ShelfOrder = 'newest' | 'oldest' | 'cheapest' | 'dearest' | 'taken'
+
 /** The Catalog. `kind` of null is everything. */
 export async function avatarShelf(
-  kind?: AvatarKind | null, term?: string, howMany = 60,
+  kind?: AvatarKind | null,
+  term?: string,
+  howMany = 60,
+  madeBy?: string | null,
+  order: ShelfOrder = 'newest',
 ): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('avatar_shelf', {
-    of_kind: kind ?? null, term: term ?? null, how_many: howMany,
+    of_kind: kind ?? null,
+    term: term ?? null,
+    how_many: howMany,
+    made_by: madeBy ?? null,
+    sort_by: order,
   })) as AvatarItem[]) ?? []
+}
+
+/**
+ * Changing what you wrote about something you made, and what it costs.
+ *
+ * Not what it is: the kind, the slot and the picture are fixed once anybody
+ * can buy it, or somebody could sell one thing and deliver another.
+ */
+export async function editAvatarItem(
+  id: string, name: string, description: string, price: number,
+) {
+  unwrap(await supabase.rpc('edit_avatar_item', {
+    target: id, new_name: name, about: description, cost: price,
+  }))
+}
+
+/** Off the shelf, still on everybody wearing it. Reversible. */
+export async function archiveAvatarItem(id: string, archived: boolean) {
+  unwrap(await supabase.rpc('archive_avatar_item', { target: id, archived }))
+}
+
+/**
+ * Gone. The server refuses while anybody else owns one, and says so - that
+ * is a rule about other people's things, not a warning this page invents.
+ */
+export async function deleteAvatarItem(id: string) {
+  unwrap(await supabase.rpc('delete_avatar_item', { target: id }))
 }
 
 export async function buyAvatarItem(id: string) {

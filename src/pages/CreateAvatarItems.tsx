@@ -13,13 +13,15 @@
 import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faDownload, faImage, faCube, faLock, faCircleCheck,
+  faShirt, faDownload, faImage, faCube, faLock, faCircleCheck, faPen,
+  faTrash, faBoxArchive, faEllipsis,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
+import { Menu } from '@/components/ui/Menu'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -28,9 +30,10 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
-  uploadCatalogImage, catalogUrl, listOwnAssets,
+  uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
+  archiveAvatarItem, deleteAvatarItem,
 } from '@/lib/api'
-import type { AvatarKind, AvatarSlot, AvatarRule } from '@/types/db'
+import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
 
 const KINDS: { kind: AvatarKind; label: string; about: string; template?: string }[] = [
@@ -60,6 +63,11 @@ const KINDS: { kind: AvatarKind; label: string; about: string; template?: string
     kind: 'hair',
     label: 'Hair',
     about: 'A model worn on the head, the same as an accessory but counted as hair.',
+  },
+  {
+    kind: 'face',
+    label: 'Face',
+    about: 'A picture on the front of the head. Kobblon only.',
   },
 ]
 
@@ -97,6 +105,17 @@ export default function CreateAvatarItems() {
   const rule = useMemo<AvatarRule | undefined>(
     () => (rules.data ?? []).find((one) => one.kind === kind),
     [rules.data, kind],
+  )
+
+  /*
+   * Faces are Kobblon's, so the tab is not offered to anybody else. The
+   * server refuses either way - this only keeps a tab off the page that
+   * would do nothing but refuse, which is the fake functionality this
+   * project does not do.
+   */
+  const tabs = useMemo(
+    () => KINDS.filter((one) => one.kind !== 'face' || profile?.is_admin),
+    [profile?.is_admin],
   )
 
   const verified = !!profile && (profile.is_verified || profile.is_admin)
@@ -156,7 +175,7 @@ export default function CreateAvatarItems() {
       <Tabs
         value={kind}
         onChange={(next) => setKind(next as AvatarKind)}
-        options={KINDS.map((one) => ({ value: one.kind, label: one.label }))}
+        options={tabs.map((one) => ({ value: one.kind, label: one.label }))}
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
@@ -330,42 +349,161 @@ export default function CreateAvatarItems() {
           ) : (
             <ul className="space-y-2">
               {(made.data ?? []).map((one) => (
-                <li key={one.id} className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-card p-2.5">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
-                    {catalogUrl(one.image_path, one.image_bucket ?? undefined)
-                      ? <img src={catalogUrl(one.image_path, one.image_bucket ?? undefined)!} alt="" className="h-full w-full object-contain" />
-                      : <FontAwesomeIcon icon={faShirt} className="text-white/30" />}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{one.name}</span>
-                    <span className="block text-[11px] text-muted">
-                      {one.status === 'approved'
-                        ? one.is_public ? 'In the Catalog' : 'Approved, not listed'
-                        : one.status === 'rejected' ? (one.review_note ?? 'Turned down')
-                          : 'Waiting to be screened'}
-                      {typeof one.taken === 'number' && one.taken > 0 && ` · ${one.taken} taken`}
-                    </span>
-                  </span>
-                  {one.status === 'approved' && (
-                    <Button
-                      size="sm"
-                      variant={one.is_public ? 'subtle' : 'yes'}
-                      onClick={() => void listAvatarItem(one.id, !one.is_public)
-                        .then(() => made.reload())
-                        .catch((error: unknown) => say(
-                          error instanceof Error ? error.message : 'That did not work.', 'error'))}
-                    >
-                      {one.is_public
-                        ? 'Take down'
-                        : <><FontAwesomeIcon icon={faCircleCheck} />List it</>}
-                    </Button>
-                  )}
-                </li>
+                <MadeRow
+                  key={one.id}
+                  item={one}
+                  onChanged={() => made.reload()}
+                  onTrouble={(message) => say(message, 'error')}
+                  onDone={(message) => say(message, 'success')}
+                />
               ))}
             </ul>
           )}
         </div>
       </div>
     </Page>
+  )
+}
+
+/**
+ * One thing somebody made, and everything they may do to it.
+ *
+ * Four actions and they are not the same weight, so they do not look the
+ * same. Listing and taking down are one press. Editing opens in place.
+ * Archiving says what it does to the people wearing it. Deleting is the only
+ * one that cannot be undone, and the server refuses it the moment anybody
+ * else owns one - so the button is there and the refusal explains itself,
+ * rather than this page hiding a rule it would have to keep in step.
+ */
+function MadeRow({ item, onChanged, onTrouble, onDone }: {
+  item: AvatarItem
+  onChanged: () => void
+  onTrouble: (message: string) => void
+  onDone: (message: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(item.name)
+  const [about, setAbout] = useState(item.description ?? '')
+  const [price, setPrice] = useState(String(item.price))
+  const [busy, setBusy] = useState<string | null>(null)
+  const [sure, setSure] = useState(false)
+
+  const run = async (what: string, doIt: () => Promise<void>, said: string) => {
+    setBusy(what)
+    try {
+      await doIt()
+      onDone(said)
+      onChanged()
+    } catch (error) {
+      onTrouble(error instanceof Error ? error.message : 'That did not work.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
+  const archived = item.status === 'approved' && !item.is_public && !editing
+
+  return (
+    <li className="rounded-xl border border-ink-line bg-ink-card p-2.5">
+      <div className="flex items-center gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
+          {picture
+            ? <img src={picture} alt="" className="h-full w-full object-contain" />
+            : <FontAwesomeIcon icon={faShirt} className="text-white/30" />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-bold">{item.name}</span>
+          <span className="block text-[11px] text-muted">
+            {item.status === 'approved'
+              ? item.is_public ? 'In the Catalog' : 'Approved, not listed'
+              : item.status === 'rejected' ? (item.review_note ?? 'Turned down')
+                : 'Waiting to be screened'}
+            {typeof item.taken === 'number' && item.taken > 0
+              && ` · ${item.taken} ${item.taken === 1 ? 'person has it' : 'people have it'}`}
+          </span>
+        </span>
+
+        {item.status === 'approved' && (
+          <Button
+            size="sm"
+            variant={item.is_public ? 'subtle' : 'yes'}
+            loading={busy === 'list'}
+            onClick={() => void run(
+              'list',
+              () => listAvatarItem(item.id, !item.is_public),
+              item.is_public ? 'Taken off the Catalog.' : 'In the Catalog.',
+            )}
+          >
+            {item.is_public
+              ? 'Take down'
+              : <><FontAwesomeIcon icon={faCircleCheck} />List it</>}
+          </Button>
+        )}
+
+        <Menu
+          label="More"
+          trigger={
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+              <FontAwesomeIcon icon={faEllipsis} />
+            </span>
+          }
+          items={[
+            { label: editing ? 'Stop editing' : 'Edit', icon: faPen,
+              onSelect: () => setEditing(!editing) },
+            { label: archived ? 'Put it back' : 'Archive',
+              icon: faBoxArchive,
+              onSelect: () => void run(
+                'archive',
+                () => archiveAvatarItem(item.id, !archived),
+                archived
+                  ? 'Back. List it when you are ready.'
+                  : 'Archived. Anybody wearing it keeps it.',
+              ) },
+            { label: sure ? 'Really delete it' : 'Delete', icon: faTrash, danger: true,
+              onSelect: () => {
+                if (!sure) { setSure(true); return }
+                setSure(false)
+                void run('delete', () => deleteAvatarItem(item.id), 'Deleted.')
+              } },
+          ]}
+        />
+      </div>
+
+      {editing && (
+        <div className="mt-3 space-y-2 border-t border-ink-line pt-3">
+          <Input label="Name" value={name} maxLength={60}
+            onChange={(e) => setName(e.target.value)} />
+          <Textarea label="Description" value={about} maxLength={400}
+            onChange={(e) => setAbout(e.target.value)} />
+          <Input label="Price in Brix" type="number" min={0} className="max-w-[10rem]"
+            value={price} onChange={(e) => setPrice(e.target.value)} />
+          <p className="text-xs text-muted">
+            What it is and the picture on it stay as they are. Somebody who bought
+            this bought this.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="yes"
+              loading={busy === 'save'}
+              onClick={() => void run(
+                'save',
+                async () => {
+                  await editAvatarItem(
+                    item.id, name, about, Math.max(0, Math.round(Number(price) || 0)),
+                  )
+                  setEditing(false)
+                },
+                'Saved.',
+              )}
+            >
+              Save
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+    </li>
   )
 }

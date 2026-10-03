@@ -7,9 +7,12 @@
  * different prices and different rules about who may make one, and a single
  * shop selling both would be a filter nobody can name.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShirt, faMagnifyingGlass, faUser, faPlus } from '@fortawesome/free-solid-svg-icons'
+import {
+  faShirt, faMagnifyingGlass, faUser, faPlus, faCircleCheck,
+} from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -23,6 +26,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import { avatarShelf, buyAvatarItem, wearAvatarItem, catalogUrl } from '@/lib/api'
+import type { ShelfOrder } from '@/lib/api'
 import type { AvatarItem, AvatarKind } from '@/types/db'
 import { cn } from '@/lib/cn'
 
@@ -41,13 +45,37 @@ export default function Catalog() {
   const { profile } = useAuth()
   const say = useToast()
 
+  /*
+   * The term comes from the address, so the search box in the top bar lands
+   * here with something already in it - and so a Catalog search is a link
+   * somebody can send. Typing in the box on this page writes the address
+   * back, which is what makes the back button work through a search.
+   */
+  const [params, setParams] = useSearchParams()
   const [shelf, setShelf] = useState<string>('all')
-  const [term, setTerm] = useState('')
+  const [term, setTerm] = useState(params.get('q') ?? '')
+  const [maker, setMaker] = useState('')
+  const [makerDraft, setMakerDraft] = useState('')
+  const [order, setOrder] = useState<ShelfOrder>('newest')
   const [busy, setBusy] = useState<string | null>(null)
 
+  useEffect(() => { setTerm(params.get('q') ?? '') }, [params])
+
+  const settle = (next: string) => {
+    setTerm(next)
+    const now = new URLSearchParams(params)
+    if (next.trim()) now.set('q', next.trim())
+    else now.delete('q')
+    setParams(now, { replace: true })
+  }
+
+  const by = maker.trim() || null
+
   const things = useAsync(
-    async () => avatarShelf(shelf === 'all' ? null : (shelf as AvatarKind), term),
-    [shelf, term],
+    async () => avatarShelf(
+      shelf === 'all' ? null : (shelf as AvatarKind), term, 60, by, order,
+    ),
+    [shelf, term, by, order],
   )
 
   /*
@@ -82,20 +110,89 @@ export default function Catalog() {
         </div>
       </header>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Tabs
-          value={shelf}
-          onChange={setShelf}
-          options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
-        />
-        <Input
-          className="max-w-xs"
-          placeholder="Name"
-          icon={faMagnifyingGlass}
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-        />
+      {/* ------------------------------------------- who made it, and in what order */}
+      <div className="space-y-3 rounded-2xl border border-ink-line bg-ink-card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wide text-muted">Made by</span>
+
+          <button
+            type="button"
+            onClick={() => { setMaker(''); setMakerDraft('') }}
+            aria-pressed={!maker}
+            className={cn(
+              'h-8 rounded-lg px-3 text-xs font-bold transition-colors',
+              !maker ? 'bg-brand text-onbrand' : 'bg-ink-hover text-white/65 hover:text-white',
+            )}
+          >
+            Anybody
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setMaker('kobblon'); setMakerDraft('kobblon') }}
+            aria-pressed={maker.toLowerCase() === 'kobblon'}
+            className={cn(
+              'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-colors',
+              maker.toLowerCase() === 'kobblon'
+                ? 'bg-brand text-onbrand'
+                : 'bg-ink-hover text-white/65 hover:text-white',
+            )}
+          >
+            <FontAwesomeIcon icon={faCircleCheck} className="text-[#4d68ff]" />
+            Kobblon
+          </button>
+
+          <form
+            onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
+            className="flex items-center gap-1.5"
+          >
+            <span className="text-xs text-muted">@</span>
+            <input
+              value={makerDraft}
+              onChange={(e) => setMakerDraft(e.target.value)}
+              onBlur={() => setMaker(makerDraft.trim())}
+              placeholder="somebody"
+              aria-label="Made by which person"
+              className="h-8 w-32 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+            />
+          </form>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            className="max-w-xs flex-1"
+            placeholder="Name"
+            icon={faMagnifyingGlass}
+            value={term}
+            onChange={(e) => settle(e.target.value)}
+          />
+          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
+            Order
+            <select
+              value={order}
+              onChange={(e) => setOrder(e.target.value as ShelfOrder)}
+              className="h-9 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-xs font-bold text-white focus:border-brand-bright focus:outline-none"
+            >
+              {/*
+                * No "best rated". Nothing rates an avatar item yet, and a
+                * sort that quietly falls back to something else is worse
+                * than one that is not offered - it looks like it worked.
+                */}
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="taken">Most taken</option>
+              <option value="cheapest">Cheapest</option>
+              <option value="dearest">Dearest</option>
+            </select>
+          </label>
+        </div>
       </div>
+
+      <Tabs
+        value={shelf}
+        onChange={setShelf}
+        options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
+      />
 
       {things.loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

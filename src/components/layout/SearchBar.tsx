@@ -12,7 +12,7 @@ export const searchScopes: { tab: string; label: string; icon: IconDefinition }[
   { tab: 'spaces', label: 'Worlds', icon: faLayerGroup },
   { tab: 'people', label: 'People', icon: faUser },
   { tab: 'create', label: 'Creator Marketplace', icon: faShapes },
-  { tab: 'style', label: 'Style', icon: faShirt },
+  { tab: 'catalog', label: 'Catalog', icon: faShirt },
   { tab: 'communities', label: 'Communities', icon: faUsers },
 ]
 
@@ -28,7 +28,7 @@ const destinations: Record<string, (query: string) => string> = {
   people: (q) => `/people?q=${encodeURIComponent(q)}`,
   communities: (q) => `/communities?q=${encodeURIComponent(q)}`,
   create: (q) => `/create/marketplace?q=${encodeURIComponent(q)}`,
-  style: (q) => `/style?q=${encodeURIComponent(q)}`,
+  catalog: (q) => `/catalog?q=${encodeURIComponent(q)}`,
 }
 
 
