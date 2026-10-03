@@ -25,3 +25,9 @@ verify_jwt = false
 # checks it against the database.
 [functions.app-signin]
 verify_jwt = false
+
+# `moderate` is deliberately not here. It is the moderation worker, and a
+# caller with no session has no business setting it going: it checks for
+# itself that the asker is Kobblon, and a service-role key - which is how a
+# schedule calls it - is a signed token too, so it gets through the same
+# door. Default behaviour is the right behaviour for this one.

@@ -4025,3 +4025,62 @@ The column is text with a check, not an enum, so this is a constraint swap
 and not the enum trap. If you draw notifications, add the two kinds or they
 fall through to your default line.
 
+
+# Forty-sixth round — the moderation machine (0164)
+
+Groq screens what is waiting, and the limits on it are in the database.
+
+## What it may do, and what it cannot
+
+`apply_ai_verdict(subject, subject_id, decision, reason, model, looked_at)`
+is the machine's **only** door:
+
+- approve or reject a thing waiting to be screened;
+- **warn** somebody, and **suspend** somebody - each only if
+  `ai_settings.may_warn` / `may_suspend` says so;
+- `unsure`, which is recorded and does nothing. A machine that cannot say "I
+  do not know" says something else instead, and that something else is
+  somebody's work refused by a guess.
+
+**It cannot delete an account.** `deleted` is not a word the function takes,
+so there is nothing to get wrong, and nothing it can call deletes anybody. It
+cannot touch Brix, roles, verification or badges, and it refuses to act on
+anybody who is staff.
+
+Those rules are in the database on purpose. The worker is a program on a
+server that anybody with the keys can redeploy; a rule that lives there lasts
+until somebody edits it.
+
+## When it works
+
+`ai_settings.mode`:
+
+- `always` - anything waiting;
+- `slow` - only what has waited more than `after_minutes` (30 by default);
+- `busy` - only once more than `when_over` things are waiting.
+
+`ai_work()` answers all three, so changing its mind is a row in a table and
+not a deploy. **Off is the shipped state**: a moderation system that starts
+itself is one nobody agreed to.
+
+## The worker
+
+`supabase/functions/moderate` - holds the service role and the Groq key,
+neither of which goes near a browser. It may be set going by a signed-in
+Kobblon admin (the console's "Run it now") or by anything holding the service
+role (`.github/workflows/moderation.yml`, every fifteen minutes, which
+no-ops without its two secrets).
+
+**It needs `GROQ_API_KEY` in Supabase's function secrets.** Without it the
+function answers "No GROQ_API_KEY is set, so nothing was screened", and the
+console shows that sentence rather than failing oddly.
+
+Text goes to `llama-3.3-70b-versatile`; anything with a picture goes to
+`llama-3.2-90b-vision-preview`, with the picture's public address - both
+buckets a screened thing can live in are public, so nothing private is handed
+to anybody. Model names are columns, not constants, so they can be changed
+without a deploy.
+
+## Still not done
+
+The console's design pass, and the page redesigns.

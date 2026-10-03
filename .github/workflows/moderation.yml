@@ -1,0 +1,59 @@
+# Setting the moderation machine going, on a schedule.
+#
+# The console has a "Run it now" button and this is the same thing on a
+# clock, because "whenever anything is waiting" is not a thing a button can
+# mean. Every quarter of an hour, which is well inside the half hour the
+# "only what has waited too long" setting defaults to.
+#
+# It does nothing at all unless two repository secrets exist:
+#
+#   SUPABASE_PROJECT_REF    - which project to call
+#   SUPABASE_SERVICE_ROLE_KEY - the key that may call the worker
+#
+# That second one is the most dangerous secret this project has, and it is
+# worth saying why it is here rather than somewhere safer: the worker checks
+# the caller itself and refuses anybody who is not Kobblon or the service
+# role, so the key is the only way a schedule can be that caller. If you
+# would rather not keep it in GitHub, delete this file and call the function
+# from Supabase's own scheduler instead - the function does not care who
+# starts it, only who it is.
+#
+# Nothing here fails the build. A moderation run that did not happen is a
+# queue a person looks at, which is where it was anyway.
+name: Moderation
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: moderation
+  cancel-in-progress: true
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the worker to look
+        env:
+          PROJECT: ${{ secrets.SUPABASE_PROJECT_REF }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$PROJECT" ] || [ -z "$KEY" ]; then
+            echo "No project or key set, so nothing was screened."
+            exit 0
+          fi
+
+          # `-sS` so a failure says something, and the body is printed
+          # whatever the status: "AI moderation is off" and "no GROQ_API_KEY
+          # is set" are the two answers somebody actually needs to read.
+          code=$(curl -sS -o /tmp/said.json -w '%{http_code}' \
+            -X POST "https://$PROJECT.supabase.co/functions/v1/moderate" \
+            -H "authorization: Bearer $KEY" \
+            -H "content-type: application/json" \
+            -d '{}') || true
+
+          echo "HTTP $code"
+          cat /tmp/said.json || true
+          echo

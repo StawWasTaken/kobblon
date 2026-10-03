@@ -18,7 +18,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
-  faTag, faFlag, faGlobe, faBullhorn,
+  faTag, faFlag, faGlobe, faBullhorn, faRobot,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate } from 'react-router-dom'
@@ -50,17 +50,19 @@ import {
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
+  aiSettings, setAiSettings, aiRecent, aiWork, runModeration,
 } from '@/lib/api'
 import type { AdminLogEntry, FlaggedTerm, ReportRow, StaffPerson } from '@/lib/api'
 import { PersonSheet } from '@/components/staff/PersonSheet'
 import { WorldMap } from '@/components/staff/WorldMap'
 
-type Section = 'People' | 'Reports' | 'Screening' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'People' | 'Reports' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 const sections: { name: Section; icon: IconDefinition; blurb: string }[] = [
   { name: 'People', icon: faUserShield, blurb: 'Standing, Brix, and removing an account' },
   { name: 'Reports', icon: faFlag, blurb: 'What people have reported, and what was done' },
   { name: 'Screening', icon: faCircleCheck, blurb: 'What people have made, waiting on a decision' },
+  { name: 'Machine', icon: faRobot, blurb: 'What the AI screens, and what it is allowed to do' },
   { name: 'Sale', icon: faTag, blurb: 'Everything in the Catalog, cheaper, for a while' },
   { name: 'Map', icon: faGlobe, blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Notice', icon: faBullhorn, blurb: 'A line across the top of the site, which anybody can close' },
@@ -1241,6 +1243,212 @@ export function NoticeSection() {
   )
 }
 
+
+/* -------------------------------------------------------------- the machine */
+
+/**
+ * The moderation machine: whether it is on, when it works, and what it is
+ * allowed to do.
+ *
+ * Every limit shown here is enforced in the database, not by this panel. The
+ * panel is a way of setting a row; `apply_ai_verdict` is what actually
+ * refuses to suspend when suspending is off, refuses to touch staff, and has
+ * no word at all for deleting an account.
+ */
+export function MachineSection() {
+  const say = useToast()
+  const settings = useAsync(async () => aiSettings(), [])
+  const recent = useAsync(async () => aiRecent(30), [])
+  const waiting = useAsync(async () => aiWork(50), [])
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const change = async (what: string, input: Parameters<typeof setAiSettings>[0]) => {
+    setBusy(what)
+    try {
+      await setAiSettings(input)
+      settings.reload()
+      waiting.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const runIt = async () => {
+    setBusy('run')
+    try {
+      const done = await runModeration()
+      say(
+        done.looked === 0
+          ? 'Nothing was waiting.'
+          : `Looked at ${done.looked}, decided ${done.decided}, unsure about ${done.unsure}.`,
+        'success',
+      )
+      recent.reload()
+      waiting.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const on = settings.data?.is_on ?? false
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted">
+        Groq reads what is waiting to be screened and says approved, rejected
+        or unsure. Unsure is a real answer and leaves the thing for a person.
+        It can warn and it can suspend, if you let it. It cannot delete an
+        account - there is no door for that, in here or in the database - and
+        it never touches staff.
+      </p>
+
+      {settings.loading ? <Skeleton className="h-28" /> : !settings.data ? (
+        /*
+         * Only staff may read the settings row, so an empty answer here is
+         * either "not staff" or "could not reach it" - and a card full of
+         * controls that do nothing is worse than a sentence saying so.
+         */
+        <Card>
+          <p className="text-sm text-muted">
+            The machine's settings could not be read. Either this account is
+            not staff, or the database did not answer.
+          </p>
+        </Card>
+      ) : (
+        <Card className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge tone={on ? 'space' : 'neutral'}>{on ? 'On' : 'Off'}</Badge>
+            <span className="text-sm text-muted">
+              {waiting.data?.length
+                ? `${waiting.data.length} waiting for it right now.`
+                : 'Nothing waiting for it.'}
+            </span>
+            <div className="ml-auto flex gap-2">
+              <Button
+                size="sm"
+                variant={on ? 'ghost' : 'yes'}
+                loading={busy === 'on'}
+                onClick={() => void change('on', { turn_on: !on })}
+              >
+                {on ? 'Turn it off' : 'Turn it on'}
+              </Button>
+              <Button
+                size="sm"
+                variant="subtle"
+                icon={faRobot}
+                loading={busy === 'run'}
+                disabled={!on}
+                onClick={() => void runIt()}
+              >
+                Run it now
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              When it works
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ['always', 'Whenever anything is waiting'],
+                ['slow', 'Only what has waited too long'],
+                ['busy', 'Only when the queue is long'],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => void change('mode', { how: value })}
+                  className={cn(
+                    'rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors',
+                    settings.data?.mode === value
+                      ? 'border-brand bg-brand/15 text-white'
+                      : 'border-ink-line text-white/60 hover:text-white',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {settings.data?.mode === 'slow' && (
+              <p className="text-xs text-muted">
+                Anything waiting more than{' '}
+                <span className="font-bold text-white">{settings.data.after_minutes} minutes</span>.
+              </p>
+            )}
+            {settings.data?.mode === 'busy' && (
+              <p className="text-xs text-muted">
+                Only once more than{' '}
+                <span className="font-bold text-white">{settings.data.when_over}</span> things are waiting.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              What it may do to people
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={settings.data?.may_warn ? 'yes' : 'subtle'}
+                loading={busy === 'warn'}
+                onClick={() => void change('warn', { warn: !settings.data?.may_warn })}
+              >
+                {settings.data?.may_warn ? 'May warn' : 'May not warn'}
+              </Button>
+              <Button
+                size="sm"
+                variant={settings.data?.may_suspend ? 'yes' : 'subtle'}
+                loading={busy === 'suspend'}
+                onClick={() => void change('suspend', { suspend: !settings.data?.may_suspend })}
+              >
+                {settings.data?.may_suspend ? 'May suspend' : 'May not suspend'}
+              </Button>
+              <Button size="sm" variant="ghost" disabled>
+                Never deletes an account
+              </Button>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted">
+            Reading with <span className="font-bold text-white/80">{settings.data?.model}</span>,
+            looking with <span className="font-bold text-white/80">{settings.data?.vision_model}</span>.
+            The key lives in Supabase as <code>GROQ_API_KEY</code> and never
+            reaches a browser.
+          </p>
+        </Card>
+      )}
+
+      <div className="space-y-2">
+        <p className="font-display text-xs uppercase tracking-wider text-muted">
+          What it has been deciding
+        </p>
+        {recent.loading ? <Skeleton className="h-24" /> : !recent.data?.length ? (
+          <p className="text-sm text-muted">Nothing yet.</p>
+        ) : recent.data.map((one) => (
+          <Card key={one.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm">
+            <Badge tone={
+              one.decision === 'rejected' || one.decision === 'suspended' ? 'danger'
+                : one.decision === 'unsure' ? 'warm' : 'space'
+            }>
+              {one.decision}
+            </Badge>
+            <span className="text-xs text-muted">{one.subject}</span>
+            <span className="min-w-0 flex-1 truncate text-white/75">{one.reason}</span>
+            <span className="shrink-0 text-xs text-muted">{timeAgo(one.created_at)}</span>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------- page */
 
 export default function Admin() {
@@ -1282,6 +1490,7 @@ export default function Admin() {
       {section === 'People' && <PeopleSection />}
       {section === 'Reports' && <ReportsSection />}
       {section === 'Screening' && <ScreeningSection />}
+      {section === 'Machine' && <MachineSection />}
       {section === 'Map' && <MapSection />}
       {section === 'Sale' && <SaleSection />}
       {section === 'Notice' && <NoticeSection />}

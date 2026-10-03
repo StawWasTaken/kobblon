@@ -9,7 +9,7 @@
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
-import { PersonRow, AnnounceSection, WordsSection, ScreenRow } from '@/pages/Admin'
+import { PersonRow, AnnounceSection, WordsSection, ScreenRow, MachineSection } from '@/pages/Admin'
 import { WorldMap } from '@/components/staff/WorldMap'
 import { NoticeBar } from '@/components/layout/NoticeBar'
 import type { StaffPerson } from '@/lib/api'
@@ -56,6 +56,14 @@ createRoot(document.getElementById('root')!).render(
         {/* Roughly where people are, with dots made up here: the shape of
             the map is the thing that can be wrong, and it does not need a
             database to be looked at. */}
+        {/* The machine's panel. Without a database it shows its empty
+            state, which is the half that has to read right when somebody
+            opens it for the first time and nothing has happened yet. */}
+        <section className="space-y-3">
+          <h2 className="font-display text-lg">Machine</h2>
+          <MachineSection />
+        </section>
+
         <section className="space-y-3">
           <h2 className="font-display text-lg">Map</h2>
           <WorldMap

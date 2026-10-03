@@ -3009,6 +3009,97 @@ export async function replaceAvatarPicture(id: string, picture: string) {
   unwrap(await supabase.rpc('replace_avatar_picture', { target: id, picture }))
 }
 
+// --------------------------------------------------------- the machine
+
+/**
+ * What the moderation machine is allowed to do.
+ *
+ * Off is the shipped state, and the limits Staw set live in the database:
+ * it may approve, reject, warn and suspend, and there is no door at all for
+ * deleting an account.
+ */
+export type AiSettings = {
+  is_on: boolean
+  mode: 'always' | 'slow' | 'busy'
+  after_minutes: number
+  when_over: number
+  may_warn: boolean
+  may_suspend: boolean
+  model: string
+  vision_model: string
+  updated_at: string
+}
+
+export type AiReview = {
+  id: number
+  subject: string
+  subject_id: string
+  decision: string
+  reason: string | null
+  model: string | null
+  created_at: string
+}
+
+export async function aiSettings(): Promise<AiSettings | null> {
+  const { data } = await supabase.from('ai_settings').select('*').maybeSingle()
+  return (data as AiSettings | null) ?? null
+}
+
+export async function setAiSettings(input: Partial<{
+  turn_on: boolean
+  how: 'always' | 'slow' | 'busy'
+  minutes: number
+  over: number
+  warn: boolean
+  suspend: boolean
+  which_model: string
+  which_vision_model: string
+}>) {
+  unwrap(await supabase.rpc('set_ai_settings', {
+    turn_on: input.turn_on ?? null,
+    how: input.how ?? null,
+    minutes: input.minutes ?? null,
+    over: input.over ?? null,
+    warn: input.warn ?? null,
+    suspend: input.suspend ?? null,
+    which_model: input.which_model ?? null,
+    which_vision_model: input.which_vision_model ?? null,
+  }))
+}
+
+export async function aiRecent(howMany = 50): Promise<AiReview[]> {
+  return (unwrap(await supabase.rpc('ai_recent', { how_many: howMany })) as AiReview[]) ?? []
+}
+
+/** How much is waiting for the machine right now. */
+export async function aiWork(howMany = 20): Promise<{ subject: string; name: string; waiting_minutes: number }[]> {
+  return (unwrap(await supabase.rpc('ai_work', { how_many: howMany })) as {
+    subject: string; name: string; waiting_minutes: number
+  }[]) ?? []
+}
+
+/**
+ * Sets it going once, now.
+ *
+ * The worker is an edge function because it holds two keys no browser may
+ * have: the service role, and the Groq one. This hands it the signed-in
+ * session and the function checks for itself that the asker is Kobblon.
+ */
+export async function runModeration(): Promise<{ looked: number; decided: number; unsure: number }> {
+  const { data, error } = await supabase.functions.invoke('moderate', { body: {} })
+  if (error) {
+    /*
+     * The function says *why* in its body - "no GROQ_API_KEY is set" is the
+     * one somebody will actually hit - and supabase-js hides that behind a
+     * flat "non-2xx". Reading it back is the difference between a console
+     * that says what to do and one that says it did not work.
+     */
+    const said = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    throw new Error(said?.error ?? error.message)
+  }
+  return data as { looked: number; decided: number; unsure: number }
+}
+
 // ------------------------------------------------------------ the console
 
 /**
