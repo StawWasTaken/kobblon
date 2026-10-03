@@ -12,7 +12,6 @@
  * thing everybody else sees.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette,
@@ -22,8 +21,6 @@ import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Tabs } from '@/components/ui/Tabs'
-import { Choices } from '@/components/ui/Choices'
-import { CatalogShelf } from '@/components/catalog/CatalogShelf'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -88,18 +85,6 @@ export default function MyAvatar() {
   const say = useToast()
 
   const [drawer, setDrawer] = useState<Drawer>('clothing')
-  /*
-   * Which half is showing. It comes from the address so that `/catalog` can
-   * land on the shop, and so that somebody who shares the link shares what
-   * they were looking at.
-   */
-  const [params, setParams] = useSearchParams()
-  const [half, setHalf] = useState<'shop' | 'mine'>(
-    params.get('tab') === 'marketplace' ? 'shop' : 'mine',
-  )
-  useEffect(() => {
-    setHalf(params.get('tab') === 'marketplace' ? 'shop' : 'mine')
-  }, [params])
   /*
    * Which parts a swatch would paint. More than one, because "both arms"
    * is one thought and used to be two trips through the colours.
@@ -277,13 +262,16 @@ export default function MyAvatar() {
     <Page className="space-y-5">
       <PageHeader
         title="My Avatar"
-        lead={half === 'shop'
-          ? 'Everything you can put on, with your own body beside it.'
-          : 'Your body, what it wears, and the face on it.'}
+        lead="Your body, what it wears, and the face on it."
         icon={faShirt}
-        actions={profile?.is_guest ? undefined : (
-          <Button to="/create/avatar" variant="subtle" icon={faPlus}>Make something</Button>
-        )}
+        actions={
+          <>
+            <Button to="/catalog" variant="subtle" icon={faStore}>The Catalog</Button>
+            {!profile?.is_guest && (
+              <Button to="/create/avatar" icon={faPlus}>Make something</Button>
+            )}
+          </>
+        }
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
@@ -333,33 +321,6 @@ export default function MyAvatar() {
 
         {/* ------------------------------------- the shop, and what you own */}
         <div className="space-y-4">
-          {/*
-            * Two halves of one activity, with the body visible through both.
-            * Staw's call after looking at how the app he grew up with does
-            * it: choosing a shirt and seeing it on yourself should not be
-            * two pages, because each of them then shows you half of what you
-            * are deciding.
-            */}
-          <Choices
-            label="The shop, or what you own"
-            value={half}
-            onChange={(next) => {
-              setHalf(next)
-              const now = new URLSearchParams(params)
-              if (next === 'shop') now.set('tab', 'marketplace')
-              else now.delete('tab')
-              setParams(now, { replace: true })
-            }}
-            options={[
-              { value: 'shop', label: 'Marketplace', icon: faStore },
-              { value: 'mine', label: 'Customize', icon: faShirt },
-            ]}
-          />
-
-          {half === 'shop' ? (
-            <CatalogShelf compact onTook={() => worn.reload()} />
-          ) : (
-          <>
           <Tabs
             value={drawer}
             onChange={(next) => setDrawer(next as Drawer)}
@@ -449,9 +410,7 @@ export default function MyAvatar() {
               mood="emptyBox"
               title="Nothing here yet"
               body="Everything you take from the Catalog turns up in this drawer."
-              action={<Button icon={faStore} onClick={() => setHalf('shop')}>
-                Open the Marketplace
-              </Button>}
+              action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
             />
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -470,8 +429,6 @@ export default function MyAvatar() {
                 />
               ))}
             </div>
-          )}
-          </>
           )}
         </div>
       </div>
