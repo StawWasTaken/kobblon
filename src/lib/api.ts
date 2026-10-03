@@ -2849,6 +2849,17 @@ export async function buyAvatarItem(id: string) {
   unwrap(await supabase.rpc('buy_avatar_item', { target: id }))
 }
 
+/**
+ * Buys a basket. Every item or none - the server does that, not this.
+ *
+ * Returns how many were bought. A refusal names the item that stopped it and
+ * nothing has been charged, which is the only honest way to fail halfway
+ * through a list somebody is paying for.
+ */
+export async function buyAvatarItems(ids: string[]): Promise<number> {
+  return unwrap(await supabase.rpc('buy_avatar_items', { targets: ids })) as number
+}
+
 export async function wearAvatarItem(id: string) {
   unwrap(await supabase.rpc('wear_avatar_item', { target: id }))
 }

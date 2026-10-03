@@ -18,6 +18,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faCube, faImage, faClock, faStore, faUser,
+  faBasketShopping, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -36,6 +37,7 @@ import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
 } from '@/lib/api'
 import { avatarTag, avatarNumber } from '@/lib/kinds'
+import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
 import type { AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
 
@@ -72,6 +74,8 @@ export default function CatalogItem() {
 
   const [busy, setBusy] = useState(false)
   const [owned, setOwned] = useState(false)
+  const basket = useBasket()
+  const put = !!item && basket.some((one) => one.id === item.id)
   useEffect(() => { setOwned(!!item?.owned) }, [item?.id, item?.owned])
 
   const closed = !!item?.sells_until
@@ -206,6 +210,25 @@ export default function CatalogItem() {
                   disabled={!profile || profile.is_guest || !item.is_public}
                   onClick={() => void take()}
                 />
+              )}
+              {!owned && !closed && item.is_public && (
+                <Button
+                  block
+                  variant="subtle"
+                  icon={put ? faCheck : faBasketShopping}
+                  disabled={!profile || profile.is_guest}
+                  onClick={() => (put
+                    ? takeOutOfBasket(item.id)
+                    : putInBasket({
+                      id: item.id,
+                      name: item.name,
+                      kind: item.kind,
+                      price: item.price,
+                      picture: cardFor(item),
+                    }))}
+                >
+                  {put ? 'In your basket' : 'Put it in your basket'}
+                </Button>
               )}
               {owned && (
                 <Button block variant="subtle" to="/avatar" icon={faUser}>

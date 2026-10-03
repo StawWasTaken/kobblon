@@ -12,6 +12,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faMagnifyingGlass, faUser, faPlus, faCircleCheck, faClock,
+  faBasketShopping, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -27,7 +28,9 @@ import { Verified, isVerified } from '@/components/brand/Verified'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
-import { avatarShelf, buyAvatarItem, wearAvatarItem, cardFor } from '@/lib/api'
+import { avatarShelf, buyAvatarItem, buyAvatarItems, wearAvatarItem, cardFor } from '@/lib/api'
+import { useBasket, putInBasket, takeOutOfBasket, emptyBasket } from '@/hooks/useBasket'
+import { BasketDialog } from '@/components/catalog/BasketDialog'
 import type { ShelfOrder } from '@/lib/api'
 import { avatarTag } from '@/lib/kinds'
 import type { AvatarItem, AvatarKind } from '@/types/db'
@@ -61,6 +64,9 @@ export default function Catalog() {
   const [makerDraft, setMakerDraft] = useState('')
   const [order, setOrder] = useState<ShelfOrder>('newest')
   const [busy, setBusy] = useState<string | null>(null)
+  const basket = useBasket()
+  const [showBasket, setShowBasket] = useState(false)
+  const [paying, setPaying] = useState(false)
 
   useEffect(() => { setTerm(params.get('q') ?? '') }, [params])
 
@@ -108,6 +114,13 @@ export default function Catalog() {
         icon={faShirt}
         actions={profile ? (
           <>
+            <Button
+              variant="subtle"
+              icon={faBasketShopping}
+              onClick={() => setShowBasket(true)}
+            >
+              Basket{basket.length ? ` (${basket.length})` : ''}
+            </Button>
             <Button to="/avatar" variant="subtle" icon={faUser}>My Avatar</Button>
             <Button to="/create/avatar" icon={faPlus}>Make one</Button>
           </>
@@ -226,19 +239,43 @@ export default function Catalog() {
               item={item}
               busy={busy === item.id}
               canTake={!!profile && !profile.is_guest}
+              inBasket={basket.some((one) => one.id === item.id)}
               onTake={() => void take(item)}
             />
           ))}
         </div>
       )}
+
+      <BasketDialog
+        open={showBasket}
+        onClose={() => setShowBasket(false)}
+        lines={basket}
+        paying={paying}
+        onBuy={() => void (async () => {
+          setPaying(true)
+          try {
+            const got = await buyAvatarItems(basket.map((one) => one.id))
+            emptyBasket()
+            setShowBasket(false)
+            say(got === 1 ? 'Bought. It is yours.' : `Bought all ${got}.`, 'success')
+            things.reload()
+          } catch (error) {
+            say(error instanceof Error ? error.message : 'That did not work.', 'error')
+          } finally {
+            setPaying(false)
+          }
+        })()}
+      />
     </Page>
   )
 }
 
-function ShelfCard({ item, busy, canTake, onTake }: {
+function ShelfCard({ item, busy, canTake, inBasket, onTake }: {
   item: AvatarItem
   busy: boolean
   canTake: boolean
+  /** Already put aside, so the control says "in your basket" and undoes it. */
+  inBasket: boolean
   onTake: () => void
 }) {
   const picture = cardFor(item)
@@ -303,17 +340,50 @@ function ShelfCard({ item, busy, canTake, onTake }: {
           {closed && !item.owned ? (
             <Button block size="sm" disabled>Closed</Button>
           ) : (
-            <BuyButton
-              block
-              size="sm"
-              price={item.price}
-              owned={item.owned}
-              ownedLabel="Wear it"
-              freeLabel="Take it"
-              loading={busy}
-              disabled={!canTake}
-              onClick={onTake}
-            />
+            <div className="flex items-center gap-1.5">
+              <BuyButton
+                className="flex-1"
+                size="sm"
+                price={item.price}
+                owned={item.owned}
+                ownedLabel="Wear it"
+                freeLabel="Take it"
+                loading={busy}
+                disabled={!canTake}
+                onClick={onTake}
+              />
+              {/*
+                * Putting something aside is not buying it, so it is its own
+                * small control beside the one that spends Brix rather than a
+                * second full-width button next to it.
+                */}
+              {!item.owned && (
+                <button
+                  type="button"
+                  aria-label={inBasket ? `Take ${item.name} out of your basket` : `Put ${item.name} in your basket`}
+                  aria-pressed={inBasket}
+                  disabled={!canTake}
+                  onClick={() => (inBasket
+                    ? takeOutOfBasket(item.id)
+                    : putInBasket({
+                      id: item.id,
+                      name: item.name,
+                      kind: item.kind,
+                      price: item.price,
+                      picture,
+                    }))}
+                  className={cn(
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg border text-xs transition-colors',
+                    'disabled:cursor-not-allowed disabled:opacity-40',
+                    inBasket
+                      ? 'border-brand bg-brand/15 text-white'
+                      : 'border-ink-line text-white/55 hover:border-brand/60 hover:text-white',
+                  )}
+                >
+                  <FontAwesomeIcon icon={inBasket ? faCheck : faBasketShopping} />
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
