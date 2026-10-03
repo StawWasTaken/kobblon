@@ -193,20 +193,14 @@ export default function MyAvatar() {
    */
   const takePortrait = async () => {
     if (!profile) return
-    const now = await avatarOf(profile.id).catch(() => null)
-    if (!now) return
 
-    const pieces = await Promise.all(now.filter((p) => p.slot).map(async (p) => ({
-      slot: p.slot!,
-      imageUrl: catalogUrl(p.image_path, p.image_bucket ?? undefined),
-      meshUrl: p.mesh_path ? await assetUrl(p.mesh_path).catch(() => null) : null,
-      textureUrl: p.texture_path ? await assetUrl(p.texture_path).catch(() => null) : null,
-    })))
-
-    const drawn = await refreshPortrait(profile.id, {
-      body: now[0]?.body ?? DEFAULT_BODY,
-      pieces,
-    }).catch(() => null)
+    /*
+     * The picture is taken from what the database says they are wearing, not
+     * from a look this page builds. This page used to build one - leaving
+     * out the mesh format and the placement - so the picture was a different
+     * avatar from the one above it.
+     */
+    const drawn = await refreshPortrait(profile.id).catch(() => null)
 
     /*
      * Telling the rest of the site. The picture was being saved and nothing

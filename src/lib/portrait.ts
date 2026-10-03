@@ -14,10 +14,11 @@
  * face is would be two different people.
  */
 import * as THREE from 'three'
+import { MANNEQUIN_BODY } from './mannequin'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
   frameMesh, lightForLooking, lookFrom, fitToSocket,
-  type K6Part, type K6Point,
+  type K6Part, type K6Point, type WornFit,
 } from '@/engine'
 
 /** What a portrait is drawn at. Square, because every frame it goes in is. */
@@ -43,6 +44,8 @@ export type PortraitLook = {
      */
     meshFormat?: string | null
     textureUrl?: string | null
+    /** Where its maker placed it. Without this a portrait is not the avatar. */
+    fit?: WornFit | null
   }[]
 }
 
@@ -97,7 +100,17 @@ export async function drawPortrait(
 
       const socket = SOCKETS[piece.slot]
       if (!piece.meshUrl || !socket) continue
-      const model = await loadMesh(piece.meshUrl, formatOf(piece.meshUrl)).catch(() => null)
+      /*
+       * The real format, not a guess off a signed address - the same bug
+       * twice over, because a signed URL has no extension and every OBJ
+       * then goes to the glTF reader and fails. The accessory simply did
+       * not appear, which is half of why a portrait did not match the
+       * avatar beside it.
+       */
+      const model = await loadMesh(
+        piece.meshUrl,
+        (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
+      ).catch(() => null)
       if (!model) continue
       borrowed.push(model)
 
@@ -113,7 +126,9 @@ export async function drawPortrait(
         }
       }
 
-      fitToSocket(model, socket)
+      // And where its maker put it. Drawing it where the measuring put it
+      // is drawing a different hat from the one on the avatar.
+      fitToSocket(model, socket, piece.fit ?? null)
       body.wear(socket, model)
     }
 
@@ -181,14 +196,16 @@ export async function drawItemCard(item: {
   meshUrl?: string | null
   meshFormat?: string | null
   textureUrl?: string | null
+  /** The mannequin's face. Without it the card is a headless body. */
+  faceUrl?: string | null
 }, avatarUrl = '/k6/k6.glb'): Promise<Blob | null> {
   // A face is its own card. Drawing a body to show one would hide it.
   if (item.kind === 'face') return null
 
-  const plain = {
-    Head: '#c9cedb', Torso: '#aab0c2', LeftArm: '#c9cedb',
-    RightArm: '#c9cedb', LeftLeg: '#8d95a6', RightLeg: '#8d95a6',
-  }
+  // The one mannequin. It was a body of its own here, slightly different
+  // from the one the item page drew, so a shirt's card and that shirt on its
+  // page were two different people.
+  const plain = MANNEQUIN_BODY
 
   /*
    * Clothes on the body, everything else on its own. An accessory worn by a
@@ -199,7 +216,16 @@ export async function drawItemCard(item: {
 
   if (onBody) {
     return drawPortrait(
-      { body: plain, pieces: [{ slot: item.slot, imageUrl: item.imageUrl }] },
+      {
+        body: plain,
+        pieces: [
+          // The face it always wears, so a card is a person wearing a shirt
+          // rather than a headless shape in one. Handed in by whoever is
+          // drawing, because this file does not talk to the database.
+          { slot: 'face', imageUrl: item.faceUrl ?? null },
+          { slot: item.slot, imageUrl: item.imageUrl },
+        ],
+      },
       avatarUrl,
       'body',
     )

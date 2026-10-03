@@ -13,6 +13,7 @@ import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { BodyPicker } from '@/components/avatar/BodyPicker'
 import type { BodyPart } from '@/engine'
 import { templateFor } from '@/engine'
+import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import '@/index.css'
 
 /** A shirt drawn into the real template, so the wrap is the real wrap. */
@@ -90,8 +91,7 @@ function wonkyHat() {
 const bare: AvatarLook = { body: null, pieces: [] }
 
 const painted: AvatarLook = {
-  body: { Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
-    RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28' },
+  body: MANNEQUIN_BODY,
   pieces: [],
 }
 

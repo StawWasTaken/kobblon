@@ -11,6 +11,7 @@ import { AvatarStage } from '@/components/avatar/AvatarStage'
 import { FitEditor, PLAIN_FIT, fitIsPlain } from '@/components/avatar/FitEditor'
 import { plainFace } from '@/lib/plainFace'
 import type { WornFit } from '@/engine'
+import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import '@/index.css'
 
 /** A hat drawn six stons off its own origin, as an uploaded one would be. */
@@ -40,10 +41,7 @@ function Fitting() {
       <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
         <AvatarStage
           look={{
-            body: {
-              Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
-              RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
-            },
+            body: MANNEQUIN_BODY,
             pieces: [
               { slot: 'face', kind: 'face', imageUrl: plainFace() },
               { slot: 'hat', kind: 'accessory', meshUrl: MESH, meshFormat: 'obj', fit },

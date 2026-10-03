@@ -5,6 +5,8 @@ import {
 } from './preview'
 import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
 import { formatOf, type WornFit } from '@/engine'
+import { FLOOR_FACE } from './mannequin'
+import { plainFace } from './plainFace'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -2741,6 +2743,36 @@ export async function ensureAvatarCard(item: AvatarItem, me: string): Promise<st
 }
 
 /**
+ * The face the mannequin wears, fetched once and remembered.
+ *
+ * FACE-1119, the free one everybody starts with - so the rig on a card, on
+ * an item page and in the create dialog is the same person. A drawn stand-in
+ * when it cannot be fetched, which is not a nicety: a bare page, the
+ * Workspace and a card drawn before anybody signs in all need a face, and
+ * one that fails to load leaves the blank head this exists to avoid.
+ */
+let askedForFace: Promise<string> | null = null
+
+export function mannequinFace(): Promise<string> {
+  if (!askedForFace) {
+    askedForFace = avatarItemPage(FLOOR_FACE)
+      .then((found) => {
+        const picture = found?.image_path
+          ? catalogUrl(found.image_path, found.image_bucket ?? undefined)
+          : null
+        return picture ?? plainFace()
+      })
+      .catch(() => plainFace())
+  }
+  return askedForFace
+}
+
+/** Forgets it, which only a test or a hot reload wants. */
+export function forgetMannequinFace() {
+  askedForFace = null
+}
+
+/**
  * Where an accessory sits, as its maker placed it.
  *
  * Applied on top of the automatic fit, so `null` is "wherever the measuring
@@ -2962,7 +2994,16 @@ export async function drawAvatarCard(
     textureUrl?: string | null
   },
 ): Promise<string | null> {
-  const drawn = await drawItemCard(item).catch(() => null)
+  /*
+   * The mannequin's face goes in here rather than being fetched by the
+   * drawing, which must not talk to the database - and it is awaited before
+   * the draw rather than during it, so a card is never drawn headless
+   * because a request was still in flight.
+   */
+  const drawn = await drawItemCard({
+    ...item,
+    faceUrl: await mannequinFace().catch(() => null),
+  }).catch(() => null)
   if (!drawn) return null
 
   const path = `${userId}/card-${crypto.randomUUID()}.webp`
@@ -3028,10 +3069,48 @@ export async function uploadCatalogImage(userId: string, file: File): Promise<st
  * WebP with alpha, like every other picture Kobblon draws, so a head sits on
  * whatever colour the page behind it is.
  */
-export async function refreshPortrait(
-  userId: string, look: PortraitLook,
-): Promise<string | null> {
-  const drawn = await drawPortrait(look).catch(() => null)
+/**
+ * What somebody is wearing, as a look anything can draw.
+ *
+ * One assembly, and that is the point of it existing. The avatar page built
+ * this for the stage and `refreshPortrait` built it again for the picture,
+ * and the second copy quietly left out the mesh format and the placement -
+ * so a profile picture was drawn with the accessory missing or sitting
+ * somewhere else, which is Staw's "the picture is made from zero, not from
+ * the avatar". Two assemblies of the same thing is two answers to one
+ * question, and the one nobody is looking at is the wrong one.
+ *
+ * Signing is a request per model, so this is awaited once and handed round
+ * rather than done again per renderer.
+ */
+export async function lookOf(userId: string): Promise<PortraitLook> {
+  const worn = await avatarOf(userId).catch(() => [])
+
+  const pieces = await Promise.all(
+    worn.filter((piece) => piece.slot).map(async (piece) => ({
+      slot: piece.slot!,
+      kind: piece.kind ?? '',
+      imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
+      meshUrl: piece.mesh_path ? await assetUrl(piece.mesh_path).catch(() => null) : null,
+      meshFormat: piece.mesh_format ?? (piece.mesh_path ? formatOf(piece.mesh_path) : null),
+      textureUrl: piece.texture_path ? await assetUrl(piece.texture_path).catch(() => null) : null,
+      fit: piece.fit ?? null,
+    })),
+  )
+
+  return { body: worn[0]?.body ?? null, pieces }
+}
+
+/**
+ * Draws somebody's profile picture from the avatar they are actually
+ * wearing, and keeps it.
+ *
+ * It takes a person rather than a look on purpose: a caller that assembles
+ * its own is a caller that can assemble it differently, which is exactly
+ * what went wrong. The only way to get a portrait is from the database.
+ */
+export async function refreshPortrait(userId: string): Promise<string | null> {
+  const drawn = await drawPortrait(await lookOf(userId)).catch(() => null)
   if (!drawn) return null
 
   /*

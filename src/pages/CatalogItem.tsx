@@ -38,8 +38,10 @@ import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
   removeAvatarItem, avatarShelf, avatarOf,
+  mannequinFace,
 } from '@/lib/api'
 import { avatarTag, avatarNumber } from '@/lib/kinds'
+import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
 import type { AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -63,18 +65,6 @@ const WHERE_WORDS: Record<string, string> = {
 const KIND_WORDS: Record<string, string> = {
   shirt: 'Shirt', trousers: 'Trousers', tdecal: 'T-decal',
   accessory: 'Accessory', hair: 'Hair', face: 'Face',
-}
-
-/*
- * A plain body to show things on, rather than the visitor's own.
- *
- * Deliberate: a card that changed with whoever was looking at it would mean
- * two people comparing the same shirt are comparing two different pictures,
- * and somebody signed out would see nothing at all.
- */
-const MANNEQUIN: Record<string, string> = {
-  Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
-  RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
 }
 
 export default function CatalogItem() {
@@ -488,6 +478,13 @@ function ItemView({ item }: { item: AvatarItem }) {
    * mesh, and a shirt has none.
    */
   const [mode, setMode] = useState<'picture' | 'body' | 'me'>('picture')
+  // The face the mannequin wears, so every rig on the site is the same one.
+  const [face, setFace] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    void mannequinFace().then((picture) => { if (live) setFace(picture) })
+    return () => { live = false }
+  }, [])
   const [model, setModel] = useState<{ mesh: string | null; skin: string | null } | null>(null)
 
   const flat = cardFor(item) ?? null
@@ -549,14 +546,20 @@ function ItemView({ item }: { item: AvatarItem }) {
         imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
       }))
     return {
-      body: mine.data[0]?.body ?? MANNEQUIN,
+      body: mine.data[0]?.body ?? MANNEQUIN_BODY,
       pieces: [...worn, asPiece],
     }
   }, [mine.data, asPiece, item.slot])
 
   const look = useMemo<AvatarLook>(
-    () => ({ body: MANNEQUIN, pieces: [asPiece] }),
-    [asPiece],
+    () => ({
+      body: MANNEQUIN_BODY,
+      pieces: [
+        ...(face ? [{ slot: 'face', kind: 'face', imageUrl: face }] : []),
+        asPiece,
+      ],
+    }),
+    [asPiece, face],
   )
 
   const waiting = (!!item.mesh_path && !model?.mesh) || (mode === 'me' && mine.loading)

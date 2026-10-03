@@ -7,7 +7,6 @@ import { BirthdayPicker, birthdayToDate, emptyBirthday } from './BirthdayPicker'
 import type { Birthday } from './BirthdayPicker'
 import { GenderPicker } from './GenderPicker'
 import type { Gender } from './GenderPicker'
-import { AvatarUpload } from './AvatarUpload'
 import { useAuth } from '@/hooks/useAuth'
 import { checkUsername } from '@/lib/api'
 import { isOldEnough, MINIMUM_AGE } from '@/lib/age'
@@ -32,7 +31,6 @@ export function SignupForm({
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [displayNameTouched, setDisplayNameTouched] = useState(false)
-  const [avatar, setAvatar] = useState<File | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -97,7 +95,13 @@ export function SignupForm({
         password,
         username,
         displayName: displayName.trim() || username,
-        avatarFile: avatar,
+        /*
+         * Nothing. A profile picture is a shot of the avatar now, drawn the
+         * first time somebody looks at themselves - so signing up is a name,
+         * an email and a password, and the picture is something they get by
+         * having a body rather than something they have to find a file for.
+         */
+        avatarFile: null,
         birthDate: birthdayToDate(birthday),
         gender,
       }
@@ -148,8 +152,6 @@ export function SignupForm({
           maxLength={32}
         />
       </Reveal>
-
-      <AvatarUpload file={avatar} onChange={setAvatar} />
 
       <Input
         label="Email"

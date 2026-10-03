@@ -39,6 +39,7 @@ import {
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
   setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard, uploadAsset,
   redrawAvatarCard, setAvatarFit,
+  mannequinFace,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -46,6 +47,7 @@ import { kindAccepts, avatarTag } from '@/lib/kinds'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { FitEditor, PLAIN_FIT, fitIsPlain, asFit } from '@/components/avatar/FitEditor'
 import { plainFace } from '@/lib/plainFace'
+import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import type { WornFit } from '@/engine'
 import { formatOf } from '@/engine'
 
@@ -158,6 +160,13 @@ export default function CreateAvatarItems() {
    * is worse than a visible one, every time.
    */
   const [cardTrouble, setCardTrouble] = useState<string | null>(null)
+  // The mannequin's face, so the rig here is the rig everywhere else.
+  const [face, setFace] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    void mannequinFace().then((picture) => { if (live) setFace(picture) })
+    return () => { live = false }
+  }, [])
   useEffect(() => {
     if (!profile || made.loading) return
     let live = true
@@ -259,15 +268,12 @@ export default function CreateAvatarItems() {
   const fitting = useMemo<AvatarLook | null>(() => {
     if (!isModel || !fitUrls.mesh) return null
     return {
-      body: {
-        Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
-        RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
-      },
+      body: MANNEQUIN_BODY,
       pieces: [
-        // A face, because a blank head is an unsettling thing to put a hat
-        // on and the whole point of this view is judging how it looks on
-        // somebody.
-        { slot: 'face', kind: 'face', imageUrl: plainFace() },
+        // The one mannequin's face. A blank head is an unsettling thing to
+        // put a hat on, and the point of this view is judging how something
+        // looks on the same person it will be shown on everywhere else.
+        { slot: 'face', kind: 'face', imageUrl: face ?? plainFace() },
         {
           slot,
           kind,
@@ -278,7 +284,7 @@ export default function CreateAvatarItems() {
         },
       ],
     }
-  }, [isModel, fitUrls, slot, kind, fresh, meshFile, fit])
+  }, [isModel, fitUrls, slot, kind, fresh, meshFile, fit, face])
 
 
   const make = async () => {
@@ -905,6 +911,17 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
   const [placing, setPlacing] = useState(false)
   const [fit, setFit] = useState<Required<WornFit>>(asFit(item.fit))
   const [worn, setWorn] = useState<{ mesh: string; skin: string | null } | null>(null)
+  /*
+   * Its own fetch rather than a prop threaded down through every card:
+   * `mannequinFace` remembers its answer, so twenty cards asking is one
+   * request and the second card onwards resolves immediately.
+   */
+  const [face, setFace] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    void mannequinFace().then((picture) => { if (live) setFace(picture) })
+    return () => { live = false }
+  }, [])
 
   useEffect(() => {
     if (!placing || worn || !item.mesh_path) return
@@ -1173,12 +1190,9 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
             {worn ? (
               <AvatarStage
                 look={{
-                  body: {
-                    Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
-                    RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
-                  },
+                  body: MANNEQUIN_BODY,
                   pieces: [
-                    { slot: 'face', kind: 'face', imageUrl: plainFace() },
+                    { slot: 'face', kind: 'face', imageUrl: face ?? plainFace() },
                     {
                       slot: item.slot,
                       kind: item.kind,
