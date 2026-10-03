@@ -291,7 +291,9 @@ export function MeshView({
           )}
         >
           <FontAwesomeIcon icon={showing === '3d' ? faImage : faCube} />
-          {labelled && <span>{showing === '3d' ? 'Picture' : '3D'}</span>}
+          {/* "2D" rather than "Picture": the switch sits in the corner of the
+              thing it is switching, and the word was most of its width. */}
+          {labelled && <span>{showing === '3d' ? '2D' : '3D'}</span>}
         </button>
       )}
 

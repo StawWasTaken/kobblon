@@ -83,8 +83,10 @@ export function WearingPanel({ look, loading }: {
   const wearing = (look?.pieces ?? []).filter((piece) => piece.contentId)
 
   return (
-    <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-      <Studio className="relative aspect-square rounded-2xl border border-ink-line">
+    // The figure gets the room. It is the thing people came to look at, and
+    // it was a third of the width with the grid spread thin beside it.
+    <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+      <Studio className="relative aspect-[4/5] rounded-2xl border border-ink-line">
         {loading ? (
           <Skeleton className="h-full w-full" />
         ) : (
@@ -93,7 +95,7 @@ export function WearingPanel({ look, loading }: {
                 same job - "just use the same design we had for the catalog". */}
             <ViewSwitch
               ways={[
-                { value: 'picture' as const, icon: faImage, label: 'Picture' },
+                { value: 'picture' as const, icon: faImage, label: '2D' },
                 { value: 'body' as const, icon: faCube, label: '3D' },
               ]}
               value={mode}

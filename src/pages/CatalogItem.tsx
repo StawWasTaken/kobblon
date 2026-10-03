@@ -675,7 +675,7 @@ function ItemView({ item }: { item: AvatarItem }) {
   const showing = mode === 'me' ? (onMe ?? look) : look
 
   const WAYS = [
-    { value: 'picture' as const, icon: faImage, label: 'Picture', on: !!flat },
+    { value: 'picture' as const, icon: faImage, label: '2D', on: !!flat },
     { value: 'body' as const, icon: faCube, label: '3D', on: canRig },
     { value: 'me' as const, icon: faUser, label: 'On me', on: canRig && !!profile && !profile.is_guest },
   ].filter((one) => one.on)

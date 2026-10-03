@@ -3499,3 +3499,60 @@ If you have a viewer with its own way of saying this, take this one.
 
 It positions itself in the bottom-right corner of whatever is `relative`
 around it, which is where `MeshView` has always put its own.
+
+# Thirty-sixth round — hair could not be published, and a figure that fills its frame
+
+## Nobody could publish hair
+
+Staw: "seems like people may encounter trouble trying to publish hair,
+accessories, etc", with a screenshot of somebody stuck on the form. They were
+not unlucky - **it was impossible**, and had been since avatar items existed.
+
+`create_avatar_item` requires `slot = kind` for everything except an
+accessory, which is the only kind with somewhere to choose. The create page
+drew its "Where it goes" picker for every model kind - hair included - and it
+starts on "On the head", so a hair was always sent as a `hat` and the server
+always refused it with "A hair is always worn as a hair". The message was
+about an answer nobody had been asked to give, which is why it reads as a
+mystery rather than as a mistake.
+
+One line decides the slot now (`kind === 'accessory' ? slot : kind`) and the
+picker is only drawn where it means something. Proven both ways in SQL:
+hair-as-a-hat refused, hair-as-hair made, accessory-on-the-head still made.
+
+**If you have a maker UI, check this.** Anything that offers a socket for a
+hair is broken the same way.
+
+## `AvatarStage` frames the body, not the sphere around it
+
+It measured the bounding *sphere* and backed off by its radius - which is half
+the **diagonal** of a standing figure, about a third more than its height - so
+every avatar on the site sat a third too far back and read as a small person
+in a big empty room. It now fits the body's height and width, asking both and
+taking the further answer, because a frame narrower than it is tall runs out
+of width first and the height alone crops the arms off.
+
+This changes every figure you draw with `AvatarStage`: they all get bigger in
+the same frame. Nothing else moves.
+
+The margin is 1.18 and is not decoration: the camera sits a little above the
+middle and looks down, so the top of the head is further from the lens than
+the middle is. At 1.06 it sawed the head off.
+
+## "2D", not "Picture"
+
+In `ViewSwitch` and in `MeshView`'s own corner button. Staw: it "takes less
+space", and the word was most of the control's width. Catalog item page,
+Marketplace mesh viewer and the profile's wearing panel all say it the same
+way now.
+
+## Also
+
+The profile's friends row and communities grid: smaller faces and emblems,
+more space between them.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, editing a face by
+re-uploading its asset, the clothing render, reselling limiteds, the outfit
+UI, the rest of the redesigns.

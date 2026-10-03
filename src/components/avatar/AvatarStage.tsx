@@ -209,9 +209,34 @@ export function AvatarStage({
           }
           const whole = new THREE.Box3().setFromObject(body!.object)
           const middle = whole.getCenter(new THREE.Vector3())
-          const reach = whole.getBoundingSphere(new THREE.Sphere()).radius
-          const away = ((reach * 1.15) / Math.sin((camera.fov * Math.PI) / 360))
-            * turn.closeness
+
+          /*
+           * Framed on the body's own height and width, not on the sphere
+           * around it.
+           *
+           * The sphere's radius is half the *diagonal* of a standing figure,
+           * which for K6 is about a third more than its height - so the
+           * camera sat a third too far back and somebody in a tall frame was
+           * a small person in a big empty room. Staw: "the avatar itself
+           * bigger cuz its too small compared to all the space it has".
+           *
+           * Both directions are asked and the further answer wins, because
+           * a frame narrower than it is tall runs out of width first and the
+           * height alone would crop the arms off.
+           */
+          const size = whole.getSize(new THREE.Vector3())
+          const half = Math.tan((camera.fov * Math.PI) / 360)
+          // The widest the body can read as from any angle it can be turned
+          // to, so turning it does not walk it out of the frame.
+          const across = Math.max(size.x, size.z)
+          const away = Math.max(
+            (size.y / 2) / half,
+            (across / 2) / (half * camera.aspect),
+            // The margin is not decoration: the camera sits a little above
+            // the middle and looks down, which puts the top of the head
+            // further from the lens than the middle is. At 1.06 it was
+            // sawing the head off.
+          ) * 1.18 * turn.closeness
           const flat = Math.cos(turn.pitch) * away
           camera.position.set(
             middle.x + Math.sin(turn.yaw) * flat,

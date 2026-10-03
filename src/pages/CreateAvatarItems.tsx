@@ -209,6 +209,21 @@ export default function CreateAvatarItems() {
     [profile?.is_admin],
   )
 
+  /*
+   * Where the thing is worn, which only an accessory gets a say in.
+   *
+   * Hair goes in the hair slot. The picker was shown for every model kind
+   * and starts on "On the head", so a hair was sent as a hat and the server
+   * refused it - "A hair is always worn as a hair" - every single time.
+   * Publishing hair was impossible, and the message was about an answer
+   * nobody had been asked to give. Staw: "seems like people may encounter
+   * trouble trying to publish hair, accessories, etc".
+   *
+   * One line decides it now, and the picker is only drawn where it means
+   * something.
+   */
+  const sendingSlot: AvatarSlot = kind === 'accessory' ? slot : (kind as AvatarSlot)
+
   const verified = !!profile && (profile.is_verified || profile.is_admin)
   /*
    * Kobblon's own kinds are Kobblon's to make, and Kobblon was being refused
@@ -287,7 +302,7 @@ export default function CreateAvatarItems() {
         // looks on the same person it will be shown on everywhere else.
         { slot: 'face', kind: 'face', imageUrl: face ?? plainFace() },
         {
-          slot,
+          slot: sendingSlot,
           kind,
           meshUrl: fitUrls.mesh,
           meshFormat: fresh && meshFile ? formatOf(meshFile.name) : undefined,
@@ -296,7 +311,7 @@ export default function CreateAvatarItems() {
         },
       ],
     }
-  }, [isModel, fitUrls, slot, kind, fresh, meshFile, fit, face])
+  }, [isModel, fitUrls, sendingSlot, kind, fresh, meshFile, fit, face])
 
 
   const make = async () => {
@@ -342,7 +357,7 @@ export default function CreateAvatarItems() {
 
       const newId = await createAvatarItem({
         kind,
-        slot: isModel ? slot : (kind as AvatarSlot),
+        slot: sendingSlot,
         name,
         description: about,
         imagePath,
@@ -381,7 +396,7 @@ export default function CreateAvatarItems() {
         : undefined
       void drawAvatarCard(newId, profile.id, {
         kind,
-        slot: isModel ? slot : kind,
+        slot: sendingSlot,
         imageUrl: imagePath ? catalogUrl(imagePath) : null,
         meshUrl: mesh ? await assetUrl(mesh.file_path).catch(() => null) : null,
         meshFormat: mesh ? formatOf(mesh.file_path) : null,
@@ -675,17 +690,23 @@ export default function CreateAvatarItems() {
                 />
               )}
 
-              <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
-                Where it goes
-              </p>
-              <Choices
-                label="Where it goes"
-                size="sm"
-                tone="soft"
-                value={slot}
-                onChange={setSlot}
-                options={PLACES.map((one) => ({ value: one.slot, label: one.label }))}
-              />
+              {/* Only an accessory has somewhere to choose. Hair goes where
+                  hair goes, and asking was what broke it. */}
+              {kind === 'accessory' && (
+                <>
+                  <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
+                    Where it goes
+                  </p>
+                  <Choices
+                    label="Where it goes"
+                    size="sm"
+                    tone="soft"
+                    value={slot}
+                    onChange={setSlot}
+                    options={PLACES.map((one) => ({ value: one.slot, label: one.label }))}
+                  />
+                </>
+              )}
 
               {/*
                 * Its texture, which is not optional in practice: a model with

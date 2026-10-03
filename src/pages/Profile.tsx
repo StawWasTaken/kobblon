@@ -109,14 +109,14 @@ function Faces({ people }: { people: Face[] }) {
     // Bigger faces, which is what Staw asked for and what the page he sent
     // does: a friends row is people, and at twenty-four across nobody can
     // tell which of their friends they are looking at.
-    <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
+    <div className="-mx-4 flex gap-6 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
       {people.map((person) => (
         <Link
           key={person.id}
           to={profileLink(person)}
-          className="w-28 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
+          className="w-24 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
         >
-          <PersonAvatar person={person} size="3xl" className="mx-auto h-20 w-20" />
+          <PersonAvatar person={person} size="3xl" className="mx-auto h-16 w-16" />
           <p className="mt-2 truncate text-sm font-bold">{person.display_name}</p>
           <p className="truncate text-[11px] text-muted">@{person.username}</p>
         </Link>
@@ -703,7 +703,7 @@ export default function Profile() {
                 * how the page Staw sent shows a group: a community is a
                 * picture people recognise before it is a name.
                 */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
                 {communities.data.map((community) => (
                   <Link
                     key={community.id}
