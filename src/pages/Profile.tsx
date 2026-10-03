@@ -26,6 +26,9 @@ import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Tabs } from '@/components/ui/Tabs'
 import { Emblem } from '@/components/community/Emblem'
+import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
+import { Studio } from '@/components/avatar/Studio'
+import { avatarTag, avatarKindLabels } from '@/lib/kinds'
 import { usePersonActions } from '@/components/social/personActions'
 import { Dialog } from '@/components/ui/Dialog'
 import { Textarea } from '@/components/ui/Input'
@@ -39,7 +42,7 @@ import {
   addressNow, discordHandleOf, getProfileByUsername, getProfileOverview, isFollowing, listEarnedBadges, peopleList,
   listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
-  usernameHistory, usernameById, listAssetsByCreator, updateProfile,
+  usernameHistory, usernameById, listAssetsByCreator, updateProfile, lookOf,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
@@ -89,6 +92,16 @@ function Fact({ icon, children }: { icon: IconDefinition; children: React.ReactN
     </span>
   )
 }
+
+/**
+ * What a worn thing is called in a list of them.
+ *
+ * `KINDS` is the one place that names them, so this reads from it rather
+ * than keeping a second list - two names for one kind is how "Model" here
+ * and "Mesh" there happened.
+ */
+const kindLabel = (kind?: string | null) =>
+  avatarKindLabels[kind ?? ''] ?? kind ?? ''
 
 type Face = {
   id: string
@@ -161,6 +174,20 @@ export default function Profile() {
     [user?.id, user?.discord_display],
   )
   const communities = useAsync(async () => (user ? listMemberCommunities(user.id) : []), [user?.id])
+
+  /*
+   * What they actually look like, which is the thing Staw asked for: "the
+   * thing i absolutely want is the full 3d avatar, and what the person is
+   * wearing".
+   *
+   * One call for both halves. `lookOf` is the site's single assembly of
+   * somebody's look - it signs the models and carries each item's name and
+   * Catalog number - so the figure standing here and the list of what it has
+   * on cannot disagree, which is what two separate fetches would eventually
+   * do.
+   */
+  const look = useAsync(async () => (user ? lookOf(user.id) : null), [user?.id])
+  const wearing = (look.data?.pieces ?? []).filter((piece) => piece.contentId)
   const names = useAsync(async () => (user ? usernameHistory(user.id) : []), [user?.id])
 
   const friends = useAsync(
@@ -363,25 +390,38 @@ export default function Profile() {
             * change your picture is to change your avatar, and this says so
             * and sends you there.
             */}
-          <div className="shrink-0">
-            <PersonAvatar
-              person={user}
-              size="3xl"
-              className="h-28 w-28 sm:h-32 sm:w-32"
-              frame={`0 0 0 3px ${accent}`}
-              overlay={isMe ? (
+          {/*
+            * Them, standing there, rather than a thumbnail of their head.
+            *
+            * Staw asked for the whole avatar on this page and he is right:
+            * a profile picture is a crop of a thing that exists, and the
+            * thing that exists is what people actually recognise each other
+            * by. It turns, and you can take hold of it - the same gesture
+            * as everywhere else an avatar is shown.
+            *
+            * Still their own picture while it loads, so the page does not
+            * open on a hole where somebody's face goes.
+            */}
+          <div className="shrink-0 sm:w-56">
+            <Studio className="relative aspect-[3/4] w-40 rounded-2xl border border-ink-line sm:w-56">
+              {look.loading ? (
+                <div className="grid h-full w-full place-items-center">
+                  <PersonAvatar person={user} size="3xl" />
+                </div>
+              ) : (
+                <AvatarStage look={look.data as AvatarLook | null} handled />
+              )}
+
+              {isMe && (
                 <Hop
                   to="/avatar"
-                  aria-label="Change your avatar"
-                  className="absolute inset-0 grid place-items-center gap-1 rounded-full bg-black/55 text-[#fff] opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
+                  className="absolute inset-x-2 bottom-2 z-10 flex items-center justify-center gap-2 rounded-xl border border-ink-line bg-ink-card/85 px-3 py-2 text-xs font-bold backdrop-blur transition-colors hover:bg-ink-hover"
                 >
                   <FontAwesomeIcon icon={faShirt} />
-                  <span className="text-[10px] font-bold uppercase tracking-wide">
-                    Avatar
-                  </span>
+                  Change your avatar
                 </Hop>
-              ) : undefined}
-            />
+              )}
+            </Studio>
           </div>
 
           <div className="min-w-0 flex-1">
@@ -627,6 +667,43 @@ export default function Profile() {
         </div>
       ) : (
         <div className="space-y-10">
+          {/*
+            * What they have on, each piece a link to its page in the
+            * Catalog.
+            *
+            * The other half of Staw's ask, and the half that makes the
+            * avatar above worth looking at: seeing a hat you like and
+            * having nowhere to go from it is a dead end. Names rather than
+            * drawn cards, because the cards are already standing in the
+            * studio next to this list wearing exactly these things.
+            */}
+          {!!wearing.length && (
+            <section>
+              <Heading icon={faShirt}>Wearing</Heading>
+              <div className="flex flex-wrap gap-2">
+                {wearing.map((piece) => (
+                  <Link
+                    key={piece.itemId ?? piece.contentId}
+                    to={`/catalog/${avatarTag(piece.kind ?? '', piece.contentId)}`}
+                    className="group flex items-center gap-2.5 rounded-xl border border-ink-line bg-ink-card px-3 py-2 transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="h-8 w-1 shrink-0 rounded-full"
+                      style={{ background: 'var(--me)' }}
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold">{piece.name}</span>
+                      <span className="block text-[11px] uppercase tracking-wide text-muted">
+                        {kindLabel(piece.kind)}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section>
             <Heading icon={faUsers} aside={
               <Link

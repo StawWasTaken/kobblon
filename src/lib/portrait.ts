@@ -36,6 +36,13 @@ export type PortraitLook = {
   body: Record<string, string> | null
   pieces: {
     slot: string
+    /** Which item this is, so a caller can key on it rather than on the slot. */
+    itemId?: string | null
+    /** What it is and what it is called, for anything that lists what somebody has on. */
+    kind?: string | null
+    name?: string | null
+    /** Its Catalog number, so a list of what somebody is wearing can link to it. */
+    contentId?: number | null
     imageUrl?: string | null
     meshUrl?: string | null
     /**

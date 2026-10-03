@@ -54,6 +54,19 @@ export const avatarCodes: Record<string, string> = {
   accessory: 'ACCS', hair: 'HAIR', face: 'FACE',
 }
 
+/**
+ * What each kind of wearable is called, in the singular.
+ *
+ * Here because this file is where the words live, and because there were
+ * three copies of this list - the item page, the create page and the shelf -
+ * which is how one of them ends up saying "Decal" while the others say
+ * "T-decal". The applications read this too.
+ */
+export const avatarKindLabels: Record<string, string> = {
+  shirt: 'Shirt', trousers: 'Trousers', tdecal: 'T-decal',
+  accessory: 'Accessory', hair: 'Hair', face: 'Face',
+}
+
 /** A Catalog item's number, with its kind in front. */
 export const avatarTag = (kind: string, id: number | null | undefined) =>
   id ? `${avatarCodes[kind] ?? 'ITEM'}-${id}` : ''

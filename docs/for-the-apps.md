@@ -3245,3 +3245,75 @@ review, editing a face by re-uploading its asset, the clothing render,
 reselling limiteds, the outfit UI, and the eight-page redesign. All of round
 thirty's "not done" list still stands apart from the accessory placement
 controls, which exist now.
+
+# Thirty-second round — a face is on the head now, and a profile is the whole person
+
+## A face is a curved surface, not a sticker (`@/engine/k6`)
+
+Staw asked for three things in one breath: every face the same size on a
+head, bigger, and "really onto the head, not infront (like the image is curvy
+literally onto the head)". All three are `setFace`, and if you draw an avatar
+anywhere, this changes what you get.
+
+- **It is a slice of a cylinder** of exactly the head's radius, a
+  fingernail proud of it, centred on the head's own axis. It was a flat
+  square standing off the front, which reads as a sticker from any angle but
+  dead ahead and lifts away at the corners.
+- **The arc is the one whose *chord* is the face width**, not the one whose
+  length is. Wrapping a picture over an arc of the width you want draws a
+  face wider than the head looks.
+- **Bigger**: the box is 0.9 of the head's width and 0.9 of its height, up
+  from 0.85 of the smaller of the two.
+- **The picture no longer decides its own size.** Two faces drawn at
+  different sizes inside their own files came out different sizes on two
+  bodies. The transparent border is found and the drawing is fitted to the
+  face box, keeping its proportions - never squashed; the window widens on
+  the short side instead, which only ever shows more of the picture's own
+  margin.
+
+The trim reads the picture back out of a canvas, so it needs the picture to
+be readable from this origin. When it is not - and when there is no
+transparency to find - it is left exactly as it was. Nothing throws either
+way.
+
+Five checks cover it, and the one worth copying is "every vertex sits the
+same distance from the head's axis": a flat sheet held against a round head
+touches down the middle and stands off at the corners, and "is there a face"
+passes on both.
+
+## `lookOf` carries more (`@/lib/api`)
+
+Additive, nothing breaks. Each piece now also has `itemId`, `name` and
+`contentId` alongside its slot and its addresses, so one call feeds both a
+figure and a list of what that figure has on. Two fetches for those two
+things is two answers to one question.
+
+## `avatarKindLabels` (`@/lib/kinds`)
+
+"Shirt", "Trousers", "T-decal", "Accessory", "Hair", "Face". There were three
+copies of this list in the website alone, which is how one of them ends up
+saying "Decal". If you name a wearable kind, name it from here.
+
+## The profile page
+
+Redesigned around the avatar: the person stands in a studio card at the top
+of their own page, turning, draggable, instead of a crop of their head - and
+under About there is **Wearing**, every piece a link to its page in the
+Catalog. Nothing new is needed from you for it; it is `AvatarStage`,
+`Studio` and `lookOf`, all three of which you already have.
+
+The Catalog item page's menu has **Copy link** now.
+
+## Said out loud
+
+The profile page could not be seen with real data from here - this container
+cannot reach Supabase, so the page sits on its skeleton. What was looked at
+is the figure, the studio card at its real size, and the faces, on bare pages
+under `tools/site/`. The layout around them is read, not seen.
+
+## Still not done
+
+Unchanged from round thirty-one: best friends, cancelling your own requests,
+the staff console's content review, editing a face by re-uploading its asset,
+the clothing render, reselling limiteds, the outfit UI, and the rest of the
+page redesigns.

@@ -3146,7 +3146,10 @@ export async function lookOf(userId: string): Promise<PortraitLook> {
   const pieces = await Promise.all(
     worn.filter((piece) => piece.slot).map(async (piece) => ({
       slot: piece.slot!,
+      itemId: piece.item_id,
       kind: piece.kind ?? '',
+      name: piece.item_name,
+      contentId: piece.content_id,
       imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
       meshUrl: piece.mesh_path ? await assetUrl(piece.mesh_path).catch(() => null) : null,
       meshFormat: piece.mesh_format ?? (piece.mesh_path ? formatOf(piece.mesh_path) : null),

@@ -1897,6 +1897,27 @@ const faces = await p.evaluate(() => window.faceOnOff())
 check('a face goes on the front of the head and just in front of it',
   faces.on && faces.proud > 0 && faces.proud < 0.1,
   `${faces.proud} stons proud of the head`)
+/*
+ * The three Staw asked for. The old check - "is it there, is it a hair
+ * proud" - passed on a flat square, which is what it was, so these measure
+ * the things that tell a sticker and a face apart.
+ */
+check('a face is bent round the head rather than hung in front of it',
+  faces.wraps > 0.2, `it wraps back ${faces.wraps} stons`)
+check('and every part of it sits on the head, not off it',
+  faces.furthest - faces.nearest < 0.001,
+  `${faces.nearest} to ${faces.furthest} stons from the head's middle`)
+check('and it is most of the width of the head',
+  faces.across > faces.headWide * 0.8 && faces.across <= faces.headWide,
+  `${faces.across} across a head of ${faces.headWide}`)
+
+const twoFaces = await p.evaluate(() => window.twoFaces())
+check('two faces drawn differently are the same size on a head',
+  twoFaces.sameSize === true,
+  `${twoFaces.full.across}x${twoFaces.full.tall} and ${twoFaces.inset.across}x${twoFaces.inset.tall}`)
+check('and the one drawn small inside its own file is shown closer in',
+  twoFaces.cropped === true,
+  `window ${twoFaces.inset.window.join(' x ')}`)
 check('it wears the picture it was given',
   faces.mapped, `mapped ${faces.mapped}`)
 check('there is no face until one is put on, and none after it comes off',

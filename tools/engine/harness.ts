@@ -278,7 +278,16 @@ Object.assign(window, {
     }
   },
 
-  /** Whether a face goes on, comes off, and leaves nothing behind. */
+  /**
+   * Whether a face goes on, comes off, leaves nothing behind - and whether
+   * it is on the head rather than in front of it.
+   *
+   * The second half is Staw's: "make that the faces really are onto the head,
+   * not infront". A flat square an inch off the front passes "is there a
+   * face", which is why the check measures the thing that tells them apart -
+   * how far the surface bends back from its middle to its edges. A plane
+   * bends back by nothing.
+   */
   async faceOnOff() {
     const { K6, loadK6Source } = await import('@/engine/k6')
     const body = new K6(await loadK6Source('/k6/k6.glb'))
@@ -298,20 +307,108 @@ Object.assign(window, {
 
     const on = find()
     const headBox = new THREE.Box3().setFromObject(body.parts.get('Head')!)
-    const where = on ? on.getWorldPosition(new THREE.Vector3()) : null
+    const headMiddle = headBox.getCenter(new THREE.Vector3())
+    const faceBox = on ? new THREE.Box3().setFromObject(on) : null
+
+    /*
+     * How far each corner of the surface sits from the head's axis, against
+     * how far the middle of it does. On a cylinder of the head's own radius
+     * they are the same number; on a plane the corners are further out,
+     * because a flat sheet held against a round head only touches down the
+     * middle.
+     */
+    const radii: number[] = []
+    if (on) {
+      const points = on.geometry.getAttribute('position')
+      const at = new THREE.Vector3()
+      for (let i = 0; i < points.count; i += 1) {
+        at.fromBufferAttribute(points, i)
+        on.localToWorld(at)
+        radii.push(Math.hypot(at.x - headMiddle.x, at.z - headMiddle.z))
+      }
+    }
 
     body.setFace(null)
     const after = !!find()
     body.dispose()
+
     return {
       before,
       on: !!on,
       after,
       mapped: on ? (on.material as THREE.MeshBasicMaterial).map === picture : false,
-      proud: where ? +(where.z - headBox.max.z).toFixed(3) : null,
-      height: where ? +where.y.toFixed(2) : null,
+      // The front of the face against the front of the head: still a hair
+      // proud, so the two never fight for the same pixels.
+      proud: faceBox ? +(faceBox.max.z - headBox.max.z).toFixed(3) : null,
+      across: faceBox ? +(faceBox.max.x - faceBox.min.x).toFixed(2) : null,
+      tall: faceBox ? +(faceBox.max.y - faceBox.min.y).toFixed(2) : null,
+      // How far it wraps back. Zero is a flat sticker.
+      wraps: faceBox ? +(faceBox.max.z - faceBox.min.z).toFixed(3) : null,
+      headWide: +(headBox.max.x - headBox.min.x).toFixed(2),
+      furthest: radii.length ? +Math.max(...radii).toFixed(3) : null,
+      nearest: radii.length ? +Math.min(...radii).toFixed(3) : null,
+      height: faceBox ? +faceBox.getCenter(new THREE.Vector3()).y.toFixed(2) : null,
     }
   },
+
+  /**
+   * The same face box whatever shape the picture is.
+   *
+   * Staw: "when on a head theyre the same size". Two pictures, one wide and
+   * one tall, each with its drawing in a different part of its own file -
+   * which is the real reason two faces look different sizes on two bodies.
+   * What this asks is that the body does not care: same geometry, and the
+   * picture fitted into it rather than the other way round.
+   */
+  async twoFaces() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+
+    const drawn = (wide: number, high: number, inset: number) => {
+      const sheet = document.createElement('canvas')
+      sheet.width = wide
+      sheet.height = high
+      const paint = sheet.getContext('2d')!
+      paint.clearRect(0, 0, wide, high)
+      paint.fillStyle = '#000000'
+      paint.fillRect(inset, inset, wide - inset * 2, high - inset * 2)
+      const picture = new THREE.CanvasTexture(sheet)
+      return picture
+    }
+
+    const measure = async (picture: THREE.Texture) => {
+      const body = new K6(await loadK6Source('/k6/k6.glb'))
+      const scene = new THREE.Scene()
+      scene.add(body.object)
+      body.setFace(picture)
+      scene.updateMatrixWorld(true)
+      let found: THREE.Mesh | null = null
+      body.object.traverse((o) => { if (o.name === 'face') found = o as THREE.Mesh })
+      const box = new THREE.Box3().setFromObject(found!)
+      const answer = {
+        across: +(box.max.x - box.min.x).toFixed(3),
+        tall: +(box.max.y - box.min.y).toFixed(3),
+        window: [
+          +picture.repeat.x.toFixed(3), +picture.repeat.y.toFixed(3),
+        ],
+      }
+      body.dispose()
+      return answer
+    }
+
+    // A square picture drawn edge to edge, and a tall one with its drawing
+    // in the middle of a wide margin.
+    const full = await measure(drawn(256, 256, 0))
+    const inset = await measure(drawn(128, 256, 40))
+
+    return {
+      full,
+      inset,
+      sameSize: full.across === inset.across && full.tall === inset.tall,
+      // The second one is cropped in on its drawing rather than shown whole.
+      cropped: inset.window[0] < 0.999 || inset.window[1] < 0.999,
+    }
+  },
+
   /**
    * Fitting the same model twice, which is what switching accessories does.
    *

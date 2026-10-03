@@ -18,7 +18,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faCube, faImage, faClock, faStore, faUser,
-  faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis, faFlag,
+  faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis, faLink, faFlag,
   faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
@@ -44,7 +44,7 @@ import {
   removeAvatarItem, avatarShelf, avatarOf,
   mannequinFace, favouriteAvatarItem,
 } from '@/lib/api'
-import { avatarTag, avatarNumber } from '@/lib/kinds'
+import { avatarTag, avatarNumber, avatarKindLabels } from '@/lib/kinds'
 import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
 import type { AvatarItem } from '@/types/db'
@@ -66,10 +66,8 @@ const WHERE_WORDS: Record<string, string> = {
   rightHand: 'In the right hand',
 }
 
-const KIND_WORDS: Record<string, string> = {
-  shirt: 'Shirt', trousers: 'Trousers', tdecal: 'T-decal',
-  accessory: 'Accessory', hair: 'Hair', face: 'Face',
-}
+// One list for the whole site, in `@/lib/kinds`, where the words live.
+const KIND_WORDS = avatarKindLabels
 
 export default function CatalogItem() {
   const { tag = '' } = useParams()
@@ -239,6 +237,20 @@ export default function CatalogItem() {
                   }
                   items={[
                     ...(owned ? [{ label: 'Wear it on my avatar', icon: faUser, to: '/avatar' }] : []),
+                    /*
+                     * The address of the thing you are looking at. Sharing
+                     * something is how anybody else gets to it, and the way
+                     * people were doing it was selecting the address bar -
+                     * which on a phone is not a thing you can do.
+                     */
+                    {
+                      label: 'Copy link',
+                      icon: faLink,
+                      onSelect: () => {
+                        void navigator.clipboard?.writeText(window.location.href)
+                        say('Link copied.', 'success')
+                      },
+                    },
                     { label: 'See who made it', icon: faUser, to: `/u/${item.creator_username}` },
                     { label: 'Report it', icon: faFlag, onSelect: () => setReporting(true) },
                     ...(canRemove ? [{

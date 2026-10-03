@@ -82,6 +82,26 @@ export type K6Point = keyof typeof K6_POINTS
  * head for the same pixels.
  */
 export const K6_FACE_SIZE = Math.min(BODY.Head.w, BODY.Head.h) * 0.85
+
+/**
+ * The box a face fills on the head, and it is the same box for every face.
+ *
+ * Staw asked for three things at once: every face the same size on a head,
+ * bigger than it was, and actually *on* the head rather than floating in
+ * front of it. The first is this pair of numbers - the picture does not get
+ * a say in how big it is drawn, so two faces drawn at different sizes inside
+ * their own files still come out the same size on a body.
+ *
+ * `FACE_ACROSS` is the width as seen from the front, in stons. The surface
+ * it is painted on is curved, so the picture is wrapped over rather more
+ * than that: the arc is worked out from the chord below.
+ */
+const FACE_ACROSS = BODY.Head.w * 0.9
+const FACE_TALL = BODY.Head.h * 0.9
+
+/** The head is a cylinder, so this is what a face is bent around. */
+const HEAD_RADIUS = BODY.Head.d / 2
+
 const FACE_GAP = 0.02
 
 /**
@@ -102,6 +122,113 @@ const WORN_FIT: Record<K6Point, { across: number; out: readonly [number, number,
   leftHand: { across: BODY.LeftArm.w * 1.4, out: [0, -1, 0] },
   rightHand: { across: BODY.RightArm.w * 1.4, out: [0, -1, 0] },
   waist: { across: BODY.Torso.w * 1.1, out: [0, -1, 0] },
+}
+
+/*
+ * What part of a face picture is actually the face.
+ *
+ * Two faces the same size on the body can still look like two different
+ * sizes, because one of them is drawn small in the middle of its own file
+ * and the other fills it to the edges. The geometry cannot know that; the
+ * picture can be asked.
+ *
+ * So the transparent border is found and the rest is stretched to the face
+ * box - and fitted into it keeping its proportions, never squashed, because
+ * a face squashed to fill a box is a different face. The window is widened
+ * on the short side instead, which only ever shows more of the picture's own
+ * empty margin.
+ *
+ * Every part of this is allowed to fail. A picture from another origin
+ * cannot be read back out of a canvas, and that throws; a picture with no
+ * transparency has no border to find. Both land on "leave it alone", which
+ * is exactly how it behaved before.
+ */
+type FacePart = { x: number; y: number; w: number; h: number; across: number; down: number }
+
+const trimmed = new WeakMap<object, FacePart | null>()
+
+function opaquePart(image: unknown) {
+  if (!image || typeof image !== 'object') return null
+  const already = trimmed.get(image)
+  if (already !== undefined) return already
+
+  let found: FacePart | null = null
+  try {
+    const source = image as HTMLImageElement | HTMLCanvasElement | ImageBitmap
+    const wide = (source as HTMLImageElement).naturalWidth || (source as HTMLCanvasElement).width
+    const high = (source as HTMLImageElement).naturalHeight || (source as HTMLCanvasElement).height
+    if (!wide || !high) return null
+
+    const canvas = document.createElement('canvas')
+    canvas.width = wide
+    canvas.height = high
+    const paper = canvas.getContext('2d', { willReadFrequently: true })
+    if (!paper) return null
+    paper.drawImage(source as CanvasImageSource, 0, 0)
+    const pixels = paper.getImageData(0, 0, wide, high).data
+
+    let left = wide, right = -1, top = high, bottom = -1
+    for (let y = 0; y < high; y += 1) {
+      for (let x = 0; x < wide; x += 1) {
+        // Anything but all but invisible counts: a soft edge is part of the
+        // drawing, and a threshold of zero makes one stray pixel the border.
+        if (pixels[(y * wide + x) * 4 + 3] <= 8) continue
+        if (x < left) left = x
+        if (x > right) right = x
+        if (y < top) top = y
+        if (y > bottom) bottom = y
+      }
+    }
+
+    // Nothing drawn at all, or the whole thing is: either way, leave it.
+    if (right < left || bottom < top) found = null
+    else if (left === 0 && top === 0 && right === wide - 1 && bottom === high - 1) found = null
+    else {
+      found = {
+        x: left / wide,
+        // Pictures are read from the top and textures from the bottom.
+        y: 1 - (bottom + 1) / high,
+        w: (right + 1 - left) / wide,
+        h: (bottom + 1 - top) / high,
+        // The drawn part's own shape, in pixels, which is what decides
+        // whether it is wider or taller than the box it has to fit.
+        across: right + 1 - left,
+        down: bottom + 1 - top,
+      }
+    }
+  } catch {
+    // A canvas that cannot be read is the ordinary case for a picture served
+    // from somewhere else without the header that allows it.
+    found = null
+  }
+
+  trimmed.set(image, found)
+  return found
+}
+
+/** Points a texture at the drawn part of itself, in the face box's shape. */
+function fitFace(picture: THREE.Texture) {
+  const part = opaquePart(picture.image)
+  if (!part) return
+
+  const want = FACE_ACROSS / FACE_TALL
+  let { x, y, w, h } = part
+  const has = part.across / part.down
+
+  if (has > want) {
+    // Wider than the box: show more above and below rather than squashing.
+    const taller = (h * has) / want
+    y -= (taller - h) / 2
+    h = taller
+  } else if (has < want) {
+    const wider = (w * want) / has
+    x -= (wider - w) / 2
+    w = wider
+  }
+
+  picture.offset.set(x, y)
+  picture.repeat.set(w, h)
+  picture.needsUpdate = true
 }
 
 /**
@@ -378,14 +505,24 @@ export class K6 {
   }
 
   /**
-   * The face, which is a picture on the front of the head rather than a
-   * thing hung off it.
+   * The face, which is a picture **on** the head rather than in front of it.
    *
-   * A plane in the face slot, standing a hair proud of the head so the two
-   * never fight for the same pixels - which reads as the face flickering
-   * when somebody walks. Null takes it off, and the texture is left for
-   * whoever owns it to dispose: this did not load it and does not know who
-   * else is using it.
+   * It was a flat square standing a fingernail off the front, which reads as
+   * a sticker from anywhere but dead ahead and comes away from the head at
+   * the corners. Staw: "make that the faces really are onto the head, not
+   * infront (like the image is curvy literally onto the head)". So it is a
+   * slice of a cylinder of exactly the head's radius, a hair proud of it,
+   * centred on the head's own axis - which is why it is pushed back a radius
+   * from the face socket, since that socket sits on the front surface.
+   *
+   * The arc is the one whose *chord* is `FACE_ACROSS`: wrapping a picture
+   * over an arc of that length would draw a face wider than the head looks,
+   * because an arc is longer than the chord under it. This way a face is as
+   * wide from the front as it says it is, and the extra is spent curving
+   * away round the sides, which is what a face on a head does.
+   *
+   * Null takes it off, and the texture is left for whoever owns it to
+   * dispose: this did not load it and does not know who else is using it.
    */
   setFace(picture: THREE.Texture | null) {
     if (!picture) {
@@ -403,14 +540,34 @@ export class K6 {
     if (!this.face) {
       const socket = this.sockets.get('face')
       if (!socket) return
+
+      const radius = HEAD_RADIUS + FACE_GAP
+      // The angle whose chord is the width we want the face to read as.
+      const arc = 2 * Math.asin(Math.min(FACE_ACROSS / 2 / radius, 1))
+
+      /*
+       * An open-ended cylinder, which is a curved sheet when you only ask
+       * for a slice of one. Its `u` runs with the angle and its `v` runs up
+       * it, so the picture lands the right way up and the right way round -
+       * at theta zero the surface faces +Z, which is the front, and theta
+       * grows towards +X, which is the way `u` grows.
+       */
       this.face = new THREE.Mesh(
-        new THREE.PlaneGeometry(K6_FACE_SIZE, K6_FACE_SIZE),
+        new THREE.CylinderGeometry(
+          radius, radius, FACE_TALL,
+          // Enough segments that the curve is a curve rather than a fold.
+          24, 1, true, -arc / 2, arc,
+        ),
         new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }),
       )
       this.face.name = 'face'
-      this.face.position.z = FACE_GAP
+      // Back onto the head's axis: the socket is on the front surface, and a
+      // cylinder is measured from its middle.
+      this.face.position.z = -HEAD_RADIUS
       socket.add(this.face)
     }
+
+    fitFace(picture)
 
     const material = this.face.material as THREE.MeshBasicMaterial
     material.map = picture
