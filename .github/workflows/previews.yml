@@ -58,7 +58,11 @@ jobs:
           # over the whole published site. The `|| true` is not decoration:
           # the loop's last root may not exist yet, and under `bash -e` that
           # alone fails the step.
-          for root in worlds c u e create style; do
+          # `catalog` is the one people paste. It was missing, so the cards
+          # this job wrote for Catalog items were left uncommitted and the
+          # next checkout threw them away - written every ten minutes and
+          # published never.
+          for root in worlds c u e catalog create; do
             if [ -d "$root" ]; then git add "$root" || true; fi
           done
           if git diff --staged --quiet; then

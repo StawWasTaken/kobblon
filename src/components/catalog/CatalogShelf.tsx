@@ -25,6 +25,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faMagnifyingGlass, faPlus, faCircleCheck, faClock,
   faBasketShopping, faCheck, faStar, faSliders,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -41,6 +42,7 @@ import { useAsync } from '@/hooks/useAsync'
 import {
   avatarShelf, buyAvatarItem, buyAvatarItems, wearAvatarItem, cardFor,
   myFavouriteAvatarItems,
+  saleNow, priceNow, type CatalogSale,
 } from '@/lib/api'
 import { useBasket, putInBasket, takeOutOfBasket, emptyBasket } from '@/hooks/useBasket'
 import { BasketDialog } from '@/components/catalog/BasketDialog'
@@ -119,6 +121,13 @@ export function CatalogShelf({ onTook, compact }: {
 
   const narrowed = !!filters.least || !!filters.most || onlyLimited || onlyFree
 
+  /*
+   * Whatever sale is on, asked once for the whole shelf rather than per card.
+   * Every card shows what it will actually charge, which is the only thing a
+   * price on a shelf is for.
+   */
+  const sale = useAsync(async () => saleNow(), [])
+
   const things = useAsync(
     async () => (starredOnly
       ? myFavouriteAvatarItems()
@@ -150,6 +159,29 @@ export function CatalogShelf({ onTook, compact }: {
 
   return (
     <div className="space-y-5">
+      {/*
+        * A sale says so, at the top, with when it ends.
+        *
+        * Said once here rather than on every card: a card shows the price it
+        * will charge, and this says why that price is what it is. Without a
+        * line like this a sale is a shop whose prices quietly changed.
+        */}
+      {sale.data && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
+          <FontAwesomeIcon icon={faTag} className="text-space-bright" />
+          <span className="font-bold text-space-bright">
+            {sale.data.percent_off}% off the Catalog
+          </span>
+          <span className="text-muted">
+            until {new Date(sale.data.ends_at).toLocaleString(undefined, {
+              day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+            })}
+            . Limiteds keep their price.
+          </span>
+          {sale.data.note && <span className="text-white/70">{sale.data.note}</span>}
+        </p>
+      )}
+
       {/*
         * The basket and the favourites, where somebody looks for them:
         * beside the shop rather than behind a page header, because both are
@@ -377,6 +409,7 @@ export function CatalogShelf({ onTook, compact }: {
               canTake={!!profile && !profile.is_guest}
               inBasket={basket.some((one) => one.id === item.id)}
               onTake={() => void take(item)}
+              sale={sale.data ?? null}
             />
           ))}
         </div>
@@ -407,15 +440,18 @@ export function CatalogShelf({ onTook, compact }: {
   )
 }
 
-function ShelfCard({ item, busy, canTake, inBasket, onTake }: {
+function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
   item: AvatarItem
   busy: boolean
   canTake: boolean
   /** Already put aside, so the control says "in your basket" and undoes it. */
   inBasket: boolean
   onTake: () => void
+  /** Whatever sale is on, so a card says the price it will charge. */
+  sale: CatalogSale | null
 }) {
   const picture = cardFor(item)
+  const costs = priceNow(item, sale)
   const closed = !!item.sells_until
     && new Date(item.sells_until).getTime() <= Date.now()
 
@@ -481,7 +517,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake }: {
               <BuyButton
                 className="flex-1"
                 size="sm"
-                price={item.price}
+                price={costs}
                 owned={item.owned}
                 ownedLabel="Wear it"
                 freeLabel="Take it"
@@ -506,7 +542,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake }: {
                       id: item.id,
                       name: item.name,
                       kind: item.kind,
-                      price: item.price,
+                      price: costs,
                       picture,
                     }))}
                   className={cn(

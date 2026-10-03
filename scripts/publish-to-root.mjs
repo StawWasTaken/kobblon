@@ -10,7 +10,11 @@ import { pageRoots } from './site-pages.mjs'
 // under the new one, and this list is what actually gets published - so
 // leaving `s` here published nothing for Worlds and kept the old cards,
 // which point at an address that redirects to Discover.
-const itemRoots = ['worlds', 'c', 'u', 'e', 'style']
+// `catalog` is here because the Catalog is the thing people paste: without
+// it, cards were written into dist/catalog and then not published, which is
+// a card that exists and that nobody is ever served. `style` stays only to
+// keep clearing the dead ones out; nothing writes there any more.
+const itemRoots = ['worlds', 'c', 'u', 'e', 'catalog', 'style']
 
 /** Roots that hold item cards as well as pages written from site-pages.mjs. */
 const itemBearing = [...itemRoots, 'create']

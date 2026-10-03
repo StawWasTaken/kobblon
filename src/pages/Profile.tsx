@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faComment, faFlag, faUserPlus, faClock, faUserCheck,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
-  faPalette, faPen, faCircleInfo, faShirt,
+  faPalette, faPen, faCircleInfo, faShirt, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -106,17 +106,21 @@ type Face = {
 
 function Faces({ people }: { people: Face[] }) {
   return (
-    // Bigger faces, which is what Staw asked for and what the page he sent
-    // does: a friends row is people, and at twenty-four across nobody can
-    // tell which of their friends they are looking at.
-    <div className="-mx-4 flex gap-8 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
+    /*
+     * A grid that stops, not a track that slides sideways. Staw: "you
+     * shouldnt have to scroll left or right to see all of your friends ...
+     * but just have a limit max that we can display with a view all". The
+     * cap is in the caller, so the heading's count is the real one and this
+     * only draws what it was handed.
+     */
+    <div className="grid grid-cols-3 gap-6 sm:grid-cols-5 lg:grid-cols-8">
       {people.map((person) => (
         <Link
           key={person.id}
           to={profileLink(person)}
           // Wider than the face it holds, so a name has somewhere to sit and
           // the dot on one picture is nowhere near the next one.
-          className="w-28 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
+          className="rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
         >
           {/* `xl` is h-16/w-16, which is the size asked for - and the size
               the dot beside it is drawn for. Overriding the width with a
@@ -680,17 +684,18 @@ export default function Profile() {
             <Heading icon={faUsers} aside={
               <Link
                 to={`${profileLink(user)}/friends`}
-                className="text-xs font-bold text-link hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
               >
                 See all
+                <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
               </Link>
             }>
               Friends{friends.data?.length ? ` (${friends.data.length})` : ''}
             </Heading>
 
             {friends.loading && (
-              <div className="flex gap-4">
-                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-20 rounded-full" />)}
+              <div className="grid grid-cols-3 gap-6 sm:grid-cols-5 lg:grid-cols-8">
+                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-16 rounded-full" />)}
               </div>
             )}
 
@@ -700,7 +705,8 @@ export default function Profile() {
               </p>
             )}
 
-            {!!friends.data?.length && <Faces people={friends.data.slice(0, 12)} />}
+            {/* Eight, like the row Staw sent, and the rest behind See all. */}
+            {!!friends.data?.length && <Faces people={friends.data.slice(0, 8)} />}
           </section>
 
           {!!communities.data?.length && (

@@ -2911,6 +2911,67 @@ export async function avatarReviewQueue(howMany = 50): Promise<AvatarItem[]> {
   return (unwrap(await supabase.rpc('avatar_review_queue', { how_many: howMany })) as AvatarItem[]) ?? []
 }
 
+/**
+ * The sale that is on, if one is.
+ *
+ * Null when nothing is on, which is the ordinary case. The page uses it to
+ * *show* a price; `sale_price` in the database is what somebody is actually
+ * charged, and those two agreeing is the whole job - see `priceNow` below.
+ */
+export type CatalogSale = { percent_off: number; ends_at: string; note: string | null }
+
+export async function saleNow(): Promise<CatalogSale | null> {
+  const rows = unwrap(await supabase.rpc('sale_now')) as CatalogSale[]
+  return rows?.[0] ?? null
+}
+
+/**
+ * What something costs today, for showing.
+ *
+ * **This is a copy of `sale_price` in the database and has to stay one.** A
+ * limited is never discounted - somebody paid what a limited cost because it
+ * was closing, and a discount a week later is that promise broken - a free
+ * thing stays free, and the rest rounds up, so a sale never makes something
+ * cost nothing.
+ *
+ * The server charges its own version. If these two ever disagree the server
+ * wins and the page is simply lying, which is why the rule is four lines and
+ * not four conditions scattered through a page.
+ */
+export function priceNow(
+  item: { price: number; sells_until?: string | null },
+  sale: CatalogSale | null,
+): number {
+  if (!sale || item.price <= 0) return item.price
+  if (item.sells_until) return item.price
+  return Math.max(1, Math.ceil((item.price * (100 - sale.percent_off)) / 100))
+}
+
+/** Puts the whole Catalog on sale. Kobblon only; the database decides. */
+export async function startCatalogSale(
+  percent: number, until: string, why?: string,
+): Promise<string> {
+  return unwrap(await supabase.rpc('start_catalog_sale', {
+    percent, until, why: why ?? null,
+  })) as string
+}
+
+/** Ends whatever sale is on, now. */
+export async function endCatalogSale() {
+  unwrap(await supabase.rpc('end_catalog_sale'))
+}
+
+/**
+ * Puts a new picture on a face. Kobblon only, faces only.
+ *
+ * Everything else keeps the edit card's promise - what it is and the picture
+ * on it stay as they are - because somebody who bought it bought that. A
+ * face is the house's own furniture and is allowed to be redrawn.
+ */
+export async function replaceAvatarPicture(id: string, picture: string) {
+  unwrap(await supabase.rpc('replace_avatar_picture', { target: id, picture }))
+}
+
 /** What each kind of avatar item costs to make, and who may make one. */
 export async function avatarRules(): Promise<AvatarRule[]> {
   return (unwrap(await supabase.rpc('avatar_rules')) as AvatarRule[]) ?? []

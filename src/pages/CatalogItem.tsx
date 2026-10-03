@@ -43,7 +43,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
-  removeAvatarItem, avatarShelf, lookOf,
+  removeAvatarItem, avatarShelf, lookOf, saleNow, priceNow,
   mannequinFace, favouriteAvatarItem,
 } from '@/lib/api'
 import { avatarTag, avatarNumber, avatarKindLabels } from '@/lib/kinds'
@@ -104,6 +104,16 @@ export default function CatalogItem() {
    * it spends Kobblon's Brix and cannot be undone - everybody who bought it
    * is paid 40% back the moment it goes.
    */
+  /*
+   * Whatever sale is on, and what this costs because of it. Asked once and
+   * handed to every place that says a price, so the buy button, the facts
+   * table, the basket and the are-you-sure card cannot disagree about what
+   * somebody is about to be charged.
+   */
+  const sale = useAsync(async () => saleNow(), [])
+  const costs = item ? priceNow(item, sale.data ?? null) : 0
+  const reduced = !!item && costs < item.price
+
   const canRemove = !!profile?.is_admin || !!profile?.is_moderator
   /** Whether this is theirs to change. The maker, and only the maker. */
   const itsMine = !!profile && item?.creator_id === profile.id
@@ -372,13 +382,13 @@ export default function CatalogItem() {
               ) : (
                 <BuyButton
                   className="flex-1"
-                  price={item.price}
+                  price={costs}
                   owned={owned}
                   ownedLabel="Wear it"
                   freeLabel="Take it"
                   loading={busy}
                   disabled={!profile || profile.is_guest || !item.is_public}
-                  onClick={() => (owned || item.price <= 0
+                  onClick={() => (owned || costs <= 0
                     ? void take()
                     : setConfirming(true))}
                 />
@@ -396,7 +406,7 @@ export default function CatalogItem() {
                       id: item.id,
                       name: item.name,
                       kind: item.kind,
-                      price: item.price,
+                      price: costs,
                       picture: cardFor(item),
                     }))}
                   className={cn(
@@ -444,10 +454,21 @@ export default function CatalogItem() {
               />
               <Fact
                 label="Price"
-                value={item.price > 0
-                  ? <span className="inline-flex items-center gap-0.5">
-                      <CurrencyMark />{item.price}
+                value={costs > 0
+                  ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      {/* The old price stays, struck through: a sale is only
+                          a sale if you can see what it was. */}
+                      {reduced && (
+                        <span className="text-muted line-through">
+                          <CurrencyMark />{item.price}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-0.5">
+                        <CurrencyMark />{costs}
+                      </span>
                     </span>
+                  )
                   : 'Free'}
               />
             </dl>
@@ -486,7 +507,7 @@ export default function CatalogItem() {
         busy={busy}
         name={item.name}
         kind={KIND_WORDS[item.kind] ?? item.kind}
-        price={item.price}
+        price={costs}
         picture={cardFor(item)}
         balance={profile?.pixels ?? 0}
         note={item.sells_until && !closed

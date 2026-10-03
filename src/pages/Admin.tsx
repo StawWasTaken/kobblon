@@ -18,6 +18,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate } from 'react-router-dom'
@@ -47,15 +48,16 @@ import {
   listFlaggedTerms, moveBrixAsStaff, notifyAsStaff, notifyEveryone,
   saveFlaggedTerm, setStanding, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
-  cardFor, previewUrl,
+  cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
 } from '@/lib/api'
 import type { AdminLogEntry, FlaggedTerm, StaffPerson } from '@/lib/api'
 
-type Section = 'People' | 'Screening' | 'Announce' | 'Words' | 'Record'
+type Section = 'People' | 'Screening' | 'Sale' | 'Announce' | 'Words' | 'Record'
 
 const sections: { name: Section; icon: IconDefinition; blurb: string }[] = [
   { name: 'People', icon: faUserShield, blurb: 'Standing, Brix, and removing an account' },
   { name: 'Screening', icon: faCircleCheck, blurb: 'What people have made, waiting on a decision' },
+  { name: 'Sale', icon: faTag, blurb: 'Everything in the Catalog, cheaper, for a while' },
   { name: 'Announce', icon: faBell, blurb: 'A word from Kobblon, to one person or everybody' },
   { name: 'Words', icon: faFilter, blurb: 'What the moderation system catches' },
   { name: 'Record', icon: faScroll, blurb: 'What staff have done' },
@@ -834,6 +836,128 @@ export function ScreeningSection() {
   )
 }
 
+
+/* -------------------------------------------------------------------- sale */
+
+/**
+ * A sale across the whole Catalog, for a while.
+ *
+ * One number and an end. Everything else - which items, what they come down
+ * to, what happens to limiteds - is the database's, and deliberately not
+ * offered here: a console that lets somebody choose "include limiteds" is a
+ * console that lets somebody break the promise a limited makes.
+ */
+export function SaleSection() {
+  const say = useToast()
+  const [percent, setPercent] = useState('20')
+  const [days, setDays] = useState('3')
+  const [why, setWhy] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const sale = useAsync(async () => saleNow(), [])
+
+  const start = async () => {
+    setBusy(true)
+    try {
+      const until = new Date(Date.now() + Number(days) * 24 * 60 * 60 * 1000).toISOString()
+      await startCatalogSale(Number(percent), until, why.trim() || undefined)
+      say(`${percent}% off, for ${days} day${days === '1' ? '' : 's'}.`, 'success')
+      setWhy('')
+      sale.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const stop = async () => {
+    setBusy(true)
+    try {
+      await endCatalogSale()
+      say('The sale is over.', 'success')
+      sale.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted">
+        Everything in the Catalog comes down by the same percentage until it
+        ends. Limiteds keep their price - somebody paid what a limited cost
+        because it was closing - and nothing ever comes down to nothing.
+      </p>
+
+      {sale.loading ? <Skeleton className="h-20" /> : sale.data ? (
+        <Card className="flex flex-wrap items-center gap-3">
+          <Badge tone="space">{sale.data.percent_off}% off</Badge>
+          <span className="text-sm">
+            until{' '}
+            <span className="font-bold">
+              {new Date(sale.data.ends_at).toLocaleString(undefined, {
+                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+              })}
+            </span>
+          </span>
+          {sale.data.note && <span className="text-sm text-muted">{sale.data.note}</span>}
+          <Button
+            className="ml-auto"
+            variant="danger"
+            size="sm"
+            loading={busy}
+            onClick={() => void stop()}
+          >
+            End it now
+          </Button>
+        </Card>
+      ) : (
+        <Card className="space-y-3">
+          <p className="text-sm font-bold">Nothing is on sale.</p>
+          <div className="flex flex-wrap items-end gap-3">
+            <Input
+              label="Percent off"
+              type="number"
+              min={1}
+              max={75}
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              className="w-28"
+            />
+            <Input
+              label="For how many days"
+              type="number"
+              min={1}
+              max={90}
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              className="w-36"
+            />
+            <Input
+              label="Why (shown on the Catalog)"
+              value={why}
+              onChange={(e) => setWhy(e.target.value)}
+              placeholder="Halloween"
+              className="w-full sm:w-72"
+            />
+            <Button
+              variant="yes"
+              loading={busy}
+              disabled={!percent || !days}
+              onClick={() => void start()}
+            >
+              Start it
+            </Button>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------- page */
 
 export default function Admin() {
@@ -874,6 +998,7 @@ export default function Admin() {
 
       {section === 'People' && <PeopleSection />}
       {section === 'Screening' && <ScreeningSection />}
+      {section === 'Sale' && <SaleSection />}
       {section === 'Announce' && <AnnounceSection />}
       {section === 'Words' && <WordsSection />}
       {section === 'Record' && <RecordSection />}

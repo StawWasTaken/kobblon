@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faDownload, faImage, faCube, faLock, faPen,
+  faShirt, faDownload, faImage, faCube, faLock, faPen, faSpinner,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
   faMagnifyingGlass, faClock, faUpload, faCircleCheck, faCircleExclamation,
   faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight,
@@ -36,7 +36,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
-  uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
+  uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem, replaceAvatarPicture,
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
   setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard, uploadAsset,
   redrawAvatarCard, setAvatarFit,
@@ -555,6 +555,7 @@ export default function CreateAvatarItems() {
               canLimit={!!profile?.is_admin}
               canScreen={!!profile?.is_admin || !!profile?.is_moderator}
               me={profile.id}
+              isHouse={!!profile.is_admin}
               onChanged={() => made.reload()}
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
@@ -930,6 +931,7 @@ export default function CreateAvatarItems() {
  */
 export function MadeCard({
   item, onChanged, onTrouble, onDone, rule, canLimit, canScreen, me, openEditor,
+  isHouse,
 }: {
   item: AvatarItem
   onChanged: () => void
@@ -943,6 +945,8 @@ export function MadeCard({
   canScreen: boolean
   /** Whose folder a redrawn card is written into. */
   me: string
+  /** Kobblon itself, which is the only account that may redraw a face. */
+  isHouse?: boolean
   /**
    * Open on the editor, for somebody who arrived here by pressing Edit on
    * the thing's own page. Scrolling to the card and leaving it shut was
@@ -1030,6 +1034,11 @@ export function MadeCard({
   }
 
   const picture = cardFor(item)
+  /*
+   * Only Kobblon, and only a face. `canScreen` is not the test - a moderator
+   * is not the house - so this asks the one thing it means.
+   */
+  const canRedraw = item.kind === 'face' && isHouse
   const archived = item.status === 'approved' && !item.is_public
 
   const state = item.status === 'approved'
@@ -1395,6 +1404,39 @@ export function MadeCard({
               )}
             </p>
           </div>
+
+          {/*
+            * Redrawing a face, which only Kobblon may do and only on a face.
+            *
+            * Staw: "make that kobblon can actually, when clicking edit, on a
+            * face, change the image of a face" - so a face can be modernised
+            * in place rather than becoming a second face nobody is wearing.
+            * Everything else keeps the promise in this card's own
+            * description, which is why this is not a general picture swap.
+            */}
+          {canRedraw && (
+            <label className="block cursor-pointer rounded-xl border border-dashed border-ink-line p-3 text-center text-xs text-muted transition-colors hover:border-brand/60 hover:text-white">
+              <input
+                type="file"
+                accept="image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const chosen = e.target.files?.[0]
+                  e.target.value = ''
+                  if (!chosen) return
+                  void run('redraw', async () => {
+                    const path = await uploadCatalogImage(me, chosen)
+                    await replaceAvatarPicture(item.id, path)
+                  }, 'The face has a new picture.')
+                }}
+              />
+              <FontAwesomeIcon
+                icon={busy === 'redraw' ? faSpinner : faImage}
+                className={cn('mr-2', busy === 'redraw' && 'animate-spin')}
+              />
+              Put a new picture on this face
+            </label>
+          )}
 
           <Input label="Name" value={name} maxLength={60}
             onChange={(e) => setName(e.target.value)} />

@@ -3744,3 +3744,75 @@ trying it *beside* them.
 Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
+
+# Forty-first round — the Catalog's cards were written and thrown away, a sale, and a face can be redrawn
+
+## Why the Catalog previews never appeared (two faults, not one)
+
+Last round taught the card writer to read `avatar_items`. It still produced
+nothing people could see, because of two more:
+
+- **`publish-to-root.mjs` did not publish `catalog/`.** The cards were written
+  into `dist/catalog` and left there.
+- **The ten-minute previews workflow did not commit `catalog/` either** - it
+  stages a fixed list of roots and that list did not have it. Written every
+  ten minutes, published never.
+
+Both fixed. With the Supabase key in the deploy's environment, a new Catalog
+item has a card within about ten minutes; there is no faster path on static
+hosting, because a card is a file and a file needs a run to write it.
+
+## The site's card picture carries its own name (`npm run stamp:card`)
+
+Staw's Discord debugger output settled it: the embed's `proxy_url` was holding
+our *old* picture under the unchanged address
+`https://kobblon.com/brand/og.png`. Nothing on our side can tell a platform to
+look again - there is no refresh button we control - so the address has to
+change when the picture does.
+
+The build now publishes the card picture as `/brand/og-<hash>.png` and points
+the tags at it. A whole new path rather than `?v=`, because a proxy keys its
+copy on what it fetched and a query string is not reliably part of that.
+`og.png` stays where it is for anything linking to it by hand.
+
+**If you show link previews anywhere, this is the general lesson:** a cached
+preview is not a broken page, and the only fix that works is a new address.
+
+## A sale across the Catalog (0156)
+
+- `catalog_sales` holds a percentage and an end. One row, not a column
+  written onto ten thousand items and then written off them again.
+- `sale_now()` - what is on, or nothing. Readable by anybody: a price shown
+  has to agree with the price charged.
+- `sale_price(full_price, sells_until)` - the rule, in one sentence:
+  **a limited is never discounted** (somebody paid what a limited cost
+  because it was closing), free stays free, the rest rounds up so nothing
+  ever falls to zero.
+- `start_catalog_sale(percent, until, why)` / `end_catalog_sale()` - Kobblon
+  only, 1-75%, 90 days at most. The console offers it; the database decides.
+- `buy_avatar_item` charges `sale_price` and writes **that** into
+  `avatar_owned.paid`, which matters: a takedown refunds 40% of what somebody
+  paid, so recording the full price would pay people back more than they
+  spent.
+
+The website has a copy of the rule (`priceNow` in `@/lib/api`) for *showing*
+prices. If you show prices, copy that one, and remember the server's is the
+one that counts.
+
+## A face can be redrawn (0157)
+
+`replace_avatar_picture(target, picture)` - **faces only, Kobblon only**. The
+edit card promises "what it is and the picture on it stay as they are;
+somebody who bought this bought this", and that promise is kept for
+everything else. A face is the house's own furniture, and modernising one
+should not mean making a second face nobody is wearing.
+
+## Also
+
+Friends rows no longer slide sideways: eight faces and "See all →", on the
+home page and on a profile. "On me" keeps your accessories on.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, the clothing render,
+reselling limiteds, the outfit UI, the rest of the redesigns.

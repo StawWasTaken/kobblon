@@ -1,12 +1,22 @@
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRight, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { Skeleton } from '@/components/ui/States'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { peopleList } from '@/lib/api'
 import { profileLink } from '@/lib/links'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+
+/**
+ * How many faces a row shows before it says "See all".
+ *
+ * Staw: "you shouldnt have to scroll left or right to see all of your
+ * friends ... but just have a limit max that we can display with a view all".
+ * Which is right - a sideways scroller hides people behind a gesture nobody
+ * makes, and the row that does this well shows a screenful and a way out.
+ */
+const SHOWN = 8
 
 /** Friends across the top of the home page, online ones first. */
 export function FriendsRail() {
@@ -27,16 +37,21 @@ export function FriendsRail() {
           Friends {!loading && <span className="text-white/40">({friends.length})</span>}
         </h2>
         {!!friends.length && (
-          <Link to="/friends" className="ml-auto text-xs font-bold text-link hover:underline">
+          <Link
+            to="/friends"
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
+          >
             See all
+            <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
           </Link>
         )}
       </div>
 
-      <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
+      {/* A grid that wraps and stops, not a track that slides. */}
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-6 lg:grid-cols-9">
         <Link
           to="/friends"
-          className="group flex w-24 shrink-0 flex-col items-center gap-2 text-center"
+          className="group flex flex-col items-center gap-2 text-center"
         >
           <span className="grid h-20 w-20 place-items-center rounded-full border border-ink-line bg-ink-card text-2xl text-white/50 transition-colors group-hover:bg-ink-hover group-hover:text-white">
             <FontAwesomeIcon icon={faPlus} />
@@ -46,19 +61,19 @@ export function FriendsRail() {
 
         {loading &&
           [0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex w-24 shrink-0 flex-col items-center gap-2">
+            <div key={i} className="flex flex-col items-center gap-2">
               <Skeleton className="h-20 w-20 rounded-full" />
               <Skeleton className="h-3 w-14" />
             </div>
           ))}
 
-        {friends.map((friend) => (
+        {friends.slice(0, SHOWN).map((friend) => (
           <Link
             key={friend.id}
             to={profileLink(friend)}
-            className="flex w-24 shrink-0 flex-col items-center gap-2 text-center"
+            className="flex flex-col items-center gap-2 text-center"
           >
-            <PersonAvatar person={friend} size="2xl" className="h-20 w-20" />
+            <PersonAvatar person={friend} size="2xl" className="mx-auto h-20 w-20" />
             <span className="w-full truncate text-sm font-semibold text-white/80">
               {friend.display_name}
             </span>

@@ -39,6 +39,11 @@ jobs:
 
       - run: npm run build
 
+      # The card picture's address carries its own version, so a platform
+      # that cached the old picture fetches the new one. Before the item
+      # cards, which are written into the shell this stamps.
+      - run: npm run stamp:card
+
       # A card for everything that is already public. Reads with the same
       # publishable key the browser carries, so it sees what a stranger sees.
       - run: npm run pages:items
