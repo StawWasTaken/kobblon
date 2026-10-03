@@ -74,7 +74,10 @@ function AxisMark({ tint, shape }: { tint: string; shape: string }) {
 const LIMITS: Record<Mode, { least: number; most: number; step: number; unit: string }> = {
   // Short units: "0.00 stons" wrapped onto two lines in the column beside
   // the slider and made every row twice as tall as it needed to be.
-  move: { least: -2, most: 2, step: 0.05, unit: ' st' },
+  // Five stons each way, matching `sane_fit`. The two have to move together:
+  // a slider that offers a reach the server refuses is a control that fails
+  // on save, which is worse than one that stops where the rule stops.
+  move: { least: -5, most: 5, step: 0.05, unit: ' st' },
   turn: { least: -180, most: 180, step: 5, unit: '°' },
   size: { least: 0.1, most: 4, step: 0.05, unit: '×' },
 }
