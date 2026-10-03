@@ -3692,3 +3692,55 @@ a made-up item, which is how that was looked at.
 Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
+
+# Fortieth round — the Catalog had no link previews, and On me took your hat off
+
+## Catalog items have cards now
+
+A link preview on GitHub Pages cannot come from the app: the robots that
+build one do not run JavaScript, so `useSocialCard` setting meta tags at
+runtime reaches nobody. Every address that should preview has to be a real
+file, which is what `scripts/write-item-pages.mjs` writes at deploy.
+
+It was still reading **`style_items`** - a table that has not existed since
+0115 - so it wrote cards for addresses the site no longer serves, and the
+Catalog, which is the thing people actually paste, had none at all. A read
+that fails quietly writes nothing and nobody notices.
+
+It reads `avatar_items` now and writes `/catalog/ACCS-1195`, with:
+
+- the drawn card, then the model's own card, then the item's own picture -
+  `cardFor`'s order, because a card that disagrees with the page it links to
+  is worse than no card, and an accessory has no picture of its own;
+- a sentence: "An accessory worn on the head by @kobblon in the Kobblon
+  Catalog, 45 Brix." then whatever its maker wrote.
+
+The kind's letters are read out of `src/lib/kinds.ts` at build time rather
+than copied, like `kindCodes` beside it.
+
+**Two things worth knowing if you ever generate these:** the cards only get
+written when the deploy has the Supabase URL and publishable key in its
+environment, and Discord caches an embed per URL for a long time - a link
+that previewed wrong once keeps previewing wrong until its cache turns over,
+which is not the page still being broken.
+
+The site-wide card is unchanged: `/brand/og.png`, 1200x630, set in
+`index.html` and inherited by every page that has no picture of its own.
+
+## "On me" kept only your clothes
+
+Trying something on took off your hat, your hair and everything else with a
+model in it - it filtered them out, because a model needs signing for and
+that code signed nothing. It uses `lookOf` now, which is the one place that
+assembles somebody's look with its models signed.
+
+What it replaces is decided by the same list the database keeps: a
+one-at-a-time slot (shirt, trousers, tdecal, face, hair) is replaced, and a
+socket is joined - somebody wearing three accessories trying on a fourth is
+trying it *beside* them.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, editing a face by
+re-uploading its asset, the clothing render, reselling limiteds, the outfit
+UI, the rest of the redesigns.

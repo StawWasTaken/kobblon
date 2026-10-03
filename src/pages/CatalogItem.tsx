@@ -43,7 +43,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
-  removeAvatarItem, avatarShelf, avatarOf,
+  removeAvatarItem, avatarShelf, lookOf,
   mannequinFace, favouriteAvatarItem,
 } from '@/lib/api'
 import { avatarTag, avatarNumber, avatarKindLabels } from '@/lib/kinds'
@@ -70,6 +70,16 @@ const WHERE_WORDS: Record<string, string> = {
 
 // One list for the whole site, in `@/lib/kinds`, where the words live.
 const KIND_WORDS = avatarKindLabels
+
+/**
+ * The slots that hold one thing, so trying something on knows what it
+ * replaces and what it joins.
+ *
+ * The same list the database keeps in `one_at_a_time`. Two copies of a rule
+ * is how they drift, and this one is only about what a preview shows - the
+ * server decides what wearing actually does.
+ */
+const ONE_AT_A_TIME = new Set(['shirt', 'trousers', 'tdecal', 'face', 'hair'])
 
 export default function CatalogItem() {
   const { tag = '' } = useParams()
@@ -642,22 +652,34 @@ function ItemView({ item }: { item: AvatarItem }) {
    * on top - so a hat replaces the hat they have on rather than sitting
    * beside it, which is what the slot does for free.
    */
+  /*
+   * `lookOf` rather than `avatarOf`, which is the whole of the fix for
+   * "when u wanna try something on u, i want to keep my accessories on":
+   * this used to drop every piece with a model, so trying a shirt on took
+   * your hat, your hair and everything else off to show it to you. It did
+   * that because a model needs signing for and this did not sign anything -
+   * and `lookOf` is the one place on the site that assembles a look with
+   * its models signed, which is exactly why it exists.
+   */
   const mine = useAsync(
-    async () => (mode === 'me' && profile ? avatarOf(profile.id) : null),
+    async () => (mode === 'me' && profile ? lookOf(profile.id) : null),
     [mode, profile?.id],
   )
 
   const onMe = useMemo<AvatarLook | null>(() => {
     if (!mine.data) return null
-    const worn = mine.data
-      .filter((piece) => piece.slot && piece.slot !== item.slot && !piece.mesh_path)
-      .map((piece) => ({
-        slot: piece.slot!,
-        kind: piece.kind ?? '',
-        imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
-      }))
+    /*
+     * Everything they have on except what this would replace. A one-per-slot
+     * slot is replaced; a socket is not, because somebody wearing three
+     * accessories is trying a fourth on beside them, not instead of them.
+     */
+    const worn = mine.data.pieces
+      .filter((piece) => (
+        ONE_AT_A_TIME.has(piece.slot) ? piece.slot !== item.slot : true
+      ))
+      .map((piece) => ({ ...piece, kind: piece.kind ?? '' }))
     return {
-      body: mine.data[0]?.body ?? MANNEQUIN_BODY,
+      body: mine.data.body ?? MANNEQUIN_BODY,
       pieces: [...worn, asPiece],
     }
   }, [mine.data, asPiece, item.slot])

@@ -76,6 +76,13 @@ const picture = (value) => (value && /^https:\/\//.test(value) ? value : null)
  * work, not the work: the file itself is in the private bucket and stays
  * there.
  */
+/** Anything in a public bucket, by its plain address. */
+const pictureIn = (bucket, path) => (
+  path
+    ? picture(`${url}/storage/v1/object/public/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`)
+    : null
+)
+
 const preview = (path) => (
   path ? picture(`${url}/storage/v1/object/public/previews/${path.split('/').map(encodeURIComponent).join('/')}`) : null
 )
@@ -134,7 +141,7 @@ export async function writeItemPages(into = 'dist') {
 
   const add = (path, page) => pages.push({ path, ...page })
 
-  const [worlds, communities, people, events, style, assets] = await Promise.all([
+  const [worlds, communities, people, events, wearables, assets] = await Promise.all([
     /*
      * Worlds, which were Spaces and are read from `worlds` under their own
      * names now. The address moved too: a World lives at /worlds/:id/:slug,
@@ -146,10 +153,20 @@ export async function writeItemPages(into = 'dist') {
     read('communities', 'select=content_id,slug,name,description,icon_url,banner_url,member_count,owner:profiles!communities_owner_id_fkey(username,display_name)&is_public=eq.true&is_removed=eq.false&limit=5000'),
     read('profiles', 'select=content_id,username,display_name,bio,avatar_url,created_at&is_suspended=eq.false&limit=5000'),
     read('community_events', 'select=content_id,title,subtitle,description,cover_url,starts_at,attending_count,community:communities(name,icon_url,banner_url)&is_cancelled=eq.false&limit=5000'),
-    // Everything a stranger can open gets a card, which is anything the
-    // review let through. Taking something out of Create hides it from the
-    // lists, not from the people you sent the link to, so it keeps its card.
-    read('style_items', 'select=content_id,name,description,slot,image_path,price,creator:profiles!style_items_creator_id_fkey(username,display_name)&is_public=eq.true&is_removed=eq.false&limit=5000'),
+    /*
+     * Catalog items, which were Style items and are `avatar_items` now.
+     *
+     * This read still named `style_items` - a table that has not existed
+     * since 0115 - so every card it wrote was for an address the site no
+     * longer has, and the Catalog, which is the thing people actually paste
+     * links to, had none at all. A read that fails quietly writes nothing
+     * and nobody notices, which is how a whole section of the site ends up
+     * with no previews.
+     *
+     * The mesh's own drawn card comes along for an accessory, which has no
+     * picture of its own - the same fallback `cardFor` does in the browser.
+     */
+    read('avatar_items', 'select=content_id,kind,slot,name,description,price,image_path,image_bucket,preview_path,mesh:assets!avatar_items_mesh_id_fkey(preview_path),creator:profiles!avatar_items_creator_id_fkey(username,display_name)&is_public=eq.true&is_removed=eq.false&status=eq.approved&limit=5000'),
     readOr(
       'assets',
       'select=content_id,kind,name,description,download_count,created_at,is_public,preview_path,creator:profiles!assets_creator_id_fkey(username,display_name,avatar_url)&status=eq.approved&limit=5000',
@@ -246,26 +263,69 @@ export async function writeItemPages(into = 'dist') {
     add(`e/${event.content_id}/${slug(slugify(event.title).slice(0, 40) || 'event')}`, page)
   }
 
-  /* Things to wear. The picture is the thing itself, which is already public
-     for anything in the shop. */
-  const slotWords = {
-    hat: 'A hat', hair: 'Hair', face: 'A face', accessory: 'An accessory', frame: 'A frame',
+  /*
+   * Things to wear, at the address the Catalog actually uses: /catalog/TAG,
+   * where the tag is the kind's letters and the number - ACCS-1195.
+   *
+   * The letters are read out of `src/lib/kinds.ts` for the same reason
+   * `kindCodes` is: a second copy of that table here is a copy that goes
+   * stale the day a kind is added, and the card then promises an address
+   * nothing serves.
+   */
+  const avatarCodes = (() => {
+    const source = readFileSync(new URL('../src/lib/kinds.ts', import.meta.url), 'utf8')
+    const line = source.match(/avatarCodes[^=]*=\s*\{([^}]*)\}/)
+    if (!line) throw new Error('avatarCodes is not where write-item-pages expects it in src/lib/kinds.ts')
+    return Object.fromEntries(
+      [...line[1].matchAll(/(\w+)\s*:\s*'([^']+)'/g)].map(([, kind, code]) => [kind, code]),
+    )
+  })()
+
+  /** What each kind is called at the start of a sentence. */
+  const kindIs = {
+    shirt: 'A shirt', trousers: 'Trousers', tdecal: 'A t-decal',
+    accessory: 'An accessory', hair: 'Hair', face: 'A face',
   }
 
-  for (const item of style) {
-    if (!item.content_id) continue
-    const by = item.creator?.username ? `@${item.creator.username}` : 'somebody'
+  /** Where it is worn, for the kinds where that is not already the name. */
+  const wornWords = {
+    hat: 'on the head', front: 'on the front', back: 'on the back',
+    neck: 'round the neck', waist: 'round the waist',
+    leftHand: 'in the left hand', rightHand: 'in the right hand',
+  }
 
-    add(`style/STY-${item.content_id}`, {
+  for (const item of wearables) {
+    if (!item.content_id) continue
+    const code = avatarCodes[item.kind]
+    // A kind with no letters is a kind this script has not been told about.
+    // Writing `ITEM-1195` would be writing an address nothing serves.
+    if (!code) continue
+
+    const by = item.creator?.username ? `@${item.creator.username}` : 'somebody'
+    const where = item.kind === 'accessory' ? wornWords[item.slot] : null
+
+    /*
+     * The drawn card first, then the model's own, then the thing's own
+     * picture - `cardFor`'s order, because a card that disagrees with the
+     * page it links to is worse than no card. An accessory has no picture
+     * of its own at all, which is why the middle one exists.
+     */
+    const bucket = item.image_bucket || 'catalog'
+    const shown = pictureIn('catalog', item.preview_path)
+      ?? preview(item.mesh?.preview_path)
+      ?? pictureIn(bucket, item.image_path)
+
+    add(`catalog/${code}-${item.content_id}`, {
       type: 'website',
       title: item.name,
       description: lines(
-        `${slotWords[item.slot] ?? 'Something to wear'} by ${by} on Kobblon Style,`
+        `${kindIs[item.kind] ?? 'Something to wear'}${where ? ` worn ${where}` : ''}`
+        + ` by ${by} in the Kobblon Catalog,`
         + ` ${item.price > 0 ? `${item.price} Brix` : 'free'}.`,
         shorten(item.description, 160),
       ),
-      image: picture(item.image_path),
-      square: !!picture(item.image_path),
+      image: shown,
+      square: !!shown,
       imageAlt: item.name,
     })
   }
