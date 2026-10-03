@@ -4001,3 +4001,27 @@ source data's clipping rings. Cosmetic, not yet cleaned.)
 
 Groq moderation and the AI's limits (warnings and suspensions only, never
 deleting an account), the console's design pass, the page redesigns.
+
+# Forty-fifth round — being asked is worth telling (0163)
+
+`notifications.kind` takes two more: **`best_friend_request`** and
+**`best_friend_accepted`**. 0158 put the asking in the database and nowhere
+else, so the only way to learn somebody had asked was to open their profile
+and notice a button had changed - an ask nobody is told about is an ask
+nobody answers.
+
+Two kinds rather than one, because they are two pieces of news: being asked
+needs an answer, being accepted is good news about something you already did.
+
+- Asking somebody who has already asked you still accepts, and then it is
+  **they** who get the acceptance - the two notifications sit on opposite
+  sides of that branch.
+- **A refusal tells nobody.** A notification whose whole content is that
+  somebody does not want to is not news worth sending.
+- Both lead to that person's profile, not to a requests list: a best friend
+  request is answered where the two of you are.
+
+The column is text with a check, not an enum, so this is a constraint swap
+and not the enum trap. If you draw notifications, add the two kinds or they
+fall through to your default line.
+

@@ -33,6 +33,9 @@ import { cn } from '@/lib/cn'
 const marks: Record<Notification['kind'], { icon: IconDefinition; tint: string; ring: string }> = {
   friend_request: { icon: faUserPlus, tint: 'bg-brand text-onbrand', ring: 'ring-brand/40' },
   friend_accepted: { icon: faUserCheck, tint: 'bg-space text-white', ring: 'ring-space/40' },
+  // Best friends wear the heart the lists wear, so the two read as one thing.
+  best_friend_request: { icon: faHeart, tint: 'bg-brand text-onbrand', ring: 'ring-brand/40' },
+  best_friend_accepted: { icon: faHeart, tint: 'bg-space text-white', ring: 'ring-space/40' },
   space_like: { icon: faHeart, tint: 'bg-danger text-white', ring: 'ring-danger/40' },
   space_visit: { icon: faDoorOpen, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
   message: { icon: faComment, tint: 'bg-brand-bright text-onbrand', ring: 'ring-brand/40' },
@@ -48,6 +51,8 @@ function words(n: Notification) {
   switch (n.kind) {
     case 'friend_request': return { who, rest: 'sent you a friend request' }
     case 'friend_accepted': return { who, rest: 'accepted your friend request' }
+    case 'best_friend_request': return { who, rest: 'wants to be best friends' }
+    case 'best_friend_accepted': return { who, rest: 'is your best friend now' }
     case 'space_like': return { who, rest: `liked ${n.space?.name ?? 'your World'}` }
     case 'space_visit': return { who, rest: `walked into ${n.space?.name ?? 'your World'}` }
     case 'message': return { who, rest: 'sent you a message' }
@@ -66,6 +71,14 @@ function words(n: Notification) {
 function linkFor(n: Notification) {
   if (n.kind === 'friend_request') return '/friends?list=requests'
   if (n.kind === 'friend_accepted') return '/friends'
+  /*
+   * Straight to them, because the answer lives on their profile: a best
+   * friend request is answered where the two of you are, not in a list of
+   * requests from strangers.
+   */
+  if (n.kind === 'best_friend_request' || n.kind === 'best_friend_accepted') {
+    return n.actor?.username ? `/u/${n.actor.username}` : '/friends'
+  }
   if (n.kind === 'message') return '/friends'
   if (n.kind === 'content_removed') return '/standing'
   // Told about a World, so it leads to that World.

@@ -276,7 +276,9 @@ export type Message = {
 export type Notification = {
   id: number
   user_id: string
-  kind: 'friend_request' | 'friend_accepted' | 'space_like' | 'space_visit' | 'message'
+  kind: 'friend_request' | 'friend_accepted'
+    | 'best_friend_request' | 'best_friend_accepted'
+    | 'space_like' | 'space_visit' | 'message'
     | 'system' | 'event_started' | 'world_updated' | 'content_removed'
   actor_id: string | null
   space_id: string | null
