@@ -751,6 +751,12 @@ export type AvatarPiece = {
   mesh_path: string | null
   mesh_format: string | null
   texture_path: string | null
+  /** How its maker placed it, applied on top of the automatic fit. */
+  fit?: {
+    p?: readonly [number, number, number]
+    r?: readonly [number, number, number]
+    s?: number
+  } | null
 }
 
 /** Something on a shelf, in the Catalog or in somebody's own things. */
@@ -794,4 +800,14 @@ export type AvatarItem = {
    * closes. Null for everything that is simply on sale.
    */
   sells_until?: string | null
+  /**
+   * How its maker placed it: `{p, r, s}`, applied on top of the automatic
+   * fit. Null means untouched, which is not the same as all zeroes - it says
+   * nobody has had an opinion yet.
+   */
+  fit?: {
+    p?: readonly [number, number, number]
+    r?: readonly [number, number, number]
+    s?: number
+  } | null
 }

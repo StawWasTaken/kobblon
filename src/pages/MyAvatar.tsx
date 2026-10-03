@@ -12,15 +12,18 @@
  * thing everybody else sees.
  */
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette,
-  faCircleNotch, faCheck,
+  faCircleNotch, faCheck, faPlus,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Tabs } from '@/components/ui/Tabs'
+import { Choices } from '@/components/ui/Choices'
+import { CatalogShelf } from '@/components/catalog/CatalogShelf'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -86,6 +89,18 @@ export default function MyAvatar() {
 
   const [drawer, setDrawer] = useState<Drawer>('clothing')
   /*
+   * Which half is showing. It comes from the address so that `/catalog` can
+   * land on the shop, and so that somebody who shares the link shares what
+   * they were looking at.
+   */
+  const [params, setParams] = useSearchParams()
+  const [half, setHalf] = useState<'shop' | 'mine'>(
+    params.get('tab') === 'marketplace' ? 'shop' : 'mine',
+  )
+  useEffect(() => {
+    setHalf(params.get('tab') === 'marketplace' ? 'shop' : 'mine')
+  }, [params])
+  /*
    * Which parts a swatch would paint. More than one, because "both arms"
    * is one thought and used to be two trips through the colours.
    */
@@ -119,6 +134,7 @@ export default function MyAvatar() {
         meshUrl: null as string | null,
         meshFormat: p.mesh_format,
         textureUrl: null as string | null,
+        fit: p.fit ?? null,
       }))
     return { body: worn.data?.[0]?.body ?? DEFAULT_BODY, pieces }
   }, [worn.data])
@@ -261,14 +277,23 @@ export default function MyAvatar() {
     <Page className="space-y-5">
       <PageHeader
         title="My Avatar"
-        lead="Your body, what it wears, and the face on it."
+        lead={half === 'shop'
+          ? 'Everything you can put on, with your own body beside it.'
+          : 'Your body, what it wears, and the face on it.'}
         icon={faShirt}
-        actions={<Button to="/catalog" icon={faStore}>The Catalog</Button>}
+        actions={profile?.is_guest ? undefined : (
+          <Button to="/create/avatar" variant="subtle" icon={faPlus}>Make something</Button>
+        )}
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        {/* --------------------------------------------------- the person */}
-        <div className="space-y-3">
+        {/*
+          * The body stays put while the shelf scrolls past it. That is the
+          * whole point of putting them on one page: a shirt you are
+          * considering is worth nothing if you have to scroll away from
+          * yourself to look at it.
+          */}
+        <div className="space-y-3 lg:sticky lg:top-20 lg:self-start">
           <Card className="overflow-hidden p-0">
             <div className="bg-gradient-to-b from-[#1a1f3a] to-[#0f1120]">
               {worn.loading
@@ -306,8 +331,35 @@ export default function MyAvatar() {
           </Card>
         </div>
 
-        {/* --------------------------------------------------- the drawers */}
+        {/* ------------------------------------- the shop, and what you own */}
         <div className="space-y-4">
+          {/*
+            * Two halves of one activity, with the body visible through both.
+            * Staw's call after looking at how the app he grew up with does
+            * it: choosing a shirt and seeing it on yourself should not be
+            * two pages, because each of them then shows you half of what you
+            * are deciding.
+            */}
+          <Choices
+            label="The shop, or what you own"
+            value={half}
+            onChange={(next) => {
+              setHalf(next)
+              const now = new URLSearchParams(params)
+              if (next === 'shop') now.set('tab', 'marketplace')
+              else now.delete('tab')
+              setParams(now, { replace: true })
+            }}
+            options={[
+              { value: 'shop', label: 'Marketplace', icon: faStore },
+              { value: 'mine', label: 'Customize', icon: faShirt },
+            ]}
+          />
+
+          {half === 'shop' ? (
+            <CatalogShelf compact onTook={() => worn.reload()} />
+          ) : (
+          <>
           <Tabs
             value={drawer}
             onChange={(next) => setDrawer(next as Drawer)}
@@ -397,7 +449,9 @@ export default function MyAvatar() {
               mood="emptyBox"
               title="Nothing here yet"
               body="Everything you take from the Catalog turns up in this drawer."
-              action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
+              action={<Button icon={faStore} onClick={() => setHalf('shop')}>
+                Open the Marketplace
+              </Button>}
             />
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -416,6 +470,8 @@ export default function MyAvatar() {
                 />
               ))}
             </div>
+          )}
+          </>
           )}
         </div>
       </div>

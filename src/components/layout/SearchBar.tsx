@@ -28,7 +28,7 @@ const destinations: Record<string, (query: string) => string> = {
   people: (q) => `/people?q=${encodeURIComponent(q)}`,
   communities: (q) => `/communities?q=${encodeURIComponent(q)}`,
   create: (q) => `/create/marketplace?q=${encodeURIComponent(q)}`,
-  catalog: (q) => `/catalog?q=${encodeURIComponent(q)}`,
+  catalog: (q) => `/avatar?tab=marketplace&q=${encodeURIComponent(q)}`,
 }
 
 

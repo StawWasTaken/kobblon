@@ -24,7 +24,10 @@ export const topNav: { to: string; label: string }[] = [
   // The Catalog is a place to browse, which by this file's own rule puts it
   // up here. It sat in the rail as "Style" while the thing it changes - your
   // avatar - had nowhere of its own at all.
-  { to: '/catalog', label: 'Catalog' },
+  // Straight to the shop half of the avatar page. `/catalog` redirects
+  // there too, for links that already exist, but the nav does not need to
+  // go through a redirect to reach a page it knows the address of.
+  { to: '/avatar?tab=marketplace', label: 'Catalog' },
 ]
 
 /**

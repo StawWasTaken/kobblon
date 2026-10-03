@@ -18,7 +18,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faCube, faImage, faClock, faStore, faUser,
-  faBasketShopping, faCheck,
+  faBasketShopping, faCheck, faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -35,6 +35,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
+  removeAvatarItem,
 } from '@/lib/api'
 import { avatarTag, avatarNumber } from '@/lib/kinds'
 import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
@@ -75,6 +76,14 @@ export default function CatalogItem() {
   const [busy, setBusy] = useState(false)
   const [owned, setOwned] = useState(false)
   const basket = useBasket()
+  /*
+   * Taking something down, for Kobblon. Offered on what the page can see and
+   * refused by the server for anybody else, as always. Two presses, because
+   * it spends Kobblon's Brix and cannot be undone - everybody who bought it
+   * is paid 40% back the moment it goes.
+   */
+  const canRemove = !!profile?.is_admin || !!profile?.is_moderator
+  const [sureRemove, setSureRemove] = useState(false)
   const put = !!item && basket.some((one) => one.id === item.id)
   useEffect(() => { setOwned(!!item?.owned) }, [item?.id, item?.owned])
 
@@ -103,7 +112,7 @@ export default function CatalogItem() {
     return (
       <Page className="space-y-5">
         <Skeleton className="h-6 w-40 rounded-lg" />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
           <Skeleton className="aspect-square rounded-2xl" />
           <Skeleton className="h-64 rounded-2xl" />
         </div>
@@ -129,7 +138,15 @@ export default function CatalogItem() {
     <Page className="space-y-5">
       <BackLink to="/catalog">Back to the Catalog</BackLink>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      {/*
+        * Capped and centred rather than "as wide as the page".
+        *
+        * It was a `1fr` square: on a wide screen that drew a 670-pixel box
+        * around a thing the size of a hat, with the panel squeezed into a
+        * corner and half the page empty underneath. A viewer is as big as it
+        * needs to be to see the item, and the panel reads beside it.
+        */}
+      <div className="mx-auto grid w-full max-w-5xl items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
         <ItemView item={item} />
 
         <div className="space-y-4">
@@ -237,6 +254,42 @@ export default function CatalogItem() {
               )}
             </div>
 
+            {canRemove && (
+              <div className="space-y-1.5 border-t border-ink-line pt-3">
+                <Button
+                  block
+                  variant="danger"
+                  icon={faTrash}
+                  loading={busy}
+                  onClick={() => {
+                    if (!sureRemove) { setSureRemove(true); return }
+                    void (async () => {
+                      setBusy(true)
+                      try {
+                        const back = await removeAvatarItem(item.id, 'Taken down by Kobblon.')
+                        say(back > 0
+                          ? `Taken down. ${back} Brix paid back.`
+                          : 'Taken down.', 'success')
+                        thing.reload()
+                      } catch (error) {
+                        say(error instanceof Error ? error.message : 'That did not work.', 'error')
+                      } finally {
+                        setBusy(false)
+                        setSureRemove(false)
+                      }
+                    })()
+                  }}
+                >
+                  {sureRemove ? 'Really take it down' : 'Take it down'}
+                </Button>
+                <p className="text-[11px] leading-snug text-muted">
+                  It stops being sold and comes off everybody wearing it.
+                  Everybody who bought it is paid back 40% of what they paid,
+                  out of Kobblon&rsquo;s account.
+                </p>
+              </div>
+            )}
+
             {typeof item.taken === 'number' && item.taken > 0 && (
               <p className="text-xs text-muted">
                 {item.taken === 1 ? '1 person has this' : `${item.taken} people have this`}
@@ -294,14 +347,29 @@ function ItemView({ item }: { item: AvatarItem }) {
       meshUrl: model?.mesh ?? null,
       meshFormat: item.mesh_format ?? null,
       textureUrl: model?.skin ?? null,
+      // Where its maker put it, not where the measuring did.
+      fit: item.fit ?? null,
     }],
   }), [item, model])
 
   const ready = !item.mesh_path || !!model?.mesh
+  /*
+   * Opening in 3D when there is no flat picture to open on.
+   *
+   * An accessory whose card has not been drawn yet had nothing to show, so
+   * the page drew a shirt icon in the middle of an enormous empty square -
+   * which reads as broken, and is the thing Staw saw. The model is right
+   * there and showing it is both honest and better. 2D stays the default
+   * wherever a picture exists, which is Staw's rule.
+   */
+  const flat = picture ?? null
+  useEffect(() => {
+    if (!flat && item.mesh_path) setMode('3d')
+  }, [flat, item.mesh_path])
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
-      <div className="grid aspect-square place-items-center overflow-hidden bg-media">
+      <div className="relative grid aspect-square place-items-center overflow-hidden bg-ink-raised">
         {!item.price && <FreeCorner />}
 
         {mode === '3d' ? (
@@ -310,19 +378,34 @@ function ItemView({ item }: { item: AvatarItem }) {
           ) : (
             <Skeleton className="h-full w-full" />
           )
-        ) : picture ? (
+        ) : flat ? (
           <img
-            src={picture}
+            src={flat}
             alt={item.name}
             draggable={false}
-            className="h-full w-full select-none object-contain"
+            className="h-full w-full select-none object-contain p-6"
           />
         ) : (
-          <FontAwesomeIcon icon={faShirt} className="text-5xl text-white/25" />
+          /*
+           * Nothing to draw at all: no card and no model. Said in words
+           * rather than as a lonely icon, because an icon in the middle of a
+           * large empty box reads as a page that failed to load.
+           */
+          <p className="max-w-[18rem] px-6 text-center text-sm leading-relaxed text-muted">
+            <FontAwesomeIcon icon={faShirt} className="mb-2 block text-2xl text-white/20" />
+            No picture of this one yet. Its maker&rsquo;s card is drawn the next
+            time they open Things to Wear.
+          </p>
         )}
       </div>
 
       {/* The switch `MeshView` has, in the same corner and the same shape. */}
+      {/*
+        * Only when there are two things to switch between. A model with no
+        * card had a "Picture" button that showed an apology, and a picture
+        * with no model had a "3D" button that drew a bare mannequin.
+        */}
+      {flat && item.mesh_path && (
       <button
         type="button"
         aria-label={mode === '3d' ? 'Show the picture' : 'See it on a body'}
@@ -336,6 +419,7 @@ function ItemView({ item }: { item: AvatarItem }) {
         <FontAwesomeIcon icon={mode === '3d' ? faImage : faCube} />
         <span>{mode === '3d' ? 'Picture' : '3D'}</span>
       </button>
+      )}
     </div>
   )
 }

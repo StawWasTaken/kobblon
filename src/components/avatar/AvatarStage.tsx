@@ -17,7 +17,7 @@ import { faUser } from '@fortawesome/free-solid-svg-icons'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
   fitToSocket,
-  type K6Point, type K6Part,
+  type K6Point, type K6Part, type WornFit,
 } from '@/engine'
 import { cn } from '@/lib/cn'
 
@@ -50,6 +50,8 @@ export type AvatarLook = {
     meshUrl?: string | null
     meshFormat?: string | null
     textureUrl?: string | null
+    /** How its maker placed it, applied on top of the automatic fit. */
+    fit?: WornFit | null
   }[]
 }
 
@@ -154,7 +156,7 @@ export function AvatarStage({
 
           // Sized and seated by the engine, so a hat sits where a hat sits
           // here, on a card and in the Workspace alike.
-          fitToSocket(model, socket)
+          fitToSocket(model, socket, piece.fit ?? null)
           body.wear(socket, model)
         }
 

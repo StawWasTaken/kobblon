@@ -67,9 +67,16 @@ export function BuyButton({
 
   return (
     <Button {...rest}>
+      {/*
+        * The mark and the number are one thing, so they are one element:
+        * the button's own gap was landing between them and reading as
+        * "Buy for ... 45" with a hole in the middle.
+        */}
       <span>{verb}</span>
-      <CurrencyMark />
-      {formatCount(price)}
+      <span className="inline-flex items-center gap-0.5">
+        <CurrencyMark />
+        {formatCount(price)}
+      </span>
     </Button>
   )
 }

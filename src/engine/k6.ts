@@ -123,7 +123,21 @@ const WORN_FIT: Record<K6Point, { across: number; out: readonly [number, number,
  * Workspace all put accessories on bodies, and three separate ideas of where
  * a hat goes is three different-looking avatars for one person.
  */
-export function fitToSocket(model: THREE.Object3D, point: K6Point) {
+/**
+ * How a maker placed a thing, on top of the automatic fit.
+ *
+ * `p` in stons, `r` in degrees, `s` a multiplier on the fitted size. Applied
+ * **after** the fit rather than instead of it, which is the whole design:
+ * every number is zero for an item nobody has touched, so an accessory that
+ * is never adjusted sits exactly where the measuring put it.
+ */
+export type WornFit = {
+  p?: readonly [number, number, number]
+  r?: readonly [number, number, number]
+  s?: number
+}
+
+export function fitToSocket(model: THREE.Object3D, point: K6Point, placed?: WornFit | null) {
   const fit = WORN_FIT[point]
   if (!fit) return model
 
@@ -145,6 +159,38 @@ export function fitToSocket(model: THREE.Object3D, point: K6Point) {
     (fit.out[1] * size.y) / 2,
     (fit.out[2] * size.z) / 2,
   ))
+
+  /*
+   * The maker's own adjustment, last.
+   *
+   * The resize multiplies what the measuring worked out rather than
+   * replacing it, and it is applied about the thing's own middle - scaling
+   * an object three-dimensionally also scales its offset from the origin, so
+   * without the correction below, making a hat bigger walks it off the head.
+   * The same shape of mistake as the one that put a bicorne beside a body.
+   */
+  if (placed) {
+    const grow = placed.s ?? 1
+    if (grow !== 1 && Number.isFinite(grow) && grow > 0) {
+      model.scale.multiplyScalar(grow)
+      const around = new THREE.Vector3(
+        (fit.out[0] * size.x) / 2,
+        (fit.out[1] * size.y) / 2,
+        (fit.out[2] * size.z) / 2,
+      )
+      model.position.sub(around).multiplyScalar(grow).add(around)
+    }
+
+    const [rx, ry, rz] = placed.r ?? [0, 0, 0]
+    if (rx || ry || rz) {
+      const turn = Math.PI / 180
+      model.rotation.set(rx * turn, ry * turn, rz * turn)
+    }
+
+    const [px, py, pz] = placed.p ?? [0, 0, 0]
+    if (px || py || pz) model.position.add(new THREE.Vector3(px, py, pz))
+  }
+
   return model
 }
 

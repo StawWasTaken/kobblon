@@ -4,7 +4,7 @@ import {
   CARD_MARK, cardIsCurrent,
 } from './preview'
 import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
-import { formatOf } from '@/engine'
+import { formatOf, type WornFit } from '@/engine'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -2741,6 +2741,28 @@ export async function ensureAvatarCard(item: AvatarItem, me: string): Promise<st
 }
 
 /**
+ * Where an accessory sits, as its maker placed it.
+ *
+ * Applied on top of the automatic fit, so `null` is "wherever the measuring
+ * put it" and is a real answer rather than a missing one.
+ */
+export async function setAvatarFit(id: string, fit: WornFit | null) {
+  unwrap(await supabase.rpc('set_avatar_fit', { target: id, fit }))
+}
+
+/**
+ * Draws the card again whatever is there now.
+ *
+ * `ensureAvatarCard` is the one that decides; this is the one somebody
+ * presses when the picture is missing and they want to know why. It throws
+ * rather than returning null quietly, because the whole point of pressing it
+ * is to find out.
+ */
+export async function redrawAvatarCard(item: AvatarItem, me: string): Promise<string | null> {
+  return ensureAvatarCard({ ...item, preview_path: null }, me)
+}
+
+/**
  * Screens an avatar item, which only a moderator or an admin may do.
  *
  * The page offers it on what it can see; the server decides. An item cannot
@@ -2765,6 +2787,19 @@ export async function reviewAvatarItem(
 export async function avatarItemPage(wanted: number): Promise<AvatarItem | null> {
   const rows = unwrap(await supabase.rpc('avatar_item_page', { wanted })) as AvatarItem[]
   return rows?.[0] ?? null
+}
+
+/**
+ * Takes something out of the Catalog and pays its buyers back.
+ *
+ * Returns how many Brix went out. Only a moderator or an admin; the server
+ * decides that, and it refuses the maker even for their own thing - taking
+ * something back off people is a moderator's act whoever made it.
+ */
+export async function removeAvatarItem(id: string, note?: string): Promise<number> {
+  return unwrap(await supabase.rpc('remove_avatar_item', {
+    target: id, note: note ?? null,
+  })) as number
 }
 
 /** What is waiting to be screened. Empty for anybody who may not screen. */

@@ -15,7 +15,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faDownload, faImage, faCube, faLock, faPen,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
-  faMagnifyingGlass, faClock, faUpload, faCircleCheck,
+  faMagnifyingGlass, faClock, faUpload, faCircleCheck, faCircleExclamation,
+  faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -37,11 +38,15 @@ import {
   uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
   setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard, uploadAsset,
+  redrawAvatarCard, setAvatarFit,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
-import { kindAccepts } from '@/lib/kinds'
+import { kindAccepts, avatarTag } from '@/lib/kinds'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
+import { FitEditor, PLAIN_FIT, fitIsPlain, asFit } from '@/components/avatar/FitEditor'
+import { plainFace } from '@/lib/plainFace'
+import type { WornFit } from '@/engine'
 import { formatOf } from '@/engine'
 
 const KINDS: { kind: AvatarKind; label: string; about: string; template?: string }[] = [
@@ -117,6 +122,8 @@ export default function CreateAvatarItems() {
    * mesh of theirs with an ordinary Decal on it.
    */
   const [fresh, setFresh] = useState(true)
+  /** How the thing is placed, while it is being made. */
+  const [fit, setFit] = useState<Required<WornFit>>(PLAIN_FIT)
   const [meshFile, setMeshFile] = useState<File | null>(null)
   const [skinFile, setSkinFile] = useState<File | null>(null)
   const meshPicked = useRef<HTMLInputElement>(null)
@@ -143,17 +150,31 @@ export default function CreateAvatarItems() {
    * square and a shirt icon. One at a time rather than all at once: each one
    * builds a WebGL context, and a browser gives out a handful.
    */
+  /*
+   * A failure here used to be swallowed - `.catch(() => null)` - and the
+   * only symptom was Staw saying "I still do not see previews" with nothing
+   * to go on. A picture that will not draw is now said once, with what went
+   * wrong, and every card keeps a button to try again. An invisible failure
+   * is worse than a visible one, every time.
+   */
+  const [cardTrouble, setCardTrouble] = useState<string | null>(null)
   useEffect(() => {
     if (!profile || made.loading) return
     let live = true
     void (async () => {
       let drew = false
+      let trouble: string | null = null
       for (const one of made.data ?? []) {
         if (!live) return
-        const drawn = await ensureAvatarCard(one, profile.id).catch(() => null)
-        if (drawn) drew = true
+        try {
+          if (await ensureAvatarCard(one, profile.id)) drew = true
+        } catch (error) {
+          trouble = error instanceof Error ? error.message : String(error)
+        }
       }
-      if (live && drew) made.reload()
+      if (!live) return
+      setCardTrouble(trouble)
+      if (drew) made.reload()
     })()
     return () => { live = false }
   }, [profile?.id, made.loading, made.data])
@@ -242,15 +263,22 @@ export default function CreateAvatarItems() {
         Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
         RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
       },
-      pieces: [{
-        slot,
-        kind,
-        meshUrl: fitUrls.mesh,
-        meshFormat: fresh && meshFile ? formatOf(meshFile.name) : undefined,
-        textureUrl: fitUrls.skin,
-      }],
+      pieces: [
+        // A face, because a blank head is an unsettling thing to put a hat
+        // on and the whole point of this view is judging how it looks on
+        // somebody.
+        { slot: 'face', kind: 'face', imageUrl: plainFace() },
+        {
+          slot,
+          kind,
+          meshUrl: fitUrls.mesh,
+          meshFormat: fresh && meshFile ? formatOf(meshFile.name) : undefined,
+          textureUrl: fitUrls.skin,
+          fit,
+        },
+      ],
     }
-  }, [isModel, fitUrls, slot, kind, fresh, meshFile])
+  }, [isModel, fitUrls, slot, kind, fresh, meshFile, fit])
 
 
   const make = async () => {
@@ -304,6 +332,14 @@ export default function CreateAvatarItems() {
         textureId: isModel ? (usingTexture || null) : null,
       })
 
+      // The placement, before the card is drawn, so the card shows the
+      // thing where its maker put it rather than where the measuring did.
+      if (isModel && !fitIsPlain(fit)) {
+        await setAvatarFit(newId, fit).catch(() => {
+          say('It was made, but the placement did not save. Adjust it from its card.', 'info')
+        })
+      }
+
       /*
        * The card, drawn now while everything it needs is in hand. Clothes go
        * on a body, because a shirt laid out flat is its template and nobody
@@ -342,7 +378,7 @@ export default function CreateAvatarItems() {
       )
       setName(''); setAbout(''); setPicture(null); setMeshId('')
       setTextureId(''); setDecalTag(''); setDecal(null)
-      setMeshFile(null); setSkinFile(null)
+      setMeshFile(null); setSkinFile(null); setFit(PLAIN_FIT)
       setMaking(false)
       made.reload()
     } catch (error) {
@@ -394,6 +430,16 @@ export default function CreateAvatarItems() {
         * something is one more thing on that shelf rather than a form the
         * shelf has to live beside.
         */}
+      {cardTrouble && (
+        <p className="flex items-start gap-2 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
+          <FontAwesomeIcon icon={faCircleExclamation} className="mt-0.5 text-danger" />
+          <span>
+            A picture would not draw: <span className="text-white/90">{cardTrouble}</span>
+            {' '}Everything else still works, and each card has a button to try again.
+          </span>
+        </p>
+      )}
+
       {!!everything.length && (
         <div className="flex flex-wrap items-center gap-2">
           <Input
@@ -455,6 +501,7 @@ export default function CreateAvatarItems() {
               rule={(rules.data ?? []).find((r) => r.kind === one.kind)}
               canLimit={!!profile?.is_admin}
               canScreen={!!profile?.is_admin || !!profile?.is_moderator}
+              me={profile.id}
               onChanged={() => made.reload()}
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
@@ -712,12 +759,21 @@ export default function CreateAvatarItems() {
                 </p>
                 <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
                   {fitting ? (
-                    <AvatarStage
-                      look={fitting}
-                      turning={false}
-                      handled
-                      className="aspect-square w-full"
-                    />
+                    <>
+                      <AvatarStage
+                        look={fitting}
+                        turning={false}
+                        handled
+                        className="aspect-square w-full"
+                      />
+                      <div className="border-t border-ink-line p-2">
+                        <FitEditor
+                          value={fit}
+                          onChange={setFit}
+                          onReset={fitIsPlain(fit) ? undefined : () => setFit(PLAIN_FIT)}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <p className="px-4 py-10 text-center text-xs text-muted">
                       Choose a model and it is drawn here, worn, so you can turn
@@ -811,7 +867,7 @@ export default function CreateAvatarItems() {
  * else owns one - so the button is there and the refusal explains itself,
  * rather than this page hiding a rule it would have to keep in step.
  */
-function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScreen }: {
+function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScreen, me }: {
   item: AvatarItem
   onChanged: () => void
   onTrouble: (message: string) => void
@@ -822,6 +878,8 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
   canLimit: boolean
   /** Whether this person may screen things. The database decides for real. */
   canScreen: boolean
+  /** Whose folder a redrawn card is written into. */
+  me: string
 }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
@@ -837,6 +895,29 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
   const [listing, setListing] = useState(false)
   const [asking, setAsking] = useState(String(item.price || rule?.least_price || 0))
   const [limiting, setLimiting] = useState(false)
+  /*
+   * Placing it again, after it exists. The same editor the create dialog
+   * uses, on the same live rig - because "it floats" is something somebody
+   * usually notices a day later, and making a second item to fix it is not
+   * an answer.
+   */
+  const isModel = item.kind === 'accessory' || item.kind === 'hair'
+  const [placing, setPlacing] = useState(false)
+  const [fit, setFit] = useState<Required<WornFit>>(asFit(item.fit))
+  const [worn, setWorn] = useState<{ mesh: string; skin: string | null } | null>(null)
+
+  useEffect(() => {
+    if (!placing || worn || !item.mesh_path) return
+    let live = true
+    void (async () => {
+      const [mesh, skin] = await Promise.all([
+        assetUrl(item.mesh_path!).catch(() => null),
+        item.texture_path ? assetUrl(item.texture_path).catch(() => null) : null,
+      ])
+      if (live && mesh) setWorn({ mesh, skin })
+    })()
+    return () => { live = false }
+  }, [placing, worn, item.mesh_path, item.texture_path])
   const [closes, setCloses] = useState(
     item.sells_until ? item.sells_until.slice(0, 16) : '',
   )
@@ -958,6 +1039,30 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
                     ? 'Back. List it when you are ready.'
                     : 'Archived. Anybody wearing it keeps it.',
                 ) },
+              /*
+                * Two things somebody wants from a card they made and could
+                * not get: see the thing where everybody else sees it, and
+                * make the picture appear when it did not.
+                */
+              ...(item.status === 'approved' && item.is_public ? [{
+                label: 'See it on the Catalog',
+                icon: faArrowUpRightFromSquare,
+                to: `/catalog/${avatarTag(item.kind, item.content_id)}`,
+              }] : []),
+              ...(isModel ? [{
+                label: 'Where it sits',
+                icon: faArrowsUpDownLeftRight,
+                onSelect: () => { setFit(asFit(item.fit)); setPlacing(true) },
+              }] : []),
+              { label: 'Draw its picture again', icon: faCamera,
+                onSelect: () => void run(
+                  'card',
+                  async () => {
+                    const drawn = await redrawAvatarCard(item, me)
+                    if (!drawn) throw new Error('Nothing came out of the drawing.')
+                  },
+                  'Drawn.',
+                ) },
               ...(canLimit ? [{
                 label: item.sells_until ? 'Change when it closes' : 'Make it a limited',
                 icon: faClock,
@@ -1030,6 +1135,72 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScree
             hint={rule && rule.least_price > 0
               ? `At least ${rule.least_price}.`
               : 'Zero means free.'}
+          />
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={placing}
+        onClose={() => setPlacing(false)}
+        title={`Where ${item.name} sits`}
+        description="Adjusted on top of where the measuring puts it, so nothing is where it was before you touched it."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPlacing(false)}>Cancel</Button>
+            <Button
+              variant="yes"
+              loading={busy === 'fit'}
+              onClick={() => void run(
+                'fit',
+                async () => {
+                  await setAvatarFit(item.id, fitIsPlain(fit) ? null : fit)
+                  // The card is a picture of where it sits, so it is drawn
+                  // again - otherwise the shelf shows the old placement for
+                  // ever and the change looks like it did nothing.
+                  await redrawAvatarCard({ ...item, fit }, me).catch(() => null)
+                  setPlacing(false)
+                },
+                'Placed.',
+              )}
+            >
+              Save where it sits
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+            {worn ? (
+              <AvatarStage
+                look={{
+                  body: {
+                    Head: '#f2d08a', Torso: '#2a2f45', LeftArm: '#f2d08a',
+                    RightArm: '#f2d08a', LeftLeg: '#1b1d28', RightLeg: '#1b1d28',
+                  },
+                  pieces: [
+                    { slot: 'face', kind: 'face', imageUrl: plainFace() },
+                    {
+                      slot: item.slot,
+                      kind: item.kind,
+                      meshUrl: worn.mesh,
+                      meshFormat: item.mesh_format ?? formatOf(item.mesh_path ?? ''),
+                      textureUrl: worn.skin,
+                      fit,
+                    },
+                  ],
+                }}
+                turning={false}
+                handled
+                className="aspect-square w-full"
+              />
+            ) : (
+              <Skeleton className="aspect-square w-full" />
+            )}
+          </div>
+          <FitEditor
+            value={fit}
+            onChange={setFit}
+            onReset={fitIsPlain(fit) ? undefined : () => setFit(PLAIN_FIT)}
           />
         </div>
       </Dialog>
