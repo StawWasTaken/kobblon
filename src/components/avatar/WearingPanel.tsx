@@ -24,6 +24,8 @@ import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { Studio } from '@/components/avatar/Studio'
 import { ViewSwitch } from '@/components/avatar/ViewSwitch'
 import { avatarTag, avatarKindLabels } from '@/lib/kinds'
+import { CurrencyMark } from '@/components/brand/Currency'
+import { formatCount } from '@/lib/format'
 import { drawPortrait, type PortraitLook } from '@/lib/portrait'
 
 /**
@@ -83,10 +85,10 @@ export function WearingPanel({ look, loading }: {
   const wearing = (look?.pieces ?? []).filter((piece) => piece.contentId)
 
   return (
-    // The figure gets the room. It is the thing people came to look at, and
-    // it was a third of the width with the grid spread thin beside it.
-    <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <Studio className="relative aspect-[4/5] rounded-2xl border border-ink-line">
+    // The figure gets room, and not more than it can fill: a square, because
+    // a tall frame is tall empty space above and below a standing body.
+    <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+      <Studio className="relative aspect-square rounded-2xl border border-ink-line">
         {loading ? (
           <Skeleton className="h-full w-full" />
         ) : (
@@ -102,7 +104,14 @@ export function WearingPanel({ look, loading }: {
               onChange={setMode}
             />
             {mode === 'body' ? (
-              <AvatarStage look={look as AvatarLook | null} handled />
+              /*
+               * `h-full w-full`, and it is not decoration. The stage sizes
+               * its canvas and its camera's aspect from this element - so
+               * with no height of its own it measured something other than
+               * what the browser then stretched the canvas to, and the
+               * figure was drawn off centre and cropped at the top.
+               */
+              <AvatarStage look={look as AvatarLook | null} handled className="h-full w-full" />
             ) : flat ? (
               <img src={flat} alt="" className="h-full w-full object-contain" />
             ) : (
@@ -142,8 +151,17 @@ export function WearingPanel({ look, loading }: {
                 )}
               </span>
               <span className="mt-1.5 block truncate text-[11px] font-bold">{piece.name}</span>
-              <span className="block truncate text-[10px] uppercase tracking-wide text-muted">
-                {avatarKindLabels[piece.kind ?? ''] ?? piece.kind}
+              <span className="flex items-center justify-between gap-1">
+                <span className="truncate text-[10px] uppercase tracking-wide text-muted">
+                  {avatarKindLabels[piece.kind ?? ''] ?? piece.kind}
+                </span>
+                {/* What it goes for. Free is said in words; a price is said
+                    with the mark, never with the word "Brix". */}
+                <span className="shrink-0 text-[10px] font-bold text-white/70">
+                  {piece.price
+                    ? <><CurrencyMark className="mr-0.5" />{formatCount(piece.price)}</>
+                    : 'Free'}
+                </span>
               </span>
             </Link>
           ))}

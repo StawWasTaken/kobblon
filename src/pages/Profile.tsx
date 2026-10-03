@@ -47,6 +47,7 @@ import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
 import { avatarOf } from '@/lib/avatars'
 import { NameMarks } from '@/components/brand/Verified'
+import { CurrencyMark } from '@/components/brand/Currency'
 import { PenIcon } from '@/components/brand/PenIcon'
 
 /** The colour somebody chose for their page, or the house one. */
@@ -109,14 +110,20 @@ function Faces({ people }: { people: Face[] }) {
     // Bigger faces, which is what Staw asked for and what the page he sent
     // does: a friends row is people, and at twenty-four across nobody can
     // tell which of their friends they are looking at.
-    <div className="-mx-4 flex gap-6 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
+    <div className="-mx-4 flex gap-8 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
       {people.map((person) => (
         <Link
           key={person.id}
           to={profileLink(person)}
-          className="w-24 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
+          // Wider than the face it holds, so a name has somewhere to sit and
+          // the dot on one picture is nowhere near the next one.
+          className="w-28 shrink-0 rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
         >
-          <PersonAvatar person={person} size="3xl" className="mx-auto h-16 w-16" />
+          {/* `xl` is h-16/w-16, which is the size asked for - and the size
+              the dot beside it is drawn for. Overriding the width with a
+              class while leaving the size at `3xl` left a dot sized for a
+              picture twice as big sitting over the name. */}
+          <PersonAvatar person={person} size="xl" className="mx-auto" />
           <p className="mt-2 truncate text-sm font-bold">{person.display_name}</p>
           <p className="truncate text-[11px] text-muted">@{person.username}</p>
         </Link>
@@ -179,6 +186,11 @@ export default function Profile() {
    * do.
    */
   const look = useAsync(async () => (user ? lookOf(user.id) : null), [user?.id])
+  /*
+   * What the whole outfit goes for today, which is not what anybody paid
+   * for it - a shop window rather than a receipt.
+   */
+  const worth = (look.data?.pieces ?? []).reduce((sum, piece) => sum + (piece.price ?? 0), 0)
   const names = useAsync(async () => (user ? usernameHistory(user.id) : []), [user?.id])
 
   const friends = useAsync(
@@ -480,7 +492,24 @@ export default function Profile() {
 
           </div>
 
-          <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-col items-end gap-2">
+            {/*
+              * What the avatar is worth, in the corner of the card.
+              *
+              * Staw asked for it here rather than in Currently wearing, and
+              * that is the right place: it is a fact about the person, like
+              * the counts, and the panel below is about the things
+              * themselves - which now each say their own price.
+              */}
+            {!!worth && (
+              <p className="order-last flex items-center gap-1.5 rounded-full border border-ink-line bg-ink-card/80 px-3 py-1 text-xs font-bold sm:order-first">
+                <span className="text-white/55">Avatar worth</span>
+                <CurrencyMark className="ml-0.5" />
+                {formatCount(worth)}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-start justify-end gap-2">
             {isMe ? (
               <>
                 {/* Your colour, changed where you can see what it does. */}
@@ -570,6 +599,7 @@ export default function Profile() {
                   : []),
               ]}
             />
+            </div>
           </div>
         </div>
       </section>

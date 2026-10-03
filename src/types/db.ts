@@ -752,6 +752,8 @@ export type AvatarPiece = {
   item_id: string | null
   content_id: number | null
   item_name: string | null
+  /** What it sells for today, which is what an avatar's worth is counted from. */
+  price?: number | null
   image_path: string | null
   image_bucket: string | null
   preview_path: string | null

@@ -3193,6 +3193,7 @@ export async function lookOf(userId: string): Promise<PortraitLook> {
       name: piece.item_name,
       contentId: piece.content_id,
       cardUrl: cardFor(piece),
+      price: piece.price ?? null,
       imageUrl: catalogUrl(piece.image_path, piece.image_bucket ?? undefined),
       meshUrl: piece.mesh_path ? await assetUrl(piece.mesh_path).catch(() => null) : null,
       meshFormat: piece.mesh_format ?? (piece.mesh_path ? formatOf(piece.mesh_path) : null),

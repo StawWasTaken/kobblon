@@ -45,6 +45,8 @@ export type PortraitLook = {
     contentId?: number | null
     /** Its card, for a list that shows the things rather than naming them. */
     cardUrl?: string | null
+    /** What it sells for today. Null for something with no price of its own. */
+    price?: number | null
     imageUrl?: string | null
     meshUrl?: string | null
     /**
@@ -190,11 +192,27 @@ export async function drawPortrait(
       camera.position.set(middle.x, middle.y, middle.z + away)
       camera.lookAt(middle)
     } else {
+      /*
+       * The same framing the stage uses, for the same reason: the sphere
+       * around a standing figure has a radius half its *diagonal*, about a
+       * third more than its height, so framing on it leaves the body a
+       * third smaller than the picture it is in. Staw, on the flat one:
+       * "when on 2d its still too small".
+       *
+       * Asked in both directions and the further answer wins. The picture
+       * is square, so the aspect is one and the width question is the plain
+       * one - written out anyway, because this is the frame that would be
+       * wrong first if a portrait ever stops being square.
+       */
       const whole = new THREE.Box3().setFromObject(body.object)
       const middle = whole.getCenter(new THREE.Vector3())
-      const reach = whole.getBoundingSphere(new THREE.Sphere()).radius
-      const away = (reach * 1.12) / Math.sin((camera.fov * Math.PI) / 360)
-      camera.position.set(middle.x, middle.y + away * 0.05, middle.z + away)
+      const size = whole.getSize(new THREE.Vector3())
+      const half = Math.tan((camera.fov * Math.PI) / 360)
+      const across = Math.max(size.x, size.z)
+      // 1.18, and the lift is small: the camera looks very slightly down, so
+      // the feet are the far corner and 1.1 cut them off.
+      const away = Math.max((size.y / 2) / half, (across / 2) / half) * 1.18
+      camera.position.set(middle.x, middle.y + away * 0.02, middle.z + away)
       camera.lookAt(middle)
     }
     camera.updateProjectionMatrix()

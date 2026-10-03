@@ -3556,3 +3556,45 @@ more space between them.
 Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
+
+# Thirty-seventh round — an avatar has a price, and three ways a figure sat wrong
+
+## `avatar_of` hands back `price` (0154)
+
+Staw wants what somebody is wearing to be worth something on the page: the
+total in a corner of the profile card, and each piece's own price on its tile.
+The price was on the item and every other reader handed it back; this one did
+not, for the same reason it did not hand back the model's card two files ago -
+nothing had needed it. A page looking each item up instead would be eight
+requests to say one number.
+
+It is **the asking price today, not what anybody paid** - `avatar_owned.paid`
+is the receipt, and the thing worth showing on a profile is what the outfit
+costs now. `lookOf` pieces carry `price`.
+
+## Three ways a figure sat wrong
+
+- **Off centre and cropped.** `AvatarStage` sizes its canvas and its camera's
+  aspect from the element it mounts in. The profile's panel did not give it a
+  height, so it measured one thing and the browser stretched the canvas to
+  another. **Pass it `className="h-full w-full"`** - if you mount the stage in
+  a box that sizes itself to its contents, it will look like this.
+- **The flat picture was small.** `drawPortrait`'s whole-body frame still used
+  the bounding sphere - half the diagonal of a standing figure - which is the
+  bug fixed in the stage last round, in the other place that frames a body.
+  Both measure height and width now and take the further answer.
+- **The margin.** 1.18 in both, because the camera looks very slightly down
+  and the feet are the far corner: at 1.1 it cut them off.
+
+## A dot drawn for the wrong size
+
+`PersonAvatar`'s status dot is sized from its `size` prop, so passing
+`size="3xl"` and then overriding the width with a class gives a dot drawn for
+a picture twice as big, sitting over the name. Pick the size, do not override
+it. (Ours is `xl` now, which *is* `h-16 w-16`.)
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, editing a face by
+re-uploading its asset, the clothing render, reselling limiteds, the outfit
+UI, the rest of the redesigns.
