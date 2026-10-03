@@ -3862,3 +3862,63 @@ that was a disabled button saying "Requested" and doing nothing.
 
 AI screening (Groq), the clothing render, reselling limiteds, the outfit UI,
 the rest of the page redesigns.
+
+# Forty-third round — outfits, a market in limiteds, and a garment card that fits
+
+## Outfits are wearable, sellable and foldered
+
+The server side has been there since 0144-0146; this is the half that was
+missing. `@/components/avatar/Outfits` is the panel: save what you are
+wearing, put it in a folder, wear it again in one press, put it in the
+Catalog. It takes an `onWear` and nothing else - no provider, no router - so
+the Workspace can mount it.
+
+New in `@/lib/api`: `myOutfits`, `myOutfitFolders`, `saveOutfit`,
+`wearOutfit`, `buyOutfit`, `outfitShelf`, `makeOutfitFolder`, `listOutfit`,
+`removeOutfit`.
+
+**`save_outfit` reads what somebody is wearing** rather than taking a list
+from the page. An outfit assembled by a page is an outfit that can disagree
+with the body it was saved from.
+
+The Catalog has an **Outfits** shelf. Each card shows what `costs` **you** -
+the pieces you do not already own - because two people looking at the same
+outfit owe different amounts, and a card that prints one number for both is
+wrong for one of them.
+
+## A market in limiteds (0160)
+
+`avatar_resales`, and only for limiteds: a thing you can still buy from its
+maker has a price, and a market against a shop that never runs out is not a
+market.
+
+- `resale_prices(item)` - cheapest standing offer, **average of the last ten
+  sales**, how many sold, how many offered. The average is of *sales*, not
+  listings: listings are what people hope for.
+- `resale_offers(item)` - cheapest first.
+- `list_resale(item, asking)` - it stays yours and stays on your body until
+  somebody buys it. A listing is an offer, not a surrender.
+- `cancel_resale(offer)`, `buy_resale(offer)` - the copy moves from seller to
+  buyer, `for update` on the offer because two people pressing buy on the
+  last copy at the same moment is the one thing a market must get right.
+  Kobblon takes its usual cut; **the maker is not paid again** - a resale is
+  two other people trading something already out in the world.
+
+## A garment's card fits in its frame now
+
+`drawItemCard`'s shirt frame used "the widest covered part times 2.6", and a
+shirt covers the torso *and both arms*, which together are nearly twice the
+torso - so cards came out with an arm off the edge. It measures the covered
+parts' real reach now, asks height and width, and takes the further answer.
+
+**On "the render doesnt work yet for clothing":** clothing cards do draw -
+`tools/site/card-draw.html` draws one from a template made in the browser,
+which is the same path a real one takes. If they are missing on the live
+site it is something else - a card that already exists and is stale, or a
+storage upload failing - and the redraw button on a maker's own card is the
+thing that will say which.
+
+## Still not done
+
+The staff console rebuild Staw has just asked for (people, reports, a map,
+Groq moderation, announcements), AI screening, the page redesigns.

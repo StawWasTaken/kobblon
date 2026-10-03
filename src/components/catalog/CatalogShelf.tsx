@@ -43,6 +43,8 @@ import {
   avatarShelf, buyAvatarItem, buyAvatarItems, wearAvatarItem, cardFor,
   myFavouriteAvatarItems,
   saleNow, priceNow, type CatalogSale,
+
+  outfitShelf, buyOutfit, wearOutfit,
 } from '@/lib/api'
 import { useBasket, putInBasket, takeOutOfBasket, emptyBasket } from '@/hooks/useBasket'
 import { BasketDialog } from '@/components/catalog/BasketDialog'
@@ -59,6 +61,9 @@ const SHELVES = [
   { value: 'accessory', label: 'Accessories' },
   { value: 'hair', label: 'Hair' },
   { value: 'face', label: 'Faces' },
+  // Not a kind of thing but a shelf of its own: an outfit is several things
+  // sold together, and buying one buys each piece you do not already have.
+  { value: 'outfits', label: 'Outfits' },
 ] as const
 
 export function CatalogShelf({ onTook, compact }: {
@@ -128,14 +133,44 @@ export function CatalogShelf({ onTook, compact }: {
    */
   const sale = useAsync(async () => saleNow(), [])
 
+  /*
+   * Outfits are a different reader and a different row, so the shelf asks
+   * for them separately rather than one query learning two shapes.
+   */
+  const outfits = useAsync(
+    async () => (shelf === 'outfits' ? outfitShelf(term || undefined, 40) : []),
+    [shelf, term],
+  )
+
   const things = useAsync(
-    async () => (starredOnly
+    async () => (shelf === 'outfits' ? [] : starredOnly
       ? myFavouriteAvatarItems()
       : avatarShelf(
         shelf === 'all' ? null : (shelf as AvatarKind), term, 60, by, order, filters,
       )),
     [shelf, term, by, order, filters, starredOnly],
   )
+
+  /**
+   * Buying a whole outfit: every piece they do not already own, then it goes
+   * on. The money, the two cuts and the all-or-nothing are the database's.
+   */
+  const takeOutfit = async (outfit: { id: string; name: string }) => {
+    setBusy(outfit.id)
+    try {
+      const bought = await buyOutfit(outfit.id)
+      await wearOutfit(outfit.id)
+      say(bought > 0
+        ? `${outfit.name} is yours and on. ${bought} new ${bought === 1 ? 'piece' : 'pieces'}.`
+        : `${outfit.name} is on.`, 'success')
+      outfits.reload()
+      onTook?.()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
 
   /*
    * Taking something puts it on straight away. Buying a hat and then being
@@ -380,7 +415,38 @@ export function CatalogShelf({ onTook, compact }: {
         options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
       />
 
-      {things.loading ? (
+      {shelf === 'outfits' ? (
+        outfits.loading ? (
+          <div className={cn('grid gap-4', compact
+            ? 'grid-cols-2 xl:grid-cols-3'
+            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4')}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            ))}
+          </div>
+        ) : !outfits.data?.length ? (
+          <EmptyState
+            mood="noResults"
+            title="No outfits yet"
+            body="Put a look together on your avatar, save it, and sell it here."
+            action={profile ? <Button to="/avatar" icon={faShirt}>My Avatar</Button> : undefined}
+          />
+        ) : (
+          <div className={cn('grid gap-4', compact
+            ? 'grid-cols-2 xl:grid-cols-3'
+            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4')}>
+            {outfits.data.map((outfit) => (
+              <OutfitShelfCard
+                key={outfit.id}
+                outfit={outfit}
+                busy={busy === outfit.id}
+                canTake={!!profile && !profile.is_guest}
+                onTake={() => void takeOutfit(outfit)}
+              />
+            ))}
+          </div>
+        )
+      ) : things.loading ? (
         <div className={cn("grid gap-4", compact
             ? "grid-cols-2 xl:grid-cols-3"
             : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5")}>
@@ -435,6 +501,71 @@ export function CatalogShelf({ onTook, compact }: {
             setPaying(false)
           }
         })()}
+      />
+    </div>
+  )
+}
+
+
+/**
+ * An outfit on the shelf: what is in it, and what it costs *you*.
+ *
+ * `costs` is the reader's, not this card's arithmetic: it is the price of
+ * the pieces this person does not already own, which is the only number
+ * worth showing - two people looking at the same outfit owe different
+ * amounts, and a card that says one number for both is wrong for one of
+ * them.
+ */
+function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
+  outfit: {
+    id: string
+    name: string
+    price: number
+    costs: number
+    owned_already: number
+    owner_username: string
+    owner_display_name: string
+    owner_is_verified: boolean
+    pieces: { slot: string; kind: string; name: string; content_id: number }[]
+  }
+  busy: boolean
+  canTake: boolean
+  onTake: () => void
+}) {
+  const pieces = Array.isArray(outfit.pieces) ? outfit.pieces : []
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-ink-line bg-ink-card p-3">
+      <p className="truncate text-sm font-bold">{outfit.name}</p>
+      <span className="flex items-center gap-1.5 text-xs text-muted">
+        <span className="truncate">{outfit.owner_display_name}</span>
+        {isVerified({ is_verified: outfit.owner_is_verified }) && (
+          <Verified className="text-[10px]" />
+        )}
+      </span>
+
+      <ul className="min-h-[3.5rem] space-y-0.5 text-[11px] text-white/70">
+        {pieces.slice(0, 4).map((piece) => (
+          <li key={piece.content_id} className="truncate">{piece.name}</li>
+        ))}
+        {pieces.length > 4 && (
+          <li className="text-muted">and {pieces.length - 4} more</li>
+        )}
+      </ul>
+
+      {outfit.owned_already > 0 && (
+        <p className="text-[11px] text-muted">
+          You have {outfit.owned_already} of {pieces.length} already.
+        </p>
+      )}
+
+      <BuyButton
+        size="sm"
+        price={outfit.costs}
+        freeLabel="Wear it"
+        loading={busy}
+        disabled={!canTake}
+        onClick={onTake}
       />
     </div>
   )

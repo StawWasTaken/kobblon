@@ -3009,6 +3009,157 @@ export async function replaceAvatarPicture(id: string, picture: string) {
   unwrap(await supabase.rpc('replace_avatar_picture', { target: id, picture }))
 }
 
+// ---------------------------------------------------------------- reselling
+
+/**
+ * What a limited is going for: the cheapest standing offer, the average of
+ * the last ten sales, how many have changed hands, how many are offered.
+ *
+ * The average is of sales rather than listings - listings are what people
+ * hope for, sales are what people paid.
+ */
+export type ResalePrices = {
+  cheapest: number | null
+  average: number | null
+  sold: number
+  offers: number
+}
+
+export type ResaleOffer = {
+  id: string
+  price: number
+  listed_at: string
+  seller_id: string
+  seller_username: string
+  seller_display_name: string
+  mine: boolean
+}
+
+export async function resalePrices(item: string): Promise<ResalePrices> {
+  const rows = unwrap(await supabase.rpc('resale_prices', { target: item })) as ResalePrices[]
+  return rows?.[0] ?? { cheapest: null, average: null, sold: 0, offers: 0 }
+}
+
+export async function resaleOffers(item: string, howMany = 20): Promise<ResaleOffer[]> {
+  return (unwrap(await supabase.rpc('resale_offers', {
+    target: item, how_many: howMany,
+  })) as ResaleOffer[]) ?? []
+}
+
+/** Offering one of yours. It stays yours until somebody buys it. */
+export async function listResale(item: string, asking: number): Promise<string> {
+  return unwrap(await supabase.rpc('list_resale', { target: item, asking })) as string
+}
+
+export async function cancelResale(offer: string) {
+  unwrap(await supabase.rpc('cancel_resale', { offer }))
+}
+
+/** Buying one from somebody. The copy moves; Kobblon takes its usual cut. */
+export async function buyResale(offer: string) {
+  unwrap(await supabase.rpc('buy_resale', { offer }))
+}
+
+// ----------------------------------------------------------------- outfits
+
+/** A saved look: what somebody had on, kept under a name. */
+export type Outfit = {
+  id: string
+  content_id: number
+  name: string
+  folder_id: string | null
+  folder_name: string | null
+  body: Record<string, string> | null
+  is_public: boolean
+  price: number
+  maker_share: number
+  created_at: string
+  pieces: { slot: string; kind: string; name: string; content_id: number }[]
+}
+
+export type OutfitFolder = { id: string; name: string; created_at: string; how_many: number }
+
+export async function myOutfits(): Promise<Outfit[]> {
+  return (unwrap(await supabase.rpc('my_outfits')) as Outfit[]) ?? []
+}
+
+export async function myOutfitFolders(): Promise<OutfitFolder[]> {
+  return (unwrap(await supabase.rpc('my_outfit_folders')) as OutfitFolder[]) ?? []
+}
+
+/**
+ * Keeps what somebody is wearing, under a name.
+ *
+ * The server reads what they have on rather than taking a list from here -
+ * an outfit assembled by a page is an outfit that can disagree with the
+ * body it was saved from.
+ */
+export async function saveOutfit(
+  name: string, folder?: string | null, over?: string | null,
+): Promise<string> {
+  return unwrap(await supabase.rpc('save_outfit', {
+    outfit_name: name, into_folder: folder ?? null, over_outfit: over ?? null,
+  })) as string
+}
+
+/** Puts one on. Returns how many pieces went on. */
+export async function wearOutfit(id: string): Promise<number> {
+  return unwrap(await supabase.rpc('wear_outfit', { target: id })) as number
+}
+
+/** Buys every piece of one that the buyer does not already own. */
+export async function buyOutfit(id: string): Promise<number> {
+  return unwrap(await supabase.rpc('buy_outfit', { target: id })) as number
+}
+
+/** Outfits anybody can buy. */
+export async function outfitShelf(term?: string, howMany = 40) {
+  return (unwrap(await supabase.rpc('outfit_shelf', {
+    term: term || null, how_many: howMany,
+  })) as (Outfit & {
+    owner_username: string
+    owner_display_name: string
+    owner_is_verified: boolean
+    owner_is_staff: boolean
+    costs: number
+    owned_already: number
+  })[]) ?? []
+}
+
+/**
+ * A folder, renaming one, putting an outfit up for sale, and throwing one
+ * away - all of them the owner writing their own rows, which their policy
+ * already allows.
+ *
+ * Written here rather than in the page so the table names live in one file:
+ * a page that knows a column name is a page that has to be found again when
+ * the column moves.
+ */
+export async function makeOutfitFolder(name: string): Promise<string> {
+  const me = (await supabase.auth.getUser()).data.user?.id
+  if (!me) throw new Error('Sign in first.')
+  const row = unwrap(await supabase.from('outfit_folders')
+    .insert({ owner_id: me, name }).select('id').single()) as { id: string }
+  return row.id
+}
+
+export async function listOutfit(id: string, listed: boolean, price?: number) {
+  unwrap(await supabase.from('outfits')
+    .update({
+      is_public: listed,
+      ...(price === undefined ? {} : { price: Math.max(0, Math.round(price)) }),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id).select('id').single())
+}
+
+/** Throwing one away. The things in it stay yours; only the look goes. */
+export async function removeOutfit(id: string) {
+  unwrap(await supabase.from('outfits')
+    .update({ is_removed: true, is_public: false, updated_at: new Date().toISOString() })
+    .eq('id', id).select('id').single())
+}
+
 /** What each kind of avatar item costs to make, and who may make one. */
 export async function avatarRules(): Promise<AvatarRule[]> {
   return (unwrap(await supabase.rpc('avatar_rules')) as AvatarRule[]) ?? []

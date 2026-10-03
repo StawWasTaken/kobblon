@@ -183,12 +183,26 @@ export async function drawPortrait(
       const covered = COVERS[frame]
       const top = Math.max(...covered.map((part) => PLACES[part].middle[1] + BODY[part].h / 2))
       const floor = Math.min(...covered.map((part) => PLACES[part].middle[1] - BODY[part].h / 2))
-      const wide = Math.max(...covered.map((part) => BODY[part].w)) * 2.6
       const tall = top - floor
 
+      /*
+       * How wide the covered parts actually reach, measured, rather than
+       * the widest single part multiplied by a number somebody picked.
+       *
+       * A shirt covers the torso and both arms, and those together are
+       * nearly twice the torso - so "the widest part times 2.6" was both
+       * wrong and not obviously wrong, and the card came out with an arm
+       * off the edge. Measuring is the same work and cannot drift.
+       */
+      const wide = Math.max(...covered.map(
+        (part) => Math.abs(PLACES[part].middle[0]) * 2 + BODY[part].w,
+      ))
+
       const middle = new THREE.Vector3(0, (top + floor) / 2, 0)
-      const reach = Math.max(wide, tall) / 2
-      const away = (reach * 1.15) / Math.sin((camera.fov * Math.PI) / 360)
+      const half = Math.tan((camera.fov * Math.PI) / 360)
+      // Both directions, the further answer winning, and a margin that is
+      // the same everywhere a body is framed in this file.
+      const away = Math.max((tall / 2) / half, (wide / 2) / half) * 1.18
       camera.position.set(middle.x, middle.y, middle.z + away)
       camera.lookAt(middle)
     } else {

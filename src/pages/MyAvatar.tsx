@@ -14,7 +14,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette,
+  faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
   faCircleNotch, faCheck, faPlus,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
@@ -36,6 +36,7 @@ import { K6_PARTS } from '@/engine'
 import type { AvatarItem, AvatarPiece } from '@/types/db'
 import type { K6Part } from '@/engine'
 import { forgetHeadshot } from '@/lib/headshots'
+import { Outfits } from '@/components/avatar/Outfits'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
 import { Studio } from '@/components/avatar/Studio'
@@ -46,6 +47,9 @@ const DRAWERS = [
   { id: 'clothing', label: 'Clothing', icon: faShirt },
   { id: 'accessories', label: 'Accessories', icon: faHatCowboy },
   { id: 'face', label: 'Face', icon: faFaceSmile },
+  // Saved looks, which are not a kind of thing you own but a way of putting
+  // the things you own back on.
+  { id: 'outfits', label: 'Outfits', icon: faFolder },
 ] as const
 
 type Drawer = (typeof DRAWERS)[number]['id']
@@ -361,7 +365,16 @@ export default function MyAvatar() {
             options={DRAWERS.map((one) => ({ value: one.id, label: one.label }))}
           />
 
-          {drawer === 'body' ? (
+          {drawer === 'outfits' ? (
+            /*
+             * Wearing one reloads what is on, draws the portrait again and
+             * leaves the person looking at themselves in it - the same
+             * `after` every other change on this page goes through, so an
+             * outfit cannot end up on the body without the picture catching
+             * up.
+             */
+            <Outfits onWear={() => void after('outfit', async () => {})} />
+          ) : drawer === 'body' ? (
             <Card className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="mx-auto w-40 shrink-0 rounded-xl border border-ink-line bg-ink-raised p-3">

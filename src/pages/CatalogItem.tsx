@@ -33,6 +33,7 @@ import { formatCount } from '@/lib/format'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { BuyButton } from '@/components/money/BuyButton'
+import { Resale } from '@/components/catalog/Resale'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -514,6 +515,20 @@ export default function CatalogItem() {
           ? `A limited: it stops selling on ${new Date(item.sells_until).toLocaleDateString()}.`
           : undefined}
       />
+
+      {/*
+        * A market, and only for a limited. Everything else is still on sale
+        * from the Catalog, and a second-hand price for a thing you can buy
+        * new is a number with nothing behind it.
+        */}
+      {!!item.sells_until && (
+        <Resale
+          itemId={item.id}
+          owned={owned}
+          canTrade={!!profile && !profile.is_guest}
+          onChanged={() => thing.reload()}
+        />
+      )}
 
       <ReportDialog
         open={reporting}
