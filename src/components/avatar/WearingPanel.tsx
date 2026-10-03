@@ -83,6 +83,7 @@ export function WearingPanel({ look, loading }: {
   // Only the pieces that have a page to go to. A thing taken down is still
   // worn and no longer has one.
   const wearing = (look?.pieces ?? []).filter((piece) => piece.contentId)
+  const worth = wearing.reduce((sum, piece) => sum + (piece.price ?? 0), 0)
 
   return (
     // The figure gets room, and not more than it can fill: a square, because
@@ -128,7 +129,30 @@ export function WearingPanel({ look, loading }: {
           {loading ? 'Looking…' : 'Nothing on.'}
         </p>
       ) : (
-        <div className="grid auto-rows-min grid-cols-3 gap-2.5 sm:grid-cols-4">
+        <div className="space-y-2.5">
+          {/*
+            * What the lot comes to, over the things it is counting.
+            *
+            * It was in the corner of the profile card and it is here now:
+            * "soo i wanted the total avatar value in this area somewhere",
+            * and he is right - a total belongs beside what it adds up
+            * rather than two sections away from it. It counts what is on,
+            * so a piece that has been taken down and is still worn counts
+            * for nothing rather than for its old price.
+            */}
+          <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span className="font-display text-xs uppercase tracking-wider text-muted">
+              {wearing.length} {wearing.length === 1 ? 'thing' : 'things'} on
+            </span>
+            <span className="flex items-center gap-1 text-sm font-bold">
+              <span className="text-white/55">Worth</span>
+              {worth > 0
+                ? <><CurrencyMark className="ml-0.5" />{formatCount(worth)}</>
+                : <span className="text-white/70">nothing — it is all free</span>}
+            </span>
+          </p>
+
+          <div className="grid auto-rows-min grid-cols-3 gap-2.5 sm:grid-cols-4">
           {wearing.map((piece) => (
             <Link
               key={piece.itemId ?? piece.contentId}
@@ -164,7 +188,8 @@ export function WearingPanel({ look, loading }: {
                 </span>
               </span>
             </Link>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </Card>

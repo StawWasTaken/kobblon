@@ -47,7 +47,6 @@ import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
 import { avatarOf } from '@/lib/avatars'
 import { NameMarks } from '@/components/brand/Verified'
-import { CurrencyMark } from '@/components/brand/Currency'
 import { PenIcon } from '@/components/brand/PenIcon'
 
 /** The colour somebody chose for their page, or the house one. */
@@ -186,11 +185,6 @@ export default function Profile() {
    * do.
    */
   const look = useAsync(async () => (user ? lookOf(user.id) : null), [user?.id])
-  /*
-   * What the whole outfit goes for today, which is not what anybody paid
-   * for it - a shop window rather than a receipt.
-   */
-  const worth = (look.data?.pieces ?? []).reduce((sum, piece) => sum + (piece.price ?? 0), 0)
   const names = useAsync(async () => (user ? usernameHistory(user.id) : []), [user?.id])
 
   const friends = useAsync(
@@ -493,22 +487,6 @@ export default function Profile() {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            {/*
-              * What the avatar is worth, in the corner of the card.
-              *
-              * Staw asked for it here rather than in Currently wearing, and
-              * that is the right place: it is a fact about the person, like
-              * the counts, and the panel below is about the things
-              * themselves - which now each say their own price.
-              */}
-            {!!worth && (
-              <p className="order-last flex items-center gap-1.5 rounded-full border border-ink-line bg-ink-card/80 px-3 py-1 text-xs font-bold sm:order-first">
-                <span className="text-white/55">Avatar worth</span>
-                <CurrencyMark className="ml-0.5" />
-                {formatCount(worth)}
-              </p>
-            )}
-
             <div className="flex flex-wrap items-start justify-end gap-2">
             {isMe ? (
               <>

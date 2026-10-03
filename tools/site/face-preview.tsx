@@ -64,10 +64,10 @@ createRoot(document.getElementById('root')!).render(
         look={{
           body,
           pieces: [
-            { slot: 'face', kind: 'face', imageUrl: looks[0].picture, name: 'Spooked Jack', contentId: 1119, cardUrl: looks[0].picture },
-            { slot: 'shirt', kind: 'shirt', name: 'Kobblon Shirt', contentId: 1221 },
+            { slot: 'face', kind: 'face', imageUrl: looks[0].picture, name: 'Spooked Jack', contentId: 1119, cardUrl: looks[0].picture, price: 150 },
+            { slot: 'shirt', kind: 'shirt', name: 'Kobblon Shirt', contentId: 1221, price: 5 },
             { slot: 'trousers', kind: 'trousers', name: 'Kobblon Trousers', contentId: 1220 },
-            { slot: 'hat', kind: 'accessory', name: 'Kobblon Cap', contentId: 1212 },
+            { slot: 'hat', kind: 'accessory', name: 'Kobblon Cap', contentId: 1212, price: 855 },
             { slot: 'tdecal', kind: 'tdecal', name: 'Kobblon Tdecal', contentId: 1196 },
           ],
         }}

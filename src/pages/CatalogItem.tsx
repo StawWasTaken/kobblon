@@ -19,6 +19,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faCube, faImage, faClock, faStore, faUser,
   faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis, faLink, faFlag,
+  faPen,
   faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
@@ -94,6 +95,8 @@ export default function CatalogItem() {
    * is paid 40% back the moment it goes.
    */
   const canRemove = !!profile?.is_admin || !!profile?.is_moderator
+  /** Whether this is theirs to change. The maker, and only the maker. */
+  const itsMine = !!profile && item?.creator_id === profile.id
   const [sureRemove, setSureRemove] = useState(false)
   const [reporting, setReporting] = useState(false)
   /*
@@ -237,13 +240,23 @@ export default function CatalogItem() {
                     </span>
                   }
                   items={[
-                    ...(owned ? [{ label: 'Wear it on my avatar', icon: faUser, to: '/avatar' }] : []),
                     /*
-                     * The address of the thing you are looking at. Sharing
-                     * something is how anybody else gets to it, and the way
-                     * people were doing it was selecting the address bar -
-                     * which on a phone is not a thing you can do.
+                     * In the order somebody reaches for them, which is what
+                     * Staw meant by "its a bit of a mess rn": what you do
+                     * with the thing, then what you do with its address,
+                     * then what you do about it. Two rules under that -
+                     * anything that changes the thing sits above anything
+                     * that only reads it, and the two that cannot be undone
+                     * are last, apart, and red.
                      */
+                    ...(owned ? [{ label: 'Wear it on my avatar', icon: faUser, to: '/avatar' }] : []),
+                    ...(itsMine ? [{
+                      // Only its maker, and it goes to the card for this
+                      // one rather than to a drawer of everything they made.
+                      label: 'Edit it',
+                      icon: faPen,
+                      to: `/create/avatar?item=${item.content_id}`,
+                    }] : []),
                     {
                       label: 'Copy link',
                       icon: faLink,
@@ -253,7 +266,7 @@ export default function CatalogItem() {
                       },
                     },
                     { label: 'See who made it', icon: faUser, to: `/u/${item.creator_username}` },
-                    { label: 'Report it', icon: faFlag, onSelect: () => setReporting(true) },
+                    { label: 'Report it', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
                     ...(canRemove ? [{
                       label: sureRemove ? 'Really take it down' : 'Take it down',
                       icon: faTrash,

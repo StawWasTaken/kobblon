@@ -13,6 +13,7 @@ import {
   faImage, faCube,
 } from '@fortawesome/free-solid-svg-icons'
 import { Menu } from '@/components/ui/Menu'
+import { faPen, faLink, faFlag } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { BuyButton } from '@/components/money/BuyButton'
@@ -39,7 +40,7 @@ createRoot(document.getElementById('root')!).render(
         {/* The three ways, exactly as the page draws them. */}
         <div className="absolute bottom-2 right-2 flex items-center gap-0.5 rounded-full border border-white/20 bg-ink/80 p-0.5 backdrop-blur-sm">
           {[
-            { label: 'Picture', icon: faImage, on: false },
+            { label: '2D', icon: faImage, on: false },
             { label: '3D', icon: faCube, on: true },
             { label: 'On me', icon: faUser, on: false },
           ].map((way) => (
@@ -75,9 +76,15 @@ createRoot(document.getElementById('root')!).render(
                     <FontAwesomeIcon icon={faEllipsis} />
                   </span>
                 }
+                /* The page's own order, so the preview shows what the page
+                   shows: what you do with the thing, then with its address,
+                   then about it, with the two that cannot be undone last. */
                 items={[
                   { label: 'Wear it on my avatar', icon: faUser, onSelect: () => {} },
+                  { label: 'Edit it', icon: faPen, onSelect: () => {} },
+                  { label: 'Copy link', icon: faLink, onSelect: () => {} },
                   { label: 'See who made it', icon: faUser, onSelect: () => {} },
+                  { label: 'Report it', icon: faFlag, danger: true, onSelect: () => {} },
                   { label: 'Take it down', icon: faTrash, danger: true, onSelect: () => {} },
                 ]}
               />

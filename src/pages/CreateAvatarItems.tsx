@@ -18,6 +18,7 @@ import {
   faMagnifyingGlass, faClock, faUpload, faCircleCheck, faCircleExclamation,
   faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight,
 } from '@fortawesome/free-solid-svg-icons'
+import { useSearchParams } from 'react-router-dom'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -103,6 +104,9 @@ export default function CreateAvatarItems() {
 
   const [kind, setKind] = useState<AvatarKind>('shirt')
   const [slot, setSlot] = useState<AvatarSlot>('hat')
+  const [params] = useSearchParams()
+  /** The thing a link asked for, by Catalog number. */
+  const wanted = params.get('item')
   const [name, setName] = useState('')
   const [about, setAbout] = useState('')
   const [picture, setPicture] = useState<File | null>(null)
@@ -137,11 +141,23 @@ export default function CreateAvatarItems() {
   const [showArchived, setShowArchived] = useState(false)
 
   const rules = useAsync(async () => avatarRules(), [])
+
   const made = useAsync(async () => (profile ? myMadeAvatarItems() : []), [profile?.id])
   const meshes = useAsync(
     async () => (profile ? (await listOwnAssets(profile.id)).filter((a) => a.kind === 'mesh') : []),
     [profile?.id],
   )
+
+  /*
+   * Arriving from a thing's own page, which is where somebody notices it
+   * needs fixing. The card is brought into view once the drawer has loaded;
+   * doing it before there is anything to scroll to is a scroll to nothing.
+   */
+  useEffect(() => {
+    if (!wanted || made.loading) return
+    const card = document.getElementById(`item-${wanted}`)
+    card?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [wanted, made.loading])
   /*
    * Cards that are missing or were drawn by an older drawing, redrawn the
    * next time their owner opens this page.
@@ -528,6 +544,10 @@ export default function CreateAvatarItems() {
           </button>
 
           {mine.map((one) => (
+            // Named, so a link from the Catalog's "Edit it" lands on the
+            // card for the thing it came from rather than on a drawer of
+            // forty of them.
+            <div key={one.id} id={`item-${one.content_id}`} className="contents">
             <MadeCard
               key={one.id}
               item={one}
@@ -539,6 +559,7 @@ export default function CreateAvatarItems() {
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
             />
+            </div>
           ))}
         </div>
       )}

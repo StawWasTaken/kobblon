@@ -3598,3 +3598,42 @@ it. (Ours is `xl` now, which *is* `h-16 w-16`.)
 Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
+
+# Thirty-eighth round — the worth moved, and the item menu has an order
+
+## Where an avatar's worth is said
+
+In the Currently wearing panel, over the tiles it is counting - "soo i wanted
+the total avatar value in this area somewhere". It was in the corner of the
+profile card for one round; a total belongs beside what it adds up. Each tile
+says its own price, and "Free" in words where there is none.
+
+Counted from what is on the body: a piece that has been taken down is still
+worn and has no page, so it counts for nothing rather than for its old price.
+
+## The item menu, in an order
+
+Staw: "i also want to reorder the thing u can do by clicking more cuz its a
+bit of a mess rn". The order is now what somebody reaches for:
+
+1. **Wear it on my avatar** (if they own it)
+2. **Edit it** (if they made it) - new, and it goes to
+   `/create/avatar?item=<content_id>`, which opens the maker's drawer *on that
+   card* rather than on forty of them
+3. **Copy link**
+4. **See who made it**
+5. **Report it**
+6. **Take it down** (staff)
+
+The rules under it, if you are building the same menu: anything that changes
+the thing sits above anything that only reads it, and the two that cannot be
+undone are last, apart, and red.
+
+**`/create/avatar?item=<content_id>`** is a link you can use too - it is the
+Things to Wear drawer, scrolled to one item.
+
+## Still not done
+
+Best friends, cancelling your own requests, AI screening, editing a face by
+re-uploading its asset, the clothing render, reselling limiteds, the outfit
+UI, the rest of the redesigns.
