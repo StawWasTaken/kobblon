@@ -15,11 +15,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faDownload, faImage, faCube, faLock, faPen,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
+  faMagnifyingGlass, faClock, faUpload,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
+import { Choices } from '@/components/ui/Choices'
 import { Menu } from '@/components/ui/Menu'
 import { Dialog } from '@/components/ui/Dialog'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -33,9 +35,11 @@ import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
   uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
+  setLimited, decalBehind,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
+import { formatOf } from '@/engine'
 
 const KINDS: { kind: AvatarKind; label: string; about: string; template?: string }[] = [
   {
@@ -91,17 +95,32 @@ export default function CreateAvatarItems() {
   const [slot, setSlot] = useState<AvatarSlot>('hat')
   const [name, setName] = useState('')
   const [about, setAbout] = useState('')
-  const [price, setPrice] = useState('')
   const [picture, setPicture] = useState<File | null>(null)
   const [making, setMaking] = useState(false)
   const picked = useRef<HTMLInputElement>(null)
   const [meshId, setMeshId] = useState('')
+  /*
+   * What the model wears. An accessory with no texture renders grey, which
+   * is what Staw saw: the form asked for a model and never for its picture,
+   * so every accessory anybody made was untextured by construction. Either
+   * one of your own Decals, or the id of any Decal on the Marketplace -
+   * the same two ways an uploaded mesh gets its texture.
+   */
+  const [textureId, setTextureId] = useState('')
+  const [decalTag, setDecalTag] = useState('')
+  const [decal, setDecal] = useState<{ id: string; name: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [term, setTerm] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
 
   const rules = useAsync(async () => avatarRules(), [])
   const made = useAsync(async () => (profile ? myMadeAvatarItems() : []), [profile?.id])
   const meshes = useAsync(
     async () => (profile ? (await listOwnAssets(profile.id)).filter((a) => a.kind === 'mesh') : []),
+    [profile?.id],
+  )
+  const decals = useAsync(
+    async () => (profile ? (await listOwnAssets(profile.id)).filter((a) => a.kind === 'image') : []),
     [profile?.id],
   )
 
@@ -128,7 +147,6 @@ export default function CreateAvatarItems() {
 
   const make = async () => {
     if (!profile || !rule) return
-    const asked = Math.max(0, Math.round(Number(price) || 0))
     setBusy(true)
     try {
       let imagePath: string | null = null
@@ -144,9 +162,9 @@ export default function CreateAvatarItems() {
         slot: isModel ? slot : (kind as AvatarSlot),
         name,
         description: about,
-        price: asked,
         imagePath,
         meshId: isModel ? meshId : null,
+        textureId: isModel ? (textureId || null) : null,
       })
 
       /*
@@ -162,11 +180,21 @@ export default function CreateAvatarItems() {
       const mesh = isModel
         ? (meshes.data ?? []).find((one) => one.id === meshId)
         : undefined
+      /*
+       * The card wears the texture too. Drawing the model bare gives a grey
+       * card for an item that is not grey, and that card is then a file in a
+       * bucket for ever - so the picture has to be in hand here, not later.
+       */
+      const skin = isModel
+        ? (decals.data ?? []).find((one) => one.id === textureId)
+        : undefined
       void drawAvatarCard(newId, profile.id, {
         kind,
         slot: isModel ? slot : kind,
         imageUrl: imagePath ? catalogUrl(imagePath) : null,
         meshUrl: mesh ? await assetUrl(mesh.file_path).catch(() => null) : null,
+        meshFormat: mesh ? formatOf(mesh.file_path) : null,
+        textureUrl: skin ? await assetUrl(skin.file_path).catch(() => null) : null,
       }).then(() => made.reload())
 
       say(
@@ -175,7 +203,8 @@ export default function CreateAvatarItems() {
           : 'Made. It goes for screening before anybody sees it.',
         'success',
       )
-      setName(''); setAbout(''); setPrice(''); setPicture(null); setMeshId('')
+      setName(''); setAbout(''); setPicture(null); setMeshId('')
+      setTextureId(''); setDecalTag(''); setDecal(null)
       setMaking(false)
       made.reload()
     } catch (error) {
@@ -187,7 +216,29 @@ export default function CreateAvatarItems() {
 
   if (!profile) return null
 
-  const mine = made.data ?? []
+  /*
+   * What the shelf shows. Archived things are kept out of the ordinary view
+   * and get a view of their own rather than a filter nobody finds: archiving
+   * is "put this away", so a page that keeps showing it has not done it.
+   *
+   * Archived here means screened, not listed, and deliberately so - which is
+   * the same state as "made it and never listed it", because the server has
+   * one flag for both. So the archived view is honest about what it is: the
+   * things that are not in the Catalog.
+   */
+  const everything = made.data ?? []
+  const needle = term.trim().toLowerCase()
+  const mine = everything.filter((one) => {
+    const away = one.status === 'approved' && !one.is_public
+    if (away !== showArchived) return false
+    return !needle
+      || one.name.toLowerCase().includes(needle)
+      || one.kind.toLowerCase().includes(needle)
+      || String(one.content_id).includes(needle)
+  })
+  const putAway = everything.filter(
+    (one) => one.status === 'approved' && !one.is_public,
+  ).length
 
   return (
     <Page className="space-y-5">
@@ -205,6 +256,29 @@ export default function CreateAvatarItems() {
         * something is one more thing on that shelf rather than a form the
         * shelf has to live beside.
         */}
+      {!!everything.length && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            icon={faMagnifyingGlass}
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="Search what you have made"
+            aria-label="Search what you have made"
+            className="min-w-[14rem] flex-1"
+          />
+          <Choices
+            label="Which of yours"
+            tone="soft"
+            value={showArchived ? 'away' : 'out'}
+            onChange={(next) => setShowArchived(next === 'away')}
+            options={[
+              { value: 'out', label: 'In the Catalog', icon: faStore },
+              { value: 'away', label: `Put away${putAway ? ` (${putAway})` : ''}`, icon: faBoxArchive },
+            ]}
+          />
+        </div>
+      )}
+
       {made.loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 10 }, (_, i) => (
@@ -216,13 +290,18 @@ export default function CreateAvatarItems() {
           <button
             type="button"
             onClick={() => setMaking(true)}
+            /*
+              * The same feel as Create's own drop area, down to the hover:
+              * these two tiles are the same act on two pages, and one of
+              * them reading as flat was the whole of Staw's complaint.
+              */
             className={cn(
-              'grid aspect-[3/4] place-items-center gap-2 rounded-xl border-2 border-dashed',
-              'border-ink-line bg-ink-card text-white/60 transition-colors',
-              'hover:border-brand hover:text-white',
+              'group grid aspect-[3/4] place-items-center gap-2 rounded-xl border-2 border-dashed',
+              'border-ink-line bg-ink-raised text-white/60 transition-colors',
+              'hover:border-brand/60 hover:bg-ink-hover hover:text-white',
             )}
           >
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-hover">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-hover transition-transform duration-150 group-hover:scale-110">
               <FontAwesomeIcon icon={faPlus} className="text-lg" />
             </span>
             <span className="text-sm font-bold">Make something</span>
@@ -235,6 +314,8 @@ export default function CreateAvatarItems() {
             <MadeCard
               key={one.id}
               item={one}
+              rule={(rules.data ?? []).find((r) => r.kind === one.kind)}
+              canLimit={!!profile?.is_admin}
               onChanged={() => made.reload()}
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
@@ -245,7 +326,11 @@ export default function CreateAvatarItems() {
 
       {!made.loading && mine.length === 0 && (
         <p className="text-sm text-muted">
-          Nothing yet. What you make turns up here, with whether it has been screened.
+          {needle
+            ? `Nothing of yours matches "${term.trim()}".`
+            : showArchived
+              ? 'Nothing put away. Archiving something takes it off the Catalog and leaves it here.'
+              : 'Nothing in the Catalog yet. What you make turns up here, with whether it has been screened.'}
         </p>
       )}
 
@@ -326,59 +411,99 @@ export default function CreateAvatarItems() {
                   first and it turns up here.
                 </p>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {(meshes.data ?? []).map((one) => (
-                    <button
-                      key={one.id}
-                      type="button"
-                      onClick={() => setMeshId(one.id)}
-                      className={cn(
-                        'rounded-lg border px-3 py-2 text-xs font-bold',
-                        meshId === one.id
-                          ? 'border-brand bg-brand/15 text-white'
-                          : 'border-ink-line text-white/70 hover:text-white',
-                      )}
-                    >
-                      <FontAwesomeIcon icon={faCube} className="mr-1.5 text-white/40" />
-                      {one.name}
-                    </button>
-                  ))}
-                </div>
+                <Choices
+                  label="Which of your models"
+                  size="sm"
+                  tone="soft"
+                  value={meshId || null}
+                  onChange={setMeshId}
+                  options={(meshes.data ?? []).map((one) => ({
+                    value: one.id, label: one.name, icon: faCube,
+                  }))}
+                />
               )}
 
               <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
                 Where it goes
               </p>
-              <div className="flex flex-wrap gap-2">
-                {PLACES.map((one) => (
-                  <button
-                    key={one.slot}
-                    type="button"
-                    onClick={() => setSlot(one.slot)}
-                    className={cn(
-                      'rounded-lg border px-3 py-1.5 text-xs font-bold',
-                      slot === one.slot
-                        ? 'border-brand bg-brand/15 text-white'
-                        : 'border-ink-line text-white/70 hover:text-white',
-                    )}
-                  >
-                    {one.label}
-                  </button>
-                ))}
-              </div>
+              <Choices
+                label="Where it goes"
+                size="sm"
+                tone="soft"
+                value={slot}
+                onChange={setSlot}
+                options={PLACES.map((one) => ({ value: one.slot, label: one.label }))}
+              />
+
+              {/*
+                * Its texture, which is not optional in practice: a model with
+                * none renders in flat grey and reads as broken rather than as
+                * undressed. One of your own Decals, or anybody's by id.
+                */}
+              <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
+                What it wears
+              </p>
+              <Choices
+                label="What it wears"
+                size="sm"
+                tone="soft"
+                value={textureId || null}
+                onChange={(next) => { setTextureId(next); setDecalTag(''); setDecal(null) }}
+                options={(decals.data ?? []).map((one) => ({
+                  value: one.id, label: one.name, icon: faImage,
+                }))}
+              />
+              {!textureId && (
+                <Input
+                  label="Or a Decal id"
+                  labelNote="IMG-1042"
+                  value={decalTag}
+                  maxLength={20}
+                  className="max-w-[16rem]"
+                  onChange={(e) => {
+                    const tag = e.target.value
+                    setDecalTag(tag)
+                    setDecal(null)
+                    if (!tag.trim()) return
+                    void decalBehind(tag)
+                      .then((found) => { setDecal(found); setTextureId('') })
+                      .catch(() => setDecal(null))
+                  }}
+                  hint={decalTag.trim() === ''
+                    ? undefined
+                    : decal ? `Wearing ${decal.name}.` : 'No Decal you can use with that id.'}
+                />
+              )}
+              {!textureId && !decal && (
+                <p className="text-[11px] leading-snug text-muted">
+                  Without one it is flat grey, which reads as broken rather than
+                  as plain.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
               <p className="font-display text-[10px] uppercase tracking-wider text-muted">
                 The picture
               </p>
-              <Button
-                variant="subtle"
-                icon={faImage}
+              {/*
+                * The upload dialog's own drop area, not a button beside a
+                * filename: choosing a file should feel the same wherever you
+                * are choosing one, and Staw noticed when it did not.
+                */}
+              <button
+                type="button"
                 onClick={() => picked.current?.click()}
+                className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
               >
-                {picture ? 'Choose another' : 'Choose a picture'}
-              </Button>
+                <FontAwesomeIcon icon={picture ? faImage : faUpload} className="text-xl text-white/40" />
+                <span className="text-sm font-semibold">
+                  {picture ? picture.name : `Choose a picture for the ${chosen?.label.toLowerCase()}`}
+                </span>
+                {picture && (
+                  <span className="text-xs text-muted">{(picture.size / 1024 / 1024).toFixed(1)} MB</span>
+                )}
+              </button>
               <input
                 ref={picked}
                 type="file"
@@ -386,7 +511,6 @@ export default function CreateAvatarItems() {
                 className="hidden"
                 onChange={(e) => { setPicture(e.target.files?.[0] ?? null); e.target.value = '' }}
               />
-              {picture && <p className="text-xs text-muted">{picture.name}</p>}
             </div>
           )}
 
@@ -394,17 +518,22 @@ export default function CreateAvatarItems() {
             onChange={(e) => setName(e.target.value)} />
           <Textarea label="Description" value={about} maxLength={400}
             onChange={(e) => setAbout(e.target.value)} />
-          <Input
-            label="Price in Brix"
-            type="number"
-            min={rule?.least_price ?? 0}
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            hint={rule
-              ? rule.least_price > 0 ? `At least ${rule.least_price}.` : 'Zero means free.'
-              : undefined}
-            className="max-w-[12rem]"
-          />
+          {/*
+            * No price here on purpose. Staw's rule: making something costs
+            * what the kind costs, and the price is something you decide when
+            * you put it in the Catalog - which is also where the server
+            * checks it against the kind's floor.
+            */}
+          <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+            You set what it sells for when you list it, not now.
+            {rule && rule.least_price > 0 && (
+              <> The least a {chosen?.label.toLowerCase()} may go for is{' '}
+                <span className="font-bold text-white">
+                  <CurrencyMark className="mx-0.5" />{rule.least_price}
+                </span>.
+              </>
+            )}
+          </p>
 
           <div className="flex gap-2">
             <Button
@@ -433,11 +562,15 @@ export default function CreateAvatarItems() {
  * else owns one - so the button is there and the refusal explains itself,
  * rather than this page hiding a rule it would have to keep in step.
  */
-function MadeCard({ item, onChanged, onTrouble, onDone }: {
+function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
   item: AvatarItem
   onChanged: () => void
   onTrouble: (message: string) => void
   onDone: (message: string) => void
+  /** This kind's floor, so the card can refuse a price the server would. */
+  rule?: AvatarRule
+  /** Only Kobblon closes a sale, and the server is the one that says so. */
+  canLimit: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
@@ -445,6 +578,18 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
   const [price, setPrice] = useState(String(item.price))
   const [busy, setBusy] = useState<string | null>(null)
   const [sure, setSure] = useState(false)
+  /*
+   * Listing asks for a price, because making something no longer does: Staw's
+   * rule is that a price is what you decide when you put it on sale. Opened
+   * in place rather than as a dialog - it is one number.
+   */
+  const [listing, setListing] = useState(false)
+  const [asking, setAsking] = useState(String(item.price || rule?.least_price || 0))
+  const [limiting, setLimiting] = useState(false)
+  const [closes, setCloses] = useState(
+    item.sells_until ? item.sells_until.slice(0, 16) : '',
+  )
+  const closed = !!item.sells_until && new Date(item.sells_until).getTime() <= Date.now()
 
   const run = async (what: string, doIt: () => Promise<void>, said: string) => {
     setBusy(what)
@@ -460,7 +605,7 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
   }
 
   const picture = cardFor(item)
-  const archived = item.status === 'approved' && !item.is_public && !editing
+  const archived = item.status === 'approved' && !item.is_public
 
   const state = item.status === 'approved'
     ? item.is_public ? 'In the Catalog' : 'Not listed'
@@ -476,6 +621,21 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
         <span className="absolute left-2 top-2 rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
           {item.kind}
         </span>
+        {item.sells_until && (
+          /*
+           * Down in the corner, Staw's word for it. A limited never stops
+           * existing and nobody loses theirs - only buying closes - so the
+           * mark says which of those two it is rather than just "limited".
+           */
+          <span className={cn(
+            'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5',
+            'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
+            closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
+          )}>
+            <FontAwesomeIcon icon={faClock} />
+            {closed ? 'Closed' : 'Limited'}
+          </span>
+        )}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
@@ -495,11 +655,13 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
               className="flex-1"
               variant={item.is_public ? 'subtle' : 'yes'}
               loading={busy === 'list'}
-              onClick={() => void run(
-                'list',
-                () => listAvatarItem(item.id, !item.is_public),
-                item.is_public ? 'Taken off the Catalog.' : 'In the Catalog.',
-              )}
+              onClick={() => {
+                if (item.is_public) {
+                  void run('list', () => listAvatarItem(item.id, false), 'Taken off the Catalog.')
+                  return
+                }
+                setListing(true)
+              }}
             >
               {item.is_public ? 'Take down' : 'List it'}
             </Button>
@@ -514,8 +676,7 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
               </span>
             }
             items={[
-              { label: editing ? 'Stop editing' : 'Edit', icon: faPen,
-                onSelect: () => setEditing(!editing) },
+              { label: 'Edit', icon: faPen, onSelect: () => setEditing(true) },
               { label: archived ? 'Put it back' : 'Archive', icon: faBoxArchive,
                 onSelect: () => void run(
                   'archive',
@@ -524,6 +685,11 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
                     ? 'Back. List it when you are ready.'
                     : 'Archived. Anybody wearing it keeps it.',
                 ) },
+              ...(canLimit ? [{
+                label: item.sells_until ? 'Change when it closes' : 'Make it a limited',
+                icon: faClock,
+                onSelect: () => setLimiting(!limiting),
+              }] : []),
               { label: sure ? 'Really delete it' : 'Delete', icon: faTrash, danger: true,
                 onSelect: () => {
                   if (!sure) { setSure(true); return }
@@ -535,21 +701,104 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
         </div>
       </div>
 
-      {editing && (
+      {listing && (
         <div className="space-y-2 border-t border-ink-line p-3">
-          <Input label="Name" value={name} maxLength={60}
-            onChange={(e) => setName(e.target.value)} />
-          <Textarea label="Description" value={about} maxLength={400}
-            onChange={(e) => setAbout(e.target.value)} />
-          <Input label="Price" type="number" min={0} className="max-w-[8rem]"
-            value={price} onChange={(e) => setPrice(e.target.value)} />
-          <p className="text-[11px] leading-snug text-muted">
-            What it is and the picture on it stay as they are. Somebody who
-            bought this bought this.
-          </p>
+          <Input
+            label="What it sells for"
+            type="number"
+            min={rule?.least_price ?? 0}
+            value={asking}
+            onChange={(e) => setAsking(e.target.value)}
+            hint={rule && rule.least_price > 0
+              ? `At least ${rule.least_price}.`
+              : 'Zero means free.'}
+          />
           <div className="flex gap-2">
             <Button
               size="sm"
+              variant="yes"
+              loading={busy === 'list'}
+              onClick={() => void run(
+                'list',
+                async () => {
+                  await listAvatarItem(
+                    item.id, true, Math.max(0, Math.round(Number(asking) || 0)),
+                  )
+                  setListing(false)
+                },
+                'In the Catalog.',
+              )}
+            >
+              List it
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setListing(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      {limiting && (
+        <div className="space-y-2 border-t border-ink-line p-3">
+          <Input
+            label="Sells until"
+            type="datetime-local"
+            value={closes}
+            onChange={(e) => setCloses(e.target.value)}
+            hint="After this nobody can buy it. Everybody who has one keeps it."
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="yes"
+              loading={busy === 'limit'}
+              onClick={() => void run(
+                'limit',
+                async () => {
+                  await setLimited(item.id, closes ? new Date(closes).toISOString() : null)
+                  setLimiting(false)
+                },
+                closes ? 'It closes then.' : 'No longer a limited.',
+              )}
+            >
+              Save
+            </Button>
+            {item.sells_until && (
+              <Button
+                size="sm"
+                variant="subtle"
+                loading={busy === 'unlimit'}
+                onClick={() => void run(
+                  'unlimit',
+                  async () => {
+                    await setLimited(item.id, null)
+                    setCloses('')
+                    setLimiting(false)
+                  },
+                  'No longer a limited.',
+                )}
+              >
+                Not a limited
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" onClick={() => setLimiting(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      {/*
+        * Editing opens a card of its own. It was a panel that unfolded
+        * underneath, which reflowed the whole shelf and put the fields in a
+        * column three inches wide - Staw's "it should be opening up a card".
+        * Every other edit on Kobblon is a Dialog, so this is one too.
+        */}
+      <Dialog
+        open={editing}
+        onClose={() => setEditing(false)}
+        title={`Edit ${item.name}`}
+        description="What it is and the picture on it stay as they are. Somebody who bought this bought this."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button
               variant="yes"
               loading={busy === 'save'}
               onClick={() => void run(
@@ -565,10 +814,42 @@ function MadeCard({ item, onChanged, onTrouble, onDone }: {
             >
               Save
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
+              {picture
+                ? <img src={picture} alt="" className="h-full w-full object-contain" />
+                : <FontAwesomeIcon icon={faShirt} className="text-xl text-white/25" />}
+            </span>
+            <p className="text-xs leading-relaxed text-muted">
+              {state}
+              {item.sells_until && (
+                <> · {closed ? 'Closed' : 'Limited'}</>
+              )}
+            </p>
           </div>
+
+          <Input label="Name" value={name} maxLength={60}
+            onChange={(e) => setName(e.target.value)} />
+          <Textarea label="Description" value={about} maxLength={400}
+            onChange={(e) => setAbout(e.target.value)} />
+          <Input
+            label="What it sells for"
+            type="number"
+            min={rule?.least_price ?? 0}
+            className="max-w-[12rem]"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            hint={rule && rule.least_price > 0
+              ? `At least ${rule.least_price}.`
+              : 'Zero means free.'}
+          />
         </div>
-      )}
+      </Dialog>
+
     </article>
   )
 }

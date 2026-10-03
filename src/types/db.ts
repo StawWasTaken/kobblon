@@ -785,4 +785,11 @@ export type AvatarItem = {
   review_note?: string | null
   is_public?: boolean
   taken?: number
+  /**
+   * When a limited stops being sold, if it is one.
+   *
+   * The item never stops existing and nobody loses theirs - only buying
+   * closes. Null for everything that is simply on sale.
+   */
+  sells_until?: string | null
 }

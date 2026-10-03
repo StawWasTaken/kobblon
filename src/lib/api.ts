@@ -2786,8 +2786,28 @@ export async function setBodyColours(colours: Record<string, string> | null) {
   unwrap(await supabase.rpc('set_body_colours', { colours }))
 }
 
-export async function listAvatarItem(id: string, listed: boolean) {
-  unwrap(await supabase.rpc('list_avatar_item', { target: id, listed }))
+/**
+ * Lists it, or takes it down, and says what it costs while listing.
+ *
+ * The price belongs here rather than to making one: Staw's rule is that you
+ * do not need a price to upload something, only to put it on sale. Leaving
+ * `price` out keeps whatever it already had, which is what taking something
+ * down and putting it back should do.
+ */
+export async function listAvatarItem(id: string, listed: boolean, price?: number) {
+  unwrap(await supabase.rpc('list_avatar_item', {
+    target: id, listed, cost: typeof price === 'number' ? price : null,
+  }))
+}
+
+/**
+ * Sets, or clears, the moment a limited stops selling.
+ *
+ * Kobblon's only - the server decides that, not this call. `until` is an ISO
+ * moment in the future, or null to make it an ordinary item again.
+ */
+export async function setLimited(id: string, until: string | null) {
+  unwrap(await supabase.rpc('set_limited', { target: id, until }))
 }
 
 /**
@@ -2811,7 +2831,14 @@ export async function setAvatarPreview(id: string, path: string | null) {
  */
 export async function drawAvatarCard(
   id: string, userId: string,
-  item: { kind: string; slot: string; imageUrl?: string | null; meshUrl?: string | null; textureUrl?: string | null },
+  item: {
+    kind: string; slot: string
+    imageUrl?: string | null
+    meshUrl?: string | null
+    /** The real one, from the row's `file_path`: a signed address hides it. */
+    meshFormat?: string | null
+    textureUrl?: string | null
+  },
 ): Promise<string | null> {
   const drawn = await drawItemCard(item).catch(() => null)
   if (!drawn) return null
@@ -2835,7 +2862,8 @@ export async function createAvatarItem(input: {
   slot: AvatarSlot
   name: string
   description?: string
-  price: number
+  /** Left out until it is listed: making one needs no price. */
+  price?: number | null
   imagePath?: string | null
   meshId?: string | null
   textureId?: string | null
@@ -2845,7 +2873,7 @@ export async function createAvatarItem(input: {
     item_slot: input.slot,
     item_name: input.name,
     about: input.description ?? '',
-    cost: input.price,
+    cost: typeof input.price === 'number' ? input.price : null,
     picture: input.imagePath ?? null,
     model: input.meshId ?? null,
     texture: input.textureId ?? null,

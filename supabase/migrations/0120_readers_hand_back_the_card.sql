@@ -13,6 +13,16 @@ begin;
 -- exactly what somebody does, and the second run is where a missed drop
 -- shows up.
 
+-- The column this file reads, said again here on purpose.
+--
+-- It belongs to 0119 and this is `if not exists`, so on a database that has
+-- 0119 it does nothing at all. It is here because these are applied by hand
+-- in the SQL editor, one file at a time, and a file that reads a column it
+-- did not create fails with `column i.preview_path does not exist` and no
+-- hint at all about which earlier file was missed. It already happened.
+alter table public.avatar_items
+  add column if not exists preview_path text;
+
 drop function if exists public.avatar_shelf(text, text, integer);
 
 drop function if exists public.avatar_of(target uuid);

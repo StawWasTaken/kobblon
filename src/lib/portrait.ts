@@ -16,7 +16,7 @@
 import * as THREE from 'three'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
-  frameMesh, lightForLooking, lookFrom,
+  frameMesh, lightForLooking, lookFrom, fitToSocket,
   type K6Part, type K6Point,
 } from '@/engine'
 
@@ -36,6 +36,12 @@ export type PortraitLook = {
     slot: string
     imageUrl?: string | null
     meshUrl?: string | null
+    /**
+     * The real format, where the caller has the filename. A signed address
+     * hides the extension behind a query string, and sniffing one calls
+     * every OBJ a glTF - which flips its texture upside down.
+     */
+    meshFormat?: string | null
     textureUrl?: string | null
   }[]
 }
@@ -100,13 +106,14 @@ export async function drawPortrait(
           .loadAsync(piece.textureUrl).catch(() => null)
         if (skin) {
           textures.push(skin)
-          wearTexture(model, skin, formatOf(piece.meshUrl))
+          wearTexture(
+            model, skin,
+            (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
+          )
         }
       }
 
-      const box = new THREE.Box3().setFromObject(model)
-      const widest = Math.max(...box.getSize(new THREE.Vector3()).toArray())
-      if (widest > 0) model.scale.multiplyScalar(3.2 / widest)
+      fitToSocket(model, socket)
       body.wear(socket, model)
     }
 
@@ -172,6 +179,7 @@ export async function drawItemCard(item: {
   slot: string
   imageUrl?: string | null
   meshUrl?: string | null
+  meshFormat?: string | null
   textureUrl?: string | null
 }, avatarUrl = '/k6/k6.glb'): Promise<Blob | null> {
   // A face is its own card. Drawing a body to show one would hide it.
@@ -198,21 +206,27 @@ export async function drawItemCard(item: {
   }
 
   if (!item.meshUrl) return null
-  return drawModelCard(item.meshUrl, item.textureUrl ?? null)
+  return drawModelCard(
+    item.meshUrl, item.textureUrl ?? null,
+    (item.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(item.meshUrl),
+  )
 }
 
 /** A model on nothing, framed to fill the card. */
-async function drawModelCard(meshUrl: string, textureUrl: string | null): Promise<Blob | null> {
+async function drawModelCard(
+  meshUrl: string, textureUrl: string | null,
+  format: 'obj' | 'gltf' = formatOf(meshUrl),
+): Promise<Blob | null> {
   let renderer: THREE.WebGLRenderer | null = null
   let model: THREE.Object3D | null = null
   const textures: THREE.Texture[] = []
   try {
-    model = await loadMesh(meshUrl, formatOf(meshUrl))
+    model = await loadMesh(meshUrl, format)
     if (textureUrl) {
       const skin = await new THREE.TextureLoader().loadAsync(textureUrl).catch(() => null)
       if (skin) {
         textures.push(skin)
-        wearTexture(model, skin, formatOf(meshUrl))
+        wearTexture(model, skin, format)
       }
     }
 

@@ -8,7 +8,10 @@
  * because this container cannot reach storage.
  */
 import { createRoot } from 'react-dom/client'
+import { useState } from 'react'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
+import { BodyPicker } from '@/components/avatar/BodyPicker'
+import type { BodyPart } from '@/engine'
 import { templateFor } from '@/engine'
 import '@/index.css'
 
@@ -60,6 +63,30 @@ function sticker() {
   return c.toDataURL('image/png')
 }
 
+/*
+ * A hat modelled badly on purpose: a box drawn six stons to one side of its
+ * own origin and ten times too big, which is what an uploaded accessory
+ * really looks like. If it lands on the head, `fitToSocket` is doing both of
+ * its jobs - the size and, the one that was missing, the position.
+ */
+function wonkyHat() {
+  const away = 6
+  const size = 10
+  const points: string[] = []
+  for (const x of [0, size]) {
+    for (const y of [0, size * 0.6]) {
+      for (const z of [0, size]) points.push(`v ${x + away} ${y} ${z}`)
+    }
+  }
+  // The eight corners above, in the order OBJ counts them from one.
+  const faces = [
+    [1, 2, 4, 3], [5, 7, 8, 6], [1, 5, 6, 2],
+    [3, 4, 8, 7], [1, 3, 7, 5], [2, 6, 8, 4],
+  ]
+  const text = [...points, ...faces.map((f) => `f ${f.join(' ')}`)].join('\n')
+  return URL.createObjectURL(new Blob([text], { type: 'text/plain' }))
+}
+
 const bare: AvatarLook = { body: null, pieces: [] }
 
 const painted: AvatarLook = {
@@ -77,15 +104,45 @@ const dressed: AvatarLook = {
   ],
 }
 
+const hatted: AvatarLook = {
+  body: painted.body,
+  pieces: [
+    { slot: 'face', kind: 'face', imageUrl: face() },
+    {
+      slot: 'hat', kind: 'accessory',
+      meshUrl: wonkyHat(), meshFormat: 'obj', textureUrl: sticker(),
+    },
+  ],
+}
+
+/** The flat body you press to choose what a colour would paint. */
+function Picker() {
+  const [chosen, setChosen] = useState<BodyPart[]>(['Torso', 'LeftArm', 'RightArm'])
+  return (
+    <div className="w-44 rounded-xl border border-ink-line bg-ink-raised p-3">
+      <BodyPicker
+        colours={painted.body!}
+        chosen={chosen}
+        onChoose={(one) => setChosen((had) => (
+          had.includes(one)
+            ? had.length > 1 ? had.filter((x) => x !== one) : had
+            : [...had, one]
+        ))}
+      />
+    </div>
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen space-y-6 bg-ink p-8 text-white">
     <h1 className="font-display text-xl">An avatar, with no website around it</h1>
-    <div className="grid w-[1000px] grid-cols-4 gap-5">
+    <div className="grid w-[1200px] grid-cols-5 gap-5">
       {([
         ['Nothing on', bare, false],
         ['Coloured', painted, false],
         ['Dressed, and draggable', dressed, false],
         ['The profile picture', dressed, true],
+        ['A badly modelled hat', hatted, false],
       ] as const).map(([label, look, portrait]) => (
         <div key={label} className="space-y-2">
           <p className="font-display text-[10px] uppercase tracking-wider text-muted">
@@ -101,6 +158,13 @@ createRoot(document.getElementById('root')!).render(
           </div>
         </div>
       ))}
+    </div>
+
+    <div className="space-y-2">
+      <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+        The body, as a thing you press
+      </p>
+      <Picker />
     </div>
   </div>,
 )

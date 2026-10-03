@@ -11,7 +11,7 @@
  * profile picture use. Not a preview of what everybody else will see - the
  * thing everybody else sees.
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette,
@@ -36,6 +36,7 @@ import { K6_PARTS } from '@/engine'
 import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
 import type { K6Part } from '@/engine'
 import { cn } from '@/lib/cn'
+import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
 
 /** The drawers, in the order somebody opens them. */
 const DRAWERS = [
@@ -84,7 +85,11 @@ export default function MyAvatar() {
   const say = useToast()
 
   const [drawer, setDrawer] = useState<Drawer>('clothing')
-  const [part, setPart] = useState<K6Part>('Torso')
+  /*
+   * Which parts a swatch would paint. More than one, because "both arms"
+   * is one thought and used to be two trips through the colours.
+   */
+  const [parts, setParts] = useState<K6Part[]>(['Torso'])
   const [busy, setBusy] = useState<string | null>(null)
 
   const worn = useAsync(
@@ -124,7 +129,14 @@ export default function MyAvatar() {
    * no accessories - most people - never waits for this at all.
    */
   const [models, setModels] = useState<Record<string, { mesh: string; skin: string | null }>>({})
-  useMemo(() => {
+  /*
+   * `useEffect`, and it was `useMemo`. A memo runs for its value, so the
+   * cleanup it returned was simply the memo's value and was never called:
+   * `live` stayed true for ever and a signing that finished after this page
+   * was gone still called `setModels`. The same family as everything else in
+   * CLAUDE.md - a guard that exists, is checked, and is never turned off.
+   */
+  useEffect(() => {
     let live = true
     void (async () => {
       const wanted = (worn.data ?? []).filter((p) => p.mesh_path)
@@ -216,9 +228,23 @@ export default function MyAvatar() {
     say('Your picture could not be redrawn. Your avatar is saved.', 'info')
   }
 
-  const paint = (which: K6Part, colour: string) => {
-    const next = { ...(look.body ?? DEFAULT_BODY), [which]: colour }
-    void after(`paint:${which}`, () => setBodyColours(next))
+  /*
+   * Paints everything chosen in one go, and refuses the one body that reads
+   * as nobody wearing anything.
+   *
+   * The refusal is said here so somebody hears it in the moment, and it is
+   * said again in `set_body_colours`, where it is actually a rule. A page
+   * that is the only thing stopping something is not stopping it.
+   */
+  const paint = (colour: string) => {
+    if (!parts.length) return
+    const next = { ...(look.body ?? DEFAULT_BODY) }
+    for (const which of parts) next[which] = colour
+    if (readsAsBare(next)) {
+      say('One colour from head to foot reads as wearing nothing. Keep a part different.', 'error')
+      return
+    }
+    void after('paint', () => setBodyColours(next))
   }
 
   const onNow = useMemo(() => {
@@ -290,22 +316,53 @@ export default function MyAvatar() {
 
           {drawer === 'body' ? (
             <Card className="space-y-4">
-              <div className="flex flex-wrap gap-1.5">
-                {K6_PARTS.map((one) => (
-                  <button
-                    key={one}
-                    type="button"
-                    onClick={() => setPart(one)}
-                    className={cn(
-                      'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
-                      part === one
-                        ? 'bg-brand text-white'
-                        : 'bg-ink-hover text-white/70 hover:text-white',
-                    )}
-                  >
-                    {PART_LABELS[one]}
-                  </button>
-                ))}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="mx-auto w-40 shrink-0 rounded-xl border border-ink-line bg-ink-raised p-3">
+                  <BodyPicker
+                    colours={look.body ?? DEFAULT_BODY}
+                    chosen={parts}
+                    onChoose={(one) => setParts((had) => (
+                      had.includes(one)
+                        ? had.length > 1 ? had.filter((x) => x !== one) : had
+                        : [...had, one]
+                    ))}
+                  />
+                </div>
+
+                <div className="min-w-0 space-y-2">
+                  <p className="text-sm font-bold">
+                    {parts.length === 1
+                      ? PART_LABELS[parts[0]]
+                      : `${parts.length} parts`}
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted">
+                    Press a part to add it, press it again to drop it, then pick
+                    a colour. Everything chosen changes at once.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setParts([...K6_PARTS])}
+                      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
+                    >
+                      All of it
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setParts(['LeftArm', 'RightArm'])}
+                      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
+                    >
+                      Both arms
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setParts(['LeftLeg', 'RightLeg'])}
+                      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
+                    >
+                      Both legs
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -314,18 +371,18 @@ export default function MyAvatar() {
                 </p>
                 <Swatches
                   colours={SKIN}
-                  current={look.body?.[part]}
-                  busy={busy === `paint:${part}`}
-                  onPick={(colour) => paint(part, colour)}
+                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+                  busy={busy === 'paint'}
+                  onPick={paint}
                 />
                 <p className="font-display text-[10px] uppercase tracking-wider text-muted">
                   Everything else
                 </p>
                 <Swatches
                   colours={CLOTH}
-                  current={look.body?.[part]}
-                  busy={busy === `paint:${part}`}
-                  onPick={(colour) => paint(part, colour)}
+                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+                  busy={busy === 'paint'}
+                  onPick={paint}
                 />
               </div>
             </Card>

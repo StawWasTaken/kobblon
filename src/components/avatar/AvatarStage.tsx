@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUser } from '@fortawesome/free-solid-svg-icons'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
+  fitToSocket,
   type K6Point, type K6Part,
 } from '@/engine'
 import { cn } from '@/lib/cn'
@@ -144,20 +145,16 @@ export function AvatarStage({
             if (!wanted) { skin?.dispose(); return }
             if (skin) {
               textures.push(skin)
-              wearTexture(model, skin, formatOf(piece.meshUrl))
+              wearTexture(
+                model, skin,
+                (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
+              )
             }
           }
 
-          /*
-           * Scaled to a sensible size for the slot it is going in. A model
-           * is uploaded at whatever size its maker worked at, and a hat
-           * modelled in metres is a hat the size of a building; the body is
-           * ten stons tall and nothing worn on it is bigger than the part it
-           * sits on.
-           */
-          const box = new THREE.Box3().setFromObject(model)
-          const widest = Math.max(...box.getSize(new THREE.Vector3()).toArray())
-          if (widest > 0) model.scale.multiplyScalar(3.2 / widest)
+          // Sized and seated by the engine, so a hat sits where a hat sits
+          // here, on a card and in the Workspace alike.
+          fitToSocket(model, socket)
           body.wear(socket, model)
         }
 

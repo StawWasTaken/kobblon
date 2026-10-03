@@ -65,7 +65,7 @@ export const PREVIEW_EXTENSION = 'webp'
  * It costs one redraw per item and it is the only thing that makes a fix
  * reach the pictures that already exist.
  */
-export const CARD_MARK = 'k2'
+export const CARD_MARK = 'k3'
 
 /**
  * Whether a stored card was drawn by the drawing that runs today.

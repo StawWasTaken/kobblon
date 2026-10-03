@@ -84,6 +84,70 @@ export type K6Point = keyof typeof K6_POINTS
 export const K6_FACE_SIZE = Math.min(BODY.Head.w, BODY.Head.h) * 0.85
 const FACE_GAP = 0.02
 
+/**
+ * How big a worn thing should be, and which way it sits off its socket.
+ *
+ * `across` is the widest the thing may be, in stons, measured against the
+ * body part it hangs on. `out` is the direction it moves to rest against the
+ * body rather than inside it: a hat goes up off the top of the head, a
+ * backpack goes back off the shoulders, and both of those are a half of the
+ * thing's own size once it has been scaled.
+ */
+const WORN_FIT: Record<K6Point, { across: number; out: readonly [number, number, number] }> = {
+  hat: { across: BODY.Head.w * 1.3, out: [0, 1, 0] },
+  face: { across: K6_FACE_SIZE, out: [0, 0, 1] },
+  neck: { across: BODY.Torso.w * 0.9, out: [0, 0, 0] },
+  back: { across: BODY.Torso.w, out: [0, 0, -1] },
+  front: { across: BODY.Torso.w * 0.7, out: [0, 0, 1] },
+  leftHand: { across: BODY.LeftArm.w * 1.4, out: [0, -1, 0] },
+  rightHand: { across: BODY.RightArm.w * 1.4, out: [0, -1, 0] },
+  waist: { across: BODY.Torso.w * 1.1, out: [0, -1, 0] },
+}
+
+/**
+ * Sits an uploaded model on a socket: the right size, and actually there.
+ *
+ * Two things, and the second one is the bug nobody saw coming. Scaling was
+ * already done - a hat modelled in metres is a hat the size of a building -
+ * but a model is also **drawn around whatever origin its author worked at**,
+ * and that origin is not the middle of the hat. Scaling an off-centre model
+ * scales its offset too, which is how a bicorne ended up floating an arm's
+ * length to the right of the head: correctly sized, correctly parented, and
+ * nowhere near the body.
+ *
+ * So: scale, then measure where the thing actually is, then move it so its
+ * own middle lands on the socket, then push it along `out` by half its size
+ * so it rests on the part rather than halfway through it.
+ *
+ * Here rather than in the page because the website, the card drawing and the
+ * Workspace all put accessories on bodies, and three separate ideas of where
+ * a hat goes is three different-looking avatars for one person.
+ */
+export function fitToSocket(model: THREE.Object3D, point: K6Point) {
+  const fit = WORN_FIT[point]
+  if (!fit) return model
+
+  model.position.set(0, 0, 0)
+  model.updateMatrixWorld(true)
+
+  const first = new THREE.Box3().setFromObject(model)
+  const span = first.getSize(new THREE.Vector3())
+  const widest = Math.max(span.x, span.y, span.z)
+  if (widest > 1e-6) model.scale.multiplyScalar(fit.across / widest)
+  model.updateMatrixWorld(true)
+
+  const box = new THREE.Box3().setFromObject(model)
+  const middle = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  model.position.sub(middle)
+  model.position.add(new THREE.Vector3(
+    (fit.out[0] * size.x) / 2,
+    (fit.out[1] * size.y) / 2,
+    (fit.out[2] * size.z) / 2,
+  ))
+  return model
+}
+
 export type K6Motion = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land' | 'wave'
 
 let source: Promise<THREE.Group & { animations: THREE.AnimationClip[] }> | null = null
@@ -296,10 +360,10 @@ export class K6 {
    * of the chest rather than a texture on the body, which is also what lets
    * it sit over a shirt instead of fighting it for the torso's one map.
    *
-   * Sized off the torso so it covers the readable part of a chest and no
-   * more; the picture's own shape is kept, so a wide logo stays wide.
+   * The size of the torso's front face exactly, so whatever the picture is
+   * gets stretched over it.
    */
-  stick(picture: THREE.Texture | null, shape = 1) {
+  stick(picture: THREE.Texture | null) {
     if (!picture) {
       if (this.decal) {
         this.decal.removeFromParent()
@@ -311,8 +375,17 @@ export class K6 {
     }
 
     picture.colorSpace = THREE.SRGBColorSpace
-    const wide = BODY.Torso.w * 0.78
-    const tall = wide / Math.max(0.2, shape)
+    /*
+     * The whole front of the torso, stretched to fit it.
+     *
+     * It used to keep the picture's own shape and sit a little inside the
+     * edges, which made a t-decal a sticker somebody put on a shirt. Staw:
+     * a t-decal *is* the front of the torso. So the plane is the torso's
+     * face exactly, and a picture that is not that shape is stretched -
+     * which is the deal, and the reason a square one looks right.
+     */
+    const wide = BODY.Torso.w
+    const tall = BODY.Torso.h
 
     if (this.decal) {
       this.decal.geometry.dispose()
