@@ -55,6 +55,7 @@ const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
 const Profile = lazyPage(() => import('@/pages/Profile'))
 const Settings = lazyPage(() => import('@/pages/Settings'))
 const Admin = lazyPage(() => import('@/pages/Admin'))
+const CatalogItem = lazyPage(() => import('@/pages/CatalogItem'))
 const MyAvatar = lazyPage(() => import('@/pages/MyAvatar'))
 
 function Booting() {
@@ -144,6 +145,7 @@ export default function App() {
                 <Route path="/d/:id" element={<DiscordJump />} />
                 {/* The Catalog: anybody may look, account or not. */}
                 <Route path="/catalog" element={<Catalog />} />
+                <Route path="/catalog/:tag" element={<CatalogItem />} />
                 {/* Style was the flat avatar and its shop. The Catalog
                     replaced both, and everything written down then - a link
                     somebody pasted, a bookmark - still lands. */}

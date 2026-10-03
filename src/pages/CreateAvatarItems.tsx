@@ -10,12 +10,12 @@
  * It also cannot decide whether somebody may make a thing. It asks, shows
  * the answer, and lets the server refuse: a page is a suggestion.
  */
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faDownload, faImage, faCube, faLock, faPen,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
-  faMagnifyingGlass, faClock, faUpload,
+  faMagnifyingGlass, faClock, faUpload, faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -24,6 +24,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { Choices } from '@/components/ui/Choices'
 import { Menu } from '@/components/ui/Menu'
 import { Dialog } from '@/components/ui/Dialog'
+import { DateTimeField } from '@/components/ui/DateTimeField'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -35,7 +36,7 @@ import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
   uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem,
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
-  setLimited, decalBehind,
+  setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -119,6 +120,31 @@ export default function CreateAvatarItems() {
     async () => (profile ? (await listOwnAssets(profile.id)).filter((a) => a.kind === 'mesh') : []),
     [profile?.id],
   )
+  /*
+   * Cards that are missing or were drawn by an older drawing, redrawn the
+   * next time their owner opens this page.
+   *
+   * A card is drawn once and is then a file in a bucket for ever, so a fix
+   * to the drawing reaches nothing already made unless something redraws it
+   * - which is exactly why the trousers and the bicorne were showing a black
+   * square and a shirt icon. One at a time rather than all at once: each one
+   * builds a WebGL context, and a browser gives out a handful.
+   */
+  useEffect(() => {
+    if (!profile || made.loading) return
+    let live = true
+    void (async () => {
+      let drew = false
+      for (const one of made.data ?? []) {
+        if (!live) return
+        const drawn = await ensureAvatarCard(one, profile.id).catch(() => null)
+        if (drawn) drew = true
+      }
+      if (live && drew) made.reload()
+    })()
+    return () => { live = false }
+  }, [profile?.id, made.loading, made.data])
+
   const decals = useAsync(
     async () => (profile ? (await listOwnAssets(profile.id)).filter((a) => a.kind === 'image') : []),
     [profile?.id],
@@ -316,6 +342,7 @@ export default function CreateAvatarItems() {
               item={one}
               rule={(rules.data ?? []).find((r) => r.kind === one.kind)}
               canLimit={!!profile?.is_admin}
+              canScreen={!!profile?.is_admin || !!profile?.is_moderator}
               onChanged={() => made.reload()}
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
@@ -562,7 +589,7 @@ export default function CreateAvatarItems() {
  * else owns one - so the button is there and the refusal explains itself,
  * rather than this page hiding a rule it would have to keep in step.
  */
-function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
+function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit, canScreen }: {
   item: AvatarItem
   onChanged: () => void
   onTrouble: (message: string) => void
@@ -571,6 +598,8 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
   rule?: AvatarRule
   /** Only Kobblon closes a sale, and the server is the one that says so. */
   canLimit: boolean
+  /** Whether this person may screen things. The database decides for real. */
+  canScreen: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
@@ -649,10 +678,11 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
         </div>
 
         <div className="mt-auto flex items-center gap-2">
-          {item.status === 'approved' && (
+          {item.status === 'approved' ? (
             <Button
               size="sm"
               className="flex-1"
+              icon={item.is_public ? undefined : faStore}
               variant={item.is_public ? 'subtle' : 'yes'}
               loading={busy === 'list'}
               onClick={() => {
@@ -660,12 +690,33 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
                   void run('list', () => listAvatarItem(item.id, false), 'Taken off the Catalog.')
                   return
                 }
+                setAsking(String(item.price || rule?.least_price || 0))
                 setListing(true)
               }}
             >
-              {item.is_public ? 'Take down' : 'List it'}
+              {item.is_public ? 'Take down' : 'Publish'}
             </Button>
-          )}
+          ) : item.status === 'pending' && canScreen ? (
+            /*
+             * Offered on what the page can see; the server decides. It
+             * refuses the person who made it, so this is only ever here for
+             * somebody screening somebody else's work.
+             */
+            <Button
+              size="sm"
+              className="flex-1"
+              variant="subtle"
+              icon={faCircleCheck}
+              loading={busy === 'screen'}
+              onClick={() => void run(
+                'screen',
+                () => reviewAvatarItem(item.id, 'approved'),
+                'Screened. It can go in the Catalog now.',
+              )}
+            >
+              Let it through
+            </Button>
+          ) : null}
 
           <Menu
             label="More"
@@ -701,22 +752,22 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
         </div>
       </div>
 
-      {listing && (
-        <div className="space-y-2 border-t border-ink-line p-3">
-          <Input
-            label="What it sells for"
-            type="number"
-            min={rule?.least_price ?? 0}
-            value={asking}
-            onChange={(e) => setAsking(e.target.value)}
-            hint={rule && rule.least_price > 0
-              ? `At least ${rule.least_price}.`
-              : 'Zero means free.'}
-          />
-          <div className="flex gap-2">
+      {/*
+        * Publishing is a card of its own, because it is a decision with a
+        * number in it rather than a toggle: Staw's "you click on it, a card
+        * appears and u set the price and publish it onto the catalog".
+        */}
+      <Dialog
+        open={listing}
+        onClose={() => setListing(false)}
+        title={`Publish ${item.name}`}
+        description="It goes into the Catalog at this price. You can take it down again whenever you like, for nothing."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setListing(false)}>Cancel</Button>
             <Button
-              size="sm"
               variant="yes"
+              icon={faStore}
               loading={busy === 'list'}
               onClick={() => void run(
                 'list',
@@ -729,41 +780,47 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
                 'In the Catalog.',
               )}
             >
-              List it
+              Publish it
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setListing(false)}>Cancel</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
+              {picture
+                ? <img src={picture} alt="" className="h-full w-full object-contain" />
+                : <FontAwesomeIcon icon={faShirt} className="text-2xl text-white/25" />}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{item.name}</p>
+              <p className="text-xs capitalize text-muted">{item.kind}</p>
+            </div>
           </div>
-        </div>
-      )}
 
-      {limiting && (
-        <div className="space-y-2 border-t border-ink-line p-3">
           <Input
-            label="Sells until"
-            type="datetime-local"
-            value={closes}
-            onChange={(e) => setCloses(e.target.value)}
-            hint="After this nobody can buy it. Everybody who has one keeps it."
+            label="What it sells for"
+            type="number"
+            min={rule?.least_price ?? 0}
+            className="max-w-[12rem]"
+            value={asking}
+            onChange={(e) => setAsking(e.target.value)}
+            hint={rule && rule.least_price > 0
+              ? `At least ${rule.least_price}.`
+              : 'Zero means free.'}
           />
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="yes"
-              loading={busy === 'limit'}
-              onClick={() => void run(
-                'limit',
-                async () => {
-                  await setLimited(item.id, closes ? new Date(closes).toISOString() : null)
-                  setLimiting(false)
-                },
-                closes ? 'It closes then.' : 'No longer a limited.',
-              )}
-            >
-              Save
-            </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={limiting}
+        onClose={() => setLimiting(false)}
+        title={item.sells_until ? `When ${item.name} closes` : `Make ${item.name} a limited`}
+        description="After the moment you pick, nobody can buy it. It still exists and everybody who has one keeps it."
+        footer={
+          <>
             {item.sells_until && (
               <Button
-                size="sm"
                 variant="subtle"
                 loading={busy === 'unlimit'}
                 onClick={() => void run(
@@ -779,10 +836,34 @@ function MadeCard({ item, onChanged, onTrouble, onDone, rule, canLimit }: {
                 Not a limited
               </Button>
             )}
-            <Button size="sm" variant="ghost" onClick={() => setLimiting(false)}>Cancel</Button>
-          </div>
-        </div>
-      )}
+            <Button variant="ghost" onClick={() => setLimiting(false)}>Cancel</Button>
+            <Button
+              variant="yes"
+              loading={busy === 'limit'}
+              disabled={!closes}
+              onClick={() => void run(
+                'limit',
+                async () => {
+                  await setLimited(item.id, closes ? new Date(closes).toISOString() : null)
+                  setLimiting(false)
+                },
+                'It closes then.',
+              )}
+            >
+              Save
+            </Button>
+          </>
+        }
+      >
+        {/* The Events calendar, which is the one we already have. */}
+        <DateTimeField
+          label="Sells until"
+          value={closes}
+          onChange={setCloses}
+          min={new Date()}
+          clearable
+        />
+      </Dialog>
 
       {/*
         * Editing opens a card of its own. It was a panel that unfolded

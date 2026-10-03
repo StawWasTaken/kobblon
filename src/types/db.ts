@@ -772,6 +772,8 @@ export type AvatarItem = {
    */
   preview_path?: string | null
   mesh_path: string | null
+  /** The real format, from the stored filename. The page must not sniff it. */
+  mesh_format?: string | null
   texture_path: string | null
   creator_id?: string
   creator_username?: string

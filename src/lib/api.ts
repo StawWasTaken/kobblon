@@ -4,6 +4,7 @@ import {
   CARD_MARK, cardIsCurrent,
 } from './preview'
 import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
+import { formatOf } from '@/engine'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -2694,6 +2695,81 @@ export function cardFor(item: {
 }): string | null {
   if (item.preview_path) return catalogUrl(item.preview_path)
   return catalogUrl(item.image_path, item.image_bucket ?? undefined)
+}
+
+/**
+ * Draws the card for something somebody made, if it has none or has a stale
+ * one, and keeps it.
+ *
+ * The same rule as `ensureAssetPreview` and for the same reason: a card is
+ * drawn once and is then a file in a bucket for ever, so a fix to the
+ * drawing reaches nothing already made unless something redraws it. Current
+ * means drawn by today's drawing - `CARD_MARK` in the name says which
+ * generation made it - not merely drawn.
+ *
+ * Best effort. A card that will not draw leaves the item showing its own
+ * picture, which for a shirt is its template and is not nothing.
+ */
+export async function ensureAvatarCard(item: AvatarItem, me: string): Promise<string | null> {
+  // A face is its own card; drawing a body to show one would hide it.
+  if (item.kind === 'face') return null
+  if (item.preview_path && cardIsCurrent(item.preview_path)) return null
+
+  const [meshUrl, textureUrl] = await Promise.all([
+    item.mesh_path ? assetUrl(item.mesh_path, 300).catch(() => null) : null,
+    item.texture_path ? assetUrl(item.texture_path, 300).catch(() => null) : null,
+  ])
+
+  const had = item.preview_path ?? null
+  const drawn = await drawAvatarCard(item.id, me, {
+    kind: item.kind,
+    slot: item.slot,
+    imageUrl: item.image_path
+      ? catalogUrl(item.image_path, item.image_bucket ?? undefined)
+      : null,
+    meshUrl,
+    meshFormat: item.mesh_path ? formatOf(item.mesh_path) : null,
+    textureUrl,
+  })
+
+  // Only once the new one is saved, so a failure leaves the card it had
+  // rather than leaving it with none.
+  if (drawn && had && had !== drawn) {
+    await supabase.storage.from(catalogBucket).remove([had])
+  }
+  return drawn
+}
+
+/**
+ * Screens an avatar item, which only a moderator or an admin may do.
+ *
+ * The page offers it on what it can see; the server decides. An item cannot
+ * be screened by the person who made it, and that refusal is the database's,
+ * not this function's.
+ */
+export async function reviewAvatarItem(
+  id: string, decision: 'approved' | 'rejected', note?: string,
+) {
+  unwrap(await supabase.rpc('review_avatar_item', {
+    target: id, decision, note: note ?? null,
+  }))
+}
+
+/**
+ * One Catalog item, by its number, for its own page.
+ *
+ * Comes back null for something that was never screened or does not exist -
+ * which the page shows as "no such thing" rather than as an error, because
+ * to somebody following an old link those are the same event.
+ */
+export async function avatarItemPage(wanted: number): Promise<AvatarItem | null> {
+  const rows = unwrap(await supabase.rpc('avatar_item_page', { wanted })) as AvatarItem[]
+  return rows?.[0] ?? null
+}
+
+/** What is waiting to be screened. Empty for anybody who may not screen. */
+export async function avatarReviewQueue(howMany = 50): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('avatar_review_queue', { how_many: howMany })) as AvatarItem[]) ?? []
 }
 
 /** What each kind of avatar item costs to make, and who may make one. */

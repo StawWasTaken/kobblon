@@ -8,10 +8,10 @@
  * shop selling both would be a filter nobody can name.
  */
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faMagnifyingGlass, faUser, faPlus, faCircleCheck,
+  faShirt, faMagnifyingGlass, faUser, faPlus, faCircleCheck, faClock,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -29,6 +29,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import { avatarShelf, buyAvatarItem, wearAvatarItem, cardFor } from '@/lib/api'
 import type { ShelfOrder } from '@/lib/api'
+import { avatarTag } from '@/lib/kinds'
 import type { AvatarItem, AvatarKind } from '@/types/db'
 import { cn } from '@/lib/cn'
 
@@ -241,6 +242,9 @@ function ShelfCard({ item, busy, canTake, onTake }: {
   onTake: () => void
 }) {
   const picture = cardFor(item)
+  const closed = !!item.sells_until
+    && new Date(item.sells_until).getTime() <= Date.now()
+
   return (
     <div className="relative">
       {!item.price && <FreeCorner />}
@@ -248,7 +252,15 @@ function ShelfCard({ item, busy, canTake, onTake }: {
         'overflow-hidden rounded-xl border border-ink-line bg-ink-card',
         'transition-colors hover:border-brand/60',
       )}>
-        <div className="grid aspect-square place-items-center overflow-hidden bg-media">
+        {/*
+          * The picture and the name open the item's page; the buy button
+          * stays a button. A card where everything is a link is a card where
+          * buying something is one slip away.
+          */}
+        <Link
+          to={`/catalog/${avatarTag(item.kind, item.content_id)}`}
+          draggable={false}
+          className="relative grid aspect-square place-items-center overflow-hidden bg-media">
           {picture ? (
             <img
               src={picture}
@@ -260,26 +272,49 @@ function ShelfCard({ item, busy, canTake, onTake }: {
           ) : (
             <FontAwesomeIcon icon={faShirt} className="text-3xl text-white/30" />
           )}
-        </div>
+
+          {/* Down in the corner, which is where Staw asked for it. */}
+          {item.sells_until && (
+            <span className={cn(
+              'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5',
+              'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
+              closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
+            )}>
+              <FontAwesomeIcon icon={faClock} />
+              {closed ? 'Closed' : 'Limited'}
+            </span>
+          )}
+        </Link>
         <div className="space-y-2 p-3">
-          <h3 className="truncate text-sm font-bold">{item.name}</h3>
+          <h3 className="truncate text-sm font-bold">
+            <Link
+              to={`/catalog/${avatarTag(item.kind, item.content_id)}`}
+              className="transition-colors hover:text-link"
+            >
+              {item.name}
+            </Link>
+          </h3>
           <span className="flex items-center gap-1.5 text-xs text-muted">
             <span className="truncate">{item.creator_display_name}</span>
             {isVerified({ is_verified: item.creator_is_verified }) && (
               <Verified className="text-[10px]" />
             )}
           </span>
-          <BuyButton
-            block
-            size="sm"
-            price={item.price}
-            owned={item.owned}
-            ownedLabel="Wear it"
-            freeLabel="Take it"
-            loading={busy}
-            disabled={!canTake}
-            onClick={onTake}
-          />
+          {closed && !item.owned ? (
+            <Button block size="sm" disabled>Closed</Button>
+          ) : (
+            <BuyButton
+              block
+              size="sm"
+              price={item.price}
+              owned={item.owned}
+              ownedLabel="Wear it"
+              freeLabel="Take it"
+              loading={busy}
+              disabled={!canTake}
+              onClick={onTake}
+            />
+          )}
         </div>
       </div>
     </div>

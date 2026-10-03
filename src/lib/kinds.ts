@@ -41,6 +41,29 @@ export const kindCodes: Record<AssetKind, string> = {
   image: 'IMG', audio: 'SND', video: 'VID', font: 'FNT', build: 'BLD', mesh: 'MSH',
 }
 
+/**
+ * The letters in front of a Catalog item's number.
+ *
+ * Its own table rather than an extension of `kindCodes`: an avatar item is
+ * not an asset, the two numbering runs are separate, and a shirt and a mesh
+ * can both be 104 without either being wrong. The apps read this too, so a
+ * link to a Catalog item means the same thing in all three places.
+ */
+export const avatarCodes: Record<string, string> = {
+  shirt: 'SHRT', trousers: 'TRSR', tdecal: 'TDCL',
+  accessory: 'ACCS', hair: 'HAIR', face: 'FACE',
+}
+
+/** A Catalog item's number, with its kind in front. */
+export const avatarTag = (kind: string, id: number | null | undefined) =>
+  id ? `${avatarCodes[kind] ?? 'ITEM'}-${id}` : ''
+
+/** The number out of such a tag, or out of a bare number. */
+export const avatarNumber = (tag: string): number | null => {
+  const found = Number(String(tag).trim().replace(/^[A-Za-z]+-/, ''))
+  return Number.isFinite(found) && found > 0 ? found : null
+}
+
 /** The number every piece of content carries, with its kind in front. */
 export const contentTag = (kind: AssetKind, id: number | null) =>
   id ? `${kindCodes[kind]}-${id}` : ''
