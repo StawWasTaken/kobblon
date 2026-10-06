@@ -1698,8 +1698,9 @@ export async function postToCommunity(input: {
 }
 
 export async function removeCommunityPost(id: number) {
-  unwrap(await supabase.from('community_posts').update({ is_removed: true })
-    .eq('id', id).select('id').single())
+  const { error } = await supabase.from('community_posts')
+    .update({ is_removed: true }).eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 // ------------------------------------------------------- community Spaces
