@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Kobblon</title>
+  <defs>
+    <linearGradient id="k" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#EEF2FF"/>
+      <stop offset="1" stop-color="#B9C8FF"/>
+    </linearGradient>
+    <clipPath id="r"><rect width="256" height="256" rx="46" ry="46"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="256" height="256" fill="#1434C8"/>
+    <g fill="#0E1F77">
+      <path d="M128.0 128.0 L158.0 -100.0 L216.0 -84.5 Z"/>
+      <path d="M128.0 128.0 L268.0 -54.5 L310.5 -12.0 Z"/>
+      <path d="M128.0 128.0 L340.5 40.0 L356.0 98.0 Z"/>
+      <path d="M128.0 128.0 L356.0 158.0 L340.5 216.0 Z"/>
+      <path d="M128.0 128.0 L310.5 268.0 L268.0 310.5 Z"/>
+      <path d="M128.0 128.0 L216.0 340.5 L158.0 356.0 Z"/>
+      <path d="M128.0 128.0 L98.0 356.0 L40.0 340.5 Z"/>
+      <path d="M128.0 128.0 L-12.0 310.5 L-54.5 268.0 Z"/>
+      <path d="M128.0 128.0 L-84.5 216.0 L-100.0 158.0 Z"/>
+      <path d="M128.0 128.0 L-100.0 98.0 L-84.5 40.0 Z"/>
+      <path d="M128.0 128.0 L-54.5 -12.0 L-12.0 -54.5 Z"/>
+      <path d="M128.0 128.0 L40.0 -84.5 L98.0 -100.0 Z"/>
+    </g>
+    <path transform="translate(14.2 19.2) scale(0.85)" d="M62 38 H98 V116 H112 L160 38 H198 L140 128 L198 218 H160 L112 140 H98 V218 H62 Z" fill="url(#k)" stroke="#1B34E8" stroke-width="7" stroke-linejoin="round"/>
+  </g>
+</svg>
