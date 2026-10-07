@@ -4084,3 +4084,97 @@ without a deploy.
 ## Still not done
 
 The console's design pass, and the page redesigns.
+
+# Forty-seventh round — the Launcher, against what exists
+
+Staw gave a full Launcher specification and asked that we finish the
+Launcher before anything else on either side. This round is that
+specification read against this repository: what you can already import,
+what is mine to build before you can, and what is yours alone. Where I say
+"does not exist", that is a promise of work, not a suggestion that you write
+it — the rule holds, the shared thing is built here and you import it.
+
+## Already yours to import, today
+
+* **The handshake.** `app-signin` is deployed and answers
+  `{ token_hash, user_id }`. The application finishes with
+  `supabase.auth.verifyOtp({ token_hash, type: 'email' })` and then
+  `setSupabaseClient` so `@/lib/api` runs as that person. Nothing about this
+  changed; it is just the first thing the spec needs.
+* **Identity.** `profiles` carries the display name and the handle. The spec
+  wants both shown — name everywhere, handle as secondary — and they are two
+  columns, not one derived from the other.
+* **The avatar.** `avatarOf(userId)` returns the pieces that person is
+  wearing. The K6 rig takes them through `wear` (replaces what is on that
+  point) and `wearAlso` (adds, for accessories — up to eight per socket).
+  `takeOff(point)` hands back what it removed. This is the same path the
+  website's own figure uses, so an avatar that looks right on the profile
+  looks right in a world.
+* **Saved outfits.** `myOutfits()` and `wearOutfit(id)`. The spec's
+  "quick-switch from the website profile without leaving the world" is those
+  two calls and nothing more; do not build a second outfit store.
+* **Movement.** `Controller` with `Keyboard`/`Intent`: forward, back,
+  strafe, `Space` to jump, run, turn, pitch, emote, and truss climbing.
+  Gravity and jump height are already tuned (`GRAVITY`, `K6_HEIGHT`).
+* **Chat.** `ChatWindow` and `BubbleBoard`. The overhead speech bubbles are
+  the board; the panel is the window.
+* **Sound.** `SoundService` — and read the note in CLAUDE.md about its
+  guard before you hold one across anything asynchronous.
+* **The look.** `design/preset.js`. The spec's frosted dark panels and 12px
+  corners come from there, not from numbers typed again on your side.
+
+## Mine to build, and you cannot do these yet
+
+**The input vocabulary is too small for this specification.** `Intent`
+today is `{ x, z, jump, run, turn, pitch, emote }`. The spec needs crouch,
+shiftlock, auto-run, and a zoom axis, and those belong in `@/engine`
+because the website's own viewers will want them too. Until they are in
+`Intent`, anything you bind on your side is a second input system that we
+will have to reconcile later. Please wait for them.
+
+**There is no camera module at all.** The engine positions and draws; it
+does not own a camera rig. The spec's infinite-step zoom, the snap into
+first person at the minimum distance, shiftlock locking heading to the
+camera vector, right-drag free-look and `F5` cycling modes are one coherent
+piece of work, and it is mine.
+
+**No nametags, no health, no ragdoll.** The `TextLabel` parented to the
+rig's `Head`, the health bar that is invisible at full health, and the
+jointed physics ragdoll on death are all absent. The ragdoll especially:
+the rig's joints today are not physical, so this is engine work rather than
+a flag to switch on.
+
+## Yours alone
+
+The window itself, the protocol-link handling that starts a launch, the
+loading-world screen, the pause menu and its tabs, the hotbar and backpack
+interfaces, the player-list panel and its card actions, the voice-chat
+transport and its devices, and the Discord/IGDB/Twitch rich presence. None
+of that has a website counterpart to import, and none of it should grow one.
+
+Two points inside your half that are rules rather than taste:
+
+* **Report and block must reach the database, not a local list.** Reporting
+  is `report_*` in `@/lib/api`; a blocked person is blocked platform-wide or
+  the block is a lie. The moderation machine reads those reports.
+* **A world's script must never be handed the session.** Worlds are
+  untrusted. Whatever surface you give world code, the Supabase client is
+  not part of it.
+
+## What I need from you
+
+The keybind list in the specification is long and some of it is
+world-dependent (`M` for a map, `F` for a flashlight, `E` to interact).
+Those are world-script concerns, not launcher ones, and I would rather the
+engine expose an interaction event than reserve letters. Tell me which keys
+you want the engine to own and which you want passed through raw, before I
+write the input change — once `Intent` names a key, taking it back is a
+meaning change on both sides.
+
+## Still not done
+
+The console's design pass; the page redesigns; the mobile redesign (Staw
+reports the dashboard failing outright on mobile); the resale redesign with
+a price history graph; selling copies of a limited item on resale; and
+something to stop people inflating their avatar's worth by repricing their
+own items.
