@@ -4181,24 +4181,20 @@ own items.
 
 # Forty-eighth round — a new mark
 
-Staw drew a new favicon and asked for it instead of the plain white K on
-blue: the same K, lit from behind by a radiating burst, the letter itself
-carrying a white-to-pale-blue gradient and a brand-blue outline.
+The website's icon is now Staw's own drawing: the Kobblon K lit from behind
+by a radiating burst, white-to-pale-blue on brand blue. It is
+**`public/brand/favicon.png`**, at the same path as the old one, so every
+generated catalog page took it without being regenerated.
 
-It is now **`public/brand/favicon.svg`**, drawn rather than exported, so it
-stays sharp at any size and weighs about 1.4 KB. `public/brand/favicon.png`
-is the same image rendered at 256 and keeps its old path on purpose - every
-catalog page already points at that name, so they all picked up the new mark
-without being regenerated.
+I first rebuilt it as an SVG, which was not what was asked for and was also
+wrong - I had drawn a straight-armed capital K where the real mark is the
+notched form. The file itself is the mark. Use it; do not redraw it.
 
-`app.html` now offers the SVG first and the PNG after it. `site-pages.mjs`
-drops the SVG line for pages under Create, which wear `favicon-create.png`
-and have no drawn mark of their own; leaving it in would have given them the
-wrong icon, which is worse than an older-looking one.
+**Create keeps its own icon**, the white K on black
+(`public/brand/favicon-create.png`). That is unchanged and stays that way.
 
-**If either application shows a Kobblon icon of its own, this is the one.**
-Prefer the SVG. The colours in it are the preset's brand blue (`#1B34E8`)
-and a deeper blue behind; it is not a new palette.
+If either application shows a Kobblon icon, `favicon.png` is the one, and
+`favicon-create.png` is the one for anything under Create.
 
 ## Still not done
 

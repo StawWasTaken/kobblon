@@ -147,25 +147,12 @@ const iconFor = (path) => (
   String(path ?? '').startsWith('create') ? '/brand/favicon-create.png' : '/brand/favicon.png'
 )
 
-/*
- * The mark is drawn rather than photographed, so a browser that can read an
- * SVG gets the sharp one and everything else falls through to the picture.
- * Create has no drawn mark of its own, so its pages carry the picture alone -
- * leaving the SVG in would hand them the wrong icon, which is worse than an
- * older-looking one.
- */
-const SVG_ICON = /<link rel="icon" type="image\/svg\+xml" href="[^"]*" \/>\n\s*/
-
-
 export function describe(html, page) {
   const url = `${SITE}/${page.path}${page.path ? '/' : ''}`
   const title = escape(page.title)
   const description = escape(page.description)
 
-  const creating = String(page.path ?? '').startsWith('create')
-
   return html
-    .replace(SVG_ICON, creating ? '' : (found) => found)
     .replace(
       /<link rel="icon" type="image\/png" href="[^"]*" \/>/,
       `<link rel="icon" type="image/png" href="${iconFor(page.path)}" />`,
