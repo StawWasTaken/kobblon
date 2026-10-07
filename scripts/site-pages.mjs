@@ -12,6 +12,8 @@
 
 export const SITE = 'https://kobblon.com'
 export const TAGLINE = 'The Game Built By Players'
+import { stamped } from './stamped-names.mjs'
+
 /** The currency's name, kept in step with src/lib/currency.ts by hand. */
 const CURRENCY = 'Brix'
 
@@ -143,8 +145,8 @@ const escape = (value) =>
  * itself rather than only once the app has started. A tab should not have to
  * wait for JavaScript to know where it is.
  */
-const iconFor = (path) => (
-  String(path ?? '').startsWith('create') ? '/brand/favicon-create.png' : '/brand/favicon.png'
+const iconFor = (path) => stamped(
+  String(path ?? '').startsWith('create') ? 'brand/favicon-create.png' : 'brand/favicon.png',
 )
 
 export function describe(html, page) {

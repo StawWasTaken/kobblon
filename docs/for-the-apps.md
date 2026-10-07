@@ -4203,3 +4203,37 @@ health, ragdoll) - still waiting on which keys the engine should own. Then
 the mobile redesign, the resale redesign with its price history, limited
 items resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the page redesigns.
+
+# Forty-ninth round — the mark, under a name nothing has cached
+
+The favicon was replaced and the site kept showing the old one. The file was
+right, the tag pointed at it, the deploy had run. A favicon is simply cached
+harder than anything else a page loads: an ordinary reload does not touch it,
+and behind a CDN neither does a hard one, reliably.
+
+So the mark is now published the way the card picture already is - under a
+name of its own making, `/brand/favicon-<eight of its hash>.png`. A new
+address has nothing cached against it anywhere, and it changes by itself
+whenever the picture does.
+
+**`scripts/stamped-names.mjs`** is new and holds the one answer. Both
+`site-pages.mjs` (which writes the name into every page it makes) and
+`stamp-card-picture.mjs` (which puts the file at that name) ask it, rather
+than each computing a hash - if those two ever disagreed, every page in the
+site would point at a file that is not there.
+
+The unstamped `brand/favicon.png` stays where it is for anything linking to
+it by hand. Create's mark is stamped the same way and is still its own
+picture.
+
+**For the applications:** if you show a Kobblon icon, keep using
+`public/brand/favicon.png` from this repository. The stamping is a publishing
+concern, not a new asset.
+
+## Still not done
+
+The Launcher work I owe (a wider `Intent`, the camera module, nametags,
+health, ragdoll) - still waiting on which keys the engine should own. Then
+the mobile redesign, the resale redesign with its price history, limited
+items resold as copies, the avatar-worth inflation, deleted accounts, the
+console's design pass and the page redesigns.

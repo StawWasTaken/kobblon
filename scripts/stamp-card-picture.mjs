@@ -27,6 +27,7 @@
  */
 import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { stamped as stampedName } from './stamped-names.mjs'
 
 const PICTURE = 'public/brand/og.png'
 const ADDRESS = 'https://kobblon.com/brand/og.png'
@@ -62,6 +63,26 @@ for (const file of ['dist/index.html', 'dist/404.html']) {
   if (next === html) continue
   writeFileSync(file, next)
   changed += 1
+}
+
+/*
+ * The marks, for the same reason and worse - a favicon outlives an ordinary
+ * reload. `site-pages.mjs` writes the stamped name into every page it makes;
+ * this puts the file at that name and fixes the built shell those pages are
+ * made from, so the two cannot disagree.
+ */
+for (const mark of ['brand/favicon.png', 'brand/favicon-create.png']) {
+  if (!existsSync(`public/${mark}`)) continue
+  const at = stampedName(mark)
+  if (existsSync('dist/brand')) copyFileSync(`public/${mark}`, `dist${at}`)
+  for (const file of ['dist/index.html', 'dist/404.html']) {
+    if (!existsSync(file)) continue
+    const html = readFileSync(file, 'utf8')
+    const was = new RegExp(`/${mark.replace('.png', '')}(-[0-9a-f]+)?\\.png`, 'g')
+    const next = html.replace(was, at)
+    if (next !== html) writeFileSync(file, next)
+  }
+  console.log(`The mark is published as ${at.slice(1)}.`)
 }
 
 console.log(`The card picture is published as ${named} (${changed} file(s) stamped).`)
