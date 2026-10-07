@@ -4178,3 +4178,32 @@ reports the dashboard failing outright on mobile); the resale redesign with
 a price history graph; selling copies of a limited item on resale; and
 something to stop people inflating their avatar's worth by repricing their
 own items.
+
+# Forty-eighth round — a new mark
+
+Staw drew a new favicon and asked for it instead of the plain white K on
+blue: the same K, lit from behind by a radiating burst, the letter itself
+carrying a white-to-pale-blue gradient and a brand-blue outline.
+
+It is now **`public/brand/favicon.svg`**, drawn rather than exported, so it
+stays sharp at any size and weighs about 1.4 KB. `public/brand/favicon.png`
+is the same image rendered at 256 and keeps its old path on purpose - every
+catalog page already points at that name, so they all picked up the new mark
+without being regenerated.
+
+`app.html` now offers the SVG first and the PNG after it. `site-pages.mjs`
+drops the SVG line for pages under Create, which wear `favicon-create.png`
+and have no drawn mark of their own; leaving it in would have given them the
+wrong icon, which is worse than an older-looking one.
+
+**If either application shows a Kobblon icon of its own, this is the one.**
+Prefer the SVG. The colours in it are the preset's brand blue (`#1B34E8`)
+and a deeper blue behind; it is not a new palette.
+
+## Still not done
+
+The Launcher work I owe (a wider `Intent`, the camera module, nametags,
+health, ragdoll) - still waiting on which keys the engine should own. Then
+the mobile redesign, the resale redesign with its price history, limited
+items resold as copies, the avatar-worth inflation, deleted accounts, the
+console's design pass and the page redesigns.
