@@ -4237,3 +4237,86 @@ health, ragdoll) - still waiting on which keys the engine should own. Then
 the mobile redesign, the resale redesign with its price history, limited
 items resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the page redesigns.
+
+# Fiftieth round — who is in there right now (0165)
+
+**This one is mostly for you.** Presence is written by the Launcher, and
+until it writes, every number below is a truthful zero.
+
+## The shape
+
+Two tables and six functions, in `0165_who_is_in_there_right_now.sql`.
+
+* `world_servers` - a running server: `world_id`, `capacity`, an optional
+  `owner_id` for a private one, `opened_at`, `closed_at`.
+* `world_players` - `(server_id, user_id)`, `joined_at`, and **`last_seen`**.
+
+Everything about counting hangs off `last_seen`, and this is the part to
+read carefully before you build against it.
+
+**Presence is a claim with an expiry, not a join/leave ledger.** Nobody can
+be relied on to say goodbye: the application is force-quit, the laptop
+sleeps, the connection drops. A design that counted joins and leaves would
+drift upward for ever and show fifty people in a World nobody has opened
+since March. So a player counts as present while they have said so
+recently - `stale_after()`, currently 90 seconds - and leaving properly is
+an optimisation that makes the number right *sooner*, never the thing the
+number depends on.
+
+What that means for the Launcher:
+
+* `open_world_server(world, capacity, private)` returns the new server's id.
+  Refuses an unpublished World, and refuses an account that is already
+  sitting on three empty open servers.
+* `join_world_server(server)` - also the way back in after a long pause, so
+  call it rather than deciding for yourself whether you are still joined.
+  Refuses a full server. Joining one leaves every other, because somebody in
+  two servers at once is counted twice and shown in both.
+* **`still_in_world(server)` must be called about every 30 seconds while
+  playing.** If you do not, the player vanishes from the list after 90
+  seconds while still standing in the World. This is the one call that is
+  not optional.
+* `left_world_server(server)` on a clean exit.
+* `close_world_server(server)` - only the owner of a private one, or staff.
+
+For the website: `playing_now(world)` and `servers_of(world, faces)`, which
+hands back each server with a small array of the people in it, so a list of
+twenty servers is one query rather than twenty-one.
+
+**Neither table is writable from a client.** No insert or update is granted
+on either; the functions are the only door. A client that could write
+`world_players` could put anybody in any server.
+
+## Also in this migration
+
+* **`worlds.emblem_url`** is new - a square mark, next to the wide
+  `cover_url`. Null is allowed and falls back to the cover.
+* **`world_visits`** - one row per person per World per day, written by
+  `join_world_server`. It feeds `also_joined(world)`, the "People also join"
+  row. A person's play history is readable only by that person; the
+  recommendation reads across everybody but hands back Worlds and never who
+  played what.
+* **First Ground now has an owner.** It was inserted with
+  `creator_name = 'Kobblon'` - a piece of text, not an account - so the page
+  said Kobblon made it while no account owned it, and it could not be opened
+  in the Workspace, renamed or published over. `owner_id` is now the Kobblon
+  account. **The rest of that is yours:** whether the Workspace lists and
+  opens it is the Workspace's business, and I have not touched it.
+
+## A thing that nearly went wrong
+
+`0073` created this table as `experiences`; `0074` renamed it to `worlds`.
+I wrote the whole migration against `experiences` and it failed on the first
+line that referenced it. Anything either of us still has written against
+that older name is pointing at a table that is not there.
+
+## Still not done
+
+The World page's **visual redesign** - Staw said it looks too much like
+Roblox, and what landed here is the server list, the live count and the
+"people also join" row on the existing layout, not a redesign. Then the
+Launcher work I owe (a wider `Intent`, the camera module, nametags, health,
+ragdoll - still waiting on which keys the engine should own), the mobile
+redesign, the resale redesign with its price history, limited items resold
+as copies, the avatar-worth inflation, deleted accounts, the console's
+design pass and the page redesigns.

@@ -2376,6 +2376,66 @@ export async function worldGenres(): Promise<WorldGenre[]> {
 }
 
 /** What a World shows of itself, in the order it chose. */
+/** Somebody in a server right now, as the server list hands them over. */
+export type PlayerThere = {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  avatar_changed_at: string | null
+}
+
+/** A running server, with the faces of the people in it. */
+export type RunningServer = {
+  id: string
+  capacity: number
+  how_many: number
+  people: PlayerThere[]
+}
+
+/**
+ * The servers of a World, with who is in each.
+ *
+ * Presence here is a claim that expires: somebody counts as playing while
+ * they have said so recently. Nobody can be relied on to say goodbye - an
+ * application is closed, a connection drops - so a list built on joins and
+ * leaves alone would only ever grow. Read this again rather than keeping it;
+ * it is true for about a minute and a half.
+ */
+export async function serversOf(worldId: string, faces = 6): Promise<RunningServer[]> {
+  return (unwrap(await supabase.rpc('servers_of', { wanted: worldId, faces })) as RunningServer[]) ?? []
+}
+
+/** How many people are in a World right now, across every server. */
+export async function playingNow(worldId: string): Promise<number> {
+  return (unwrap(await supabase.rpc('playing_now', { wanted: worldId })) as number) ?? 0
+}
+
+/** A World the people who played this one also played. */
+export type AlsoJoined = {
+  id: string
+  content_id: number
+  slug: string | null
+  name: string
+  emblem_url: string | null
+  cover_url: string | null
+  creator_name: string | null
+  like_count: number
+  dislike_count: number
+  playing: number
+}
+
+/**
+ * Worlds joined by the people who joined this one.
+ *
+ * Built from what people actually did, so it is empty until they have done
+ * it. A World nobody has played alongside anything else recommends nothing,
+ * and that is the honest answer rather than a filler row.
+ */
+export async function alsoJoined(worldId: string, howMany = 6): Promise<AlsoJoined[]> {
+  return (unwrap(await supabase.rpc('also_joined', { wanted: worldId, how_many: howMany })) as AlsoJoined[]) ?? []
+}
+
 export async function worldMedia(worldId: string): Promise<WorldMedium[]> {
   const { data, error } = await supabase
     .from('world_media')

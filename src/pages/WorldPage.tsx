@@ -18,13 +18,16 @@ import { NameMarks } from '@/components/brand/Verified'
 import { RatingBar } from '@/components/worlds/RatingBar'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
 import { ReportDialog } from '@/components/social/ReportDialog'
+import { ServerList } from '@/components/worlds/ServerList'
+import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  doIWatchWorld, favouriteWorld, getWorld, myWorldStanding, setWorldOpinion, watchWorld,
+  alsoJoined, doIWatchWorld, favouriteWorld, getWorld, myWorldStanding, playingNow,
+  serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
 import { play } from '@/lib/app'
@@ -167,6 +170,16 @@ export default function WorldPage() {
     async () => (thing && profile ? doIWatchWorld(thing.id) : false),
     [thing?.id, profile?.id],
   )
+
+  /*
+   * Who is in there now, and what the people who play it also play.
+   *
+   * Presence is a claim that expires, so this is asked again rather than
+   * kept: a list held open for ten minutes is a list of people who left.
+   */
+  const servers = useAsync(async () => (thing ? serversOf(thing.id) : []), [thing?.id])
+  const playing = useAsync(async () => (thing ? playingNow(thing.id) : 0), [thing?.id])
+  const alsoPlayed = useAsync(async () => (thing ? alsoJoined(thing.id) : []), [thing?.id])
 
   const [tab, setTab] = useState<Tab>('About')
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
@@ -385,6 +398,19 @@ export default function WorldPage() {
                 </p>
               )}
 
+              {/*
+                * How many are in it right now. Shown only when somebody is:
+                * "0 playing" on every quiet World is a row of zeroes that
+                * says the platform is empty, which is both true and not
+                * worth printing six times on a page.
+                */}
+              {(playing.data ?? 0) > 0 && (
+                <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-space/15 px-3 py-1 text-sm font-semibold text-space">
+                  <span className="h-2 w-2 rounded-full bg-space" />
+                  {formatCount(playing.data ?? 0)} playing now
+                </p>
+              )}
+
               {genre && (
                 <p className="mt-2 text-sm text-muted">{genre.label}</p>
               )}
@@ -516,7 +542,13 @@ export default function WorldPage() {
           </div>
         )}
 
-        {tab !== 'About' && <Waiting tab={tab} name={thing.name} />}
+        {tab === 'Servers' && (
+          <ServerList servers={servers.data ?? []} name={thing.name} />
+        )}
+
+        {tab !== 'About' && tab !== 'Servers' && <Waiting tab={tab} name={thing.name} />}
+
+        <AlsoJoinedRow worlds={alsoPlayed.data ?? []} />
 
         <AdBanner className="mt-10" quiet />
       </Page>
