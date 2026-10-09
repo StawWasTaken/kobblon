@@ -27,7 +27,25 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, apikey',
+  /*
+   * Listed by hand, this is a trap, and it cost a day.
+   *
+   * supabase-js puts `x-client-info` on every call it makes, and newer
+   * versions add `x-supabase-api-version`. A browser asks the preflight
+   * whether it may send each one, and a header missing from this list
+   * means the browser cancels the request before it is sent — which the
+   * library then reports as "Failed to send a request to the Edge
+   * Function", the same sentence it uses when a function does not exist.
+   * `login` happened to list `x-client-info` and worked; this one did not
+   * and did not, and the two looked identical from outside.
+   *
+   * So the preflight echoes back whatever was asked for rather than
+   * keeping a list in step with a library. That is not a hole: a header
+   * is not a credential, every request still has to get past the checks
+   * below, and a caller who can set headers can set them anyway — CORS
+   * decides what a *page in a browser* may read, not who may call.
+   */
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -187,7 +205,17 @@ Deno.serve(async (request) => {
 })
 
 async function handle(request: Request): Promise<Response> {
-  if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (request.method === 'OPTIONS') {
+    return new Response('ok', {
+      headers: {
+        ...CORS,
+        'Access-Control-Allow-Headers':
+          request.headers.get('access-control-request-headers')
+          ?? CORS['Access-Control-Allow-Headers'],
+        'Access-Control-Max-Age': '86400',
+      },
+    })
+  }
 
   /*
    * A ping answers before anything else: before the method check, before
