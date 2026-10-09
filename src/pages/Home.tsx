@@ -128,7 +128,7 @@ export default function Home() {
   const rest = shown.slice(8, 24)
 
   return (
-    <Page>
+    <Page width="wide">
       <h1 className="mb-6 font-display text-3xl font-extrabold sm:text-4xl">Home</h1>
 
       <FriendsRail />

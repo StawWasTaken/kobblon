@@ -4616,3 +4616,107 @@ as accepted rather than done, and do not build your own.
 barrel, and the two camera signs. I have not got to those; they are not
 forgotten, and the camera module is mine to write once you tell me which
 keys the engine should own - that question is still open from round 47.
+
+# Fifty-seventh round — one shape for the three pages you browse
+
+Nothing in this round breaks a signature. It is here because one of the
+things in it is shared and two of them change what a number *means* on a
+page, and the rule is that a meaning change gets a line even when nothing
+fails to compile.
+
+## A new shared component: `BrowseHero` and `ChipRail`
+
+`@/components/browse/BrowseHero`. Two exports, both mountable outside the
+website - no router, no auth, no page around them. `tools/site/browse-preview`
+mounts them bare and I have looked at it.
+
+```ts
+<BrowseHero
+  title={ReactNode} lead?={ReactNode} icon?={IconDefinition}
+  actions?={ReactNode}
+  value={string} onChange={(next: string) => void}
+  placeholder={string}
+>{/* anything under the field */}</BrowseHero>
+
+<ChipRail words={string[]} value?={string} onPick={(word: string) => void} />
+```
+
+It is the panel at the top of Communities, Discover and the Catalog: the
+title, the line under it, one tall search field, and whatever the page
+wants beside the heading. Staw's words were that the three should look like
+one place while keeping their own elements, and the three had each grown
+their own top - a panel here, a bare heading there, a search buried three
+controls down in a card on the third.
+
+**If the Workspace ever grows a "look through what exists" panel - the asset
+browser is the obvious one - this is the thing to mount rather than a fourth
+version of it.** It is a controlled input: the page owns the term, which is
+what lets the Catalog keep its search in the address bar.
+
+`ChipRail` is a row of words that scroll sideways. Pressing one **performs a
+search**; it does not set a filter. That distinction matters if you copy it:
+the back button and a shared link have to behave as though the word was
+typed, and they do.
+
+## The page column is no longer narrow everywhere
+
+Round earlier I made `narrow` (68rem) the default for every signed-in page,
+on Staw's drawing. He has taken four of them back out, and the reason is
+worth carrying: **a page you read gets the narrow column, a page you survey
+gets the room.** Wide (86rem) again: the Catalog, My Avatar, the homepage,
+Discover. Communities is now wide too, and is finally inside `Page` at all -
+it had been a bare `div` with its own padding, which is why it never lined
+up with anything.
+
+If you mirror the website's column anywhere in the apps, that is the rule
+now, not "narrow everywhere".
+
+## The Catalog's filters are visible rather than folded away
+
+Staw asked for more of the Roblox marketplace's shape here. What changed:
+
+- The category tabs come **first**, then the narrowings, then the grid.
+- The narrowings are a visible row of the site's own `Select`: **All
+  creators / Any price / Order / Sale kind**, plus an "Exact price" toggle
+  that opens the two number fields. They used to be behind a "More" button,
+  and a shop where you cannot see that a filter is on is a shop that
+  silently shows you a tenth of itself.
+- A count at the end of the row: *"N to look at"*. It is the length of what
+  came back, not a total of everything in the Catalog, and it is hidden
+  while the read is failing rather than reading zero.
+
+Two things I deliberately did **not** add, both because the reader cannot
+answer them and a control that implies something the runtime does not do is
+worse than no control: **"regular only"** (there is no not-limited filter in
+`avatar_shelf`) and **"best rated"** (nothing rates an avatar item yet).
+
+No RPC changed. `avatar_shelf` has the same arguments it had; the price
+bands are the existing `least_price`/`most_price` with names on them.
+
+## `CatalogShelf` gained two props
+
+```ts
+<CatalogShelf onTook? compact? hero? actions? />
+```
+
+`hero` makes the shelf carry its own `BrowseHero` and the word rail, which
+is how `/catalog` has one search box instead of a page header above a second
+one. **Off by default**, which is what the avatar page wants - there the
+shelf is a column beside the body and keeps its small search on the filter
+row. If the Workspace ever mounts `CatalogShelf`, `compact` and no `hero` is
+the combination that behaves.
+
+The words in the rail are taken from what is actually on the shelf, not from
+a list written down somewhere, so it cannot offer a word that finds nothing.
+They are held from the widest result the shelf has had rather than recomputed
+as you narrow - otherwise narrowing to four items offers four words from
+those four, and pressing one returns exactly what is already on screen.
+
+## Still blocking on me, unchanged from round 55
+
+Which keys the engine should own versus pass through raw. The camera module,
+the wider `Intent`, nametags, the health HUD and the ragdoll are all behind
+that one answer, and every day it is open is a day `Intent` can still be
+named without breaking you. Also still owed: `page_url`, whether
+`BubbleBoard` is restylable, `WorldScript` in the barrel, and the two camera
+signs.

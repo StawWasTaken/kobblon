@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import { faCompass } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Choices } from '@/components/ui/Choices'
+import { BrowseHero } from '@/components/browse/BrowseHero'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { Input } from '@/components/ui/Input'
 import { EmptyState, ErrorState, SpaceCardSkeleton } from '@/components/ui/States'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { useAsync } from '@/hooks/useAsync'
@@ -94,22 +94,24 @@ export default function Discover() {
   const fresh = useAsync(async () => (browsing ? listWorlds({ sort: 'new', limit: 18 }) : []), [browsing])
   const liked = useAsync(async () => (browsing ? listWorlds({ sort: 'popular', limit: 18 }) : []), [browsing])
 
+  /*
+   * Wide, and the same panel the Catalog and Communities wear. The three
+   * are the same activity - search, narrow, grid - and Staw asked for them
+   * to read as one place rather than three sites that happen to share a
+   * header.
+   */
   return (
-    <Page>
-      <header className="mb-6">
-        <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Discover</h1>
-        <p className="mt-1.5 text-muted">What people are building and playing right now.</p>
-      </header>
+    <Page width="wide">
+      <BrowseHero
+        title="Discover"
+        lead="What people are building and playing right now."
+        icon={faCompass}
+        value={term}
+        onChange={setTerm}
+        placeholder="Search Worlds by name"
+      />
 
-
-      <div className="sticky top-14 z-20 -mx-4 mb-6 space-y-3 bg-ink/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <Input
-          icon={faMagnifyingGlass}
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search Worlds by name"
-          aria-label="Search Worlds"
-        />
+      <div className="sticky top-14 z-20 -mx-4 mb-6 mt-4 space-y-3 bg-ink/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
           {!browsing && (
             <>

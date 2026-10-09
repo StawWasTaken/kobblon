@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faMagnifyingGlass, faXmark, faUsers, faSeedling,
+  faUsers, faSeedling, faPlus,
 } from '@fortawesome/free-solid-svg-icons'
+import { Page } from '@/components/layout/AppShell'
+import { BrowseHero } from '@/components/browse/BrowseHero'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -25,7 +26,6 @@ export default function Communities() {
   const [params, setParams] = useSearchParams()
   const [term, setTerm] = useState(params.get('q') ?? '')
   const [debounced, setDebounced] = useState(term)
-  const field = useRef<HTMLInputElement>(null)
 
   // The search lives in the address, so the bar at the top of the site can
   // hand a search over to this page and a result can be linked to.
@@ -61,47 +61,19 @@ export default function Communities() {
     .slice(0, 12)
 
   return (
-    <div className="px-4 py-6 sm:px-6">
-        {/* The search leads, the way it does in Create. */}
-        <section className="relative overflow-hidden rounded-3xl border border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9">
-
-          <div className="relative">
-            <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Communities</h1>
-            <p className="mt-1.5 max-w-xl text-sm text-muted">
-              Fan clubs, build teams, hobby corners. Each one has its own wall, its own ranks, its
-              own events and its own Spaces.
-            </p>
-
-            <div className="mt-5">
-              <div className="relative">
-                <FontAwesomeIcon
-                  icon={faMagnifyingGlass}
-                  className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/35"
-                />
-                <input
-                  ref={field}
-                  value={term}
-                  onChange={(e) => setTerm(e.target.value)}
-                  placeholder="Search every Community"
-                  aria-label="Search communities"
-                  className="h-14 w-full rounded-2xl border border-ink-line bg-ink-raised pl-12 pr-12 text-base font-semibold shadow-card transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
-                />
-                {term && (
-                  <button
-                    onClick={() => setTerm('')}
-                    aria-label="Clear the search"
-                    className="absolute right-4 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
-                  >
-                    <FontAwesomeIcon icon={faXmark} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+    <Page width="wide">
+      <BrowseHero
+        title="Communities"
+        lead="Fan clubs, build teams, hobby corners. Each one has its own wall, its own ranks, its own events and its own Spaces."
+        icon={faUsers}
+        value={term}
+        onChange={setTerm}
+        placeholder="Search every Community"
+        actions={<Button onClick={openNew} icon={faPlus}>Make one</Button>}
+      />
 
         {all.loading && (
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
           </div>
         )}
@@ -133,7 +105,7 @@ export default function Communities() {
               {formatCount(all.data.length)} {all.data.length === 1 ? 'result' : 'results'} for
               &ldquo;{debounced}&rdquo;
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {all.data.map((community) => (
                 <CommunityCard key={community.id} community={community} />
               ))}
@@ -146,7 +118,7 @@ export default function Communities() {
             <section className="mt-8">
               <SectionHeader title="The biggest" icon={faUsers} />
               {/* One size each, so a row of them lines up. */}
-              <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                 {biggest.map((community) => (
                   <BigCommunityCard key={community.id} community={community} />
                 ))}
@@ -157,7 +129,7 @@ export default function Communities() {
 
             <section className="mt-8">
               <SectionHeader title="Just started" icon={faSeedling} />
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                 {newest.map((community) => (
                   <CommunityCard key={community.id} community={community} />
                 ))}
@@ -165,7 +137,7 @@ export default function Communities() {
             </section>
           </>
         )}
-    </div>
+    </Page>
   )
 }
 

@@ -293,7 +293,7 @@ export default function MyAvatar() {
   if (!profile) return null
 
   return (
-    <Page className="space-y-5">
+    <Page width="wide" className="space-y-5">
       <PageHeader
         title="My Avatar"
         lead="Your body, what it wears, and the face on it."

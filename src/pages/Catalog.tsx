@@ -12,23 +12,29 @@
  * ends up mounting it next.
  */
 import { Page } from '@/components/layout/AppShell'
-import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { CatalogShelf } from '@/components/catalog/CatalogShelf'
 import { useAuth } from '@/hooks/useAuth'
 import { useTitle } from '@/hooks/useTitle'
-import { faShirt, faUser, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faPlus } from '@fortawesome/free-solid-svg-icons'
 
 export default function Catalog() {
   useTitle('Catalog')
   const { profile } = useAuth()
 
+  /*
+   * Wide again. The narrow column Staw asked for on signed-in pages is for
+   * pages you read; a shop is a page you survey, and at 68rem the shelf
+   * dropped to three cards a row with the rest of the screen empty beside
+   * it. He named this one, the avatar, the homepage and Discover as the
+   * four that want the room.
+   */
   return (
-    <Page className="space-y-5">
-      <PageHeader
-        title="Catalog"
-        lead="Everything you can put on an avatar."
-        icon={faShirt}
+    <Page width="wide" className="space-y-5">
+      {/* The heading, the search and the word rail all belong to the shelf,
+          so there is one search box on the page rather than two. */}
+      <CatalogShelf
+        hero
         actions={profile ? (
           <>
             <Button to="/avatar" variant="subtle" icon={faUser}>My Avatar</Button>
@@ -36,7 +42,6 @@ export default function Catalog() {
           </>
         ) : undefined}
       />
-      <CatalogShelf />
     </Page>
   )
 }

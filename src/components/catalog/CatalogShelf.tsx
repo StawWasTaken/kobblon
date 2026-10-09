@@ -23,14 +23,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faMagnifyingGlass, faPlus, faCircleCheck, faClock,
+  faShirt, faMagnifyingGlass, faPlus, faClock,
   faBasketShopping, faCheck, faStar, faSliders,
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
-import { Choices } from '@/components/ui/Choices'
 import { Select } from '@/components/ui/Select'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -52,6 +51,7 @@ import type { ShelfOrder } from '@/lib/api'
 import { avatarTag } from '@/lib/kinds'
 import type { AvatarItem, AvatarKind } from '@/types/db'
 import { cn } from '@/lib/cn'
+import { BrowseHero, ChipRail } from '@/components/browse/BrowseHero'
 
 const SHELVES = [
   { value: 'all', label: 'Everything' },
@@ -66,11 +66,62 @@ const SHELVES = [
   { value: 'outfits', label: 'Outfits' },
 ] as const
 
-export function CatalogShelf({ onTook, compact }: {
+/*
+ * Words that are on nearly everything and so narrow nothing. Without this
+ * the chip rail's first few are "the", "of" and "new", which is a row of
+ * buttons that all return the whole shelf.
+ */
+/** What each price band asks the reader for, as [at least, at most]. */
+const BANDS: Record<string, [string, string]> = {
+  any: ['', ''],
+  free: ['', ''],
+  under: ['', '50'],
+  mid: ['50', '250'],
+  over: ['250', ''],
+}
+
+const NOT_A_KEYWORD = new Set([
+  'the', 'and', 'for', 'with', 'you', 'your', 'new', 'kobblon', 'item',
+  'shirt', 'pants', 'top', 'this', 'that', 'from', 'all', 'one', 'two',
+])
+
+/**
+ * The row of words under the search field.
+ *
+ * Taken from what is actually on the shelf rather than written down
+ * somewhere, so it cannot offer a word that finds nothing - which is the
+ * whole point of a suggestion. Most common first, ties broken by the word
+ * so the row does not reshuffle itself between renders.
+ */
+function keywordsFrom(items: { name: string }[]): string[] {
+  const seen = new Map<string, number>()
+  for (const item of items) {
+    for (const raw of item.name.toLowerCase().split(/[^a-z0-9]+/)) {
+      if (raw.length < 3 || raw.length > 14) continue
+      if (NOT_A_KEYWORD.has(raw)) continue
+      seen.set(raw, (seen.get(raw) ?? 0) + 1)
+    }
+  }
+  return [...seen.entries()]
+    .filter(([, count]) => count > 1)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 18)
+    .map(([word]) => word)
+}
+
+export function CatalogShelf({ onTook, compact, hero, actions }: {
   /** Told when something is bought or worn, so a page beside it can refresh. */
   onTook?: () => void
   /** Fewer columns, for the narrow half of the avatar page. */
   compact?: boolean
+  /**
+   * The shelf leads the page, so it carries the heading and the big search
+   * field rather than having a page header above a second search box. Off
+   * for the avatar page, where the shelf is a column beside the body.
+   */
+  hero?: boolean
+  /** Buttons for the heading row, when the shelf is carrying one. */
+  actions?: React.ReactNode
 }) {
   const { profile } = useAuth()
   const say = useToast()
@@ -100,6 +151,8 @@ export function CatalogShelf({ onTook, compact }: {
   const [onlyFree, setOnlyFree] = useState(false)
   /** The favourites shelf is a different question, so it is a different read. */
   const [starredOnly, setStarredOnly] = useState(false)
+  /** Whether the "Somebody…" field is open, which outlives an empty name. */
+  const [pickingMaker, setPickingMaker] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const basket = useBasket()
   const [showBasket, setShowBasket] = useState(false)
@@ -126,6 +179,17 @@ export function CatalogShelf({ onTook, compact }: {
 
   const narrowed = !!filters.least || !!filters.most || onlyLimited || onlyFree
 
+  /** Which of the three the "Made by" dropdown is sitting on. */
+  const madeByChoice = maker.toLowerCase() === 'kobblon'
+    ? 'kobblon'
+    : (maker || pickingMaker) ? 'somebody' : 'anybody'
+
+  /** Which price band the two numbers currently amount to. */
+  const band = onlyFree
+    ? 'free'
+    : Object.keys(BANDS).find((key) => key !== 'any' && key !== 'free'
+      && BANDS[key][0] === least && BANDS[key][1] === most) ?? 'any'
+
   /*
    * Whatever sale is on, asked once for the whole shelf rather than per card.
    * Every card shows what it will actually charge, which is the only thing a
@@ -150,6 +214,19 @@ export function CatalogShelf({ onTook, compact }: {
       )),
     [shelf, term, by, order, filters, starredOnly],
   )
+
+  /*
+   * The suggestions are taken from the widest list this shelf has had, not
+   * from the current one: narrowing to four items and then being offered
+   * four words from those four is a dead end, and pressing one would always
+   * return exactly what is already on screen.
+   */
+  const [railWords, setRailWords] = useState<string[]>([])
+  useEffect(() => {
+    if (term || by || narrowed || starredOnly) return
+    const found = keywordsFrom(things.data ?? [])
+    if (found.length) setRailWords(found)
+  }, [things.data, term, by, narrowed, starredOnly])
 
   /**
    * Buying a whole outfit: every piece they do not already own, then it goes
@@ -194,6 +271,25 @@ export function CatalogShelf({ onTook, compact }: {
 
   return (
     <div className="space-y-5">
+      {hero && (
+        <BrowseHero
+          title="Catalog"
+          lead="Everything you can put on an avatar - shirts, hair, faces, whole outfits."
+          icon={faShirt}
+          actions={actions}
+          value={term}
+          onChange={settle}
+          placeholder="Search the Catalog"
+        >
+          <ChipRail
+            className="mt-4"
+            words={railWords}
+            value={term}
+            onPick={settle}
+          />
+        </BrowseHero>
+      )}
+
       {/*
         * A sale says so, at the top, with when it ends.
         *
@@ -247,81 +343,102 @@ export function CatalogShelf({ onTook, compact }: {
         </div>
       )}
 
-      {/* ------------------------------------------- who made it, and in what order */}
+      <Tabs
+        value={shelf}
+        onChange={setShelf}
+        options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
+      />
+
+      {/*
+        * Everything that narrows the shelf, on one row.
+        *
+        * Staw asked for the Roblox marketplace's shape here and this is the
+        * part of it worth copying: the narrowings are visible rather than
+        * behind a "More", because a shop where you cannot see that a filter
+        * is on is a shop that silently shows you a tenth of itself. The
+        * exact numbers stay folded away - those are for somebody hunting a
+        * hat under forty Brix, and the bands cover everybody else.
+        */}
       <div className={cn(
-        'space-y-3 rounded-2xl border border-ink-line bg-ink-card p-4',
+        'space-y-3 rounded-2xl border border-ink-line bg-ink-card p-3.5',
         starredOnly && 'pointer-events-none opacity-40',
       )}>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wide text-muted">Made by</span>
-
-          <button
-            type="button"
-            onClick={() => { setMaker(''); setMakerDraft('') }}
-            aria-pressed={!maker}
-            className={cn(
-              'h-8 rounded-lg px-3 text-xs font-bold transition-colors',
-              !maker ? 'bg-brand text-onbrand' : 'bg-ink-hover text-white/65 hover:text-white',
-            )}
-          >
-            Anybody
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setMaker('kobblon'); setMakerDraft('kobblon') }}
-            aria-pressed={maker.toLowerCase() === 'kobblon'}
-            className={cn(
-              'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-colors',
-              maker.toLowerCase() === 'kobblon'
-                ? 'bg-brand text-onbrand'
-                : 'bg-ink-hover text-white/65 hover:text-white',
-            )}
-          >
-            <FontAwesomeIcon icon={faCircleCheck} className="text-[#4d68ff]" />
-            Kobblon
-          </button>
-
-          <form
-            onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
-            className="flex items-center gap-1.5"
-          >
-            <span className="text-xs text-muted">@</span>
-            <input
-              value={makerDraft}
-              onChange={(e) => setMakerDraft(e.target.value)}
-              onBlur={() => setMaker(makerDraft.trim())}
-              placeholder="somebody"
-              aria-label="Made by which person"
-              className="h-8 w-32 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+          {/* The avatar page mounts this shelf without a heading above it,
+              so the search has to live on the row instead. */}
+          {!hero && (
+            <Input
+              className="max-w-xs flex-1"
+              placeholder="Name"
+              icon={faMagnifyingGlass}
+              value={term}
+              onChange={(e) => settle(e.target.value)}
             />
-          </form>
-        </div>
+          )}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Input
-            className="max-w-xs flex-1"
-            placeholder="Name"
-            icon={faMagnifyingGlass}
-            value={term}
-            onChange={(e) => settle(e.target.value)}
+          <Select
+            label="Made by"
+            value={madeByChoice}
+            onChange={(next) => {
+              if (next === 'anybody') { setMaker(''); setMakerDraft('') }
+              else if (next === 'kobblon') { setMaker('kobblon'); setMakerDraft('kobblon') }
+              else { setMaker(''); setMakerDraft('') }
+              setPickingMaker(next === 'somebody')
+            }}
+            className="w-44"
+            options={[
+              { value: 'anybody', label: 'All creators' },
+              { value: 'kobblon', label: 'Kobblon' },
+              { value: 'somebody', label: 'Somebody…' },
+            ]}
           />
+
+          {(pickingMaker || madeByChoice === 'somebody') && (
+            <form
+              onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
+              className="flex items-center gap-1.5"
+            >
+              <span className="text-xs text-muted">@</span>
+              <input
+                value={makerDraft}
+                onChange={(e) => setMakerDraft(e.target.value)}
+                onBlur={() => setMaker(makerDraft.trim())}
+                placeholder="username"
+                aria-label="Made by which person"
+                className="h-9 w-36 rounded-xl border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+              />
+            </form>
+          )}
+
+          <Select
+            label="Price"
+            value={band}
+            onChange={(next) => {
+              setOnlyFree(next === 'free')
+              const [low, high] = BANDS[next] ?? ['', '']
+              setLeast(low)
+              setMost(high)
+            }}
+            className="w-40"
+            options={[
+              { value: 'any', label: 'Any price' },
+              { value: 'free', label: 'Free' },
+              { value: 'under', label: 'Under 50' },
+              { value: 'mid', label: '50 – 250' },
+              { value: 'over', label: '250 and up' },
+            ]}
+          />
+
           {/*
-            * The site's own Select, not a bare one. There is a dropdown in
-            * `@/components/ui` that every other shelf on Kobblon uses, and a
-            * browser's own select next to it is the thing that makes a page
-            * look like it was built by somebody else.
-            *
-            * No "best rated" in it: nothing rates an avatar item yet, and a
-            * sort that quietly falls back to something else is worse than
-            * one that is not offered, because it looks like it worked.
+            * No "best rated": nothing rates an avatar item yet, and a sort
+            * that quietly falls back to something else is worse than one
+            * that is not offered, because it looks like it worked.
             */}
           <Select
             label="Order"
             value={order}
             onChange={(next) => setOrder(next as ShelfOrder)}
             className="w-40"
-            align="right"
             options={[
               { value: 'newest', label: 'Newest' },
               { value: 'oldest', label: 'Oldest' },
@@ -331,21 +448,58 @@ export function CatalogShelf({ onTook, compact }: {
             ]}
           />
 
+          {/*
+            * Only two, because the reader can only answer two. There is no
+            * "regular only" behind it, so it is not offered.
+            */}
+          <Select
+            label="Sale kind"
+            value={onlyLimited ? 'limited' : 'any'}
+            onChange={(next) => setOnlyLimited(next === 'limited')}
+            className="w-40"
+            options={[
+              { value: 'any', label: 'Any kind' },
+              { value: 'limited', label: 'Limiteds only' },
+            ]}
+          />
+
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
             aria-expanded={showFilters}
             className={cn(
               'inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors',
-              narrowed || showFilters
+              showFilters
                 ? 'border-brand bg-brand/15 text-white'
                 : 'border-ink-line text-white/65 hover:text-white',
             )}
           >
             <FontAwesomeIcon icon={faSliders} />
-            More
-            {narrowed && <span className="text-brand-bright">•</span>}
+            Exact price
           </button>
+
+          {(narrowed || by) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setLeast(''); setMost(''); setOnlyFree(false); setOnlyLimited(false)
+                setMaker(''); setMakerDraft(''); setPickingMaker(false)
+              }}
+            >
+              Clear
+            </Button>
+          )}
+
+          {/* What the narrowing came to, which is the thing a shop should
+              say back to you before you scroll. */}
+          {!things.error && (
+            <span className="ml-auto text-xs text-muted">
+              {things.loading || outfits.loading
+                ? 'Looking…'
+                : `${(shelf === 'outfits' ? outfits.data : things.data)?.length ?? 0} to look at`}
+            </span>
+          )}
         </div>
 
         {showFilters && (
@@ -356,8 +510,7 @@ export function CatalogShelf({ onTook, compact }: {
               * `cn` joins and does not merge, so `w-28` next to the field's
               * own `w-full` is decided by which lands later in the
               * stylesheet - and `w-full` won, which is why these two were
-              * the width of the card. The same trap that is written down in
-              * CLAUDE.md, in code written after reading it.
+              * the width of the card.
               */}
             <div className="w-28">
               <Input
@@ -379,41 +532,9 @@ export function CatalogShelf({ onTook, compact }: {
                 onChange={(e) => setMost(e.target.value)}
               />
             </div>
-            <Choices
-              label="Narrow it"
-              size="sm"
-              tone="soft"
-              value={onlyFree ? 'free' : onlyLimited ? 'limited' : 'any'}
-              onChange={(next) => {
-                setOnlyFree(next === 'free')
-                setOnlyLimited(next === 'limited')
-              }}
-              options={[
-                { value: 'any', label: 'Anything' },
-                { value: 'free', label: 'Free only' },
-                { value: 'limited', label: 'Limiteds only', icon: faClock },
-              ]}
-            />
-            {narrowed && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setLeast(''); setMost(''); setOnlyFree(false); setOnlyLimited(false)
-                }}
-              >
-                Clear
-              </Button>
-            )}
           </div>
         )}
       </div>
-
-      <Tabs
-        value={shelf}
-        onChange={setShelf}
-        options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
-      />
 
       {shelf === 'outfits' ? (
         outfits.loading ? (
