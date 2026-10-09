@@ -108,7 +108,7 @@ create or replace function public.open_world_server(
   wanted uuid, room_for integer default 50, private boolean default false
 )
 returns uuid
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare
   me uuid := auth.uid();
   fresh integer;
@@ -153,7 +153,7 @@ $$;
 /** Closing one. Only whoever opened a private room may close it. */
 create or replace function public.close_world_server(server uuid)
 returns void
-language sql security definer set search_path = public as $$
+language sql security definer set search_path = public, extensions as $$
   update public.world_servers
      set closed_at = clock_timestamp()
    where id = server
@@ -177,7 +177,7 @@ grant execute on function public.close_world_server(uuid) to authenticated;
  */
 create or replace function public.join_world_server(server uuid)
 returns void
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare
   me uuid := auth.uid();
   room record;
@@ -223,7 +223,7 @@ $$;
 /** Said every so often while playing. Nothing happens if the row is gone. */
 create or replace function public.still_in_world(server uuid)
 returns void
-language sql security definer set search_path = public as $$
+language sql security definer set search_path = public, extensions as $$
   update public.world_players
      set last_seen = clock_timestamp()
    where server_id = server and user_id = auth.uid();
@@ -232,7 +232,7 @@ $$;
 /** Said on the way out, when there is a way out to be said on. */
 create or replace function public.left_world_server(server uuid)
 returns void
-language sql security definer set search_path = public as $$
+language sql security definer set search_path = public, extensions as $$
   delete from public.world_players
    where server_id = server and user_id = auth.uid();
 $$;
@@ -246,7 +246,7 @@ $$;
  */
 create or replace function public.playing_now(wanted uuid)
 returns integer
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select count(*)::integer
     from public.world_players p
     join public.world_servers s on s.id = p.server_id
@@ -273,7 +273,7 @@ returns table (
   how_many integer,
   people jsonb
 )
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   with fresh as (
     select p.server_id, p.user_id, p.joined_at
       from public.world_players p
@@ -373,7 +373,7 @@ returns table (
   emblem_url text, cover_url text, creator_name text,
   like_count integer, dislike_count integer, playing integer
 )
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   with theirs as (
     select distinct user_id from public.world_visits where world_id = wanted
   ),
