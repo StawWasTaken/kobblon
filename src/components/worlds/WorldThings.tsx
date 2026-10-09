@@ -20,7 +20,7 @@ function AddTile({ to, says }: { to: string; says: string }) {
   return (
     <Link
       to={to}
-      className="group flex flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center outline-none transition-colors hover:border-ink-line focus-visible:border-brand"
+      className="group flex w-32 flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center outline-none transition-colors hover:border-ink-line focus-visible:border-brand"
     >
       <span className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-dashed border-ink-line text-2xl text-ink-soft transition-colors group-hover:border-brand group-hover:text-brand">
         <FontAwesomeIcon icon={faPlus} />
@@ -42,7 +42,7 @@ function Thing({
   fallback: typeof faAward
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 p-4 text-center">
+    <div className="flex w-32 flex-col items-center gap-3 p-4 text-center">
       <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-ink-line bg-ink-sunken">
         {picture ? (
           <img src={picture} alt="" className="h-full w-full object-cover" />
@@ -58,7 +58,12 @@ function Thing({
   )
 }
 
-const GRID = 'grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6'
+/*
+ * Centred and wrapping rather than a grid. A grid left-aligns two badges
+ * against the edge of a wide card and leaves four empty cells beside them,
+ * which reads as something failing to load.
+ */
+const GRID = 'flex flex-wrap justify-center gap-2'
 
 /**
  * Both tabs are the same shape, so they are the same component with

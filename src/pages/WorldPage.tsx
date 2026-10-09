@@ -536,65 +536,64 @@ export default function WorldPage() {
           options={tabs.map((name) => ({ value: name, label: name, icon: tabIcons[name] }))}
         />
 
-        {tab === 'About' && (
-          <div className="mt-6">
-            {/*
-              * The screenshots live here now rather than beside the title.
-              * Somebody deciding whether to press Play has already pressed
-              * it or not by the time they scroll; somebody who wants to see
-              * more of a World comes looking, and this is where they look.
-              */}
-            {/*
-              * Capped. Across the whole column it is a 1088-pixel wall of
-              * one screenshot, which is more of a World than anybody asked
-              * to see before they have decided anything.
-              */}
-            <div className="max-w-3xl">
-              <WorldGallery shots={shots} name={thing.name} />
-            </div>
-
-            <h2 className="mt-8 font-display text-lg font-extrabold">Description</h2>
-            <p className="mt-2 max-w-3xl whitespace-pre-wrap leading-relaxed text-white/70">
-              {thing.description || 'Whoever built this has not described it yet.'}
-            </p>
-
-            <div className="mt-6 flex flex-wrap border-y border-ink-line">
-              <Stat label="Visits" value={formatCount(thing.visit_count)} />
-              <Stat label="Favourites" value={formatCount(counts.favourites)} />
-              <Stat label="Likes" value={formatCount(counts.likes)} />
-              <Stat
-                label="Published"
-                value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
-              />
-              <Stat
-                label="Updated"
-                value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
-              />
-              <Stat label="Genre" value={genre?.label ?? 'Not set'} />
-            </div>
-
-            {profile && !mine && (
-              <div className="mt-2 text-right">
-                <button
-                  onClick={() => setReporting(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
-                >
-                  <FontAwesomeIcon icon={faFlag} className="text-[10px]" />
-                  Report Abuse
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
         {/*
-          * Every tab's contents sit in the same box, so moving between them
-          * does not move the page under somebody. They were four different
-          * widths before - one capped, one a full-width card, two centred
-          * empty states - and the only thing they had in common was the row
-          * of tabs above them.
+          * One box for every tab.
+          *
+          * They were four different things before - About ran its own
+          * left-aligned column while the other three were cards - so moving
+          * between tabs moved the page under you and nothing lined up.
+          * Each one is the same card in the same place now, which is what
+          * "uniform" has to mean before anything inside it is worth
+          * arguing about.
           */}
         <div className="mt-6">
+          {tab === 'About' && (
+            <Card className="p-5 sm:p-6">
+              {/*
+                * Centred and capped. Across the whole column one screenshot
+                * is a 1088-pixel wall; left-aligned in a wide card it looks
+                * like a mistake.
+                */}
+              <div className="mx-auto max-w-3xl">
+                <WorldGallery shots={shots} name={thing.name} />
+              </div>
+
+              <div className="mx-auto mt-8 max-w-3xl">
+                <h2 className="font-display text-lg font-extrabold">Description</h2>
+                <p className="mt-2 whitespace-pre-wrap leading-relaxed text-white/70">
+                  {thing.description || 'Whoever built this has not described it yet.'}
+                </p>
+
+                <div className="mt-6 flex flex-wrap border-y border-ink-line">
+                  <Stat label="Visits" value={formatCount(thing.visit_count)} />
+                  <Stat label="Favourites" value={formatCount(counts.favourites)} />
+                  <Stat label="Likes" value={formatCount(counts.likes)} />
+                  <Stat
+                    label="Published"
+                    value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
+                  />
+                  <Stat
+                    label="Updated"
+                    value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
+                  />
+                  <Stat label="Genre" value={genre?.label ?? 'Not set'} />
+                </div>
+
+                {profile && !mine && (
+                  <div className="mt-2 text-right">
+                    <button
+                      onClick={() => setReporting(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
+                    >
+                      <FontAwesomeIcon icon={faFlag} className="text-[10px]" />
+                      Report Abuse
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
           {tab === 'Badges' && (
             <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
           )}
