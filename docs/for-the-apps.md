@@ -5015,3 +5015,34 @@ database yet** — Staw applies those by hand. So build against them, and if
 `screen_say` answers "function does not exist" for a day, that is why
 rather than a mistake on your side. `ChatService` without a screen is the
 state it is in today and it is not broken, it is unscreened.
+
+# Fifty-ninth round — the machine reads with GPT-OSS now
+
+Short one, and none of it is yours to build. It is here because the thing
+that screens chat and the thing that screens uploads are now visibly the
+same system, and because a model name changed under both of us.
+
+**Both model names this project was using are gone from Groq.**
+`llama-3.3-70b-versatile` was retired on 16 August 2026 and the Llama 3.2
+vision previews went the year before. Every ask had been coming back an
+error that the worker swallowed, which is why the console kept reporting
+that it had looked at twelve things and decided none of them. Staw asked
+for OpenAI's models, on Groq, where they are free, so reading is now
+`openai/gpt-oss-120b` — OpenAI's open-weight model, Groq's hosting, same
+key and same endpoint (migration 0169).
+
+**Nothing looks at pictures for the moment.** GPT-OSS is text only and
+Groq's catalogue has no vision model I can point at honestly, so
+`vision_model` is empty, and empty is a real setting: anything with a
+picture is left for a person rather than sent to a model that cannot see.
+
+**The console asks Groq what exists rather than remembering.** `moderate`
+takes `{ list: true }` now and hands back the model ids the key can
+actually use, and the staff panel offers those as a menu. A name written
+down in a migration is a name that is right until it is not, and "decided
+0" is a terrible way to find out.
+
+What this means for you: nothing changes about `screen_say`, which is
+patterns in the database and never asks a model. If the Launcher ever wants
+a *machine* opinion on something — a World's description, say — it goes
+through `moderate` with an admin session, not from a client.

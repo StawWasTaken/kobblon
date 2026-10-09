@@ -50,7 +50,7 @@ import {
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
-  aiSettings, setAiSettings, aiRecent, aiWork, runModeration,
+  aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
 } from '@/lib/api'
 import type { AdminLogEntry, FlaggedTerm, ReportRow, StaffPerson } from '@/lib/api'
 import { PersonSheet } from '@/components/staff/PersonSheet'
@@ -1262,6 +1262,24 @@ export function MachineSection() {
   const waiting = useAsync(async () => aiWork(50), [])
   const [busy, setBusy] = useState<string | null>(null)
 
+  /*
+   * What the key can see. Asked once, on purpose: it is a call to Groq and
+   * the answer does not change while somebody is looking at this page. A
+   * failure is not shouted about — the two Selects fall back to whatever
+   * is already set, which is still true and still saveable.
+   */
+  const [models, setModels] = useState<string[]>([])
+  const [modelTrouble, setModelTrouble] = useState<string | null>(null)
+  useEffect(() => {
+    let wanted = true
+    groqModels()
+      .then((found) => { if (wanted) setModels(found) })
+      .catch((error: unknown) => {
+        if (wanted) setModelTrouble(error instanceof Error ? error.message : 'Groq did not answer.')
+      })
+    return () => { wanted = false }
+  }, [])
+
   const change = async (what: string, input: Parameters<typeof setAiSettings>[0]) => {
     setBusy(what)
     try {
@@ -1427,12 +1445,47 @@ export function MachineSection() {
             </div>
           </div>
 
-          <p className="text-[11px] text-muted">
-            Reading with <span className="font-bold text-white/80">{settings.data?.model}</span>,
-            looking with <span className="font-bold text-white/80">{settings.data?.vision_model}</span>.
-            The key lives in Supabase as <code>GROQ_API_KEY</code> and never
-            reaches a browser.
-          </p>
+          <div className="space-y-2">
+            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              Which models it uses
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {/*
+                * Whatever is set is always an option, even when Groq no
+                * longer lists it. Otherwise the Select shows something else
+                * as the current value and the first save changes a setting
+                * nobody meant to change.
+                */}
+              <Select
+                label="Reading"
+                value={settings.data?.model ?? ''}
+                disabled={busy === 'model'}
+                onChange={(picked) => void change('model', { which_model: picked })}
+                options={[...new Set([settings.data?.model, ...models].filter(Boolean))]
+                  .map((one) => ({ value: one as string, label: one as string }))}
+              />
+              <Select
+                label="Looking at pictures"
+                value={settings.data?.vision_model ?? ''}
+                disabled={busy === 'vision'}
+                onChange={(picked) => void change('vision', { which_vision_model: picked })}
+                options={[
+                  { value: '', label: 'Nobody — a person looks at pictures' },
+                  ...[...new Set([settings.data?.vision_model, ...models].filter(Boolean))]
+                    .map((one) => ({ value: one as string, label: one as string })),
+                ]}
+              />
+            </div>
+            <p className="text-[11px] text-muted">
+              {modelTrouble
+                ? `Groq's list could not be fetched, so only what is already set is offered. ${modelTrouble}`
+                : models.length
+                  ? `${models.length} models this key can use. Groq retires names on its own schedule, so this is asked rather than remembered.`
+                  : 'Asking Groq what this key can use…'}
+              {' '}The key lives in Supabase as <code>GROQ_API_KEY</code> and
+              never reaches a browser.
+            </p>
+          </div>
         </Card>
       )}
 

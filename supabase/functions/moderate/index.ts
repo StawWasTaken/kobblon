@@ -135,6 +135,36 @@ async function askGroq(
   }
 }
 
+/**
+ * Which models this key can actually use, asked of Groq rather than
+ * remembered.
+ *
+ * Groq retires names on its own schedule — `llama-3.3-70b-versatile` went
+ * on 16 August 2026 and the vision previews before it — and a name written
+ * down in a migration is a name that is right until it is not, with
+ * "decided 0" as the only symptom. So the console asks, and whoever is
+ * setting this picks from what exists today.
+ */
+async function groqModels(): Promise<{ models?: string[]; trouble?: string }> {
+  const said = await fetch('https://api.groq.com/openai/v1/models', {
+    headers: { authorization: `Bearer ${GROQ_KEY}` },
+  }).catch((why) => ({ failed: String(why) }) as const)
+
+  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
+  if (!said.ok) {
+    const why = await said.text().catch(() => '')
+    return { trouble: `Groq said ${said.status}: ${why.slice(0, 300)}` }
+  }
+
+  const body = await said.json().catch(() => null)
+  const list = Array.isArray(body?.data) ? body.data : []
+  const models = list
+    .map((one: { id?: unknown }) => String(one?.id ?? ''))
+    .filter((id: string) => id && !/whisper|tts|guard/i.test(id))
+    .sort()
+  return { models }
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   if (request.method !== 'POST') return answer({ error: 'Use POST.' }, 405)
@@ -169,6 +199,17 @@ Deno.serve(async (request) => {
     const { data: profile } = await asking
       .from('profiles').select('is_admin').eq('id', who.user.id).maybeSingle()
     if (!profile?.is_admin) return answer({ error: 'Only Kobblon runs this.' }, 403)
+  }
+
+  /*
+   * Asking what the machine *could* be, rather than setting it going. Same
+   * door, same two ways through it: this hands back model names, which is
+   * not public information about somebody's account.
+   */
+  const asked = await request.json().catch(() => ({}))
+  if (asked?.list) {
+    const { models, trouble } = await groqModels()
+    return trouble ? answer({ error: trouble }, 502) : answer({ models })
   }
 
   const db = createClient(SUPABASE_URL, SERVICE_KEY)
@@ -209,6 +250,18 @@ Deno.serve(async (request) => {
       job.words ? `Description: ${job.words}` : null,
       picture ? 'A picture of it is attached.' : 'There is no picture.',
     ].filter(Boolean).join('\n')
+
+    /*
+     * No vision model set means no machine looks at pictures, and the thing
+     * is left exactly where it was, for a person. That is a real setting
+     * rather than a broken one: Groq's catalogue has had no vision model
+     * for stretches at a time, and sending a picture to a model that
+     * cannot see is twelve refusals that mean nothing.
+     */
+    if (picture && !settings.vision_model) {
+      trouble.add('No vision model is set, so anything with a picture was left for a person.')
+      continue
+    }
 
     const verdict = await askGroq(
       picture ? settings.vision_model : settings.model,

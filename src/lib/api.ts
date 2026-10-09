@@ -3186,6 +3186,22 @@ export async function aiSettings(): Promise<AiSettings | null> {
   return (data as AiSettings | null) ?? null
 }
 
+/**
+ * Which models the Groq key can actually use, today.
+ *
+ * Asked of Groq through the worker rather than written down here, because
+ * a name written down is a name that is right until Groq retires it — and
+ * the only symptom of that is the machine quietly deciding nothing.
+ */
+export async function groqModels(): Promise<string[]> {
+  const { data, error } = await supabase.functions.invoke('moderate', { body: { list: true } })
+  if (error) {
+    const said = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    throw new Error(said?.error ?? error.message)
+  }
+  return (data as { models?: string[] }).models ?? []
+}
+
 export async function setAiSettings(input: Partial<{
   turn_on: boolean
   how: 'always' | 'slow' | 'busy'
