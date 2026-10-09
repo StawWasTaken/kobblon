@@ -262,8 +262,27 @@ async function handle(request: Request): Promise<Response> {
     const asking = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { authorization: sent } },
     })
-    const { data: who } = await asking.auth.getUser()
-    if (!who?.user) return answer({ error: 'Sign in first.' }, 401)
+    /*
+     * The token, handed over, rather than `getUser()` on its own.
+     *
+     * `getUser()` with no argument reads the session the client has, and a
+     * client made a line ago on a server has none — the session lives in a
+     * browser's storage, which is not here. So it answered "nobody" for a
+     * signed-in admin, every time, and said "Sign in first" to somebody who
+     * was. The authorization header is passed for the database calls below,
+     * where PostgREST does read it, and that is what made this look right.
+     *
+     * `discord` has always done it this way. This one did not, and nothing
+     * found out until the request started arriving at all.
+     */
+    const { data: who } = await asking.auth.getUser(token)
+    if (!who?.user) {
+      return answer({
+        error: token && token !== ANON_KEY
+          ? 'That sign-in is not valid any more. Sign out and back in.'
+          : 'Sign in first.',
+      }, 401)
+    }
     const { data: profile } = await asking
       .from('profiles').select('is_admin').eq('id', who.user.id).maybeSingle()
     if (!profile?.is_admin) return answer({ error: 'Only Kobblon runs this.' }, 403)
