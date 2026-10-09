@@ -366,173 +366,189 @@ export default function WorldPage() {
   return (
     <>
       {/*
-        * Narrow on purpose. Stretched across a wide screen the emblem is a
-        * billboard and the column beside it is mostly air; this is a page
-        * about one thing and it reads better held together.
+        * A banner with the emblem sitting across its edge, rather than a
+        * picture on the left and a column of facts on the right.
+        *
+        * Staw said the page looked too much like Roblox, and the two-column
+        * card was the reason: it is their shape, and it makes every World
+        * read as a product listing. This is the shape a profile has - a
+        * thing with a face and a name - which is nearer what a World is,
+        * and it gives the emblem somewhere to matter.
+        *
+        * The screenshots move down into About, where somebody who wants
+        * them goes looking. The picture up here is the cover, behind the
+        * words rather than beside them.
         */}
-      <Page width="narrow">
-        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-          <WorldGallery shots={shots} name={thing.name} />
-
-          {/*
-            * Everything that decides whether somebody presses Play, in one
-            * column, with Play at the bottom of it where the thumb lands.
-            */}
-          <div className="flex flex-col gap-5">
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
-                  {thing.name}
-                </h1>
-
-                {/*
-                  * Everything that is not Play.
-                  *
-                  * Copying the link is the one anybody wants, so it is first
-                  * and it is there for everybody. The two ways in are only
-                  * drawn for whoever owns the World - a menu offering
-                  * "Edit it" to a stranger is a menu that lies - and they
-                  * replace the Configure button that used to sit under the
-                  * card taking a whole row to say less.
-                  */}
-                <Menu
-                  label="More"
-                  align="right"
-                  trigger={
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white">
-                      <FontAwesomeIcon icon={faEllipsis} />
-                    </span>
-                  }
-                  items={[
-                    {
-                      label: 'Copy link',
-                      icon: faLink,
-                      onSelect: () => {
-                        void navigator.clipboard?.writeText(window.location.href)
-                        toast('Link copied.', 'success')
-                      },
-                    },
-                    ...(mine ? [
-                      { label: 'Edit the page', icon: faSliders, to: `/create/worlds/${thing.id}` },
-                      {
-                        label: 'Open in Workspace',
-                        icon: faCube,
-                        onSelect: () => editInWorkspace(thing.id, () => setHanding('missing')),
-                      },
-                    ] : []),
-                    { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
-                  ]}
-                />
-              </div>
-
-              {owner ? (
-                <Link
-                  to={profileLink(owner)}
-                  className="mt-2 inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
-                >
-                  <PersonAvatar person={owner} size="xs" />
-                  By <span className="font-bold text-white">{owner.display_name}</span>
-                  <NameMarks person={owner} />
-                </Link>
-              ) : (
-                <p className="mt-2 text-sm text-white/70">
-                  By <span className="font-bold text-white">{thing.creator_name ?? 'Kobblon'}</span>
-                </p>
-              )}
-
-              {/*
-                * How many are in it right now. Shown only when somebody is:
-                * "0 playing" on every quiet World is a row of zeroes that
-                * says the platform is empty, which is both true and not
-                * worth printing six times on a page.
-                */}
-              {(playing.data ?? 0) > 0 && (
-                <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-space/15 px-3 py-1 text-sm font-semibold text-space">
-                  <span className="h-2 w-2 rounded-full bg-space" />
-                  {formatCount(playing.data ?? 0)} playing now
-                </p>
-              )}
-
-              {genre && (
-                <p className="mt-2 text-sm text-muted">{genre.label}</p>
-              )}
-            </div>
-
-            {thing.description && (
-              <p className="line-clamp-3 text-sm leading-relaxed text-white/55">
-                {thing.description}
-              </p>
+      <Page>
+        <section className="overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
+          <div className="relative h-44 w-full sm:h-60">
+            {thing.cover_url ? (
+              <img src={thing.cover_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-brand-deep to-ink-sunken" />
             )}
+            {/* So the words stay readable over whatever somebody uploaded. */}
+            <div className="absolute inset-0 bg-gradient-to-t from-ink-card via-ink-card/60 to-ink-card/10" />
+          </div>
 
-            <div className="mt-auto">
-              <Button size="lg" block variant="enter" onClick={start}>
-                <FontAwesomeIcon icon={faPlay} />
-                <span className="font-display text-lg font-extrabold">Play</span>
-              </Button>
+          <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex min-w-0 items-end gap-4">
+                {/*
+                  * The emblem, half over the banner. Square, because that is
+                  * what an emblem is; the cover is the wide one.
+                  */}
+                <div className="-mt-12 h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-4 border-ink-card bg-gradient-to-br from-brand to-brand-deep sm:-mt-16 sm:h-28 sm:w-28">
+                  {(thing.emblem_url ?? thing.cover_url) ? (
+                    <img
+                      src={thing.emblem_url ?? thing.cover_url ?? ''}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center font-display text-3xl font-black text-white/90">
+                      {thing.name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
 
-              <div className="mt-4 flex items-start justify-center gap-6">
-                <Tooltip
-                  label={profile ? (favourited ? 'Saved' : 'Save this World') : 'Sign in to save it'}
-                  side="top"
-                >
-                  <button
-                    onClick={keep}
-                    disabled={!profile}
-                    aria-pressed={favourited}
-                    className={cn(
-                      'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold',
-                      'transition-colors disabled:opacity-40',
-                      favourited ? 'text-amber-300' : 'text-white/60 hover:text-white',
+                <div className="min-w-0 pb-1">
+                  <h1 className="truncate font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+                    {thing.name}
+                  </h1>
+
+                  {owner ? (
+                    <Link
+                      to={profileLink(owner)}
+                      className="mt-1.5 inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
+                    >
+                      <PersonAvatar person={owner} size="xs" />
+                      By <span className="font-bold text-white">{owner.display_name}</span>
+                      <NameMarks person={owner} />
+                    </Link>
+                  ) : (
+                    <p className="mt-1.5 text-sm text-white/70">
+                      By <span className="font-bold text-white">{thing.creator_name ?? 'Kobblon'}</span>
+                    </p>
+                  )}
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    {/*
+                      * Only when somebody is in it. A row of zeroes on every
+                      * quiet World says the platform is empty, which is both
+                      * true and not worth printing.
+                      */}
+                    {(playing.data ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-space/15 px-2.5 py-1 font-bold text-space">
+                        <span className="h-1.5 w-1.5 rounded-full bg-space" />
+                        {formatCount(playing.data ?? 0)} playing
+                      </span>
                     )}
-                  >
-                    <FontAwesomeIcon icon={faStar} className="text-base" />
-                    {formatCount(counts.favourites)}
-                  </button>
-                </Tooltip>
-
-                <Tooltip
-                  label={profile
-                    ? (notify
-                      ? 'You will be told when this World changes'
-                      : 'Get told when this World changes')
-                    : 'Sign in to be told'}
-                  side="top"
-                >
-                  <button
-                    onClick={tell}
-                    disabled={!profile}
-                    aria-pressed={notify}
-                    className={cn(
-                      'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold',
-                      'transition-colors disabled:opacity-40',
-                      notify ? 'text-link' : 'text-white/60 hover:text-white',
+                    {genre && (
+                      <span className="rounded-full bg-white/5 px-2.5 py-1 font-semibold text-muted">
+                        {genre.label}
+                      </span>
                     )}
-                  >
-                    <FontAwesomeIcon icon={faBell} className="text-base" />
-                    Notify
-                  </button>
-                </Tooltip>
-
-                <RatingBar
-                  likes={counts.likes}
-                  dislikes={counts.dislikes}
-                  iLike={opinion === true}
-                  iDislike={opinion === false}
-                  disabled={!profile}
-                  onLike={like}
-                  onDislike={dislike}
-                />
+                    <span className="rounded-full bg-white/5 px-2.5 py-1 font-semibold text-muted">
+                      {formatCount(thing.visit_count)} visits
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/*
-                * Configure used to be a full-width button here. It is in the
-                * menu beside the name now, with the Workspace beside it,
-                * because a row of its own was a lot of page for a thing only
-                * its owner can press.
-                */}
+              {/* Play, with the small things beside it rather than under it. */}
+              <div className="flex shrink-0 flex-col gap-3 sm:min-w-[18rem]">
+                <div className="flex items-center gap-2">
+                  <Button size="lg" variant="enter" className="flex-1" onClick={start}>
+                    <FontAwesomeIcon icon={faPlay} />
+                    <span className="font-display text-lg font-extrabold">Play</span>
+                  </Button>
+
+                  <Menu
+                    label="More"
+                    align="right"
+                    trigger={
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-ink-line text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+                        <FontAwesomeIcon icon={faEllipsis} />
+                      </span>
+                    }
+                    items={[
+                      {
+                        label: 'Copy link',
+                        icon: faLink,
+                        onSelect: () => {
+                          void navigator.clipboard?.writeText(window.location.href)
+                          toast('Link copied.', 'success')
+                        },
+                      },
+                      ...(mine ? [
+                        { label: 'Edit the page', icon: faSliders, to: `/create/worlds/${thing.id}` },
+                        {
+                          label: 'Open in Workspace',
+                          icon: faCube,
+                          onSelect: () => editInWorkspace(thing.id, () => setHanding('missing')),
+                        },
+                      ] : []),
+                      { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <Tooltip
+                    label={profile ? (favourited ? 'Saved' : 'Save this World') : 'Sign in to save it'}
+                    side="top"
+                  >
+                    <button
+                      onClick={keep}
+                      disabled={!profile}
+                      aria-pressed={favourited}
+                      className={cn(
+                        'flex shrink-0 items-center gap-1.5 text-xs font-bold transition-colors disabled:opacity-40',
+                        favourited ? 'text-amber-300' : 'text-white/60 hover:text-white',
+                      )}
+                    >
+                      <FontAwesomeIcon icon={faStar} />
+                      {formatCount(counts.favourites)}
+                    </button>
+                  </Tooltip>
+
+                  <Tooltip
+                    label={profile
+                      ? (notify
+                        ? 'You will be told when this World changes'
+                        : 'Get told when this World changes')
+                      : 'Sign in to be told'}
+                    side="top"
+                  >
+                    <button
+                      onClick={tell}
+                      disabled={!profile}
+                      aria-pressed={notify}
+                      className={cn(
+                        'flex shrink-0 items-center gap-1.5 text-xs font-bold transition-colors disabled:opacity-40',
+                        notify ? 'text-link' : 'text-white/60 hover:text-white',
+                      )}
+                    >
+                      <FontAwesomeIcon icon={faBell} />
+                      Notify
+                    </button>
+                  </Tooltip>
+
+                  <RatingBar
+                    likes={counts.likes}
+                    dislikes={counts.dislikes}
+                    iLike={opinion === true}
+                    iDislike={opinion === false}
+                    disabled={!profile}
+                    onLike={like}
+                    onDislike={dislike}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <Tabs
           look="line"
@@ -545,7 +561,15 @@ export default function WorldPage() {
 
         {tab === 'About' && (
           <div className="mt-6">
-            <h2 className="font-display text-lg font-extrabold">Description</h2>
+            {/*
+              * The screenshots live here now rather than beside the title.
+              * Somebody deciding whether to press Play has already pressed
+              * it or not by the time they scroll; somebody who wants to see
+              * more of a World comes looking, and this is where they look.
+              */}
+            <WorldGallery shots={shots} name={thing.name} />
+
+            <h2 className="mt-8 font-display text-lg font-extrabold">Description</h2>
             <p className="mt-2 max-w-3xl whitespace-pre-wrap leading-relaxed text-white/70">
               {thing.description || 'Whoever built this has not described it yet.'}
             </p>

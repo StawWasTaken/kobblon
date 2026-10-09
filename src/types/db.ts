@@ -648,6 +648,8 @@ export type World = {
   description: string | null
   creator_name: string | null
   cover_url: string | null
+  /** The square mark. Null falls back to the cover, which is wide. */
+  emblem_url: string | null
   runtime_version: number
   visit_count: number
   like_count: number

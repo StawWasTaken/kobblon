@@ -4366,3 +4366,52 @@ which keys the engine should own), the mobile redesign, the resale redesign
 with its price history, limited items resold as copies, the avatar-worth
 inflation, deleted accounts, the console's design pass and the page
 redesigns.
+
+# Fifty-second round — the World page, reshaped
+
+Staw said the World page looked too much like Roblox. The reason was its
+shape: a big picture on the left, a column of facts and a Play button on the
+right. That is their layout, and it makes every World read as a product
+listing.
+
+It is now a **banner with the emblem across its edge** - the shape a profile
+has, a thing with a face and a name, which is nearer what a World is. The
+cover sits behind the words rather than beside them, under a gradient so
+white text stays readable over whatever somebody uploaded. The screenshots
+moved down into About: somebody deciding whether to press Play has decided
+by the time they scroll, and somebody who wants to see more goes looking.
+
+Facts that were a column are now small pills under the name - **playing
+now** (only when somebody is), the genre, the visit count. Play and the
+`...` sit together on the right, with save, notify and the rating under
+them.
+
+The emblem is `worlds.emblem_url` from the last round, falling back to the
+cover, and then to the World's first letter on brand blue. It is given a
+real tile rather than a hole: on the card's own colour the fallback was
+invisible.
+
+## For the applications
+
+**`World` has gained `emblem_url`** in `@/types/db`, and `WORLD_FIELDS` in
+`@/lib/api` now selects it. If you keep your own select list for a World,
+add it, or the emblem is silently always the cover - which renders fine and
+is wrong, which is this project's favourite kind of bug.
+
+Nothing else changed shape. `WorldGallery`, `RatingBar` and the rest are the
+same components with the same props; only where they sit on the page moved.
+
+## And a deploy
+
+The last few rounds changed `src/` and were pushed, but `npm run deploy` was
+never run, so the published root - which is what GitHub Pages serves - still
+held the bundle from the 7th. Staw saw none of it. **A change is not on the
+site until the root is rebuilt**, and that is a separate step from pushing.
+
+## Still not done
+
+The Launcher work I owe (a wider `Intent`, the camera module, nametags,
+health, ragdoll - still waiting on which keys the engine should own), the
+mobile redesign, the resale redesign with its price history, limited items
+resold as copies, the avatar-worth inflation, deleted accounts, the
+console's design pass and the remaining page redesigns.

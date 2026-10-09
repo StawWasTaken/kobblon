@@ -2196,7 +2196,7 @@ export async function getAppeal(violationId: number): Promise<Appeal | null> {
 
 // ------------------------------------------------------------------ worlds
 
-const WORLD_FIELDS = 'id, owner_id, is_published, archived_at, updated_at, content_id, slug, name, description, creator_name, cover_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
+const WORLD_FIELDS = 'id, owner_id, is_published, archived_at, updated_at, content_id, slug, name, description, creator_name, cover_url, emblem_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
 
 export type WorldSort = 'trending' | 'new' | 'popular'
 
