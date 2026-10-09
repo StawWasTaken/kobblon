@@ -165,8 +165,48 @@ async function groqModels(): Promise<{ models?: string[]; trouble?: string }> {
   return { models }
 }
 
+/*
+ * Anything thrown anywhere in here comes back as an answer with the CORS
+ * headers on it.
+ *
+ * This is not tidiness. A handler that throws gets a 500 from the runtime
+ * with no `Access-Control-Allow-Origin` on it, and a browser will not let
+ * the page read a response without that header - so the one thing it can
+ * say is "the request failed", which is the same sentence it says when the
+ * function is not deployed, when the gateway refused the preflight, and
+ * when the machine is on fire. Three different faults, one useless
+ * message, and no way to tell them apart from the outside. Caught here,
+ * the page can read what actually happened.
+ */
 Deno.serve(async (request) => {
+  try {
+    return await handle(request)
+  } catch (why) {
+    return answer({ error: `The worker fell over: ${String(why)}` }, 500)
+  }
+})
+
+async function handle(request: Request): Promise<Response> {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+
+  /*
+   * A ping answers before anything else: before the method check, before
+   * the sign-in check, and without touching the database, Groq, or who is
+   * asking. It is how you find out whether the function is reachable at
+   * all, which is the question underneath every "failed to send a
+   * request" — and it has to be answerable by a plain address in a browser
+   * tab, because that is the one way of asking that no library, session or
+   * preflight can get in the way of.
+   *
+   * It says nothing an outsider does not already know: that there is a
+   * function here. Whether the two keys are set is all it adds, as
+   * booleans about the server's own configuration rather than anything
+   * about anybody's account.
+   */
+  if (new URL(request.url).searchParams.has('ping')) {
+    return answer({ alive: true, hasGroqKey: Boolean(GROQ_KEY), hasServiceKey: Boolean(SERVICE_KEY) })
+  }
+
   if (request.method !== 'POST') return answer({ error: 'Use POST.' }, 405)
 
   if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -207,6 +247,9 @@ Deno.serve(async (request) => {
    * not public information about somebody's account.
    */
   const asked = await request.json().catch(() => ({}))
+  if (asked?.ping) {
+    return answer({ alive: true, hasGroqKey: Boolean(GROQ_KEY), hasServiceKey: Boolean(SERVICE_KEY) })
+  }
   if (asked?.list) {
     const { models, trouble } = await groqModels()
     return trouble ? answer({ error: trouble }, 502) : answer({ models })
@@ -305,4 +348,4 @@ Deno.serve(async (request) => {
     unsure,
     trouble: trouble.size ? [...trouble] : undefined,
   })
-})
+}

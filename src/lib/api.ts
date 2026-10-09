@@ -3193,10 +3193,53 @@ export async function aiSettings(): Promise<AiSettings | null> {
  * a name written down is a name that is right until Groq retires it — and
  * the only symptom of that is the machine quietly deciding nothing.
  */
+/**
+ * Why a call to an edge function did not arrive.
+ *
+ * supabase-js says "Failed to send a request to the Edge Function" for
+ * every network-level failure, and that one sentence covers a function
+ * that is not deployed, a gateway refusing the preflight, a function that
+ * threw before it could put CORS headers on anything, and a browser
+ * extension eating the request. They need four different fixes and the
+ * message tells you nothing.
+ *
+ * So when it happens, ask the function the simplest question there is —
+ * `?ping`, which answers before the method check and before the sign-in
+ * check — and say which of the four it was. The ping is a plain GET with
+ * no headers, so it needs no preflight: if the ping lands and the real
+ * call does not, the fault is the preflight and nothing else.
+ */
+async function whyNoFunction(name: string, said: string): Promise<string> {
+  const base = import.meta.env.VITE_SUPABASE_URL ?? ''
+  if (!base) return `${said} The site has no Supabase address configured.`
+
+  let ping: Response
+  try {
+    ping = await fetch(`${base}/functions/v1/${name}?ping`)
+  } catch {
+    return `${said} The function could not be reached at all — either it is not deployed, or something in this browser is blocking requests to Supabase (an extension, or an ad blocker).`
+  }
+
+  if (ping.status === 404) return `${said} There is no function called "${name}" deployed on this project.`
+  if (ping.status === 401 || ping.status === 403) {
+    return `${said} The gateway is refusing the request before the function runs, which is the "Verify JWT" setting on ${name}: a browser cannot send a token on a preflight. Turn it off for this function; it checks who is asking by itself.`
+  }
+  if (!ping.ok) return `${said} The function answered ${ping.status} to a plain ping, so it is failing before it runs.`
+
+  const alive = await ping.json().catch(() => null) as
+    { hasGroqKey?: boolean; hasServiceKey?: boolean } | null
+  if (alive && alive.hasGroqKey === false) {
+    return `${said} The function is alive but has no GROQ_API_KEY set.`
+  }
+  return `${said} The function is alive and answers a plain ping, so what is being refused is the preflight on the real call — check "Verify JWT" on ${name}.`
+}
+
 export async function groqModels(): Promise<string[]> {
   const { data, error } = await supabase.functions.invoke('moderate', { body: { list: true } })
   if (error) {
-    const said = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    const context = (error as { context?: Response }).context
+    if (!context) throw new Error(await whyNoFunction('moderate', error.message))
+    const said = await context.json?.().catch(() => null)
     throw new Error(said?.error ?? error.message)
   }
   return (data as { models?: string[] }).models ?? []
@@ -3253,7 +3296,9 @@ export async function runModeration(): Promise<
      * flat "non-2xx". Reading it back is the difference between a console
      * that says what to do and one that says it did not work.
      */
-    const said = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    const context = (error as { context?: Response }).context
+    if (!context) throw new Error(await whyNoFunction('moderate', error.message))
+    const said = await context.json?.().catch(() => null)
     throw new Error(said?.error ?? error.message)
   }
   return data as { looked: number; decided: number; unsure: number; trouble?: string[] }
