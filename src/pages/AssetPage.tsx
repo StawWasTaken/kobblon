@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCopy, faLock, faLockOpen, faPen, faTrash, faShieldHalved,
-  faTriangleExclamation, faClock, faEllipsis,
+  faTriangleExclamation, faClock, faEllipsis, faFlag,
   faThumbsUp, faThumbsDown, faComment, faChevronRight, faTag, faLink, faBoxOpen,
 } from '@fortawesome/free-solid-svg-icons'
 import { BuyButton } from '@/components/money/BuyButton'
@@ -23,6 +23,7 @@ import { MeshEdit } from '@/components/create/MeshEdit'
 import { FontPreview } from '@/components/create/FontPreview'
 import { AssetTile } from '@/components/create/AssetTile'
 import { Menu } from '@/components/ui/Menu'
+import { ReportDialog } from '@/components/social/ReportDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import {
@@ -284,6 +285,7 @@ export default function AssetPage() {
   const { profile, refreshProfile } = useAuth()
   const toast = useToast()
   const [editing, setEditing] = useState(false)
+  const [reporting, setReporting] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('0')
@@ -538,6 +540,20 @@ export default function AssetPage() {
                   toast('Link copied.', 'success')
                 },
               },
+              /*
+               * Reportable, like everything else somebody made. The
+               * Catalog had this and the Create marketplace did not,
+               * which meant the half of the platform where people upload
+               * models had no way to say a model was a problem.
+               */
+              ...(!mine
+                ? [{
+                    label: 'Report it',
+                    icon: faFlag,
+                    danger: true,
+                    onSelect: () => setReporting(true),
+                  }]
+                : []),
               ...(asset.i_can_use && !mine
                 ? [{
                     label: 'Remove from my inventory',
@@ -575,6 +591,14 @@ export default function AssetPage() {
           />
         </div>
       </header>
+
+      <ReportDialog
+        open={reporting}
+        onClose={() => setReporting(false)}
+        targetType="asset"
+        targetId={asset.id}
+        targetName={asset.name}
+      />
 
       {/* Deleting is asked about, and when it cannot go the reason is shown
           here rather than disappearing into the console. */}
