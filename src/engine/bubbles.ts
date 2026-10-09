@@ -3,6 +3,21 @@ import type { ChatLine } from './chat'
 import { K6_HEIGHT } from './units'
 
 /**
+ * The gap between the top of somebody and the bottom of their bubble.
+ *
+ * It was `K6_HEIGHT * 1.05` measured from the feet, which is the top of a
+ * *bare* head — so anybody in a tall hat wore their own bubble. Staw, who
+ * wears one: "if theres accessories ontop of the head then we make sure
+ * the gap between the chatbubble and the head is the same we have between
+ * the chatbubble and the accessories." Same gap, measured from whatever is
+ * actually up there.
+ */
+const ABOVE = K6_HEIGHT * 0.05
+
+/** How often the top of somebody is measured again. */
+const RE_MEASURE = 500
+
+/**
  * What somebody just said, over their head.
  *
  * Roblox's system: the last few things a person said stack above them, the
@@ -19,16 +34,21 @@ import { K6_HEIGHT } from './units'
  */
 
 /**
- * How long a bubble stays, plus a moment for each word to be read.
+ * How long a bubble stays.
  *
- * Staw asked for fifteen seconds. It is the ceiling rather than a constant:
- * "hi" does not need fifteen seconds and two hundred characters need every
- * one of them, so the scale stays and the longest a bubble can last is now
- * what he asked for.
+ * Fifteen seconds, which is what Staw asked for twice. It was the ceiling
+ * before, and a ceiling is not what he asked for: at 45ms a character a
+ * line needed 245 of them to reach fifteen seconds, so "eee" got four. The
+ * reasoning for the scale was sound and the arithmetic made it a different
+ * feature from the one requested.
+ *
+ * So it is the floor now. Fifteen seconds for anything, longer for
+ * something long enough to need it, and a hard stop at twenty so one
+ * enormous line cannot sit over somebody's head for most of a minute.
  */
-const LEAST = 4000
+const LEAST = 15000
 const PER_CHARACTER = 45
-const MOST = 15000
+const MOST = 20000
 
 /** How many one person can have over them at once. */
 const STACKED = 3
@@ -55,8 +75,18 @@ export type BubbleLook = {
   font: string
   padding: string
   maxWidth: string
-  /** The tail, in pixels, and how far across the bubble it sits. */
-  tail: number
+  /**
+   * The tail, in pixels, and how far across the bubble it sits.
+   *
+   * Three numbers rather than one, because one made the half-base and the
+   * depth the same — so a border triangle was always as deep as it was
+   * wide, and could not round its point. The mark's nub is wide, shallow
+   * and round, and at a bubble's width the triangle read as a pin stuck in
+   * the bottom edge. Drawn as a path now, so it can be all three.
+   *
+   * `wide: 0` turns it off.
+   */
+  tail: { wide: number; deep: number; round: number }
   tailAt: string
 }
 
@@ -68,17 +98,36 @@ export type BubbleLook = {
  * edge; this one does, because a white bubble over a bright World has
  * nothing to end it against.
  */
+/**
+ * Measured off the mark rather than guessed at, which is what the last
+ * version was.
+ *
+ * `ChatMark` is drawn in a 24 box: a body 20 wide by 13.85 tall, a corner
+ * of 2.1, and a tail 8 wide and 3.26 deep centred on the body with a 1.06
+ * arc rounding its point. So:
+ *
+ *   - the corner is 15.2% of the body's *height*. `0.55rem` on a bubble
+ *     34px tall was nearer 26%, which is a pill where the mark is a
+ *     rounded square, and that was most of "ugly".
+ *   - the tail is centred. It was at 42%, and nobody could tell that was
+ *     deliberate, which is the honest test for an off-centre detail.
+ *   - the type is Inter, not `system-ui`. Every other word in this product
+ *     is Inter and the operating system's font was the odd one out.
+ *
+ * The corner is in `em` so it stays 15.2% of the line box whatever size the
+ * bubble is set to, rather than being right at one size.
+ */
 export const BUBBLE_LOOK: BubbleLook = {
   background: '#ffffff',
   color: '#101012',
   edge: '1px solid rgba(16, 16, 18, 0.12)',
   shadow: '0 10px 24px -14px rgba(0, 0, 0, 0.55)',
-  radius: '0.55rem',
-  font: '600 0.9rem/1.35 system-ui, sans-serif',
-  padding: '0.4rem 0.7rem',
+  radius: '0.32em',
+  font: '600 1rem/1.35 Inter, system-ui, sans-serif',
+  padding: '0.45rem 0.75rem',
   maxWidth: '22rem',
-  tail: 9,
-  tailAt: '42%',
+  tail: { wide: 16, deep: 6.5, round: 2.1 },
+  tailAt: '50%',
 }
 
 /**
@@ -106,6 +155,17 @@ export class BubbleBoard {
 
   private look: BubbleLook
   private contents: BubbleContents | null
+  /*
+   * How high each subject reaches, and when that was last worked out.
+   *
+   * Measured rather than assumed, and measured again on a timer rather
+   * than once: a hat put on halfway through a session changes the answer,
+   * and a value read once and kept is the mistake this project makes most.
+   * Cheap at a couple of times a second for the handful of people in
+   * earshot.
+   */
+  private tops = new Map<THREE.Object3D, { y: number; at: number }>()
+  private box = new THREE.Box3()
 
   /**
    * The layer sits over the canvas and never takes a click: a bubble is
@@ -132,6 +192,25 @@ export class BubbleBoard {
       if (getComputedStyle(holder).position === 'static') holder.style.position = 'relative'
       holder.appendChild(this.layer)
     }
+  }
+
+  /**
+   * How far up the world somebody reaches, hat and all.
+   *
+   * Falls back to a bare head's height if the object has nothing to
+   * measure — an empty peg, or a body whose meshes have not landed yet.
+   */
+  private topOf(who: THREE.Object3D, now: number): number {
+    const known = this.tops.get(who)
+    if (known && now - known.at < RE_MEASURE) return known.y
+
+    this.box.setFromObject(who)
+    const floor = who.getWorldPosition(new THREE.Vector3()).y
+    const y = Number.isFinite(this.box.max.y) && this.box.max.y > floor
+      ? this.box.max.y
+      : floor + K6_HEIGHT
+    this.tops.set(who, { y, at: now })
+    return y
   }
 
   /** Put one over somebody. `who` is whatever object follows their head. */
@@ -163,27 +242,45 @@ export class BubbleBoard {
     })
 
     /*
-     * The tail, as its own element rather than a pseudo-element, because
-     * there is no stylesheet to put one in. A triangle made of borders,
-     * below the body and slightly left of centre, the way his mark draws
-     * it. It sits a pixel up so the hairline does not show through the
-     * join.
+     * The tail, as a drawn path rather than a border triangle.
+     *
+     * A border triangle's half-base and depth are the same number, so it
+     * cannot be wide and shallow, and it cannot round its point. The
+     * mark's nub is both. An `<svg>` under the bubble can be all three,
+     * and it is its own element rather than a pseudo-element because
+     * there is no stylesheet here to put one in.
      */
-    const tail = document.createElement('div')
-    Object.assign(tail.style, {
-      position: 'absolute',
-      left: look.tailAt,
-      top: '100%',
-      marginTop: '-1px',
-      width: '0',
-      height: '0',
-      transform: 'translateX(-50%)',
-      borderLeft: `${look.tail}px solid transparent`,
-      borderRight: `${look.tail}px solid transparent`,
-      borderTop: `${look.tail}px solid ${look.background}`,
-      filter: 'drop-shadow(0 1px 0 rgba(16, 16, 18, 0.12))',
-    })
-    element.appendChild(tail)
+    if (look.tail.wide > 0) {
+      const { wide, deep, round } = look.tail
+      const tail = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      tail.setAttribute('width', String(wide))
+      tail.setAttribute('height', String(deep))
+      tail.setAttribute('viewBox', `0 0 ${wide} ${deep}`)
+      tail.dataset.tail = 'yes'
+      Object.assign(tail.style, {
+        position: 'absolute',
+        left: look.tailAt,
+        top: '100%',
+        // Up by a pixel, so the hairline along the bubble's bottom edge
+        // does not show through where the two meet.
+        marginTop: '-1px',
+        transform: 'translateX(-50%)',
+        display: 'block',
+        filter: 'drop-shadow(0 1px 0 rgba(16, 16, 18, 0.10))',
+      })
+
+      const nub = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      nub.setAttribute('fill', look.background)
+      nub.setAttribute('d', [
+        `M 0 0`,
+        `L ${wide} 0`,
+        `L ${wide / 2 + round} ${deep - round * 0.75}`,
+        `Q ${wide / 2} ${deep} ${wide / 2 - round} ${deep - round * 0.75}`,
+        'Z',
+      ].join(' '))
+      tail.appendChild(nub)
+      element.appendChild(tail)
+    }
 
     this.layer.appendChild(element)
     // Next frame, so the transition has something to move from.
@@ -193,7 +290,7 @@ export class BubbleBoard {
     stack.push({
       line,
       element,
-      until: Date.now() + Math.min(LEAST + line.text.length * PER_CHARACTER, MOST),
+      until: Date.now() + Math.min(Math.max(LEAST, line.text.length * PER_CHARACTER), MOST),
     })
 
     // The oldest goes when a fourth arrives, rather than growing a column
@@ -223,12 +320,15 @@ export class BubbleBoard {
       }
       if (!stack.length) {
         this.over.delete(who)
+        this.tops.delete(who)
         continue
       }
 
       who.getWorldPosition(this.middle)
       const away = this.middle.distanceTo(this.toward)
-      this.middle.y += K6_HEIGHT * 1.05
+      // Above whatever is on top of them, not above where a bare head
+      // would have been.
+      this.middle.y = this.topOf(who, now) + ABOVE
 
       const at = this.middle.clone().project(camera)
       // Behind the camera, too far to matter, or hidden because it is you.
@@ -251,6 +351,14 @@ export class BubbleBoard {
         style.transform = `translate(-50%, -100%) scale(${size.toFixed(3)})`
         style.opacity = `${(fading * (1 - age * 0.25)).toFixed(3)}`
 
+        /*
+         * Only the newest keeps its tail. Three arrows pointing at one
+         * head point at nothing, and a stack reads as a stack when the
+         * ones above are plain.
+         */
+        const tail = bubble.element.querySelector('[data-tail]') as SVGElement | null
+        if (tail) tail.style.display = age === 0 ? 'block' : 'none'
+
         lift += bubble.element.offsetHeight * size + 6
       }
     }
@@ -260,11 +368,13 @@ export class BubbleBoard {
   forget(who: THREE.Object3D) {
     for (const bubble of this.over.get(who) ?? []) this.drop(bubble)
     this.over.delete(who)
+    this.tops.delete(who)
   }
 
   clear() {
     for (const stack of this.over.values()) for (const bubble of stack) this.drop(bubble)
     this.over.clear()
+    this.tops.clear()
   }
 
   private drop(bubble: Bubble) {

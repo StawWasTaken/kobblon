@@ -14,6 +14,7 @@ export {
   type K6Part, type K6Look, type K6Motion, type K6Point,
 } from './k6'
 export { blockify, headshot, PLACES } from './body'
+export { dressFrom, type WornLook } from './dress'
 export {
   BODY, COVERS, SIDES, PIXELS_PER_STON, templateFor, wrapToTemplate,
   drawTemplate, type BodyPart, type Clothing, type Side, type Template,
@@ -37,7 +38,8 @@ export {
 export { SoundService, type Playing } from './sound'
 export {
   ChatService, LocalEcho, clean, muted, tintFor, NAME_TINTS, MOST_CHARACTERS,
-  type ChatLine, type ChatKind, type ChatTransport, type ChatEvents, type ScreenSay,
+  type ChatLine, type ChatKind, type ChatMark, type ChatTransport, type ChatEvents,
+  type ScreenSay,
 } from './chat'
 export { ChatWindow } from './chatui'
 export { BubbleBoard, BUBBLE_LOOK, type BubbleLook, type BubbleContents } from './bubbles'

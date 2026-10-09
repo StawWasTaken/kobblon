@@ -11,7 +11,7 @@ import { K6_HEIGHT } from './units'
 import { SoundService } from './sound'
 import { ChatService, LocalEcho, muted, type ChatTransport, type ScreenSay } from './chat'
 import { ChatWindow } from './chatui'
-import { BubbleBoard } from './bubbles'
+import { BubbleBoard, type BubbleLook, type BubbleContents } from './bubbles'
 
 /**
  * The Kobblon Engine, the first useful slice of it.
@@ -34,6 +34,17 @@ export type EngineOptions = {
   /** Off for a test or a thumbnail, on for a player. */
   listen?: boolean
   look?: K6Look
+  /**
+   * How the bubbles over people's heads look, and what goes inside them.
+   *
+   * Passed straight to `BubbleBoard`. It exists because the hook did and
+   * could not be reached: the Engine builds the board itself, so an
+   * application drawing its emoji as pictures had its chat window reading
+   * one way and the bubble over the speaker's head reading another, in
+   * the same frame. An exported option nothing can reach is not an
+   * option.
+   */
+  bubbles?: { look?: Partial<BubbleLook>; contents?: BubbleContents }
   /**
    * Turns a Catalog id into something the runtime can load.
    *
@@ -97,6 +108,17 @@ export class Engine {
   private running = false
 
   private avatar: K6 | null = null
+  /**
+   * The player's body, for anything that has to put something on it.
+   *
+   * Readable rather than private because dressing somebody is work the
+   * engine does not do yet, and an application that cannot reach the body
+   * cannot do it either. Null before a World is open.
+   */
+  get body(): K6 | null {
+    return this.avatar
+  }
+
   private world: BuiltWorld | null = null
   private sky: Skybox | null = null
   /** Everything this World makes a noise with. */
@@ -153,7 +175,7 @@ export class Engine {
         asked.transport ?? new LocalEcho(asked.name ?? 'You'),
         { screen: asked.screen },
       )
-      this.bubbles = new BubbleBoard(options.canvas)
+      this.bubbles = new BubbleBoard(options.canvas, options.bubbles)
       this.chat.on('line', (line) => {
         // Only somebody's own words go over a head. A system line is the
         // client talking to you, and nobody said it out loud.

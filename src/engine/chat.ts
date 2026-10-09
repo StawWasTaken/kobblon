@@ -47,7 +47,22 @@ export type ChatLine = {
   at: number
   /** The name of whoever it was meant for, on a whisper. */
   to?: string
+  /**
+   * What goes next to their name: verified, staff, both, neither.
+   *
+   * The art is `public/brand/verified.png` and `staff.png`; nothing here
+   * draws it, because a window decides how big a mark is next to a name in
+   * its own type. This is the field that was missing, which is why a badge
+   * could not go on a chat line at all.
+   *
+   * It is a list rather than two booleans so a third mark costs nobody a
+   * migration of their rendering code.
+   */
+  marks?: ChatMark[]
 }
+
+/** A mark beside somebody's name. */
+export type ChatMark = 'verified' | 'staff'
 
 /**
  * How a message gets from one person to another.

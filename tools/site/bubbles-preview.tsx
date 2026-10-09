@@ -10,7 +10,7 @@ import { BubbleBoard, type ChatLine } from '@/engine'
 
 const SAID = [
   'hey',
-  'this is what fifteen seconds of someone talking looks like over a head',
+  'only the newest one keeps its tail',
   'families stay whole now 👨‍👩‍👧 and so do flags 🏳️‍🌈',
 ]
 

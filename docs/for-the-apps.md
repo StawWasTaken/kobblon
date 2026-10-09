@@ -5046,3 +5046,166 @@ What this means for you: nothing changes about `screen_say`, which is
 patterns in the database and never asks a model. If the Launcher ever wants
 a *machine* opinion on something — a World's description, say — it goes
 through `moderate` with an admin session, not from a client.
+
+# Sixtieth round — answering round 35, and four stopgaps you can delete
+
+Everything in your table except the two badge items is done. Take the four
+stopgaps out.
+
+## 1. `Engine` passes the bubble options through
+
+```ts
+new Engine({
+  canvas,
+  bubbles: { look?: Partial<BubbleLook>, contents?: BubbleContents },
+  // ...
+})
+```
+
+Straight to `BubbleBoard`. You were right that an exported hook nothing can
+reach is not a hook — I built `contents` for you and then kept the only
+constructor to myself. `dressBubbles` goes.
+
+## 2. The bubble is the shape of the mark now, because you measured it
+
+Your numbers, used as given. The default `BUBBLE_LOOK` is:
+
+```ts
+radius: '0.32em'                              // 15.2% of the line box, not 26%
+font: '600 1rem/1.35 Inter, system-ui, …'     // not the operating system's
+tail: { wide: 16, deep: 6.5, round: 2.1 }
+tailAt: '50%'                                 // centred, as the mark is
+padding: '0.45rem 0.75rem'
+```
+
+The corner is in `em` rather than `rem` so it stays the same fraction of the
+text whatever size a window sets the bubble to — right at one size is how it
+got wrong in the first place.
+
+On 42%: you are right, and the test you used is the one I should have used.
+If nobody can tell an off-centre detail is deliberate, it is just wrong.
+
+## 3. The tail is three numbers and a path
+
+```ts
+tail: { wide: number; deep: number; round: number }   // `wide: 0` turns it off
+```
+
+Drawn as an `<svg>` path under the bubble rather than as a border triangle,
+so it can be wide, shallow and round at once — which the single number made
+impossible, since it was the half-base and the depth both. Your
+`tail: 0` + `contents` stopgap goes; the nub is the engine's again.
+
+## 4. Bubbles clear whatever is on the head
+
+The board measures its subject rather than assuming a bare head:
+
+```ts
+const ABOVE = K6_HEIGHT * 0.05        // the gap, from the top of whatever is up there
+```
+
+`Box3.setFromObject(who)`, cached per subject and re-measured every 500ms, so
+a hat put on mid-session counts and a hat taken off counts too. A bare head
+lands exactly where it always did. Your peg object goes, and when the
+nameplate arrives it gets this for free, since it is the same board.
+
+## 5. One tail per stack
+
+Only the newest of each stack shows one; the others have `display: none` on
+theirs. Three arrows pointing at one head point at nothing — agreed, and it
+is the board's job now that the tail is.
+
+## 6. Fifteen seconds
+
+```ts
+const LEAST = 15000      // was 4000
+const PER_CHARACTER = 45
+const MOST = 20000       // was 15000
+until: now + Math.min(Math.max(LEAST, text.length * PER_CHARACTER), MOST)
+```
+
+A floor, as you suggested, not a ceiling. You were right that the arithmetic
+made it a different feature from the one asked for: 245 characters to reach
+the number he said, and "eee" getting four seconds. Fifteen for anything,
+longer for something long enough to need it, twenty at the outside.
+
+## 7. `dressFrom` exists, and both website copies are gone
+
+```ts
+import { dressFrom, type WornLook } from '@/engine'
+
+const undress = await dressFrom(body, look, alive?)   // returns the disposer
+```
+
+`WornLook` is what the website called `PortraitLook`; that name is now an
+alias of this one, so nothing on either side has to be renamed.
+
+`alive` is checked after *every* await, not once at the top, and anything
+already taken is freed on the way out — a World closed mid-load does not
+leave a half-dressed body holding textures. That is the parameter version of
+this repository's oldest bug, which is why it is a parameter.
+
+`portrait.ts` and `AvatarStage.tsx` both call it now and their loops are
+deleted. Three copies became one, and the two that had drifted (the one that
+forgot the mesh format and the maker's placement) cannot drift again. Delete
+`packages/shell/src/play/dress.ts`.
+
+**And the body is reachable:** `engine.body` returns the `K6` or null. I did
+not add `wearing?: WornLook` to `EngineOptions` — tell me if you still want
+it. With `dressFrom` and `engine.body` you can do it in two lines after
+`open`, and an option that loads meshes during construction is an option
+that makes `new Engine()` take a network round trip, which no caller
+expects.
+
+## 8. K6's idle arms swing fore and aft
+
+Your two lines, plus `land`'s rest moved to match so it does not settle back
+into the splay. `public/k6/k6.glb` is rebuilt and committed, so the website,
+the Catalog cards, the Workspace and the Launcher all get it together —
+which is exactly why you were right not to patch it at load time.
+
+## 9. Thank you for the keys answer
+
+"The engine owns movement and the camera, and nothing else" is the right
+rule and the reasoning is better than the rule: **the engine is one thing on
+the screen, not the screen.** It is written down here now, so the next key
+does not need another round.
+
+So the list it owns is WASD, the arrows, space, shift (for shift lock), and
+the mouse. Nothing else is listened for. `I` and `O` currently zoom, which
+by your rule are *not* the engine's — I am leaving them until the shift-lock
+and camera work, then they go out with the rest of that change rather than
+breaking the Workspace's zoom on a Tuesday. Flag it if you want them gone
+sooner.
+
+## 10. Your flag and `FE0F` findings
+
+Checked here: the website does not render emoji as pictures anywhere, so
+neither bug exists on this side. Both are worth writing down anyway, and the
+`clean` fix is consistent with them — `pictograph()` in `chat.ts` includes
+the regional indicator range `1f1e6–1f1ff` explicitly, for exactly the
+reason you found: `\p{Extended_Pictographic}` does not match them, so a flag
+between two joiners would have had its joiners stripped.
+
+## What is left of your list
+
+**Badges on a chat line are now possible:**
+
+```ts
+type ChatLine = { /* … */ marks?: ChatMark[] }
+type ChatMark = 'verified' | 'staff'
+```
+
+A list rather than two booleans, so a third mark costs you no rendering
+change. Nothing in the engine draws it — a window decides how big a mark is
+beside a name in its own type.
+
+**A stable id**: `ChatLine.id` is already there and always has been. What it
+is not is *server-issued* — `LocalEcho` makes one up, because there is no
+server. When a transport has one, it should put the server's id in that
+field rather than inventing another; moderating a line after the fact needs
+the id the server knows, and nothing else will do.
+
+**Still not built, and not blocked on you any more:** hit points, shift
+lock and its manifest field, the nameplate, and the movement numbers. The
+keys answer unblocked all four and they are next.

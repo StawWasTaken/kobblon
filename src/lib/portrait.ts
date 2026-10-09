@@ -17,9 +17,8 @@ import * as THREE from 'three'
 import { MANNEQUIN_BODY } from './mannequin'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
-  frameMesh, lightForLooking, lookFrom, fitToSocket,
-  COVERS, PLACES, BODY, type Clothing,
-  SOCKET_FOR, type K6Part, type K6Point, type WornFit,
+  frameMesh, lightForLooking, lookFrom, dressFrom,
+  COVERS, PLACES, BODY, type Clothing, type WornLook,
 } from '@/engine'
 
 /** What a portrait is drawn at. Square, because every frame it goes in is. */
@@ -31,36 +30,15 @@ const SIDE = 512
  * did - and a mirror is a second place to change.
  */
 
-export type PortraitLook = {
-  body: Record<string, string> | null
-  pieces: {
-    slot: string
-    /** Which socket it hangs from. Null for clothing, which is painted on. */
-    point?: K6Point | null
-    /** Which item this is, so a caller can key on it rather than on the slot. */
-    itemId?: string | null
-    /** What it is and what it is called, for anything that lists what somebody has on. */
-    kind?: string | null
-    name?: string | null
-    /** Its Catalog number, so a list of what somebody is wearing can link to it. */
-    contentId?: number | null
-    /** Its card, for a list that shows the things rather than naming them. */
-    cardUrl?: string | null
-    /** What it sells for today. Null for something with no price of its own. */
-    price?: number | null
-    imageUrl?: string | null
-    meshUrl?: string | null
-    /**
-     * The real format, where the caller has the filename. A signed address
-     * hides the extension behind a query string, and sniffing one calls
-     * every OBJ a glTF - which flips its texture upside down.
-     */
-    meshFormat?: string | null
-    textureUrl?: string | null
-    /** Where its maker placed it. Without this a portrait is not the avatar. */
-    fit?: WornFit | null
-  }[]
-}
+/**
+ * What somebody is wearing.
+ *
+ * The engine's `WornLook`, under the name the website has always called
+ * it. Kept as an alias rather than renamed everywhere: this name is in
+ * thirty-odd files and the type is the same type, so a rename would be a
+ * large diff that changes nothing.
+ */
+export type PortraitLook = WornLook
 
 /**
  * Draws somebody's head and shoulders.
@@ -96,64 +74,19 @@ export async function drawPortrait(
 ): Promise<Blob | null> {
   let renderer: THREE.WebGLRenderer | null = null
   let body: K6 | null = null
-  const borrowed: THREE.Object3D[] = []
-  const textures: THREE.Texture[] = []
+  let undress: (() => void) | null = null
 
   try {
     body = new K6(await loadK6Source(avatarUrl))
-    if (look.body) body.paint(look.body as Partial<Record<K6Part, string>>)
 
-    for (const piece of look.pieces) {
-      if (piece.imageUrl) {
-        const picture = await new THREE.TextureLoader()
-          .loadAsync(piece.imageUrl).catch(() => null)
-        if (!picture) continue
-        textures.push(picture)
-        if (piece.slot === 'shirt' || piece.slot === 'trousers') {
-          body.dress(piece.slot, picture)
-        } else if (piece.slot === 'face') {
-          body.setFace(picture)
-        } else if (piece.slot === 'tdecal') {
-          body.stick(picture)
-        }
-        continue
-      }
-
-      const socket = SOCKET_FOR[piece.slot]
-      if (!piece.meshUrl || !socket) continue
-      /*
-       * The real format, not a guess off a signed address - the same bug
-       * twice over, because a signed URL has no extension and every OBJ
-       * then goes to the glTF reader and fails. The accessory simply did
-       * not appear, which is half of why a portrait did not match the
-       * avatar beside it.
-       */
-      const model = await loadMesh(
-        piece.meshUrl,
-        (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
-      ).catch(() => null)
-      if (!model) continue
-      borrowed.push(model)
-
-      if (piece.textureUrl) {
-        const skin = await new THREE.TextureLoader()
-          .loadAsync(piece.textureUrl).catch(() => null)
-        if (skin) {
-          textures.push(skin)
-          wearTexture(
-            model, skin,
-            (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
-          )
-        }
-      }
-
-      // And where its maker put it. Drawing it where the measuring put it
-      // is drawing a different hat from the one on the avatar.
-      fitToSocket(model, socket, piece.fit ?? null)
-      // Beside, not instead of - the same reason as the stage. A portrait
-      // that drops the second hat is a portrait of somebody else.
-      body.wearAlso(socket, model)
-    }
+    /*
+     * The engine dresses it. This loop used to live here and in
+     * `AvatarStage`, and the two had drifted — one had lost the real mesh
+     * format and the maker's placement, so an accessory came out missing
+     * or in the wrong spot and a portrait stopped being a picture of the
+     * avatar. `dressFrom` is the one copy now.
+     */
+    undress = await dressFrom(body, look)
 
     const scene = new THREE.Scene()
     scene.add(body.object)
@@ -239,8 +172,7 @@ export async function drawPortrait(
   } catch {
     return null
   } finally {
-    for (const one of borrowed) releaseMesh(one)
-    for (const one of textures) one.dispose()
+    undress?.()
     body?.dispose()
     renderer?.dispose()
   }

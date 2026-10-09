@@ -15,9 +15,8 @@ import * as THREE from 'three'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUser } from '@fortawesome/free-solid-svg-icons'
 import {
-  K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
-  fitToSocket,
-  SOCKET_FOR, type K6Part, type WornFit,
+  K6, loadK6Source, headshot, dressFrom,
+  type WornFit,
 } from '@/engine'
 import { cn } from '@/lib/cn'
 
@@ -99,8 +98,7 @@ export function AvatarStage({
     let frame = 0
     let renderer: THREE.WebGLRenderer | null = null
     let body: K6 | null = null
-    const borrowed: THREE.Object3D[] = []
-    const textures: THREE.Texture[] = []
+    let undress: (() => void) | null = null
 
     void (async () => {
       try {
@@ -108,62 +106,15 @@ export function AvatarStage({
         if (!wanted) return
         body = new K6(source)
 
-        if (look?.body) body.paint(look.body as Partial<Record<K6Part, string>>)
-
-        for (const piece of look?.pieces ?? []) {
-          if (!wanted) return
-
-          // A picture: clothing laid on by the template, or a face.
-          if (piece.imageUrl) {
-            const picture = await new THREE.TextureLoader()
-              .loadAsync(piece.imageUrl).catch(() => null)
-            if (!wanted) { picture?.dispose(); return }
-            if (!picture) continue
-            textures.push(picture)
-
-            if (piece.slot === 'shirt' || piece.slot === 'trousers') {
-              body.dress(piece.slot, picture)
-            } else if (piece.slot === 'face') {
-              body.setFace(picture)
-            } else if (piece.slot === 'tdecal') {
-              // Straight onto the torso, over whatever clothing is there.
-              body.stick(picture)
-            }
-            continue
-          }
-
-          // A model: an accessory or hair, hung off a socket.
-          const socket = SOCKET_FOR[piece.slot]
-          if (!piece.meshUrl || !socket) continue
-          const model = await loadMesh(
-            piece.meshUrl,
-            (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
-          ).catch(() => null)
-          if (!wanted) { if (model) releaseMesh(model); return }
-          if (!model) continue
-          borrowed.push(model)
-
-          if (piece.textureUrl) {
-            const skin = await new THREE.TextureLoader()
-              .loadAsync(piece.textureUrl).catch(() => null)
-            if (!wanted) { skin?.dispose(); return }
-            if (skin) {
-              textures.push(skin)
-              wearTexture(
-                model, skin,
-                (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
-              )
-            }
-          }
-
-          // Sized and seated by the engine, so a hat sits where a hat sits
-          // here, on a card and in the Workspace alike.
-          fitToSocket(model, socket, piece.fit ?? null)
-          // Beside whatever is already on that socket, not instead of it: the
-          // database allows two hats now, and a stage that replaces would
-          // draw one of them and quietly lose the other.
-          body.wearAlso(socket, model)
-        }
+        /*
+         * Dressed by the engine. This was the second of three copies of
+         * the same loop — the Launcher had written a third — and the two
+         * here had already drifted apart, which is how a portrait came out
+         * with somebody's hat missing. `alive` is the same `wanted` this
+         * pass has always checked, handed over so the engine can check it
+         * after each await rather than this file checking it afterwards.
+         */
+        undress = await dressFrom(body, look ?? { body: null, pieces: [] }, () => wanted)
 
         if (!wanted) return
 
@@ -321,8 +272,7 @@ export function AvatarStage({
       wanted = false
       cancelAnimationFrame(frame)
       mount.replaceChildren()
-      for (const one of borrowed) releaseMesh(one)
-      for (const one of textures) one.dispose()
+      undress?.()
       body?.dispose()
       renderer?.dispose()
       renderer?.domElement.remove()

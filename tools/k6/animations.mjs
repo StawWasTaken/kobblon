@@ -50,8 +50,21 @@ export function animations({ index }) {
       tracks: [
         track(index.J_Spine, [[0, turn(X, 0)], [1.4, turn(X, 1.6)], [2.8, turn(X, 0)]]),
         track(index.J_Head, [[0, turn(X, 0)], [1.4, turn(X, -1.4)], [2.8, turn(X, 0)]]),
-        track(arms.L, [[0, turn(Z, -4)], [1.4, turn(Z, -6)], [2.8, turn(Z, -4)]]),
-        track(arms.R, [[0, turn(Z, 4)], [1.4, turn(Z, 6)], [2.8, turn(Z, 4)]]),
+        /*
+         * Fore and aft, opposite on each side, the way arms hang on
+         * somebody standing.
+         *
+         * They used to breathe on Z, which is the shoulder hinging out
+         * away from the ribs — so a still avatar held its arms a few
+         * degrees off the torso and swung them further out. Staw: "i dont
+         * like how the arms are animated towards the torso, i would like
+         * them to be animated towards the behind and the infront". Every
+         * other clip already swings on X; idle was the only one that did
+         * not. `wave` stays on Z and is right: an arm waves out, not
+         * forward.
+         */
+        track(arms.L, [[0, turn(X, -3)], [1.4, turn(X, 3)], [2.8, turn(X, -3)]]),
+        track(arms.R, [[0, turn(X, 3)], [1.4, turn(X, -3)], [2.8, turn(X, 3)]]),
       ],
     },
     {
@@ -112,8 +125,11 @@ export function animations({ index }) {
         track(hips.R, [[0, turn(X, 16)], [0.12, turn(X, 30)], [0.34, still]]),
         track(knees.L, [[0, turn(X, -30)], [0.12, turn(X, -58)], [0.34, still]]),
         track(knees.R, [[0, turn(X, -30)], [0.12, turn(X, -58)], [0.34, still]]),
-        track(arms.L, [[0, turn(X, -40)], [0.12, turn(X, -16)], [0.34, turn(Z, -4)]]),
-        track(arms.R, [[0, turn(X, -40)], [0.12, turn(X, -16)], [0.34, turn(Z, 4)]]),
+        // Landing settles into idle's rest, so this ends where idle
+        // begins. It used to end on the old splay, which put the arms
+        // back out to the sides every time somebody touched the ground.
+        track(arms.L, [[0, turn(X, -40)], [0.12, turn(X, -16)], [0.34, turn(X, -3)]]),
+        track(arms.R, [[0, turn(X, -40)], [0.12, turn(X, -16)], [0.34, turn(X, 3)]]),
         track(index.J_Spine, [[0, turn(X, 10)], [0.12, turn(X, 16)], [0.34, still]]),
       ],
     },
