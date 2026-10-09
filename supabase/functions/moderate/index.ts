@@ -232,7 +232,12 @@ async function handle(request: Request): Promise<Response> {
    * about anybody's account.
    */
   if (new URL(request.url).searchParams.has('ping')) {
-    return answer({ alive: true, hasGroqKey: Boolean(GROQ_KEY), hasServiceKey: Boolean(SERVICE_KEY) })
+    return answer({
+      alive: true,
+      hasGroqKey: Boolean(GROQ_KEY),
+      hasServiceKey: Boolean(SERVICE_KEY),
+      hasAnonKey: Boolean(ANON_KEY),
+    })
   }
 
   if (request.method !== 'POST') return answer({ error: 'Use POST.' }, 405)
@@ -258,33 +263,40 @@ async function handle(request: Request): Promise<Response> {
   const token = sent.replace(/^Bearer\s+/i, '')
   const isWorker = token === SERVICE_KEY
 
+  /*
+   * The database client is made first, because validating a token needs
+   * one and the service role is the thing that can do it.
+   */
+  const db = createClient(SUPABASE_URL, SERVICE_KEY)
+
   if (!isWorker) {
-    const asking = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { authorization: sent } },
-    })
     /*
-     * The token, handed over, rather than `getUser()` on its own.
+     * Checked with the service role, the way `discord` has always done it,
+     * and not with an anon client.
      *
-     * `getUser()` with no argument reads the session the client has, and a
-     * client made a line ago on a server has none — the session lives in a
-     * browser's storage, which is not here. So it answered "nobody" for a
-     * signed-in admin, every time, and said "Sign in first" to somebody who
-     * was. The authorization header is passed for the database calls below,
-     * where PostgREST does read it, and that is what made this look right.
+     * The anon version depended on `SUPABASE_ANON_KEY` being set and on
+     * legacy keys still being enabled on the project — neither of which is
+     * true everywhere, and both of which fail as "no user", which reads to
+     * whoever pressed the button as "you are not signed in" while they are
+     * looking at their own name in the corner. The service role validates
+     * the token itself and needs nothing from the caller but the token.
      *
-     * `discord` has always done it this way. This one did not, and nothing
-     * found out until the request started arriving at all.
+     * This grants nothing extra. The token still has to be a real one, and
+     * `is_admin` is still read from the database rather than believed from
+     * the request.
      */
-    const { data: who } = await asking.auth.getUser(token)
-    if (!who?.user) {
+    const { data: who, error: badToken } = await db.auth.getUser(token)
+    if (badToken || !who?.user) {
       return answer({
-        error: token && token !== ANON_KEY
-          ? 'That sign-in is not valid any more. Sign out and back in.'
-          : 'Sign in first.',
+        error: !token
+          ? 'No sign-in was sent with that. Sign out and back in, then try again.'
+          : `That sign-in was not accepted: ${badToken?.message ?? 'no account behind it'}.`,
       }, 401)
     }
-    const { data: profile } = await asking
+
+    const { data: profile, error: noProfile } = await db
       .from('profiles').select('is_admin').eq('id', who.user.id).maybeSingle()
+    if (noProfile) return answer({ error: `Your account could not be read: ${noProfile.message}` }, 500)
     if (!profile?.is_admin) return answer({ error: 'Only Kobblon runs this.' }, 403)
   }
 
@@ -301,8 +313,6 @@ async function handle(request: Request): Promise<Response> {
     const { models, trouble } = await groqModels()
     return trouble ? answer({ error: trouble }, 502) : answer({ models })
   }
-
-  const db = createClient(SUPABASE_URL, SERVICE_KEY)
 
   const { data: settings } = await db.from('ai_settings').select('*').maybeSingle()
   if (!settings?.is_on) return answer({ error: 'AI moderation is off.' }, 409)
