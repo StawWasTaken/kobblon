@@ -63,7 +63,7 @@ export function ServerList({
 }) {
   if (!servers.length) {
     return (
-      <Card className="mt-6">
+      <Card>
         <EmptyState
           mood="emptyBox"
           title="No servers running"
@@ -74,7 +74,7 @@ export function ServerList({
   }
 
   return (
-    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {servers.map((server) => {
         const full = server.how_many >= server.capacity
         return (

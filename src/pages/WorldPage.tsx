@@ -21,14 +21,15 @@ import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { ServerList } from '@/components/worlds/ServerList'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
+import { WorldThings } from '@/components/worlds/WorldThings'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  alsoJoined, doIWatchWorld, favouriteWorld, getWorld, myWorldStanding, playingNow,
-  serversOf, setWorldOpinion, watchWorld,
+  alsoJoined, badgesOf, doIWatchWorld, favouriteWorld, getWorld, myWorldStanding,
+  passesOf, playingNow, serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
@@ -126,32 +127,6 @@ function Handover({
   )
 }
 
-/** A tab that has nothing in it yet, saying what will be in it. */
-function Waiting({ tab, name }: { tab: Tab; name: string }) {
-  const words: Record<string, { title: string; body: string }> = {
-    Badges: {
-      title: 'No badges yet',
-      body: `Badges are things ${name} hands out for doing something in it. Whoever built it has not made any.`,
-    },
-    Shop: {
-      title: 'Nothing for sale',
-      body: `Passes and items ${name} sells would be here. This one sells nothing.`,
-    },
-    Servers: {
-      title: 'No servers running',
-      body: `Where people are playing ${name} right now. Nobody is in it at the moment.`,
-    },
-  }
-  const said = words[tab]
-  if (!said) return null
-
-  return (
-    <Card className="mt-6">
-      <EmptyState mood="emptyBox" title={said.title} body={said.body} />
-    </Card>
-  )
-}
-
 export default function WorldPage() {
   const { id = '' } = useParams()
   const number = Number(id)
@@ -181,6 +156,8 @@ export default function WorldPage() {
   const servers = useAsync(async () => (thing ? serversOf(thing.id) : []), [thing?.id])
   const playing = useAsync(async () => (thing ? playingNow(thing.id) : 0), [thing?.id])
   const alsoPlayed = useAsync(async () => (thing ? alsoJoined(thing.id) : []), [thing?.id])
+  const badges = useAsync(async () => (thing ? badgesOf(thing.id) : []), [thing?.id])
+  const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
   const [tab, setTab] = useState<Tab>('About')
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
@@ -610,11 +587,26 @@ export default function WorldPage() {
           </div>
         )}
 
-        {tab === 'Servers' && (
-          <ServerList servers={servers.data ?? []} name={thing.name} />
-        )}
+        {/*
+          * Every tab's contents sit in the same box, so moving between them
+          * does not move the page under somebody. They were four different
+          * widths before - one capped, one a full-width card, two centred
+          * empty states - and the only thing they had in common was the row
+          * of tabs above them.
+          */}
+        <div className="mt-6">
+          {tab === 'Badges' && (
+            <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
+          )}
 
-        {tab !== 'About' && tab !== 'Servers' && <Waiting tab={tab} name={thing.name} />}
+          {tab === 'Shop' && (
+            <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
+          )}
+
+          {tab === 'Servers' && (
+            <ServerList servers={servers.data ?? []} name={thing.name} />
+          )}
+        </div>
 
         <AlsoJoinedRow worlds={alsoPlayed.data ?? []} />
 

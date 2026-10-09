@@ -2376,6 +2376,62 @@ export async function worldGenres(): Promise<WorldGenre[]> {
 }
 
 /** What a World shows of itself, in the order it chose. */
+/** A badge a World hands out. `content_id` is the number used in scripts. */
+export type WorldBadge = {
+  id: string
+  content_id: number
+  world_id: string
+  name: string
+  description: string | null
+  icon_url: string | null
+  is_enabled: boolean
+  awarded_count: number
+}
+
+/** Something a World sells. Free is allowed - a pass can be a key. */
+export type WorldPass = {
+  id: string
+  content_id: number
+  world_id: string
+  name: string
+  description: string | null
+  icon_url: string | null
+  price: number
+  is_for_sale: boolean
+}
+
+export async function badgesOf(worldId: string): Promise<WorldBadge[]> {
+  return (unwrap(await supabase.rpc('badges_of', { wanted: worldId })) as WorldBadge[]) ?? []
+}
+
+export async function passesOf(worldId: string): Promise<WorldPass[]> {
+  return (unwrap(await supabase.rpc('passes_of', { wanted: worldId })) as WorldPass[]) ?? []
+}
+
+/**
+ * Makes one and hands back its number.
+ *
+ * The number is the point: it is what somebody pastes into a script in the
+ * Workspace to award the badge or check for the pass. The database refuses
+ * anybody who does not own the World, so this does not check first - asking
+ * twice only means two ways to be wrong.
+ */
+export async function makeWorldBadge(
+  worldId: string, name: string, description?: string | null,
+): Promise<number> {
+  return unwrap(await supabase.rpc('make_world_badge', {
+    wanted: worldId, called: name, about: description ?? null,
+  })) as number
+}
+
+export async function makeWorldPass(
+  worldId: string, name: string, description?: string | null, price = 0,
+): Promise<number> {
+  return unwrap(await supabase.rpc('make_world_pass', {
+    wanted: worldId, called: name, about: description ?? null, costs: price,
+  })) as number
+}
+
 /** Somebody in a server right now, as the server list hands them over. */
 export type PlayerThere = {
   id: string

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faArrowUpRightFromSquare, faBell, faCheck, faCopy, faImage, faLink, faPlus,
@@ -10,6 +11,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
+import { MakeThings } from '@/components/worlds/MakeThings'
 import { Select } from '@/components/ui/Select'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -54,6 +56,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function CreateWorld() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  /*
+   * The add tile on the World page comes here with `?make=badge` or
+   * `?make=pass`, so a plus pressed over there opens the right form rather
+   * than dropping somebody on a settings page to go looking for it.
+   */
+  const [asked] = useSearchParams()
+  const make = asked.get('make')
   const { profile } = useAuth()
   const toast = useToast()
   useFavicon(CREATE_ICON)
@@ -373,6 +382,9 @@ export default function CreateWorld() {
           void pickEmblem(cut)
         }}
       />
+
+      <MakeThings worldId={world.id} kind="badge" opened={make === 'badge'} />
+      <MakeThings worldId={world.id} kind="pass" opened={make === 'pass'} />
 
       <Card className="flex flex-wrap items-center gap-4 p-5">
         <div className="min-w-0 flex-1">

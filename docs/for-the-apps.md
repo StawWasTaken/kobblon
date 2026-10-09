@@ -4452,3 +4452,54 @@ health, ragdoll - still waiting on which keys the engine should own), the
 mobile redesign, the resale redesign with its price history, limited items
 resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the remaining page redesigns.
+
+# Fifty-fourth round — badges and passes a World actually has (0166)
+
+**This is the one the Workspace needs.** Until now a World could not have a
+badge or sell anything: Communities have `space_badges`, Worlds had nothing,
+and nothing anywhere was a pass. Both tabs were honest empty states.
+
+## The number is the feature
+
+`world_badges` and `world_passes` each carry a **`content_id`** off the same
+sequence as the rest of the site's link numbers. That number is what a
+script names, and it is why this exists at all - a badge the Workspace
+cannot name cannot be awarded by anything. The owner sees it beside every
+badge and pass in the World's configuration, and copies it in one press.
+
+The uuid stays the key; the number is what a person handles.
+
+**What you need to build against it:** awarding a badge and checking for a
+pass, from inside a running World, by that number. I have not written those
+calls yet because they belong on whatever surface you give world scripts,
+and I do not want to guess its shape - **tell me what you want them to look
+like**. What exists today is the making and the listing.
+
+Tables: `world_badges`, `world_passes`, `pass_holders`. Functions:
+`make_world_badge`, `make_world_pass`, `edit_world_badge`,
+`edit_world_pass`, `badges_of`, `passes_of`, and `i_own_world` which the
+writes all go through. Fifty of each per World - not a rule, just far above
+anything real and short of a page nothing can page through.
+
+**Neither table is client-writable.** Checked as the owner, as a stranger
+(refused making, refused editing) and as `authenticated` writing by hand
+(permission denied). Who holds a pass is readable by that person and by the
+World's owner, nobody else.
+
+## The tabs
+
+Badges and Shop are one component with different words, and every tab's
+contents now sit in one container - they were four different widths before
+and the page jumped as you moved between them. The owner gets a dashed ring
+with a plus where a name would be, saying "Create a badge" or "Create a
+gamepass", which goes to `/create/worlds/<id>?make=badge|pass` and opens
+that form on arrival. **It is drawn only for the owner**: an add tile a
+stranger cannot use is a button that lies.
+
+## Still not done
+
+The Launcher work I owe (a wider `Intent`, the camera module, nametags,
+health, ragdoll - still waiting on which keys the engine should own), the
+mobile redesign, the resale redesign with its price history, limited items
+resold as copies, the avatar-worth inflation, deleted accounts, the
+console's design pass and the remaining page redesigns.
