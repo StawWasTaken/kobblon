@@ -113,6 +113,16 @@ export function AppShell() {
  * joins strings: passing max-w-5xl alongside the default left both in the
  * markup and the wider one won, which is how a page ended up wider than its
  * own header.
+ *
+ * **`narrow` is the default, and it is the site's width.** Staw drew the
+ * edges of a profile on a screenshot and asked for that same column on
+ * every page somebody is signed in to, which is what it already was on
+ * roughly half of them: the other half ran to 86rem and nothing lined up
+ * between the two. A page is read, not surveyed, and 68rem is about as wide
+ * as a line of text stays readable at.
+ *
+ * `wide` is still here for a page that genuinely tiles - a grid that would
+ * show two columns instead of four - and it has to be asked for.
  */
 export const PAGE_WIDTH = {
   wide: 'max-w-[86rem]',
@@ -122,7 +132,7 @@ export const PAGE_WIDTH = {
 export function Page({
   children,
   className,
-  width = 'wide',
+  width = 'narrow',
   style,
 }: {
   children: React.ReactNode

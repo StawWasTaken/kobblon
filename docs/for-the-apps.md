@@ -4415,3 +4415,40 @@ health, ragdoll - still waiting on which keys the engine should own), the
 mobile redesign, the resale redesign with its price history, limited items
 resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the remaining page redesigns.
+
+# Fifty-third round — one column for the whole site
+
+**A shared change, so it gets a line even though nothing breaks.**
+
+`Page`'s default width was `wide` (86rem). It is now **`narrow`** (68rem),
+which is what a profile already used. Staw drew the edges of his profile on
+a screenshot and asked for that column on every page somebody is signed in
+to - which it already was on about half of them, while the other half ran to
+86rem and nothing lined up between the two.
+
+* `PAGE_WIDTH` is unchanged - both values still exist.
+* Pages that said `width="narrow"` are untouched.
+* Pages that said nothing are now 68rem instead of 86rem.
+* `width="wide"` still works and must now be asked for. The **staff
+  console** is the one page that asks: a table of every account beside a map
+  of the world does not fit in 68rem, and that is the case `wide` exists
+  for.
+
+If either application mounts a `Page`, or copies that measurement, it has
+moved. If you hardcode `max-w-[86rem]` anywhere to match the site, that is
+now wrong by 18rem.
+
+## The World page, smaller
+
+Same shape as the last round, less of it: the banner is `h-32`/`sm:h-44`
+rather than `h-44`/`sm:h-60`, the emblem `h-20`/`sm:h-24` rather than
+`h-24`/`sm:h-28`, and the screenshot gallery in About is capped at `3xl`.
+Across the full column it was a 1088-pixel wall of one picture.
+
+## Still not done
+
+The Launcher work I owe (a wider `Intent`, the camera module, nametags,
+health, ragdoll - still waiting on which keys the engine should own), the
+mobile redesign, the resale redesign with its price history, limited items
+resold as copies, the avatar-worth inflation, deleted accounts, the
+console's design pass and the remaining page redesigns.

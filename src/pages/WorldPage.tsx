@@ -381,7 +381,7 @@ export default function WorldPage() {
         */}
       <Page>
         <section className="overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
-          <div className="relative h-44 w-full sm:h-60">
+          <div className="relative h-32 w-full sm:h-44">
             {thing.cover_url ? (
               <img src={thing.cover_url} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -398,7 +398,7 @@ export default function WorldPage() {
                   * The emblem, half over the banner. Square, because that is
                   * what an emblem is; the cover is the wide one.
                   */}
-                <div className="-mt-12 h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-4 border-ink-card bg-gradient-to-br from-brand to-brand-deep sm:-mt-16 sm:h-28 sm:w-28">
+                <div className="-mt-10 h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-ink-card bg-gradient-to-br from-brand to-brand-deep sm:-mt-12 sm:h-24 sm:w-24">
                   {(thing.emblem_url ?? thing.cover_url) ? (
                     <img
                       src={thing.emblem_url ?? thing.cover_url ?? ''}
@@ -567,7 +567,14 @@ export default function WorldPage() {
               * it or not by the time they scroll; somebody who wants to see
               * more of a World comes looking, and this is where they look.
               */}
-            <WorldGallery shots={shots} name={thing.name} />
+            {/*
+              * Capped. Across the whole column it is a 1088-pixel wall of
+              * one screenshot, which is more of a World than anybody asked
+              * to see before they have decided anything.
+              */}
+            <div className="max-w-3xl">
+              <WorldGallery shots={shots} name={thing.name} />
+            </div>
 
             <h2 className="mt-8 font-display text-lg font-extrabold">Description</h2>
             <p className="mt-2 max-w-3xl whitespace-pre-wrap leading-relaxed text-white/70">

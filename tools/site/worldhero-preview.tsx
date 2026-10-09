@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay, faEllipsis, faLink, faStar, faBell, faSliders, faCube, faFlag } from '@fortawesome/free-solid-svg-icons'
+import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Menu } from '@/components/ui/Menu'
 import { Tabs } from '@/components/ui/Tabs'
@@ -27,16 +28,17 @@ const kobblon = {
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
     <ToastProvider>
-      <div className="min-h-screen bg-ink p-6 text-ink-strong">
+      <div className="min-h-screen bg-ink text-ink-strong">
+        <Page>
         <section className="overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
-          <div className="relative h-44 w-full sm:h-60">
+          <div className="relative h-32 w-full sm:h-44">
             <div className="h-full w-full bg-gradient-to-br from-brand-deep to-ink-sunken" />
             <div className="absolute inset-0 bg-gradient-to-t from-ink-card via-ink-card/60 to-ink-card/10" />
           </div>
           <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex min-w-0 items-end gap-4">
-                <div className="-mt-12 h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-4 border-ink-card bg-gradient-to-br from-brand to-brand-deep sm:-mt-16 sm:h-28 sm:w-28">
+                <div className="-mt-10 h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-ink-card bg-gradient-to-br from-brand to-brand-deep sm:-mt-12 sm:h-24 sm:w-24">
                   <div className="flex h-full w-full items-center justify-center font-display text-3xl font-black text-white/90">F</div>
                 </div>
                 <div className="min-w-0 pb-1">
@@ -86,6 +88,7 @@ createRoot(document.getElementById('root')!).render(
           value="About" onChange={() => {}}
           options={['About', 'Badges', 'Shop', 'Servers'].map((v) => ({ value: v, label: v }))}
         />
+        </Page>
       </div>
     </ToastProvider>
   </MemoryRouter>,

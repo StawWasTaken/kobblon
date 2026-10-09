@@ -1456,7 +1456,12 @@ export default function Admin() {
   const [section, setSection] = useState<Section>('People')
   useTitle('Staff', 'Kobblon')
 
-  if (loading) return <Page><Skeleton className="h-96" /></Page>
+  /*
+   * The one page that stays wide. The site's column is the profile's now,
+   * and a table of every account beside a map of the world does not fit in
+   * it - this is a console, which is the case `wide` exists for.
+   */
+  if (loading) return <Page width="wide"><Skeleton className="h-96" /></Page>
 
   /*
    * Sent away rather than shown an empty panel. This is not what keeps
@@ -1466,7 +1471,7 @@ export default function Admin() {
   if (!profile?.is_admin) return <Navigate to="/" replace />
 
   return (
-    <Page className="space-y-6">
+    <Page width="wide" className="space-y-6">
       <div className="flex items-center gap-3">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-white">
           <FontAwesomeIcon icon={faUserShield} />
