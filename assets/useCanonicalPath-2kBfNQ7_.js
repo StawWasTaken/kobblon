@@ -1,0 +1,1 @@
+import{Xn as e,Zn as t,or as n,rr as r}from"./asset-DmMqW53p.js";var i=n(r(),1);function a(n){let{pathname:r,search:a,hash:o}=e(),s=t();(0,i.useEffect)(()=>{n&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(n).replace(/\/+$/,``)&&s(`${n}${a}${o}`,{replace:!0})},[n,r,a,o,s])}export{a as t};

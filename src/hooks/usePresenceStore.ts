@@ -24,6 +24,20 @@ export type Here = {
 }
 
 const here = new Map<string, Here>()
+
+/*
+ * Whose tab this is.
+ *
+ * The hole left by the version above: a row is the fallback for people who
+ * are not here to speak for themselves, and you are always here. But your
+ * own entry only arrives once the channel has synced, and until it does you
+ * fall back to a row fetched when the page loaded - so your profile said
+ * Offline while the chat dock, holding a fresher row, said Online. Same
+ * logic, differently-aged photographs.
+ *
+ * You are demonstrably present: you are looking at the page.
+ */
+let myId: string | undefined
 const watchers = new Set<() => void>()
 let version = 0
 
@@ -58,6 +72,9 @@ export function useLivePresence(person?: {
     return live.in_space_id ? 'in-space' : live.activity === 'building' ? 'building' : 'online'
   }
 
+  /* Never tell somebody they are offline to their own face. */
+  if (person?.id && person.id === myId) return 'online'
+
   return presenceOf(person)
 }
 
@@ -85,6 +102,7 @@ export function usePresenceChannel(
 
   useEffect(() => {
     if (!me) return
+    myId = me
 
     const mine = supabase.channel('kobblon:here', {
       config: { presence: { key: me } },
@@ -118,6 +136,9 @@ export function usePresenceChannel(
       channel.current = null
       void supabase.removeChannel(mine)
       here.clear()
+      /* Signed out, or signed in as somebody else. Whoever this was is no
+         longer the person looking at the page. */
+      myId = undefined
       changed()
     }
     // Only the account matters here: what you are doing is said again below

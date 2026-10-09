@@ -4,7 +4,7 @@ import {
   CARD_MARK, cardIsCurrent,
 } from './preview'
 import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
-import { formatOf, type WornFit } from '@/engine'
+import { formatOf, socketFor, type WornFit } from '@/engine'
 import { FLOOR_FACE } from './mannequin'
 import { plainFace } from './plainFace'
 import type {
@@ -3524,7 +3524,18 @@ export async function avatarRules(): Promise<AvatarRule[]> {
  * row with a null slot rather than no rows, so "has no avatar" and "does not
  * exist" stay different answers - a suspended person returns nothing at all.
  */
-export async function avatarOf(userId: string): Promise<AvatarPiece[]> {
+/**
+ * What somebody is wearing, as rows.
+ *
+ * Called `avatarOf` until the Workspace read round 47, went looking for it
+ * and found `avatarOf` in `@/lib/avatars` instead - which returns a profile
+ * picture. Two exported functions with one name and two meanings, and the
+ * round pointed at the wrong one. Renamed rather than explained.
+ *
+ * For drawing a figure, use `lookOf` below; this is the rows it is built
+ * from.
+ */
+export async function wornBy(userId: string): Promise<AvatarPiece[]> {
   return (unwrap(await supabase.rpc('avatar_of', { target: userId })) as AvatarPiece[]) ?? []
 }
 
@@ -3784,11 +3795,19 @@ export async function uploadCatalogImage(userId: string, file: File): Promise<st
  * rather than done again per renderer.
  */
 export async function lookOf(userId: string): Promise<PortraitLook> {
-  const worn = await avatarOf(userId).catch(() => [])
+  const worn = await wornBy(userId).catch(() => [])
 
   const pieces = await Promise.all(
     worn.filter((piece) => piece.slot).map(async (piece) => ({
       slot: piece.slot!,
+      /*
+       * Where it hangs, answered here rather than by each renderer. The
+       * wardrobe speaks in slots and the rig in sockets, and a client left
+       * to map between them is a second opinion about what a hat does.
+       * Null means a slot that hangs from nothing - clothing, which is
+       * painted onto the body rather than attached to it.
+       */
+      point: socketFor(piece.slot!),
       itemId: piece.item_id,
       kind: piece.kind ?? '',
       name: piece.item_name,

@@ -59,11 +59,11 @@ function Thing({
 }
 
 /*
- * Centred and wrapping rather than a grid. A grid left-aligns two badges
- * against the edge of a wide card and leaves four empty cells beside them,
- * which reads as something failing to load.
+ * Wrapping from the left. Tried centred first and Staw preferred these
+ * left: a row of tiles that starts where every other row on the page
+ * starts is easier to read down than one that drifts with its own count.
  */
-const GRID = 'flex flex-wrap justify-center gap-2'
+const GRID = 'flex flex-wrap justify-start gap-2'
 
 /**
  * Both tabs are the same shape, so they are the same component with

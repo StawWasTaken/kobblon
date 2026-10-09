@@ -45,4 +45,5 @@ export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from
 export { SHAPES, isShape, geometryFor, tiledGeometry, TRUSS_BAY, type Shape } from './shapes'
 export { textureFor, bumpFor, reliefFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'
 export { buildSky, cutCross, Skybox, type Sky, type ResolveAsset } from './sky'
+export { SOCKET_FOR, socketFor } from './k6'
 export { STON, GRAVITY, K6_HEIGHT, K6_RADIUS } from './units'

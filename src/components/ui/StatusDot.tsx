@@ -1,6 +1,3 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHouse, faHammer, faMinus } from '@fortawesome/free-solid-svg-icons'
-import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
 /**
@@ -71,23 +68,15 @@ export function presenceOf(p?: {
   return 'online'
 }
 
-function Mark({ presence }: { presence: Presence }) {
-  // The house mark is ours, so it is the logo rather than a shape that looks
-  // like it. It is flattened to white because a dot is one colour and a mark
-  // on it is the other.
-  if (presence === 'online') {
-    return (
-      <img
-        src={asset('/brand/logomark.png')}
-        alt=""
-        className="h-[1.15em] w-[1.15em] brightness-0 invert"
-      />
-    )
-  }
-  if (presence === 'in-space') return <FontAwesomeIcon icon={faHouse} />
-  if (presence === 'building') return <FontAwesomeIcon icon={faHammer} />
-  return <FontAwesomeIcon icon={faMinus} />
-}
+/*
+ * There is no mark inside the dot any more.
+ *
+ * It carried the house logo for Online, a house for in-a-World, a hammer
+ * for building and a dash for away - and Staw asked for the colour alone.
+ * He is right: at the size these are actually drawn, a mark inside a circle
+ * is a smudge, and the colour already says the thing. The words are still
+ * on the tooltip for anybody who wants them.
+ */
 
 export function StatusDot({
   presence,
@@ -118,7 +107,6 @@ export function StatusDot({
       role="img"
       aria-label={presenceWords[presence]}
     >
-      <Mark presence={presence} />
     </span>
   )
 }

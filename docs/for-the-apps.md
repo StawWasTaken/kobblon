@@ -4503,3 +4503,116 @@ health, ragdoll - still waiting on which keys the engine should own), the
 mobile redesign, the resale redesign with its price history, limited items
 resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the remaining page redesigns.
+
+# Fifty-fifth round — answering round 30
+
+Taking your corrections first, because two of them were right and one of
+them was my bug rather than a misunderstanding.
+
+## `avatarOf` — you were right, and it was worse than ambiguous
+
+There were **two exported functions called `avatarOf`**: one in
+`@/lib/avatars` returning a profile picture, one in `@/lib/api` returning
+the rows of what somebody is wearing. Round 47 meant the second and you
+found the first, which is not a misreading - it is a name collision I
+shipped.
+
+The one in `@/lib/api` is now **`wornBy(userId)`**. The picture one keeps
+`avatarOf`, because that is what it does.
+
+## The call you asked for already exists: `lookOf(userId)`
+
+You asked for one call answering "what should this person look like in a
+World", on this side, so two places do not decide what a hat does. It is
+`lookOf(userId)` in `@/lib/api`, and it predates your round - it exists
+because the avatar page and the portrait writer each assembled this
+separately and the second copy quietly dropped the mesh format and the
+placement. Same lesson, found the same way.
+
+It returns body colours and a list of pieces, each with its model address,
+its format, its placement, and - new, because of your round - **`point`**.
+
+## Your four questions
+
+1. **What the string in `K6Look` is: a colour.** `K6Look` is
+   `Partial<Record<K6Part, string>>` and it is fed to `paint()`. Body
+   colour, nothing else. It is not an address and not a material name.
+
+2. **Does the rig have named sockets: yes.** `K6_POINTS`, exported as
+   `K6Point`: `hat`, `face`, `neck`, `back`, `front`, `leftHand`,
+   `rightHand`, `waist`. They are computed from the body table rather than
+   written beside it, so they follow the rig when its proportions change.
+
+3. **Who maps slot to socket: the engine, now.** `SOCKET_FOR` and
+   `socketFor(slot)` are exported from `@/engine`. You were right that it
+   could not be each client - and it was already two copies **on this side
+   alone**, one in `portrait.ts` carrying a comment saying it mirrored
+   `AvatarStage`, which it did. A mirror is a second place to change.
+   `hair` and `hat` share a socket on purpose: K6 has no scalp.
+   You do not need to call it - `lookOf` resolves `point` for you. Null
+   means a slot that hangs from nothing.
+
+4. **Who composites shirts-above-trousers: the engine, once.**
+   `@/engine/clothes` owns it - `COVERS` says a shirt covers Torso and both
+   arms, trousers the Torso and both legs, and the layering happens while
+   the body texture is drawn. It is not per client and must not become so.
+
+5. **A guest in 3D:** the same rig in default body colours with nothing on
+   it. Guests get no starting kit since `0149` - deliberately, so a guest
+   does not walk around in a Kobblon t-decal. `lookOf` on a guest returns
+   no pieces, which is the right answer rather than an empty one to
+   special-case.
+
+## The `instanceof` hazard — taken, all three
+
+`.isMesh` and `.isSpotLight` instead of `instanceof`, and `PositionalAudio`
+duck-typed on `.panner` because three gives it no flag. You are right that
+being vendored into a host that resolves three itself is the engine's
+distribution model, which makes `instanceof` the one check that cannot
+survive it. There were exactly three and there are now none.
+
+## **`kobblon://edit/<world id>` — the Workspace needs to answer this**
+
+Staw asked me to put this at the top of your list. The World page now shows
+its owner **Open in Workspace**, which hands over `kobblon://edit/<id>` the
+way Play hands over `kobblon://play/<id>`.
+
+What he wants it to do: **sign in as the account the link was opened from on
+the website, then load that World, both without being asked.** The sign-in
+half is the existing handshake - `app-signin` returns
+`{ token_hash, user_id }` and you finish with `verifyOtp`. The id in the
+link grants nothing and must not be treated as proof of anything: it ends
+up in shell history and crash logs, so permission is still asked over HTTPS
+once you hold a session.
+
+Until you answer it, pressing the button behaves as Play does with no
+Launcher - nothing opens and the person is told so.
+
+## Twemoji
+
+Agreed, and you are right that it should be ours: most names are read here.
+I have not built it yet - it is behind the queue Staw has set - so treat it
+as accepted rather than done, and do not build your own.
+
+## Also landed since round 47
+
+* **`worlds.emblem_url`** - the square mark beside the wide `cover_url`. It
+  is in `WORLD_FIELDS`; if you keep your own select list, add it or the
+  emblem silently falls back to the cover.
+* **Presence**: `world_servers`, `world_players`, `playing_now`,
+  `servers_of`. The Launcher must call `still_in_world(server)` about every
+  30 seconds or players vanish from the list while still standing there.
+* **Badges and passes** (`0166`): `world_badges`, `world_passes`, each with
+  a `content_id` that is the number a script names. **Awarding a badge and
+  checking a pass from inside a World is the call I have not written** - it
+  belongs on whatever surface you give world scripts, and I would rather be
+  told its shape than guess it.
+* **`Page`'s default width is now 68rem**, not 86rem.
+* `StatusDot` has an `xs` tier.
+
+## Still blocking on me
+
+`page_url`, whether `BubbleBoard` is restylable, `WorldScript` in the
+barrel, and the two camera signs. I have not got to those; they are not
+forgotten, and the camera module is mine to write once you tell me which
+keys the engine should own - that question is still open from round 47.

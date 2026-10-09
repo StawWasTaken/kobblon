@@ -19,23 +19,24 @@ import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
   frameMesh, lightForLooking, lookFrom, fitToSocket,
   COVERS, PLACES, BODY, type Clothing,
-  type K6Part, type K6Point, type WornFit,
+  SOCKET_FOR, type K6Part, type K6Point, type WornFit,
 } from '@/engine'
 
 /** What a portrait is drawn at. Square, because every frame it goes in is. */
 const SIDE = 512
 
-/** Which engine socket each worn kind hangs from. Mirrors `AvatarStage`. */
-const SOCKETS: Record<string, K6Point> = {
-  hat: 'hat', hair: 'hat', face: 'face', neck: 'neck',
-  back: 'back', front: 'front', waist: 'waist',
-  leftHand: 'leftHand', rightHand: 'rightHand',
-}
+/*
+ * The slot-to-socket mapping is `SOCKET_FOR` in the engine now. It was
+ * copied here with a comment saying it mirrored `AvatarStage`, which it
+ * did - and a mirror is a second place to change.
+ */
 
 export type PortraitLook = {
   body: Record<string, string> | null
   pieces: {
     slot: string
+    /** Which socket it hangs from. Null for clothing, which is painted on. */
+    point?: K6Point | null
     /** Which item this is, so a caller can key on it rather than on the slot. */
     itemId?: string | null
     /** What it is and what it is called, for anything that lists what somebody has on. */
@@ -118,7 +119,7 @@ export async function drawPortrait(
         continue
       }
 
-      const socket = SOCKETS[piece.slot]
+      const socket = SOCKET_FOR[piece.slot]
       if (!piece.meshUrl || !socket) continue
       /*
        * The real format, not a guess off a signed address - the same bug

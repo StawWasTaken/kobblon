@@ -171,7 +171,14 @@ export class SoundService {
       node.setVolume(one.sound.volume ?? 1)
       node.setPlaybackRate(Math.max(one.sound.speed ?? 1, 0.01))
 
-      if (one.at && node instanceof THREE.PositionalAudio) {
+      /*
+       * Duck-typed for the same reason as the `is*` flags elsewhere: two
+       * copies of three.js make `instanceof` lie. PositionalAudio has no
+       * flag of its own, and `panner` is the thing that makes it
+       * positional, so it is the honest test.
+       */
+      const placed = node as THREE.PositionalAudio
+      if (one.at && placed.panner) {
         const reach = Math.max(one.sound.reach ?? 40, 0.5)
         /*
          * Two distances, not one. Everything inside `near` is at full
@@ -180,9 +187,9 @@ export class SoundService {
          * as the near distance for every sound, which is a guess, and most
          * of why these did not feel like Roblox's.
          */
-        node.setRefDistance(Math.min(Math.max(one.sound.near ?? reach / 4, 0.1), reach))
-        node.setMaxDistance(reach)
-        node.setDistanceModel(one.sound.falloff === 'linear' ? 'linear' : 'inverse')
+        placed.setRefDistance(Math.min(Math.max(one.sound.near ?? reach / 4, 0.1), reach))
+        placed.setMaxDistance(reach)
+        placed.setDistanceModel(one.sound.falloff === 'linear' ? 'linear' : 'inverse')
         one.at.add(node)
       }
 

@@ -1095,9 +1095,17 @@ function lightFor(part: WorldLight, allowed: boolean): THREE.Object3D {
       (part.turn[2] * Math.PI) / 180,
     )
   }
-  if (here instanceof THREE.SpotLight) {
-    here.target.position.set(0, 0, -1)
-    here.add(here.target)
+  /*
+   * `.isSpotLight`, not `instanceof`. The engine is vendored into hosts
+   * that resolve three.js themselves - the Workspace hit this three times
+   * in one session - and two copies of three means every `instanceof`
+   * against it answers false while the object is plainly the right thing.
+   * The `is*` flags are there precisely for this and survive it.
+   */
+  const spot = here as THREE.SpotLight
+  if (spot.isSpotLight) {
+    spot.target.position.set(0, 0, -1)
+    spot.add(spot.target)
   }
 
   return here
@@ -1341,9 +1349,10 @@ export async function applyMeshes(
     const pieces: THREE.BufferGeometry[] = []
     model.updateMatrixWorld(true)
     model.traverse((one) => {
-      if (!(one instanceof THREE.Mesh)) return
-      const piece = one.geometry.clone()
-      piece.applyMatrix4(one.matrixWorld)
+      const mesh = one as THREE.Mesh
+      if (!mesh.isMesh) return
+      const piece = mesh.geometry.clone()
+      piece.applyMatrix4(mesh.matrixWorld)
       pieces.push(piece)
     })
     releaseMesh(model)

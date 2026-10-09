@@ -17,7 +17,7 @@ import { faUser } from '@fortawesome/free-solid-svg-icons'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
   fitToSocket,
-  type K6Point, type K6Part, type WornFit,
+  SOCKET_FOR, type K6Part, type WornFit,
 } from '@/engine'
 import { cn } from '@/lib/cn'
 
@@ -62,11 +62,7 @@ export type AvatarLook = {
 }
 
 /** Which engine slot each wearable kind hangs from. */
-const SOCKETS: Record<string, K6Point> = {
-  hat: 'hat', hair: 'hat', face: 'face', neck: 'neck',
-  back: 'back', front: 'front', waist: 'waist',
-  leftHand: 'leftHand', rightHand: 'rightHand',
-}
+/* `SOCKET_FOR` in the engine. One mapping, not one per renderer. */
 
 export function AvatarStage({
   look, avatarUrl = '/k6/k6.glb', portrait, turning = true, handled,
@@ -137,7 +133,7 @@ export function AvatarStage({
           }
 
           // A model: an accessory or hair, hung off a socket.
-          const socket = SOCKETS[piece.slot]
+          const socket = SOCKET_FOR[piece.slot]
           if (!piece.meshUrl || !socket) continue
           const model = await loadMesh(
             piece.meshUrl,

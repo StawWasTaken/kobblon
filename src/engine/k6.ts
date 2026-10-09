@@ -74,6 +74,33 @@ export const K6_POINTS = {
 export type K6Point = keyof typeof K6_POINTS
 
 /**
+ * Which socket a wardrobe slot hangs from.
+ *
+ * **The two vocabularies that do not meet.** A wardrobe is organised by
+ * slot - hat, hair, face, accessory - and the rig has body parts and
+ * sockets. A hat is not a body part; a torso is not a slot. Something has
+ * to say which slot goes where, and the Workspace was right that it cannot
+ * be each client deciding for itself: two places deciding what a hat does
+ * is two avatars.
+ *
+ * It lived in `portrait.ts` with a comment saying it mirrored
+ * `AvatarStage`, and it did - two copies on this side alone, which is the
+ * same failure already half-happened. It is here now because the engine is
+ * the one thing every client has.
+ *
+ * `hair` and `hat` share a socket on purpose: both sit on top of the head,
+ * and K6 has no scalp of its own.
+ */
+export const SOCKET_FOR: Record<string, K6Point> = {
+  hat: 'hat', hair: 'hat', face: 'face', neck: 'neck',
+  back: 'back', front: 'front', waist: 'waist',
+  leftHand: 'leftHand', rightHand: 'rightHand',
+}
+
+/** The socket for a slot, or null for a slot that hangs from nothing. */
+export const socketFor = (slot: string): K6Point | null => SOCKET_FOR[slot] ?? null
+
+/**
  * How big the front of the head is, so a face fills it.
  *
  * The head measures 2.68 across and 2.5 through, and a face that is the

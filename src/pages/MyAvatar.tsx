@@ -29,7 +29,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  avatarOf, myAvatarItems, wearAvatarItem, takeOffItem, setBodyColours,
+  wornBy, myAvatarItems, wearAvatarItem, takeOffItem, setBodyColours,
   catalogUrl, assetUrl, refreshPortrait, cardFor,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
@@ -99,7 +99,7 @@ export default function MyAvatar() {
   const [busy, setBusy] = useState<string | null>(null)
 
   const worn = useAsync(
-    async () => (profile ? avatarOf(profile.id) : []),
+    async () => (profile ? wornBy(profile.id) : []),
     [profile?.id],
   )
   const owned = useAsync(
