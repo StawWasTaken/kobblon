@@ -3042,12 +3042,12 @@ export type ScreeningAsset = {
 }
 
 /**
- * May this be said?
+ * The same line with the bad words taken out.
  *
  * One call, one answer, and the same terms that judge a username. This is
  * the whole of what a chat window has to do to be moderated: hand it to
- * `ChatService` as its `screen`, and a refused line never leaves the
- * machine it was typed on.
+ * `ChatService` as its `screen`, and what leaves the machine is what came
+ * back from here rather than what was typed.
  *
  * It refuses when it cannot tell. The filter being unreachable is not
  * permission — that would make a dropped connection the way round it — and
@@ -3056,13 +3056,55 @@ export type ScreeningAsset = {
  * `setSupabaseClient` means this works from the Launcher and the Workspace
  * too, against whatever session they hold.
  */
-export async function screenSay(text: string): Promise<{ allowed: boolean; reason?: string }> {
+/** A chat suspension somebody is under, or has just come out of. */
+export type ChatStanding = {
+  id: string
+  until: string
+  minutes: number
+  reason: string
+  source: 'machine' | 'staff'
+  seen: boolean
+  over: boolean
+}
+
+/**
+ * Whether this person may talk, asked of the server.
+ *
+ * Null is the ordinary answer. The row is the authority — a suspension
+ * lives on the server with a time on it, so leaving and coming back,
+ * signing in elsewhere, or clearing a browser changes nothing, which is
+ * the whole point of it.
+ */
+export async function myChatStanding(): Promise<ChatStanding | null> {
+  const { data, error } = await supabase.rpc('my_chat_standing')
+  if (error) return null
+  const row = (Array.isArray(data) ? data[0] : data) as ChatStanding | undefined
+  return row ?? null
+}
+
+/** Say the card has been read, so it is not shown again. */
+export async function chatCardSeen(which: string, ended = false) {
+  await supabase.rpc('chat_card_seen', { which, ended })
+}
+
+export async function screenSay(
+  text: string,
+): Promise<{ allowed: boolean; clean: string; reason?: string }> {
   const { data, error } = await supabase.rpc('screen_say', { words: text })
   if (error) throw new Error(error.message)
   const said = (Array.isArray(data) ? data[0] : data) as
-    { allowed: boolean; reason: string | null } | null
-  if (!said) return { allowed: false, reason: 'That could not be checked.' }
-  return { allowed: said.allowed, reason: said.reason ?? undefined }
+    { allowed: boolean; clean: string | null; reason: string | null } | null
+  /*
+   * No answer is not permission, and it is not a licence to send the raw
+   * line either: the caller sends `clean`, so `clean` has to be something
+   * safe when there is nothing to go on.
+   */
+  if (!said) return { allowed: false, clean: '', reason: 'That could not be checked.' }
+  return {
+    allowed: said.allowed,
+    clean: said.clean ?? '',
+    reason: said.reason ?? undefined,
+  }
 }
 
 export async function screeningQueue(howMany = 50): Promise<ScreeningAsset[]> {

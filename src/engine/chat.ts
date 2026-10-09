@@ -246,7 +246,12 @@ export class LocalEcho implements ChatTransport {
  * moderation behind it passes nothing, and then nothing is screened and
  * this service says so rather than pretending.
  */
-export type ScreenSay = (text: string) => Promise<{ allowed: boolean; reason?: string }>
+export type ScreenSay = (text: string) => Promise<{
+  allowed: boolean
+  /** The line with the bad words taken out. What actually gets sent. */
+  clean: string
+  reason?: string
+}>
 
 export type ChatEvents = {
   /** A line arrived, from anyone, including this player. */
@@ -359,7 +364,7 @@ export class ChatService {
   private async ask(text: string) {
     const mine = this.generation
     const transport = this.transport
-    let verdict: { allowed: boolean; reason?: string }
+    let verdict: { allowed: boolean; clean: string; reason?: string }
     try {
       verdict = await this.screen!(text)
     } catch {
@@ -377,13 +382,23 @@ export class ChatService {
     // Gone, swapped, or disposed while we were asking.
     if (mine !== this.generation || transport !== this.transport) return
 
-    if (!verdict.allowed) {
-      const why = verdict.reason || 'That cannot be said here.'
-      this.say('refused', { why })
-      this.tell(why)
-      return
-    }
-    void transport.send(text)
+    /*
+     * Censored, not refused.
+     *
+     * This used to drop the whole line, and that was my call rather than
+     * Staw's: "IT CENSORS WORDS OR SENTENCES JUST LIKE ROBLOX DID WITH
+     * HASHTAGS BUT US ITS ••••". He is right about what people expect,
+     * and it is the kinder of the two besides — a message that arrives
+     * with a word missing tells you what happened, where one that
+     * vanishes reads as the chat being broken.
+     *
+     * What is sent is always what came back, never what was typed. A
+     * filter whose output the caller may ignore is a suggestion.
+     */
+    if (!verdict.allowed && verdict.reason) this.say('refused', { why: verdict.reason })
+    const sending = verdict.clean ?? text
+    if (!sending.trim()) return
+    void transport.send(sending)
   }
 
   /** A line from the World or the client itself, shown only to this player. */

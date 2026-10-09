@@ -57,6 +57,28 @@ const STACKED = 3
 const HEARD_WITHIN = 140
 
 /**
+ * How a bubble shrinks with distance.
+ *
+ * It did not, and that was the whole of "they feel like theyre on the
+ * screen but they dont feel like they are hover the player heads in the
+ * space of the world". The apps measured it: 107 by 38 at six stons and
+ * 107 by 38 at sixty. A thing in a World gets smaller as you walk away
+ * from it and a thing stuck to the glass does not, and that one property
+ * was all that was left reading as furniture.
+ *
+ * Inside `PLAIN_WITHIN` it is full size, because a bubble growing as
+ * somebody walks towards you is its own kind of wrong. Past that it falls
+ * off with distance and stops at `SMALLEST`, so a bubble across a World is
+ * small but still a thing you can read. The last quarter of the range is
+ * spent fading, rather than a bubble blinking out of existence on a
+ * threshold — which is what Roblox does and why nobody notices the
+ * threshold.
+ */
+const PLAIN_WITHIN = 14
+const SMALLEST = 0.42
+const FADES_FROM = HEARD_WITHIN * 0.75
+
+/**
  * How a bubble looks, in one place and overridable.
  *
  * Every property here is set with `Object.assign(element.style, ...)`, and
@@ -126,7 +148,15 @@ export const BUBBLE_LOOK: BubbleLook = {
   font: '600 1rem/1.35 Inter, system-ui, sans-serif',
   padding: '0.45rem 0.75rem',
   maxWidth: '22rem',
-  tail: { wide: 16, deep: 6.5, round: 2.1 },
+  /*
+   * The mark's own share, not three quarters of it.
+   *
+   * The apps measured the first version at 0.73 of the nub's real size and
+   * asked which I wanted. The mark is what Staw asked the bubble to look
+   * like, and he had already seen and accepted the full-size nub, so it is
+   * the full-size nub: 57.8% of the body's height rather than 42%.
+   */
+  tail: { wide: 22, deep: 9, round: 2.9 },
   tailAt: '50%',
 }
 
@@ -225,6 +255,10 @@ export class BubbleBoard {
     else element.textContent = line.text
     Object.assign(element.style, {
       position: 'absolute',
+      // Measured from the layer's own corner, since the position lives in
+      // the transform now.
+      left: '0',
+      top: '0',
       transform: 'translate(-50%, -100%)',
       maxWidth: look.maxWidth,
       padding: look.padding,
@@ -237,7 +271,13 @@ export class BubbleBoard {
       whiteSpace: 'pre-wrap',
       overflowWrap: 'anywhere',
       boxShadow: look.shadow,
-      transition: 'opacity 180ms ease, transform 180ms ease',
+      /*
+       * Opacity only. The transform is written every frame now, and a
+       * transition on a property set every frame is sliding by
+       * construction: each move would be animated over 180ms and the
+       * bubble would always trail the head it belongs to.
+       */
+      transition: 'opacity 180ms ease',
       opacity: '0',
     })
 
@@ -334,6 +374,12 @@ export class BubbleBoard {
       // Behind the camera, too far to matter, or hidden because it is you.
       const shown = at.z < 1 && away < HEARD_WITHIN && who !== hide
 
+      // Smaller the further off, and thinner over the last stretch.
+      const near = Math.max(SMALLEST, Math.min(1, PLAIN_WITHIN / Math.max(away, 0.001)))
+      const heard = away > FADES_FROM
+        ? Math.max(0, 1 - (away - FADES_FROM) / (HEARD_WITHIN - FADES_FROM))
+        : 1
+
       let lift = 0
       for (let i = stack.length - 1; i >= 0; i -= 1) {
         const bubble = stack[i]
@@ -343,13 +389,27 @@ export class BubbleBoard {
         // Older ones sit higher, smaller and fainter, so the newest reads
         // first without anything jumping when one goes.
         const age = stack.length - 1 - i
-        const size = 1 - age * 0.12
+        // The two multiply, so an old bubble on somebody far away is
+        // smaller than a new one on somebody standing next to you — which
+        // it was not, and nobody had noticed yet.
+        const size = (1 - age * 0.12) * near
         const fading = Math.max(0, Math.min(1, (bubble.until - now) / 600))
 
-        style.left = `${(at.x * 0.5 + 0.5) * width}px`
-        style.top = `${(-at.y * 0.5 + 0.5) * height - lift}px`
-        style.transform = `translate(-50%, -100%) scale(${size.toFixed(3)})`
-        style.opacity = `${(fading * (1 - age * 0.25)).toFixed(3)}`
+        /*
+         * Everything in the transform, nothing in `left` and `top`.
+         *
+         * Those two make the browser lay out and paint every bubble every
+         * frame, on the main thread, beside a canvas the GPU is
+         * compositing — which is the usual reason a DOM overlay swims
+         * against the scene it is meant to be stuck to. The same numbers
+         * in a `translate3d` cost no layout at all.
+         */
+        const x = (at.x * 0.5 + 0.5) * width
+        const y = (-at.y * 0.5 + 0.5) * height - lift
+        style.transform =
+          `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`
+          + ` translate(-50%, -100%) scale(${size.toFixed(3)})`
+        style.opacity = `${(fading * heard * (1 - age * 0.25)).toFixed(3)}`
 
         /*
          * Only the newest keeps its tail. Three arrows pointing at one

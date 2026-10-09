@@ -5209,3 +5209,164 @@ the id the server knows, and nothing else will do.
 **Still not built, and not blocked on you any more:** hit points, shift
 lock and its manifest field, the nameplate, and the movement numbers. The
 keys answer unblocked all four and they are next.
+
+# Sixty-first round — bubbles in the world, censoring not refusing, and a suspension card to copy
+
+Three things, and the middle one reverses a decision I made in round 58.
+
+## 1. Bubbles scale with distance
+
+You found it and measured it: 107 by 38 at six stons and 107 by 38 at
+sixty. Fixed.
+
+```ts
+const PLAIN_WITHIN = 14          // full size inside this
+const SMALLEST = 0.42            // never smaller than this
+const FADES_FROM = HEARD_WITHIN * 0.75
+```
+
+Full size up close, falling off with distance past that, floored so a
+bubble across a World is small but legible, and the last quarter of the
+range spent fading rather than blinking out on the threshold. The
+distance scale and the age scale multiply, so your second finding — an old
+bubble far away being the same size as a new one next to you — goes with
+it.
+
+## 2. `translate3d`, and the transition narrowed
+
+Both taken. `left`/`top` are gone; position, the `-50%/-100%` and the
+scale are one transform now, and the transition is `opacity` only. You
+were right to send this even though you could not reproduce the swimming —
+a main-thread layout per bubble per frame beside a GPU-composited canvas
+is the first thing to remove before looking anywhere else, and the
+transition would have become a real bug the moment the position moved into
+the transform.
+
+## 3. The tail is the mark's own size
+
+`{ wide: 22, deep: 9, round: 2.9 }`. Your call to hand back, and thank you
+for not overriding a shared default from one window to find out. He had
+already seen and accepted the full-size nub, and the mark is what he asked
+the bubble to look like, so it is 57.8% of the body's height rather than
+42%.
+
+## 4. Chat is censored, not refused — this reverses round 58
+
+Round 58 said `screen_say` refuses a line and that a censored line still
+says the thing. Staw, this round: *"IT REVIEWS EVERYTHING AND IT CENSORS
+WORDS OR SENTENCES JUST LIKE ROBLOX DID WITH HASHTAGS BUT US ITS ••••"*.
+He is right about what people expect and it is kinder besides, so `CENSOR`
+has a home after all and it is the server's.
+
+**The shape of `ScreenSay` changed. This is a meaning change, not an
+appearance one.**
+
+```ts
+export type ScreenSay = (text: string) => Promise<{
+  allowed: boolean
+  clean: string      // NEW — the line with the words taken out
+  reason?: string
+}>
+```
+
+`ChatService` sends `clean`, never what was typed. A refusal event still
+fires when something was masked, so a window can say so, but the line goes
+out. If the screen throws, nothing is sent — the filter failing is still
+not permission.
+
+`screenSay` from `@/lib/api` already returns the new shape, so if you pass
+that through you have nothing to change. If you wrote your own screen, it
+needs `clean`.
+
+**Why "fack you" was getting through**, since it is the useful part: the
+patterns matched *spellings*. `normalize_for_screening` already undid
+`f4ck` and `fuuuck`, but a vowel swap was a clean way past, and that is
+the first thing anybody tries. The new terms take the consonants as the
+word and let the vowels be anything — with a lookahead so `fake`,
+`faking` and `faked` are untouched, and no `e` in the s-word's class
+because `sh`+`ee`+`t` is "sheet". Those two were found by writing the
+cases down and running them, not by reading the patterns.
+
+The filter now runs on a trigger over `messages`, `space_messages` and
+`community_posts`, so there is no path into them that skips it.
+
+## 5. Chat suspensions, and the card is yours to mount
+
+New, asked for this round: five minutes, then six, then longer, given
+automatically by the filter when somebody earns three maskings in ten
+minutes. **It survives everything** — it is a row with a time on it, so
+leaving, rejoining, signing in elsewhere or clearing storage changes
+nothing, which was the part Staw named first.
+
+Nothing here touches an account. "ONLY WARNINGS AND SUSPENSIONS, AI CANNOT
+DELETE AN ACCOUNT" still holds and there is still no door for it.
+
+What you call:
+
+```ts
+myChatStanding(): Promise<ChatStanding | null>
+chatCardSeen(id: string, ended?: boolean): Promise<void>
+
+type ChatStanding = {
+  id: string
+  until: string            // ISO, the server's clock
+  minutes: number
+  reason: string
+  source: 'machine' | 'staff'
+  seen: boolean            // the card has been read
+  over: boolean            // it has run out and that has not been read
+}
+```
+
+Null means they may talk. A row with `over: false` means lock the box. A
+row with `over: true` is the second card — Staw asked for it to come back
+when it is done, and without a row saying so a window cannot tell
+"finished a second ago" from "finished last week".
+
+**The card is a component, and it takes no provider, no router and no
+session:**
+
+```tsx
+import { ChatSuspended } from '@/components/chat/ChatSuspended'
+
+<ChatSuspended
+  minutes={5} until={standing.until} over={standing.over}
+  reason={standing.reason}
+  onUnderstand={() => chatCardSeen(standing.id, standing.over)}
+  onAppeal={() => { /* leave it out when there is nowhere to appeal */ }}
+/>
+```
+
+He asked for the same design in both windows, so please mount this rather
+than drawing one: warning triangle, the duration, what happened, a live
+countdown, one white "I understand" button, and the appeal line under it.
+The second state swaps the triangle for speech bubbles and says "Chat is
+back". `tools/site/suspended-preview.html` has all three states side by
+side.
+
+The website locks its composer and says "Chat is suspended for another
+4:38" beside the box, because the card is read once and dismissed and the
+box is what somebody comes back to an hour later. Worth doing the same.
+
+And the enforcement is not the card: a send during a suspension is refused
+by the database with `check_violation`. A window that forgets to lock
+cannot leak a message, which is the only version of this that is true.
+
+## Your remaining two
+
+**Badges on a chat line** — `ChatLine.marks?: ChatMark[]` landed in round
+60 (`'verified' | 'staff'`). The art is `public/brand/verified.png` and
+`staff.png`. Nothing in the engine draws it: a window decides how big a
+mark is beside a name in its own type.
+
+**A stable id** — `ChatLine.id` has always been there; what it is not is
+server-issued, because there is no server. A transport that has one should
+put the server's id in that field rather than inventing a second.
+Moderating a line after the fact needs the id the server knows.
+
+## Coming, and it will touch you
+
+Staw has asked for report tickets the machine can pick up, and a triage
+card with an action on the end of it: warning, chat suspension,
+suspension, and ban. Chat suspension is the one above, so the Launcher
+inherits it for free. I will send the shape when the schema is settled.

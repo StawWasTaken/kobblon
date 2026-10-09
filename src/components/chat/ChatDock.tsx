@@ -19,7 +19,9 @@ import { useAuth } from '@/hooks/useAuth'
 import {
   chatRoster, conversationName, deleteMessage, editMessage, ignorePerson, listMessages,
   markConversationRead, sendMessage, startConversation, unignorePerson,
+  myChatStanding, chatCardSeen, type ChatStanding,
 } from '@/lib/api'
+import { ChatSuspended } from '@/components/chat/ChatSuspended'
 import { supabase } from '@/lib/supabase'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -138,6 +140,8 @@ function Window({
   useEffect(() => {
     if (!collapsed && !details) bottom.current?.scrollIntoView({ block: 'end' })
   }, [messages, collapsed, details])
+
+  const quiet = useChatStanding()
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -318,6 +322,17 @@ function Window({
 
           <form onSubmit={submit} className="shrink-0 border-t border-ink-line p-2">
             {error && <p className="px-1 pb-1.5 text-xs text-danger">{error}</p>}
+            {/*
+              * Said where the box is, rather than only in the card. The
+              * card is read once and dismissed; this is what somebody sees
+              * when they come back in an hour and wonder why the box does
+              * nothing.
+              */}
+            {quiet.standing && !quiet.standing.over && (
+              <p className="px-1 pb-1.5 text-xs text-warm">
+                Chat is suspended for another {quiet.left}.
+              </p>
+            )}
             <div className="flex items-center gap-1.5">
               <label className="sr-only" htmlFor={`draft-${conversation.id}`}>Message</label>
               <input
@@ -325,12 +340,15 @@ function Window({
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={2000}
-                placeholder="Send a message"
+                disabled={Boolean(quiet.standing && !quiet.standing.over)}
+                placeholder={
+                  quiet.standing && !quiet.standing.over ? 'Chat is suspended' : 'Send a message'
+                }
                 className="h-9 min-w-0 flex-1 rounded-full border border-ink-line bg-ink-raised px-3.5 text-sm placeholder:text-white/30 focus:border-brand-bright"
               />
               <button
                 type="submit"
-                disabled={!draft.trim()}
+                disabled={!draft.trim() || Boolean(quiet.standing && !quiet.standing.over)}
                 aria-label="Send"
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-bright disabled:opacity-40"
               >
@@ -496,7 +514,48 @@ function List({
   )
 }
 
+/**
+ * Whether this person is allowed to talk, and the card that says so.
+ *
+ * Asked once when the dock mounts and again when the clock runs out, not
+ * on a timer: the server said when it ends, so the only moment the answer
+ * can change on its own is that one. (A suspension *given* while somebody
+ * is sitting here is caught by the send being refused, which is the
+ * server's job and not a poll's.)
+ */
+function useChatStanding() {
+  const [standing, setStanding] = useState<ChatStanding | null>(null)
+  const [left, setLeft] = useState('')
+
+  const ask = useCallback(() => { void myChatStanding().then(setStanding) }, [])
+  useEffect(() => { ask() }, [ask])
+
+  useEffect(() => {
+    if (!standing || standing.over) return
+    const tick = () => {
+      const ms = new Date(standing.until).getTime() - Date.now()
+      if (ms <= 0) { ask(); return }
+      const all = Math.ceil(ms / 1000)
+      setLeft(`${Math.floor(all / 60)}:${String(all % 60).padStart(2, '0')}`)
+    }
+    tick()
+    const timer = setInterval(tick, 1000)
+    return () => clearInterval(timer)
+  }, [standing, ask])
+
+  const read = useCallback(() => {
+    if (!standing) return
+    void chatCardSeen(standing.id, standing.over)
+    // Seen is seen: the card goes now rather than after a round trip, and
+    // the row behind it is what stops it coming back.
+    setStanding(standing.over ? null : { ...standing, seen: true })
+  }, [standing])
+
+  return { standing, left, read }
+}
+
 export function ChatDock({ children }: { children: ReactNode }) {
+  const quiet = useChatStanding()
   const { profile } = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
@@ -573,6 +632,28 @@ export function ChatDock({ children }: { children: ReactNode }) {
             loading={loading}
             onOpen={openConversation}
             onNewGroup={() => setMaking(true)}
+          />
+        </div>
+      )}
+
+      {/*
+        * The card, over everything, once each way.
+        *
+        * Shown when a suspension has not been read, and again when it has
+        * run out and that has not been read — which is what Staw asked
+        * for: "this popup will appear then it'll appear again once its
+        * gone". Both facts are rows on the server, so closing the window
+        * or coming back tomorrow shows whichever is still unread rather
+        * than nothing.
+        */}
+      {quiet.standing && (quiet.standing.over || !quiet.standing.seen) && (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/60 p-4">
+          <ChatSuspended
+            minutes={quiet.standing.minutes}
+            until={quiet.standing.until}
+            over={quiet.standing.over}
+            reason={quiet.standing.reason}
+            onUnderstand={quiet.read}
           />
         </div>
       )}
