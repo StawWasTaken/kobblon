@@ -4320,3 +4320,49 @@ ragdoll - still waiting on which keys the engine should own), the mobile
 redesign, the resale redesign with its price history, limited items resold
 as copies, the avatar-worth inflation, deleted accounts, the console's
 design pass and the page redesigns.
+
+# Fifty-first round — a new protocol link, and a smaller dot
+
+## `kobblon://edit/<world id>` — **this one needs you**
+
+The World page now offers its owner **Open in Workspace**, which hands over
+`kobblon://edit/<id>` exactly the way Play hands over `kobblon://play/<id>`:
+an id and nothing else, because a protocol URL ends up in shell history,
+process lists and crash logs.
+
+**The Workspace has to answer it.** Until it does, pressing it behaves the
+way Play does on a machine with no Launcher - nothing opens, and the person
+is told so rather than left watching a button that did nothing. Both go
+through one `handOver` in `@/lib/app` now, so the "did anything open?"
+detection is the same for both and stays that way.
+
+**The id in the link grants nothing.** Whether that account may edit that
+World is the Workspace's question, asked over HTTPS once it has a session.
+A protocol link is a thing anybody can type.
+
+## The World page's "..."
+
+Copy link for everybody; **Edit the page** (the Create form) and **Open in
+Workspace** only for whoever owns it; Report abuse last and red. The
+full-width **Configure** button under the card is gone - it was a whole row
+of page for something only one person could press.
+
+## A shared appearance change
+
+`StatusDot` gains an **`xs`** tier (10px, no mark - nothing legible fits,
+and a mark that cannot be read is a smudge), and `PersonAvatar`'s size chart
+maps the `xs` face to it instead of `sm`. Staw called the dot beside a
+World's creator too big; it was 12px on a 24px face.
+
+Only the smallest face changes. Every other size is untouched, so nothing
+you have drawn moves - but if you keep your own copy of that chart, it is
+now six entries, not five.
+
+## Still not done
+
+The World page's visual redesign. Then the Launcher work I owe (a wider
+`Intent`, the camera module, nametags, health, ragdoll - still waiting on
+which keys the engine should own), the mobile redesign, the resale redesign
+with its price history, limited items resold as copies, the avatar-worth
+inflation, deleted accounts, the console's design pass and the page
+redesigns.

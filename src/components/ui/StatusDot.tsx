@@ -36,6 +36,13 @@ export const presenceWords: Record<Presence, string> = {
  * a mark inside a circle still reads at.
  */
 const sizes = {
+  /*
+   * For a face small enough that the next size up covers a quarter of it -
+   * the one beside a World's creator, which Staw called out as too big. It
+   * carries no mark: nothing legible fits in ten pixels, and a mark that
+   * cannot be read is a smudge.
+   */
+  xs: 'h-2.5 w-2.5 text-[0px]',
   sm: 'h-3 w-3 text-[6px]',
   md: 'h-3.5 w-3.5 text-[7px]',
   lg: 'h-4 w-4 text-[8px]',

@@ -33,8 +33,8 @@ const sizes = {
  * is. It was different in every place before, which is why no two of them
  * looked alike.
  */
-const dots: Record<keyof typeof sizes, 'sm' | 'md' | 'lg' | 'xl' | '2xl'> = {
-  xs: 'sm', sm: 'sm', md: 'md', lg: 'md', xl: 'lg', '2xl': 'xl', '3xl': '2xl',
+const dots: Record<keyof typeof sizes, 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'> = {
+  xs: 'xs', sm: 'sm', md: 'md', lg: 'md', xl: 'lg', '2xl': 'xl', '3xl': '2xl',
 }
 
 /**

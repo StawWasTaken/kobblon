@@ -3,13 +3,14 @@ import { Link, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
-  faXmark, faSpinner, faDownload,
+  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube,
 } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Tabs } from '@/components/ui/Tabs'
+import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -30,7 +31,7 @@ import {
   serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
-import { play } from '@/lib/app'
+import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -379,9 +380,50 @@ export default function WorldPage() {
             */}
           <div className="flex flex-col gap-5">
             <div>
-              <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
-                {thing.name}
-              </h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+                  {thing.name}
+                </h1>
+
+                {/*
+                  * Everything that is not Play.
+                  *
+                  * Copying the link is the one anybody wants, so it is first
+                  * and it is there for everybody. The two ways in are only
+                  * drawn for whoever owns the World - a menu offering
+                  * "Edit it" to a stranger is a menu that lies - and they
+                  * replace the Configure button that used to sit under the
+                  * card taking a whole row to say less.
+                  */}
+                <Menu
+                  label="More"
+                  align="right"
+                  trigger={
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+                      <FontAwesomeIcon icon={faEllipsis} />
+                    </span>
+                  }
+                  items={[
+                    {
+                      label: 'Copy link',
+                      icon: faLink,
+                      onSelect: () => {
+                        void navigator.clipboard?.writeText(window.location.href)
+                        toast('Link copied.', 'success')
+                      },
+                    },
+                    ...(mine ? [
+                      { label: 'Edit the page', icon: faSliders, to: `/create/worlds/${thing.id}` },
+                      {
+                        label: 'Open in Workspace',
+                        icon: faCube,
+                        onSelect: () => editInWorkspace(thing.id, () => setHanding('missing')),
+                      },
+                    ] : []),
+                    { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
+                  ]}
+                />
+              </div>
 
               {owner ? (
                 <Link
@@ -482,17 +524,12 @@ export default function WorldPage() {
                 />
               </div>
 
-              {mine && (
-                <Button
-                  variant="ghost"
-                  block
-                  icon={faSliders}
-                  className="mt-4"
-                  to={`/create/worlds/${thing.id}`}
-                >
-                  Configure
-                </Button>
-              )}
+              {/*
+                * Configure used to be a full-width button here. It is in the
+                * menu beside the name now, with the Workspace beside it,
+                * because a row of its own was a lot of page for a thing only
+                * its owner can press.
+                */}
             </div>
           </div>
         </div>

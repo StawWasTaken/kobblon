@@ -20,6 +20,25 @@ export const playLink = (experienceId: string) => {
 }
 
 /**
+ * Opening a World in the Workspace to build it.
+ *
+ * The same shape as playing one and for the same reasons: an id and nothing
+ * else. Whether the account may actually edit it is the Workspace's
+ * question, asked over HTTPS once it has a session - a protocol link is a
+ * thing anybody can type, so it can never be the thing that grants
+ * permission.
+ *
+ * **New contract.** The Workspace has to answer `kobblon://edit/<id>`. Until
+ * it does, this behaves exactly as `play` does against a machine with no
+ * Launcher: nothing opens and the caller is told, which is why it takes the
+ * same `onMissing`.
+ */
+export const editLink = (worldId: string) => {
+  if (!ID.test(worldId)) throw new Error('That is not a world id.')
+  return `kobblon://edit/${worldId}`
+}
+
+/**
  * Tries to open the Launcher, and says whether it looks like it worked.
  *
  * There is no way to ask a browser whether a desktop application is
@@ -28,7 +47,15 @@ export const playLink = (experienceId: string) => {
  * caller offers the download. Silently doing nothing is the one wrong answer.
  */
 export function play(experienceId: string, onMissing: () => void) {
-  const link = playLink(experienceId)
+  return handOver(playLink(experienceId), onMissing)
+}
+
+/** Open a World in the Workspace, or say nothing happened. */
+export function editInWorkspace(worldId: string, onMissing: () => void) {
+  return handOver(editLink(worldId), onMissing)
+}
+
+function handOver(link: string, onMissing: () => void) {
   const started = Date.now()
   let answered = false
 
