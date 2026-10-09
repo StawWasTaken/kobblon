@@ -1279,12 +1279,23 @@ export function MachineSection() {
     setBusy('run')
     try {
       const done = await runModeration()
-      say(
-        done.looked === 0
-          ? 'Nothing was waiting.'
-          : `Looked at ${done.looked}, decided ${done.decided}, unsure about ${done.unsure}.`,
-        'success',
-      )
+      /*
+       * A run where the machine never answered is not a success, and it
+       * used to read like one: "looked at 12, decided 0" is what a retired
+       * model name looks like from here, and it is also what twelve
+       * genuinely unclear things look like. The function says which now,
+       * and this shows its words rather than summarising them away.
+       */
+      if (done.trouble?.length) {
+        say(`Looked at ${done.looked}, decided ${done.decided}. ${done.trouble.join(' ')}`, 'error')
+      } else {
+        say(
+          done.looked === 0
+            ? 'Nothing was waiting.'
+            : `Looked at ${done.looked}, decided ${done.decided}, unsure about ${done.unsure}.`,
+          'success',
+        )
+      }
       recent.reload()
       waiting.reload()
     } catch (error) {

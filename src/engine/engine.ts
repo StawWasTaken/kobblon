@@ -9,7 +9,7 @@ import {
 import { buildSky, type ResolveAsset, type Skybox } from './sky'
 import { K6_HEIGHT } from './units'
 import { SoundService } from './sound'
-import { ChatService, LocalEcho, muted, type ChatTransport } from './chat'
+import { ChatService, LocalEcho, muted, type ChatTransport, type ScreenSay } from './chat'
 import { ChatWindow } from './chatui'
 import { BubbleBoard } from './bubbles'
 
@@ -51,7 +51,17 @@ export type EngineOptions = {
    * it is a local echo, and the window says so rather than implying a room
    * full of people who are not there.
    */
-  chat?: false | { name?: string; transport?: ChatTransport; window?: boolean }
+  chat?: false | {
+    name?: string
+    transport?: ChatTransport
+    window?: boolean
+    /**
+     * Who decides what may be said. The website passes `screenSay`; a World
+     * with nothing behind it screens nothing, which the service admits to
+     * rather than hiding.
+     */
+    screen?: ScreenSay
+  }
 }
 
 /** Things the engine says happened, for a client to act on. */
@@ -139,7 +149,10 @@ export class Engine {
      */
     if (options.chat !== false) {
       const asked = options.chat ?? {}
-      this.chat = new ChatService(asked.transport ?? new LocalEcho(asked.name ?? 'You'))
+      this.chat = new ChatService(
+        asked.transport ?? new LocalEcho(asked.name ?? 'You'),
+        { screen: asked.screen },
+      )
       this.bubbles = new BubbleBoard(options.canvas)
       this.chat.on('line', (line) => {
         // Only somebody's own words go over a head. A system line is the
@@ -154,6 +167,16 @@ export class Engine {
 
     if (options.listen !== false) {
       this.keyboard = new Keyboard(options.canvas)
+
+      /*
+       * The keyboard is told about typing by the service, so a window only
+       * has to do the one documented thing. Asked for now as well as
+       * subscribed to, because the service can already be open by the time
+       * a keyboard exists — reading it once and only listening afterwards
+       * is this project's oldest mistake.
+       */
+      this.keyboard.setTyping(this.chat?.typing ?? false)
+      this.chat?.on('typing', ({ typing }) => this.keyboard?.setTyping(typing))
       this.onWheel = (event) => {
         event.preventDefault()
         /*
@@ -177,6 +200,9 @@ export class Engine {
        * choose where the camera sits.
        */
       this.onKey = (event: KeyboardEvent) => {
+        // Not while somebody is typing: "io" in a sentence is two letters,
+        // not a camera.
+        if (this.chat?.typing) return
         if (event.code === 'KeyI') this.zoom(-Math.max(1.5, this.orbit.distance * 0.22))
         else if (event.code === 'KeyO') this.zoom(Math.max(1.5, this.orbit.distance * 0.22))
       }

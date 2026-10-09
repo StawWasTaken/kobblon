@@ -66,12 +66,23 @@ Say "unsure" when you genuinely cannot tell from what you were given. Do not gue
 
 The reason is shown to the person who made it, so write it plainly and without blaming them.`
 
-/** One ask of Groq, with a picture when there is one. */
+/**
+ * One ask of Groq, with a picture when there is one.
+ *
+ * It says why it failed rather than returning a bare null. Not for the
+ * person who uploaded anything — for whoever pressed the button in the
+ * staff console, because "looked: 12, decided: 0" is the same answer
+ * whether the key is wrong, the model name is retired, or every single
+ * thing in the queue was genuinely unclear. Those need different fixes and
+ * the console could not tell them apart. Groq retires model names on its
+ * own schedule, so a name that worked last month answering 404 today is the
+ * ordinary case rather than the strange one.
+ */
 async function askGroq(
   model: string,
   words: string,
   picture: string | null,
-): Promise<{ decision: string; reason: string } | null> {
+): Promise<{ decision: string; reason: string } | { trouble: string }> {
   const content: unknown = picture
     ? [
       { type: 'text', text: words },
@@ -95,23 +106,32 @@ async function askGroq(
         { role: 'user', content },
       ],
     }),
-  }).catch(() => null)
+  }).catch((why) => ({ failed: String(why) }) as const)
 
-  if (!said || !said.ok) return null
+  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
+
+  if (!said.ok) {
+    // Groq's own words, trimmed. A retired model name, a key that is not a
+    // key, and a rate limit all land here and all read differently.
+    const why = await said.text().catch(() => '')
+    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
+  }
 
   const body = await said.json().catch(() => null)
   const text = body?.choices?.[0]?.message?.content
-  if (typeof text !== 'string') return null
+  if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
 
   try {
     const verdict = JSON.parse(text)
     const decision = String(verdict.decision ?? '').toLowerCase()
-    if (!['approved', 'rejected', 'unsure'].includes(decision)) return null
+    if (!['approved', 'rejected', 'unsure'].includes(decision)) {
+      return { trouble: `${model} answered "${decision.slice(0, 40)}", which is not a decision.` }
+    }
     return { decision, reason: String(verdict.reason ?? '').slice(0, 300) }
   } catch {
     // A model that did not answer in the shape it was asked for is a model
     // that has not answered. Nothing is decided on a half-read reply.
-    return null
+    return { trouble: `${model} did not answer in JSON.` }
   }
 }
 
@@ -162,6 +182,12 @@ Deno.serve(async (request) => {
 
   let decided = 0
   let unsure = 0
+  /*
+   * Every distinct reason the machine failed, once each. Twelve jobs
+   * failing the same way is one fault, and a list of twelve identical
+   * sentences is how a console stops being read.
+   */
+  const trouble = new Set<string>()
 
   for (const job of work as {
     subject: string; subject_id: string; kind: string; name: string
@@ -191,7 +217,10 @@ Deno.serve(async (request) => {
     )
 
     // No answer at all leaves it exactly where it was, for a person.
-    if (!verdict) continue
+    if ('trouble' in verdict) {
+      trouble.add(verdict.trouble)
+      continue
+    }
 
     if (verdict.decision === 'unsure') {
       unsure += 1
@@ -217,5 +246,10 @@ Deno.serve(async (request) => {
     if (!refused) decided += 1
   }
 
-  return answer({ looked: work.length, decided, unsure })
+  return answer({
+    looked: work.length,
+    decided,
+    unsure,
+    trouble: trouble.size ? [...trouble] : undefined,
+  })
 })

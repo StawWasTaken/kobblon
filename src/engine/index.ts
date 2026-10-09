@@ -30,17 +30,17 @@ export {
   ZOOM_NEAR, ZOOM_FAR,
   type WorldManifest, type WorldBlock, type WorldGroup, type WorldPart, type BuiltWorld,
   type WorldDecal, type WorldSound, type WorldLight, type Vec3,
-  type WorldNode, type WorldClass,
+  type WorldNode, type WorldClass, type WorldScript,
   MOST_LIGHTS,
   type Face, type ExperienceManifest, type ExperienceBlock, type BuiltExperience,
 } from './experience'
 export { SoundService, type Playing } from './sound'
 export {
-  ChatService, LocalEcho, clean, muted, MOST_CHARACTERS,
-  type ChatLine, type ChatKind, type ChatTransport, type ChatEvents,
+  ChatService, LocalEcho, clean, muted, tintFor, NAME_TINTS, MOST_CHARACTERS,
+  type ChatLine, type ChatKind, type ChatTransport, type ChatEvents, type ScreenSay,
 } from './chat'
 export { ChatWindow } from './chatui'
-export { BubbleBoard } from './bubbles'
+export { BubbleBoard, BUBBLE_LOOK, type BubbleLook, type BubbleContents } from './bubbles'
 export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from './materials'
 export { SHAPES, isShape, geometryFor, tiledGeometry, TRUSS_BAY, type Shape } from './shapes'
 export { textureFor, bumpFor, reliefFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'

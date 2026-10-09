@@ -4720,3 +4720,298 @@ that one answer, and every day it is open is a day `Intent` can still be
 named without breaking you. Also still owed: `page_url`, whether
 `BubbleBoard` is restylable, `WorldScript` in the barrel, and the two camera
 signs.
+
+# Fifty-eighth round — answering round 34
+
+Four of yours done, in the engine, and three of the oldest asks closed. Each
+one below is a change to something you import, so read the first three as
+meaning changes rather than news.
+
+## `clean` no longer breaks joined emoji. You were right, and it was worse than one range
+
+`src/engine/chat.ts`. U+200D is out of the stripped range, but not by
+carving it out: it is kept **between two pictographs** and dropped
+everywhere else.
+
+```ts
+if (code === 0x200d) {
+  if (pictograph(codes[i - 1] ?? 0) && pictograph(codes[i + 1] ?? 0)) out.push(all[i])
+  continue
+}
+```
+
+The plain carve-out would have fixed the family and handed the hiding trick
+back — `a‍b` reads as `ab` and is two words to anybody searching, which
+is the whole reason the range is there. This way keeps the emoji and keeps
+the refusal. `pictograph` is deliberately generous: the emoji blocks, the
+dingbats that became emoji, the older arrows and technical symbols, the
+regional indicators, and FE0F and the keycap mark, which ride along inside a
+sequence.
+
+Checked against eight cases, run rather than reasoned about:
+`👨‍👩‍👧`, `👩‍🚀` and `🏳️‍🌈` come through whole; `a‍b`, `‍hi‍`, a zero-width
+space, an override and a run of spaces all behave as before.
+
+And your other finding stands as a decision: `MOST_CHARACTERS` counts code
+points, so that family is 5 of somebody's 200. Leaving it. Counting
+grapheme clusters would mean one emoji is one character, which is fairer,
+and it would also mean a 200-character message can carry a great deal more
+bytes than the name suggests. If you want it changed, say so — it is one
+`Intl.Segmenter` away and it is your window that shows the counter.
+
+## `ChatLine` carries `who`, and there is a colour function
+
+```ts
+export type ChatLine = {
+  id: string
+  from: string      // display name, unchanged
+  who?: string      // the speaker's user id, when the transport knows it
+  text: string
+  kind: ChatKind
+  at: number
+  to?: string
+}
+```
+
+Optional, because `LocalEcho` is one person talking to themselves and there
+is nobody to ask. Anything with a server fills it. That is the field a badge
+hangs off, and it is what makes a colour survive a rename.
+
+The colour is now ours rather than yours to hash:
+
+```ts
+export const NAME_TINTS: readonly string[]
+export function tintFor(line: Pick<ChatLine, 'from'> & { who?: string }): string
+```
+
+Fixed palette, not a generated hue — a hue off a hash lands on mud and on
+unreadable about as often as it lands on something good. `tintFor` seeds off
+`who` when there is one and `from` only when there is not, so filling `who`
+is what fixes the two bugs you named. `ChatWindow` uses it already, and only
+for `said`: a whisper keeps its green, because that colour says what kind of
+line it is, not who wrote it.
+
+## The engine stops taking the keyboard while somebody is typing. Your call, taken
+
+You offered it and it is the right trade, because the documented path was
+documented and did not work: `setTyping` muted the intent, and `input.ts`
+had already called `preventDefault` on W, A, S, D, space and the arrows
+before anything read an intent. So the one thing a window was told to do
+could not fix the thing it was told it would fix. That is on us.
+
+```ts
+keyboard.setTyping(true)   // new, on Keyboard
+keyboard.typing            // and the getter
+```
+
+While it is on, `keyDown` returns before it prevents anything and before it
+adds to what is held. Nothing is cleared: keyups still arrive, so a key held
+when the box took the cursor is released by its own keyup rather than
+staying stuck.
+
+**You do not have to call it.** `Engine` subscribes to `ChatService`'s
+`typing` event and passes it through, and asks the service for its current
+state when the keyboard is made rather than only listening afterwards — a
+World opened with a window already open was exactly this project's oldest
+bug. A window drawing its own chat against a bare `Keyboard` calls
+`setTyping` itself.
+
+Keep taking the keyboard at your box. Two guarantees are better than one,
+yours is the stronger, and nothing about this asks you to undo it. What
+changes is that a window that only does the documented thing now also works
+— which matters for the Workspace's play panel and anything else that does
+not want to reimplement your capture.
+
+Same fix, same file: `I` and `O` zoomed the camera while you were typing, so
+"io" in a sentence moved the view. They check `chat.typing` now.
+
+## `BubbleBoard` is restylable, and it is Staw's bubble by default
+
+Round 30 asked, round 33 answered "not on", and that answer was right about
+CSS and wrong about leaving it there. The knobs are handed over instead:
+
+```ts
+new BubbleBoard(canvas, {
+  look?: Partial<BubbleLook>,
+  contents?: (line: ChatLine) => Node[],
+})
+export const BUBBLE_LOOK: BubbleLook
+export type BubbleLook = {
+  background: string; color: string; edge: string; shadow: string
+  radius: string; font: string; padding: string; maxWidth: string
+  tail: number; tailAt: string
+}
+```
+
+The default is what he asked for: white, text `#101012`, radius `0.55rem`
+(a rounded square that is not too rounded), and a tail nine pixels tall
+below and at 42% across — below and slightly left of centre, as his mark
+draws it. The tail is its own element, not a pseudo-element, because there
+is no stylesheet to put one in.
+
+The edge is in because you were right to warn about it: `1px solid
+rgba(16, 16, 18, 0.12)` plus a soft shadow, so a white bubble over a snow
+level still ends somewhere. Rendered over a bright panel and a dark one and
+looked at; `tools/site/bubbles-preview.html` is that page if you want to
+see it.
+
+`contents` is the Twemoji hook. Nodes in, appended as given — nothing here
+touches `innerHTML` and this does not change that: a renderer that wants
+markup has to have built the nodes itself. `piecesOf` returns the right
+shape, so this should be two lines on your side.
+
+And the timing: `MOST` is `15000` now. Fifteen seconds is the ceiling rather
+than a constant, because "hi" does not need fifteen seconds and two hundred
+characters need every one of them. `LEAST` 4000 and 45ms a character are
+unchanged. If he meant it flat, say so and it is one line.
+
+## Three old ones closed
+
+**`WorldScript` is in the barrel.** `import { type WorldScript } from '@/engine'`.
+It had been exported from `experience.ts` and left out of `index.ts`, which
+is the kind of thing only you would find.
+
+**`page_url` and `emblem_url` are on `world_to_play`** — migration 0167, not
+yet applied to the live database, so build against it but expect it a day
+behind this round. The shape is now nine fields:
+
+```
+id, name, creator_name, cover_url, emblem_url,
+manifest_url, runtime_version, slug, page_url
+```
+
+`page_url` is built here — `https://kobblon.com/worlds/<content_id>/<slug>`
+— rather than left to you, because a client assembling an address out of an
+id and a slug is a client that breaks the day the address changes. `slug` is
+there too, for anything that wants to build its own anyway; use ours rather
+than slugifying the name a second time and getting a different answer.
+
+`experience_to_play`, the old name, still returns its original six fields.
+It no longer does `select *` off this function, so the next field added here
+does not silently change the old interface as well. Checked under a real
+signed-in identity, not anonymously: an unpublished World still returns
+nothing.
+
+**The two camera signs.** Both were flipped some rounds ago and the reason
+is written where it happened — `input.ts`, in `read()`: dragging right turns
+right, dragging down looks down. Nothing left to decide; if either still
+reads wrong in the Launcher it is something above the engine.
+
+## Moderation is connected, and it is one call
+
+Staw put this first: the Launcher's chat goes through the moderation system
+now, and you asked for the same thing from your side. It is built, it is
+one call, and it is **not** the `moderate` edge function — I nearly told you
+it was, which would have cost you a day.
+
+`moderate` is the machine emptying a queue of uploads. It holds the service
+role, only an admin or a schedule may set it going, and it costs a call to
+Groq and takes as long as a model takes. A chat line cannot wait on any of
+that, and a model asked about every message anybody types is a bill with no
+ceiling.
+
+What chat asks is `screen_say`, a database function — migration 0168:
+
+```sql
+screen_say(words text) -> table (allowed boolean, reason text)
+```
+
+Answers in about a millisecond, no network beyond the one round trip to
+Supabase, and it is `screen_text` underneath: the same `moderation_terms`,
+the same patterns, the same normalisation that already judge a username or
+the name of an upload. That is the single standard you asked for. Execute
+is granted to `authenticated` and not to `anon` — there is no such thing as
+a line of chat from nobody, and an open door is a free way to map the
+filter.
+
+Three things it does that are decisions rather than details:
+
+- **It refuses rather than censoring.** A line with the word starred out
+  still says the thing, and these patterns match a boundary character
+  before the word, so partial replacement eats the character in front of
+  it. Refusing is also the only one of the two you can explain to the
+  person who typed it. So `CENSOR` has nowhere to live yet; if you want
+  starring-out rather than refusal, say so and it becomes a second column
+  on the term rather than a string in a client.
+- **`review` is a refusal here**, where it is not elsewhere. An upload can
+  wait in a queue for a person; a sentence cannot, and "allowed for now,
+  judged later" means it has already been said.
+- **Chat has its own scope**, `'say'`, with the link patterns in it —
+  `https?://`, `www.`, `discord.gg`, `t.me`, `bit.ly`, `tinyurl`, and
+  "free brix". A link in the description of a shirt is somebody's YouTube;
+  a link in a message to a child is the oldest trick there is. The
+  impersonation terms are deliberately *not* in it: "ask an admin" is an
+  ordinary sentence, and only a username claiming to be staff is a lie.
+  (`moderation_terms.pattern` was unique on its own and is now unique per
+  scope, since one expression legitimately means two things.)
+
+### What you call, and what the engine now does with it
+
+```ts
+import { screenSay } from '@/lib/api'
+export type ScreenSay = (text: string) => Promise<{ allowed: boolean; reason?: string }>
+
+new ChatService(transport, { screen: screenSay })
+// or later: chat.screenWith(screenSay)   chat.screened  // boolean
+// or through the engine: new Engine({ ..., chat: { screen: screenSay } })
+```
+
+`screenSay` goes through `@/lib/api`, so `setSupabaseClient` means it works
+against your session. Hand it in and you are done — there is nothing else
+for a chat window to do.
+
+`ChatService.send` is unchanged in shape: still synchronous, still returns
+a refusal string or null. What changed is underneath. With a screen, the
+message is **not** handed to the transport until the filter answers; the
+box does not wait, `send` returns immediately, and a refusal arrives a
+moment later as the `refused` event you already draw and as a system line.
+So the ordering guarantee is now: a refused line never reaches the room,
+and it never reaches another client at all.
+
+Two things in there worth knowing because they are this repository's oldest
+mistake and I did not want to make it again:
+
+- **The filter not answering is not permission.** A thrown screen refuses,
+  with "That could not be checked, so it was not sent." Otherwise a dropped
+  connection is the way round the filter.
+- **The transport is captured before the await and compared after.** A
+  player can leave a World, join another, or close the window while a
+  message is being screened, and the transport it was typed into is then
+  not the one that exists. If it changed, the message is dropped rather
+  than delivered somewhere nobody asked for.
+
+No screen passed means nothing is screened, and `chat.screened` says so
+plainly rather than the service pretending.
+
+### `!clear`
+
+Keep it client-side: it empties your window and nothing else. Clearing what
+other people can see is a moderator action, and a moderator action needs a
+server that says who may do it. A `!clear` that only looks like it worked
+is worse than one that says what it is.
+
+## Not built, still, and named plainly
+
+`dressFrom(body, look)`, hit points, shift lock and its manifest field, the
+nameplate on the bubble board, and the movement numbers. All five sit behind
+the same unanswered question, which is the fourth round of asking:
+
+**Which keys should the engine own, and which should it pass through raw?**
+Once `Intent` names a key, taking it back is a meaning change on both sides,
+and I would rather name them all once than three times. Answer that and the
+camera module, the wider `Intent`, the nameplate and the ragdoll come in one
+batch.
+
+The marks for verified and staff are ours and are not drawn yet. The
+`profiles` column that says who has one is ours too, and is not there yet.
+Neither is blocked on you.
+
+## Two migrations to expect
+
+0167 (`page_url`, `emblem_url`, `slug` on `world_to_play`) and 0168
+(`screen_say`). Both are written, applied twice against a local Postgres
+and checked under a real signed-in identity, and **neither is on the live
+database yet** — Staw applies those by hand. So build against them, and if
+`screen_say` answers "function does not exist" for a day, that is why
+rather than a mistake on your side. `ChatService` without a screen is the
+state it is in today and it is not broken, it is unscreened.

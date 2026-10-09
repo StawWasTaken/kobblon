@@ -1,4 +1,4 @@
-import { ChatService, MOST_CHARACTERS, type ChatLine } from './chat'
+import { ChatService, MOST_CHARACTERS, tintFor, type ChatLine } from './chat'
 
 /**
  * The chat window.
@@ -206,6 +206,12 @@ export class ChatWindow {
       // textContent throughout: a name is text too, and a name is the field
       // somebody would try this on.
       who.textContent = `${line.from}: `
+      /*
+       * Theirs, and the same every time. Set inline because the palette is
+       * per person rather than per kind, and a whisper keeps the green it
+       * had — that colour says what kind of line this is, not who wrote it.
+       */
+      if (line.kind === 'said') who.style.color = tintFor(line)
       row.appendChild(who)
     }
 

@@ -3041,6 +3041,30 @@ export type ScreeningAsset = {
   creator_is_suspended: boolean
 }
 
+/**
+ * May this be said?
+ *
+ * One call, one answer, and the same terms that judge a username. This is
+ * the whole of what a chat window has to do to be moderated: hand it to
+ * `ChatService` as its `screen`, and a refused line never leaves the
+ * machine it was typed on.
+ *
+ * It refuses when it cannot tell. The filter being unreachable is not
+ * permission — that would make a dropped connection the way round it — and
+ * `ChatService` says as much to whoever typed it.
+ *
+ * `setSupabaseClient` means this works from the Launcher and the Workspace
+ * too, against whatever session they hold.
+ */
+export async function screenSay(text: string): Promise<{ allowed: boolean; reason?: string }> {
+  const { data, error } = await supabase.rpc('screen_say', { words: text })
+  if (error) throw new Error(error.message)
+  const said = (Array.isArray(data) ? data[0] : data) as
+    { allowed: boolean; reason: string | null } | null
+  if (!said) return { allowed: false, reason: 'That could not be checked.' }
+  return { allowed: said.allowed, reason: said.reason ?? undefined }
+}
+
 export async function screeningQueue(howMany = 50): Promise<ScreeningAsset[]> {
   return (unwrap(await supabase.rpc('screening_queue', { how_many: howMany })) as ScreeningAsset[]) ?? []
 }
@@ -3202,7 +3226,9 @@ export async function aiWork(howMany = 20): Promise<{ subject: string; name: str
  * have: the service role, and the Groq one. This hands it the signed-in
  * session and the function checks for itself that the asker is Kobblon.
  */
-export async function runModeration(): Promise<{ looked: number; decided: number; unsure: number }> {
+export async function runModeration(): Promise<
+  { looked: number; decided: number; unsure: number; trouble?: string[] }
+> {
   const { data, error } = await supabase.functions.invoke('moderate', { body: {} })
   if (error) {
     /*
@@ -3214,7 +3240,7 @@ export async function runModeration(): Promise<{ looked: number; decided: number
     const said = await (error as { context?: Response }).context?.json?.().catch(() => null)
     throw new Error(said?.error ?? error.message)
   }
-  return data as { looked: number; decided: number; unsure: number }
+  return data as { looked: number; decided: number; unsure: number; trouble?: string[] }
 }
 
 // ------------------------------------------------------------ the console

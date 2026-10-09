@@ -29,6 +29,17 @@ export type ChatLine = {
   id: string
   /** Who said it. A display name, never a user id. */
   from: string
+  /**
+   * The speaker's user id, when the transport knows it.
+   *
+   * Optional because `LocalEcho` is one person talking to themselves and
+   * there is no server to ask, but anything that can fill it should: a
+   * display name is not an identity. It is what lets a badge go next to a
+   * name in chat, what keeps somebody's colour theirs across a rename, and
+   * what stops two people who picked the same name reading as one person.
+   * Nothing here renders it; it is carried so the window can.
+   */
+  who?: string
   /** What they said, as text. Never markup; see `clean`. */
   text: string
   kind: ChatKind
@@ -77,6 +88,27 @@ const BURST = 3
 const EVERY = 750
 
 /**
+ * Whether a character is the kind of thing an emoji is made of.
+ *
+ * Only ever asked about the two characters either side of a zero-width
+ * joiner, which is why it can be this rough: the blocks, the dingbats that
+ * became emoji, the regional indicators flags are built from, and the two
+ * marks that ride along inside a sequence. Being generous here keeps a
+ * joined emoji whole; being wrong the other way would strip a joiner that
+ * was carrying meaning, which is the bug this exists to fix.
+ */
+function pictograph(code: number): boolean {
+  return (code >= 0x1f000 && code <= 0x1faff)            // the emoji blocks proper
+    || (code >= 0x2600 && code <= 0x27bf)                // dingbats and misc symbols
+    || (code >= 0x2b00 && code <= 0x2bff)                // arrows and shapes used as emoji
+    || (code >= 0x2190 && code <= 0x21ff)                // the older arrows
+    || (code >= 0x2300 && code <= 0x23ff)                // the technical ones: ⌚ ⏰ ⏳
+    || code === 0x203c || code === 0x2049                // ‼ and ⁉
+    || code === 0xfe0f || code === 0x20e3                // the variation selector and keycap mark
+    || (code >= 0x1f1e6 && code <= 0x1f1ff)              // regional indicators
+}
+
+/**
  * Text, made safe to put in a page.
  *
  * Not by escaping it — by never treating it as markup in the first place.
@@ -91,9 +123,33 @@ const EVERY = 750
  * person can see.
  */
 export function clean(raw: string): string {
+  const all = [...raw]
+  const codes = all.map((one) => one.codePointAt(0) ?? 0)
   const out: string[] = []
-  for (const one of raw) {
-    const code = one.codePointAt(0) ?? 0
+  for (let i = 0; i < all.length; i += 1) {
+    const code = codes[i]
+
+    /*
+     * The joiner is the exception, and it was a bug.
+     *
+     * U+200D sat inside the zero-width range below, so it was stripped with
+     * the rest — and it is the character that makes a sequence one emoji.
+     * Without it a family is three separate people, an astronaut is a woman
+     * and a rocket, and the rainbow flag is a white one. Nobody gets an
+     * error; the message just says something slightly different from what
+     * was typed. Found by the Launcher, building Twemoji.
+     *
+     * Kept where it means something and dropped where it does not: between
+     * two emoji it is joining them, and anywhere else — between letters, at
+     * either end — it is the hiding trick the range is here to remove. That
+     * is stronger than simply carving it out, which would have traded one
+     * for the other.
+     */
+    if (code === 0x200d) {
+      if (pictograph(codes[i - 1] ?? 0) && pictograph(codes[i + 1] ?? 0)) out.push(all[i])
+      continue
+    }
+
     // Written as numbers rather than as a regular expression of escapes,
     // because these are exactly the characters that do not survive being
     // copied between files by hand.
@@ -104,11 +160,39 @@ export function clean(raw: string): string {
       || (code >= 0x202a && code <= 0x202e)                // the overrides text is hidden with
       || (code >= 0x2066 && code <= 0x2069)                // and the isolates
     if (control || invisible) continue
-    out.push(one)
+    out.push(all[i])
   }
 
   const flat = out.join('').replace(/\s+/g, ' ').trim()
   return [...flat].slice(0, MOST_CHARACTERS).join('')
+}
+
+/**
+ * The colours a name is drawn in, so two people are told apart at a glance.
+ *
+ * Fixed rather than generated: a hue spun off a hash lands on mud and on
+ * things that cannot be read over a bright World about as often as it lands
+ * on something good, and these are picked from the palette the rest of
+ * Kobblon uses.
+ */
+export const NAME_TINTS = [
+  '#6c8cff', '#25d68c', '#ffb020', '#ff7a8a',
+  '#8f7aff', '#3fd0d8', '#ffd166', '#f08a5d',
+] as const
+
+/**
+ * Which of those a person gets. The same one every time.
+ *
+ * Hashed from the user id when the line carries one, and from the display
+ * name only when it does not. That difference is the whole point of `who`:
+ * on a name, two people who picked the same one share a colour and anybody
+ * who renames themselves changes colour mid-conversation.
+ */
+export function tintFor(line: Pick<ChatLine, 'from'> & { who?: string }): string {
+  const seed = line.who ?? line.from
+  let hash = 0
+  for (const one of seed) hash = (hash * 31 + (one.codePointAt(0) ?? 0)) % 0xffffffff
+  return NAME_TINTS[hash % NAME_TINTS.length]
 }
 
 /** Hearing yourself, because there is nobody else to hear you yet. */
@@ -136,6 +220,19 @@ export class LocalEcho implements ChatTransport {
   }
 }
 
+/**
+ * Whether a line may be said, asked of whoever knows.
+ *
+ * The engine does not decide this and must not: a filter that lives in a
+ * client is a filter somebody edits out, and two places deciding what may
+ * be said is two standards with the lenient one winning. The website hands
+ * in `screenSay` from `@/lib/api`, which is one call to `screen_say` in the
+ * database — the same terms that judge a username. A World with no
+ * moderation behind it passes nothing, and then nothing is screened and
+ * this service says so rather than pretending.
+ */
+export type ScreenSay = (text: string) => Promise<{ allowed: boolean; reason?: string }>
+
 export type ChatEvents = {
   /** A line arrived, from anyone, including this player. */
   line: ChatLine
@@ -152,7 +249,21 @@ export class ChatService {
   private sentAt: number[] = []
   private open = false
 
-  constructor(private transport: ChatTransport) {
+  private screen: ScreenSay | null
+  /*
+   * Which transport the answer is for.
+   *
+   * Screening is a round trip, and in the time it takes a player can leave
+   * a World, join another, or close the window — and then the transport
+   * this message was typed into is not the one that exists. Captured before
+   * the await and compared after, because "is the current transport right"
+   * is the question this project keeps answering yes to while the message
+   * goes somewhere nobody asked for.
+   */
+  private generation = 0
+
+  constructor(private transport: ChatTransport, options: { screen?: ScreenSay } = {}) {
+    this.screen = options.screen ?? null
     this.stopListening = transport.listen((line) => this.take(line))
   }
 
@@ -160,7 +271,18 @@ export class ChatService {
   use(transport: ChatTransport) {
     this.stopListening?.()
     this.transport = transport
+    this.generation += 1
     this.stopListening = transport.listen((line) => this.take(line))
+  }
+
+  /** Say who decides what may be said. Null is nobody, and nothing is screened. */
+  screenWith(screen: ScreenSay | null) {
+    this.screen = screen
+  }
+
+  /** Whether anything is screening what goes out. */
+  get screened() {
+    return this.screen !== null
   }
 
   get note() {
@@ -208,8 +330,45 @@ export class ChatService {
     }
     this.sentAt.push(now)
 
-    void this.transport.send(text)
+    /*
+     * Sent after the filter answers, not before. A refused line never
+     * reaches the room, and the box does not wait on the answer: `send`
+     * returns now, the refusal arrives as an event a moment later, and
+     * nothing holds somebody's typing hostage to a round trip.
+     */
+    if (this.screen) void this.ask(text)
+    else void this.transport.send(text)
     return null
+  }
+
+  private async ask(text: string) {
+    const mine = this.generation
+    const transport = this.transport
+    let verdict: { allowed: boolean; reason?: string }
+    try {
+      verdict = await this.screen!(text)
+    } catch {
+      /*
+       * The filter not answering is not permission. A dropped connection
+       * would otherwise be the way round it, and the person is told what
+       * happened rather than watching their message disappear.
+       */
+      const why = 'That could not be checked, so it was not sent.'
+      this.say('refused', { why })
+      this.tell(why)
+      return
+    }
+
+    // Gone, swapped, or disposed while we were asking.
+    if (mine !== this.generation || transport !== this.transport) return
+
+    if (!verdict.allowed) {
+      const why = verdict.reason || 'That cannot be said here.'
+      this.say('refused', { why })
+      this.tell(why)
+      return
+    }
+    void transport.send(text)
   }
 
   /** A line from the World or the client itself, shown only to this player. */
@@ -248,6 +407,8 @@ export class ChatService {
   dispose() {
     this.stopListening?.()
     this.listeners.clear()
+    // Anything still being screened is for a service that no longer exists.
+    this.generation += 1
   }
 }
 

@@ -37,10 +37,23 @@ export class Keyboard {
   private dragY = 0
   private dragging = false
   private locked = false
+  private typingNow = false
   private stop: (() => void)[] = []
 
   constructor(private element: HTMLElement) {
     const keyDown = (e: KeyboardEvent) => {
+      /*
+       * While somebody is typing, the keyboard is not ours — and muting the
+       * intent was never enough to say that. This listener called
+       * `preventDefault` on every key it knew before anything read the
+       * intent, so with a cursor in a chat box the space bar typed no
+       * space, the arrows would not move the caret, and W, A, S and D could
+       * not be written: the four letters hardest to do without. The
+       * Launcher worked around it by taking the keyboard at the box, which
+       * is stronger but means the engine's own `setTyping` was the
+       * documented path to a thing it did not actually do. It does now.
+       */
+      if (this.typingNow) return
       if (KEYS[e.code]) { this.down.add(e.code); e.preventDefault() }
     }
     const keyUp = (e: KeyboardEvent) => this.down.delete(e.code)
@@ -129,6 +142,25 @@ export class Keyboard {
     this.dragX = 0
     this.dragY = 0
     return intent
+  }
+
+  /**
+   * Say whether somebody is typing, and the keyboard stops being read.
+   *
+   * Nothing is prevented, nothing is added to what is held, and anything
+   * already held is released by its own keyup, which still arrives. The
+   * engine calls this from `ChatService`'s typing event, so a window that
+   * does the one documented thing — `chat.setTyping(true)` — gets this for
+   * free. A window drawing its own chat against a bare `Keyboard` calls it
+   * itself.
+   */
+  setTyping(typing: boolean) {
+    this.typingNow = typing
+  }
+
+  /** Whether the keyboard is somebody's text rather than the World's. */
+  get typing() {
+    return this.typingNow
   }
 
   /** Whether the mouse is being held in the middle of the window. */
