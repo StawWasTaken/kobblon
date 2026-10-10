@@ -33,8 +33,22 @@ import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
 
-type ChatValue = { openConversation: (id: string) => void }
-const ChatContext = createContext<ChatValue>({ openConversation: () => {} })
+/*
+ * The standing lives here, once.
+ *
+ * It used to be a hook called in two places - the dock, and every open
+ * conversation - which is two separate answers to one question. The card
+ * is rendered by the dock and the only thing that pokes a standing awake
+ * on a refusal is a conversation's failed send, so a suspension handed out
+ * mid-sentence locked the bar and never raised the card: the copy that
+ * learned it was not the copy that draws it. One standing, shared.
+ */
+type Quiet = ReturnType<typeof useChatStanding>
+type ChatValue = { openConversation: (id: string) => void; quiet: Quiet }
+const ChatContext = createContext<ChatValue>({
+  openConversation: () => {},
+  quiet: { standing: null, left: '', read: () => {}, ask: () => {} },
+})
 
 /** Lets any page pop a conversation open in the dock. */
 export const useChatDock = () => useContext(ChatContext)
@@ -144,7 +158,7 @@ function Window({
     if (!collapsed && !details) bottom.current?.scrollIntoView({ block: 'end' })
   }, [messages, collapsed, details])
 
-  const quiet = useChatStanding()
+  const { quiet } = useChatDock()
   const locked = Boolean(quiet.standing && !quiet.standing.over)
 
   const submit = async (e: React.FormEvent) => {
@@ -617,7 +631,10 @@ function useChatStanding() {
     setStanding(standing.over ? null : { ...standing, seen: true })
   }, [standing])
 
-  return { standing, left, read, ask }
+  // Memoised because this now goes through a context: a fresh object every
+  // render would hand every conversation a new value on every render of the
+  // dock.
+  return useMemo(() => ({ standing, left, read, ask }), [standing, left, read, ask])
 }
 
 export function ChatDock({ children }: { children: ReactNode }) {
@@ -659,7 +676,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
     load()
   }, [load])
 
-  const value = useMemo(() => ({ openConversation }), [openConversation])
+  const value = useMemo(() => ({ openConversation, quiet }), [openConversation, quiet])
 
   return (
     <ChatContext.Provider value={value}>

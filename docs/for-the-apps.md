@@ -5959,3 +5959,122 @@ engine list rather than in it.
   now: masked, an immediate chat suspension rather than one strike of three,
   and a report opened so a person decides what the account needs. `suicide`
   and `depressed` on their own are deliberately not on that list.
+
+---
+
+# Sixty-seventh round — the bypasses that were open, and one shape worth copying
+
+Four things, three of which are server-side and therefore already yours the
+moment Staw applies the migrations. The fourth is a React shape I got wrong
+here and you may well have copied.
+
+## 1. A swear with a word in front of it went straight through
+
+Every word pattern on the list begins `(^|[^a-z])`. That does not mean "a
+whole word" — it means the word has to **start** there. 0017 took the
+boundary off the *end* so "fuckyou" was caught, and left the front alone, so
+the other half of the same bypass stayed open for the whole life of the
+platform:
+
+```
+fucker        -> block
+motherfucker  -> ok
+```
+
+Also bullshit, dumbfuck, clusterfuck, horseshit. Not a clever bypass. A word
+with a word in front of it.
+
+**`0195_a_swear_with_a_word_in_front_of_it.sql`** takes the anchor off, but
+only where no ordinary word contains the stem. It stays on `rape`
+(therapeutic, grape, scrape), `pedo` (torpedo), `cock` (peacock, cockpit),
+`nigg` (snigger) and `cum` (document, cucumber) — there the prefix guard is
+the only thing keeping the filter off innocent writing — and `cunt` keeps a
+guard of its own for Scunthorpe. No word was added. Still not stricter.
+
+## 2. Splitting a word in two also went through
+
+0183 only counted a spelled-out match when no single piece gave more than
+**two** characters, which is what keeps "miss hit" from being read as one
+word. It also meant "f uck", "shi t", "bit ch" and "fuc k" all sailed past,
+because one of their pieces is three.
+
+**`0196_three_letters_is_still_spelling_it_out.sql`** raises the cap to
+three **and** adds the rule the cap alone cannot give you: the match has to
+begin where a piece begins and end where a piece ends. I needed both — with
+only the cap, "miss hit" became `mi••••` and "traffic k" became `traf••••`,
+because "ss"+"hit" and "ffic"+"k" are each within three. Somebody splitting
+a word types the whole of each piece; somebody writing two words does not.
+
+Caught now: `f uck`, `fuc k`, `shi t`, `bit ch`, `fu ck`, `s hit`, `ret ard`,
+`f u c k`, `motherfucker`. Untouched: `miss hit`, `traffic k`, `the rapist`,
+`class room`, `a c a t sat on a mat`.
+
+## 3. Editing a message skipped the AI entirely — this one matters for you
+
+`words_are_censored` fires on `insert or update of body`, so the word list
+has always read edits. **The queue that feeds the machine did not.** All
+three `_go_to_the_machine` triggers were `after insert`, full stop.
+
+So: send "hi", edit it into whatever you actually meant. The list sees it and
+shrugs, because the list only knows words. The machine — the part that reads
+what was *meant*, and the only part that catches a line no pattern can —
+never hears about it at all. On private messages, world chat and community
+posts alike.
+
+**`0197_an_edit_is_a_new_thing_to_read.sql`** makes all three
+`after insert or update of body`, and `queue_for_the_machine` returns early
+when `new.body is not distinct from old.body`, so a pin or a stamp or any
+other column being written does not cost a reading.
+
+**What this means for the Launcher and the Workspace:** if either of you
+offers editing of anything that goes through these tables, it is now
+screened on the edit as well as the send, and an edit can come back masked
+or raise the suspension refusal exactly like a first send. Treat the update
+path's error handling the same as the insert path's — if you only catch
+refusals on send, an edit will throw somewhere you are not looking. And this
+is the general rule rather than a one-off: **anywhere a person can change
+what they already said, moderation has to run again.** It is worth grepping
+your own side for an `after insert` that should be `after insert or update`.
+
+## 4. The React shape I got wrong — worth checking your own
+
+`useChatStanding` was a hook called in two places: the dock, and every open
+conversation. That is two separate answers to one question, and it broke in
+a way that reads as a design choice rather than a bug.
+
+The chat bar locked instantly when somebody was suspended mid-sentence. The
+**card** did not. Reason: the only thing that pokes a standing awake on a
+refusal is a conversation's failed send — and the card is rendered by the
+dock, which holds a different copy. The copy that learned it was not the
+copy that draws it.
+
+It is one standing now, in the dock, handed down through `ChatContext`
+(`useChatDock()` returns `{ openConversation, quiet }`), memoised so the
+provider's value does not change every render.
+
+Same batch, same file, related: all those copies had been opening a realtime
+channel on the literal topic `my-chat-standing`. **Two channels on one topic
+is not two listeners** — the second subscribe is refused, and whichever
+unmounts first tears down the other's. Each instance's topic now carries a
+`useId()`. If you subscribe to anything per-panel on your side, check the
+topic is unique per subscriber; the failure is silent and looks like "the
+event just did not fire".
+
+## 5. The error page
+
+`Boundary` briefly grew a full stack-trace panel. Staw did not want it, and
+it is gone — the page is a line, two buttons and a link to support, and the
+cause goes to the console. If you mirrored it, mirror the removal.
+
+## Still not done, and still ours
+
+- **Migrations 0172–0197 are not on production.** None of the above is live
+  until Staw runs them, the three bypasses included.
+- **The cron job for `moderate` is still not set up** in the Supabase
+  dashboard, so the machine still only runs when somebody presses "Run now".
+  Round 66's correction stands: everything in it is a queue nobody is
+  draining on a schedule.
+- `supabase/config.toml` still lacks `[functions.moderate] verify_jwt = false`.
+- Owed to you from earlier rounds and still owed: `marks` filled in
+  `LocalEcho`, the single-use code in the play link, the two camera signs,
+  pointer lock on the way into first person, and shiftlock.
