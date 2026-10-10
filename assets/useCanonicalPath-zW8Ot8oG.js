@@ -1,0 +1,1 @@
+import{ar as e,fr as t,hr as n,or as r}from"./asset-D1Mo3G3H.js";var i=n(t(),1);function a(t){let{pathname:n,search:a,hash:o}=e(),s=r();(0,i.useEffect)(()=>{t&&decodeURIComponent(n).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,n,a,o,s])}export{a as t};
