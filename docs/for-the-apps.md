@@ -6645,3 +6645,120 @@ Also in this batch, not shared: `docs/staff-console.md`, a full written
 description of the console — the gate, the three ranks, the layout, all ten
 panels and every control with the rank it needs. If you are building
 anything staff-facing, read it rather than guessing from our screenshots.
+
+# Round seventy-three — Kobby reads the rules, and a suspension says which way of talking
+
+## The thing to build on your side
+
+**`my_chat_standing()` returns four new columns, and one of them is work
+for you.**
+
+```
+evidence    text      the line that was acted on, already censored
+rule        text      the rule's code
+rule_ord    integer   its number: "rule 5"
+rule_title  text
+gravity     integer   1-4, how serious Kobblon calls that rule
+channels    text[]    ['chat'] or ['chat','voice']
+```
+
+`channels` is the one that matters. **Read it rather than assuming chat.**
+A row saying `['chat','voice']` and a client that greys out the text box
+and leaves the microphone live is a voice suspension that does not exist,
+and the person has been told by the one screen meant to explain it that
+only chat was taken away. Every existing row and every existing caller
+defaults to `['chat']`, so nothing you have today changes meaning.
+
+`ChatSuspended` already takes all of it: `evidence`, `ruleOrd`,
+`ruleTitle`, `channels`. The heading becomes "Chat and voice suspended"
+on its own when voice is in the list. **Pull the component rather than
+copying the card** - that is the whole reason it has no provider, no
+router and no session in it.
+
+## Voice moderation, since you are waiting on me for it
+
+Here is the shape, and the part of it that is already built.
+
+Built here: the rules are rows now (`moderation_rules`, 0207), each with a
+`channels` array that already lists `voice`, and a `gravity`. The ladder
+that turns a broken rule plus a behaviour bar into an action is
+`what_kobby_may_do(gravity, band)` and it is channel-agnostic - voice gets
+the same ladder as chat, which is the point. `mute_chat` takes a
+`channels` argument, so a voice suspension is one call.
+
+Not built here, and this is what the Workspace and the Launcher own:
+**voice never reaches this database.** Text does, because every line is a
+row in `messages` and a trigger queues it. Voice is a stream between
+clients.
+
+So the join has to be: the client that carries the audio produces a
+**transcript**, and the transcript lands in `chat_to_read` exactly as a
+message does - `kind` would need a `'voice'` value added, which is a
+migration I will write when you are ready for it, not before. From there
+nothing is new: the worker reads it against the numbered rules, and
+`judge_chat_line` decides with the speaker's behaviour bar.
+
+Three things to settle before either of us writes code:
+
+1. **Where the transcription runs.** On the speaker's machine is cheapest
+   and is also the one place a person can tamper with it. On a server
+   costs real money per minute. I would take the server and sample rather
+   than transcribe everything.
+2. **What is kept.** My position: the transcript of a judged line only,
+   as `evidence`, under the same seven-day rule the text queue has. Never
+   the audio.
+3. **The lag.** Text moderation here is deliberately after the fact. Voice
+   has to be too, and that means a voice suspension lands after the thing
+   was said and heard. Live blocking is not on this ladder.
+
+Say which of the three you disagree with and I will build to that.
+
+## What changed in the database
+
+**0207 - `moderation_rules`.** Eleven numbered rules as rows, each with a
+code (the same vocabulary `violations.rule` has used since 0072), a number,
+its text, a gravity 1-4 and the channels it applies to. `the_rules(channel)`
+reads them. They are public - everybody may select them signed in or not,
+because a rule nobody can read is a rule nobody agreed to.
+
+Rule 5 is "Kobblon chat is not for sex", which is Staw's own example.
+
+**0208 - evidence.** `chat_timeouts` gains `evidence`, `rule`, `gravity`,
+`channels`; `violations` gains `evidence`. `mute_chat` takes four more
+arguments (the three-argument form is **dropped**, so a six-argument call
+is the one to write; fewer still resolves on the defaults).
+`my_chat_standing`, `my_moderation_history` and `moderation_history_of`
+all return the new columns - **all three changed shape**, so if you select
+positionally, look again.
+
+**0209 - the ladder.** `judge_chat_line(line_id, breaks, rule_code, quote,
+reason, model)`. The model says whether a sentence breaks a numbered rule
+and quotes the part it judged. **It never says what should happen.** The
+rule's gravity and the speaker's behaviour band pick the rung in
+`what_kobby_may_do`: nothing, a warning, chat suspended, chat and voice
+suspended, account suspended. Gravity 4 - the hard limits - ignores the bar
+entirely. The top of the ladder is still a suspension; nothing here deletes
+an account and nothing can.
+
+The same sentence from an exemplary account and from a critical one,
+checked locally: a five-minute chat suspension, and a suspended account.
+
+**0210 - the report console, re-asserted.** 0176, 0177 and 0178 never
+landed on the live database, exactly as 0172 had not. `report_ticket`,
+`report_queue`, `take_down`, `suspend_account` and `take_report` are
+re-asserted verbatim. If you call any of them, they have been missing over
+there, and a missing function and a refusing one read identically from a
+page.
+
+**0211 - `judge_report`.** Kobby could never settle a report: `ai_work` has
+handed it open reports since 0179 and `apply_ai_verdict` has no `report`
+branch, so it answered in the vocabulary of screening an upload and the
+ticket stayed open. Now the same ladder decides, and it goes through
+`take_report`, which still refuses the worker a termination outright.
+
+## What is not built
+
+Voice, as above. `decide_appeal` still has nothing calling it. There is
+still no support queue in the console. And `take_report` has no voice
+action, so a report that earns the chat-and-voice rung lands as a chat
+suspension - said out loud in the code rather than quietly.

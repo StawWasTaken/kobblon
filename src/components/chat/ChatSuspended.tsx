@@ -21,7 +21,8 @@ import { cn } from '@/lib/cn'
  * report it.
  */
 export function ChatSuspended({
-  minutes, until, over, reason, onUnderstand, onAppeal, className,
+  minutes, until, over, reason, evidence, ruleOrd, ruleTitle, channels,
+  onUnderstand, onAppeal, className,
 }: {
   /** How long it was given for, in minutes. */
   minutes: number
@@ -30,12 +31,40 @@ export function ChatSuspended({
   /** Shown after the fact: the same card saying it is over. */
   over?: boolean
   reason?: string
+  /**
+   * The line that was acted on, as it was stored - which is to say with
+   * the filter's bullets still in it. Staw: "i want the evidence of what
+   * the user did to justify our action". Left out and the card says
+   * nothing was recorded, which is the honest version of not having it:
+   * every suspension before 0208 has none.
+   */
+  evidence?: string | null
+  /** Which numbered rule, so the card points at one rather than at a page. */
+  ruleOrd?: number | null
+  ruleTitle?: string | null
+  /**
+   * Which ways of talking this took away: `['chat']`, or `['chat','voice']`.
+   * Read it rather than assuming chat. A client that greys out the text box
+   * and leaves the microphone live is a voice suspension that does not exist.
+   */
+  channels?: string[] | null
   onUnderstand: () => void
   /** Left out entirely when there is nowhere to appeal to. */
   onAppeal?: () => void
   className?: string
 }) {
   const [left, setLeft] = useState(() => remaining(until))
+
+  /*
+   * What was taken away, in the card's own words. A row saying
+   * `{chat,voice}` has to read as both, because somebody told "chat
+   * suspended" who then finds the microphone dead has been told something
+   * untrue by the one screen that was meant to explain it.
+   */
+  const ways = (channels?.length ? channels : ['chat'])
+  const what = ways.includes('voice')
+    ? (ways.includes('chat') ? 'Chat and voice' : 'Voice chat')
+    : 'Chat'
 
   /*
    * Counted down here rather than asked for again. The server decided
@@ -64,7 +93,7 @@ export function ChatSuspended({
       />
 
       <h2 id="chat-suspended-title" className="mt-3 font-display text-lg font-bold text-ink-strong">
-        {over ? 'Chat is back' : 'Chat suspended'}
+        {over ? `${what} is back` : `${what} suspended`}
       </h2>
 
       <hr className="mx-auto my-4 w-full border-ink-line" />
@@ -76,13 +105,32 @@ export function ChatSuspended({
       ) : (
         <>
           <p className="text-sm font-bold text-ink-strong">
-            {minutes} minute suspension
+            {minutes} minute suspension{ways.includes('voice') ? ', chat and voice' : ''}
           </p>
+
+          {!!ruleTitle && (
+            <p className="mt-2 text-xs font-extrabold uppercase tracking-wide text-muted">
+              {ruleOrd ? `Rule ${ruleOrd} — ` : ''}{ruleTitle}
+            </p>
+          )}
           <p className="mt-2 text-sm text-muted">
             {reason
-              ? `We've turned chat off for a few minutes: ${reason.toLowerCase()}`
-              : "We've turned chat off for a few minutes because of language that goes against the Kobblon guidelines."}
+              ? `We've turned ${what.toLowerCase()} off for a while: ${reason.toLowerCase()}`
+              : `We've turned ${what.toLowerCase()} off for a while because of language that goes against the Kobblon guidelines.`}
           </p>
+          {evidence && (
+            <div className="mt-4 text-left">
+              <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                What we acted on
+              </p>
+              <blockquote className="rounded-xl rounded-tl-md border border-ink-line bg-ink-raised px-3 py-2">
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-strong">
+                  {evidence}
+                </p>
+              </blockquote>
+            </div>
+          )}
+
           <p className="mt-3 text-sm text-muted">
             If this keeps happening, the next one is longer.
           </p>

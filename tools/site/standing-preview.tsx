@@ -26,6 +26,10 @@ const ahead = (days: number) =>
 const base: ModerationRow = {
   key: 'x', violation_id: null, kind: 'decision', action: 'warning', rule: 'spam',
   reason: 'Repeating the same line in six Worlds in a row.',
+  rule_ord: 7, rule_title: 'Do not flood, and do not advertise',
+  rule_body: 'No repeating the same line, no walls of nonsense to push a conversation off the screen, no "free Brix", and no sending people to other sites.',
+  gravity: 1, evidence: 'free brix free brix free brix go to kobblon-free dot net',
+  channels: [],
   target_type: null, target_id: null, blocks: [], by_rank: 'kobby',
   at: ago(2), until: null, is_void: false, void_reason: null,
   counts: true, weight: 9.3,
@@ -45,7 +49,11 @@ const rows: ModerationRow[] = [
   {
     ...base, key: 'c', kind: 'chat', action: 'chat_timeout', by_rank: 'kobby',
     at: ago(4), until: ago(4), weight: 3.2, appealable: false,
-    reason: 'Language that goes against the Kobblon guidelines.',
+    rule: 'sexual', rule_ord: 5, rule_title: 'Kobblon chat is not for sex',
+    rule_body: 'Do not use Kobblon to talk about sex, describe sexual acts, ask anybody for anything sexual, or proposition anybody. This is judged by what the sentence means, not by which words are in it.',
+    gravity: 3, channels: ['chat', 'voice'],
+    evidence: 'i wanna take you by your ••••',
+    reason: 'A sexual proposition aimed at the person it was sent to.',
   },
   {
     ...base, key: 'd', violation_id: 14, action: 'feature_block', rule: 'copyright',
@@ -85,7 +93,7 @@ function Bar({ score, band }: { score: number; band: BehaviourBand }) {
 }
 
 function Everything() {
-  const [open, setOpen] = useState<string | null>(null)
+  const [open, setOpen] = useState<string | null>('c')
   const showing = rows.find((one) => one.key === open) ?? null
 
   return (

@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleCheck, faTriangleExclamation, faLock, faBan,
   faRobot, faUserShield, faShieldHalved, faCrown, faCommentSlash,
+  faQuoteLeft, faScaleBalanced, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
@@ -404,4 +405,126 @@ export const inDays = (iso: string) => {
   if (days < 31) return `in ${days} days`
   const months = Math.round(days / 30)
   return `in about ${months} month${months === 1 ? '' : 's'}`
+}
+
+/* ------------------------------------------------- the rule, and the proof */
+
+/**
+ * How serious Kobblon calls the rule itself, 1 to 4.
+ *
+ * The rule's seriousness, not the sentence's and not this person's. It is
+ * on the card because it is half of why what happened happened - the other
+ * half is the bar, and the card shows that too. Somebody who can see both
+ * numbers can argue with the decision, which is the point of showing them.
+ */
+export const gravityWord: Record<number, string> = {
+  1: 'Minor',
+  2: 'Serious',
+  3: 'Very serious',
+  4: 'Never allowed',
+}
+
+export const gravityTone: Record<number, string> = {
+  1: 'text-white/60',
+  2: 'text-amber-300',
+  3: 'text-amber-300',
+  4: 'text-red-300',
+}
+
+export const channelWord: Record<string, string> = {
+  chat: 'Chat',
+  voice: 'Voice chat',
+  post: 'Posting',
+}
+
+/** "chat", "chat and voice chat" - what a suspension actually took away. */
+export const channelsLine = (channels: string[] | null | undefined) => {
+  const list = (channels ?? []).map((one) => (channelWord[one] ?? one).toLowerCase())
+  if (!list.length) return 'chat'
+  if (list.length === 1) return list[0]
+  return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
+}
+
+/**
+ * The line that was acted on, shown back.
+ *
+ * Staw: "i want the evidence of what the user did to justify our action".
+ *
+ * Shown **as it was stored**, which is to say already censored by the
+ * patterns - the bullets stay bullets. Printing a slur back at somebody
+ * uncensored because they typed it is not evidence, it is Kobblon saying
+ * it too. The note under it says so, because an account that sees its own
+ * line with holes in it will otherwise think the card is broken.
+ *
+ * `whitespace-pre-wrap` and `break-words` rather than anything clever:
+ * this is somebody's text, it is rendered as text, and it is never handed
+ * to anything that would read markup in it.
+ */
+export function Evidence({ said, className }: { said: string; className?: string }) {
+  return (
+    <div className={cn('space-y-2', className)}>
+      <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
+        <FontAwesomeIcon icon={faQuoteLeft} />
+        What we acted on
+      </p>
+      <blockquote className="rounded-2xl rounded-tl-md border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3">
+        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white/85">
+          {said}
+        </p>
+      </blockquote>
+      <p className="text-xs leading-relaxed text-muted">
+        Copied from what was sent, exactly as Kobblon stored it. Anything the filter had
+        already starred out is still starred out.
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Which rule, in its own words.
+ *
+ * The number is the useful part: the rules are rows now, numbered, and the
+ * same number means the same rule on this card, in the console, and in
+ * what Kobby was shown. "Against the guidelines" is what the old card said
+ * and it pointed at seven pages.
+ */
+export function RuleCard({ ord, title, body, gravity }: {
+  ord: number | null
+  title: string | null
+  body: string | null
+  gravity: number | null
+}) {
+  if (!title) return null
+
+  return (
+    <div className="space-y-2 rounded-2xl border border-ink-line bg-ink-raised px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <FontAwesomeIcon icon={faScaleBalanced} className="text-sm text-brand-bright" />
+        <p className="font-display text-sm font-extrabold">
+          {ord ? `Rule ${ord} — ` : ''}{title}
+        </p>
+        {!!gravity && (
+          <span className={cn(
+            'ml-auto text-[11px] font-extrabold uppercase tracking-wide',
+            gravityTone[gravity] ?? 'text-muted',
+          )}>
+            {gravityWord[gravity] ?? ''}
+          </span>
+        )}
+      </div>
+      {body && <p className="text-sm leading-relaxed text-white/65">{body}</p>}
+      {/*
+        * A plain anchor, not <Link>. This file is mounted by the Workspace's
+        * panels, which have no router, and a <Link> outside one throws and
+        * takes the panel down - that has already happened three times here.
+        */}
+      <a
+        href="/policies/guidelines"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
+      >
+        Read the guidelines
+        <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+      </a>
+    </div>
+  )
 }

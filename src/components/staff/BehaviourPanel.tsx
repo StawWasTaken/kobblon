@@ -142,7 +142,14 @@ export function BehaviourPanel({ personId, username, rank }: {
               <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-muted">
                 {one.counts && one.weight >= 1 ? `−${Math.round(one.weight)}` : '—'}
               </span>
-              <span className="w-full truncate text-xs text-white/60">{one.reason}</span>
+              <span className="w-full truncate text-xs text-white/60">
+                {one.rule_ord ? `Rule ${one.rule_ord} · ` : ''}{one.reason}
+              </span>
+              {one.evidence && (
+                <span className="w-full truncate rounded-lg border border-amber-400/25 bg-amber-400/[0.07] px-2 py-1 text-xs italic text-white/70">
+                  “{one.evidence}”
+                </span>
+              )}
             </li>
           ))}
         </ul>

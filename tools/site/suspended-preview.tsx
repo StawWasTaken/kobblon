@@ -8,7 +8,26 @@ const soon = new Date(Date.now() + 4 * 60_000 + 38_000).toISOString()
 
 createRoot(document.getElementById('root')!).render(
   <div className="flex min-h-screen flex-wrap items-start justify-center gap-8 bg-ink p-10">
-    <ChatSuspended minutes={5} until={soon} onUnderstand={() => {}} onAppeal={() => {}} />
+    <ChatSuspended
+      minutes={5}
+      until={soon}
+      onUnderstand={() => {}}
+      onAppeal={() => {}}
+      ruleOrd={5}
+      ruleTitle="Kobblon chat is not for sex"
+      evidence="i wanna take you by your ••••"
+      reason="A sexual proposition aimed at the person it was sent to."
+    />
+    <ChatSuspended
+      minutes={45}
+      until={soon}
+      onUnderstand={() => {}}
+      ruleOrd={1}
+      ruleTitle="Leave people alone when they ask"
+      channels={['chat', 'voice']}
+      evidence="follow you everywhere until you cry"
+      reason="Following somebody around after being told to stop."
+    />
     <ChatSuspended minutes={6} until={soon} onUnderstand={() => {}} />
     <ChatSuspended minutes={5} until={soon} over onUnderstand={() => {}} />
 

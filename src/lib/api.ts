@@ -3140,6 +3140,18 @@ export type ChatStanding = {
   source: 'machine' | 'staff'
   seen: boolean
   over: boolean
+  /** The line that was acted on, already censored, or null for an older row. */
+  evidence: string | null
+  rule: string | null
+  rule_ord: number | null
+  rule_title: string | null
+  gravity: number | null
+  /**
+   * Which ways of talking are suspended. Read it rather than assuming
+   * chat: a row saying `['chat','voice']` and a client that only greys out
+   * the text box is a voice suspension that does not exist.
+   */
+  channels: string[]
 }
 
 /**

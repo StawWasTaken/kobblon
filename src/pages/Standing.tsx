@@ -13,9 +13,9 @@ import { Dialog } from '@/components/ui/Dialog'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import {
-  BehaviourBar, ByBadge, bandLine, bandTone, bandWord, byWord, blockWord, day,
-  heldFor, historyIcon, historyWord, inDays, kobbyLine, levelWord, ruleWord,
-  rowTitle, stamp, stillOn,
+  BehaviourBar, ByBadge, Evidence, RuleCard, bandLine, bandTone, bandWord, byWord,
+  blockWord, channelsLine, day, gravityWord, heldFor, historyIcon, historyWord,
+  inDays, kobbyLine, levelWord, ruleWord, rowTitle, stamp, stillOn,
 } from '@/components/social/standing'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -196,6 +196,15 @@ export function RowCard({ one, onClose, onAppealed }: {
           </p>
         )}
 
+        {one.evidence && <Evidence said={one.evidence} />}
+
+        <RuleCard
+          ord={one.rule_ord}
+          title={one.rule_title}
+          body={one.rule_body}
+          gravity={one.gravity}
+        />
+
         <Card className="p-0">
           <Fact label="Who decided it">
             <span className="font-bold">{byWord[one.by_rank]}</span>
@@ -216,23 +225,48 @@ export function RowCard({ one, onClose, onAppealed }: {
             </Fact>
           )}
 
-          {one.kind === 'decision' && (
-            <Fact label="What it was about">
-              <span className="font-bold">{ruleWord[one.rule] ?? one.rule}</span>
-            </Fact>
-          )}
+          <Fact label="What it was about">
+            <span className="font-bold">
+              {one.rule_ord ? `Rule ${one.rule_ord}, ` : ''}
+              {one.rule_title ?? ruleWord[one.rule] ?? one.rule}
+            </span>
+            {!!one.gravity && (
+              <span className="text-white/60">
+                {' '}— a rule Kobblon calls{' '}
+                {(gravityWord[one.gravity] ?? '').toLowerCase()}.
+              </span>
+            )}
+          </Fact>
 
-          {!!one.blocks.length && (
+          {(one.kind === 'chat' || !!one.channels.length || !!one.blocks.length) && (
             <Fact label="What it switched off">
               <span className="font-bold">
-                {one.blocks.map((b) => blockWord[b] ?? b).join(', ')}
+                {one.blocks.length
+                  ? one.blocks.map((b) => blockWord[b] ?? b).join(', ')
+                  : channelsLine(one.channels)}
               </span>
+              {one.kind === 'chat' && (
+                <span className="text-white/60">
+                  . Everything else on your account kept working.
+                </span>
+              )}
             </Fact>
           )}
 
           <Fact label="Why">
             <p className="whitespace-pre-wrap text-white/75">{one.reason}</p>
           </Fact>
+
+          {one.by_rank === 'kobby' && !!one.gravity && (
+            <Fact label="Why this and not something else">
+              <p className="text-white/75">
+                Kobby takes how serious the rule is and how your behaviour bar stood at the
+                time, and the two together pick what happens. A better bar means a gentler
+                answer to the same line, and a worse one means a heavier answer. Nothing it
+                can do reaches further than suspending an account.
+              </p>
+            </Fact>
+          )}
 
           <Fact label="On your behaviour bar">
             {one.counts && one.weight >= 1 ? (

@@ -778,6 +778,10 @@ export function ChatDock({ children }: { children: ReactNode }) {
             until={quiet.standing.until}
             over={quiet.standing.over}
             reason={quiet.standing.reason}
+            evidence={quiet.standing.evidence}
+            ruleOrd={quiet.standing.rule_ord}
+            ruleTitle={quiet.standing.rule_title}
+            channels={quiet.standing.channels}
             onUnderstand={quiet.read}
           />
         </div>

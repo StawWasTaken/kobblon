@@ -609,10 +609,20 @@ export type ModerationRow = {
   kind: 'decision' | 'chat'
   action: ViolationAction | 'chat_timeout'
   rule: string
+  /** Its number in the guidelines, so a card can say "rule 5" and mean it. */
+  rule_ord: number | null
+  rule_title: string | null
+  rule_body: string | null
+  /** How serious Kobblon calls that rule, 1 to 4. Not how serious this was. */
+  gravity: number | null
+  /** What was acted on, as it was stored - which is to say already censored. */
+  evidence: string | null
   reason: string
   target_type: string | null
   target_id: string | null
   blocks: string[]
+  /** Which ways of talking it took away: chat, voice, or both. */
+  channels: string[]
   by_rank: ModeratedBy
   at: string
   until: string | null
@@ -635,7 +645,11 @@ export type StaffModerationRow = {
   kind: 'decision' | 'chat'
   action: ViolationAction | 'chat_timeout'
   rule: string
+  rule_ord: number | null
+  gravity: number | null
+  evidence: string | null
   reason: string
+  channels: string[]
   by_rank: ModeratedBy
   at: string
   until: string | null
