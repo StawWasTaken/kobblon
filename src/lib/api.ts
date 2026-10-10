@@ -2167,7 +2167,7 @@ export async function readAllMail() {
 export async function listTickets(): Promise<Ticket[]> {
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, contact_email, first_name, device, updated_at, created_at')
+    .select('id, topic, subject, contact_email, first_name, device, wants_human, updated_at, created_at')
     .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as Ticket[]
@@ -2176,7 +2176,7 @@ export async function listTickets(): Promise<Ticket[]> {
 export async function getTicket(id: number): Promise<Ticket | null> {
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, contact_email, first_name, device, updated_at, created_at')
+    .select('id, topic, subject, contact_email, first_name, device, wants_human, updated_at, created_at')
     .eq('id', id)
     .maybeSingle()
   if (error) throw new Error(error.message)
@@ -2200,6 +2200,7 @@ export async function openTicket(card: {
   contact_email?: string | null
   first_name?: string | null
   device?: TicketDevice | null
+  wants_human?: boolean
 }): Promise<number> {
   return unwrap(await supabase.rpc('open_ticket', {
     topic: card.topic,
@@ -2208,6 +2209,7 @@ export async function openTicket(card: {
     contact_email: card.contact_email ?? null,
     first_name: card.first_name ?? null,
     device: card.device ?? null,
+    wants_human: card.wants_human ?? false,
   })) as number
 }
 

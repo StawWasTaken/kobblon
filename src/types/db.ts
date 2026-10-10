@@ -701,6 +701,8 @@ export type Ticket = {
   contact_email: string | null
   first_name: string | null
   device: TicketDevice | null
+  /** They asked for a person to read this one. Sorts to the front. */
+  wants_human: boolean
   updated_at: string
   created_at: string
 }

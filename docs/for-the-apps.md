@@ -6584,3 +6584,64 @@ checked, and is answering from a call that never completed.
 Also: `admin_delete_account` was gated on `require_admin` until 0205 lands,
 so until Staw runs it, **any admin can delete any account** on the live
 database. That is the actual reason 0172 existed.
+
+# Round seventy-two — a ticket that asks for a person, in a popup
+
+## What changed
+
+**0206 adds `wants_human boolean not null default false` to
+`support_tickets`**, plus a partial index on
+`(wants_human, updated_at desc) where status <> 'closed'` so the urgent,
+still-open ones are cheap to list.
+
+**`open_ticket` now takes seven arguments.** The six-argument form 0204
+created is **dropped**, so a caller that passes six is now calling nothing:
+
+```
+open_ticket(topic, subject, body,
+            contact_email default null,
+            first_name    default null,
+            device        default null,
+            wants_human   default false)
+```
+
+The seventh is defaulted, so a positional call with six arguments still
+resolves — but if you were passing six positionally you were already
+depending on 0204's shape, and this is the signature to build against now.
+
+**The ticket form is a popup, not a page section.** `Support` keeps its
+topic tiles and its list of your tickets; pressing a tile opens
+`TicketCard`, a `Dialog size="lg"` with four steps (who you are, what you
+were on, what it is about, describe it) and the checkbox. The dialog is
+keyed on an open counter, so it remounts empty every time rather than
+holding the last draft.
+
+**The checkbox is "I want my ticket to be reviewed by a human."** Its own
+copy says the honest thing, which matters more than the box: *every ticket
+is read by a person today — nothing automated answers these.* Ticking it
+marks the ticket important and puts it at the front of the queue. It is not
+an opt-out of a machine, because there is no machine on this path. It is
+the column that would stop Kobby if there ever is one.
+
+An urgent ticket shows an amber **Urgent** badge with `faBolt` in the
+ticket list.
+
+## What it means for you
+
+If either application opens tickets, pass `wants_human` and show the badge,
+or you will have tickets in the queue whose urgency is invisible on your
+side. If you render a ticket row, `contact_email`, `first_name`, `device`
+and `wants_human` are all selectable now.
+
+## What is not built
+
+Nothing automated reads or answers a support ticket. There is still **no
+support queue in the staff console** — tickets are written and stored and a
+staff reader has no panel for them yet. And `decide_appeal` still exists
+with nothing calling it, so an appeal sent from the standing page can be
+read in the database and not from any screen. Both are owed.
+
+Also in this batch, not shared: `docs/staff-console.md`, a full written
+description of the console — the gate, the three ranks, the layout, all ten
+panels and every control with the rank it needs. If you are building
+anything staff-facing, read it rather than guessing from our screenshots.
