@@ -578,6 +578,73 @@ export type AccountStanding = {
   until: string | null
 }
 
+/*
+ * The behaviour bar. Nought to a hundred, a hundred being nothing on record,
+ * worked out on the server from the decisions still standing - never stored,
+ * so an upheld appeal lifts its weight with nothing to keep in step.
+ */
+export type BehaviourBand = 'exemplary' | 'good' | 'mixed' | 'poor' | 'critical'
+
+export type Behaviour = {
+  score: number
+  band: BehaviourBand
+  cleared_at: string | null
+  cleared_note: string | null
+  /** When the bar is next worth more, and when it is full again. */
+  next_at: string | null
+  full_at: string | null
+  /** A closed account, which does not climb back. */
+  permanent: boolean
+  /** What the next chat suspension would last, which is what the bar buys. */
+  timeout_minutes: number
+}
+
+/** Mod, Admin, Superadmin, or Kobby - the automated one. Never an id. */
+export type ModeratedBy = 'kobby' | 'moderator' | 'admin' | 'superadmin' | 'staff'
+
+/** One thing that has happened to this account, decision or chat suspension. */
+export type ModerationRow = {
+  key: string
+  violation_id: number | null
+  kind: 'decision' | 'chat'
+  action: ViolationAction | 'chat_timeout'
+  rule: string
+  reason: string
+  target_type: string | null
+  target_id: string | null
+  blocks: string[]
+  by_rank: ModeratedBy
+  at: string
+  until: string | null
+  is_void: boolean
+  void_reason: string | null
+  /** Whether it still presses on the bar: a clear leaves it listed but at nought. */
+  counts: boolean
+  weight: number
+  appeal_status: 'open' | 'upheld' | 'declined' | null
+  appeal_body: string | null
+  appeal_note: string | null
+  appeal_at: string | null
+  appeal_decided_at: string | null
+  appealable: boolean
+}
+
+/** The same, about somebody else, for a staff panel. */
+export type StaffModerationRow = {
+  key: string
+  kind: 'decision' | 'chat'
+  action: ViolationAction | 'chat_timeout'
+  rule: string
+  reason: string
+  by_rank: ModeratedBy
+  at: string
+  until: string | null
+  is_void: boolean
+  counts: boolean
+  weight: number
+  appeal_status: 'open' | 'upheld' | 'declined' | null
+}
+
 export type ViolationAction =
   | 'warning' | 'content_removed' | 'feature_block' | 'suspension' | 'termination'
 
@@ -621,11 +688,19 @@ export type Letter = {
 export type TicketTopic =
   | 'account' | 'money' | 'safety' | 'bug' | 'creator' | 'privacy' | 'other'
 
+/** What they were on when it happened, which halves the questions back. */
+export type TicketDevice =
+  | 'computer' | 'phone' | 'tablet' | 'console' | 'launcher' | 'other'
+
 export type Ticket = {
   id: number
   topic: TicketTopic
   subject: string
   status: 'open' | 'answered' | 'closed'
+  /** What they typed into the form. A claim, not proof. */
+  contact_email: string | null
+  first_name: string | null
+  device: TicketDevice | null
   updated_at: string
   created_at: string
 }

@@ -18,6 +18,7 @@ import type {
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
+  Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,} from '@/types/db'
 
 const SPACE_FIELDS =
@@ -2096,6 +2097,29 @@ export async function listViolations(): Promise<Violation[]> {
   return (data ?? []) as Violation[]
 }
 
+/**
+ * The behaviour bar, asked of the server every time rather than remembered.
+ *
+ * It climbs by being read on a later day - each decision's weight fades
+ * across its own window - so a copy held anywhere would be a value captured
+ * before the thing that decides it moved. There is nothing to cache here.
+ */
+export async function getBehaviour(): Promise<Behaviour | null> {
+  const rows = unwrap(await supabase.rpc('my_behaviour')) as Behaviour[] | null
+  return rows?.[0] ?? null
+}
+
+/**
+ * Everything that has happened to this account: the decisions and the chat
+ * suspensions, newest first, each one saying which rank decided it. Kobby is
+ * the automated one, and comes back as a rank rather than an id because
+ * handing a browser the id of the moderator who suspended somebody is how a
+ * moderator gets harassed.
+ */
+export async function moderationHistory(): Promise<ModerationRow[]> {
+  return (unwrap(await supabase.rpc('my_moderation_history')) as ModerationRow[]) ?? []
+}
+
 export async function listAppeals(): Promise<Appeal[]> {
   const { data, error } = await supabase
     .from('appeals')
@@ -2143,7 +2167,7 @@ export async function readAllMail() {
 export async function listTickets(): Promise<Ticket[]> {
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, status, updated_at, created_at')
+    .select('id, topic, subject, contact_email, first_name, device, updated_at, created_at')
     .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as Ticket[]
@@ -2152,7 +2176,7 @@ export async function listTickets(): Promise<Ticket[]> {
 export async function getTicket(id: number): Promise<Ticket | null> {
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, status, updated_at, created_at')
+    .select('id, topic, subject, contact_email, first_name, device, updated_at, created_at')
     .eq('id', id)
     .maybeSingle()
   if (error) throw new Error(error.message)
@@ -2169,10 +2193,22 @@ export async function listTicketMessages(id: number): Promise<TicketMessage[]> {
   return (data ?? []) as TicketMessage[]
 }
 
-export async function openTicket(
-  topic: TicketTopic, subject: string, body: string,
-): Promise<number> {
-  return unwrap(await supabase.rpc('open_ticket', { topic, subject, body })) as number
+export async function openTicket(card: {
+  topic: TicketTopic
+  subject: string
+  body: string
+  contact_email?: string | null
+  first_name?: string | null
+  device?: TicketDevice | null
+}): Promise<number> {
+  return unwrap(await supabase.rpc('open_ticket', {
+    topic: card.topic,
+    subject: card.subject,
+    body: card.body,
+    contact_email: card.contact_email ?? null,
+    first_name: card.first_name ?? null,
+    device: card.device ?? null,
+  })) as number
 }
 
 export async function replyTicket(id: number, body: string) {
@@ -2718,6 +2754,34 @@ export async function setStanding(target: string, change: {
 export async function moveBrixAsStaff(target: string, amount: number, why?: string) {
   return unwrap(await supabase.rpc('admin_move_brix', {
     target, amount, why: why ?? null,
+  })) as number
+}
+
+/** Somebody else's bar, for a staff panel. Moderator and up. */
+export async function behaviourOf(target: string): Promise<{
+  score: number
+  band: Behaviour['band']
+  cleared_at: string | null
+  timeout_minutes: number
+} | null> {
+  const rows = unwrap(await supabase.rpc('behaviour_of', { target })) as
+    { score: number; band: Behaviour['band']; cleared_at: string | null; timeout_minutes: number }[] | null
+  return rows?.[0] ?? null
+}
+
+export async function moderationHistoryOf(target: string): Promise<StaffModerationRow[]> {
+  return (unwrap(await supabase.rpc('moderation_history_of', { target })) as
+    StaffModerationRow[]) ?? []
+}
+
+/**
+ * Put somebody back to a hundred. A superadmin's, and the server is where
+ * that is decided: `clear_behaviour` calls `require_superadmin` whatever a
+ * panel chose to draw. Returns the score afterwards, which is a hundred.
+ */
+export async function clearBehaviour(target: string, note?: string) {
+  return unwrap(await supabase.rpc('clear_behaviour', {
+    target, note: note?.trim() || null,
   })) as number
 }
 

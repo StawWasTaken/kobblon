@@ -6439,3 +6439,104 @@ Launcher screens something per-message, the same hole is open.
   the automated moderator's name, appeals) is specified in
   `docs/roadmap.md` and not built. Do not invent a label for who issued a
   sanction before that round.
+
+---
+
+# Round seventy — the behaviour bar, the standing page, support, and the staff console
+
+Nothing in this round breaks a build. Two things change **meaning** for you
+and are at the top for that reason.
+
+## 1. Chat suspension lengths are no longer a fixed ladder
+
+`next_timeout_minutes` used to be five, then six, then up, decided purely by
+how many suspensions somebody had collected in thirty days. It now also
+shifts by their **behaviour band**: a clean account starts one rung lower, a
+poor one a rung higher, a critical one two. A superadmin clearing somebody's
+record also forgives their place on the ladder.
+
+**What that means for you:** any number your side shows for "your next one
+would last X" must come from the server, per person, at the moment of asking.
+A constant, a copied array, or a value read once at sign-in is now wrong.
+`my_behaviour()` returns `timeout_minutes` alongside the bar, so one call
+gets both.
+
+## 2. Kobby is the name of the automated moderator, and it is user-facing
+
+Where a decision has no human behind it, everything now says **Kobby**. Not
+"the system", not "automated", not a blank. If the Workspace ever shows who
+acted on something, use that word. The server hands you one of five:
+`kobby`, `moderator`, `admin`, `superadmin`, `staff`.
+
+It never hands you the moderator's id, and it must not: a browser that knows
+which moderator suspended somebody is how a moderator gets harassed. If you
+need the identity for an internal tool, that is `admin_log`, which is an
+admin's to read and is audited.
+
+## What is new to call
+
+```
+my_behaviour()            -> score, band, cleared_at, cleared_note,
+                             next_at, full_at, permanent, timeout_minutes
+my_moderation_history()   -> every decision and chat suspension about me,
+                             newest first, with by_rank and what each one
+                             still weighs
+behaviour_of(target)      -> moderator and up: somebody else's bar
+moderation_history_of(t)  -> moderator and up: somebody else's history
+clear_behaviour(t, note)  -> superadmin only. Returns 100.
+```
+
+The bar is **nought to a hundred, a hundred being nothing on record**. It is
+not stored anywhere: it is read out of the decisions already on file, each
+one's weight fading across its own window (a warning over 30 days, a
+suspension over 300, a closed account never). So:
+
+- **Do not cache it.** It climbs by being read on a later day. A copy held
+  across a session is the project's oldest trap wearing a new hat.
+- An upheld appeal lifts its weight with nothing to keep in step, because
+  there is no second number to update.
+- Bands are `exemplary` (90+), `good` (70+), `mixed` (45+), `poor` (20+),
+  `critical`. The edges are the server's; do not re-derive them.
+
+## `open_ticket` changed shape
+
+The three-argument form is **gone**, not overloaded beside the new one:
+
+```
+open_ticket(topic, subject, body,
+            contact_email default null,
+            first_name    default null,
+            device        default null)
+```
+
+`device` is one of `computer`, `phone`, `tablet`, `console`, `launcher`,
+`other`, and the Launcher should send `launcher`. The email is optional,
+stored, and **never proof of anything** - anybody can type anybody's address
+into a box, and nothing is unlocked by what is in that column.
+
+If the Workspace opens tickets, it needs updating; nothing else does.
+
+## On the website side, for reference
+
+- `/standing` is now the behaviour bar, what it buys you, and every decision
+  and chat suspension as a row that opens a popup card with the whole of it:
+  who, when, how long, for what, why, what it costs the bar, and the appeal.
+- `/support` is a four-step ticket card - who you are, what you were on, what
+  it is about, what happened - rather than a two-field popup.
+- The staff console is rank-aware. It gated on `profile.is_admin`, which sent
+  **every moderator away from the one panel that is their job**; it now asks
+  `my_staff_rank()` and draws the four panels a moderator can work, nine for
+  an admin, ten for a superadmin. Each person's sheet carries their bar and
+  their history, and a superadmin gets the clear.
+
+## Still not done
+
+- **The cron job for `moderate`.** Still the single biggest thing
+  outstanding, and still not a code change. `chat_to_read` had 29 waiting
+  and 0 read at last look.
+- **Appeals have no panel.** `decide_appeal` exists and works; nothing in
+  the console calls it, so an appeal filed today is answered by hand in SQL.
+  Next round.
+- **Support tickets are not in the console either** - same shape of gap.
+- The quest session schema. Nothing about quests can start until it exists.
+- Voice moderation itself. The interface was handed over in round 69.

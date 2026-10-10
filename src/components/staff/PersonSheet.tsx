@@ -22,7 +22,8 @@ import { Skeleton } from '@/components/ui/States'
 import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { useAsync } from '@/hooks/useAsync'
-import { sessionsOf, type StaffPerson } from '@/lib/api'
+import { sessionsOf, type StaffPerson, type StaffRank } from '@/lib/api'
+import { BehaviourPanel } from '@/components/staff/BehaviourPanel'
 import { avatarOf } from '@/lib/avatars'
 import { countryName, placeOfZone } from '@/lib/places'
 import { formatCount, timeAgo } from '@/lib/format'
@@ -31,7 +32,10 @@ const when = (at: string) => new Date(at).toLocaleString(undefined, {
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
 })
 
-export function PersonSheet({ person }: { person: StaffPerson }) {
+export function PersonSheet({ person, rank = 'moderator' }: {
+  person: StaffPerson
+  rank?: StaffRank
+}) {
   const sessions = useAsync(async () => sessionsOf(person.id, 30), [person.id])
 
   /*
@@ -43,6 +47,7 @@ export function PersonSheet({ person }: { person: StaffPerson }) {
   const place = placeOfZone(latest?.zone)
 
   return (
+    <div className="space-y-4">
     <div className="grid gap-4 lg:grid-cols-2">
       {/* ------------------------------------------- what everybody sees */}
       <Card className="space-y-3">
@@ -139,6 +144,14 @@ export function PersonSheet({ person }: { person: StaffPerson }) {
           </ul>
         )}
       </Card>
+    </div>
+
+    {/*
+     * The third thing a moderator needs and the sheet did not have: how this
+     * account has behaved, and everything that has ever been decided about
+     * it. Deciding anything without that is guessing.
+     */}
+    <BehaviourPanel personId={person.id} username={person.username} rank={rank} />
     </div>
   )
 }

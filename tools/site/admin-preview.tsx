@@ -9,7 +9,8 @@
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
-import { PersonRow, AnnounceSection, WordsSection, ScreenRow, MachineSection } from '@/pages/Admin'
+import { useState } from 'react'
+import { PersonRow, AnnounceSection, WordsSection, ScreenRow, MachineSection, ConsoleRail } from '@/pages/Admin'
 import { WorldMap } from '@/components/staff/WorldMap'
 import { NoticeBar } from '@/components/layout/NoticeBar'
 import type { StaffPerson } from '@/lib/api'
@@ -36,10 +37,34 @@ const people: StaffPerson[] = [
 ]
 import '@/index.css'
 
+function Rail({ rank }: { rank: 'moderator' | 'admin' | 'superadmin' }) {
+  const [at, setAt] = useState<Parameters<typeof ConsoleRail>[0]['value']>('Reports')
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-extrabold uppercase tracking-wide text-muted">{rank}</p>
+      <ConsoleRail rank={rank} value={at} onChange={setAt} />
+    </div>
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
     <ToastProvider>
       <div className="min-h-screen space-y-10 bg-ink p-8 text-white">
+        {/*
+          * The rail at all three ranks, side by side. The difference between
+          * them is the design: a moderator is shown four panels, an admin
+          * nine, and the one power that stops at the top is marked.
+          */}
+        <section className="space-y-3">
+          <h2 className="font-display text-lg">The rail, at each rank</h2>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {(['moderator', 'admin', 'superadmin'] as const).map((rank) => (
+              <Rail key={rank} rank={rank} />
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-3">
           <h2 className="font-display text-lg">People</h2>
           {people.map((person) => (

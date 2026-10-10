@@ -267,6 +267,15 @@ takes one, and `my_chat_standing` answers for both. Nothing else moves.
 
 ## The support system and account standing, reworked
 
+**Built, 0202-0204.** The behaviour bar (computed, never stored, fading by
+itself and cleared outright only by a superadmin), the whole history as rows
+with popup cards naming Mod / Admin / Superadmin / Kobby, the Roblox-shaped
+ticket card, and a rank-aware staff console that a moderator can finally get
+into. What is still owed off this section: appeals have no panel of their own
+in the console - `decide_appeal` exists and nothing in the console calls it -
+and support tickets are still answered from the database rather than a queue
+beside reports.
+
 Staw: both are a mess, and they are one job rather than two, because a
 sanction a person cannot see or answer is the thing that makes support
 necessary in the first place.

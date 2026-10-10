@@ -1,10 +1,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleCheck, faTriangleExclamation, faLock, faBan,
+  faRobot, faUserShield, faShieldHalved, faCrown, faCommentSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
-import type { StandingLevel, Violation, ViolationAction } from '@/types/db'
+import type {
+  BehaviourBand, ModeratedBy, ModerationRow, StandingLevel, Violation, ViolationAction,
+} from '@/types/db'
 
 /*
  * The words and the reading used by both the status page and one decision's
@@ -185,4 +188,220 @@ export function LevelMark({ level }: { level: StandingLevel }) {
   return (
     <FontAwesomeIcon icon={levelIcon[level]} className={cn('text-xl', levelTone[level])} />
   )
+}
+
+/* ---------------------------------------------------------- the behaviour bar
+ *
+ * Staw asked for "a bar with how your behaviour was", and for the bar to buy
+ * something: "the better your behaviour was the less moderated & punished you
+ * will be". The number is the server's - `my_behaviour` - and everything here
+ * is only how it is read out loud.
+ */
+
+export const bandWord: Record<BehaviourBand, string> = {
+  exemplary: 'Exemplary',
+  good: 'Good',
+  mixed: 'Mixed',
+  poor: 'Poor',
+  critical: 'Very poor',
+}
+
+/** What the band buys, said as the thing it actually changes. */
+export const bandLine: Record<BehaviourBand, string> = {
+  exemplary: 'Nothing is on record. You get the gentlest version of every rule we have.',
+  good: 'Something small is on record. You are still treated as a trusted account.',
+  mixed: 'Enough is on record that we watch a little closer. The bar climbs on its own.',
+  poor: 'A lot is on record. Punishments start a step higher than they would for most people.',
+  critical: 'Almost everything is on record. The next thing that happens will be a long one.',
+}
+
+export const bandFill: Record<BehaviourBand, string> = {
+  exemplary: 'bg-space',
+  good: 'bg-space',
+  mixed: 'bg-amber-400',
+  poor: 'bg-amber-500',
+  critical: 'bg-danger',
+}
+
+export const bandTone: Record<BehaviourBand, string> = {
+  exemplary: 'text-space-bright',
+  good: 'text-space-bright',
+  mixed: 'text-amber-300',
+  poor: 'text-amber-300',
+  critical: 'text-danger',
+}
+
+export const bandGlow: Record<BehaviourBand, string> = {
+  exemplary: 'shadow-[0_0_24px_-6px_rgb(var(--space)/0.75)]',
+  good: 'shadow-[0_0_24px_-6px_rgb(var(--space)/0.6)]',
+  mixed: 'shadow-[0_0_24px_-8px_rgb(251_191_36/0.6)]',
+  poor: 'shadow-[0_0_24px_-8px_rgb(245_158_11/0.6)]',
+  critical: 'shadow-[0_0_24px_-6px_rgb(var(--danger)/0.7)]',
+}
+
+/**
+ * The bar itself: a filled track with the four band edges marked on it, so
+ * the number has somewhere to sit rather than floating. The marks are where
+ * the server's bands change - 20, 45, 70, 90 - and not decoration.
+ */
+export function BehaviourBar({ score, band, className, tall }: {
+  score: number
+  band: BehaviourBand
+  className?: string
+  tall?: boolean
+}) {
+  const safe = Math.max(0, Math.min(100, Math.round(score)))
+
+  return (
+    <div className={className}>
+      <div
+        className={cn(
+          'relative w-full overflow-hidden rounded-full bg-ink-line',
+          tall ? 'h-4' : 'h-2.5',
+        )}
+        role="img"
+        aria-label={`Behaviour ${safe} out of 100: ${bandWord[band]}`}
+      >
+        <span
+          className={cn(
+            'absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out',
+            bandFill[band], bandGlow[band],
+          )}
+          style={{ width: `${safe}%` }}
+        />
+        {[20, 45, 70, 90].map((edge) => (
+          <span
+            key={edge}
+            className="absolute inset-y-0 w-px bg-ink/70"
+            style={{ left: `${edge}%` }}
+          />
+        ))}
+      </div>
+      <div className="mt-1.5 flex justify-between text-[11px] font-bold text-muted">
+        <span>Very poor</span>
+        <span>Exemplary</span>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------- who decided it
+ *
+ * Mod, Admin, Superadmin, or Kobby. The rank and never the id: handing a
+ * browser the id of the moderator who suspended somebody is how a moderator
+ * gets harassed, so the server returns a word.
+ */
+
+export const byWord: Record<ModeratedBy, string> = {
+  kobby: 'Kobby',
+  moderator: 'A moderator',
+  admin: 'An admin',
+  superadmin: 'A superadmin',
+  staff: 'Kobblon staff',
+}
+
+export const byIcon: Record<ModeratedBy, IconDefinition> = {
+  kobby: faRobot,
+  moderator: faShieldHalved,
+  admin: faUserShield,
+  superadmin: faCrown,
+  staff: faUserShield,
+}
+
+/** What Kobby is, said once, wherever its name first appears. */
+export const kobbyLine =
+  'Kobby is our automated system. It reads what gets sent and acts on the '
+  + 'obvious cases on its own. It can warn you and it can suspend you; it '
+  + 'cannot close an account, and a person reads every appeal.'
+
+export function ByBadge({ rank, className }: { rank: ModeratedBy; className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5',
+        'text-[11px] font-extrabold uppercase tracking-wide',
+        rank === 'kobby'
+          ? 'border-brand/40 bg-brand/10 text-brand-bright'
+          : 'border-white/15 bg-white/[0.06] text-white/70',
+        className,
+      )}
+    >
+      <FontAwesomeIcon icon={byIcon[rank]} className="text-[10px]" />
+      {rank === 'kobby' ? 'Kobby' : rank === 'staff' ? 'Staff' : rank}
+    </span>
+  )
+}
+
+/* --------------------------------------------------------- a history row */
+
+/** Every action's word, the chat suspensions included. */
+export const historyWord: Record<string, string> = {
+  ...actionWord,
+  chat_timeout: 'Chat suspended',
+}
+
+export const historyIcon: Record<string, IconDefinition> = {
+  warning: faTriangleExclamation,
+  content_removed: faBan,
+  feature_block: faLock,
+  suspension: faLock,
+  termination: faBan,
+  chat_timeout: faCommentSlash,
+}
+
+/** The headline a row wears in the list and at the top of its popup card. */
+export const rowTitle = (one: ModerationRow) => {
+  if (one.action === 'chat_timeout') return 'Your chat was suspended'
+  if (one.action === 'warning') return 'You were warned'
+  if (one.action === 'content_removed') return 'Something of yours was taken down'
+  if (one.action === 'feature_block') return 'Something was switched off'
+  if (one.action === 'suspension') return 'Your account was suspended'
+  return 'Your account was closed'
+}
+
+/** "5 minutes", "7 days", "For good" - how long it held for. */
+export const howLong = (from: string, until: string | null) => {
+  if (!until) return 'For good'
+  const minutes = Math.max(1, Math.round(
+    (new Date(until).getTime() - new Date(from).getTime()) / 60000,
+  ))
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'}`
+  if (minutes < 60 * 48) {
+    const hours = Math.round(minutes / 60)
+    return `${hours} hour${hours === 1 ? '' : 's'}`
+  }
+  const days = Math.round(minutes / 1440)
+  if (days < 60) return `${days} day${days === 1 ? '' : 's'}`
+  const months = Math.round(days / 30)
+  return `${months} month${months === 1 ? '' : 's'}`
+}
+
+/**
+ * How long it held, where that means anything.
+ *
+ * A warning and a takedown have no `until` and are not "for good": they
+ * happened once and that was that. Saying "For good" on a warning is the
+ * kind of wrong wording that makes somebody write in, so those two answer
+ * with nothing and the page leaves the line out.
+ */
+export const heldFor = (one: Pick<ModerationRow, 'action' | 'at' | 'until'>) =>
+  one.action === 'warning' || one.action === 'content_removed'
+    ? null
+    : howLong(one.at, one.until)
+
+/** Whether a row is still holding right now, which is what somebody scans for. */
+export const stillOn = (one: ModerationRow) =>
+  !one.is_void
+  && (one.action === 'termination'
+    || (!!one.until && new Date(one.until) > new Date())
+    || (one.until === null && one.action === 'suspension'))
+
+/** Seventeen days, or "today", for the line about when the bar next moves. */
+export const inDays = (iso: string) => {
+  const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
+  if (days <= 0) return 'today'
+  if (days === 1) return 'tomorrow'
+  if (days < 31) return `in ${days} days`
+  const months = Math.round(days / 30)
+  return `in about ${months} month${months === 1 ? '' : 's'}`
 }

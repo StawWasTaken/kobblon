@@ -13,7 +13,7 @@
  * who is not staff and writes down what was done, which is why the record at
  * the bottom is a section rather than an afterthought.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
@@ -62,18 +62,63 @@ import { WorldMap } from '@/components/staff/WorldMap'
 
 type Section = 'People' | 'Reports' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
-const sections: { name: Section; icon: IconDefinition; blurb: string }[] = [
-  { name: 'People', icon: faUserShield, blurb: 'Standing, Brix, and removing an account' },
-  { name: 'Reports', icon: faFlag, blurb: 'What people have reported, and what was done' },
-  { name: 'Screening', icon: faCircleCheck, blurb: 'What people have made, waiting on a decision' },
-  { name: 'Machine', icon: faRobot, blurb: 'What the AI screens, and what it is allowed to do' },
-  { name: 'Sale', icon: faTag, blurb: 'Everything in the Catalog, cheaper, for a while' },
-  { name: 'Map', icon: faGlobe, blurb: 'Roughly where people are, by the clock on their machine' },
-  { name: 'Notice', icon: faBullhorn, blurb: 'A line across the top of the site, which anybody can close' },
-  { name: 'Announce', icon: faBell, blurb: 'A word from Kobblon, to one person or everybody' },
-  { name: 'Words', icon: faFilter, blurb: 'What the moderation system catches' },
-  { name: 'Record', icon: faScroll, blurb: 'What staff have done' },
+/*
+ * The rank, held once for the whole console.
+ *
+ * Every section used to ask for it separately, or not ask at all and read
+ * `profile.is_admin` - which is how a moderator ended up locked out of the
+ * one panel that is their job. It is asked of the database because since 0172
+ * the three ranks imply one another and that order is decided there, and it
+ * is held in a context so a section never has to ask twice.
+ *
+ * What it decides is which panels are worth drawing. Nothing more: every
+ * function behind every button checks again, and that is the check that
+ * counts.
+ */
+const RankContext = createContext<StaffRank>('moderator')
+export const useStaffRank = () => useContext(RankContext)
+
+const rankOrder: Record<StaffRank, number> = {
+  none: 0, moderator: 1, admin: 2, superadmin: 3,
+}
+
+export const rankWord: Record<StaffRank, string> = {
+  none: 'Not staff',
+  moderator: 'Moderator',
+  admin: 'Admin',
+  superadmin: 'Superadmin',
+}
+
+const rankLook: Record<StaffRank, string> = {
+  none: 'border-ink-line bg-ink-raised text-muted',
+  moderator: 'border-space/40 bg-space/10 text-space-bright',
+  admin: 'border-brand-bright/50 bg-brand/20 text-white',
+  superadmin: 'border-amber-400/50 bg-amber-400/10 text-amber-300',
+}
+
+/**
+ * What each panel is for, and the lowest rank it is any use to.
+ *
+ * `needs` is the honest version of what the database already refuses. A
+ * moderator shown the Brix box would press it once and be told no, which
+ * teaches them the console lies to them.
+ */
+const sections: {
+  name: Section; icon: IconDefinition; blurb: string; needs: StaffRank
+}[] = [
+  { name: 'Reports', icon: faFlag, needs: 'moderator', blurb: 'What people have reported, and what was done' },
+  { name: 'People', icon: faUserShield, needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
+  { name: 'Screening', icon: faCircleCheck, needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
+  { name: 'Words', icon: faFilter, needs: 'moderator', blurb: 'What the moderation system catches' },
+  { name: 'Machine', icon: faRobot, needs: 'admin', blurb: 'What Kobby screens, and what it is allowed to do' },
+  { name: 'Notice', icon: faBullhorn, needs: 'admin', blurb: 'A line across the top of the site, which anybody can close' },
+  { name: 'Announce', icon: faBell, needs: 'admin', blurb: 'A word from Kobblon, to one person or everybody' },
+  { name: 'Sale', icon: faTag, needs: 'admin', blurb: 'Everything in the Catalog, cheaper, for a while' },
+  { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
+  { name: 'Record', icon: faScroll, needs: 'admin', blurb: 'What staff have done' },
 ]
+
+const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOrder[needs]
 
 /* ------------------------------------------------------------------ people */
 
@@ -82,6 +127,7 @@ export function PersonRow({ person, onChanged }: {
   onChanged: () => void
 }) {
   const say = useToast()
+  const rank = useStaffRank()
   const [busy, setBusy] = useState(false)
   const [brix, setBrix] = useState('')
   const [note, setNote] = useState('')
@@ -134,6 +180,24 @@ export function PersonRow({ person, onChanged }: {
         </p>
       </div>
 
+      {/*
+        * What a rank may actually do, rather than what it may press.
+        *
+        * `admin_set_standing`, `admin_move_brix` and `admin_notify` all call
+        * `require_admin`, and deleting calls `require_superadmin`. A
+        * moderator shown these would press one and be told no, which teaches
+        * them that the console lies to them - so a moderator gets the record
+        * and the behaviour panel below, and acts through a report instead.
+        */}
+      {rank === 'moderator' && (
+        <p className="rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-xs leading-relaxed text-muted">
+          Standing, Brix and removing an account are an admin’s. Open the record below for
+          their behaviour and everything that has been decided about them; a warning, a chat
+          suspension or a suspension is taken from the report itself.
+        </p>
+      )}
+
+      {rank !== 'moderator' && (
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
@@ -206,14 +270,21 @@ export function PersonRow({ person, onChanged }: {
               {person.is_suspended ? 'Unsuspend' : 'Suspend'}
             </Button>
 
-            <Button size="sm" variant="danger" disabled={busy} onClick={() => setRemoving(true)}>
-              <FontAwesomeIcon icon={faTrash} />
-              Delete
-            </Button>
+            {/* Closing an account is a superadmin's, and 0172 made the
+                database say so. Not drawing it for an admin saves them
+                pressing it to be refused. */}
+            {rank === 'superadmin' && (
+              <Button size="sm" variant="danger" disabled={busy} onClick={() => setRemoving(true)}>
+                <FontAwesomeIcon icon={faTrash} />
+                Delete
+              </Button>
+            )}
           </>
         )}
       </div>
+      )}
 
+      {rank !== 'moderator' && (
       <div className="flex flex-wrap items-end gap-2">
         <div className="w-40 shrink-0">
           <Input
@@ -247,6 +318,7 @@ export function PersonRow({ person, onChanged }: {
           {amount < 0 ? 'Take' : 'Give'}
         </Button>
       </div>
+      )}
 
       <Dialog
         open={saying}
@@ -298,6 +370,7 @@ export function PeopleSection() {
   const [looking, setLooking] = useState(false)
   /** Whoever is open, which is how a list of names becomes a console. */
   const [open, setOpen] = useState<StaffPerson | null>(null)
+  const rank = useStaffRank()
 
   const look = useCallback(async (term: string) => {
     setLooking(true)
@@ -348,7 +421,7 @@ export function PeopleSection() {
           >
             {open?.id === person.id ? 'Close the record' : 'Open the record'}
           </button>
-          {open?.id === person.id && <PersonSheet person={person} />}
+          {open?.id === person.id && <PersonSheet person={person} rank={rank} />}
         </div>
       ))}
     </div>
@@ -371,13 +444,8 @@ export function ReportsSection() {
   const [open, setOpen] = useState<ReportTicket | null>(null)
   const reports = useAsync(async () => reportQueue(which, 200), [which])
 
-  /*
-   * The rank is asked for rather than read off a profile, because since 0172
-   * three ranks imply one another and the order is decided in the database.
-   * It only decides which buttons are worth drawing - `take_report` checks
-   * again, and that is the check that counts.
-   */
-  const rank = useAsync(async () => myStaffRank(), [])
+  /* Held once for the whole console now, rather than asked for per section. */
+  const rank = useStaffRank()
 
   const settle = async (id: number, how: 'actioned' | 'dismissed') => {
     setBusy(id)
@@ -497,7 +565,7 @@ export function ReportsSection() {
         {open && (
           <ReportTriage
             ticket={open}
-            rank={(rank.data ?? 'moderator') as StaffRank}
+            rank={rank}
             onTake={async (input) => {
               const done = await takeReport({ id: open.id, ...input })
               say(
@@ -1570,57 +1638,150 @@ export function MachineSection() {
 
 /* ------------------------------------------------------------------- page */
 
+/**
+ * The rail down the side of the console.
+ *
+ * It replaced a row of ten one-word tabs that wrapped onto three lines and
+ * told nobody what any of them did. Each panel says what it is for and which
+ * rank it wants, so somebody opening this for the first time does not have
+ * to press all ten to find out, and a moderator is not shown four they
+ * cannot use.
+ */
+export function ConsoleRail({ rank, value, onChange }: {
+  rank: StaffRank
+  value: Section
+  onChange: (next: Section) => void
+}) {
+  return (
+    <nav className="space-y-1.5" aria-label="What to work on">
+      {sections.filter((one) => allowed(rank, one.needs)).map((one) => {
+        const on = one.name === value
+        return (
+          <button
+            key={one.name}
+            type="button"
+            aria-current={on ? 'page' : undefined}
+            onClick={() => onChange(one.name)}
+            className={cn(
+              'flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors',
+              on
+                ? 'border-brand-bright bg-brand/15'
+                : 'border-ink-line bg-ink-card hover:bg-ink-hover',
+            )}
+          >
+            <FontAwesomeIcon
+              icon={one.icon}
+              className={cn('mt-0.5 shrink-0', on ? 'text-brand-bright' : 'text-white/40')}
+            />
+            <span className="min-w-0">
+              <span className="flex items-center gap-2">
+                <span className="font-bold">{one.name}</span>
+                {one.needs !== 'moderator' && (
+                  <span className="rounded-full border border-ink-line px-1.5 text-[10px] font-extrabold uppercase tracking-wide text-muted">
+                    {one.needs === 'superadmin' ? 'Super' : 'Admin'}
+                  </span>
+                )}
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                {one.blurb}
+              </span>
+            </span>
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
+
 export default function Admin() {
   const { profile, loading } = useAuth()
-  const [section, setSection] = useState<Section>('People')
+  const [section, setSection] = useState<Section>('Reports')
   useTitle('Staff', 'Kobblon')
+
+  /*
+   * The rank from the database rather than `profile.is_admin`, which is what
+   * this page used to gate on - and which sent every moderator away from the
+   * one panel that is their job. `my_staff_rank` answers 'none' rather than
+   * nothing, so a reader that forgets to handle null is not wrong in the
+   * dangerous direction.
+   */
+  const asked = useAsync(async () => myStaffRank(), [profile?.id])
+  const rank = (asked.data ?? 'none') as StaffRank
 
   /*
    * The one page that stays wide. The site's column is the profile's now,
    * and a table of every account beside a map of the world does not fit in
    * it - this is a console, which is the case `wide` exists for.
    */
-  if (loading) return <Page width="wide"><Skeleton className="h-96" /></Page>
+  if (loading || asked.loading) return <Page width="wide"><Skeleton className="h-96" /></Page>
 
   /*
    * Sent away rather than shown an empty panel. This is not what keeps
    * anybody out - the functions do that - it is so a page that would refuse
    * every button is not drawn at all.
    */
-  if (!profile?.is_admin) return <Navigate to="/" replace />
+  if (rank === 'none') return <Navigate to="/" replace />
+
+  const mine = sections.filter((one) => allowed(rank, one.needs))
+  const here = mine.find((one) => one.name === section) ?? mine[0]
+  const open = here.name
 
   return (
-    <Page width="wide" className="space-y-6">
-      <div className="flex items-center gap-3">
+    <Page width="wide" className="space-y-5">
+      {/* ------------------------------------------------------- who you are */}
+      <div className="flex flex-wrap items-center gap-3">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-white">
           <FontAwesomeIcon icon={faUserShield} />
         </span>
-        <div>
-          <h1 className="font-display text-xl">Staff</h1>
+        <div className="min-w-0">
+          <h1 className="flex flex-wrap items-center gap-2 font-display text-xl">
+            Staff console
+            <span
+              className={cn(
+                'rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                rankLook[rank],
+              )}
+            >
+              {rankWord[rank]}
+            </span>
+          </h1>
           <p className="text-sm text-muted">
-            {sections.find((one) => one.name === section)?.blurb}
+            {mine.length} of {sections.length} panels are yours at this rank.
+            {rank !== 'superadmin' && ' Closing an account, and clearing a behaviour record, are a superadmin’s.'}
           </p>
         </div>
       </div>
 
-      <Tabs
-        look="line"
-        label="What to work on"
-        value={section}
-        onChange={setSection}
-        options={sections.map((one) => ({ value: one.name, label: one.name }))}
-      />
+      {/*
+       * The rail, rather than a row of ten word tabs that wrapped onto three
+       * lines and said nothing about what any of them did. Each panel says
+       * what it is for, so somebody who has never opened this does not have
+       * to press all ten to find out.
+       */}
+      <div className="grid gap-5 lg:grid-cols-[17rem_minmax(0,1fr)]">
+        <ConsoleRail rank={rank} value={open} onChange={setSection} />
 
-      {section === 'People' && <PeopleSection />}
-      {section === 'Reports' && <ReportsSection />}
-      {section === 'Screening' && <ScreeningSection />}
-      {section === 'Machine' && <MachineSection />}
-      {section === 'Map' && <MapSection />}
-      {section === 'Sale' && <SaleSection />}
-      {section === 'Notice' && <NoticeSection />}
-      {section === 'Announce' && <AnnounceSection />}
-      {section === 'Words' && <WordsSection />}
-      {section === 'Record' && <RecordSection />}
+        <div className="min-w-0 space-y-4">
+          <div className="flex items-center gap-3 border-b border-ink-line pb-3">
+            <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />
+            <h2 className="font-display text-lg font-extrabold">{here.name}</h2>
+            <p className="min-w-0 truncate text-sm text-muted">{here.blurb}</p>
+          </div>
+
+          <RankContext.Provider value={rank}>
+            {open === 'People' && <PeopleSection />}
+            {open === 'Reports' && <ReportsSection />}
+            {open === 'Screening' && <ScreeningSection />}
+            {open === 'Machine' && <MachineSection />}
+            {open === 'Map' && <MapSection />}
+            {open === 'Sale' && <SaleSection />}
+            {open === 'Notice' && <NoticeSection />}
+            {open === 'Announce' && <AnnounceSection />}
+            {open === 'Words' && <WordsSection />}
+            {open === 'Record' && <RecordSection />}
+          </RankContext.Provider>
+        </div>
+      </div>
     </Page>
   )
 }
