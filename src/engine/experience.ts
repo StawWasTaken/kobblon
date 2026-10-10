@@ -372,7 +372,19 @@ export type WorldManifest = {
    * hillside. The near end is the engine's, because it is where the camera
    * enters somebody's head and that is not a creative decision.
    */
-  camera?: { zoom?: { most?: number } }
+  camera?: {
+    zoom?: { most?: number }
+    /**
+     * Whether players may use shiftlock in this World.
+     *
+     * Absent means yes: shiftlock is on by default, per Staw, and a World
+     * saved before this field existed should behave the way it did. A
+     * creator setting it to `false` turns it off for everybody - which is
+     * the only reason the field exists, because a player's own preference
+     * belongs in their settings and not in somebody's World file.
+     */
+    shiftlock?: boolean
+  }
   /** Sounds that are not anywhere in particular. Ambience. */
   sounds?: WorldSound[]
   blocks: WorldPart[]
@@ -872,6 +884,8 @@ export function readManifest(raw: unknown): WorldManifest {
           ? THREE.MathUtils.clamp(Number(data.camera?.zoom?.most), ZOOM_NEAR, 400)
           : undefined,
       },
+      // Absent means allowed: only an explicit false turns it off.
+      shiftlock: data.camera?.shiftlock === false ? false : undefined,
     },
     sounds: (Array.isArray(data.sounds) ? data.sounds : [])
       .map((one: any) => (one && typeof one.class === 'string' ? flatten(one) : one))

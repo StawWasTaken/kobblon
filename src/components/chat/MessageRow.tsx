@@ -62,7 +62,10 @@ export function MessageRow({
   return (
     <div
       className={cn(
-        'group flex items-end gap-2',
+        // Aligned to the top and nudged a little higher, so the picture
+        // sits beside the cut corner that points at it rather than under
+        // the end of the bubble.
+        'group flex items-start gap-2',
         mine ? 'flex-row-reverse' : 'flex-row',
         grouped ? 'mt-0.5' : 'mt-2',
       )}
@@ -73,7 +76,7 @@ export function MessageRow({
       ) : (
         <Link
           to={`/u/${sender?.username ?? ''}`}
-          className="shrink-0"
+          className="-mt-0.5 shrink-0"
           aria-label={sender?.display_name ?? 'Profile'}
         >
           <Avatar src={avatarOf(sender)} personId={message.sender_id} name={sender?.display_name ?? 'K'} size="xs" />
@@ -115,9 +118,9 @@ export function MessageRow({
           <div
             className={cn(
               'relative rounded-2xl px-3 py-1.5 text-sm leading-snug',
-              // The corner nearest the avatar is cut short, so the bubble
+              // The top corner nearest the avatar is cut short, so the bubble
               // points at whoever said it rather than floating beside them.
-              mine ? 'rounded-br-[5px]' : 'rounded-bl-[5px]',
+              mine ? 'rounded-tr-[5px]' : 'rounded-tl-[5px]',
               mine ? 'bg-brand text-white' : 'bg-ink-hover text-white/90',
               hidden && 'cursor-pointer select-none',
             )}

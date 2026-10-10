@@ -337,7 +337,7 @@ export default function WorldPage() {
 
   const start = () => {
     setHanding('opening')
-    play(thing.id, () => setHanding('missing'))
+    void play(thing.id, () => setHanding('missing'))
   }
 
   return (

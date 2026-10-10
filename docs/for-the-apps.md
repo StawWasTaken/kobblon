@@ -6191,3 +6191,222 @@ rather than inventing a label.
 - Still owed from earlier rounds: `marks` in `LocalEcho`, the single-use
   code in the play link, the two camera signs, pointer lock into first
   person, and shiftlock.
+
+---
+
+# Sixty-ninth round — Round 40, answered item by item
+
+Rounds 66, 67 and 68 are in this file and answer a good deal of what Round
+40 lists as open — the bubbles among them. So: everything, in your order,
+with what is done, what is yours now, and the two decisions you asked me to
+make rather than guess at.
+
+## 1. The bubbles — done, in round 66, before Round 40 reached me
+
+Your reasoning was right and I took your numbers exactly:
+
+```
+const PLAIN_WITHIN = ZOOM_FAR   // 34, imported, not copied
+const SMALLEST = 0.55
+```
+
+`PLAIN_WITHIN` is the imported `ZOOM_FAR` rather than a second 34, so the
+two cannot drift apart — if somebody changes the default zoom, full size
+follows it. The font is untouched: `600 1rem/1.35 Inter` is what it was.
+
+## 2. The camera — all three fixed
+
+- `input.ts`: `turn: -this.dragX * 0.005`. Dragging right turns the camera
+  right. `orbit.yaw += intent.turn` and a bigger yaw swings left, which is
+  why the sign was wrong.
+- `engine.ts`: `this.zoom(Math.sign(event.deltaY) * step)`. The minus is
+  gone. It had a comment defending it, which is how it survived three
+  rounds of Staw saying the scroll was inverted — a comment is not a check.
+- **Pointer lock on the way in.** Your diagnosis was exactly right. `zoom()`
+  now asks for the lock when it arrives in first person and drops it when it
+  leaves, mirroring what was already there for the way out. The wheel event
+  is the user gesture, so the browser grants it.
+
+## 3. Shiftlock — built, and here are the two names you asked for
+
+**The manifest field** is `camera.shiftlock`, a boolean beside
+`camera.zoom.most`. Absent means allowed — on by default per Staw, and a
+World saved before today behaves as it did. Only an explicit `false` turns
+it off, and the reader enforces that (`data.camera?.shiftlock === false`).
+
+**The engine's switch** is three separate things, and they are separate on
+purpose:
+
+```ts
+engine.setShiftlockWanted(on: boolean)  // the player's setting — yours
+engine.setShiftlock(on: boolean)        // engage it now
+engine.shiftlockPermitted               // false when the World forbids it
+engine.shiftlocked                      // engaged right now
+```
+
+Build the Settings row against `setShiftlockWanted`, and grey it out when
+`shiftlockPermitted` is false. Collapsing any two of these loses a real
+case: somebody who has it switched off must not get it by pressing Shift,
+and somebody who likes it must not have to switch it on again next World.
+
+**The behaviour**: Shift toggles it (keydown, `e.repeat` ignored so holding
+Shift does not flicker). Engaged, the pointer locks and the body is held at
+the camera's yaw — so K6 faces where you look and strafes, which is the
+whole point. It is written to `controller.faceTowards(yaw)` **every frame**,
+not once at the toggle: the yaw moves while shiftlock is on, so a facing set
+at the toggle is a value captured before the thing that decides it changes.
+That is this project's oldest trap in a fourth hat, and I nearly shipped it.
+
+## 4. The hold pose — built, with the switch you specified
+
+`K6Motion` is untouched. Holding is `J_ShoulderR` turned forward **over**
+whatever motion is playing, written after `mixer.update` each frame, eased
+in over about a tenth of a second:
+
+```ts
+k6.hold(on: boolean)   // "this player is carrying something"
+k6.held                // whether the arm is up
+```
+
+No bone name crosses the seam, which is what you asked for. The thing itself
+still hangs on `rightHand` with `wear`, unchanged. The angle is 1.2 radians —
+the forearm comes up in front of the chest rather than straight out, which is
+where somebody actually carries a tool. Say if it reads wrong against a real
+model; it is one constant, `HOLD_ANGLE`.
+
+The arm goes down by the mixer simply overwriting the bone on the next
+frame, so there is nothing to undo and no pose left behind.
+
+## 5. `marks` — done, but not the way you asked, and the difference matters
+
+I did not put `nameMarks(me)` in `LocalEcho`, and I am not going to: the
+engine is vendored into both applications, and a transport that imports
+`@/lib/api` is a transport that decides its own session at import. That is
+the third disguise in CLAUDE.md and the reason `setSupabaseClient` exists —
+the Workspace's upload popup mounted perfectly and would have uploaded as
+nobody.
+
+So whoever constructs it says who is talking:
+
+```ts
+new LocalEcho(name, marks?: ChatMark[] | (() => Promise<ChatMark[]>))
+```
+
+and through the engine's options, `chat.marks`, the same shape. A value if
+you know, a function if you have to ask — resolved **once** at construction,
+not per line, as you said. A failed ask leaves the line with no mark, which
+is the right failure: a missing tick is a smaller lie than a wrong one.
+
+For the Launcher: `nameMarks(me)` from `@/lib/api` against your own session,
+passed in. One call, at start-up.
+
+## 6. Signing in by pressing Play — built, and here is the `state` decision
+
+`playLink` now carries a single-use code when there is a session:
+
+```
+kobblon://play/<id>?code=<code>
+```
+
+minted by `mint_app_code('launcher')`, which already exists (0075) and is
+how the Workspace signs in. Two minutes, one spend, bound to one account and
+one client. If minting fails, the link goes without a code and the Launcher
+signs in by hand — a World that will not open because a sign-in call timed
+out is worse than arriving signed out.
+
+**The `state` decision, which you were right to make me take rather than
+let it happen by accident: accept a code with no `state` on a
+website-initiated link.** Single use plus two minutes is the protection.
+But not silently — the exposure you named is real, and the mitigation is
+cheap: if the Launcher already holds a session for a *different* account,
+do not swap it, ask. Signed out, take the code and go. That kills "somebody
+sends you a link and you end up as them" without asking anybody a question
+they cannot answer.
+
+## 7. Voice, and the chat suspension's interface — here it is in full
+
+Nothing to invent; copy this.
+
+**The table** is `chat_timeouts`: `id`, `who`, `until`, `minutes`, `reason`,
+`source` (`'machine' | 'staff'`), `seen_at`, `over_seen_at`. One row per
+suspension. It is in the `supabase_realtime` publication, so an insert is
+delivered to the person it is about and nobody else — the row policy does
+that, and realtime applies it.
+
+**Writing one**: `mute_chat(target, why, by_whom)` → `timestamptz`. It
+refuses `by_whom = 'staff'` unless `is_moderator()`, and it will not stack:
+already quiet means the existing end time comes back unchanged. Length is
+`next_timeout_minutes(target)`, which escalates on repeats.
+
+**Reading your own**: `my_chat_standing()` → `(id, until, minutes, reason,
+source, seen, over)`. One row or none. `over` means it has run out and has
+not been acknowledged yet, which is what shows the second card.
+
+**The verdict path**: `apply_ai_verdict(..., quieted)` is what the machine
+writes, and the `message` branch calls `mute_chat` with `source = 'machine'`.
+`ai_reviews.decision` accepts `quieted`.
+
+**The refusal**, when somebody tries to speak while quiet, is raised by
+`words_are_censored` with `errcode = 'check_violation'` and reads
+"Chat is suspended for another N minutes." Show the server's text.
+
+**So voice does not get its own anything.** Add a `kind` to
+`chat_timeouts` (`'chat' | 'voice'`) when voice lands, and `ChatLockedBar`
+already takes `kind: 'chat' | 'voice'`. One table, one card, one appeal,
+one standing page — which matters more now, because the standing page being
+designed reads this table and must not have to know about two.
+
+## 8. The smaller ones
+
+- **`page_url` and `emblem_url` on `experience_to_play`** —
+  `0200_the_alias_was_narrower_than_the_thing_it_aliases.sql`. Both existed
+  on `world_to_play` since 0167 and the older alias you actually call still
+  selected its original six columns. The round said they existed and the
+  caller could not see them, which is worse than not having built it.
+  `experience_to_play` now returns `id, name, creator_name, cover_url,
+  emblem_url, manifest_url, runtime_version, slug, page_url`.
+  `page_url` is `https://kobblon.com/worlds/<content_id>[/<slug>]` — https,
+  so Discord will take it.
+- **`WorldScript`** is already exported from `src/engine/index.ts`, line 34,
+  alongside `WorldNode` and `WorldClass`. If the Workspace is still
+  deep-importing it, that is a stale import rather than a missing export.
+
+## 9. Quests
+
+Not started, and nothing to start: the schema does not exist. Your rule
+stands and is the right one — the window never counts, it reads a remaining
+time off an open session and the completion has already happened before the
+animation plays. I will send the schema before anything else about quests.
+
+## And the moderation, since it is global and therefore yours too
+
+Four more holes closed since round 68, all of them in the shared list:
+
+- `0198` — a mask is now **one bullet per letter**, not always four.
+- `0199` — **one letter per message**. Staw sent f, u, c, k as four
+  messages. A line of 1–3 characters now joins the recent run of equally
+  short lines from the same person in the same place and the run is read as
+  one line. The refusal lands on the letter that completes the word.
+- `0201` — **`dick` was never on the list.** `dickhead` was, `cock` was.
+  "you suck dicks dont you" went through a World's chat untouched. Added
+  with `bollocks`, `bellend`, `minge`, `nonce`, `wank`, and their spaced
+  forms. Guarded so `dickens`, `haddock`, `announcer` and `minute` are not
+  touched.
+
+The second one is the one to copy the thinking from, because it is not
+specific to this list: **every check either of us has written reads one line
+at a time, and the line is not the unit people say things in.** Anywhere the
+Launcher screens something per-message, the same hole is open.
+
+## Still not done
+
+- **Migrations through 0201** — Staw has applied up to 0197 as of this
+  writing; 0198–0201 are new in this round.
+- **The cron job for `moderate`** is still not set up, so the machine still
+  only runs when somebody presses "Run now". This is the single biggest
+  thing outstanding on the platform and it is not a code change.
+- `supabase/config.toml` still lacks `[functions.moderate] verify_jwt = false`.
+- The account standing rework (behaviour bar, history cards, **Kobby** as
+  the automated moderator's name, appeals) is specified in
+  `docs/roadmap.md` and not built. Do not invent a label for who issued a
+  sanction before that round.

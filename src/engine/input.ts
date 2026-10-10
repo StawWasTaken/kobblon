@@ -15,10 +15,18 @@ export type Intent = {
   turn: number
   pitch: number
   emote: boolean
+  /**
+   * Shift was pressed this frame, asking for shiftlock on or off.
+   *
+   * An edge rather than a held state: shiftlock is a mode you turn on and
+   * leave on, the way classic Roblox does it, so what the engine needs to
+   * know is that the key went down - not that it is still down.
+   */
+  lock: boolean
 }
 
 export const stillIntent = (): Intent => ({
-  x: 0, z: 0, jump: false, run: false, turn: 0, pitch: 0, emote: false,
+  x: 0, z: 0, jump: false, run: false, turn: 0, pitch: 0, emote: false, lock: false,
 })
 
 const KEYS: Record<string, keyof Intent | 'left' | 'right' | 'forward' | 'back'> = {
@@ -38,6 +46,8 @@ export class Keyboard {
   private dragging = false
   private locked = false
   private typingNow = false
+  /** Set when Shift goes down, taken by the next `read`. */
+  private lockAsked = false
   private stop: (() => void)[] = []
 
   constructor(private element: HTMLElement) {
@@ -54,6 +64,8 @@ export class Keyboard {
        * documented path to a thing it did not actually do. It does now.
        */
       if (this.typingNow) return
+      // Not on auto-repeat: holding Shift must not flicker the mode.
+      if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) this.lockAsked = true
       if (KEYS[e.code]) { this.down.add(e.code); e.preventDefault() }
     }
     const keyUp = (e: KeyboardEvent) => this.down.delete(e.code)
@@ -129,16 +141,19 @@ export class Keyboard {
       run: false,
       emote: held('emote'),
       /*
-       * Dragging right turns the camera right. It was the other way round,
-       * which is the one thing about a camera nobody forgives.
+       * Negated, because `orbit.yaw += intent.turn` and a bigger yaw swings
+       * the camera left. Dragging right has to turn the camera right; it
+       * did the opposite for as long as there has been a camera.
        */
-      turn: this.dragX * 0.005,
+      turn: -this.dragX * 0.005,
       /*
        * Dragging down looks down. Both axes were the wrong way round, and
        * they are fixed one at a time because each was reported separately.
        */
       pitch: this.dragY * 0.005,
+      lock: this.lockAsked,
     }
+    this.lockAsked = false
     this.dragX = 0
     this.dragY = 0
     return intent

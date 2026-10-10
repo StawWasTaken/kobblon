@@ -213,10 +213,29 @@ export function tintFor(line: Pick<ChatLine, 'from'> & { who?: string }): string
 /** Hearing yourself, because there is nobody else to hear you yet. */
 export class LocalEcho implements ChatTransport {
   private heard = new Set<(line: ChatLine) => void>()
+  private marks: ChatMark[] = []
 
   readonly note = 'There is no server yet, so this is you talking to yourself.'
 
-  constructor(private who: string) {}
+  /**
+   * The marks are handed in, not fetched.
+   *
+   * The apps side asked for `nameMarks(me)` to be called here, and it
+   * cannot be: the engine is vendored into the Workspace and the Launcher,
+   * and a transport that imports `@/lib/api` is a transport that decides
+   * its own session at import - the third disguise of this project's
+   * oldest trap, and the reason `setSupabaseClient` exists.
+   *
+   * So whoever constructs it says who is talking. A value for a caller who
+   * already knows; a function for one that has to ask, resolved once here
+   * rather than per line, because a badge does not change between two
+   * sentences. If the ask fails the line simply has no mark, which is the
+   * right failure: a missing tick is a smaller lie than a wrong one.
+   */
+  constructor(private who: string, marks?: ChatMark[] | (() => Promise<ChatMark[]>)) {
+    if (Array.isArray(marks)) this.marks = marks
+    else if (marks) void marks().then((got) => { this.marks = got ?? [] }).catch(() => {})
+  }
 
   send(text: string) {
     const line: ChatLine = {
@@ -225,6 +244,7 @@ export class LocalEcho implements ChatTransport {
       text,
       kind: 'said',
       at: Date.now(),
+      marks: this.marks.length ? this.marks : undefined,
     }
     for (const one of this.heard) one(line)
   }

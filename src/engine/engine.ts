@@ -9,7 +9,7 @@ import {
 import { buildSky, type ResolveAsset, type Skybox } from './sky'
 import { K6_HEIGHT } from './units'
 import { SoundService } from './sound'
-import { ChatService, LocalEcho, muted, type ChatTransport, type ScreenSay } from './chat'
+import { ChatService, LocalEcho, muted, type ChatTransport, type ScreenSay, type ChatMark } from './chat'
 import { ChatWindow } from './chatui'
 import { BubbleBoard, type BubbleLook, type BubbleContents } from './bubbles'
 
@@ -72,6 +72,12 @@ export type EngineOptions = {
      * rather than hiding.
      */
     screen?: ScreenSay
+    /**
+     * The marks beside the speaker's own name, for the stand-in transport.
+     * A value if the caller knows, a function if it has to ask - resolved
+     * once. A real transport carries its own and ignores this.
+     */
+    marks?: ChatMark[] | (() => Promise<ChatMark[]>)
   }
 }
 
@@ -149,6 +155,12 @@ export class Engine {
   private held = ZOOM_FAR
   /** How far back this World lets the camera go. */
   private zoomMost = ZOOM_FAR
+  /** Whether this World permits shiftlock at all. A manifest may forbid it. */
+  private shiftlockAllowed = true
+  /** Whether the player has it switched on in their own settings. */
+  private shiftlockWanted = true
+  /** Whether it is engaged right now, which Shift toggles. */
+  private shiftlockOn = false
   private onWheel: ((event: WheelEvent) => void) | null = null
   private onKey: ((event: KeyboardEvent) => void) | null = null
   /** How many Worlds have been opened, so a late arrival knows it is late. */
@@ -172,7 +184,7 @@ export class Engine {
     if (options.chat !== false) {
       const asked = options.chat ?? {}
       this.chat = new ChatService(
-        asked.transport ?? new LocalEcho(asked.name ?? 'You'),
+        asked.transport ?? new LocalEcho(asked.name ?? 'You', asked.marks),
         { screen: asked.screen },
       )
       this.bubbles = new BubbleBoard(options.canvas, options.bubbles)
@@ -202,8 +214,10 @@ export class Engine {
       this.onWheel = (event) => {
         event.preventDefault()
         /*
-         * The wheel was going the wrong way round and is flipped here
-         * rather than argued with.
+         * Wheel away from you (deltaY negative) pulls the camera in, wheel
+         * towards you pushes it out. It was flipped, and the flip had a
+         * comment defending it, which is how it survived three rounds of
+         * Staw saying the scrolling was inverted.
          *
          * The step grows with the distance: a notch that moves the camera
          * two stons is a crawl at thirty stons out and a lurch at three,
@@ -212,7 +226,7 @@ export class Engine {
          * amount.
          */
         const step = Math.max(1.5, this.orbit.distance * 0.22)
-        this.zoom(-Math.sign(event.deltaY) * step)
+        this.zoom(Math.sign(event.deltaY) * step)
       }
       options.canvas.addEventListener('wheel', this.onWheel, { passive: false })
 
@@ -300,6 +314,8 @@ export class Engine {
     // A World decides how much of itself is seen at once: a corridor is not
     // a hillside. Pulling back further than it allows is not offered.
     this.zoomMost = manifest.camera?.zoom?.most ?? ZOOM_FAR
+    this.shiftlockAllowed = manifest.camera?.shiftlock !== false
+    if (!this.shiftlockAllowed) this.setShiftlock(false)
     this.orbit.distance = Math.min(this.orbit.distance, this.zoomMost)
     // A new World starts with the camera where it belongs rather than
     // gliding in from wherever the last one left it.
@@ -341,9 +357,51 @@ export class Engine {
      * zooming back out is how they ask to stop. The pointer follows that
      * rather than needing its own control.
      */
-    if (!this.firstPerson) this.keyboard?.setPointerLock(false)
+    /*
+     * And the way in, which was missing.
+     *
+     * The lock was only ever asked for on a click, and nobody clicks after
+     * zooming into their own head - so first person was entered with the
+     * pointer still loose, which is the "cursor + dot" Staw described. A
+     * wheel event is a user gesture, so the browser will grant it here.
+     */
+    if (this.firstPerson) this.keyboard?.setPointerLock(true)
+    else this.keyboard?.setPointerLock(false)
     return this.orbit.distance
   }
+
+  /**
+   * Shiftlock: the body faces where the camera looks, and strafes.
+   *
+   * Three facts decide whether it is engaged, and they are kept apart on
+   * purpose. `shiftlockAllowed` is the World's - a creator may forbid it
+   * for everybody with `camera.shiftlock: false` in the manifest.
+   * `shiftlockWanted` is the player's own setting, which is what a
+   * Launcher's Settings row writes, and it is on by default per Staw.
+   * `shiftlockOn` is whether it is engaged this second, which Shift
+   * toggles. Collapsing any two of them loses a real case: a player who
+   * has it switched off should not get it by pressing Shift, and one who
+   * likes it should not have to switch it on again in the next World.
+   */
+  setShiftlock(on: boolean) {
+    this.shiftlockOn = on && this.shiftlockAllowed && this.shiftlockWanted
+    this.controller.faceTowards(this.shiftlockOn ? this.orbit.yaw : null)
+    if (this.shiftlockOn) this.keyboard?.setPointerLock(true)
+    else if (!this.firstPerson) this.keyboard?.setPointerLock(false)
+    return this.shiftlockOn
+  }
+
+  /** The player's own preference, from their settings. On by default. */
+  setShiftlockWanted(wanted: boolean) {
+    this.shiftlockWanted = wanted
+    if (!wanted) this.setShiftlock(false)
+  }
+
+  /** Whether this World permits it, for a Settings row that should grey out. */
+  get shiftlockPermitted() { return this.shiftlockAllowed }
+
+  /** Whether it is engaged right now. */
+  get shiftlocked() { return this.shiftlockOn }
 
   /** Whether the camera is inside the head rather than behind it. */
   get firstPerson() {
@@ -466,7 +524,19 @@ export class Engine {
      */
     const intent = this.chat?.typing ? muted(asked) : asked
 
+    // Shift asks for shiftlock, if this World and this player both allow it.
+    if (intent.lock) this.setShiftlock(!this.shiftlockOn)
+
     this.orbit.yaw += intent.turn
+
+    /*
+     * Every frame, not only when it was switched on. The yaw moves while
+     * shiftlock is engaged - that is the entire point of it - so a facing
+     * set once at the toggle is a value captured before the thing that
+     * decides it changes, which is this project's oldest trap wearing a
+     * fourth hat.
+     */
+    if (this.shiftlockOn) this.controller.faceTowards(this.orbit.yaw)
     /*
      * Almost all the way up and almost all the way down, about seventy five
      * degrees each way. The old range let somebody look a little above the

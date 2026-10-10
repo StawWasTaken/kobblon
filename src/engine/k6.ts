@@ -259,6 +259,14 @@ export function fitToSocket(model: THREE.Object3D, point: K6Point, placed?: Worn
   return model
 }
 
+/**
+ * How far forward the right shoulder turns when something is held.
+ *
+ * About seventy degrees: the forearm comes up in front of the chest rather
+ * than straight out, which is where somebody actually carries a tool.
+ */
+const HOLD_ANGLE = 1.2
+
 export type K6Motion = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land' | 'wave'
 
 let source: Promise<THREE.Group & { animations: THREE.AnimationClip[] }> | null = null
@@ -291,6 +299,11 @@ export class K6 {
 
   private actions = new Map<K6Motion, THREE.AnimationAction>()
   private motion: K6Motion = 'idle'
+  /** The right shoulder, kept so a hold pose can be laid over any motion. */
+  private shoulderR: THREE.Bone | null = null
+  /** How far into the hold pose the arm is, 0 to 1, eased towards `holding`. */
+  private heldBy = 0
+  private holding = false
   private landingFor = 0
 
   /** The bone for each slot, found once, and what is hanging on each. */
@@ -343,6 +356,7 @@ export class K6 {
     this.object.traverse((child) => {
       if ((child as THREE.Bone).isBone) bones.set(child.name, child as THREE.Bone)
     })
+    this.shoulderR = bones.get('J_ShoulderR') ?? null
     this.object.updateMatrixWorld(true)
 
     for (const [name, where] of Object.entries(K6_POINTS) as [K6Point, { bone: string; at: readonly number[] }][]) {
@@ -735,8 +749,37 @@ export class K6 {
     else this.play('idle')
   }
 
+  /**
+   * Whether this K6 is carrying something, which lifts the right arm.
+   *
+   * Not an eighth animation. Holding has to survive walking, jumping and
+   * falling, and a clip would fight whichever of those is playing - so it
+   * is the shoulder turned forward *over* the motion, written after the
+   * mixer each frame rather than instead of it. The socket on this bone
+   * carries the thing itself, so the tool comes with the arm for free.
+   *
+   * A caller says "this player is carrying something" and never names a
+   * bone, which is what the Launcher asked for.
+   */
+  hold(on: boolean) { this.holding = on }
+
+  /** Whether the arm is up. */
+  get held() { return this.holding }
+
   update(dt: number) {
     this.mixer.update(dt)
+
+    /*
+     * After the mixer, every frame, and eased rather than snapped - a hand
+     * that arrives instantly reads as a glitch rather than a movement. The
+     * mixer rewrites this bone on the next frame, so there is nothing to
+     * undo when the arm goes down: stop adding and it is simply gone.
+     */
+    if (this.shoulderR) {
+      const want = this.holding ? 1 : 0
+      this.heldBy += (want - this.heldBy) * Math.min(1, dt * 9)
+      if (this.heldBy > 0.001) this.shoulderR.rotation.x -= HOLD_ANGLE * this.heldBy
+    }
   }
 
   /**

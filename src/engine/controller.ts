@@ -107,6 +107,19 @@ export class Controller {
 
   /** Where this World puts somebody, and where it puts them back. */
   private spawn = { at: new THREE.Vector3(), facing: 0 }
+  /**
+   * An angle the body is held at, instead of facing the way it is going.
+   *
+   * This is shiftlock, and it is a property of the body rather than of the
+   * camera: with it on, K6 faces where you are looking and strafes, which
+   * is the whole point - you can walk sideways while watching something.
+   * Null is the ordinary behaviour, where the body turns to follow its own
+   * movement.
+   */
+  private held: number | null = null
+
+  /** Hold the body at this angle, or null to let it face where it walks. */
+  faceTowards(angle: number | null) { this.held = angle }
 
   /** Set when the body left the world, for the engine to act on and clear. */
   fellOut = false
@@ -251,7 +264,9 @@ export class Controller {
       this.state.speed = Math.abs(velocity.y) + Math.hypot(velocity.x, velocity.z)
       this.state.rising = velocity.y > 0
 
-      if (this.state.speed > 0.5 && wanted.lengthSq() > 0) {
+      if (this.held !== null) {
+        this.state.facing = this.held
+      } else if (this.state.speed > 0.5 && wanted.lengthSq() > 0) {
         const want = Math.atan2(wanted.x, wanted.z)
         let turn = want - this.state.facing
         while (turn > Math.PI) turn -= Math.PI * 2
@@ -305,7 +320,9 @@ export class Controller {
     // -- face the way we are going, without snapping
     const moving = new THREE.Vector2(velocity.x, velocity.z)
     this.state.speed = moving.length()
-    if (this.state.speed > 0.5) {
+    if (this.held !== null) {
+      this.state.facing = this.held
+    } else if (this.state.speed > 0.5) {
       const want = Math.atan2(velocity.x, velocity.z)
       let turn = want - this.state.facing
       while (turn > Math.PI) turn -= Math.PI * 2
