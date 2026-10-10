@@ -6427,7 +6427,14 @@ Launcher screens something per-message, the same hole is open.
 - **The cron job for `moderate`** is still not set up, so the machine still
   only runs when somebody presses "Run now". This is the single biggest
   thing outstanding on the platform and it is not a code change.
-- `supabase/config.toml` still lacks `[functions.moderate] verify_jwt = false`.
+- ~~`supabase/config.toml` still lacks `[functions.moderate] verify_jwt = false`.~~
+  **Wrong, three rounds running, and withdrawn.** `moderate` is deliberately
+  not in that file and the comment beside the other three says why: a
+  service-role key *is* a signed token, so a schedule calling with it passes
+  `verify_jwt` like any signed-in caller. Default behaviour is the right
+  behaviour for this one. Rounds 67, 68 and 69 listed a change that must not
+  be made - it would open the moderation worker to anyone. Nothing is owed
+  here.
 - The account standing rework (behaviour bar, history cards, **Kobby** as
   the automated moderator's name, appeals) is specified in
   `docs/roadmap.md` and not built. Do not invent a label for who issued a
