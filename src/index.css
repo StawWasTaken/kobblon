@@ -1,5 +1,52 @@
 @import './../design/tokens.css';
 
+/*
+ * Every emoji on Kobblon, drawn the same way on every machine.
+ *
+ * Staw wants one set of emoji across the whole site, not one per operating
+ * system. The usual way to do that is to find emoji in the text and swap
+ * each one for a picture - which means touching every place that renders
+ * somebody's words, and missing the ones in a placeholder, a tooltip or a
+ * `<title>` because those cannot hold an element at all.
+ *
+ * A font has none of those problems. Inter has no emoji in it, so every
+ * emoji character falls through to the next family in the stack, and this
+ * is that family. It covers the whole site at once - inputs, placeholders,
+ * headings, somebody's name, text Kobblon has not written yet - with
+ * nothing wired anywhere and no element inserted into text React owns.
+ *
+ * 465KB for all of them, which is the other reason: the picture-per-emoji
+ * version was 7.8MB of files and only ever covered the four places it had
+ * been wired into.
+ *
+ * `font-display: swap` on purpose. The system's own emoji for the first
+ * moment is a far better page than a row of invisible gaps.
+ */
+@font-face {
+  font-family: 'Twemoji';
+  src: url('/fonts/twemoji.woff2') format('woff2');
+  font-display: swap;
+  /*
+   * `unicode-range` is what makes this work, and without it the face is
+   * declared, reachable and never used: measured in Chromium, an emoji in
+   * `Inter, Twemoji, system-ui` came out the system's own size and the
+   * woff2 was never even requested. Emoji go down a fallback path of the
+   * browser's own rather than simply walking the family list, so sitting
+   * second in the stack is not enough to be chosen.
+   *
+   * Naming the codepoints settles it: the face is selected for exactly
+   * these and never competes for a letter, which also means the 465KB is
+   * only fetched by a page that actually has an emoji on it.
+   */
+  unicode-range:
+    U+200D, U+20E3, U+FE0F,
+    U+203C, U+2049, U+2122, U+2139,
+    U+2194-21AA, U+231A-231B, U+2328, U+23CF-23FA, U+24C2,
+    U+25AA-25FE, U+2600-27BF, U+2934-2935, U+2B00-2BFF,
+    U+3030, U+303D, U+3297, U+3299,
+    U+1F000-1FAFF, U+E0020-E007F;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

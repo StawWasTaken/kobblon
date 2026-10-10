@@ -69,8 +69,17 @@ export default {
         },
       },
       fontFamily: {
-        display: ['bd-gravel-vf', 'system-ui', 'sans-serif'],
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        /*
+         * 'Twemoji' sits after the text face and before the system in both
+         * stacks. A text face has no emoji in it, so an emoji character
+         * falls through to Twemoji and a letter never reaches it - which is
+         * how the whole site gets one set of emoji without anything being
+         * wired to it. It has to be in every stack: one that leaves it out
+         * is a corner of Kobblon drawing the operating system's emoji
+         * beside Twemoji elsewhere on the same screen.
+         */
+        display: ['bd-gravel-vf', 'Twemoji', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'Twemoji', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       borderRadius: { xl2: '1.25rem' },
       boxShadow: {

@@ -558,6 +558,33 @@ function useChatStanding() {
   const ask = useCallback(() => { void myChatStanding().then(setStanding) }, [])
   useEffect(() => { ask() }, [ask])
 
+  /*
+   * Being told, rather than finding out.
+   *
+   * Asking on mount and at the end of the clock misses the one case that
+   * matters most: a suspension handed out while somebody is sitting here.
+   * Before this, the first they knew of it was a message of theirs
+   * failing, which is the worst possible way to learn it.
+   *
+   * The row is heard, not read: realtime hands over a `chat_timeouts` row
+   * and the card is worked out by `my_chat_standing` from it, so there is
+   * one place that decides what a suspension means rather than a second
+   * assembled here out of a payload. The row policy is what keeps this
+   * private - realtime applies it, so somebody hears about their own
+   * suspension and nobody else's.
+   */
+  useEffect(() => {
+    const channel = supabase
+      .channel('my-chat-standing')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_timeouts' },
+        () => ask(),
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [ask])
+
   useEffect(() => {
     if (!standing || standing.over) return
     const tick = () => {

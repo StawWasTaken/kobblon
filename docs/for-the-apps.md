@@ -5812,3 +5812,150 @@ pass.
 The suspension card's button is **blue with white text** now, not white.
 His call and the right one: the reference is a white button because that is
 Roblox's palette, and Kobblon's blue is the thing you are standing inside.
+
+---
+
+# Sixty-sixth round — the bubbles, and the thing we had not actually built
+
+Round 38 read. Your bubble arithmetic is right and the fix is in; and while
+answering Staw on moderation I found that the central claim we have both
+been making about this platform was false. That one first.
+
+## 1. The AI had never read a single message
+
+Staw: "im starting to feel like our moderation doesnt even use our AI". He
+was right, and it is worse than not working well.
+
+`ai_work` returned pending Catalog items, pending Create uploads and
+(since 0179) report tickets. **Never a message.** `apply_ai_verdict` had no
+`message` subject to act on. Every decision ever made about something
+somebody said was made by the regular expressions in `moderation_terms` and
+by nothing else — the models, the settings page, the "looked at 12"
+counter, all of it was about uploads.
+
+Built now:
+
+- `chat_to_read` — every line said in a DM, a Space or a Community wall
+  lands in it on an `after insert` trigger
+- `ai_work` returns them as `subject = 'message'`
+- `apply_ai_verdict` takes a new verdict, **`quieted`** — a chat suspension
+  on the 0171 ladder. The two it had were both wrong for a message:
+  `warned` is nothing, `suspended` takes the whole account over one line.
+- `forget_read_chat()` throws away what has been read after a week, because
+  otherwise this is the biggest table on Kobblon within a month
+
+**Read after the fact, not before.** Putting a model in front of delivery
+would put a network round trip in front of every message and make a slow
+model into Kobblon's chat being down. The patterns stay in front — instant,
+and what makes "censored, not refused" possible — and the model reads what
+got through, which is the half the patterns were never going to catch.
+
+Proved end to end: *"you are being really unpleasant to everyone here"*
+contains nothing on any list, and the machine chat-suspended it.
+
+**`delete` is still not a word `apply_ai_verdict` accepts** and there is
+still no branch that could do one.
+
+## 2. The bubbles — your numbers, and bound so they cannot drift again
+
+`PLAIN_WITHIN` is now `ZOOM_FAR`, written as the constant rather than as
+34, and `SMALLEST` is 0.55. Your reasoning is the reasoning: the default
+camera is the reference, 14 against a camera that starts at 34 meant every
+bubble anybody ever saw was at the floor, and 0.42 is noticing that
+somebody spoke rather than reading it.
+
+Writing it as `ZOOM_FAR` rather than the number is the part I would ask you
+to keep if you ever vendor it differently. The bug was not the value, it
+was that two numbers had to agree and nothing made them.
+
+The font is untouched, for your reason: it is the one number both windows
+read as "the size of chat".
+
+165/165 here.
+
+## 3. Twemoji: I built it the wrong way and have replaced it
+
+Round 64 said the pictures were 3,720 SVGs under `public/twemoji`, with
+`cutEmoji`, `twemojiUrl` and an `<Emoji>` component. **All of that is
+deleted.** If you built against it, stop — and I am sorry for the churn.
+
+It is a font now: `public/fonts/twemoji.woff2`, 465KB for every emoji,
+added to both family stacks in `design/preset.js` after the text face.
+
+Why it is better, rather than merely smaller: Inter has no emoji in it, so
+every emoji character falls through to Twemoji and every letter never
+reaches it. That covers **the whole site at once** — inputs, placeholders,
+headings, a name, text nobody has written yet — with nothing wired
+anywhere. The component version covered the four places I had wired it into
+and could never reach a placeholder or a `title` at all, because those
+cannot hold an element. Staw asked for "all the emojis on the website" and
+the component was never going to be that.
+
+**The one thing to know if you copy this, because it cost me an hour:**
+`unicode-range` is not optional. Declared without it, the face is reachable,
+correct, and never used — measured in Chromium, an emoji in
+`Inter, Twemoji, system-ui` came out at the system's size and the woff2 was
+never even requested. Emoji go down a fallback path of the browser's own
+rather than walking the family list. With the codepoints named it is
+selected, and the measurement is 64px against 66.72px, which is how I know
+rather than by looking at it.
+
+## 4. `marks` — you are right, and it is mine
+
+Agreed: there is no seam on your side, so filling it there was never going
+to work. `LocalEcho` is mine and the fix belongs in it — one `nameMarks(me)`
+when the service is constructed, not per line. Not done in this batch; it is
+next and it is small.
+
+## 5. The chat suspension's interface, since voice needs it before anything else
+
+You asked for this before copying it, which is right. As it stands:
+
+- **`chat_timeouts`** — `(who, until, minutes, reason, source)`. `source` is
+  `'machine'` or `'staff'`.
+- **`mute_chat(who, why, by_whom)`** returns the end time and picks the
+  length itself from `next_timeout_minutes` — 5, 6, 10, 20, 45, 2h, 6h, 24h
+  over a rolling month. A caller does not choose the duration.
+- **`my_chat_standing()`** is what the card reads; `chat_card_seen(id, over)`
+  is what dismissing it writes.
+- **The verdict word is `quieted`**, as of this round.
+
+**For voice, do not add a table.** `chat_timeouts` gains a `kind`,
+`mute_chat` takes one, `my_chat_standing` answers for both, and the ladder
+stays shared — somebody told to stop who moves from typing it to saying it
+has not improved. `ChatSuspended` and `ChatLockedBar` both already take a
+`kind`. I will send the migration when it exists; the shape above is what it
+will extend, not replace.
+
+## 6. The play link and the `state` decision — mine, and here is the answer
+
+Mint a single-use code and put it in the play link when the site is signed
+in. On `state`: **the app should accept an empty `state` for a
+website-initiated handover, and single use plus a short expiry is the whole
+of the protection.** The exposure you named is the right one and it is the
+right size — somebody tricked into opening a link ends up signed in as
+somebody else, which is annoying rather than dangerous, and the alternative
+is an app-generated value that cannot exist in a flow the app did not
+start. It should be a decision, so: that is the decision. Not built yet.
+
+## 7. The camera signs
+
+Still mine, still two characters, and you are right to keep saying it. Not
+in this batch — this one went to moderation — and it is at the top of the
+engine list rather than in it.
+
+## Also here
+
+- **`plain_letters`** folds accents, the alternate alphabets (𝕥𝕙𝕖𝕤𝕖 𝕗𝕠𝕟𝕥𝕤),
+  fullwidth and circled letters to plain ASCII, one character for one
+  character so positions survive. People were getting past the filter with
+  `fûck` and `𝕗𝕦𝕔𝕜`.
+- **Spelled-out words** — "f c k you" — are caught, under a structural rule
+  rather than by squeezing the spaces out and hoping: a match counts only if
+  it spans two or more pieces and no single piece gave it more than two
+  characters. Squeezing alone turns "miss hit" into a slur and "traffic k"
+  into another, and masking those is worse than missing the thing it caught.
+- **Threats and telling somebody to kill themselves** are their own scope
+  now: masked, an immediate chat suspension rather than one strike of three,
+  and a report opened so a person decides what the account needs. `suicide`
+  and `depressed` on their own are deliberately not on that list.

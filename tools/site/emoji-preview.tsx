@@ -1,6 +1,5 @@
-/* Twemoji, in the shapes that normally break. */
+/* Twemoji by font: everywhere, including the places a component cannot reach. */
 import { createRoot } from 'react-dom/client'
-import { Emoji } from '@/components/ui/Emoji'
 import '@/index.css'
 
 const lines = [
@@ -13,22 +12,29 @@ const lines = [
   'keycaps  1️⃣ 2️⃣ #️⃣',
   'variation or not  ❤️ ❤ ⚠️',
   'two hands, two tones  🧑🏻‍🤝‍🧑🏿',
-  'no emoji in this line at all',
 ]
 
 createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen bg-ink p-10 text-white">
     <div className="mx-auto max-w-2xl space-y-3">
-      <p className="text-xs uppercase tracking-wide text-muted">In a line of text</p>
-      {lines.map((line) => (
-        <p key={line} className="text-sm"><Emoji>{line}</Emoji></p>
-      ))}
-      <p className="pt-4 text-xs uppercase tracking-wide text-muted">In a heading</p>
-      <h2 className="font-display text-2xl font-black">
-        <Emoji>First Ground 🏗️ — the game built by players 🎮</Emoji>
-      </h2>
-      <p className="pt-4 text-xs uppercase tracking-wide text-muted">Small</p>
-      <p className="text-xs"><Emoji>tiny 😀 beside tiny type</Emoji></p>
+      <p className="text-xs uppercase tracking-wide text-muted">Body text, nothing wired</p>
+      {lines.map((line) => <p key={line} className="text-sm">{line}</p>)}
+
+      <p className="pt-4 text-xs uppercase tracking-wide text-muted">A heading, display face</p>
+      <h2 className="font-display text-2xl font-black">First Ground 🏗️ — built by players 🎮</h2>
+
+      <p className="pt-4 text-xs uppercase tracking-wide text-muted">
+        Inside an input, and inside its placeholder — a component cannot reach either
+      </p>
+      <input
+        defaultValue="typed into the box 🥺 like this"
+        className="h-9 w-full rounded-full border border-ink-line bg-ink-raised px-3.5 text-sm"
+      />
+      <input
+        placeholder="say something nice 😀"
+        className="h-9 w-full rounded-full border border-ink-line bg-ink-raised px-3.5 text-sm placeholder:text-white/40"
+      />
+      <p className="pt-4 text-xs text-muted">and small, beside small type 😀 ❤️ 🎮</p>
     </div>
   </div>,
 )

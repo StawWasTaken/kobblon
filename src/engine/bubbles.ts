@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { ChatLine } from './chat'
 import { K6_HEIGHT } from './units'
+import { ZOOM_FAR } from './experience'
 
 /**
  * The gap between the top of somebody and the bottom of their bubble.
@@ -73,9 +74,31 @@ const HEARD_WITHIN = 140
  * spent fading, rather than a bubble blinking out of existence on a
  * threshold — which is what Roblox does and why nobody notices the
  * threshold.
+ *
+ * **`PLAIN_WITHIN` is `ZOOM_FAR` and must stay that way.** It was 14 while
+ * the camera starts at 34, so `14/34 = 0.41` was already under the floor:
+ * every bubble anybody saw was at `SMALLEST`, and Staw's "TOO SMALL TOO
+ * SMALL" was the scaling working perfectly over a band nobody plays in.
+ * Written as the constant rather than as the number so the two cannot drift
+ * apart again — the default camera is the reference, not a figure somebody
+ * picked.
+ *
+ * So: full size anywhere between first person and the default zoom, which
+ * is where almost all play happens, and pulling the camera back is the only
+ * thing that shrinks a bubble. That is the better story anyway — asking to
+ * see more World is asking to see less of its furniture.
+ *
+ * `SMALLEST` is 0.55 rather than 0.42 because the floor is now reached only
+ * by somebody who deliberately zoomed out, and at 0.42 a bubble is 15px
+ * tall, which is not reading a message. It is noticing that somebody spoke.
+ *
+ * The font is deliberately not touched. `600 1rem/1.35 Inter` is the one
+ * number the Workspace and the Launcher both read as "the size of chat",
+ * and a bubble that is bigger because its type is bigger has stopped being
+ * the same drawing.
  */
-const PLAIN_WITHIN = 14
-const SMALLEST = 0.42
+const PLAIN_WITHIN = ZOOM_FAR
+const SMALLEST = 0.55
 const FADES_FROM = HEARD_WITHIN * 0.75
 
 /**

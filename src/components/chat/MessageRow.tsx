@@ -7,7 +7,6 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/cn'
 import type { ConversationMember, Message } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
-import { Emoji } from '@/components/ui/Emoji'
 
 /**
  * One message, with its sender's picture beside it. Your own can be changed
@@ -127,7 +126,7 @@ export function MessageRow({
             title={hidden ? 'You are ignoring this person. Tap to read.' : undefined}
           >
             <p className={cn('whitespace-pre-wrap break-words', hidden && 'blur-[5px]')}>
-              <Emoji>{message.body}</Emoji>
+              {message.body}
             </p>
             {message.edited_at && (
               <span className={cn('text-[10px]', mine ? 'text-white/55' : 'text-white/35')}>
