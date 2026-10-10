@@ -1,0 +1,1 @@
+import{cr as e,hr as t,lr as n,vr as r}from"./asset-CAfxlf1q.js";var i=r(t(),1);function a(t){let{pathname:r,search:a,hash:o}=e(),s=n();(0,i.useEffect)(()=>{t&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,r,a,o,s])}export{a as t};

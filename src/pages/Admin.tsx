@@ -13,16 +13,16 @@
  * who is not staff and writes down what was done, which is why the record at
  * the bottom is a section rather than an afterthought.
  */
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
-  faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing,
+  faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { Link, Navigate } from 'react-router-dom'
-import { Page } from '@/components/layout/AppShell'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -37,6 +37,7 @@ import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useTitle } from '@/hooks/useTitle'
+import { CommandBar } from '@/components/staff/CommandBar'
 import { AppealsQueue } from '@/components/staff/AppealsQueue'
 import { SupportQueue } from '@/components/staff/SupportQueue'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -367,9 +368,9 @@ export function PersonRow({ person, onChanged }: {
   )
 }
 
-export function PeopleSection() {
+export function PeopleSection({ initial }: { initial?: string }) {
   const say = useToast()
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initial ?? '')
   const [people, setPeople] = useState<StaffPerson[] | null>(null)
   const [looking, setLooking] = useState(false)
   /** Whoever is open, which is how a list of names becomes a console. */
@@ -386,6 +387,15 @@ export function PeopleSection() {
       setLooking(false)
     }
   }, [say])
+
+  /*
+   * A term handed in by the command bar runs the search itself, because
+   * arriving at a box somebody has already typed into and still having to
+   * press Look is the shortcut not working.
+   */
+  useEffect(() => {
+    if (initial) { setSearch(initial); void look(initial) }
+  }, [initial, look])
 
   return (
     <div className="space-y-4">
@@ -957,7 +967,18 @@ export function RecordSection() {
  * is the whole of what the maker is told, and a rejection with nothing said
  * is somebody's work disappearing.
  */
-export function ScreenRow({ picture, name, kind, description, maker, makerLink, when, onDecide }: {
+/** One key cap, for a line that tells somebody the shortcuts exist. */
+function Key({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="rounded-md border border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
+      {children}
+    </kbd>
+  )
+}
+
+export function ScreenRow({
+  picture, name, kind, description, maker, makerLink, when, onDecide, focused, onReady,
+}: {
   picture: string | null
   name: string
   kind: string
@@ -966,6 +987,17 @@ export function ScreenRow({ picture, name, kind, description, maker, makerLink, 
   makerLink: string
   when?: string | null
   onDecide: (decision: 'approved' | 'rejected', note?: string) => Promise<void>
+  /** Whether the keyboard is on this one. Screening is a hundred of these. */
+  focused?: boolean
+  /**
+   * Hands the row's two actions up so A and R can reach them.
+   *
+   * Approving is one keypress because approving is the usual answer and
+   * it is reversible. **Rejecting is not**: R opens the box and the note
+   * is still required, because the note is what the maker is told, and a
+   * refusal with no reason is the thing this console exists to avoid.
+   */
+  onReady?: (api: { approve: () => void; askReject: () => void }) => void
 }) {
   const say = useToast()
   const [busy, setBusy] = useState<'approved' | 'rejected' | null>(null)
@@ -986,8 +1018,27 @@ export function ScreenRow({ picture, name, kind, description, maker, makerLink, 
     }
   }
 
+  /*
+   * Re-handed on every render rather than once: `decide` closes over
+   * `onDecide`, which the section rebuilds each time its queue reloads,
+   * and a callback captured once would be approving against a stale
+   * queue. That is this project's oldest trap and it is cheap to avoid
+   * here.
+   */
+  useEffect(() => {
+    onReady?.({
+      approve: () => void decide('approved'),
+      askReject: () => setAsking(true),
+    })
+  })
+
   return (
-    <Card className="flex flex-wrap items-start gap-4 p-3 sm:flex-nowrap">
+    <Card
+      className={cn(
+        'flex flex-wrap items-start gap-4 p-3 sm:flex-nowrap',
+        focused && 'ring-2 ring-brand-bright/70',
+      )}
+    >
       <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
         {picture
           ? <img src={picture} alt="" className="h-full w-full object-contain" />
@@ -1067,12 +1118,62 @@ export function ScreeningSection() {
   const items = useAsync(async () => avatarReviewQueue(100), [])
   const uploads = useAsync(async () => screeningQueue(100), [])
 
+  /*
+   * The keyboard. Screening is the one panel somebody sits in front of
+   * for an hour, and a hundred decisions at two clicks each is the reason
+   * things sit in this queue for days.
+   *
+   * J and K move, A approves, R opens the refusal box. Held off while
+   * somebody is typing in a field - otherwise writing "a reason" in the
+   * note box approves three things behind it.
+   */
+  const howMany = (queue === 'Catalog' ? items.data?.length : uploads.data?.length) ?? 0
+  const [at, setAt] = useState(0)
+  const hands = useRef(new Map<number, { approve: () => void; askReject: () => void }>())
+
+  useEffect(() => { setAt(0) }, [queue])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const on = document.activeElement
+      const typing = on instanceof HTMLInputElement || on instanceof HTMLTextAreaElement
+        || (on instanceof HTMLElement && on.isContentEditable)
+      if (typing || e.metaKey || e.ctrlKey || e.altKey || !howMany) return
+
+      const key = e.key.toLowerCase()
+      if (key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault(); setAt((n) => Math.min(n + 1, howMany - 1))
+      } else if (key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault(); setAt((n) => Math.max(n - 1, 0))
+      } else if (key === 'a') {
+        e.preventDefault(); hands.current.get(at)?.approve()
+      } else if (key === 'r') {
+        e.preventDefault(); hands.current.get(at)?.askReject()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [at, howMany])
+
+  const keys = (i: number) => ({
+    focused: i === at,
+    onReady: (api: { approve: () => void; askReject: () => void }) => {
+      hands.current.set(i, api)
+    },
+  })
+
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted">
         Everything a person has to look at. Most uploads never reach here -
         the screener approves or refuses them as they arrive - so what is
         waiting is what it could not decide.
+      </p>
+
+      <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <Key>J</Key><Key>K</Key> move ·
+        <Key>A</Key> approve ·
+        <Key>R</Key> turn down, which still asks you why
       </p>
 
       <Tabs
@@ -1089,9 +1190,10 @@ export function ScreeningSection() {
         items.loading ? <Skeleton className="h-40" />
           : !items.data?.length ? (
             <p className="py-8 text-center text-sm text-muted">Nothing waiting.</p>
-          ) : items.data.map((item) => (
+          ) : items.data.map((item, i) => (
             <ScreenRow
               key={item.id}
+              {...keys(i)}
               picture={cardFor(item)}
               name={item.name}
               kind={avatarKindLabels[item.kind] ?? item.kind}
@@ -1108,9 +1210,10 @@ export function ScreeningSection() {
       ) : uploads.loading ? <Skeleton className="h-40" />
         : !uploads.data?.length ? (
           <p className="py-8 text-center text-sm text-muted">Nothing waiting.</p>
-        ) : uploads.data.map((one) => (
+        ) : uploads.data.map((one, i) => (
           <ScreenRow
             key={one.id}
+            {...keys(i)}
             picture={previewUrl(one.preview_path ?? one.thumbnail_path)}
             name={one.name}
             kind={kindLabels[one.kind] ?? one.kind}
@@ -1697,8 +1800,59 @@ export function ConsoleRail({ rank, value, onChange }: {
   )
 }
 
+/**
+ * The console as a card over the site, rather than a page you go away to.
+ *
+ * Staw asked for it as a popup, and it is the right shape for what this
+ * is: nobody opens the staff console as a destination. They are looking at
+ * somebody's profile, or at a World, and they need to act on it - and a
+ * full page navigation means losing whatever they were looking at and
+ * finding their way back to it afterwards. A card over the top closes back
+ * onto what was underneath.
+ *
+ * Not `Dialog`: a dialog caps its body at 70vh and is built around one
+ * short question. This is the opposite - it is tall on purpose, it holds
+ * twelve panels, and it manages its own scrolling inside the card so the
+ * rail stays put while a queue scrolls.
+ *
+ * Escape closes it. The backdrop does not, which is deliberate: a stray
+ * click behind a half-written suspension reason is not a thing to be
+ * relaxed about.
+ */
+export function ConsoleCard({ onClose, children }: {
+  onClose: () => void
+  children: React.ReactNode
+}) {
+  useEffect(() => {
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = overflow
+    }
+  }, [onClose])
+
+  return createPortal(
+    <div className="fixed inset-0 z-[55] flex items-center justify-center p-0 sm:p-6">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" aria-hidden="true" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Staff console"
+        className="relative flex h-full w-full animate-pop-in flex-col overflow-hidden border-ink-line bg-ink-card shadow-pop sm:h-[min(56rem,92vh)] sm:max-w-6xl sm:rounded-3xl sm:border"
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 export default function Admin() {
   const { profile, loading } = useAuth()
+  const navigate = useNavigate()
   const [section, setSection] = useState<Section>('Reports')
   useTitle('Staff', 'Kobblon')
 
@@ -1729,11 +1883,33 @@ export default function Admin() {
   const rank: StaffRank = asked.data ?? (asked.error ? fromProfile : 'none')
 
   /*
+   * Where closing the card goes. Back if there is somewhere to go back
+   * to - the console is nearly always opened from a profile or a World
+   * and that is the whole point of it being a card - and home if this
+   * address was typed or opened in a new tab, because there is no "back"
+   * out of a fresh tab and a close button that does nothing is worse than
+   * no close button.
+   */
+  const leave = useCallback(() => {
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/')
+  }, [navigate])
+
+  /* What the command bar asked People to look for, if anything. */
+  const [lookFor, setLookFor] = useState<string | undefined>()
+
+  /*
    * The one page that stays wide. The site's column is the profile's now,
    * and a table of every account beside a map of the world does not fit in
    * it - this is a console, which is the case `wide` exists for.
    */
-  if (loading || asked.loading) return <Page width="wide"><Skeleton className="h-96" /></Page>
+  if (loading || asked.loading) {
+    return (
+      <ConsoleCard onClose={leave}>
+        <div className="p-5"><Skeleton className="h-96" /></div>
+      </ConsoleCard>
+    )
+  }
 
   /*
    * Sent away rather than shown an empty panel. This is not what keeps
@@ -1747,13 +1923,13 @@ export default function Admin() {
   const open = here.name
 
   return (
-    <Page width="wide" className="space-y-5">
+    <ConsoleCard onClose={leave}>
       {/* ------------------------------------------------------- who you are */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-ink-line px-5 py-4">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-white">
           <FontAwesomeIcon icon={faUserShield} />
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="flex flex-wrap items-center gap-2 font-display text-xl">
             Staff console
             <span
@@ -1766,7 +1942,13 @@ export default function Admin() {
             </span>
           </h1>
           <p className="text-sm text-muted">
-            {mine.length} of {sections.length} panels are yours at this rank.
+            {mine.length} of {sections.length} panels are yours at this rank.{' '}
+            <span className="whitespace-nowrap">
+              <kbd className="rounded-md border border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold">
+                Ctrl K
+              </kbd>{' '}
+              jumps anywhere.
+            </span>
             {rank !== 'superadmin' && ' Closing an account, and clearing a behaviour record, are a superadmin’s.'}
           </p>
           {!!asked.error && (
@@ -1776,6 +1958,15 @@ export default function Admin() {
             </p>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={leave}
+          aria-label="Close the console"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <FontAwesomeIcon icon={faXmark} />
+        </button>
       </div>
 
       {/*
@@ -1783,11 +1974,23 @@ export default function Admin() {
        * lines and said nothing about what any of them did. Each panel says
        * what it is for, so somebody who has never opened this does not have
        * to press all ten to find out.
+       *
+       * Inside the card the two sides scroll separately: the rail stays
+       * where it is while a queue of eighty tickets goes past, which is the
+       * point of having a rail at all.
        */}
-      <div className="grid gap-5 lg:grid-cols-[17rem_minmax(0,1fr)]">
-        <ConsoleRail rank={rank} value={open} onChange={setSection} />
+      <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-5 py-4 kob-scroll lg:grid-cols-[17rem_minmax(0,1fr)] lg:overflow-hidden">
+        <div className="min-h-0 lg:overflow-y-auto lg:pr-1 kob-scroll">
+          <ConsoleRail rank={rank} value={open} onChange={setSection} />
+        </div>
 
-        <div className="min-w-0 space-y-4">
+        <CommandBar
+          panels={mine}
+          onGo={(name) => setSection(name as Section)}
+          onFindPerson={(term) => { setLookFor(term); setSection('People') }}
+        />
+
+        <div className="min-w-0 min-h-0 space-y-4 lg:overflow-y-auto lg:pr-1 kob-scroll">
           <div className="flex items-center gap-3 border-b border-ink-line pb-3">
             <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />
             <h2 className="font-display text-lg font-extrabold">{here.name}</h2>
@@ -1795,7 +1998,7 @@ export default function Admin() {
           </div>
 
           <RankContext.Provider value={rank}>
-            {open === 'People' && <PeopleSection />}
+            {open === 'People' && <PeopleSection initial={lookFor} />}
             {open === 'Reports' && <ReportsSection />}
             {open === 'Appeals' && <AppealsQueue />}
             {open === 'Support' && <SupportQueue />}
@@ -1810,6 +2013,6 @@ export default function Admin() {
           </RankContext.Provider>
         </div>
       </div>
-    </Page>
+    </ConsoleCard>
   )
 }

@@ -16,7 +16,7 @@ import { useTitle } from '@/hooks/useTitle'
 import { closeTicket, getTicket, listTicketMessages, replyTicket } from '@/lib/api'
 import { avatarOf } from '@/lib/avatars'
 import { timeAgo } from '@/lib/format'
-import { statusLook, topics } from '@/pages/Support'
+import { lookOf, topics } from '@/pages/Support'
 import { cn } from '@/lib/cn'
 
 /*
@@ -90,7 +90,7 @@ export default function SupportTicket() {
   }
 
   const one = ticket.data
-  const look = statusLook[one.status]
+  const look = lookOf(one.status)
   const shut = one.status === 'closed'
 
   return (

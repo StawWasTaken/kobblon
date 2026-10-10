@@ -6762,3 +6762,75 @@ Voice, as above. `decide_appeal` still has nothing calling it. There is
 still no support queue in the console. And `take_report` has no voice
 action, so a report that earns the chat-and-voice rung lands as a chat
 suspension - said out loud in the code rather than quietly.
+
+# Round seventy-four — a queue staff can work, an appeal somebody can answer, and a page that stopped drawing
+
+## Two migrations, in this order
+
+**0212 - the support queue.** `support_tickets.status` accepts
+`open | in_progress | answered | escalated | closed` now; it was three
+values before. Three functions, all gated on `is_moderator()`:
+`ticket_queue(which, how_many)`, `ticket_counts()`,
+`set_ticket_status(ticket, status)`. The queue returns the person's
+`first_name`, `contact_email`, `device` and `wants_human` alongside the
+ticket, and sorts `wants_human desc, updated_at desc` — somebody who asked
+for a human is at the top whatever the clock says.
+
+**0213 - the appeal queue.** `appeal_queue(which, how_many)` and
+`appeal_counts()`. The queue hands back the appeal, the violation it is
+against, the rule's number, title and gravity, the stored `evidence`, and
+the person's behaviour score and band. It never returns the moderator's
+id — only `by_rank`, because an appeal reviewer does not need to know
+which of their colleagues decided it.
+
+## The thing that matters to you: status is now a wider set
+
+If the Workspace renders a support ticket's status, **it must not index a
+lookup table with it and dereference the result.** That is not advice, it
+is the bug that took the website's Support page down today: `statusLook[
+ticket.status].look` on a browser holding a bundle built before 0212, the
+moment a staff member moved a ticket to `in_progress`. Nothing threw on the
+server, nothing threw in the build, and the page rendered "This page would
+not draw". The website now goes through `lookOf(status)`, which falls back
+to a neutral chip with the raw word in it. Do the same.
+
+The general shape, since it will happen again: **a closed set in the code
+and an open set in the database.** Any `Record<Status, …>` you write is a
+promise that the server will never learn a new word, and this server learns
+new words in migrations you do not see.
+
+## New shared components you can mount
+
+- `@/components/ui/Drawer` — slide-over panel. Portal, focus trap, Escape,
+  scroll lock, `width: 'md' | 'lg'`. No provider, no router.
+- `@/components/staff/SupportQueue` — also exports `TicketLine` and
+  `TicketDrawer` on their own, if you want the row without the queue.
+- `@/components/staff/AppealsQueue` — likewise `AppealLine`, `AppealDrawer`.
+- `@/components/staff/CommandBar` — Ctrl/Cmd+K panel jump. Takes its panel
+  list as a prop, so it has no idea it is on a website.
+
+`design/preset.js` gained two keyframes, `slide-in` and `row-in`, used by
+the drawer and the staggered queue rows. Pull the preset or the animations
+are named and absent.
+
+## The console is a popup card now
+
+`/admin` draws as a modal over whatever was behind it, not as a page.
+Closing it goes back, or home if there is no back. It is exported as
+`ConsoleCard` from `src/pages/Admin.tsx` if you want the same shell.
+
+## In `@/lib/api`
+
+`appealQueue`, `appealCounts`, `decideAppeal`, `ticketQueue`,
+`ticketCounts`, `setTicketStatus`. `ChatStanding` carries `evidence`,
+`rule`, `rule_ord`, `rule_title`, `gravity` and `channels` as of 0208 —
+round seventy-three covers what they mean.
+
+## What is not built
+
+Voice moderation itself, still. The console's vector map, People bulk
+actions and the audit-log filters. And Kobby has not answered anything yet
+for a reason that is not code: **`SUPABASE_SERVICE_ROLE_KEY` is not set as
+a repository secret**, so every scheduled run has printed "nothing was
+screened" and gone green. The workflow now names the missing secret out
+loud instead.

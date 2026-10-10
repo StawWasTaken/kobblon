@@ -19,7 +19,15 @@
 # starts it, only who it is.
 #
 # Nothing here fails the build. A moderation run that did not happen is a
-# queue a person looks at, which is where it was anyway.
+# queue a person looks at, which is where it was anyway - but it does print
+# a warning naming the missing secret, because silent-and-green is how this
+# went unnoticed from the day it was written until somebody asked why Kobby
+# had never answered anything.
+#
+# One more thing worth knowing before blaming this file: **GitHub does not
+# honour `*/15` on a quiet repository.** Runs here have landed four or five
+# hours apart. If moderation has to be prompt, Supabase's own scheduler
+# calls the same function on a real clock.
 name: Moderation
 
 on:
@@ -40,8 +48,22 @@ jobs:
           PROJECT: ${{ secrets.SUPABASE_PROJECT_REF }}
           KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ -z "$PROJECT" ] || [ -z "$KEY" ]; then
-            echo "No project or key set, so nothing was screened."
+          # Named one at a time, because the version that said "no project
+          # or key set" hid a real fault for weeks: PROJECT was set, KEY was
+          # not, every run went green saying nothing was screened, and the
+          # console's "whenever anything is waiting" looked like the thing
+          # that was broken. A check that cannot say which half failed is a
+          # check somebody stops reading.
+          # `if` rather than `[ ... ] && ...`: the shell runs with -e, and
+          # a test that is simply false returns 1 and takes the whole job
+          # down with it.
+          missing=
+          if [ -z "$PROJECT" ]; then missing="$missing SUPABASE_PROJECT_REF"; fi
+          if [ -z "$KEY" ]; then missing="$missing SUPABASE_SERVICE_ROLE_KEY"; fi
+          if [ -n "$missing" ]; then
+            echo "::warning title=Kobby did not run::These repository secrets are not set:$missing. Nothing was screened, and nothing will be until they are."
+            echo "Not set:$missing"
+            echo "Add them under Settings, Secrets and variables, Actions."
             exit 0
           fi
 

@@ -78,6 +78,22 @@ export const statusLook: Record<Ticket['status'], { word: string; look: string }
   closed: { word: 'Closed', look: 'border-white/15 bg-white/[0.06] text-white/55' },
 }
 
+/**
+ * The badge for a status, for any status.
+ *
+ * `statusLook[status]` was read straight, and a status the map has not heard
+ * of is `undefined` — so `look.look` threw and the whole page would not draw.
+ * That is not hypothetical: 0212 widened the server's statuses to include
+ * `in_progress` and `escalated`, and a browser holding an older bundle reads
+ * them the moment a staff member touches a ticket. A word nobody recognises
+ * belongs in a neutral chip, not in a blank page.
+ */
+export const lookOf = (status: string) =>
+  statusLook[status as Ticket['status']] ?? {
+    word: String(status || 'Unknown').replace(/_/g, ' '),
+    look: 'border-white/15 bg-white/[0.06] text-white/55',
+  }
+
 /** An email, loosely. The server checks it too, and neither check is proof. */
 const looksLikeEmail = (text: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text.trim())
 
@@ -503,7 +519,7 @@ export default function Support() {
         )}
 
         {tickets.data?.map((ticket) => {
-          const look = statusLook[ticket.status]
+          const look = lookOf(ticket.status)
           const was = devices.find((one) => one.value === ticket.device)
           return (
             <Link key={ticket.id} to={`/support/${ticket.id}`} className="block">
