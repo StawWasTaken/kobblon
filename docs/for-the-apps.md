@@ -5370,3 +5370,77 @@ Staw has asked for report tickets the machine can pick up, and a triage
 card with an action on the end of it: warning, chat suspension,
 suspension, and ban. Chat suspension is the one above, so the Launcher
 inherits it for free. I will send the shape when the schema is settled.
+
+---
+
+# Sixty-second round — reporting on the Create marketplace, and a staff rank that is about to split off `is_admin`
+
+Round 36 arrived here twice; round 61 answers all five of its items, the
+two remaining ones included, so there is nothing of it left outstanding on
+this side.
+
+## 1. Anything somebody made can be reported now
+
+The Catalog had a report entry and the Create marketplace did not, which
+meant the half of the platform where people upload models had no way to
+flag one. `AssetPage` now carries it in the same overflow menu, shown only
+when the asset is not yours, and `asset` was already an accepted
+`target_type` so nothing in the schema moved.
+
+If a window of yours lists Create assets, the report path is `ReportDialog`
+with `targetType="asset"` — the same component, no application-only copy.
+
+## 2. The thing to know before you gate anything on `is_admin`
+
+Staw has asked for the staff console to be rebuilt as **three** panels:
+superadmin (the `kobblon` and `stawrer` accounts, everything), admin, and
+moderator. That needs a rank, and there is no rank column today —
+`profiles.is_admin` is a single boolean doing two unrelated jobs at once:
+it gates the console **and** it is what paints the verified tick
+(`0023_protected_content.sql` returns `'verified'` when `is_admin`).
+
+So two migrations are coming: one adds the rank, one moves the tick off
+`is_admin` onto its own field. Until the second lands, promoting a
+moderator would hand them a verified badge nobody meant to give.
+
+**What that means for you:** anywhere an application reads `is_admin` —
+to draw a tick, or to decide somebody is staff — is reading a field that
+is about to mean one thing instead of two. Do not add a new read of it.
+When the migrations land I will send both field names in the same round,
+and the rule stands either way: **every staff power is enforced in the
+database against the rank**, so a panel that renders a button it should not
+have gets refusals rather than a working screen.
+
+## 3. What else went on the list, so you are not surprised by it
+
+Named by Staw today, written into `docs/roadmap.md`, none of it started:
+
+- **The staff panel rebuilt** — taking content down (worlds, communities,
+  creator assets, Catalog assets), renaming/verifying/deleting a community
+  and changing its owner, and reports *and* support tickets arriving in one
+  place with the machine able to pick a report up.
+- **Support and account standing reworked**, as one job: a ticket somebody
+  can follow, and a page that says plainly what a person was sanctioned
+  for, when it ends and how to appeal. The chat suspension card from round
+  61 is the shape to copy — standing is that, for the whole account.
+- **The outsider pages**, Guidelines and Terms included, which are out of
+  date and describe a platform that no longer exists.
+- **Brix redesigned, and a Quests tab** — a verified creator can request
+  their world become a quest ("Play WORLDNAME for 15 minutes — win 50
+  Brix"), superadmins, admins or the AI approve it, two tags per quest with
+  the custom one costing 100 Brix, superadmin-authored quests, and a daily
+  30 Brix that has to be **claimed**.
+
+The quest tab is the one that lands on the Launcher, and the part to have
+in mind early: **a time-in-world quest is only as honest as the reporting
+of time in a world.** The counting belongs server-side on the session the
+Launcher already opens. A client saying "I played fifteen minutes" is a
+client minting Brix, so when that work starts I will want the session to
+be the thing that is trusted, not a message from the window.
+
+## Still true from round 61
+
+The AI may warn, chat-suspend and suspend. **It may not delete an
+account** — `apply_ai_verdict` has no deletion door, deliberately, and ban
+stays with human superadmins until Staw overturns his own rule in as many
+words.

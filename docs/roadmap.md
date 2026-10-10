@@ -161,6 +161,103 @@ Switching accounts keeps the sessions it already has, so it never asks twice.
 A guest who decides to stay keeps the account they have been using. A failure
 says what actually went wrong rather than blaming the password for it.
 
+## The staff panel, rebuilt — three panels, not one
+
+Staw, 10 October: the staff console has to be rebuilt entirely, it has to be
+**extra practical**, and the design as it stands is not good enough. It is
+also no longer one panel. Three, by rank:
+
+- **Superadmin panel** — the `kobblon` and `stawrer` accounts. Everything.
+  Staw's reasoning, and it is sound: he trusts himself, so the ceiling sits
+  here and nowhere else.
+- **Admin panel** — a great deal more than a moderator, meaningfully less
+  than a superadmin.
+- **Moderator panel** — moderation and only moderation: created things,
+  people, communities.
+
+**The thing to settle before any of it is drawn: there is no rank column
+today.** `profiles.is_admin` is a single boolean, and it is doing two
+unrelated jobs — it gates the console *and* it is what paints the verified
+tick (`0023_protected_content.sql` returns `'verified'` when `is_admin`).
+Three panels need a real rank, and the tick needs its own field, or promoting
+a moderator hands them a verified badge nobody meant to give. One migration
+adds the rank and a second moves the tick off it; nothing is drawn until both
+have landed and the row policies read the rank rather than the boolean.
+
+Every power below is **enforced in the database against the rank**, not by
+which panel rendered the button. A moderator who opens the superadmin screen
+by hand gets refusals, not a working screen.
+
+What the new panel has to be able to do:
+
+- **Take content down** — worlds, communities, creator assets, Catalog
+  assets. One action over every kind of thing, not four half-built ones.
+- **Communities** — rename, verify, delete, change the owner.
+- **People** — the triage card and its actions: warning, chat suspension,
+  account suspension, and ban (superadmin only, and see the standing rule
+  below).
+- **Reports and support tickets both arrive here**, in one place, with the
+  machine able to pick up a report ticket and act within its ceiling.
+
+The standing rule holds until Staw says otherwise in as many words: the AI
+may warn, chat-suspend and suspend. **It may not delete an account.**
+`apply_ai_verdict` has no deletion door and that is deliberate.
+
+## The support system and account standing, reworked
+
+Staw: both are a mess, and they are one job rather than two, because a
+sanction a person cannot see or answer is the thing that makes support
+necessary in the first place.
+
+- **Support** — a ticket somebody can open, follow, and get a reply on,
+  landing in the panel above alongside reports.
+- **Account standing** — one page that says plainly where a person stands:
+  what they were sanctioned for, when it ends, what it stops them doing, and
+  how to appeal it. The chat suspension card is the shape to copy; standing
+  is that, for the whole account.
+
+## The outsider pages
+
+The pages somebody sees before they have an account, which today are the
+worst-looking part of Kobblon and the part most people meet first.
+
+- **Old leftovers** in among them, from before the platform looked like this.
+- **The Community Guidelines and the Terms are out of date**, and so are the
+  other policies — they describe a platform that no longer exists. Rewritten
+  against what Kobblon actually is and actually enforces, not aspirationally.
+- **There are too many policies.** Fold them into the few that earn a page.
+- **How they are stored and presented** both want redoing: a proper
+  presentation rather than a wall, and one source each rather than prose
+  pasted into a component.
+
+## Brix, redesigned — and the quest tab
+
+Every page about Brix gets a design pass, and Brix gains the thing it has
+been missing: a reason to come back. A **Quests tab**, where Brix, avatar
+items and cosmetics are earned.
+
+**Quests from worlds.** A verified creator may request that their world
+become a quest on the official quest tab — *"Play WORLDNAME for 15 minutes —
+win 50 Brix"*. Superadmins and admins approve the request, and the AI may
+approve one too. Every quest carries two tags: one naming the world it comes
+from, and one custom tag, which needs an admin or superadmin to approve it
+and **costs the creator 100 Brix**. Official Kobblon accounts can give their
+own quests a custom background image.
+
+**Quests Staw adds by hand.** Superadmin-only, and arbitrary — *"invite 5
+friends for 50 Brix"*.
+
+**The daily.** 30 Brix for connecting to the website on a given day, but it
+has to be **claimed** on the quest tab. Showing up is not enough; going to
+look is the point of it.
+
+The parts that need thinking about before building: a time-in-world quest is
+only as honest as the Launcher's reporting of time in a world, so the
+counting belongs server-side with the session the Launcher already opens —
+a client saying "I played fifteen minutes" is a client minting Brix. And a
+paid-for tag is a Brix sink, which the economy wants; it should go through
+the ledger that already exists rather than a second path.
+
 ## The redesign pass Staw asked for
 
 Named by Staw, 3 October, as pages to redesign or modify. They are the ones
