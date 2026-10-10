@@ -6540,3 +6540,47 @@ If the Workspace opens tickets, it needs updating; nothing else does.
 - **Support tickets are not in the console either** - same shape of gap.
 - The quest session schema. Nothing about quests can start until it exists.
 - Voice moderation itself. The interface was handed over in round 69.
+
+---
+
+# Round seventy-one — the rank function was never in the live database
+
+Short and worth reading, because it probably affects you too.
+
+Staw tried to apply 0203 and got
+`ERROR: 42883: function public.staff_rank(uuid) does not exist`, and the new
+staff console sent him - a superadmin - back to the home page. One cause:
+**0172, the migration that added the third rank, is not on the live
+database.** Nothing drops those functions and they are defined nowhere else,
+so the file was simply never run.
+
+**0205 re-asserts 0172's core idempotently** - the `is_superadmin` column,
+`is_moderator`/`is_admin`/`is_superadmin`, `require_superadmin`,
+`staff_rank`, `my_staff_rank`, and `admin_delete_account`'s superadmin gate.
+Run **0205 before re-running 0203**. If 0172 did land on your side, every
+statement in it is a no-op replacement with identical text.
+
+## What it means for you
+
+If the Workspace or the Launcher calls `my_staff_rank()` or `staff_rank()`,
+it has been failing, and **check what your code does with the failure**. Ours
+did the two worst possible things:
+
+```
+rank.data ?? 'moderator'   // a failed call silently became a moderator
+asked.data ?? 'none'       // a failed call silently became nobody
+```
+
+Neither is a default. One quietly promotes, the other quietly locks the top
+rank out of their own console, and both read as perfectly ordinary code. A
+refusal and a failure are different answers and have to be told apart: an
+answer is believed whatever it says, a failure is handled as a failure and
+said out loud. The console now falls back to the profile's own flags on an
+error **and prints a line saying it is guessing**.
+
+This is the second trap wearing another coat: a guard that is there, is
+checked, and is answering from a call that never completed.
+
+Also: `admin_delete_account` was gated on `require_admin` until 0205 lands,
+so until Staw runs it, **any admin can delete any account** on the live
+database. That is the actual reason 0172 existed.

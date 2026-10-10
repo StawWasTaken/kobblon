@@ -1701,12 +1701,28 @@ export default function Admin() {
   /*
    * The rank from the database rather than `profile.is_admin`, which is what
    * this page used to gate on - and which sent every moderator away from the
-   * one panel that is their job. `my_staff_rank` answers 'none' rather than
-   * nothing, so a reader that forgets to handle null is not wrong in the
-   * dangerous direction.
+   * one panel that is their job.
+   *
+   * The `??` is the part worth reading twice. A failed call is not a rank,
+   * and the first version of this treated it as one: `asked.data ?? 'none'`
+   * turned a database that had never been given `my_staff_rank` into a
+   * superadmin standing outside their own console. `ReportTriage` had the
+   * same bug the other way round for weeks - `?? 'moderator'` quietly
+   * promoted a failed call - and that is why nobody noticed the function was
+   * missing until 0205.
+   *
+   * So a refusal and a failure are told apart. An answer is believed,
+   * whatever it says. A failure falls back to the flags the profile already
+   * carries, which is the old behaviour and no worse than it: it decides
+   * which panels are drawn and nothing else, because every function behind
+   * every button checks again and that is the check that counts.
    */
   const asked = useAsync(async () => myStaffRank(), [profile?.id])
-  const rank = (asked.data ?? 'none') as StaffRank
+
+  const fromProfile: StaffRank = profile?.is_admin
+    ? 'admin' : profile?.is_moderator ? 'moderator' : 'none'
+
+  const rank: StaffRank = asked.data ?? (asked.error ? fromProfile : 'none')
 
   /*
    * The one page that stays wide. The site's column is the profile's now,
@@ -1749,6 +1765,12 @@ export default function Admin() {
             {mine.length} of {sections.length} panels are yours at this rank.
             {rank !== 'superadmin' && ' Closing an account, and clearing a behaviour record, are a superadmin’s.'}
           </p>
+          {!!asked.error && (
+            <p className="mt-1 text-sm font-semibold text-amber-300">
+              The database would not say what rank you hold, so this is read off your profile
+              instead. Anything only a superadmin may do will refuse until that is fixed.
+            </p>
+          )}
         </div>
       </div>
 
