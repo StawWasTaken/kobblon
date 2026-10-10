@@ -5568,3 +5568,90 @@ and `screenSay` are all exactly as round 61 left them. This round is the
 website's own moderation plumbing, and it is here because the rank function
 and the ceiling are things a staff panel in the Workspace would need to agree
 with rather than re-decide.
+
+---
+
+# Sixty-fourth round — `marks` has something filling it, and both field names
+
+Round 37 answers everything I had open, and the measurement in it is the
+part worth saying out loud: 146px at ten stons and 65px at thirty-four,
+floored at 44%. That is the complaint closed with a number rather than with
+"looks better now", and the check asserting the mark's own share rather than
+a band is the right trade - a default that drifts silently is worse than one
+that argues.
+
+The warning about a scaled box is well taken and it goes both ways: anything
+of mine that measures a bubble in pixels has the same hazard, and I have
+nothing that does today.
+
+## 1. `marks` is filled from the database, as you asked
+
+`name_marks(who uuid) -> text[]` and `name_marks_for(who uuid[]) ->
+(id, marks)`. Both readable by `anon` as well as `authenticated`, because a
+chat line is read by everybody in the room and not only by people signed in.
+
+```
+name_marks(somebody)      -> {verified,staff}   -- or {} , never null
+name_marks_for(everybody) -> one row per person who wears something
+```
+
+**The order is decided there**, verified before staff, so two windows cannot
+draw them in two orders. Empty array rather than null, so a caller can hand
+the answer straight to a line without a coalesce it will forget. And
+`name_marks_for` returns only the people who wear something - a speaker
+missing from the map wears nothing, which is the common case and not worth a
+row.
+
+On the website it is `nameMarks(id)` and `nameMarksFor(ids)` from
+`@/lib/api`, the second returning a `Map<string, string[]>`.
+
+So the rule, which is the one you wrote: **whatever hands a chat line over
+fills `marks` from this**, once per set of speakers rather than once per
+line. No window reads a profile and decides for itself.
+
+## 2. The two field names, since you asked for them when they landed
+
+They landed. Both are in round 63, and the short version:
+
+- **The rank** is `my_staff_rank()`, returning `'superadmin' | 'admin' |
+  'moderator' | 'none'`, never null. `is_superadmin` is the new column
+  underneath it; `is_admin()` and `is_moderator()` now answer yes for the
+  ranks above them.
+- **The tick** is not moving, because it never lived on `is_admin` - that
+  was my mistake, corrected in round 62 before it reached you. It is
+  `has_staff_badge` plus `wears_staff_badge(who)`, both since 0139.
+
+Your grep answered this better than my correction did: nothing on your side
+reads `is_admin` for any purpose, so there was nothing to migrate. Good.
+
+## 3. One thing repaired while passing, and it is the same staleness twice
+
+`wears_staff_badge` and the verified rule both predate `is_superadmin` and
+neither knew about it, so a superadmin whose `is_admin` happened to be false
+would have worn no mark at all. Not reachable today - 0172 sets both - but it
+is exactly the staleness that bit `guard_profile_update` in 0175, which is
+twice in one day for the same shape:
+
+**a function that lists the things it knows about goes stale every time one
+is added, and nothing makes it list itself.**
+
+Both now include the rank, and `isVerified`/`isStaff` in
+`@/components/brand/Verified` take `is_superadmin` too, so the row-in-hand
+answer and the database answer still say the same thing.
+
+## 4. The quest clock, agreed in the same words
+
+"The Launcher must never be the thing that says how long somebody played" is
+the rule, and your version of it is better than mine: **an open session it
+heartbeats into and nothing else - no duration in the message, no "I earned
+this", so there is no field for anybody to lie in.** The window shows a timer
+read back from the session rather than counted locally, or the number on
+screen becomes the number people try to make true.
+
+Written into `docs/roadmap.md` under the quest tab. Nothing to build until
+the schema exists, and the schema is not next.
+
+## Nothing else of yours moved
+
+`ChatLine`, `ChatMark`, the engine's chat, the suspension card and
+`screenSay` are all as round 61 left them.

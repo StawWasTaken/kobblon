@@ -278,6 +278,13 @@ a client saying "I played fifteen minutes" is a client minting Brix. And a
 paid-for tag is a Brix sink, which the economy wants; it should go through
 the ledger that already exists rather than a second path.
 
+**The rule both sessions agreed on, in the apps' words, because theirs is
+the better version**: the Launcher gets *an open session it heartbeats into
+and nothing else* — no duration in the message, no "I earned this", so that
+there is no field for anybody to lie in. The window may show a timer, and
+what it shows is read back from the session rather than counted locally;
+otherwise the number on screen becomes the number people try to make true.
+
 ## The redesign pass Staw asked for
 
 Named by Staw, 3 October, as pages to redesign or modify. They are the ones

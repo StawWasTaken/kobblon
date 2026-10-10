@@ -3527,6 +3527,34 @@ export type WorkWaiting = {
   oldest_minutes: number | null
 }
 
+/**
+ * The marks beside a name, resolved by the database rather than by a window.
+ *
+ * `ChatMark` in `@/engine` is the same two words in the same order, and the
+ * order is decided server-side so two windows cannot draw them in two.
+ *
+ * Whoever hands a chat line over fills `marks` from this. A window reading a
+ * profile per speaker and deciding for itself is how the tick ends up
+ * disagreeing with the database the week a flag changes meaning - which is
+ * exactly what happened to `is_admin`.
+ */
+export async function nameMarks(who: string): Promise<string[]> {
+  return (unwrap(await supabase.rpc('name_marks', { who })) as string[]) ?? []
+}
+
+/**
+ * The same for everybody in a room, in one go.
+ *
+ * Only the people who wear something come back: a speaker missing from the
+ * map wears nothing, which is the common case and not worth a row.
+ */
+export async function nameMarksFor(who: string[]): Promise<Map<string, string[]>> {
+  if (!who.length) return new Map()
+  const rows = unwrap(await supabase.rpc('name_marks_for', { who })) as
+    { id: string; marks: string[] }[]
+  return new Map((rows ?? []).map((row) => [row.id, row.marks ?? []]))
+}
+
 export async function aiWorkWaiting(): Promise<WorkWaiting | null> {
   const rows = unwrap(await supabase.rpc('ai_work_waiting')) as WorkWaiting[]
   return rows?.[0] ?? null

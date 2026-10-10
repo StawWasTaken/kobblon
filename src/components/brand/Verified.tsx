@@ -57,7 +57,8 @@ export const StaffMark = ({ className }: { className?: string }) =>
 export const isVerified = (person?: {
   is_verified?: boolean | null
   is_admin?: boolean | null
-} | null) => !!(person?.is_verified || person?.is_admin)
+  is_superadmin?: boolean | null
+} | null) => !!(person?.is_verified || person?.is_admin || person?.is_superadmin)
 
 /**
  * Whether somebody's name should carry the k.
@@ -71,8 +72,12 @@ export const isVerified = (person?: {
 export const isStaff = (person?: {
   is_admin?: boolean | null
   is_moderator?: boolean | null
+  is_superadmin?: boolean | null
   has_staff_badge?: boolean | null
-} | null) => !!(person?.is_admin || person?.is_moderator || person?.has_staff_badge)
+} | null) => !!(
+  person?.is_admin || person?.is_moderator
+  || person?.is_superadmin || person?.has_staff_badge
+)
 
 export function Verified({
   label = 'Verified by Kobblon',
