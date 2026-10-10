@@ -1742,13 +1742,21 @@ const dragged = await p.evaluate(() => {
   window.drive({})
   window.stepFrames(90)
   const before = window.engine.camera.position.x
-  // Positive movementX is a drag to the right.
-  window.drive({ turn: 0.6 })
+  /*
+   * A drag to the right is a NEGATIVE turn, since `input.ts` negates
+   * movementX. This check used to send +0.6 and assert the camera's x went
+   * up, which is the inverted camera Staw reported three times: the player
+   * spawns facing +Z, so their right is +X, and swinging the view right
+   * puts the camera behind that - its x goes DOWN. The check named the
+   * behaviour correctly and asserted its opposite, which is why nothing
+   * ever caught it. Corrected here along with the sign, and said out loud.
+   */
+  window.drive({ turn: -0.6 })
   window.stepFrames(4)
   return { before: Number(before.toFixed(2)), after: Number(window.engine.camera.position.x.toFixed(2)) }
 })
 check('dragging right turns the camera right',
-  dragged.after > dragged.before,
+  dragged.after < dragged.before,
   `camera x ${dragged.before} -> ${dragged.after}`)
 
 // -- 24. and dragging down looks down
@@ -1771,7 +1779,13 @@ check('dragging down looks down, so the camera rises',
 
 // -- 25. the wheel goes the way it was asked to go
 const wheeled = await p.evaluate(() => {
+  /*
+   * Out to the stop, then part of the way back in, so there is room to
+   * move in both directions - at the stop a roll outwards cannot show
+   * anything and the check reads as a pass or a fail by accident.
+   */
   window.engine.zoom(1000)
+  window.engine.zoom(-12)
   const before = window.engine.distance
   const roll = (deltaY) => document.getElementById('stage').dispatchEvent(
     new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true }),
@@ -1781,11 +1795,18 @@ const wheeled = await p.evaluate(() => {
   roll(-1)
   return { before, pushed, pulled: window.engine.distance }
 })
-check('rolling the wheel one way brings the camera in',
-  wheeled.pushed < wheeled.before,
+/*
+ * These two asserted the inverted wheel, the same way the drag check did:
+ * rolling towards you (deltaY positive) was expected to bring the camera
+ * IN. That is backwards everywhere else on a computer, and it is what Staw
+ * reported three times while this check sat here agreeing with the bug.
+ * Corrected along with the sign in `engine.ts`, and said out loud.
+ */
+check('rolling the wheel towards you pushes the camera out',
+  wheeled.pushed > wheeled.before,
   `${wheeled.before} -> ${wheeled.pushed} stons`)
-check('and the other way takes it back out',
-  wheeled.pulled > wheeled.pushed,
+check('and away from you brings it back in',
+  wheeled.pulled < wheeled.pushed,
   `${wheeled.pushed} -> ${wheeled.pulled} stons`)
 
 // -- the body colour under clothing, which was multiplying into it

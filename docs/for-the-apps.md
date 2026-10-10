@@ -6227,6 +6227,28 @@ follows it. The font is untouched: `600 1rem/1.35 Inter` is what it was.
   leaves, mirroring what was already there for the way out. The wheel event
   is the user gesture, so the browser grants it.
 
+**And three checks that were agreeing with the bug.** This is the part
+worth your attention, because it is why nobody caught the camera in
+thirty-nine rounds. `drive.mjs` had:
+
+```js
+// Positive movementX is a drag to the right.
+window.drive({ turn: 0.6 })
+check('dragging right turns the camera right', dragged.after > dragged.before, …)
+```
+
+and two wheel checks asserting that rolling **towards** you brings the
+camera **in**. All three named the correct behaviour and asserted its
+opposite, so the suite went green on exactly the thing Staw kept
+reporting. A check that encodes the bug is worse than no check: it is a
+reason not to look.
+
+Corrected, out loud, as the rules here require. The wheel pair also zoomed
+to the stop before rolling outwards, where the camera cannot move and the
+result is a pass or a fail by accident; they now come part way back in
+first. Run with the fixes: the two wheel checks failed, which is them
+finally doing their job.
+
 ## 3. Shiftlock — built, and here are the two names you asked for
 
 **The manifest field** is `camera.shiftlock`, a boolean beside
