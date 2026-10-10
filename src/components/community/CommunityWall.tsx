@@ -20,6 +20,7 @@ import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { profileLink } from '@/lib/links'
 import { Verified } from '@/components/brand/Verified'
+import { Emoji } from '@/components/ui/Emoji'
 
 /** The author, in the shape the avatar and link helpers expect. */
 const authorOf = (post: CommunityPost) => ({
@@ -165,7 +166,7 @@ export function CommunityWall({
                 </div>
 
                 <p className="mt-1 whitespace-pre-wrap break-words leading-relaxed text-white/85">
-                  {post.body}
+                  <Emoji>{post.body}</Emoji>
                 </p>
 
                 <div className="mt-2 flex items-center gap-3">

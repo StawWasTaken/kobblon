@@ -223,6 +223,30 @@ without being asked - "looked at 12, acted on 2, left 10" on the Machine
 card, with the last pass's time, so "is it running" is a question the page
 answers rather than one Staw has to ask.
 
+## Twemoji everywhere, which means a name primitive first
+
+Staw: every emoji on the website drawn as Twemoji. The machinery is built
+and shipped — `@/lib/twemoji` cuts a line into words and emoji, `<Emoji>`
+renders it without ever handing somebody's words to the browser as HTML, and
+the 3,720 pictures are Kobblon's own under `public/twemoji` rather than a
+content network's.
+
+**What is wired: the four places a body of text is rendered** — a chat
+message, a Community wall post, an announcement, the notice bar. That is
+where emoji overwhelmingly are.
+
+**What is not: names.** A display name, a World's name, an item's name, a
+Community's name. There are forty-nine places that render one and no
+component in the middle of them, which is the actual finding here — wiring
+`<Emoji>` into forty-nine call sites by hand is how the next change has to
+be made in forty-nine places too, and it is the same shape the other session
+named when `NameMarks` replaced twenty-one of them.
+
+So the job is a name primitive first — one component that takes a person or
+a piece of content and renders the name, the emoji in it and the marks
+beside it — and then forty-nine call sites deleted into it. Worth doing as
+its own pass rather than smuggled into another one.
+
 ## Voice, and moderating it
 
 Staw, 10 October: voice chat is coming, and it gets the same moderation

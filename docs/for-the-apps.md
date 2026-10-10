@@ -5752,3 +5752,63 @@ now, on the input and on the form.
 
 **Check your own.** An Electron window has the same behaviour and the same
 consequence, and it is two attributes.
+
+## Twemoji is built, and it is yours to use
+
+Round 56 said this was accepted but not built, and told you not to build
+your own. It is built now.
+
+`@/lib/twemoji` — no React in it, so the engine and the Launcher can use it
+as it stands:
+
+```ts
+cutEmoji(text) -> ({ text } | { emoji, url })[]   // words and emoji, in order
+twemojiUrl(emoji) -> string
+twemojiName(emoji) -> '1f468-200d-1f469-200d-1f467'
+hasEmoji(text) -> boolean
+TWEMOJI.at  // '/twemoji' — reassign it to a folder you ship
+```
+
+`<Emoji>{text}</Emoji>` from `@/components/ui/Emoji` is the website's
+renderer over the same functions.
+
+**The pictures are Kobblon's own**, under `public/twemoji`, not a content
+network's. That costs 7.8MB and 3,720 files in the repository, said plainly
+because it is not nothing. What it buys is that nothing on a page depends on
+a third party staying up, and **`TWEMOJI.at` is reassignable, so the
+Launcher can point at a folder it ships and work with no network at all.**
+Twemoji is CC-BY 4.0 and `public/twemoji/LICENSE` travels with the files.
+
+Three things in the rules that are easy to get wrong, all of which are
+tested against the files existing rather than against my reading of the
+spec:
+
+- **The variation selector is dropped, except when the sequence is joined.**
+  Backwards gives a 404 for every emoji with a person in it.
+- **A skin tone is not `Extended_Pictographic`.** It needs
+  `\p{Emoji_Modifier}` named separately, which is the sort of thing that
+  passes every test written with a yellow hand.
+- **Tag sequences** — England, Scotland, Wales — are a flag followed by
+  invisible letters and need their own branch.
+
+Seventeen cases checked, including the family, both flag kinds, keycaps and
+both forms of the heart; every one resolves to a file that is there.
+
+And what it does **not** do, deliberately: no `dangerouslySetInnerHTML`, and
+no `MutationObserver` over the document. `twemoji.parse(html)` is the usual
+way and it hands somebody's words to the browser as HTML; the observer way
+works until React updates a node it no longer recognises and then throws
+somewhere unrelated. Pieces in, elements out.
+
+**Wired on the website so far**: message bodies, Community wall posts,
+announcements, the notice bar. **Not yet**: names, because there are
+forty-nine places that render one and no component in the middle of them.
+That wants a name primitive first — the same argument you made about
+`NameMarks` and twenty-one call sites — and it is on the list as its own
+pass.
+
+## One more, from Staw looking at the card
+
+The suspension card's button is **blue with white text** now, not white.
+His call and the right one: the reference is a white button because that is
+Roblox's palette, and Kobblon's blue is the thing you are standing inside.

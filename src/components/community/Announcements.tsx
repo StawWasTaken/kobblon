@@ -25,6 +25,7 @@ import type { CommunityOverview, CommunityPost } from '@/types/db'
 import { Verified } from '@/components/brand/Verified'
 import { overlayButton } from '@/lib/overlay'
 import { cn } from '@/lib/cn'
+import { Emoji } from '@/components/ui/Emoji'
 
 const MAX_BYTES = 12 * 1024 * 1024
 
@@ -209,7 +210,7 @@ export function Announcements({
               </div>
 
               <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-white/85">
-                {post.body}
+                <Emoji>{post.body}</Emoji>
               </p>
 
               {post.media_url && post.media_kind === 'image' && (

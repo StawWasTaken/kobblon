@@ -22,6 +22,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark, faBullhorn } from '@fortawesome/free-solid-svg-icons'
 import { noticeNow, type SiteNotice } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { Emoji } from '@/components/ui/Emoji'
 
 const CLOSED = 'kobblon.notice.closed'
 
@@ -70,7 +71,7 @@ export function NoticeBar() {
       <div className="mx-auto flex max-w-[86rem] items-center gap-3">
         <FontAwesomeIcon icon={faBullhorn} className="shrink-0 text-xs" />
         <p className="min-w-0 flex-1">
-          <span className="font-bold">{notice.body}</span>
+          <span className="font-bold"><Emoji>{notice.body}</Emoji></span>
           {notice.link && (
             outside ? (
               <a

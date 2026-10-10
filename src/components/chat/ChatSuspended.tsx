@@ -95,7 +95,13 @@ export function ChatSuspended({
       <button
         type="button"
         onClick={onUnderstand}
-        className="mt-5 w-full rounded-xl bg-white px-4 py-2.5 font-display text-sm font-bold text-ink shadow-sm transition-colors hover:bg-white/90"
+        /*
+         * Blue, not white. The reference this copied is a white button on a
+         * grey card because that is Roblox's palette; Kobblon's blue is the
+         * thing you are standing inside, and a card with one button on it is
+         * exactly that. White read as a borrowed screen.
+         */
+        className="mt-5 w-full rounded-xl border-b-[3px] border-brand-ink bg-brand px-4 py-2.5 font-display text-sm font-bold text-white transition-colors hover:bg-brand-bright active:mt-[calc(1.25rem+3px)] active:border-b-0"
       >
         {over ? 'Thanks' : 'I understand'}
       </button>
