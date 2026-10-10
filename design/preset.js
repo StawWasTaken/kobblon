@@ -95,6 +95,21 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(14px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        /* A panel coming in from the right edge: drawers and slide-overs. */
+        'slide-in': {
+          '0%': { opacity: '0', transform: 'translateX(24px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        /*
+         * One row of a list arriving. Used with an inline animation-delay
+         * so a queue staggers in rather than appearing all at once - which
+         * is the difference between a list that loaded and a list that is
+         * being dealt to you.
+         */
+        'row-in': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
         'pulse-ring': {
           '0%': { boxShadow: '0 0 0 0 currentColor', opacity: '0.7' },
           '100%': { boxShadow: '0 0 0 7px transparent', opacity: '0' },
@@ -108,6 +123,8 @@ export default {
       animation: {
         'pop-in': 'pop-in 180ms cubic-bezier(0.2,0.8,0.2,1) both',
         'slide-up': 'slide-up 420ms cubic-bezier(0.2,0.8,0.2,1) both',
+        'slide-in': 'slide-in 220ms cubic-bezier(0.2,0.8,0.2,1) both',
+        'row-in': 'row-in 260ms cubic-bezier(0.2,0.8,0.2,1) both',
         'pulse-ring': 'pulse-ring 1.8s ease-out infinite',
         bob: 'bob 4s ease-in-out infinite',
         drift: 'drift 48s linear infinite',

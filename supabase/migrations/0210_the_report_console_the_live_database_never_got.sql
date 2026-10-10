@@ -30,6 +30,17 @@ begin;
 -- that tells them apart is reading the error, which is why the console says
 -- what the database said rather than "something went wrong".
 
+-- **Each one is dropped first, and that is not tidiness.** Where an older
+-- version of the same function does exist over there - `report_queue` has
+-- been there since 0161 and `take_down` since 0089 - `create or replace`
+-- refuses outright: *cannot change return type of existing function*. A
+-- re-assertion that only works on a database missing the function is a
+-- re-assertion that fails on every database that half-has it, which is
+-- exactly the case this file is for. Dropped and recreated in one
+-- transaction, so nothing is ever without them.
+
+drop function if exists public.take_down(text, uuid, text);
+
 create or replace function public.take_down(what text, which uuid, reason text)
 returns void
 language plpgsql security definer set search_path = public, extensions as $$
@@ -108,6 +119,8 @@ end $$;
 revoke all on function public.take_down(text, uuid, text) from public, anon;
 grant execute on function public.take_down(text, uuid, text) to authenticated;
 
+drop function if exists public.report_queue(text, integer);
+
 create or replace function public.report_queue(which text default 'open', how_many integer default 100)
 returns table (
   id bigint,
@@ -158,6 +171,8 @@ begin
 end $$;
 
 grant execute on function public.report_queue(text, integer) to authenticated;
+
+drop function if exists public.report_ticket(bigint);
 
 create or replace function public.report_ticket(ticket bigint)
 returns table (
@@ -223,6 +238,8 @@ end $$;
 
 grant execute on function public.report_ticket(bigint) to authenticated;
 
+drop function if exists public.suspend_account(uuid, timestamptz, text);
+
 create or replace function public.suspend_account(
   target uuid, until_when timestamptz, said text
 ) returns void
@@ -258,6 +275,8 @@ begin
 end $$;
 
 grant execute on function public.suspend_account(uuid, timestamptz, text) to authenticated;
+
+drop function if exists public.take_report(bigint, text, text, text, integer, text);
 
 create or replace function public.take_report(
   ticket bigint,

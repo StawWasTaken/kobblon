@@ -19,7 +19,8 @@ import type {
   AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
-  WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,} from '@/types/db'
+  WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
+  TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,} from '@/types/db'
 
 const SPACE_FIELDS =
   'id, owner_id, slug, name, description, category, cover_url, is_published, visit_count, ' +
@@ -2129,6 +2130,66 @@ export async function listAppeals(): Promise<Appeal[]> {
   return (data ?? []) as Appeal[]
 }
 
+/* ------------------------------------------------- the staff appeal queue */
+
+export type AppealRow = {
+  id: number
+  status: 'open' | 'upheld' | 'declined'
+  body: string
+  created_at: string
+  decision_note: string | null
+  decided_at: string | null
+  decided_rank: StaffRank | 'staff' | null
+  user_id: string
+  username: string | null
+  display_name: string | null
+  avatar_url: string | null
+  score: number
+  band: BehaviourBand
+  violation_id: number
+  action: ViolationAction
+  rule: string
+  rule_ord: number | null
+  rule_title: string | null
+  gravity: number | null
+  reason: string
+  evidence: string | null
+  target_type: string | null
+  target_id: string | null
+  blocks: string[]
+  is_void: boolean
+  expires_at: string | null
+  decided_on: string
+  /** Which rank decided the thing being appealed. Never who. */
+  by_rank: ModeratedBy
+  waiting_hours: number
+}
+
+/**
+ * The appeals waiting to be answered.
+ *
+ * `decide_appeal` has existed since 0072 with nothing calling it, so every
+ * appeal written from the standing page has been sitting unread while its
+ * writer was told a person would look at it. This is the door.
+ */
+export async function appealQueue(which: 'open' | 'answered' | 'all' = 'open') {
+  return (unwrap(await supabase.rpc('appeal_queue', { which })) as AppealRow[]) ?? []
+}
+
+export async function appealCounts(): Promise<{
+  waiting: number; oldest_hours: number; upheld_30d: number; declined_30d: number
+}> {
+  const rows = unwrap(await supabase.rpc('appeal_counts')) as {
+    waiting: number; oldest_hours: number; upheld_30d: number; declined_30d: number
+  }[]
+  return rows?.[0] ?? { waiting: 0, oldest_hours: 0, upheld_30d: 0, declined_30d: 0 }
+}
+
+/** Upholding voids the decision and lifts a suspension nothing else holds. */
+export async function decideAppeal(appeal: number, upheld: boolean, note: string) {
+  unwrap(await supabase.rpc('decide_appeal', { appeal, upheld, note }))
+}
+
 export async function fileAppeal(violationId: number, body: string): Promise<number> {
   return unwrap(await supabase.rpc('file_appeal', { violation: violationId, body })) as number
 }
@@ -2171,6 +2232,49 @@ export async function listTickets(): Promise<Ticket[]> {
     .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as Ticket[]
+}
+
+/* -------------------------------------------------- the staff ticket queue */
+
+export type TicketRow = {
+  id: number
+  topic: TicketTopic
+  subject: string
+  status: TicketStatus
+  first_name: string | null
+  contact_email: string | null
+  device: TicketDevice | null
+  wants_human: boolean
+  username: string | null
+  user_id: string
+  /** The first message, so a queue can be triaged without opening each one. */
+  opener: string | null
+  replies: number
+  /** Whether the last word was theirs, which is the real order of work. */
+  waiting_on_us: boolean
+  created_at: string
+  updated_at: string
+}
+
+/** Urgent first, then whoever has been waiting longest. Staff only. */
+export async function ticketQueue(
+  which: 'open' | 'urgent' | 'closed' | 'all' = 'open',
+) {
+  return (unwrap(await supabase.rpc('ticket_queue', { which })) as TicketRow[]) ?? []
+}
+
+export async function ticketCounts(): Promise<{
+  open_now: number; urgent: number; waiting: number; closed_today: number
+}> {
+  const rows = unwrap(await supabase.rpc('ticket_counts')) as {
+    open_now: number; urgent: number; waiting: number; closed_today: number
+  }[]
+  return rows?.[0] ?? { open_now: 0, urgent: 0, waiting: 0, closed_today: 0 }
+}
+
+/** Moving a ticket along without writing on it. Staff only. */
+export async function setTicketStatus(ticket: number, status: TicketStatus) {
+  unwrap(await supabase.rpc('set_ticket_status', { ticket, status }))
 }
 
 export async function getTicket(id: number): Promise<Ticket | null> {

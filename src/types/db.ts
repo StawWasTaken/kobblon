@@ -706,11 +706,19 @@ export type TicketTopic =
 export type TicketDevice =
   | 'computer' | 'phone' | 'tablet' | 'console' | 'launcher' | 'other'
 
+/**
+ * `in_progress` and `escalated` arrived with the staff queue (0212): the
+ * three it had could not say "somebody is on this", and two moderators
+ * answering the same ticket is what that costs.
+ */
+export type TicketStatus =
+  | 'open' | 'in_progress' | 'answered' | 'escalated' | 'closed'
+
 export type Ticket = {
   id: number
   topic: TicketTopic
   subject: string
-  status: 'open' | 'answered' | 'closed'
+  status: TicketStatus
   /** What they typed into the form. A claim, not proof. */
   contact_email: string | null
   first_name: string | null

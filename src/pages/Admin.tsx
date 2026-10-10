@@ -18,7 +18,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
-  faTag, faFlag, faGlobe, faBullhorn, faRobot,
+  faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate } from 'react-router-dom'
@@ -37,6 +37,8 @@ import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useTitle } from '@/hooks/useTitle'
+import { AppealsQueue } from '@/components/staff/AppealsQueue'
+import { SupportQueue } from '@/components/staff/SupportQueue'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { avatarOf } from '@/lib/avatars'
 import { formatCount, timeAgo } from '@/lib/format'
@@ -60,7 +62,7 @@ import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
 import { WorldMap } from '@/components/staff/WorldMap'
 
-type Section = 'People' | 'Reports' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'People' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -107,6 +109,8 @@ const sections: {
   name: Section; icon: IconDefinition; blurb: string; needs: StaffRank
 }[] = [
   { name: 'Reports', icon: faFlag, needs: 'moderator', blurb: 'What people have reported, and what was done' },
+  { name: 'Appeals', icon: faScaleBalanced, needs: 'moderator', blurb: 'People disagreeing with a decision, and the answer' },
+  { name: 'Support', icon: faLifeRing, needs: 'moderator', blurb: 'What people have written in about, urgent first' },
   { name: 'People', icon: faUserShield, needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
   { name: 'Screening', icon: faCircleCheck, needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
   { name: 'Words', icon: faFilter, needs: 'moderator', blurb: 'What the moderation system catches' },
@@ -1793,6 +1797,8 @@ export default function Admin() {
           <RankContext.Provider value={rank}>
             {open === 'People' && <PeopleSection />}
             {open === 'Reports' && <ReportsSection />}
+            {open === 'Appeals' && <AppealsQueue />}
+            {open === 'Support' && <SupportQueue />}
             {open === 'Screening' && <ScreeningSection />}
             {open === 'Machine' && <MachineSection />}
             {open === 'Map' && <MapSection />}

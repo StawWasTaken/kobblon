@@ -72,6 +72,8 @@ const devices: { value: TicketDevice; label: string; icon: IconDefinition }[] = 
 
 export const statusLook: Record<Ticket['status'], { word: string; look: string }> = {
   open: { word: 'Waiting on us', look: 'border-brand-bright/50 bg-brand/20 text-white' },
+  in_progress: { word: 'Being looked at', look: 'border-brand-bright/40 bg-brand/10 text-white/80' },
+  escalated: { word: 'Passed up', look: 'border-amber-400/50 bg-amber-400/10 text-amber-200' },
   answered: { word: 'Replied', look: 'border-space/40 bg-space/10 text-space-bright' },
   closed: { word: 'Closed', look: 'border-white/15 bg-white/[0.06] text-white/55' },
 }
