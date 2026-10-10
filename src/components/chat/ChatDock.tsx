@@ -22,6 +22,7 @@ import {
   myChatStanding, chatCardSeen, type ChatStanding,
 } from '@/lib/api'
 import { ChatSuspended } from '@/components/chat/ChatSuspended'
+import { ChatLockedBar } from '@/components/chat/ChatLockedBar'
 import { supabase } from '@/lib/supabase'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -142,6 +143,7 @@ function Window({
   }, [messages, collapsed, details])
 
   const quiet = useChatStanding()
+  const locked = Boolean(quiet.standing && !quiet.standing.over)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -158,6 +160,15 @@ function Window({
     } catch (err) {
       setDraft(body)
       setError(err instanceof Error ? err.message : 'That did not send.')
+      /*
+       * A suspension given while somebody is sitting here was only ever
+       * caught by this failing, and nothing then told the window - so the
+       * box stayed typable and the card never came up. Asking again on any
+       * refusal is one call and needs no guess at which refusal it was;
+       * reading the error text to decide would be a window parsing English
+       * the server is free to reword.
+       */
+      quiet.ask()
     }
   }
 
@@ -320,41 +331,58 @@ function Window({
             <div ref={bottom} />
           </div>
 
-          <form onSubmit={submit} className="shrink-0 border-t border-ink-line p-2">
-            {error && <p className="px-1 pb-1.5 text-xs text-danger">{error}</p>}
-            {/*
-              * Said where the box is, rather than only in the card. The
-              * card is read once and dismissed; this is what somebody sees
-              * when they come back in an hour and wonder why the box does
-              * nothing.
-              */}
-            {quiet.standing && !quiet.standing.over && (
-              <p className="px-1 pb-1.5 text-xs text-warm">
-                Chat is suspended for another {quiet.left}.
-              </p>
+          <form
+            onSubmit={submit}
+            autoComplete="off"
+            className="shrink-0 border-t border-ink-line p-2"
+          >
+            {error && !locked && (
+              <p className="px-1 pb-1.5 text-xs text-danger">{error}</p>
             )}
-            <div className="flex items-center gap-1.5">
-              <label className="sr-only" htmlFor={`draft-${conversation.id}`}>Message</label>
-              <input
-                id={`draft-${conversation.id}`}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                maxLength={2000}
-                disabled={Boolean(quiet.standing && !quiet.standing.over)}
-                placeholder={
-                  quiet.standing && !quiet.standing.over ? 'Chat is suspended' : 'Send a message'
-                }
-                className="h-9 min-w-0 flex-1 rounded-full border border-ink-line bg-ink-raised px-3.5 text-sm placeholder:text-white/30 focus:border-brand-bright"
-              />
-              <button
-                type="submit"
-                disabled={!draft.trim() || Boolean(quiet.standing && !quiet.standing.over)}
-                aria-label="Send"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-bright disabled:opacity-40"
-              >
-                <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
-              </button>
-            </div>
+
+            {/*
+              * The bar replaces the box rather than greying it out. A
+              * disabled input under a line of red reads as something that
+              * went wrong; a solid bar with a lock on it reads as a
+              * decision, which is what it is - and it is what somebody sees
+              * when they come back in an hour, so it says how long is left
+              * rather than only that something happened.
+              */}
+            {locked ? (
+              <ChatLockedBar until={quiet.standing!.until} onOver={quiet.ask} />
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <label className="sr-only" htmlFor={`draft-${conversation.id}`}>Message</label>
+                <input
+                  id={`draft-${conversation.id}`}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  maxLength={2000}
+                  /*
+                   * A chat box is not a form field worth remembering. Left
+                   * to itself the browser keeps every line anybody has sent
+                   * and offers them back in a dropdown, which puts one
+                   * person's messages on screen in front of the next person
+                   * to use the computer.
+                   */
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="sentences"
+                  spellCheck
+                  name={`draft-${conversation.id}`}
+                  placeholder="Send a message"
+                  className="h-9 min-w-0 flex-1 rounded-full border border-ink-line bg-ink-raised px-3.5 text-sm placeholder:text-white/30 focus:border-brand-bright"
+                />
+                <button
+                  type="submit"
+                  disabled={!draft.trim()}
+                  aria-label="Send"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-bright disabled:opacity-40"
+                >
+                  <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
+                </button>
+              </div>
+            )}
           </form>
         </>
       )}
@@ -551,7 +579,7 @@ function useChatStanding() {
     setStanding(standing.over ? null : { ...standing, seen: true })
   }, [standing])
 
-  return { standing, left, read }
+  return { standing, left, read, ask }
 }
 
 export function ChatDock({ children }: { children: ReactNode }) {

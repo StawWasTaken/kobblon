@@ -223,6 +223,34 @@ without being asked - "looked at 12, acted on 2, left 10" on the Machine
 card, with the last pass's time, so "is it running" is a question the page
 answers rather than one Staw has to ask.
 
+## Voice, and moderating it
+
+Staw, 10 October: voice chat is coming, and it gets the same moderation
+shape as text — a suspension with a popup, a locked bar, and no voice until
+it is over. The card and the bar are already built and already take a
+`kind`, so voice inherits both the day it exists.
+
+What voice does **not** inherit is the screening, and this is the part to
+have straight before anybody builds it. Text is screened by a trigger on the
+way into the table: there is no path into a message that skips it. Voice has
+no equivalent, because there is no text to censor — a word is already out of
+somebody's mouth and in somebody else's ears before anything could look at
+it. So voice moderation is a different thing wearing the same clothes:
+
+- **It is after the fact, not before.** The sanction comes from a report or
+  from a pass over a recording, never from a filter in the path.
+- **Which means recording, which means telling people.** Anything that
+  listens has to be said out loud in the Guidelines and the Terms — the ones
+  already on the list as out of date — and that is a policy decision before
+  it is a feature.
+- **The ladder is the same one.** `next_timeout_minutes` already escalates
+  5, 6, 10, 20, 45, 2h, 6h, 24h over a month, and a voice suspension should
+  count on the same ladder rather than inventing a second: somebody who is
+  told to stop and moves from typing it to saying it has not improved.
+
+Buildable the moment voice exists: `chat_timeouts` gains a kind, `mute_chat`
+takes one, and `my_chat_standing` answers for both. Nothing else moves.
+
 ## The support system and account standing, reworked
 
 Staw: both are a mess, and they are one job rather than two, because a

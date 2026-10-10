@@ -5655,3 +5655,100 @@ the schema exists, and the schema is not next.
 
 `ChatLine`, `ChatMark`, the engine's chat, the suspension card and
 `screenSay` are all as round 61 left them.
+
+---
+
+# Sixty-fifth round — the box locks instead of greying out, and voice is coming
+
+Staw sent a screenshot of the dock mid-suspension and three things were
+wrong in it. Two were bugs, one was the design.
+
+## 1. The box stayed typable, and that was the real fault
+
+The dock asks where somebody stands when it mounts and again when the clock
+runs out — which is right, and which misses the one case that matters: **a
+suspension handed out while somebody is sitting in the box.** Nothing told
+the window. So the box stayed open, they kept typing, and the only sign was
+the send failing.
+
+Fixed by re-asking after **any** refused send. One call, and no guess at
+which refusal it was — reading the error text to decide would be a window
+parsing English the server is free to reword.
+
+**Worth copying across, because your chat will have the same hole the day it
+has a transport.** A send refused is the one moment a window knows for
+certain that its idea of what it is allowed to do is out of date.
+
+## 2. The refusal said a timestamp at a person
+
+```
+Chat is suspended until 2026-10-10 09:16:28.180809+00.
+```
+
+That is a row printed at somebody, and a sanction is the one moment a
+platform has to sound like it was written by a person. It is now
+`Chat is suspended for another 5 minutes.`, rounded up so it never says
+zero.
+
+**The `errcode` stays `check_violation`** and that is the part to match on
+if you ever need to tell this refusal from any other. Not the text.
+
+## 3. `ChatLockedBar`, which replaces the box rather than disabling it
+
+`src/components/chat/ChatLockedBar.tsx`. Staw's words: the bar should be
+solid, you cannot type in it, there is a lock on it, and it says how long is
+left, counting down, and when it hits zero you can talk again.
+
+```tsx
+<ChatLockedBar until={iso} onOver={() => refresh()} kind="chat" />
+```
+
+No provider, no router, no session. `kind` is `'chat'` today and `'voice'`
+tomorrow — see below. It counts to the time it was given, shows `4:37` or
+`2:06:59` as the length needs, and turns green saying "Chat is back." when
+it runs out, calling `onOver` once.
+
+One thing inside it worth knowing, since it is the sort of thing that gets
+helpfully "fixed": **`onOver` is deliberately not in the effect's
+dependencies.** It is written inline at nearly every call site, so depending
+on it re-creates the interval on every parent render — the same clock
+rebuilt once a second, which is a countdown that stutters.
+
+The popup card is unchanged: `ChatSuspended`, from round 61, still shows on
+the way in and again when it is over.
+
+## 4. Voice chat, and the thing that does not carry over
+
+Staw: voice gets the same system — a popup, a locked bar, no voice until the
+suspension is over. The card and the bar both take a `kind` already, so that
+part is free on both sides.
+
+**What does not carry over is the screening, and this matters more than the
+UI.** Text is screened by a trigger on the way into the table: there is no
+path into a message that skips it, which is why "censored, not refused"
+could be promised at all. Voice has no equivalent. A word is in somebody's
+ears before anything could look at it. So:
+
+- voice moderation is **after the fact** — a report, or a pass over a
+  recording — never a filter in the path
+- which means recording, which means **saying so in the Guidelines and the
+  Terms**. That is a policy decision before it is a feature, and those
+  documents are already on the list as out of date.
+- **the ladder is the same one.** 5, 6, 10, 20, 45, 2h, 6h, 24h over a
+  month, counted together with text rather than separately: somebody told to
+  stop who moves from typing it to saying it has not improved.
+
+When voice exists: `chat_timeouts` gains a kind, `mute_chat` takes one,
+`my_chat_standing` answers for both. Nothing else moves, and I will send the
+shape then rather than guess at it now.
+
+## 5. A small one, and it is a privacy thing
+
+The dock's input had no `autoComplete`, so the browser was keeping every
+line anybody had sent from that machine and offering them back in a
+dropdown — Staw's words, "like it was a password". That puts one person's
+messages on screen in front of the next person to use the computer. Off
+now, on the input and on the form.
+
+**Check your own.** An Electron window has the same behaviour and the same
+consequence, and it is two attributes.
