@@ -50,9 +50,13 @@ import {
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
+  reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
 } from '@/lib/api'
-import type { AdminLogEntry, FlaggedTerm, ReportRow, StaffPerson } from '@/lib/api'
+import type {
+  AdminLogEntry, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
+} from '@/lib/api'
+import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
 import { WorldMap } from '@/components/staff/WorldMap'
 
@@ -364,7 +368,16 @@ export function ReportsSection() {
   const say = useToast()
   const [which, setWhich] = useState<'open' | 'actioned' | 'dismissed' | 'all'>('open')
   const [busy, setBusy] = useState<number | null>(null)
+  const [open, setOpen] = useState<ReportTicket | null>(null)
   const reports = useAsync(async () => reportQueue(which, 200), [which])
+
+  /*
+   * The rank is asked for rather than read off a profile, because since 0172
+   * three ranks imply one another and the order is decided in the database.
+   * It only decides which buttons are worth drawing - `take_report` checks
+   * again, and that is the check that counts.
+   */
+  const rank = useAsync(async () => myStaffRank(), [])
 
   const settle = async (id: number, how: 'actioned' | 'dismissed') => {
     setBusy(id)
@@ -372,6 +385,19 @@ export function ReportsSection() {
       await settleReport(id, how)
       say(how === 'actioned' ? 'Marked as dealt with.' : 'Dismissed.', 'success')
       reports.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const openTicket = async (id: number) => {
+    setBusy(id)
+    try {
+      const ticket = await reportTicket(id)
+      if (!ticket) { say('That report could not be read.', 'error'); return }
+      setOpen(ticket)
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
     } finally {
@@ -388,9 +414,11 @@ export function ReportsSection() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted">
-        What people have reported. Settling one says what staff did about it;
-        it does not do it - taking something down or suspending somebody are
-        their own doors, on purpose.
+        What people have reported. Opening one shows the thing, who it is
+        about and what has been decided about them before, and the action
+        happens from there - a warning, chat suspended, the account
+        suspended, or the thing taken down. Deleting an account is a
+        superadmin's.
       </p>
 
       <Tabs
@@ -440,11 +468,11 @@ export function ReportsSection() {
               <div className="flex shrink-0 gap-2">
                 <Button
                   size="sm"
-                  variant="yes"
+                  variant="primary"
                   loading={busy === row.id}
-                  onClick={() => void settle(row.id, 'actioned')}
+                  onClick={() => void openTicket(row.id)}
                 >
-                  Dealt with
+                  Take it
                 </Button>
                 <Button
                   size="sm"
@@ -459,6 +487,33 @@ export function ReportsSection() {
           </Card>
         )
       })}
+
+      <Dialog
+        open={Boolean(open)}
+        onClose={() => setOpen(null)}
+        title="What happens about this"
+        size="lg"
+      >
+        {open && (
+          <ReportTriage
+            ticket={open}
+            rank={(rank.data ?? 'moderator') as StaffRank}
+            onTake={async (input) => {
+              const done = await takeReport({ id: open.id, ...input })
+              say(
+                done.action === 'nothing'
+                  ? 'Recorded as nothing in it.'
+                  : done.until
+                    ? `Done, until ${new Date(done.until).toLocaleString()}.`
+                    : 'Done.',
+                'success',
+              )
+              setOpen(null)
+              reports.reload()
+            }}
+          />
+        )}
+      </Dialog>
     </div>
   )
 }

@@ -203,6 +203,26 @@ The standing rule holds until Staw says otherwise in as many words: the AI
 may warn, chat-suspend and suspend. **It may not delete an account.**
 `apply_ai_verdict` has no deletion door and that is deliberate.
 
+## The machine runs when there is work
+
+Staw, 10 October: the AI should moderate when there is something to moderate,
+not when somebody remembers to press **Run now**.
+
+Half of this is done and the other half is a dashboard step, written up in
+`docs/deploying.md`. What is built: `moderate` already accepts a service-role
+call, `ai_work_waiting()` answers "is there anything to do" in one count, and
+`ai_work()` returns report tickets as well as pending uploads - so a
+scheduled pass sees a report the moment it is filed. What is missing is the
+schedule itself, which cannot live here because it needs the service-role key
+and that key must never be in this repository.
+
+Still to think about once it is running: a pass that wakes every minute and
+an `ai_settings.mode` that paces the same work are two dials for one thing,
+and the row should win. And the console should show what the machine did
+without being asked - "looked at 12, acted on 2, left 10" on the Machine
+card, with the last pass's time, so "is it running" is a question the page
+answers rather than one Staw has to ask.
+
 ## The support system and account standing, reworked
 
 Staw: both are a mess, and they are one job rather than two, because a

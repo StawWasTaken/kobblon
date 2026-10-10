@@ -157,3 +157,39 @@ supabase functions deploy app-signin --project-ref <ref>
 `verify_jwt` comes from `supabase/config.toml`, so it does not need a flag.
 `app-signin` is `false` there on purpose: the application calling it has not
 signed in yet, and the code it sends is the credential.
+
+## Making the machine run on its own
+
+The complaint, and it is a fair one: the AI only moderates when somebody
+presses **Run now**.
+
+Nothing in this repository can fix that, and it is worth saying why rather
+than leaving a half-built scheduler lying about. A schedule has to call the
+`moderate` function with the service role, and the service-role key is the
+one secret that must never be in a file here. So the schedule is a dashboard
+step, and it is the only part of this that is.
+
+**What is already true**, so this is the only missing piece:
+
+- `moderate` has accepted a service-role call since it was written. It does
+  not need a signed-in admin and it does not need changing.
+- `ai_work_waiting()` answers "is there anything to do" in one count, so a
+  schedule that wakes every minute costs almost nothing on a quiet platform.
+- `ai_work()` now returns **reports** as well as pending uploads, so a
+  scheduled pass sees a report ticket the moment it is filed.
+
+**The step**: in the Supabase dashboard, under *Integrations → Cron*, create
+a job that invokes the `moderate` edge function. Every minute is fine - the
+function reads `ai_settings` and returns immediately when the machine is off
+or `busy` mode says the queue is too short, so a pass over nothing is a
+single count.
+
+Two things to get right:
+
+- **Send the service-role key as the `Authorization` header**, because that
+  is what makes the call the worker rather than an unknown caller. Supabase's
+  cron UI stores it on the job; it never comes near this repository.
+- **Leave `ai_settings.mode` alone.** Pacing belongs in that row, not in the
+  schedule: a job that runs every minute and a `slow` mode that waits are two
+  dials for one thing, and setting both is how a platform ends up moderating
+  nothing and nobody knowing why.

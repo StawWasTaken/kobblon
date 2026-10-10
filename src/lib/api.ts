@@ -3406,6 +3406,13 @@ export type ReportRow = {
   about_name: string | null
   about_username: string | null
   about_id: string | null
+  /* Added in 0176. The console built before it does not read these. */
+  outcome?: string | null
+  handled_at?: string | null
+  subject_label?: string | null
+  subject_link?: string | null
+  subject_gone?: boolean
+  others_open?: number
 }
 
 export async function reportQueue(which = 'open', howMany = 100): Promise<ReportRow[]> {
@@ -3416,6 +3423,113 @@ export async function reportQueue(which = 'open', howMany = 100): Promise<Report
 
 export async function settleReport(id: number, how: 'actioned' | 'dismissed' | 'open') {
   unwrap(await supabase.rpc('settle_report', { target: id, how }))
+}
+
+/**
+ * What a staff account is allowed to be shown.
+ *
+ * Read from the database rather than from a column on a profile, because
+ * since 0172 three ranks imply each other and the precedence is decided in
+ * one place. Nothing here is a permission: every power is checked again
+ * server-side, and this only decides what is worth rendering.
+ */
+export type StaffRank = 'superadmin' | 'admin' | 'moderator' | 'none'
+
+export async function myStaffRank(): Promise<StaffRank> {
+  return (unwrap(await supabase.rpc('my_staff_rank')) as StaffRank) ?? 'none'
+}
+
+/** One report, with enough about the person to decide without a second page. */
+export type ReportTicket = {
+  id: number
+  target_type: string
+  target_id: string
+  reason: string
+  details: string | null
+  status: string
+  outcome: string | null
+  handled_note: string | null
+  created_at: string
+  handled_at: string | null
+  handled_by_username: string | null
+  reporter_id: string
+  reporter_username: string | null
+  about_id: string | null
+  about_username: string | null
+  about_suspended: boolean
+  about_suspended_until: string | null
+  about_muted_until: string | null
+  subject_label: string | null
+  subject_link: string | null
+  subject_gone: boolean
+  past_warnings: number
+  past_heavy: number
+  past_mutes: number
+  other_open: number
+}
+
+export async function reportTicket(id: number): Promise<ReportTicket | null> {
+  const rows = unwrap(await supabase.rpc('report_ticket', { ticket: id })) as ReportTicket[]
+  return rows?.[0] ?? null
+}
+
+/**
+ * What a report takes: nothing, the content down, a warning, chat suspended,
+ * the account suspended, or the account deleted.
+ *
+ * `termination` is a superadmin's and the machine is refused it by name, both
+ * in the database. This passing it does not make it allowed.
+ */
+export type ReportAction =
+  | 'nothing' | 'content_removed' | 'warning'
+  | 'chat_suspension' | 'suspension' | 'termination'
+
+export type TakenReport = {
+  action: ReportAction
+  report: number
+  violation?: number | null
+  until?: string | null
+  about?: string | null
+}
+
+export async function takeReport(input: {
+  id: number
+  action: ReportAction
+  why: string
+  rule?: string
+  days?: number | null
+  note?: string | null
+}): Promise<TakenReport> {
+  return unwrap(await supabase.rpc('take_report', {
+    ticket: input.id,
+    action: input.action,
+    why: input.why,
+    rule: input.rule ?? 'other',
+    days: input.days ?? null,
+    note: input.note ?? null,
+  })) as TakenReport
+}
+
+/**
+ * Whether the machine has anything to do.
+ *
+ * One count, so a schedule can ask every minute without reading a queue it
+ * throws away. `is_on` and `total` are separate answers on purpose: a quiet
+ * platform and a disabled machine look identical if you only ask one.
+ */
+export type WorkWaiting = {
+  is_on: boolean
+  mode: string | null
+  items: number
+  assets: number
+  reports: number
+  total: number
+  oldest_minutes: number | null
+}
+
+export async function aiWorkWaiting(): Promise<WorkWaiting | null> {
+  const rows = unwrap(await supabase.rpc('ai_work_waiting')) as WorkWaiting[]
+  return rows?.[0] ?? null
 }
 
 /**

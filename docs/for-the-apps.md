@@ -5390,26 +5390,37 @@ when the asset is not yours, and `asset` was already an accepted
 If a window of yours lists Create assets, the report path is `ReportDialog`
 with `targetType="asset"` — the same component, no application-only copy.
 
-## 2. The thing to know before you gate anything on `is_admin`
+## 2. Three ranks, and `my_staff_rank()` is how you ask
 
-Staw has asked for the staff console to be rebuilt as **three** panels:
-superadmin (the `kobblon` and `stawrer` accounts, everything), admin, and
-moderator. That needs a rank, and there is no rank column today —
-`profiles.is_admin` is a single boolean doing two unrelated jobs at once:
-it gates the console **and** it is what paints the verified tick
-(`0023_protected_content.sql` returns `'verified'` when `is_admin`).
+**A correction first, because I wrote the wrong thing in this round before
+checking it.** I said `profiles.is_admin` was doing double duty as the staff
+gate and as the verified tick. It is not. 0139 already split the badge off
+into `has_staff_badge` and `wears_staff_badge(who)`, and the `'verified'` I
+found in `0023_protected_content.sql` is not a badge on a person at all - it
+is the `source` label on an asset, saying an admin's upload is a platform
+asset rather than a granted one. Two different things with one word on them,
+and I read the word instead of the function. Nothing about the tick is
+changing.
 
-So two migrations are coming: one adds the rank, one moves the tick off
-`is_admin` onto its own field. Until the second lands, promoting a
-moderator would hand them a verified badge nobody meant to give.
+What is actually changing is the rank. Staw wants three staff panels, and
+`profiles` had two booleans - `is_moderator` (0001) and `is_admin` (0005).
+0172 adds the third above them:
 
-**What that means for you:** anywhere an application reads `is_admin` —
-to draw a tick, or to decide somebody is staff — is reading a field that
-is about to mean one thing instead of two. Do not add a new read of it.
-When the migrations land I will send both field names in the same round,
-and the rule stands either way: **every staff power is enforced in the
-database against the rank**, so a panel that renders a button it should not
-have gets refusals rather than a working screen.
+- `is_superadmin`, a new column. Granted in the database by somebody who
+  already has it, never from a panel.
+- `public.my_staff_rank()` returns `'superadmin' | 'admin' | 'moderator' |
+  'none'` for whoever is asking, never null. **This is what a window should
+  ask.** The precedence lives in one function instead of in every reader.
+- `is_admin()` and `is_moderator()` now answer yes for the ranks above them.
+  A superadmin is an admin everywhere, without anybody remembering to say so.
+
+On the website it is `myStaffRank()` from `@/lib/api`, returning
+`StaffRank`.
+
+**What a rank is not**: a permission. It decides which buttons are worth
+drawing and nothing else - every power is checked again in the database
+against the rank, so a panel that renders a button it should not have gets a
+refusal rather than a working screen. Do not gate a *write* on it.
 
 ## 3. What else went on the list, so you are not surprised by it
 
@@ -5444,3 +5455,116 @@ The AI may warn, chat-suspend and suspend. **It may not delete an
 account** — `apply_ai_verdict` has no deletion door, deliberately, and ban
 stays with human superadmins until Staw overturns his own rule in as many
 words.
+
+---
+
+# Sixty-third round — a report with an action on the end of it, and four bugs the checks found
+
+Round 62's rank section was corrected in place before you got it; if you are
+reading it above, it is the corrected one.
+
+## 1. `take_report` is the one door, and it holds the ceiling
+
+A report could be *marked* dealt with and nothing more - the console said so
+itself: "Settling one says what staff did about it; it does not do it." Now
+there is one function that does it:
+
+```
+take_report(ticket, action, why, rule default 'other',
+            days default null, note default null) -> jsonb
+```
+
+`action` is one of `nothing`, `content_removed`, `warning`,
+`chat_suspension`, `suspension`, `termination`. Every decision writes a
+`violations` row, which is what an account's standing reads and what an
+appeal hangs off - a sanction with no row is a sanction nobody can appeal.
+
+**The ceiling, which is held in the database and not in a panel:**
+
+- a moderator **or the machine** may warn, chat-suspend, suspend, and take
+  content down
+- **`termination` is a superadmin's, and the machine is refused it by name**
+
+Staw reaffirmed that today in as many words: the AI cannot delete an
+account. There are two locks on it now - `take_report` refuses the worker
+explicitly, and `admin_delete_account` became a superadmin's in 0172.
+
+Reading a ticket is `report_ticket(id)`, which comes back with the thing
+reported, who it is about, and their history beside it - warnings, heavier
+decisions, times quietened, other reports open. A card that shows only the
+complaint produces a platform where the tenth offence is handled like the
+first.
+
+`report_queue` gained columns and kept every one it had, `about_name`
+included, so a console built against the old shape still works.
+
+## 2. The card is shared, and it is mountable
+
+`src/components/staff/ReportTriage.tsx`. No provider, no router, no session:
+it takes `ticket`, `rank` and an `onTake`, and hands back what was chosen.
+Links are plain `<a>`, deliberately, so a panel in the Workspace can mount it
+with nothing around it. `tools/site/triage-preview.html` is it with nothing
+around it, at three ranks.
+
+The rank only hides buttons. The server refuses them again.
+
+## 3. Four bugs, and three of them only appeared under a real identity
+
+Worth the space, because two are shapes `CLAUDE.md` already warns about and
+they still got past me while I was writing the warning's own feature.
+
+**`take_down` on a Create asset has never worked.** Since 0089 its asset
+branch has run `update assets set status = 'removed'`, and
+`moderation_status` is `('pending','approved','rejected')`. Every attempt
+raised `invalid input value for enum`. The value is a string in both files
+and they look consistent, which is why reading them never found it; resolving
+a report's subject did. 0174 adds the value, on its own, because Postgres
+will not let a new enum value be used in the transaction that added it.
+
+**A moderator could not suspend anybody** - `take_report` went through
+`admin_set_standing`, which is `require_admin()`. So a moderator was told
+they could suspend and then got "This is staff only" from inside the action.
+The machine, which is not an admin either, got the same.
+
+**And fixing that was the third trap again.** Writing `is_suspended`
+directly from a security-definer function does not work:
+`guard_profile_update` pins it for anybody who is not an admin, and
+`security definer` changes a function's rights, not who it reports as. A
+moderator's suspension would have returned successfully and changed nothing.
+The fix is 0105's transaction-local flag, raised and lowered around the
+write.
+
+**The guard was stale, in a way that was my own fault an hour earlier.** It
+pins a list of columns, and 0172 and 0173 added two it did not know:
+`is_superadmin` - so **any signed-in person could have made themselves a
+superadmin** with an update to their own row - and `suspended_until`, where
+setting your own end time into the past would have had the next staff view
+lift your suspension for you. Both pinned in 0175.
+
+The general shape, and the one to carry: **a guard that lists columns goes
+stale every time a column is added.** Nothing makes it list itself.
+
+## 4. The machine sees reports now, and runs on a schedule you have to set
+
+`ai_work()` returns `subject = 'report'` rows as well as pending uploads, and
+reports count towards `busy` mode - a platform drowning in complaints was
+previously "quiet" as far as the machine was concerned.
+
+`ai_work_waiting()` answers "is there anything to do" in one count:
+`is_on`, `mode`, `items`, `assets`, `reports`, `total`, `oldest_minutes`.
+`is_on` and `total` are separate on purpose - a quiet platform and a disabled
+machine look identical if you only ask one.
+
+**What is not built, and cannot be here**: the schedule. It needs the
+service-role key, which must never be in the repository, so it is a Supabase
+dashboard cron job pointed at `moderate`. `docs/deploying.md` has the step.
+`moderate` has accepted a service-role call since it was written, so nothing
+in the function changes.
+
+## Nothing changed on your side
+
+No shared signature moved. `ChatLine`, the engine's chat, the suspension card
+and `screenSay` are all exactly as round 61 left them. This round is the
+website's own moderation plumbing, and it is here because the rank function
+and the ceiling are things a staff panel in the Workspace would need to agree
+with rather than re-decide.
