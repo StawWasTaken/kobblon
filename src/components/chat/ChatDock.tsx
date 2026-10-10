@@ -1,4 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState,
+} from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -552,6 +554,7 @@ function List({
  * server's job and not a poll's.)
  */
 function useChatStanding() {
+  const mine = useId()
   const [standing, setStanding] = useState<ChatStanding | null>(null)
   const [left, setLeft] = useState('')
 
@@ -574,8 +577,16 @@ function useChatStanding() {
    * suspension and nobody else's.
    */
   useEffect(() => {
+    /*
+     * The topic carries the instance's own id, because this hook runs in
+     * two places - the dock, and each open conversation - and two channels
+     * on one topic is not two listeners. The second subscribe is refused,
+     * and whichever panel unmounts first takes the other's down with it, so
+     * the dock would quietly stop hearing anything the moment somebody
+     * closed a conversation.
+     */
     const channel = supabase
-      .channel('my-chat-standing')
+      .channel(`my-chat-standing:${mine}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_timeouts' },
@@ -583,7 +594,7 @@ function useChatStanding() {
       )
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
-  }, [ask])
+  }, [ask, mine])
 
   useEffect(() => {
     if (!standing || standing.over) return
