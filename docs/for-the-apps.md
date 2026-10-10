@@ -6078,3 +6078,116 @@ cause goes to the console. If you mirrored it, mirror the removal.
 - Owed to you from earlier rounds and still owed: `marks` filled in
   `LocalEcho`, the single-use code in the play link, the two camera signs,
   pointer lock on the way into first person, and shiftlock.
+
+---
+
+# Sixty-eighth round — masks that fit, letters sent one at a time, and three things that needed a reload
+
+Staw tested the moderation properly and found three more holes. Two are
+server-side and therefore yours the moment the migrations are applied; the
+rest is the website catching up with what the server already knew.
+
+## 1. A mask is now the length of the word
+
+Every masked word came back as exactly four bullets, whatever it was.
+`0198_a_mask_the_length_of_the_word.sql` makes it one bullet per letter:
+
+```
+fucker              -> ••••••
+you are a (fucker)  -> you are a (••••••)
+motherfucker        -> ••••••••••••
+```
+
+Punctuation hanging off the token is kept, so the brackets survive. Spans
+(the spelled-out ones) are masked to the width they actually cover.
+
+**If either application renders masked text, nothing changes for you** —
+the server sends the string. But if anything on your side matches on the
+literal `••••` to detect "this was censored", it must stop: the marker is
+now a run of bullets of any length. `was_masked` on the queue row uses
+`like '%••••%'`, which still holds, because four is the shortest word on
+the list — but do not copy that test for a two- or three-letter word.
+
+## 2. Sending a word one letter per message
+
+Staw's screenshot: seven bubbles reading f, u, c, k, y, o, u. Every check
+this platform has reads **one line at a time**, and there is nothing wrong
+with the letter "f". The line was never the unit people say things in; it
+is the unit the database happens to store.
+
+`0199_one_letter_per_message_is_still_a_word.sql`: when a line of 1–3
+alphanumeric characters arrives, the recent run of equally short lines from
+the same person in the same conversation (or world, or community) is joined
+and read as one line, using the machinery 0183 already had for "f u c k"
+typed in one go. A real sentence is not short, so it ends the run; the run
+ages out after three minutes; at most eleven pieces.
+
+Proven: `f`, `u`, `c` go through and `k` is refused —
+
+> That message was not sent: spelling a word out one letter at a time is
+> still saying it.
+
+— with a strike recorded, so three of these in ten minutes is still a
+suspension. `ok`, `hi`, `yes`, `lol`, `u`, `2` in a row are all untouched.
+
+**This matters for you**: the refusal arrives on the *send*, and it is the
+same `check_violation` shape as every other refusal. If the Launcher's chat
+sends short lines rapidly, it will now occasionally get a refusal on a
+message that looks innocent on its own. Show the server's text; do not try
+to explain it yourself.
+
+## 3. Three things that needed a page reload, and no longer do
+
+All three were the website's, but the shapes are general and two of them
+are shapes you can have too.
+
+- **An edit painted the typed text, not the stored row.** `editMessage`
+  discarded the response and wrote what the person typed into state. The
+  censor runs on updates, so an edit that came back masked showed
+  *uncensored* until a reload — the one case where the filter looks like it
+  did nothing. `editMessage` now returns the stored `Message` and the
+  window paints that. **Anywhere you write back what was typed rather than
+  what was stored, you have this bug.**
+- **The other person never saw an edit or a deletion.** The conversation
+  subscribed to `INSERT` on `messages` only. It now also takes `UPDATE`,
+  which covers both, because a deletion here is `is_removed` being set.
+- **The suspension card still needed a reload.** The bar updated and the
+  card did not, for the reason in round 67 — fixed there. On top of that
+  the standing now re-asks when the tab comes back to the front and every
+  thirty seconds while it is in front, because realtime only delivers once
+  `chat_timeouts` is in the publication and **a dropped socket is silent**.
+  Worth copying: a realtime subscription with no fallback fails by showing
+  nothing, which is indistinguishable from there being nothing to show.
+
+## 4. Cosmetic
+
+Chat bubbles now cut the corner nearest the avatar (`rounded-br-[5px]` on
+your own, `rounded-bl-[5px]` on theirs) so the bubble points at whoever said
+it. Shared component, so the Workspace gets it on the next pull.
+
+## Coming next, and it will touch you
+
+Account standing and support are being rebuilt together, and the shape is
+now in `docs/roadmap.md`: standing becomes a **behaviour bar** that decays
+upward over days or weeks, that a superadmin can clear outright, and that
+decides how hard the platform comes down on somebody next time. Every past
+action is a row with a popup card carrying who did it — **Mod, Admin,
+Superadmin, or Kobby**, which is the name we are giving the automated
+system — when, for how long, why, and an appeal button. Support becomes a
+ticket card rather than a contact form.
+
+The reason to flag it now: **"Kobby" becomes a moderator identity**, and
+the standing bar becomes a number that affects enforcement. If either
+application ever shows a sanction or who issued it, wait for that round
+rather than inventing a label.
+
+## Still not done, and still ours
+
+- **Migrations 0172–0199 are not on production.** None of the three
+  bypasses above is closed until Staw runs them.
+- **The cron job for `moderate` is still not set up**, so the machine still
+  only runs when somebody presses "Run now".
+- `supabase/config.toml` still lacks `[functions.moderate] verify_jwt = false`.
+- Still owed from earlier rounds: `marks` in `LocalEcho`, the single-use
+  code in the play link, the two camera signs, pointer lock into first
+  person, and shiftlock.

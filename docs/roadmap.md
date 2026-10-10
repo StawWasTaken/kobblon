@@ -273,10 +273,41 @@ necessary in the first place.
 
 - **Support** — a ticket somebody can open, follow, and get a reply on,
   landing in the panel above alongside reports.
+- **Support** is a **ticket card**, Roblox's shape: who you are, what device,
+  which category, what happened, Continue. Not a form that feels like a
+  contact page — a thing with a state, that you can come back to.
 - **Account standing** — one page that says plainly where a person stands:
   what they were sanctioned for, when it ends, what it stops them doing, and
   how to appeal it. The chat suspension card is the shape to copy; standing
   is that, for the whole account.
+
+### The behaviour bar
+
+Standing is **a bar, not a list**. How you have behaved, as one visible
+quantity, and it decides how hard the platform comes down on you next time:
+the higher it is, the less you are moderated and the lighter the punishment.
+
+- Low on the bar, it **climbs back by itself** — over days, sometimes weeks,
+  sometimes months, depending how far it fell.
+- A **superadmin can clear it outright**, and you are good again
+  immediately. Nobody else can.
+- Every past moderation action is **shown here** — a row each, with the
+  basics visible, and a **popup card** on click carrying the whole of it:
+  who moderated you (**Mod, Admin, Superadmin, or Kobby**, which is what we
+  call the automated system), when, against what, for how long, for what,
+  why, and the button to **appeal**.
+
+**Visual, not a table of text.** Bars, cards, the shapes already used for
+the chat suspension card — this is the page people land on at the worst
+moment they will have on Kobblon, and it should read as something built.
+
+### One ecosystem
+
+The standing page, the three staff panels and the moderation system are the
+same system seen from three sides, and they are built that way: a moderator
+acts in the panel, the action lands on the person's standing with its reason
+and its author, the bar moves, the appeal goes back to the panel. No part of
+it is a separate feature with its own copy of the truth.
 
 ## The outsider pages
 

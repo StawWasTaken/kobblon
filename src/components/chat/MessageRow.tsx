@@ -115,6 +115,9 @@ export function MessageRow({
           <div
             className={cn(
               'relative rounded-2xl px-3 py-1.5 text-sm leading-snug',
+              // The corner nearest the avatar is cut short, so the bubble
+              // points at whoever said it rather than floating beside them.
+              mine ? 'rounded-br-[5px]' : 'rounded-bl-[5px]',
               mine ? 'bg-brand text-white' : 'bg-ink-hover text-white/90',
               hidden && 'cursor-pointer select-none',
             )}

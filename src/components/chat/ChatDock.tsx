@@ -150,6 +150,25 @@ function Window({
           const incoming = payload.new as Message
           setMessages((all) => (all.some((m) => m.id === incoming.id) ? all : [...all, incoming]))
         })
+      /*
+       * Edits and deletions, too.
+       *
+       * Only inserts were listened for, so an edit or a deletion reached
+       * the other side on their next reload and not before - they sat
+       * reading a sentence that had been taken back minutes ago. A delete
+       * here is an update of `is_removed`, so both arrive as the same
+       * event and the row is simply replaced by whatever the server now
+       * holds.
+       */
+      .on('postgres_changes',
+        {
+          event: 'UPDATE', schema: 'public', table: 'messages',
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const changed = payload.new as Message
+          setMessages((all) => all.map((m) => (m.id === changed.id ? changed : m)))
+        })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [conversation.id, pending])
@@ -330,10 +349,11 @@ function Window({
                         : conversation.members.find((member) => member.id === m.sender_id)
                     }
                     onEdit={async (body) => {
-                      await editMessage(m.id, body)
-                      setMessages((all) =>
-                        all.map((x) =>
-                          x.id === m.id ? { ...x, body, edited_at: new Date().toISOString() } : x))
+                      // The stored row, not the typed text: an edit can come
+                      // back masked, and painting what was typed would hide
+                      // that until a reload.
+                      const saved = await editMessage(m.id, body)
+                      setMessages((all) => all.map((x) => (x.id === m.id ? saved : x)))
                     }}
                     onDelete={async () => {
                       await deleteMessage(m.id)
@@ -609,6 +629,28 @@ function useChatStanding() {
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
   }, [ask, mine])
+
+  /*
+   * And a way that does not depend on the socket.
+   *
+   * Realtime only delivers once `chat_timeouts` is in the publication, and
+   * a dropped socket is silent - the card simply never appears, which is
+   * exactly how this read when it was broken. Asking again when the tab
+   * comes back to the front, and every half minute while it is in front,
+   * costs one small call and means the worst case is thirty seconds late
+   * rather than "until you reload".
+   */
+  useEffect(() => {
+    const again = () => { if (document.visibilityState === 'visible') ask() }
+    document.addEventListener('visibilitychange', again)
+    window.addEventListener('focus', again)
+    const timer = setInterval(again, 30_000)
+    return () => {
+      document.removeEventListener('visibilitychange', again)
+      window.removeEventListener('focus', again)
+      clearInterval(timer)
+    }
+  }, [ask])
 
   useEffect(() => {
     if (!standing || standing.over) return

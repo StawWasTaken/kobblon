@@ -447,9 +447,18 @@ export async function listMessages(conversationId: string): Promise<Message[]> {
   return (rows ?? []).reverse()
 }
 
-export async function editMessage(id: number, body: string) {
-  unwrap(await supabase.from('messages').update({ body: body.trim() })
-    .eq('id', id).select('id').single())
+/**
+ * Edit a message, and hand back what the server actually stored.
+ *
+ * Not what was typed. The censor runs on the update as well as the insert,
+ * so the row that comes back can be masked - and a window that painted the
+ * typed text instead showed the person their own line uncensored until they
+ * reloaded, which is the one case where the filter looks like it did
+ * nothing.
+ */
+export async function editMessage(id: number, body: string): Promise<Message> {
+  return unwrap(await supabase.from('messages').update({ body: body.trim() })
+    .eq('id', id).select('*').single()) as Message
 }
 
 export async function deleteMessage(id: number) {
