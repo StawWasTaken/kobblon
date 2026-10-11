@@ -1655,7 +1655,15 @@ export function MachineSection() {
        * and this shows its words rather than summarising them away.
        */
       if (done.trouble?.length) {
-        say(`Looked at ${done.looked}, decided ${done.decided}. ${done.trouble.join(' ')}`, 'error')
+        /*
+         * A spent rate limit is not a failure: the work was not lost, it
+         * was not reached. Red for it teaches somebody to ignore red.
+         */
+        const paused = done.trouble.every((one) => one.includes('is spent for this minute'))
+        say(
+          `Looked at ${done.looked}, decided ${done.decided}. ${done.trouble.join(' ')}`,
+          paused ? 'info' : 'error',
+        )
       } else {
         say(
           done.looked === 0

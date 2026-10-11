@@ -7135,3 +7135,31 @@ side reads `request.jwt.claim.<name>`, it has the same bug today.
 
 Apply order from here: 0214, 0215, 0216, 0217, 0218, 0219, 0220, 0221,
 0222.
+
+# Round eighty: it runs, and what the first real run found
+
+Kobby screened its first twelve things today: four decided, a slur
+quieted on rule 2, three lines read and left alone. The worker is alive.
+Three things came back from that one minute, all now handled in
+`supabase/functions/moderate`:
+
+- **429.** `openai/gpt-oss-20b` has eight thousand tokens a minute on the
+  free tier and twelve jobs is more than that. Groq says how long to wait
+  in its own sentence, so that is read and waited out once. A second 429
+  means the minute really is spent: the run stops there and says so,
+  rather than collecting the same refusal nine more times. Nothing was
+  marked read, so it is a pause, not a loss, and the console says it in
+  blue rather than red.
+- **400 `json_validate_failed`.** That model sometimes refuses
+  `response_format: json_object` outright. Asked again without the flag
+  it answers JSON anyway, and the reply is read with `firstJson`, which
+  takes the first `{...}` out of a model that wrapped it in a sentence.
+- **`Named a rule that does not exist: [sexual]`.** The prompts put each
+  rule's code in brackets, so a model answering `[sexual]` copied what it
+  was shown. `tidyRule` takes the brackets, quotes and case off in the
+  one place that knows both how the prompt is written and how the column
+  is spelt.
+
+Nothing in the database changed for this round; it is all in the worker.
+If you call a model from the applications, the first two are worth
+copying rather than rediscovering.

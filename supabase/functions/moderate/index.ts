@@ -139,6 +139,127 @@ The reason is shown to the person who wrote the line. Write it plainly, say what
  * own schedule, so a name that worked last month answering 404 today is the
  * ordinary case rather than the strange one.
  */
+/*
+ * One way out to Groq, for every ask.
+ *
+ * Two things the first live run found, inside one minute of real traffic:
+ *
+ *   * **429.** `openai/gpt-oss-20b` has eight thousand tokens a minute on
+ *     the free tier, and twelve jobs is more than that. Groq says how long
+ *     to wait in its own sentence, so that is read and waited out once. A
+ *     second 429 means the minute is genuinely spent: the run stops there
+ *     and says so, rather than grinding through the rest of the queue
+ *     collecting the same refusal nine more times. What is left is still
+ *     waiting, and the next run takes it.
+ *   * **400 `json_validate_failed`.** Asking that model for
+ *     `response_format: json_object` fails outright on some lines - Groq's
+ *     own words are "Failed to validate JSON. Please adjust your prompt".
+ *     Asked again without the flag it answers JSON anyway, because every
+ *     prompt here already says to, and the reply is read with `firstJson`
+ *     since a model left to itself sometimes wraps it in a sentence.
+ */
+const sleep = (ms: number) => new Promise((go) => setTimeout(go, ms))
+
+/**
+ * Whether the minute is spent, for this run.
+ *
+ * Module-level because every ask shares it and the run loop reads it, and
+ * cleared at the top of every run because an edge function's isolate is
+ * reused between calls: a flag left standing would stop the next run
+ * before it began.
+ */
+let limitSpent = false
+
+/** How long Groq said to wait, out of its own sentence. Capped at 20s. */
+function waitFromGroq(said: string): number {
+  const found = said.match(/try again in ([\d.]+)s/i)
+  const seconds = found ? Number(found[1]) : NaN
+  if (!Number.isFinite(seconds)) return 2000
+  return Math.min(Math.ceil(seconds * 1000) + 250, 20_000)
+}
+
+/** The first `{...}` in a reply, for a model that wrapped it in words. */
+function firstJson(text: string): Record<string, unknown> | null {
+  const from = text.indexOf('{')
+  const to = text.lastIndexOf('}')
+  if (from < 0 || to <= from) return null
+  try {
+    return JSON.parse(text.slice(from, to + 1)) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+async function postToGroq(
+  body: Record<string, unknown>,
+): Promise<{ text: string } | { trouble: string }> {
+  const model = String(body.model ?? '')
+  let waited = false
+  let plain = false
+
+  for (;;) {
+    const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${GROQ_KEY}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }).catch((why) => ({ failed: String(why) }) as const)
+
+    if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
+
+    if (said.ok) {
+      const answer = await said.json().catch(() => null)
+      const text = answer?.choices?.[0]?.message?.content
+      if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+      return { text }
+    }
+
+    const why = await said.text().catch(() => '')
+
+    if (said.status === 429 && !waited) {
+      waited = true
+      await sleep(waitFromGroq(why))
+      continue
+    }
+    if (said.status === 429) {
+      limitSpent = true
+      return {
+        trouble:
+          `Groq's limit for ${model} is spent for this minute, so the run stopped `
+          + 'there. What is left is still waiting, and the next run takes it.',
+      }
+    }
+
+    if (said.status === 400 && why.includes('json_validate_failed') && !plain) {
+      plain = true
+      delete body.response_format
+      continue
+    }
+
+    // Groq's own words, trimmed. A retired model name, a key that is not a
+    // key, and a rate limit all land here and all read differently.
+    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
+  }
+}
+
+/**
+ * A rule code as the model wrote it, spelt as the database spells it.
+ *
+ * The prompts number the rules and put each code in brackets, so a model
+ * answering `[sexual]` has copied what it was shown rather than got it
+ * wrong - and `judge_report` then said "Named a rule that does not exist:
+ * [sexual]" and left a real report unsure. The brackets, quotes and case
+ * come off here, the one place that knows both how the prompt is written
+ * and how the column is spelt.
+ */
+function tidyRule(said: unknown): string | null {
+  if (typeof said !== 'string') return null
+  const word = said.trim().replace(/^[\[("'`]+/, '').replace(/[\])"'`.]+$/, '').trim().toLowerCase()
+  return word && word !== 'null' ? word : null
+}
+
 async function askGroq(
   model: string,
   words: string,
@@ -151,39 +272,21 @@ async function askGroq(
     ]
     : words
 
-  const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${GROQ_KEY}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      max_tokens: 200,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: RULES },
-        { role: 'user', content },
-      ],
-    }),
-  }).catch((why) => ({ failed: String(why) }) as const)
-
-  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
-
-  if (!said.ok) {
-    // Groq's own words, trimmed. A retired model name, a key that is not a
-    // key, and a rate limit all land here and all read differently.
-    const why = await said.text().catch(() => '')
-    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
-  }
-
-  const body = await said.json().catch(() => null)
-  const text = body?.choices?.[0]?.message?.content
-  if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+  const said = await postToGroq({
+    model,
+    temperature: 0,
+    max_tokens: 200,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: RULES },
+      { role: 'user', content },
+    ],
+  })
+  if ('trouble' in said) return said
+  const text = said.text
 
   try {
-    const verdict = JSON.parse(text)
+    const verdict = firstJson(text) ?? JSON.parse(text)
     const decision = String(verdict.decision ?? '').toLowerCase()
     if (!['approved', 'rejected', 'unsure'].includes(decision)) {
       return { trouble: `${model} answered "${decision.slice(0, 40)}", which is not a decision.` }
@@ -323,33 +426,21 @@ async function askGroqAppeal(model: string, rules: {
 async function askGroqJson(
   model: string, system: string, words: string, limit: number,
 ): Promise<{ json: Record<string, unknown> } | { trouble: string }> {
-  const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { authorization: `Bearer ${GROQ_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      max_tokens: limit,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: words },
-      ],
-    }),
-  }).catch((why) => ({ failed: String(why) }) as const)
-
-  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
-  if (!said.ok) {
-    const why = await said.text().catch(() => '')
-    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
-  }
-
-  const body = await said.json().catch(() => null)
-  const text = body?.choices?.[0]?.message?.content
-  if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+  const said = await postToGroq({
+    model,
+    temperature: 0,
+    max_tokens: limit,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: words },
+    ],
+  })
+  if ('trouble' in said) return said
+  const text = said.text
 
   try {
-    return { json: JSON.parse(text) }
+    return { json: firstJson(text) ?? JSON.parse(text) }
   } catch {
     return { trouble: `${model} did not answer in JSON.` }
   }
@@ -361,39 +452,24 @@ async function askGroqReport(model: string, rules: {
 }[], ticket: string): Promise<
   { founded: boolean; rule: string | null; reason: string } | { trouble: string }
 > {
-  const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${GROQ_KEY}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      max_tokens: 250,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: reportPrompt(rules) },
-        { role: 'user', content: ticket },
-      ],
-    }),
-  }).catch((why) => ({ failed: String(why) }) as const)
-
-  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
-  if (!said.ok) {
-    const why = await said.text().catch(() => '')
-    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
-  }
-
-  const body = await said.json().catch(() => null)
-  const text = body?.choices?.[0]?.message?.content
-  if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+  const said = await postToGroq({
+    model,
+    temperature: 0,
+    max_tokens: 250,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: reportPrompt(rules) },
+      { role: 'user', content: ticket },
+    ],
+  })
+  if ('trouble' in said) return said
+  const text = said.text
 
   try {
-    const verdict = JSON.parse(text)
+    const verdict = firstJson(text) ?? JSON.parse(text)
     return {
       founded: verdict.founded === true,
-      rule: typeof verdict.rule === 'string' && verdict.rule.trim() ? verdict.rule.trim() : null,
+      rule: tidyRule(verdict.rule),
       reason: String(verdict.reason ?? '').slice(0, 300),
     }
   } catch {
@@ -408,36 +484,21 @@ async function askGroqChat(model: string, rules: {
   { breaks: boolean; rule: string | null; quote: string | null; reason: string }
   | { trouble: string }
 > {
-  const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${GROQ_KEY}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      max_tokens: 250,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: chatPrompt(rules) },
-        { role: 'user', content: line },
-      ],
-    }),
-  }).catch((why) => ({ failed: String(why) }) as const)
-
-  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
-  if (!said.ok) {
-    const why = await said.text().catch(() => '')
-    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
-  }
-
-  const body = await said.json().catch(() => null)
-  const text = body?.choices?.[0]?.message?.content
-  if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+  const said = await postToGroq({
+    model,
+    temperature: 0,
+    max_tokens: 250,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: chatPrompt(rules) },
+      { role: 'user', content: line },
+    ],
+  })
+  if ('trouble' in said) return said
+  const text = said.text
 
   try {
-    const verdict = JSON.parse(text)
+    const verdict = firstJson(text) ?? JSON.parse(text)
     const breaks = verdict.breaks === true
     /*
      * A code that is not on the list it was given is not a refusal to
@@ -446,7 +507,7 @@ async function askGroqChat(model: string, rules: {
      * than corrected here so the console can see the model drifting off
      * its own list.
      */
-    const rule = breaks && typeof verdict.rule === 'string' ? verdict.rule.trim() : null
+    const rule = breaks ? tidyRule(verdict.rule) : null
     return {
       breaks: breaks && Boolean(rule),
       rule,
@@ -692,6 +753,13 @@ async function handle(request: Request): Promise<Response> {
     ord: number; code: string; title: string; body: string; gravity: number
   }[]
 
+  /*
+   * Cleared here rather than where it is declared: the isolate is reused
+   * between calls, so a run that spent the minute would otherwise stop
+   * the next one before it started.
+   */
+  limitSpent = false
+
   let decided = 0
   let unsure = 0
   /* What was actually done to anybody, by rung, so the console can say so. */
@@ -707,6 +775,13 @@ async function handle(request: Request): Promise<Response> {
     subject: string; subject_id: string; kind: string; name: string
     words: string; picture: string | null
   }[]) {
+    /*
+     * The minute is spent. Everything still in `work` is still waiting -
+     * nothing was marked read - so this is a pause, not a loss, and the
+     * run says which it was.
+     */
+    if (limitSpent) break
+
     /*
      * A line somebody said goes down its own path: its own prompt, the
      * numbered rules, and `judge_chat_line` rather than
