@@ -636,7 +636,12 @@ export type ModerationRow = {
   appeal_note: string | null
   appeal_at: string | null
   appeal_decided_at: string | null
+  /** All four walls at once: not void, a go left, the last one answered, in time. */
   appealable: boolean
+  /** Goes used, of the two anybody gets. */
+  appeals_used: number
+  /** When the window shuts. Fifteen days, or longer for a closed account. */
+  appeal_closes_at: string | null
 }
 
 /** The same, about somebody else, for a staff panel. */

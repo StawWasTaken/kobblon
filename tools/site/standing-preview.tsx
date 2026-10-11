@@ -35,6 +35,7 @@ const base: ModerationRow = {
   counts: true, weight: 9.3,
   appeal_status: null, appeal_body: null, appeal_note: null,
   appeal_at: null, appeal_decided_at: null, appealable: true,
+  appeals_used: 0, appeal_closes_at: ahead(13),
 }
 
 const rows: ModerationRow[] = [
@@ -44,7 +45,7 @@ const rows: ModerationRow[] = [
     by_rank: 'superadmin', at: ago(1), until: ahead(29), weight: 44,
     reason: 'Going after the same person across four Worlds after being told to stop.',
     appeal_status: 'open', appeal_body: 'It was not me, somebody was on my account.',
-    appeal_at: ago(1), appealable: false,
+    appeal_at: ago(1), appealable: false, appeals_used: 1,
   },
   {
     ...base, key: 'c', kind: 'chat', action: 'chat_timeout', by_rank: 'kobby',
@@ -61,7 +62,8 @@ const rows: ModerationRow[] = [
     weight: 20, reason: 'An uploaded texture that was somebody else’s work.',
     appeal_status: 'declined', appeal_body: 'I drew it myself.',
     appeal_note: 'We found the original, dated two years earlier.',
-    appeal_at: ago(38), appeal_decided_at: ago(36), appealable: false,
+    appeal_at: ago(38), appeal_decided_at: ago(36), appealable: true,
+    appeals_used: 1, appeal_closes_at: ahead(5),
   },
   {
     ...base, key: 'e', violation_id: 15, action: 'content_removed', rule: 'sexual',

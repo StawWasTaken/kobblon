@@ -12,7 +12,7 @@ import {
 } from '@/components/social/standing'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
-import { fileAppeal, getAppeal, getViolation } from '@/lib/api'
+import { fileAppeal, getAppeal, getViolation, myAppealState } from '@/lib/api'
 
 /*
  * One decision, in full.
@@ -62,6 +62,7 @@ export default function StandingItem() {
 
   const decision = useAsync(async () => (number ? getViolation(number) : null), [number])
   const appeal = useAsync(async () => (number ? getAppeal(number) : null), [number])
+  const state = useAsync(async () => (number ? myAppealState(number) : null), [number])
 
   const [writing, setWriting] = useState(false)
   const [words, setWords] = useState('')
@@ -77,6 +78,7 @@ export default function StandingItem() {
       setWriting(false)
       setWords('')
       appeal.reload()
+      state.reload()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'That did not send.', 'error')
     } finally {
@@ -217,15 +219,17 @@ export default function StandingItem() {
       </section>
 
       {/* ------------------------------------------------------------ appeal */}
-      {!appeal.data && !one.is_void && (
+      {state.data?.may && (
         <Card className="space-y-4 p-5 sm:p-6">
           {writing ? (
             <>
               <div>
-                <h2 className="font-display text-lg font-extrabold">Appeal this decision</h2>
+                <h2 className="font-display text-lg font-extrabold">
+                  {state.data?.used ? 'Your second and last appeal' : 'Appeal this decision'}
+                </h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
-                  Say what you think was missed. You get one appeal for each decision, so put
-                  everything in it.
+                  We look at what you were sanctioned for again, so it can be lifted, softened,
+                  or made heavier if what we find is worse.
                 </p>
               </div>
               <textarea
@@ -253,8 +257,10 @@ export default function StandingItem() {
             <div className="flex flex-wrap items-center gap-4">
               <FontAwesomeIcon icon={faGavel} className="text-lg text-brand-bright" />
               <p className="min-w-0 flex-1 text-sm leading-relaxed text-white/65">
-                Think this is wrong? Appeal it once, and somebody who was not part of the
-                decision reads it.
+                {state.data?.used
+                  ? 'You have one more go at this'
+                  : 'Think this is wrong? Somebody who was not part of it reads your appeal'}
+                {state.data?.closes_at && <>, until <span className="font-bold text-white">{day(state.data.closes_at)}</span></>}.
               </p>
               <Button variant="subtle" onClick={() => setWriting(true)}>Appeal this</Button>
             </div>

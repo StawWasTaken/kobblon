@@ -7,6 +7,7 @@ import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
 import { formatOf, socketFor, type WornFit } from '@/engine'
 import { FLOOR_FACE } from './mannequin'
 import { plainFace } from './plainFace'
+import { timeAgo } from './format'
 import type {
   ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
@@ -2335,11 +2336,31 @@ export async function getViolation(id: number): Promise<Violation | null> {
   return (data as Violation | null) ?? null
 }
 
+/**
+ * How a decision of yours stands on appeals: goes used, when the window
+ * shuts, and whether another one may be written now. Straight from the
+ * server, because the four walls are the server's to decide.
+ */
+export async function myAppealState(violation: number): Promise<{
+  used: number
+  closes_at: string | null
+  may: boolean
+}> {
+  const rows = unwrap(await supabase.rpc('my_appeal_state', { violation })) as {
+    used: number; closes_at: string | null; may: boolean
+  }[] | null
+  return rows?.[0] ?? { used: 0, closes_at: null, may: false }
+}
+
 export async function getAppeal(violationId: number): Promise<Appeal | null> {
   const { data, error } = await supabase
     .from('appeals')
     .select('id, violation_id, body, status, decision_note, decided_at, created_at')
     .eq('violation_id', violationId)
+    // The latest go, since 0223 allows a second one. `maybeSingle` threw the
+    // moment anybody used theirs.
+    .order('attempt', { ascending: false })
+    .limit(1)
     .maybeSingle()
   if (error) throw new Error(error.message)
   return (data as Appeal | null) ?? null
@@ -3619,7 +3640,45 @@ export async function checkTheMachine(): Promise<MachineStep[]> {
     })
   }
 
+  try {
+    const door = await pokeState()
+    out.push({
+      step: 'It is woken the moment work lands',
+      ok: Boolean(door.wired && door.net_ready),
+      said: !door.net_ready
+        ? 'pg_net is not on for this project, so the database cannot call out. Database, Extensions, pg_net.'
+        : !door.wired
+          ? 'No address or key stored, so new work waits for the clock instead. The statement that sets it is in migration 0224.'
+          : door.last_at
+            ? `Wired. It last knocked ${timeAgo(door.last_at)}.`
+            : 'Wired, and it has not had to knock yet.',
+    })
+  } catch (error) {
+    out.push({
+      step: 'It is woken the moment work lands',
+      ok: false,
+      said: error instanceof Error ? error.message : 'That could not be read.',
+    })
+  }
+
   return out
+}
+
+/**
+ * Whether the database can wake the worker by itself, and when it last did.
+ *
+ * Never the address and never the key: `poke_state` does not return them,
+ * on purpose.
+ */
+export async function pokeState(): Promise<{
+  wired: boolean
+  net_ready: boolean
+  last_at: string | null
+}> {
+  const rows = unwrap(await supabase.rpc('poke_state')) as {
+    wired: boolean; net_ready: boolean; last_at: string | null
+  }[] | null
+  return rows?.[0] ?? { wired: false, net_ready: false, last_at: null }
 }
 
 export async function groqModels(): Promise<string[]> {

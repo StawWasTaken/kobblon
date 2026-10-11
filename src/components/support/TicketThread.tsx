@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { closeTicket, getTicket, listTicketMessages, replyTicket } from '@/lib/api'
 import { avatarOf } from '@/lib/avatars'
+import { asset } from '@/lib/asset'
 import { timeAgo } from '@/lib/format'
 import { lookOf, topics } from '@/pages/Support'
 import { cn } from '@/lib/cn'
@@ -19,15 +20,15 @@ import { cn } from '@/lib/cn'
 /**
  * The face Kobblon answers with.
  *
- * Not a moderator's avatar, and not the plain logomark either: support
- * speaks for the platform, and putting a name and a face on a reply is how
- * moderators get followed around. The file is an SVG so a 36px row and a
- * retina screen are the same file.
+ * The site's own favicon, the same file the browser tab shows - not a
+ * drawing of it. Staw: "just use the favicon we're using for the website but
+ * as the pfp (like same image)". A second mark drawn to look like the first
+ * is a second mark to keep in step, and it was already out of step.
  */
 export function KobblonFace({ className }: { className?: string }) {
   return (
     <img
-      src="/brand/kobblon-reply.svg"
+      src={asset('/brand/favicon.png')}
       alt=""
       aria-hidden="true"
       className={cn('h-9 w-9 shrink-0 rounded-xl', className)}

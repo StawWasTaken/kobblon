@@ -7163,3 +7163,92 @@ Three things came back from that one minute, all now handled in
 Nothing in the database changed for this round; it is all in the worker.
 If you call a model from the applications, the first two are worth
 copying rather than rediscovering.
+
+# Round eighty-one: the worker is woken, and an appeal can be sent twice
+
+Two things in this round, plus a mark that was wrong.
+
+## The worker is woken the moment work lands
+
+Staw asked whether the machine answers immediately when something new
+arrives. It did not, and nothing in the database has ever called it. There
+were exactly two ways in and both were clocks: the button in the staff
+console, and a GitHub schedule that does not keep time on a quiet repository
+- its runs have landed five hours apart.
+
+`0224` adds the missing one. An `after insert` trigger on the six tables
+work arrives in (avatar items, assets, reports, support tickets, appeals,
+chat lines) knocks on the edge function through `pg_net`, which posts and
+does not wait for an answer. Four things about it worth knowing on your
+side:
+
+* **The mode decides.** "Whenever anything is waiting" knocks at once.
+  "Only when the queue is long" knocks as soon as the queue gets there.
+  "Only what has waited too long" is never woken early, because waiting is
+  what that setting means.
+* **Twenty seconds between knocks**, kept on the row, so a hundred rows
+  landing together is one run and not a hundred.
+* **It cannot fail a write.** The trigger swallows everything; if the knock
+  cannot go out, the row still lands and the clock picks the work up as
+  before.
+* **The address and the key live in `ai_poke`**, a table with row level
+  security on and no grants to any role at all. `authenticated`, `anon` and
+  `service_role` all get "permission denied" reading it, and only the
+  definer functions touch it. There is deliberately no way to set it from
+  the console: a service-role key typed into a web page is a service-role
+  key that went through a browser.
+
+Nothing here is a shared component, so nothing to import. What it means for
+you is only that a thing screened in the Workspace now comes back in
+seconds rather than on the next quarter hour, when the mode allows it.
+
+`poke_state()` is new and moderator-only: `wired`, `net_ready`, `last_at`.
+Never the url and never the key. The console's "Check it" grew a fifth step
+off it.
+
+## An appeal can be sent twice, and only for a while
+
+`0223`. The rule was one appeal per decision, for ever, and the only wall
+was a unique index.
+
+* **Two goes.** Send one; we answer it. If it was declined you may send a
+  second, and that is the last. Upheld means there is nothing left, and an
+  appeal still open is not a reason to write another.
+* **Fifteen days** from the decision for everything short of closing an
+  account. A closed account is **a month**, and **six months in the EU**.
+* The EU part reads the country kept on `account_sessions`, which comes
+  from the browser's time zone and is a hint. So it is used **only to
+  lengthen** a window, never to shorten one. Somebody who sets their
+  machine to Dublin gets six months; nobody loses a day over a zone we read
+  wrong.
+
+Shapes that changed, if you read any of this:
+
+* `appeals` gained `attempt` (1 or 2). The unique index is now
+  `(violation_id, attempt)`. **Anything selecting a single appeal row by
+  `violation_id` will start returning two** - the website's own `getAppeal`
+  did, and now orders by `attempt desc limit 1`.
+* `my_moderation_history()` gained `appeals_used` and `appeal_closes_at`,
+  and `appealable` now means all four walls rather than "no appeal yet".
+* `my_appeal_state(violation)` is new: `used`, `closes_at`, `may`.
+* `moderation_history_of(target)` was quietly returning one row per appeal
+  per decision from the same join. Fixed the same way.
+
+On the website the writer moved: there is an **Appeal this** button beside
+Close in the decision card, and the form opens in that same card. Under it,
+one line saying when the window shuts.
+
+One thing that is **not** built, said plainly: the appeal review can be
+described as able to make a sanction heavier, and the words on the page and
+in the policies say so - but there is no door for it in `decide_appeal` or
+`judge_appeal`, which take upheld or declined. A moderator who finds worse
+re-sanctions from the person's panel, by hand. If that should be one
+action on the appeal itself, it is a migration nobody has written.
+
+## The face on a support reply
+
+It was `brand/kobblon-reply.svg`, a mark drawn to look like the favicon.
+Staw: "i gave you the image i wanted you to use, that image, not try to
+recreate it - just use the favicon we're using for the website". It is now
+`brand/favicon.png`, the same file the browser tab shows, and the SVG is
+deleted. If you drew your own anywhere, use the favicon.

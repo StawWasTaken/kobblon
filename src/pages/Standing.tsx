@@ -305,6 +305,9 @@ export function RowCard({ one, onClose, onAppealed }: {
               {one.appeal_status === 'upheld' ? 'Your appeal was upheld'
                 : one.appeal_status === 'declined' ? 'Your appeal was declined'
                 : 'Your appeal is being looked at'}
+              {one.appeals_used > 1 && (
+                <span className="text-sm font-bold text-muted">· second go</span>
+              )}
             </p>
             <p className="text-sm leading-relaxed text-muted">
               {one.appeal_status === 'open'
@@ -334,45 +337,50 @@ export function RowCard({ one, onClose, onAppealed }: {
           </Card>
         )}
 
-        {one.appealable && (
+        {/*
+          * The writer, opened by the button beside Close rather than sitting
+          * open under every decision. Staw asked for it in the same card, and
+          * a form nobody has asked for yet is a form in the way of reading.
+          */}
+        {writing && (
           <Card className="space-y-3 p-4">
-            {writing ? (
-              <>
-                <p className="font-display text-lg font-extrabold">Send an appeal</p>
-                <p className="text-sm leading-relaxed text-muted">
-                  One appeal for each decision, so put everything in it. A person reads it.
-                </p>
-                <textarea
-                  value={words}
-                  onChange={(e) => setWords(e.target.value)}
-                  rows={6}
-                  maxLength={2000}
-                  placeholder="What happened, from your side."
-                  aria-label="Your appeal"
-                  className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
-                />
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="min-w-0 flex-1 text-xs text-muted">
-                    {words.trim().length < 20
-                      ? `At least ${20 - words.trim().length} more characters.`
-                      : `${2000 - words.length} left.`}
-                  </p>
-                  <Button variant="ghost" onClick={() => setWriting(false)}>Cancel</Button>
-                  <Button onClick={send} loading={sending} disabled={words.trim().length < 20}>
-                    Send appeal
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <FontAwesomeIcon icon={faGavel} className="text-brand-bright" />
-                <p className="min-w-0 flex-1 text-sm leading-relaxed text-white/65">
-                  Think this is wrong? Appeal it once and somebody who was not part of it reads it.
-                </p>
-                <Button variant="subtle" onClick={() => setWriting(true)}>Appeal this</Button>
-              </div>
-            )}
+            <p className="font-display text-lg font-extrabold">
+              {one.appeals_used ? 'Your second and last appeal' : 'Send an appeal'}
+            </p>
+            <Note icon={faGavel}>
+              We look at what you were sanctioned for again, so it can be lifted, softened,
+              or - if what we find is worse than what was acted on - made heavier.
+            </Note>
+            <textarea
+              value={words}
+              onChange={(e) => setWords(e.target.value)}
+              rows={6}
+              maxLength={2000}
+              placeholder="What happened, from your side."
+              aria-label="Your appeal"
+              className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="min-w-0 flex-1 text-xs text-muted">
+                {words.trim().length < 20
+                  ? `At least ${20 - words.trim().length} more characters.`
+                  : `${2000 - words.length} left.`}
+              </p>
+              <Button variant="ghost" onClick={() => setWriting(false)}>Cancel</Button>
+              <Button onClick={send} loading={sending} disabled={words.trim().length < 20}>
+                Send appeal
+              </Button>
+            </div>
           </Card>
+        )}
+
+        {one.appealable && !writing && (
+          <p className="text-sm text-muted">
+            {one.appeals_used
+              ? 'You have one more go at this'
+              : 'You can appeal this'}
+            {one.appeal_closes_at && <> until <span className="font-bold text-white">{day(one.appeal_closes_at)}</span></>}.
+          </p>
         )}
 
         <div className="flex flex-wrap items-center gap-3">
@@ -385,7 +393,12 @@ export function RowCard({ one, onClose, onAppealed }: {
               <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs" />
             </Link>
           )}
-          <Button variant="ghost" className="ml-auto" onClick={onClose}>Close</Button>
+          <div className="ml-auto flex items-center gap-3">
+            {one.appealable && !writing && (
+              <Button variant="subtle" onClick={() => setWriting(true)}>Appeal this</Button>
+            )}
+            <Button variant="ghost" onClick={onClose}>Close</Button>
+          </div>
         </div>
       </div>
     </Dialog>

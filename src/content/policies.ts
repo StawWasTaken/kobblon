@@ -376,8 +376,10 @@ const moderation: StorySection[] = [
     id: 'appealing',
     heading: 'Arguing with it',
     body: [
-      'Every decision can be appealed once, from the standing page, in your own words.',
+      'Every decision can be appealed from the standing page, in your own words. If we decline the first one you may send a second, and that is the end of it.',
+      'You have fifteen days from the decision. A closed account is a month, and six months if you are in the EU.',
       'An appeal goes to somebody who was not the person who made the decision. You are told the outcome either way.',
+      'We look at what you were sanctioned for again, so an upheld appeal can lift the decision or soften it - and if what we find is worse than what was acted on, it can be made heavier.',
       'An upheld appeal voids the decision and lifts whatever it switched off, straight away.',
     ],
   },

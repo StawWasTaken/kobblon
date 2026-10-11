@@ -1768,16 +1768,24 @@ export function MachineSection() {
               ]}
             />
 
+            {settings.data?.mode === 'always' && (
+              <p className="text-xs text-muted">
+                The database wakes it as each thing lands, so it answers at once rather than
+                on the quarter hour.
+              </p>
+            )}
             {settings.data?.mode === 'slow' && (
               <p className="text-xs text-muted">
                 Anything waiting more than{' '}
                 <span className="font-bold text-white">{settings.data.after_minutes} minutes</span>.
+                It is never woken early; waiting is the point of this one.
               </p>
             )}
             {settings.data?.mode === 'busy' && (
               <p className="text-xs text-muted">
                 Only once more than{' '}
-                <span className="font-bold text-white">{settings.data.when_over}</span> things are waiting.
+                <span className="font-bold text-white">{settings.data.when_over}</span> things are waiting,
+                and it is woken as soon as the queue gets there.
               </p>
             )}
           </div>
