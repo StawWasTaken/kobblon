@@ -6973,3 +6973,55 @@ Voice moderation. The console's vector map, People bulk actions, the
 audit-log filters. Kobby answers tickets and appeals in the schema and in
 the worker; whether it has answered anything live still depends on the
 service-role key in the repository secret being the right one.
+
+# Round seventy-seven: the console's last unbuilt pieces
+
+## `Switch`
+
+`@/components/ui/Switch` is the toggle: `on`, `onChange`, `label`, an
+optional `note`, `busy` and `disabled`. Green when on, because green is
+yes here.
+
+It replaces the pattern the Machine panel used, a button whose own label
+flipped between "May warn" and "May not warn" - which reads as a state
+half the time and as the thing you are about to do the other half. If the
+Workspace has a settings toggle, this is the one.
+
+## The record can be looked through (migration 0218)
+
+Two new functions, both admin-only and both refusing by returning
+nothing rather than by raising:
+
+- `staff_record(what, term, since_hours, how_many)` - the staff log,
+  filtered where it is kept. `term` matches the subject's handle, the
+  staff member's handle, or anything in the `detail` JSON. Capped at 500.
+- `staff_record_kinds()` - which actions are actually in the log, with
+  counts, so the filter's options are read rather than hard-coded.
+
+`staff_record` also answers **who did it**: `admin_log.admin_id` is a
+uuid and nothing joined it to a name, so the one column a record most
+needs was the one the panel could not show. In `@/lib/api` these are
+`staffRecord()` and `staffRecordKinds()`, returning `RecordEntry`.
+
+Filtering client-side was the alternative and it is wrong for the usual
+reason: it hides rows out of the sixty the browser happened to be given,
+which answers no question anybody actually has.
+
+## The map answers
+
+`WorldMap` takes `active` and `onHover` now. The console's Map panel
+lights the dot under the pointer, in the map or in the list beside it,
+and reads out the zone, the country and its share of the total. Still one
+dot per time zone, still a hint, still nothing asked of any geolocation
+service.
+
+## What is deliberately not built
+
+**Bulk select on People.** The only actions worth doing in bulk there are
+suspend and delete, and a checkbox that suspends nine accounts at once is
+a mis-click with no undo. It stays one account at a time, from the report
+or the person's own row.
+
+## Still not built
+
+Voice moderation. Quest session schema.

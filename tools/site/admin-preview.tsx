@@ -12,6 +12,11 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { useState } from 'react'
 import { PersonRow, AnnounceSection, WordsSection, ScreenRow, MachineSection, ConsoleRail } from '@/pages/Admin'
 import { WorldMap } from '@/components/staff/WorldMap'
+import { Note } from '@/components/ui/Note'
+import { Switch } from '@/components/ui/Switch'
+import { Tickbox } from '@/components/ui/Tickbox'
+import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 import { NoticeBar } from '@/components/layout/NoticeBar'
 import type { StaffPerson } from '@/lib/api'
 
@@ -36,6 +41,29 @@ const people: StaffPerson[] = [
     is_suspended: false, is_admin: false, is_guest: true, created_at: '2026-09-26T00:00:00Z' },
 ]
 import '@/index.css'
+
+function Bits() {
+  const [warn, setWarn] = useState(true)
+  const [tick, setTick] = useState(false)
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <Switch on={warn} onChange={setWarn} label="Warn somebody" />
+      <Switch
+        on={false}
+        disabled
+        onChange={() => {}}
+        label="Close an account"
+        note="There is no door for this, here or in the database."
+      />
+      <Tickbox on={tick} onChange={setTick} label="Have a person read this one" />
+    </div>
+  )
+}
+
+function Lit({ dots }: { dots: Parameters<typeof WorldMap>[0]['dots'] }) {
+  const [over, setOver] = useState<string | null>('Europe/Paris')
+  return <WorldMap dots={dots} active={over} onHover={setOver} />
+}
 
 function Rail({ rank }: { rank: 'moderator' | 'admin' | 'superadmin' }) {
   const [at, setAt] = useState<Parameters<typeof ConsoleRail>[0]['value']>('Reports')
@@ -90,9 +118,22 @@ createRoot(document.getElementById('root')!).render(
         </section>
 
         <section className="space-y-3">
+          <h2 className="font-display text-lg">The shared bits</h2>
+          <Note>One line of information, which is all an information box gets.</Note>
+          <Note tone="yes">The same box when the news is good.</Note>
+          <Bits />
+          <Card className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm">
+            <Badge>brix</Badge>
+            <span className="font-bold">@troublemaker</span>
+            <span className="text-xs text-muted">by @stawrer</span>
+            <span className="min-w-0 flex-1 truncate text-xs text-muted">amount: 250</span>
+            <span className="shrink-0 text-xs text-muted">2 hours ago</span>
+          </Card>
+        </section>
+
+        <section className="space-y-3">
           <h2 className="font-display text-lg">Map</h2>
-          <WorldMap
-            dots={[
+          <Lit dots={[
               { zone: 'Europe/Paris', country: 'FR', how_many: 42 },
               { zone: 'America/New_York', country: 'US', how_many: 61 },
               { zone: 'America/Sao_Paulo', country: 'BR', how_many: 18 },

@@ -33,7 +33,10 @@ import { Badge } from '@/components/ui/Badge'
 import { StaffMark } from '@/components/brand/Verified'
 import { Dialog } from '@/components/ui/Dialog'
 import { Confirm } from '@/components/ui/Confirm'
-import { Skeleton } from '@/components/ui/States'
+import { ErrorState, Skeleton } from '@/components/ui/States'
+import { Note } from '@/components/ui/Note'
+import { Switch } from '@/components/ui/Switch'
+import { Choices } from '@/components/ui/Choices'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useTitle } from '@/hooks/useTitle'
@@ -47,7 +50,8 @@ import { avatarKindLabels, kindLabels } from '@/lib/kinds'
 import { useAsync } from '@/hooks/useAsync'
 import { cn } from '@/lib/cn'
 import {
-  deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff, listAdminLog,
+  deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff,
+  staffRecord, staffRecordKinds,
   listFlaggedTerms, moveBrixAsStaff, notifyAsStaff, notifyEveryone,
   saveFlaggedTerm, setStanding, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
@@ -57,7 +61,7 @@ import {
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
 } from '@/lib/api'
 import type {
-  AdminLogEntry, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
+  FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
 } from '@/lib/api'
 import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
@@ -195,11 +199,7 @@ export function PersonRow({ person, onChanged }: {
         * and the behaviour panel below, and acts through a report instead.
         */}
       {rank === 'moderator' && (
-        <p className="rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-xs leading-relaxed text-muted">
-          Standing, Brix and removing an account are an admin’s. Open the record below for
-          their behaviour and everything that has been decided about them; a warning, a chat
-          suspension or a suspension is taken from the report itself.
-        </p>
+        <Note>Standing, Brix and closing an account are an admin's; you act from the report.</Note>
       )}
 
       {rank !== 'moderator' && (
@@ -605,26 +605,66 @@ export function ReportsSection() {
 /** Roughly where people are, and what that does and does not mean. */
 export function MapSection() {
   const dots = useAsync(async () => wherePeopleAre(30), [])
+  /** Whichever zone the pointer is on, in the list or on the map itself. */
+  const [over, setOver] = useState<string | null>(null)
+
+  const all = dots.data ?? []
+  const total = all.reduce((sum, one) => sum + one.how_many, 0)
+  const lit = all.find((one) => one.zone === over) ?? null
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted">
-        A dot per time zone, sized by how many accounts have been seen there
-        in the last month. The zone is what a browser reports - a setting on
-        somebody's own machine - and a zone's coordinates are the zone's, not
-        the person's. Kobblon asks no service where anybody is.
-      </p>
+      <Note icon={faGlobe}>
+        A dot per time zone, sized by how many accounts have been seen there this month.
+        A zone is a setting on somebody's machine, so it is a hint.
+      </Note>
 
       {dots.loading
         ? <Skeleton className="aspect-[2/1] w-full rounded-2xl" />
-        : <WorldMap dots={dots.data ?? []} />}
+        : <WorldMap dots={all} active={over} onHover={setOver} />}
 
-      {!!dots.data?.length && (
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
-          {dots.data.slice(0, 12).map((one) => (
-            <li key={one.zone} className="flex justify-between gap-3">
-              <span className="truncate text-muted">{one.zone}</span>
-              <span className="font-bold tabular-nums">{one.how_many}</span>
+      <p className="flex flex-wrap items-baseline gap-x-3 text-sm">
+        {lit ? (
+          <>
+            <span className="font-bold">{lit.zone}</span>
+            <span className="text-muted">{lit.country ?? 'somewhere'}</span>
+            <span className="ml-auto font-bold tabular-nums">
+              {lit.how_many} of {total}
+            </span>
+          </>
+        ) : (
+          <span className="text-muted">
+            {total} accounts across {all.length} zones. Point at one.
+          </span>
+        )}
+      </p>
+
+      {!!all.length && (
+        <ul className="grid gap-1 sm:grid-cols-2">
+          {all.slice(0, 12).map((one) => (
+            <li key={one.zone}>
+              <button
+                type="button"
+                onMouseEnter={() => setOver(one.zone)}
+                onMouseLeave={() => setOver(null)}
+                onFocus={() => setOver(one.zone)}
+                onBlur={() => setOver(null)}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-lg px-2 py-1 text-left text-sm transition-colors',
+                  over === one.zone ? 'bg-ink-hover text-white' : 'text-muted hover:bg-ink-hover',
+                )}
+              >
+                <span className="min-w-0 flex-1 truncate">{one.zone}</span>
+                <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-ink-line">
+                  <span
+                    className="block h-full rounded-full bg-brand-bright"
+                    style={{ width: `${Math.round((one.how_many / Math.max(1, all[0].how_many)) * 100)}%` }}
+                  />
+                </span>
+                <span className="w-8 shrink-0 text-right font-bold tabular-nums text-white">
+                  {one.how_many}
+                </span>
+              </button>
             </li>
           ))}
         </ul>
@@ -919,30 +959,106 @@ export function WordsSection() {
 /* ----------------------------------------------------------------- record */
 
 export function RecordSection() {
-  const [entries, setEntries] = useState<AdminLogEntry[] | null>(null)
+  const [what, setWhat] = useState<string>('')
+  const [term, setTerm] = useState('')
+  const [asked, setAsked] = useState('')
+  const [since, setSince] = useState<number | null>(null)
 
-  useEffect(() => {
-    let wanted = true
-    void listAdminLog()
-      .then((rows) => { if (wanted) setEntries(rows) })
-      .catch(() => { if (wanted) setEntries([]) })
-    return () => { wanted = false }
-  }, [])
+  const kinds = useAsync(async () => staffRecordKinds(), [])
+  const rows = useAsync(
+    async () => staffRecord({ what, term: asked, sinceHours: since, limit: 200 }),
+    [what, asked, since],
+  )
+
+  const when: { value: number | null; label: string }[] = [
+    { value: null, label: 'Everything' },
+    { value: 24, label: 'Today' },
+    { value: 24 * 7, label: 'This week' },
+    { value: 24 * 30, label: 'This month' },
+  ]
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted">
-        Everything staff have done, kept where the person who did it cannot
-        edit it. A deleted account keeps its name here and nowhere else.
-      </p>
-      {entries === null && <Skeleton className="h-40" />}
-      {entries?.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted">Nothing yet.</p>
+    <div className="space-y-3">
+      <Note>
+        Kept where whoever did it cannot edit it. A deleted account keeps its name here.
+      </Note>
+
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(e) => { e.preventDefault(); setAsked(term) }}
+      >
+        <div className="min-w-[12rem] flex-1">
+          <Input
+            label="Find in the record"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="A handle, a staff name, or anything in the detail"
+          />
+        </div>
+        <Button type="submit" variant="subtle" disabled={rows.loading}>
+          <FontAwesomeIcon icon={rows.loading ? faSpinner : faMagnifyingGlass} spin={rows.loading} />
+          Look
+        </Button>
+        {(asked || what || since !== null) && (
+          <Button
+            variant="ghost"
+            onClick={() => { setTerm(''); setAsked(''); setWhat(''); setSince(null) }}
+          >
+            Clear
+          </Button>
+        )}
+      </form>
+
+      <div className="flex flex-wrap gap-2">
+        <Choices
+          size="sm"
+          tone="soft"
+          label="Which kind"
+          value={what}
+          onChange={setWhat}
+          options={[
+            { value: '', label: 'Everything' },
+            ...(kinds.data ?? []).map((one) => ({
+              value: one.action,
+              label: `${one.action} (${one.how_many})`,
+            })),
+          ]}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Choices
+          size="sm"
+          tone="soft"
+          label="How far back"
+          value={String(since)}
+          onChange={(picked) => setSince(picked === 'null' ? null : Number(picked))}
+          options={when.map((one) => ({ value: String(one.value), label: one.label }))}
+        />
+      </div>
+
+      {rows.loading && <Skeleton className="h-40" />}
+      {rows.error && <ErrorState message={rows.error} onRetry={rows.reload} />}
+      {!rows.loading && !rows.data?.length && (
+        <p className="py-8 text-center text-sm text-muted">
+          {asked || what || since !== null ? 'Nothing matches that.' : 'Nothing yet.'}
+        </p>
       )}
-      {entries?.map((entry) => (
+
+      {!!rows.data?.length && (
+        <p className="text-xs text-muted">
+          {rows.data.length === 200 ? 'The newest 200' : `${rows.data.length} of them`}
+          {what && `, ${what} only`}.
+        </p>
+      )}
+
+      {rows.data?.map((entry) => (
         <Card key={entry.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm">
           <Badge>{entry.action}</Badge>
           {entry.subject_label && <span className="font-bold">@{entry.subject_label}</span>}
+          <span className="text-xs text-muted">
+            by {entry.by_username ? `@${entry.by_username}` : 'somebody since deleted'}
+          </span>
           <span className="min-w-0 flex-1 truncate text-xs text-muted">
             {Object.entries(entry.detail)
               .filter(([, value]) => value !== null && value !== '')
@@ -1557,13 +1673,10 @@ export function MachineSection() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted">
-        Groq reads what is waiting to be screened and says approved, rejected
-        or unsure. Unsure is a real answer and leaves the thing for a person.
-        It can warn and it can suspend, if you let it. It cannot delete an
-        account - there is no door for that, in here or in the database - and
-        it never touches staff.
-      </p>
+      <Note icon={faRobot}>
+        Kobby answers approved, rejected or unsure, and unsure leaves the thing for a person.
+        It cannot close an account and it never touches staff.
+      </Note>
 
       {settings.loading ? <Skeleton className="h-28" /> : !settings.data ? (
         /*
@@ -1586,15 +1699,14 @@ export function MachineSection() {
                 ? `${waiting.data.length} waiting for it right now.`
                 : 'Nothing waiting for it.'}
             </span>
-            <div className="ml-auto flex gap-2">
-              <Button
-                size="sm"
-                variant={on ? 'ghost' : 'yes'}
-                loading={busy === 'on'}
-                onClick={() => void change('on', { turn_on: !on })}
-              >
-                {on ? 'Turn it off' : 'Turn it on'}
-              </Button>
+            <div className="ml-auto flex items-center gap-2">
+              <Switch
+                className="w-auto"
+                on={on}
+                busy={busy === 'on'}
+                onChange={(next) => void change('on', { turn_on: next })}
+                label={on ? 'Running' : 'Stopped'}
+              />
               <Button
                 size="sm"
                 variant="subtle"
@@ -1612,27 +1724,18 @@ export function MachineSection() {
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
               When it works
             </p>
-            <div className="flex flex-wrap gap-2">
-              {([
-                ['always', 'Whenever anything is waiting'],
-                ['slow', 'Only what has waited too long'],
-                ['busy', 'Only when the queue is long'],
-              ] as const).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => void change('mode', { how: value })}
-                  className={cn(
-                    'rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors',
-                    settings.data?.mode === value
-                      ? 'border-brand bg-brand/15 text-white'
-                      : 'border-ink-line text-white/60 hover:text-white',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <Choices
+              size="sm"
+              tone="soft"
+              label="When it works"
+              value={settings.data?.mode ?? 'always'}
+              onChange={(picked) => void change('mode', { how: picked })}
+              options={[
+                { value: 'always', label: 'Whenever anything is waiting' },
+                { value: 'slow', label: 'Only what has waited too long' },
+                { value: 'busy', label: 'Only when the queue is long' },
+              ]}
+            />
 
             {settings.data?.mode === 'slow' && (
               <p className="text-xs text-muted">
@@ -1652,26 +1755,26 @@ export function MachineSection() {
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
               What it may do to people
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant={settings.data?.may_warn ? 'yes' : 'subtle'}
-                loading={busy === 'warn'}
-                onClick={() => void change('warn', { warn: !settings.data?.may_warn })}
-              >
-                {settings.data?.may_warn ? 'May warn' : 'May not warn'}
-              </Button>
-              <Button
-                size="sm"
-                variant={settings.data?.may_suspend ? 'yes' : 'subtle'}
-                loading={busy === 'suspend'}
-                onClick={() => void change('suspend', { suspend: !settings.data?.may_suspend })}
-              >
-                {settings.data?.may_suspend ? 'May suspend' : 'May not suspend'}
-              </Button>
-              <Button size="sm" variant="ghost" disabled>
-                Never deletes an account
-              </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Switch
+                on={!!settings.data?.may_warn}
+                busy={busy === 'warn'}
+                onChange={(next) => void change('warn', { warn: next })}
+                label="Warn somebody"
+              />
+              <Switch
+                on={!!settings.data?.may_suspend}
+                busy={busy === 'suspend'}
+                onChange={(next) => void change('suspend', { suspend: next })}
+                label="Suspend a chat or an account"
+              />
+              <Switch
+                on={false}
+                disabled
+                onChange={() => {}}
+                label="Close an account"
+                note="There is no door for this, here or in the database."
+              />
             </div>
           </div>
 
@@ -1770,10 +1873,11 @@ export function ConsoleRail({ rank, value, onChange }: {
             aria-current={on ? 'page' : undefined}
             onClick={() => onChange(one.name)}
             className={cn(
-              'flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors',
+              'flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left',
+              'transition-[background-color,border-color,transform] duration-150',
               on
                 ? 'border-brand-bright bg-brand/15'
-                : 'border-ink-line bg-ink-card hover:bg-ink-hover',
+                : 'border-ink-line bg-ink-card hover:-translate-y-px hover:bg-ink-hover',
             )}
           >
             <FontAwesomeIcon

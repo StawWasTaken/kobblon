@@ -23,7 +23,13 @@ import { cn } from '@/lib/cn'
 
 export type Dot = { zone: string; country: string | null; how_many: number }
 
-export function WorldMap({ dots, className }: { dots: Dot[]; className?: string }) {
+export function WorldMap({ dots, active, onHover, className }: {
+  dots: Dot[]
+  /** The zone the list is pointing at, drawn brighter and ringed. */
+  active?: string | null
+  onHover?: (zone: string | null) => void
+  className?: string
+}) {
   const placed = dots
     .map((dot) => ({ ...dot, at: placeOfZone(dot.zone) }))
     .filter((dot): dot is Dot & { at: NonNullable<ReturnType<typeof placeOfZone>> } => !!dot.at)
@@ -48,22 +54,28 @@ export function WorldMap({ dots, className }: { dots: Dot[]; className?: string 
         aria-label="Roughly where people are"
       >
         {placed.map((dot) => {
+          const lit = active === dot.zone
           // Area with the count, not radius: a dot twice as wide is four
           // times the ink, and reads as four times the people.
           const size = 1.2 + 3.2 * Math.sqrt(dot.how_many / most)
           return (
-            <g key={dot.zone}>
+            <g
+              key={dot.zone}
+              onMouseEnter={() => onHover?.(dot.zone)}
+              onMouseLeave={() => onHover?.(null)}
+              className={onHover ? 'cursor-default' : undefined}
+            >
               <circle
                 cx={dot.at.lon + 180}
                 cy={90 - dot.at.lat}
-                r={size * 2.2}
-                className="fill-brand-bright/15"
+                r={size * (lit ? 3.4 : 2.2)}
+                className={lit ? 'fill-brand-bright/35' : 'fill-brand-bright/15'}
               />
               <circle
                 cx={dot.at.lon + 180}
                 cy={90 - dot.at.lat}
-                r={size}
-                className="fill-brand-bright/80"
+                r={lit ? size * 1.3 : size}
+                className={lit ? 'fill-white' : 'fill-brand-bright/80'}
               >
                 <title>
                   {dot.at.countryName} · {dot.zone} · {dot.how_many}

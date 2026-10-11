@@ -2943,6 +2943,45 @@ export async function listAdminLog(limit = 60): Promise<AdminLogEntry[]> {
   ) as AdminLogEntry[]
 }
 
+export type RecordEntry = {
+  id: number
+  action: string
+  by_id: string | null
+  by_username: string | null
+  subject_id: string | null
+  subject_label: string | null
+  detail: Record<string, unknown>
+  created_at: string
+}
+
+/**
+ * The record, filtered where it is kept.
+ *
+ * Filtering in the browser would only hide rows out of the sixty it was
+ * handed, which answers no question anybody actually has. `staff_record`
+ * refuses anybody who is not an admin and joins the name of whoever did
+ * it, which the table itself cannot give.
+ */
+export async function staffRecord(filter: {
+  what?: string | null
+  term?: string | null
+  sinceHours?: number | null
+  limit?: number
+} = {}): Promise<RecordEntry[]> {
+  return unwrap(await supabase.rpc('staff_record', {
+    what: filter.what || null,
+    term: filter.term || null,
+    since_hours: filter.sinceHours ?? null,
+    how_many: filter.limit ?? 60,
+  })) as RecordEntry[]
+}
+
+/** Which kinds of thing are in the record, commonest first. */
+export async function staffRecordKinds(): Promise<{ action: string; how_many: number }[]> {
+  return unwrap(await supabase.rpc('staff_record_kinds')) as
+    { action: string; how_many: number }[]
+}
+
 // --------------------------------------------- changing a mesh afterwards
 
 /** What changing a mesh's picture or its model costs, in Brix. */
