@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faCircleCheck, faTriangleExclamation, faLock, faBan,
-  faRobot, faUserShield, faShieldHalved, faCrown, faCommentSlash,
+  faRobot, faUserShield, faShieldHalved, faCrown, faCommentSlash, faMicrophoneSlash,
   faQuoteLeft, faScaleBalanced, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -62,6 +62,7 @@ export const actionWord: Record<ViolationAction, string> = {
   warning: 'Warning',
   content_removed: 'Taken down',
   feature_block: 'Switched off',
+  voice_suspension: 'Chat and voice suspended',
   suspension: 'Suspended',
   termination: 'Account closed',
 }
@@ -348,11 +349,20 @@ export const historyIcon: Record<string, IconDefinition> = {
   suspension: faLock,
   termination: faBan,
   chat_timeout: faCommentSlash,
+  voice_suspension: faMicrophoneSlash,
 }
 
 /** The headline a row wears in the list and at the top of its popup card. */
 export const rowTitle = (one: ModerationRow) => {
-  if (one.action === 'chat_timeout') return 'Your chat was suspended'
+  if (one.action === 'voice_suspension') return 'Your chat and voice were suspended'
+  if (one.action === 'chat_timeout') {
+    // The row carries what it actually took, so the heading says it. A
+    // card headed "chat" over a suspension that also took the microphone
+    // is the one thing somebody appeals and is right about.
+    return one.channels.includes('voice')
+      ? 'Your chat and voice were suspended'
+      : 'Your chat was suspended'
+  }
   if (one.action === 'warning') return 'You were warned'
   if (one.action === 'content_removed') return 'Something of yours was taken down'
   if (one.action === 'feature_block') return 'Something was switched off'

@@ -3506,6 +3506,122 @@ async function whyNoFunction(name: string, said: string): Promise<string> {
   return `${said} The function is alive and answers a plain ping, so what is being refused is the preflight on the real call - check "Verify JWT" on ${name}.`
 }
 
+/**
+ * Why the machine has done nothing.
+ *
+ * Four questions in the order they stop being answerable, each with the
+ * sentence that step actually produced. "It does not work" has had three
+ * different causes on this project - a function that was never deployed,
+ * a gateway refusing before the function ran, and a key that did not
+ * match - and from the console all three looked the same.
+ *
+ * Nothing here is privileged: the ping says whether the function exists
+ * and whether its secrets are set, as booleans. No key is read, and none
+ * could be: they are on the server.
+ */
+export type MachineStep = {
+  step: string
+  ok: boolean | null
+  said: string
+}
+
+export async function checkTheMachine(): Promise<MachineStep[]> {
+  const out: MachineStep[] = []
+  const base = import.meta.env.VITE_SUPABASE_URL ?? ''
+
+  if (!base) {
+    out.push({ step: 'The site knows where Supabase is', ok: false, said: 'VITE_SUPABASE_URL is not set in this build.' })
+    return out
+  }
+
+  let ping: Response | null = null
+  try {
+    ping = await fetch(`${base}/functions/v1/moderate?ping`)
+  } catch {
+    ping = null
+  }
+
+  if (!ping) {
+    out.push({
+      step: 'The worker is deployed',
+      ok: false,
+      said: 'It could not be reached at all. Either it was never deployed, or something in this browser is blocking Supabase.',
+    })
+    return out
+  }
+
+  if (ping.status === 404) {
+    out.push({
+      step: 'The worker is deployed',
+      ok: false,
+      said: 'There is no function called "moderate" on this project. Deploy it: supabase functions deploy moderate.',
+    })
+    return out
+  }
+
+  if (ping.status === 401 || ping.status === 403) {
+    out.push({
+      step: 'The worker is deployed',
+      ok: false,
+      said: `The gateway answered ${ping.status} before the function ran. That is "Verify JWT" on the function: turn it off in Edge Functions, moderate, Details. It checks who is asking by itself.`,
+    })
+    return out
+  }
+
+  const alive = await ping.json().catch(() => null) as
+    { hasGroqKey?: boolean; hasServiceKey?: boolean } | null
+
+  out.push({ step: 'The worker is deployed', ok: ping.ok, said: ping.ok ? 'It answers.' : `It answered ${ping.status} to a plain ping.` })
+  if (!ping.ok) return out
+
+  out.push({
+    step: 'Its secrets are set',
+    ok: Boolean(alive?.hasGroqKey && alive?.hasServiceKey),
+    said: !alive?.hasGroqKey
+      ? 'No GROQ_API_KEY on the function, so nothing can be asked of Groq.'
+      : !alive?.hasServiceKey
+        ? 'No SUPABASE_SERVICE_ROLE_KEY on the function.'
+        : 'Both are there.',
+  })
+
+  try {
+    const models = await groqModels()
+    out.push({
+      step: 'Your sign-in gets through, and Groq answers',
+      ok: true,
+      said: `${models.length} models this key can use.`,
+    })
+  } catch (error) {
+    out.push({
+      step: 'Your sign-in gets through, and Groq answers',
+      ok: false,
+      said: error instanceof Error ? error.message : 'It did not answer.',
+    })
+    return out
+  }
+
+  try {
+    const waiting = await aiWorkWaiting()
+    out.push({
+      step: 'It is switched on, with something to read',
+      ok: Boolean(waiting?.is_on) && (waiting?.total ?? 0) > 0,
+      said: !waiting?.is_on
+        ? 'Switched off. Nothing runs until it is on.'
+        : waiting.total === 0
+          ? 'On, and nothing is waiting - so a run would do nothing, correctly.'
+          : `On, with ${waiting.total} waiting.`,
+    })
+  } catch (error) {
+    out.push({
+      step: 'It is switched on, with something to read',
+      ok: false,
+      said: error instanceof Error ? error.message : 'The queue could not be read.',
+    })
+  }
+
+  return out
+}
+
 export async function groqModels(): Promise<string[]> {
   const { data, error } = await supabase.functions.invoke('moderate', { body: { list: true } })
   if (error) {
@@ -3712,7 +3828,10 @@ export async function reportTicket(id: number): Promise<ReportTicket | null> {
  */
 export type ReportAction =
   | 'nothing' | 'content_removed' | 'warning'
-  | 'chat_suspension' | 'suspension' | 'termination'
+  | 'chat_suspension'
+  /** Chat and voice together: voice is never taken on its own. */
+  | 'voice_suspension'
+  | 'suspension' | 'termination'
 
 export type TakenReport = {
   action: ReportAction
@@ -3753,6 +3872,10 @@ export type WorkWaiting = {
   items: number
   assets: number
   reports: number
+  tickets: number
+  appeals: number
+  /** Chat, Space chat and Community posts waiting to be read. */
+  lines: number
   total: number
   oldest_minutes: number | null
 }

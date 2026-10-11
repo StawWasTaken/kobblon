@@ -20,6 +20,7 @@ import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
+  faStethoscope,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
@@ -59,9 +60,10 @@ import {
   reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
+  checkTheMachine,
 } from '@/lib/api'
 import type {
-  FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
+  MachineStep, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
 } from '@/lib/api'
 import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
@@ -1607,6 +1609,8 @@ export function MachineSection() {
   const recent = useAsync(async () => aiRecent(30), [])
   const waiting = useAsync(async () => aiWork(50), [])
   const [busy, setBusy] = useState<string | null>(null)
+  /** The self-check's answers, once somebody has asked for them. */
+  const [checked, setChecked] = useState<MachineStep[] | null>(null)
 
   /*
    * What the key can see. Asked once, on purpose: it is a call to Groq and
@@ -1669,6 +1673,16 @@ export function MachineSection() {
     }
   }
 
+  const check = async () => {
+    setBusy('check')
+    setChecked(null)
+    try {
+      setChecked(await checkTheMachine())
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const on = settings.data?.is_on ?? false
 
   return (
@@ -1716,6 +1730,15 @@ export function MachineSection() {
                 onClick={() => void runIt()}
               >
                 Run it now
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={faStethoscope}
+                loading={busy === 'check'}
+                onClick={() => void check()}
+              >
+                Check it
               </Button>
             </div>
           </div>
@@ -1819,6 +1842,29 @@ export function MachineSection() {
               never reaches a browser.
             </p>
           </div>
+        </Card>
+      )}
+
+      {!!checked?.length && (
+        <Card className="space-y-2 p-4">
+          <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+            Why it has or has not run
+          </p>
+          {checked.map((one) => (
+            <div key={one.step} className="flex items-start gap-3 text-sm">
+              <FontAwesomeIcon
+                icon={one.ok ? faCircleCheck : faXmark}
+                className={cn('mt-1 text-xs', one.ok ? 'text-space-bright' : 'text-danger')}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold">{one.step}</span>
+                <span className="block text-xs leading-relaxed text-muted">{one.said}</span>
+              </span>
+            </div>
+          ))}
+          <p className="text-[11px] text-muted">
+            The first cross is the one to fix; everything under it is waiting on that.
+          </p>
         </Card>
       )}
 

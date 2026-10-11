@@ -7025,3 +7025,80 @@ or the person's own row.
 ## Still not built
 
 Voice moderation. Quest session schema.
+
+# Round seventy-eight: voice, and the branch that went missing
+
+## The machine stopped reading what people say (migration 0221)
+
+Worth reading even though it is a website bug, because it is the shape of
+mistake either of us can make.
+
+0189 queues every line - chat, Space chat, Community posts - into
+`chat_to_read` by trigger. 0190 handed those lines to `ai_work`.
+`apply_ai_verdict` has had a branch for judging one ever since. Then 0216
+added tickets and appeals by rewriting `ai_work` **whole**, and the
+message branch did not come back with it. Lines kept being queued,
+nothing ever asked for them, and the console's own count left them out,
+so the panel read "nothing waiting" over a queue that was growing.
+
+0221 puts the branch back and adds `lines` to `ai_work_waiting`.
+
+The lesson: replacing a function whole means its old branches are gone
+unless they are carried across, and nothing in the schema says one is
+missing. The check is not "does it apply" - it is **"name every subject
+it used to hand out and show each one still coming back"**.
+
+## Voice (migrations 0219 and 0220)
+
+Voice moderation is after the fact. There is no filter in the path and
+there cannot be one: a word is in somebody's ears before anything could
+look at it. Nothing records anybody.
+
+What changed:
+
+- **`mute_chat` widens instead of returning early.** It used to hand back
+  an existing live timeout untouched, which was right for two reports
+  about the same hour and wrong the moment the channels differ: somebody
+  chat-quieted and then reported for voice got the old row back and kept
+  their microphone, and the caller was told a time as though it had
+  worked. A live timeout that does not cover what is asked for now has
+  the channels added and `seen_at` cleared, so the card is shown again
+  saying what it actually took. The clock is not restarted.
+- **`take_report` takes `voice_suspension`**, which quiets chat and voice
+  together. Never voice alone: somebody who cannot be trusted with a
+  microphone can type the same thing in a second.
+- **`apply_ai_verdict` accepts `quieted_voice`.** `what_kobby_may_do` has
+  returned that rung since 0209 and the applier refused the word, so the
+  ladder's fourth rung quietly did nothing.
+- **`report_subject` knows `'voice'`**, and `reports.target_type`,
+  `reports.outcome`, `violations.action` and `violations.target_type` all
+  allow the new words.
+
+### What the applications need
+
+**`may_i_speak()`** is the one to call. It returns
+`{ chat, voice, until, why }` for the signed-in account - `chat` and
+`voice` are booleans meaning *may*. Ask it when joining, and again when a
+countdown says it is over. A client deciding this for itself is a client
+that can decide the other way.
+
+`my_chat_standing()` already returns `channels`, and `ChatLockedBar` and
+`ChatSuspended` already take a `kind`. A row saying `['chat','voice']`
+with a greyed-out text box and a live microphone is a voice suspension
+that does not exist, so read the array, do not assume chat.
+
+Report a voice incident as `target_type: 'voice'`, `target_id`: the
+person's uuid. There is nothing else to name - no row, no file, no line.
+
+## The console can now say why the machine has not run
+
+`checkTheMachine()` in `@/lib/api`, behind a "Check it" button in the
+Machine panel. Four steps in the order they stop being answerable: the
+worker is deployed, its secrets are set, your sign-in gets through and
+Groq answers, it is on with something to read. Each carries the sentence
+that step actually produced, and the first cross is the one to fix.
+
+It exists because "it does not work" has had three different causes here
+- a function never deployed, a gateway refusing before the function ran,
+and a key that did not match - and from the console all three looked
+identical.

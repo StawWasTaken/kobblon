@@ -660,7 +660,10 @@ export type StaffModerationRow = {
 }
 
 export type ViolationAction =
-  | 'warning' | 'content_removed' | 'feature_block' | 'suspension' | 'termination'
+  | 'warning' | 'content_removed' | 'feature_block'
+  /** Chat and voice together. Voice is never taken on its own. */
+  | 'voice_suspension'
+  | 'suspension' | 'termination'
 
 export type Violation = {
   id: number

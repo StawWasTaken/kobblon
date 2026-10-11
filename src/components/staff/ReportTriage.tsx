@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faArrowUpRightFromSquare, faBan, faCommentSlash, faFlag, faGavel,
+  faArrowUpRightFromSquare, faBan, faCommentSlash, faMicrophoneSlash, faFlag, faGavel,
   faTrashCan, faTriangleExclamation, faUserSlash, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -67,6 +67,13 @@ const DEEDS: Deed[] = [
     needs: 'moderator',
   },
   {
+    value: 'voice_suspension',
+    label: 'Suspend chat and voice',
+    blurb: 'For something said out loud. It takes the microphone and the text box together, on the same ladder - somebody who stops typing it and starts saying it has not improved.',
+    icon: faMicrophoneSlash,
+    needs: 'moderator',
+  },
+  {
     value: 'suspension',
     label: 'Suspend the account',
     blurb: 'They cannot sign in. Give it an end date unless you mean it to last until somebody lifts it.',
@@ -90,6 +97,7 @@ const SAID: Record<string, string> = {
   warning: 'a warning',
   content_removed: 'the thing taken down',
   chat_suspension: 'chat suspended',
+  voice_suspension: 'chat and voice suspended',
   suspension: 'the account suspended',
   termination: 'the account deleted',
 }
