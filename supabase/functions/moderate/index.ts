@@ -488,6 +488,27 @@ async function groqModels(): Promise<{ models?: string[]; trouble?: string }> {
   return { models }
 }
 
+
+/**
+ * The `role` a token claims, read without verifying it.
+ *
+ * Only ever used to write a better error. Nothing is trusted from it: the
+ * one path that grants anything compares the whole token against the key
+ * this function holds, and a signed-in person is still checked against the
+ * database.
+ */
+function roleClaimOf(token: string): string | null {
+  const middle = token.split('.')[1]
+  if (!middle) return null
+  try {
+    const json = atob(middle.replace(/-/g, '+').replace(/_/g, '/'))
+    const claims = JSON.parse(json)
+    return typeof claims?.role === 'string' ? claims.role : null
+  } catch {
+    return null
+  }
+}
+
 /*
  * Anything thrown anywhere in here comes back as an answer with the CORS
  * headers on it.
@@ -565,8 +586,15 @@ async function handle(request: Request): Promise<Response> {
    * taken from the request.
    */
   const sent = request.headers.get('authorization') ?? ''
-  const token = sent.replace(/^Bearer\s+/i, '')
-  const isWorker = token === SERVICE_KEY
+  /*
+   * Trimmed, because a key pasted into a GitHub secret box carries a
+   * trailing newline often enough to be worth one call: a key that is
+   * right apart from a `\n` fails the comparison below and then fails
+   * again as a sign-in, and the sentence it produces is about claims,
+   * which sends whoever reads it looking at the wrong thing entirely.
+   */
+  const token = sent.replace(/^Bearer\s+/i, '').trim()
+  const isWorker = Boolean(SERVICE_KEY) && token === SERVICE_KEY
 
   /*
    * The database client is made first, because validating a token needs
@@ -592,6 +620,30 @@ async function handle(request: Request): Promise<Response> {
      */
     const { data: who, error: badToken } = await db.auth.getUser(token)
     if (badToken || !who?.user) {
+      /*
+       * Name the real fault when the caller is plainly a machine.
+       *
+       * A service-role key has a `role` claim and no `sub`, so when one is
+       * sent that is *not* this project's key, it falls to here and
+       * Supabase answers "missing sub claim" - which is true, and which
+       * describes the shape of a service-role token rather than the thing
+       * that is actually wrong, which is that the key does not match. That
+       * sentence cost a round of looking at the gateway and at
+       * `verify_jwt` before anybody looked at the key itself.
+       *
+       * The token is read, never echoed: only which role it claims, which
+       * says nothing an attacker holding it does not have already.
+       */
+      const claimed = roleClaimOf(token)
+      if (claimed === 'service_role' || claimed === 'anon') {
+        return answer({
+          error:
+            `A ${claimed} key was sent, and it is not this project's `
+            + 'service-role key. Check the key in the caller against '
+            + 'Project Settings, API, service_role - they have to match '
+            + 'exactly, with no newline on the end.',
+        }, 401)
+      }
       return answer({
         error: !token
           ? 'No sign-in was sent with that. Sign out and back in, then try again.'
