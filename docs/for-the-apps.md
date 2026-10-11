@@ -7102,3 +7102,36 @@ It exists because "it does not work" has had three different causes here
 - a function never deployed, a gateway refusing before the function ran,
 and a key that did not match - and from the console all three looked
 identical.
+
+# Round seventy-nine: the worker was never recognised
+
+The machine has never acted on anything, and the reason was one word in
+one function.
+
+`is_the_worker()` asked `current_setting('request.jwt.claim.role')`. That
+is the **old** spelling: PostgREST set one GUC per claim years ago, and
+now sets a single JSON `request.jwt.claims`. Supabase's current gateway
+does not set the per-claim ones at all. So the setting read back empty,
+the worker was not recognised, and every door it has was shut:
+
+- `ai_work` returned nothing, so a run read "looked at 0" with sixty-one
+  things waiting, which is exactly what the console showed;
+- `apply_ai_verdict` would have refused the verdict anyway;
+- `take_report`, `answer_ticket` and `judge_appeal` the same;
+- `review_asset` read the claim itself, with the same spelling, and was
+  not granted to `service_role` either, so the worker was refused at the
+  door before the branch inside could be read.
+
+0222 reads both spellings, in one place, and grants the two review
+functions to `service_role`.
+
+**Nothing was wrong with the key, the deployment or Groq.** The worker
+arrived, was not recognised, and was handed an empty queue, which from
+outside is indistinguishable from an empty queue. That is the whole
+lesson: the check is never "is the guard there", it is **"show the guard
+saying yes to the real caller"** - and no test on this project had ever
+set the claims the way PostgREST actually sets them. If anything your
+side reads `request.jwt.claim.<name>`, it has the same bug today.
+
+Apply order from here: 0214, 0215, 0216, 0217, 0218, 0219, 0220, 0221,
+0222.
