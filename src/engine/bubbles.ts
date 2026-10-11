@@ -7,7 +7,7 @@ import { ZOOM_FAR } from './experience'
  * The gap between the top of somebody and the bottom of their bubble.
  *
  * It was `K6_HEIGHT * 1.05` measured from the feet, which is the top of a
- * *bare* head — so anybody in a tall hat wore their own bubble. Staw, who
+ * *bare* head - so anybody in a tall hat wore their own bubble. Staw, who
  * wears one: "if theres accessories ontop of the head then we make sure
  * the gap between the chatbubble and the head is the same we have between
  * the chatbubble and the accessories." Same gap, measured from whatever is
@@ -72,7 +72,7 @@ const HEARD_WITHIN = 140
  * off with distance and stops at `SMALLEST`, so a bubble across a World is
  * small but still a thing you can read. The last quarter of the range is
  * spent fading, rather than a bubble blinking out of existence on a
- * threshold — which is what Roblox does and why nobody notices the
+ * threshold - which is what Roblox does and why nobody notices the
  * threshold.
  *
  * **`PLAIN_WITHIN` is `ZOOM_FAR` and must stay that way.** It was 14 while
@@ -80,12 +80,12 @@ const HEARD_WITHIN = 140
  * every bubble anybody saw was at `SMALLEST`, and Staw's "TOO SMALL TOO
  * SMALL" was the scaling working perfectly over a band nobody plays in.
  * Written as the constant rather than as the number so the two cannot drift
- * apart again — the default camera is the reference, not a figure somebody
+ * apart again - the default camera is the reference, not a figure somebody
  * picked.
  *
  * So: full size anywhere between first person and the default zoom, which
  * is where almost all play happens, and pulling the camera back is the only
- * thing that shrinks a bubble. That is the better story anyway — asking to
+ * thing that shrinks a bubble. That is the better story anyway - asking to
  * see more World is asking to see less of its furniture.
  *
  * `SMALLEST` is 0.55 rather than 0.42 because the floor is now reached only
@@ -105,7 +105,7 @@ const FADES_FROM = HEARD_WITHIN * 0.75
  * How a bubble looks, in one place and overridable.
  *
  * Every property here is set with `Object.assign(element.style, ...)`, and
- * inline beats a class — which is why restyling this from outside with CSS
+ * inline beats a class - which is why restyling this from outside with CSS
  * does not work, and why the knobs are handed over instead. The Launcher
  * asked twice; this is the answer. Pass what you want changed, keep the
  * rest.
@@ -124,7 +124,7 @@ export type BubbleLook = {
    * The tail, in pixels, and how far across the bubble it sits.
    *
    * Three numbers rather than one, because one made the half-base and the
-   * depth the same — so a border triangle was always as deep as it was
+   * depth the same - so a border triangle was always as deep as it was
    * wide, and could not round its point. The mark's nub is wide, shallow
    * and round, and at a bubble's width the triangle read as a pin stuck in
    * the bottom edge. Drawn as a path now, so it can be all three.
@@ -251,7 +251,7 @@ export class BubbleBoard {
    * How far up the world somebody reaches, hat and all.
    *
    * Falls back to a bare head's height if the object has nothing to
-   * measure — an empty peg, or a body whose meshes have not landed yet.
+   * measure - an empty peg, or a body whose meshes have not landed yet.
    */
   private topOf(who: THREE.Object3D, now: number): number {
     const known = this.tops.get(who)
@@ -413,7 +413,7 @@ export class BubbleBoard {
         // first without anything jumping when one goes.
         const age = stack.length - 1 - i
         // The two multiply, so an old bubble on somebody far away is
-        // smaller than a new one on somebody standing next to you — which
+        // smaller than a new one on somebody standing next to you - which
         // it was not, and nobody had noticed yet.
         const size = (1 - age * 0.12) * near
         const fading = Math.max(0, Math.min(1, (bubble.until - now) / 600))
@@ -423,7 +423,7 @@ export class BubbleBoard {
          *
          * Those two make the browser lay out and paint every bubble every
          * frame, on the main thread, beside a canvas the GPU is
-         * compositing — which is the usual reason a DOM overlay swims
+         * compositing - which is the usual reason a DOM overlay swims
          * against the scene it is meant to be stuck to. The same numbers
          * in a `translate3d` cost no layout at all.
          */

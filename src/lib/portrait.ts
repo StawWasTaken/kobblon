@@ -81,7 +81,7 @@ export async function drawPortrait(
 
     /*
      * The engine dresses it. This loop used to live here and in
-     * `AvatarStage`, and the two had drifted — one had lost the real mesh
+     * `AvatarStage`, and the two had drifted - one had lost the real mesh
      * format and the maker's placement, so an accessory came out missing
      * or in the wrong spot and a portrait stopped being a picture of the
      * avatar. `dressFrom` is the one copy now.

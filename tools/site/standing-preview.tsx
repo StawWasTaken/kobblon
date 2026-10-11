@@ -87,13 +87,14 @@ function Bar({ score, band }: { score: number; band: BehaviourBand }) {
       </div>
       <BehaviourBar score={score} band={band} tall />
       <p className="leading-relaxed text-white/70">{bandLine[band]}</p>
-      <Bought minutes={score >= 90 ? 5 : score >= 45 ? 10 : 120} />
+      <Bought minutes={score >= 90 ? 5 : score >= 45 ? 10 : 120} next="in 21 days" />
     </Card>
   )
 }
 
 function Everything() {
-  const [open, setOpen] = useState<string | null>('c')
+  const [open, setOpen] = useState<string | null>(null)
+  const [card, setCard] = useState(true)
   const showing = rows.find((one) => one.key === open) ?? null
 
   return (
@@ -111,8 +112,9 @@ function Everything() {
       </Card>
 
       <TicketCard
+        open={card}
         username="staw"
-        onCancel={() => {}}
+        onClose={() => setCard(false)}
         onSend={() => {}}
       />
 

@@ -11,12 +11,12 @@ import { cn } from '@/lib/cn'
  *
  * Staw's number is about thirty percent green, the rest blue, red only for
  * deleting, reporting, blocking and warning. The first attempt at "more
- * green" made `primary` green — and `primary` is the default, so every
+ * green" made `primary` green - and `primary` is the default, so every
  * button nobody thought about went green and the ratio came out the other
  * way round. Loud everywhere is the same as quiet everywhere.
  *
  * So: `primary` is blue again and stays the workhorse. `yes` is green and is
- * said on purpose — the one action a screen is for. Save, publish, upload,
+ * said on purpose - the one action a screen is for. Save, publish, upload,
  * accept, play. One per screen, usually; if two buttons on a screen are both
  * green, one of them is wrong.
  *

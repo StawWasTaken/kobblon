@@ -5,8 +5,8 @@ import { loadMesh, releaseMesh, wearTexture, formatOf } from './meshes'
 /**
  * Putting somebody's avatar on a body.
  *
- * This is the loop that had been written three times — twice on the
- * website (`AvatarStage` and `portrait.ts`) and once in the Launcher — and
+ * This is the loop that had been written three times - twice on the
+ * website (`AvatarStage` and `portrait.ts`) and once in the Launcher - and
  * the copies had already drifted: one forgot the real mesh format and the
  * maker's placement, so a profile picture came out with the accessory
  * missing or sitting in the wrong place, and Staw said what that looks
@@ -22,7 +22,7 @@ import { loadMesh, releaseMesh, wearTexture, formatOf } from './meshes'
  * hand back.
  *
  * Every field beyond the first three is for whoever is *listing* what
- * somebody has on — a name, a price, a card — and none of it is read here.
+ * somebody has on - a name, a price, a card - and none of it is read here.
  * It is carried because the alternative is a second type that is this one
  * minus six fields, and then a mapping between them that somebody has to
  * keep in step.
@@ -44,7 +44,7 @@ export type WornLook = {
      * The real format, where the caller has the filename.
      *
      * Not optional in spirit: a signed address hides the extension behind
-     * a query string, and sniffing one calls every OBJ a glTF — which
+     * a query string, and sniffing one calls every OBJ a glTF - which
      * flips its texture upside down and was half of why a portrait did not
      * match the avatar beside it.
      */
@@ -66,7 +66,7 @@ export type WornLook = {
  * is this repository's oldest bug written as a parameter: a value read
  * before the thing that decides it can change is a value that is right
  * until it matters. Say no and loading stops, and everything already
- * taken is freed on the way out — a half-dressed body is not left holding
+ * taken is freed on the way out - a half-dressed body is not left holding
  * textures for a World nobody is in.
  */
 export async function dressFrom(

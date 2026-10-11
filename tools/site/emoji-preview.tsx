@@ -21,10 +21,10 @@ createRoot(document.getElementById('root')!).render(
       {lines.map((line) => <p key={line} className="text-sm">{line}</p>)}
 
       <p className="pt-4 text-xs uppercase tracking-wide text-muted">A heading, display face</p>
-      <h2 className="font-display text-2xl font-black">First Ground 🏗️ — built by players 🎮</h2>
+      <h2 className="font-display text-2xl font-black">First Ground 🏗️ - built by players 🎮</h2>
 
       <p className="pt-4 text-xs uppercase tracking-wide text-muted">
-        Inside an input, and inside its placeholder — a component cannot reach either
+        Inside an input, and inside its placeholder - a component cannot reach either
       </p>
       <input
         defaultValue="typed into the box 🥺 like this"

@@ -31,7 +31,7 @@ const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
  * `model` became `build` and `mesh` arrived: a mesh uploaded that afternoon
  * previewed as `IMG-1122`, which is a different thing entirely. Node cannot
  * import the TypeScript directly, so the one line that matters is read out
- * of it — badly, on purpose, so that it breaks loudly if the shape changes
+ * of it - badly, on purpose, so that it breaks loudly if the shape changes
  * rather than silently going back to a copy.
  */
 const kindCodes = (() => {
@@ -145,7 +145,7 @@ export async function writeItemPages(into = 'dist') {
     /*
      * Worlds, which were Spaces and are read from `worlds` under their own
      * names now. The address moved too: a World lives at /worlds/:id/:slug,
-     * and /s/:id/:slug redirects to Discover — so every card written at the
+     * and /s/:id/:slug redirects to Discover - so every card written at the
      * old address promised a World and delivered a list, which is worse
      * than no card.
      */

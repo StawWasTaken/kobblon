@@ -5,7 +5,7 @@ import type { Intent } from './input'
  *
  * Roblox's system rather than Roblox's look: a line of text goes up over the
  * speaker's head for a few seconds and into a window that fades when nobody
- * is talking. Everything below is about the rules around that — who may say
+ * is talking. Everything below is about the rules around that - who may say
  * what, how often, and what happens to text nobody wrote by hand.
  *
  * **Where the honesty is.** Kobblon has no server, so there is nowhere for a
@@ -126,7 +126,7 @@ function pictograph(code: number): boolean {
 /**
  * Text, made safe to put in a page.
  *
- * Not by escaping it — by never treating it as markup in the first place.
+ * Not by escaping it - by never treating it as markup in the first place.
  * Every message is written into the document with `textContent`, so a
  * message reading `<script>` is five words nobody has to think about. This
  * only removes what would break the *layout*: control characters, the
@@ -148,15 +148,15 @@ export function clean(raw: string): string {
      * The joiner is the exception, and it was a bug.
      *
      * U+200D sat inside the zero-width range below, so it was stripped with
-     * the rest — and it is the character that makes a sequence one emoji.
+     * the rest - and it is the character that makes a sequence one emoji.
      * Without it a family is three separate people, an astronaut is a woman
      * and a rocket, and the rainbow flag is a white one. Nobody gets an
      * error; the message just says something slightly different from what
      * was typed. Found by the Launcher, building Twemoji.
      *
      * Kept where it means something and dropped where it does not: between
-     * two emoji it is joining them, and anywhere else — between letters, at
-     * either end — it is the hiding trick the range is here to remove. That
+     * two emoji it is joining them, and anywhere else - between letters, at
+     * either end - it is the hiding trick the range is here to remove. That
      * is stronger than simply carving it out, which would have traded one
      * for the other.
      */
@@ -262,7 +262,7 @@ export class LocalEcho implements ChatTransport {
  * client is a filter somebody edits out, and two places deciding what may
  * be said is two standards with the lenient one winning. The website hands
  * in `screenSay` from `@/lib/api`, which is one call to `screen_say` in the
- * database — the same terms that judge a username. A World with no
+ * database - the same terms that judge a username. A World with no
  * moderation behind it passes nothing, and then nothing is screened and
  * this service says so rather than pretending.
  */
@@ -294,7 +294,7 @@ export class ChatService {
    * Which transport the answer is for.
    *
    * Screening is a round trip, and in the time it takes a player can leave
-   * a World, join another, or close the window — and then the transport
+   * a World, join another, or close the window - and then the transport
    * this message was typed into is not the one that exists. Captured before
    * the await and compared after, because "is the current transport right"
    * is the question this project keeps answering yes to while the message
@@ -408,7 +408,7 @@ export class ChatService {
      * This used to drop the whole line, and that was my call rather than
      * Staw's: "IT CENSORS WORDS OR SENTENCES JUST LIKE ROBLOX DID WITH
      * HASHTAGS BUT US ITS ••••". He is right about what people expect,
-     * and it is the kinder of the two besides — a message that arrives
+     * and it is the kinder of the two besides - a message that arrives
      * with a word missing tells you what happened, where one that
      * vanishes reads as the chat being broken.
      *

@@ -314,13 +314,13 @@ export function ReportTriage({
           {deed && (
             <div className="space-y-3 rounded-xl border border-ink-line bg-ink-hover p-3">
               <Textarea
-                label={deed.value === 'nothing' ? 'A note, for the record' : 'Why — they are shown this'}
+                label={deed.value === 'nothing' ? 'A note, for the record' : 'Why - they are shown this'}
                 value={why}
                 onChange={(event) => setWhy(event.target.value)}
                 rows={3}
                 placeholder={
                   deed.value === 'nothing'
-                    ? 'Nothing in it — the thing reported is fine.'
+                    ? 'Nothing in it - the thing reported is fine.'
                     : 'What they did, in words they are allowed to read.'
                 }
               />

@@ -6,7 +6,7 @@ import type { AnchorHTMLAttributes, ReactNode } from 'react'
  *
  * The website's components are meant to be used by Kobblon Workspace, which
  * mounts them on their own: no router, no providers, its own window. A
- * `<Link>` in that position does not render wrong — it throws, and takes the
+ * `<Link>` in that position does not render wrong - it throws, and takes the
  * panel with it. So the ones that might travel ask first.
  *
  * Inside the website this is a `<Link>` and nothing changes: no page reload,

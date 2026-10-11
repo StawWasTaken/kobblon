@@ -28,7 +28,7 @@ export const isShape = (value: unknown): value is Shape =>
  * read as an open box: you saw through the slope to the inside of the far
  * face. `computeVertexNormals` works off the winding too, so the normals
  * were inward as well and the lighting was wrong on top of it. This is the
- * whole of that bug — the shape was never the wrong size, it was inside out.
+ * whole of that bug - the shape was never the wrong size, it was inside out.
  *
  * Counter-clockwise seen from outside, which is what three.js calls front.
  */
@@ -108,8 +108,8 @@ const TRUSS_BAR = 0.5
  * which is the same mistake as a stretched brick texture and worse, because
  * you can see through it.
  *
- * So this is built for the size it is asked for — a part ten stons tall gets
- * two and a half bays, one twenty stons tall gets five — and then divided
+ * So this is built for the size it is asked for - a part ten stons tall gets
+ * two and a half bays, one twenty stons tall gets five - and then divided
  * back through that size, because the mesh is still scaled by it. Bars keep
  * one thickness whatever the part does; only the count changes.
  *

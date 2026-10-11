@@ -17,8 +17,8 @@ export type Solid = {
   /**
    * Whether somebody can climb this rather than only walk into it.
    *
-   * A truss. Its collision is still its box — a lattice is mostly holes and
-   * a tower made of its bars would be hundreds of solids — so it is solid to
+   * A truss. Its collision is still its box - a lattice is mostly holes and
+   * a tower made of its bars would be hundreds of solids - so it is solid to
    * walk into and climbable from any side, which is what makes a truss tower
    * a tower rather than a cloud of beams.
    */
@@ -175,7 +175,7 @@ export class Controller {
    * collision at all: you grab it rather than bump into it, and the bars it
    * is drawn from are mostly holes anyway. Anything else and the moment
    * somebody lets go while inside one, the collision resolution has to put
-   * them somewhere they are not inside — which it did, by teleporting them
+   * them somewhere they are not inside - which it did, by teleporting them
    * out of the bottom of the tower, twenty stons in one frame.
    *
    * Walking into a truss still stops you, because touching one starts you
@@ -249,7 +249,7 @@ export class Controller {
       this.slide(position, new THREE.Vector3(0, 0, velocity.z * dt), 'z')
       /*
        * Climbing moves straight up rather than through `fall`, so that the
-       * truss's own box does not stop somebody going up the inside of it —
+       * truss's own box does not stop somebody going up the inside of it -
        * and at the top it steps onto whatever is up there instead of
        * sliding back down, which is the difference between a ladder that
        * works and one everybody avoids.

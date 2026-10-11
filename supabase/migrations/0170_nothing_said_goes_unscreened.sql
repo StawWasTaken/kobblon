@@ -13,7 +13,7 @@ begin;
  * first thing anybody tries.
  *
  * The second is the shape of the answer. 0168 refused a line outright, and
- * the reasoning — that a censored line still says the thing — is not the
+ * the reasoning - that a censored line still says the thing - is not the
  * call I get to make. Staw: "IT CENSORS WORDS OR SENTENCES JUST LIKE
  * ROBLOX DID WITH HASHTAGS BUT US ITS ••••". He is right about the
  * behaviour people expect, and it is kinder besides: a message that half
@@ -21,7 +21,7 @@ begin;
  * the site being broken.
  *
  * And "fack" is the real lesson. The patterns matched spellings rather
- * than words, so every vowel swap was a way through — which is most of
+ * than words, so every vowel swap was a way through - which is most of
  * what anybody tries.
  */
 
@@ -35,7 +35,7 @@ begin;
  *
  * The lookahead is what keeps this from eating English. `f[uaeio]{1,2}c*k`
  * matches the `fak` inside `fake`, `faking` and `faked`, and a filter that
- * censors "fake" is a filter people route around rather than accept — so
+ * censors "fake" is a filter people route around rather than accept - so
  * each one refuses to match when a letter follows.
  */
 insert into public.moderation_terms (pattern, decision, reason, scope)
@@ -62,8 +62,8 @@ select v.pattern, 'block'::public.screen_decision, v.reason, 'all'
  * The same sentence with the bad words taken out of it.
  *
  * Word by word, because that is the only pass that works on what somebody
- * actually typed. The patterns match *normalised* text — vowels undone,
- * runs collapsed, punctuation stripped — so running one over the original
+ * actually typed. The patterns match *normalised* text - vowels undone,
+ * runs collapsed, punctuation stripped - so running one over the original
  * finds nothing the moment anybody writes `f4ck`. Testing each word
  * separately and replacing the whole word keeps the original intact
  * everywhere else, and it is what Roblox's hashes did: the word goes, the

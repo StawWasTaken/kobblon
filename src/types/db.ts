@@ -89,7 +89,7 @@ export type ActivityEvent = {
  * What a piece of content is.
  *
  * `build` is an arrangement of parts made in Kobblon Workspace and published
- * from it — it is not a file anybody uploads here. `mesh` is the geometry a
+ * from it - it is not a file anybody uploads here. `mesh` is the geometry a
  * MeshPart draws, a .glb somebody made in Blender. They used to be one kind
  * called `model`, which is why meshes could not be found: the name said it
  * was already covered.

@@ -206,7 +206,7 @@ export class Engine {
        * The keyboard is told about typing by the service, so a window only
        * has to do the one documented thing. Asked for now as well as
        * subscribed to, because the service can already be open by the time
-       * a keyboard exists — reading it once and only listening afterwards
+       * a keyboard exists - reading it once and only listening afterwards
        * is this project's oldest mistake.
        */
       this.keyboard.setTyping(this.chat?.typing ?? false)
@@ -290,7 +290,7 @@ export class Engine {
      * A World's pictures, models, sounds and sky are all fetched after it is
      * standing, which is what lets it stand at all. That means every one of
      * them can come back after somebody has already left for another World,
-     * and write into a World nobody is in — or, in the case of a sound,
+     * and write into a World nobody is in - or, in the case of a sound,
      * start one playing on a service that has already been cleared and will
      * never be cleared again.
      *
@@ -447,7 +447,7 @@ export class Engine {
     /*
      * A World opened while this was loading has already set its own. This
      * used to compare the manifest, which misses the case of the same World
-     * being opened twice — an ordinary thing to do, and the reload button.
+     * being opened twice - an ordinary thing to do, and the reload button.
      */
     if (!stillWanted()) {
       sky.box?.dispose()
@@ -488,8 +488,8 @@ export class Engine {
      * Fog is how far you can see, in stons, and zero is a clear day.
      *
      * The near end used to be forty, whatever the far end was, so a World
-     * that asked to see thirty stons got a range running backwards — fog
-     * starting further away than it finished — and three.js draws that as
+     * that asked to see thirty stons got a range running backwards - fog
+     * starting further away than it finished - and three.js draws that as
      * nonsense. Anything under forty was broken and nobody had asked for
      * one yet.
      *

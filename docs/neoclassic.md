@@ -16,7 +16,7 @@ digital toys, unpretentious and immediately playable. The belief underneath
 it: the simplest things stay fun the longest, and a hyper-real engine is
 boring by the second evening.
 
-**Low poly, primitive, free.** Basic shapes, few parts, clear structure —
+**Low poly, primitive, free.** Basic shapes, few parts, clear structure -
 K6 and the part system are this on purpose. It keeps the whole thing
 accessible to somebody who has never built anything, and creative because
 of the limits rather than despite them.
@@ -28,7 +28,7 @@ hand, so it feels remembered and still native to Kobblon.
 ## What follows from it, when building
 
 - **Copy the system, not the look.** Where another platform has solved a
-  social problem — friend requests, badges, passes — take the *mechanism*,
+  social problem - friend requests, badges, passes - take the *mechanism*,
   which people already understand, and draw it in Kobblon's design. Making
   up a novel mechanism so as not to look like a copy is how a platform ends
   up with something worse that nobody recognises.
@@ -37,7 +37,7 @@ hand, so it feels remembered and still native to Kobblon.
   Not a feature because a big platform has one.
 - **Blue is Kobblon. Green is yes.** Blue is the platform: the chrome, the
   links, the marks, what somebody is standing inside. Green is what Kobblon
-  says yes in — going into a World, something being live, something being
+  says yes in - going into a World, something being live, something being
   yours, an answer that means agreement. A screen that is only blue is a
   screen with nothing happening on it, and that is the corporate look this
   is meant to avoid. Green is not decoration: if a green thing does not
@@ -51,7 +51,7 @@ hand, so it feels remembered and still native to Kobblon.
     is green and it is the default, so a button nobody labelled is green.
   - **Blue is what you are standing inside, not what you are doing.** Links,
     the topbar, marks, the selected tab. `variant="brand"` exists for the
-    rare button that *is* Kobblon — signing in — rather than an action.
+    rare button that *is* Kobblon - signing in - rather than an action.
   - **Red is danger and nothing else.** It was always this and stays.
   - The old default was blue, and because it was the default, every button
     nobody thought about came out blue. Watch for that shape elsewhere: a

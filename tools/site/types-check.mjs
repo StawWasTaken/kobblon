@@ -3,7 +3,7 @@
  *
  * Small, but it has already cost a round of confusion: a file whose type the
  * browser did not know went up as application/octet-stream, no bucket allows
- * that, and the error names the type the bucket refused — so somebody
+ * that, and the error names the type the bucket refused - so somebody
  * uploading an ordinary PNG was told that PNG is not supported.
  *
  * The function is read out of api.ts rather than copied here, so this checks

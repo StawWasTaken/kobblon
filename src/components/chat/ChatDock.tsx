@@ -765,7 +765,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
         * The card, over everything, once each way.
         *
         * Shown when a suspension has not been read, and again when it has
-        * run out and that has not been read — which is what Staw asked
+        * run out and that has not been read - which is what Staw asked
         * for: "this popup will appear then it'll appear again once its
         * gone". Both facts are rows on the server, so closing the window
         * or coming back tomorrow shows whichever is still unread rather

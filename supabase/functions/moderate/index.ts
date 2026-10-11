@@ -33,7 +33,7 @@ const CORS = {
    * supabase-js puts `x-client-info` on every call it makes, and newer
    * versions add `x-supabase-api-version`. A browser asks the preflight
    * whether it may send each one, and a header missing from this list
-   * means the browser cancels the request before it is sent — which the
+   * means the browser cancels the request before it is sent - which the
    * library then reports as "Failed to send a request to the Edge
    * Function", the same sentence it uses when a function does not exist.
    * `login` happened to list `x-client-info` and worked; this one did not
@@ -42,7 +42,7 @@ const CORS = {
    * So the preflight echoes back whatever was asked for rather than
    * keeping a list in step with a library. That is not a hole: a header
    * is not a credential, every request still has to get past the checks
-   * below, and a caller who can set headers can set them anyway — CORS
+   * below, and a caller who can set headers can set them anyway - CORS
    * decides what a *page in a browser* may read, not who may call.
    */
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -131,7 +131,7 @@ The reason is shown to the person who wrote the line. Write it plainly, say what
  * One ask of Groq, with a picture when there is one.
  *
  * It says why it failed rather than returning a bare null. Not for the
- * person who uploaded anything — for whoever pressed the button in the
+ * person who uploaded anything - for whoever pressed the button in the
  * staff console, because "looked: 12, decided: 0" is the same answer
  * whether the key is wrong, the model name is retired, or every single
  * thing in the queue was genuinely unclear. Those need different fixes and
@@ -462,8 +462,8 @@ async function askGroqChat(model: string, rules: {
  * Which models this key can actually use, asked of Groq rather than
  * remembered.
  *
- * Groq retires names on its own schedule — `llama-3.3-70b-versatile` went
- * on 16 August 2026 and the vision previews before it — and a name written
+ * Groq retires names on its own schedule - `llama-3.3-70b-versatile` went
+ * on 16 August 2026 and the vision previews before it - and a name written
  * down in a migration is a name that is right until it is not, with
  * "decided 0" as the only symptom. So the console asks, and whoever is
  * setting this picks from what exists today.
@@ -548,7 +548,7 @@ async function handle(request: Request): Promise<Response> {
    * the sign-in check, and without touching the database, Groq, or who is
    * asking. It is how you find out whether the function is reachable at
    * all, which is the question underneath every "failed to send a
-   * request" — and it has to be answerable by a plain address in a browser
+   * request" - and it has to be answerable by a plain address in a browser
    * tab, because that is the one way of asking that no library, session or
    * preflight can get in the way of.
    *
@@ -608,7 +608,7 @@ async function handle(request: Request): Promise<Response> {
      * and not with an anon client.
      *
      * The anon version depended on `SUPABASE_ANON_KEY` being set and on
-     * legacy keys still being enabled on the project — neither of which is
+     * legacy keys still being enabled on the project - neither of which is
      * true everywhere, and both of which fail as "no user", which reads to
      * whoever pressed the button as "you are not signed in" while they are
      * looking at their own name in the corner. The service role validates

@@ -37,7 +37,7 @@ The model Staw asked for, exactly:
 
 - A World may belong to a Community. `worlds.community_id`.
 - The people who may edit it are that Community's members **with a rank that
-  carries the permission** — they are its developers by virtue of their
+  carries the permission** - they are its developers by virtue of their
   rank, not by a separate list.
 - The moment somebody leaves the Community, or their rank changes so it no
   longer carries the permission, they lose access. **Immediately, not at
@@ -69,9 +69,9 @@ column is added.
 
 Earned inside a World, worn on a profile.
 
-- `world_badges` — the badge a World defines: name, picture, description,
+- `world_badges` - the badge a World defines: name, picture, description,
   and how rare it is.
-- `world_badge_awards` — who has it, from which World, and when.
+- `world_badge_awards` - who has it, from which World, and when.
 - Shown on a profile as "earned in *this World*", linking back to it.
 
 The awarding is a script call: touching a part, joining, finishing
@@ -88,9 +88,9 @@ waits.
 
 Not Pixels and not Kubes. **Brix.**
 
-- `world_passes` — what a World sells: name, picture, description, price in
+- `world_passes` - what a World sells: name, picture, description, price in
   Brix, and whether it is still on sale.
-- `world_pass_owners` — who bought one.
+- `world_pass_owners` - who bought one.
 - Buying goes through the transaction ledger that already exists, so a
   purchase is one statement that moves Brix and records ownership, or does
   neither.
@@ -99,7 +99,7 @@ Two kinds of pass, and the difference matters for what has to exist first:
 
 - **A donation.** Somebody pays because they want to. This needs nothing
   from the runtime and can be built now.
-- **A pass that does something** — a sword, a door, a faster walk. The World
+- **A pass that does something** - a sword, a door, a faster walk. The World
   asks at join time what this player owns and behaves accordingly, which
   means it waits on scripting, like badges.
 
@@ -113,7 +113,7 @@ Who is playing right now, and joining the one you choose.
 Needs the Launcher to host a session that other people can join, which does
 not exist yet. What the website owns once it does:
 
-- `world_servers` — a live row per running session: which World, how many
+- `world_servers` - a live row per running session: which World, how many
   are in it, how many it holds, and when it was last heard from.
 - A server goes stale and disappears if it stops saying it is there. A list
   of servers that are not running is worse than no list.
@@ -126,7 +126,7 @@ Launcher doing something it cannot do today.
 
 ## Two files that keep arriving empty
 
-`plastic` and `foil` have both come through as fully transparent PNGs —
+`plastic` and `foil` have both come through as fully transparent PNGs -
 every pixel white, nothing in them. Same as the glass one before. Whatever
 is exporting them loses the very subtle textures entirely.
 

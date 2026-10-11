@@ -163,7 +163,7 @@ export class ChatWindow {
     /*
      * No /w yet. A whisper needs somebody to whisper to, and there is no
      * server, so it would be a command that looks like it works and does
-     * nothing — which is worse than not having it.
+     * nothing - which is worse than not having it.
      */
     this.chat.tell(`There is no /${word.slice(0, 20)}. Try /help.`)
   }
@@ -209,7 +209,7 @@ export class ChatWindow {
       /*
        * Theirs, and the same every time. Set inline because the palette is
        * per person rather than per kind, and a whisper keeps the green it
-       * had — that colour says what kind of line this is, not who wrote it.
+       * had - that colour says what kind of line this is, not who wrote it.
        */
       if (line.kind === 'said') who.style.color = tintFor(line)
       row.appendChild(who)

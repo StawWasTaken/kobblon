@@ -9,8 +9,8 @@ import { asset } from '@/lib/asset'
 /*
  * A word to somebody looking around as a guest.
  *
- * A guest account is real — it has their name, their friends, whatever they
- * have made — but it has no email and no password, so it lives in this
+ * A guest account is real - it has their name, their friends, whatever they
+ * have made - but it has no email and no password, so it lives in this
  * browser and nowhere else. Clear the browser, or come back on a phone, and
  * it is gone with everything in it. That is worth saying out loud, once in a
  * while, rather than the day it happens.
@@ -95,7 +95,7 @@ export function GuestNudge() {
 
         <p className="mt-2 text-sm leading-relaxed text-white/65">
           You are looking around as a guest. This account has no email and no password,
-          so it lives in this browser only — clear it, or come back on another machine,
+          so it lives in this browser only - clear it, or come back on another machine,
           and everything in it is gone.
         </p>
 
@@ -106,7 +106,7 @@ export function GuestNudge() {
           </li>
           <li className="flex gap-2">
             <span className="text-space-bright">•</span>
-            And it unlocks what guests cannot do — uploading to Create, making a
+            And it unlocks what guests cannot do - uploading to Create, making a
             Community, buying things, redeeming codes.
           </li>
         </ul>

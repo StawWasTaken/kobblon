@@ -31,6 +31,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Drawer } from '@/components/ui/Drawer'
 import { StatTile } from '@/components/ui/StatTile'
 import { Tabs } from '@/components/ui/Tabs'
+import { Note } from '@/components/ui/Note'
 import { Skeleton, ErrorState } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAsync } from '@/hooks/useAsync'
@@ -89,12 +90,10 @@ export function SupportQueue() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted">
-        What people have written in about. Anything marked{' '}
-        <span className="font-bold text-amber-300">urgent</span> asked for a person
-        rather than waiting their turn, so it sits at the top. Nothing automated answers
-        these — every one of them is read by whoever opens this panel.
-      </p>
+      <Note>
+        Anything marked <span className="font-bold text-amber-300">urgent</span> asked for a
+        person, so it sits at the top. Kobby answers the plain ones and passes the rest here.
+      </Note>
 
       <div className="grid gap-2 sm:grid-cols-4">
         <StatTile icon={faInbox} value={sums?.open_now ?? null} label="Still open" />
@@ -306,7 +305,7 @@ export function TicketDrawer({ one, onClose, onMove, onReplied }: {
         {/* ------------------------------------------------- who wrote it */}
         <Card className="grid gap-x-6 gap-y-3 p-4 sm:grid-cols-2">
           <Fact label="Who" icon={faUser}>
-            {one.first_name ?? '—'}
+            {one.first_name ?? '-'}
             {one.username && <span className="text-muted"> · @{one.username}</span>}
           </Fact>
           <Fact label="Write back to" icon={faEnvelope}>

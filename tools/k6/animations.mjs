@@ -55,7 +55,7 @@ export function animations({ index }) {
          * somebody standing.
          *
          * They used to breathe on Z, which is the shoulder hinging out
-         * away from the ribs — so a still avatar held its arms a few
+         * away from the ribs - so a still avatar held its arms a few
          * degrees off the torso and swung them further out. Staw: "i dont
          * like how the arms are animated towards the torso, i would like
          * them to be animated towards the behind and the infront". Every

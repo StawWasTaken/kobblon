@@ -3,6 +3,7 @@ import { faPaperPlane, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Note } from '@/components/ui/Note'
 import { Confirm } from '@/components/ui/Confirm'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -192,10 +193,7 @@ export function TicketThread({
             </div>
 
             {shut ? (
-              <Card className="p-4 text-sm leading-relaxed text-muted">
-                This ticket is closed. If it comes back, open a new one and say it is about
-                this ticket.
-              </Card>
+              <Note>This ticket is closed. Open a new one if it comes back.</Note>
             ) : (
               <textarea
                 value={words}
@@ -216,7 +214,7 @@ export function TicketThread({
         onClose={() => setClosing(false)}
         onConfirm={close}
         title="Close this ticket?"
-        lead="It stops being on our queue. You can open a new one whenever you like."
+        lead="It leaves our queue. You can open a new one whenever you like."
         confirmText="Close it"
       />
     </>

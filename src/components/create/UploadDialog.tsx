@@ -60,7 +60,7 @@ export function UploadDialog({
   const [pending, setPending] = useState(false)
   /*
    * Uploading is not publishing. What somebody makes is theirs until they
-   * say otherwise — a texture for their own World has no business appearing
+   * say otherwise - a texture for their own World has no business appearing
    * in a shop because nobody found a switch. This is that switch, at the
    * moment it is easiest to mean it.
    */
@@ -226,7 +226,7 @@ export function UploadDialog({
           </p>
           <p className="mt-1 text-xs leading-relaxed text-white/55">
             What the mesh wears. Upload one and it becomes a Decal of yours, or use a
-            Decal that already exists — one of yours, or anybody else&rsquo;s that is on
+            Decal that already exists - one of yours, or anybody else&rsquo;s that is on
             the Marketplace.
           </p>
 

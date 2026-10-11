@@ -736,9 +736,9 @@ export function AnnounceSection() {
 /* ------------------------------------------------------------------ words */
 
 const decisions = [
-  { value: 'block', label: 'Block — refuse it outright' },
-  { value: 'review', label: 'Review — let it through and flag it' },
-  { value: 'ok', label: 'Allow — an exception to another pattern' },
+  { value: 'block', label: 'Block - refuse it outright' },
+  { value: 'review', label: 'Review - let it through and flag it' },
+  { value: 'ok', label: 'Allow - an exception to another pattern' },
 ] as const
 
 export function WordsSection() {
@@ -798,7 +798,7 @@ export function WordsSection() {
         <p className="text-sm text-muted">
           Every pattern is a regular expression, matched without regard to case
           against names, descriptions and messages. Editing this list changes
-          what Kobblon catches immediately — it used to take a migration.
+          what Kobblon catches immediately - it used to take a migration.
         </p>
         <Button
           variant="yes"
@@ -1495,7 +1495,7 @@ export function MachineSection() {
   /*
    * What the key can see. Asked once, on purpose: it is a call to Groq and
    * the answer does not change while somebody is looking at this page. A
-   * failure is not shouted about — the two Selects fall back to whatever
+   * failure is not shouted about - the two Selects fall back to whatever
    * is already set, which is still true and still saveable.
    */
   const [models, setModels] = useState<string[]>([])
@@ -1700,7 +1700,7 @@ export function MachineSection() {
                 disabled={busy === 'vision'}
                 onChange={(picked) => void change('vision', { which_vision_model: picked })}
                 options={[
-                  { value: '', label: 'Nobody — a person looks at pictures' },
+                  { value: '', label: 'Nobody - a person looks at pictures' },
                   ...[...new Set([settings.data?.vision_model, ...models].filter(Boolean))]
                     .map((one) => ({ value: one as string, label: one as string })),
                 ]}

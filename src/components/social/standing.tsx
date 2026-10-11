@@ -501,7 +501,7 @@ export function RuleCard({ ord, title, body, gravity }: {
       <div className="flex flex-wrap items-center gap-2">
         <FontAwesomeIcon icon={faScaleBalanced} className="text-sm text-brand-bright" />
         <p className="font-display text-sm font-extrabold">
-          {ord ? `Rule ${ord} — ` : ''}{title}
+          {ord ? `Rule ${ord} - ` : ''}{title}
         </p>
         {!!gravity && (
           <span className={cn(

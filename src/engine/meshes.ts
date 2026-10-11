@@ -2,7 +2,7 @@
  * Reading a mesh file, in the one place that knows how.
  *
  * The card drawn at upload and the viewer on an item's page are the same
- * question asked twice — which loader does this file want, where is the
+ * question asked twice - which loader does this file want, where is the
  * model once it is loaded, and how far back does a camera stand to see all
  * of it. That was written twice the day the viewer arrived, and a format
  * added to one copy and not the other is a file Kobblon accepts and then
@@ -26,7 +26,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
  *
  * The extensions here, `kindAccepts.mesh` in `@/lib/kinds` and
  * `expected_extensions('mesh')` in the database are three statements of one
- * fact, and the database is the one that decides — the other two only say no
+ * fact, and the database is the one that decides - the other two only say no
  * earlier and more politely.
  */
 export const meshFormats = /\.(glb|gltf|obj)$/i

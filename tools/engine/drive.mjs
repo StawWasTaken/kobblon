@@ -1017,7 +1017,7 @@ const chatted = await p.evaluate(async () => {
    * The markup one again, last, with the allowance let go first.
    *
    * Only three bubbles stack, so by now the markup one has been pushed out
-   * by the newer messages — the board doing its job. Asking again is how
+   * by the newer messages - the board doing its job. Asking again is how
    * this check looks at the bubble it means rather than whichever three
    * happen to be up, and the send is asserted rather than assumed: at
    * 800ms apart these sit close enough to the rate limit that one was
@@ -1093,7 +1093,7 @@ const typing = await p.evaluate(() => {
 
   /*
    * Now they are typing, with the same key still held. A body has weight,
-   * so it does not stop on the frame the window opens — it slides to a
+   * so it does not stop on the frame the window opens - it slides to a
    * halt. The check is that it stops, not that it stops instantly: the
    * first version demanded a dead stop within half a ston and failed on
    * the deceleration, which is the controller being right.
@@ -1511,8 +1511,8 @@ const fitted = await p.evaluate(async () => {
 })
 /*
  * These two used to assert the opposite: that a picture kept its own
- * proportions whatever it was painted on. That was the bug — a sign stopped
- * being readable the moment somebody resized the wall — and the checks were
+ * proportions whatever it was painted on. That was the bug - a sign stopped
+ * being readable the moment somebody resized the wall - and the checks were
  * holding it in place.
  */
 check('a square picture on a long wall covers the long wall',

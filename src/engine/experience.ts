@@ -71,7 +71,7 @@ export type WorldBlock = {
    * written keeps working on it with no special case: it is placed, sized,
    * turned, coloured, made solid and carries decals exactly like any other
    * part, and `size` scales the loaded geometry to fill that box. A part
-   * that names a model nobody can fetch is still a part — it is drawn as
+   * that names a model nobody can fetch is still a part - it is drawn as
    * its shape, which is the honest answer and not an empty space where
    * somebody's building used to be.
    *
@@ -143,7 +143,7 @@ export type WorldDecal = {
    *
    * This is the whole of the difference between a Decal and a Texture:
    * absent means once, which is a decal, and present means the picture
-   * tiles. A Texture is a decal that repeats — one node, one field, rather
+   * tiles. A Texture is a decal that repeats - one node, one field, rather
    * than a second kind that would have to learn everything a decal already
    * knows about faces, offsets, tints and transparency.
    *
@@ -234,7 +234,7 @@ export type WorldLight = {
   /**
    * `point` throws light in every direction. `spot` throws a cone the way
    * `turn` is pointing. `surface` is the face of the part it is on, glowing
-   * — a panel or a strip rather than a bulb.
+   * - a panel or a strip rather than a bulb.
    */
   light: 'point' | 'spot' | 'surface'
   colour?: string
@@ -505,7 +505,7 @@ function readLight(raw: any): WorldLight | null {
  * says so.
  *
  * So anything unrecognised is kept to one side and handed back. It is never
- * read, never executed, never given to three.js — it is carried. The caps
+ * read, never executed, never given to three.js - it is carried. The caps
  * are because this is user content like everything else here: a file cannot
  * make the reader hold a megabyte of nonsense per part.
  *
@@ -564,7 +564,7 @@ function keepUnknown(raw: any, known: string[]): Record<string, unknown> | undef
 /**
  * The shape a World is written in from now on.
  *
- * `{ class, properties, children }` — one shape for everything, rather than a
+ * `{ class, properties, children }` - one shape for everything, rather than a
  * `kind` on a part, a `parts` list on a group, a `children` list on a part and
  * a `sounds` list on the World. A tree walker written once works on all of
  * it, a Properties panel is "show the properties of the selected node", and a
@@ -1189,7 +1189,7 @@ export function buildWorld(manifest: WorldManifest): BuiltWorld {
     if (part.kind === 'light') {
       /*
        * Past the budget a light is still in the tree, still selectable,
-       * still saved — it simply is not burning. Dropping it would lose
+       * still saved - it simply is not burning. Dropping it would lose
        * somebody's work; drawing it would lose everybody's frame rate.
        */
       const here = lightFor(part, lit < MOST_LIGHTS)

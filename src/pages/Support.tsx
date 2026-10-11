@@ -5,7 +5,7 @@ import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
   faCircleQuestion, faCheck, faUser, faEnvelope,
-  faUserCheck, faBolt,
+  faBolt,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
 import { GuestGate } from '@/components/ui/GuestGate'
+import { Note } from '@/components/ui/Note'
+import { Tickbox } from '@/components/ui/Tickbox'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -83,7 +85,7 @@ export const statusLook: Record<Ticket['status'], { word: string; look: string }
  * The badge for a status, for any status.
  *
  * `statusLook[status]` was read straight, and a status the map has not heard
- * of is `undefined` — so `look.look` threw and the whole page would not draw.
+ * of is `undefined` - so `look.look` threw and the whole page would not draw.
  * That is not hypothetical: 0212 widened the server's statuses to include
  * `in_progress` and `escalated`, and a browser holding an older bundle reads
  * them the moment a staff member touches a ticket. A word nobody recognises
@@ -223,7 +225,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
       open={open}
       onClose={onClose}
       title="Contact us"
-      description="Four steps. A person reads every one of these."
+      description="Four steps."
       size="lg"
       footer={
         <div className="flex flex-wrap items-center gap-3">
@@ -258,7 +260,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
       <Step
         n={1}
         title="Who you are"
-        note="Your account is already attached to this ticket. The email is only needed if the account itself is the problem — leave it empty otherwise."
+        note="Your account is already on this ticket. An email is only needed if the account itself is the problem."
         done={emailOk && emailGiven}
       >
         <div className="space-y-3">
@@ -315,7 +317,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
           {emailGiven && emailOk && (
             <p className="flex items-center gap-2 text-sm font-semibold text-space-bright">
               <FontAwesomeIcon icon={faEnvelope} className="text-xs" />
-              We will write back to that address as well as here.
+              We will write there as well as here.
             </p>
           )}
         </div>
@@ -366,55 +368,17 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
             onChange={(e) => setBody(e.target.value)}
             rows={6}
             maxLength={4000}
-            placeholder="Take as long as you need. The more of it we have, the fewer times we have to write back asking."
+            placeholder="What happened, in your own words."
             aria-label="Describe your issue"
             className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
           />
           <p className="text-xs text-muted">{4000 - body.length} characters left.</p>
 
-          {/*
-            * The tick Staw asked for, and the line under it that keeps it
-            * honest. Nothing automated answers tickets today - Kobby reads
-            * messages and uploads, it has never written a support reply - so
-            * the box cannot promise a person instead of a robot, because
-            * that is already every ticket. What it does is mark this one
-            * urgent and put it at the front of the queue, which is a thing
-            * the database actually does.
-            */}
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={wantsHuman}
-            onClick={() => setWantsHuman((on) => !on)}
-            className={cn(
-              'flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors',
-              wantsHuman
-                ? 'border-brand-bright bg-brand/15'
-                : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
-            )}
-          >
-            <span
-              className={cn(
-                'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors',
-                wantsHuman
-                  ? 'border-brand-bright bg-brand-bright text-white'
-                  : 'border-white/25',
-              )}
-            >
-              {wantsHuman && <FontAwesomeIcon icon={faCheck} className="text-[10px]" />}
-            </span>
-            <span className="min-w-0">
-              <span className="flex flex-wrap items-center gap-2 text-sm font-bold">
-                <FontAwesomeIcon icon={faUserCheck} className="text-xs text-brand-bright" />
-                I want my ticket to be reviewed by a human
-              </span>
-              <span className="mt-1 block text-xs leading-relaxed text-muted">
-                Every ticket is read by a person today — nothing automated answers these. Ticking
-                this marks yours as important, so it goes to the front of the queue. Please only
-                use it when it matters.
-              </span>
-            </span>
-          </button>
+          <Tickbox
+            on={wantsHuman}
+            onChange={setWantsHuman}
+            label="Have a person read this one"
+          />
         </div>
       </Step>
     </Dialog>
@@ -472,7 +436,7 @@ export default function Support() {
         kicker="Help"
         icon={faHeadset}
         title="Support"
-        lead="Write to a person at Kobblon. Everything you send and everything we say back stays on this page."
+        lead="Write to us. Everything you send, and everything we say back, stays on this page."
         actions={
           <GuestGate action="write to support">
             <Button
@@ -525,7 +489,7 @@ export default function Support() {
             <EmptyState
               mood="emptyBox"
               title="Nothing open"
-              body="You have not written to us. If something is wrong, say so and a person reads it."
+              body="You have not written to us yet."
               action={
                 <GuestGate action="write to support">
                   <Button icon={faPlus} onClick={startWriting} disabled={!profile}>
@@ -592,11 +556,7 @@ export default function Support() {
         })}
       </section>
 
-      <p className="flex items-start gap-3 rounded-2xl border border-ink-line bg-ink-card p-5 text-sm leading-relaxed text-muted">
-        <FontAwesomeIcon icon={faCircleInfo} className="mt-0.5" />
-        Kobblon will never ask you for your password, and never asks for it here. Anybody who
-        does is not us, whatever the message looks like.
-      </p>
+      <Note>Kobblon never asks for your password, here or anywhere else.</Note>
 
       {reading !== null && (
         <TicketThread number={reading} onClose={shutCard} onChanged={tickets.reload} />

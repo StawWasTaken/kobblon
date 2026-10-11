@@ -53,7 +53,7 @@ export class Keyboard {
   constructor(private element: HTMLElement) {
     const keyDown = (e: KeyboardEvent) => {
       /*
-       * While somebody is typing, the keyboard is not ours — and muting the
+       * While somebody is typing, the keyboard is not ours - and muting the
        * intent was never enough to say that. This listener called
        * `preventDefault` on every key it knew before anything read the
        * intent, so with a cursor in a chat box the space bar typed no
@@ -165,7 +165,7 @@ export class Keyboard {
    * Nothing is prevented, nothing is added to what is held, and anything
    * already held is released by its own keyup, which still arrives. The
    * engine calls this from `ChatService`'s typing event, so a window that
-   * does the one documented thing — `chat.setTyping(true)` — gets this for
+   * does the one documented thing - `chat.setTyping(true)` - gets this for
    * free. A window drawing its own chat against a bare `Keyboard` calls it
    * itself.
    */

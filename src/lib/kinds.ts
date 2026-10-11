@@ -9,7 +9,7 @@ import type { AssetKind } from '@/types/db'
  *
  * One file, because Kobblon Workspace and the Create pages must not disagree
  * about this. A kind called "Model" in one window and "Mesh" in the other is
- * two products; and the version of that which actually bites is subtler — a
+ * two products; and the version of that which actually bites is subtler - a
  * list of accepted extensions copied into the Workspace, then a format added
  * here and not there, so a file Kobblon accepts is refused by Kobblon.
  *

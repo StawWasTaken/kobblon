@@ -149,7 +149,7 @@ export default function Inbox() {
         kicker="From Kobblon"
         icon={faEnvelopeOpenText}
         title="Inbox"
-        lead="Decisions, security notices, replies from support and anything Kobblon needs you to actually read. Nothing here came from another person."
+        lead="Decisions, security notices and replies from support. Never another person."
         actions={
           <>
             <Tabs
@@ -185,7 +185,7 @@ export default function Inbox() {
             body={
               tab === 'new'
                 ? 'You have read everything Kobblon has sent you.'
-                : 'Kobblon writes here when something happens to your account. An empty inbox is the good outcome.'
+                : 'Kobblon writes here when something happens to your account.'
             }
             action={
               tab === 'new'

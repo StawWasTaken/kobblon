@@ -5,7 +5,7 @@ begin;
  *
  * `world_to_play` hands back six fields because the runtime "has no business
  * with the rest of the row", and that is still right. These three are not
- * the rest of the row — they are things the Launcher has to draw and cannot
+ * the rest of the row - they are things the Launcher has to draw and cannot
  * work out:
  *
  *   - `emblem_url`, because the emblem is what a World is named by in a
@@ -20,7 +20,7 @@ begin;
  * The return type changes, so the function is dropped rather than replaced:
  * `create or replace` cannot change the shape of what comes back.
  * `experience_to_play`, the old name kept pointing at this one, has to go
- * first because it depends on it — and it comes back naming its six fields
+ * first because it depends on it - and it comes back naming its six fields
  * explicitly rather than `select *`, so the next field added here does not
  * silently change the old interface too.
  */

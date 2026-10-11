@@ -800,7 +800,7 @@ export async function listAssets(options: {
  *
  * Takes `IMG-1042` or `1042`, because somebody copying a tag off a page gets
  * the whole thing and somebody typing it from memory does not. What comes
- * back is the row's real id, or null — and null covers both "no such Decal"
+ * back is the row's real id, or null - and null covers both "no such Decal"
  * and "not one you may use", deliberately: the difference between those two
  * is whether a private upload exists, which is not a question an id box
  * should answer.
@@ -993,8 +993,8 @@ export async function uploadAsset(input: {
   /**
    * The Decal a mesh wears.
    *
-   * Either a picture uploaded in the same breath — which becomes a Decal of
-   * its own, unlisted, owned by whoever uploaded the mesh — or the id of one
+   * Either a picture uploaded in the same breath - which becomes a Decal of
+   * its own, unlisted, owned by whoever uploaded the mesh - or the id of one
    * that already exists. A mesh with no texture is a grey shape, and making
    * somebody upload the shape, find the Decal page and come back is three
    * steps for one thought.
@@ -1023,7 +1023,7 @@ export async function uploadAsset(input: {
    * Before the mesh rather than after, so a mesh never exists undressed: if
    * the picture is refused, nothing has been made, and somebody tries again
    * rather than finding a grey shape they have to go and fix. It is a Decal
-   * in its own right — its own page, its own owner, its own screening — and
+   * in its own right - its own page, its own owner, its own screening - and
    * it is never listed on the Marketplace by being a texture. Whether the
    * mesh goes on the Marketplace is the mesh's business.
    */
@@ -2708,7 +2708,7 @@ export async function favouriteWorld(worldId: string, userId: string, on: boolea
  * is an empty string: a file dragged from an archive, one whose extension the
  * machine does not recognise, a few older Windows setups. Supabase then sends
  * `application/octet-stream`, which no bucket of ours allows, and the error
- * that comes back names the type the bucket refused — so somebody uploading a
+ * that comes back names the type the bucket refused - so somebody uploading a
  * perfectly ordinary PNG is told that PNG is not supported.
  *
  * That message cost a round of confusion already. The extension is a worse
@@ -3229,7 +3229,7 @@ export type ScreeningAsset = {
  * back from here rather than what was typed.
  *
  * It refuses when it cannot tell. The filter being unreachable is not
- * permission — that would make a dropped connection the way round it — and
+ * permission - that would make a dropped connection the way round it - and
  * `ChatService` says as much to whoever typed it.
  *
  * `setSupabaseClient` means this works from the Launcher and the Workspace
@@ -3261,7 +3261,7 @@ export type ChatStanding = {
 /**
  * Whether this person may talk, asked of the server.
  *
- * Null is the ordinary answer. The row is the authority — a suspension
+ * Null is the ordinary answer. The row is the authority - a suspension
  * lives on the server with a time on it, so leaving and coming back,
  * signing in elsewhere, or clearing a browser changes nothing, which is
  * the whole point of it.
@@ -3423,7 +3423,7 @@ export async function aiSettings(): Promise<AiSettings | null> {
  * Which models the Groq key can actually use, today.
  *
  * Asked of Groq through the worker rather than written down here, because
- * a name written down is a name that is right until Groq retires it — and
+ * a name written down is a name that is right until Groq retires it - and
  * the only symptom of that is the machine quietly deciding nothing.
  */
 /**
@@ -3436,9 +3436,9 @@ export async function aiSettings(): Promise<AiSettings | null> {
  * extension eating the request. They need four different fixes and the
  * message tells you nothing.
  *
- * So when it happens, ask the function the simplest question there is —
+ * So when it happens, ask the function the simplest question there is -
  * `?ping`, which answers before the method check and before the sign-in
- * check — and say which of the four it was. The ping is a plain GET with
+ * check - and say which of the four it was. The ping is a plain GET with
  * no headers, so it needs no preflight: if the ping lands and the real
  * call does not, the fault is the preflight and nothing else.
  */
@@ -3450,7 +3450,7 @@ async function whyNoFunction(name: string, said: string): Promise<string> {
   try {
     ping = await fetch(`${base}/functions/v1/${name}?ping`)
   } catch {
-    return `${said} The function could not be reached at all — either it is not deployed, or something in this browser is blocking requests to Supabase (an extension, or an ad blocker).`
+    return `${said} The function could not be reached at all - either it is not deployed, or something in this browser is blocking requests to Supabase (an extension, or an ad blocker).`
   }
 
   if (ping.status === 404) return `${said} There is no function called "${name}" deployed on this project.`
@@ -3464,7 +3464,7 @@ async function whyNoFunction(name: string, said: string): Promise<string> {
   if (alive && alive.hasGroqKey === false) {
     return `${said} The function is alive but has no GROQ_API_KEY set.`
   }
-  return `${said} The function is alive and answers a plain ping, so what is being refused is the preflight on the real call — check "Verify JWT" on ${name}.`
+  return `${said} The function is alive and answers a plain ping, so what is being refused is the preflight on the real call - check "Verify JWT" on ${name}.`
 }
 
 export async function groqModels(): Promise<string[]> {

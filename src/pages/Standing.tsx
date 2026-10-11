@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
+import { Note } from '@/components/ui/Note'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import {
@@ -46,8 +47,14 @@ import type { ModerationRow } from '@/types/db'
  * compute differently from the thing enforcing it.
  */
 
-/** The one line that says what the bar bought, which is the point of it. */
-export function Bought({ minutes }: { minutes: number }) {
+/**
+ * The one line that says what the bar bought, and when it climbs back.
+ *
+ * Two boxes, which is one too many: the only thing anybody wants off this
+ * part of the page is how long a suspension would be today and when the
+ * number moves.
+ */
+export function Bought({ minutes, next }: { minutes: number; next?: string | null }) {
   const said = minutes < 60
     ? `${minutes} minutes`
     : minutes < 1440
@@ -55,14 +62,10 @@ export function Bought({ minutes }: { minutes: number }) {
       : `${Math.round(minutes / 1440)} day`
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
-      <FontAwesomeIcon icon={faClock} className="mt-0.5 text-sm text-brand-bright" />
-      <p className="min-w-0 text-sm leading-relaxed text-white/70">
-        What this buys you right now: if your chat were suspended today it would last{' '}
-        <span className="font-bold text-white">{said}</span>. A better bar makes that
-        shorter, a worse one makes it longer.
-      </p>
-    </div>
+    <Note icon={faClock}>
+      A chat suspension today would last <span className="font-bold text-white">{said}</span>
+      {next && <>, and the bar climbs again <span className="font-bold text-white">{next}</span></>}.
+    </Note>
   )
 }
 
@@ -232,7 +235,7 @@ export function RowCard({ one, onClose, onAppealed }: {
             </span>
             {!!one.gravity && (
               <span className="text-white/60">
-                {' '}— a rule Kobblon calls{' '}
+                {' '}· a rule Kobblon calls{' '}
                 {(gravityWord[one.gravity] ?? '').toLowerCase()}.
               </span>
             )}
@@ -260,10 +263,8 @@ export function RowCard({ one, onClose, onAppealed }: {
           {one.by_rank === 'kobby' && !!one.gravity && (
             <Fact label="Why this and not something else">
               <p className="text-white/75">
-                Kobby takes how serious the rule is and how your behaviour bar stood at the
-                time, and the two together pick what happens. A better bar means a gentler
-                answer to the same line, and a worse one means a heavier answer. Nothing it
-                can do reaches further than suspending an account.
+                How serious the rule is, and where your bar stood at the time. Nothing Kobby
+                can do goes further than suspending an account.
               </p>
             </Fact>
           )}
@@ -339,8 +340,7 @@ export function RowCard({ one, onClose, onAppealed }: {
               <>
                 <p className="font-display text-lg font-extrabold">Send an appeal</p>
                 <p className="text-sm leading-relaxed text-muted">
-                  Say what you think was missed. You get one appeal for each decision, so put
-                  everything in it. A person reads it, even where Kobby decided.
+                  One appeal for each decision, so put everything in it. A person reads it.
                 </p>
                 <textarea
                   value={words}
@@ -415,7 +415,7 @@ export default function Standing() {
         kicker="Your account"
         icon={faShieldHalved}
         title="Account standing"
-        lead="How your behaviour stands with Kobblon, what that buys you, and everything that has ever been decided about this account."
+        lead="Where your behaviour stands, and everything ever decided about this account."
       />
 
       {/* ------------------------------------------------------- the bar */}
@@ -448,19 +448,10 @@ export default function Standing() {
 
           <p className="leading-relaxed text-white/70">{bandLine[me.band]}</p>
 
-          <Bought minutes={me.timeout_minutes} />
-
-          {/* The climb, as days rather than "slowly". */}
-          {me.score < 100 && !me.permanent && (
-            <div className="flex items-start gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
-              <FontAwesomeIcon icon={faClock} className="mt-0.5 text-sm text-space-bright" />
-              <p className="min-w-0 text-sm leading-relaxed text-white/70">
-                It climbs on its own.
-                {me.next_at && <> It moves up again <span className="font-bold text-white">{inDays(me.next_at)}</span>.</>}
-                {me.full_at && <> It is back to a hundred <span className="font-bold text-white">{inDays(me.full_at)}</span>.</>}
-              </p>
-            </div>
-          )}
+          <Bought
+            minutes={me.timeout_minutes}
+            next={me.score < 100 && !me.permanent && me.next_at ? inDays(me.next_at) : null}
+          />
 
           {me.permanent && (
             <p className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm leading-relaxed text-white/80">
@@ -544,20 +535,20 @@ export default function Standing() {
         )}
       </section>
 
-      <Card className="flex flex-wrap items-center gap-4 p-5">
-        <FontAwesomeIcon icon={faComments} className="text-lg text-brand-bright" />
-        <p className="min-w-0 flex-1 text-sm leading-relaxed text-white/65">
-          Appeals go on the decision itself, in its card above. If something here does not match
-          what you think happened, write to us instead.
-        </p>
-        <Link
-          to="/support"
-          className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
-        >
-          Open a ticket
-          <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
-        </Link>
-      </Card>
+      <Note
+        icon={faComments}
+        side={
+          <Link
+            to="/support"
+            className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
+          >
+            Open a ticket
+            <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+          </Link>
+        }
+      >
+        Appeals go on the decision itself, in its card above.
+      </Note>
 
       {showing && (
         <RowCard

@@ -103,7 +103,7 @@ export function CommunityHeader({
                     loading={pending}
                     onClick={onUnask}
                   >
-                    Asked — take it back
+                    Asked - take it back
                   </Button>
                 ) : (
                   <Button icon={faUserPlus} loading={pending} onClick={onJoin}>

@@ -15,13 +15,13 @@ createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen space-y-8 bg-ink p-8 text-white">
     <div className="space-y-2">
       <h2 className="font-display text-sm uppercase tracking-wider text-muted">
-        Ordinary — as an item page uses it
+        Ordinary - as an item page uses it
       </h2>
       <MediaPlayer kind="video" src={clip} className="max-w-xl" />
     </div>
     <div className="space-y-2">
       <h2 className="font-display text-sm uppercase tracking-wider text-muted">
-        Ambient — as the front page uses it
+        Ambient - as the front page uses it
       </h2>
       <MediaPlayer kind="video" ambient src={clip} className="max-w-xl" />
     </div>

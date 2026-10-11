@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')!).render(
       <div className="mx-auto flex w-72 flex-col gap-1.5 rounded-xl border border-ink-line bg-ink-card p-3">
         <MessageRow message={say(1, 'hi')} sender={them} mine={false} />
         <MessageRow message={say(2, 'hey, how is the world going?')} sender={me} mine />
-        <MessageRow message={say(3, 'good — ••••••  got masked though')} sender={them} mine={false} />
+        <MessageRow message={say(3, 'good - ••••••  got masked though')} sender={them} mine={false} />
         <MessageRow message={say(4, 'ok')} sender={me} mine />
       </div>
     </div>

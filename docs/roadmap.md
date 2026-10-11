@@ -10,7 +10,7 @@ website and its builder are the first generation and stay. `docs/audit.md`
 lists what in the architecture would make the rest awkward, and what to do
 about each of them.
 
-## The sweep — tomorrow, both sessions, before anything new
+## The sweep - tomorrow, both sessions, before anything new
 
 Staw, after looking at the whole thing at once: there are parts of the old
 website creator still lying about, attempts at copying Roblox that half
@@ -20,14 +20,14 @@ Launcher, and it comes before the next feature rather than after it.
 
 **Are we building what we said we were?** `docs/direction.md` and
 `docs/neoclassic.md` say what Kobblon is. Read both, then walk the product
-and name the places where it has drifted — not to redesign them, to list
+and name the places where it has drifted - not to redesign them, to list
 them. Copy the system, not the look; only what a week-old platform needs;
 nothing sterile; no fake functionality.
 
 **The leftovers.** The old Space creator, the abandoned halves, the things
 that only work if you hold them right. Each is one of three: finish it,
 delete it, or write down why it stays. Something left in place because
-deleting it felt rude is the worst of the three — it teaches everybody that
+deleting it felt rude is the worst of the three - it teaches everybody that
 broken things are normal here.
 
 **Coherence.** One name for one thing, in both windows: `@/lib/kinds` is the
@@ -47,14 +47,14 @@ doing with fresh eyes rather than by search.
 `CLAUDE.md`, and actually driving the things nobody has driven since they
 were written.
 
-**"Making sure people cannot steal our scripts" — the honest version.**
+**"Making sure people cannot steal our scripts" - the honest version.**
 Worth writing down plainly now so the day is not spent chasing it:
 
 - **Anything shipped to a browser or an application can be read.** Minifying
   and bundling raise the cost of reading it; they do not make it private, and
   no technique does. Anybody who tells you otherwise is selling something.
 - **So nothing that must stay secret goes in the client.** No service-role
-  key, no private API key, no signing secret. The publishable key is fine —
+  key, no private API key, no signing secret. The publishable key is fine -
   it is published on purpose and the row policies are what protect the data.
 - **What actually protects Kobblon is the server saying no.** Row Level
   Security, the RPCs, the screening triggers, the checks in `check_texture`
@@ -161,23 +161,23 @@ Switching accounts keeps the sessions it already has, so it never asks twice.
 A guest who decides to stay keeps the account they have been using. A failure
 says what actually went wrong rather than blaming the password for it.
 
-## The staff panel, rebuilt — three panels, not one
+## The staff panel, rebuilt - three panels, not one
 
 Staw, 10 October: the staff console has to be rebuilt entirely, it has to be
 **extra practical**, and the design as it stands is not good enough. It is
 also no longer one panel. Three, by rank:
 
-- **Superadmin panel** — the `kobblon` and `stawrer` accounts. Everything.
+- **Superadmin panel** - the `kobblon` and `stawrer` accounts. Everything.
   Staw's reasoning, and it is sound: he trusts himself, so the ceiling sits
   here and nowhere else.
-- **Admin panel** — a great deal more than a moderator, meaningfully less
+- **Admin panel** - a great deal more than a moderator, meaningfully less
   than a superadmin.
-- **Moderator panel** — moderation and only moderation: created things,
+- **Moderator panel** - moderation and only moderation: created things,
   people, communities.
 
 **The thing to settle before any of it is drawn: there is no rank column
 today.** `profiles.is_admin` is a single boolean, and it is doing two
-unrelated jobs — it gates the console *and* it is what paints the verified
+unrelated jobs - it gates the console *and* it is what paints the verified
 tick (`0023_protected_content.sql` returns `'verified'` when `is_admin`).
 Three panels need a real rank, and the tick needs its own field, or promoting
 a moderator hands them a verified badge nobody meant to give. One migration
@@ -190,10 +190,10 @@ by hand gets refusals, not a working screen.
 
 What the new panel has to be able to do:
 
-- **Take content down** — worlds, communities, creator assets, Catalog
+- **Take content down** - worlds, communities, creator assets, Catalog
   assets. One action over every kind of thing, not four half-built ones.
-- **Communities** — rename, verify, delete, change the owner.
-- **People** — the triage card and its actions: warning, chat suspension,
+- **Communities** - rename, verify, delete, change the owner.
+- **People** - the triage card and its actions: warning, chat suspension,
   account suspension, and ban (superadmin only, and see the standing rule
   below).
 - **Reports and support tickets both arrive here**, in one place, with the
@@ -230,7 +230,7 @@ Things Staw has named for the rebuilt panel, beyond the three ranks:
 - **Switch model when a quota runs out.** Groq's free tiers have limits, and
   today a model that has hit one just fails and the pass does nothing. The
   panel should hold an ordered list rather than one name, and the worker
-  should walk down it on a quota error — with the console saying which one
+  should walk down it on a quota error - with the console saying which one
   it is actually on, because "it is set to the big one" and "it has been
   running on the small one since Tuesday" look identical right now.
 - **What the machine did, without being asked.** "Looked at 12, acted on 2,
@@ -240,22 +240,22 @@ Things Staw has named for the rebuilt panel, beyond the three ranks:
 ## Voice, and moderating it
 
 Staw, 10 October: voice chat is coming, and it gets the same moderation
-shape as text — a suspension with a popup, a locked bar, and no voice until
+shape as text - a suspension with a popup, a locked bar, and no voice until
 it is over. The card and the bar are already built and already take a
 `kind`, so voice inherits both the day it exists.
 
 What voice does **not** inherit is the screening, and this is the part to
 have straight before anybody builds it. Text is screened by a trigger on the
 way into the table: there is no path into a message that skips it. Voice has
-no equivalent, because there is no text to censor — a word is already out of
+no equivalent, because there is no text to censor - a word is already out of
 somebody's mouth and in somebody else's ears before anything could look at
 it. So voice moderation is a different thing wearing the same clothes:
 
 - **It is after the fact, not before.** The sanction comes from a report or
   from a pass over a recording, never from a filter in the path.
 - **Which means recording, which means telling people.** Anything that
-  listens has to be said out loud in the Guidelines and the Terms — the ones
-  already on the list as out of date — and that is a policy decision before
+  listens has to be said out loud in the Guidelines and the Terms - the ones
+  already on the list as out of date - and that is a policy decision before
   it is a feature.
 - **The ladder is the same one.** `next_timeout_minutes` already escalates
   5, 6, 10, 20, 45, 2h, 6h, 24h over a month, and a voice suspension should
@@ -280,12 +280,12 @@ Staw: both are a mess, and they are one job rather than two, because a
 sanction a person cannot see or answer is the thing that makes support
 necessary in the first place.
 
-- **Support** — a ticket somebody can open, follow, and get a reply on,
+- **Support** - a ticket somebody can open, follow, and get a reply on,
   landing in the panel above alongside reports.
 - **Support** is a **ticket card**, Roblox's shape: who you are, what device,
   which category, what happened, Continue. Not a form that feels like a
-  contact page — a thing with a state, that you can come back to.
-- **Account standing** — one page that says plainly where a person stands:
+  contact page - a thing with a state, that you can come back to.
+- **Account standing** - one page that says plainly where a person stands:
   what they were sanctioned for, when it ends, what it stops them doing, and
   how to appeal it. The chat suspension card is the shape to copy; standing
   is that, for the whole account.
@@ -296,18 +296,18 @@ Standing is **a bar, not a list**. How you have behaved, as one visible
 quantity, and it decides how hard the platform comes down on you next time:
 the higher it is, the less you are moderated and the lighter the punishment.
 
-- Low on the bar, it **climbs back by itself** — over days, sometimes weeks,
+- Low on the bar, it **climbs back by itself** - over days, sometimes weeks,
   sometimes months, depending how far it fell.
 - A **superadmin can clear it outright**, and you are good again
   immediately. Nobody else can.
-- Every past moderation action is **shown here** — a row each, with the
+- Every past moderation action is **shown here** - a row each, with the
   basics visible, and a **popup card** on click carrying the whole of it:
   who moderated you (**Mod, Admin, Superadmin, or Kobby**, which is what we
   call the automated system), when, against what, for how long, for what,
   why, and the button to **appeal**.
 
 **Visual, not a table of text.** Bars, cards, the shapes already used for
-the chat suspension card — this is the page people land on at the worst
+the chat suspension card - this is the page people land on at the worst
 moment they will have on Kobblon, and it should read as something built.
 
 ### One ecosystem
@@ -325,28 +325,28 @@ worst-looking part of Kobblon and the part most people meet first.
 
 - **Old leftovers** in among them, from before the platform looked like this.
 - **The Community Guidelines and the Terms are out of date**, and so are the
-  other policies — they describe a platform that no longer exists. Rewritten
+  other policies - they describe a platform that no longer exists. Rewritten
   against what Kobblon actually is and actually enforces, not aspirationally.
 - **There are too many policies.** Fold them into the few that earn a page.
 - **How they are stored and presented** both want redoing: a proper
   presentation rather than a wall, and one source each rather than prose
   pasted into a component.
 
-## Brix, redesigned — and the quest tab
+## Brix, redesigned - and the quest tab
 
 Every page about Brix gets a design pass, and Brix gains the thing it has
 been missing: a reason to come back. A **Quests tab**, where Brix, avatar
 items and cosmetics are earned.
 
 **Quests from worlds.** A verified creator may request that their world
-become a quest on the official quest tab — *"Play WORLDNAME for 15 minutes —
+become a quest on the official quest tab - *"Play WORLDNAME for 15 minutes -
 win 50 Brix"*. Superadmins and admins approve the request, and the AI may
 approve one too. Every quest carries two tags: one naming the world it comes
 from, and one custom tag, which needs an admin or superadmin to approve it
 and **costs the creator 100 Brix**. Official Kobblon accounts can give their
 own quests a custom background image.
 
-**Quests Staw adds by hand.** Superadmin-only, and arbitrary — *"invite 5
+**Quests Staw adds by hand.** Superadmin-only, and arbitrary - *"invite 5
 friends for 50 Brix"*.
 
 **The daily.** 30 Brix for connecting to the website on a given day, but it
@@ -355,14 +355,14 @@ look is the point of it.
 
 The parts that need thinking about before building: a time-in-world quest is
 only as honest as the Launcher's reporting of time in a world, so the
-counting belongs server-side with the session the Launcher already opens —
+counting belongs server-side with the session the Launcher already opens -
 a client saying "I played fifteen minutes" is a client minting Brix. And a
 paid-for tag is a Brix sink, which the economy wants; it should go through
 the ledger that already exists rather than a second path.
 
 **The rule both sessions agreed on, in the apps' words, because theirs is
 the better version**: the Launcher gets *an open session it heartbeats into
-and nothing else* — no duration in the message, no "I earned this", so that
+and nothing else* - no duration in the message, no "I earned this", so that
 there is no field for anybody to lie in. The window may show a timer, and
 what it shows is read back from the session rather than counted locally;
 otherwise the number on screen becomes the number people try to make true.
@@ -374,14 +374,14 @@ somebody meets first and the ones they come back to, which is why they are
 listed together rather than scattered through the sections below: a platform
 is judged on the landing page and the home page before anybody sees a World.
 
-- **Landing page** — the first thing anybody sees, and the one page with no
+- **Landing page** - the first thing anybody sees, and the one page with no
   second chance.
-- **Signup page** — the step between wanting an account and having one.
-- **Home** — still mostly rails, as the section below has said for a while.
-- **Profile** — now that an avatar is a body, a profile is a person standing
+- **Signup page** - the step between wanting an account and having one.
+- **Home** - still mostly rails, as the section below has said for a while.
+- **Profile** - now that an avatar is a body, a profile is a person standing
   there rather than a row of counts.
 - **Friends**
-- **Discover** — rows and a filter; it should surface things worth finding.
+- **Discover** - rows and a filter; it should surface things worth finding.
 - **Communities (the home page of it)**
 - **Settings**
 

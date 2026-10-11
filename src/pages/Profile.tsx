@@ -618,7 +618,7 @@ export default function Profile() {
                             loading={busyWith === 'best'}
                             onClick={() => void bestFriend('unbest')}
                           >
-                            Asked — take it back
+                            Asked - take it back
                           </Button>
                         ) : (
                           <Button
@@ -640,7 +640,7 @@ export default function Profile() {
                         loading={busyWith === 'cancel'}
                         onClick={() => void takeBackRequest()}
                       >
-                        Asked — take it back
+                        Asked - take it back
                       </Button>
                     ) : standing?.request_received ? (
                       <Button icon={faUserPlus} to="/friends?list=requests">Answer their request</Button>

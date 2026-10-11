@@ -1,7 +1,7 @@
 /*
  * The shared components with nothing around them.
  *
- * No router, no providers, no site — which is how Kobblon Workspace mounts
+ * No router, no providers, no site - which is how Kobblon Workspace mounts
  * them. If this page renders, they travel; if it throws, one of them has
  * quietly grown a dependency on the website again, and the Workspace finds
  * out by its panel going blank.

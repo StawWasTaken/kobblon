@@ -11,7 +11,7 @@ import { cn } from '@/lib/cn'
  * Kobblon, and two versions of it drifting apart means two different
  * accounts of what happened depending on which window you are in.
  *
- * It takes no provider, no router and no session — everything it shows is
+ * It takes no provider, no router and no session - everything it shows is
  * a prop. Mount it anywhere. `tools/site/suspended-preview.html` mounts it
  * with nothing around it, which is how we find out it still does.
  *
@@ -110,7 +110,7 @@ export function ChatSuspended({
 
           {!!ruleTitle && (
             <p className="mt-2 text-xs font-extrabold uppercase tracking-wide text-muted">
-              {ruleOrd ? `Rule ${ruleOrd} — ` : ''}{ruleTitle}
+              {ruleOrd ? `Rule ${ruleOrd} - ` : ''}{ruleTitle}
             </p>
           )}
           <p className="mt-2 text-sm text-muted">

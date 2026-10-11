@@ -20,7 +20,7 @@ const CORS = {
    * supabase-js puts `x-client-info` on every call it makes, and newer
    * versions add `x-supabase-api-version`. A browser asks the preflight
    * whether it may send each one, and a header missing from this list
-   * means the browser cancels the request before it is sent — which the
+   * means the browser cancels the request before it is sent - which the
    * library then reports as "Failed to send a request to the Edge
    * Function", the same sentence it uses when a function does not exist.
    * `login` happened to list `x-client-info` and worked; this one did not
@@ -29,7 +29,7 @@ const CORS = {
    * So the preflight echoes back whatever was asked for rather than
    * keeping a list in step with a library. That is not a hole: a header
    * is not a credential, every request still has to get past the checks
-   * below, and a caller who can set headers can set them anyway — CORS
+   * below, and a caller who can set headers can set them anyway - CORS
    * decides what a *page in a browser* may read, not who may call.
    */
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

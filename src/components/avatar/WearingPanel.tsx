@@ -148,7 +148,7 @@ export function WearingPanel({ look, loading }: {
               <span className="text-white/55">Worth</span>
               {worth > 0
                 ? <><CurrencyMark className="ml-0.5" />{formatCount(worth)}</>
-                : <span className="text-white/70">nothing — it is all free</span>}
+                : <span className="text-white/70">nothing - it is all free</span>}
             </span>
           </p>
 

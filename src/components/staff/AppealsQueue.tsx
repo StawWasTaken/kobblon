@@ -268,7 +268,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
                 <FontAwesomeIcon icon={faScaleBalanced} className="mt-0.5 text-brand-bright" />
                 <span>
                   <span className="font-bold">
-                    {one.rule_ord ? `Rule ${one.rule_ord} — ` : ''}{one.rule_title}
+                    {one.rule_ord ? `Rule ${one.rule_ord} - ` : ''}{one.rule_title}
                   </span>
                 </span>
               </p>
@@ -354,7 +354,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
                 What they were told
               </p>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/75">
-                {one.decision_note ?? '—'}
+                {one.decision_note ?? '-'}
               </p>
               <p className="text-xs text-muted">
                 Answered {one.decided_at ? timeAgo(one.decided_at) : ''}

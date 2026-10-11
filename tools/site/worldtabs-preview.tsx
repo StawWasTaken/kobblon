@@ -27,16 +27,16 @@ createRoot(document.getElementById('root')!).render(
     <ToastProvider>
       <div className="min-h-screen bg-ink text-ink-strong">
         <Page className="space-y-8">
-          <p className="text-xs uppercase tracking-wide text-ink-soft">Badges — the owner</p>
+          <p className="text-xs uppercase tracking-wide text-ink-soft">Badges - the owner</p>
           <WorldThings kind="badges" badges={badges} mine worldId="w" />
 
-          <p className="text-xs uppercase tracking-wide text-ink-soft">Shop — the owner</p>
+          <p className="text-xs uppercase tracking-wide text-ink-soft">Shop - the owner</p>
           <WorldThings kind="shop" passes={passes} mine worldId="w" />
 
-          <p className="text-xs uppercase tracking-wide text-ink-soft">Badges — the owner, nothing made yet</p>
+          <p className="text-xs uppercase tracking-wide text-ink-soft">Badges - the owner, nothing made yet</p>
           <WorldThings kind="badges" badges={[]} mine worldId="w" />
 
-          <p className="text-xs uppercase tracking-wide text-ink-soft">Shop — anybody else, nothing for sale</p>
+          <p className="text-xs uppercase tracking-wide text-ink-soft">Shop - anybody else, nothing for sale</p>
           <WorldThings kind="shop" passes={[]} mine={false} worldId="w" />
         </Page>
       </div>

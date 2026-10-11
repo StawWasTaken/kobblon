@@ -140,7 +140,7 @@ export function BehaviourPanel({ personId, username, rank }: {
                 </Badge>
               )}
               <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-muted">
-                {one.counts && one.weight >= 1 ? `−${Math.round(one.weight)}` : '—'}
+                {one.counts && one.weight >= 1 ? `−${Math.round(one.weight)}` : '-'}
               </span>
               <span className="w-full truncate text-xs text-white/60">
                 {one.rule_ord ? `Rule ${one.rule_ord} · ` : ''}{one.reason}
@@ -160,7 +160,7 @@ export function BehaviourPanel({ personId, username, rank }: {
         open={asking}
         onClose={() => setAsking(false)}
         title={`Clear @${username}'s record?`}
-        description="Everything on record stops counting against them and their bar goes back to a hundred. The decisions stay readable on their status page — this is mercy, not a rewrite of what happened."
+        description="Everything on record stops counting against them and their bar goes back to a hundred. The decisions stay readable on their status page - this is mercy, not a rewrite of what happened."
       >
         <div className="space-y-3">
           <p className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-sm leading-relaxed text-white/80">

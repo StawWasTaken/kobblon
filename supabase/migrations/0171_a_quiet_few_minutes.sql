@@ -5,7 +5,7 @@ begin;
  *
  * Staw asked for Roblox's one, and named the part that makes it real:
  * "even if u leave & rejoin it stays until the sanction is gone". So it is
- * a row with a time on it, not a flag in a window — closing the Launcher,
+ * a row with a time on it, not a flag in a window - closing the Launcher,
  * clearing the browser, or signing in somewhere else changes nothing.
  *
  * It is chat only. Nothing here touches anybody's account, and nothing
@@ -92,7 +92,7 @@ $$;
  *
  * `over` is the part that makes the second card possible: a suspension
  * that has run out but has not been seen to run out. Staw asked for the
- * card to come back when it is done — "it'll appear again once its gone" —
+ * card to come back when it is done - "it'll appear again once its gone" -
  * and without a row saying that, a window has no way to tell the
  * difference between "finished a second ago" and "finished last week".
  */
@@ -170,7 +170,7 @@ grant execute on function public.mute_chat(uuid, text, text) to authenticated;
  *
  * Three in ten minutes. Written as a trigger on the same tables the
  * censoring happens on, so there is no path that censors without
- * counting — the two have to be the same event or somebody finds the one
+ * counting - the two have to be the same event or somebody finds the one
  * that is not.
  */
 create or replace function public.words_are_censored()

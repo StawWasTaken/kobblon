@@ -1,7 +1,7 @@
 -- A mesh arrives wearing something.
 --
 -- Staw: uploading a mesh should let you upload its texture at the same time,
--- or point at a Decal that already exists — one of yours, or somebody
+-- or point at a Decal that already exists - one of yours, or somebody
 -- else's. A mesh with no texture is a grey shape, and making somebody upload
 -- the shape, then find the Decal page, then come back, is three steps for
 -- one thought.
@@ -26,7 +26,7 @@ create index if not exists assets_texture_idx on public.assets (texture_id)
  * What may be pointed at, decided here rather than in a client.
  *
  * Only a mesh wears one; only a Decal can be worn. And it has to be a Decal
- * the person can actually see — their own, whatever state it is in, or one
+ * the person can actually see - their own, whatever state it is in, or one
  * that is approved and listed. Without that last part, a texture id is a way
  * of asking whether a private upload exists: point at one, see whether it is
  * refused, and you have read a row the policies would never have shown you.
@@ -65,5 +65,5 @@ create trigger assets_texture_check
 -- A note for whoever reads this next, having checked rather than assumed:
 -- `guard_asset_update` pins what a creator may not change by copying the old
 -- row's value over the new one, field by field. `texture_id` is deliberately
--- not in that list, so dressing a mesh after uploading it works — which is
+-- not in that list, so dressing a mesh after uploading it works - which is
 -- what somebody will want, having found a better Decal a week later.

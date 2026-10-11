@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
  *
  * The website's own client keeps its session in localStorage, which is right
  * for a browser tab: it is how a refresh does not sign you out. Kobblon
- * Workspace deliberately does the opposite — its session lives in memory and
+ * Workspace deliberately does the opposite - its session lives in memory and
  * its refresh token in the operating system's keychain, so there is no
  * readable copy on disk for a fake Workspace to steal.
  *
@@ -47,7 +47,7 @@ function website(): SupabaseClient {
  * website's own client, which is what a test wants when it is finished.
  *
  * Building the website's client is deferred until something asks for it, so
- * an application that calls this at startup never builds one at all — and
+ * an application that calls this at startup never builds one at all - and
  * never warns about configuration it does not have and does not need.
  */
 export function setSupabaseClient(client: SupabaseClient | null) {

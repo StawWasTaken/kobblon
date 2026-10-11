@@ -108,7 +108,7 @@ export function AvatarStage({
 
         /*
          * Dressed by the engine. This was the second of three copies of
-         * the same loop — the Launcher had written a third — and the two
+         * the same loop - the Launcher had written a third - and the two
          * here had already drifted apart, which is how a portrait came out
          * with somebody's hat missing. `alive` is the same `wanted` this
          * pass has always checked, handed over so the engine can check it

@@ -3,7 +3,7 @@
  *
  * BubbleBoard draws into the canvas's parent and positions by projecting a
  * point, so the only honest way to look at it is with a real camera and a
- * real object — no React, no page, nothing it could be leaning on.
+ * real object - no React, no page, nothing it could be leaning on.
  */
 import * as THREE from 'three'
 import { BubbleBoard, type ChatLine } from '@/engine'

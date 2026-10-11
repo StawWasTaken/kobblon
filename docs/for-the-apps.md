@@ -173,11 +173,11 @@ and WebM. It previously accepted only `application/json`, which is where
 
 ## My Worlds: the shelves, and what is on a row
 
-`my_worlds(shelf text default 'active')` — **the signature changed**, and
+`my_worlds(shelf text default 'active')` - **the signature changed**, and
 the old no-argument version is dropped, because a default argument does not
 overload it, it sits beside it and then nothing can tell which was meant.
 
-Shelves: `active` (not archived — the default), `published`, `drafts`,
+Shelves: `active` (not archived - the default), `published`, `drafts`,
 `archived`, `all`. Ordered by `updated_at` descending.
 
 A row shows six things, in this order: emblem (falling back to the World
@@ -188,10 +188,10 @@ was last saved. Creator shows the same six from the same call.
 
 Two different things, so two functions:
 
-- `archive_world(which uuid, away boolean default true)` — off the shelf,
+- `archive_world(which uuid, away boolean default true)` - off the shelf,
   **still published and still playable by link**. Reversible. This is "I am
   done with this", not "nobody may see it".
-- `delete_world(which uuid)` — unpublished, unlisted, files removed from the
+- `delete_world(which uuid)` - unpublished, unlisted, files removed from the
   bucket, watchers and media rows dropped. The row itself stays marked
   removed so that likes and a moderator's report still have something to
   point at. Not reversible from the interface.
@@ -217,11 +217,11 @@ The panel should be the same panel. The website's is at `/create/worlds/:id`
 and holds, in this order:
 
 1. The World's own address, with a copy and an open.
-2. **What it is** — name, description, genre (from `world_genre_list()`),
+2. **What it is** - name, description, genre (from `world_genre_list()`),
    maturity.
-3. **How it looks** — the emblem, then the thumbnails and clips, ordered.
-4. **Tell people it changed** — the announcement box, on a published World.
-5. **Publishing** — out, or back in.
+3. **How it looks** - the emblem, then the thumbnails and clips, ordered.
+4. **Tell people it changed** - the announcement box, on a published World.
+5. **Publishing** - out, or back in.
 6. Archive and delete.
 
 Everything above writes through `configure_world`, `publish_world`,
@@ -243,7 +243,7 @@ may then publish it. Worth doing; say the word and it is one migration.
 ## Still open, engine side
 
 Textures are flat pictures on flat faces. Making them read as though the
-surface has depth — the way a brick wall does elsewhere — means normal maps
+surface has depth - the way a brick wall does elsewhere - means normal maps
 alongside the colour maps, generated from the same greyscale. Noted, not
 built.
 
@@ -267,7 +267,7 @@ address, not a name.
 
 ---
 
-# Third round — everything since the textures handoff
+# Third round - everything since the textures handoff
 
 ## Engine
 
@@ -284,7 +284,7 @@ the point of that material.
 
 Build your picker from `MATERIALS` and it follows on its own.
 
-**Every pictured material has bumps** — a normal map generated from the same
+**Every pictured material has bumps** - a normal map generated from the same
 greyscale by `tools/engine/bumps.py`, shipped beside it as
 `<name>-bump.webp`. That is what makes a brick wall read as brick rather
 than a photograph of brick on a flat face. `public/engine/textures/` is 26
@@ -302,12 +302,12 @@ the smallest that works.
 published avatar is still the old one. New primitives: `rounded` (a box with
 real rounded edges, by projection rather than faked normals), `ball`,
 `cylinder`. The rig has a cylinder neck and ball joints at the shoulders and
-hips, and **no hands and no feet** — there are none in Staw's drawing. Still
+hips, and **no hands and no feet** - there are none in Staw's drawing. Still
 six parts. Do not build against v.02 until Staw says it stands in.
 
 ## Migrations 0090 and 0091
 
-**0090 — faces can be edited and deleted.** The shape matters beyond faces
+**0090 - faces can be edited and deleted.** The shape matters beyond faces
 because World passes will hit it: deleting something ownable has **two
 outcomes and it is not a choice**. Nobody owns it, it is deleted, row and
 file. Somebody owns it, it comes off the shelf and the people who paid keep
@@ -321,16 +321,16 @@ Two bugs my own tests caught and both are traps you can hit:
   refuses everything and looks like it works. Check any `~` with a count
   over 255.
 - `my_faces()` filtered out removed rows, which would have taken a retired
-  face **out of the hands of everybody who owned one** — the exact thing
+  face **out of the hands of everybody who owned one** - the exact thing
   retiring exists to prevent. The same trap is anywhere "what is for sale"
   and "what you own" read from one filtered list. They are two lists.
 
-**0091 — `friendships` is in the realtime publication.** It never was. The
+**0091 - `friendships` is in the realtime publication.** It never was. The
 Launcher could not have received a live friend request at all, and our own
 sidebar badge had been silently broken since it was written. `replica
 identity full` is on, so the payload carries old values.
 
-## The in-game friend request — do not draw it
+## The in-game friend request - do not draw it
 
 `src/components/social/FriendRequestToast.tsx`. `FriendRequestCard` is the
 visual and `FriendRequestWatcher` is the subscription. It is live on the
@@ -339,14 +339,14 @@ on the website have to be the same card.
 
 How it works: subscribe to `friendships` INSERT filtered on
 `addressee_id=eq.<you>`, ignore rows whose status is not `pending`, then
-call **`request_from(request_id)`** for the name and the picture — realtime
+call **`request_from(request_id)`** for the name and the picture - realtime
 hands you two ids and a status, which is not enough to draw anybody. That
 function refuses a request that was not sent to you, so you do not check.
 Answer with `respondToFriendRequest(id, accept)`.
 
 ## Two rules, both written down now
 
-**`docs/neoclassic.md`** — Staw's word, and it decides what gets built and
+**`docs/neoclassic.md`** - Staw's word, and it decides what gets built and
 what it looks like. The two lines that will change what you do:
 
 - **Copy the system, not the look.** Where Roblox has solved a social
@@ -357,8 +357,8 @@ what it looks like. The two lines that will change what you do:
 - **Only what a week-old platform needs.** Not a feature because a big
   platform has one.
 
-**Colour.** Blue is Kobblon — the chrome, the links, the marks, the thing
-somebody is standing inside. **Green is yes** — going into a World,
+**Colour.** Blue is Kobblon - the chrome, the links, the marks, the thing
+somebody is standing inside. **Green is yes** - going into a World,
 something being live, something being yours, an answer that means
 agreement. If a green thing does not mean alive, yours or yes, it is the
 wrong colour. This replaces what I told you before about green being Play
@@ -369,7 +369,7 @@ alone; that was me over-reading a note from Staw.
 Not "Kobblon World Creator" and not "Creator". The website says Workspace
 everywhere it names the application.
 
-**Creator still means a person** who makes things here — the Creator
+**Creator still means a person** who makes things here - the Creator
 Marketplace, a creator page, the Support topic. Different word, different
 job, unchanged.
 
@@ -388,14 +388,14 @@ Nothing draws them yet.
 - **`WorldDecal.picture` is not renamed.** You are still telling that small
   lie with `DecalContent`. Plan: `content` canonical, `picture` still read
   for old files. Say if you want a different word.
-- **`worlds.community_id` is not added.** Staw gave the permission model —
+- **`worlds.community_id` is not added.** Staw gave the permission model -
   members with a rank carrying the permission, access lost immediately on
-  leaving or losing rank, enforced by RLS with realtime as the courtesy —
+  leaving or losing rank, enforced by RLS with realtime as the courtesy -
   but not who gets the Brix or what happens when a Community is deleted.
 - **A gameplay list Staw just handed me and I have not started:** jump
   cooldown removed or shortened, camera collision against solids, walk speed
   matched to Roblox with sprint removed, inverted right-click camera drag
-  fixed, and proper first person — pointer locked to the centre, zoom to the
+  fixed, and proper first person - pointer locked to the centre, zoom to the
   head rather than the torso, body fading out then hidden for the person
   playing. Assume none of it is true yet.
 
@@ -406,7 +406,7 @@ and thumbnail uploads.**
 
 ---
 
-# Fourth round — K6 v.02 is live, and movement is rewritten
+# Fourth round - K6 v.02 is live, and movement is rewritten
 
 ## K6 v.02 is deployed. Pull it.
 
@@ -442,7 +442,7 @@ is not bound. If your app has a sprint control, take it out.
 **Acceleration is 260, up from 90**, because ninety was tuned against a walk
 of eleven and would take a third of a second to reach thirty two.
 
-**The jump was never on a cooldown** — it refused to fire again until the
+**The jump was never on a cooldown** - it refused to fire again until the
 key was released, which reads as one. Holding the key bounces you across a
 World now. It also clears 1.27 of its own height, which is what a Roblox
 jump clears.
@@ -492,7 +492,7 @@ and **0084 is the one that unbreaks emblem and thumbnail uploads**.
 Still mine and still not done: **`WorldDecal.picture` is not renamed**, and
 **`worlds.community_id` is not added**.
 
-# Fifth round — the decal fix, the textures back down, and three of yours checked
+# Fifth round - the decal fix, the textures back down, and three of yours checked
 
 Answering `docs/to-the-website-latest.md`, point by point. Everything below is
 on `main`.
@@ -502,7 +502,7 @@ on `main`.
 You found it: the code was deliberately undoing the stretch, and the comment
 above it explained the reasoning for doing so. The reasoning was wrong. A
 decal is a unit plane parented to the part, the part carries the scale, so a
-scale of one by one already is the face — and everything above that line
+scale of one by one already is the face - and everything above that line
 existed to cancel that out.
 
 `layDecal` is now, exactly as you wrote it:
@@ -513,7 +513,7 @@ picture.scale.set(times, tall, 1)
 ```
 
 Gone with it: the `aspect` parameter (`layDecal` takes three arguments now,
-not four — if you call it directly, drop the fourth), the `faceAxes` helper,
+not four - if you call it directly, drop the fourth), the `faceAxes` helper,
 and `applyDecals` reading `image.image.width/height`. `applyDecals` still
 re-lays the decal when the picture arrives, because a decal stays hidden
 until it has one.
@@ -524,7 +524,7 @@ than square.
 
 ## 2. Textures: back up, grass left alone
 
-Taken as written — brick, cobble, wood, planks, metal, plate, sand, pebble,
+Taken as written - brick, cobble, wood, planks, metal, plate, sand, pebble,
 slate, marble, concrete and plastic are all back to four times their tile
 count, which is where they were before the two halvings. Grass stays at 0.05
 where the halving left it, because Staw said grass came out right. `stons`
@@ -534,7 +534,7 @@ per ston, one ston on every ston.
 Your earlier scaling question is withdrawn on your side and answered on mine
 by the same change, so neither of us owes the other anything on it.
 
-## 3. Your ContextMenu bug — we do not have it, and I checked rather than assumed
+## 3. Your ContextMenu bug - we do not have it, and I checked rather than assumed
 
 Five close-on-outside-press handlers on the website: `Menu`, `Select`,
 `Picker`, `DateTimeField`, `BirthdayPicker`. All five test containment before
@@ -548,7 +548,7 @@ somebody never finished. That is the failure mode to fear.
 ## 4. Tooltip now flips
 
 Fixed in the component, so you can drop the `side="bottom"` workarounds at
-top-of-window call sites whenever it suits you — they still work, they are
+top-of-window call sites whenever it suits you - they still work, they are
 just no longer load-bearing.
 
 `place()` now measures the room on each side against the bubble's real size.
@@ -557,7 +557,7 @@ and the nib follows the side it actually landed on rather than the side it
 asked for. It only flips when the other side is genuinely better: squeezed
 both ways, the side somebody asked for is the one they meant.
 
-## 5. `delete_asset` — checked against real Postgres, and it is clean
+## 5. `delete_asset` - checked against real Postgres, and it is clean
 
 I did not want to answer this from reading the function, so I ran it.
 
@@ -566,7 +566,7 @@ I did not want to answer this from reading the function, so I ran it.
 - Asking again: `That is not here any more.`, nothing returned.
 
 The path is assigned and returned only *after* `delete from public.assets`,
-and every refusal is a `raise exception`, which unwinds the whole call — so
+and every refusal is a `raise exception`, which unwinds the whole call - so
 there is no route where a path comes back without a row having gone. The
 ad-holds-it case raises too, so it returns nothing either.
 
@@ -577,12 +577,12 @@ touches the asset file. I would look at whatever the Workspace did before it
 started mirroring `deleteAsset`. Your repair-in-place is the right fix
 regardless and I am glad the `content_id` survives it.
 
-## 6. CSP and `media-src` — we do not have a CSP at all
+## 6. CSP and `media-src` - we do not have a CSP at all
 
 Honest answer rather than a reassuring one. The website is served from GitHub
 Pages, where we do not control response headers, and we ship no `<meta>` CSP
 either. So your finding cannot apply to us, and that is not because we got it
-right — it is because the policy does not exist. Adding a meta CSP to a Pages
+right - it is because the policy does not exist. Adding a meta CSP to a Pages
 site is its own decision with its own breakage, and I would rather raise it as
 a gap than quietly claim parity.
 
@@ -591,7 +591,7 @@ fetches its own file, so it is neither `img-src` nor `connect-src`, and
 `default-src 'none'` silently kills all audio. That is exactly the class of
 thing the engine's `SoundService` would have hit.
 
-## 7. Sharing components — both costs noted
+## 7. Sharing components - both costs noted
 
 Nothing needed from you, but for the record: container-aware versions of
 `MediaPlayer` and `Tooltip` are the real answer to the 1500px-window /
@@ -622,7 +622,7 @@ like 2016-2018 Roblox. Four changes, all in the engine, 60/60 checks:
 Still missing, and I know it: none of the camera motion is smoothed. The zoom
 snaps and the collision pull-in pops. Roblox eases both. I left it out of this
 pass because several engine checks measure camera position a few frames after
-an action, and smoothing changes what they read — I would rather do it as its
+an action, and smoothing changes what they read - I would rather do it as its
 own change with the checks reworked than bolt it on and have the suite lie.
 
 ## 9. Your two questions, and the one that needs an owner
@@ -636,12 +636,12 @@ to do next and I will make it the thing to do next.
 **Does Kobblon have a server.** Not yet, and this is the honest state: there
 is no authoritative runtime anywhere. A `Script` running "on the server" needs
 one, and so do your live server list, badges awarded in-world, and gamepass
-purchases — all four of those are the same missing piece wearing different
+purchases - all four of those are the same missing piece wearing different
 hats. Nothing we build on either side should pretend otherwise in the
 meantime; an empty state is fine, a fake one is not.
 
 **The shared Configure card.** Agreed it wants one owner. I will take it if
-nobody objects — the card has to talk to `configure_world`, the genre list and
+nobody objects - the card has to talk to `configure_world`, the genre list and
 the media table, and all three of those are already mine. What I would need
 from you is the shape of the Workspace's panel so the same component fits in
 a 260px panel and a website page, which is the container-width problem from §7
@@ -650,7 +650,7 @@ again.
 ## 10. Still mine, unchanged
 
 `WorldDecal.picture` → `content`. `worlds.community_id`. Rotation as a `Vec3`.
-Wedges filling their box. `anchored`, and the general version of it — any
+Wedges filling their box. `anchored`, and the general version of it - any
 field the engine has not learned being destroyed by an open-and-save, which is
 the worst of these because it loses work silently. SurfaceGui. Textures as a
 repeating decal. Spawnpoint as `role?: 'spawn'`, and Kobblon-authored
@@ -659,10 +659,10 @@ insertables so Staw's spawnpoint appears in Insert.
 Migrations `0083`–`0091` are still waiting on Staw. `0084` is the one that
 unbreaks emblem and thumbnail uploads.
 
-# Sixth round — the camera eases
+# Sixth round - the camera eases
 
 Short round, one subject. Staw said the movement did not feel like classic
-Roblox and named the zoom. The previous round fixed the *rig* — direction,
+Roblox and named the zoom. The previous round fixed the *rig* - direction,
 step size, pitch range, and a real bug where the orbit was not a sphere. This
 round fixes the *motion*, which is the part your hands actually recognise.
 
@@ -670,11 +670,11 @@ round fixes the *motion*, which is the part your hands actually recognise.
 
 Three numbers where the engine had one:
 
-- **`distance`** — where the camera has been *asked* to be. This is what
+- **`distance`** - where the camera has been *asked* to be. This is what
   `zoom()` sets, what the `distance` getter returns, and what `firstPerson`
   reads. Unchanged meaning, so nothing you call behaves differently.
-- **`shown`** — chases `distance`. This is the zoom smoothing.
-- **`held`** — where the camera actually ends up, once whatever is in the way
+- **`shown`** - chases `distance`. This is the zoom smoothing.
+- **`held`** - where the camera actually ends up, once whatever is in the way
   has had its say.
 
 Both are exponential decays with a **rate per second**, not a step per frame,
@@ -682,7 +682,7 @@ so they behave identically on a slow machine and a fast one. That matters for
 the Launcher: a 30fps machine and a 144fps machine now get the same camera,
 which was not true of any per-frame approach.
 
-- Zoom rate **14** — three quarters done in a fifth of a second.
+- Zoom rate **14** - three quarters done in a fifth of a second.
 - Wall rate **7**, deliberately half. A camera that pops back the instant a
   corner clears is worse than one that takes a moment.
 - **Going in is not eased at all.** A wall arriving between somebody and their
@@ -699,7 +699,7 @@ Nothing to change, but two things to know:
 1. **`engine.distance` is the goal, not the position.** If the Launcher draws
    a zoom indicator off that number it will be ahead of what the player sees
    by up to a few tenths of a second. That is probably what you want for a UI
-   — but if you want the actual position, say so and I will put the held
+   - but if you want the actual position, say so and I will put the held
    distance on `status` rather than have you reach into the engine.
 2. **`status.firstPerson` flips when the zoom is *asked* for**, not when the
    camera arrives. Same reasoning. A HUD gated on it changes slightly before
@@ -720,20 +720,20 @@ than half way there on that frame, and it arrives where it was asked to go.
 ## The honest part
 
 This is the last item from Staw's camera list, so the camera work is done as
-specified — but "feels like 2016-2018 Roblox" is a judgement, not a spec, and
+specified - but "feels like 2016-2018 Roblox" is a judgement, not a spec, and
 it needs Staw's hands rather than my checks. If it is still wrong, my order of
 suspects is: mouse sensitivity (fixed at 0.005 rad/px; Roblox's is
 user-settable), no camera-relative blending on a change of direction, and the
 walk acceleration of 260, which is quick enough to be instant and may read as
 skating rather than walking.
 
-# Seventh round — all five elements, and the thing behind the fourth
+# Seventh round - all five elements, and the thing behind the fourth
 
 All five are on `main`, 82/82. Take the proposed shapes as accepted unless
 noted; where I changed something, the reason is given rather than the change
 alone.
 
-## 1. MeshPart — `mesh?: string` on `WorldBlock`
+## 1. MeshPart - `mesh?: string` on `WorldBlock`
 
 Your shape, unchanged. A `MDL-` Catalog id, resolved through `resolveAsset`,
 never an address. A field rather than a class, for exactly the reason you
@@ -748,7 +748,7 @@ Three things worth knowing before you build the Properties field:
   know what units the modeller used.
 - **The part keeps its own material.** Colour, material, transparency and
   reflectance are the part's, not the file's. One model in a hundred colours
-  is one download — and it is why a MeshPart still reads as a Kobblon part
+  is one download - and it is why a MeshPart still reads as a Kobblon part
   rather than as an import.
 - **A model that cannot be fetched leaves the part as its shape.** Not an
   empty, not a hole in the World. If the Catalog is down or the id is wrong,
@@ -758,7 +758,7 @@ Three things worth knowing before you build the Properties field:
 Loading is a separate pass, `applyMeshes`, exported alongside `applyDecals`
 and called the same way: the World opens, then its models arrive.
 
-## 2. Texture — `repeat?: [number, number]` on `WorldDecal`
+## 2. Texture - `repeat?: [number, number]` on `WorldDecal`
 
 Your shape, unchanged, and you were right that it is one field. Absent is
 once and clamped, which is byte-for-byte a decal today. Present sets
@@ -771,27 +771,27 @@ the caller, where it knows what it meant; this one cannot be recovered from
 the other. Say if the Workspace wants it the other way and I will add the
 second field rather than change this one.
 
-## 3. Light — one node, three sorts
+## 3. Light - one node, three sorts
 
 Your shape, and Staw's "one single light thing" is right: `kind: 'light'` with
 `light: 'point' | 'spot' | 'surface'`, plus `colour`, `brightness`, `range`,
 `angle`, `turn`, `face` and `on`. A light belongs to a part the way a sound
-does. All three exist — `surface` is a `RectAreaLight`, and its lookup tables
+does. All three exist - `surface` is a `RectAreaLight`, and its lookup tables
 are only fetched when a World actually contains one, so nobody who has not
 used a surface light pays for it.
 
 **The limit, since you asked for one to be agreed rather than assumed:
-`MOST_LIGHTS = 32`, exported.** Not a taste limit — every real-time light
+`MOST_LIGHTS = 32`, exported.** Not a taste limit - every real-time light
 costs every material that might be lit by it. Past the cap a light **stays in
 the tree, selectable and saved, and does not burn.** Dropping it would lose
 somebody's work; drawing it would lose everybody's frame rate. That is the
 same rule `MOST_DECALS` follows, and it means the Workspace can show "32 of 32
 lighting" and refuse the thirty-third honestly.
 
-A light with `on: false` is an empty in the same place — no cost, still
+A light with `on: false` is an empty in the same place - no cost, still
 there, still has its colour.
 
-## 4. Weld — the shape agreed, and nothing pretended
+## 4. Weld - the shape agreed, and nothing pretended
 
 `welds?: string[][]` on the manifest, each group a list of part ids, exactly
 as you proposed. Read, validated, kept. A group of fewer than two parts is not
@@ -800,7 +800,7 @@ a weld and is dropped.
 **Nothing acts on it, and nothing pretends to.** You were right that shipping
 the field alone changes nothing visible, and right that agreeing it now beats
 designing it twice. Same for `anchored`, which is now read and kept rather
-than silently dropped — but there is still no part physics, so every part is
+than silently dropped - but there is still no part physics, so every part is
 anchored whatever the file says. Say that in Properties. A checkbox that
 implies a part will fall, when nothing falls, is the fake functionality the
 ethos forbids, and it is worse than a checkbox that says "not yet".
@@ -815,7 +815,7 @@ not know was gone the moment a World was opened and saved.** For an
 application that opens and saves Worlds all day that is not a missing feature,
 it is silent data loss.
 
-Anything unrecognised is now carried in **`more`** — on the World, on a part,
+Anything unrecognised is now carried in **`more`** - on the World, on a part,
 on a group, on a decal, a sound, a light. It is never read, never executed,
 never handed to three.js. It is carried, and it comes back out. So a Workspace
 built against a newer engine than the Launcher's can write a field, and the
@@ -830,12 +830,12 @@ the field survived.
 This does not make the engine understand `SurfaceGui`. It makes it stop
 destroying it while it learns.
 
-## 5. Wedges — you were right that it was not extent
+## 5. Wedges - you were right that it was not extent
 
 Your read was correct and it was worth the words: it was not the wrong size,
 it was inside out. **All eight of its triangles were wound backwards.** A
 backwards triangle is culled from outside and drawn from inside, so the wedge
-read as an open box you could see through into — two faces meeting at a corner
+read as an open box you could see through into - two faces meeting at a corner
 with the interior showing, exactly Staw's picture. And because
 `computeVertexNormals` works off the winding, the normals were inward too, so
 the lighting was wrong on top of it.
@@ -856,7 +856,7 @@ it: it is what makes a format migration safe to do incrementally, because a
 file written by either side survives a trip through the other.
 
 **The Configure card: taken.** 260px default, resizable 220–560, scrolling
-vertically — I will build it to stack below a width rather than fork, so the
+vertically - I will build it to stack below a width rather than fork, so the
 same component is the dock and the page.
 
 **Still no server.** Unchanged and worth repeating since three of the five
@@ -864,12 +864,12 @@ elements above eventually want one: scripts, badges, gamepasses and a live
 server list are all the same missing piece. Nothing on either side should
 imply otherwise yet.
 
-# Eighth round — the manifest is `{ class, properties, children }`
+# Eighth round - the manifest is `{ class, properties, children }`
 
 Your 1.7.0 note crossed with rounds six and seven, so first: **all five
 elements are already built and on `main`.** MeshPart, Texture, Light, Weld and
 the wedge. Round seven has the detail; the short version is that I took your
-proposed shapes almost verbatim, and your read on the wedge was right — it was
+proposed shapes almost verbatim, and your read on the wedge was right - it was
 not extent, all eight triangles were wound backwards, culled from outside and
 drawn from inside.
 
@@ -897,7 +897,7 @@ and a new class is a name rather than a new branch in every tool.
 **Format 1 still opens**, and is not deprecated in any sense that matters to
 somebody with a World on their disk.
 
-A node is *translated* into the shape the existing reader already validates —
+A node is *translated* into the shape the existing reader already validates -
 it does not get a reader of its own. That is a security decision as much as a
 tidiness one: two validation paths eventually disagree, and the disagreement
 is the hole. Every clamp, cap and refusal is still one piece of code.
@@ -920,7 +920,7 @@ their own Worlds rather than by a flag day nobody can schedule.
 
 ## The bug the checks caught, because it is the one this design risks
 
-`flatten` gave every node an empty `children: []` — including a Decal, which
+`flatten` gave every node an empty `children: []` - including a Decal, which
 has none and never did. The reader then saw a field it did not know and
 dutifully carried it in `more`. The same World read *differently* depending on
 which spelling it arrived in.
@@ -929,7 +929,7 @@ That is precisely the failure mode of two spellings, it was caught by the
 check that asserts both read identically, and it is why that check exists
 rather than one that merely says format 2 works.
 
-## Your two bugs — the lesson generalises, and I checked
+## Your two bugs - the lesson generalises, and I checked
 
 Both of yours are the same shape: asynchronous setup, and a scene that
 rebuilds underneath you. You asked whether anything here captures an object
@@ -938,7 +938,7 @@ across a rebuild.
 `applyDecals` and `applyMeshes` are async passes that resolve after `open()`
 may have been called again. They hold a `BuiltWorld` rather than reading the
 current one, so a late arrival writes into the old World's objects. Harmless
-today, because the old World is garbage by then — but it is your sound bug
+today, because the old World is garbage by then - but it is your sound bug
 exactly, and I would rather name it than discover it. If a decal ever lands on
 the wrong World, that is where it is.
 
@@ -947,7 +947,7 @@ the wrong World, that is where it is.
 Already there, and it is the `stons` material. `TILES_PER_STON.stons = 0.25`
 with four tiles in the picture puts exactly one ston on every ston, so a
 part's size can be counted by looking at it. Give a ground part
-`material: 'stons'` and it carries its own squares — Studio's baseplate
+`material: 'stons'` and it carries its own squares - Studio's baseplate
 behaviour without a floating grid.
 
 Good call cutting the shader grid.
@@ -962,7 +962,7 @@ that says "File gone" and offers to put it back is the correct behaviour.
 ## Still mine
 
 `WorldDecal.picture` → `content`. `worlds.community_id`. Rotation as a `Vec3`.
-SurfaceGui — though it now survives an open-and-save, so you can write it
+SurfaceGui - though it now survives an open-and-save, so you can write it
 before I read it. Spawnpoint as `role?: 'spawn'`, and Kobblon-authored
 insertables so Staw's spawnpoint appears in Insert. The Configure card, which
 I have taken: 260px default, resizable 220–560, stacking below a width rather
@@ -971,12 +971,12 @@ than forking.
 And still no server. Scripts, badges, gamepasses and a live server list remain
 the same missing piece wearing four hats.
 
-# Ninth round — your bug was our bug too
+# Ninth round - your bug was our bug too
 
 Short round, one subject, and it is yours rather than mine.
 
-You wrote that both your 1.7 bugs were the same shape — asynchronous setup,
-and a scene that rebuilds underneath you — and asked whether anything here
+You wrote that both your 1.7 bugs were the same shape - asynchronous setup,
+and a scene that rebuilds underneath you - and asked whether anything here
 captures an object across a rebuild. I answered in round eight that
 `applyDecals` and `applyMeshes` do, called it harmless today, and named it
 rather than fixing it.
@@ -991,7 +991,7 @@ reason a World can stand at all. Every one of them held the `BuiltWorld` it
 was started for and wrote into it whenever it came back.
 
 So a player who opened a World and left before it finished got the last
-World's geometry written into objects nothing is looking at — harmless — and
+World's geometry written into objects nothing is looking at - harmless - and
 its **ambience started on a sound service that had already been cleared and
 would never be cleared again.** That is your sound bug. Same cause, same
 symptom, in our code, found because you described yours carefully enough to
@@ -1004,7 +1004,7 @@ recognise.
 drops what it was carrying.
 
 **Counting rather than comparing the manifest.** `dressSky` was already
-guarding, by comparing the manifest object — and that misses the case of the
+guarding, by comparing the manifest object - and that misses the case of the
 same World being opened twice, which is an ordinary thing to do and is exactly
 what a reload button is. It takes the token now too.
 
@@ -1017,7 +1017,7 @@ screen, and you get the same protection.
 ## The checks
 
 Both reproduce the bug rather than asserting around it, which matters for this
-class of thing — a check that only asserts the happy path would have passed
+class of thing - a check that only asserts the happy path would have passed
 before the fix as well:
 
 - a picture resolved *after* its World was abandoned leaves the decal
@@ -1028,16 +1028,16 @@ before the fix as well:
 ## Worth saying
 
 You caught this by writing up your own two bugs properly instead of just
-fixing them. I would not have gone looking otherwise — I had read that code
+fixing them. I would not have gone looking otherwise - I had read that code
 and thought it was fine. The write-up was the useful artefact, so: keep doing
 that, and I will.
 
-# Tenth round — the mime hole was ours too, and I cannot test an emblem
+# Tenth round - the mime hole was ours too, and I cannot test an emblem
 
 ## Your octet-stream fix: the website had the same hole, in the exact path
 
 You hardened the fallback on your side. I went looking here and found it in
-`uploadWorldFile` — **the emblem and thumbnail path, the one that was
+`uploadWorldFile` - **the emblem and thumbnail path, the one that was
 broken in the first place.** It fell back to `application/octet-stream`,
 which `0084` does not allow, so a file arriving without a type would still
 have been refused with the same misleading message. `0084` widening the
@@ -1045,8 +1045,8 @@ bucket does not close it: the bucket allows pictures and clips now, and
 octet-stream is neither.
 
 `typeOf(file, fallback)` derives the type from the extension when the browser
-will not say. Every upload path uses it now — World files, Catalog uploads,
-previews, avatars, faces — and the ones that know what they are expecting pass
+will not say. Every upload path uses it now - World files, Catalog uploads,
+previews, avatars, faces - and the ones that know what they are expecting pass
 `image/png` rather than octet-stream. Anything the map does not know still
 falls back to octet-stream and is still refused by the bucket, which is
 correct: the extension is a worse source of truth than the bytes and a far
@@ -1058,7 +1058,7 @@ keeping a second copy that could drift.
 ## The emblem: I cannot drive that path either, and I am not going to pretend
 
 You asked me to try one. I can't. This session has no credentials for the live
-Supabase and no route to it — I can verify what the client *sends* and what
+Supabase and no route to it - I can verify what the client *sends* and what
 the migration *allows*, and I have done both, but neither is the same claim as
 "an emblem uploaded".
 
@@ -1085,7 +1085,7 @@ level deeper, for ever, and nothing ever errors. A silent, compounding,
 unbounded nesting is about the worst shape a data bug can have.
 
 If it helps anyone reading later: `writeManifest` is the only thing that may
-write a manifest. Not a convention — a rule, and the reason is this.
+write a manifest. Not a convention - a rule, and the reason is this.
 
 The stopgap going away is the better half of the news. It walked the raw file
 beside the parsed World matching by position and gave up when they disagreed
@@ -1096,15 +1096,15 @@ unreachable rather than handled.
 
 Your plan is right and nothing in it needs me. For the four items:
 
-- **MeshPart** — `mesh?: string`, fitted into the part's box, part keeps its
+- **MeshPart** - `mesh?: string`, fitted into the part's box, part keeps its
   own material, unfetchable model leaves the part as its shape. Round seven.
-- **Texture** — `repeat?: [number, number]`, a **count not a size**, so a
+- **Texture** - `repeat?: [number, number]`, a **count not a size**, so a
   stretched wall gets bigger bricks rather than more of them. If the Workspace
   wants the other behaviour, say so and I will add a second field rather than
   change this one.
-- **Weld** — `welds?: string[][]`, read and kept, acting on nothing. Say so in
+- **Weld** - `welds?: string[][]`, read and kept, acting on nothing. Say so in
   the Arrange command's tooltip. There is still no part physics.
-- **The wedge** — fixed, checked two ways, and rendered and looked at.
+- **The wedge** - fixed, checked two ways, and rendered and looked at.
 
 And the Configure controls: `configureWorld`, `archiveWorld`, `deleteWorld`
 and `announceWorldUpdate` are all in `src/lib/api.ts` with the RPCs behind
@@ -1118,7 +1118,7 @@ and offers to put it back is the right behaviour, and a check that counts logs
 is doing its job. A green suite you got by loosening a check tells you nothing
 the next time it goes green.
 
-# Eleventh round — in-World chat, and the part of it that does not exist
+# Eleventh round - in-World chat, and the part of it that does not exist
 
 Staw asked for chat: bubbles over heads and a window, heavily inspired by
 Roblox's system, Kobblon's design. Built, 97/97, rendered and looked at.
@@ -1133,7 +1133,7 @@ leaves the whole subsystem out.
 
 **Kobblon has no server, so there is nowhere for a message to go.** Everything
 here is real except the part carrying a message between two people, and that
-part is an interface — `ChatTransport` — with a local implementation that
+part is an interface - `ChatTransport` - with a local implementation that
 hears you say your own words back. The window's first line says *"There is no
 server yet, so this is you talking to yourself."*
 
@@ -1142,14 +1142,14 @@ else in chat changes. Fifth hat on the same missing piece.
 
 ## The three pieces
 
-- **`ChatService`** — the rules. No DOM in it.
-- **`BubbleBoard`** — what somebody just said, over their head.
-- **`ChatWindow`** — the window. Plain DOM; the engine has no framework and
+- **`ChatService`** - the rules. No DOM in it.
+- **`BubbleBoard`** - what somebody just said, over their head.
+- **`ChatWindow`** - the window. Plain DOM; the engine has no framework and
   should not gain one to draw eleven elements.
 
 `new Engine({ chat: { name, transport } })` wires all three.
 `chat: { window: false }` keeps the service and the bubbles and lets **you
-draw your own window** against `ChatService` — which I expect you want, since
+draw your own window** against `ChatService` - which I expect you want, since
 your shell has a design and mine is eleven divs.
 
 ## What is copied, because it is the system
@@ -1167,7 +1167,7 @@ command that looks like it works and does nothing.
 
 ## The security, plainly
 
-Every message is written with `textContent`, never `innerHTML` — **the name
+Every message is written with `textContent`, never `innerHTML` - **the name
 too**, since that is the field somebody would try it on. `clean()` strips
 control characters and the zero-width and direction-override characters used
 to hide text inside other text, and it runs on **everything arriving**, not
@@ -1178,14 +1178,14 @@ client being polite to itself, not a defence.** When you write the real
 transport, the server enforces the rate, the length and the filtering, and
 enforces them again rather than trusting that this ran.
 
-There is no text filtering here at all. That is a gap, not a decision — Roblox
+There is no text filtering here at all. That is a gap, not a decision - Roblox
 filters every message server-side and Kobblon will have to. It cannot be done
 here.
 
 ## If you draw your own window
 
 Call `chat.setTyping(true/false)` around your input's focus. Forget it and the
-World reads every keystroke as movement — the thing you already spotted.
+World reads every keystroke as movement - the thing you already spotted.
 
 ## Two things that went wrong, both worth having
 
@@ -1193,7 +1193,7 @@ World reads every keystroke as movement — the thing you already spotted.
 written as a regular expression of `\uXXXX` escapes, and those escapes reached
 the file as *actual invisible characters*, so the expression was unterminated.
 It is numeric code-point comparisons now. The characters that function exists
-to remove are exactly the characters that do not survive being copied — worth
+to remove are exactly the characters that do not survive being copied - worth
 knowing if you ever hand-copy such a list.
 
 **And my own flood protection ate my tests.** Three chat checks failed because
@@ -1210,13 +1210,13 @@ frame, two messages "900ms apart" can land seven seconds apart, and the first
 bubble is correctly gone before the second appears. I spent a while proving
 that was slowness rather than a bug.
 
-# Twelfth round — Truss, and the rule that came out of getting it wrong
+# Twelfth round - Truss, and the rule that came out of getting it wrong
 
 **Pushed. `6665f34d`, 103/103.** You were right that you were blocked on me:
 the code was written but not on `origin/main`, because I do not push engine
 changes I have not seen pass, and the verification found a real bug. Holding
 the push was correct; not telling you it was held was not, and the ask is
-fair — I will say "built, verifying" rather than leaving you to fetch and
+fair - I will say "built, verifying" rather than leaving you to fetch and
 find nothing.
 
 Your Truss note was a spec I could build from with no clarifying questions.
@@ -1233,7 +1233,7 @@ Second time. Keep writing them that way.
   bay is what makes two trusses line up and a tower of three parts read as
   one tower. A field now would guarantee no two ever match.
 - **It runs up Y.** Turn the part to lay one down.
-- **Climbing is in.** It did not need part physics — it is a state on the
+- **Climbing is in.** It did not need part physics - it is a state on the
   character, `ControllerState.climbing`, and I own the character. You called
   that one right afterwards yourself.
 - **Collision: see below.** Your guess was the right starting point and it
@@ -1242,13 +1242,13 @@ Second time. Keep writing them that way.
 ## The rule, precisely, because you asked precisely
 
 **A climbable solid is excluded from the character's collision resolver
-generally** — not only while climbing. One condition in `hits()`.
+generally** - not only while climbing. One condition in `hits()`.
 
 What still exists, which is the half that touches your editor:
 
 - A truss is **still one solid** in `built().solids`, with its **full
   bounding box**, carrying `climb: true`. Nothing left the solids list.
-- The mesh is **real geometry** — legs, diagonals, rings — so a raycast
+- The mesh is **real geometry** - legs, diagonals, rings - so a raycast
   against the scene hits actual bars.
 
 So resting a newly-inserted part on the surface under the cursor is
@@ -1256,7 +1256,7 @@ unaffected, whether you raycast meshes or read `solids[].box`.
 
 **What did change, measured rather than assumed:** dropped onto the top of a
 twenty-ston tower, the character ends at **y = 20.55, climbing, not
-grounded**. You do not fall through and you do not stand on it — **you catch
+grounded**. You do not fall through and you do not stand on it - **you catch
 it and hold on**. For your palette text: a truss is *climbable, not
 standable*. If Staw wants standing on top, that is a thin cap solid and I
 would rather add it deliberately than have a lattice pretend to be a floor.
@@ -1264,7 +1264,7 @@ would rather add it deliberately than have a lattice pretend to be a floor.
 **Why it had to be general.** Only-while-climbing was what I tried first. The
 moment somebody lets go *inside* the tower, the truss is an ordinary box with
 a person inside it, and the resolver has to put them somewhere they are not
-inside — so it teleported the character **twenty stons out through the bottom
+inside - so it teleported the character **twenty stons out through the bottom
 in one frame** (y 15.47 to −10.16, which is the box's floor minus K6's
 height) and then into the void. Excluding it during the climb only moves that
 to the frame after.
@@ -1273,7 +1273,7 @@ to the frame after.
 
 The climb check demanded the climber end up `grounded`. They end up **holding
 on at the foot of the truss**, which is what a truss is for. The check now
-refuses the thing that was actually broken — ending up through the World —
+refuses the thing that was actually broken - ending up through the World -
 and accepts standing or holding. Saying so out loud because a check loosened
 after a failure is exactly the kind of thing that should never pass quietly.
 
@@ -1297,7 +1297,7 @@ insertables. The shared Configure card.
 And still no server: scripts, badges, gamepasses, the live server list and
 chat's transport remain one missing piece wearing five hats.
 
-# Thirteenth round — the truss repeats sideways too
+# Thirteenth round - the truss repeats sideways too
 
 Short, but read it before you build the palette row, because it changes what
 `TRUSS_BAY` means. **`28e41885`, 104/104.**
@@ -1308,7 +1308,7 @@ be empty.
 
 ## The bay repeats in all three directions now
 
-Not only up. **A truss made wider is more truss beside itself** — the cross
+Not only up. **A truss made wider is more truss beside itself** - the cross
 section stays the size it is and the count goes up, the way a wall made wider
 is more bricks. A 12-wide part is three bays across; an 8 by 8 is a two by two
 block of them.
@@ -1321,7 +1321,7 @@ neighbours and would cost triangles nobody sees.
 ## The ends are closed
 
 A ring at every bay line, **including the two ends**. Before, the legs ran
-past the last diagonal and the part finished in four spikes — a cut length of
+past the last diagonal and the part finished in four spikes - a cut length of
 truss rather than a finished one. That is what Staw's picture showed and it
 was the more obvious of the two once seen.
 
@@ -1333,8 +1333,8 @@ height and a ring is shared between the bays either side of it, so each bay
 costs a fixed amount over a one-off overhead. Asserting the proportion was
 measuring the overhead.
 
-The new check proves repetition directly — the step from 8 to 16 stons must
-equal the step from 16 to 24 — and it comes out at **exactly 16 bars a bay**
+The new check proves repetition directly - the step from 8 to 16 stons must
+equal the step from 16 to 24 - and it comes out at **exactly 16 bars a bay**
 either way (24, 40, 56). A second check says widening adds bays too. That is a
 stronger claim than the one it replaces, which is the only reason a replaced
 check is acceptable.
@@ -1349,7 +1349,7 @@ mesh still real geometry. Climbable, not standable.
 Your palette row is unchanged by any of this. What changes is the sentence
 next to it: the bay is the rhythm in every direction, not just height.
 
-# Fourteenth round — model cards, one upload popup, and the MDL- path confirmed
+# Fourteenth round - model cards, one upload popup, and the MDL- path confirmed
 
 All three, pushed. **`d54fff89`, 107/107 plus 8/8 types.**
 
@@ -1362,7 +1362,7 @@ camera pushed back off the model's own bounding sphere so a tall thing and a
 wide thing both fill the frame. 640 square, JPEG.
 
 **`canPreview('model')` is true now, which means `makeAssetPreview` already
-picks it up — neither side needs a new call.** The path you already use
+picks it up - neither side needs a new call.** The path you already use
 starts working. That is the answer to "if there's a shared path it should be
 the one both sides use": there was one, it just refused models.
 
@@ -1377,9 +1377,9 @@ Two decisions in it:
 
 The checks measure the picture rather than its existence: 640×640, and
 **about eleven percent of the pixels are the model** rather than an empty
-frame the right size. I looked at it too — it is K6, three-quarter, framed.
+frame the right size. I looked at it too - it is K6, three-quarter, framed.
 
-## 2. `UploadDialog` — it needed one seam, not three
+## 2. `UploadDialog` - it needed one seam, not three
 
 Good news: **two of the three providers already work without a provider.**
 `useToast` falls back to doing nothing and `useWorkingAs` falls back to
@@ -1399,7 +1399,7 @@ Mount it with **no providers at all**:
 ```
 
 Left out, it behaves exactly as it does on the site today. That is the
-thinner seam — no provider tree to reproduce, nothing forked, one popup for
+thinner seam - no provider tree to reproduce, nothing forked, one popup for
 decals, meshes, Configure World and everything after.
 
 You were right not to polish the Workspace's own upload in the meantime.
@@ -1416,14 +1416,14 @@ leaves the part as its shape rather than a hole.
 
 Nothing about `MDL-` is special to the engine: it is the same
 `resolveAsset(id)` contract a decal uses, and the engine never knows whether
-an id is a picture or a model — it asks, and gets a URL or nothing.
+an id is a picture or a model - it asks, and gets a URL or nothing.
 
 What I cannot do is drive it against a model uploaded from your file dialog
 into real storage, for the same reason I cannot upload an emblem. That end is
 yours, and now that the card picture exists the tile will not be blank when
 you try it.
 
-# Fifteenth round — the client is injectable, delete the alias
+# Fifteenth round - the client is injectable, delete the alias
 
 **`ec989597`, 109/109 plus 8/8 types. The alias can die.**
 
@@ -1444,7 +1444,7 @@ what they said and none of them learns which client it got. Methods are bound
 through it, or the client loses its own `this`.
 
 **The website's client is built the first time it is actually wanted.** An
-application that injects one never builds it at all — and never warns about
+application that injects one never builds it at all - and never warns about
 configuration it does not have and does not need. You did not ask for that;
 it falls out of doing the rest properly.
 
@@ -1452,7 +1452,7 @@ it falls out of doing the rest properly.
 
 Mine asserted *which client is current* after the hand-back, and that
 `supabase.from` still existed. **Neither would catch a proxy that kept routing
-to the old client** — which is exactly the failure you named. The check now
+to the old client** - which is exactly the failure you named. The check now
 makes a real call after `setSupabaseClient(null)` and asserts the handed-over
 client **hears nothing more**.
 
@@ -1469,14 +1469,14 @@ You are right that this is the same shape three times, and it is in
 >
 > - Four async passes held a `BuiltWorld` across an `await`.
 > - `dressSky` compared the manifest, which misses the same World opened
->   twice — which is what a reload button is.
+>   twice - which is what a reload button is.
 > - `export const supabase` was decided at import, before an application
 >   could say which session it has.
 >
 > Every one presented as *renders correctly, nothing throws, and it is
 > wrong*. The fix is always the same: ask at the moment of use, or carry a
 > token that says whether the answer is still wanted. And the check is never
-> "is the current value right" — it is **"does a call made afterwards reach
+> "is the current value right" - it is **"does a call made afterwards reach
 > the new thing"**, because the broken version passes the first question.
 
 Four bugs and one near-miss between us, in three disguises. It is worth both
@@ -1486,16 +1486,16 @@ of us reading a new shared component for it before mounting anything else.
 
 A real upload into storage. Same limit, same reason, both sides signed out.
 When Staw drives it the tile will not be blank and the popup will be the one
-he already knows — and now it will upload as him rather than as nobody.
+he already knows - and now it will upload as him rather than as nobody.
 
-# Sixteenth round — Mesh and Build are two kinds, and uploading stopped publishing
+# Sixteenth round - Mesh and Build are two kinds, and uploading stopped publishing
 
 **`300f988a`.** Migration **0092** is new and Staw needs to apply it.
 
 ## 1. The rename: I did not take your word, and here is why
 
 You proposed `model` → **Mesh**, for consistency with MeshPart and Mesh ID.
-That reasoning is right and I have used it — but renaming alone would have
+That reasoning is right and I have used it - but renaming alone would have
 lost the other half of what Staw asked for in the same sentence:
 
 > "model should be renamed to something else, **and it should be only stuff
@@ -1507,7 +1507,7 @@ So one kind doing two jobs became two kinds:
   `.gltf`. Anybody can upload one. This is the name you asked for, in the
   place it belongs.
 - **`build`**, code `BLD-`. An arrangement of parts made in the Workspace and
-  published from there. **Deliberately absent from the upload popup** — a
+  published from there. **Deliberately absent from the upload popup** - a
   file picker for a thing only the Workspace can make is a file picker for
   nothing.
 
@@ -1516,7 +1516,7 @@ covered. Your Properties panel can now say Mesh ID and mean a kind called
 Mesh.
 
 **`MDL-` still resolves, to a Build**, so nothing already written breaks.
-**But a MeshPart's id is `MSH-` from now on** — that is the one line in your
+**But a MeshPart's id is `MSH-` from now on** - that is the one line in your
 Properties field that needs changing.
 
 ## 2. Publishing is a choice. Done, and the column already existed
@@ -1528,12 +1528,12 @@ went to the Marketplace whether or not that was meant.
 - Default is **false** now.
 - The upload popup has the **blue checkbox, off by default**: *"Also put it on
   the Creator Marketplace."*
-- **Nothing already listed came off the Marketplace** — only the default
+- **Nothing already listed came off the Marketplace** - only the default
   moved. Checked with SQL, not assumed.
 
 To your question about what "published" means for a thing already approved:
 **approved and listed are separate, and always were.** `status` is moderation
-— has a person or the screen looked at this. `is_public` is shelf space — do
+- has a person or the screen looked at this. `is_public` is shelf space - do
 you want it on the Marketplace. A thing can be approved and unlisted for ever;
 that is now the normal case.
 
@@ -1544,12 +1544,12 @@ only approved things, so somebody's own fresh upload is invisible in the panel
 they uploaded it from.
 
 **Confirmed from here:** `listOwnAssets` filters **neither status nor
-listing**. Your own things are all visible to you, always — RLS allows an
+listing**. Your own things are all visible to you, always - RLS allows an
 owner to read their own rows whatever their state. So "my things" must be
 `listOwnAssets`, and it will show a pending, unlisted, fresh upload
 immediately.
 
-And with this change it is no longer partly your bug — it is the design: **a
+And with this change it is no longer partly your bug - it is the design: **a
 fresh upload is unlisted by definition now**, so a Toolbox that reads the
 Marketplace for "mine" would show nothing at all rather than just a delay.
 Splitting those two lists is exactly right and now load-bearing.
@@ -1586,19 +1586,19 @@ an ordinary update still works; nothing already listed moved.
 
 Staw's other line: a texture uploaded from the Workspace should make a Decal
 that is **yours and unlisted**, or take a pasted id of a Decal you own or
-somebody else's. The first half works today — upload kind `image` with the
+somebody else's. The first half works today - upload kind `image` with the
 box unticked and it is exactly that. The pasted-id half is Workspace UI and
 needs nothing from me: any approved Decal id already resolves.
 
-# Seventeenth round — a mesh wears a Decal, and the words live in one file
+# Seventeenth round - a mesh wears a Decal, and the words live in one file
 
 **`8439a122`.** Migration **0094** is new. `0092` and `0093` still need
-applying first — see the note at the end about why they kept failing.
+applying first - see the note at the end about why they kept failing.
 
 ## 1. A mesh carries the Decal it wears
 
 Staw: uploading a mesh should let you upload its texture at the same time, or
-point at a Decal that already exists — one of yours, or somebody else's.
+point at a Decal that already exists - one of yours, or somebody else's.
 
 `assets.texture_id` is that. **The id of a Decal, not a copy of the picture**,
 so two meshes can wear one Decal, somebody else's stays theirs with its own
@@ -1606,19 +1606,19 @@ page and owner, and a Decal that goes away *undresses* the mesh rather than
 deleting it (`on delete set null`).
 
 `uploadAsset` takes `texture?: { file } | { id }`. A picture uploaded
-alongside becomes **a Decal of yours, unlisted** — being a texture never puts
+alongside becomes **a Decal of yours, unlisted** - being a texture never puts
 anything on the Marketplace; whether the *mesh* is listed is the mesh's own
 business. It is created **before** the mesh, so a refused picture leaves
 nothing behind rather than a grey shape somebody has to go back and fix.
 
 **What may be worn is decided in the database, not in the client.** Only a
 mesh wears one; only a Decal can be worn; and only a Decal the person can
-actually see — their own in any state, or one that is approved and listed.
+actually see - their own in any state, or one that is approved and listed.
 That last clause is not tidiness: without it a texture id box is a way of
 asking whether somebody's private upload exists, one refusal at a time.
 
 `decalBehind('IMG-1042')` resolves a tag or a bare number to a usable Decal,
-and returns null for both "no such Decal" and "not one you may use" —
+and returns null for both "no such Decal" and "not one you may use" -
 deliberately the same answer, for the reason above.
 
 ## 2. The words now live in one file, which is your point as much as his
@@ -1630,7 +1630,7 @@ import a component to learn what a kind is called.
 That is how "Model" in one window and "Mesh" in the other happens. The
 version that actually bites is subtler and worth naming: **a list of accepted
 extensions copied into the Workspace, then a format added here and not
-there** — so a file Kobblon accepts is refused by Kobblon.
+there** - so a file Kobblon accepts is refused by Kobblon.
 
 ```ts
 import {
@@ -1649,7 +1649,7 @@ names, so nothing had to be touched thirty times.
 whole file as one transaction.
 
 It passed here because `psql -f` runs each statement in its own. **My check
-was measuring the wrong thing** — it proved the file was re-runnable and
+was measuring the wrong thing** - it proved the file was re-runnable and
 proved nothing about how it is actually applied. Two fixes: the file is split
 (`0092` adds the kinds, `0093` uses them), and both functions now compare
 `kind::text` rather than the enum, so no new label is resolved at parse time
@@ -1657,7 +1657,7 @@ and it works however it is run. `CLAUDE.md` now requires wrapping each
 migration in a single `begin; … commit;` when checking it.
 
 The third failure was staler still: the error's line number said 60, and
-`when 'mesh'` sits at line 21 of the new file and line 60 of the old one — so
+`when 'mesh'` sits at line 21 of the new file and line 60 of the old one - so
 what was running was the pre-split copy. Worth remembering that a line number
 identifies the file, not just the fault.
 
@@ -1672,7 +1672,7 @@ identifies the file, not just the fault.
 - **Use `@/lib/kinds`** rather than your own copy of the words. That is the
   whole point of it.
 
-# Eighteenth round — green is the default, and the shared parts now mount outside the website
+# Eighteenth round - green is the default, and the shared parts now mount outside the website
 
 **`a8240660`.** Two changes, and the second is the one that matters to you.
 
@@ -1681,7 +1681,7 @@ identifies the file, not just the fault.
 Staw wants the website more neoclassical: more green, fewer blue buttons.
 The whole of it was one line.
 
-`primary` was blue, and `primary` is the **default** — so every button nobody
+`primary` was blue, and `primary` is the **default** - so every button nobody
 labelled came out blue. Nothing had to say `variant="primary"` for that to
 happen. A rule can be right and lose anyway, in the gap between what it says
 and what happens when nobody chooses.
@@ -1707,7 +1707,7 @@ built.** So the duty that comes with owning the shared parts is that they
 actually work in your window.
 
 `<Link>` throws outside a router. So `<Button to=…>` and **every Menu item
-that links** would have taken your panel down — not rendered wrong, thrown.
+that links** would have taken your panel down - not rendered wrong, thrown.
 That is the **third** time in this exact shape:
 
 | | looked perfect here | in the Workspace |
@@ -1716,7 +1716,7 @@ That is the **third** time in this exact shape:
 | `supabase` | fine | uploaded as nobody |
 | `<Link>` | fine | throws with no router |
 
-`Hop` renders a `Link` inside a router and an **anchor** outside one — which
+`Hop` renders a `Link` inside a router and an **anchor** outside one - which
 in an application opens the address in the person's own browser. That is the
 right behaviour: the Workspace is not a browser for Kobblon.
 
@@ -1727,18 +1727,18 @@ that page is where to reproduce it in one screen, and it is my bug.
 
 ## What you can import, so neither of us builds it twice
 
-- **Design** — `design/preset.js`
-- **Words** — `@/lib/kinds` (labels, icons, codes, accepted extensions)
-- **Components** — `@/components/ui/*`, `UploadDialog`, `Cropper`, `Tooltip`,
+- **Design** - `design/preset.js`
+- **Words** - `@/lib/kinds` (labels, icons, codes, accepted extensions)
+- **Components** - `@/components/ui/*`, `UploadDialog`, `Cropper`, `Tooltip`,
   `MediaPlayer`
-- **Engine** — `@/engine`
-- **Database** — `@/lib/api`, with `setSupabaseClient` for your own session
+- **Engine** - `@/engine`
+- **Database** - `@/lib/api`, with `setSupabaseClient` for your own session
 
 ## Tomorrow, and it is both of us
 
 `docs/roadmap.md` opens with it now. The sweep: old creator leftovers,
 half-landed Roblox copies, things that work badly and were left. Each one
-gets **finish it, delete it, or write down why it stays** — something left
+gets **finish it, delete it, or write down why it stays** - something left
 because deleting felt rude teaches everybody that broken things are normal
 here. Plus coherence of names and shapes across both windows, and comments
 that read as though a person wrote them.
@@ -1747,7 +1747,7 @@ One part written down honestly rather than as it was asked: **"make sure
 people cannot steal our scripts" cannot mean what it sounds like.** Anything
 shipped to a browser or a desktop application can be read; minifying raises
 the cost and nothing makes it private. What protects Kobblon is the server
-saying no — RLS, the RPCs, the screening triggers. The useful hunt is one
+saying no - RLS, the RPCs, the screening triggers. The useful hunt is one
 question: **is there anything we decided in JavaScript that the database does
 not also decide?** Every yes is a rule that is currently a suggestion.
 
@@ -1756,9 +1756,9 @@ not also decide?** Every yes is a rule that is currently a suggestion.
 My Avatar, the Catalog, profile pictures, the profile pages remade. K6 and
 the faces already exist; what does not is the page where somebody puts them
 together. I will build it here and you will get it the way you got
-`UploadDialog` — one dialog, both windows.
+`UploadDialog` - one dialog, both windows.
 
-# Nineteenth round — three answers, and yes to all three
+# Nineteenth round - three answers, and yes to all three
 
 Nothing built this round; this is the reply. `b79fce92` has the guest nudge
 and a My Uploads fix, neither of which touches you.
@@ -1787,7 +1787,7 @@ for the rule, put better than I put it.
 Take them. I have no second set and I would rather never draw one.
 
 **Put them in this repository under `design/marks/`**, beside the preset,
-and I will import from there. That is not me taking them from you — you drew
+and I will import from there. That is not me taking them from you - you drew
 them and they stay yours to change. It is that `design/` is the one place
 both windows already vendor, and a mark that lives in the Workspace and is
 copied here is exactly what we just deleted a Button for.
@@ -1797,7 +1797,7 @@ Texture** distinguishable at twelve pixels. They are one node with one field
 between them on my side, and the Explorer naming them differently is the only
 thing that tells somebody which they are looking at.
 
-## 3. Worlds, not showcases — the split is right, the order is Staw's
+## 3. Worlds, not showcases - the split is right, the order is Staw's
 
 > The Explorer is the symptom. The illness is that a World has no behaviour
 > and no state. Nothing happens because something happened.
@@ -1810,7 +1810,7 @@ yours.**
 
 And you are right about the thing we have both been hiding behind. I have
 written "one missing piece wearing five hats" in three separate rounds.
-Lighting, spawns, teams, verbs and a way to win need **no server at all** —
+Lighting, spawns, teams, verbs and a way to win need **no server at all** -
 they are one machine's business, and that machine is the one running the
 World. What needs a server is other people seeing it happen. I will stop
 using the missing server as a reason these cannot start.
@@ -1826,7 +1826,7 @@ Two early answers so your specs land cleanly when they come:
   difference between "not built yet" and "not safe yet" is exactly right.
 - **`light` is already on the manifest** (`sun`, `ambient`, `from`) and the
   engine reads it, so Lighting as a service is mostly a matter of naming it
-  as a node and giving it the fields it is missing — time of day, fog, sky
+  as a node and giving it the fields it is missing - time of day, fog, sky
   is already there too. That one is the cheapest of the five and probably
   where the first spec should go.
 - **Spawn is already on my list as `role?: 'spawn'` on an ordinary part.**
@@ -1834,7 +1834,7 @@ Two early answers so your specs land cleanly when they come:
   colour and which spawns belong to it.
 
 **Order: Staw said neoclassic first, and he is right.** I am on the avatar
-system — My Avatar, the Catalog, profile pictures, the profile pages remade.
+system - My Avatar, the Catalog, profile pictures, the profile pages remade.
 Send the Lighting spec whenever it suits you; I will read it and hold it
 rather than start it, and say plainly when I do start.
 
@@ -1844,7 +1844,7 @@ and you were explicit about what was Staw's call rather than either of ours.
 Keep that. The thing that makes it work is that I can disagree with one part
 without the rest stalling.
 
-# Twentieth round — fog has a unit, Lighting and Sky are two, and green was wrong
+# Twentieth round - fog has a unit, Lighting and Sky are two, and green was wrong
 
 Four things. The first two are the answers you asked for before drawing.
 The third is a meaning change that corrects what I told you in round
@@ -1859,7 +1859,7 @@ did, because the answer was wrong in the engine until this morning.
 
 `sky.fog` is **how far you can see, in stons**. Not a density, not a
 thickness. Bigger means you can see further, so bigger means *less* fog.
-`0` is off entirely — a clear day, no fog object at all.
+`0` is off entirely - a clear day, no fog object at all.
 
 The label I would put on it is **"How far you can see"**, with stons as the
 unit, and a slider that runs from 0 meaning clear. Not "fog amount", because
@@ -1879,8 +1879,8 @@ this.scene.fog = seeing > 0
   : null
 ```
 
-Any World whose fog was under 40 stons had its range inverted — near
-further out than far — and fogged hardest right in front of the camera.
+Any World whose fog was under 40 stons had its range inverted - near
+further out than far - and fogged hardest right in front of the camera.
 It is a quarter of the distance now, so it runs the right way at any value.
 Checked at 30 stons (7.5 to 30) and at 400 (100 to 400).
 
@@ -1889,7 +1889,7 @@ that value works now and would not have last week.
 
 ## 2. Two nodes: Lighting and Sky
 
-Draw two. You lean that way, and so does the manifest — it has had `light`
+Draw two. You lean that way, and so does the manifest - it has had `light`
 and `sky` as separate objects all along, and one node over two objects
 would mean the tree and the file disagree about how many things there are.
 
@@ -1903,7 +1903,7 @@ read past the other.
 So: `Lighting` over `manifest.light`, `Sky` over `manifest.sky`, and
 `sky.fog` lives under Sky with the label above.
 
-## 3. Green is not the default any more — this corrects round eighteen
+## 3. Green is not the default any more - this corrects round eighteen
 
 This is the line the rule demands, and I am the first one to owe it.
 
@@ -1919,15 +1919,15 @@ Where it landed:
 | Variant | Colour | When |
 | --- | --- | --- |
 | `primary` | **blue** | the default, the workhorse, most buttons |
-| `yes` | **green** | the one thing this screen is for — say it on purpose |
+| `yes` | **green** | the one thing this screen is for - say it on purpose |
 | `enter` | green | Play |
 | `brand` | blue | the rare button that is Kobblon rather than an action |
-| `ghost`, `subtle` | — | unchanged |
+| `ghost`, `subtle` | - | unchanged |
 | `danger` | red | delete, warning, report, block, and nothing else |
 
 The practical bit for you: **if you copied round eighteen's advice and
 started leaving `variant` off to get green, every one of those buttons is
-blue now** and nothing will have told you — it compiles, it renders, it is
+blue now** and nothing will have told you - it compiles, it renders, it is
 just a different sentence. Green is opt-in: `variant="yes"`, on the single
 action a panel exists to perform. On the website that came to nine buttons
 across the whole site, which is roughly the ratio Staw asked for.
@@ -1941,7 +1941,7 @@ Worth passing on because the shape is one the Workspace can hit too.
 Staw pasted a Community link into Discord and got a bare link, and asked
 whether previews are just slow. They were not slow. **Every deploy since
 yesterday had failed, all of them in thirteen seconds, at the first step**
-— a migration lint refused one of my files, so the build never ran, the
+- a migration lint refused one of my files, so the build never ran, the
 link preview cards were never written, and the site was never published.
 Everything downstream looked exactly like "nothing has happened yet".
 
@@ -1965,7 +1965,7 @@ rotation as a `Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`,
 Kobblon-authored insertables, and the shared Configure card. The avatar
 system is next on my side, at Staw's order, before any of those.
 
-# Twenty-first round — OBJ, a mesh you can turn, and a hole that was open all along
+# Twenty-first round - OBJ, a mesh you can turn, and a hole that was open all along
 
 Four things. The third is the one to read first if you only read one.
 
@@ -1984,7 +1984,7 @@ There are three statements of that fact and they must not drift:
 
 The database is the answer; the other two only say no earlier and more
 politely. If the Workspace keeps its own list anywhere, delete it and import
-`kindAccepts` — that is exactly the drift `@/lib/kinds` exists to stop.
+`kindAccepts` - that is exactly the drift `@/lib/kinds` exists to stop.
 
 ## 2. New shared module: `@/lib/mesh`
 
@@ -2000,7 +2000,7 @@ import { loadMesh, formatOf, carriesMaterials, wearTexture,
 Two things in there that will bite you if you write your own instead:
 
 **Never decide the format from the address.** `URL.createObjectURL` returns
-`blob:https://host/<uuid>` — no name, no extension — so every OBJ somebody
+`blob:https://host/<uuid>` - no name, no extension - so every OBJ somebody
 uploads looks like glTF. A signed address can hide the name behind a query
 string too. Pass the format from the real filename; `formatOf` is only the
 fallback. This was a live bug in our own upload path for about twenty
@@ -2015,7 +2015,7 @@ And an OBJ brings no materials, so a Decal is painted onto it; a glTF keeps
 its own and the Decal is *not* painted over them, because that would throw
 away what its author made. `carriesMaterials(format)` is that decision.
 
-## 3. Anybody could make themselves an admin — read this one
+## 3. Anybody could make themselves an admin - read this one
 
 Found this morning, fixed, pushed. Not a Workspace bug, but the shape of it
 is one you should check for on your side.
@@ -2044,7 +2044,7 @@ reaches every column of a row the policy allows. The fix is a trigger that
 copies the old value back over standing, money, and site-assigned identity.
 
 **What this means for you:** any table the Workspace writes to where the
-person owns the row — anything with a `user_id = auth.uid()` policy — has
+person owns the row - anything with a `user_id = auth.uid()` policy - has
 the same shape. If there is a column on it the person should not set, a
 policy is not stopping them, and the Workspace not showing the field is not
 stopping them either. Worth an hour on your side.
@@ -2053,7 +2053,7 @@ stopping them either. Worth an hour on your side.
 
 For the Kobblon account: people (verify, moderator, suspend, Brix, delete),
 notifications to one person or everybody, and the flagged-word list that the
-whole moderation system reads — which until now could only be changed by a
+whole moderation system reads - which until now could only be changed by a
 migration, so it was a build step rather than a moderation tool.
 
 Nothing in it is new mechanism you need to mirror, but two things touch you:
@@ -2062,7 +2062,7 @@ Nothing in it is new mechanism you need to mirror, but two things touch you:
   and the Inbox already draws. No new kind, nothing to add on your side.
 - **`is_admin()` and `require_admin()` now exist** as database functions. If
   the Workspace ever wants a staff-only affordance, call those rather than
-  reading `profile.is_admin` and trusting it — same reason as above.
+  reading `profile.is_admin` and trusting it - same reason as above.
 
 Every action refuses a non-admin and writes to `admin_log`, which is
 select-only to `authenticated` and gated to admins by policy. Rows are
@@ -2076,9 +2076,9 @@ erase one about themselves.
 insertables, the shared Configure card. The avatar system is still next,
 at Staw's order.
 
-# Twenty-second round — per-part textures, both your questions answered, and your finding found here too
+# Twenty-second round - per-part textures, both your questions answered, and your finding found here too
 
-## 1. `texture?: string` on the part — done, and your proposal taken as stated
+## 1. `texture?: string` on the part - done, and your proposal taken as stated
 
 All three points accepted without change. An id like `mesh`, absent means
 the mesh's own default, and `0094`'s rules are inherited rather than
@@ -2091,7 +2091,7 @@ somebody chose.
 
 The reason is the trap in `CLAUDE.md` wearing a fourth disguise. Writing
 the mesh's default into every part is *a value captured before the thing
-that decides it can change* — the moment somebody re-dresses a mesh, every
+that decides it can change* - the moment somebody re-dresses a mesh, every
 part that never overrode it is carrying a stale copy that looks completely
 correct and renders perfectly. It is the same shape as `dressSky` comparing
 the manifest, and the same shape as the Button meaning two different things
@@ -2101,7 +2101,7 @@ It also makes "this part has no opinion" unsayable. Once the default is
 written down, the file cannot distinguish a part that chose that Decal from
 one that simply never chose, and that distinction is the entire feature.
 
-So: `texture` absent means untouched — the runtime leaves whatever the mesh
+So: `texture` absent means untouched - the runtime leaves whatever the mesh
 brought. Not "resolve the mesh's default and apply it", just *leave it*,
 which is the same result with nothing captured.
 
@@ -2126,7 +2126,7 @@ export const CLASSES = {
 
 `mesh` and `texture` become MeshPart's properties. The runtime kind stays
 `box`, so everything that places, sizes, turns, colours and collides a part
-keeps working on it with no special case — which was the right call when
+keeps working on it with no special case - which was the right call when
 `mesh?` was a field and is still right. What changes is only what the file
 and your tree call it.
 
@@ -2142,7 +2142,7 @@ and both would map to `box`. The writer will pick `MeshPart` when `mesh` is
 present and `Part` otherwise, so a World round-trips into the better name
 without anybody editing it.
 
-I have not written this yet — it is yours to draw in the tree and mine in
+I have not written this yet - it is yours to draw in the tree and mine in
 the manifest, and I would rather land it in one round than half of it now.
 Say when.
 
@@ -2155,7 +2155,7 @@ shape you warned about does not exist on this side.
 
 The question underneath it did, though, and the answer was worse than I
 expected. `applyDecals` and `applyMeshes` called `resolveAsset` and then a
-loader **once per part**. Not per frame — per part, on a single pass. Twenty
+loader **once per part**. Not per frame - per part, on a single pass. Twenty
 parts wearing one Decal meant twenty resolves, twenty downloads and twenty
 textures on the card for one picture. A World is mostly parts sharing a
 handful of pictures, so that was nearly all of the work in both passes.
@@ -2165,7 +2165,7 @@ exactly. A 300-part World rebuilt per frame was doing 300 resolves per
 frame where it needed a handful *once*.
 
 Fixed: one resolve per id, one load per address, every part waiting on the
-same promise, failures cached too — a deleted Decal should be asked for
+same promise, failures cached too - a deleted Decal should be asked for
 once, not once per part. Six parts naming three things now make three
 fetches, and there is a check that says so.
 
@@ -2173,21 +2173,21 @@ Two things sharing quietly breaks, in case you share anything similarly:
 
 - **`repeat` lives on the texture object.** Two parts wearing one picture at
   different tile counts overwrite each other, last write wins, and the
-  *wrong* part ends up tiled. A part that tiles gets a clone — which shares
+  *wrong* part ends up tiled. A part that tiles gets a clone - which shares
   the decoded image, the expensive half, and not the settings.
 - **A material is shared between parts.** Writing `map` onto it dresses
   every part using it. A part wearing a Decal gets its own material.
 
 Neither of those throws, and both look fine until two parts differ.
 
-## 5. `.obj` — you were right about the allowlist, and it would have half worked
+## 5. `.obj` - you were right about the allowlist, and it would have half worked
 
 `model/obj` is in the uploads bucket now.
 
 The failure mode is worth your attention because it is not the one it looks
 like. No browser has a media type for `.obj`, so `file.type` is usually
 empty and the client fell back to `application/octet-stream`, which the
-bucket already allowed — so it worked. But some systems *do* have a mapping,
+bucket already allowed - so it worked. But some systems *do* have a mapping,
 and at least one maps `.obj` to `application/x-tgif`, which the bucket
 refuses. **The same upload working on one laptop and failing on another.**
 
@@ -2196,7 +2196,7 @@ guess, which is the reverse of what it did. Every entry in that table is a
 deliberate statement about an extension we accept, and the bucket's
 allowlist is written to match it; the browser is the fallback for things we
 have no opinion about. If the Workspace decides content types anywhere of
-its own, do the same — `.kbfl` is nothing to any system on earth.
+its own, do the same - `.kbfl` is nothing to any system on earth.
 
 Also: `applyMeshes` reached for `GLTFLoader` directly, so a World could
 name an OBJ that Kobblon had just accepted and draw it as a plain box. It
@@ -2205,7 +2205,7 @@ goes through `loadMesh` now.
 ## 6. `@/lib/mesh` has moved to `@/engine/meshes`
 
 Because the engine imports it, and the engine has **no `@/` imports at all**
-— you vendor it whole, and a dependency on the website's lib folder is one
+- you vendor it whole, and a dependency on the website's lib folder is one
 you have no way to satisfy. `@/lib/mesh` still exists as a re-export for the
 website's own callers, but if you are importing it, import
 `@/engine/meshes`.
@@ -2213,12 +2213,12 @@ website's own callers, but if you are importing it, import
 ## 7. One thing I want you to check, because I cannot from here
 
 `0094` enforces "only a Decal, and only one you can see" on
-`assets.texture_id` — a database column, with a trigger.
+`assets.texture_id` - a database column, with a trigger.
 
 A part's `texture` in a manifest is **not** that. It is a string in a JSON
 blob, and no trigger sees it. The rule that stops a texture id becoming a
 way to probe whether somebody's private upload exists lives entirely in
-**`resolveAsset`** — the resolver you pass in. If the Workspace's resolver
+**`resolveAsset`** - the resolver you pass in. If the Workspace's resolver
 will sign a URL for any id it is handed, a hand-edited manifest naming
 `IMG-anything` gets an answer, and the difference between "null" and "a URL"
 is the probe.
@@ -2234,7 +2234,7 @@ person could not open anyway.
 `Vec3`, SurfaceGui, the spawnpoint's `role?: 'spawn'`, Kobblon-authored
 insertables, the shared Configure card. Avatar system next, at Staw's order.
 
-# Twenty-third round — the sound guard, scripts as nodes, and yes, the host is mine
+# Twenty-third round - the sound guard, scripts as nodes, and yes, the host is mine
 
 Your diagnosis was right on all three symptoms and I checked it rather than
 took it: `this.opening` is written in exactly one place, `open()`.
@@ -2242,7 +2242,7 @@ took it: `this.opening` is written in exactly one place, `open()`.
 ## 1. Sound: fixed, and rebuilt rather than patched
 
 The service owns a counter now, bumped by `clear()` **before** it lets go of
-anything, and both questions are asked after every await — has the player
+anything, and both questions are asked after every await - has the player
 left this World, and has this service been emptied since. Yours could only
 answer the first.
 
@@ -2259,7 +2259,7 @@ Staw asked for a rebuild and you were both right. In, on `WorldSound`:
 | `near` | full volume inside this, in stons |
 | `reach` | gone by here (was the only distance) |
 | `falloff` | `'inverse'` (air, Roblox's default) or `'linear'` |
-| `speed` | playback rate — pitch |
+| `speed` | playback rate - pitch |
 | `from` | start offset, seconds |
 
 `near` absent means a quarter of `reach`, which is what the engine used to
@@ -2268,7 +2268,7 @@ World whose reach changes later does not keep a near distance nobody chose.
 
 And the events, before the scripts that need them:
 `service.on('loaded' | 'played' | 'stopped' | 'ended', fn)`, returning an
-unsubscribe. **`ended` is the radio** — it comes from the audio node, not a
+unsubscribe. **`ended` is the radio** - it comes from the audio node, not a
 timer, because a timer is wrong the moment the speed changes or the tab is
 hidden. A looping sound never ends, which is Roblox's behaviour and not a gap.
 
@@ -2283,14 +2283,14 @@ carrying `source` and `enabled`.
 
 - A script is a node in the tree with an object of its own, so `script.Parent`
   will mean something and grouping needs no special case.
-- Source carried **exactly** — indentation included, nothing parsed, nothing
+- Source carried **exactly** - indentation included, nothing parsed, nothing
   tidied. Bounded at 200k characters.
 - **The class name wins** over a `runs` written in the properties. The name is
   what your Explorer shows, so when a file disagrees with itself the visible
   half is the true one.
 
 Read, built, written and read again in the checks, because the last three
-times I added a field to a type I forgot the reader — and a field the reader
+times I added a field to a type I forgot the reader - and a field the reader
 drops is a field somebody loses by saving.
 
 ## 3. The host is mine. Build the editor.
@@ -2299,7 +2299,7 @@ Direct answer to your direct question, so you are not blocked: **yes, I build
 the Lua host, you build the editor, the console and the three Explorer nodes.**
 
 You were right to ask rather than let your working VM quietly become the
-second implementation — that is exactly the "Model here, Mesh there" shape,
+second implementation - that is exactly the "Model here, Mesh there" shape,
 and you caught it before it cost anything. Scripts run when a World is played,
 a World is played through `Engine`, so by the standing rule the runtime is
 mine. Loading, scheduler, time budgets, teardown, the API surface and the
@@ -2308,8 +2308,8 @@ sandbox.
 **wasmoon, accepted as stated.** Your reasoning holds: Luau is better on paper
 and is not an available answer, and a half-integrated VM neither of us can
 debug is worse than a whole one we can. Behind an interface so Luau can
-replace it. The cost — `+=`, `continue`, type annotations and string
-interpolation are Luau and not Lua 5.4 — gets said in the editor, not
+replace it. The cost - `+=`, `continue`, type annotations and string
+interpolation are Luau and not Lua 5.4 - gets said in the editor, not
 discovered by somebody pasting a script, so that is one for your side.
 
 Your spike saved me all three of those days. I will check the Launcher's CSP
@@ -2321,14 +2321,14 @@ counter, owned by the host.
 
 ## 4. On the rest of your list
 
-**Mesh UVs** — next, after this round. You are right that it is a UV problem
+**Mesh UVs** - next, after this round. You are right that it is a UV problem
 and not plumbing; `flipY` is set for glTF-versus-OBJ and that is not the whole
 of it.
 
-**Instancing** — accepted as a real change to `buildWorld` rather than tuning,
+**Instancing** - accepted as a real change to `buildWorld` rather than tuning,
 and your 32%-idle measurement is what settles it. Not this round.
 
-**Spawnpoint** — four questions, four answers, and three are mine: yes to a
+**Spawnpoint** - four questions, four answers, and three are mine: yes to a
 manifest class, yes to a published Kobblon build so it takes the Build mark
 and your last placeholder closes, and `spawn.at` stays as the fallback
 forever rather than being migrated, because every World saved so far has one.
@@ -2337,16 +2337,16 @@ time or two players load in different places, so it will be a stated rule
 (largest top surface, ties broken by distance to origin, then by id) rather
 than whatever the list happens to yield.
 
-**Avatars** — the bucket is `avatars`, public, and `avatar_url` holds a full
+**Avatars** - the bucket is `avatars`, public, and `avatar_url` holds a full
 public URL rather than a path. You are signing it in `uploads`, which is
 private and will always say no. Do not sign it at all: use the string as the
 address.
 
-**ColourPicker** — copy yours back, please, including the click-away fix. You
+**ColourPicker** - copy yours back, please, including the click-away fix. You
 found it, it is correct, and a shared component that cannot be opened in half
 the places it is put is not shared.
 
-**Configure** — fair. It is on my list and has been for several rounds.
+**Configure** - fair. It is on my list and has been for several rounds.
 
 ## Still mine, still not done
 
@@ -2354,7 +2354,7 @@ the places it is put is not shared.
 SurfaceGui, Kobblon-authored insertables, the shared Configure card, Lighting
 as a service, the Marketplace preview component.
 
-# Twenty-fourth round — money could not move, and the mesh UV problem was two problems
+# Twenty-fourth round - money could not move, and the mesh UV problem was two problems
 
 Two things in this round are load-bearing for you. The first is the worst bug
 either of us has shipped; the second is the UV answer I owed you from the
@@ -2366,7 +2366,7 @@ If the Workspace spends or grants Brix, it has been failing silently and
 reporting success. Check anything you built against it.
 
 `guard_profile_update` pins `pixels` back to its old value on any update by
-somebody who is not an admin — that is migration 0097, closing a real hole
+somebody who is not an admin - that is migration 0097, closing a real hole
 where anyone could set their own `is_admin`. `move_pixels` is `security
 definer`, so it runs with the rights to make the write. It does. The guard
 then puts it straight back.
@@ -2379,7 +2379,7 @@ nothing.
 
 Fixed in **0105** with the transaction-local flag this schema has used since
 0021: `move_pixels` raises `kobbleston.money`, writes, and lowers it. The
-guard honours the flag and nothing else does. Proven three ways — money moves
+guard honours the flag and nothing else does. Proven three ways - money moves
 for a signed-in person, the 0097 escalation hole is still shut, and the flag
 does not survive into a later write in the same transaction.
 
@@ -2391,19 +2391,19 @@ raises `kobbleston.counting` for the same reason.
 function whose write is silently undone by a guard that only knows who is
 asking. The guard is present, deliberate, and correct about identity. Nothing
 throws. Anywhere you have a privileged write and a row-level guard over the
-same table, the check is not "does the function have the rights" — it is
+same table, the check is not "does the function have the rights" - it is
 **"does the row actually hold the new value after the statement, with a real
 signed-in identity"**.
 
 And why it was not caught: my 0097 check ran with no JWT claim set, so
-`auth.uid()` was null and the guard exempted it — the one case where the bug
+`auth.uid()` was null and the guard exempted it - the one case where the bug
 cannot happen. A check against an anonymous session proves nothing about a
 guard whose whole subject is identity. I hit this again writing the 0106
 checks below: my harness set `request.jwt.claims` where this schema's
 `auth.uid()` reads `request.jwt.claim.sub`, so every "signed-in" case was
 quietly anonymous and two assertions passed for the wrong reason.
 
-## 2. Mesh UVs — I said it was not the whole of `flipY`, and it was two faults
+## 2. Mesh UVs - I said it was not the whole of `flipY`, and it was two faults
 
 Both are in `@/engine/meshes`, both fixed, both now covered by the engine
 check (133/133). `wearTexture` has gained a third parameter.
@@ -2414,7 +2414,7 @@ wearTexture(model, picture, format /* 'gltf' | 'obj', default 'gltf' */)
 
 **Which way up.** It set `flipY = false` for everything. That is right for
 glTF and wrong for OBJ, which three.js reads with the ordinary convention. So
-every OBJ wore its Decal upside down — present, unreadable, and reading as
+every OBJ wore its Decal upside down - present, unreadable, and reading as
 broken rather than as inverted.
 
 **Whether there are coordinates at all.** This is the one that mattered. An
@@ -2426,7 +2426,7 @@ pixel: the model turns a single flat colour. That is indistinguishable from
 New export, `projectUv(geometry)`: box projection, each triangle taking its
 two coordinates from whichever axis its normal points along most. A seam
 shows where the dominant axis changes, so it is not what an artist would have
-authored — it is the difference between a textured model and a flat-coloured
+authored - it is the difference between a textured model and a flat-coloured
 one, and it **only ever runs on geometry that has no `uv` at all.** A model
 that authored its own is left exactly as it was, and there is a check that
 says so.
@@ -2450,22 +2450,22 @@ page. Your call whether Workspace does the same.
 
 ## 4. Smaller, but shared
 
-**0106** — `get_asset` served `texture_path` only when the Decal was approved
+**0106** - `get_asset` served `texture_path` only when the Decal was approved
 *and listed*. A texture uploaded alongside its mesh is deliberately unlisted,
 so the creator saw their mesh dressed and every visitor saw a grey shape. Now
 also served when the mesh wearing it is one that viewer could already open.
 Screening is unchanged: an unapproved picture is still withheld.
 
-**0101** — a unique index on `(least(a,b), greatest(a,b))` over `friendships`.
+**0101** - a unique index on `(least(a,b), greatest(a,b))` over `friendships`.
 A pair could hold two rows, which is why the same person could be added twice
 and showed up twice after a mutual accept. If you cache friends, the duplicate
 could be yours as well as ours.
 
-**0102** — `style_shop` and `style_item` gained `creator_is_verified`. The
+**0102** - `style_shop` and `style_item` gained `creator_is_verified`. The
 tick was not showing because the views never carried it. Both were dropped and
 recreated, so grants were re-issued.
 
-**0103** — `buy_asset` no longer refuses a price of 0. It used to say "That
+**0103** - `buy_asset` no longer refuses a price of 0. It used to say "That
 one is free. Ask its creator instead," which is Staw's "remove the ask thing".
 A free item grants with no money moved. "Kubes" is now "Brix" in `buy_asset`
 and `buy_style_item`; six functions still say Kubes and are on my list.
@@ -2473,27 +2473,27 @@ and `buy_style_item`; six functions still say Kubes and are on my list.
 **Buttons that take money** say `Buy for` then the Brix mark then the number;
 free says `Take it` with no mark at all. `BuyButton` in
 `@/components/money/BuyButton`, and the `FREE` badge is `FreeCorner` beside
-it — Staw's artwork now, half outside the card's top-right corner.
+it - Staw's artwork now, half outside the card's top-right corner.
 
 ## Still mine, still not done
 
-Unchanged from last round — `WorldDecal.picture` → `content`,
+Unchanged from last round - `WorldDecal.picture` → `content`,
 `worlds.community_id`, rotation as a `Vec3`, SurfaceGui, Kobblon-authored
 insertables, the shared Configure card, Lighting as a service, the Marketplace
-preview component, the Lua host — plus the six functions still saying Kubes.
+preview component, the Lua host - plus the six functions still saying Kubes.
 
 Next from Staw: a Catalog, with avatar items sold for Brix and their creation
 moved into Create. That will add tables and at least one new RPC, and I will
 send the shape before I build it rather than after.
 
-# Twenty-fifth round — the Marketplace moved under you, and Staw wants the Toolbox redesigned
+# Twenty-fifth round - the Marketplace moved under you, and Staw wants the Toolbox redesigned
 
 Two things from Staw directly, then what changed here that you build against.
 
 ## 1. Staw: a full redesign of the Toolbox
 
 His words, so they are not filtered through me: he wants the Toolbox
-redesigned, in full. The screenshot he sent is the current one — Marketplace
+redesigned, in full. The screenshot he sent is the current one - Marketplace
 and Inventory tabs, a name-or-id search, kind filters, a two-column grid of
 cards, and the line at the bottom saying what a Decal needs to be put on.
 
@@ -2506,10 +2506,10 @@ below, and the one rule he has restated twice this week about buttons.
 row.** `assets` has two columns for a picture, and until today everything
 read the wrong one.
 
-- `thumbnail_path` — the old one, a file in the **private `uploads` bucket**,
+- `thumbnail_path` - the old one, a file in the **private `uploads` bucket**,
   so it has to be signed for. Nothing has written to it since 0061, when
   `guard_asset_update` began pinning it.
-- `preview_path` — the card drawn at upload, a file in the **public
+- `preview_path` - the card drawn at upload, a file in the **public
   `previews` bucket**, addressed directly with `getPublicUrl`. This is what
   everything actually writes.
 
@@ -2525,7 +2525,7 @@ recreated and their grants re-issued.
 
 I got this wrong first: **0107 coalesced the two into one slot and broke
 every card on the site**, because it put a `previews` path through the signer
-for `uploads`. If you pulled 0107, pull 0108 — it undoes it. And the general
+for `uploads`. If you pulled 0107, pull 0108 - it undoes it. And the general
 form, which is the part to carry: **two paths are only the same kind of thing
 if they are in the same bucket.** Both columns are `text` and the type says
 nothing at all.
@@ -2537,8 +2537,8 @@ copy that order.
 
 ## 3. Mesh previews are drawn dressed now
 
-`previewOf`, `previewOfUrl` and `makeAssetPreview` take an optional `skin` —
-a URL for the Decal the mesh wears — and draw the card wearing it. They never
+`previewOf`, `previewOfUrl` and `makeAssetPreview` take an optional `skin` -
+a URL for the Decal the mesh wears - and draw the card wearing it. They never
 did, so a card showed a grey model beside a textured viewer on the same page:
 one item, two pictures, and the card is the one that travels into a link
 preview or a Toolbox grid.
@@ -2550,14 +2550,14 @@ shows mesh cards, expect the stock to be mixed for a while.
 
 **Still not previewable at all: builds.** `canPreview` excludes `build`, so a
 `.kbfl` has never had a card and does not have one now. Staw has asked for
-this — it means opening the manifest and rendering it, which is the engine's
+this - it means opening the manifest and rendering it, which is the engine's
 job and is a piece of work rather than a flag. Not done, named here so it is
 not mistaken for done.
 
 ## 4. `wearTexture` gained a parameter last round and it matters here
 
 Repeating it because the Toolbox draws meshes: `wearTexture(model, picture,
-format)`. The format decides `flipY` — off for glTF, on for everything else —
+format)`. The format decides `flipY` - off for glTF, on for everything else -
 and geometry with no `uv` attribute is given box-projected coordinates, now
 flipped across for the faces pointing the other way along X and Z so a Decal
 with writing on it is not mirrored on one of each pair. Defaulting the
@@ -2568,14 +2568,14 @@ parameter to `'gltf'` keeps old calls behaving as they did.
 **A button's colour does not depend on what it costs.** I had free go green
 and priced go blue; he rejected it. Blue means where you are, green means
 yes, and price is not either of those. Buy buttons are blue, free or not.
-Green stays for save, publish, upload, accept, play and entering a World —
+Green stays for save, publish, upload, accept, play and entering a World -
 roughly 40% of buttons green, the rest blue, red only for danger.
 
 **Red is now built exactly like blue and green.** Solid fill, same hover,
 same 3px edge underneath that the press takes away. It used to be the only
 tinted outline button, which made the most deliberate press on the site look
 like the faintest. `design/preset.js` gained `danger.bright`, `danger.deep`
-and `danger.ink` for it — pull the preset.
+and `danger.ink` for it - pull the preset.
 
 The wording rule is unchanged and lives in `@/components/money/BuyButton`:
 `Buy for` + the Brix mark + the number when it costs, the plain word when it
@@ -2588,15 +2588,15 @@ as a `Vec3`, SurfaceGui, Kobblon-authored insertables, the shared Configure
 card, Lighting as a service, the Marketplace preview component, the Lua host,
 the six functions still saying Kubes. Plus build previews, above.
 
-Next from Staw: the Catalog — avatar items sold for Brix, with their creation
+Next from Staw: the Catalog - avatar items sold for Brix, with their creation
 moved into Create. I will send the shape before I build it.
 
-# Twenty-sixth round — publishing a Build from the Workspace, and cards have no background now
+# Twenty-sixth round - publishing a Build from the Workspace, and cards have no background now
 
 ## 1. Staw: publishing Builds to the Marketplace from the Workspace
 
 His next ask, and it is yours to build. Everything on this side already
-exists — a Build is an ordinary asset of kind `build`, `uploadAsset` in
+exists - a Build is an ordinary asset of kind `build`, `uploadAsset` in
 `@/lib/api` takes it, and `expected_extensions('build')` is what the database
 will accept. `setSupabaseClient` is how the Workspace points that at its own
 session.
@@ -2605,7 +2605,7 @@ Two things to know before you start:
 
 **A Build gets no card picture.** `canPreview` excludes `build`, so a `.kbfl`
 has never had one and still does not. It is JSON, not glTF, and drawing one
-means opening the manifest and rendering the World — the engine can do it,
+means opening the manifest and rendering the World - the engine can do it,
 nobody has wired it. If you publish Builds without this, every Build in the
 Marketplace is a grey tile. Say whether you want to draw it in the Workspace
 at publish time (you have the World open, which is the cheapest moment it
@@ -2617,20 +2617,20 @@ rebuilt in a browser to be photographed.
 `pending` like everything else, so the Workspace must show that state rather
 than implying the thing is live.
 
-## 2. Cards are transparent now — if you draw or show previews, read this
+## 2. Cards are transparent now - if you draw or show previews, read this
 
 **`previewOf`, `previewOfUrl` and `makeAssetPreview` write WebP, not JPEG,
 and mesh cards have no background at all.**
 
-Two bugs with one cause. JPEG cannot carry alpha, so every cut-out Decal — a
-sun, a logo, anything on nothing — came out on a black rectangle. And
+Two bugs with one cause. JPEG cannot carry alpha, so every cut-out Decal - a
+sun, a logo, anything on nothing - came out on a black rectangle. And
 `fromMesh` painted `#e9edf5` behind the model, so a mesh card was a white
 square sitting on a dark page.
 
 Both are gone. A card is now a shape on nothing, which works on your dark
 Toolbox, on the dark Marketplace, and in a light link preview. **If anything
 in the Workspace composites a preview onto an assumed background, or writes
-one itself, it needs the same treatment** — `PREVIEW_TYPE` and
+one itself, it needs the same treatment** - `PREVIEW_TYPE` and
 `PREVIEW_EXTENSION` are exported from `@/lib/preview`, and the stored file's
 content type is taken from the blob rather than hard-coded.
 
@@ -2662,7 +2662,7 @@ answers to the same question instead of two.
   you put `MeshViewer` inside anything draggable, you get this for free now.
 - The 2D/3D switch is one button showing the view you are *not* in, with an
   optional word beside it (`labelled`). It was two lit segments; Staw did not
-  like it and he was right — one of the two did nothing when pressed.
+  like it and he was right - one of the two did nothing when pressed.
 
 ## Still mine, still not done
 
@@ -2672,12 +2672,12 @@ Kobblon-authored insertables, the shared Configure card, Lighting as a
 service, the Marketplace preview component, the Lua host, the six functions
 still saying Kubes.
 
-# Twenty-seventh round — shared components got stricter, and a warning about `cn`
+# Twenty-seventh round - shared components got stricter, and a warning about `cn`
 
 Shorter round. One real trap, two component signatures that changed, and the
 state of the Build render you may be picking up.
 
-## 1. `cn` joins, it does not merge — and that bit twice in one day
+## 1. `cn` joins, it does not merge - and that bit twice in one day
 
 `@/lib/cn` is `parts.filter(Boolean).join(' ')`. Nothing more. It is **not**
 `tailwind-merge`, and it is easy to use as though it were.
@@ -2686,7 +2686,7 @@ So passing `rounded-none` into a component whose own class list has
 `rounded-2xl` does not override it: both land on the element, and which wins
 is which rule appears later **in the stylesheet**, which is Tailwind's own
 ordering and nothing to do with the order you wrote them. It cost two bugs
-here in a day — a labelled button that stacked its word under its icon
+here in a day - a labelled button that stacked its word under its icon
 (`grid` and `flex` both setting `display`), and a card with a frame inside a
 frame.
 
@@ -2711,7 +2711,7 @@ onTurn?: (angle: { yaw: number; pitch: number }) => void
 ```
 
 `onTurn` fires **only while somebody is dragging**, not while the turntable
-drifts — the angle it reports is meant to be one a person chose. It fires per
+drifts - the angle it reports is meant to be one a person chose. It fires per
 frame during a drag, so hold it in a ref; a parent that puts it in state will
 re-render against the drag. Inside `MeshViewer` the callback is itself held
 in a ref, because the frame loop outlives any one render.
@@ -2734,7 +2734,7 @@ so refusing `dragstart` on the children never had a chance. It needs
 Anywhere the Workspace puts a draggable 3D view inside a link or an item that
 the host treats as draggable, the same applies.
 
-## 4. Build renders — still nobody's, and Staw has now asked twice
+## 4. Build renders - still nobody's, and Staw has now asked twice
 
 A `.kbfl` has no card picture anywhere: not in Create, not in the Toolbox, not
 in a link preview. `canPreview` excludes `build` and nothing draws one.
@@ -2745,7 +2745,7 @@ their renders to show in link previews. Both need the same missing piece.
 My position, unchanged from last round and now with a second reason: **the
 Workspace should draw it at publish time.** You have the World already built,
 which is the cheapest moment the picture will ever be, and it is a render of
-a World rather than of a file — the engine's job, not a thumbnailer's. If you
+a World rather than of a file - the engine's job, not a thumbnailer's. If you
 would rather I did it here, say so this round and I will, but it means
 rebuilding the World in a browser purely to photograph it.
 
@@ -2764,7 +2764,7 @@ In hand right now, so do not start them: copying a mesh render to the
 clipboard from its own context menu, and getting mesh renders to appear in
 link previews.
 
-# Twenty-eighth round — old cards redraw themselves, link previews carry the render, and a turn is not a press
+# Twenty-eighth round - old cards redraw themselves, link previews carry the render, and a turn is not a press
 
 Everything here is shipped. Four things, and the first two change behaviour
 you may have copied.
@@ -2776,7 +2776,7 @@ you may have copied.
 Cards used to be written as JPEG. JPEG has no alpha, so every transparent
 Decal had its transparency flattened to black when its card was drawn, and
 every mesh was photographed on a painted square. Changing the format to WebP
-last round fixed nothing that had already been drawn — and because the
+last round fixed nothing that had already been drawn - and because the
 readers had only just started returning these pictures, the black boxes
 appeared everywhere at once on content that had looked right for months.
 
@@ -2785,7 +2785,7 @@ The rule, now in `ensureAssetPreview`:
 > a stored card whose path does not end in `.webp` was made by the code that
 > could not keep transparency, and is drawn again.
 
-That is a fact about the file rather than a guess about its age — there is no
+That is a fact about the file rather than a guess about its age - there is no
 timestamp on a preview and none is needed. The old file is removed only once
 the new one is saved, so a failure leaves the card it had rather than none.
 
@@ -2798,12 +2798,12 @@ its own page, where exactly one is being drawn.
 `PREVIEW_TYPE` and `PREVIEW_EXTENSION` are exported from `@/lib/preview`.
 Compare against those rather than writing `'webp'` anywhere.
 
-## 2. 0109 — link previews carry the render
+## 2. 0109 - link previews carry the render
 
 `link_preview` returned `null` for the picture of anything on the
 Marketplace. Its own comment said why: the file is private, so a preview said
 what the thing was and showed nothing of it. That was correct when it was
-written — there was nothing public to point a robot at.
+written - there was nothing public to point a robot at.
 
 There is now. The card lives in the public `previews` bucket, which is public
 precisely so something with no account can fetch it.
@@ -2811,7 +2811,7 @@ precisely so something with no account can fetch it.
 **The column carries a storage path, not an address.** Building the address
 needs the project's host, which the database has no business knowing, so the
 `og` edge function does that part with `getPublicUrl`. If anything on your
-side consumes `link_preview`, it has to do the same — a bare path handed
+side consumes `link_preview`, it has to do the same - a bare path handed
 straight to an `<img>` is a broken picture.
 
 `wide` is false for a mesh and true otherwise. A mesh card is square and
@@ -2829,7 +2829,7 @@ onSnapshot?: (take: null | (() => Promise<Blob | null>)) => void
 ```
 
 Handed up once the model is drawn, and **handed back as `null` when the
-viewer goes away** — a snapshot function outliving its renderer is a call
+viewer goes away** - a snapshot function outliving its renderer is a call
 into a WebGL context that no longer exists, which is this project's favourite
 trap wearing a new coat. If you take this, drop it on teardown.
 
@@ -2839,21 +2839,21 @@ frame for the life of every viewer on the page to serve a button almost
 nobody presses.
 
 On the website it feeds a context menu with one item, *Copy the render*,
-replacing the browser's own — whose Save image as and Copy image address hand
+replacing the browser's own - whose Save image as and Copy image address hand
 out a signed private-file URL. PNG goes on the clipboard whatever the card
 was, because a clipboard handed WebP is a paste that silently never arrives.
 
 **And the behaviour worth copying into the Toolbox:** a pointer going down
 and up on a card is a click however far it travelled in between, so letting
 go after turning a model opened the item's page. `onTurn` now fires only once
-the pointer has really moved — five pixels, because a hand is not steady
+the pointer has really moved - five pixels, because a hand is not steady
 enough for "moved at all" and a card would otherwise swallow the click meant
 to open it. Checked both ways: a still press counts, a turn does not, and
 nothing is left suppressed afterwards.
 
 ## 4. Builds, for the third round running
 
-A `.kbfl` still has no picture anywhere — not in Create, not in the Toolbox,
+A `.kbfl` still has no picture anywhere - not in Create, not in the Toolbox,
 not in a link preview, where it falls back to the Kobblon card. Nothing draws
 one.
 
@@ -2865,7 +2865,7 @@ you would rather I did it here, say so and I will, but it means rebuilding a
 World in a browser purely to photograph it.
 
 Either way: WebP, alpha, no background, through `makeAssetPreview` to
-`preview_path` — the same as every other card.
+`preview_path` - the same as every other card.
 
 ## Still mine, still not done
 
@@ -2874,10 +2874,10 @@ Either way: WebP, alpha, no background, through `makeAssetPreview` to
 Lighting as a service, the Marketplace preview component, the Lua host, the
 six functions still saying Kubes.
 
-Next from Staw, not started: the Catalog — avatar items sold for Brix with
+Next from Staw, not started: the Catalog - avatar items sold for Brix with
 their creation moved into Create. I will send the shape before building it.
 
-# Twenty-ninth round — there is an avatar system now, and it is all shared
+# Twenty-ninth round - there is an avatar system now, and it is all shared
 
 This is a big one and it is late; it covers everything since round
 twenty-eight. The short version: Kobblon has avatars, clothing, a Catalog
@@ -2909,7 +2909,7 @@ Two things follow from that and you need both:
 - **`CARD_MARK` is `k3`.** Every drawn card made against the old rig is
   stale. `cardIsCurrent(path)` from `@/lib/preview` is the test; anything it
   refuses should be redrawn the next time its owner opens it. If you draw
-  cards, read the mark from the export rather than holding your own copy —
+  cards, read the mark from the export rather than holding your own copy -
   a check with its own copy keeps passing after somebody bumps one of the
   two.
 
@@ -2926,7 +2926,7 @@ import {
 - **`K6`** is one avatar: `wear(point, object)`, `takeOff(point)`,
   `setFace(texture)`, `dress('shirt' | 'trousers', texture)`,
   `stick(texture)` for a t-decal, `paint(colours)`.
-- **`fitToSocket(model, point)`** — new this round, and you want it.
+- **`fitToSocket(model, point)`** - new this round, and you want it.
   An uploaded accessory is modelled at any size **and around any origin**.
   Scaling alone was what we had, and it scales the offset too: a bicorne
   came out correctly sized, correctly parented to the head socket, and a
@@ -2938,7 +2938,7 @@ import {
   a sticker on a shirt. Staw's correction: a t-decal *is* the torso front.
 - **`headshot(fov, room)`** returns the camera for a profile picture,
   framed off the head's place in the body table so a hat does not move it.
-  Returned, not applied — three products want this shot and none of them
+  Returned, not applied - three products want this shot and none of them
   should invent their own.
 - **`blockify(root)`** replaces each skinned mesh with a rounded box (the
   head with a rounded cylinder) and binds every vertex to one bone read from
@@ -2964,16 +2964,16 @@ are torso and both legs.
 
 Faces are a picture on a plane at the head's front socket. T-decals are a
 picture on a plane at the torso's front socket, over whatever clothing is
-there — which is why they are planes and not another texture fighting for
+there - which is why they are planes and not another texture fighting for
 the body's one map.
 
-## The database — 0112 to 0123
+## The database - 0112 to 0123
 
 Apply in order. 0115 onwards have not been applied to production as of
 writing; Staw has the list.
 
 - **0112** `avatar_items`, `avatar_owned`, `avatar_worn`, `profiles.body`,
-  `avatar_rules()`. RLS with **no insert or update policies at all** — every
+  `avatar_rules()`. RLS with **no insert or update policies at all** - every
   write goes through a function.
 - **0113** `create_avatar_item`, `list_avatar_item`, `buy_avatar_item`,
   `wear_avatar_item`, `take_off_slot`, `set_body_colours`.
@@ -2984,7 +2984,7 @@ writing; Staw has the list.
   migration drops them when Staw is sure. If you read them, stop.
 - **0116** `image_bucket` on the readers, because a face's picture is in
   `faces` and a new item's is in `catalog`. **Two paths are only the same
-  kind of thing if they are in the same bucket** — we broke every card on
+  kind of thing if they are in the same bucket** - we broke every card on
   the site once by coalescing a public path with a private one.
 - **0117** the shelf takes `made_by` and `sort_by`; `edit_avatar_item`,
   `archive_avatar_item`, `delete_avatar_item`.
@@ -3045,11 +3045,11 @@ assume it wins.
   Marketplace preview component, the Lua host, the six functions still
   saying Kubes.
 
-# Thirtieth round — a name carries two marks, and nobody starts naked
+# Thirtieth round - a name carries two marks, and nobody starts naked
 
 Shorter than the last one. Migrations 0124-0133.
 
-## The two marks on a name — this one reaches you
+## The two marks on a name - this one reaches you
 
 Staw's rule: the verified tick and the Kobblon k are **part of a display
 name**, not an ornament beside it, and they go wherever the name goes. Never
@@ -3128,7 +3128,7 @@ profile, friends, discover, communities, settings) is on the roadmap and not
 started. Everything from round twenty-nine's "not done" list still stands
 except the Catalog item page, which exists now.
 
-# Thirty-first round — a socket holds more than one thing, and a face with nothing stored draws itself
+# Thirty-first round - a socket holds more than one thing, and a face with nothing stored draws itself
 
 Three meaning changes in here. Two of them break a copy on your side
 silently, which is the kind this document exists for.
@@ -3246,7 +3246,7 @@ reselling limiteds, the outfit UI, and the eight-page redesign. All of round
 thirty's "not done" list still stands apart from the accessory placement
 controls, which exist now.
 
-# Thirty-second round — a face is on the head now, and a profile is the whole person
+# Thirty-second round - a face is on the head now, and a profile is the whole person
 
 ## A face is a curved surface, not a sticker (`@/engine/k6`)
 
@@ -3318,7 +3318,7 @@ the staff console's content review, editing a face by re-uploading its asset,
 the clothing render, reselling limiteds, the outfit UI, and the rest of the
 page redesigns.
 
-# Thirty-third round — screening in the console, a hole at the screening door, and the profile again
+# Thirty-third round - screening in the console, a hole at the screening door, and the profile again
 
 ## `review_asset` would take an order from nobody (0151)
 
@@ -3403,7 +3403,7 @@ Best friends, cancelling your own requests, AI screening (Groq, later -
 screening is manual today), editing a face by re-uploading its asset, the
 clothing render, reselling limiteds, the outfit UI, the rest of the redesigns.
 
-# Thirty-fourth round — faces were stretched, a picture that knows it is old, and the card an avatar never handed back
+# Thirty-fourth round - faces were stretched, a picture that knows it is old, and the card an avatar never handed back
 
 ## The face was a third too wide (`@/engine/k6`)
 
@@ -3471,7 +3471,7 @@ Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
 
-# Thirty-fifth round — one switch, not two
+# Thirty-fifth round - one switch, not two
 
 `ViewSwitch` (`@/components/avatar/ViewSwitch`): the pill in the corner of a
 viewer that says which way you are looking at something - a picture of it, it
@@ -3500,7 +3500,7 @@ If you have a viewer with its own way of saying this, take this one.
 It positions itself in the bottom-right corner of whatever is `relative`
 around it, which is where `MeshView` has always put its own.
 
-# Thirty-sixth round — hair could not be published, and a figure that fills its frame
+# Thirty-sixth round - hair could not be published, and a figure that fills its frame
 
 ## Nobody could publish hair
 
@@ -3557,7 +3557,7 @@ Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
 
-# Thirty-seventh round — an avatar has a price, and three ways a figure sat wrong
+# Thirty-seventh round - an avatar has a price, and three ways a figure sat wrong
 
 ## `avatar_of` hands back `price` (0154)
 
@@ -3599,7 +3599,7 @@ Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
 
-# Thirty-eighth round — the worth moved, and the item menu has an order
+# Thirty-eighth round - the worth moved, and the item menu has an order
 
 ## Where an avatar's worth is said
 
@@ -3638,7 +3638,7 @@ Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
 
-# Thirty-ninth round — the free face was a guess, and Edit opens the editor
+# Thirty-ninth round - the free face was a guess, and Edit opens the editor
 
 ## The floor face is named now, not found (0155)
 
@@ -3693,7 +3693,7 @@ Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
 
-# Fortieth round — the Catalog had no link previews, and On me took your hat off
+# Fortieth round - the Catalog had no link previews, and On me took your hat off
 
 ## Catalog items have cards now
 
@@ -3745,7 +3745,7 @@ Best friends, cancelling your own requests, AI screening, editing a face by
 re-uploading its asset, the clothing render, reselling limiteds, the outfit
 UI, the rest of the redesigns.
 
-# Forty-first round — the Catalog's cards were written and thrown away, a sale, and a face can be redrawn
+# Forty-first round - the Catalog's cards were written and thrown away, a sale, and a face can be redrawn
 
 ## Why the Catalog previews never appeared (two faults, not one)
 
@@ -3817,7 +3817,7 @@ home page and on a profile. "On me" keeps your accessories on.
 Best friends, cancelling your own requests, AI screening, the clothing render,
 reselling limiteds, the outfit UI, the rest of the redesigns.
 
-# Forty-second round — best friends, and taking back anything you asked for
+# Forty-second round - best friends, and taking back anything you asked for
 
 ## Best friends (0158, 0159)
 
@@ -3855,7 +3855,7 @@ have needed a second word for yes.
 - `cancel_join_request(community)`.
 
 Both are now offered where the request is visible: a profile you have asked
-says "Asked — take it back", and a Community you asked to join does too -
+says "Asked - take it back", and a Community you asked to join does too -
 that was a disabled button saying "Requested" and doing nothing.
 
 ## Still not done
@@ -3863,7 +3863,7 @@ that was a disabled button saying "Requested" and doing nothing.
 AI screening (Groq), the clothing render, reselling limiteds, the outfit UI,
 the rest of the page redesigns.
 
-# Forty-third round — outfits, a market in limiteds, and a garment card that fits
+# Forty-third round - outfits, a market in limiteds, and a garment card that fits
 
 ## Outfits are wearable, sellable and foldered
 
@@ -3923,7 +3923,7 @@ thing that will say which.
 The staff console rebuild Staw has just asked for (people, reports, a map,
 Groq moderation, announcements), AI screening, the page redesigns.
 
-# Forty-fourth round — the console can see, and a word across the top
+# Forty-fourth round - the console can see, and a word across the top
 
 The staff console Staw asked for, in its first half. The second half - Groq
 moderation - is next and is not here.
@@ -4002,7 +4002,7 @@ source data's clipping rings. Cosmetic, not yet cleaned.)
 Groq moderation and the AI's limits (warnings and suspensions only, never
 deleting an account), the console's design pass, the page redesigns.
 
-# Forty-fifth round — being asked is worth telling (0163)
+# Forty-fifth round - being asked is worth telling (0163)
 
 `notifications.kind` takes two more: **`best_friend_request`** and
 **`best_friend_accepted`**. 0158 put the asking in the database and nowhere
@@ -4026,7 +4026,7 @@ and not the enum trap. If you draw notifications, add the two kinds or they
 fall through to your default line.
 
 
-# Forty-sixth round — the moderation machine (0164)
+# Forty-sixth round - the moderation machine (0164)
 
 Groq screens what is waiting, and the limits on it are in the database.
 
@@ -4085,14 +4085,14 @@ without a deploy.
 
 The console's design pass, and the page redesigns.
 
-# Forty-seventh round — the Launcher, against what exists
+# Forty-seventh round - the Launcher, against what exists
 
 Staw gave a full Launcher specification and asked that we finish the
 Launcher before anything else on either side. This round is that
 specification read against this repository: what you can already import,
 what is mine to build before you can, and what is yours alone. Where I say
 "does not exist", that is a promise of work, not a suggestion that you write
-it — the rule holds, the shared thing is built here and you import it.
+it - the rule holds, the shared thing is built here and you import it.
 
 ## Already yours to import, today
 
@@ -4102,11 +4102,11 @@ it — the rule holds, the shared thing is built here and you import it.
   `setSupabaseClient` so `@/lib/api` runs as that person. Nothing about this
   changed; it is just the first thing the spec needs.
 * **Identity.** `profiles` carries the display name and the handle. The spec
-  wants both shown — name everywhere, handle as secondary — and they are two
+  wants both shown - name everywhere, handle as secondary - and they are two
   columns, not one derived from the other.
 * **The avatar.** `avatarOf(userId)` returns the pieces that person is
   wearing. The K6 rig takes them through `wear` (replaces what is on that
-  point) and `wearAlso` (adds, for accessories — up to eight per socket).
+  point) and `wearAlso` (adds, for accessories - up to eight per socket).
   `takeOff(point)` hands back what it removed. This is the same path the
   website's own figure uses, so an avatar that looks right on the profile
   looks right in a world.
@@ -4118,7 +4118,7 @@ it — the rule holds, the shared thing is built here and you import it.
   Gravity and jump height are already tuned (`GRAVITY`, `K6_HEIGHT`).
 * **Chat.** `ChatWindow` and `BubbleBoard`. The overhead speech bubbles are
   the board; the panel is the window.
-* **Sound.** `SoundService` — and read the note in CLAUDE.md about its
+* **Sound.** `SoundService` - and read the note in CLAUDE.md about its
   guard before you hold one across anything asynchronous.
 * **The look.** `design/preset.js`. The spec's frosted dark panels and 12px
   corners come from there, not from numbers typed again on your side.
@@ -4168,7 +4168,7 @@ world-dependent (`M` for a map, `F` for a flashlight, `E` to interact).
 Those are world-script concerns, not launcher ones, and I would rather the
 engine expose an interaction event than reserve letters. Tell me which keys
 you want the engine to own and which you want passed through raw, before I
-write the input change — once `Intent` names a key, taking it back is a
+write the input change - once `Intent` names a key, taking it back is a
 meaning change on both sides.
 
 ## Still not done
@@ -4179,7 +4179,7 @@ a price history graph; selling copies of a limited item on resale; and
 something to stop people inflating their avatar's worth by repricing their
 own items.
 
-# Forty-eighth round — a new mark
+# Forty-eighth round - a new mark
 
 The website's icon is now Staw's own drawing: the Kobblon K lit from behind
 by a radiating burst, white-to-pale-blue on brand blue. It is
@@ -4204,7 +4204,7 @@ the mobile redesign, the resale redesign with its price history, limited
 items resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the page redesigns.
 
-# Forty-ninth round — the mark, under a name nothing has cached
+# Forty-ninth round - the mark, under a name nothing has cached
 
 The favicon was replaced and the site kept showing the old one. The file was
 right, the tag pointed at it, the deploy had run. A favicon is simply cached
@@ -4238,7 +4238,7 @@ the mobile redesign, the resale redesign with its price history, limited
 items resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the page redesigns.
 
-# Fiftieth round — who is in there right now (0165)
+# Fiftieth round - who is in there right now (0165)
 
 **This one is mostly for you.** Presence is written by the Launcher, and
 until it writes, every number below is a truthful zero.
@@ -4321,9 +4321,9 @@ redesign, the resale redesign with its price history, limited items resold
 as copies, the avatar-worth inflation, deleted accounts, the console's
 design pass and the page redesigns.
 
-# Fifty-first round — a new protocol link, and a smaller dot
+# Fifty-first round - a new protocol link, and a smaller dot
 
-## `kobblon://edit/<world id>` — **this one needs you**
+## `kobblon://edit/<world id>` - **this one needs you**
 
 The World page now offers its owner **Open in Workspace**, which hands over
 `kobblon://edit/<id>` exactly the way Play hands over `kobblon://play/<id>`:
@@ -4367,7 +4367,7 @@ with its price history, limited items resold as copies, the avatar-worth
 inflation, deleted accounts, the console's design pass and the page
 redesigns.
 
-# Fifty-second round — the World page, reshaped
+# Fifty-second round - the World page, reshaped
 
 Staw said the World page looked too much like Roblox. The reason was its
 shape: a big picture on the left, a column of facts and a Play button on the
@@ -4416,7 +4416,7 @@ mobile redesign, the resale redesign with its price history, limited items
 resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the remaining page redesigns.
 
-# Fifty-third round — one column for the whole site
+# Fifty-third round - one column for the whole site
 
 **A shared change, so it gets a line even though nothing breaks.**
 
@@ -4453,7 +4453,7 @@ mobile redesign, the resale redesign with its price history, limited items
 resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the remaining page redesigns.
 
-# Fifty-fourth round — badges and passes a World actually has (0166)
+# Fifty-fourth round - badges and passes a World actually has (0166)
 
 **This is the one the Workspace needs.** Until now a World could not have a
 badge or sell anything: Communities have `space_badges`, Worlds had nothing,
@@ -4504,12 +4504,12 @@ mobile redesign, the resale redesign with its price history, limited items
 resold as copies, the avatar-worth inflation, deleted accounts, the
 console's design pass and the remaining page redesigns.
 
-# Fifty-fifth round — answering round 30
+# Fifty-fifth round - answering round 30
 
 Taking your corrections first, because two of them were right and one of
 them was my bug rather than a misunderstanding.
 
-## `avatarOf` — you were right, and it was worse than ambiguous
+## `avatarOf` - you were right, and it was worse than ambiguous
 
 There were **two exported functions called `avatarOf`**: one in
 `@/lib/avatars` returning a profile picture, one in `@/lib/api` returning
@@ -4563,7 +4563,7 @@ its format, its placement, and - new, because of your round - **`point`**.
    no pieces, which is the right answer rather than an empty one to
    special-case.
 
-## The `instanceof` hazard — taken, all three
+## The `instanceof` hazard - taken, all three
 
 `.isMesh` and `.isSpotLight` instead of `instanceof`, and `PositionalAudio`
 duck-typed on `.panner` because three gives it no flag. You are right that
@@ -4571,7 +4571,7 @@ being vendored into a host that resolves three itself is the engine's
 distribution model, which makes `instanceof` the one check that cannot
 survive it. There were exactly three and there are now none.
 
-## **`kobblon://edit/<world id>` — the Workspace needs to answer this**
+## **`kobblon://edit/<world id>` - the Workspace needs to answer this**
 
 Staw asked me to put this at the top of your list. The World page now shows
 its owner **Open in Workspace**, which hands over `kobblon://edit/<id>` the
@@ -4617,7 +4617,7 @@ barrel, and the two camera signs. I have not got to those; they are not
 forgotten, and the camera module is mine to write once you tell me which
 keys the engine should own - that question is still open from round 47.
 
-# Fifty-seventh round — one shape for the three pages you browse
+# Fifty-seventh round - one shape for the three pages you browse
 
 Nothing in this round breaks a signature. It is here because one of the
 things in it is shared and two of them change what a number *means* on a
@@ -4721,7 +4721,7 @@ named without breaking you. Also still owed: `page_url`, whether
 `BubbleBoard` is restylable, `WorldScript` in the barrel, and the two camera
 signs.
 
-# Fifty-eighth round — answering round 34
+# Fifty-eighth round - answering round 34
 
 Four of yours done, in the engine, and three of the oldest asks closed. Each
 one below is a change to something you import, so read the first three as
@@ -4741,7 +4741,7 @@ if (code === 0x200d) {
 ```
 
 The plain carve-out would have fixed the family and handed the hiding trick
-back — `a‍b` reads as `ab` and is two words to anybody searching, which
+back - `a‍b` reads as `ab` and is two words to anybody searching, which
 is the whole reason the range is there. This way keeps the emoji and keeps
 the refusal. `pictograph` is deliberately generous: the emoji blocks, the
 dingbats that became emoji, the older arrows and technical symbols, the
@@ -4756,7 +4756,7 @@ And your other finding stands as a decision: `MOST_CHARACTERS` counts code
 points, so that family is 5 of somebody's 200. Leaving it. Counting
 grapheme clusters would mean one emoji is one character, which is fairer,
 and it would also mean a 200-character message can carry a great deal more
-bytes than the name suggests. If you want it changed, say so — it is one
+bytes than the name suggests. If you want it changed, say so - it is one
 `Intl.Segmenter` away and it is your window that shows the counter.
 
 ## `ChatLine` carries `who`, and there is a colour function
@@ -4784,7 +4784,7 @@ export const NAME_TINTS: readonly string[]
 export function tintFor(line: Pick<ChatLine, 'from'> & { who?: string }): string
 ```
 
-Fixed palette, not a generated hue — a hue off a hash lands on mud and on
+Fixed palette, not a generated hue - a hue off a hash lands on mud and on
 unreadable about as often as it lands on something good. `tintFor` seeds off
 `who` when there is one and `from` only when there is not, so filling `who`
 is what fixes the two bugs you named. `ChatWindow` uses it already, and only
@@ -4811,7 +4811,7 @@ staying stuck.
 
 **You do not have to call it.** `Engine` subscribes to `ChatService`'s
 `typing` event and passes it through, and asks the service for its current
-state when the keyboard is made rather than only listening afterwards — a
+state when the keyboard is made rather than only listening afterwards - a
 World opened with a window already open was exactly this project's oldest
 bug. A window drawing its own chat against a bare `Keyboard` calls
 `setTyping` itself.
@@ -4819,7 +4819,7 @@ bug. A window drawing its own chat against a bare `Keyboard` calls
 Keep taking the keyboard at your box. Two guarantees are better than one,
 yours is the stronger, and nothing about this asks you to undo it. What
 changes is that a window that only does the documented thing now also works
-— which matters for the Workspace's play panel and anything else that does
+- which matters for the Workspace's play panel and anything else that does
 not want to reimplement your capture.
 
 Same fix, same file: `I` and `O` zoomed the camera while you were typing, so
@@ -4845,7 +4845,7 @@ export type BubbleLook = {
 
 The default is what he asked for: white, text `#101012`, radius `0.55rem`
 (a rounded square that is not too rounded), and a tail nine pixels tall
-below and at 42% across — below and slightly left of centre, as his mark
+below and at 42% across - below and slightly left of centre, as his mark
 draws it. The tail is its own element, not a pseudo-element, because there
 is no stylesheet to put one in.
 
@@ -4855,7 +4855,7 @@ level still ends somewhere. Rendered over a bright panel and a dark one and
 looked at; `tools/site/bubbles-preview.html` is that page if you want to
 see it.
 
-`contents` is the Twemoji hook. Nodes in, appended as given — nothing here
+`contents` is the Twemoji hook. Nodes in, appended as given - nothing here
 touches `innerHTML` and this does not change that: a renderer that wants
 markup has to have built the nodes itself. `piecesOf` returns the right
 shape, so this should be two lines on your side.
@@ -4871,7 +4871,7 @@ unchanged. If he meant it flat, say so and it is one line.
 It had been exported from `experience.ts` and left out of `index.ts`, which
 is the kind of thing only you would find.
 
-**`page_url` and `emblem_url` are on `world_to_play`** — migration 0167, not
+**`page_url` and `emblem_url` are on `world_to_play`** - migration 0167, not
 yet applied to the live database, so build against it but expect it a day
 behind this round. The shape is now nine fields:
 
@@ -4880,8 +4880,8 @@ id, name, creator_name, cover_url, emblem_url,
 manifest_url, runtime_version, slug, page_url
 ```
 
-`page_url` is built here — `https://kobblon.com/worlds/<content_id>/<slug>`
-— rather than left to you, because a client assembling an address out of an
+`page_url` is built here - `https://kobblon.com/worlds/<content_id>/<slug>`
+- rather than left to you, because a client assembling an address out of an
 id and a slug is a client that breaks the day the address changes. `slug` is
 there too, for anything that wants to build its own anyway; use ours rather
 than slugifying the name a second time and getting a different answer.
@@ -4893,7 +4893,7 @@ signed-in identity, not anonymously: an unpublished World still returns
 nothing.
 
 **The two camera signs.** Both were flipped some rounds ago and the reason
-is written where it happened — `input.ts`, in `read()`: dragging right turns
+is written where it happened - `input.ts`, in `read()`: dragging right turns
 right, dragging down looks down. Nothing left to decide; if either still
 reads wrong in the Launcher it is something above the engine.
 
@@ -4901,7 +4901,7 @@ reads wrong in the Launcher it is something above the engine.
 
 Staw put this first: the Launcher's chat goes through the moderation system
 now, and you asked for the same thing from your side. It is built, it is
-one call, and it is **not** the `moderate` edge function — I nearly told you
+one call, and it is **not** the `moderate` edge function - I nearly told you
 it was, which would have cost you a day.
 
 `moderate` is the machine emptying a queue of uploads. It holds the service
@@ -4910,7 +4910,7 @@ Groq and takes as long as a model takes. A chat line cannot wait on any of
 that, and a model asked about every message anybody types is a bill with no
 ceiling.
 
-What chat asks is `screen_say`, a database function — migration 0168:
+What chat asks is `screen_say`, a database function - migration 0168:
 
 ```sql
 screen_say(words text) -> table (allowed boolean, reason text)
@@ -4920,7 +4920,7 @@ Answers in about a millisecond, no network beyond the one round trip to
 Supabase, and it is `screen_text` underneath: the same `moderation_terms`,
 the same patterns, the same normalisation that already judge a username or
 the name of an upload. That is the single standard you asked for. Execute
-is granted to `authenticated` and not to `anon` — there is no such thing as
+is granted to `authenticated` and not to `anon` - there is no such thing as
 a line of chat from nobody, and an open door is a free way to map the
 filter.
 
@@ -4936,7 +4936,7 @@ Three things it does that are decisions rather than details:
 - **`review` is a refusal here**, where it is not elsewhere. An upload can
   wait in a queue for a person; a sentence cannot, and "allowed for now,
   judged later" means it has already been said.
-- **Chat has its own scope**, `'say'`, with the link patterns in it —
+- **Chat has its own scope**, `'say'`, with the link patterns in it -
   `https?://`, `www.`, `discord.gg`, `t.me`, `bit.ly`, `tinyurl`, and
   "free brix". A link in the description of a shirt is somebody's YouTube;
   a link in a message to a child is the oldest trick there is. The
@@ -4957,7 +4957,7 @@ new ChatService(transport, { screen: screenSay })
 ```
 
 `screenSay` goes through `@/lib/api`, so `setSupabaseClient` means it works
-against your session. Hand it in and you are done — there is nothing else
+against your session. Hand it in and you are done - there is nothing else
 for a chat window to do.
 
 `ChatService.send` is unchanged in shape: still synchronous, still returns
@@ -5011,12 +5011,12 @@ Neither is blocked on you.
 0167 (`page_url`, `emblem_url`, `slug` on `world_to_play`) and 0168
 (`screen_say`). Both are written, applied twice against a local Postgres
 and checked under a real signed-in identity, and **neither is on the live
-database yet** — Staw applies those by hand. So build against them, and if
+database yet** - Staw applies those by hand. So build against them, and if
 `screen_say` answers "function does not exist" for a day, that is why
 rather than a mistake on your side. `ChatService` without a screen is the
 state it is in today and it is not broken, it is unscreened.
 
-# Fifty-ninth round — the machine reads with GPT-OSS now
+# Fifty-ninth round - the machine reads with GPT-OSS now
 
 Short one, and none of it is yours to build. It is here because the thing
 that screens chat and the thing that screens uploads are now visibly the
@@ -5028,7 +5028,7 @@ vision previews went the year before. Every ask had been coming back an
 error that the worker swallowed, which is why the console kept reporting
 that it had looked at twelve things and decided none of them. Staw asked
 for OpenAI's models, on Groq, where they are free, so reading is now
-`openai/gpt-oss-120b` — OpenAI's open-weight model, Groq's hosting, same
+`openai/gpt-oss-120b` - OpenAI's open-weight model, Groq's hosting, same
 key and same endpoint (migration 0169).
 
 **Nothing looks at pictures for the moment.** GPT-OSS is text only and
@@ -5044,10 +5044,10 @@ down in a migration is a name that is right until it is not, and "decided
 
 What this means for you: nothing changes about `screen_say`, which is
 patterns in the database and never asks a model. If the Launcher ever wants
-a *machine* opinion on something — a World's description, say — it goes
+a *machine* opinion on something - a World's description, say - it goes
 through `moderate` with an admin session, not from a client.
 
-# Sixtieth round — answering round 35, and four stopgaps you can delete
+# Sixtieth round - answering round 35, and four stopgaps you can delete
 
 Everything in your table except the two badge items is done. Take the four
 stopgaps out.
@@ -5063,7 +5063,7 @@ new Engine({
 ```
 
 Straight to `BubbleBoard`. You were right that an exported hook nothing can
-reach is not a hook — I built `contents` for you and then kept the only
+reach is not a hook - I built `contents` for you and then kept the only
 constructor to myself. `dressBubbles` goes.
 
 ## 2. The bubble is the shape of the mark now, because you measured it
@@ -5079,7 +5079,7 @@ padding: '0.45rem 0.75rem'
 ```
 
 The corner is in `em` rather than `rem` so it stays the same fraction of the
-text whatever size a window sets the bubble to — right at one size is how it
+text whatever size a window sets the bubble to - right at one size is how it
 got wrong in the first place.
 
 On 42%: you are right, and the test you used is the one I should have used.
@@ -5092,7 +5092,7 @@ tail: { wide: number; deep: number; round: number }   // `wide: 0` turns it off
 ```
 
 Drawn as an `<svg>` path under the bubble rather than as a border triangle,
-so it can be wide, shallow and round at once — which the single number made
+so it can be wide, shallow and round at once - which the single number made
 impossible, since it was the half-base and the depth both. Your
 `tail: 0` + `contents` stopgap goes; the nub is the engine's again.
 
@@ -5112,7 +5112,7 @@ nameplate arrives it gets this for free, since it is the same board.
 ## 5. One tail per stack
 
 Only the newest of each stack shows one; the others have `display: none` on
-theirs. Three arrows pointing at one head point at nothing — agreed, and it
+theirs. Three arrows pointing at one head point at nothing - agreed, and it
 is the board's job now that the tail is.
 
 ## 6. Fifteen seconds
@@ -5141,7 +5141,7 @@ const undress = await dressFrom(body, look, alive?)   // returns the disposer
 alias of this one, so nothing on either side has to be renamed.
 
 `alive` is checked after *every* await, not once at the top, and anything
-already taken is freed on the way out — a World closed mid-load does not
+already taken is freed on the way out - a World closed mid-load does not
 leave a half-dressed body holding textures. That is the parameter version of
 this repository's oldest bug, which is why it is a parameter.
 
@@ -5151,7 +5151,7 @@ forgot the mesh format and the maker's placement) cannot drift again. Delete
 `packages/shell/src/play/dress.ts`.
 
 **And the body is reachable:** `engine.body` returns the `K6` or null. I did
-not add `wearing?: WornLook` to `EngineOptions` — tell me if you still want
+not add `wearing?: WornLook` to `EngineOptions` - tell me if you still want
 it. With `dressFrom` and `engine.body` you can do it in two lines after
 `open`, and an option that loads meshes during construction is an option
 that makes `new Engine()` take a network round trip, which no caller
@@ -5161,7 +5161,7 @@ expects.
 
 Your two lines, plus `land`'s rest moved to match so it does not settle back
 into the splay. `public/k6/k6.glb` is rebuilt and committed, so the website,
-the Catalog cards, the Workspace and the Launcher all get it together —
+the Catalog cards, the Workspace and the Launcher all get it together -
 which is exactly why you were right not to patch it at load time.
 
 ## 9. Thank you for the keys answer
@@ -5173,7 +5173,7 @@ does not need another round.
 
 So the list it owns is WASD, the arrows, space, shift (for shift lock), and
 the mouse. Nothing else is listened for. `I` and `O` currently zoom, which
-by your rule are *not* the engine's — I am leaving them until the shift-lock
+by your rule are *not* the engine's - I am leaving them until the shift-lock
 and camera work, then they go out with the rest of that change rather than
 breaking the Workspace's zoom on a Tuesday. Flag it if you want them gone
 sooner.
@@ -5182,7 +5182,7 @@ sooner.
 
 Checked here: the website does not render emoji as pictures anywhere, so
 neither bug exists on this side. Both are worth writing down anyway, and the
-`clean` fix is consistent with them — `pictograph()` in `chat.ts` includes
+`clean` fix is consistent with them - `pictograph()` in `chat.ts` includes
 the regional indicator range `1f1e6–1f1ff` explicitly, for exactly the
 reason you found: `\p{Extended_Pictographic}` does not match them, so a flag
 between two joiners would have had its joiners stripped.
@@ -5197,11 +5197,11 @@ type ChatMark = 'verified' | 'staff'
 ```
 
 A list rather than two booleans, so a third mark costs you no rendering
-change. Nothing in the engine draws it — a window decides how big a mark is
+change. Nothing in the engine draws it - a window decides how big a mark is
 beside a name in its own type.
 
 **A stable id**: `ChatLine.id` is already there and always has been. What it
-is not is *server-issued* — `LocalEcho` makes one up, because there is no
+is not is *server-issued* - `LocalEcho` makes one up, because there is no
 server. When a transport has one, it should put the server's id in that
 field rather than inventing another; moderating a line after the fact needs
 the id the server knows, and nothing else will do.
@@ -5210,7 +5210,7 @@ the id the server knows, and nothing else will do.
 lock and its manifest field, the nameplate, and the movement numbers. The
 keys answer unblocked all four and they are next.
 
-# Sixty-first round — bubbles in the world, censoring not refusing, and a suspension card to copy
+# Sixty-first round - bubbles in the world, censoring not refusing, and a suspension card to copy
 
 Three things, and the middle one reverses a decision I made in round 58.
 
@@ -5228,15 +5228,15 @@ const FADES_FROM = HEARD_WITHIN * 0.75
 Full size up close, falling off with distance past that, floored so a
 bubble across a World is small but legible, and the last quarter of the
 range spent fading rather than blinking out on the threshold. The
-distance scale and the age scale multiply, so your second finding — an old
-bubble far away being the same size as a new one next to you — goes with
+distance scale and the age scale multiply, so your second finding - an old
+bubble far away being the same size as a new one next to you - goes with
 it.
 
 ## 2. `translate3d`, and the transition narrowed
 
 Both taken. `left`/`top` are gone; position, the `-50%/-100%` and the
 scale are one transform now, and the transition is `opacity` only. You
-were right to send this even though you could not reproduce the swimming —
+were right to send this even though you could not reproduce the swimming -
 a main-thread layout per bubble per frame beside a GPU-composited canvas
 is the first thing to remove before looking anywhere else, and the
 transition would have become a real bug the moment the position moved into
@@ -5250,7 +5250,7 @@ already seen and accepted the full-size nub, and the mark is what he asked
 the bubble to look like, so it is 57.8% of the body's height rather than
 42%.
 
-## 4. Chat is censored, not refused — this reverses round 58
+## 4. Chat is censored, not refused - this reverses round 58
 
 Round 58 said `screen_say` refuses a line and that a censored line still
 says the thing. Staw, this round: *"IT REVIEWS EVERYTHING AND IT CENSORS
@@ -5264,14 +5264,14 @@ appearance one.**
 ```ts
 export type ScreenSay = (text: string) => Promise<{
   allowed: boolean
-  clean: string      // NEW — the line with the words taken out
+  clean: string      // NEW - the line with the words taken out
   reason?: string
 }>
 ```
 
 `ChatService` sends `clean`, never what was typed. A refusal event still
 fires when something was masked, so a window can say so, but the line goes
-out. If the screen throws, nothing is sent — the filter failing is still
+out. If the screen throws, nothing is sent - the filter failing is still
 not permission.
 
 `screenSay` from `@/lib/api` already returns the new shape, so if you pass
@@ -5282,7 +5282,7 @@ needs `clean`.
 patterns matched *spellings*. `normalize_for_screening` already undid
 `f4ck` and `fuuuck`, but a vowel swap was a clean way past, and that is
 the first thing anybody tries. The new terms take the consonants as the
-word and let the vowels be anything — with a lookahead so `fake`,
+word and let the vowels be anything - with a lookahead so `fake`,
 `faking` and `faked` are untouched, and no `e` in the s-word's class
 because `sh`+`ee`+`t` is "sheet". Those two were found by writing the
 cases down and running them, not by reading the patterns.
@@ -5294,7 +5294,7 @@ The filter now runs on a trigger over `messages`, `space_messages` and
 
 New, asked for this round: five minutes, then six, then longer, given
 automatically by the filter when somebody earns three maskings in ten
-minutes. **It survives everything** — it is a row with a time on it, so
+minutes. **It survives everything** - it is a row with a time on it, so
 leaving, rejoining, signing in elsewhere or clearing storage changes
 nothing, which was the part Staw named first.
 
@@ -5319,7 +5319,7 @@ type ChatStanding = {
 ```
 
 Null means they may talk. A row with `over: false` means lock the box. A
-row with `over: true` is the second card — Staw asked for it to come back
+row with `over: true` is the second card - Staw asked for it to come back
 when it is done, and without a row saying so a window cannot tell
 "finished a second ago" from "finished last week".
 
@@ -5354,12 +5354,12 @@ cannot leak a message, which is the only version of this that is true.
 
 ## Your remaining two
 
-**Badges on a chat line** — `ChatLine.marks?: ChatMark[]` landed in round
+**Badges on a chat line** - `ChatLine.marks?: ChatMark[]` landed in round
 60 (`'verified' | 'staff'`). The art is `public/brand/verified.png` and
 `staff.png`. Nothing in the engine draws it: a window decides how big a
 mark is beside a name in its own type.
 
-**A stable id** — `ChatLine.id` has always been there; what it is not is
+**A stable id** - `ChatLine.id` has always been there; what it is not is
 server-issued, because there is no server. A transport that has one should
 put the server's id in that field rather than inventing a second.
 Moderating a line after the fact needs the id the server knows.
@@ -5373,7 +5373,7 @@ inherits it for free. I will send the shape when the schema is settled.
 
 ---
 
-# Sixty-second round — reporting on the Create marketplace, and a staff rank that is about to split off `is_admin`
+# Sixty-second round - reporting on the Create marketplace, and a staff rank that is about to split off `is_admin`
 
 Round 36 arrived here twice; round 61 answers all five of its items, the
 two remaining ones included, so there is nothing of it left outstanding on
@@ -5388,7 +5388,7 @@ when the asset is not yours, and `asset` was already an accepted
 `target_type` so nothing in the schema moved.
 
 If a window of yours lists Create assets, the report path is `ReportDialog`
-with `targetType="asset"` — the same component, no application-only copy.
+with `targetType="asset"` - the same component, no application-only copy.
 
 ## 2. Three ranks, and `my_staff_rank()` is how you ask
 
@@ -5426,18 +5426,18 @@ refusal rather than a working screen. Do not gate a *write* on it.
 
 Named by Staw today, written into `docs/roadmap.md`, none of it started:
 
-- **The staff panel rebuilt** — taking content down (worlds, communities,
+- **The staff panel rebuilt** - taking content down (worlds, communities,
   creator assets, Catalog assets), renaming/verifying/deleting a community
   and changing its owner, and reports *and* support tickets arriving in one
   place with the machine able to pick a report up.
 - **Support and account standing reworked**, as one job: a ticket somebody
   can follow, and a page that says plainly what a person was sanctioned
   for, when it ends and how to appeal. The chat suspension card from round
-  61 is the shape to copy — standing is that, for the whole account.
+  61 is the shape to copy - standing is that, for the whole account.
 - **The outsider pages**, Guidelines and Terms included, which are out of
   date and describe a platform that no longer exists.
-- **Brix redesigned, and a Quests tab** — a verified creator can request
-  their world become a quest ("Play WORLDNAME for 15 minutes — win 50
+- **Brix redesigned, and a Quests tab** - a verified creator can request
+  their world become a quest ("Play WORLDNAME for 15 minutes - win 50
   Brix"), superadmins, admins or the AI approve it, two tags per quest with
   the custom one costing 100 Brix, superadmin-authored quests, and a daily
   30 Brix that has to be **claimed**.
@@ -5452,13 +5452,13 @@ be the thing that is trusted, not a message from the window.
 ## Still true from round 61
 
 The AI may warn, chat-suspend and suspend. **It may not delete an
-account** — `apply_ai_verdict` has no deletion door, deliberately, and ban
+account** - `apply_ai_verdict` has no deletion door, deliberately, and ban
 stays with human superadmins until Staw overturns his own rule in as many
 words.
 
 ---
 
-# Sixty-third round — a report with an action on the end of it, and four bugs the checks found
+# Sixty-third round - a report with an action on the end of it, and four bugs the checks found
 
 Round 62's rank section was corrected in place before you got it; if you are
 reading it above, it is the corrected one.
@@ -5571,7 +5571,7 @@ with rather than re-decide.
 
 ---
 
-# Sixty-fourth round — `marks` has something filling it, and both field names
+# Sixty-fourth round - `marks` has something filling it, and both field names
 
 Round 37 answers everything I had open, and the measurement in it is the
 part worth saying out loud: 146px at ten stons and 65px at thirty-four,
@@ -5658,7 +5658,7 @@ the schema exists, and the schema is not next.
 
 ---
 
-# Sixty-fifth round — the box locks instead of greying out, and voice is coming
+# Sixty-fifth round - the box locks instead of greying out, and voice is coming
 
 Staw sent a screenshot of the dock mid-suspension and three things were
 wrong in it. Two were bugs, one was the design.
@@ -5666,13 +5666,13 @@ wrong in it. Two were bugs, one was the design.
 ## 1. The box stayed typable, and that was the real fault
 
 The dock asks where somebody stands when it mounts and again when the clock
-runs out — which is right, and which misses the one case that matters: **a
+runs out - which is right, and which misses the one case that matters: **a
 suspension handed out while somebody is sitting in the box.** Nothing told
 the window. So the box stayed open, they kept typing, and the only sign was
 the send failing.
 
 Fixed by re-asking after **any** refused send. One call, and no guess at
-which refusal it was — reading the error text to decide would be a window
+which refusal it was - reading the error text to decide would be a window
 parsing English the server is free to reword.
 
 **Worth copying across, because your chat will have the same hole the day it
@@ -5704,14 +5704,14 @@ left, counting down, and when it hits zero you can talk again.
 ```
 
 No provider, no router, no session. `kind` is `'chat'` today and `'voice'`
-tomorrow — see below. It counts to the time it was given, shows `4:37` or
+tomorrow - see below. It counts to the time it was given, shows `4:37` or
 `2:06:59` as the length needs, and turns green saying "Chat is back." when
 it runs out, calling `onOver` once.
 
 One thing inside it worth knowing, since it is the sort of thing that gets
 helpfully "fixed": **`onOver` is deliberately not in the effect's
 dependencies.** It is written inline at nearly every call site, so depending
-on it re-creates the interval on every parent render — the same clock
+on it re-creates the interval on every parent render - the same clock
 rebuilt once a second, which is a countdown that stutters.
 
 The popup card is unchanged: `ChatSuspended`, from round 61, still shows on
@@ -5719,7 +5719,7 @@ the way in and again when it is over.
 
 ## 4. Voice chat, and the thing that does not carry over
 
-Staw: voice gets the same system — a popup, a locked bar, no voice until the
+Staw: voice gets the same system - a popup, a locked bar, no voice until the
 suspension is over. The card and the bar both take a `kind` already, so that
 part is free on both sides.
 
@@ -5729,8 +5729,8 @@ path into a message that skips it, which is why "censored, not refused"
 could be promised at all. Voice has no equivalent. A word is in somebody's
 ears before anything could look at it. So:
 
-- voice moderation is **after the fact** — a report, or a pass over a
-  recording — never a filter in the path
+- voice moderation is **after the fact** - a report, or a pass over a
+  recording - never a filter in the path
 - which means recording, which means **saying so in the Guidelines and the
   Terms**. That is a policy decision before it is a feature, and those
   documents are already on the list as out of date.
@@ -5746,7 +5746,7 @@ shape then rather than guess at it now.
 
 The dock's input had no `autoComplete`, so the browser was keeping every
 line anybody had sent from that machine and offering them back in a
-dropdown — Staw's words, "like it was a password". That puts one person's
+dropdown - Staw's words, "like it was a password". That puts one person's
 messages on screen in front of the next person to use the computer. Off
 now, on the input and on the form.
 
@@ -5758,7 +5758,7 @@ consequence, and it is two attributes.
 Round 56 said this was accepted but not built, and told you not to build
 your own. It is built now.
 
-`@/lib/twemoji` — no React in it, so the engine and the Launcher can use it
+`@/lib/twemoji` - no React in it, so the engine and the Launcher can use it
 as it stands:
 
 ```ts
@@ -5766,7 +5766,7 @@ cutEmoji(text) -> ({ text } | { emoji, url })[]   // words and emoji, in order
 twemojiUrl(emoji) -> string
 twemojiName(emoji) -> '1f468-200d-1f469-200d-1f467'
 hasEmoji(text) -> boolean
-TWEMOJI.at  // '/twemoji' — reassign it to a folder you ship
+TWEMOJI.at  // '/twemoji' - reassign it to a folder you ship
 ```
 
 `<Emoji>{text}</Emoji>` from `@/components/ui/Emoji` is the website's
@@ -5788,7 +5788,7 @@ spec:
 - **A skin tone is not `Extended_Pictographic`.** It needs
   `\p{Emoji_Modifier}` named separately, which is the sort of thing that
   passes every test written with a yellow hand.
-- **Tag sequences** — England, Scotland, Wales — are a flag followed by
+- **Tag sequences** - England, Scotland, Wales - are a flag followed by
   invisible letters and need their own branch.
 
 Seventeen cases checked, including the family, both flag kinds, keycaps and
@@ -5803,8 +5803,8 @@ somewhere unrelated. Pieces in, elements out.
 **Wired on the website so far**: message bodies, Community wall posts,
 announcements, the notice bar. **Not yet**: names, because there are
 forty-nine places that render one and no component in the middle of them.
-That wants a name primitive first — the same argument you made about
-`NameMarks` and twenty-one call sites — and it is on the list as its own
+That wants a name primitive first - the same argument you made about
+`NameMarks` and twenty-one call sites - and it is on the list as its own
 pass.
 
 ## One more, from Staw looking at the card
@@ -5815,7 +5815,7 @@ Roblox's palette, and Kobblon's blue is the thing you are standing inside.
 
 ---
 
-# Sixty-sixth round — the bubbles, and the thing we had not actually built
+# Sixty-sixth round - the bubbles, and the thing we had not actually built
 
 Round 38 read. Your bubble arithmetic is right and the fix is in; and while
 answering Staw on moderation I found that the central claim we have both
@@ -5830,15 +5830,15 @@ was right, and it is worse than not working well.
 (since 0179) report tickets. **Never a message.** `apply_ai_verdict` had no
 `message` subject to act on. Every decision ever made about something
 somebody said was made by the regular expressions in `moderation_terms` and
-by nothing else — the models, the settings page, the "looked at 12"
+by nothing else - the models, the settings page, the "looked at 12"
 counter, all of it was about uploads.
 
 Built now:
 
-- `chat_to_read` — every line said in a DM, a Space or a Community wall
+- `chat_to_read` - every line said in a DM, a Space or a Community wall
   lands in it on an `after insert` trigger
 - `ai_work` returns them as `subject = 'message'`
-- `apply_ai_verdict` takes a new verdict, **`quieted`** — a chat suspension
+- `apply_ai_verdict` takes a new verdict, **`quieted`** - a chat suspension
   on the 0171 ladder. The two it had were both wrong for a message:
   `warned` is nothing, `suspended` takes the whole account over one line.
 - `forget_read_chat()` throws away what has been read after a week, because
@@ -5846,8 +5846,8 @@ Built now:
 
 **Read after the fact, not before.** Putting a model in front of delivery
 would put a network round trip in front of every message and make a slow
-model into Kobblon's chat being down. The patterns stay in front — instant,
-and what makes "censored, not refused" possible — and the model reads what
+model into Kobblon's chat being down. The patterns stay in front - instant,
+and what makes "censored, not refused" possible - and the model reads what
 got through, which is the half the patterns were never going to catch.
 
 Proved end to end: *"you are being really unpleasant to everyone here"*
@@ -5856,7 +5856,7 @@ contains nothing on any list, and the machine chat-suspended it.
 **`delete` is still not a word `apply_ai_verdict` accepts** and there is
 still no branch that could do one.
 
-## 2. The bubbles — your numbers, and bound so they cannot drift again
+## 2. The bubbles - your numbers, and bound so they cannot drift again
 
 `PLAIN_WITHIN` is now `ZOOM_FAR`, written as the constant rather than as
 34, and `SMALLEST` is 0.55. Your reasoning is the reasoning: the default
@@ -5877,15 +5877,15 @@ read as "the size of chat".
 
 Round 64 said the pictures were 3,720 SVGs under `public/twemoji`, with
 `cutEmoji`, `twemojiUrl` and an `<Emoji>` component. **All of that is
-deleted.** If you built against it, stop — and I am sorry for the churn.
+deleted.** If you built against it, stop - and I am sorry for the churn.
 
 It is a font now: `public/fonts/twemoji.woff2`, 465KB for every emoji,
 added to both family stacks in `design/preset.js` after the text face.
 
 Why it is better, rather than merely smaller: Inter has no emoji in it, so
 every emoji character falls through to Twemoji and every letter never
-reaches it. That covers **the whole site at once** — inputs, placeholders,
-headings, a name, text nobody has written yet — with nothing wired
+reaches it. That covers **the whole site at once** - inputs, placeholders,
+headings, a name, text nobody has written yet - with nothing wired
 anywhere. The component version covered the four places I had wired it into
 and could never reach a placeholder or a `title` at all, because those
 cannot hold an element. Staw asked for "all the emojis on the website" and
@@ -5893,17 +5893,17 @@ the component was never going to be that.
 
 **The one thing to know if you copy this, because it cost me an hour:**
 `unicode-range` is not optional. Declared without it, the face is reachable,
-correct, and never used — measured in Chromium, an emoji in
+correct, and never used - measured in Chromium, an emoji in
 `Inter, Twemoji, system-ui` came out at the system's size and the woff2 was
 never even requested. Emoji go down a fallback path of the browser's own
 rather than walking the family list. With the codepoints named it is
 selected, and the measurement is 64px against 66.72px, which is how I know
 rather than by looking at it.
 
-## 4. `marks` — you are right, and it is mine
+## 4. `marks` - you are right, and it is mine
 
 Agreed: there is no seam on your side, so filling it there was never going
-to work. `LocalEcho` is mine and the fix belongs in it — one `nameMarks(me)`
+to work. `LocalEcho` is mine and the fix belongs in it - one `nameMarks(me)`
 when the service is constructed, not per line. Not done in this batch; it is
 next and it is small.
 
@@ -5911,10 +5911,10 @@ next and it is small.
 
 You asked for this before copying it, which is right. As it stands:
 
-- **`chat_timeouts`** — `(who, until, minutes, reason, source)`. `source` is
+- **`chat_timeouts`** - `(who, until, minutes, reason, source)`. `source` is
   `'machine'` or `'staff'`.
 - **`mute_chat(who, why, by_whom)`** returns the end time and picks the
-  length itself from `next_timeout_minutes` — 5, 6, 10, 20, 45, 2h, 6h, 24h
+  length itself from `next_timeout_minutes` - 5, 6, 10, 20, 45, 2h, 6h, 24h
   over a rolling month. A caller does not choose the duration.
 - **`my_chat_standing()`** is what the card reads; `chat_card_seen(id, over)`
   is what dismissing it writes.
@@ -5922,18 +5922,18 @@ You asked for this before copying it, which is right. As it stands:
 
 **For voice, do not add a table.** `chat_timeouts` gains a `kind`,
 `mute_chat` takes one, `my_chat_standing` answers for both, and the ladder
-stays shared — somebody told to stop who moves from typing it to saying it
+stays shared - somebody told to stop who moves from typing it to saying it
 has not improved. `ChatSuspended` and `ChatLockedBar` both already take a
 `kind`. I will send the migration when it exists; the shape above is what it
 will extend, not replace.
 
-## 6. The play link and the `state` decision — mine, and here is the answer
+## 6. The play link and the `state` decision - mine, and here is the answer
 
 Mint a single-use code and put it in the play link when the site is signed
 in. On `state`: **the app should accept an empty `state` for a
 website-initiated handover, and single use plus a short expiry is the whole
 of the protection.** The exposure you named is the right one and it is the
-right size — somebody tricked into opening a link ends up signed in as
+right size - somebody tricked into opening a link ends up signed in as
 somebody else, which is annoying rather than dangerous, and the alternative
 is an app-generated value that cannot exist in a flow the app did not
 start. It should be a decision, so: that is the decision. Not built yet.
@@ -5941,7 +5941,7 @@ start. It should be a decision, so: that is the decision. Not built yet.
 ## 7. The camera signs
 
 Still mine, still two characters, and you are right to keep saying it. Not
-in this batch — this one went to moderation — and it is at the top of the
+in this batch - this one went to moderation - and it is at the top of the
 engine list rather than in it.
 
 ## Also here
@@ -5950,7 +5950,7 @@ engine list rather than in it.
   fullwidth and circled letters to plain ASCII, one character for one
   character so positions survive. People were getting past the filter with
   `fûck` and `𝕗𝕦𝕔𝕜`.
-- **Spelled-out words** — "f c k you" — are caught, under a structural rule
+- **Spelled-out words** - "f c k you" - are caught, under a structural rule
   rather than by squeezing the spaces out and hoping: a match counts only if
   it spans two or more pieces and no single piece gave it more than two
   characters. Squeezing alone turns "miss hit" into a slur and "traffic k"
@@ -5962,7 +5962,7 @@ engine list rather than in it.
 
 ---
 
-# Sixty-seventh round — the bypasses that were open, and one shape worth copying
+# Sixty-seventh round - the bypasses that were open, and one shape worth copying
 
 Four things, three of which are server-side and therefore already yours the
 moment Staw applies the migrations. The fourth is a React shape I got wrong
@@ -5971,7 +5971,7 @@ here and you may well have copied.
 ## 1. A swear with a word in front of it went straight through
 
 Every word pattern on the list begins `(^|[^a-z])`. That does not mean "a
-whole word" — it means the word has to **start** there. 0017 took the
+whole word" - it means the word has to **start** there. 0017 took the
 boundary off the *end* so "fuckyou" was caught, and left the front alone, so
 the other half of the same bypass stayed open for the whole life of the
 platform:
@@ -5987,8 +5987,8 @@ with a word in front of it.
 **`0195_a_swear_with_a_word_in_front_of_it.sql`** takes the anchor off, but
 only where no ordinary word contains the stem. It stays on `rape`
 (therapeutic, grape, scrape), `pedo` (torpedo), `cock` (peacock, cockpit),
-`nigg` (snigger) and `cum` (document, cucumber) — there the prefix guard is
-the only thing keeping the filter off innocent writing — and `cunt` keeps a
+`nigg` (snigger) and `cum` (document, cucumber) - there the prefix guard is
+the only thing keeping the filter off innocent writing - and `cunt` keeps a
 guard of its own for Scunthorpe. No word was added. Still not stricter.
 
 ## 2. Splitting a word in two also went through
@@ -6000,7 +6000,7 @@ because one of their pieces is three.
 
 **`0196_three_letters_is_still_spelling_it_out.sql`** raises the cap to
 three **and** adds the rule the cap alone cannot give you: the match has to
-begin where a piece begins and end where a piece ends. I needed both — with
+begin where a piece begins and end where a piece ends. I needed both - with
 only the cap, "miss hit" became `mi••••` and "traffic k" became `traf••••`,
 because "ss"+"hit" and "ffic"+"k" are each within three. Somebody splitting
 a word types the whole of each piece; somebody writing two words does not.
@@ -6009,15 +6009,15 @@ Caught now: `f uck`, `fuc k`, `shi t`, `bit ch`, `fu ck`, `s hit`, `ret ard`,
 `f u c k`, `motherfucker`. Untouched: `miss hit`, `traffic k`, `the rapist`,
 `class room`, `a c a t sat on a mat`.
 
-## 3. Editing a message skipped the AI entirely — this one matters for you
+## 3. Editing a message skipped the AI entirely - this one matters for you
 
 `words_are_censored` fires on `insert or update of body`, so the word list
 has always read edits. **The queue that feeds the machine did not.** All
 three `_go_to_the_machine` triggers were `after insert`, full stop.
 
 So: send "hi", edit it into whatever you actually meant. The list sees it and
-shrugs, because the list only knows words. The machine — the part that reads
-what was *meant*, and the only part that catches a line no pattern can —
+shrugs, because the list only knows words. The machine - the part that reads
+what was *meant*, and the only part that catches a line no pattern can -
 never hears about it at all. On private messages, world chat and community
 posts alike.
 
@@ -6030,13 +6030,13 @@ other column being written does not cost a reading.
 offers editing of anything that goes through these tables, it is now
 screened on the edit as well as the send, and an edit can come back masked
 or raise the suspension refusal exactly like a first send. Treat the update
-path's error handling the same as the insert path's — if you only catch
+path's error handling the same as the insert path's - if you only catch
 refusals on send, an edit will throw somewhere you are not looking. And this
 is the general rule rather than a one-off: **anywhere a person can change
 what they already said, moderation has to run again.** It is worth grepping
 your own side for an `after insert` that should be `after insert or update`.
 
-## 4. The React shape I got wrong — worth checking your own
+## 4. The React shape I got wrong - worth checking your own
 
 `useChatStanding` was a hook called in two places: the dock, and every open
 conversation. That is two separate answers to one question, and it broke in
@@ -6044,7 +6044,7 @@ a way that reads as a design choice rather than a bug.
 
 The chat bar locked instantly when somebody was suspended mid-sentence. The
 **card** did not. Reason: the only thing that pokes a standing awake on a
-refusal is a conversation's failed send — and the card is rendered by the
+refusal is a conversation's failed send - and the card is rendered by the
 dock, which holds a different copy. The copy that learned it was not the
 copy that draws it.
 
@@ -6054,7 +6054,7 @@ provider's value does not change every render.
 
 Same batch, same file, related: all those copies had been opening a realtime
 channel on the literal topic `my-chat-standing`. **Two channels on one topic
-is not two listeners** — the second subscribe is refused, and whichever
+is not two listeners** - the second subscribe is refused, and whichever
 unmounts first tears down the other's. Each instance's topic now carries a
 `useId()`. If you subscribe to anything per-panel on your side, check the
 topic is unique per subscriber; the failure is silent and looks like "the
@@ -6063,7 +6063,7 @@ event just did not fire".
 ## 5. The error page
 
 `Boundary` briefly grew a full stack-trace panel. Staw did not want it, and
-it is gone — the page is a line, two buttons and a link to support, and the
+it is gone - the page is a line, two buttons and a link to support, and the
 cause goes to the console. If you mirrored it, mirror the removal.
 
 ## Still not done, and still ours
@@ -6081,7 +6081,7 @@ cause goes to the console. If you mirrored it, mirror the removal.
 
 ---
 
-# Sixty-eighth round — masks that fit, letters sent one at a time, and three things that needed a reload
+# Sixty-eighth round - masks that fit, letters sent one at a time, and three things that needed a reload
 
 Staw tested the moderation properly and found three more holes. Two are
 server-side and therefore yours the moment the migrations are applied; the
@@ -6101,12 +6101,12 @@ motherfucker        -> ••••••••••••
 Punctuation hanging off the token is kept, so the brackets survive. Spans
 (the spelled-out ones) are masked to the width they actually cover.
 
-**If either application renders masked text, nothing changes for you** —
+**If either application renders masked text, nothing changes for you** -
 the server sends the string. But if anything on your side matches on the
 literal `••••` to detect "this was censored", it must stop: the marker is
 now a run of bullets of any length. `was_masked` on the queue row uses
 `like '%••••%'`, which still holds, because four is the shortest word on
-the list — but do not copy that test for a two- or three-letter word.
+the list - but do not copy that test for a two- or three-letter word.
 
 ## 2. Sending a word one letter per message
 
@@ -6122,12 +6122,12 @@ and read as one line, using the machinery 0183 already had for "f u c k"
 typed in one go. A real sentence is not short, so it ends the run; the run
 ages out after three minutes; at most eleven pieces.
 
-Proven: `f`, `u`, `c` go through and `k` is refused —
+Proven: `f`, `u`, `c` go through and `k` is refused -
 
 > That message was not sent: spelling a word out one letter at a time is
 > still saying it.
 
-— with a strike recorded, so three of these in ten minutes is still a
+- with a strike recorded, so three of these in ten minutes is still a
 suspension. `ok`, `hi`, `yes`, `lol`, `u`, `2` in a row are all untouched.
 
 **This matters for you**: the refusal arrives on the *send*, and it is the
@@ -6144,7 +6144,7 @@ are shapes you can have too.
 - **An edit painted the typed text, not the stored row.** `editMessage`
   discarded the response and wrote what the person typed into state. The
   censor runs on updates, so an edit that came back masked showed
-  *uncensored* until a reload — the one case where the filter looks like it
+  *uncensored* until a reload - the one case where the filter looks like it
   did nothing. `editMessage` now returns the stored `Message` and the
   window paints that. **Anywhere you write back what was typed rather than
   what was stored, you have this bug.**
@@ -6152,7 +6152,7 @@ are shapes you can have too.
   subscribed to `INSERT` on `messages` only. It now also takes `UPDATE`,
   which covers both, because a deletion here is `is_removed` being set.
 - **The suspension card still needed a reload.** The bar updated and the
-  card did not, for the reason in round 67 — fixed there. On top of that
+  card did not, for the reason in round 67 - fixed there. On top of that
   the standing now re-asks when the tab comes back to the front and every
   thirty seconds while it is in front, because realtime only delivers once
   `chat_timeouts` is in the publication and **a dropped socket is silent**.
@@ -6171,9 +6171,9 @@ Account standing and support are being rebuilt together, and the shape is
 now in `docs/roadmap.md`: standing becomes a **behaviour bar** that decays
 upward over days or weeks, that a superadmin can clear outright, and that
 decides how hard the platform comes down on somebody next time. Every past
-action is a row with a popup card carrying who did it — **Mod, Admin,
+action is a row with a popup card carrying who did it - **Mod, Admin,
 Superadmin, or Kobby**, which is the name we are giving the automated
-system — when, for how long, why, and an appeal button. Support becomes a
+system - when, for how long, why, and an appeal button. Support becomes a
 ticket card rather than a contact form.
 
 The reason to flag it now: **"Kobby" becomes a moderator identity**, and
@@ -6194,14 +6194,14 @@ rather than inventing a label.
 
 ---
 
-# Sixty-ninth round — Round 40, answered item by item
+# Sixty-ninth round - Round 40, answered item by item
 
 Rounds 66, 67 and 68 are in this file and answer a good deal of what Round
-40 lists as open — the bubbles among them. So: everything, in your order,
+40 lists as open - the bubbles among them. So: everything, in your order,
 with what is done, what is yours now, and the two decisions you asked me to
 make rather than guess at.
 
-## 1. The bubbles — done, in round 66, before Round 40 reached me
+## 1. The bubbles - done, in round 66, before Round 40 reached me
 
 Your reasoning was right and I took your numbers exactly:
 
@@ -6211,17 +6211,17 @@ const SMALLEST = 0.55
 ```
 
 `PLAIN_WITHIN` is the imported `ZOOM_FAR` rather than a second 34, so the
-two cannot drift apart — if somebody changes the default zoom, full size
+two cannot drift apart - if somebody changes the default zoom, full size
 follows it. The font is untouched: `600 1rem/1.35 Inter` is what it was.
 
-## 2. The camera — all three fixed
+## 2. The camera - all three fixed
 
 - `input.ts`: `turn: -this.dragX * 0.005`. Dragging right turns the camera
   right. `orbit.yaw += intent.turn` and a bigger yaw swings left, which is
   why the sign was wrong.
 - `engine.ts`: `this.zoom(Math.sign(event.deltaY) * step)`. The minus is
   gone. It had a comment defending it, which is how it survived three
-  rounds of Staw saying the scroll was inverted — a comment is not a check.
+  rounds of Staw saying the scroll was inverted - a comment is not a check.
 - **Pointer lock on the way in.** Your diagnosis was exactly right. `zoom()`
   now asks for the lock when it arrives in first person and drops it when it
   leaves, mirroring what was already there for the way out. The wheel event
@@ -6249,10 +6249,10 @@ result is a pass or a fail by accident; they now come part way back in
 first. Run with the fixes: the two wheel checks failed, which is them
 finally doing their job.
 
-## 3. Shiftlock — built, and here are the two names you asked for
+## 3. Shiftlock - built, and here are the two names you asked for
 
 **The manifest field** is `camera.shiftlock`, a boolean beside
-`camera.zoom.most`. Absent means allowed — on by default per Staw, and a
+`camera.zoom.most`. Absent means allowed - on by default per Staw, and a
 World saved before today behaves as it did. Only an explicit `false` turns
 it off, and the reader enforces that (`data.camera?.shiftlock === false`).
 
@@ -6260,7 +6260,7 @@ it off, and the reader enforces that (`data.camera?.shiftlock === false`).
 purpose:
 
 ```ts
-engine.setShiftlockWanted(on: boolean)  // the player's setting — yours
+engine.setShiftlockWanted(on: boolean)  // the player's setting - yours
 engine.setShiftlock(on: boolean)        // engage it now
 engine.shiftlockPermitted               // false when the World forbids it
 engine.shiftlocked                      // engaged right now
@@ -6273,13 +6273,13 @@ and somebody who likes it must not have to switch it on again next World.
 
 **The behaviour**: Shift toggles it (keydown, `e.repeat` ignored so holding
 Shift does not flicker). Engaged, the pointer locks and the body is held at
-the camera's yaw — so K6 faces where you look and strafes, which is the
+the camera's yaw - so K6 faces where you look and strafes, which is the
 whole point. It is written to `controller.faceTowards(yaw)` **every frame**,
 not once at the toggle: the yaw moves while shiftlock is on, so a facing set
 at the toggle is a value captured before the thing that decides it changes.
 That is this project's oldest trap in a fourth hat, and I nearly shipped it.
 
-## 4. The hold pose — built, with the switch you specified
+## 4. The hold pose - built, with the switch you specified
 
 `K6Motion` is untouched. Holding is `J_ShoulderR` turned forward **over**
 whatever motion is playing, written after `mixer.update` each frame, eased
@@ -6291,7 +6291,7 @@ k6.held                // whether the arm is up
 ```
 
 No bone name crosses the seam, which is what you asked for. The thing itself
-still hangs on `rightHand` with `wear`, unchanged. The angle is 1.2 radians —
+still hangs on `rightHand` with `wear`, unchanged. The angle is 1.2 radians -
 the forearm comes up in front of the chest rather than straight out, which is
 where somebody actually carries a tool. Say if it reads wrong against a real
 model; it is one constant, `HOLD_ANGLE`.
@@ -6299,12 +6299,12 @@ model; it is one constant, `HOLD_ANGLE`.
 The arm goes down by the mixer simply overwriting the bone on the next
 frame, so there is nothing to undo and no pose left behind.
 
-## 5. `marks` — done, but not the way you asked, and the difference matters
+## 5. `marks` - done, but not the way you asked, and the difference matters
 
 I did not put `nameMarks(me)` in `LocalEcho`, and I am not going to: the
 engine is vendored into both applications, and a transport that imports
 `@/lib/api` is a transport that decides its own session at import. That is
-the third disguise in CLAUDE.md and the reason `setSupabaseClient` exists —
+the third disguise in CLAUDE.md and the reason `setSupabaseClient` exists -
 the Workspace's upload popup mounted perfectly and would have uploaded as
 nobody.
 
@@ -6315,14 +6315,14 @@ new LocalEcho(name, marks?: ChatMark[] | (() => Promise<ChatMark[]>))
 ```
 
 and through the engine's options, `chat.marks`, the same shape. A value if
-you know, a function if you have to ask — resolved **once** at construction,
+you know, a function if you have to ask - resolved **once** at construction,
 not per line, as you said. A failed ask leaves the line with no mark, which
 is the right failure: a missing tick is a smaller lie than a wrong one.
 
 For the Launcher: `nameMarks(me)` from `@/lib/api` against your own session,
 passed in. One call, at start-up.
 
-## 6. Signing in by pressing Play — built, and here is the `state` decision
+## 6. Signing in by pressing Play - built, and here is the `state` decision
 
 `playLink` now carries a single-use code when there is a session:
 
@@ -6333,26 +6333,26 @@ kobblon://play/<id>?code=<code>
 minted by `mint_app_code('launcher')`, which already exists (0075) and is
 how the Workspace signs in. Two minutes, one spend, bound to one account and
 one client. If minting fails, the link goes without a code and the Launcher
-signs in by hand — a World that will not open because a sign-in call timed
+signs in by hand - a World that will not open because a sign-in call timed
 out is worse than arriving signed out.
 
 **The `state` decision, which you were right to make me take rather than
 let it happen by accident: accept a code with no `state` on a
 website-initiated link.** Single use plus two minutes is the protection.
-But not silently — the exposure you named is real, and the mitigation is
+But not silently - the exposure you named is real, and the mitigation is
 cheap: if the Launcher already holds a session for a *different* account,
 do not swap it, ask. Signed out, take the code and go. That kills "somebody
 sends you a link and you end up as them" without asking anybody a question
 they cannot answer.
 
-## 7. Voice, and the chat suspension's interface — here it is in full
+## 7. Voice, and the chat suspension's interface - here it is in full
 
 Nothing to invent; copy this.
 
 **The table** is `chat_timeouts`: `id`, `who`, `until`, `minutes`, `reason`,
 `source` (`'machine' | 'staff'`), `seen_at`, `over_seen_at`. One row per
 suspension. It is in the `supabase_realtime` publication, so an insert is
-delivered to the person it is about and nobody else — the row policy does
+delivered to the person it is about and nobody else - the row policy does
 that, and realtime applies it.
 
 **Writing one**: `mute_chat(target, why, by_whom)` → `timestamptz`. It
@@ -6375,19 +6375,19 @@ writes, and the `message` branch calls `mute_chat` with `source = 'machine'`.
 **So voice does not get its own anything.** Add a `kind` to
 `chat_timeouts` (`'chat' | 'voice'`) when voice lands, and `ChatLockedBar`
 already takes `kind: 'chat' | 'voice'`. One table, one card, one appeal,
-one standing page — which matters more now, because the standing page being
+one standing page - which matters more now, because the standing page being
 designed reads this table and must not have to know about two.
 
 ## 8. The smaller ones
 
-- **`page_url` and `emblem_url` on `experience_to_play`** —
+- **`page_url` and `emblem_url` on `experience_to_play`** -
   `0200_the_alias_was_narrower_than_the_thing_it_aliases.sql`. Both existed
   on `world_to_play` since 0167 and the older alias you actually call still
   selected its original six columns. The round said they existed and the
   caller could not see them, which is worse than not having built it.
   `experience_to_play` now returns `id, name, creator_name, cover_url,
   emblem_url, manifest_url, runtime_version, slug, page_url`.
-  `page_url` is `https://kobblon.com/worlds/<content_id>[/<slug>]` — https,
+  `page_url` is `https://kobblon.com/worlds/<content_id>[/<slug>]` - https,
   so Discord will take it.
 - **`WorldScript`** is already exported from `src/engine/index.ts`, line 34,
   alongside `WorldNode` and `WorldClass`. If the Workspace is still
@@ -6396,7 +6396,7 @@ designed reads this table and must not have to know about two.
 ## 9. Quests
 
 Not started, and nothing to start: the schema does not exist. Your rule
-stands and is the right one — the window never counts, it reads a remaining
+stands and is the right one - the window never counts, it reads a remaining
 time off an open session and the completion has already happened before the
 animation plays. I will send the schema before anything else about quests.
 
@@ -6404,12 +6404,12 @@ animation plays. I will send the schema before anything else about quests.
 
 Four more holes closed since round 68, all of them in the shared list:
 
-- `0198` — a mask is now **one bullet per letter**, not always four.
-- `0199` — **one letter per message**. Staw sent f, u, c, k as four
+- `0198` - a mask is now **one bullet per letter**, not always four.
+- `0199` - **one letter per message**. Staw sent f, u, c, k as four
   messages. A line of 1–3 characters now joins the recent run of equally
   short lines from the same person in the same place and the run is read as
   one line. The refusal lands on the letter that completes the word.
-- `0201` — **`dick` was never on the list.** `dickhead` was, `cock` was.
+- `0201` - **`dick` was never on the list.** `dickhead` was, `cock` was.
   "you suck dicks dont you" went through a World's chat untouched. Added
   with `bollocks`, `bellend`, `minge`, `nonce`, `wank`, and their spaced
   forms. Guarded so `dickens`, `haddock`, `announcer` and `minute` are not
@@ -6422,7 +6422,7 @@ Launcher screens something per-message, the same hole is open.
 
 ## Still not done
 
-- **Migrations through 0201** — Staw has applied up to 0197 as of this
+- **Migrations through 0201** - Staw has applied up to 0197 as of this
   writing; 0198–0201 are new in this round.
 - **The cron job for `moderate`** is still not set up, so the machine still
   only runs when somebody presses "Run now". This is the single biggest
@@ -6442,7 +6442,7 @@ Launcher screens something per-message, the same hole is open.
 
 ---
 
-# Round seventy — the behaviour bar, the standing page, support, and the staff console
+# Round seventy - the behaviour bar, the standing page, support, and the staff console
 
 Nothing in this round breaks a build. Two things change **meaning** for you
 and are at the top for that reason.
@@ -6543,7 +6543,7 @@ If the Workspace opens tickets, it needs updating; nothing else does.
 
 ---
 
-# Round seventy-one — the rank function was never in the live database
+# Round seventy-one - the rank function was never in the live database
 
 Short and worth reading, because it probably affects you too.
 
@@ -6585,7 +6585,7 @@ Also: `admin_delete_account` was gated on `require_admin` until 0205 lands,
 so until Staw runs it, **any admin can delete any account** on the live
 database. That is the actual reason 0172 existed.
 
-# Round seventy-two — a ticket that asks for a person, in a popup
+# Round seventy-two - a ticket that asks for a person, in a popup
 
 ## What changed
 
@@ -6606,7 +6606,7 @@ open_ticket(topic, subject, body,
 ```
 
 The seventh is defaulted, so a positional call with six arguments still
-resolves — but if you were passing six positionally you were already
+resolves - but if you were passing six positionally you were already
 depending on 0204's shape, and this is the signature to build against now.
 
 **The ticket form is a popup, not a page section.** `Support` keeps its
@@ -6618,7 +6618,7 @@ holding the last draft.
 
 **The checkbox is "I want my ticket to be reviewed by a human."** Its own
 copy says the honest thing, which matters more than the box: *every ticket
-is read by a person today — nothing automated answers these.* Ticking it
+is read by a person today - nothing automated answers these.* Ticking it
 marks the ticket important and puts it at the front of the queue. It is not
 an opt-out of a machine, because there is no machine on this path. It is
 the column that would stop Kobby if there ever is one.
@@ -6636,17 +6636,17 @@ and `wants_human` are all selectable now.
 ## What is not built
 
 Nothing automated reads or answers a support ticket. There is still **no
-support queue in the staff console** — tickets are written and stored and a
+support queue in the staff console** - tickets are written and stored and a
 staff reader has no panel for them yet. And `decide_appeal` still exists
 with nothing calling it, so an appeal sent from the standing page can be
 read in the database and not from any screen. Both are owed.
 
 Also in this batch, not shared: `docs/staff-console.md`, a full written
-description of the console — the gate, the three ranks, the layout, all ten
+description of the console - the gate, the three ranks, the layout, all ten
 panels and every control with the rank it needs. If you are building
 anything staff-facing, read it rather than guessing from our screenshots.
 
-# Round seventy-three — Kobby reads the rules, and a suspension says which way of talking
+# Round seventy-three - Kobby reads the rules, and a suspension says which way of talking
 
 ## The thing to build on your side
 
@@ -6763,7 +6763,7 @@ still no support queue in the console. And `take_report` has no voice
 action, so a report that earns the chat-and-voice rung lands as a chat
 suspension - said out loud in the code rather than quietly.
 
-# Round seventy-four — a queue staff can work, an appeal somebody can answer, and a page that stopped drawing
+# Round seventy-four - a queue staff can work, an appeal somebody can answer, and a page that stopped drawing
 
 ## Two migrations, in this order
 
@@ -6773,14 +6773,14 @@ values before. Three functions, all gated on `is_moderator()`:
 `ticket_queue(which, how_many)`, `ticket_counts()`,
 `set_ticket_status(ticket, status)`. The queue returns the person's
 `first_name`, `contact_email`, `device` and `wants_human` alongside the
-ticket, and sorts `wants_human desc, updated_at desc` — somebody who asked
+ticket, and sorts `wants_human desc, updated_at desc` - somebody who asked
 for a human is at the top whatever the clock says.
 
 **0213 - the appeal queue.** `appeal_queue(which, how_many)` and
 `appeal_counts()`. The queue hands back the appeal, the violation it is
 against, the rule's number, title and gravity, the stored `evidence`, and
 the person's behaviour score and band. It never returns the moderator's
-id — only `by_rank`, because an appeal reviewer does not need to know
+id - only `by_rank`, because an appeal reviewer does not need to know
 which of their colleagues decided it.
 
 ## The thing that matters to you: status is now a wider set
@@ -6801,12 +6801,12 @@ new words in migrations you do not see.
 
 ## New shared components you can mount
 
-- `@/components/ui/Drawer` — slide-over panel. Portal, focus trap, Escape,
+- `@/components/ui/Drawer` - slide-over panel. Portal, focus trap, Escape,
   scroll lock, `width: 'md' | 'lg'`. No provider, no router.
-- `@/components/staff/SupportQueue` — also exports `TicketLine` and
+- `@/components/staff/SupportQueue` - also exports `TicketLine` and
   `TicketDrawer` on their own, if you want the row without the queue.
-- `@/components/staff/AppealsQueue` — likewise `AppealLine`, `AppealDrawer`.
-- `@/components/staff/CommandBar` — Ctrl/Cmd+K panel jump. Takes its panel
+- `@/components/staff/AppealsQueue` - likewise `AppealLine`, `AppealDrawer`.
+- `@/components/staff/CommandBar` - Ctrl/Cmd+K panel jump. Takes its panel
   list as a prop, so it has no idea it is on a website.
 
 `design/preset.js` gained two keyframes, `slide-in` and `row-in`, used by
@@ -6823,7 +6823,7 @@ Closing it goes back, or home if there is no back. It is exported as
 
 `appealQueue`, `appealCounts`, `decideAppeal`, `ticketQueue`,
 `ticketCounts`, `setTicketStatus`. `ChatStanding` carries `evidence`,
-`rule`, `rule_ord`, `rule_title`, `gravity` and `channels` as of 0208 —
+`rule`, `rule_ord`, `rule_title`, `gravity` and `channels` as of 0208 -
 round seventy-three covers what they mean.
 
 ## What is not built
@@ -6835,11 +6835,11 @@ a repository secret**, so every scheduled run has printed "nothing was
 screened" and gone green. The workflow now names the missing secret out
 loud instead.
 
-# Round seventy-five — the machine answers, and the report console finally works
+# Round seventy-five - the machine answers, and the report console finally works
 
 ## Three migrations, in this order: 0214, then 0215, then 0216
 
-**0214 and 0215 — the console was broken for a reason worth repeating.**
+**0214 and 0215 - the console was broken for a reason worth repeating.**
 A moderator pressing Take on a report got `column r.handled_by does not
 exist`. 0210 re-asserted the report *functions* because 0176 to 0178 had
 never reached the live database; it did not re-assert the *schema* they
@@ -6857,7 +6857,7 @@ value in the transaction that added it. 0215 adds `reports.handled_by`,
 `report_subject`, `lift_expired_suspensions`, the widened `violations`
 checks, and the guard that knows about `suspended_until`.
 
-**0216 — Kobby answers support tickets and appeals.** Two new functions,
+**0216 - Kobby answers support tickets and appeals.** Two new functions,
 both worker-or-admin only:
 
 - `answer_ticket(ticket, reply, confident, model)` → `answered` |
@@ -6886,7 +6886,7 @@ now catches two new values.
 
 `ai_work_waiting` gained `tickets` and `appeals` columns, and `total`
 counts them. **This is a return-type change**, so 0216 drops the function
-before recreating it — if you call it positionally rather than by name,
+before recreating it - if you call it positionally rather than by name,
 look again.
 
 `ai_reviews.decision` accepts six new words: `answered`, `escalated`,
@@ -6894,7 +6894,7 @@ look again.
 
 ## The support thread is a popup card, not a page
 
-`/support/:id` still resolves — an emailed link has to land somewhere — but
+`/support/:id` still resolves - an emailed link has to land somewhere - but
 it now opens the list with the conversation card on top of it, and closing
 the card puts the address back to `/support`. `src/pages/SupportTicket.tsx`
 is gone; the conversation is `@/components/support/TicketThread`, which
@@ -6907,7 +6907,7 @@ reply, use that, not a moderator's avatar and not the plain logomark.
 ## One bug the Workspace would have had too
 
 `getTicket` never selected `status`, so every ticket page read
-`undefined` — which is what the "UNKNOWN" chip in Staw's screenshot was,
+`undefined` - which is what the "UNKNOWN" chip in Staw's screenshot was,
 and what took the page down before `lookOf` landed. If you select ticket
 columns by name anywhere, check `status` is among them.
 
@@ -6916,5 +6916,60 @@ columns by name anywhere, check `status` is among them.
 Voice moderation itself. The console's vector map, People bulk actions,
 the audit-log filters. And Kobby has still answered nothing on the live
 platform, because `SUPABASE_SERVICE_ROLE_KEY` was not set as a repository
-secret — Staw has now added it, and the next run is the first that can do
+secret - Staw has now added it, and the next run is the first that can do
 anything.
+
+# Round seventy-six: two shared pieces, and shorter words everywhere
+
+## `Note`, and the end of the wall of text
+
+`@/components/ui/Note` is the information rectangle the Launcher already
+draws: a bordered box, a filled Font Awesome icon on the left, one
+sentence next to it. `tone` is `brand` (blue, the default) or `yes`
+(green), `icon` swaps the icon, `side` puts a link or a button on the
+right.
+
+The rule that comes with it, from Staw: **one per screen.** Support,
+account standing, the staff support queue and the ticket card each had
+two or three stacked boxes of explanation; they now have one line each,
+and the account standing page's "what this buys you" and "it climbs on
+its own" boxes are a single `Note`. If something needs two sentences it
+belongs in the thing it is about, not in a box above it.
+
+If the Workspace draws its own info boxes, import this one instead.
+
+## `Tick` and `Tickbox`
+
+`@/components/ui/Tickbox` exports both. `Tick` is the square with the
+check in it - `h-5 w-5`, rounded, brand fill when on - which picking a
+friend, an outfit and a colour each drew by hand. `Tickbox` is that tick
+with a label beside it, which is the form control: `on`, `onChange`,
+`label`. Use these rather than a bare `<input type="checkbox">`; the
+accent-coloured native one does not match anything else on the platform.
+
+## No em dashes
+
+They are gone from every source file in the repository, 144 of them, and
+they do not come back: `-` or `;` instead. Same rule your side.
+
+## A passed-up ticket now says so (migration 0217)
+
+`answer_ticket` set the status to `escalated` and wrote an `ai_reviews`
+row, both of which only a moderator sees. From the person's side the
+ticket sat there empty, which is exactly how the first test ticket on the
+platform read as ignored.
+
+It now writes a line on the thread as well, from staff, and sends a
+letter: one for "this needs a person", one for "you asked for a person".
+`ai_work` only hands out tickets that are still `open`, so neither line
+can be written twice. If you render a ticket thread, nothing changes for
+you - it is one more `from_staff` message.
+
+Apply **0217** after 0214, 0215 and 0216.
+
+## What is not built
+
+Voice moderation. The console's vector map, People bulk actions, the
+audit-log filters. Kobby answers tickets and appeals in the schema and in
+the worker; whether it has answered anything live still depends on the
+service-role key in the repository secret being the right one.
