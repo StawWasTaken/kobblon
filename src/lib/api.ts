@@ -2135,7 +2135,7 @@ export async function listAppeals(): Promise<Appeal[]> {
 
 export type AppealRow = {
   id: number
-  status: 'open' | 'upheld' | 'declined'
+  status: 'open' | 'upheld' | 'declined' | 'worsened'
   body: string
   created_at: string
   decision_note: string | null
@@ -2147,7 +2147,12 @@ export type AppealRow = {
   avatar_url: string | null
   score: number
   band: BehaviourBand
-  violation_id: number
+  /** Which kind of decision is being argued with: a violation, or a timeout. */
+  subject: 'violation' | 'timeout'
+  /** First go or second. Nobody gets a third. */
+  attempt: number
+  violation_id: number | null
+  timeout_id: string | null
   action: ViolationAction
   rule: string
   rule_ord: number | null
@@ -2177,22 +2182,110 @@ export async function appealQueue(which: 'open' | 'answered' | 'all' = 'open') {
   return (unwrap(await supabase.rpc('appeal_queue', { which })) as AppealRow[]) ?? []
 }
 
+export type AppealOutcome = 'upheld' | 'declined' | 'worsened'
+
 export async function appealCounts(): Promise<{
-  waiting: number; oldest_hours: number; upheld_30d: number; declined_30d: number
+  waiting: number; oldest_hours: number
+  upheld_30d: number; declined_30d: number; worsened_30d: number
 }> {
   const rows = unwrap(await supabase.rpc('appeal_counts')) as {
-    waiting: number; oldest_hours: number; upheld_30d: number; declined_30d: number
+    waiting: number; oldest_hours: number
+    upheld_30d: number; declined_30d: number; worsened_30d: number
   }[]
-  return rows?.[0] ?? { waiting: 0, oldest_hours: 0, upheld_30d: 0, declined_30d: 0 }
+  return rows?.[0] ?? {
+    waiting: 0, oldest_hours: 0, upheld_30d: 0, declined_30d: 0, worsened_30d: 0,
+  }
 }
 
-/** Upholding voids the decision and lifts a suspension nothing else holds. */
-export async function decideAppeal(appeal: number, upheld: boolean, note: string) {
-  unwrap(await supabase.rpc('decide_appeal', { appeal, upheld, note }))
+/**
+ * Answering one, three ways.
+ *
+ * Upholding voids the decision, or lifts the timeout, and lifts a
+ * suspension nothing else holds. Worsening moves it one rung up and leaves
+ * the original standing, because an appeal that found worse does not erase
+ * what was already found.
+ */
+export async function decideAppeal(appeal: number, outcome: AppealOutcome, note: string) {
+  unwrap(await supabase.rpc('decide_appeal', { appeal, outcome, note }))
+}
+
+/**
+ * Appointing a moderator or an admin, which is a superadmin's.
+ *
+ * Superadmin is not one of the three words this takes, deliberately: that
+ * rank is granted in the database by somebody who already holds it,
+ * because a panel that can promote only has to be stolen once.
+ */
+export async function setStaffRank(
+  target: string,
+  rank: 'none' | 'moderator' | 'admin',
+): Promise<string> {
+  return unwrap(await supabase.rpc('set_staff_rank', { target, rank })) as string
 }
 
 export async function fileAppeal(violationId: number, body: string): Promise<number> {
   return unwrap(await supabase.rpc('file_appeal', { violation: violationId, body })) as number
+}
+
+/** The same, about a chat or voice suspension rather than a violation. */
+export async function fileAppealForTimeout(timeout: string, body: string): Promise<number> {
+  return unwrap(await supabase.rpc('file_appeal_for_timeout', { timeout, body })) as number
+}
+
+/**
+ * The one tap on the suspension card: "I did not say that."
+ *
+ * The words are written by the database, not here, so the Launcher and the
+ * website cannot put two different claims in somebody's mouth.
+ */
+export async function iDidNotSayThat(timeout: string): Promise<number> {
+  return unwrap(await supabase.rpc('i_did_not_say_that', { timeout })) as number
+}
+
+/** Goes used, when the window shuts, and whether another may be written. */
+export async function myTimeoutAppealState(timeout: string): Promise<{
+  used: number
+  closes_at: string | null
+  may: boolean
+}> {
+  const rows = unwrap(await supabase.rpc('my_timeout_appeal_state', { timeout })) as {
+    used: number; closes_at: string | null; may: boolean
+  }[] | null
+  return rows?.[0] ?? { used: 0, closes_at: null, may: false }
+}
+
+/**
+ * Whether this account may type and whether it may speak, asked of the
+ * server rather than worked out from a row the client happens to hold.
+ *
+ * The Launcher asks this on joining and after every suspension card: a
+ * client that greys the text box and leaves the microphone live is a voice
+ * suspension that does not exist.
+ */
+export async function mayISpeak(): Promise<{
+  chat: boolean
+  voice: boolean
+  until: string | null
+  why: string | null
+}> {
+  const rows = unwrap(await supabase.rpc('may_i_speak')) as {
+    chat: boolean; voice: boolean; until: string | null; why: string | null
+  }[] | null
+  return rows?.[0] ?? { chat: true, voice: true, until: null, why: null }
+}
+
+/**
+ * A line the Launcher heard in voice chat, handed over to be read.
+ *
+ * One call per transcribed utterance. `whereAt` is whatever the
+ * application calls the place it was said, kept so a moderator can tell
+ * where it happened; nothing is looked up from it. Censored on the way in
+ * by the same patterns chat goes through.
+ */
+export async function heardInVoice(said: string, whereAt?: string): Promise<number | null> {
+  return (unwrap(await supabase.rpc('heard_in_voice', {
+    said, where_at: whereAt ?? null,
+  })) as number | null) ?? null
 }
 
 /** Whether something is switched off for this account, asked of the server. */

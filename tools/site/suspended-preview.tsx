@@ -28,6 +28,32 @@ createRoot(document.getElementById('root')!).render(
       evidence="follow you everywhere until you cry"
       reason="Following somebody around after being told to stop."
     />
+    {/* Out of voice chat: the same card, one different tap. */}
+    <ChatSuspended
+      minutes={20}
+      until={soon}
+      spoken
+      onUnderstand={() => {}}
+      onAppeal={() => {}}
+      ruleOrd={2}
+      ruleTitle="Do not go after people"
+      channels={['chat', 'voice']}
+      evidence="youre a •••• and everyone here knows it"
+      reason="A slur aimed at somebody in the room."
+    />
+    <ChatSuspended
+      minutes={20}
+      until={soon}
+      spoken
+      appealed
+      onUnderstand={() => {}}
+      onAppeal={() => {}}
+      ruleOrd={2}
+      ruleTitle="Do not go after people"
+      channels={['chat', 'voice']}
+      evidence="youre a •••• and everyone here knows it"
+      reason="A slur aimed at somebody in the room."
+    />
     <ChatSuspended minutes={6} until={soon} onUnderstand={() => {}} />
     <ChatSuspended minutes={5} until={soon} over onUnderstand={() => {}} />
 

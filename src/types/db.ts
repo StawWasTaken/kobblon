@@ -631,7 +631,9 @@ export type ModerationRow = {
   /** Whether it still presses on the bar: a clear leaves it listed but at nought. */
   counts: boolean
   weight: number
-  appeal_status: 'open' | 'upheld' | 'declined' | null
+  /** The timeout this row is, when it is one. A violation row has none. */
+  timeout_id: string | null
+  appeal_status: 'open' | 'upheld' | 'declined' | 'worsened' | null
   appeal_body: string | null
   appeal_note: string | null
   appeal_at: string | null
@@ -661,7 +663,7 @@ export type StaffModerationRow = {
   is_void: boolean
   counts: boolean
   weight: number
-  appeal_status: 'open' | 'upheld' | 'declined' | null
+  appeal_status: 'open' | 'upheld' | 'declined' | 'worsened' | null
 }
 
 export type ViolationAction =

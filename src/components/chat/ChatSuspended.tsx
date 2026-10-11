@@ -22,7 +22,7 @@ import { cn } from '@/lib/cn'
  */
 export function ChatSuspended({
   minutes, until, over, reason, evidence, ruleOrd, ruleTitle, channels,
-  onUnderstand, onAppeal, className,
+  spoken, onUnderstand, onAppeal, appealBusy, appealed, className,
 }: {
   /** How long it was given for, in minutes. */
   minutes: number
@@ -48,9 +48,28 @@ export function ChatSuspended({
    * and leaves the microphone live is a voice suspension that does not exist.
    */
   channels?: string[] | null
+  /**
+   * Whether this came out of voice chat rather than something typed.
+   *
+   * It changes what the card offers, not how it looks: a transcript is a
+   * guess, and a worse guess for a child, an accent, or a noisy room, so
+   * the person it got wrong is offered one tap instead of an essay.
+   */
+  spoken?: boolean
   onUnderstand: () => void
-  /** Left out entirely when there is nowhere to appeal to. */
+  /**
+   * Left out entirely when there is nowhere to appeal to.
+   *
+   * On a spoken line this is the one tap - the host calls
+   * `iDidNotSayThat(timeoutId)` and the database writes the appeal. The
+   * card does not compose it, so the Launcher and the website cannot put
+   * two different claims in somebody's mouth.
+   */
   onAppeal?: () => void
+  /** While the appeal is going out, so the tap cannot be pressed twice. */
+  appealBusy?: boolean
+  /** Once it has gone, so the card says so instead of offering it again. */
+  appealed?: boolean
   className?: string
 }) {
   const [left, setLeft] = useState(() => remaining(until))
@@ -154,15 +173,23 @@ export function ChatSuspended({
         {over ? 'Thanks' : 'I understand'}
       </button>
 
-      {onAppeal && !over && (
+      {appealed && !over && (
         <p className="mt-4 text-xs text-muted">
-          Did we get this wrong?{' '}
+          Sent. Somebody will read what was heard against the rule, and you will be told
+          either way.
+        </p>
+      )}
+
+      {onAppeal && !appealed && !over && (
+        <p className="mt-4 text-xs text-muted">
+          {spoken ? 'This was transcribed, and a transcript can be wrong. ' : 'Did we get this wrong? '}
           <button
             type="button"
             onClick={onAppeal}
-            className="font-bold text-ink-strong underline underline-offset-2 hover:text-brand-bright"
+            disabled={appealBusy}
+            className="font-bold text-ink-strong underline underline-offset-2 hover:text-brand-bright disabled:opacity-60"
           >
-            Let us know
+            {spoken ? 'I did not say that' : 'Let us know'}
           </button>
         </p>
       )}

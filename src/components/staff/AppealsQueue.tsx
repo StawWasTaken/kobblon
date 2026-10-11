@@ -18,7 +18,7 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faGavel, faCircleCheck, faBan, faClock, faScaleBalanced, faQuoteLeft,
+  faGavel, faCircleCheck, faBan, faClock, faScaleBalanced, faQuoteLeft, faArrowUp,
   faHourglassHalf, faInbox, faThumbsUp, faThumbsDown,
 } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
@@ -33,7 +33,7 @@ import { useAsync } from '@/hooks/useAsync'
 import {
   BehaviourBar, ByBadge, bandTone, bandWord, historyWord,
 } from '@/components/social/standing'
-import { appealQueue, appealCounts, decideAppeal } from '@/lib/api'
+import { appealQueue, appealCounts, decideAppeal, type AppealOutcome } from '@/lib/api'
 import type { AppealRow } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -143,8 +143,10 @@ export function AppealLine({ one, onOpen }: { one: AppealRow; onOpen: () => void
           {one.status === 'open' ? (
             <Badge tone={slow ? 'warm' : 'brand'}>Waiting {waited(one.waiting_hours)}</Badge>
           ) : (
-            <Badge tone={one.status === 'upheld' ? 'space' : 'neutral'}>
-              {one.status === 'upheld' ? 'Upheld' : 'Declined'}
+            <Badge tone={one.status === 'upheld' ? 'space'
+              : one.status === 'worsened' ? 'danger' : 'neutral'}>
+              {one.status === 'upheld' ? 'Upheld'
+                : one.status === 'worsened' ? 'Up a rung' : 'Declined'}
             </Badge>
           )}
           {one.rule_ord && <span className="text-xs text-muted">Rule {one.rule_ord}</span>}
@@ -171,18 +173,29 @@ export function AppealDrawer({ one, onClose, onDecided }: {
 }) {
   const say = useToast()
   const [note, setNote] = useState('')
-  const [busy, setBusy] = useState<'upheld' | 'declined' | null>(null)
+  const [busy, setBusy] = useState<AppealOutcome | null>(null)
 
-  const decide = async (upheld: boolean) => {
+  /*
+   * Three answers since 0227, not two. Worsening leaves the original
+   * decision standing and adds one rung above it, so the button says what
+   * it does rather than "reject harder".
+   */
+  const said_after: Record<AppealOutcome, string> = {
+    upheld: 'Upheld. It has been taken back.',
+    declined: 'Declined. They have been told.',
+    worsened: 'Taken up a rung. They have been told what and why.',
+  }
+
+  const decide = async (outcome: AppealOutcome) => {
     const said = note.trim()
     if (said.length < 10) {
       say('Say why. They are sent this, word for word.', 'error')
       return
     }
-    setBusy(upheld ? 'upheld' : 'declined')
+    setBusy(outcome)
     try {
-      await decideAppeal(one.id, upheld, said)
-      say(upheld ? 'Upheld. The decision has been voided.' : 'Declined. They have been told.', 'success')
+      await decideAppeal(one.id, outcome, said)
+      say(said_after[outcome], 'success')
       onDecided()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
@@ -200,13 +213,16 @@ export function AppealDrawer({ one, onClose, onDecided }: {
       badge={
         one.status === 'open'
           ? <Badge tone="brand">Waiting {waited(one.waiting_hours)}</Badge>
-          : <Badge tone={one.status === 'upheld' ? 'space' : 'neutral'}>
-              {one.status === 'upheld' ? 'Upheld' : 'Declined'}
+          : <Badge tone={one.status === 'upheld' ? 'space' : one.status === 'worsened' ? 'danger' : 'neutral'}>
+              {one.status === 'upheld' ? 'Upheld'
+                : one.status === 'worsened' ? 'Taken up a rung' : 'Declined'}
             </Badge>
       }
       subtitle={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span>@{one.username ?? 'somebody'}</span>
+          {one.attempt > 1 && <span>second and last go</span>}
+          {one.subject === 'timeout' && <span>about a suspension, not a violation</span>}
           <span>sent {timeAgo(one.created_at)}</span>
           <span>decision made {timeAgo(one.decided_on)}</span>
         </span>
@@ -219,20 +235,30 @@ export function AppealDrawer({ one, onClose, onDecided }: {
             icon={faCircleCheck}
             loading={busy === 'upheld'}
             disabled={!!busy}
-            onClick={() => decide(true)}
+            onClick={() => void decide('upheld')}
             className="border-space/50 text-space-bright"
           >
             Put it back
           </Button>
           <Button
             size="sm"
-            variant="danger"
+            variant="subtle"
             icon={faBan}
             loading={busy === 'declined'}
             disabled={!!busy}
-            onClick={() => decide(false)}
+            onClick={() => void decide('declined')}
           >
             It stands
+          </Button>
+          <Button
+            size="sm"
+            variant="danger"
+            icon={faArrowUp}
+            loading={busy === 'worsened'}
+            disabled={!!busy}
+            onClick={() => void decide('worsened')}
+          >
+            Up a rung
           </Button>
           <p className="ml-auto text-xs text-muted">
             They are sent what you write, as you write it.

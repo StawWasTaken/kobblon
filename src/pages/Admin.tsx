@@ -54,7 +54,7 @@ import {
   deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff,
   staffRecord, staffRecordKinds,
   listFlaggedTerms, moveBrixAsStaff, notifyAsStaff, notifyEveryone,
-  saveFlaggedTerm, setStanding, tryFlaggedTerm,
+  saveFlaggedTerm, setStaffRank, setStanding, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
@@ -219,18 +219,46 @@ export function PersonRow({ person, onChanged }: {
           {person.is_verified ? 'Unverify' : 'Verify'}
         </Button>
 
-        <Button
-          size="sm"
-          variant="subtle"
-          disabled={busy}
-          onClick={() => run(
-            person.is_moderator ? 'No longer a moderator.' : 'Now a moderator.',
-            () => setStanding(person.id, { moderator: !person.is_moderator }),
-          )}
-        >
-          <FontAwesomeIcon icon={faShieldHalved} />
-          {person.is_moderator ? 'Remove mod' : 'Make mod'}
-        </Button>
+        {/*
+          * Appointing, for a superadmin, and the mod toggle for everybody
+          * else who may be here.
+          *
+          * `set_staff_rank` is a superadmin's and refuses anybody else, so
+          * an admin shown three choices would press one and be told no.
+          * They keep the one switch they really do have, which is the
+          * moderator bit through `admin_set_standing`.
+          */}
+        {rank === 'superadmin' ? (
+          <Choices
+            size="sm"
+            tone="soft"
+            label="Their rank"
+            value={person.is_admin ? 'admin' : person.is_moderator ? 'moderator' : 'none'}
+            onChange={(picked) => run(
+              picked === 'none' ? 'Staff access removed.'
+                : picked === 'admin' ? 'Now an admin.' : 'Now a moderator.',
+              async () => { await setStaffRank(person.id, picked as 'none' | 'moderator' | 'admin') },
+            )}
+            options={[
+              { value: 'none', label: 'No rank' },
+              { value: 'moderator', label: 'Moderator' },
+              { value: 'admin', label: 'Admin' },
+            ]}
+          />
+        ) : (
+          <Button
+            size="sm"
+            variant="subtle"
+            disabled={busy}
+            onClick={() => run(
+              person.is_moderator ? 'No longer a moderator.' : 'Now a moderator.',
+              () => setStanding(person.id, { moderator: !person.is_moderator }),
+            )}
+          >
+            <FontAwesomeIcon icon={faShieldHalved} />
+            {person.is_moderator ? 'Remove mod' : 'Make mod'}
+          </Button>
+        )}
 
         {/*
           * The badge on its own, which hands out no power at all. Kept

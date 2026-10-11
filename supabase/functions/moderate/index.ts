@@ -799,7 +799,19 @@ async function handle(request: Request): Promise<Response> {
         continue
       }
 
-      const verdict = await askGroqChat(settings.model, rules, job.words)
+      /*
+       * A spoken line is told it was spoken.
+       *
+       * Not to judge it more harshly - the rules are the rules - but
+       * because a transcript reads differently: no punctuation, run-on
+       * words, and whatever the recogniser guessed. A model shown that as
+       * if it were typed reads the recogniser's mistakes as the person's.
+       */
+      const heard = job.kind === 'voice'
+        ? `Said out loud in voice chat and transcribed, so the wording may be imperfect: ${job.words}`
+        : job.words
+
+      const verdict = await askGroqChat(settings.model, rules, heard)
       if ('trouble' in verdict) {
         trouble.add(verdict.trouble)
         continue

@@ -35,7 +35,7 @@ const base: ModerationRow = {
   counts: true, weight: 9.3,
   appeal_status: null, appeal_body: null, appeal_note: null,
   appeal_at: null, appeal_decided_at: null, appealable: true,
-  appeals_used: 0, appeal_closes_at: ahead(13),
+  appeals_used: 0, appeal_closes_at: ahead(13), timeout_id: null,
 }
 
 const rows: ModerationRow[] = [
@@ -49,7 +49,9 @@ const rows: ModerationRow[] = [
   },
   {
     ...base, key: 'c', kind: 'chat', action: 'chat_timeout', by_rank: 'kobby',
-    at: ago(4), until: ago(4), weight: 3.2, appealable: false,
+    at: ago(0), until: ahead(0), weight: 3.2, appealable: true,
+    timeout_id: '00000000-0000-0000-0000-00000000c0de', target_type: 'voice',
+    appeal_closes_at: ahead(15),
     rule: 'sexual', rule_ord: 5, rule_title: 'Kobblon chat is not for sex',
     rule_body: 'Do not use Kobblon to talk about sex, describe sexual acts, ask anybody for anything sexual, or proposition anybody. This is judged by what the sentence means, not by which words are in it.',
     gravity: 3, channels: ['chat', 'voice'],

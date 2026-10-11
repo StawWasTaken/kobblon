@@ -7252,3 +7252,150 @@ Staw: "i gave you the image i wanted you to use, that image, not try to
 recreate it - just use the favicon we're using for the website". It is now
 `brand/favicon.png`, the same file the browser tab shows, and the SVG is
 deleted. If you drew your own anywhere, use the favicon.
+
+# Round eighty-two: voice, struck-out lines, and what the Launcher calls
+
+The big one for you. Everything here is about chat and voice in the
+Launcher, and most of it is a call you make rather than a component you
+mount.
+
+## Voice is moderated by reading what was said
+
+There is no new machine for it, on purpose. A transcript is a line
+somebody said, and `chat_to_read` already is the queue for lines somebody
+said. Voice joins it as a fourth kind and walks the same path: the same
+numbered rules, the same prompt, the same ladder, the same `judge_chat_line`.
+
+**What you call, once per transcribed utterance:**
+
+```ts
+import { heardInVoice } from '@/lib/api'
+await heardInVoice(whatWasHeard, worldOrPartyId)
+```
+
+`where_at` is whatever you call the place it was said; it is kept so a
+moderator can see where it happened and nothing is looked up from it. The
+text is censored on the way in by the same patterns chat goes through, and
+it is rate limited to sixty lines a minute per person - a transcriber that
+breaks and floods is a bill, and the person being transcribed has not done
+anything wrong.
+
+Two differences from a typed line, both deliberate:
+
+* **Being quieted for something spoken takes voice too.** A spoken line
+  that would have quieted somebody's chat quiets chat and voice. Voice is
+  still never taken on its own: somebody who may not speak may not type the
+  same thing instead.
+* **The model is told it was spoken**, so it reads the recogniser's
+  mistakes as the recogniser's rather than the person's.
+
+**What you ask before letting anybody talk:**
+
+```ts
+const { chat, voice, until, why } = await mayISpeak()
+```
+
+Ask it on joining and after every suspension card. A client that greys the
+text box and leaves the microphone live is a voice suspension that does not
+exist.
+
+## Something that got you moderated is struck out where you said it
+
+Staw: "if you get moderated for something youve said, even days after,
+then the text you sent gets instantly censored where it was". It was not,
+and the gap was the worst possible one: the filter stars out *words* as
+they are typed, and Kobby reading the *meaning* of a sentence is exactly
+the case the filter cannot catch. The one kind of line the machine exists
+to find was the one kind that stayed on screen in full, for everybody, for
+ever.
+
+Now, the moment a line is judged to break a rule, the row it came from is
+rewritten in place: every word becomes four bullets, the same bullets the
+filter uses. The original is kept in `chat_to_read` and on the violation,
+which is what a moderator reads when the appeal arrives.
+
+**Nothing to call.** It is an UPDATE on `messages`, `space_messages` or
+`community_posts`, so if your chat listens for UPDATE it is already
+instant. **If it only listens for INSERT, it is not** - that is the one
+thing to check on your side.
+
+## The suspension card, with one tap for a transcript
+
+`ChatSuspended` took `onAppeal` already. Three props more:
+
+* `spoken` - the tap reads **"I did not say that"** and the line above it
+  says the transcript can be wrong.
+* `appealBusy` - while it is going out.
+* `appealed` - once it has gone, so the card says so instead of offering
+  it again.
+
+The host does the call: `iDidNotSayThat(timeoutId)`. **The card does not
+compose the appeal and neither should you** - the database writes the
+words, so the Launcher and the website cannot put two different claims in
+somebody's mouth. It files a real appeal against that suspension, it shows
+up on the standing page like any other, and a person answers it.
+
+`tools/site/suspended-preview.html` mounts all of it with nothing around
+it, including the spoken and already-sent states.
+
+## An appeal can be about a suspension now, and has three answers
+
+Until this round an appeal could only be about a `violations` row, so the
+sanction the machine hands out most often - a chat or voice suspension, a
+`chat_timeouts` row - was the one thing on the standing page with no way to
+argue with it.
+
+* `appeals` now points at a violation **or** a timeout, never both.
+  `violation_id` is nullable; `timeout_id` is new. **Anything you read off
+  `appeals` has to handle both.**
+* `chat_timeouts` has `lifted_at` and `lift_reason`. Everything that asks
+  whether somebody may speak, whether a new sanction widens the live one,
+  and how long the next one should be, ignores a lifted timeout. If you
+  cache a timeout anywhere, a lifted one is over.
+* `decide_appeal(appeal, outcome, note)` - **the signature changed**, a
+  word instead of a boolean, and the old one is dropped. `upheld`,
+  `declined`, `worsened`. Worsening moves it one rung up and leaves the
+  original standing, because an appeal that found worse does not erase what
+  was already found. A suspension does not escalate: the only thing above
+  it is closing an account, which is a superadmin with a typed
+  confirmation and never a side effect of answering an appeal.
+* `appeal_queue` gained `subject`, `attempt` and `timeout_id`, and its
+  inner join on `violations` became a left join - it would have hidden
+  every timeout appeal, open for ever and counted nowhere.
+* `my_moderation_history()` gained `timeout_id`, and a timeout row now
+  carries its appeal and `appealable` like any other.
+
+**The machine never sees these.** `judge_appeal` only ever gets appeals
+against a violation a person did not decide. An appeal that says "I did
+not say that" is a claim about a transcript, and a transcript is the
+machine's own evidence; asking it to mark its own homework is not review.
+`ai_work`'s own 'busy' gate was counting them as work it could take, and
+no longer does.
+
+## The decision card was redrawn to match yours
+
+The popup on the standing page and the suspension card you show were two
+layouts for one event. The popup now takes the card's shape - the icon in
+a disc, the one line saying what happened, a hairline, then the facts -
+and keeps what the small card cannot carry: the rule in full, the appeal
+and its answer, and the bar. A timeout that took voice is titled "Chat and
+voice suspended" rather than by the action's name, which said "Chat
+suspended" at somebody whose microphone was dead.
+
+## Ranks
+
+`set_staff_rank(target, 'none' | 'moderator' | 'admin')`, a superadmin's,
+with the console control beside it. It cannot make a superadmin, touch a
+superadmin's row, touch the house account, or be used on yourself. Every
+use is written to the admin log and the person is told.
+
+And the house account is a superadmin now. It has been answering tickets,
+sending every piece of staff mail and owning the starting kit from rank
+'none' this whole time, which worked only because the functions behind
+those are `security definer`. The first page to read a table directly as
+that account would have found out the hard way.
+
+## Migrations
+
+0225 through 0230, in order. 0230 has to come after 0225, because it
+rewrites the same function.
