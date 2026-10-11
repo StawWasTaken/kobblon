@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
@@ -23,6 +23,7 @@ import { useTitle } from '@/hooks/useTitle'
 import { listTickets, openTicket } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
+import { TicketThread } from '@/components/support/TicketThread'
 import type { Ticket, TicketDevice, TicketTopic } from '@/types/db'
 
 /*
@@ -431,6 +432,24 @@ export default function Support() {
   const [sending, setSending] = useState(false)
   const [opened, setOpened] = useState(0)
 
+  /*
+   * Which ticket is open on top of the list, if any.
+   *
+   * `/support/:id` still resolves here, because a link in a reply email has
+   * to land somewhere - it opens the list with that card on top. Closing the
+   * card puts the address back to `/support` rather than going back, so
+   * closing it twice does not leave somebody on a page they already left.
+   */
+  const { id: fromAddress } = useParams()
+  const navigate = useNavigate()
+  const [reading, setReading] = useState<number | null>(
+    Number(fromAddress) > 0 ? Number(fromAddress) : null,
+  )
+  const shutCard = () => {
+    setReading(null)
+    if (fromAddress) navigate('/support', { replace: true })
+  }
+
   const startWriting = () => { setOpened((n) => n + 1); setWriting(true) }
 
   const send = async (filled: Parameters<Parameters<typeof TicketCard>[0]['onSend']>[0]) => {
@@ -522,7 +541,12 @@ export default function Support() {
           const look = lookOf(ticket.status)
           const was = devices.find((one) => one.value === ticket.device)
           return (
-            <Link key={ticket.id} to={`/support/${ticket.id}`} className="block">
+            <button
+              key={ticket.id}
+              type="button"
+              onClick={() => setReading(ticket.id)}
+              className="block w-full text-left"
+            >
               <Card className="flex flex-wrap items-center gap-3 p-5 transition-colors hover:bg-ink-hover">
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
@@ -563,7 +587,7 @@ export default function Support() {
                 </span>
                 <FontAwesomeIcon icon={faArrowRight} className="text-xs text-muted" />
               </Card>
-            </Link>
+            </button>
           )
         })}
       </section>
@@ -573,6 +597,10 @@ export default function Support() {
         Kobblon will never ask you for your password, and never asks for it here. Anybody who
         does is not us, whatever the message looks like.
       </p>
+
+      {reading !== null && (
+        <TicketThread number={reading} onClose={shutCard} onChanged={tickets.reload} />
+      )}
 
       {/*
         * Keyed on how many times it has been opened, so a card that was

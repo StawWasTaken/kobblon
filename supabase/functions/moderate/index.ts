@@ -237,6 +237,124 @@ Answer with JSON only:
 {"founded": true|false, "rule": "<the code in brackets, or null>", "reason": "<one short sentence saying what is or is not against the rules>"}`
 }
 
+
+/* ------------------------------------------------- answering a support ticket */
+
+const TICKET_PROMPT = `You answer support tickets for Kobblon, a game platform used by children. You are writing as Kobblon, not as a named person.
+
+HOW TO ANSWER
+
+Read what they wrote and answer the question they actually asked, in plain words, in at most four sentences. No greeting block, no sign-off, no "I'm sorry to hear that". Say what is true, say what they should do next, and stop.
+
+Set confident false - and leave the answer empty - whenever any of these is true:
+
+* you would have to guess at something about their account, their money, or a specific thing they uploaded
+* answering would mean promising a refund, a reversal, a restoration or an exception
+* it is about a decision taken against their account, which is appealed and not answered here
+* it is a report about another person, which is handled somewhere else
+* you simply do not know
+
+A person reads every ticket you are not confident about, so saying nothing costs them a short wait and saying the wrong thing costs them their trust. Prefer the wait.
+
+Never ask for a password. Never claim an action has been taken. Never invent a policy, a price, a date or a feature.
+
+Answer with JSON only:
+{"confident": true|false, "reply": "<the answer, or an empty string>"}`
+
+/** One ask about one support ticket. */
+async function askGroqTicket(model: string, ticket: string): Promise<
+  { confident: boolean; reply: string } | { trouble: string }
+> {
+  const got = await askGroqJson(model, TICKET_PROMPT, ticket, 400)
+  if ('trouble' in got) return got
+  return {
+    confident: got.json.confident === true,
+    reply: String(got.json.reply ?? '').slice(0, 2000),
+  }
+}
+
+/* --------------------------------------------------------- deciding an appeal */
+
+function appealPrompt(rules: { ord: number; code: string; title: string; body: string }[]) {
+  const list = rules.map((r) => `${r.ord}. [${r.code}] ${r.title}\n   ${r.body}`).join('\n')
+
+  return `You look again at a moderation decision Kobblon's own machine made, now that the person has appealed it. Kobblon is a game platform used by children.
+
+THE RULES
+
+${list}
+
+HOW TO DECIDE
+
+You are given the decision, the reason recorded for it, the evidence kept with it, and what the person says. Ask one question: does the evidence actually break the rule that was named?
+
+Overturn when the evidence does not show the rule being broken, when the rule named does not fit what was said, or when it is genuinely ambiguous. An ambiguous case is overturned: the cost of lifting a warning that was fair is far smaller than the cost of holding one that was not.
+
+Uphold only when the evidence plainly breaks the rule and what the person says does not change that. "I did not mean it that way" can change it. "Everyone else does it" does not.
+
+Write the reason as something the person will read about their own account: short, plain, and about what was said rather than about them.
+
+Answer with JSON only:
+{"overturn": true|false, "reason": "<one or two short sentences>"}`
+}
+
+/** One ask about one appeal, against the numbered rules. */
+async function askGroqAppeal(model: string, rules: {
+  ord: number; code: string; title: string; body: string
+}[], appeal: string): Promise<
+  { overturn: boolean; reason: string } | { trouble: string }
+> {
+  const got = await askGroqJson(model, appealPrompt(rules), appeal, 300)
+  if ('trouble' in got) return got
+  return {
+    overturn: got.json.overturn === true,
+    reason: String(got.json.reason ?? '').slice(0, 500),
+  }
+}
+
+/**
+ * The one ask, for the two above.
+ *
+ * `askGroqReport` and `askGroqChat` predate this and each carry their own
+ * copy of it. They are left alone deliberately: they are the two paths that
+ * take action against an account, they are checked, and rewriting them to
+ * share a helper is a change to working moderation code for tidiness.
+ */
+async function askGroqJson(
+  model: string, system: string, words: string, limit: number,
+): Promise<{ json: Record<string, unknown> } | { trouble: string }> {
+  const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${GROQ_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      temperature: 0,
+      max_tokens: limit,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: words },
+      ],
+    }),
+  }).catch((why) => ({ failed: String(why) }) as const)
+
+  if ('failed' in said) return { trouble: `Groq could not be reached: ${said.failed}` }
+  if (!said.ok) {
+    const why = await said.text().catch(() => '')
+    return { trouble: `Groq said ${said.status} for ${model}: ${why.slice(0, 300)}` }
+  }
+
+  const body = await said.json().catch(() => null)
+  const text = body?.choices?.[0]?.message?.content
+  if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+
+  try {
+    return { json: JSON.parse(text) }
+  } catch {
+    return { trouble: `${model} did not answer in JSON.` }
+  }
+}
+
 /** One ask about one report, against the numbered rules. */
 async function askGroqReport(model: string, rules: {
   ord: number; code: string; title: string; body: string
@@ -632,6 +750,86 @@ async function handle(request: Request): Promise<Response> {
       if (typeof did === 'string' && did !== 'nothing') {
         acted[did] = (acted[did] ?? 0) + 1
       }
+      continue
+    }
+
+
+    /*
+     * A support ticket. The machine writes the reply as Kobblon; the
+     * database decides whether it is allowed to, and it refuses outright
+     * for anybody who ticked "I want a person".
+     */
+    if (job.subject === 'ticket') {
+      const asked = [
+        `What it is about: ${job.kind}`,
+        `Subject: ${job.name}`,
+        job.words ? `What they wrote: ${job.words}` : 'They wrote nothing beyond the subject.',
+      ].join('\n')
+
+      const draft = await askGroqTicket(settings.model, asked)
+      if ('trouble' in draft) {
+        trouble.add(draft.trouble)
+        continue
+      }
+
+      const { data: did, error: refusedTicket } = await db.rpc('answer_ticket', {
+        ticket: Number(job.subject_id),
+        reply: draft.reply,
+        confident: draft.confident,
+        model: settings.model,
+      })
+      if (refusedTicket) {
+        trouble.add(`A ticket could not be answered: ${refusedTicket.message}`)
+        continue
+      }
+
+      if (did === 'answered') decided += 1
+      else unsure += 1
+      if (typeof did === 'string') acted[did] = (acted[did] ?? 0) + 1
+      continue
+    }
+
+    /*
+     * An appeal against one of the machine's own decisions. `ai_work` hands
+     * over no other kind, and `judge_appeal` refuses the rest anyway - a
+     * person's decision is a person's to revisit.
+     */
+    if (job.subject === 'appeal') {
+      if (noRules || !rules.length) {
+        trouble.add(
+          noRules
+            ? `The rules could not be read, so no appeal was decided: ${noRules.message}`
+            : 'No rules are switched on, so no appeal was decided.',
+        )
+        continue
+      }
+
+      const asked = [
+        `What was decided: ${job.kind}`,
+        `The reason recorded: ${job.name}`,
+        job.words ? `What they say: ${job.words}` : 'They said nothing.',
+      ].join('\n')
+
+      const second = await askGroqAppeal(settings.model, rules, asked)
+      if ('trouble' in second) {
+        trouble.add(second.trouble)
+        continue
+      }
+
+      const { data: did, error: refusedAppeal } = await db.rpc('judge_appeal', {
+        appeal: Number(job.subject_id),
+        overturn: second.overturn,
+        why: second.reason,
+        model: settings.model,
+      })
+      if (refusedAppeal) {
+        trouble.add(`An appeal could not be decided: ${refusedAppeal.message}`)
+        continue
+      }
+
+      if (did === 'for_a_person' || did === 'gone') unsure += 1
+      else decided += 1
+      if (typeof did === 'string') acted[did] = (acted[did] ?? 0) + 1
       continue
     }
 

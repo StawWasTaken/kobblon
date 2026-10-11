@@ -41,7 +41,6 @@ const Standing = lazyPage(() => import('@/pages/Standing'))
 const StandingItem = lazyPage(() => import('@/pages/StandingItem'))
 const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
-const SupportTicket = lazyPage(() => import('@/pages/SupportTicket'))
 const Download = lazyPage(() => import('@/pages/Download'))
 const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
@@ -194,7 +193,7 @@ export default function App() {
                   <Route path="/standing/:id" element={<StandingItem />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/support" element={<Support />} />
-                  <Route path="/support/:id" element={<SupportTicket />} />
+                  <Route path="/support/:id" element={<Support />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

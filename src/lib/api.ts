@@ -2228,7 +2228,7 @@ export async function readAllMail() {
 export async function listTickets(): Promise<Ticket[]> {
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, contact_email, first_name, device, wants_human, updated_at, created_at')
+    .select('id, topic, subject, status, contact_email, first_name, device, wants_human, updated_at, created_at')
     .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as Ticket[]

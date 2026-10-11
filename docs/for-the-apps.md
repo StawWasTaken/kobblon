@@ -6834,3 +6834,87 @@ for a reason that is not code: **`SUPABASE_SERVICE_ROLE_KEY` is not set as
 a repository secret**, so every scheduled run has printed "nothing was
 screened" and gone green. The workflow now names the missing secret out
 loud instead.
+
+# Round seventy-five — the machine answers, and the report console finally works
+
+## Three migrations, in this order: 0214, then 0215, then 0216
+
+**0214 and 0215 — the console was broken for a reason worth repeating.**
+A moderator pressing Take on a report got `column r.handled_by does not
+exist`. 0210 re-asserted the report *functions* because 0176 to 0178 had
+never reached the live database; it did not re-assert the *schema* they
+stand on, which is 0173, and 0173 had never reached it either.
+
+**A plpgsql body is not checked until it runs.** Every one of those
+functions was created perfectly by a migration that applied cleanly, and
+failed the first time a person called it. If you carry any plpgsql of your
+own, this is the trap: a green migration proves the text parsed, not that
+the columns exist.
+
+0214 adds the enum value `removed` alone, because Postgres refuses to use a
+value in the transaction that added it. 0215 adds `reports.handled_by`,
+`handled_at`, `outcome`, `handled_note`, `profiles.suspended_until`,
+`report_subject`, `lift_expired_suspensions`, the widened `violations`
+checks, and the guard that knows about `suspended_until`.
+
+**0216 — Kobby answers support tickets and appeals.** Two new functions,
+both worker-or-admin only:
+
+- `answer_ticket(ticket, reply, confident, model)` → `answered` |
+  `escalated` | `for_a_person` | `already_answered` | `gone`
+- `judge_appeal(appeal, overturn, why, model)` → `overturned` | `upheld` |
+  `for_a_person` | `gone`
+
+What they will not do matters more than what they will, and the
+applications should say the same things in their own words:
+
+- A ticket whose opener ticked **"I want a person"** is never answered by
+  the machine. `ai_work` does not even hand those over.
+- The machine **never closes a ticket.** `answered` is as far as it goes.
+- An appeal against a decision a **person** made is never machine-decided.
+  `violations.moderator_id is null` is exactly "Kobby decided this".
+- The machine may **overturn** any decision of its own, at any weight. It
+  may **uphold** only a warning or a chat suspension. Upholding a
+  suspension is a human sentence.
+- Still, and in three places now: the machine cannot delete an account.
+
+## Two shapes changed
+
+`ai_work` now returns `subject = 'ticket'` and `subject = 'appeal'`
+alongside the three it had. If you switch on `subject`, the default branch
+now catches two new values.
+
+`ai_work_waiting` gained `tickets` and `appeals` columns, and `total`
+counts them. **This is a return-type change**, so 0216 drops the function
+before recreating it — if you call it positionally rather than by name,
+look again.
+
+`ai_reviews.decision` accepts six new words: `answered`, `escalated`,
+`for_a_person`, `overturned`, `upheld`, `quieted_voice`.
+
+## The support thread is a popup card, not a page
+
+`/support/:id` still resolves — an emailed link has to land somewhere — but
+it now opens the list with the conversation card on top of it, and closing
+the card puts the address back to `/support`. `src/pages/SupportTicket.tsx`
+is gone; the conversation is `@/components/support/TicketThread`, which
+takes `number`, `onClose` and `onChanged` and mounts anywhere.
+
+It also exports `KobblonFace`, the face Kobblon answers with: the burst
+mark at `public/brand/kobblon-reply.svg`. If the Workspace shows a support
+reply, use that, not a moderator's avatar and not the plain logomark.
+
+## One bug the Workspace would have had too
+
+`getTicket` never selected `status`, so every ticket page read
+`undefined` — which is what the "UNKNOWN" chip in Staw's screenshot was,
+and what took the page down before `lookOf` landed. If you select ticket
+columns by name anywhere, check `status` is among them.
+
+## What is not built
+
+Voice moderation itself. The console's vector map, People bulk actions,
+the audit-log filters. And Kobby has still answered nothing on the live
+platform, because `SUPABASE_SERVICE_ROLE_KEY` was not set as a repository
+secret — Staw has now added it, and the next run is the first that can do
+anything.
