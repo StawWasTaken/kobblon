@@ -28,6 +28,24 @@ begin;
  * report success.
  */
 
+-- ------------------------------------------- the columns this stands on
+
+/*
+ * 0215 adds these, and on the live database it had not been run when this
+ * one was first tried: `column "outcome" does not exist`. They are
+ * repeated here, each `if not exists`, so a file about voice is not the
+ * place somebody finds out that an earlier one is missing. It changes
+ * nothing where 0215 has already landed.
+ *
+ * Run 0214 and 0215 anyway. This covers four columns; they carry the rest
+ * of what the report console needs.
+ */
+alter table public.reports
+  add column if not exists handled_by uuid references public.profiles on delete set null,
+  add column if not exists handled_at timestamptz,
+  add column if not exists outcome text,
+  add column if not exists handled_note text check (char_length(handled_note) <= 1000);
+
 -- ------------------------------------------------- what the rows may say
 
 alter table public.reports drop constraint if exists reports_target_type_check;
