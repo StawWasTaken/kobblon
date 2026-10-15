@@ -247,7 +247,7 @@ export default function CatalogItem() {
                       : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
                   )}
                 >
-                  <Glyph icon={faStar} />
+                  <Glyph icon={faStar} on={starred} />
                   {stars > 0 && <span>{formatCount(stars)}</span>}
                 </button>
 

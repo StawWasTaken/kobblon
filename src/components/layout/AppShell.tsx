@@ -89,7 +89,7 @@ export function AppShell() {
                           isActive && 'bg-brand text-white',
                         )}
                       >
-                        <Glyph icon={item.icon} />
+                        <Glyph icon={item.icon} name={item.ours} />
                       </span>
                       {item.label}
                     </>

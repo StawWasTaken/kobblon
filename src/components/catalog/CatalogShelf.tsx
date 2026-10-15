@@ -309,7 +309,9 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
         */}
       {sale.data && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
-          <Glyph icon={faTag} className="text-space-bright" />
+          {/* A sale, so it is `discount` and not a price tag. Staw, in
+              capitals: "AND FOR DISCOUNTS ITS THIS ONE". */}
+          <Glyph icon={faTag} name="discount" className="text-space-bright" />
           <span className="font-bold text-space-bright">
             {sale.data.percent_off}% off the Catalog
           </span>
@@ -333,6 +335,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
           <Button
             variant={starredOnly ? 'primary' : 'subtle'}
             icon={faStar}
+            iconOn={starredOnly}
             onClick={() => setStarredOnly(!starredOnly)}
             aria-pressed={starredOnly}
           >

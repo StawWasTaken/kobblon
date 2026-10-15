@@ -54,7 +54,10 @@ export function FriendsRail() {
           className="group flex flex-col items-center gap-2 text-center"
         >
           <span className="grid h-20 w-20 place-items-center rounded-full border border-ink-line bg-ink-card text-2xl text-white/50 transition-colors group-hover:bg-ink-hover group-hover:text-white">
-            <Glyph icon={faPlus} />
+            {/* Staw's own, by its name: this is the one that means
+                wanting to add somebody. A bare plus says "another of
+                these" and this is not another of these. */}
+            <Glyph icon={faPlus} name="add-user" />
           </span>
           <span className="truncate text-xs font-semibold text-white/70">Add Friends</span>
         </Link>

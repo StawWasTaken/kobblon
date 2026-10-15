@@ -110,7 +110,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 )
               }
             >
-              <Glyph icon={item.icon} className="w-5 text-[15px]" />
+              <Glyph icon={item.icon} name={item.ours} className="w-5 text-[15px]" />
               <span className="flex-1">{item.label}</span>
               {badge > 0 && (
                 <span className="grid h-5 min-w-5 place-items-center rounded-full bg-onbrand px-1.5 text-[11px] font-extrabold text-brand-deep">

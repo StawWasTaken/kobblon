@@ -33,7 +33,7 @@ export function RatingBar({
           iLike ? 'text-space-bright' : 'text-white/60 hover:text-white',
         )}
       >
-        <Glyph icon={faThumbsUp} className="text-base" />
+        <Glyph icon={faThumbsUp} on={iLike} className="text-base" />
         {formatCount(likes)}
       </button>
 
@@ -63,7 +63,7 @@ export function RatingBar({
           iDislike ? 'text-danger' : 'text-white/60 hover:text-white',
         )}
       >
-        <Glyph icon={faThumbsDown} className="text-base" />
+        <Glyph icon={faThumbsDown} on={iDislike} className="text-base" />
         {formatCount(dislikes)}
       </button>
     </div>

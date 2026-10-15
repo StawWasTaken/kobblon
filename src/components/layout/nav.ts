@@ -3,11 +3,18 @@ import {
   faPeopleGroup, faEnvelope,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import type { KobIcon } from '@/components/brand/Icon'
 
 export type NavItem = {
   to: string
   label: string
   icon: IconDefinition
+  /**
+   * One of ours, by name, where the Font Awesome stand-in means something
+   * else elsewhere. My Avatar's glyph is a shirt, and `shirt` cannot mean
+   * `avatar` everywhere - the Catalog is full of actual shirts.
+   */
+  ours?: KobIcon
   end?: boolean
   /**
    * 'friends' shows the number of pending friend requests, 'mail' the number
@@ -37,7 +44,7 @@ export const sideNav: NavItem[] = [
   { to: '/profile', label: 'Profile', icon: faUser },
   { to: '/friends', label: 'Friends', icon: faUserGroup, badge: 'friends' },
   { to: '/people', label: 'People', icon: faUsers },
-  { to: '/avatar', label: 'My Avatar', icon: faShirt },
+  { to: '/avatar', label: 'My Avatar', icon: faShirt, ours: 'avatar' },
   { to: '/library', label: 'Library', icon: faBookmark },
   { to: '/inbox', label: 'Inbox', icon: faEnvelope, badge: 'mail' },
   { to: '/settings', label: 'Settings', icon: faGear },

@@ -25,11 +25,13 @@ import { cn } from '@/lib/cn'
 /** Everything in `public/icons/ui`. */
 export const UI_ICONS = [
   'add-user', 'admin', 'announcement', 'avatar', 'brix', 'chatbubble',
-  'check-user', 'checkmark', 'circle-user', 'click', 'cross-user', 'discount',
+  'check-user', 'checkmark', 'circle-user', 'click', 'clock-user',
+  'cross-user', 'discount',
   'favourite-stroke', 'favourite', 'gear', 'heart-user', 'laurel-quest-stroke',
   'laurel-quest', 'microphone', 'mute-microphone', 'notification', 'people',
   'reaction-angry', 'reaction-happy-grin', 'reaction-heart-eyes',
   'reaction-laugh', 'reaction-sad', 'reaction-shocked', 'reaction-skull',
+  'klub', 'klub-badge',
   'reaction-smile', 'reaction-sunglasses', 'reaction-winky-grin',
   'remove-user', 'report', 'search-user', 'send', 'thumbs-down-stroke',
   'thumbs-down', 'thumbs-up-stroke', 'thumbs-up', 'user', 'users', 'voice-user',
