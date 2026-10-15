@@ -397,13 +397,18 @@ export default function MyAvatar() {
         * Three columns and the body in the middle of them.
         *
         * Staw: "make it so the avatar thing is centered in the center but
-        * slightly on the left, and make everything a bit wider". The rail
-        * is as wide as it needs to be, the wardrobe is a fixed panel, and
-        * the stage takes every pixel left over - which puts the figure at
-        * about forty per cent across the page rather than pinned to the
-        * left edge with a dead gutter on the right, which is what it was.
+        * slightly on the left", and then "i dont want stuff to be bigger
+        * than everything else, i want good ratios".
+        *
+        * Both at once, which is the whole of the layout. The stage is
+        * capped rather than taking every pixel left over - at full width it
+        * was twice the wardrobe and the page was one enormous avatar with a
+        * list beside it. Capped at forty rem it is about one and a bit times
+        * the wardrobe, which reads as two panels in a composition rather
+        * than a picture with a sidebar; and because the wardrobe takes the
+        * slack instead, the figure still sits left of the page's centre.
         */}
-      <div className="grid items-start gap-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(22rem,28rem)]">
+      <div className="grid items-start justify-center gap-5 lg:grid-cols-[auto_minmax(22rem,38rem)_minmax(18rem,32rem)]">
         {/* ------------------------------------------------------- the rail */}
         {/*
           * Down the side rather than across the top. Five tabs over a grid
@@ -460,7 +465,7 @@ export default function MyAvatar() {
             * the half that makes it read as floating. The padding at the
             * bottom is what the panel hangs into.
             */}
-          <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-16">
+          <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-12">
             <div className="relative overflow-hidden rounded-2xl">
               {/*
                 * A wash of Kobblon blue behind the figure.
@@ -551,7 +556,7 @@ export default function MyAvatar() {
               * somebody had to read rather than look, and the place where
               * looking is the whole point.
               */}
-            <div className="absolute bottom-4 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
+            <div className="absolute bottom-3 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
               <div className="flex items-center gap-2">
                 <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
                   Wearing
@@ -691,7 +696,7 @@ export default function MyAvatar() {
               </div>
             </Card>
           ) : owned.loading ? (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
               {Array.from({ length: 9 }, (_, i) => (
                 <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
               ))}
@@ -710,7 +715,16 @@ export default function MyAvatar() {
               />
             )
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            /*
+             * Tiles of a size, however wide the panel is.
+             *
+             * Three columns stretched to fill gave 250 pixel tiles on a wide
+             * screen, which made a shirt bigger than the person wearing it.
+             * `auto-fill` adds columns instead of growing the ones there
+             * are, and the cap stops the last row stretching when there are
+             * only two of them.
+             */
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
               {shelf.map((item) => (
                 <WornTile
                   key={item.id}
