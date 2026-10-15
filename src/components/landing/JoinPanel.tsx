@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faBolt } from '@fortawesome/free-solid-svg-icons'
 import { SignupForm } from '@/components/auth/SignupForm'
 import { Kobby } from '@/components/brand/Kobby'
@@ -29,7 +29,7 @@ export function JoinPanel() {
 
         <div className="relative">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white/70">
-            <FontAwesomeIcon icon={faBolt} />
+            <Glyph icon={faBolt} />
             About a minute
           </span>
 

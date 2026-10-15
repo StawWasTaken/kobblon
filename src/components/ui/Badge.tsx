@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -32,7 +32,7 @@ export function Badge({
         className,
       )}
     >
-      {icon && <FontAwesomeIcon icon={icon} className="text-[10px]" />}
+      {icon && <Glyph icon={icon} className="text-[10px]" />}
       {children}
     </span>
   )

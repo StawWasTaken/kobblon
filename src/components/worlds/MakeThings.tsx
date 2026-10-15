@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faPlus, faCopy, faAward, faBagShopping } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -46,7 +46,7 @@ function TheNumber({ id }: { id: number }) {
       title="Copy this number for a script"
     >
       {id}
-      <FontAwesomeIcon icon={faCopy} />
+      <Glyph icon={faCopy} />
     </button>
   )
 }
@@ -153,7 +153,7 @@ export function MakeThings({
               className="flex items-center gap-3 rounded-xl border border-ink-line p-3"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-sunken">
-                <FontAwesomeIcon icon={badge ? faAward : faBagShopping} className="text-ink-soft" />
+                <Glyph icon={badge ? faAward : faBagShopping} className="text-ink-soft" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-ink-strong">{one.name}</span>

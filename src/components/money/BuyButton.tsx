@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -68,7 +68,7 @@ export function BuyButton({
         {...rest}
         disabled={rest.disabled ?? !rest.onClick}
       >
-        <FontAwesomeIcon icon={faCheck} />
+        <Glyph icon={faCheck} />
         {ownedLabel}
       </Button>
     )

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faEye, faThumbsUp, faTag } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
@@ -41,7 +41,7 @@ export function WorldCard({
           />
         ) : (
           <span className="grid h-full w-full place-items-center">
-            <FontAwesomeIcon icon={worldIcon} className="text-3xl text-white/20" />
+            <Glyph icon={worldIcon} className="text-3xl text-white/20" />
           </span>
         )}
       </Link>
@@ -64,18 +64,18 @@ export function WorldCard({
 
         <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] font-bold text-muted">
           <span className="inline-flex items-center gap-1">
-            <FontAwesomeIcon icon={faEye} />
+            <Glyph icon={faEye} />
             {formatCount(world.visit_count ?? 0)}
           </span>
           {score !== null && (
             <span className="inline-flex items-center gap-1">
-              <FontAwesomeIcon icon={faThumbsUp} />
+              <Glyph icon={faThumbsUp} />
               {score}%
             </span>
           )}
           {genre && (
             <span className="inline-flex items-center gap-1 truncate">
-              <FontAwesomeIcon icon={faTag} />
+              <Glyph icon={faTag} />
               {genre.label}
             </span>
           )}

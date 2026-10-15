@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowDown, faArrowUp, faGift, faReceipt, faStore,
 } from '@fortawesome/free-solid-svg-icons'
@@ -145,7 +145,7 @@ export default function Brix() {
         {/* ------------------------------------------------------ summary */}
         <Card className="p-5">
           <h2 className="flex items-center gap-2 font-display text-lg font-extrabold">
-            <FontAwesomeIcon icon={faArrowDown} className="text-space-bright" />
+            <Glyph icon={faArrowDown} className="text-space-bright" />
             Coming in
           </h2>
           <div className="mt-2">
@@ -158,7 +158,7 @@ export default function Brix() {
           </div>
 
           <h2 className="mt-6 flex items-center gap-2 font-display text-lg font-extrabold">
-            <FontAwesomeIcon icon={faArrowUp} className="text-danger" />
+            <Glyph icon={faArrowUp} className="text-danger" />
             Going out
           </h2>
           <div className="mt-2">

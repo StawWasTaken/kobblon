@@ -14,7 +14,7 @@
  * buttons are worth showing. It is never the check.
  */
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faWandMagicSparkles, faGavel, faClock, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
@@ -67,7 +67,7 @@ export function BehaviourPanel({ personId, username, rank }: {
     <Card className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted">
-          <FontAwesomeIcon icon={faGavel} />
+          <Glyph icon={faGavel} />
           Behaviour and what has been decided
         </p>
         {rank === 'superadmin' && (
@@ -100,7 +100,7 @@ export function BehaviourPanel({ personId, username, rank }: {
           <BehaviourBar score={me.score} band={me.band} />
 
           <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
-            <FontAwesomeIcon icon={faClock} />
+            <Glyph icon={faClock} />
             Their next chat suspension would last{' '}
             <span className="font-bold text-white">{me.timeout_minutes} minutes</span>,
             which is the band deciding it.
@@ -121,7 +121,7 @@ export function BehaviourPanel({ personId, username, rank }: {
               key={one.key}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-sm"
             >
-              <FontAwesomeIcon
+              <Glyph
                 icon={historyIcon[one.action] ?? faGavel}
                 className={cn(
                   'shrink-0 text-xs',
@@ -164,7 +164,7 @@ export function BehaviourPanel({ personId, username, rank }: {
       >
         <div className="space-y-3">
           <p className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-sm leading-relaxed text-white/80">
-            <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 text-amber-300" />
+            <Glyph icon={faTriangleExclamation} className="mt-0.5 text-amber-300" />
             It also forgives their place on the chat suspension ladder, so their next one starts
             at five minutes again. They are told, by letter, and it goes in the staff record.
           </p>

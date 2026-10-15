@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCalendarDay, faChevronLeft, faChevronRight, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
@@ -142,7 +142,7 @@ export function DateTimeField({
             !chosen && 'text-white/35',
           )}
         >
-          <FontAwesomeIcon icon={faCalendarDay} className="text-xs" />
+          <Glyph icon={faCalendarDay} className="text-xs" />
           <span className="min-w-0 flex-1 truncate">{shown}</span>
         </button>
 
@@ -153,7 +153,7 @@ export function DateTimeField({
             aria-label={`Clear ${label}`}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-ink-line text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
           >
-            <FontAwesomeIcon icon={faXmark} />
+            <Glyph icon={faXmark} />
           </button>
         )}
       </div>
@@ -173,7 +173,7 @@ export function DateTimeField({
               aria-label="Previous month"
               className="grid h-8 w-8 place-items-center rounded-lg text-white/55 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faChevronLeft} />
+              <Glyph icon={faChevronLeft} />
             </button>
 
             <p className="flex-1 text-center text-sm font-extrabold">
@@ -186,7 +186,7 @@ export function DateTimeField({
               aria-label="Next month"
               className="grid h-8 w-8 place-items-center rounded-lg text-white/55 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faChevronRight} />
+              <Glyph icon={faChevronRight} />
             </button>
           </div>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faChevronLeft, faGavel, faDiamond } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
@@ -31,7 +31,7 @@ function Moment({ title, at, children, last }: {
   return (
     <li className="relative flex gap-4 pb-6 last:pb-0">
       {!last && <span className="absolute left-[7px] top-5 h-full w-px bg-ink-line" />}
-      <FontAwesomeIcon
+      <Glyph
         icon={faDiamond}
         className="relative mt-1 text-[15px] text-white/30"
       />
@@ -124,7 +124,7 @@ export default function StandingItem() {
           to="/standing"
           className="inline-flex items-center gap-2 text-sm font-bold text-muted transition-colors hover:text-white"
         >
-          <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+          <Glyph icon={faChevronLeft} className="text-xs" />
           Account status
         </Link>
 
@@ -255,7 +255,7 @@ export default function StandingItem() {
             </>
           ) : (
             <div className="flex flex-wrap items-center gap-4">
-              <FontAwesomeIcon icon={faGavel} className="text-lg text-brand-bright" />
+              <Glyph icon={faGavel} className="text-lg text-brand-bright" />
               <p className="min-w-0 flex-1 text-sm leading-relaxed text-white/65">
                 {state.data?.used
                   ? 'You have one more go at this'

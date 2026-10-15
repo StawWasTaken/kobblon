@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faPlus, faTrash, faUserShield } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -149,7 +149,7 @@ export function RolesEditor({ communityId }: { communityId: string }) {
                   selected === rank.id ? 'bg-brand text-white' : 'text-white/70 hover:bg-ink-hover',
                 )}
               >
-                <FontAwesomeIcon icon={faUserShield} className="w-4 text-xs opacity-60" />
+                <Glyph icon={faUserShield} className="w-4 text-xs opacity-60" />
                 <span className="min-w-0 flex-1 truncate">{rank.name}</span>
                 <span className="shrink-0 text-xs opacity-60">{rank.rank}</span>
               </button>

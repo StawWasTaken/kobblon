@@ -58,7 +58,7 @@ export function iconUrl(name: KobIcon) {
 }
 
 export function Icon({
-  name, label, tone, className,
+  name, label, title, tone, style, className,
 }: {
   name: KobIcon
   /**
@@ -67,11 +67,14 @@ export function Icon({
    * says it, and wrong on its own.
    */
   label?: string
+  /** The hover tooltip the browser draws, where a call site wants one. */
+  title?: string
   /**
    * A colour to paint it, for the places it has to match the text beside
    * it. `currentColor` takes the colour of whatever it sits in.
    */
   tone?: string
+  style?: React.CSSProperties
   className?: string
 }) {
   const url = iconUrl(name)
@@ -87,8 +90,10 @@ export function Icon({
         role={label ? 'img' : undefined}
         aria-label={label}
         aria-hidden={label ? undefined : true}
+        title={title}
         className={cn('inline-block h-[1em] w-[1em] align-[-0.125em]', className)}
         style={{
+          ...style,
           backgroundColor: tone === 'currentColor' ? 'currentColor' : tone,
           maskImage: `url(${url})`,
           WebkitMaskImage: `url(${url})`,
@@ -108,6 +113,8 @@ export function Icon({
       src={url}
       alt={label ?? ''}
       aria-hidden={label ? undefined : true}
+      title={title}
+      style={style}
       draggable={false}
       className={cn('inline-block h-[1em] w-[1em] select-none align-[-0.125em] object-contain', className)}
     />

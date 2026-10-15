@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faMagnifyingGlass, faUser, faArrowTurnDown } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
@@ -105,7 +105,7 @@ export function CommandBar({ panels, onGo, onFindPerson }: {
         className="relative w-full max-w-xl animate-pop-in overflow-hidden rounded-2xl border border-ink-line bg-ink-card shadow-pop"
       >
         <div className="flex items-center gap-3 border-b border-ink-line px-4 py-3">
-          <FontAwesomeIcon icon={faMagnifyingGlass} className="text-muted" />
+          <Glyph icon={faMagnifyingGlass} className="text-muted" />
           <input
             ref={box}
             value={term}
@@ -135,7 +135,7 @@ export function CommandBar({ panels, onGo, onFindPerson }: {
                   i === here ? 'bg-white/[0.08]' : 'hover:bg-white/[0.05]',
                 )}
               >
-                <FontAwesomeIcon
+                <Glyph
                   icon={one.icon}
                   className={cn('w-4 shrink-0', i === here ? 'text-brand-bright' : 'text-muted')}
                 />
@@ -144,7 +144,7 @@ export function CommandBar({ panels, onGo, onFindPerson }: {
                   <span className="block truncate text-xs text-muted">{one.note}</span>
                 </span>
                 {i === here && (
-                  <FontAwesomeIcon icon={faArrowTurnDown} className="shrink-0 text-xs text-muted" />
+                  <Glyph icon={faArrowTurnDown} className="shrink-0 text-xs text-muted" />
                 )}
               </button>
             </li>

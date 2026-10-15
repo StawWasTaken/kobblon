@@ -19,7 +19,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCube, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import {
   formatOf, frameMesh, lightForLooking, loadMesh, releaseMesh, wearTexture,
@@ -321,7 +321,7 @@ export function MeshViewer({
 
       {state !== 'shown' && (
         <div className="pointer-events-none relative grid place-items-center gap-2 text-white/30">
-          <FontAwesomeIcon
+          <Glyph
             icon={state === 'failed' ? faTriangleExclamation : faCube}
             style={{ width: '34%', height: 'auto' }}
             className={state === 'loading' ? 'animate-pulse' : ''}

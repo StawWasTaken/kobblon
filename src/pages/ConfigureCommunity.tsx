@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCircleInfo, faGear, faUserGroup, faUserShield, faHandshake, faScroll,
   faMagnifyingGlass, faPlus, faSkull, faCalendarDay, faTriangleExclamation,
@@ -151,7 +151,7 @@ export default function ConfigureCommunity() {
                         : 'text-white/65 hover:bg-ink-hover hover:text-white',
                     )}
                   >
-                    <FontAwesomeIcon icon={item.icon} className="mt-0.5 w-4 text-xs opacity-80" />
+                    <Glyph icon={item.icon} className="mt-0.5 w-4 text-xs opacity-80" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold">{item.name}</span>
                       <span
@@ -452,7 +452,7 @@ function DangerCard({
   return (
     <Card className="border-danger/30 p-5 sm:p-6">
       <h3 className="flex items-center gap-2 font-display text-lg font-extrabold text-danger">
-        <FontAwesomeIcon icon={faTriangleExclamation} className="text-base" />
+        <Glyph icon={faTriangleExclamation} className="text-base" />
         {closed ? 'This Community is closed' : 'Closing it down'}
       </h3>
       <p className="mt-1 text-sm leading-relaxed text-muted">

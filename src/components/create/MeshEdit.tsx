@@ -12,7 +12,7 @@
  * this id is drawing.
  */
 import { useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faImage, faCube, faXmark, faRotate } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -106,7 +106,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
       {/* --------------------------------------------------- the picture */}
       <div className="space-y-2">
         <p className="flex items-center gap-2 text-sm font-bold">
-          <FontAwesomeIcon icon={faImage} className="text-white/40" />
+          <Glyph icon={faImage} className="text-white/40" />
           {asset.texture_content_id ? 'Wearing a Decal' : 'No Decal on it'}
         </p>
 
@@ -133,7 +133,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
               disabled={!!busy}
               onClick={() => run('undress', () => redressMesh(asset.id, null))}
             >
-              <FontAwesomeIcon icon={faXmark} />
+              <Glyph icon={faXmark} />
               Take it off
             </Button>
           )}
@@ -146,7 +146,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
       {/* ------------------------------------------------------ the card */}
       <div className="space-y-2 border-t border-ink-line pt-4">
         <p className="flex items-center gap-2 text-sm font-bold">
-          <FontAwesomeIcon icon={faImage} className="text-white/40" />
+          <Glyph icon={faImage} className="text-white/40" />
           The card picture
         </p>
         <Button
@@ -156,7 +156,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
           disabled={!!busy}
           onClick={() => void redraw()}
         >
-          <FontAwesomeIcon icon={faRotate} />
+          <Glyph icon={faRotate} />
           Take the card from this angle
         </Button>
         <p className="text-xs text-muted">
@@ -171,7 +171,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
       {/* ----------------------------------------------------- the model */}
       <div className="space-y-2 border-t border-ink-line pt-4">
         <p className="flex items-center gap-2 text-sm font-bold">
-          <FontAwesomeIcon icon={faCube} className="text-white/40" />
+          <Glyph icon={faCube} className="text-white/40" />
           The model
         </p>
 

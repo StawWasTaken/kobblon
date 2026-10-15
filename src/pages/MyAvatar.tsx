@@ -29,7 +29,7 @@
  * everybody else sees.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
   faCircleNotch, faCheck, faPlus, faShuffle, faCamera, faMagnifyingGlass,
@@ -444,7 +444,7 @@ export default function MyAvatar() {
                   : 'border-ink-line bg-ink-card text-white/40 hover:border-brand/40 hover:text-white',
               )}
             >
-              <FontAwesomeIcon icon={one.icon} className="text-xl" />
+              <Glyph icon={one.icon} className="text-xl" />
               <span className="mt-1.5 font-display text-[10px] font-extrabold uppercase leading-none tracking-wide">
                 {one.label}
               </span>
@@ -617,10 +617,10 @@ export default function MyAvatar() {
                               className="h-full w-full object-contain"
                             />
                           ) : (
-                            <FontAwesomeIcon icon={faHatCowboy} className="text-white/30" />
+                            <Glyph icon={faHatCowboy} className="text-white/30" />
                           )}
                           <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">
-                            <FontAwesomeIcon icon={faXmark} className="text-danger" />
+                            <Glyph icon={faXmark} className="text-danger" />
                           </span>
                         </button>
                       </Tooltip>
@@ -813,7 +813,7 @@ function StageButton({ label, icon, busy, disabled, onClick }: {
         onClick={onClick}
         className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white disabled:opacity-40"
       >
-        <FontAwesomeIcon icon={busy ? faCircleNotch : icon} className={cn(busy && 'animate-spin')} />
+        <Glyph icon={busy ? faCircleNotch : icon} className={cn(busy && 'animate-spin')} />
       </button>
     </Tooltip>
   )
@@ -857,7 +857,7 @@ function Swatches({ colours, current, busy, onPick }: {
           style={{ background: colour }}
         >
           {current?.toLowerCase() === colour.toLowerCase() && (
-            <FontAwesomeIcon
+            <Glyph
               icon={faCheck}
               className="text-xs text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
             />
@@ -899,11 +899,11 @@ function WornTile({ item, on, busy, onToggle }: {
           {picture ? (
             <img src={picture} alt="" draggable={false} className="h-full w-full object-contain" />
           ) : (
-            <FontAwesomeIcon icon={faHatCowboy} className="text-2xl text-white/25" />
+            <Glyph icon={faHatCowboy} className="text-2xl text-white/25" />
           )}
           {busy && (
             <span className="absolute inset-0 grid place-items-center bg-ink/60">
-              <FontAwesomeIcon icon={faCircleNotch} className="animate-spin text-white/70" />
+              <Glyph icon={faCircleNotch} className="animate-spin text-white/70" />
             </span>
           )}
         </span>

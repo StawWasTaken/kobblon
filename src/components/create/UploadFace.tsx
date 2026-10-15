@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faLock, faArrowDown, faCircleCheck, faCircleXmark, faClock, faHardDrive, faPlay,
 } from '@fortawesome/free-solid-svg-icons'
@@ -91,7 +91,7 @@ export function Preview({ item }: { item: OwnAsset }) {
         )}
         <span className="absolute inset-0 grid place-items-center bg-black/25">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-black/60 text-xs">
-            <FontAwesomeIcon icon={faPlay} className="translate-x-px" />
+            <Glyph icon={faPlay} className="translate-x-px" />
           </span>
         </span>
       </span>
@@ -103,7 +103,7 @@ export function Preview({ item }: { item: OwnAsset }) {
   // Sound and models: the mark for what it is, on the house colours.
   return (
     <span className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-deep to-brand/40">
-      <FontAwesomeIcon icon={kindIcons[item.kind]} className="text-2xl text-white/70" />
+      <Glyph icon={kindIcons[item.kind]} className="text-2xl text-white/70" />
     </span>
   )
 }
@@ -133,7 +133,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
 
         {!item.is_public && (
           <span className={cn('absolute right-2 top-2 h-6 w-6 rounded-full text-[10px]', overlayButton)}>
-            <FontAwesomeIcon icon={faLock} />
+            <Glyph icon={faLock} />
           </span>
         )}
       </Link>
@@ -141,7 +141,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="flex items-start gap-2">
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-ink-hover text-[11px] text-white/60">
-            <FontAwesomeIcon icon={kindIcons[item.kind]} />
+            <Glyph icon={kindIcons[item.kind]} />
           </span>
           <div className="min-w-0 flex-1">
             <Link
@@ -168,11 +168,11 @@ export function UploadCard({ item }: { item: OwnAsset }) {
         <div className="mt-auto flex items-center gap-3 pt-1 text-[11px] font-bold text-muted">
           <span className="font-mono text-white/45">{tag || 'No number yet'}</span>
           <span className="ml-auto inline-flex items-center gap-1">
-            <FontAwesomeIcon icon={faHardDrive} />
+            <Glyph icon={faHardDrive} />
             {size(item.byte_size)}
           </span>
           <span className="inline-flex items-center gap-1">
-            <FontAwesomeIcon icon={faArrowDown} />
+            <Glyph icon={faArrowDown} />
             {formatCount(item.download_count)}
           </span>
         </div>
@@ -199,7 +199,7 @@ export function UploadLine({ item }: { item: OwnAsset }) {
           {item.name}
         </Link>
         <p className={cn('flex flex-wrap items-center gap-1.5 text-xs', look.tone)}>
-          <FontAwesomeIcon icon={look.icon} />
+          <Glyph icon={look.icon} />
           {look.label}
           <span className="text-muted">
             · {kindLabels[item.kind]} · {timeAgo(item.created_at)}
@@ -207,7 +207,7 @@ export function UploadLine({ item }: { item: OwnAsset }) {
           </span>
           {!item.is_public && (
             <span className="inline-flex items-center gap-1 text-muted">
-              <FontAwesomeIcon icon={faLock} /> Unlisted
+              <Glyph icon={faLock} /> Unlisted
             </span>
           )}
         </p>

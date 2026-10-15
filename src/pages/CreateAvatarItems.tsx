@@ -11,7 +11,7 @@
  * the answer, and lets the server refuse: a page is a suggestion.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faDownload, faImage, faCube, faLock, faPen, faSpinner,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
@@ -481,7 +481,7 @@ export default function CreateAvatarItems() {
         */}
       {cardTrouble && (
         <p className="flex items-start gap-2 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
-          <FontAwesomeIcon icon={faCircleExclamation} className="mt-0.5 text-danger" />
+          <Glyph icon={faCircleExclamation} className="mt-0.5 text-danger" />
           <span>
             A picture would not draw: <span className="text-white/90">{cardTrouble}</span>
             {' '}Everything else still works, and each card has a button to try again.
@@ -535,7 +535,7 @@ export default function CreateAvatarItems() {
             )}
           >
             <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-hover transition-transform duration-150 group-hover:scale-110">
-              <FontAwesomeIcon icon={faPlus} className="text-lg" />
+              <Glyph icon={faPlus} className="text-lg" />
             </span>
             <span className="text-sm font-bold">Make something</span>
             <span className="px-4 text-center text-[11px] leading-snug text-muted">
@@ -620,7 +620,7 @@ export default function CreateAvatarItems() {
 
           {!allowed && (
             <p className="flex items-start gap-2 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
-              <FontAwesomeIcon icon={faLock} className="mt-0.5 text-danger" />
+              <Glyph icon={faLock} className="mt-0.5 text-danger" />
               <span>
                 {rule?.kobblon_only
                   ? 'Only Kobblon makes those.'
@@ -635,7 +635,7 @@ export default function CreateAvatarItems() {
               download
               className="inline-flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2.5 text-sm font-bold hover:border-brand"
             >
-              <FontAwesomeIcon icon={faDownload} className="text-white/50" />
+              <Glyph icon={faDownload} className="text-white/50" />
               Download the {chosen.label.toLowerCase()} template
             </a>
           )}
@@ -675,7 +675,7 @@ export default function CreateAvatarItems() {
                     onClick={() => meshPicked.current?.click()}
                     className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
                   >
-                    <FontAwesomeIcon icon={meshFile ? faCube : faUpload} className="text-xl text-white/40" />
+                    <Glyph icon={meshFile ? faCube : faUpload} className="text-xl text-white/40" />
                     <span className="text-sm font-semibold">
                       {meshFile ? meshFile.name : 'Choose a model file'}
                     </span>
@@ -746,7 +746,7 @@ export default function CreateAvatarItems() {
                     onClick={() => skinPicked.current?.click()}
                     className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-6 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
                   >
-                    <FontAwesomeIcon icon={faImage} className="text-lg text-white/40" />
+                    <Glyph icon={faImage} className="text-lg text-white/40" />
                     <span className="text-sm font-semibold">
                       {skinFile ? skinFile.name : 'Upload a picture for it'}
                     </span>
@@ -860,7 +860,7 @@ export default function CreateAvatarItems() {
                 onClick={() => picked.current?.click()}
                 className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
               >
-                <FontAwesomeIcon icon={picture ? faImage : faUpload} className="text-xl text-white/40" />
+                <Glyph icon={picture ? faImage : faUpload} className="text-xl text-white/40" />
                 <span className="text-sm font-semibold">
                   {picture ? picture.name : `Choose a picture for the ${chosen?.label.toLowerCase()}`}
                 </span>
@@ -1051,7 +1051,7 @@ export function MadeCard({
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
         {picture
           ? <img src={picture} alt="" loading="lazy" className="h-full w-full object-contain" />
-          : <FontAwesomeIcon icon={faShirt} className="text-3xl text-white/25" />}
+          : <Glyph icon={faShirt} className="text-3xl text-white/25" />}
         <span className="absolute left-2 top-2 rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
           {item.kind}
         </span>
@@ -1066,7 +1066,7 @@ export function MadeCard({
             'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
             closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
           )}>
-            <FontAwesomeIcon icon={faClock} />
+            <Glyph icon={faClock} />
             {closed ? 'Closed' : 'Limited'}
           </span>
         )}
@@ -1128,7 +1128,7 @@ export function MadeCard({
             align="right"
             trigger={
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
-                <FontAwesomeIcon icon={faEllipsis} />
+                <Glyph icon={faEllipsis} />
               </span>
             }
             items={[
@@ -1219,7 +1219,7 @@ export function MadeCard({
             <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
               {picture
                 ? <img src={picture} alt="" className="h-full w-full object-contain" />
-                : <FontAwesomeIcon icon={faShirt} className="text-2xl text-white/25" />}
+                : <Glyph icon={faShirt} className="text-2xl text-white/25" />}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-bold">{item.name}</p>
@@ -1395,7 +1395,7 @@ export function MadeCard({
             <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
               {picture
                 ? <img src={picture} alt="" className="h-full w-full object-contain" />
-                : <FontAwesomeIcon icon={faShirt} className="text-xl text-white/25" />}
+                : <Glyph icon={faShirt} className="text-xl text-white/25" />}
             </span>
             <p className="text-xs leading-relaxed text-muted">
               {state}
@@ -1430,7 +1430,7 @@ export function MadeCard({
                   }, 'The face has a new picture.')
                 }}
               />
-              <FontAwesomeIcon
+              <Glyph
                 icon={busy === 'redraw' ? faSpinner : faImage}
                 className={cn('mr-2', busy === 'redraw' && 'animate-spin')}
               />

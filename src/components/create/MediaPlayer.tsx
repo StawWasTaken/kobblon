@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faPlay, faPause, faVolumeHigh, faVolumeXmark, faRotateRight,
 } from '@fortawesome/free-solid-svg-icons'
@@ -113,7 +113,7 @@ function VolumeControl({ media, muted, onMuted }: {
         aria-label={muted ? 'Unmute' : 'Mute'}
         className="grid h-8 w-8 place-items-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white"
       >
-        <FontAwesomeIcon icon={muted || volume === 0 ? faVolumeXmark : faVolumeHigh} />
+        <Glyph icon={muted || volume === 0 ? faVolumeXmark : faVolumeHigh} />
       </button>
       <input
         type="range"
@@ -272,7 +272,7 @@ export function MediaPlayer({
         aria-label={playing ? 'Pause' : 'Play'}
         className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand text-[#fff] transition-colors hover:bg-brand-bright disabled:opacity-40"
       >
-        <FontAwesomeIcon
+        <Glyph
           icon={ended ? faRotateRight : playing ? faPause : faPlay}
           className={cn(!playing && !ended && 'translate-x-px')}
         />
@@ -339,7 +339,7 @@ export function MediaPlayer({
             onContextMenu={(e) => e.preventDefault()}
             className="group absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-ink/75 px-3.5 py-2 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-brand"
           >
-            <FontAwesomeIcon icon={faVolumeXmark} />
+            <Glyph icon={faVolumeXmark} />
             Tap for sound
           </button>
         )}
@@ -352,7 +352,7 @@ export function MediaPlayer({
             className="absolute inset-0 grid place-items-center bg-black/30 transition-colors hover:bg-black/20"
           >
             <span className="grid h-16 w-16 place-items-center rounded-full bg-brand text-[#fff] shadow-pop">
-              <FontAwesomeIcon icon={ended ? faRotateRight : faPlay} className="text-xl" />
+              <Glyph icon={ended ? faRotateRight : faPlay} className="text-xl" />
             </span>
           </button>
         )}

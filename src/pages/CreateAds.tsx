@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faRectangleAd, faPlus, faStop, faEye, faHandPointer, faCircleCheck, faGlobe,
   faRotateRight, faHourglassHalf, faTrash, faPen, faPause, faPlay, faPenToSquare,
@@ -90,16 +90,16 @@ function AdRow({ ad, onEdit, onChanged }: {
           )}
         </p>
         <p className="mt-1 flex items-center gap-1.5 truncate text-[11px] text-muted">
-          <FontAwesomeIcon icon={ad.target_kind === 'link' ? faGlobe : look.icon} />
+          <Glyph icon={ad.target_kind === 'link' ? faGlobe : look.icon} />
           {ad.target_path}
         </p>
         <p className="mt-1 flex flex-wrap items-center gap-x-3 text-[11px] font-bold text-muted">
           <span className="inline-flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faEye} />
+            <Glyph icon={faEye} />
             {formatCount(ad.views)}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faHandPointer} />
+            <Glyph icon={faHandPointer} />
             {formatCount(ad.clicks)}
           </span>
         </p>
@@ -170,7 +170,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
               aria-label="Rename this campaign"
               className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-white/40 hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faPen} className="text-[10px]" />
+              <Glyph icon={faPen} className="text-[10px]" />
             </button>
           </p>
 
@@ -181,16 +181,16 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
             </span>
             {remaining && (
               <span className="inline-flex items-center gap-1.5 text-muted">
-                <FontAwesomeIcon icon={faHourglassHalf} />
+                <Glyph icon={faHourglassHalf} />
                 {remaining}
               </span>
             )}
             <span className="inline-flex items-center gap-1.5 text-muted">
-              <FontAwesomeIcon icon={faEye} />
+              <Glyph icon={faEye} />
               {formatCount(campaign.views)} views
             </span>
             <span className="inline-flex items-center gap-1.5 text-muted">
-              <FontAwesomeIcon icon={faHandPointer} />
+              <Glyph icon={faHandPointer} />
               {formatCount(campaign.clicks)} presses
             </span>
             {campaign.renewed_count > 0 && (
@@ -235,7 +235,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
       <div className="p-4">
         {!campaign.is_running && (
           <p className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold text-muted">
-            <FontAwesomeIcon icon={faCircleCheck} />
+            <Glyph icon={faCircleCheck} />
             Finished. Nothing in it is being shown.
           </p>
         )}

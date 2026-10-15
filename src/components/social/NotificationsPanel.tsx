@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay, faGavel,
   faCheckDouble, faBell, faUserGroup,
@@ -146,7 +146,7 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
             mark.tint,
           )}
         >
-          <FontAwesomeIcon icon={mark.icon} />
+          <Glyph icon={mark.icon} />
         </span>
       </span>
 
@@ -265,7 +265,7 @@ export function NotificationsPanel({
             onClick={onClose}
             className="flex items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-sm font-bold transition-colors hover:bg-brand/20"
           >
-            <FontAwesomeIcon icon={faUserGroup} className="text-brand-bright" />
+            <Glyph icon={faUserGroup} className="text-brand-bright" />
             {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
           </Link>
         )}
@@ -305,7 +305,7 @@ export function NotificationsPanel({
         {/* ------------------------------------------------------- footer */}
         {!!rows.length && (
           <div className="flex items-center gap-3 border-t border-ink-line px-4 py-2.5">
-            <FontAwesomeIcon icon={faBell} className="text-xs text-muted" />
+            <Glyph icon={faBell} className="text-xs text-muted" />
             <p className="min-w-0 flex-1 truncate text-xs text-muted">
               {rows.length} in the last while
             </p>
@@ -317,7 +317,7 @@ export function NotificationsPanel({
                 }}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-link transition-colors hover:underline"
               >
-                <FontAwesomeIcon icon={faCheckDouble} />
+                <Glyph icon={faCheckDouble} />
                 Mark all read
               </button>
             )}

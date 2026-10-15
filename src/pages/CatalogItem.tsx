@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faCube, faImage, faClock, faStore, faUser,
   faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis, faLink, faFlag,
@@ -228,7 +228,7 @@ export default function CatalogItem() {
               <div className="flex shrink-0 items-center gap-2">
                 {owned && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-space/15 px-2.5 py-1 text-[11px] font-bold text-space-bright">
-                    <FontAwesomeIcon icon={faCircleCheck} />
+                    <Glyph icon={faCircleCheck} />
                     Yours
                   </span>
                 )}
@@ -247,7 +247,7 @@ export default function CatalogItem() {
                       : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
                   )}
                 >
-                  <FontAwesomeIcon icon={faStar} />
+                  <Glyph icon={faStar} />
                   {stars > 0 && <span>{formatCount(stars)}</span>}
                 </button>
 
@@ -257,7 +257,7 @@ export default function CatalogItem() {
                   align="right"
                   trigger={
                     <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
-                      <FontAwesomeIcon icon={faEllipsis} />
+                      <Glyph icon={faEllipsis} />
                     </span>
                   }
                   items={[
@@ -347,7 +347,7 @@ export default function CatalogItem() {
                   ? 'border border-ink-line bg-ink-raised text-white/65'
                   : 'border border-amber-400/40 bg-amber-400/10 text-amber-200',
               )}>
-                <FontAwesomeIcon icon={faClock} className="mt-0.5" />
+                <Glyph icon={faClock} className="mt-0.5" />
                 <span>
                   {closed ? (
                     <>This limited has closed. It still exists and everybody
@@ -418,7 +418,7 @@ export default function CatalogItem() {
                       : 'border-ink-line bg-ink-raised text-white/60 hover:border-brand/60 hover:text-white',
                   )}
                 >
-                  <FontAwesomeIcon icon={put ? faCheck : faBasketShopping} />
+                  <Glyph icon={put ? faCheck : faBasketShopping} />
                 </button>
               )}
             </div>
@@ -588,7 +588,7 @@ function MoreLikeThis({ item }: { item: AvatarItem }) {
               <span className="grid aspect-square place-items-center overflow-hidden bg-ink-raised">
                 {picture
                   ? <img src={picture} alt="" loading="lazy" className="h-full w-full object-contain p-2" />
-                  : <FontAwesomeIcon icon={faShirt} className="text-2xl text-white/20" />}
+                  : <Glyph icon={faShirt} className="text-2xl text-white/20" />}
               </span>
               <span className="block space-y-0.5 p-2">
                 <span className="block truncate text-xs font-bold">{one.name}</span>
@@ -780,7 +780,7 @@ function ItemView({ item }: { item: AvatarItem }) {
           />
         ) : (
           <p className="max-w-[18rem] px-6 text-center text-sm leading-relaxed text-muted">
-            <FontAwesomeIcon icon={faShirt} className="mb-2 block text-2xl text-white/20" />
+            <Glyph icon={faShirt} className="mb-2 block text-2xl text-white/20" />
             No picture of this one yet. Its maker&rsquo;s card is drawn the next
             time they open Things to Wear.
           </p>

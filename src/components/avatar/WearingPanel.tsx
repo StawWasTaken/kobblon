@@ -16,7 +16,7 @@
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCube, faImage, faShirt } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/States'
@@ -131,7 +131,7 @@ export function WearingPanel({ look, loading }: {
                   />
                 ) : (
                   <span className="grid h-full w-full place-items-center text-white/30">
-                    <FontAwesomeIcon icon={faShirt} />
+                    <Glyph icon={faShirt} />
                   </span>
                 )}
               </span>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
   faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube,
@@ -92,7 +92,7 @@ function Handover({
           aria-label="Close"
           className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-lg text-white/40 transition-colors hover:bg-white/10 hover:text-white"
         >
-          <FontAwesomeIcon icon={faXmark} />
+          <Glyph icon={faXmark} />
         </button>
 
         {/* Kobblon's own mark, not a stand-in for one. */}
@@ -109,7 +109,7 @@ function Handover({
             </p>
             {/* Blue: the green is Play's and nothing else's. */}
             <div className="mt-5 grid h-11 place-items-center rounded-xl bg-brand text-white">
-              <FontAwesomeIcon icon={faSpinner} spin />
+              <Glyph icon={faSpinner} spin />
             </div>
           </>
         ) : (
@@ -437,7 +437,7 @@ export default function WorldPage() {
               <div className="flex shrink-0 flex-col gap-3 sm:min-w-[18rem]">
                 <div className="flex items-center gap-2">
                   <Button size="lg" variant="enter" className="flex-1" onClick={start}>
-                    <FontAwesomeIcon icon={faPlay} />
+                    <Glyph icon={faPlay} />
                     <span className="font-display text-lg font-extrabold">Play</span>
                   </Button>
 
@@ -446,7 +446,7 @@ export default function WorldPage() {
                     align="right"
                     trigger={
                       <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-ink-line text-white/70 transition-colors hover:bg-white/10 hover:text-white">
-                        <FontAwesomeIcon icon={faEllipsis} />
+                        <Glyph icon={faEllipsis} />
                       </span>
                     }
                     items={[
@@ -485,7 +485,7 @@ export default function WorldPage() {
                         favourited ? 'text-amber-300' : 'text-white/60 hover:text-white',
                       )}
                     >
-                      <FontAwesomeIcon icon={faStar} />
+                      <Glyph icon={faStar} />
                       {formatCount(counts.favourites)}
                     </button>
                   </Tooltip>
@@ -507,7 +507,7 @@ export default function WorldPage() {
                         notify ? 'text-link' : 'text-white/60 hover:text-white',
                       )}
                     >
-                      <FontAwesomeIcon icon={faBell} />
+                      <Glyph icon={faBell} />
                       Notify
                     </button>
                   </Tooltip>
@@ -585,7 +585,7 @@ export default function WorldPage() {
                       onClick={() => setReporting(true)}
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
                     >
-                      <FontAwesomeIcon icon={faFlag} className="text-[10px]" />
+                      <Glyph icon={faFlag} className="text-[10px]" />
                       Report Abuse
                     </button>
                   </div>

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCircleCheck, faCircleExclamation, faCircleInfo } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               tones[t.tone],
             )}
           >
-            <FontAwesomeIcon icon={icons[t.tone]} />
+            <Glyph icon={icons[t.tone]} />
             <span className="text-white/90">{t.message}</span>
           </div>
         ))}

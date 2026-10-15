@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faUser } from '@fortawesome/free-solid-svg-icons'
 import {
   K6, loadK6Source, headshot, dressFrom,
@@ -302,7 +302,7 @@ export function AvatarStage({
       )}
     >
       {failed && (
-        <FontAwesomeIcon icon={faUser} className="text-3xl text-white/25" />
+        <Glyph icon={faUser} className="text-3xl text-white/25" />
       )}
     </div>
   )

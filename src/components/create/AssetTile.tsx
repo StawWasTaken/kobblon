@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FreeCorner } from '@/components/brand/FreeBadge'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faThumbsUp, faHandPointUp, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
@@ -105,14 +105,14 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
             className="h-full w-full select-none object-cover"
           />
         ) : (
-          <FontAwesomeIcon icon={kindIcons[item.kind]} className="text-3xl text-white/35" />
+          <Glyph icon={kindIcons[item.kind]} className="text-3xl text-white/35" />
         )}
         <span className={cn('absolute left-2 top-2', overlayChip)}>
           {kindLabels[item.kind]}
         </span>
         {owned && (
           <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-md bg-space text-[11px] text-[#fff]">
-            <FontAwesomeIcon icon={faCheck} />
+            <Glyph icon={faCheck} />
           </span>
         )}
       </div>
@@ -135,12 +135,12 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
         <p className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/40">
           {typeof item.score === 'number' && item.score !== null ? (
             <span className="inline-flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faThumbsUp} />
+              <Glyph icon={faThumbsUp} />
               {item.score}%
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faHandPointUp} />
+              <Glyph icon={faHandPointUp} />
               {formatCount(item.download_count)}
             </span>
           )}

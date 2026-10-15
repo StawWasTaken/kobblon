@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faUserPlus, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { NameMarks } from '@/components/brand/Verified'
@@ -72,7 +72,7 @@ export function FriendRequestCard({
           </p>
           {/* Not truncated: the sentence is the whole point of the card. */}
           <p className="flex items-center gap-1.5 text-sm leading-snug text-muted">
-            <FontAwesomeIcon icon={faUserPlus} className="shrink-0 text-xs" />
+            <Glyph icon={faUserPlus} className="shrink-0 text-xs" />
             Sent you a friend request
           </p>
         </div>
@@ -82,7 +82,7 @@ export function FriendRequestCard({
           aria-label="Later"
           className="grid h-7 w-7 shrink-0 place-items-center self-start rounded-lg text-white/35 transition-colors hover:bg-white/10 hover:text-white"
         >
-          <FontAwesomeIcon icon={faXmark} className="text-xs" />
+          <Glyph icon={faXmark} className="text-xs" />
         </button>
       </div>
 
@@ -96,7 +96,7 @@ export function FriendRequestCard({
           disabled={busy}
           className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-white/60 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40"
         >
-          <FontAwesomeIcon icon={faXmark} className="text-xs" />
+          <Glyph icon={faXmark} className="text-xs" />
           Decline
         </button>
         <button
@@ -104,7 +104,7 @@ export function FriendRequestCard({
           disabled={busy}
           className="flex items-center justify-center gap-2 border-l border-ink-line bg-space py-3 text-sm font-bold text-white transition-colors hover:bg-space-bright disabled:opacity-40"
         >
-          <FontAwesomeIcon icon={faCheck} className="text-xs" />
+          <Glyph icon={faCheck} className="text-xs" />
           Accept
         </button>
       </div>

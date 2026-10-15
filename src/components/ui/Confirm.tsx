@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { Dialog } from './Dialog'
@@ -76,7 +76,7 @@ export function Confirm({
             tone === 'danger' ? 'bg-danger/15 text-danger' : 'bg-brand/15 text-brand',
           )}
         >
-          <FontAwesomeIcon icon={icon} />
+          <Glyph icon={icon} />
         </span>
         <div className="min-w-0 flex-1 space-y-3">
           {lead && <p className="text-sm text-white/80">{lead}</p>}

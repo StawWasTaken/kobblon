@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Wordmark } from '@/components/brand/Wordmark'
@@ -205,7 +205,7 @@ export function StoryPage({
                 }}
                 className="inline-flex items-center gap-2 text-sm font-bold text-link hover:underline"
               >
-                <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
+                <Glyph icon={faArrowUp} className="text-xs" />
                 Back to the top
               </a>
               <Link to="/policies" className="text-sm font-semibold text-white/45 hover:text-white">

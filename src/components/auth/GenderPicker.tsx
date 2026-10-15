@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faMars, faVenus, faGenderless } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
@@ -39,7 +39,7 @@ export function GenderPicker({
                   : 'border-ink-line bg-ink-raised text-white/60 hover:bg-ink-hover hover:text-white',
               )}
             >
-              <FontAwesomeIcon icon={option.icon} />
+              <Glyph icon={option.icon} />
               {option.label}
             </button>
           )

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowUpRightFromSquare, faBell, faCheck, faCopy, faImage, faLink, faPlus,
   faTrash, faUpload, faVideo,
@@ -107,7 +107,7 @@ export default function CreateWorld() {
   if (!world) {
     return (
       <Card className="p-8 text-center">
-        <FontAwesomeIcon icon={worldIcon} className="text-2xl text-white/25" />
+        <Glyph icon={worldIcon} className="text-2xl text-white/25" />
         <h1 className="mt-3 font-display text-xl font-extrabold">No World of yours here</h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">
           Either that number is not one of yours, or it has been taken down.
@@ -184,7 +184,7 @@ export default function CreateWorld() {
         * from this page more than anything else is the link to send people.
         */}
       <Card className="flex flex-wrap items-center gap-3 p-4">
-        <FontAwesomeIcon icon={faLink} className="text-muted" />
+        <Glyph icon={faLink} className="text-muted" />
         <code className="min-w-0 flex-1 truncate rounded-lg bg-ink-raised px-3 py-2 text-xs text-white/80">
           {address}
         </code>
@@ -265,7 +265,7 @@ export default function CreateWorld() {
           <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
             {world.cover_url
               ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
-              : <FontAwesomeIcon icon={faImage} className="text-white/30" />}
+              : <Glyph icon={faImage} className="text-white/30" />}
           </span>
           <div>
             <Button
@@ -300,7 +300,7 @@ export default function CreateWorld() {
             >
               {one.kind === 'video' ? (
                 <span className="grid h-full w-full place-items-center text-white/50">
-                  <FontAwesomeIcon icon={faVideo} />
+                  <Glyph icon={faVideo} />
                 </span>
               ) : (
                 <img src={worldFileUrl(one.path)} alt="" className="h-full w-full object-cover" />
@@ -311,7 +311,7 @@ export default function CreateWorld() {
                 aria-label="Take this off the page"
                 className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-xs text-white opacity-0 transition-opacity hover:bg-danger group-hover:opacity-100"
               >
-                <FontAwesomeIcon icon={faTrash} />
+                <Glyph icon={faTrash} />
               </button>
             </div>
           ))}
@@ -322,7 +322,7 @@ export default function CreateWorld() {
             className="grid aspect-video place-items-center rounded-lg border border-dashed border-ink-line text-sm text-muted transition-colors hover:border-white/30 hover:text-white disabled:opacity-40"
           >
             <span className="flex flex-col items-center gap-1">
-              <FontAwesomeIcon icon={faPlus} />
+              <Glyph icon={faPlus} />
               Add
             </span>
           </button>

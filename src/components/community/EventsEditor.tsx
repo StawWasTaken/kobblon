@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faPlus, faPen, faTrash, faBan, faCalendarDay, faUserGroup, faRotateLeft,
 } from '@fortawesome/free-solid-svg-icons'
@@ -104,7 +104,7 @@ export function EventsEditor({ communityId }: { communityId: string }) {
 
       {!events.loading && !events.data?.length && (
         <Card className="p-8 text-center">
-          <FontAwesomeIcon icon={faCalendarDay} className="text-3xl text-white/20" />
+          <Glyph icon={faCalendarDay} className="text-3xl text-white/20" />
           <p className="mt-3 text-sm font-bold">Nothing in the calendar</p>
           <p className="mt-1 text-sm text-muted">
             A meet-up, a build night, the day something launches.
@@ -127,7 +127,7 @@ export function EventsEditor({ communityId }: { communityId: string }) {
                       <img src={event.cover_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <span className="grid h-full w-full place-items-center text-white/25">
-                        <FontAwesomeIcon icon={faCalendarDay} />
+                        <Glyph icon={faCalendarDay} />
                       </span>
                     )}
                   </span>
@@ -142,7 +142,7 @@ export function EventsEditor({ communityId }: { communityId: string }) {
                       {event.is_cancelled && ' · cancelled'}
                     </p>
                     <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
-                      <FontAwesomeIcon icon={faUserGroup} />
+                      <Glyph icon={faUserGroup} />
                       {formatCount(event.attending_count)} going
                       <span className="font-mono">EVT-{event.content_id}</span>
                     </p>

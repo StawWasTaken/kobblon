@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -18,7 +18,7 @@ export function Tick({ on, className }: { on: boolean; className?: string }) {
         className,
       )}
     >
-      {on && <FontAwesomeIcon icon={faCheck} />}
+      {on && <Glyph icon={faCheck} />}
     </span>
   )
 }

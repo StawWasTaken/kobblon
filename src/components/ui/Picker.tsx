@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -94,7 +94,7 @@ export function Picker({
         )}
       >
         <span className="truncate">{selected?.label ?? placeholder}</span>
-        <FontAwesomeIcon
+        <Glyph
           icon={faChevronDown}
           className={cn('text-xs text-white/40 transition-transform', open && 'rotate-180')}
         />

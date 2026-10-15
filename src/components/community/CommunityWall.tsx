@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faThumbtack, faThumbsUp, faTrash, faEllipsis } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -179,7 +179,7 @@ export function CommunityWall({
                         : 'text-muted hover:bg-ink-hover hover:text-white',
                     )}
                   >
-                    <FontAwesomeIcon icon={faThumbsUp} />
+                    <Glyph icon={faThumbsUp} />
                     {post.like_count > 0 ? formatCount(post.like_count) : 'Like'}
                   </button>
 
@@ -195,7 +195,7 @@ export function CommunityWall({
                   label="Post options"
                   trigger={
                     <span className="grid h-7 w-7 place-items-center rounded-md text-white/35 transition-colors hover:bg-ink-hover hover:text-white">
-                      <FontAwesomeIcon icon={faEllipsis} />
+                      <Glyph icon={faEllipsis} />
                     </span>
                   }
                   items={[

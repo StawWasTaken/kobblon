@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCopy, faLock, faLockOpen, faPen, faTrash, faShieldHalved,
   faTriangleExclamation, faClock, faEllipsis, faFlag,
@@ -127,7 +127,7 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl, onTurn }: {
         ) : (
           // Sized against the square rather than against the text, so the
           // mark keeps its proportions whatever the cover is worth.
-          <FontAwesomeIcon
+          <Glyph
             icon={kindIcons.audio}
             style={{ width: '38%', height: 'auto' }}
             className="text-white/25"
@@ -160,7 +160,7 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl, onTurn }: {
           className="h-full w-full select-none object-contain"
         />
       ) : (
-        <FontAwesomeIcon
+        <Glyph
           icon={kindIcons[asset.kind]}
           style={{ width: '34%', height: 'auto' }}
           className="text-white/25"
@@ -231,7 +231,7 @@ function UsePanel({ asset, onChanged }: { asset: AssetPageItem; onChanged: () =>
           {ticked(asset) ? (
             <Verified className="mt-0.5" />
           ) : (
-            <FontAwesomeIcon icon={faShieldHalved} className="mt-0.5 shrink-0" />
+            <Glyph icon={faShieldHalved} className="mt-0.5 shrink-0" />
           )}
           <span>
             {mine
@@ -505,13 +505,13 @@ export default function AssetPage() {
               <span className="italic">Not enough ratings</span>
             ) : (
               <span className="inline-flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faThumbsUp} className="text-space-bright" />
+                <Glyph icon={faThumbsUp} className="text-space-bright" />
                 <span className="font-bold text-white">{asset.score}%</span>
                 <span>({formatCount(asset.votes)} {asset.votes === 1 ? 'vote' : 'votes'})</span>
               </span>
             )}
             <span className="inline-flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faComment} />
+              <Glyph icon={faComment} />
               {formatCount(asset.review_count)} {asset.review_count === 1 ? 'review' : 'reviews'}
             </span>
             <span className="font-mono text-link">{contentTag(asset.kind, asset.content_id)}</span>
@@ -528,7 +528,7 @@ export default function AssetPage() {
             align="right"
             trigger={
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
-                <FontAwesomeIcon icon={faEllipsis} />
+                <Glyph icon={faEllipsis} />
               </span>
             }
             items={[
@@ -677,7 +677,7 @@ export default function AssetPage() {
             ? 'bg-amber-400/10 text-amber-200'
             : 'bg-danger/10 text-danger',
         )}>
-          <FontAwesomeIcon
+          <Glyph
             icon={asset.status === 'pending' ? faClock : faTriangleExclamation}
             className="mt-0.5"
           />
@@ -760,7 +760,7 @@ export default function AssetPage() {
               to={`/create/${kindCodes.image}-${asset.texture_content_id}`}
               className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-3 py-2.5 hover:border-brand"
             >
-              <FontAwesomeIcon icon={kindIcons.image} className="text-white/40" />
+              <Glyph icon={kindIcons.image} className="text-white/40" />
               <span className="min-w-0 flex-1">
                 <span className="block font-display text-[10px] uppercase tracking-wider text-muted">
                   Wearing
@@ -900,7 +900,7 @@ export default function AssetPage() {
                             {review.display_name}
                           </Link>
                           {review.up !== null && (
-                            <FontAwesomeIcon
+                            <Glyph
                               icon={review.up ? faThumbsUp : faThumbsDown}
                               className={cn('text-xs', review.up ? 'text-space-bright' : 'text-white/40')}
                             />
@@ -953,7 +953,7 @@ export default function AssetPage() {
               aria-label={`Everything by ${asset.creator_display_name}`}
               className="text-sm text-white/40 transition-colors hover:text-white"
             >
-              <FontAwesomeIcon icon={faChevronRight} />
+              <Glyph icon={faChevronRight} />
             </Link>
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-6">
@@ -1016,7 +1016,7 @@ function ReviewBox({ asset, onDone }: { asset: AssetPageItem; onDone: () => void
                 : 'bg-ink-card text-white/60 hover:bg-ink-hover hover:text-white',
             )}
           >
-            <FontAwesomeIcon icon={up ? faThumbsUp : faThumbsDown} />
+            <Glyph icon={up ? faThumbsUp : faThumbsDown} />
             {up ? 'Good' : 'Not for me'}
           </button>
         ))}

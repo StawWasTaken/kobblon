@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { faStar, faSliders, faPlus } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -116,7 +116,7 @@ export default function Library() {
                     title="Configure"
                     className={cn('grid h-8 w-8 place-items-center', overlayButton)}
                   >
-                    <FontAwesomeIcon icon={faSliders} />
+                    <Glyph icon={faSliders} />
                   </Link>
                 </div>
               )}

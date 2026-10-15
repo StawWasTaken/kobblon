@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faUpload, faMagnifyingGlass, faTableCellsLarge, faList,
   faCircleCheck, faCircleXmark, faClock, faHardDrive, faFileArrowDown,
@@ -40,7 +40,7 @@ function Tally({ icon, label, value, tone }: {
   return (
     <div className="rounded-2xl border border-ink-line bg-ink-card px-4 py-3">
       <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-        <FontAwesomeIcon icon={icon} className={tone} />
+        <Glyph icon={icon} className={tone} />
         {label}
       </p>
       <p className="mt-1 font-display text-2xl font-extrabold tabular-nums">{value}</p>
@@ -203,7 +203,7 @@ export default function CreateUploads() {
                     one.on ? 'bg-brand text-onbrand' : 'text-white/50 hover:text-white',
                   )}
                 >
-                  <FontAwesomeIcon icon={one.icon} />
+                  <Glyph icon={one.icon} />
                 </button>
               ))}
             </div>

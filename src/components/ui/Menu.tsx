@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Hop } from '@/components/ui/Hop'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -103,7 +103,7 @@ export function Menu({
           {items.map((item) => {
             const body = (
               <>
-                {item.icon && <FontAwesomeIcon icon={item.icon} className="w-4" />}
+                {item.icon && <Glyph icon={item.icon} className="w-4" />}
                 {item.label}
               </>
             )

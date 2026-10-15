@@ -15,7 +15,7 @@
  * It owns no data. The page holds the value and decides when to save, so
  * this can be mounted in a dialog, on a card, or in the Workspace.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowsUpDownLeftRight, faRotate, faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons'
@@ -124,7 +124,7 @@ export function FitEditor({ value, onChange, onReset, className }: {
       {(mode === 'size' ? [AXES[1]] : AXES).map((axis) => (
         <label key={axis.key} className="flex items-center gap-2.5">
           {mode === 'size'
-            ? <FontAwesomeIcon
+            ? <Glyph
                 icon={faUpRightAndDownLeftFromCenter}
                 className="h-3.5 w-3.5 shrink-0 text-white/45"
               />

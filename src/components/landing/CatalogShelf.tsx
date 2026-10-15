@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/States'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faShirt } from '@fortawesome/free-solid-svg-icons'
 import { Price } from '@/components/brand/Currency'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -90,7 +90,7 @@ function Card({ item }: { item: AvatarItem }) {
             className="h-full w-full object-contain p-4"
           />
         ) : (
-          <FontAwesomeIcon icon={faShirt} className="text-3xl text-white/25" />
+          <Glyph icon={faShirt} className="text-3xl text-white/25" />
         )}
       </div>
 

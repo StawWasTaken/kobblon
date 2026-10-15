@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faBullhorn, faPen, faTrash, faEllipsis, faPlus, faImage, faVideo, faXmark,
   faThumbsUp, faThumbsDown,
@@ -121,7 +121,7 @@ export function Announcements({
     <section>
       <div className="mb-3 flex items-center gap-3">
         <h2 className="flex items-center gap-2 font-display text-lg font-extrabold">
-          <FontAwesomeIcon icon={faBullhorn} className="text-sm" />
+          <Glyph icon={faBullhorn} className="text-sm" />
           Announcement
         </h2>
 
@@ -189,7 +189,7 @@ export function Announcements({
                     align="right"
                     trigger={
                       <span className="grid h-8 w-8 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white">
-                        <FontAwesomeIcon icon={faEllipsis} />
+                        <Glyph icon={faEllipsis} />
                       </span>
                     }
                     items={[
@@ -244,7 +244,7 @@ export function Announcements({
                         : 'border-ink-line bg-ink-raised text-white/60 hover:bg-ink-hover hover:text-white',
                     )}
                   >
-                    <FontAwesomeIcon icon={side.icon} />
+                    <Glyph icon={side.icon} />
                     {formatCount(side.count ?? 0)}
                   </button>
                 ))}
@@ -308,13 +308,13 @@ export function Announcements({
                   aria-label="Remove"
                   className={cn('absolute right-2 top-2 h-8 w-8', overlayButton)}
                 >
-                  <FontAwesomeIcon icon={faXmark} />
+                  <Glyph icon={faXmark} />
                 </button>
               </div>
             ) : (
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-ink-hover px-3 py-2 text-xs font-bold transition-colors hover:bg-ink-line">
-                <FontAwesomeIcon icon={faImage} />
-                <FontAwesomeIcon icon={faVideo} />
+                <Glyph icon={faImage} />
+                <Glyph icon={faVideo} />
                 {pending ? 'Uploading...' : 'Add a picture or a clip'}
                 <input
                   type="file"

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faMagnifyingGlassPlus, faRotate } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
@@ -133,7 +133,7 @@ export function Cropper({
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <FontAwesomeIcon icon={faMagnifyingGlassPlus} className="text-sm" />
+        <Glyph icon={faMagnifyingGlassPlus} className="text-sm" />
         <input
           type="range"
           min={1}

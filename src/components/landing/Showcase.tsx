@@ -14,7 +14,7 @@
  */
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faPlay, faEnvelopeOpenText } from '@fortawesome/free-solid-svg-icons'
 import { SignupForm } from '@/components/auth/SignupForm'
 import { Button } from '@/components/ui/Button'
@@ -94,7 +94,7 @@ export function Showcase() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button to="/discover" size="lg" variant="brand">
-              <FontAwesomeIcon icon={faPlay} />
+              <Glyph icon={faPlay} />
               Start playing
             </Button>
             <Button to="/download" size="lg" variant="ghost">
@@ -139,7 +139,7 @@ export function Showcase() {
             */}
           {sent ? (
             <div className="py-6 text-center">
-              <FontAwesomeIcon icon={faEnvelopeOpenText} className="text-3xl text-space-bright" />
+              <Glyph icon={faEnvelopeOpenText} className="text-3xl text-space-bright" />
               <h2 className="mt-3 font-display text-xl">Check your email</h2>
               <p className="mt-2 text-sm text-muted">
                 We sent a link to <span className="font-bold text-white">{sent}</span>.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCheck, faComment, faEllipsis, faFilter, faInbox, faUserGroup, faUserPlus,
   faUsers, faXmark, faHeart, faStar, faBan, faEyeSlash, faUser,
@@ -97,7 +97,7 @@ function PersonLine({
               what stops that ordering reading as random. */}
           {person.best && (
             <Tooltip label="Best friends" side="top">
-              <FontAwesomeIcon icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
+              <Glyph icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
             </Tooltip>
           )}
           <span className="truncate text-sm font-bold">{person.display_name}</span>
@@ -262,7 +262,7 @@ export default function Friends() {
         label={`Options for ${person.display_name}`}
         trigger={
           <span className="grid h-8 w-8 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white">
-            <FontAwesomeIcon icon={faEllipsis} />
+            <Glyph icon={faEllipsis} />
           </span>
         }
         items={items}
@@ -368,7 +368,7 @@ export default function Friends() {
         <div className="space-y-6">
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-muted">
-              <FontAwesomeIcon icon={faInbox} />
+              <Glyph icon={faInbox} />
               Waiting on you
             </h2>
             {!incoming.loading && !incoming.data?.length && (
@@ -405,7 +405,7 @@ export default function Friends() {
 
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-muted">
-              <FontAwesomeIcon icon={faUserPlus} />
+              <Glyph icon={faUserPlus} />
               You asked
             </h2>
             {!outgoing.data?.length ? (

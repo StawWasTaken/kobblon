@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faBars, faBell, faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Avatar } from '@/components/ui/Avatar'
@@ -101,7 +101,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
           aria-label="Open navigation"
           className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 lg:hidden"
         >
-          <FontAwesomeIcon icon={faBars} />
+          <Glyph icon={faBars} />
         </button>
 
         <Wordmark to="/home" className="h-5 shrink-0" />
@@ -148,7 +148,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
                   aria-label={post ? `Inbox, ${post} unread` : 'Inbox'}
                   className="relative grid h-9 w-9 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15"
                 >
-                  <FontAwesomeIcon icon={faEnvelope} />
+                  <Glyph icon={faEnvelope} />
                   {post > 0 && (
                     <span className="absolute right-0.5 top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-space px-1 text-[10px] font-bold text-onbrand">
                       {post > 9 ? '9+' : post}
@@ -164,7 +164,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
                 aria-expanded={notificationsOpen}
                 className="relative grid h-9 w-9 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15"
               >
-                <FontAwesomeIcon icon={faBell} />
+                <Glyph icon={faBell} />
                 {unread > 0 && (
                   <span className="absolute right-0.5 top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-space px-1 text-[10px] font-bold text-onbrand">
                     {unread > 9 ? '9+' : unread}

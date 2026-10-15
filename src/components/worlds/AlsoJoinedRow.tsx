@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faThumbsUp, faUser } from '@fortawesome/free-solid-svg-icons'
 import { worldLink } from '@/lib/links'
 import { formatCount } from '@/lib/format'
@@ -58,12 +58,12 @@ export function AlsoJoinedRow({ worlds }: { worlds: AlsoJoined[] }) {
               <div className="mt-1 flex items-center gap-3 text-xs text-ink-soft">
                 {score !== null && (
                   <span className="inline-flex items-center gap-1">
-                    <FontAwesomeIcon icon={faThumbsUp} />
+                    <Glyph icon={faThumbsUp} />
                     {score}%
                   </span>
                 )}
                 <span className="inline-flex items-center gap-1">
-                  <FontAwesomeIcon icon={faUser} />
+                  <Glyph icon={faUser} />
                   {formatCount(world.playing ?? 0)}
                 </span>
               </div>

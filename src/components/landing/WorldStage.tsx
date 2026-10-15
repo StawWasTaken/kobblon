@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faEye, faThumbsUp, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
@@ -33,7 +33,7 @@ function Poster({ world, tall }: { world: World; tall?: boolean }) {
         />
       ) : (
         <span className="grid h-full w-full place-items-center">
-          <FontAwesomeIcon icon={worldIcon} className="text-5xl text-white/15" />
+          <Glyph icon={worldIcon} className="text-5xl text-white/15" />
         </span>
       )}
       <span className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 to-transparent" />
@@ -49,18 +49,18 @@ function Poster({ world, tall }: { world: World; tall?: boolean }) {
 
         <span className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-bold text-white/55">
           <span className="inline-flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faEye} />
+            <Glyph icon={faEye} />
             {formatCount(world.visit_count)}
           </span>
           {world.like_count > 0 && (
             <span className="inline-flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faThumbsUp} />
+              <Glyph icon={faThumbsUp} />
               {formatCount(world.like_count)}
             </span>
           )}
           <span className="ml-auto inline-flex items-center gap-1.5 text-space-bright opacity-0 transition-opacity group-hover:opacity-100">
             Play
-            <FontAwesomeIcon icon={faArrowRight} />
+            <Glyph icon={faArrowRight} />
           </span>
         </span>
       </span>

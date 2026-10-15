@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCompass, faChevronLeft, faChevronRight, faEye,
 } from '@fortawesome/free-solid-svg-icons'
@@ -52,7 +52,7 @@ function Row({ title, children, more }: {
               aria-label={way === -1 ? `Scroll ${title} left` : `Scroll ${title} right`}
               className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/60 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
+              <Glyph icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
             </button>
           ))}
         </div>
@@ -90,13 +90,13 @@ function Suggestion({ world }: { world: World }) {
           />
         ) : (
           <span className="grid h-full w-full place-items-center">
-            <FontAwesomeIcon icon={worldIcon} className="text-2xl text-white/20" />
+            <Glyph icon={worldIcon} className="text-2xl text-white/20" />
           </span>
         )}
       </Link>
       <p className="mt-1.5 truncate text-sm font-bold">{world.name}</p>
       <p className="flex items-center gap-1.5 text-xs text-muted">
-        <FontAwesomeIcon icon={faEye} />
+        <Glyph icon={faEye} />
         {formatCount(world.visit_count ?? 0)}
       </p>
     </article>

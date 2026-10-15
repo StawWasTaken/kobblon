@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faEnvelopeOpenText, faGavel, faLock, faHeadset, faScroll, faBullhorn,
   faCheckDouble, faArrowRight,
@@ -68,7 +68,7 @@ function LetterCard({ letter, onOpen }: { letter: Letter; onOpen: () => void }) 
         >
           {letter.kind === 'money'
             ? <CurrencyMark className="h-4 w-4" />
-            : <FontAwesomeIcon icon={look.icon} />}
+            : <Glyph icon={look.icon} />}
         </span>
 
         <span className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ function LetterCard({ letter, onOpen }: { letter: Letter; onOpen: () => void }) 
               className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-link hover:underline"
             >
               Go to it
-              <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+              <Glyph icon={faArrowRight} className="text-xs" />
             </Link>
           )}
         </div>

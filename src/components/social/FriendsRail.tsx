@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faArrowRight, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { Skeleton } from '@/components/ui/States'
 import { useAuth } from '@/hooks/useAuth'
@@ -42,7 +42,7 @@ export function FriendsRail() {
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
           >
             See all
-            <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+            <Glyph icon={faArrowRight} className="text-[10px]" />
           </Link>
         )}
       </div>
@@ -54,7 +54,7 @@ export function FriendsRail() {
           className="group flex flex-col items-center gap-2 text-center"
         >
           <span className="grid h-20 w-20 place-items-center rounded-full border border-ink-line bg-ink-card text-2xl text-white/50 transition-colors group-hover:bg-ink-hover group-hover:text-white">
-            <FontAwesomeIcon icon={faPlus} />
+            <Glyph icon={faPlus} />
           </span>
           <span className="truncate text-xs font-semibold text-white/70">Add Friends</span>
         </Link>

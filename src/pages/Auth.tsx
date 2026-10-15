@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowLeft, faLayerGroup, faShapes, faUsers, faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons'
@@ -21,7 +21,7 @@ function Promise_({ icon, title, body }: { icon: IconDefinition; title: string; 
   return (
     <li className="flex gap-3.5">
       <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.06] text-sm text-white">
-        <FontAwesomeIcon icon={icon} />
+        <Glyph icon={icon} />
       </span>
       <span className="min-w-0">
         <span className="block text-sm font-bold text-white">{title}</span>
@@ -78,7 +78,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
             to="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition-colors hover:text-white"
           >
-            <FontAwesomeIcon icon={faArrowLeft} />
+            <Glyph icon={faArrowLeft} />
             Back to the front
           </Link>
         </header>
@@ -154,7 +154,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                 ) : claiming ? (
                   <>
                     <span className="inline-flex items-center gap-2 rounded-full border border-space/40 bg-space/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
-                      <FontAwesomeIcon icon={faCircleCheck} />
+                      <Glyph icon={faCircleCheck} />
                       Nothing gets lost
                     </span>
                     <h1 className="mt-4 font-display text-2xl font-extrabold">

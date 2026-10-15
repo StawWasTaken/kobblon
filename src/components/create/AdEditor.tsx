@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faUsers, faCalendarDay, faShapes, faGlobe, faLock,
 } from '@fortawesome/free-solid-svg-icons'
@@ -242,7 +242,7 @@ export function AdEditor({
                 return (
                   <div key={kind}>
                     <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                      <FontAwesomeIcon icon={targetLook[kind].icon} />
+                      <Glyph icon={targetLook[kind].icon} />
                       {targetLook[kind].label}
                     </p>
                     <div className="grid gap-1.5 sm:grid-cols-2">
@@ -283,7 +283,7 @@ export function AdEditor({
             </div>
           ) : (
             <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted">
-              <FontAwesomeIcon icon={faLock} />
+              <Glyph icon={faLock} />
               Ads cannot be pointed off Kobblon.
             </p>
           )}

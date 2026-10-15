@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faTriangleExclamation, faRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { Kobby } from '@/components/brand/Kobby'
 import type { KobbyMood } from '@/components/brand/Kobby'
@@ -33,7 +33,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
       <span className="grid h-12 w-12 place-items-center rounded-xl bg-danger/15 text-danger">
-        <FontAwesomeIcon icon={faTriangleExclamation} className="text-lg" />
+        <Glyph icon={faTriangleExclamation} className="text-lg" />
       </span>
       <h3 className="mt-4 text-base font-bold">That didn&apos;t load</h3>
       <p className="mt-1 max-w-sm text-sm text-muted">{message}</p>
