@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes } from 'react'
 import { Hop } from '@/components/ui/Hop'
 import { Glyph } from '@/components/brand/Glyph'
+import type { KobIcon } from '@/components/brand/Icon'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
@@ -69,6 +70,19 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant
   size?: Size
   icon?: IconDefinition
+  /**
+   * Whether what this button toggles is on, for the icons Staw drew twice
+   * - a star, a heart, a thumb. Left out, those stay Font Awesome's,
+   * because the filled drawing means "you pressed it" and showing it to
+   * somebody who has not is a lie the page tells about them.
+   */
+  iconOn?: boolean
+  /**
+   * One of ours by name, where the Font Awesome stand-in means something
+   * else elsewhere - a clock that is "waiting to be friended" rather than
+   * a clock, a heart that is "best friend" rather than a like.
+   */
+  iconName?: KobIcon
   iconRight?: IconDefinition
   loading?: boolean
   to?: string
@@ -76,7 +90,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', icon, iconRight, loading, to, block, className, children, ...props },
+  { variant = 'primary', size = 'md', icon, iconOn, iconName, iconRight, loading, to, block, className, children, ...props },
   ref,
 ) {
   const classes = cn(base, variants[variant], sizes[size], block && 'w-full', className)
@@ -85,7 +99,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {loading ? (
         <Glyph icon={faSpinner} className="animate-spin" />
       ) : (
-        icon && <Glyph icon={icon} />
+        icon && <Glyph icon={icon} name={iconName} on={iconOn} />
       )}
       {children}
       {iconRight && !loading && <Glyph icon={iconRight} />}

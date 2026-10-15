@@ -4333,6 +4333,19 @@ export type OutfitPage = {
   }[]
 }
 
+/**
+ * A moderator taking an outfit down.
+ *
+ * Not the owner's `removeOutfit`, deliberately: an owner deleting their own
+ * look and a moderator taking one down are two different events, and only
+ * one of them has a reason, a log entry and a word to the person.
+ */
+export async function takeDownOutfit(id: string, note?: string): Promise<boolean> {
+  return unwrap(await supabase.rpc('take_down_outfit', {
+    target: id, note: note ?? null,
+  })) as boolean
+}
+
 /** A new name on a saved look, and nothing else about it moves. */
 export async function renameOutfit(id: string, name: string) {
   unwrap(await supabase.rpc('rename_outfit', { outfit: id, new_name: name }))

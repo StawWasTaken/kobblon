@@ -615,6 +615,7 @@ export default function Profile() {
                           <Button
                             variant="subtle"
                             icon={faClock}
+                            iconName="clock-user"
                             loading={busyWith === 'best'}
                             onClick={() => void bestFriend('unbest')}
                           >
@@ -624,6 +625,7 @@ export default function Profile() {
                           <Button
                             variant="subtle"
                             icon={faHeart}
+                            iconName="heart-user"
                             loading={busyWith === 'best'}
                             onClick={() => void bestFriend('ask')}
                           >
@@ -637,6 +639,7 @@ export default function Profile() {
                       <Button
                         variant="subtle"
                         icon={faClock}
+                        iconName="clock-user"
                         loading={busyWith === 'cancel'}
                         onClick={() => void takeBackRequest()}
                       >
