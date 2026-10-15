@@ -3,11 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faFaceSmile, faHatCowboy, faPalette, faFolder, faShuffle,
-  faCamera, faEraser, faBookmark, faMagnifyingGlass,
+  faCamera, faEraser, faBookmark, faMagnifyingGlass, faImage, faCube,
 } from '@fortawesome/free-solid-svg-icons'
 import { Input } from '@/components/ui/Input'
 import { Studio } from '@/components/avatar/Studio'
 import { AvatarStage } from '@/components/avatar/AvatarStage'
+import { ViewSwitch } from '@/components/avatar/ViewSwitch'
 import { Icon } from '@/components/brand/Icon'
 import { cn } from '@/lib/cn'
 import '@/index.css'
@@ -61,19 +62,17 @@ createRoot(document.getElementById('root')!).render(
       <div className="min-w-0 space-y-4">
         <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-12">
           <div className="relative overflow-hidden rounded-2xl">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_55%_at_50%_40%,rgba(58,80,255,0.18),transparent_70%)]"
-            />
-            <Studio className="grid aspect-[5/4] w-full place-items-center">
-              <div className="aspect-square h-[80%]">
-                <AvatarStage look={LOOK} handled className="h-full" />
-              </div>
+            <Studio className="aspect-[4/3] w-full">
+              <AvatarStage look={LOOK} handled fill className="h-full w-full" />
+              <ViewSwitch
+                ways={[
+                  { value: 'picture' as const, icon: faImage, label: '2D' },
+                  { value: 'body' as const, icon: faCube, label: '3D' },
+                ]}
+                value={'body' as const}
+                onChange={() => {}}
+              />
             </Studio>
-            <div className="pointer-events-none absolute left-4 top-4 z-[2] flex items-center gap-2 rounded-xl border border-ink-line bg-ink-card/70 px-3 py-1.5 backdrop-blur">
-              <Icon name="avatar" tone="currentColor" className="h-3.5 w-3.5 text-brand-bright" />
-              <span className="font-display text-xs font-extrabold">Staw</span>
-            </div>
           </div>
 
           <div className="absolute right-4 top-4 z-[3]">

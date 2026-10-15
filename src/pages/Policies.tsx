@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowRight, faScaleBalanced, faShieldHalved, faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons'
@@ -82,7 +82,7 @@ export default function PolicyHub() {
               <p className="mt-2 flex-1 leading-relaxed text-white/60">{policy.blurb}</p>
               <p className="mt-5 flex items-center gap-2 text-sm font-bold text-white/40">
                 <span className="tabular-nums">Changed {readable(policy.updated)}</span>
-                <FontAwesomeIcon
+                <Glyph
                   icon={faArrowRight}
                   className="ml-auto text-link transition-transform group-hover:translate-x-1"
                 />
@@ -97,7 +97,7 @@ export default function PolicyHub() {
             to="/standing"
             className="flex items-start gap-4 rounded-3xl border border-white/10 bg-ink-card/70 p-6 transition-colors hover:border-white/25"
           >
-            <FontAwesomeIcon icon={faScaleBalanced} className="mt-1 text-xl text-brand-bright" />
+            <Glyph icon={faScaleBalanced} className="mt-1 text-xl text-brand-bright" />
             <span>
               <span className="block font-display text-lg font-extrabold">Where you stand</span>
               <span className="mt-1 block text-sm leading-relaxed text-white/55">
@@ -109,7 +109,7 @@ export default function PolicyHub() {
             to="/support"
             className="flex items-start gap-4 rounded-3xl border border-white/10 bg-ink-card/70 p-6 transition-colors hover:border-white/25"
           >
-            <FontAwesomeIcon icon={faShieldHalved} className="mt-1 text-xl text-brand-bright" />
+            <Glyph icon={faShieldHalved} className="mt-1 text-xl text-brand-bright" />
             <span>
               <span className="block font-display text-lg font-extrabold">Write to us</span>
               <span className="mt-1 block text-sm leading-relaxed text-white/55">
@@ -120,7 +120,7 @@ export default function PolicyHub() {
         </div>
 
         <p className="mb-14 mt-10 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-relaxed text-white/45">
-          <FontAwesomeIcon icon={faCircleInfo} className="mt-0.5 text-white/30" />
+          <Glyph icon={faCircleInfo} className="mt-0.5 text-white/30" />
           These pages are written plainly and say what actually happens. They have not been
           through a lawyer yet. They will be before Kobblon opens widely, and this note will go
           when that is done rather than before.

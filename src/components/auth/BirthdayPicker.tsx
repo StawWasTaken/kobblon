@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCakeCandles, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -126,9 +126,9 @@ export function BirthdayPicker({
           open ? 'border-brand-bright bg-ink-hover' : 'bg-ink-raised hover:bg-ink-hover',
         )}
       >
-        <FontAwesomeIcon icon={faCakeCandles} className="text-white/35" />
+        <Glyph icon={faCakeCandles} className="text-white/35" />
         <span className={cn('flex-1 text-left', !complete && 'text-white/35')}>{summary}</span>
-        <FontAwesomeIcon
+        <Glyph
           icon={faChevronDown}
           className={cn('text-xs text-white/40 transition-transform', open && 'rotate-180')}
         />

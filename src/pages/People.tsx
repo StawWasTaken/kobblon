@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faMagnifyingGlass, faXmark, faUserPlus, faCheck, faEllipsis, faUser, faBolt, faSeedling, faArrowDownAZ,
 } from '@fortawesome/free-solid-svg-icons'
@@ -140,7 +140,7 @@ export default function People() {
       label={`Options for ${person.display_name}`}
       trigger={
         <span className="grid h-8 w-8 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white">
-          <FontAwesomeIcon icon={faEllipsis} />
+          <Glyph icon={faEllipsis} />
         </span>
       }
       items={[
@@ -165,7 +165,7 @@ export default function People() {
           </p>
 
           <div className="relative mt-5">
-            <FontAwesomeIcon
+            <Glyph
               icon={faMagnifyingGlass}
               className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/35"
             />
@@ -182,7 +182,7 @@ export default function People() {
                 aria-label="Clear the search"
                 className="absolute right-4 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
               >
-                <FontAwesomeIcon icon={faXmark} />
+                <Glyph icon={faXmark} />
               </button>
             )}
           </div>

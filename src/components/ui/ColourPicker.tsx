@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faEyeDropper, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -276,7 +276,7 @@ function Panel({
             style={{ background: swatch }}
           >
             {swatch.toLowerCase() === current.toLowerCase() && (
-              <FontAwesomeIcon icon={faCheck} className="text-[8px] mix-blend-difference" />
+              <Glyph icon={faCheck} className="text-[8px] mix-blend-difference" />
             )}
           </button>
         ))}
@@ -317,7 +317,7 @@ export function ColourPicker({
         }}
       >
         <span className="absolute inset-0" style={{ background: value }} />
-        <FontAwesomeIcon
+        <Glyph
           icon={faEyeDropper}
           className="absolute bottom-0.5 right-0.5 text-[9px] text-white mix-blend-difference"
         />

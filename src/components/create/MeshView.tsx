@@ -16,7 +16,7 @@
  * Mountable with no provider and no router: the Workspace shows meshes too.
  */
 import { useEffect, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCube, faImage, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { MeshViewer } from '@/components/create/MeshViewer'
 import { formatOf, type MeshFormat } from '@/engine/meshes'
@@ -224,7 +224,7 @@ export function MeshView({
           />
         ) : (
           /* Asked for, not arrived: the frame keeps its size and says so. */
-          <FontAwesomeIcon
+          <Glyph
             icon={kindIcons.mesh}
             style={{ width: '28%', height: 'auto' }}
             className="animate-pulse text-white/25"
@@ -240,7 +240,7 @@ export function MeshView({
           className="absolute inset-0 h-full w-full select-none object-contain"
         />
       ) : (
-        <FontAwesomeIcon icon={kindIcons.mesh} className="text-3xl text-white/35" />
+        <Glyph icon={kindIcons.mesh} className="text-3xl text-white/35" />
       )}
 
       {/*
@@ -290,7 +290,7 @@ export function MeshView({
               : 'grid h-8 w-8 place-items-center text-xs',
           )}
         >
-          <FontAwesomeIcon icon={showing === '3d' ? faImage : faCube} />
+          <Glyph icon={showing === '3d' ? faImage : faCube} />
           {/* "2D" rather than "Picture": the switch sits in the corner of the
               thing it is switching, and the word was most of its width. */}
           {labelled && <span>{showing === '3d' ? '2D' : '3D'}</span>}
@@ -310,7 +310,7 @@ export function MeshView({
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); void copy() }}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-ink-hover"
           >
-            <FontAwesomeIcon icon={faCopy} className="text-white/40" />
+            <Glyph icon={faCopy} className="text-white/40" />
             Copy the render
           </button>
         </div>

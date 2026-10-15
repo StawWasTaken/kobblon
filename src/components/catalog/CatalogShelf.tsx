@@ -21,7 +21,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faMagnifyingGlass, faPlus, faClock,
   faBasketShopping, faCheck, faStar, faSliders,
@@ -300,7 +300,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
         */}
       {sale.data && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
-          <FontAwesomeIcon icon={faTag} className="text-space-bright" />
+          <Glyph icon={faTag} className="text-space-bright" />
           <span className="font-bold text-space-bright">
             {sale.data.percent_off}% off the Catalog
           </span>
@@ -475,7 +475,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
                 : 'border-ink-line text-white/65 hover:text-white',
             )}
           >
-            <FontAwesomeIcon icon={faSliders} />
+            <Glyph icon={faSliders} />
             Exact price
           </button>
 
@@ -749,7 +749,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
               className="h-full w-full select-none object-contain"
             />
           ) : (
-            <FontAwesomeIcon icon={faShirt} className="text-3xl text-white/30" />
+            <Glyph icon={faShirt} className="text-3xl text-white/30" />
           )}
 
           {/* Down in the corner, which is where Staw asked for it. */}
@@ -759,7 +759,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
               'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
               closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
             )}>
-              <FontAwesomeIcon icon={faClock} />
+              <Glyph icon={faClock} />
               {closed ? 'Closed' : 'Limited'}
             </span>
           )}
@@ -822,7 +822,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
                       : 'border-ink-line text-white/55 hover:border-brand/60 hover:text-white',
                   )}
                 >
-                  <FontAwesomeIcon icon={inBasket ? faCheck : faBasketShopping} />
+                  <Glyph icon={inBasket ? faCheck : faBasketShopping} />
                 </button>
               )}
             </div>

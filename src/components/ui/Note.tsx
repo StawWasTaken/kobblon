@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
@@ -25,7 +25,7 @@ export function Note({ tone = 'brand', icon = faCircleInfo, children, side, clas
         className,
       )}
     >
-      <FontAwesomeIcon
+      <Glyph
         icon={icon}
         className={cn('text-sm', tone === 'yes' ? 'text-space-bright' : 'text-brand-bright')}
       />

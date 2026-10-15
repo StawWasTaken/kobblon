@@ -16,7 +16,7 @@
  * the Workspace will want it: no provider of its own, no router.
  */
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faFolder, faFolderPlus, faPlus, faShirt, faTrash, faTag, faCheck,
   faGear, faPenToSquare, faArrowsRotate,
@@ -95,7 +95,7 @@ function OutfitCard({ outfit, onChanged, onWear }: {
             label={`What to do with ${outfit.name}`}
             trigger={
               <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white">
-                <FontAwesomeIcon icon={faGear} />
+                <Glyph icon={faGear} />
               </span>
             }
             items={[
@@ -345,7 +345,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
           {grouped.filter((one) => one.outfits.length).map((one) => (
             <section key={one.id}>
               <p className="mb-2 flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted">
-                <FontAwesomeIcon icon={faFolder} />
+                <Glyph icon={faFolder} />
                 {one.name}
               </p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

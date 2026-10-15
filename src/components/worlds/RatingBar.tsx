@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faThumbsUp, faThumbsDown } from '@fortawesome/free-solid-svg-icons'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -33,7 +33,7 @@ export function RatingBar({
           iLike ? 'text-space-bright' : 'text-white/60 hover:text-white',
         )}
       >
-        <FontAwesomeIcon icon={faThumbsUp} className="text-base" />
+        <Glyph icon={faThumbsUp} className="text-base" />
         {formatCount(likes)}
       </button>
 
@@ -63,7 +63,7 @@ export function RatingBar({
           iDislike ? 'text-danger' : 'text-white/60 hover:text-white',
         )}
       >
-        <FontAwesomeIcon icon={faThumbsDown} className="text-base" />
+        <Glyph icon={faThumbsDown} className="text-base" />
         {formatCount(dislikes)}
       </button>
     </div>

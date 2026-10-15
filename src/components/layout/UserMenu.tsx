@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faGear, faShieldHalved, faRightFromBracket, faScroll, faRightLeft, faUserPlus,
   faUserShield, faShirt,
@@ -66,7 +66,7 @@ export function UserMenu() {
         aria-label="Account menu"
         className="grid h-9 w-9 place-items-center rounded-lg text-white/85 transition-colors hover:bg-white/15"
       >
-        <FontAwesomeIcon icon={faGear} />
+        <Glyph icon={faGear} />
       </button>
 
       {open && (
@@ -83,7 +83,7 @@ export function UserMenu() {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-white/80 transition-colors hover:bg-ink-hover hover:text-white"
               >
-                <FontAwesomeIcon icon={item.icon} className="w-4" />
+                <Glyph icon={item.icon} className="w-4" />
                 {item.label}
               </Link>
             ) : (
@@ -93,7 +93,7 @@ export function UserMenu() {
                 onClick={() => { setOpen(false); item.onSelect?.() }}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold text-white/80 transition-colors hover:bg-ink-hover hover:text-white"
               >
-                <FontAwesomeIcon icon={item.icon} className="w-4" />
+                <Glyph icon={item.icon} className="w-4" />
                 {item.label}
               </button>
             ),

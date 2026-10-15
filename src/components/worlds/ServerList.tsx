@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faUserGroup, faPlay } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -102,7 +102,7 @@ export function ServerList({
               disabled={full}
               onClick={() => onJoin?.(server)}
             >
-              <FontAwesomeIcon icon={full ? faUserGroup : faPlay} />
+              <Glyph icon={full ? faUserGroup : faPlay} />
               {full ? 'Full' : 'Join'}
             </Button>
           </article>

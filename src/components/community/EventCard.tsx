@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCalendarDay, faUserGroup, faBan } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { formatCount } from '@/lib/format'
@@ -46,13 +46,13 @@ export function EventCard({
           />
         ) : (
           <span className="grid h-full w-full place-items-center text-3xl text-white/20">
-            <FontAwesomeIcon icon={faCalendarDay} />
+            <Glyph icon={faCalendarDay} />
           </span>
         )}
 
         {(event.is_cancelled || over) && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-ink/85 px-2 py-1 text-[11px] font-bold backdrop-blur">
-            <FontAwesomeIcon icon={faBan} className="text-[10px]" />
+            <Glyph icon={faBan} className="text-[10px]" />
             {event.is_cancelled ? 'Cancelled' : 'Finished'}
           </span>
         )}
@@ -67,7 +67,7 @@ export function EventCard({
         <p className="mt-1.5 text-xs font-semibold">{eventWhen(event.starts_at)}</p>
 
         <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
-          <FontAwesomeIcon icon={faUserGroup} />
+          <Glyph icon={faUserGroup} />
           {formatCount(event.attending_count)} going
         </p>
 

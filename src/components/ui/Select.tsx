@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCaretDown, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -124,7 +124,7 @@ export function Select({
         )}
       >
         <span className="min-w-0 flex-1 truncate">{current?.label ?? 'Choose'}</span>
-        <FontAwesomeIcon
+        <Glyph
           icon={faCaretDown}
           className={cn('shrink-0 text-xs text-white/45 transition-transform', open && 'rotate-180')}
         />
@@ -151,7 +151,7 @@ export function Select({
                 index === active ? 'bg-ink-hover text-white' : 'text-white/75',
               )}
             >
-              <FontAwesomeIcon
+              <Glyph
                 icon={faCheck}
                 className={cn('w-3 shrink-0 text-xs', option.value === value ? 'text-link' : 'opacity-0')}
               />

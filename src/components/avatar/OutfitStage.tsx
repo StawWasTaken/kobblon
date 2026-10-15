@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faShirt } from '@fortawesome/free-solid-svg-icons'
 import { AvatarStage } from '@/components/avatar/AvatarStage'
 import { lookOfOutfit } from '@/lib/api'
@@ -60,7 +60,7 @@ export function OutfitStage({ outfitId, className }: {
       {state === 'loading' && <Skeleton className="h-full w-full" />}
       {state === 'failed' && (
         <span className="grid h-full w-full place-items-center">
-          <FontAwesomeIcon icon={faShirt} className="text-2xl text-white/25" />
+          <Glyph icon={faShirt} className="text-2xl text-white/25" />
         </span>
       )}
       {state === 'ready' && look && (

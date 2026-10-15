@@ -12,7 +12,7 @@
  * It renders nothing when there is only one way to look: a switch with one
  * setting is a label pretending to be a control.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -50,7 +50,7 @@ export function ViewSwitch<T extends string>({ ways, value, onChange, className 
             value === way.value ? 'bg-brand text-white' : 'text-white/65 hover:text-white',
           )}
         >
-          <FontAwesomeIcon icon={way.icon} />
+          <Glyph icon={way.icon} />
           <span>{way.label}</span>
         </button>
       ))}

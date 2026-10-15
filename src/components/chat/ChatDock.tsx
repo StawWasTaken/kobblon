@@ -3,7 +3,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faChevronDown, faChevronUp, faXmark, faPaperPlane, faMagnifyingGlass, faPenToSquare,
   faGear, faArrowLeft, faUserGroup, faEyeSlash,
@@ -236,7 +236,7 @@ function Window({
               aria-label="Back to the conversation"
               className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faArrowLeft} />
+              <Glyph icon={faArrowLeft} />
             </button>
             <h3 className="flex-1 truncate text-sm font-bold">Chat Details</h3>
           </>
@@ -253,7 +253,7 @@ function Window({
                 </>
               ) : (
                 <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-deep text-[10px] text-white">
-                  <FontAwesomeIcon icon={faUserGroup} />
+                  <Glyph icon={faUserGroup} />
                 </span>
               )}
             </span>
@@ -268,7 +268,7 @@ function Window({
               aria-label="Chat details"
               className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faGear} />
+              <Glyph icon={faGear} />
             </button>
           </Tooltip>
         )}
@@ -277,7 +277,7 @@ function Window({
           aria-label="Close"
           className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
         >
-          <FontAwesomeIcon icon={faXmark} />
+          <Glyph icon={faXmark} />
         </button>
       </header>
 
@@ -428,7 +428,7 @@ function Window({
                   aria-label="Send"
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-bright disabled:opacity-40"
                 >
-                  <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
+                  <Glyph icon={faPaperPlane} className="text-xs" />
                 </button>
               </div>
             )}
@@ -501,7 +501,7 @@ function List({
             aria-label="New chat group"
             className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
           >
-            <FontAwesomeIcon icon={faPenToSquare} />
+            <Glyph icon={faPenToSquare} />
           </button>
         </Tooltip>
 
@@ -510,7 +510,7 @@ function List({
           aria-label={open ? 'Minimise chat' : 'Open chat'}
           className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
         >
-          <FontAwesomeIcon icon={open ? faChevronDown : faChevronUp} />
+          <Glyph icon={open ? faChevronDown : faChevronUp} />
         </button>
       </header>
 
@@ -518,7 +518,7 @@ function List({
         <>
           <div className="relative shrink-0 p-2">
             <label className="sr-only" htmlFor="chat-filter">Search for friends</label>
-            <FontAwesomeIcon
+            <Glyph
               icon={faMagnifyingGlass}
               className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-xs text-white/35"
             />
@@ -559,7 +559,7 @@ function List({
                       </>
                     ) : (
                       <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-deep text-xs text-white">
-                        <FontAwesomeIcon icon={faUserGroup} />
+                        <Glyph icon={faUserGroup} />
                       </span>
                     )}
                   </span>
@@ -567,7 +567,7 @@ function List({
                     <span className="flex items-center gap-1.5">
                       <span className="truncate text-sm font-bold">{conversationName(c)}</span>
                       {c.ignored && (
-                        <FontAwesomeIcon
+                        <Glyph
                           icon={faEyeSlash}
                           title="You are ignoring this person"
                           className="shrink-0 text-[10px] text-white/35"
@@ -830,7 +830,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
                   aria-label={phone === 'list' ? 'Close chat' : 'Back to your chats'}
                   className="grid h-9 w-9 place-items-center rounded-lg text-white/60 transition-colors hover:bg-ink-hover hover:text-white"
                 >
-                  <FontAwesomeIcon icon={phone === 'list' ? faXmark : faArrowLeft} />
+                  <Glyph icon={phone === 'list' ? faXmark : faArrowLeft} />
                 </button>
                 <p className="flex-1 font-display text-sm font-bold">Friends Chat</p>
                 {phone === 'list' && (
@@ -840,7 +840,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
                     aria-label="New chat group"
                     className="grid h-9 w-9 place-items-center rounded-lg text-white/60 transition-colors hover:bg-ink-hover hover:text-white"
                   >
-                    <FontAwesomeIcon icon={faPenToSquare} />
+                    <Glyph icon={faPenToSquare} />
                   </button>
                 )}
               </div>

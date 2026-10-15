@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faRectangleAd, faArrowRight, faFlag } from '@fortawesome/free-solid-svg-icons'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { useAuth } from '@/hooks/useAuth'
@@ -166,7 +166,7 @@ export function AdBanner({
                   overlayButton,
                 )}
               >
-                <FontAwesomeIcon icon={faFlag} />
+                <Glyph icon={faFlag} />
               </button>
             )}
 
@@ -184,11 +184,11 @@ export function AdBanner({
             style={frame}
             className="group mx-auto flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink-line bg-ink-card/40 px-4 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
           >
-            <FontAwesomeIcon icon={faRectangleAd} className="text-base text-white/25" />
+            <Glyph icon={faRectangleAd} className="text-base text-white/25" />
             <span className="text-xs font-bold text-white/55">This space is for an ad</span>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-link">
               Put your work here
-              <FontAwesomeIcon icon={faArrowRight} className="text-[9px] transition-transform group-hover:translate-x-0.5" />
+              <Glyph icon={faArrowRight} className="text-[9px] transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
         )}

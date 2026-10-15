@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useOutletContext, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faUpload, faMagnifyingGlass, faCircleCheck, faBoxArchive, faTrash, faEllipsis,
   faEye, faHandPointUp, faBoxOpen, faXmark,
@@ -89,7 +89,7 @@ function Tile({ icon, label, value, to }: {
 }) {
   const body = (
     <>
-      <FontAwesomeIcon icon={icon} className="text-base text-link" />
+      <Glyph icon={icon} className="text-base text-link" />
       <p className="mt-2 font-display text-2xl font-extrabold tabular-nums">{value}</p>
       <p className="text-xs text-muted">{label}</p>
     </>
@@ -290,7 +290,7 @@ export function CreateWorlds() {
                     <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink">
                       {world.cover_url
                         ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
-                        : <FontAwesomeIcon icon={worldIcon} className="text-white/50" />}
+                        : <Glyph icon={worldIcon} className="text-white/50" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">{world.name}</span>
@@ -323,7 +323,7 @@ export function CreateWorlds() {
 
                     <Menu
                       label={`More for ${world.name}`}
-                      trigger={<FontAwesomeIcon icon={faEllipsis} />}
+                      trigger={<Glyph icon={faEllipsis} />}
                       items={[
                         {
                           label: world.archived_at ? 'Take out of the archive' : 'Archive',
@@ -445,7 +445,7 @@ export function CreateMarketplace() {
 
           <div className="mt-5 flex flex-col gap-3 lg:flex-row">
             <div className="relative flex-1">
-              <FontAwesomeIcon
+              <Glyph
                 icon={faMagnifyingGlass}
                 className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/35"
               />
@@ -463,7 +463,7 @@ export function CreateMarketplace() {
                   aria-label="Clear the search"
                   className="absolute right-4 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
                 >
-                  <FontAwesomeIcon icon={faXmark} />
+                  <Glyph icon={faXmark} />
                 </button>
               ) : (
                 <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-md border border-ink-line px-2 py-0.5 text-[11px] font-bold text-white/35 sm:block">
@@ -504,7 +504,7 @@ export function CreateMarketplace() {
                   : 'bg-ink-hover text-white/65 hover:text-white',
               )}
             >
-              <FontAwesomeIcon icon={faCircleCheck} className="text-[#4d68ff]" />
+              <Glyph icon={faCircleCheck} className="text-[#4d68ff]" />
               Kobblon
             </button>
 
@@ -643,7 +643,7 @@ function Chip({ children, onClear }: { children: React.ReactNode; onClear: () =>
     <span className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-ink-hover px-2.5 text-xs font-bold">
       {children}
       <button onClick={onClear} aria-label="Remove this filter" className="text-white/45 hover:text-white">
-        <FontAwesomeIcon icon={faXmark} />
+        <Glyph icon={faXmark} />
       </button>
     </span>
   )

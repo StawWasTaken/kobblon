@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faAward, faLock } from '@fortawesome/free-solid-svg-icons'
 import { formatCount } from '@/lib/format'
 import { RefImage } from '@/components/create/RefImage'
@@ -33,7 +33,7 @@ export function BadgeTile({
             className={cn('h-full w-full object-cover', !earned && 'grayscale')}
           />
         ) : (
-          <FontAwesomeIcon icon={earned ? faAward : faLock} className="text-xl" />
+          <Glyph icon={earned ? faAward : faLock} className="text-xl" />
         )}
       </span>
       <h3 className="mt-2.5 w-full truncate text-sm font-bold">{badge.name}</h3>

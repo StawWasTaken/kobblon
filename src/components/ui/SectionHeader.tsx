@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -19,7 +19,7 @@ export function SectionHeader({
   return (
     <div className={cn('mb-3 flex items-center gap-3', className)}>
       <h2 className="flex items-center gap-2 font-display text-xl font-extrabold sm:text-2xl">
-        {icon && <FontAwesomeIcon icon={icon} className="text-base text-muted" />}
+        {icon && <Glyph icon={icon} className="text-base text-muted" />}
         {title}
         {typeof count === 'number' && <span className="text-white/40">({count})</span>}
       </h2>

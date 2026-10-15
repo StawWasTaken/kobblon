@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faUpload, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -186,7 +186,7 @@ export function UploadDialog({
         onClick={() => fileInput.current?.click()}
         className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
       >
-        <FontAwesomeIcon icon={faUpload} className="text-xl text-white/40" />
+        <Glyph icon={faUpload} className="text-xl text-white/40" />
         <span className="text-sm font-semibold">
           {file ? file.name : `Choose a ${kindLabels[kind].toLowerCase()} file`}
         </span>
@@ -302,7 +302,7 @@ export function UploadDialog({
       </label>
 
       <p className="mt-3 flex items-start gap-2.5 rounded-lg border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/55">
-        <FontAwesomeIcon icon={faShieldHalved} className="mt-0.5 shrink-0" />
+        <Glyph icon={faShieldHalved} className="mt-0.5 shrink-0" />
         Uploads are checked automatically as soon as they arrive, so most go live straight
         away. Anything the check is unsure about waits for a person, and you will be told
         either way in My Uploads.

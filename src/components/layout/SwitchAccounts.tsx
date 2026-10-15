@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCheck, faPlus, faXmark, faSpinner, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
@@ -45,13 +45,13 @@ function AccountRow({
         </span>
 
         {busy ? (
-          <FontAwesomeIcon icon={faSpinner} className="shrink-0 animate-spin text-white/50" />
+          <Glyph icon={faSpinner} className="shrink-0 animate-spin text-white/50" />
         ) : current ? (
           <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-space text-[11px] text-white">
-            <FontAwesomeIcon icon={faCheck} />
+            <Glyph icon={faCheck} />
           </span>
         ) : account.session ? (
-          <FontAwesomeIcon
+          <Glyph
             icon={faArrowRight}
             className="shrink-0 text-white/25 transition-colors group-hover:text-white"
           />
@@ -69,7 +69,7 @@ function AccountRow({
             aria-label={`Forget ${account.displayName}`}
             className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border border-ink-line bg-ink-card text-[10px] text-white/45 opacity-0 transition-opacity hover:text-white group-hover:opacity-100 focus:opacity-100"
           >
-            <FontAwesomeIcon icon={faXmark} />
+            <Glyph icon={faXmark} />
           </button>
         </Tooltip>
       )}
@@ -243,7 +243,7 @@ export function SwitchAccounts({ open, onClose }: { open: boolean; onClose: () =
                 className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-ink-line p-3 text-left transition-colors hover:border-brand/60 hover:bg-ink-hover"
               >
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-raised text-white/60">
-                  <FontAwesomeIcon icon={faPlus} />
+                  <Glyph icon={faPlus} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold">Add account</span>

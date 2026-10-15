@@ -1,6 +1,6 @@
 import { forwardRef, useId } from 'react'
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -32,7 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
       <div className="relative">
         {icon && (
-          <FontAwesomeIcon
+          <Glyph
             icon={icon}
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-white/35"
           />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faLock } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -76,7 +76,7 @@ export function ChatLockedBar({
       role="status"
       aria-live="polite"
     >
-      <FontAwesomeIcon
+      <Glyph
         icon={faLock}
         className={cn('shrink-0 text-xs', over ? 'text-space-bright' : 'text-white/40')}
       />

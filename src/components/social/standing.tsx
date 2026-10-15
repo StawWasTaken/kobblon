@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCircleCheck, faTriangleExclamation, faLock, faBan,
   faRobot, faUserShield, faShieldHalved, faCrown, faCommentSlash, faMicrophoneSlash,
@@ -188,7 +188,7 @@ export function ActionTag({ one }: { one: Violation }) {
 
 export function LevelMark({ level }: { level: StandingLevel }) {
   return (
-    <FontAwesomeIcon icon={levelIcon[level]} className={cn('text-xl', levelTone[level])} />
+    <Glyph icon={levelIcon[level]} className={cn('text-xl', levelTone[level])} />
   )
 }
 
@@ -328,7 +328,7 @@ export function ByBadge({ rank, className }: { rank: ModeratedBy; className?: st
         className,
       )}
     >
-      <FontAwesomeIcon icon={byIcon[rank]} className="text-[10px]" />
+      <Glyph icon={byIcon[rank]} className="text-[10px]" />
       {rank === 'kobby' ? 'Kobby' : rank === 'staff' ? 'Staff' : rank}
     </span>
   )
@@ -474,7 +474,7 @@ export function Evidence({ said, className }: { said: string; className?: string
   return (
     <div className={cn('space-y-2', className)}>
       <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
-        <FontAwesomeIcon icon={faQuoteLeft} />
+        <Glyph icon={faQuoteLeft} />
         What we acted on
       </p>
       <blockquote className="rounded-2xl rounded-tl-md border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3">
@@ -509,7 +509,7 @@ export function RuleCard({ ord, title, body, gravity }: {
   return (
     <div className="space-y-2 rounded-2xl border border-ink-line bg-ink-raised px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        <FontAwesomeIcon icon={faScaleBalanced} className="text-sm text-brand-bright" />
+        <Glyph icon={faScaleBalanced} className="text-sm text-brand-bright" />
         <p className="font-display text-sm font-extrabold">
           {ord ? `Rule ${ord} - ` : ''}{title}
         </p>
@@ -533,7 +533,7 @@ export function RuleCard({ ord, title, body, gravity }: {
         className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
       >
         Read the guidelines
-        <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+        <Glyph icon={faArrowRight} className="text-[10px]" />
       </a>
     </div>
   )

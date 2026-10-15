@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowRight, faShieldHalved, faStore, faEye, faUserAstronaut, faBolt, faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons'
@@ -61,7 +61,7 @@ function Opening({
         className="group inline-flex items-center gap-3 rounded-full border border-white/12 px-6 py-3 text-sm font-extrabold uppercase tracking-wide transition-colors hover:border-brand-bright hover:bg-brand/15"
       >
         {action}
-        <FontAwesomeIcon
+        <Glyph
           icon={faArrowRight}
           className="text-xs transition-transform group-hover:translate-x-1"
         />
@@ -73,7 +73,7 @@ function Opening({
 function Ticker({ icon, value, label }: { icon: IconDefinition; value: string; label: string }) {
   return (
     <span className="flex items-baseline gap-3">
-      <FontAwesomeIcon icon={icon} className="text-sm text-white/40" />
+      <Glyph icon={icon} className="text-sm text-white/40" />
       <span className="font-display text-xl font-extrabold tabular-nums">{value}</span>
       <span className="text-xs uppercase tracking-wide text-white/40">{label}</span>
     </span>
@@ -270,7 +270,7 @@ export default function Landing() {
         <div className="mx-auto grid max-w-6xl gap-14 px-4 py-24 sm:px-8 lg:grid-cols-[1fr_1fr] lg:gap-20">
           <div>
             <span className="grid h-16 w-16 place-items-center rounded-2xl border-b-4 border-brand-ink bg-brand text-2xl text-onbrand shadow-pop">
-              <FontAwesomeIcon icon={faShieldHalved} />
+              <Glyph icon={faShieldHalved} />
             </span>
             <h2 className="mt-7 font-display text-4xl font-extrabold leading-[0.92] sm:text-5xl">
               Built to be

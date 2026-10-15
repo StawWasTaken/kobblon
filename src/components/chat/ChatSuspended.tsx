@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faTriangleExclamation, faComments } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -106,7 +106,7 @@ export function ChatSuspended({
         className,
       )}
     >
-      <FontAwesomeIcon
+      <Glyph
         icon={over ? faComments : faTriangleExclamation}
         className={cn('text-3xl', over ? 'text-yes' : 'text-white')}
       />

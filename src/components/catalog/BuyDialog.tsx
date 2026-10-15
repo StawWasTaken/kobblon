@@ -11,7 +11,7 @@
  * to do if yes, so it can be mounted anywhere - the item page, a shelf card,
  * the Workspace - and so the only place that spends Brix stays the server.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faShirt, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -58,7 +58,7 @@ export function BuyDialog({
           <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
             {picture
               ? <img src={picture} alt="" className="h-full w-full object-contain p-1" />
-              : <FontAwesomeIcon icon={faShirt} className="text-2xl text-white/25" />}
+              : <Glyph icon={faShirt} className="text-2xl text-white/25" />}
           </span>
           <div className="min-w-0">
             <p className="truncate font-display text-base font-extrabold">{name}</p>
@@ -96,7 +96,7 @@ export function BuyDialog({
 
         {note && (
           <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
-            <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 text-amber-300" />
+            <Glyph icon={faTriangleExclamation} className="mt-0.5 text-amber-300" />
             <span>{note}</span>
           </p>
         )}

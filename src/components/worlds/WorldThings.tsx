@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faPlus, faAward, faBagShopping } from '@fortawesome/free-solid-svg-icons'
 import { EmptyState } from '@/components/ui/States'
 import { Card } from '@/components/ui/Card'
@@ -23,7 +23,7 @@ function AddTile({ to, says }: { to: string; says: string }) {
       className="group flex w-32 flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center outline-none transition-colors hover:border-ink-line focus-visible:border-brand"
     >
       <span className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-dashed border-ink-line text-2xl text-ink-soft transition-colors group-hover:border-brand group-hover:text-brand">
-        <FontAwesomeIcon icon={faPlus} />
+        <Glyph icon={faPlus} />
       </span>
       <span className="text-sm font-semibold text-ink-soft transition-colors group-hover:text-ink-strong">
         {says}
@@ -47,7 +47,7 @@ function Thing({
         {picture ? (
           <img src={picture} alt="" className="h-full w-full object-cover" />
         ) : (
-          <FontAwesomeIcon icon={fallback} className="text-2xl text-ink-soft" />
+          <Glyph icon={fallback} className="text-2xl text-ink-soft" />
         )}
       </span>
       <span className="min-w-0">

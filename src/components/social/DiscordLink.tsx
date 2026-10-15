@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { faLink, faLinkSlash, faCopy } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
@@ -81,7 +81,7 @@ export function DiscordLink() {
     <Card className="space-y-4 p-5">
       <div className="flex flex-wrap items-center gap-3">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#5865F2] text-lg text-white">
-          <FontAwesomeIcon icon={faDiscord} />
+          <Glyph icon={faDiscord} />
         </span>
 
         <div className="min-w-0 flex-1">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faPen, faTrash, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -104,14 +104,14 @@ export function MessageRow({
               aria-label="Save"
               className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-space-bright hover:bg-ink-hover"
             >
-              <FontAwesomeIcon icon={faCheck} className="text-xs" />
+              <Glyph icon={faCheck} className="text-xs" />
             </button>
             <button
               onClick={() => { setDraft(message.body); setEditing(false) }}
               aria-label="Cancel"
               className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-white/40 hover:bg-ink-hover"
             >
-              <FontAwesomeIcon icon={faXmark} className="text-xs" />
+              <Glyph icon={faXmark} className="text-xs" />
             </button>
           </div>
         ) : (
@@ -151,7 +151,7 @@ export function MessageRow({
               aria-label="Edit this message"
               className="grid h-6 w-6 place-items-center rounded-md text-white/35 hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faPen} className="text-[10px]" />
+              <Glyph icon={faPen} className="text-[10px]" />
             </button>
           </Tooltip>
           <Tooltip label="Delete" side="top">
@@ -160,7 +160,7 @@ export function MessageRow({
               aria-label="Delete this message"
               className="grid h-6 w-6 place-items-center rounded-md text-white/35 hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
+              <Glyph icon={faTrash} className="text-[10px]" />
             </button>
           </Tooltip>
         </div>

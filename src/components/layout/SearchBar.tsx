@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faMagnifyingGlass, faXmark, faLayerGroup, faUser, faShapes, faUsers, faShirt,
 } from '@fortawesome/free-solid-svg-icons'
@@ -71,7 +71,7 @@ export function SearchBar({ className }: { className?: string }) {
         onSubmit={(e) => { e.preventDefault(); go(searchScopes[active].tab) }}
       >
         <label htmlFor="app-search" className="sr-only">Search Kobblon</label>
-        <FontAwesomeIcon
+        <Glyph
           icon={faMagnifyingGlass}
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-onbrand/50"
         />
@@ -95,7 +95,7 @@ export function SearchBar({ className }: { className?: string }) {
             aria-label="Clear search"
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-onbrand/45 hover:text-onbrand"
           >
-            <FontAwesomeIcon icon={faXmark} />
+            <Glyph icon={faXmark} />
           </button>
         )}
       </form>
@@ -119,7 +119,7 @@ export function SearchBar({ className }: { className?: string }) {
                   i === active ? 'bg-ink-hover' : 'hover:bg-ink-hover',
                 )}
               >
-                <FontAwesomeIcon icon={scope.icon} className="w-4 text-onbrand/45" />
+                <Glyph icon={scope.icon} className="w-4 text-onbrand/45" />
                 <span className="truncate font-bold text-onbrand">{term.trim()}</span>
                 <span className="text-onbrand/45">in {scope.label}</span>
               </button>

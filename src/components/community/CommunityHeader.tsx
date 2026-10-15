@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faEllipsis, faGear, faRightFromBracket, faLink, faFlag, faUserPlus, faClock,
 } from '@fortawesome/free-solid-svg-icons'
@@ -116,7 +116,7 @@ export function CommunityHeader({
                 label="More"
                 trigger={
                   <span className="grid h-9 w-9 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
-                    <FontAwesomeIcon icon={faEllipsis} />
+                    <Glyph icon={faEllipsis} />
                   </span>
                 }
                 items={[

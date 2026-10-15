@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faBan, faFlag, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/cn'
@@ -44,7 +44,7 @@ export function SafetyNote({
             onClick={onIgnore}
             className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
           >
-            <FontAwesomeIcon icon={ignored ? faEye : faEyeSlash} className="text-[10px]" />
+            <Glyph icon={ignored ? faEye : faEyeSlash} className="text-[10px]" />
             {ignored ? 'Unignore' : 'Ignore'}
           </button>
         )}
@@ -52,14 +52,14 @@ export function SafetyNote({
           onClick={onBlock}
           className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
         >
-          <FontAwesomeIcon icon={faBan} className="text-[10px]" />
+          <Glyph icon={faBan} className="text-[10px]" />
           Block
         </button>
         <button
           onClick={onReport}
           className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
         >
-          <FontAwesomeIcon icon={faFlag} className="text-[10px]" />
+          <Glyph icon={faFlag} className="text-[10px]" />
           Report
         </button>
       </div>

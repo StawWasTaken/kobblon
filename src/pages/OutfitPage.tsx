@@ -20,7 +20,7 @@
  */
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faStore, faCheck, faUser, faLink, faFlag, faCircleCheck,
   faEllipsis,
@@ -150,7 +150,7 @@ export default function OutfitPage() {
               <div className="flex shrink-0 items-center gap-2">
                 {one.mine && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-space/15 px-2.5 py-1 text-[11px] font-bold text-space-bright">
-                    <FontAwesomeIcon icon={faCircleCheck} />
+                    <Glyph icon={faCircleCheck} />
                     Yours
                   </span>
                 )}
@@ -160,7 +160,7 @@ export default function OutfitPage() {
                   align="right"
                   trigger={
                     <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
-                      <FontAwesomeIcon icon={faEllipsis} />
+                      <Glyph icon={faEllipsis} />
                     </span>
                   }
                   items={[
@@ -293,7 +293,7 @@ export default function OutfitPage() {
                           className="h-full w-full object-contain"
                         />
                       ) : (
-                        <FontAwesomeIcon icon={faShirt} className="text-white/30" />
+                        <Glyph icon={faShirt} className="text-white/30" />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -307,7 +307,7 @@ export default function OutfitPage() {
                       piece.owned ? 'text-yes' : 'text-white/85',
                     )}>
                       {piece.owned ? (
-                        <FontAwesomeIcon icon={faCheck} />
+                        <Glyph icon={faCheck} />
                       ) : piece.price > 0 ? (
                         <span className="inline-flex items-center gap-0.5">
                           <CurrencyMark />{formatCount(piece.price)}

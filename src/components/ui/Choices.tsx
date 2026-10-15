@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -63,7 +63,7 @@ export function Choices<T extends string>({
                 : 'border-ink-line bg-ink-card text-white/60 hover:bg-ink-hover hover:text-white',
             )}
           >
-            {option.icon && <FontAwesomeIcon icon={option.icon} className="text-[0.85em]" />}
+            {option.icon && <Glyph icon={option.icon} className="text-[0.85em]" />}
             {option.label}
           </button>
         )

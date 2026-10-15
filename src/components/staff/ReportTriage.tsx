@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowUpRightFromSquare, faBan, faCommentSlash, faMicrophoneSlash, faFlag, faGavel,
   faTrashCan, faTriangleExclamation, faUserSlash, faXmark,
@@ -241,7 +241,7 @@ export function ReportTriage({
                 target="_blank"
                 rel="noreferrer"
               >
-                Open it <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[0.65em]" />
+                Open it <Glyph icon={faArrowUpRightFromSquare} className="text-[0.65em]" />
               </a>
             </>
           )}
@@ -270,7 +270,7 @@ export function ReportTriage({
       ) : (
         <div className="space-y-3">
           <p className="flex items-center gap-2 text-sm font-bold">
-            <FontAwesomeIcon icon={faGavel} className="text-muted" />
+            <Glyph icon={faGavel} className="text-muted" />
             What happens about it
           </p>
 
@@ -294,7 +294,7 @@ export function ReportTriage({
                       : 'border-ink-line bg-ink-hover hover:border-white/25',
                   )}
                 >
-                  <FontAwesomeIcon
+                  <Glyph
                     icon={option.icon}
                     className={cn('mt-0.5 shrink-0', option.danger ? 'text-danger' : 'text-muted')}
                   />

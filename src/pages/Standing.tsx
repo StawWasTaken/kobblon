@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faShieldHalved, faComments, faArrowRight, faRobot, faClock,
   faCircleCheck, faGavel, faArrowUpRightFromSquare, faWandMagicSparkles,
@@ -96,7 +96,7 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
                 : 'border-ink-line bg-ink-raised text-white/50',
           )}
         >
-          <FontAwesomeIcon icon={historyIcon[one.action] ?? faGavel} />
+          <Glyph icon={historyIcon[one.action] ?? faGavel} />
         </span>
 
         <span className="min-w-0 flex-1">
@@ -143,7 +143,7 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
           </span>
         </span>
 
-        <FontAwesomeIcon icon={faArrowRight} className="shrink-0 text-xs text-muted" />
+        <Glyph icon={faArrowRight} className="shrink-0 text-xs text-muted" />
       </button>
     </li>
   )
@@ -187,7 +187,7 @@ function Crest({ one }: { one: ModerationRow }) {
       'mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border',
       tone,
     )}>
-      <FontAwesomeIcon icon={historyIcon[one.action] ?? faShieldHalved} className="text-xl" />
+      <Glyph icon={historyIcon[one.action] ?? faShieldHalved} className="text-xl" />
     </span>
   )
 }
@@ -379,7 +379,7 @@ export function RowCard({ one, onClose, onAppealed }: {
         {one.appeal_status && (
           <Card className="space-y-3 p-4">
             <p className="flex items-center gap-2 font-display text-base font-extrabold">
-              <FontAwesomeIcon
+              <Glyph
                 icon={one.appeal_status === 'upheld' ? faCircleCheck : faGavel}
                 className={cn(
                   'text-sm',
@@ -485,7 +485,7 @@ export function RowCard({ one, onClose, onAppealed }: {
               className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
             >
               Open this on its own page
-              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs" />
+              <Glyph icon={faArrowUpRightFromSquare} className="text-xs" />
             </Link>
           )}
           <div className="ml-auto flex items-center gap-3">
@@ -570,14 +570,14 @@ export default function Standing() {
 
           {me.score === 100 && !me.cleared_at && (
             <p className="flex items-center gap-2 text-sm font-semibold text-space-bright">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
+              <Glyph icon={faCircleCheck} className="text-xs" />
               Nothing is pressing on your bar. Keep it that way and this page stays boring.
             </p>
           )}
 
           {me.cleared_at && (
             <p className="flex items-start gap-3 rounded-xl border border-space/40 bg-space/10 px-4 py-3 text-sm leading-relaxed text-white/80">
-              <FontAwesomeIcon icon={faWandMagicSparkles} className="mt-0.5 text-space-bright" />
+              <Glyph icon={faWandMagicSparkles} className="mt-0.5 text-space-bright" />
               <span>
                 A superadmin cleared your record on {day(me.cleared_at)}. Everything before then
                 stops counting against you.
@@ -651,7 +651,7 @@ export default function Standing() {
             className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
           >
             Open a ticket
-            <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+            <Glyph icon={faArrowRight} className="text-xs" />
           </Link>
         }
       >

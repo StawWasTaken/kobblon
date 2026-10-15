@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCalendarDay } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -199,7 +199,7 @@ export default function CommunityPage() {
               <section>
                 <div className="mb-3 flex items-center gap-3">
                   <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-                    <FontAwesomeIcon icon={faCalendarDay} className="text-base" />
+                    <Glyph icon={faCalendarDay} className="text-base" />
                     Events
                   </h2>
                   <button

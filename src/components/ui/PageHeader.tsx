@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -31,7 +31,7 @@ export function PageHeader({
       <div className="min-w-0">
         {kicker && (
           <p className="flex items-center gap-2 font-display text-xs font-extrabold uppercase tracking-[0.3em] text-white/40">
-            {icon && <FontAwesomeIcon icon={icon} className="text-brand-bright" />}
+            {icon && <Glyph icon={icon} className="text-brand-bright" />}
             {kicker}
           </p>
         )}

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faUser, faCaretDown, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { useAuth } from '@/hooks/useAuth'
@@ -101,7 +101,7 @@ export function WorkingAsMenu() {
           </span>
         </span>
 
-        <FontAwesomeIcon
+        <Glyph
           icon={faCaretDown}
           className={cn('text-xs text-white/45 transition-transform', open && 'rotate-180')}
         />
@@ -122,7 +122,7 @@ export function WorkingAsMenu() {
             <span className="min-w-0 flex-1 truncate text-sm font-semibold">
               {profile.display_name}
             </span>
-            {!target && <FontAwesomeIcon icon={faCheck} className="text-xs text-link" />}
+            {!target && <Glyph icon={faCheck} className="text-xs text-link" />}
           </button>
 
           <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wide text-muted">
@@ -152,7 +152,7 @@ export function WorkingAsMenu() {
               />
               <span className="min-w-0 flex-1 truncate text-sm font-semibold">{option.name}</span>
               {target?.id === option.id && (
-                <FontAwesomeIcon icon={faCheck} className="text-xs text-link" />
+                <Glyph icon={faCheck} className="text-xs text-link" />
               )}
             </button>
           ))}
@@ -168,7 +168,7 @@ export function WorkingAsNote() {
   if (!target) return null
   return (
     <p className="flex items-center gap-2 rounded-lg border border-brand/35 bg-brand/10 px-3 py-2 text-xs text-[#b9c3ff]">
-      <FontAwesomeIcon icon={faUser} />
+      <Glyph icon={faUser} />
       This will belong to {target.name}, and anything it earns goes into its funds.
     </p>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faRocket, faPenToSquare, faDoorOpen, faSeedling } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Avatar } from '@/components/ui/Avatar'
@@ -106,7 +106,7 @@ export function ActivityFeed({ limit = 10, className }: { limit?: number; classN
             <span
               className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full text-[9px] ring-2 ring-ink-card ${tones[event.kind]}`}
             >
-              <FontAwesomeIcon icon={icons[event.kind]} />
+              <Glyph icon={icons[event.kind]} />
             </span>
           </span>
           <p className="min-w-0 flex-1 truncate text-sm text-white/70">

@@ -18,7 +18,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faXmark, faBullhorn } from '@fortawesome/free-solid-svg-icons'
 import { noticeNow, type SiteNotice } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -68,7 +68,7 @@ export function NoticeBar() {
   return (
     <div className={cn('border-b px-4 py-2 text-sm', tones[notice.tone])}>
       <div className="mx-auto flex max-w-[86rem] items-center gap-3">
-        <FontAwesomeIcon icon={faBullhorn} className="shrink-0 text-xs" />
+        <Glyph icon={faBullhorn} className="shrink-0 text-xs" />
         <p className="min-w-0 flex-1">
           <span className="font-bold">{notice.body}</span>
           {notice.link && (
@@ -94,7 +94,7 @@ export function NoticeBar() {
           aria-label="Close this notice"
           className="grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors hover:bg-white/10"
         >
-          <FontAwesomeIcon icon={faXmark} />
+          <Glyph icon={faXmark} />
         </button>
       </div>
     </div>

@@ -11,7 +11,7 @@
  * Four items, the Brix run out on the third, and somebody owning two of a
  * set with no idea which two is the thing a basket must never do.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faShirt, faXmark, faBasketShopping } from '@fortawesome/free-solid-svg-icons'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
@@ -66,7 +66,7 @@ export function BasketDialog({ open, onClose, lines, paying, onBuy }: {
               <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
                 {line.picture
                   ? <img src={line.picture} alt="" className="h-full w-full object-contain" />
-                  : <FontAwesomeIcon icon={faShirt} className="text-white/25" />}
+                  : <Glyph icon={faShirt} className="text-white/25" />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold">{line.name}</span>
@@ -83,7 +83,7 @@ export function BasketDialog({ open, onClose, lines, paying, onBuy }: {
                 onClick={() => takeOutOfBasket(line.id)}
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
               >
-                <FontAwesomeIcon icon={faXmark} />
+                <Glyph icon={faXmark} />
               </button>
             </li>
           ))}

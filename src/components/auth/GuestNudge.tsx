@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
@@ -86,7 +86,7 @@ export function GuestNudge() {
           aria-label="Close"
           className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-lg text-white/40 transition-colors hover:bg-white/10 hover:text-white"
         >
-          <FontAwesomeIcon icon={faXmark} />
+          <Glyph icon={faXmark} />
         </button>
 
         <img src={asset('/brand/favicon.png')} alt="" className="mx-auto h-14 w-14 rounded-2xl" />

@@ -10,7 +10,7 @@
  * record, which exists because moderating without it is guessing, and which
  * says what it is: a browser's own clock setting, not a location.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faClock, faGlobe, faDesktop, faArrowUpRightFromSquare,
 } from '@fortawesome/free-solid-svg-icons'
@@ -72,7 +72,7 @@ export function PersonSheet({ person, rank = 'moderator' }: {
             to={`/u/${person.username}`}
             className="ml-auto shrink-0 text-xs font-bold text-link hover:underline"
           >
-            Their profile <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px]" />
+            Their profile <Glyph icon={faArrowUpRightFromSquare} className="text-[10px]" />
           </Link>
         </div>
 
@@ -100,12 +100,12 @@ export function PersonSheet({ person, rank = 'moderator' }: {
       {/* ------------------------------------------- what only staff see */}
       <Card className="space-y-3">
         <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted">
-          <FontAwesomeIcon icon={faClock} />
+          <Glyph icon={faClock} />
           Comings and goings
         </p>
 
         <p className="flex items-start gap-2 rounded-xl border border-ink-line bg-ink-raised p-2.5 text-xs leading-relaxed text-muted">
-          <FontAwesomeIcon icon={faGlobe} className="mt-0.5 shrink-0" />
+          <Glyph icon={faGlobe} className="mt-0.5 shrink-0" />
           <span>
             {place
               ? <>Looks like <span className="font-bold text-white">{place.countryName}</span>, from the time zone their browser reports.</>
@@ -135,7 +135,7 @@ export function PersonSheet({ person, rank = 'moderator' }: {
                 )}
                 {one.agent && (
                   <span className="ml-auto flex items-center gap-1.5 truncate text-[11px] text-muted">
-                    <FontAwesomeIcon icon={faDesktop} />
+                    <Glyph icon={faDesktop} />
                     <span className="max-w-[14rem] truncate">{one.agent}</span>
                   </span>
                 )}

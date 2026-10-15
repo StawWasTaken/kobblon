@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faCircleCheck, faUserGroup } from '@fortawesome/free-solid-svg-icons'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
@@ -141,7 +141,7 @@ export default function AppSignIn() {
                 onClick={() => signOut()}
                 className="flex w-full items-center justify-center gap-2 text-sm font-semibold text-white/45 transition-colors hover:text-white"
               >
-                <FontAwesomeIcon icon={faUserGroup} className="text-xs" />
+                <Glyph icon={faUserGroup} className="text-xs" />
                 Use a different account
               </button>
             </div>
@@ -150,7 +150,7 @@ export default function AppSignIn() {
           {/* --------------------------------------------------- handed over */}
           {sent && (
             <div className="mt-6 space-y-3">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-3xl text-space-bright" />
+              <Glyph icon={faCircleCheck} className="text-3xl text-space-bright" />
               <p className="font-display text-lg font-extrabold">
                 Go back to {app.short}
               </p>

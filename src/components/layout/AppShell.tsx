@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { NoticeBar } from './NoticeBar'
@@ -89,7 +89,7 @@ export function AppShell() {
                           isActive && 'bg-brand text-white',
                         )}
                       >
-                        <FontAwesomeIcon icon={item.icon} />
+                        <Glyph icon={item.icon} />
                       </span>
                       {item.label}
                     </>

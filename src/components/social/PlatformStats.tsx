@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faEye, faLayerGroup, faPenToSquare, faUsers } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { ErrorState, Skeleton } from '@/components/ui/States'
@@ -53,7 +53,7 @@ function Tile({
           accent ? 'bg-space text-white' : 'bg-brand/25 text-link',
         )}
       >
-        <FontAwesomeIcon icon={icon} />
+        <Glyph icon={icon} />
       </span>
       <p className="mt-3 font-display text-2xl font-extrabold tabular-nums sm:text-3xl">
         <Counter value={value} />

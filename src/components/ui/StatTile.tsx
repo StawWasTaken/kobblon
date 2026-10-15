@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/cn'
@@ -24,7 +24,7 @@ export function StatTile({
 }) {
   const body = (
     <>
-      {icon && <FontAwesomeIcon icon={icon} className="text-base" />}
+      {icon && <Glyph icon={icon} className="text-base" />}
       <span className="min-w-0">
         <span className="block font-display text-xl font-extrabold tabular-nums leading-none">
           {value ?? '·'}

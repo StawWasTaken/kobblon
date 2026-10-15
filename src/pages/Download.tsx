@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faWindows, faApple, faLinux } from '@fortawesome/free-brands-svg-icons'
 import { faCube, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { Wordmark } from '@/components/brand/Wordmark'
@@ -52,7 +52,7 @@ export default function Download() {
 
           <div className="mt-10 max-w-2xl rounded-3xl border border-white/10 bg-white/[0.04] p-6">
             <p className="flex items-center gap-3 font-display text-lg font-extrabold">
-              <FontAwesomeIcon icon={faCube} className="text-brand-bright" />
+              <Glyph icon={faCube} className="text-brand-bright" />
               Not released yet
             </p>
             <p className="mt-2 leading-relaxed text-white/60">
@@ -62,15 +62,15 @@ export default function Download() {
 
             <div className="mt-6 flex flex-wrap gap-6 text-sm font-bold text-white/30">
               <span className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faWindows} />
+                <Glyph icon={faWindows} />
                 Windows
               </span>
               <span className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faApple} />
+                <Glyph icon={faApple} />
                 macOS
               </span>
               <span className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faLinux} />
+                <Glyph icon={faLinux} />
                 Linux
               </span>
             </div>
@@ -81,7 +81,7 @@ export default function Download() {
             className="mt-8 inline-flex items-center gap-2 font-bold text-link hover:underline"
           >
             See what people are making
-            <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+            <Glyph icon={faArrowRight} className="text-xs" />
           </Link>
         </section>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faImage, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Cropper } from '@/components/ui/Cropper'
 import { cn } from '@/lib/cn'
@@ -112,7 +112,7 @@ export function ImageDrop({
             <img src={shown} alt="" className="h-full w-full object-cover" />
           ) : (
             <span className="grid h-full w-full place-items-center text-white/25">
-              <FontAwesomeIcon icon={faImage} className="text-xl" />
+              <Glyph icon={faImage} className="text-xl" />
             </span>
           )}
         </div>
@@ -134,7 +134,7 @@ export function ImageDrop({
               onClick={() => onChange(null)}
               className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 hover:text-white"
             >
-              <FontAwesomeIcon icon={faXmark} /> Remove
+              <Glyph icon={faXmark} /> Remove
             </button>
           )}
         </div>

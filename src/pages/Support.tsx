@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
@@ -123,7 +123,7 @@ export function Step({ n, title, note, children, done, last }: {
             : 'border-ink-line bg-ink-raised text-white/70',
         )}
       >
-        {done ? <FontAwesomeIcon icon={faCheck} className="text-xs" /> : n}
+        {done ? <Glyph icon={faCheck} className="text-xs" /> : n}
       </span>
       <div className="min-w-0 flex-1 pt-1">
         <h3 className="font-display text-lg font-extrabold leading-none">{title}</h3>
@@ -158,7 +158,7 @@ export function Tiles<T extends string>({ value, onChange, options, label }: {
                 : 'border-ink-line bg-ink-raised text-white/70 hover:bg-ink-hover',
             )}
           >
-            <FontAwesomeIcon
+            <Glyph
               icon={one.icon}
               className={cn('text-base', picked ? 'text-brand-bright' : 'text-white/40')}
             />
@@ -266,7 +266,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
         <div className="space-y-3">
           {username && (
             <div className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
-              <FontAwesomeIcon icon={faUser} className="text-sm text-brand-bright" />
+              <Glyph icon={faUser} className="text-sm text-brand-bright" />
               <p className="min-w-0 flex-1 text-sm">
                 Writing as <span className="font-bold">@{username}</span>
               </p>
@@ -316,7 +316,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
           )}
           {emailGiven && emailOk && (
             <p className="flex items-center gap-2 text-sm font-semibold text-space-bright">
-              <FontAwesomeIcon icon={faEnvelope} className="text-xs" />
+              <Glyph icon={faEnvelope} className="text-xs" />
               We will write there as well as here.
             </p>
           )}
@@ -456,7 +456,7 @@ export default function Support() {
           to="/standing"
           className="flex items-start gap-4 rounded-2xl border border-ink-line bg-ink-card p-5 transition-colors hover:bg-ink-hover"
         >
-          <FontAwesomeIcon icon={faScaleBalanced} className="mt-1 text-lg text-brand-bright" />
+          <Glyph icon={faScaleBalanced} className="mt-1 text-lg text-brand-bright" />
           <span className="min-w-0">
             <span className="block font-bold">Where you stand</span>
             <span className="mt-0.5 block text-sm leading-relaxed text-muted">
@@ -468,7 +468,7 @@ export default function Support() {
           to="/policies"
           className="flex items-start gap-4 rounded-2xl border border-ink-line bg-ink-card p-5 transition-colors hover:bg-ink-hover"
         >
-          <FontAwesomeIcon icon={faScroll} className="mt-1 text-lg text-brand-bright" />
+          <Glyph icon={faScroll} className="mt-1 text-lg text-brand-bright" />
           <span className="min-w-0">
             <span className="block font-bold">The rules</span>
             <span className="mt-0.5 block text-sm leading-relaxed text-muted">
@@ -525,7 +525,7 @@ export default function Support() {
                       <>
                         <span className="text-xs text-muted">·</span>
                         <span className="flex items-center gap-1.5 text-xs text-muted">
-                          <FontAwesomeIcon icon={was.icon} className="text-[10px]" />
+                          <Glyph icon={was.icon} className="text-[10px]" />
                           {was.label}
                         </span>
                       </>
@@ -534,7 +534,7 @@ export default function Support() {
                   <span className="mt-1 flex items-center gap-2">
                     {ticket.wants_human && (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
-                        <FontAwesomeIcon icon={faBolt} className="text-[9px]" />
+                        <Glyph icon={faBolt} className="text-[9px]" />
                         Urgent
                       </span>
                     )}
@@ -549,7 +549,7 @@ export default function Support() {
                 >
                   {look.word}
                 </span>
-                <FontAwesomeIcon icon={faArrowRight} className="text-xs text-muted" />
+                <Glyph icon={faArrowRight} className="text-xs text-muted" />
               </Card>
             </button>
           )

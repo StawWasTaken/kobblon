@@ -18,7 +18,7 @@
  * your place every time you look at something.
  */
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faBolt, faLifeRing, faClock, faCircleCheck, faPaperPlane, faArrowUp,
   faEnvelope, faDesktop, faMobileScreen, faTabletScreenButton, faGamepad,
@@ -175,7 +175,7 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
     >
       {one.wants_human && one.status !== 'closed' && (
         <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-amber-400/50 bg-amber-400/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-amber-200 shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
-          <FontAwesomeIcon icon={faBolt} />
+          <Glyph icon={faBolt} />
           Urgent
         </span>
       )}
@@ -190,19 +190,19 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
         </span>
         <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span className="flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faUser} />
+            <Glyph icon={faUser} />
             {one.first_name ?? one.username ?? 'somebody'}
             {one.username && <span className="text-white/40">@{one.username}</span>}
           </span>
           <span>{topicWord[one.topic] ?? one.topic}</span>
           {one.device && (
             <span className="flex items-center gap-1.5">
-              <FontAwesomeIcon icon={deviceIcon[one.device] ?? faCircleQuestion} />
+              <Glyph icon={deviceIcon[one.device] ?? faCircleQuestion} />
               {one.device}
             </span>
           )}
           <span className="flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faClock} />
+            <Glyph icon={faClock} />
             {timeAgo(one.updated_at)}
           </span>
           {one.replies > 1 && <span>{one.replies} messages</span>}
@@ -396,7 +396,7 @@ function Fact({ label, icon, children }: {
   return (
     <div className="min-w-0">
       <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
-        <FontAwesomeIcon icon={icon} />
+        <Glyph icon={icon} />
         {label}
       </p>
       <p className="mt-0.5 truncate text-sm font-bold">{children}</p>

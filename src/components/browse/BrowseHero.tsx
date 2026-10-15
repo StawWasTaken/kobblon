@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useRef } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { faMagnifyingGlass, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
@@ -52,7 +52,7 @@ export function BrowseHero({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="flex items-center gap-3 font-display text-3xl font-extrabold sm:text-4xl">
-              {icon && <FontAwesomeIcon icon={icon} className="text-brand-bright" />}
+              {icon && <Glyph icon={icon} className="text-brand-bright" />}
               {title}
             </h1>
             {lead && <p className="mt-1.5 max-w-xl text-sm text-muted">{lead}</p>}
@@ -61,7 +61,7 @@ export function BrowseHero({
         </div>
 
         <div className="relative mt-5">
-          <FontAwesomeIcon
+          <Glyph
             icon={faMagnifyingGlass}
             className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/35"
           />
@@ -79,7 +79,7 @@ export function BrowseHero({
               aria-label="Clear the search"
               className="absolute right-4 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              <FontAwesomeIcon icon={faXmark} />
+              <Glyph icon={faXmark} />
             </button>
           )}
         </div>

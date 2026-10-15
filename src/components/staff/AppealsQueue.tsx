@@ -16,7 +16,7 @@
  * suspended somebody is how a moderator gets harassed.
  */
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faGavel, faCircleCheck, faBan, faClock, faScaleBalanced, faQuoteLeft, faArrowUp,
   faHourglassHalf, faInbox, faThumbsUp, faThumbsDown,
@@ -270,7 +270,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
         {/* ------------------------------------------- what was decided */}
         <div className="space-y-3">
           <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted">
-            <FontAwesomeIcon icon={faGavel} />
+            <Glyph icon={faGavel} />
             What was decided
           </p>
 
@@ -284,14 +284,14 @@ export function AppealDrawer({ one, onClose, onDecided }: {
             </div>
 
             <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
-              <FontAwesomeIcon icon={faClock} />
+              <Glyph icon={faClock} />
               {timeAgo(one.decided_on)}
               {one.expires_at && <span>· until {new Date(one.expires_at).toLocaleDateString()}</span>}
             </p>
 
             {one.rule_title && (
               <p className="flex items-start gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-sm">
-                <FontAwesomeIcon icon={faScaleBalanced} className="mt-0.5 text-brand-bright" />
+                <Glyph icon={faScaleBalanced} className="mt-0.5 text-brand-bright" />
                 <span>
                   <span className="font-bold">
                     {one.rule_ord ? `Rule ${one.rule_ord} - ` : ''}{one.rule_title}
@@ -307,7 +307,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
             {one.evidence && (
               <div>
                 <p className="mb-1.5 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                  <FontAwesomeIcon icon={faQuoteLeft} />
+                  <Glyph icon={faQuoteLeft} />
                   What it was based on
                 </p>
                 <blockquote className="rounded-xl rounded-tl-md border border-amber-400/30 bg-amber-400/[0.07] px-3 py-2">
@@ -345,7 +345,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
         {/* ------------------------------------------------ what they say */}
         <div className="space-y-3">
           <p className="flex items-center gap-2 font-display text-xs uppercase tracking-wider text-muted">
-            <FontAwesomeIcon icon={faQuoteLeft} />
+            <Glyph icon={faQuoteLeft} />
             What they say
           </p>
 

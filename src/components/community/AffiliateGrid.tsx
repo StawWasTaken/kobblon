@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCheck, faXmark, faEllipsis, faChevronLeft, faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
@@ -50,7 +50,7 @@ export function AffiliateGrid({
               aria-label={`Previous page of ${title ?? 'affiliates'}`}
               className="grid h-8 w-8 place-items-center rounded-lg text-white/50 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-30"
             >
-              <FontAwesomeIcon icon={faChevronLeft} />
+              <Glyph icon={faChevronLeft} />
             </button>
             <span className="text-sm font-semibold text-muted">
               Page {current + 1} / {pages}
@@ -61,7 +61,7 @@ export function AffiliateGrid({
               aria-label={`Next page of ${title ?? 'affiliates'}`}
               className="grid h-8 w-8 place-items-center rounded-lg text-white/50 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-30"
             >
-              <FontAwesomeIcon icon={faChevronRight} />
+              <Glyph icon={faChevronRight} />
             </button>
           </div>
         )}
@@ -87,7 +87,7 @@ export function AffiliateGrid({
                     label={`Options for ${other.name}`}
                     trigger={
                       <span className={cn('h-7 w-7', overlayButton)}>
-                        <FontAwesomeIcon icon={faEllipsis} className="text-xs" />
+                        <Glyph icon={faEllipsis} className="text-xs" />
                       </span>
                     }
                     items={[{ label: 'Remove', onSelect: () => onRemove(other.id), danger: true }]}
@@ -136,14 +136,14 @@ export function AffiliateGrid({
                     onClick={() => onAnswer(other.id, true)}
                     className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg bg-brand text-xs font-bold text-white hover:bg-brand-bright"
                   >
-                    <FontAwesomeIcon icon={faCheck} className="text-[10px]" /> Accept
+                    <Glyph icon={faCheck} className="text-[10px]" /> Accept
                   </button>
                   <button
                     onClick={() => onAnswer(other.id, false)}
                     aria-label={`Decline ${other.name}`}
                     className="grid h-7 w-7 place-items-center rounded-lg border border-ink-line text-white/50 hover:bg-ink-hover hover:text-white"
                   >
-                    <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                    <Glyph icon={faXmark} className="text-[10px]" />
                   </button>
                 </div>
               )}

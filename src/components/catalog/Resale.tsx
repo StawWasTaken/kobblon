@@ -11,7 +11,7 @@
  * offers: offers are what people hope for.
  */
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faTag, faArrowTrendUp } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -61,7 +61,7 @@ export function Resale({ itemId, owned, canTrade, onChanged }: {
   return (
     <Card className="space-y-3">
       <h2 className="flex items-center gap-2 font-display text-base font-extrabold">
-        <FontAwesomeIcon icon={faArrowTrendUp} className="text-white/50" />
+        <Glyph icon={faArrowTrendUp} className="text-white/50" />
         Going for
       </h2>
 

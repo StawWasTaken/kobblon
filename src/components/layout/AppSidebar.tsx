@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { unreadMail } from '@/lib/api'
@@ -110,7 +110,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 )
               }
             >
-              <FontAwesomeIcon icon={item.icon} className="w-5 text-[15px]" />
+              <Glyph icon={item.icon} className="w-5 text-[15px]" />
               <span className="flex-1">{item.label}</span>
               {badge > 0 && (
                 <span className="grid h-5 min-w-5 place-items-center rounded-full bg-onbrand px-1.5 text-[11px] font-extrabold text-brand-deep">

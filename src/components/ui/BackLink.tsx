@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 
@@ -24,7 +24,7 @@ export function BackLink({
       )}
     >
       <span className="grid h-6 w-6 place-items-center rounded-lg bg-ink-hover text-[11px]">
-        <FontAwesomeIcon icon={faChevronLeft} />
+        <Glyph icon={faChevronLeft} />
       </span>
       {children}
     </Link>

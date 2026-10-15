@@ -1,7 +1,7 @@
 import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes } from 'react'
 import { Hop } from '@/components/ui/Hop'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
@@ -83,12 +83,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const inner = (
     <>
       {loading ? (
-        <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+        <Glyph icon={faSpinner} className="animate-spin" />
       ) : (
-        icon && <FontAwesomeIcon icon={icon} />
+        icon && <Glyph icon={icon} />
       )}
       {children}
-      {iconRight && !loading && <FontAwesomeIcon icon={iconRight} />}
+      {iconRight && !loading && <Glyph icon={iconRight} />}
     </>
   )
 

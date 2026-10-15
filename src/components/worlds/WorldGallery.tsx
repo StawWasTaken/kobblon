@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faChevronLeft, faChevronRight, faPlay } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { cn } from '@/lib/cn'
@@ -25,7 +25,7 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
     return (
       <div className="grid aspect-[16/9] place-items-center rounded-xl border border-ink-line bg-media">
         <div className="text-center">
-          <FontAwesomeIcon icon={worldIcon} className="text-3xl text-white/25" />
+          <Glyph icon={worldIcon} className="text-3xl text-white/25" />
           <p className="mt-3 text-sm text-muted">Nothing to show of this World yet.</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
               by === -1 ? 'left-3' : 'right-3',
             )}
           >
-            <FontAwesomeIcon icon={by === -1 ? faChevronLeft : faChevronRight} />
+            <Glyph icon={by === -1 ? faChevronLeft : faChevronRight} />
           </button>
         ))}
       </div>
@@ -81,7 +81,7 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
             >
               {shot.kind === 'video' ? (
                 <span className="grid h-full w-full place-items-center bg-media text-white/70">
-                  <FontAwesomeIcon icon={faPlay} className="text-xs" />
+                  <Glyph icon={faPlay} className="text-xs" />
                 </span>
               ) : (
                 <img src={shot.url} alt="" className="h-full w-full object-cover" />

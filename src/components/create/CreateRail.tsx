@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faChartSimple, faGaugeHigh, faBoxOpen, faShapes, faUpload, faShirt, faRectangleAd,
 } from '@fortawesome/free-solid-svg-icons'
@@ -51,7 +51,7 @@ export function CreateRail({ ownedCount = 0 }: { ownedCount?: number }) {
             )
           }
         >
-          <FontAwesomeIcon icon={section.icon} className="w-4 text-xs" />
+          <Glyph icon={section.icon} className="w-4 text-xs" />
           <span className="flex-1">{section.label}</span>
           {section.label === 'Inventory' && ownedCount > 0 && (
             <span className="text-[11px] font-bold text-muted">{ownedCount}</span>

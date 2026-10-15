@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
@@ -57,7 +57,7 @@ export function Tabs<T extends string>({
               )}
               style={active && accent ? { borderColor: accent } : undefined}
             >
-              {option.icon && <FontAwesomeIcon icon={option.icon} className="mr-2 text-xs" />}
+              {option.icon && <Glyph icon={option.icon} className="mr-2 text-xs" />}
               {option.label}
               {typeof option.count === 'number' && (
                 <span className="ml-2 text-xs text-white/40 tabular-nums">{option.count}</span>
@@ -89,7 +89,7 @@ export function Tabs<T extends string>({
               active ? 'bg-brand text-onbrand' : 'text-white/60 hover:bg-ink-hover hover:text-white',
             )}
           >
-            {option.icon && <FontAwesomeIcon icon={option.icon} className="text-xs" />}
+            {option.icon && <Glyph icon={option.icon} className="text-xs" />}
             {option.label}
             {typeof option.count === 'number' && (
               <span

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faXmark, faCalendarDay, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { useAsync } from '@/hooks/useAsync'
 import { announceStartedEvents, currentEvent } from '@/lib/api'
@@ -37,7 +37,7 @@ export function LiveEventBar({ communityId }: { communityId: string }) {
           out sit at the ends without pushing it off centre. */}
       <div className="relative flex items-center justify-center gap-3 px-16 py-2.5">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-space text-xs text-[#fff]">
-          <FontAwesomeIcon icon={faCalendarDay} />
+          <Glyph icon={faCalendarDay} />
         </span>
 
         <p className="min-w-0 truncate text-center text-sm">
@@ -57,7 +57,7 @@ export function LiveEventBar({ communityId }: { communityId: string }) {
             className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-space px-3 py-1.5 text-xs font-extrabold text-[#fff] transition-colors hover:brightness-110"
           >
             Go
-            <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+            <Glyph icon={faArrowRight} className="text-[10px]" />
           </Link>
 
           <button
@@ -65,7 +65,7 @@ export function LiveEventBar({ communityId }: { communityId: string }) {
             aria-label="Put this away for now"
             className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white/50 transition-colors hover:bg-ink-hover hover:text-white"
           >
-            <FontAwesomeIcon icon={faXmark} className="text-xs" />
+            <Glyph icon={faXmark} className="text-xs" />
           </button>
         </span>
       </div>

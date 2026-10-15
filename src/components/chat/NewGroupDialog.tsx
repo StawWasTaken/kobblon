@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faMagnifyingGlass, faUserGroup, faCheck } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
@@ -57,7 +57,7 @@ export function NewGroupDialog({
   return (
     <section className="pointer-events-auto flex h-96 w-72 flex-col overflow-hidden rounded-t-xl border border-b-0 border-ink-line bg-ink-card shadow-pop">
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-3">
-        <FontAwesomeIcon icon={faUserGroup} className="text-white/40" />
+        <Glyph icon={faUserGroup} className="text-white/40" />
         <h2 className="flex-1 text-sm font-extrabold">New Chat Group</h2>
         <button
           onClick={onClose}
@@ -81,7 +81,7 @@ export function NewGroupDialog({
 
         <div className="relative">
           <label className="sr-only" htmlFor="group-friends">Search for friends</label>
-          <FontAwesomeIcon
+          <Glyph
             icon={faMagnifyingGlass}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/35"
           />
@@ -131,7 +131,7 @@ export function NewGroupDialog({
                   on ? 'border-brand-bright bg-brand text-white' : 'border-ink-line',
                 )}
               >
-                {on && <FontAwesomeIcon icon={faCheck} />}
+                {on && <Glyph icon={faCheck} />}
               </span>
             </button>
           )

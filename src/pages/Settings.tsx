@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faCube, faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck, faTriangleExclamation,
@@ -314,14 +314,14 @@ function Appearance() {
                     : 'bg-gradient-to-br from-[#101012] to-[#f2f3f7] text-white',
               )}
             >
-              <FontAwesomeIcon icon={mode.icon} />
+              <Glyph icon={mode.icon} />
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-bold">{mode.label}</span>
               <span className="block text-xs text-muted">{mode.note}</span>
             </span>
             {theme === mode.value && (
-              <FontAwesomeIcon icon={faCheck} className="ml-auto text-sm text-link" />
+              <Glyph icon={faCheck} className="ml-auto text-sm text-link" />
             )}
           </button>
         ))}
@@ -371,7 +371,7 @@ function Safety() {
                 : 'border-amber-400/40 bg-amber-400/10 text-amber-300',
             )}
           >
-            <FontAwesomeIcon icon={clear ? faCircleCheck : faTriangleExclamation} />
+            <Glyph icon={clear ? faCircleCheck : faTriangleExclamation} />
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-display text-lg font-extrabold">Where you stand</p>
@@ -390,7 +390,7 @@ function Safety() {
           to="/support"
           className="flex items-start gap-3 rounded-2xl border border-ink-line bg-ink-card p-5 transition-colors hover:bg-ink-hover"
         >
-          <FontAwesomeIcon icon={faHeadset} className="mt-1 text-brand-bright" />
+          <Glyph icon={faHeadset} className="mt-1 text-brand-bright" />
           <span className="min-w-0">
             <span className="block font-bold">Write to us</span>
             <span className="mt-0.5 block text-sm leading-relaxed text-muted">
@@ -402,7 +402,7 @@ function Safety() {
           to="/policies"
           className="flex items-start gap-3 rounded-2xl border border-ink-line bg-ink-card p-5 transition-colors hover:bg-ink-hover"
         >
-          <FontAwesomeIcon icon={faScroll} className="mt-1 text-brand-bright" />
+          <Glyph icon={faScroll} className="mt-1 text-brand-bright" />
           <span className="min-w-0">
             <span className="block font-bold">The rules</span>
             <span className="mt-0.5 block text-sm leading-relaxed text-muted">
@@ -484,7 +484,7 @@ export default function Settings() {
                   : 'text-white/65 hover:bg-ink-hover hover:text-white',
               )}
             >
-              <FontAwesomeIcon icon={item.icon} className="w-4 text-xs opacity-70" />
+              <Glyph icon={item.icon} className="w-4 text-xs opacity-70" />
               {item.label}
             </button>
           ))}

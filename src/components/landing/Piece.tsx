@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import { faImage, faMusic, faVideo, faFont, faCube, faShapes } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -195,14 +195,14 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
               />
             ) : (
               <span className="grid h-full w-full place-items-center">
-                <FontAwesomeIcon icon={faMusic} className="text-5xl text-white/30" />
+                <Glyph icon={faMusic} className="text-5xl text-white/30" />
               </span>
             )}
           </span>
         )}
 
         <span className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-ink/75 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide backdrop-blur">
-          <FontAwesomeIcon icon={kind.icon} />
+          <Glyph icon={kind.icon} />
           {kind.word}
         </span>
 

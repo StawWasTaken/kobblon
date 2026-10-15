@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Glyph } from '@/components/brand/Glyph'
 import {
   faComment, faFlag, faUserPlus, faClock, faUserCheck,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
@@ -70,7 +70,7 @@ function Heading({ icon, children, aside }: {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <h2 className="relative flex items-center gap-2.5 font-display text-xl font-extrabold sm:text-2xl">
-        <FontAwesomeIcon icon={icon} className="text-base opacity-70" />
+        <Glyph icon={icon} className="text-base opacity-70" />
         {children}
         <span
           aria-hidden="true"
@@ -87,7 +87,7 @@ function Heading({ icon, children, aside }: {
 function Fact({ icon, children }: { icon: IconDefinition; children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-sm text-white/60">
-      <FontAwesomeIcon icon={icon} className="text-xs" style={{ color: 'var(--me)' }} />
+      <Glyph icon={icon} className="text-xs" style={{ color: 'var(--me)' }} />
       {children}
     </span>
   )
@@ -134,7 +134,7 @@ function Faces({ people }: { people: Face[] }) {
             {/* The heart says why they are first. A list that silently
                 reorders itself is a list somebody thinks is broken. */}
             {person.best && (
-              <FontAwesomeIcon
+              <Glyph
                 icon={faHeart}
                 className="shrink-0 text-[10px]"
                 style={{ color: 'var(--me)' }}
@@ -458,7 +458,7 @@ export default function Profile() {
                   aria-label="Change your avatar"
                   className="absolute inset-0 grid place-items-center gap-1 rounded-xl bg-black/55 text-[#fff] opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
                 >
-                  <FontAwesomeIcon icon={faShirt} />
+                  <Glyph icon={faShirt} />
                   <span className="text-[10px] font-bold uppercase tracking-wide">Avatar</span>
                 </Hop>
               ) : undefined}
@@ -516,7 +516,7 @@ export default function Profile() {
                 >
                   {isMe && !user.bio
                     ? <><PenIcon className="text-xs" />Write your bio</>
-                    : <><FontAwesomeIcon icon={faCircleInfo} className="text-xs" />Read more</>}
+                    : <><Glyph icon={faCircleInfo} className="text-xs" />Read more</>}
                 </button>
 
                 {/* Somebody's Discord, when they have said which one is
@@ -533,7 +533,7 @@ export default function Profile() {
                     side="top"
                   >
                     <p className="inline-flex cursor-default items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1 text-xs font-bold">
-                      <FontAwesomeIcon icon={faDiscord} className="text-[#5865F2]" />
+                      <Glyph icon={faDiscord} className="text-[#5865F2]" />
                       {user.discord_display}
                     </p>
                   </Tooltip>
@@ -555,7 +555,7 @@ export default function Profile() {
                   className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line text-white/80 transition-colors hover:bg-ink-hover"
                   style={{ background: `${accent}33` }}
                 >
-                  <FontAwesomeIcon icon={faPalette} />
+                  <Glyph icon={faPalette} />
                 </button>
               </>
             ) : (
@@ -667,7 +667,7 @@ export default function Profile() {
               align="right"
               trigger={
                 <span className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
-                  <FontAwesomeIcon icon={faEllipsis} />
+                  <Glyph icon={faEllipsis} />
                 </span>
               }
               items={[
@@ -802,7 +802,7 @@ export default function Profile() {
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
               >
                 See all
-                <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                <Glyph icon={faArrowRight} className="text-[10px]" />
               </Link>
             }>
               Friends{friends.data?.length ? ` (${friends.data.length})` : ''}
@@ -917,7 +917,7 @@ export default function Profile() {
                     onClick={() => setWritingBio(true)}
                     className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
                   >
-                    <FontAwesomeIcon icon={faPen} className="text-[10px]" />
+                    <Glyph icon={faPen} className="text-[10px]" />
                     Edit bio
                   </button>
                 )}
