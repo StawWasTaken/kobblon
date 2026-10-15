@@ -4288,6 +4288,61 @@ export async function removeOutfit(id: string) {
     .eq('id', id).select('id').single())
 }
 
+/** A new name on a saved look, and nothing else about it moves. */
+export async function renameOutfit(id: string, name: string) {
+  unwrap(await supabase.rpc('rename_outfit', { outfit: id, new_name: name }))
+}
+
+/**
+ * This outfit, but what I have on now.
+ *
+ * Keeps the name, the folder, the price and the Catalog listing - the whole
+ * point of pressing Update rather than saving a new one. Returns how many
+ * pieces it ended up with. The server reads what is worn rather than taking
+ * a list from here, so an outfit cannot be saved as something the body is
+ * not actually wearing.
+ */
+export async function restyleOutfit(id: string): Promise<number> {
+  return unwrap(await supabase.rpc('restyle_outfit', { outfit: id })) as number
+}
+
+/**
+ * Changing something you made, for a fee.
+ *
+ * Staw: "we also should let people update the mesh & texture & name &
+ * description & position & price of their accessories for 60 brix". Every
+ * field is optional and left out means "leave it" - a dialog that sends
+ * every field back sends the value it happened to be holding, which is the
+ * one from before somebody else's change.
+ *
+ * Comes back `nothing` when nothing moved (and nothing is charged),
+ * `changed`, or `pending` when a new mesh or picture sent it back to be
+ * looked at again.
+ */
+export async function updateAvatarItem(item: string, change: {
+  name?: string
+  description?: string
+  meshId?: string | null
+  textureId?: string | null
+  fit?: WornFit | null
+  price?: number
+}): Promise<'nothing' | 'changed' | 'pending'> {
+  return unwrap(await supabase.rpc('update_avatar_item', {
+    item,
+    new_name: change.name ?? null,
+    new_description: change.description ?? null,
+    new_mesh: change.meshId ?? null,
+    new_texture: change.textureId ?? null,
+    new_fit: change.fit ?? null,
+    new_price: change.price ?? null,
+  })) as 'nothing' | 'changed' | 'pending'
+}
+
+/** What a change to a published item costs. Read, never assumed. */
+export async function itemEditPrice(): Promise<number> {
+  return (unwrap(await supabase.rpc('item_edit_price')) as number) ?? 60
+}
+
 /** What each kind of avatar item costs to make, and who may make one. */
 export async function avatarRules(): Promise<AvatarRule[]> {
   return (unwrap(await supabase.rpc('avatar_rules')) as AvatarRule[]) ?? []
@@ -4571,8 +4626,24 @@ export async function uploadCatalogImage(userId: string, file: File): Promise<st
  * rather than done again per renderer.
  */
 export async function lookOf(userId: string): Promise<PortraitLook> {
-  const worn = await wornBy(userId).catch(() => [])
+  return buildLook(await wornBy(userId).catch(() => []))
+}
 
+/**
+ * What a saved outfit looks like, drawn the same way a person is.
+ *
+ * `outfit_look` answers in `avatar_of`'s own columns, so this is `lookOf`
+ * with a different list of rows and not a second idea of what an avatar is.
+ * Staw: "for outfits, i want to see each outfit in 3d" - and an outfit drawn
+ * by its own code is an outfit that looks subtly unlike the body it goes on.
+ */
+export async function lookOfOutfit(outfitId: string): Promise<PortraitLook> {
+  const rows = (unwrap(await supabase.rpc('outfit_look', { outfit: outfitId })) as AvatarPiece[]) ?? []
+  return buildLook(rows)
+}
+
+/** The rows, resolved into addresses something can actually draw. */
+async function buildLook(worn: AvatarPiece[]): Promise<PortraitLook> {
   const pieces = await Promise.all(
     worn.filter((piece) => piece.slot).map(async (piece) => ({
       slot: piece.slot!,

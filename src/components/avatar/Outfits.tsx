@@ -19,6 +19,7 @@ import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faFolder, faFolderPlus, faPlus, faShirt, faTrash, faTag, faCheck,
+  faGear, faPenToSquare, faArrowsRotate,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -26,12 +27,15 @@ import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/States'
+import { Menu } from '@/components/ui/Menu'
+import { Confirm } from '@/components/ui/Confirm'
+import { OutfitStage } from '@/components/avatar/OutfitStage'
 import { useToast } from '@/components/ui/Toast'
 import { useAsync } from '@/hooks/useAsync'
 import { CurrencyMark } from '@/components/brand/Currency'
 import {
   myOutfits, myOutfitFolders, saveOutfit, wearOutfit, removeOutfit,
-  makeOutfitFolder, listOutfit, type Outfit,
+  makeOutfitFolder, listOutfit, renameOutfit, restyleOutfit, type Outfit,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 
@@ -44,7 +48,17 @@ function OutfitCard({ outfit, onChanged, onWear }: {
   const say = useToast()
   const [busy, setBusy] = useState<string | null>(null)
   const [selling, setSelling] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [binning, setBinning] = useState(false)
+  const [name, setName] = useState(outfit.name)
   const [price, setPrice] = useState(String(outfit.price || 0))
+  /*
+   * Bumped whenever the pieces change, and handed to the stage as a key so
+   * it draws the new outfit rather than keeping the one it loaded. Without
+   * it, Update changes what is saved and the card goes on showing what was
+   * saved before - a picture that disagrees with the thing it is of.
+   */
+  const [drawn, setDrawn] = useState(0)
 
   const run = async (what: string, doIt: () => Promise<unknown>, said: string) => {
     setBusy(what)
@@ -62,29 +76,73 @@ function OutfitCard({ outfit, onChanged, onWear }: {
   const pieces = Array.isArray(outfit.pieces) ? outfit.pieces : []
 
   return (
-    <Card className="space-y-2.5 p-3">
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
+    <Card className="overflow-hidden p-0">
+      {/*
+        * The outfit itself, standing up, which is what Staw asked for: "i
+        * want to see each outfit in 3d". A grid of names and counts is a
+        * list of files; a grid of bodies is a wardrobe.
+        */}
+      <div className="relative">
+        <OutfitStage
+          key={`${outfit.id}:${drawn}`}
+          outfitId={outfit.id}
+          className="aspect-[4/5] w-full"
+        />
+
+        {/* The gear, top right, exactly where Staw's picture has it. */}
+        <div className="absolute right-2 top-2">
+          <Menu
+            label={`What to do with ${outfit.name}`}
+            trigger={
+              <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white">
+                <FontAwesomeIcon icon={faGear} />
+              </span>
+            }
+            items={[
+              {
+                label: 'Update to what I am wearing',
+                icon: faArrowsRotate,
+                onSelect: () => void run('restyle', async () => {
+                  await restyleOutfit(outfit.id)
+                  setDrawn((n) => n + 1)
+                }, `${outfit.name} is what you have on now.`),
+              },
+              { label: 'Rename', icon: faPenToSquare, onSelect: () => setRenaming(true) },
+              {
+                label: outfit.is_public ? 'Change the price' : 'Sell it',
+                icon: faTag,
+                onSelect: () => setSelling(true),
+              },
+              { label: 'Delete', icon: faTrash, danger: true, onSelect: () => setBinning(true) },
+            ]}
+          />
+        </div>
+
+        {outfit.is_public && (
+          <span className="absolute left-2 top-2">
+            <Badge tone="space">
+              {outfit.price > 0
+                ? <><CurrencyMark className="mr-0.5" />{formatCount(outfit.price)}</>
+                : 'Free'}
+            </Badge>
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-2.5 p-3">
+        <div className="min-w-0">
           <p className="truncate text-sm font-bold">{outfit.name}</p>
           <p className="text-[11px] text-muted">
             {pieces.length} {pieces.length === 1 ? 'thing' : 'things'}
             {outfit.folder_name && <> · {outfit.folder_name}</>}
           </p>
         </div>
-        {outfit.is_public && (
-          <Badge tone="space">
-            {outfit.price > 0
-              ? <><CurrencyMark className="mr-0.5" />{formatCount(outfit.price)}</>
-              : 'Free'}
-          </Badge>
-        )}
-      </div>
 
-      <div className="flex flex-wrap gap-1.5">
         <Button
           size="sm"
           variant="yes"
           icon={faShirt}
+          className="w-full"
           loading={busy === 'wear'}
           onClick={() => void run('wear', async () => {
             await wearOutfit(outfit.id)
@@ -93,22 +151,59 @@ function OutfitCard({ outfit, onChanged, onWear }: {
         >
           Wear it
         </Button>
-        <Button
-          size="sm"
-          variant="subtle"
-          icon={faTag}
-          onClick={() => setSelling(true)}
-        >
-          {outfit.is_public ? 'Listed' : 'Sell it'}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          icon={faTrash}
-          loading={busy === 'remove'}
-          onClick={() => void run('remove', () => removeOutfit(outfit.id), 'Gone.')}
-        />
       </div>
+
+      <Dialog
+        open={renaming}
+        onClose={() => { setRenaming(false); setName(outfit.name) }}
+        title="Rename this outfit"
+        description="Only the name moves. What is in it, where it sits and what it sells for all stay as they are."
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => { setRenaming(false); setName(outfit.name) }}>
+              Cancel
+            </Button>
+            <Button
+              variant="yes"
+              icon={faCheck}
+              loading={busy === 'rename'}
+              disabled={!name.trim() || name.trim() === outfit.name}
+              onClick={() => void run('rename', async () => {
+                await renameOutfit(outfit.id, name.trim())
+                setRenaming(false)
+              }, 'Renamed.')}
+            >
+              Save
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="Name"
+          value={name}
+          maxLength={60}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </Dialog>
+
+      <Confirm
+        open={binning}
+        onClose={() => setBinning(false)}
+        onConfirm={() => void run('remove', async () => {
+          await removeOutfit(outfit.id)
+          setBinning(false)
+        }, 'Gone.')}
+        title={`Delete ${outfit.name}?`}
+        lead="The look goes. Everything in it is still yours."
+        points={[
+          'Nothing you own is deleted; only this saved arrangement of it.',
+          outfit.is_public
+            ? 'It comes out of the Catalog. Anybody who already bought it keeps what they bought.'
+            : 'It was never listed, so nobody else is affected.',
+        ]}
+        confirmText="Delete it"
+      />
 
       <Dialog
         open={selling}
@@ -253,7 +348,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
                 <FontAwesomeIcon icon={faFolder} />
                 {one.name}
               </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {one.outfits.map((outfit) => (
                   <OutfitCard
                     key={outfit.id}
@@ -267,7 +362,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
           ))}
 
           {!!loose.length && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {loose.map((outfit) => (
                 <OutfitCard
                   key={outfit.id}
