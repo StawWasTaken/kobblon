@@ -1,36 +1,57 @@
 /*
- * Your avatar, in three dimensions, which is the only kind there is now.
+ * Your avatar: the body is the page, and the wardrobe stands beside it.
  *
- * It was a flat picture with things pasted onto it, and Staw asked for that
- * gone completely. The avatar is a body: it has a colour per part, it wears
- * clothes drawn into a template, and it hangs things off its head and back.
- * So the page is the body at full size and the drawers you open to change
- * it, rather than a stamp beside a grid.
+ * Staw asked for a complete redesign - "i want it to look the best possible,
+ * with the most useful features possible, and keep it as unique as possible
+ * from roblox" - and the honest problem with what was here is that it was
+ * Roblox's shape: a stamp of your avatar in the corner, tabs across the top
+ * of a grid, and the grid doing all the talking.
  *
- * What is drawn here is `AvatarStage`, the same component a profile and a
- * profile picture use. Not a preview of what everybody else will see - the
- * thing everybody else sees.
+ * So it is turned inside out. The body is the biggest thing on the screen
+ * and it stays that way; the drawers are a rail of icons down the side
+ * rather than a row of words above a grid; and the things you own are a
+ * panel beside the body rather than the page the body sits on. Under the
+ * figure is the one row that was missing: what you have on, as pictures,
+ * each with a cross - the list of names it replaces was the only place on
+ * this page you had to read rather than look.
+ *
+ * The four buttons over the stage are the useful part, and none of them are
+ * decoration:
+ *
+ *   Undress   everything off in one press, which took eleven before.
+ *   Shuffle   one thing per socket, at random, out of what you own. It is
+ *             the fastest way to find out you own something you forgot.
+ *   Keep      save what you have on as an outfit, without leaving the body.
+ *   Redraw    take the profile picture again, for when one did not draw.
+ *
+ * What is drawn is `AvatarStage`, the same component a profile and a profile
+ * picture use. Not a preview of what everybody else will see - the thing
+ * everybody else sees.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
-  faCircleNotch, faCheck, faPlus,
+  faCircleNotch, faCheck, faPlus, faShuffle, faCamera, faMagnifyingGlass,
+  faEraser, faBookmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Tabs } from '@/components/ui/Tabs'
+import { Input } from '@/components/ui/Input'
+import { Dialog } from '@/components/ui/Dialog'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState, Skeleton } from '@/components/ui/States'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
+import { Icon } from '@/components/brand/Icon'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   wornBy, myAvatarItems, wearAvatarItem, takeOffItem, setBodyColours,
-  catalogUrl, assetUrl, refreshPortrait, cardFor,
+  catalogUrl, assetUrl, refreshPortrait, cardFor, saveOutfit,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
 import type { AvatarItem, AvatarPiece } from '@/types/db'
@@ -43,10 +64,10 @@ import { Studio } from '@/components/avatar/Studio'
 
 /** The drawers, in the order somebody opens them. */
 const DRAWERS = [
-  { id: 'body', label: 'Body', icon: faPalette },
   { id: 'clothing', label: 'Clothing', icon: faShirt },
   { id: 'accessories', label: 'Accessories', icon: faHatCowboy },
   { id: 'face', label: 'Face', icon: faFaceSmile },
+  { id: 'body', label: 'Body', icon: faPalette },
   // Saved looks, which are not a kind of thing you own but a way of putting
   // the things you own back on.
   { id: 'outfits', label: 'Outfits', icon: faFolder },
@@ -91,6 +112,9 @@ export default function MyAvatar() {
   const say = useToast()
 
   const [drawer, setDrawer] = useState<Drawer>('clothing')
+  const [term, setTerm] = useState('')
+  const [keeping, setKeeping] = useState(false)
+  const [outfitName, setOutfitName] = useState('')
   /*
    * Which parts a swatch would paint. More than one, because "both arms"
    * is one thought and used to be two trips through the colours.
@@ -288,9 +312,69 @@ export default function MyAvatar() {
     [worn.data],
   )
 
-  const shelf = (owned.data ?? []).filter((item) => DRAWER_OF[item.kind] === drawer)
+  const wearing = (worn.data ?? []).filter((p) => p.slot && p.item_id)
+
+  /** Everything you own that belongs in the open drawer, narrowed by the box. */
+  const shelf = (owned.data ?? [])
+    .filter((item) => DRAWER_OF[item.kind] === drawer)
+    .filter((item) => !term.trim()
+      || item.name.toLowerCase().includes(term.trim().toLowerCase()))
+
+  /** How many things each drawer holds, for the number on the rail. */
+  const counts = useMemo(() => {
+    const all: Partial<Record<Drawer, number>> = {}
+    for (const item of owned.data ?? []) {
+      const which = DRAWER_OF[item.kind]
+      if (which) all[which] = (all[which] ?? 0) + 1
+    }
+    return all
+  }, [owned.data])
+
+  /** Everything off, in one press. It was eleven. */
+  const undress = () => void after('undress', async () => {
+    for (const piece of wearing) await takeOffItem(piece.item_id!)
+  })
+
+  /**
+   * One thing per socket, at random, out of what you own.
+   *
+   * Grouped by slot and one picked from each, rather than picking items at
+   * random and hoping: picking at random gives three hats and no trousers,
+   * which is not an outfit, it is a bag.
+   */
+  const shuffle = () => void after('shuffle', async () => {
+    const bySlot = new Map<string, AvatarItem[]>()
+    for (const item of owned.data ?? []) {
+      if (!item.slot) continue
+      bySlot.set(item.slot, [...(bySlot.get(item.slot) ?? []), item])
+    }
+    if (!bySlot.size) throw new Error('There is nothing in your wardrobe to shuffle.')
+
+    for (const piece of wearing) await takeOffItem(piece.item_id!)
+    for (const [, options] of bySlot) {
+      const picked = options[Math.floor(Math.random() * options.length)]
+      await wearAvatarItem(picked.id)
+    }
+  })
+
+  const keep = async () => {
+    setBusy('keep')
+    try {
+      await saveOutfit(outfitName.trim(), null)
+      say('Kept. It is in your outfits.', 'success')
+      setOutfitName('')
+      setKeeping(false)
+      setDrawer('outfits')
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not save.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
 
   if (!profile) return null
+
+  const open = DRAWERS.find((one) => one.id === drawer)!
 
   return (
     <Page width="wide" className="space-y-5">
@@ -308,178 +392,341 @@ export default function MyAvatar() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+      <div className="flex gap-4">
+        {/* ------------------------------------------------------- the rail */}
         {/*
-          * The body stays put while the shelf scrolls past it. That is the
-          * whole point of putting them on one page: a shirt you are
-          * considering is worth nothing if you have to scroll away from
-          * yourself to look at it.
+          * Down the side rather than across the top, which is the one
+          * change that stops this reading as somebody else's page. It is
+          * also simply better: five drawers across the top of a grid push
+          * the grid down, and five down the side cost nothing.
           */}
-        <div className="space-y-3 lg:sticky lg:top-20 lg:self-start">
-          <Card className="overflow-hidden p-0">
-            {/* Standing in a studio rather than on a flat gradient. */}
-            <Studio>
-              {worn.loading
-                ? <Skeleton className="aspect-square w-full" />
-                : <AvatarStage look={dressed} handled />}
-            </Studio>
-          </Card>
+        <nav
+          aria-label="What to change"
+          className="flex shrink-0 flex-col gap-1.5 sm:w-20"
+        >
+          {DRAWERS.map((one) => (
+            <Tooltip key={one.id} label={one.label} side="right">
+              <button
+                type="button"
+                onClick={() => { setDrawer(one.id); setTerm('') }}
+                aria-current={drawer === one.id}
+                className={cn(
+                  'relative grid h-14 w-14 place-items-center rounded-2xl border px-1 text-center transition-colors sm:h-20 sm:w-20',
+                  drawer === one.id
+                    ? 'border-brand bg-brand/15 text-white'
+                    : 'border-ink-line bg-ink-card text-white/45 hover:text-white',
+                )}
+              >
+                <FontAwesomeIcon icon={one.icon} className="text-lg" />
+                <span className="mt-1 hidden text-[9px] font-extrabold uppercase leading-tight tracking-wide sm:block">
+                  {one.label}
+                </span>
+                {!!counts[one.id] && (
+                  <span className="absolute right-1 top-1 text-[9px] font-bold text-white/35">
+                    {counts[one.id]}
+                  </span>
+                )}
+              </button>
+            </Tooltip>
+          ))}
+        </nav>
 
-          <Card className="space-y-2">
-            <p className="font-display text-xs uppercase tracking-wider text-muted">
-              Wearing
-            </p>
-            {onNow.size === 0 ? (
-              <p className="text-sm text-muted">Nothing yet.</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {/* Keyed by the item, because two hats are two rows and a
-                    key of "hat" would make them one. The cross takes that
-                    one off rather than emptying the socket. */}
-                {(worn.data ?? []).filter((p) => p.slot && p.item_id).map((piece) => (
-                  <li key={piece.item_id} className="flex items-center gap-2 text-sm">
-                    <span className="min-w-0 flex-1 truncate">{piece.item_name}</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      loading={busy === `off:${piece.item_id}`}
-                      onClick={() => void after(
-                        `off:${piece.item_id}`,
-                        () => takeOffItem(piece.item_id!),
-                      )}
-                    >
-                      <FontAwesomeIcon icon={faXmark} />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
+        {/* ------------------------------------------------------ the body */}
+        <div className="grid min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+          <div className="mx-auto w-full max-w-[32rem] space-y-3 lg:sticky lg:top-20 lg:self-start">
+            <Card className="overflow-hidden p-0">
+              <div className="relative">
+                {/*
+                  * The stage keeps its own square, and the column caps how
+                  * wide it may get.
+                  *
+                  * `AvatarStage` is `aspect-square w-full` and frames the
+                  * body to fit the box it is given. Wrapping it in a taller
+                  * box and telling it `h-full` made it square at the
+                  * column's full width - a 1,180 pixel avatar seen through
+                  * a letterbox, with the head and the feet outside it. The
+                  * fix is to stop arguing with it.
+                  */}
+                <Studio>
+                  {worn.loading
+                    ? <Skeleton className="aspect-square w-full" />
+                    : <AvatarStage look={dressed} handled />}
+                </Studio>
 
-        {/* ------------------------------------- the shop, and what you own */}
-        <div className="space-y-4">
-          <Tabs
-            value={drawer}
-            onChange={(next) => setDrawer(next as Drawer)}
-            options={DRAWERS.map((one) => ({ value: one.id, label: one.label }))}
-          />
-
-          {drawer === 'outfits' ? (
-            /*
-             * Wearing one reloads what is on, draws the portrait again and
-             * leaves the person looking at themselves in it - the same
-             * `after` every other change on this page goes through, so an
-             * outfit cannot end up on the body without the picture catching
-             * up.
-             */
-            <Outfits onWear={() => void after('outfit', async () => {})} />
-          ) : drawer === 'body' ? (
-            <Card className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="mx-auto w-40 shrink-0 rounded-xl border border-ink-line bg-ink-raised p-3">
-                  <BodyPicker
-                    colours={look.body ?? DEFAULT_BODY}
-                    chosen={parts}
-                    onChoose={(one) => setParts((had) => (
-                      had.includes(one)
-                        ? had.length > 1 ? had.filter((x) => x !== one) : had
-                        : [...had, one]
-                    ))}
+                {/*
+                  * Over the stage rather than under it, because they are
+                  * things you do to the body and not another row of page.
+                  */}
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-ink/80 to-transparent p-3">
+                  <StageButton
+                    label="Take everything off"
+                    icon={faEraser}
+                    busy={busy === 'undress'}
+                    disabled={!wearing.length}
+                    onClick={undress}
+                  />
+                  <StageButton
+                    label="Shuffle what you own"
+                    icon={faShuffle}
+                    busy={busy === 'shuffle'}
+                    disabled={!owned.data?.length}
+                    onClick={shuffle}
+                  />
+                  <StageButton
+                    label="Keep this as an outfit"
+                    icon={faBookmark}
+                    disabled={!wearing.length}
+                    onClick={() => setKeeping(true)}
+                  />
+                  <StageButton
+                    label="Take my picture again"
+                    icon={faCamera}
+                    busy={busy === 'portrait'}
+                    onClick={() => void after('portrait', async () => {})}
                   />
                 </div>
-
-                <div className="min-w-0 space-y-2">
-                  <p className="text-sm font-bold">
-                    {parts.length === 1
-                      ? PART_LABELS[parts[0]]
-                      : `${parts.length} parts`}
-                  </p>
-                  <p className="text-xs leading-relaxed text-muted">
-                    Press a part to add it, press it again to drop it, then pick
-                    a colour. Everything chosen changes at once.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setParts([...K6_PARTS])}
-                      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
-                    >
-                      All of it
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setParts(['LeftArm', 'RightArm'])}
-                      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
-                    >
-                      Both arms
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setParts(['LeftLeg', 'RightLeg'])}
-                      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
-                    >
-                      Both legs
-                    </button>
-                  </div>
-                </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-                  Skin
+              {/*
+                * What you have on, as pictures with a cross on each.
+                *
+                * It was a column of names. This is the one place on the page
+                * somebody had to read rather than look, and it was the place
+                * where looking is the whole point.
+                */}
+              <div className="border-t border-ink-line p-3">
+                <p className="mb-2 font-display text-[10px] uppercase tracking-wider text-muted">
+                  Wearing{wearing.length ? ` · ${wearing.length}` : ''}
                 </p>
-                <Swatches
-                  colours={SKIN}
-                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
-                  busy={busy === 'paint'}
-                  onPick={paint}
-                />
-                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-                  Everything else
-                </p>
-                <Swatches
-                  colours={CLOTH}
-                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
-                  busy={busy === 'paint'}
-                  onPick={paint}
-                />
+                {!wearing.length ? (
+                  <p className="text-xs text-muted">
+                    Nothing yet. Press something on the right to put it on.
+                  </p>
+                ) : (
+                  <ul className="flex flex-wrap gap-2">
+                    {/* Keyed by the item, because two hats are two rows and a
+                        key of "hat" would make them one. The cross takes that
+                        one off rather than emptying the socket. */}
+                    {wearing.map((piece) => (
+                      <li key={piece.item_id} className="relative">
+                        <Tooltip label={piece.item_name ?? 'Something'} side="top">
+                          <button
+                            type="button"
+                            aria-label={`Take off ${piece.item_name ?? 'this'}`}
+                            disabled={busy === `off:${piece.item_id}`}
+                            onClick={() => void after(
+                              `off:${piece.item_id}`,
+                              () => takeOffItem(piece.item_id!),
+                            )}
+                            className="group grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media transition-colors hover:border-danger"
+                          >
+                            {cardFor(piece) ? (
+                              <img
+                                src={cardFor(piece)!}
+                                alt=""
+                                draggable={false}
+                                className="h-full w-full object-contain"
+                              />
+                            ) : (
+                              <FontAwesomeIcon icon={faHatCowboy} className="text-white/30" />
+                            )}
+                            <span className="absolute inset-0 grid place-items-center bg-ink/70 opacity-0 transition-opacity group-hover:opacity-100">
+                              <FontAwesomeIcon icon={faXmark} className="text-danger" />
+                            </span>
+                          </button>
+                        </Tooltip>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </Card>
-          ) : owned.loading ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {Array.from({ length: 8 }, (_, i) => (
-                <Skeleton key={i} className="aspect-square rounded-xl" />
-              ))}
-            </div>
-          ) : shelf.length === 0 ? (
-            <EmptyState
-              mood="emptyBox"
-              title="Nothing here yet"
-              body="Everything you take from the Catalog turns up in this drawer."
-              action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
-            />
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {shelf.map((item) => (
-                <WornTile
-                  key={item.id}
-                  item={item}
-                  on={onNow.has(item.id)}
-                  busy={busy === `wear:${item.id}`}
-                  onToggle={() => void after(
-                    `wear:${item.id}`,
-                    () => (onNow.has(item.id)
-                      ? takeOffItem(item.id)
-                      : wearAvatarItem(item.id)),
-                  )}
+          </div>
+
+          {/* ------------------------------------------------- the wardrobe */}
+          <div className="min-w-0 space-y-3">
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-sm font-bold">{open.label}</h2>
+              {drawer !== 'body' && drawer !== 'outfits' && (
+                <Input
+                  value={term}
+                  onChange={(e) => setTerm(e.target.value)}
+                  placeholder="Search what you own"
+                  icon={faMagnifyingGlass}
+                  className="ml-auto w-44"
                 />
-              ))}
+              )}
             </div>
-          )}
+
+            {drawer === 'outfits' ? (
+              /*
+               * Wearing one reloads what is on, draws the portrait again and
+               * leaves the person looking at themselves in it - the same
+               * `after` every other change on this page goes through, so an
+               * outfit cannot end up on the body without the picture catching
+               * up.
+               */
+              <Outfits onWear={() => void after('outfit', async () => {})} />
+            ) : drawer === 'body' ? (
+              <Card className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="mx-auto w-36 shrink-0 rounded-xl border border-ink-line bg-ink-raised p-3">
+                    <BodyPicker
+                      colours={look.body ?? DEFAULT_BODY}
+                      chosen={parts}
+                      onChoose={(one) => setParts((had) => (
+                        had.includes(one)
+                          ? had.length > 1 ? had.filter((x) => x !== one) : had
+                          : [...had, one]
+                      ))}
+                    />
+                  </div>
+
+                  <div className="min-w-0 space-y-2">
+                    <p className="text-sm font-bold">
+                      {parts.length === 1
+                        ? PART_LABELS[parts[0]]
+                        : `${parts.length} parts`}
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted">
+                      Press a part to add it, press it again to drop it, then pick
+                      a colour. Everything chosen changes at once.
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Quick onPick={() => setParts([...K6_PARTS])}>All of it</Quick>
+                      <Quick onPick={() => setParts(['LeftArm', 'RightArm'])}>Both arms</Quick>
+                      <Quick onPick={() => setParts(['LeftLeg', 'RightLeg'])}>Both legs</Quick>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                    Skin
+                  </p>
+                  <Swatches
+                    colours={SKIN}
+                    current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+                    busy={busy === 'paint'}
+                    onPick={paint}
+                  />
+                  <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                    Everything else
+                  </p>
+                  <Swatches
+                    colours={CLOTH}
+                    current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+                    busy={busy === 'paint'}
+                    onPick={paint}
+                  />
+                </div>
+              </Card>
+            ) : owned.loading ? (
+              <div className="grid grid-cols-3 gap-2.5">
+                {Array.from({ length: 9 }, (_, i) => (
+                  <Skeleton key={i} className="aspect-square rounded-xl" />
+                ))}
+              </div>
+            ) : !shelf.length ? (
+              term.trim() ? (
+                <p className="py-8 text-center text-sm text-muted">
+                  Nothing here called that.
+                </p>
+              ) : (
+                <EmptyState
+                  mood="emptyBox"
+                  title="Nothing here yet"
+                  body="Everything you take from the Catalog turns up in this drawer."
+                  action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
+                />
+              )
+            ) : (
+              <div className="grid grid-cols-3 gap-2.5">
+                {shelf.map((item) => (
+                  <WornTile
+                    key={item.id}
+                    item={item}
+                    on={onNow.has(item.id)}
+                    busy={busy === `wear:${item.id}`}
+                    onToggle={() => void after(
+                      `wear:${item.id}`,
+                      () => (onNow.has(item.id)
+                        ? takeOffItem(item.id)
+                        : wearAvatarItem(item.id)),
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      <Dialog
+        open={keeping}
+        onClose={() => setKeeping(false)}
+        title="Keep this outfit"
+        description="Whatever you have on right now, kept under a name. Your colours go with it."
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setKeeping(false)}>Cancel</Button>
+            <Button
+              variant="yes"
+              icon={faCheck}
+              loading={busy === 'keep'}
+              disabled={!outfitName.trim()}
+              onClick={() => void keep()}
+            >
+              Keep it
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="Name"
+          value={outfitName}
+          maxLength={60}
+          onChange={(e) => setOutfitName(e.target.value)}
+          placeholder="Saturday"
+        />
+      </Dialog>
     </Page>
+  )
+}
+
+/** One of the four over the stage. */
+function StageButton({ label, icon, busy, disabled, onClick }: {
+  label: string
+  icon: typeof faShuffle
+  busy?: boolean
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <Tooltip label={label} side="top">
+      <button
+        type="button"
+        aria-label={label}
+        disabled={busy || disabled}
+        onClick={onClick}
+        className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white disabled:opacity-40"
+      >
+        <FontAwesomeIcon icon={busy ? faCircleNotch : icon} className={cn(busy && 'animate-spin')} />
+      </button>
+    </Tooltip>
+  )
+}
+
+function Quick({ onPick, children }: { onPick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
+    >
+      {children}
+    </button>
   )
 }
 
@@ -549,12 +796,12 @@ function WornTile({ item, on, busy, onToggle }: {
           </span>
         )}
         {on && !busy && (
-          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-md bg-brand text-[11px] text-white">
-            <FontAwesomeIcon icon={faCheck} />
+          <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-md bg-brand text-[11px] text-white">
+            <Icon name="checkmark" tone="currentColor" className="h-3 w-3" />
           </span>
         )}
       </div>
-      <p className="truncate p-2.5 text-xs font-bold">{item.name}</p>
+      <p className="truncate p-2 text-[11px] font-bold">{item.name}</p>
     </button>
   )
 }

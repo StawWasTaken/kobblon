@@ -4288,6 +4288,51 @@ export async function removeOutfit(id: string) {
     .eq('id', id).select('id').single())
 }
 
+/**
+ * One outfit, on its own page: what it is, who made it, and every piece.
+ *
+ * Taken by the number in the address rather than by uuid, which is what the
+ * rest of the Catalog's pages do. Null when there is no such outfit, or it
+ * has been taken down, or it is somebody's private one.
+ */
+export async function outfitPage(tag: number): Promise<OutfitPage | null> {
+  const rows = unwrap(await supabase.rpc('outfit_page', { tag })) as OutfitPage[] | null
+  return rows?.[0] ?? null
+}
+
+export type OutfitPage = {
+  id: string
+  content_id: number
+  name: string
+  price: number
+  /** What it costs this person: the pieces they do not already own. */
+  costs: number
+  owned_already: number
+  how_many: number
+  maker_share: number
+  created_at: string
+  owner_id: string
+  owner_username: string
+  owner_display_name: string
+  owner_avatar_url: string | null
+  owner_is_verified: boolean
+  owner_is_staff: boolean
+  /** Yours, so the page offers Wear rather than Buy. */
+  mine: boolean
+  pieces: {
+    item_id: string
+    content_id: number
+    kind: string
+    slot: string
+    name: string
+    price: number
+    image_path: string | null
+    image_bucket: string | null
+    preview_path: string | null
+    owned: boolean
+  }[]
+}
+
 /** A new name on a saved look, and nothing else about it moves. */
 export async function renameOutfit(id: string, name: string) {
   unwrap(await supabase.rpc('rename_outfit', { outfit: id, new_name: name }))
