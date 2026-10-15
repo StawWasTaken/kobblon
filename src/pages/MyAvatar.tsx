@@ -33,7 +33,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
   faCircleNotch, faCheck, faPlus, faShuffle, faCamera, faMagnifyingGlass,
-  faEraser, faBookmark,
+  faEraser, faBookmark, faImage, faCube,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -46,6 +46,9 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { Icon } from '@/components/brand/Icon'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
+import { ViewSwitch } from '@/components/avatar/ViewSwitch'
+import { useFlatPicture } from '@/components/avatar/useFlatPicture'
+import type { PortraitLook } from '@/lib/portrait'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
@@ -115,6 +118,8 @@ export default function MyAvatar() {
   const [drawer, setDrawer] = useState<Drawer>('clothing')
   const [term, setTerm] = useState('')
   const [keeping, setKeeping] = useState(false)
+  /** Which way the body is being looked at: in three dimensions, or flat. */
+  const [mode, setMode] = useState<'picture' | 'body'>('body')
   const [outfitName, setOutfitName] = useState('')
   /*
    * Which parts a swatch would paint. More than one, because "both arms"
@@ -195,6 +200,13 @@ export default function MyAvatar() {
       return model ? { ...piece, meshUrl: model.mesh, textureUrl: model.skin } : piece
     }),
   }), [look, models])
+
+  /*
+   * The flat version, drawn only when somebody asks for it, and drawn from
+   * the same look the stage is showing rather than from a second one this
+   * page assembles.
+   */
+  const flat = useFlatPicture(dressed as unknown as PortraitLook, mode === 'picture')
 
   const after = async (what: string, doIt: () => Promise<void>) => {
     setBusy(what)
@@ -468,47 +480,54 @@ export default function MyAvatar() {
           <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-12">
             <div className="relative overflow-hidden rounded-2xl">
               {/*
-                * A wash of Kobblon blue behind the figure.
+                * The whole frame is the viewport.
                 *
-                * The studio backdrop is a photographer's sweep and it is
-                * right, but on its own this page was a grey box with a
-                * person in it. One soft light is the difference between a
-                * form and a place somebody stands.
+                * Staw: "the avatar viewport isnt of the full area we can
+                * see it". It was a square stage centred inside a wider
+                * backdrop, so two strips of the picture were not the stage
+                * at all - a drag there did nothing and the figure was
+                * smaller than the room it was standing in. `fill` lets the
+                * stage take the box; its camera already fits the body to
+                * whatever aspect it is handed.
                 */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_55%_at_50%_40%,rgba(58,80,255,0.18),transparent_70%)]"
-              />
-              {/*
-                * A frame wider than it is tall, with the square stage
-                * centred in it and a little shorter than the frame.
-                *
-                * `AvatarStage` is `aspect-square w-full` and it is right to
-                * be: it frames a standing figure. The holder being eighty
-                * per cent of the frame's height is what keeps the feet clear
-                * of the panel hanging over the bottom edge.
-                */}
-              <Studio className="grid aspect-[5/4] w-full place-items-center">
-                <div className="aspect-square h-[80%]">
-                  {worn.loading
-                    ? <Skeleton className="h-full w-full" />
-                    : <AvatarStage look={dressed} handled className="h-full" />}
-                </div>
-              </Studio>
+              <Studio className="aspect-[4/3] w-full">
+                {worn.loading
+                  ? <Skeleton className="h-full w-full" />
+                  : (
+                    <AvatarStage
+                      look={dressed}
+                      handled
+                      fill
+                      turning={mode === 'body'}
+                      className={cn('h-full w-full', mode === 'picture' && 'invisible')}
+                    />
+                  )}
 
-              {/* Who is standing there, over the backdrop's top corner. */}
-              <div className="pointer-events-none absolute left-4 top-4 z-[2] flex items-center gap-2 rounded-xl border border-ink-line bg-ink-card/70 px-3 py-1.5 backdrop-blur">
-                <Icon name="avatar" tone="currentColor" className="h-3.5 w-3.5 text-brand-bright" />
-                <span className="font-display text-xs font-extrabold">
-                  {profile.display_name}
-                </span>
-              </div>
+                {/*
+                  * Flat, when somebody asks for it: the same two-way switch
+                  * the Catalog and the profile use. Drawn over the stage
+                  * rather than instead of it, so turning 3D back on does
+                  * not cost a second load of the body.
+                  */}
+                {mode === 'picture' && (
+                  <div className="absolute inset-0 grid place-items-center p-6">
+                    {flat
+                      ? <img src={flat} alt="" className="h-full w-full object-contain" />
+                      : <p className="text-sm text-muted">Drawing…</p>}
+                  </div>
+                )}
+
+                <ViewSwitch
+                  ways={[
+                    { value: 'picture' as const, icon: faImage, label: '2D' },
+                    { value: 'body' as const, icon: faCube, label: '3D' },
+                  ]}
+                  value={mode}
+                  onChange={setMode}
+                />
+              </Studio>
             </div>
 
-            {/*
-              * The four, as one floating pill, over the picture and clear
-              * of the panel below it.
-              */}
             {/*
               * Up the right-hand side rather than across the bottom.
               *

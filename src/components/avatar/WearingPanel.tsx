@@ -14,7 +14,7 @@
  *
  * No provider of its own, and a router only because the tiles are links.
  */
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCube, faImage, faShirt } from '@fortawesome/free-solid-svg-icons'
@@ -23,51 +23,12 @@ import { Skeleton } from '@/components/ui/States'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { Studio } from '@/components/avatar/Studio'
 import { ViewSwitch } from '@/components/avatar/ViewSwitch'
+import { useFlatPicture } from '@/components/avatar/useFlatPicture'
 import { avatarTag, avatarKindLabels } from '@/lib/kinds'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { formatCount } from '@/lib/format'
-import { drawPortrait, type PortraitLook } from '@/lib/portrait'
+import type { PortraitLook } from '@/lib/portrait'
 
-/**
- * The flat one.
- *
- * 2D is a *picture* - that is the whole difference from 3D, and the reason
- * it is worth having: it does not spin, it does not hold a WebGL context,
- * and it is what somebody wants when they are looking at the eight tiles
- * beside it rather than at the figure.
- *
- * Drawn once per look and kept for as long as the panel is open. Freed on
- * the way out: a blob URL nobody revokes is a leak that only shows up after
- * somebody has read twenty profiles.
- */
-function useFlatPicture(look: PortraitLook | null, wanted: boolean) {
-  const [picture, setPicture] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!wanted || !look) return
-    let live = true
-    let made: string | null = null
-
-    void (async () => {
-      const drawn = await drawPortrait(look, '/k6/k6.glb', 'body').catch(() => null)
-      if (!drawn) return
-      made = URL.createObjectURL(drawn)
-      // The person being drawn can change while this is in flight, which is
-      // the trap this project keeps falling into. If it has, the picture is
-      // thrown away rather than shown over somebody else.
-      if (!live) { URL.revokeObjectURL(made); return }
-      setPicture(made)
-    })()
-
-    return () => {
-      live = false
-      if (made) URL.revokeObjectURL(made)
-      setPicture(null)
-    }
-  }, [look, wanted])
-
-  return picture
-}
 
 export function WearingPanel({ look, loading }: {
   look: PortraitLook | null

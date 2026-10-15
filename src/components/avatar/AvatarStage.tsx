@@ -64,7 +64,7 @@ export type AvatarLook = {
 /* `SOCKET_FOR` in the engine. One mapping, not one per renderer. */
 
 export function AvatarStage({
-  look, avatarUrl = '/k6/k6.glb', portrait, turning = true, handled,
+  look, avatarUrl = '/k6/k6.glb', portrait, turning = true, handled, fill,
   className,
 }: {
   look: AvatarLook | null
@@ -79,6 +79,18 @@ export function AvatarStage({
    * there a drag is the list being scrolled.
    */
   handled?: boolean
+  /**
+   * Fill whatever box it is given, instead of keeping its own square.
+   *
+   * The square is the right default - it frames a standing figure, and a
+   * tall frame is empty space above and below one. But an editor gives the
+   * stage the whole card and expects the whole card to be the viewport:
+   * Staw, of the version that kept its square inside a wider frame, "the
+   * avatar viewport isnt of the full area we can see it". The camera
+   * already fits the body to whatever aspect it is handed, so filling is
+   * only a matter of letting it.
+   */
+  fill?: boolean
   className?: string
 }) {
   const holder = useRef<HTMLDivElement>(null)
@@ -283,7 +295,8 @@ export function AvatarStage({
     <div
       ref={holder}
       className={cn(
-        'relative grid aspect-square w-full place-items-center',
+        'relative grid w-full place-items-center',
+        fill ? 'h-full' : 'aspect-square',
         handled && !portrait && 'touch-none select-none',
         className,
       )}
