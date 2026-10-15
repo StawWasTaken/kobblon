@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import type { KobIcon } from '@/components/brand/Icon'
 import {
   faComment, faFlag, faUserPlus, faClock, faUserCheck,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
@@ -62,15 +63,17 @@ const accentOf = (colour?: string | null) =>
  * profile is not four filing cabinets, it is somebody's work with their name
  * on it.
  */
-function Heading({ icon, children, aside }: {
+function Heading({ icon, name, children, aside }: {
   icon: IconDefinition
+  /** One of ours by name, where the stand-in means something else. */
+  name?: KobIcon
   children: React.ReactNode
   aside?: React.ReactNode
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <h2 className="relative flex items-center gap-2.5 font-display text-xl font-extrabold sm:text-2xl">
-        <Glyph icon={icon} className="text-base opacity-70" />
+        <Glyph icon={icon} name={name} className="text-base opacity-70" />
         {children}
         <span
           aria-hidden="true"
@@ -799,7 +802,9 @@ export default function Profile() {
           </section>
 
           <section>
-            <Heading icon={faUsers} aside={
+            {/* Somebody's friends, so `users` - `people` is people in
+                general and communities, which is the heading below. */}
+            <Heading icon={faUsers} name="users" aside={
               <Link
                 to={`${profileLink(user)}/friends`}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"

@@ -4334,6 +4334,73 @@ export type OutfitPage = {
 }
 
 /**
+ * Whether somebody is in the Klub, at a tier or better.
+ *
+ * Asked of the server rather than read off a profile row, because the row
+ * says what was bought and this says whether it is still running - and a
+ * membership that has lapsed has to stop working the day it lapses, not
+ * the next time somebody signs in.
+ */
+export async function inTheKlub(
+  target?: string, atLeast: 'lite' | 'klub' | 'life' = 'lite',
+): Promise<boolean> {
+  return unwrap(await supabase.rpc('in_the_klub', {
+    target: target ?? null, at_least: atLeast,
+  })) as boolean
+}
+
+/** The ten faces, in the order they are offered. */
+export const FACES = [
+  'smile', 'laugh', 'happy-grin', 'winky-grin', 'heart-eyes',
+  'sunglasses', 'shocked', 'sad', 'angry', 'skull',
+] as const
+
+export type Face = (typeof FACES)[number]
+
+export type ReactionCount = { face: Face; how_many: number; mine: boolean }
+
+/**
+ * React, change your mind, or take it back.
+ *
+ * Passing the face you already have takes it off, which is what every
+ * reaction control anybody has used does. Returns the face that is now on,
+ * or null. Reacting to a World is a Klub thing and the server says so.
+ */
+export async function react(
+  what: 'post' | 'world', which: string, face: Face | null,
+): Promise<Face | null> {
+  return unwrap(await supabase.rpc('react', { what, which, face })) as Face | null
+}
+
+/** What is on one thing: the faces used, how many times, and which is mine. */
+export async function reactionsOn(
+  what: 'post' | 'world', which: string,
+): Promise<ReactionCount[]> {
+  return (unwrap(await supabase.rpc('reactions_on', { what, which })) as ReactionCount[]) ?? []
+}
+
+/**
+ * The same, for a page full of things at once.
+ *
+ * A wall of twenty posts asking one at a time is twenty round trips before
+ * anybody can read the first one.
+ */
+export async function reactionsOnMany(
+  what: 'post' | 'world', whichever: string[],
+): Promise<Record<string, ReactionCount[]>> {
+  if (!whichever.length) return {}
+  const rows = (unwrap(await supabase.rpc('reactions_on_many', {
+    what, whichever,
+  })) as (ReactionCount & { target_id: string })[]) ?? []
+
+  const by: Record<string, ReactionCount[]> = {}
+  for (const row of rows) {
+    (by[row.target_id] ??= []).push({ face: row.face, how_many: row.how_many, mine: row.mine })
+  }
+  return by
+}
+
+/**
  * A moderator taking an outfit down.
  *
  * Not the owner's `removeOutfit`, deliberately: an owner deleting their own

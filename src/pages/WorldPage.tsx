@@ -17,6 +17,8 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { NameMarks } from '@/components/brand/Verified'
 import { RatingBar } from '@/components/worlds/RatingBar'
+import { Reactions } from '@/components/social/Reactions'
+import { reactionsOn, inTheKlub } from '@/lib/api'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { ServerList } from '@/components/worlds/ServerList'
@@ -135,6 +137,18 @@ export default function WorldPage() {
 
   const world = useAsync(async () => (number ? getWorld(number) : null), [number])
   const thing = world.data
+
+  /*
+   * The faces on this World, and whether this person may add one. The
+   * membership is asked of the server rather than read off the profile,
+   * so a membership that has run out stops working the day it runs out.
+   */
+  const faces = useAsync(
+    async () => (thing ? reactionsOn('world', thing.id) : []),
+    [world.data?.id],
+  )
+  const klub = useAsync(async () => (profile ? inTheKlub() : false), [profile?.id])
+  const inKlub = klub.data ?? false
 
   const media = useAsync(async () => (thing ? worldMedia(thing.id) : []), [thing?.id])
   const genres = useAsync(worldGenres, [])
@@ -522,6 +536,28 @@ export default function WorldPage() {
                     onDislike={dislike}
                   />
                 </div>
+
+                {/*
+                  * Faces, beside the rating rather than instead of it.
+                  *
+                  * Staw: "worlds keep the dislikes & likes only, but klub
+                  * users can also click a third button to add reactions to
+                  * worlds". The bar is a rating and a rating has to be one
+                  * number; a face says something the number cannot, and it
+                  * does not move the number. The server refuses a
+                  * non-member, so this only saves somebody a round trip.
+                  */}
+                <Reactions
+                  className="mt-3"
+                  what="world"
+                  which={thing.id}
+                  counts={faces.data ?? []}
+                  canReact={!!profile && !profile.is_guest && inKlub}
+                  whyNot={!profile
+                    ? 'Sign in to react.'
+                    : 'Reacting to a World is a Kobblon Klub thing.'}
+                  onChanged={faces.reload}
+                />
               </div>
             </div>
           </div>
