@@ -538,7 +538,7 @@ export async function markNotificationsRead(userId: string) {
 
 export async function submitReport(input: {
   reporterId: string
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style' | 'avatar_item'
+  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style' | 'avatar_item' | 'outfit'
   targetId: string
   reason: string
   details: string

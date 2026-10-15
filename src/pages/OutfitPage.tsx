@@ -1,43 +1,50 @@
 /*
- * One saved outfit, on its own page.
+ * One saved outfit, on its own page - the same page an accessory gets.
  *
- * Staw: "the outfits on the catalog should be in 3d too and have their own
- * asset page like others". Everything else in the Catalog has had a page
- * since `avatar_item_page`; an outfit had a shelf card with four names on
- * it and nowhere to go. So this is the same page shape an item gets - the
- * thing itself, large and turnable, on the left; what it is, who made it
- * and what it costs on the right - with the one difference an outfit has:
- * it is made of other things, and each of them has its own page, so every
- * piece is a link rather than a line of text.
+ * Staw: "for the outfit asset pages i want them unified to the other
+ * catalog asset pages like for accessories (do the same design as for
+ * accessories but as outfits)". So this is `CatalogItem`'s shape, measure
+ * for measure: the capped five-column width, the square viewer on the left
+ * in its own bordered card, the panel on the right with the kind word over
+ * the name, the buy row, the facts table, the maker line, and the same
+ * `BuyDialog` at the end of it.
  *
- * The figure is `OutfitStage`, which is `AvatarStage` fed `outfit_look`.
+ * What an outfit has that an item does not is that it is made of other
+ * things, and each of those has a page. So the one section that is not on
+ * the item page is the list of pieces, and every line of it is a link - the
+ * thing the shelf card could never do, which printed four names that went
+ * nowhere.
+ *
+ * The viewer is `OutfitStage`, which is `AvatarStage` fed `outfit_look`.
  * Not a picture of the outfit: the outfit, on a body, from any angle.
  */
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faShirt, faStore, faCheck, faUser, faClock, faLayerGroup,
+  faShirt, faStore, faCheck, faUser, faLink, faFlag, faCircleCheck,
+  faEllipsis,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { BackLink } from '@/components/ui/BackLink'
-import { Badge } from '@/components/ui/Badge'
+import { Menu } from '@/components/ui/Menu'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { BuyButton } from '@/components/money/BuyButton'
 import { BuyDialog } from '@/components/catalog/BuyDialog'
+import { ReportDialog } from '@/components/social/ReportDialog'
 import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
-import { Studio } from '@/components/avatar/Studio'
+import { FreeCorner } from '@/components/brand/FreeBadge'
 import { OutfitStage } from '@/components/avatar/OutfitStage'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import { outfitPage, buyOutfit, wearOutfit, catalogUrl } from '@/lib/api'
-import { avatarTag, avatarNumber, avatarKindLabels } from '@/lib/kinds'
-import { formatCount, timeAgo } from '@/lib/format'
+import { avatarTag, avatarNumber, outfitTag, avatarKindLabels } from '@/lib/kinds'
+import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 export default function OutfitPage() {
@@ -45,7 +52,8 @@ export default function OutfitPage() {
   const { profile } = useAuth()
   const say = useToast()
   const [busy, setBusy] = useState(false)
-  const [asking, setAsking] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [reporting, setReporting] = useState(false)
 
   const number = avatarNumber(tag ?? '')
   const outfit = useAsync(
@@ -73,15 +81,15 @@ export default function OutfitPage() {
       say(error instanceof Error ? error.message : 'That did not go through.', 'error')
     } finally {
       setBusy(false)
-      setAsking(false)
+      setConfirming(false)
     }
   }
 
   if (outfit.loading) {
     return (
-      <Page className="space-y-4">
-        <Skeleton className="h-6 w-32" />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      <Page className="space-y-5">
+        <Skeleton className="h-6 w-40 rounded-lg" />
+        <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
           <Skeleton className="aspect-square rounded-2xl" />
           <Skeleton className="h-64 rounded-2xl" />
         </div>
@@ -92,9 +100,10 @@ export default function OutfitPage() {
   const one = outfit.data
   if (!one) {
     return (
-      <Page>
+      <Page className="space-y-5">
+        <BackLink to="/catalog">Back to the Catalog</BackLink>
         <EmptyState
-          mood="noResults"
+          mood="emptyBox"
           title="No such outfit"
           body="It may have been taken down, or it was never listed."
           action={<Button to="/catalog" icon={faStore}>The Catalog</Button>}
@@ -112,110 +121,170 @@ export default function OutfitPage() {
   const costs = one.mine ? 0 : one.costs
 
   return (
-    <Page className="space-y-4">
-      <BackLink to="/catalog?shelf=outfits">The Catalog</BackLink>
+    <Page className="space-y-5">
+      <BackLink to="/catalog?shelf=outfits">Back to the Catalog</BackLink>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        {/* ------------------------------------------------------ the look */}
-        <Card className="overflow-hidden p-0">
-          <Studio>
-            <OutfitStage outfitId={one.id} className="aspect-square w-full" />
-          </Studio>
-        </Card>
+      <div className="mx-auto grid w-full max-w-5xl items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+        {/* ----------------------------------------------------- the viewer */}
+        <div className="relative rounded-2xl border border-ink-line bg-ink-card">
+          {/* Outside the box that clips, which is where it has to be: the
+              badge sits half on and half off the corner. */}
+          {costs <= 0 && !one.mine && <FreeCorner size="page" />}
+          <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-ink-raised">
+            <OutfitStage outfitId={one.id} className="h-full w-full" />
+          </div>
+        </div>
 
-        {/* ------------------------------------------------- what it is */}
+        {/* ------------------------------------------------------ the panel */}
         <div className="space-y-4">
-          <Card className="space-y-3">
-            <div>
-              <h1 className="font-display text-xl font-bold">{one.name}</h1>
-              <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted">
-                <FontAwesomeIcon icon={faUser} className="text-[11px]" />
-                <Link
-                  to={`/u/${one.owner_username}`}
-                  className="font-bold text-ink-strong hover:text-brand-bright"
-                >
-                  {one.owner_display_name}
-                </Link>
-                <NameMarks
-                  person={{
-                    is_verified: one.owner_is_verified,
-                    has_staff_badge: one.owner_is_staff,
-                  }}
-                  className="text-[10px]"
+          <Card className="space-y-4 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                  Outfit
+                </p>
+                <h1 className="mt-1 font-display text-2xl font-extrabold leading-tight">
+                  {one.name}
+                </h1>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {one.mine && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-space/15 px-2.5 py-1 text-[11px] font-bold text-space-bright">
+                    <FontAwesomeIcon icon={faCircleCheck} />
+                    Yours
+                  </span>
+                )}
+
+                <Menu
+                  label="More"
+                  align="right"
+                  trigger={
+                    <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+                      <FontAwesomeIcon icon={faEllipsis} />
+                    </span>
+                  }
+                  items={[
+                    ...(one.mine ? [{
+                      label: 'Change it on my avatar',
+                      icon: faUser,
+                      to: '/avatar',
+                    }] : []),
+                    {
+                      label: 'Copy link',
+                      icon: faLink,
+                      onSelect: () => {
+                        void navigator.clipboard?.writeText(window.location.href)
+                        say('Link copied.', 'success')
+                      },
+                    },
+                    { label: 'See who made it', icon: faUser, to: `/u/${one.owner_username}` },
+                    { label: 'Report it', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
+                  ]}
                 />
-              </p>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              <Badge tone="neutral">
-                <FontAwesomeIcon icon={faLayerGroup} className="mr-1 text-[10px]" />
-                {one.how_many} {one.how_many === 1 ? 'piece' : 'pieces'}
-              </Badge>
-              <Badge tone="neutral">
-                <FontAwesomeIcon icon={faClock} className="mr-1 text-[10px]" />
-                {timeAgo(one.created_at)}
-              </Badge>
-              <Badge tone="neutral">{avatarTagFor(one.content_id)}</Badge>
+            <Link
+              to={`/u/${one.owner_username}`}
+              className="flex items-center gap-2 text-sm text-white/75 transition-colors hover:text-white"
+            >
+              <span className="text-muted">By</span>
+              <span className="truncate font-semibold text-white/90">
+                {one.owner_display_name}
+              </span>
+              <NameMarks
+                person={{
+                  is_verified: one.owner_is_verified,
+                  is_admin: one.owner_is_staff,
+                }}
+                className="text-[11px]"
+              />
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <BuyButton
+                className="flex-1"
+                price={costs}
+                owned={one.mine}
+                ownedLabel="Wear it"
+                freeLabel="Take it"
+                loading={busy}
+                disabled={!profile || profile.is_guest}
+                onClick={() => (one.mine || costs <= 0
+                  ? void take()
+                  : setConfirming(true))}
+              />
             </div>
 
             {one.owned_already > 0 && !one.mine && (
-              <p className="text-xs text-muted">
-                You already have {one.owned_already} of {one.how_many}, so you
+              <p className="text-xs leading-relaxed text-muted">
+                You already have {one.owned_already} of the {one.how_many}, so you
                 are only charged for the rest.
               </p>
             )}
 
-            {one.mine ? (
-              <Button
-                className="w-full"
-                variant="yes"
-                icon={faShirt}
-                loading={busy}
-                onClick={() => void take()}
-              >
-                Wear it
-              </Button>
-            ) : (
-              <BuyButton
-                className="w-full"
-                price={costs}
-                freeLabel="Wear it"
-                loading={busy}
-                disabled={!profile}
-                onClick={() => (costs > 0 ? setAsking(true) : void take())}
+            {/*
+              * The facts, as a table - the same one the item page has, with
+              * the two rows an outfit answers differently. An outfit's
+              * "Worn" is everywhere at once, so it says how many pieces
+              * instead; and its price is the sum of what is left to buy.
+              */}
+            <dl className="divide-y divide-ink-line border-t border-ink-line text-sm">
+              <Fact label="ID" value={outfitTag(one.content_id)} />
+              <Fact label="Type" value="Outfit" />
+              <Fact
+                label="Pieces"
+                value={`${one.how_many} ${one.how_many === 1 ? 'thing' : 'things'}`}
               />
-            )}
-
-            {!profile && (
-              <p className="text-center text-xs text-muted">
-                <Link to="/login" className="font-bold text-ink-strong hover:text-brand-bright">
-                  Sign in
-                </Link>{' '}
-                to put this on.
-              </p>
-            )}
+              <Fact
+                label="Made"
+                value={new Date(one.created_at).toLocaleDateString(undefined, {
+                  day: 'numeric', month: 'short', year: 'numeric',
+                })}
+              />
+              <Fact
+                label="Price"
+                value={costs > 0
+                  ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      {/* The listed price stays, struck through, when
+                          somebody already owns part of it: a smaller number
+                          with no explanation reads like a mistake. */}
+                      {one.owned_already > 0 && one.price > costs && (
+                        <span className="text-muted line-through">
+                          <CurrencyMark />{formatCount(one.price)}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-0.5">
+                        <CurrencyMark />{formatCount(costs)}
+                      </span>
+                    </span>
+                  )
+                  : 'Free'}
+              />
+            </dl>
           </Card>
 
           {/*
             * Every piece, and every one of them a link.
             *
-            * This is the thing the shelf card could not do: it listed four
-            * names and none of them went anywhere, so the only way to find
-            * out what "Traffic Wizard" actually was involved searching the
-            * Catalog for it by hand.
+            * This is the one section the item page does not have, and the
+            * thing the shelf card could not do: it listed four names and
+            * none of them went anywhere, so the only way to find out what
+            * "Traffic Wizard" actually was involved searching for it.
             */}
-          <Card className="space-y-2 p-3">
+          <Card className="space-y-3 p-5">
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
               What is in it
             </p>
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
               {one.pieces.map((piece) => (
                 <li key={piece.item_id}>
                   <Link
                     to={`/catalog/${avatarTag(piece.kind, piece.content_id)}`}
-                    className="flex items-center gap-2.5 rounded-xl border border-ink-line bg-ink-raised p-2 transition-colors hover:border-brand/60"
+                    className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised p-2.5 transition-colors hover:border-brand/60"
                   >
-                    <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
                       {pictureOf(piece) ? (
                         <img
                           src={pictureOf(piece)!}
@@ -235,12 +304,14 @@ export default function OutfitPage() {
                     </span>
                     <span className={cn(
                       'shrink-0 text-xs font-bold',
-                      piece.owned ? 'text-yes' : 'text-ink-strong',
+                      piece.owned ? 'text-yes' : 'text-white/85',
                     )}>
                       {piece.owned ? (
                         <FontAwesomeIcon icon={faCheck} />
                       ) : piece.price > 0 ? (
-                        <><CurrencyMark className="mr-0.5 h-[0.9em] w-[0.9em]" />{formatCount(piece.price)}</>
+                        <span className="inline-flex items-center gap-0.5">
+                          <CurrencyMark />{formatCount(piece.price)}
+                        </span>
                       ) : 'Free'}
                     </span>
                   </Link>
@@ -252,15 +323,14 @@ export default function OutfitPage() {
       </div>
 
       {/*
-        * The same confirm card the rest of the Catalog uses. An outfit is
-        * the most expensive single press on the site - it buys several
-        * things at once - so it is the last place that should have its own
-        * idea of what buying looks like.
+        * Asked before the Brix move, and only when there are Brix to move:
+        * confirming a free thing is a dialog that teaches somebody to press
+        * through dialogs.
         */}
       <BuyDialog
-        open={asking}
-        onClose={() => setAsking(false)}
-        onBuy={() => void take()}
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onBuy={async () => { setConfirming(false); await take() }}
         busy={busy}
         name={one.name}
         kind="outfit"
@@ -268,14 +338,31 @@ export default function OutfitPage() {
         balance={profile?.pixels ?? 0}
         note={one.owned_already > 0
           ? `You already have ${one.owned_already} of the ${one.how_many}, so only the rest is charged.`
-          : undefined}
+          : `It buys all ${one.how_many} pieces at once, or none of them.`}
+      />
+
+      <ReportDialog
+        open={reporting}
+        onClose={() => setReporting(false)}
+        targetType="outfit"
+        targetId={one.id}
+        targetName={one.name}
       />
     </Page>
   )
 }
 
-/** The number a person reads off the page, with the outfit code in front. */
-const avatarTagFor = (id: number) => `OUTF-${id}`
+/** One row of the facts table. The item page's, word for word. */
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-2">
+      <dt className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted">
+        {label}
+      </dt>
+      <dd className="min-w-0 truncate text-right font-semibold text-white/85">{value}</dd>
+    </div>
+  )
+}
 
 /** A piece's picture: its drawn card if it has one, its own image if not. */
 function pictureOf(piece: {

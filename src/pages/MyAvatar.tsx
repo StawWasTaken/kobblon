@@ -58,6 +58,7 @@ import type { AvatarItem, AvatarPiece } from '@/types/db'
 import type { K6Part } from '@/engine'
 import { forgetHeadshot } from '@/lib/headshots'
 import { Outfits } from '@/components/avatar/Outfits'
+import { avatarKindLabels } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
 import { Studio } from '@/components/avatar/Studio'
@@ -392,273 +393,340 @@ export default function MyAvatar() {
         }
       />
 
-      <div className="flex gap-4">
+      {/*
+        * Three columns and the body in the middle of them.
+        *
+        * Staw: "make it so the avatar thing is centered in the center but
+        * slightly on the left, and make everything a bit wider". The rail
+        * is as wide as it needs to be, the wardrobe is a fixed panel, and
+        * the stage takes every pixel left over - which puts the figure at
+        * about forty per cent across the page rather than pinned to the
+        * left edge with a dead gutter on the right, which is what it was.
+        */}
+      <div className="grid items-start gap-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(22rem,28rem)]">
         {/* ------------------------------------------------------- the rail */}
         {/*
-          * Down the side rather than across the top, which is the one
-          * change that stops this reading as somebody else's page. It is
-          * also simply better: five drawers across the top of a grid push
-          * the grid down, and five down the side cost nothing.
+          * Down the side rather than across the top. Five tabs over a grid
+          * push the grid down; five down the side cost nothing, and it is
+          * the one change that stops this reading as somebody else's page.
           */}
         <nav
           aria-label="What to change"
-          className="flex shrink-0 flex-col gap-1.5 sm:w-20"
+          className="flex shrink-0 gap-2 overflow-x-auto pb-1 lg:w-[5.5rem] lg:flex-col lg:overflow-visible lg:pb-0"
         >
           {DRAWERS.map((one) => (
-            <Tooltip key={one.id} label={one.label} side="right">
-              <button
-                type="button"
-                onClick={() => { setDrawer(one.id); setTerm('') }}
-                aria-current={drawer === one.id}
-                className={cn(
-                  'relative grid h-14 w-14 place-items-center rounded-2xl border px-1 text-center transition-colors sm:h-20 sm:w-20',
-                  drawer === one.id
-                    ? 'border-brand bg-brand/15 text-white'
-                    : 'border-ink-line bg-ink-card text-white/45 hover:text-white',
-                )}
-              >
-                <FontAwesomeIcon icon={one.icon} className="text-lg" />
-                <span className="mt-1 hidden text-[9px] font-extrabold uppercase leading-tight tracking-wide sm:block">
-                  {one.label}
+            <button
+              key={one.id}
+              type="button"
+              onClick={() => { setDrawer(one.id); setTerm('') }}
+              aria-current={drawer === one.id}
+              className={cn(
+                'group relative grid h-[4.5rem] w-[4.5rem] shrink-0 place-items-center rounded-2xl border px-2 text-center transition-all lg:h-[5.5rem] lg:w-[5.5rem]',
+                drawer === one.id
+                  ? 'border-brand bg-brand/15 text-white shadow-[0_0_0_1px_var(--brand)]'
+                  : 'border-ink-line bg-ink-card text-white/40 hover:border-brand/40 hover:text-white',
+              )}
+            >
+              <FontAwesomeIcon icon={one.icon} className="text-xl" />
+              <span className="mt-1.5 font-display text-[10px] font-extrabold uppercase leading-none tracking-wide">
+                {one.label}
+              </span>
+              {!!counts[one.id] && (
+                <span className={cn(
+                  'absolute right-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-extrabold leading-none transition-colors',
+                  drawer === one.id ? 'bg-brand text-white' : 'bg-ink-hover text-white/50',
+                )}>
+                  {counts[one.id]}
                 </span>
-                {!!counts[one.id] && (
-                  <span className="absolute right-1 top-1 text-[9px] font-bold text-white/35">
-                    {counts[one.id]}
-                  </span>
-                )}
-              </button>
-            </Tooltip>
+              )}
+            </button>
           ))}
         </nav>
 
-        {/* ------------------------------------------------------ the body */}
-        <div className="grid min-w-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-          <div className="mx-auto w-full max-w-[32rem] space-y-3 lg:sticky lg:top-20 lg:self-start">
-            <Card className="overflow-hidden p-0">
-              <div className="relative">
-                {/*
-                  * The stage keeps its own square, and the column caps how
-                  * wide it may get.
-                  *
-                  * `AvatarStage` is `aspect-square w-full` and frames the
-                  * body to fit the box it is given. Wrapping it in a taller
-                  * box and telling it `h-full` made it square at the
-                  * column's full width - a 1,180 pixel avatar seen through
-                  * a letterbox, with the head and the feet outside it. The
-                  * fix is to stop arguing with it.
-                  */}
-                <Studio>
-                  {worn.loading
-                    ? <Skeleton className="aspect-square w-full" />
-                    : <AvatarStage look={dressed} handled />}
-                </Studio>
-
-                {/*
-                  * Over the stage rather than under it, because they are
-                  * things you do to the body and not another row of page.
-                  */}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-ink/80 to-transparent p-3">
-                  <StageButton
-                    label="Take everything off"
-                    icon={faEraser}
-                    busy={busy === 'undress'}
-                    disabled={!wearing.length}
-                    onClick={undress}
-                  />
-                  <StageButton
-                    label="Shuffle what you own"
-                    icon={faShuffle}
-                    busy={busy === 'shuffle'}
-                    disabled={!owned.data?.length}
-                    onClick={shuffle}
-                  />
-                  <StageButton
-                    label="Keep this as an outfit"
-                    icon={faBookmark}
-                    disabled={!wearing.length}
-                    onClick={() => setKeeping(true)}
-                  />
-                  <StageButton
-                    label="Take my picture again"
-                    icon={faCamera}
-                    busy={busy === 'portrait'}
-                    onClick={() => void after('portrait', async () => {})}
-                  />
-                </div>
-              </div>
-
+        {/* ------------------------------------------------------- the body */}
+        <div className="min-w-0 space-y-4 lg:sticky lg:top-20">
+          {/*
+            * Things sitting over the stage rather than stacked under it.
+            *
+            * Staw: "i also want stuff that can be a slightly over the avatar
+            * area - so its aesthetic yk". A card with a hard rule across it
+            * and a band of thumbnails underneath is a form. The same two
+            * pieces floating over the lower edge of the picture is a place -
+            * and it is the difference he means by making it look like a
+            * game rather than a settings page.
+            *
+            * So the card does **not** clip: `overflow-hidden` here would saw
+            * off the half of the Wearing panel that hangs below it, which is
+            * the half that makes it read as floating. The padding at the
+            * bottom is what the panel hangs into.
+            */}
+          <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-16">
+            <div className="relative overflow-hidden rounded-2xl">
               {/*
-                * What you have on, as pictures with a cross on each.
+                * A wash of Kobblon blue behind the figure.
                 *
-                * It was a column of names. This is the one place on the page
-                * somebody had to read rather than look, and it was the place
-                * where looking is the whole point.
+                * The studio backdrop is a photographer's sweep and it is
+                * right, but on its own this page was a grey box with a
+                * person in it. One soft light is the difference between a
+                * form and a place somebody stands.
                 */}
-              <div className="border-t border-ink-line p-3">
-                <p className="mb-2 font-display text-[10px] uppercase tracking-wider text-muted">
-                  Wearing{wearing.length ? ` · ${wearing.length}` : ''}
-                </p>
-                {!wearing.length ? (
-                  <p className="text-xs text-muted">
-                    Nothing yet. Press something on the right to put it on.
-                  </p>
-                ) : (
-                  <ul className="flex flex-wrap gap-2">
-                    {/* Keyed by the item, because two hats are two rows and a
-                        key of "hat" would make them one. The cross takes that
-                        one off rather than emptying the socket. */}
-                    {wearing.map((piece) => (
-                      <li key={piece.item_id} className="relative">
-                        <Tooltip label={piece.item_name ?? 'Something'} side="top">
-                          <button
-                            type="button"
-                            aria-label={`Take off ${piece.item_name ?? 'this'}`}
-                            disabled={busy === `off:${piece.item_id}`}
-                            onClick={() => void after(
-                              `off:${piece.item_id}`,
-                              () => takeOffItem(piece.item_id!),
-                            )}
-                            className="group grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media transition-colors hover:border-danger"
-                          >
-                            {cardFor(piece) ? (
-                              <img
-                                src={cardFor(piece)!}
-                                alt=""
-                                draggable={false}
-                                className="h-full w-full object-contain"
-                              />
-                            ) : (
-                              <FontAwesomeIcon icon={faHatCowboy} className="text-white/30" />
-                            )}
-                            <span className="absolute inset-0 grid place-items-center bg-ink/70 opacity-0 transition-opacity group-hover:opacity-100">
-                              <FontAwesomeIcon icon={faXmark} className="text-danger" />
-                            </span>
-                          </button>
-                        </Tooltip>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </Card>
-          </div>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(70%_55%_at_50%_40%,rgba(58,80,255,0.18),transparent_70%)]"
+              />
+              {/*
+                * A frame wider than it is tall, with the square stage
+                * centred in it and a little shorter than the frame.
+                *
+                * `AvatarStage` is `aspect-square w-full` and it is right to
+                * be: it frames a standing figure. The holder being eighty
+                * per cent of the frame's height is what keeps the feet clear
+                * of the panel hanging over the bottom edge.
+                */}
+              <Studio className="grid aspect-[5/4] w-full place-items-center">
+                <div className="aspect-square h-[80%]">
+                  {worn.loading
+                    ? <Skeleton className="h-full w-full" />
+                    : <AvatarStage look={dressed} handled className="h-full" />}
+                </div>
+              </Studio>
 
-          {/* ------------------------------------------------- the wardrobe */}
-          <div className="min-w-0 space-y-3">
-            <div className="flex items-center gap-2">
-              <h2 className="font-display text-sm font-bold">{open.label}</h2>
-              {drawer !== 'body' && drawer !== 'outfits' && (
-                <Input
-                  value={term}
-                  onChange={(e) => setTerm(e.target.value)}
-                  placeholder="Search what you own"
-                  icon={faMagnifyingGlass}
-                  className="ml-auto w-44"
-                />
-              )}
+              {/* Who is standing there, over the backdrop's top corner. */}
+              <div className="pointer-events-none absolute left-4 top-4 z-[2] flex items-center gap-2 rounded-xl border border-ink-line bg-ink-card/70 px-3 py-1.5 backdrop-blur">
+                <Icon name="avatar" tone="currentColor" className="h-3.5 w-3.5 text-brand-bright" />
+                <span className="font-display text-xs font-extrabold">
+                  {profile.display_name}
+                </span>
+              </div>
             </div>
 
-            {drawer === 'outfits' ? (
-              /*
-               * Wearing one reloads what is on, draws the portrait again and
-               * leaves the person looking at themselves in it - the same
-               * `after` every other change on this page goes through, so an
-               * outfit cannot end up on the body without the picture catching
-               * up.
-               */
-              <Outfits onWear={() => void after('outfit', async () => {})} />
-            ) : drawer === 'body' ? (
-              <Card className="space-y-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="mx-auto w-36 shrink-0 rounded-xl border border-ink-line bg-ink-raised p-3">
-                    <BodyPicker
-                      colours={look.body ?? DEFAULT_BODY}
-                      chosen={parts}
-                      onChoose={(one) => setParts((had) => (
-                        had.includes(one)
-                          ? had.length > 1 ? had.filter((x) => x !== one) : had
-                          : [...had, one]
-                      ))}
-                    />
-                  </div>
-
-                  <div className="min-w-0 space-y-2">
-                    <p className="text-sm font-bold">
-                      {parts.length === 1
-                        ? PART_LABELS[parts[0]]
-                        : `${parts.length} parts`}
-                    </p>
-                    <p className="text-xs leading-relaxed text-muted">
-                      Press a part to add it, press it again to drop it, then pick
-                      a colour. Everything chosen changes at once.
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Quick onPick={() => setParts([...K6_PARTS])}>All of it</Quick>
-                      <Quick onPick={() => setParts(['LeftArm', 'RightArm'])}>Both arms</Quick>
-                      <Quick onPick={() => setParts(['LeftLeg', 'RightLeg'])}>Both legs</Quick>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-                    Skin
-                  </p>
-                  <Swatches
-                    colours={SKIN}
-                    current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
-                    busy={busy === 'paint'}
-                    onPick={paint}
-                  />
-                  <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-                    Everything else
-                  </p>
-                  <Swatches
-                    colours={CLOTH}
-                    current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
-                    busy={busy === 'paint'}
-                    onPick={paint}
-                  />
-                </div>
-              </Card>
-            ) : owned.loading ? (
-              <div className="grid grid-cols-3 gap-2.5">
-                {Array.from({ length: 9 }, (_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-xl" />
-                ))}
+            {/*
+              * The four, as one floating pill, over the picture and clear
+              * of the panel below it.
+              */}
+            {/*
+              * Up the right-hand side rather than across the bottom.
+              *
+              * Across the bottom they fought the Wearing panel for the same
+              * strip of picture, and a control that overlaps another control
+              * is a control somebody presses by accident. Up the side they
+              * are clear of it, and they sit where a game puts its tools.
+              */}
+            <div className="absolute right-4 top-4 z-[3]">
+              <div className="flex flex-col items-center gap-1 rounded-2xl border border-ink-line bg-ink-card/85 p-1.5 shadow-pop backdrop-blur">
+                <StageButton
+                  label="Take everything off"
+                  icon={faEraser}
+                  busy={busy === 'undress'}
+                  disabled={!wearing.length}
+                  onClick={undress}
+                />
+                <StageButton
+                  label="Shuffle what you own"
+                  icon={faShuffle}
+                  busy={busy === 'shuffle'}
+                  disabled={!owned.data?.length}
+                  onClick={shuffle}
+                />
+                <StageButton
+                  label="Keep this as an outfit"
+                  icon={faBookmark}
+                  disabled={!wearing.length}
+                  onClick={() => setKeeping(true)}
+                />
+                <StageButton
+                  label="Take my picture again"
+                  icon={faCamera}
+                  busy={busy === 'portrait'}
+                  onClick={() => void after('portrait', async () => {})}
+                />
               </div>
-            ) : !shelf.length ? (
-              term.trim() ? (
-                <p className="py-8 text-center text-sm text-muted">
-                  Nothing here called that.
+            </div>
+
+            {/*
+              * What you have on, as pictures with a cross on each, floating
+              * half over the picture and half below it.
+              *
+              * It was a column of names - the one place on this page
+              * somebody had to read rather than look, and the place where
+              * looking is the whole point.
+              */}
+            <div className="absolute bottom-4 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
+              <div className="flex items-center gap-2">
+                <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+                  Wearing
+                </p>
+                {!!wearing.length && (
+                  <span className="rounded-full bg-ink-hover px-1.5 py-0.5 text-[9px] font-extrabold leading-none text-white/50">
+                    {wearing.length}
+                  </span>
+                )}
+              </div>
+
+              {!wearing.length ? (
+                <p className="mt-1.5 text-xs text-muted">
+                  Nothing yet. Press something on the right to put it on.
                 </p>
               ) : (
-                <EmptyState
-                  mood="emptyBox"
-                  title="Nothing here yet"
-                  body="Everything you take from the Catalog turns up in this drawer."
-                  action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
-                />
-              )
-            ) : (
-              <div className="grid grid-cols-3 gap-2.5">
-                {shelf.map((item) => (
-                  <WornTile
-                    key={item.id}
-                    item={item}
-                    on={onNow.has(item.id)}
-                    busy={busy === `wear:${item.id}`}
-                    onToggle={() => void after(
-                      `wear:${item.id}`,
-                      () => (onNow.has(item.id)
-                        ? takeOffItem(item.id)
-                        : wearAvatarItem(item.id)),
-                    )}
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {/* Keyed by the item, because two hats are two rows and a
+                      key of "hat" would make them one. The cross takes that
+                      one off rather than emptying the socket. */}
+                  {wearing.map((piece) => (
+                    <li key={piece.item_id}>
+                      <Tooltip label={piece.item_name ?? 'Something'} side="top">
+                        <button
+                          type="button"
+                          aria-label={`Take off ${piece.item_name ?? 'this'}`}
+                          disabled={busy === `off:${piece.item_id}`}
+                          onClick={() => void after(
+                            `off:${piece.item_id}`,
+                            () => takeOffItem(piece.item_id!),
+                          )}
+                          className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media p-1 transition-colors hover:border-danger"
+                        >
+                          {cardFor(piece) ? (
+                            <img
+                              src={cardFor(piece)!}
+                              alt=""
+                              draggable={false}
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <FontAwesomeIcon icon={faHatCowboy} className="text-white/30" />
+                          )}
+                          <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">
+                            <FontAwesomeIcon icon={faXmark} className="text-danger" />
+                          </span>
+                        </button>
+                      </Tooltip>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* --------------------------------------------------- the wardrobe */}
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-display text-base font-extrabold">{open.label}</h2>
+            {drawer !== 'body' && drawer !== 'outfits' && (
+              <>
+                <span className="text-xs text-muted">{shelf.length}</span>
+                <div className="ml-auto w-full sm:w-44">
+                  <Input
+                    value={term}
+                    onChange={(e) => setTerm(e.target.value)}
+                    placeholder="Search"
+                    icon={faMagnifyingGlass}
                   />
-                ))}
-              </div>
+                </div>
+              </>
             )}
           </div>
+
+          {drawer === 'outfits' ? (
+            /*
+             * Wearing one reloads what is on, draws the portrait again and
+             * leaves the person looking at themselves in it - the same
+             * `after` every other change on this page goes through, so an
+             * outfit cannot end up on the body without the picture catching
+             * up.
+             */
+            <Outfits onWear={() => void after('outfit', async () => {})} />
+          ) : drawer === 'body' ? (
+            <Card className="space-y-5 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="mx-auto w-32 shrink-0 rounded-2xl border border-ink-line bg-ink-raised p-3">
+                  <BodyPicker
+                    colours={look.body ?? DEFAULT_BODY}
+                    chosen={parts}
+                    onChoose={(one) => setParts((had) => (
+                      had.includes(one)
+                        ? had.length > 1 ? had.filter((x) => x !== one) : had
+                        : [...had, one]
+                    ))}
+                  />
+                </div>
+
+                <div className="min-w-0 space-y-2.5">
+                  <p className="text-sm font-bold">
+                    {parts.length === 1
+                      ? PART_LABELS[parts[0]]
+                      : `${parts.length} parts`}
+                  </p>
+                  <p className="text-xs leading-relaxed text-muted">
+                    Press a part to add it, press it again to drop it, then pick
+                    a colour. Everything chosen changes at once.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Quick onPick={() => setParts([...K6_PARTS])}>All of it</Quick>
+                    <Quick onPick={() => setParts(['LeftArm', 'RightArm'])}>Both arms</Quick>
+                    <Quick onPick={() => setParts(['LeftLeg', 'RightLeg'])}>Both legs</Quick>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+                  Skin
+                </p>
+                <Swatches
+                  colours={SKIN}
+                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+                  busy={busy === 'paint'}
+                  onPick={paint}
+                />
+                <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+                  Everything else
+                </p>
+                <Swatches
+                  colours={CLOTH}
+                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+                  busy={busy === 'paint'}
+                  onPick={paint}
+                />
+              </div>
+            </Card>
+          ) : owned.loading ? (
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({ length: 9 }, (_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
+              ))}
+            </div>
+          ) : !shelf.length ? (
+            term.trim() ? (
+              <p className="py-10 text-center text-sm text-muted">
+                Nothing here called that.
+              </p>
+            ) : (
+              <EmptyState
+                mood="emptyBox"
+                title="Nothing here yet"
+                body="Everything you take from the Catalog turns up in this drawer."
+                action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}
+              />
+            )
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {shelf.map((item) => (
+                <WornTile
+                  key={item.id}
+                  item={item}
+                  on={onNow.has(item.id)}
+                  busy={busy === `wear:${item.id}`}
+                  onToggle={() => void after(
+                    `wear:${item.id}`,
+                    () => (onNow.has(item.id)
+                      ? takeOffItem(item.id)
+                      : wearAvatarItem(item.id)),
+                  )}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -779,29 +847,45 @@ function WornTile({ item, on, busy, onToggle }: {
       type="button"
       onClick={onToggle}
       disabled={busy}
+      title={item.name}
       className={cn(
-        'group overflow-hidden rounded-xl border bg-ink-card text-left transition-colors',
+        'group flex flex-col overflow-hidden rounded-2xl border bg-ink-card text-left transition-colors',
         on ? 'border-brand' : 'border-ink-line hover:border-brand/60',
       )}
     >
-      <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
-        {picture ? (
-          <img src={picture} alt="" draggable={false} className="h-full w-full object-contain" />
-        ) : (
-          <FontAwesomeIcon icon={faHatCowboy} className="text-2xl text-white/30" />
-        )}
-        {busy && (
-          <span className="absolute inset-0 grid place-items-center bg-ink/60">
-            <FontAwesomeIcon icon={faCircleNotch} className="animate-spin text-white/70" />
-          </span>
-        )}
+      {/*
+        * Inset rather than bleeding to the edge.
+        *
+        * Staw: "i hate it when your text is ugly and theres no spacing
+        * between the cards edges & the text". The picture had no inset and
+        * the name sat two pixels off the corner, which is what made a grid
+        * of these read as cheap. The padding is the whole fix.
+        */}
+      <span className="relative block p-2">
+        <span className="relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-media">
+          {picture ? (
+            <img src={picture} alt="" draggable={false} className="h-full w-full object-contain" />
+          ) : (
+            <FontAwesomeIcon icon={faHatCowboy} className="text-2xl text-white/25" />
+          )}
+          {busy && (
+            <span className="absolute inset-0 grid place-items-center bg-ink/60">
+              <FontAwesomeIcon icon={faCircleNotch} className="animate-spin text-white/70" />
+            </span>
+          )}
+        </span>
         {on && !busy && (
-          <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-md bg-brand text-[11px] text-white">
+          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 place-items-center rounded-lg bg-brand text-white shadow-pop">
             <Icon name="checkmark" tone="currentColor" className="h-3 w-3" />
           </span>
         )}
-      </div>
-      <p className="truncate p-2 text-[11px] font-bold">{item.name}</p>
+      </span>
+      <span className="block px-3 pb-3 pt-0.5">
+        <span className="block truncate text-xs font-bold leading-snug">{item.name}</span>
+        <span className="mt-0.5 block text-[10px] text-muted">
+          {avatarKindLabels[item.kind] ?? item.kind}
+        </span>
+      </span>
     </button>
   )
 }
