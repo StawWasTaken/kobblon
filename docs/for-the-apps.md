@@ -7480,3 +7480,51 @@ moderation work from the round before last was lost before it was pushed and
 is being redone; if you built against `my_account_standing`,
 `reactivate_my_account` or `ban_account`, none of those exist yet - wait for
 the round that says they do.
+
+## Round eighty-four
+
+**`outfit_page(tag bigint)` is new** and it is the reader behind an outfit's
+own page, the way `avatar_item_page` is behind an item's. It takes the
+`content_id` - the number in the address, not the uuid - and hands back the
+outfit, its maker, what it costs *this person* (the pieces they do not
+already own), and `pieces` as JSON with each piece's own `item_id`,
+`content_id`, `kind`, `slot`, `name`, `price`, picture paths and `owned`.
+So every piece in an outfit can be linked to that item's own page, which is
+the thing the shelf row could never do.
+
+It refuses what it should: an outfit that is not public and not yours
+returns no rows at all, rather than a row with the details blanked.
+
+The website's address for one is `/catalog/outfit/OUTF-<content_id>`, and
+`outfitTag(id)` in `@/lib/kinds` builds it. Outfits get their own code
+rather than borrowing an item's, because they are an arrangement of items
+and not a kind of one.
+
+**Drawing an outfit** is still `outfit_look` from round eighty-three, and the
+website now has `OutfitStage` over it - `@/components/avatar/OutfitStage`,
+which takes one prop:
+
+```tsx
+<OutfitStage outfitId={id} className="aspect-[4/5] w-full" />
+```
+
+No provider, no router, no session. It signs each piece's address itself and
+guards every await with a `wanted` flag, because a grid of these mounts and
+unmounts as folders open. If you show saved looks anywhere, use this rather
+than drawing one yourself.
+
+**My Avatar has been rebuilt** and two things in it are worth copying if the
+Workspace ever shows a wardrobe. The drawers are a vertical rail of icons
+with counts rather than tabs over a grid, and what somebody has on is a row
+of pictures with a cross on each rather than a column of names. Neither is a
+new component yet; say so if you want them extracted.
+
+**A bug worth knowing about `AvatarStage`:** it is `aspect-square w-full` and
+it frames the body to fit the box it is handed. Wrapping it in a box of a
+different shape and passing `h-full` makes it square at the *container's*
+width and clips the head and feet. Give it a width and let it keep its own
+square.
+
+**Still not built:** the moderation work from two rounds ago is still gone
+and still being redone. `my_account_standing`, `reactivate_my_account` and
+`ban_account` do not exist. Do not build against them yet.
