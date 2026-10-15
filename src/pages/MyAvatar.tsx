@@ -61,6 +61,7 @@ import type { AvatarItem, AvatarPiece } from '@/types/db'
 import type { K6Part } from '@/engine'
 import { forgetHeadshot } from '@/lib/headshots'
 import { Outfits } from '@/components/avatar/Outfits'
+import { Recommended } from '@/components/catalog/Recommended'
 import { avatarKindLabels } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
@@ -509,10 +510,24 @@ export default function MyAvatar() {
                   * rather than instead of it, so turning 3D back on does
                   * not cost a second load of the body.
                   */}
+                {/*
+                  * The flat one is drawn into a square and the stage is
+                  * 4:3, so `object-contain` on the frame fitted the picture
+                  * to the frame's *height* - which made the flat body
+                  * noticeably bigger than the live one and shifted it up.
+                  * Pressing 2D should change how the body is drawn and
+                  * nothing else about where it is. Contained in a square of
+                  * the frame's height, it is the same body in the same
+                  * place.
+                  */}
                 {mode === 'picture' && (
-                  <div className="absolute inset-0 grid place-items-center p-6">
+                  <div className="absolute inset-0 grid place-items-center">
                     {flat
-                      ? <img src={flat} alt="" className="h-full w-full object-contain" />
+                      ? (
+                        <div className="aspect-square h-full">
+                          <img src={flat} alt="" className="h-full w-full object-contain" />
+                        </div>
+                      )
                       : <p className="text-sm text-muted">Drawing…</p>}
                   </div>
                 )}
@@ -630,6 +645,15 @@ export default function MyAvatar() {
               )}
             </div>
           </div>
+
+          {/*
+            * Things to put on, under the body they would go on.
+            *
+            * Staw: "under that i want the catalog recommended items". The
+            * same component the Catalog uses, so what is suggested here and
+            * what is suggested there cannot disagree.
+            */}
+          <Recommended />
         </div>
 
         {/* --------------------------------------------------- the wardrobe */}
