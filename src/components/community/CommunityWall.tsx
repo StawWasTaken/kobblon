@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faThumbtack, faThumbsUp, faTrash, faEllipsis } from '@fortawesome/free-solid-svg-icons'
+import { faThumbtack, faTrash, faEllipsis } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
@@ -11,13 +11,13 @@ import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
+import { Reactions } from '@/components/social/Reactions'
+import { reactionsOnMany, type ReactionCount } from '@/lib/api'
 import {
-  likePost, listCommunityPosts, postToCommunity, removeCommunityPost, setPostPinned,
+  listCommunityPosts, postToCommunity, removeCommunityPost, setPostPinned,
 } from '@/lib/api'
 import type { CommunityOverview, CommunityPost } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
-import { formatCount } from '@/lib/format'
-import { cn } from '@/lib/cn'
 import { profileLink } from '@/lib/links'
 import { Verified } from '@/components/brand/Verified'
 
@@ -49,14 +49,19 @@ export function CommunityWall({
 
   const posts = useAsync(() => listCommunityPosts(communityId), [communityId])
 
-  const like = async (post: CommunityPost) => {
-    try {
-      await likePost(post.id, !post.i_like)
-      posts.reload()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'That did not work.', 'error')
-    }
-  }
+  /*
+   * Every post's faces in one call rather than one call per post. A wall
+   * of twenty asking separately is twenty round trips before anybody can
+   * read the first one.
+   */
+  const ids = (posts.data ?? []).map((one) => String(one.id)).join(',')
+  const reactions = useAsync(
+    async () => (ids ? reactionsOnMany('post', ids.split(',')) : {} as Record<string, ReactionCount[]>),
+    [ids],
+  )
+  const faces = reactions.data ?? {}
+  const reloadFaces = reactions.reload
+
 
   const pin = async (post: CommunityPost) => {
     try {
@@ -168,20 +173,24 @@ export function CommunityWall({
                   {post.body}
                 </p>
 
-                <div className="mt-2 flex items-center gap-3">
-                  <button
-                    onClick={() => like(post)}
-                    aria-pressed={post.i_like}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold transition-colors',
-                      post.i_like
-                        ? 'bg-brand/15 text-link'
-                        : 'text-muted hover:bg-ink-hover hover:text-white',
-                    )}
-                  >
-                    <Glyph icon={faThumbsUp} />
-                    {post.like_count > 0 ? formatCount(post.like_count) : 'Like'}
-                  </button>
+                {/*
+                  * Faces, not a thumb.
+                  *
+                  * Staw: "Reactions are for announcements & posts, instead
+                  * of simple likes/dislikes". A like on something somebody
+                  * wrote is a thumb where a face would say what you
+                  * actually felt - and a wall of posts with one number
+                  * each tells you which was popular and nothing about why.
+                  */}
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <Reactions
+                    what="post"
+                    which={String(post.id)}
+                    counts={faces[String(post.id)] ?? []}
+                    canReact={!!profile && !profile.is_guest}
+                    whyNot={profile ? undefined : 'Sign in to react.'}
+                    onChanged={reloadFaces}
+                  />
 
                   <p className="text-xs text-muted">
                     {stamp(post.created_at)}

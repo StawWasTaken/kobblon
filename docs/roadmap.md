@@ -10,6 +10,53 @@ website and its builder are the first generation and stay. `docs/audit.md`
 lists what in the architecture would make the rest awkward, and what to do
 about each of them.
 
+## Putting the pages in order, the way My Avatar was
+
+Staw, on the Catalog, Communities, Discover, People and Settings: "i would
+like to redesign all of these pages cuz theyre not.. original enough and
+they feel messy and i want to put order into these pages, the same way we
+did put order into the my avatar page".
+
+What that meant on My Avatar, so each of these can be held to the same
+thing rather than redrawn to taste:
+
+- **One subject, as big as the page allows.** The body is the page and the
+  wardrobe stands beside it. On each of these, name the one thing somebody
+  came for and give it the room.
+- **Navigation down the side, not across the top of a grid.** Tabs over a
+  grid push the grid down and read as somebody else's page; a rail with
+  counts on it costs nothing and is ours.
+- **Good ratios.** Nothing twice the size of anything else. Cap the panels
+  and let the page centre what is left rather than letting one column eat
+  the slack.
+- **Padding, and a second line.** A picture inset from the card's edge and
+  a name with room either side of it is most of what separates a grid that
+  reads as cheap from one that does not.
+- **Things that sit slightly over each other.** A panel hanging half over
+  the picture it belongs to is what makes a page look composed rather than
+  stacked - and the card holding it must not clip.
+- **Say less.** One rectangle with an icon and a short line where there
+  would have been a paragraph.
+
+Page by page, what is actually wrong with each today:
+
+- **Catalog.** Four rows of controls - search, chips, Favourites and
+  Basket, the shelf tabs, then the filters - before a single item. The
+  Recommended row and the shelf look like the same thing twice.
+- **Communities.** "The biggest" cards are three different heights because
+  the description sets them; "Just started" is a second list of the same
+  communities in a different shape.
+- **Discover.** Three headed rows down a narrow column with an advert
+  beside them, so the Worlds are the smallest thing on a page about
+  Worlds.
+- **People.** A grid of cards with an advert cut into the middle of it,
+  and every card the same weight whether it is you, a friend or a
+  stranger.
+- **Settings.** A rail and a panel, which is right, and then one field in
+  a card the width of the page.
+
+Not started. This is a day of work and it comes with screenshots.
+
 ## The sweep - tomorrow, both sessions, before anything new
 
 Staw, after looking at the whole thing at once: there are parts of the old
