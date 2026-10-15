@@ -67,6 +67,16 @@ export const avatarKindLabels: Record<string, string> = {
   accessory: 'Accessory', hair: 'Hair', face: 'Face',
 }
 
+/**
+ * A saved outfit's number, with its own code in front.
+ *
+ * Outfits are not `avatar_items` and never were - they are an arrangement
+ * of them - so they get their own code rather than borrowing one and
+ * reading as a kind of hat in every address they appear in.
+ */
+export const outfitTag = (id: number | null | undefined) =>
+  id ? `OUTF-${id}` : ''
+
 /** A Catalog item's number, with its kind in front. */
 export const avatarTag = (kind: string, id: number | null | undefined) =>
   id ? `${avatarCodes[kind] ?? 'ITEM'}-${id}` : ''

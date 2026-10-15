@@ -27,6 +27,7 @@ import {
   faBasketShopping, faCheck, faStar, faSliders,
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
+import { OutfitStage } from '@/components/avatar/OutfitStage'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
@@ -48,7 +49,7 @@ import {
 import { useBasket, putInBasket, takeOutOfBasket, emptyBasket } from '@/hooks/useBasket'
 import { BasketDialog } from '@/components/catalog/BasketDialog'
 import type { ShelfOrder } from '@/lib/api'
-import { avatarTag } from '@/lib/kinds'
+import { avatarTag, outfitTag } from '@/lib/kinds'
 import type { AvatarItem, AvatarKind } from '@/types/db'
 import { cn } from '@/lib/cn'
 import { BrowseHero, ChipRail } from '@/components/browse/BrowseHero'
@@ -640,6 +641,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
 function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
   outfit: {
     id: string
+    content_id: number
     name: string
     price: number
     costs: number
@@ -656,38 +658,53 @@ function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
   const pieces = Array.isArray(outfit.pieces) ? outfit.pieces : []
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-ink-line bg-ink-card p-3">
-      <p className="truncate text-sm font-bold">{outfit.name}</p>
-      <span className="flex items-center gap-1.5 text-xs text-muted">
-        <span className="truncate">{outfit.owner_display_name}</span>
-        {isVerified({ is_verified: outfit.owner_is_verified }) && (
-          <Verified className="text-[10px]" />
-        )}
-      </span>
+    <div className="flex flex-col overflow-hidden rounded-xl border border-ink-line bg-ink-card">
+      {/*
+        * The outfit itself, on a body, rather than a list of the names of
+        * the things in it. Staw: "the outfits on the catalog should be in
+        * 3d too". A shelf of four-line lists is a spreadsheet of clothes.
+        *
+        * The whole picture is the link to its own page; the button below
+        * still buys it where it stands, because the shelf's job is to let
+        * somebody take something without leaving the shelf.
+        */}
+      <Link
+        to={`/catalog/outfit/${outfitTag(outfit.content_id)}`}
+        aria-label={`Look at ${outfit.name}`}
+        className="relative block"
+      >
+        <OutfitStage outfitId={outfit.id} className="aspect-[4/5] w-full" />
+      </Link>
 
-      <ul className="min-h-[3.5rem] space-y-0.5 text-[11px] text-white/70">
-        {pieces.slice(0, 4).map((piece) => (
-          <li key={piece.content_id} className="truncate">{piece.name}</li>
-        ))}
-        {pieces.length > 4 && (
-          <li className="text-muted">and {pieces.length - 4} more</li>
-        )}
-      </ul>
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <Link
+          to={`/catalog/outfit/${outfitTag(outfit.content_id)}`}
+          className="truncate text-sm font-bold hover:text-brand-bright"
+        >
+          {outfit.name}
+        </Link>
+        <span className="flex items-center gap-1.5 text-xs text-muted">
+          <span className="truncate">{outfit.owner_display_name}</span>
+          {isVerified({ is_verified: outfit.owner_is_verified }) && (
+            <Verified className="text-[10px]" />
+          )}
+        </span>
 
-      {outfit.owned_already > 0 && (
         <p className="text-[11px] text-muted">
-          You have {outfit.owned_already} of {pieces.length} already.
+          {pieces.length} {pieces.length === 1 ? 'piece' : 'pieces'}
+          {outfit.owned_already > 0 && <> · you have {outfit.owned_already}</>}
         </p>
-      )}
 
-      <BuyButton
-        size="sm"
-        price={outfit.costs}
-        freeLabel="Wear it"
-        loading={busy}
-        disabled={!canTake}
-        onClick={onTake}
-      />
+        <BuyButton
+          className="mt-auto"
+          size="sm"
+          price={outfit.costs}
+          freeLabel="Wear it"
+          loading={busy}
+          disabled={!canTake}
+          onClick={onTake}
+        />
+      </div>
     </div>
   )
 }
