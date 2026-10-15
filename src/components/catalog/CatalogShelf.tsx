@@ -28,6 +28,7 @@ import {
   faTag,
 } from '@fortawesome/free-solid-svg-icons'
 import { OutfitStage } from '@/components/avatar/OutfitStage'
+import { Recommended } from '@/components/catalog/Recommended'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
@@ -290,6 +291,14 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
           />
         </BrowseHero>
       )}
+
+      {/*
+        * Picked for whoever is looking, before the shelf they came to
+        * browse. Only on the full page: the Catalog squeezed into a panel
+        * beside an avatar already has one of these above it, and two rows
+        * of suggestions on one screen is a shop shouting.
+        */}
+      {hero && !term && !starredOnly && <Recommended howMany={14} />}
 
       {/*
         * A sale says so, at the top, with when it ends.

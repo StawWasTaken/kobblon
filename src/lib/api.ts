@@ -4438,6 +4438,24 @@ export type ShelfFilters = {
   onlyFree?: boolean
 }
 
+/**
+ * What to put in front of somebody, scored by the server.
+ *
+ * One reader for both places it is shown - the shelf under the avatar and
+ * the Catalog's own row - because two ideas of what somebody wants is how a
+ * shop recommends a hat on one page and the same person a skirt on the
+ * next. The ranking is in `recommended_avatar_items`, where it can be read
+ * and argued with.
+ *
+ * Comes back in `avatar_shelf`'s own columns, so every card that draws a
+ * Catalog item draws these with no new code.
+ */
+export async function recommendedAvatarItems(howMany = 12): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('recommended_avatar_items', {
+    how_many: howMany,
+  })) as AvatarItem[]) ?? []
+}
+
 export async function avatarShelf(
   kind?: AvatarKind | null,
   term?: string,
