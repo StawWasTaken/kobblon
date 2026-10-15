@@ -11,6 +11,7 @@ import {
 import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Icon } from '@/components/brand/Icon'
 import { NewGroupDialog } from './NewGroupDialog'
 import { MessageRow } from './MessageRow'
 import { SafetyNote } from './SafetyNote'
@@ -79,11 +80,21 @@ function useRemembered(key: string, fallback: boolean) {
 }
 
 function Window({
-  conversation, onClose, onOpened,
+  conversation, onClose, onOpened, full,
 }: {
   conversation: Conversation
   onClose: () => void
   onOpened: (conversationId: string) => void
+  /**
+   * Filling the screen instead of sitting in the corner.
+   *
+   * Staw: "the chat docks for mobile isnt convenient and we cant see the
+   * chat docks". A 288-pixel window pinned to the bottom right of a phone
+   * is a desktop idea, and the dock was `hidden md:flex` anyway - so on a
+   * phone there was no chat at all. The same component, given the whole
+   * screen, rather than a second chat written for small windows.
+   */
+  full?: boolean
 }) {
   const { profile } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
@@ -210,8 +221,10 @@ function Window({
   return (
     <section
       className={cn(
-        'pointer-events-auto flex w-72 flex-col overflow-hidden rounded-t-xl border border-b-0 border-ink-line bg-ink-card shadow-pop',
-        collapsed ? 'h-11' : 'h-96',
+        'pointer-events-auto flex flex-col overflow-hidden border-ink-line bg-ink-card',
+        full
+          ? 'h-full w-full'
+          : cn('w-72 rounded-t-xl border border-b-0 shadow-pop', collapsed ? 'h-11' : 'h-96'),
       )}
       aria-label={`Chat with ${name}`}
     >
@@ -439,15 +452,23 @@ function Window({
 }
 
 function List({
-  conversations, loading, onOpen, onNewGroup,
+  conversations, loading, onOpen, onNewGroup, full,
 }: {
   conversations: Conversation[]
   loading: boolean
   onOpen: (id: string) => void
   onNewGroup: () => void
+  /** Filling a phone's screen rather than sitting in a corner of a desktop. */
+  full?: boolean
 }) {
   // Open the first time somebody sees it, and however they left it after that.
-  const [open, setOpen] = useRemembered(LIST_STATE, true)
+  const [remembered, setOpen] = useRemembered(LIST_STATE, true)
+  /*
+   * Filling the screen means always open: the collapse is what makes a
+   * corner window get out of the way, and a sheet somebody deliberately
+   * opened has nothing to get out of the way of.
+   */
+  const open = full ? true : remembered
   const [term, setTerm] = useState('')
 
   const shown = conversations.filter((c) =>
@@ -456,18 +477,22 @@ function List({
   return (
     <section
       className={cn(
-        'pointer-events-auto flex w-72 flex-col overflow-hidden rounded-t-xl border border-b-0 border-ink-line bg-ink-card shadow-pop',
-        open ? 'h-96' : 'h-11',
+        'pointer-events-auto flex flex-col overflow-hidden border-ink-line bg-ink-card',
+        full
+          ? 'h-full w-full'
+          : cn('w-72 rounded-t-xl border border-b-0 shadow-pop', open ? 'h-96' : 'h-11'),
       )}
-      aria-label="Chat"
+      aria-label="Friends Chat"
     >
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-3">
         <button
           onClick={() => setOpen((v) => !v)}
-          className="flex-1 text-left text-sm font-extrabold"
+          className="flex flex-1 items-center gap-2 text-left text-sm font-extrabold"
           aria-expanded={open}
         >
-          Chat
+          {/* Staw's own mark, not a glyph that looks like it. */}
+          <Icon name="chatbubble" className="h-4 w-4" />
+          Friends Chat
         </button>
 
         <Tooltip label="New chat group" side="top">
@@ -718,6 +743,15 @@ export function ChatDock({ children }: { children: ReactNode }) {
     load()
   }, [load])
 
+  /*
+   * What the phone is showing: nothing, the list, or one conversation by
+   * id. One value rather than an "open" flag and a "which" - two pieces of
+   * state that can disagree is how a sheet ends up open with nothing in it.
+   */
+  const [phone, setPhone] = useState<string | null>(null)
+
+  const unread = conversations.reduce((all, one) => all + (one.unread_count ?? 0), 0)
+
   const value = useMemo(() => ({ openConversation, quiet }), [openConversation, quiet])
 
   return (
@@ -758,6 +792,95 @@ export function ChatDock({ children }: { children: ReactNode }) {
             onOpen={openConversation}
             onNewGroup={() => setMaking(true)}
           />
+        </div>
+      )}
+
+      {/* ------------------------------------------------- chat, on a phone */}
+      {profile && !profile.is_guest && (
+        <div className="md:hidden">
+          {/*
+            * The button, above the thumb and clear of the bottom bar.
+            *
+            * Hidden while the sheet is open rather than drawn under it: a
+            * round button floating over a full-screen conversation is a
+            * second way to do the thing already on screen.
+            */}
+          {!phone && (
+            <button
+              type="button"
+              onClick={() => setPhone('list')}
+              aria-label="Friends Chat"
+              className="fixed bottom-20 right-4 z-40 grid h-14 w-14 place-items-center rounded-full border-b-[3px] border-brand-ink bg-brand text-white shadow-pop transition-colors hover:bg-brand-bright active:bottom-[4.8rem] active:border-b-0"
+            >
+              <Icon name="chatbubble" className="h-6 w-6" />
+              {unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-danger px-1 text-[10px] font-extrabold text-white">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+          )}
+
+          {phone && (
+            <div className="fixed inset-0 z-[60] flex flex-col bg-ink">
+              <div className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line px-3">
+                <button
+                  type="button"
+                  onClick={() => setPhone(phone === 'list' ? null : 'list')}
+                  aria-label={phone === 'list' ? 'Close chat' : 'Back to your chats'}
+                  className="grid h-9 w-9 place-items-center rounded-lg text-white/60 transition-colors hover:bg-ink-hover hover:text-white"
+                >
+                  <FontAwesomeIcon icon={phone === 'list' ? faXmark : faArrowLeft} />
+                </button>
+                <p className="flex-1 font-display text-sm font-bold">Friends Chat</p>
+                {phone === 'list' && (
+                  <button
+                    type="button"
+                    onClick={() => setMaking(true)}
+                    aria-label="New chat group"
+                    className="grid h-9 w-9 place-items-center rounded-lg text-white/60 transition-colors hover:bg-ink-hover hover:text-white"
+                  >
+                    <FontAwesomeIcon icon={faPenToSquare} />
+                  </button>
+                )}
+              </div>
+
+              <div className="min-h-0 flex-1">
+                {phone === 'list' ? (
+                  <List
+                    full
+                    conversations={conversations}
+                    loading={loading}
+                    onOpen={(id) => { openConversation(id); setPhone(id) }}
+                    onNewGroup={() => setMaking(true)}
+                  />
+                ) : (
+                  (() => {
+                    const conversation = conversations.find((c) => c.id === phone)
+                    /*
+                     * A conversation that is no longer in the roster - left,
+                     * blocked, or opened by an id that has since changed -
+                     * goes back to the list rather than showing an empty
+                     * screen with no way out of it.
+                     */
+                    if (!conversation) return (
+                      <div className="grid h-full place-items-center p-6 text-center text-sm text-muted">
+                        That conversation is not here any more.
+                      </div>
+                    )
+                    return (
+                      <Window
+                        full
+                        conversation={conversation}
+                        onClose={() => setPhone('list')}
+                        onOpened={(real) => { setPhone(real); load() }}
+                      />
+                    )
+                  })()
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

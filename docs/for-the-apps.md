@@ -7399,3 +7399,84 @@ that account would have found out the hard way.
 
 0225 through 0230, in order. 0230 has to come after 0225, because it
 rewrites the same function.
+
+## Round eighty-three
+
+**Staw's icons are in the repository and they are yours too.** He uploaded
+fifty-eight PNGs. They arrived at the repository root in two folders called
+`F-icons` and `workspace icons` - a space in a served path, and nothing under
+`public/`, so none of them were reachable from the site at all. They are at
+`public/icons/ui` and `public/icons/workspace` now.
+
+Fifteen of them were drawn for you: `cylinder`, `decal`, `group`, `light`,
+`meshpart`, `part`, `script`, `sky`, `sound`, `soundservice`, `sphere`,
+`texture`, `truss`, `wedge`, `world`. They are at
+`public/icons/workspace/<name>.png` and they are the explorer's icons - a
+MeshPart in your tree and a MeshPart in Create should not be two drawings of
+the same thing. They carry their own colours; do not tint them.
+
+The website reads them through `@/components/brand/Icon`:
+
+```ts
+import { Icon, type KobIcon } from '@/components/brand/Icon'
+
+<Icon name="workspace/decal" className="h-4 w-4" />
+<Icon name="chatbubble" tone="currentColor" />   // painted as a mask
+```
+
+It takes no provider and no router. `tone` paints the icon as a CSS mask, so
+the shape is exact and the colour is whatever the design system hands it;
+left out, the icon is drawn as Staw drew it. The names are a union type, so a
+name that does not exist is a build error rather than a picture that silently
+does not load.
+
+**The Brix mark was a reproduction and is not any more.** `CurrencyMark` drew
+a two stud brick as hand-written `<svg>`. Staw: "i dont want you to reproduce
+it and use the reproduction i want you to use the original image". It is his
+file now - `public/icons/ui/brix.png` - and every price on the website draws
+it. If you have your own copy of that `<svg>`, replace it; it is not the
+mark.
+
+**`outfit_look(outfit uuid)` is new, and it answers in `avatar_of`'s own
+columns.** Same names, same order, same meaning: body, slot, kind, item_id,
+content_id, item_name, price, image_path, image_bucket, preview_path,
+mesh_preview_path, fit, mesh_path, mesh_format, texture_path. So whatever you
+already have that draws a person from `avatar_of` draws a saved outfit with
+no new code. Readable by the owner, or by anybody if it is listed in the
+Catalog; a private one belonging to somebody else returns no rows.
+
+**`update_avatar_item` lets a creator fix something they have published, for
+60 Brix.** Signature:
+
+```sql
+public.update_avatar_item(
+  item uuid,
+  new_name text default null,
+  new_description text default null,
+  new_mesh uuid default null,
+  new_texture uuid default null,
+  new_fit jsonb default null,
+  new_price integer default null
+) returns text   -- 'nothing' | 'changed' | 'pending'
+```
+
+Every argument is optional and null means "leave it alone" - do not send a
+field back because you happen to be holding it, because the value you are
+holding is the one from before somebody else's change. Charged once, after
+every refusal, and nothing is charged when nothing moved. **A new mesh or
+texture sends the item back to `pending`**, so anything of yours that lists a
+creator's items has to expect an approved item to become pending again
+without the creator uploading anything new. `item_edit_price()` is the 60, if
+you want to print it.
+
+`restyle_outfit(outfit uuid)` and `rename_outfit(outfit uuid, new_name text)`
+are there as well. `restyle_outfit` reads `avatar_worn` on the server rather
+than taking a list - same promise `save_outfit` makes - and keeps the
+outfit's name, folder, price and Catalog listing.
+
+**Not built, and said plainly:** the transport field and `mark`/`unmark` on
+the bubble board went in last round. Nothing here touches either. The
+moderation work from the round before last was lost before it was pushed and
+is being redone; if you built against `my_account_standing`,
+`reactivate_my_account` or `ban_account`, none of those exist yet - wait for
+the round that says they do.
