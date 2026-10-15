@@ -30,7 +30,7 @@ const LOOK = {
 
 createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen bg-ink px-6 py-6">
-    <div className="mx-auto grid max-w-[86rem] items-start gap-5 lg:grid-cols-[auto_minmax(0,1fr)_minmax(22rem,28rem)]">
+    <div className="mx-auto grid max-w-[86rem] items-start justify-center gap-5 lg:grid-cols-[auto_minmax(22rem,38rem)_minmax(18rem,32rem)]">
       <nav className="flex shrink-0 gap-2 lg:w-[5.5rem] lg:flex-col">
         {DRAWERS.map((one, i) => (
           <button
@@ -59,7 +59,7 @@ createRoot(document.getElementById('root')!).render(
       </nav>
 
       <div className="min-w-0 space-y-4">
-        <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-16">
+        <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-12">
           <div className="relative overflow-hidden rounded-2xl">
             <div
               aria-hidden="true"
@@ -86,7 +86,7 @@ createRoot(document.getElementById('root')!).render(
             </div>
           </div>
 
-          <div className="absolute bottom-4 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
+          <div className="absolute bottom-3 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
             <div className="flex items-center gap-2">
               <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
                 Wearing
@@ -122,7 +122,7 @@ createRoot(document.getElementById('root')!).render(
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
           {Array.from({ length: 9 }, (_, i) => (
             <div
               key={i}
