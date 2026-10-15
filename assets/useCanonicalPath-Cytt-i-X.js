@@ -1,1 +1,0 @@
-import{Cr as e,br as t,mr as n,pr as r}from"./asset-DAKDEhrh.js";var i=e(t(),1);function a(e){let{pathname:t,search:a,hash:o}=r(),s=n();(0,i.useEffect)(()=>{e&&decodeURIComponent(t).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,t,a,o,s])}export{a as t};
