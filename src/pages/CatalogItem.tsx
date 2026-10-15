@@ -38,13 +38,14 @@ import { FreeCorner } from '@/components/brand/FreeBadge'
 import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { ViewSwitch } from '@/components/avatar/ViewSwitch'
+import { Recommended } from '@/components/catalog/Recommended'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   avatarItemPage, buyAvatarItem, wearAvatarItem, cardFor, catalogUrl, assetUrl,
-  removeAvatarItem, avatarShelf, lookOf, saleNow, priceNow,
+  removeAvatarItem, lookOf, saleNow, priceNow,
   mannequinFace, favouriteAvatarItem,
 } from '@/lib/api'
 import { avatarTag, avatarNumber, avatarKindLabels } from '@/lib/kinds'
@@ -494,7 +495,14 @@ export default function CatalogItem() {
         </div>
       </div>
 
-      <MoreLikeThis item={item} />
+      {/*
+        * Picked for whoever is looking, rather than "more of the same
+        * kind". Staw: "i want the Recommended thing to be instead of the
+        * more [type of asset] under every kind of assets". Six more hats
+        * under a hat is a correct list and a dead end; what somebody has
+        * no trousers for is a reason to keep looking.
+        */}
+      <Recommended className="mx-auto w-full max-w-5xl" />
 
       {/*
         * Asked before the Brix move, and only when there are Brix to move:
@@ -553,60 +561,6 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-/**
- * Other things of the same kind.
- *
- * Both of the shops Staw put ours beside end with one of these, and the
- * reason is not decoration: somebody looking at a hat they have decided
- * against should land on another hat rather than on a dead end. The same
- * shelf reader the Catalog uses, filtered to this kind, with this one
- * dropped out of it.
- */
-function MoreLikeThis({ item }: { item: AvatarItem }) {
-  const others = useAsync(
-    async () => avatarShelf(item.kind, undefined, 12, null, 'taken'),
-    [item.kind],
-  )
-
-  const rest = (others.data ?? []).filter((one) => one.id !== item.id).slice(0, 6)
-  if (others.loading || rest.length === 0) return null
-
-  return (
-    <section className="mx-auto w-full max-w-5xl space-y-3">
-      <h2 className="font-display text-sm font-bold uppercase tracking-wider text-muted">
-        More {(KIND_WORDS[item.kind] ?? item.kind).toLowerCase()}
-      </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {rest.map((one) => {
-          const picture = cardFor(one)
-          return (
-            <Link
-              key={one.id}
-              to={`/catalog/${avatarTag(one.kind, one.content_id)}`}
-              className="overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60"
-            >
-              <span className="grid aspect-square place-items-center overflow-hidden bg-ink-raised">
-                {picture
-                  ? <img src={picture} alt="" loading="lazy" className="h-full w-full object-contain p-2" />
-                  : <Glyph icon={faShirt} className="text-2xl text-white/20" />}
-              </span>
-              <span className="block space-y-0.5 p-2">
-                <span className="block truncate text-xs font-bold">{one.name}</span>
-                <span className="block text-[11px] text-muted">
-                  {one.price > 0
-                    ? <span className="inline-flex items-center gap-0.5">
-                        <CurrencyMark />{one.price}
-                      </span>
-                    : 'Free'}
-                </span>
-              </span>
-            </Link>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
 
 /**
  * The thing itself, flat or on a body.

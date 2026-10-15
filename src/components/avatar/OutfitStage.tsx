@@ -5,6 +5,8 @@ import { AvatarStage } from '@/components/avatar/AvatarStage'
 import { lookOfOutfit } from '@/lib/api'
 import type { AvatarLook } from '@/components/avatar/AvatarStage'
 import { Skeleton } from '@/components/ui/States'
+import { useFlatPicture } from '@/components/avatar/useFlatPicture'
+import type { PortraitLook } from '@/lib/portrait'
 import { cn } from '@/lib/cn'
 
 /**
@@ -20,12 +22,25 @@ import { cn } from '@/lib/cn'
  * request. Not turning and not draggable, because this sits in a grid where
  * a drag is the page being scrolled.
  */
-export function OutfitStage({ outfitId, className }: {
+export function OutfitStage({ outfitId, flat, turning = false, className }: {
   outfitId: string
+  /**
+   * Flat, when somebody presses 2D.
+   *
+   * The same two ways everything else in the Catalog offers, because Staw
+   * asked for the asset pages to be one thing: "i want them to be
+   * uniformized, like same thing for every asset, outfits, faces, etc, so
+   * it means theres 2d & 3d for outfits too". The flat one is drawn from
+   * the same look the stage is given, so the two are the same outfit.
+   */
+  flat?: boolean
+  /** Slowly turning, which a page wants and a card in a grid does not. */
+  turning?: boolean
   className?: string
 }) {
   const [look, setLook] = useState<AvatarLook | null>(null)
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
+  const picture = useFlatPicture(look as unknown as PortraitLook, !!flat && !!look)
 
   /*
    * `wanted` rather than trusting what this pass captured. A grid of these
@@ -64,7 +79,25 @@ export function OutfitStage({ outfitId, className }: {
         </span>
       )}
       {state === 'ready' && look && (
-        <AvatarStage look={look} turning={false} className="h-full w-full" />
+        <>
+          {/*
+            * Drawn over the stage rather than instead of it, so pressing 3D
+            * again does not cost a second load of the body.
+            */}
+          <AvatarStage
+            look={look}
+            fill
+            turning={turning && !flat}
+            className={cn('h-full w-full', flat && 'invisible')}
+          />
+          {flat && (
+            <div className="absolute inset-0 grid place-items-center">
+              {picture
+                ? <img src={picture} alt="" className="h-full w-full object-contain" />
+                : <p className="text-sm text-muted">Drawing…</p>}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

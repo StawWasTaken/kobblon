@@ -23,7 +23,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faStore, faCheck, faUser, faLink, faFlag, faCircleCheck,
-  faEllipsis,
+  faEllipsis, faImage, faCube, faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -39,10 +39,12 @@ import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { OutfitStage } from '@/components/avatar/OutfitStage'
+import { ViewSwitch } from '@/components/avatar/ViewSwitch'
+import { Recommended } from '@/components/catalog/Recommended'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
-import { outfitPage, buyOutfit, wearOutfit, catalogUrl } from '@/lib/api'
+import { outfitPage, buyOutfit, wearOutfit, catalogUrl, takeDownOutfit } from '@/lib/api'
 import { avatarTag, avatarNumber, outfitTag, avatarKindLabels } from '@/lib/kinds'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -54,6 +56,10 @@ export default function OutfitPage() {
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [reporting, setReporting] = useState(false)
+  /** Which way it is being looked at: in three dimensions, or flat. */
+  const [mode, setMode] = useState<'picture' | 'body'>('body')
+  /** Staff only, and asked twice, the way the item page asks. */
+  const [sureRemove, setSureRemove] = useState(false)
 
   const number = avatarNumber(tag ?? '')
   const outfit = useAsync(
@@ -119,6 +125,7 @@ export default function OutfitPage() {
    * the one charged is worse than a page with no number on it.
    */
   const costs = one.mine ? 0 : one.costs
+  const canTakeDown = !!profile?.is_moderator || !!profile?.is_admin
 
   return (
     <Page className="space-y-5">
@@ -131,7 +138,21 @@ export default function OutfitPage() {
               badge sits half on and half off the corner. */}
           {costs <= 0 && !one.mine && <FreeCorner size="page" />}
           <div className="relative grid aspect-square place-items-center overflow-hidden rounded-2xl bg-ink-raised">
-            <OutfitStage outfitId={one.id} className="h-full w-full" />
+            <OutfitStage
+              outfitId={one.id}
+              flat={mode === 'picture'}
+              className="h-full w-full"
+            />
+            {/* The Catalog's own switch, because this is the Catalog's own
+                page and an outfit is an asset like the rest of them. */}
+            <ViewSwitch
+              ways={[
+                { value: 'picture' as const, icon: faImage, label: '2D' },
+                { value: 'body' as const, icon: faCube, label: '3D' },
+              ]}
+              value={mode}
+              onChange={setMode}
+            />
           </div>
         </div>
 
@@ -179,6 +200,33 @@ export default function OutfitPage() {
                     },
                     { label: 'See who made it', icon: faUser, to: `/u/${one.owner_username}` },
                     { label: 'Report it', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
+                    /*
+                     * Staff only, asked twice, and the same wording the
+                     * item page uses - "and to take down stuff". The
+                     * server refuses anybody else, so this only saves a
+                     * moderator a round trip rather than being the rule.
+                     */
+                    ...(canTakeDown ? [{
+                      label: sureRemove ? 'Really take it down' : 'Take it down',
+                      icon: faTrash,
+                      danger: true,
+                      onSelect: () => {
+                        if (!sureRemove) { setSureRemove(true); return }
+                        void (async () => {
+                          setBusy(true)
+                          try {
+                            await takeDownOutfit(one.id, 'Taken down by Kobblon.')
+                            say('Taken down.', 'success')
+                            outfit.reload()
+                          } catch (error) {
+                            say(error instanceof Error ? error.message : 'That did not work.', 'error')
+                          } finally {
+                            setBusy(false)
+                            setSureRemove(false)
+                          }
+                        })()
+                      },
+                    }] : []),
                   ]}
                 />
               </div>
@@ -321,6 +369,12 @@ export default function OutfitPage() {
           </Card>
         </div>
       </div>
+
+      {/*
+        * The same shelf every other asset page ends with, so a person
+        * leaving an outfit lands somewhere rather than nowhere.
+        */}
+      <Recommended className="mx-auto w-full max-w-5xl" />
 
       {/*
         * Asked before the Brix move, and only when there are Brix to move:
