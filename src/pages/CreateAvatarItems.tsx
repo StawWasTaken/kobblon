@@ -17,7 +17,7 @@ import {
   faShirt, faDownload, faImage, faCube, faLock, faPen, faSpinner,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
   faMagnifyingGlass, faClock, faUpload, faCircleCheck, faCircleExclamation,
-  faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight, faUsers,
+  faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight, faUsers, faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import { useSearchParams } from 'react-router-dom'
 import { Page } from '@/components/layout/AppShell'
@@ -25,7 +25,6 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
 import { Choices } from '@/components/ui/Choices'
-import { Select } from '@/components/ui/Select'
 import { Menu } from '@/components/ui/Menu'
 import { Dialog } from '@/components/ui/Dialog'
 import { DateTimeField } from '@/components/ui/DateTimeField'
@@ -39,12 +38,15 @@ import { useTitle } from '@/hooks/useTitle'
 import {
   avatarRules, createAvatarItem, listAvatarItem, myMadeAvatarItems,
   uploadCatalogImage, catalogUrl, listOwnAssets, editAvatarItem, replaceAvatarPicture,
-  archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
+  archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl,
   setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard, uploadAsset,
   redrawAvatarCard, setAvatarFit,
-  mannequinFace, listMemberCommunities,
+  mannequinFace, moveAvatarItemMaker,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
+import { WornPicture } from '@/components/catalog/WornPicture'
+import { forgetWornCard } from '@/lib/wornCard'
+import { useWorkingAs } from '@/components/create/WorkingAs'
 import { cn } from '@/lib/cn'
 import { kindAccepts, avatarTag } from '@/lib/kinds'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
@@ -147,23 +149,20 @@ export default function CreateAvatarItems() {
   /*
    * Who this is being made for: you, or a Community you run.
    *
-   * Staw: "either as you or as a community". A Community's item is sold
-   * under the Community's name and its money fills the Community's funds,
-   * and the Community pays the making fee - so the choice is made here,
-   * before anything is paid for, rather than being moved afterwards.
-   *
-   * Only the ones somebody actually runs. A member of forty Communities is
-   * not offered forty ways to spend somebody else's Brix, and the server
-   * refuses it anyway.
+   * Staw: "either as you or as a community", and then "everything made by a
+   * community should be only seen on the working as [community]". So it is
+   * not a field in the dialog any more - it is the Working as menu that is
+   * already at the top of Create, and it decides both what is made and what
+   * is listed. A picker in the dialog and a menu in the sidebar were two
+   * answers to one question, and the list ignored both.
    */
-  const [maker, setMaker] = useState('')
-  const myCommunities = useAsync(
-    async () => (profile ? listMemberCommunities(profile.id) : []),
-    [profile?.id],
-  )
-  const canMakeFor = (myCommunities.data ?? []).filter((one) => one.role !== 'member')
+  const { target, targets } = useWorkingAs()
+  const maker = target?.id ?? ''
 
-  const made = useAsync(async () => (profile ? myMadeAvatarItems() : []), [profile?.id])
+  const made = useAsync(
+    async () => (profile ? myMadeAvatarItems(maker || null) : []),
+    [profile?.id, maker],
+  )
   const meshes = useAsync(
     async () => (profile ? (await listOwnAssets(profile.id)).filter((a) => a.kind === 'mesh') : []),
     [profile?.id],
@@ -578,6 +577,7 @@ export default function CreateAvatarItems() {
               canScreen={!!profile?.is_admin || !!profile?.is_moderator}
               me={profile.id}
               isHouse={!!profile.is_admin}
+              canMakeFor={targets}
               onChanged={() => made.reload()}
               onTrouble={(message) => say(message, 'error')}
               onDone={(message) => say(message, 'success')}
@@ -900,35 +900,17 @@ export default function CreateAvatarItems() {
             </div>
           )}
 
-          {!!canMakeFor.length && (
-            <Select
-              label="Made by"
-              value={maker}
-              onChange={setMaker}
-              options={[
-                { value: '', label: 'You', note: 'Sold under your name' },
-                ...canMakeFor.map((one) => ({
-                  value: one.id,
-                  label: one.name,
-                  note: 'Sold under theirs, and paid into their funds',
-                })),
-              ]}
-            />
-          )}
-
           <Input label="Name" value={name} maxLength={60}
             onChange={(e) => setName(e.target.value)} />
           <Textarea label="Description" value={about} maxLength={400}
             onChange={(e) => setAbout(e.target.value)} />
 
-          {!!maker && (
+          {!!target && (
             <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
               It will say it is by{' '}
-              <span className="font-bold text-white">
-                {canMakeFor.find((one) => one.id === maker)?.name}
-              </span>
-              , the fee comes out of their funds, and what it sells for goes back
-              into them.
+              <span className="font-bold text-white">{target.name}</span>, the fee
+              comes out of their funds, and what it sells for goes back into them.
+              Change that with the Working as menu.
             </p>
           )}
           {/*
@@ -980,9 +962,15 @@ export default function CreateAvatarItems() {
  */
 export function MadeCard({
   item, onChanged, onTrouble, onDone, rule, canLimit, canScreen, me, openEditor,
-  isHouse,
+  isHouse, canMakeFor,
 }: {
   item: AvatarItem
+  /**
+   * The Communities this person may make for, so a thing can be handed to
+   * one. For everything uploaded for a Community before there was a column
+   * to record it: nothing but its maker knows which those were.
+   */
+  canMakeFor: { id: string; name: string }[]
   onChanged: () => void
   onTrouble: (message: string) => void
   onDone: (message: string) => void
@@ -1082,12 +1070,22 @@ export function MadeCard({
     }
   }
 
-  const picture = cardFor(item)
   /*
    * Only Kobblon, and only a face. `canScreen` is not the test - a moderator
    * is not the house - so this asks the one thing it means.
    */
-  const canRedraw = item.kind === 'face' && isHouse
+  /*
+   * Staw: "in create, only the kobblon account can replace its own shirt &
+   * trousers images by a new one, instead of reuploading them". A garment of
+   * the house's own counts the same way a face does - when the template
+   * geometry moves under it, the alternative is deleting it, and everybody
+   * who owns one loses it. Everybody else's garments keep the promise this
+   * card's description makes, which is why this is not a general swap.
+   */
+  const canRedraw = isHouse
+    && (item.kind === 'face'
+      || ((item.kind === 'shirt' || item.kind === 'trousers')
+        && item.creator_id === me))
   const archived = item.status === 'approved' && !item.is_public
 
   const state = item.status === 'approved'
@@ -1098,13 +1096,9 @@ export function MadeCard({
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-ink-line bg-ink-card">
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
-        {picture
-          ? <img src={picture} alt="" loading="lazy" className="h-full w-full object-contain" />
-          : (
-            /* Kobby with the empty box: the picture Staw picked for a
-               picture that is not there. */
-            <Missing why={item.status === 'rejected' ? 'Turned down' : undefined} />
-          )}
+        {item.status === 'rejected'
+          ? <Missing why="Turned down" />
+          : <WornPicture item={item} />}
         <span className="absolute left-2 top-2 rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
           {item.kind}
         </span>
@@ -1231,6 +1225,25 @@ export function MadeCard({
                 icon: faClock,
                 onSelect: () => setLimiting(!limiting),
               }] : []),
+              ...(item.community_id
+                ? [{
+                  label: 'Make it yours again',
+                  icon: faUser,
+                  onSelect: () => void run(
+                    'move',
+                    () => moveAvatarItemMaker(item.id, null),
+                    'Yours. It is on your own shop now.',
+                  ),
+                }]
+                : canMakeFor.map((one) => ({
+                  label: `Hand it to ${one.name}`,
+                  icon: faUsers,
+                  onSelect: () => void run(
+                    'move',
+                    () => moveAvatarItemMaker(item.id, one.id),
+                    `${one.name} made it now. It is on their shop.`,
+                  ),
+                }))),
               { label: sure ? 'Really delete it' : 'Delete', icon: faTrash, danger: true,
                 onSelect: () => {
                   if (!sure) { setSure(true); return }
@@ -1278,9 +1291,7 @@ export function MadeCard({
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
-              {picture
-                ? <img src={picture} alt="" className="h-full w-full object-contain" />
-                : <Glyph icon={faShirt} className="text-2xl text-white/25" />}
+              <WornPicture item={item} />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-bold">{item.name}</p>
@@ -1454,9 +1465,7 @@ export function MadeCard({
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
-              {picture
-                ? <img src={picture} alt="" className="h-full w-full object-contain" />
-                : <Glyph icon={faShirt} className="text-xl text-white/25" />}
+              <WornPicture item={item} />
             </span>
             <p className="text-xs leading-relaxed text-muted">
               {state}
@@ -1488,14 +1497,24 @@ export function MadeCard({
                   void run('redraw', async () => {
                     const path = await uploadCatalogImage(me, chosen)
                     await replaceAvatarPicture(item.id, path)
-                  }, 'The face has a new picture.')
+                    /*
+                     * The saved card is cleared by the database, and this is
+                     * the drawing this tab made from the old picture - both
+                     * have to go or the new template is invisible here.
+                     */
+                    forgetWornCard(item.id)
+                  }, item.kind === 'face'
+                    ? 'The face has a new picture.'
+                    : 'The template is replaced. Its card is drawn again.')
                 }}
               />
               <Glyph
                 icon={busy === 'redraw' ? faSpinner : faImage}
                 className={cn('mr-2', busy === 'redraw' && 'animate-spin')}
               />
-              Put a new picture on this face
+              {item.kind === 'face'
+                ? 'Put a new picture on this face'
+                : 'Replace the template on this one'}
             </label>
           )}
 

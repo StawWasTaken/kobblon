@@ -22,8 +22,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { Missing } from '@/components/brand/Missing'
 import { Byline } from '@/components/catalog/Byline'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import {
   faShirt, faMagnifyingGlass, faPlus, faClock,
   faBasketShopping, faCheck, faStar, faSliders,
@@ -733,6 +733,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
   /** Whatever sale is on, so a card says the price it will charge. */
   sale: CatalogSale | null
 }) {
+  // Only the basket line needs a plain address; the card itself draws.
   const picture = cardFor(item)
   const costs = priceNow(item, sale)
   const closed = !!item.sells_until
@@ -754,20 +755,12 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
           to={`/catalog/${avatarTag(item.kind, item.content_id)}`}
           draggable={false}
           className="relative grid aspect-square place-items-center overflow-hidden bg-media">
-          {picture ? (
-            <img
-              src={picture}
-              alt=""
-              loading="lazy"
-              draggable={false}
-              className="h-full w-full select-none object-contain"
-            />
-          ) : (
-            /* Kobby with the empty box, which is Staw's picture for a
-               picture that is not there. A shirt glyph said "this is a
-               shirt", which the card already says. */
-            <Missing />
-          )}
+          {/*
+            * WornPicture rather than an img: a garment with no saved card
+            * is drawn on the mannequin here rather than showing the template
+            * sheet, and the torn mark is its own fallback inside.
+            */}
+          <WornPicture item={item} className="select-none" />
 
           {/* Down in the corner, which is where Staw asked for it. */}
           {item.sells_until && (

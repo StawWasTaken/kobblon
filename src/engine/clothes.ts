@@ -140,10 +140,19 @@ export const SHEET = { width: 585, height: 559 }
  * 64 by 128.
  *
  * Two details are easy to get wrong and both show up as a sleeve on back to
- * front. **The limbs are mirrored**: the lid and floor of the left one sit
- * over its fourth panel and the right one's over its first, so the two
- * inner faces meet in the middle of the sheet. And **the order across is
- * not the same for the two of them** either, for the same reason.
+ * front. **The limbs are mirrored**: the lid and floor sit over the front on
+ * both, but the row runs the opposite way round the limb on each - so the
+ * order across is not the same for the two of them.
+ *
+ * Which way round each runs is the part that has now been wrong twice. It
+ * was a column out first, which put the front down the sides. Then the two
+ * rows ran the same way round, which is not a mirror at all: it kept the
+ * front and back where they belonged and swapped each limb's inner face
+ * with its outer one. Staw: "the sides of the arms & legs that were
+ * supposed being the inside sides were replaced by the ones on the
+ * outside". The two faces it swaps are nearly the same on most garments,
+ * which is why a seam or a stripe down a leg is the first thing that shows
+ * it.
  *
  * It fits K6 because K6 is the familiar shape: a torso two wide, two tall
  * and one deep, and limbs one by two by one.
@@ -192,8 +201,8 @@ const LIMBS: Record<'left' | 'right', { at: number; across: Side[]; flapAt: numb
    * the wrong arm - it survives being looked at, because a sleeve is nearly
    * symmetrical and most shirts do not care until one of them does.
    */
-  right: { at: 19, across: ['right', 'back', 'left', 'front'], flapAt: 3 },
-  left: { at: 308, across: ['front', 'right', 'back', 'left'], flapAt: 0 },
+  right: { at: 19, across: ['left', 'back', 'right', 'front'], flapAt: 3 },
+  left: { at: 308, across: ['front', 'left', 'back', 'right'], flapAt: 0 },
 }
 
 /** Panel to panel across a strip: 64 of panel and 2 of gap. */

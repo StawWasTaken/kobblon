@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { faClock, faShapes } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { FreeCorner } from '@/components/brand/FreeBadge'
-import { Missing } from '@/components/brand/Missing'
 import { Byline } from '@/components/catalog/Byline'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { AssetTile } from '@/components/create/AssetTile'
 import { BuyButton } from '@/components/money/BuyButton'
 import { Button } from '@/components/ui/Button'
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAsync } from '@/hooks/useAsync'
 import {
-  buyAvatarItem, cardFor, listAssetsByCreator, listCommunityAssets, shopShelf,
+  buyAvatarItem, listAssetsByCreator, listCommunityAssets, shopShelf,
   wearAvatarItem,
 } from '@/lib/api'
 import { avatarTag } from '@/lib/kinds'
@@ -130,7 +130,6 @@ function ShopCard({ item }: { item: AvatarItem }) {
   const say = useToast()
   const [busy, setBusy] = useState(false)
   const [owned, setOwned] = useState(!!item.owned)
-  const picture = cardFor(item)
   const closed = !!item.sells_until
     && new Date(item.sells_until).getTime() <= Date.now()
 
@@ -159,17 +158,7 @@ function ShopCard({ item }: { item: AvatarItem }) {
           draggable={false}
           className="relative grid aspect-square place-items-center overflow-hidden bg-media"
         >
-          {picture
-            ? (
-              <img
-                src={picture}
-                alt=""
-                loading="lazy"
-                draggable={false}
-                className="h-full w-full select-none object-contain"
-              />
-            )
-            : <Missing why="No picture" />}
+          <WornPicture item={item} className="select-none" />
 
           {item.sells_until && (
             <span className={cn(

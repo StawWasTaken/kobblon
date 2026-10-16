@@ -1936,6 +1936,9 @@ check('a leg lands its front on the panel the sheet calls its front',
   legWrap.allInside, legWrap.facing)
 check('and that panel is the one the lid sits over, which is the sheet rule',
   legWrap.lidOverFront, `lid over front on both legs: ${legWrap.lidOverFront}`)
+check('and a leg\'s inner face lands on the panel the sheet calls its inner one',
+  legWrap.innerFaceInwards,
+  `inner face inwards on both legs: ${legWrap.innerFaceInwards}`)
 
 const faces = await p.evaluate(() => window.faceOnOff())
 check('a face goes on the front of the head and just in front of it',

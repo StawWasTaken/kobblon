@@ -54,7 +54,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   wornBy, myAvatarItems, wearAvatarItem, takeOffItem, setBodyColours,
-  catalogUrl, assetUrl, refreshPortrait, cardFor, saveOutfit,
+  catalogUrl, assetUrl, refreshPortrait, saveOutfit,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
 import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
@@ -63,6 +63,7 @@ import { forgetHeadshot } from '@/lib/headshots'
 import { Outfits } from '@/components/avatar/Outfits'
 import { Recommended } from '@/components/catalog/Recommended'
 import { avatarKindLabels } from '@/lib/kinds'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
 import { Studio } from '@/components/avatar/Studio'
@@ -719,16 +720,7 @@ export default function MyAvatar() {
                           )}
                           className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media p-1 transition-colors hover:border-danger"
                         >
-                          {cardFor(piece) ? (
-                            <img
-                              src={cardFor(piece)!}
-                              alt=""
-                              draggable={false}
-                              className="h-full w-full object-contain"
-                            />
-                          ) : (
-                            <Glyph icon={faHatCowboy} className="text-white/30" />
-                          )}
+                          <WornPicture item={{ ...piece, id: piece.item_id ?? '' }} />
                           <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">
                             <Glyph icon={faXmark} className="text-danger" />
                           </span>
@@ -1121,7 +1113,6 @@ function WornTile({ item, nth, on, busy, onToggle }: {
   busy: boolean
   onToggle: () => void
 }) {
-  const picture = cardFor(item)
   /*
    * A limited, which the Catalog has always said and nowhere else did.
    * Staw: "we dont show the limited badge outside of the catalog". Both
@@ -1154,11 +1145,7 @@ function WornTile({ item, nth, on, busy, onToggle }: {
         */}
       <span className="relative block p-2">
         <span className="relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-media">
-          {picture ? (
-            <img src={picture} alt="" draggable={false} className="h-full w-full object-contain" />
-          ) : (
-            <Glyph icon={faHatCowboy} className="text-2xl text-white/25" />
-          )}
+          <WornPicture item={item} />
           {busy && (
             <span className="absolute inset-0 grid place-items-center bg-ink/60">
               <Glyph icon={faCircleNotch} className="animate-spin text-white/70" />
