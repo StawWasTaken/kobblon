@@ -1,1 +1,0 @@
-import{Sr as e,Tr as t,gr as n,hr as r}from"./free-solid-svg-icons-B2QCSkv8.js";var i=t(e(),1);function a(e){let{pathname:t,search:a,hash:o}=r(),s=n();(0,i.useEffect)(()=>{e&&decodeURIComponent(t).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,t,a,o,s])}export{a as t};
