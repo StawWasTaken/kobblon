@@ -8126,3 +8126,54 @@ Two fixes, and the second is the one that matters to you:
 part" - which hands the stage a piece with a shape and no address, the way
 a page does. If the stage ever stops carrying it, that stand goes back to
 the plain block and says so.
+
+## Round ninety-four
+
+Hair was broken, and the reason is one you can copy wrong in a line.
+
+**A haircut hung off the hat socket.** They shared one on purpose, and the
+note saying so was wrong: "both sit on top of the head". A hat sits **on**
+the head; hair is a thing the head goes **inside**. The hat socket is the
+top of the skull and `WORN_FIT.hat` has `out: [0, 1, 0]`, which lifts
+whatever is on it by half its own height so it rests on the part rather
+than halfway through it - exactly right for a hat, and for hair it means
+every haircut floats above the scalp like a lid. Staw: "for hair, its
+bugged".
+
+There is now a **`hair` socket**: same bone, the middle of the head rather
+than the top of it, `across` of `Head.w * 1.35`, and `out: [0, 0, 0]` -
+pushed off nothing, because hair is meant to be inside the head. If you map
+slots to sockets anywhere, `SOCKET_FOR.hair` is `'hair'` now and not
+`'hat'`.
+
+**What this moves.** Any haircut a maker already placed by hand was placed
+against the old socket, so its saved `fit` now reads as an offset from a
+different starting point. There are few enough of them that nobody is going
+to notice a historical one being a little off, and leaving the socket wrong
+so old fits stay consistent is keeping a bug to protect the workarounds for
+it. Flagged because it is a meaning change: the same `fit` numbers describe
+a different place than they did yesterday.
+
+**The reach doubled.** Staw: "make that we can make the hair go lower (in
+stons) and larger range when setting up hair". Five stons was written for
+an accessory you nudge; hair is pulled down over a head. **Migration 0250**
+takes `sane_fit` to ten stons each way and the resize to six times, and
+`FitEditor`'s sliders move with it in the same push - a page offering a
+reach the server refuses is a control that fails on save. If the Workspace
+has its own placer, those two bounds are the ones to change.
+
+**The skin colours are Staw's five**, replacing the ramp I had picked:
+`#53463E`, `#87674F`, `#B39B8B`, `#D29A72`, `#EBB591`. Bright, Quiet and
+Deep are untouched. The body a new account starts with was `#f2d08a`, which
+is no longer on any shelf, so it is `#EBB591` now - a default nobody can
+choose again is a body you cannot put back the way you found it.
+
+Engine check 177/177, with two new ones that say where hair is rather than
+that it is somewhere: it is at the middle of the head (8.5 against 8.5),
+and its bottom is below the top of the head (8.3 against 9.7). The old
+checks would have passed on the broken version, because a lid on a skull is
+still "on the hat socket, roughly the right size".
+
+`tools/site/skin-preview.html` is new: the five tones on the rig rather than
+as squares, because a tone that reads warm in a 24-pixel swatch can read
+orange across a whole person.
