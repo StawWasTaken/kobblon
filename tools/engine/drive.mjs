@@ -1946,7 +1946,7 @@ check('a body part keeps the template coordinates it is wearing',
 check('and stays inside the box the template is measured against',
   bodyPart.insideItsBox, "widest half-width against the block's 1.8")
 check('and is actually pinched at the waist rather than the plain block',
-  bodyPart.pinched, 'waist narrower than the block')
+  bodyPart.pinched, `waist ${bodyPart.waist} against ${bodyPart.widest} at the shoulders`)
 
 const faces = await p.evaluate(() => window.faceOnOff())
 check('a face goes on the front of the head and just in front of it',
