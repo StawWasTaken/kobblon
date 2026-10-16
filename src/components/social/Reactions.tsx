@@ -33,6 +33,10 @@ import { cn } from '@/lib/cn'
  * **The faces are drawn as drawn, in colour when they are yours.** Staw
  * picked the colours: #FFCC4D for all of them, which is the yellow an
  * emoji face is, except the skull in bone grey and the angry one in red.
+ * The bone is a token rather than a number, because #E6E7E8 is a skull on
+ * a dark card and an empty space on a white one - Staw, of the light
+ * theme: "for the reactions on light stuff its- uh weird". The yellow and
+ * the red hold in both and are left exactly as he set them.
  * Not yours, they take the colour of the text around them like every other
  * icon on the site - so an unpressed face is quiet and a pressed one is
  * the only coloured thing in the row, which is the whole job.
@@ -63,7 +67,7 @@ const FACE_COLOUR: Record<Face, string> = {
   shocked: FACE_YELLOW,
   sad: FACE_YELLOW,
   angry: '#DF1F2D',
-  skull: '#E6E7E8',
+  skull: 'rgb(var(--face-bone))',
 }
 
 export function Reactions({
