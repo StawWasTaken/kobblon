@@ -17,7 +17,7 @@ import type {
   AssetPageItem, AssetDay, CreatorAssetRow, Collaborator, UsernameRecord,
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
-  AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
+  AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
@@ -2088,6 +2088,29 @@ export async function listCommunityAudit(communityId: string): Promise<Community
 export async function getStanding(): Promise<AccountStanding | null> {
   const rows = unwrap(await supabase.rpc('my_standing')) as AccountStanding[] | null
   return rows?.[0] ?? null
+}
+
+/**
+ * What a locked-out account is told, and the way back in.
+ *
+ * Asked only when the row already says somebody is shut out - the profile
+ * carries `is_suspended`, so a platform where nobody is suspended makes none
+ * of these calls.
+ */
+export async function accountStanding(): Promise<AccountLock | null> {
+  const rows = unwrap(await supabase.rpc('my_account_standing')) as AccountLock[] | null
+  return rows?.[0] ?? null
+}
+
+/**
+ * Coming back after a suspension has run out.
+ *
+ * Time does not lift it by itself: somebody has to say they are back, which
+ * is the moment the rules can be put in front of them again. Refuses a
+ * suspension still running and refuses a termination outright, and says so.
+ */
+export async function reactivateAccount(): Promise<boolean> {
+  return (unwrap(await supabase.rpc('reactivate_my_account')) as boolean) ?? false
 }
 
 export async function listViolations(): Promise<Violation[]> {

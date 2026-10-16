@@ -1,17 +1,17 @@
-import { kobbyArt } from '@/components/brand/Kobby'
+import { Icon } from '@/components/brand/Icon'
 import { cn } from '@/lib/cn'
 
 /**
  * What stands in for a picture that is not there.
  *
- * Staw picked it: Kobby holding an empty box, "when an image doesnt load
- * theres the image i sent u". It is the right choice for the reason a
- * broken-image icon is the wrong one - a grey frame with a torn corner says
- * the page is broken, and this says the box is empty, which is what actually
- * happened.
+ * Staw's own mark, the torn square: "the not loading image was this one".
+ * Drawn as a mask rather than as a picture, like every other icon of his on
+ * the site, so it takes the colour of whatever it is sitting in and is not a
+ * grey shape on one theme and a hole on the other.
  *
- * It fills whatever it is put in and never bobs: a card full of these would
- * be a card full of movement, and nothing here is being celebrated.
+ * Quiet on purpose. This is the most common thing on the page when something
+ * is wrong, and a loud one turns a slow network into a page that looks
+ * broken.
  *
  * `why` is said out loud for anybody reading with their ears, and shown
  * underneath when there is room for it. An item that is waiting to be looked
@@ -24,17 +24,23 @@ export function Missing({ why, className }: { why?: string; className?: string }
       role="img"
       aria-label={why ?? 'No picture'}
       className={cn(
-        'grid h-full w-full place-items-center gap-1 bg-media p-3 text-center',
+        'flex h-full w-full flex-col items-center justify-center gap-2 bg-media p-3 text-center',
         className,
       )}
     >
-      <img
-        src={kobbyArt.emptyBox}
-        alt=""
-        aria-hidden="true"
-        loading="lazy"
-        decoding="async"
-        className="max-h-[70%] w-auto max-w-[70%] select-none object-contain opacity-80"
+      {/*
+        * Sized by font size rather than by a height class: an icon is drawn
+        * at one em, and a height put on it from outside loses to that
+        * depending on which rule Tailwind happens to write last. Set the em
+        * and it is the size it is asked for, everywhere.
+        *
+        * Fixed rather than a share of the box, so the mark sits in the same
+        * place whether or not there is a line under it.
+        */}
+      <Icon
+        name="broken-image"
+        className="shrink-0 opacity-40"
+        style={{ fontSize: '3.25rem' }}
       />
       {why && (
         <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-muted">

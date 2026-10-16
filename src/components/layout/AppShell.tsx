@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Locked } from '@/components/social/Locked'
 import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { NoticeBar } from './NoticeBar'
@@ -31,6 +32,10 @@ export function AppShell() {
 
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 
+  const letThrough = ['/standing', '/support', '/guidelines', '/policies', '/terms', '/privacy']
+  const locked = !!profile?.is_suspended
+    && !letThrough.some((one) => location.pathname.startsWith(one))
+
 
   return (
     <ChatDock>
@@ -60,7 +65,15 @@ export function AppShell() {
           {/* Pages put their own ad slots where they want them; this only
               makes sure two slots on one page do not land on one ad. */}
           <AdsProvider>
-            <Outlet />
+            {/*
+              * A shut-out account sees the one screen that explains it,
+              * wherever it was going. Decided from the row the profile
+              * already carries, so nothing is asked on a load where nobody
+              * is suspended - and the pages it does let through are the
+              * ones a suspension must not close: the record and the appeal
+              * on it, support, and the rules themselves.
+              */}
+            {locked ? <Locked /> : <Outlet />}
           </AdsProvider>
         </main>
 
