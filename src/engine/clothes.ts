@@ -157,27 +157,42 @@ export const SHEET = { width: 585, height: 559 }
 
 /** The torso's six panels, which are the same on a shirt and on trousers. */
 const TORSO_PANELS: Record<Side, Region> = {
-  top: { x: 231, y: 10, w: 128, h: 64 },
-  left: { x: 167, y: 74, w: 64, h: 128 },
+  top: { x: 231, y: 8, w: 128, h: 64 },
+  left: { x: 165, y: 74, w: 64, h: 128 },
   front: { x: 231, y: 74, w: 128, h: 128 },
-  right: { x: 359, y: 74, w: 64, h: 128 },
-  back: { x: 423, y: 74, w: 128, h: 128 },
-  bottom: { x: 231, y: 202, w: 128, h: 64 },
+  right: { x: 361, y: 74, w: 64, h: 128 },
+  back: { x: 427, y: 74, w: 128, h: 128 },
+  bottom: { x: 231, y: 204, w: 128, h: 64 },
 }
 
 /*
  * A limb's four faces, in the order they lie across its block, and which of
  * those four the lid and floor sit over. The avatar's left limb and its
  * right one are mirror images of each other on the sheet.
+ *
+ * The panels are 64 wide with two pixels between them, which is why the
+ * pitch is 66 and not the cell size. Those two pixels are where the sheet
+ * draws its own lines, so that nothing a creator can see sits inside a
+ * panel and ends up printed on the garment.
  */
-const LIMBS = [
-  { at: 16, across: ['back', 'left', 'front', 'right'] as Side[], flapAt: 3 },
-  { at: 313, across: ['left', 'front', 'right', 'back'] as Side[], flapAt: 0 },
-]
+const LIMBS: Record<'left' | 'right', { at: number; across: Side[]; flapAt: number }> = {
+  /*
+   * Keyed by which arm or leg it is, and not by the order the parts happen
+   * to be listed in, because the sheet puts the avatar's **right** limb on
+   * the left of the page. Reading them off in list order put every sleeve on
+   * the wrong arm - it survives being looked at, because a sleeve is nearly
+   * symmetrical and most shirts do not care until one of them does.
+   */
+  right: { at: 19, across: ['back', 'left', 'front', 'right'], flapAt: 3 },
+  left: { at: 308, across: ['left', 'front', 'right', 'back'], flapAt: 0 },
+}
 
-const LIMB_ROW = 346
-const LIMB_LID = 282
-const LIMB_FLOOR = 474
+/** Panel to panel across a strip: 64 of panel and 2 of gap. */
+const PITCH = CELL + 2
+
+const LIMB_ROW = 355
+const LIMB_LID = 289
+const LIMB_FLOOR = 485
 
 export function templateFor(kind: Clothing): Template {
   const regions: Record<string, Region> = {}
@@ -187,17 +202,17 @@ export function templateFor(kind: Clothing): Template {
     regions[key(body as BodyPart, side)] = { ...TORSO_PANELS[side] }
   }
 
-  limbs.forEach((part, nth) => {
-    const { at, across, flapAt } = LIMBS[nth]
+  for (const part of limbs) {
+    const { at, across, flapAt } = LIMBS[part.startsWith('Right') ? 'right' : 'left']
     across.forEach((side, column) => {
-      const x = at + column * CELL
+      const x = at + column * PITCH
       regions[key(part as BodyPart, side)] = { x, y: LIMB_ROW, w: CELL, h: CELL * 2 }
       if (column === flapAt) {
         regions[key(part as BodyPart, 'top')] = { x, y: LIMB_LID, w: CELL, h: CELL }
         regions[key(part as BodyPart, 'bottom')] = { x, y: LIMB_FLOOR, w: CELL, h: CELL }
       }
     })
-  })
+  }
 
   return { kind, width: SHEET.width, height: SHEET.height, regions }
 }
@@ -295,24 +310,23 @@ export function wrapToTemplate(
  * The template a creator draws into, as a picture.
  *
  * Drawn from the same regions the wrapping reads, so it cannot describe a
- * layout the body does not actually use. Every region is outlined and named,
- * because an unlabelled template is a puzzle: somebody draws a sleeve, puts
- * it on, and finds it on the back of the other arm.
+ * layout the body does not actually use.
  *
- * Staw asked for it to be "a bit more like roblox but without copying them,
- * and also make it aesthetic". What that means in practice is three things
- * their sheet gets right and the first version here did not: the front of
- * each part reads as the front at a glance, every panel says which way is
- * up, and the whole sheet is one picture rather than a scatter of boxes.
+ * **The panels are empty, and that is the whole design.** Staw, holding up
+ * the sheet everybody already draws into: "same exact template as roblox but
+ * make it a different design for the images on it - the stuff that are not
+ * apart of the clothing". The layout is the one every creator has muscle
+ * memory for, down to the two pixels between panels; everything this file
+ * draws - the field, the lines, the names, the notes - sits outside the
+ * panels, in those two pixels and in the margins the layout leaves over.
  *
- * So each part is a strip with its name down the side, the front panel is
- * the only one filled in the brand colour, the seams between panels are
- * drawn as hairlines rather than full boxes, and there is a centre line and
- * a corner tick on each panel - which is the thing you actually need when
- * lining a pocket up with the one on the other side.
+ * So nothing here can end up on a garment. The first version of this drew
+ * faint guides inside each panel, which is a guide on the sheet and a ghost
+ * on the shirt of anybody who did not paint over every corner of it.
  *
- * Everything drawn here ends up in the texture if the creator does not paint
- * over it, so it is all kept faint on purpose. Guides, not decoration.
+ * The panels are cleared to transparent rather than filled white, because a
+ * clear pixel is now a clear pixel on the body: a sleeveless shirt is a
+ * sheet with the sleeve panels left alone.
  */
 export function drawTemplate(sheet: Template, canvas: HTMLCanvasElement) {
   canvas.width = sheet.width
@@ -320,13 +334,36 @@ export function drawTemplate(sheet: Template, canvas: HTMLCanvasElement) {
   const brush = canvas.getContext('2d')
   if (!brush) return canvas
 
+  const FIELD = '#e4e5ea'
+  const LINE = '#bfc3cd'
+  const QUIET = '#9aa1b0'
+  const LOUD = '#c7cad3'
+  const BRAND = '#1b34e8'
+  const type = 'system-ui, -apple-system, Segoe UI, sans-serif'
+
   brush.clearRect(0, 0, sheet.width, sheet.height)
+  brush.fillStyle = FIELD
+  brush.fillRect(0, 0, sheet.width, sheet.height)
   brush.textBaseline = 'top'
 
+  // Every panel punched out of the field, and a hairline round it drawn in
+  // the gap beside it rather than on it.
+  for (const region of Object.values(sheet.regions)) {
+    brush.clearRect(region.x, region.y, region.w, region.h)
+  }
+  brush.strokeStyle = LINE
+  brush.lineWidth = 1
+  for (const region of Object.values(sheet.regions)) {
+    brush.strokeRect(region.x - 0.5, region.y - 0.5, region.w + 1, region.h + 1)
+  }
+
   /*
-   * Grouped back into parts, because the sheet is laid out as one strip per
-   * part and the drawing wants to say so - a name down the side of a strip
-   * and a box around it, neither of which a loop over loose regions can do.
+   * Each part's name, large and quiet, in the margin its lid leaves empty.
+   *
+   * Which margin is not fixed: the two limbs are mirrored, so a corner that
+   * is open on one of them is a sleeve on the other. The name goes on the
+   * side of the strip the lid is not, which is the one rule that holds for
+   * all three strips and for trousers as well as shirts.
    */
   const strips = new Map<string, Region[]>()
   for (const [name, region] of Object.entries(sheet.regions)) {
@@ -336,101 +373,125 @@ export function drawTemplate(sheet: Template, canvas: HTMLCanvasElement) {
     else strips.set(part, [region])
   }
 
+  const body = COVERS[sheet.kind][0] as string
+  const spaced = (word: string) => word.split('').join(' ')
+
   for (const [part, regions] of strips) {
     const left = Math.min(...regions.map((one) => one.x))
     const right = Math.max(...regions.map((one) => one.x + one.w))
-    const top = Math.min(...regions.map((one) => one.y))
-    const bottom = Math.max(...regions.map((one) => one.y + one.h))
+    const lid = sheet.regions[`${part}.top`]
+    const floor = sheet.regions[`${part}.bottom`]
+    const band = part === body ? lid : floor
+    if (!band) continue
 
-    // The strip's own ground, so a part reads as one object unfolded.
-    brush.fillStyle = 'rgba(255,255,255,0.035)'
-    brush.fillRect(left, top, right - left, bottom - top)
+    const lidIsLeft = lid ? lid.x + lid.w / 2 < (left + right) / 2 : true
+    const words = part.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
 
     /*
-     * The part's name, large and faint, in the band the lid leaves empty -
-     * on whichever side of the strip the lid is not. The limbs are mirrored,
-     * so a fixed corner puts the name inside a sleeve on one of them.
+     * Sized to the gap it is standing in rather than set once. The gap is
+     * whatever the lid leaves over, which is not the same on the torso as on
+     * a limb, and a name that is one letter too long for it gets that letter
+     * cut off by the panel beside it.
      */
-    const lid = sheet.regions[`${part}.top`]
-    const lidLeftOfMiddle = lid
-      ? lid.x + lid.w / 2 < (left + right) / 2
-      : true
+    const room = (lidIsLeft ? sheet.width - 16 - (band.x + band.w + 8) : band.x - 8 - 16)
     brush.save()
-    brush.fillStyle = 'rgba(27,52,232,0.12)'
-    brush.font = '700 22px system-ui, sans-serif'
-    brush.textAlign = lidLeftOfMiddle ? 'right' : 'left'
-    brush.textBaseline = 'bottom'
+    brush.fillStyle = LOUD
+    brush.textBaseline = 'middle'
+    brush.textAlign = lidIsLeft ? 'right' : 'left'
+    let size = 26
+    brush.font = `700 ${size}px ${type}`
+    while (size > 13 && brush.measureText(spaced(words)).width > room) {
+      size -= 1
+      brush.font = `700 ${size}px ${type}`
+    }
     brush.fillText(
-      part.toUpperCase(),
-      lidLeftOfMiddle ? right - 4 : left + 4,
-      (lid ? lid.y + lid.h : top + 34) - 6,
+      spaced(words),
+      lidIsLeft ? sheet.width - 16 : 16,
+      band.y + band.h / 2,
     )
     brush.restore()
     brush.textBaseline = 'top'
-  }
-
-  for (const [name, region] of Object.entries(sheet.regions)) {
-    const [part, side] = name.split('.')
-    const front = side === 'front'
-
-    brush.fillStyle = front ? 'rgba(27,52,232,0.12)' : 'rgba(255,255,255,0.045)'
-    brush.fillRect(region.x, region.y, region.w, region.h)
-
-    // The seam. A hairline, in the brand colour on the front and grey
-    // elsewhere, so the panel somebody is looking for is the lit one.
-    brush.strokeStyle = front ? 'rgba(27,52,232,0.55)' : 'rgba(140,150,180,0.35)'
-    brush.lineWidth = 1
-    brush.strokeRect(region.x + 0.5, region.y + 0.5, region.w - 1, region.h - 1)
 
     /*
-     * The centre line, dashed, down every panel. This is the guide that
-     * does real work: a logo on the chest and a stripe down a sleeve are
-     * both "find the middle", and counting pixels on a template is how
-     * everybody's first shirt ends up a little to the left.
+     * And under a limb's name, the order its faces lie in across the sheet.
+     * This is the thing people actually get wrong - the two arms do not
+     * read the same way, and a sleeve drawn to the wrong order comes out on
+     * the back of the other arm with no clue as to why.
      */
-    const middle = Math.round(region.x + region.w / 2) + 0.5
+    if (part === body) continue
+    const across = Object.entries(sheet.regions)
+      .filter(([name, one]) => name.startsWith(`${part}.`) && one.h > CELL)
+      .sort(([, one], [, other]) => one.x - other.x)
+      .map(([name]) => name.split('.')[1])
     brush.save()
-    brush.setLineDash([3, 5])
-    brush.strokeStyle = front ? 'rgba(27,52,232,0.30)' : 'rgba(140,150,180,0.18)'
-    brush.beginPath()
-    brush.moveTo(middle, region.y + 3)
-    brush.lineTo(middle, region.y + region.h - 3)
-    brush.stroke()
+    brush.fillStyle = QUIET
+    brush.font = `500 10px ${type}`
+    brush.textAlign = lidIsLeft ? 'right' : 'left'
+    brush.fillText(
+      across.join('  ·  '),
+      lidIsLeft ? sheet.width - 17 : 17,
+      band.y + band.h / 2 + 20,
+    )
     brush.restore()
-
-    /*
-     * A tick in the top two corners: which end is up, without a word for
-     * it. A panel upside down is the mistake that survives being looked at,
-     * because a sleeve is nearly symmetrical and a stripe does not care.
-     */
-    brush.strokeStyle = front ? 'rgba(27,52,232,0.5)' : 'rgba(140,150,180,0.3)'
-    brush.beginPath()
-    brush.moveTo(region.x + 0.5, region.y + 7.5)
-    brush.lineTo(region.x + 0.5, region.y + 0.5)
-    brush.lineTo(region.x + 7.5, region.y + 0.5)
-    brush.moveTo(region.x + region.w - 7.5, region.y + 0.5)
-    brush.lineTo(region.x + region.w - 0.5, region.y + 0.5)
-    brush.lineTo(region.x + region.w - 0.5, region.y + 7.5)
-    brush.stroke()
-
-    brush.font = `${front ? 700 : 500} 10px system-ui, sans-serif`
-    brush.fillStyle = front ? 'rgba(27,52,232,0.85)' : 'rgba(120,130,160,0.8)'
-    brush.fillText(side.toUpperCase(), region.x + 4, region.y + 4)
-    if (front) {
-      brush.fillStyle = 'rgba(27,52,232,0.6)'
-      brush.font = '500 10px system-ui, sans-serif'
-      brush.fillText(part, region.x + 4, region.y + 17)
-    }
   }
 
   /*
-   * The sheet's own label, in the gap at the top left where no region sits.
-   * A downloaded file that says what it is and how big it is saves the one
-   * question everybody asks after resizing it by accident.
+   * The corner that says what the file is. A sheet that has been resized by
+   * accident is the commonest way a shirt comes out blurred, and the size is
+   * the one thing nobody can read off the picture itself.
    */
-  brush.font = '700 10px system-ui, sans-serif'
-  brush.fillStyle = 'rgba(27,52,232,0.45)'
-  brush.fillText(`KOBBLON ${sheet.kind.toUpperCase()} ${sheet.width}x${sheet.height}`, 2, 1)
+  brush.save()
+  brush.fillStyle = BRAND
+  brush.fillRect(16, 16, 4, 40)
+  brush.fillStyle = '#4a4f5e'
+  brush.font = `800 20px ${type}`
+  brush.fillText('KOBBLON', 28, 15)
+  brush.fillStyle = QUIET
+  brush.font = `600 11px ${type}`
+  brush.fillText(`${sheet.kind.toUpperCase()} TEMPLATE`, 29, 39)
+  brush.font = `500 10px ${type}`
+  brush.fillText(`${sheet.width} × ${sheet.height}`, 29, 53)
+  brush.restore()
+
+  /*
+   * The three things worth knowing, in the margin beside the torso. Said as
+   * short lines rather than a paragraph: this is a picture somebody opens in
+   * a paint program, not a page they read.
+   */
+  const notes = [
+    'The empty squares are',
+    'the garment. Everything',
+    'else is this sheet',
+    'talking to you, and is',
+    'not painted on.',
+    '',
+    'Clear pixels stay clear',
+    'on the avatar, so a gap',
+    'here is skin or what is',
+    'worn underneath, never',
+    'white.',
+    '',
+    'Keep the size.',
+    'Save as PNG.',
+  ]
+  brush.save()
+  brush.fillStyle = QUIET
+  brush.font = `500 11px ${type}`
+  notes.forEach((line, nth) => brush.fillText(line, 17, 80 + nth * 15))
+  brush.restore()
+
+  /*
+   * And last, the panels again.
+   *
+   * Everything above is laid out to keep clear of them, and this is the line
+   * that makes that true rather than intended: a letter that strays into a
+   * panel because a font fell back or a part got a longer name is a letter
+   * printed on somebody's shirt. Cutting it off looks wrong on the sheet,
+   * which is exactly where it should look wrong.
+   */
+  for (const region of Object.values(sheet.regions)) {
+    brush.clearRect(region.x, region.y, region.w, region.h)
+  }
 
   return canvas
 }

@@ -7727,3 +7727,47 @@ hearts. The split is worth copying: **person icons mean friendship** (a
 request and an answer, two-sided), **the heart means following** (one-sided,
 no answer). If a panel of yours has a Follow control on a person icon, swap
 it.
+
+## Round eighty-eight
+
+**The template geometry moved again, and this time it is measured rather
+than approximated.** Staw put the sheet everybody already draws into next to
+ours: "same exact template as roblox but make it a different design for the
+images on it - the stuff that are not apart of the clothing". So the layout
+is now the real one, off the real file, and only the furniture is ours.
+
+What changed in `templateFor`, in numbers:
+
+- Torso: lid `(231, 8)`, row at `y 74` with sides at `x 165` and `x 361`,
+  front `x 231`, back `x 427`, floor `(231, 204)`. Panels are 64 or 128 wide
+  with **two pixels between them**, so the pitch across a strip is 66, not
+  64.
+- Limbs: the strips start at `x 19` and `x 308`, the row is `y 355`, the lid
+  `y 289`, the floor `y 485`.
+- **The avatar's right limb is the strip on the left of the page**, and it
+  was not. `LIMBS` was read off in the order the parts are listed, which put
+  every sleeve on the opposite arm. It is keyed by `left`/`right` now. If you
+  cached a wrap or a preview from before this, drop it.
+
+The sheet is still 585 x 559 and `PIXELS_PER_STON` is unchanged.
+
+**The drawing is all outside the panels now.** The panels are cleared to
+transparent and nothing is drawn into them - no guide line, no centre line,
+no corner tick, no faint fill. The old sheet drew those inside each panel,
+which is a guide on the template and a ghost on the shirt of anybody who did
+not paint over every corner. The field, the hairlines, the part names and the
+notes live in the two-pixel gaps and the margins the layout leaves over, and
+`drawTemplate` clears the panels **again** as its last act, so a letter that
+strays gets cut off on the sheet rather than printed on a garment.
+
+If you render the template anywhere in the Workspace, that is the rule to
+copy: **a panel is the garment.** `grab-templates.mjs` at the root of this
+repository regenerates the two PNGs and fails if any panel has a pixel in it.
+
+The furniture itself is ours: a grey field, the Kobblon wordmark and the size
+in the top left, the part names spaced out in the margins, and under each
+limb the order its faces lie in across the sheet - which is the thing people
+actually get wrong, since the two limbs do not read the same way.
+
+Nothing about wrapping, the two-layer alpha shader or `K6` changed in this
+round. 169 engine checks pass.
