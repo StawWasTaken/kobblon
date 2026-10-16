@@ -33,7 +33,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
   faCircleNotch, faCheck, faPlus, faShuffle, faCamera, faMagnifyingGlass,
-  faEraser, faBookmark, faImage, faCube,
+  faEraser, faBookmark, faImage, faCube, faClock,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -57,7 +57,7 @@ import {
   catalogUrl, assetUrl, refreshPortrait, cardFor, saveOutfit,
 } from '@/lib/api'
 import { K6_PARTS } from '@/engine'
-import type { AvatarItem, AvatarPiece } from '@/types/db'
+import type { AvatarItem, AvatarPiece, AvatarSlot } from '@/types/db'
 import type { K6Part } from '@/engine'
 import { forgetHeadshot } from '@/lib/headshots'
 import { Outfits } from '@/components/avatar/Outfits'
@@ -65,6 +65,7 @@ import { Recommended } from '@/components/catalog/Recommended'
 import { avatarKindLabels } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
+import { ColourPicker } from '@/components/ui/ColourPicker'
 import { Studio } from '@/components/avatar/Studio'
 
 /** The drawers, in the order somebody opens them. */
@@ -86,6 +87,38 @@ const DRAWERS = [
 
 type Drawer = (typeof DRAWERS)[number]['id']
 
+/**
+ * The sub-divisions inside a drawer.
+ *
+ * Staw: "id like multiple subdivisions for clothing: shirts, trousers,
+ * tdecals / then later we'll separate acessories with hats, front
+ * accessories, back accessories, etc (unless you can do it now properly)".
+ *
+ * It can be done now properly, because the wardrobe already stores a slot
+ * on every item and the slots are exactly the divisions he is describing.
+ * Nothing is guessed from a name; `Everything` is first so the drawer
+ * opens the way it always did.
+ *
+ * A division with nothing in it is not drawn. A row of empty categories is
+ * a wardrobe telling somebody about the shape of the database.
+ */
+const PARTS: Partial<Record<Drawer, { id: string; label: string; slots: AvatarSlot[] }[]>> = {
+  clothing: [
+    { id: 'shirt', label: 'Shirts', slots: ['shirt'] },
+    { id: 'trousers', label: 'Trousers', slots: ['trousers'] },
+    { id: 'tdecal', label: 'T-decals', slots: ['tdecal'] },
+  ],
+  accessories: [
+    { id: 'hat', label: 'Hats', slots: ['hat'] },
+    { id: 'hair', label: 'Hair', slots: ['hair'] },
+    { id: 'front', label: 'Front', slots: ['front'] },
+    { id: 'back', label: 'Back', slots: ['back'] },
+    { id: 'neck', label: 'Neck', slots: ['neck'] },
+    { id: 'waist', label: 'Waist', slots: ['waist'] },
+    { id: 'hands', label: 'Hands', slots: ['leftHand', 'rightHand'] },
+  ],
+}
+
 /** Which drawer each kind of thing lives in. */
 const DRAWER_OF: Record<string, Drawer> = {
   shirt: 'clothing', trousers: 'clothing', tdecal: 'clothing',
@@ -101,10 +134,28 @@ const DRAWER_OF: Record<string, Drawer> = {
  * picker.
  */
 const SKIN = ['#f2d08a', '#e8b878', '#d99a62', '#b9743f', '#8a5230', '#5e3620']
-const CLOTH = [
-  '#f4f6ff', '#c9cedb', '#8d95a6', '#4a5166', '#2a2f45', '#14161f',
-  '#1b34e8', '#3a50ff', '#1cae71', '#25d68c', '#ff0033', '#ff8a1b',
-  '#9b1be8', '#e8c91b', '#8a5230', '#0d1349',
+/*
+ * Three shelves rather than one row of sixteen.
+ *
+ * Staw asked for "a bit more colours", and the answer to that is not a
+ * longer row - a row of forty is a row nobody scans. Grouped by what they
+ * are for, because somebody choosing a colour is usually choosing a mood
+ * first and a hue second.
+ */
+const BRIGHT = [
+  '#1b34e8', '#3a50ff', '#4f8cff', '#00c2d6', '#1cae71', '#25d68c',
+  '#8ee34a', '#e8c91b', '#ffb020', '#ff8a1b', '#ff0033', '#ff4d7e',
+  '#d74bd6', '#9b1be8', '#6b4bff',
+]
+
+const QUIET = [
+  '#f4f6ff', '#dfe3ef', '#c9cedb', '#a7aec0', '#8d95a6', '#6b7488',
+  '#c7b9a3', '#a8907a', '#8a5230', '#5e3620', '#7f8f6b', '#5c6e58',
+]
+
+const DARK = [
+  '#4a5166', '#363c50', '#2a2f45', '#1c2033', '#14161f', '#0d1349',
+  '#111827', '#000000',
 ]
 
 const DEFAULT_BODY: Record<string, string> = {
@@ -124,6 +175,8 @@ export default function MyAvatar() {
 
   const [drawer, setDrawer] = useState<Drawer>('clothing')
   const [term, setTerm] = useState('')
+  /** Which sub-division of the open drawer, or null for all of it. */
+  const [part, setPart] = useState<string | null>(null)
   const [keeping, setKeeping] = useState(false)
   /** Which way the body is being looked at: in three dimensions, or flat. */
   const [mode, setMode] = useState<'picture' | 'body'>('body')
@@ -335,8 +388,24 @@ export default function MyAvatar() {
   const wearing = (worn.data ?? []).filter((p) => p.slot && p.item_id)
 
   /** Everything you own that belongs in the open drawer, narrowed by the box. */
-  const shelf = (owned.data ?? [])
-    .filter((item) => DRAWER_OF[item.kind] === drawer)
+  /** Everything in the open drawer, before the divisions narrow it. */
+  const drawerItems = (owned.data ?? []).filter((item) => DRAWER_OF[item.kind] === drawer)
+
+  /*
+   * Only the divisions that have something in them, with their counts, so
+   * the row says what is there rather than what could be.
+   */
+  const divisions = (PARTS[drawer] ?? [])
+    .map((one) => ({
+      ...one,
+      how_many: drawerItems.filter((item) => one.slots.includes(item.slot)).length,
+    }))
+    .filter((one) => one.how_many > 0)
+
+  const open_part = divisions.find((one) => one.id === part) ?? null
+
+  const shelf = drawerItems
+    .filter((item) => !open_part || open_part.slots.includes(item.slot))
     .filter((item) => !term.trim()
       || item.name.toLowerCase().includes(term.trim().toLowerCase()))
 
@@ -442,7 +511,7 @@ export default function MyAvatar() {
             <button
               key={one.id}
               type="button"
-              onClick={() => { setDrawer(one.id); setTerm('') }}
+              onClick={() => { setDrawer(one.id); setTerm(''); setPart(null) }}
               aria-current={drawer === one.id}
               title={one.label}
               className={cn(
@@ -674,7 +743,7 @@ export default function MyAvatar() {
             * same component the Catalog uses, so what is suggested here and
             * what is suggested there cannot disagree.
             */}
-          <Recommended />
+          <Recommended layout="row" howMany={14} />
         </div>
 
         {/* --------------------------------------------------- the wardrobe */}
@@ -696,6 +765,31 @@ export default function MyAvatar() {
             )}
           </div>
 
+          {/*
+            * The divisions, as chips under the heading. Only drawn when
+            * there is more than one thing to choose between - a single
+            * chip saying "Shirts" beside a heading saying "Clothing" is a
+            * control with one setting, which is a label pretending to be
+            * a control.
+            */}
+          {divisions.length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              <Chip on={!part} onPick={() => setPart(null)} count={drawerItems.length}>
+                Everything
+              </Chip>
+              {divisions.map((one) => (
+                <Chip
+                  key={one.id}
+                  on={part === one.id}
+                  onPick={() => setPart(part === one.id ? null : one.id)}
+                  count={one.how_many}
+                >
+                  {one.label}
+                </Chip>
+              ))}
+            </div>
+          )}
+
           {drawer === 'outfits' ? (
             /*
              * Wearing one reloads what is on, draws the portrait again and
@@ -706,57 +800,84 @@ export default function MyAvatar() {
              */
             <Outfits onWear={() => void after('outfit', async () => {})} />
           ) : drawer === 'body' ? (
-            <Card className="space-y-5 p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <Card className="animate-pop-in space-y-5 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className="mx-auto w-32 shrink-0 rounded-2xl border border-ink-line bg-ink-raised p-3">
                   <BodyPicker
                     colours={look.body ?? DEFAULT_BODY}
                     chosen={parts}
+                    /*
+                     * Pressing a chosen part lets go of it, including the
+                     * last one.
+                     *
+                     * Staw: "one annoying thing is that you cannot
+                     * unselect a body part". It refused to go below one,
+                     * which was me stopping somebody reaching a state
+                     * where a swatch does nothing - except that a swatch
+                     * doing nothing is obvious, and a part that will not
+                     * let go is a control fighting the person using it.
+                     * Nothing chosen is a fine state; `paint` already
+                     * returns early on it and the hint below says so.
+                     */
                     onChoose={(one) => setParts((had) => (
                       had.includes(one)
-                        ? had.length > 1 ? had.filter((x) => x !== one) : had
+                        ? had.filter((x) => x !== one)
                         : [...had, one]
                     ))}
                   />
                 </div>
 
-                <div className="min-w-0 space-y-2.5">
+                <div className="min-w-0 flex-1 space-y-3">
                   <p className="text-sm font-bold">
-                    {parts.length === 1
-                      ? PART_LABELS[parts[0]]
-                      : `${parts.length} parts`}
+                    {parts.length === 0
+                      ? 'Nothing chosen'
+                      : parts.length === 1
+                        ? PART_LABELS[parts[0]]
+                        : `${parts.length} parts`}
                   </p>
                   <p className="text-xs leading-relaxed text-muted">
-                    Press a part to add it, press it again to drop it, then pick
-                    a colour. Everything chosen changes at once.
+                    {parts.length === 0
+                      ? 'Press a part of the body, then pick a colour.'
+                      : 'Press a part to add it, press it again to let go. Everything chosen changes at once.'}
                   </p>
+
                   <div className="flex flex-wrap gap-1.5">
                     <Quick onPick={() => setParts([...K6_PARTS])}>All of it</Quick>
                     <Quick onPick={() => setParts(['LeftArm', 'RightArm'])}>Both arms</Quick>
                     <Quick onPick={() => setParts(['LeftLeg', 'RightLeg'])}>Both legs</Quick>
+                    <Quick onPick={() => setParts(['Head'])}>Head</Quick>
+                    {!!parts.length && (
+                      <Quick onPick={() => setParts([])}>Let go</Quick>
+                    )}
+                  </div>
+
+                  {/*
+                    * Any colour at all, for the people who want the one
+                    * that is not on the shelf.
+                    *
+                    * The short list stays and stays first - every avatar
+                    * being one of thirty colours is a look and every
+                    * avatar being any of sixteen million is a muddle - but
+                    * refusing the wheel outright was the shelf deciding
+                    * something for somebody rather than suggesting it.
+                    */}
+                  <div className="flex items-center gap-2 border-t border-ink-line pt-3">
+                    <span className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+                      Or any colour
+                    </span>
+                    <ColourPicker
+                      value={(parts.length === 1 ? look.body?.[parts[0]] : undefined) ?? '#3a50ff'}
+                      onChange={paint}
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
-                  Skin
-                </p>
-                <Swatches
-                  colours={SKIN}
-                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
-                  busy={busy === 'paint'}
-                  onPick={paint}
-                />
-                <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
-                  Everything else
-                </p>
-                <Swatches
-                  colours={CLOTH}
-                  current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
-                  busy={busy === 'paint'}
-                  onPick={paint}
-                />
+                <Shelf label="Skin" colours={SKIN} parts={parts} look={look} busy={busy} onPick={paint} />
+                <Shelf label="Bright" colours={BRIGHT} parts={parts} look={look} busy={busy} onPick={paint} />
+                <Shelf label="Quiet" colours={QUIET} parts={parts} look={look} busy={busy} onPick={paint} />
+                <Shelf label="Dark" colours={DARK} parts={parts} look={look} busy={busy} onPick={paint} />
               </div>
             </Card>
           ) : owned.loading ? (
@@ -789,10 +910,11 @@ export default function MyAvatar() {
              * only two of them.
              */
             <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
-              {shelf.map((item) => (
+              {shelf.map((item, i) => (
                 <WornTile
                   key={item.id}
                   item={item}
+                  nth={i}
                   on={onNow.has(item.id)}
                   busy={busy === `wear:${item.id}`}
                   onToggle={() => void after(
@@ -864,6 +986,32 @@ function StageButton({ label, icon, busy, disabled, onClick }: {
   )
 }
 
+/** One of the division chips under a drawer's heading. */
+function Chip({ on, count, onPick, children }: {
+  on: boolean
+  count: number
+  onPick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      aria-pressed={on}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold',
+        'transition-colors duration-150',
+        on
+          ? 'border-brand bg-brand/15 text-white'
+          : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
+      )}
+    >
+      {children}
+      <span className={on ? 'text-white/70' : 'text-white/30'}>{count}</span>
+    </button>
+  )
+}
+
 function Quick({ onPick, children }: { onPick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -873,6 +1021,30 @@ function Quick({ onPick, children }: { onPick: () => void; children: React.React
     >
       {children}
     </button>
+  )
+}
+
+/** A labelled row of swatches. */
+function Shelf({ label, colours, parts, look, busy, onPick }: {
+  label: string
+  colours: string[]
+  parts: K6Part[]
+  look: AvatarLook
+  busy: string | null
+  onPick: (colour: string) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+        {label}
+      </p>
+      <Swatches
+        colours={colours}
+        current={parts.length === 1 ? look.body?.[parts[0]] : undefined}
+        busy={busy === 'paint'}
+        onPick={onPick}
+      />
+    </div>
   )
 }
 
@@ -893,8 +1065,8 @@ function Swatches({ colours, current, busy, onPick }: {
           title={colour}
           aria-label={colour}
           className={cn(
-            'grid h-9 w-9 place-items-center rounded-lg border-2 transition-transform',
-            'hover:scale-110 disabled:opacity-50',
+            'grid h-9 w-9 place-items-center rounded-lg border-2',
+            'transition-transform duration-150 hover:scale-110 active:scale-95 disabled:opacity-50',
             current?.toLowerCase() === colour.toLowerCase()
               ? 'border-white'
               : 'border-ink-line',
@@ -913,13 +1085,23 @@ function Swatches({ colours, current, busy, onPick }: {
   )
 }
 
-function WornTile({ item, on, busy, onToggle }: {
+function WornTile({ item, nth, on, busy, onToggle }: {
   item: AvatarItem
+  nth: number
   on: boolean
   busy: boolean
   onToggle: () => void
 }) {
   const picture = cardFor(item)
+  /*
+   * A limited, which the Catalog has always said and nowhere else did.
+   * Staw: "we dont show the limited badge outside of the catalog". Both
+   * states, because a limited that has closed is the rarer of the two and
+   * saying nothing about it is the one case somebody actually cares about.
+   */
+  const limited = !!item.sells_until
+  const closed = limited && new Date(item.sells_until!).getTime() <= Date.now()
+
   return (
     <button
       type="button"
@@ -927,9 +1109,11 @@ function WornTile({ item, on, busy, onToggle }: {
       disabled={busy}
       title={item.name}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-2xl border bg-ink-card text-left transition-colors',
+        'group flex animate-row-in flex-col overflow-hidden rounded-2xl border bg-ink-card text-left',
+        'transition-[border-color,transform] duration-150 active:scale-[0.97]',
         on ? 'border-brand' : 'border-ink-line hover:border-brand/60',
       )}
+      style={{ animationDelay: `${Math.min(nth, 12) * 25}ms` }}
     >
       {/*
         * Inset rather than bleeding to the edge.
@@ -953,8 +1137,18 @@ function WornTile({ item, on, busy, onToggle }: {
           )}
         </span>
         {on && !busy && (
-          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 place-items-center rounded-lg bg-brand text-white shadow-pop">
+          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 animate-pop-in place-items-center rounded-lg bg-brand text-white shadow-pop">
             <Icon name="checkmark" tone="currentColor" className="h-3 w-3" />
+          </span>
+        )}
+        {limited && (
+          <span className={cn(
+            'absolute bottom-3.5 left-3.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5',
+            'text-[9px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
+            closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
+          )}>
+            <Glyph icon={faClock} />
+            {closed ? 'Closed' : 'Limited'}
           </span>
         )}
       </span>

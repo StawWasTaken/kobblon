@@ -862,6 +862,11 @@ export type AvatarPiece = {
   body: Record<string, string> | null
   slot: AvatarSlot | null
   kind: AvatarKind | null
+  /**
+   * When it stopped or stops selling, so a profile can say a worn thing
+   * was a limited. Null for anything always on sale.
+   */
+  sells_until?: string | null
   item_id: string | null
   content_id: number | null
   item_name: string | null

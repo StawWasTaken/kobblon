@@ -38,6 +38,12 @@ export type WornLook = {
     contentId?: number | null
     cardUrl?: string | null
     price?: number | null
+    /**
+     * When it stopped or stops selling, so a page can say it was a
+     * limited. Carried rather than looked up: the engine draws, it does
+     * not decide what anything is.
+     */
+    sellsUntil?: string | null
     imageUrl?: string | null
     meshUrl?: string | null
     /**

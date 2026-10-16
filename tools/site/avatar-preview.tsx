@@ -123,6 +123,23 @@ createRoot(document.getElementById('root')!).render(
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-1.5">
+          {[['Everything', 9, true], ['Shirts', 2, false], ['Trousers', 2, false], ['T-decals', 5, false]].map(([label, n, on]) => (
+            <button
+              key={String(label)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold',
+                on
+                  ? 'border-brand bg-brand/15 text-white'
+                  : 'border-ink-line bg-ink-raised text-white/60',
+              )}
+            >
+              {label}
+              <span className={on ? 'text-white/70' : 'text-white/30'}>{n as number}</span>
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
           {Array.from({ length: 9 }, (_, i) => (
             <div
@@ -139,6 +156,14 @@ createRoot(document.getElementById('root')!).render(
                 {i === 0 && (
                   <span className="absolute right-3.5 top-3.5 grid h-6 w-6 place-items-center rounded-lg bg-brand text-white shadow-pop">
                     <Icon name="checkmark" tone="currentColor" className="h-3 w-3" />
+                  </span>
+                )}
+                {(i === 1 || i === 4) && (
+                  <span className={cn(
+                    'absolute bottom-3.5 left-3.5 rounded-md px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide',
+                    i === 4 ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
+                  )}>
+                    {i === 4 ? 'Closed' : 'Limited'}
                   </span>
                 )}
               </span>
