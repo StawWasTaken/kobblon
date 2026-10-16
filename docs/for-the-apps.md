@@ -7907,3 +7907,101 @@ ran ten lines deep on under two hundred characters, so the count alone said
 suspensions and bans. Nothing calls `ban_account` or `lift_account_ban`, and
 there is no suspend action in the console. The person's side of it landed
 last round; the console's side has not.
+
+## Round ninety-one
+
+**Body parts exist, and they are a shape rather than a file.** Staw: "we
+want to be able to sell bodyparts too (kobblon only can upload some)". A
+seventh kind of avatar item, `bodypart`, and the first one that is neither a
+picture nor a model: the row names a shape the engine knows how to build.
+
+Why it has to be that way, because this is the part an application cannot
+guess from the column: a part of the body is skinned to a bone and is the
+box the clothing sheet is measured against. A mesh somebody uploads is
+neither, so a shirt worn over it would land anywhere. The geometry is the
+engine's; the row names which one. That is also the whole reason the kind is
+Kobblon's: a shape has to be in the build before a row can name it.
+
+- `@/engine/bodyshapes` is new and exported from `@/engine`: `BODY_SHAPES`
+  (the shapes, by the name a row carries), `shapeFor`, `PART_FOR_SLOT` and
+  `SLOT_FOR_PART` (the wardrobe speaks in slots, the rig in parts - do not
+  write a second table), and the `WornShapes` type.
+- `K6.setShape(part, shape)` and `K6.setShapes(shapes)` on the rig. Changing
+  a part rebuilds its geometry, carries the bone over from the geometry
+  being replaced, drops the wrap marks and wraps whatever it is wearing onto
+  the new surface. Call `setShapes` once with every part, not `setShape` six
+  times.
+- `WornLook`'s pieces carry `shape?: string | null`, and `dressFrom` applies
+  every shape in the look **before** a stitch of clothing, in one call, and
+  **always** - a look with no body part in it puts the plain block back,
+  which is how taking one off works on a rig you reuse.
+
+**The box a shape lives in never changes.** A shape may move the surface
+around inside `BODY[part]` and may not leave it. That is what keeps a shirt
+fitting a narrower waist instead of needing its own sheet, and it is what
+the new engine checks measure: the part keeps the template coordinates it is
+wearing, stays inside the box, and is actually pinched rather than the plain
+block. 175/175. Looked at as well as measured - the same shirt over the plain torso
+and over the waisted one, which is in the repository as
+`tools/site/bodypart-preview.html`, and the card drawing as
+`tools/site/bodypartcard-preview.html`.
+
+**Migration 0247** does the database half, and it is wider than it sounds
+because the slot list is written down in more places than one:
+
+- `kind` gains `bodypart`, `slot` gains `torso`, and `avatar_items` gains
+  `shape text`. `avatar_item_has_its_thing` now reads "a part needs a
+  shape" - 0112's `else mesh_id is not null` made a body part impossible to
+  insert, which is the one case its `else` was never written for.
+- **`avatar_worn` carries its own copy of the slots** and it is widened
+  too. Without that half a torso can be made, bought and owned and is
+  refused the moment somebody puts it on.
+- `one_at_a_time` and the `avatar_worn_one_per_slot` index gain `torso`: two
+  torsos is not ugly, it is undefined. The index is dropped and rebuilt,
+  not `if not exists`, or the old five-slot list would have stayed.
+- `avatar_rules` gains `('bodypart', 0, 0, false, true)` - free to make,
+  free to price, Kobblon only.
+- `create_avatar_item` takes a tenth argument, `form text default null`,
+  which is the shape. **Both arities are dropped before the create**: a
+  defaulted argument overloads rather than replaces, and which one answers
+  would depend on how the caller spelled its arguments.
+- Six readers hand the shape back: `avatar_of`, `outfit_look`,
+  `avatar_item_page`, `my_avatar_items`, `my_made_avatar_items` and
+  `avatar_shelf`. Each is dropped
+  first - a `returns table` cannot gain a column in place. If you read any
+  of these positionally, there is one more column on the end.
+
+Applied twice against a local Postgres and exercised under two identities:
+Kobblon makes one, a part with no shape is refused, a part in the wrong slot
+is refused, an ordinary account is refused, a stranger buys it and wears it,
+and a second torso replaces the first rather than joining it.
+
+**Migration 0248 is the item itself: "Waisted Torso", 95 Brix, by Kobblon,
+shape `torso-girl`.** Staw asked for "a girl torso (like roblox but slightly
+more original)" and then said what he meant by the shape: "normal blocky
+torso like the regular torso but in the middle on each side it gets tight,
+like a waist". So it is the plain block, full width at the shoulders and at
+the hips, taken in on the two sides only - the chest and the back do not
+move, so it is the same torso from the front and a waist from the side.
+Named for the shape rather than for who it is for; anybody may wear it.
+Seeded in a migration rather than made in Create, because a row somebody has
+to remember to click a button for is a row that is missing from the next
+deployment. Re-runnable: it inserts nothing if a `torso-girl` is already
+there.
+
+**On the website:** Create has a Body part tile for Kobblon that picks from
+`BODY_SHAPES` instead of asking for a file, and draws it on the mannequin
+straight away; the Catalog has a Body parts shelf; the item page will wear
+one and says "It is the torso" for the slot; and My Avatar shows the parts
+you own in the **Body** drawer, beside the colours, because that drawer is
+the one about the body itself. `avatarKindLabels` says "Body part" and
+`avatarCodes` says `BODY`, so a Catalog number reads `BODY-1234`.
+
+**What is not built.** Only the torso has a shape, so `torso` is the only
+body-part slot: arms, legs and a head are added to the slot check when the
+engine grows a shape for them, and the create page offers what is in
+`BODY_SHAPES` and nothing else, on purpose. A shape cannot be swapped on an
+item after it is made - there is no `replace` for this kind, the way there
+is for a face's picture. And the staff side of warnings, suspensions and
+bans is still not built: nothing calls `ban_account` or `lift_account_ban`,
+and there is no suspend action in the console.

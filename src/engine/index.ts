@@ -48,4 +48,8 @@ export { SHAPES, isShape, geometryFor, tiledGeometry, TRUSS_BAY, type Shape } fr
 export { textureFor, bumpFor, reliefFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'
 export { buildSky, cutCross, Skybox, type Sky, type ResolveAsset } from './sky'
 export { SOCKET_FOR, socketFor } from './k6'
+export {
+  BODY_SHAPES, PART_FOR_SLOT, SLOT_FOR_PART, shapeFor,
+  type BodyShape, type WornShapes,
+} from './bodyshapes'
 export { STON, GRAVITY, K6_HEIGHT, K6_RADIUS } from './units'

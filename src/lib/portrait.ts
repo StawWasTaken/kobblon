@@ -200,6 +200,8 @@ export async function drawItemCard(item: {
   textureUrl?: string | null
   /** The mannequin's face. Without it the card is a headless body. */
   faceUrl?: string | null
+  /** Which shape in the engine, for a body part. */
+  shape?: string | null
 }, avatarUrl = '/k6/k6.glb'): Promise<Blob | null> {
   // A face is its own card. Drawing a body to show one would hide it.
   if (item.kind === 'face') return null
@@ -215,6 +217,30 @@ export async function drawItemCard(item: {
    * and twenty of those in a grid are twenty identical grey people.
    */
   const onBody = item.kind === 'shirt' || item.kind === 'trousers' || item.kind === 'tdecal'
+
+  /*
+   * A body part is the body, so its card is the mannequin built that shape
+   * and nothing else on it.
+   *
+   * Framed on the part rather than head to toe: a torso drawn as a whole
+   * figure is a card where the one thing that differs from the plain body
+   * is a third of the picture, which is how a shirt card read before Staw
+   * said to centre the shot on the piece.
+   */
+  if (item.kind === 'bodypart') {
+    if (!item.shape) return null
+    return drawPortrait(
+      {
+        body: plain,
+        pieces: [
+          { slot: 'face', imageUrl: item.faceUrl ?? null },
+          { slot: item.slot, kind: 'bodypart', shape: item.shape },
+        ],
+      },
+      avatarUrl,
+      item.slot === 'torso' ? 'shirt' : 'body',
+    )
+  }
 
   if (onBody) {
     return drawPortrait(

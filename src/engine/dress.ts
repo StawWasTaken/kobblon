@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { K6, fitToSocket, SOCKET_FOR, type K6Part, type K6Point, type WornFit } from './k6'
 import { loadMesh, releaseMesh, wearTexture, formatOf } from './meshes'
+import { PART_FOR_SLOT, type WornShapes } from './bodyshapes'
 
 /**
  * Putting somebody's avatar on a body.
@@ -58,6 +59,15 @@ export type WornLook = {
     textureUrl?: string | null
     /** Where its maker placed it. Without this, it is not the same hat. */
     fit?: WornFit | null
+    /**
+     * Which shape in the engine, for a body part.
+     *
+     * Not a thing hung off the body and not a picture painted on it: it
+     * replaces the geometry of the part it is worn on, so it is applied
+     * before anything else, because clothing is measured against the shape
+     * it is laid over.
+     */
+    shape?: string | null
   }[]
 }
 
@@ -91,6 +101,30 @@ export async function dressFrom(
   }
 
   if (look.body) body.paint(look.body as Partial<Record<K6Part, string>>)
+
+  /*
+   * The body's own shape first, in one call, before a stitch of clothing.
+   *
+   * Both halves matter. First, because `setShape` rebuilds the part and
+   * re-wraps whatever is on it - a shirt dressed before the torso changed
+   * would be laid out against a torso that no longer exists, which is this
+   * repository's oldest bug wearing a skirt. And in one call, because six
+   * parts changed one at a time is six rebuilds and five of them are thrown
+   * away.
+   */
+  const shapes: WornShapes = {}
+  for (const piece of look.pieces) {
+    const part = PART_FOR_SLOT[piece.slot]
+    if (piece.kind === 'bodypart' && piece.shape && part) shapes[part] = piece.shape
+  }
+  /*
+   * Always, rather than only when there is one: `setShapes` names every part
+   * and `setShape` does nothing where the shape has not changed, so this is
+   * also how a part that was taken off goes back to the plain block. Guarded
+   * on "is there a shape in this look" it would not - the body would keep
+   * the last one it was given, which on a reused rig is somebody else's.
+   */
+  body.setShapes(shapes)
 
   for (const piece of look.pieces) {
     if (!alive()) { undo(); return () => {} }

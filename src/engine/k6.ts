@@ -4,8 +4,9 @@ import { clone as cloneRigged } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import {
   COVERS, templateFor, wrapToTemplate, type BodyPart, type Clothing,
 } from './clothes'
-import { blockify, PLACES } from './body'
+import { blockify, partGeometry, PLACES } from './body'
 import { BODY } from './clothes'
+import type { WornShapes } from './bodyshapes'
 
 /**
  * K6, in the engine.
@@ -319,6 +320,8 @@ export class K6 {
   private clothes = new Map<Clothing, THREE.Texture>()
   /** The colour each part was painted, under whatever it is wearing. */
   private skin = new Map<K6Part, string>()
+  /** The body part on each, where one is on. */
+  private shapes = new Map<K6Part, string>()
 
   constructor(source: THREE.Group & { animations: THREE.AnimationClip[] }) {
     this.object = cloneRigged(source) as THREE.Group
@@ -566,6 +569,67 @@ export class K6 {
     }
 
     this.redress()
+  }
+
+  /**
+   * Gives a part a different shape, or takes one back to the plain block.
+   *
+   * A body part is the body, not a thing worn over it, so this swaps the
+   * geometry rather than hanging something on a socket. What it must not
+   * disturb is the skinning: every vertex of a part belongs wholly to one
+   * bone, and that bone is read off the geometry being replaced rather than
+   * looked up again - the body is already bound, and a second opinion about
+   * which bone the torso is would be a torso that follows the wrong one.
+   *
+   * The template coordinates go with the old geometry, so whatever the part
+   * is wearing is wrapped onto the new surface before anybody sees it. That
+   * is the whole reason a shape may not leave its box: the sheet is measured
+   * against the box, so a shirt lands correctly on a narrower waist instead
+   * of being re-cut for it.
+   */
+  setShape(part: K6Part, shape: string | null) {
+    const mesh = this.parts.get(part)
+    if (!mesh) return
+    if ((this.shapes.get(part) ?? null) === (shape ?? null)) return
+
+    const was = mesh.geometry
+    const bone = (was.getAttribute('skinIndex') as THREE.BufferAttribute | undefined)?.getX(0) ?? 0
+
+    const next = partGeometry(part, shape ?? undefined)
+    const count = next.getAttribute('position').count
+    const skinIndex = new Uint16Array(count * 4)
+    const skinWeight = new Float32Array(count * 4)
+    for (let i = 0; i < count; i += 1) {
+      skinIndex[i * 4] = bone
+      skinWeight[i * 4] = 1
+    }
+    next.setAttribute('skinIndex', new THREE.BufferAttribute(skinIndex, 4))
+    next.setAttribute('skinWeight', new THREE.BufferAttribute(skinWeight, 4))
+
+    mesh.geometry = next
+    was.dispose()
+    if (shape) this.shapes.set(part, shape)
+    else this.shapes.delete(part)
+
+    /*
+     * The wrap was written into the geometry that has just gone, so the
+     * marks saying it was done have to go with it - otherwise the part keeps
+     * its clothes and loses the coordinates that put them anywhere.
+     */
+    for (const kind of this.clothes.keys()) {
+      this.wrapped.delete(`${kind}:${part}`)
+      if ((COVERS[kind] as readonly string[]).includes(part)) {
+        this.wrapOnce(mesh, part, kind)
+      }
+    }
+    this.redress()
+  }
+
+  /** Every shape on at once, which is how a look names them. */
+  setShapes(shapes: WornShapes) {
+    for (const part of K6_PARTS) {
+      this.setShape(part, shapes[part] ?? null)
+    }
   }
 
   /**

@@ -26,6 +26,8 @@ export function WornPicture({
     mesh_preview_path?: string | null
     image_path?: string | null
     image_bucket?: string | null
+    /** Which shape in the engine, for a body part. */
+    shape?: string | null
   }
   className?: string
   alt?: string

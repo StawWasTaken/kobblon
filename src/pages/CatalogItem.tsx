@@ -71,6 +71,8 @@ const WHERE_WORDS: Record<string, string> = {
   waist: 'Round the waist',
   leftHand: 'In the left hand',
   rightHand: 'In the right hand',
+  // A body part is not worn over anything; it is the part itself.
+  torso: 'It is the torso',
 }
 
 // One list for the whole site, in `@/lib/kinds`, where the words live.
@@ -84,7 +86,12 @@ const KIND_WORDS = avatarKindLabels
  * is how they drift, and this one is only about what a preview shows - the
  * server decides what wearing actually does.
  */
-const ONE_AT_A_TIME = new Set(['shirt', 'trousers', 'tdecal', 'face', 'hair'])
+const ONE_AT_A_TIME = new Set([
+  'shirt', 'trousers', 'tdecal', 'face', 'hair',
+  // A part of the body, which replaces the one that is there. The server's
+  // `one_at_a_time` says the same; this is the page agreeing with it.
+  'torso',
+])
 
 export default function CatalogItem() {
   const { tag = '' } = useParams()
@@ -637,8 +644,11 @@ function ItemView({ item }: { item: AvatarItem }) {
    */
   const drawable = item.kind === 'shirt' || item.kind === 'trousers' || item.kind === 'tdecal'
 
-  /** Whether it can be put on a body at all: a model, or a picture to lay on. */
-  const canRig = !!item.mesh_path || !!item.image_path
+  /**
+   * Whether it can be put on a body at all: a model, a picture to lay on,
+   * or a shape the body is built to.
+   */
+  const canRig = !!item.mesh_path || !!item.image_path || !!item.shape
 
   /*
    * The model is fetched the first time somebody asks to see it worn, not on
@@ -669,6 +679,8 @@ function ItemView({ item }: { item: AvatarItem }) {
     meshUrl: model?.mesh ?? null,
     meshFormat: item.mesh_format ?? null,
     textureUrl: model?.skin ?? null,
+    /** Which shape in the engine, for a body part. */
+    shape: item.shape ?? null,
     // Where its maker put it, not where the measuring did.
     fit: item.fit ?? null,
   }), [item, model])

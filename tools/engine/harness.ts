@@ -401,6 +401,65 @@ Object.assign(window, {
       facing: legs.map((one) => `${one.name} ${one.facing}`).join(', '),
     }
   },
+  /*
+   * A body part changes the body's geometry, and the template coordinates
+   * live in that geometry - so the question is not whether the shape looks
+   * right, it is whether a shirt still lands on it afterwards.
+   */
+  async shapedWrap() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const { templateFor } = await import('@/engine/clothes')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+    body.setShape('Torso', 'torso-girl')
+    body.dress('shirt', new THREE.Texture())
+    const sheet = templateFor('shirt')
+
+    const part = body.parts.get('Torso')!
+    const uv = part.geometry.getAttribute('uv1') as THREE.BufferAttribute | undefined
+    const normal = part.geometry.getAttribute('normal')
+    const front = sheet.regions['Torso.front']
+    const box = {
+      u0: front.x / sheet.width,
+      u1: (front.x + front.w) / sheet.width,
+      v0: 1 - (front.y + front.h) / sheet.height,
+      v1: 1 - front.y / sheet.height,
+    }
+
+    let facing = 0
+    let inside = 0
+    let widest = 0
+    const at = part.geometry.getAttribute('position')
+    for (let i = 0; i < normal.count; i += 1) {
+      widest = Math.max(widest, Math.abs(at.getX(i)))
+      if (normal.getZ(i) < 0.9) continue
+      facing += 1
+      if (!uv) continue
+      const u = uv.getX(i)
+      const v = uv.getY(i)
+      if (u >= box.u0 - 0.001 && u <= box.u1 + 0.001
+        && v >= box.v0 - 0.001 && v <= box.v1 + 0.001) inside += 1
+    }
+
+    const shaped = body.parts.get('Torso')!.geometry.getAttribute('position')
+    let waist = Infinity
+    for (let i = 0; i < shaped.count; i += 1) {
+      // The middle third of the part, which is where a waist is.
+      const y = shaped.getY(i)
+      if (Math.abs(y - 5.5) > 0.4) continue
+      waist = Math.min(waist, Math.abs(shaped.getX(i)))
+    }
+
+    body.dispose()
+    return {
+      wrapped: !!uv,
+      allInside: facing > 0 && inside === facing,
+      /** It has to stay inside the box the template is measured against. */
+      insideItsBox: widest <= 1.8 + 0.001,
+      /** And it has to actually be a waist, or it is the plain block. */
+      pinched: waist < 1.8 * 0.95,
+      facing,
+    }
+  },
   async faceOnOff() {
     const { K6, loadK6Source } = await import('@/engine/k6')
     const body = new K6(await loadK6Source('/k6/k6.glb'))

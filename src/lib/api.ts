@@ -3225,6 +3225,13 @@ export function cardFor(item: {
   if ((item.kind === 'shirt' || item.kind === 'trousers') && !item.preview_path) {
     return null
   }
+  /*
+   * A body part has no picture of its own at all - it is a shape the engine
+   * builds - so without a saved card there is nothing to fall back to. Null
+   * rather than the empty address the fallbacks below would hand back, so
+   * `WornPicture` draws it instead of showing a torn mark.
+   */
+  if (item.kind === 'bodypart' && !item.preview_path) return null
   // Drawn for this item, then the model's own card, then the thing itself.
   //
   // The middle one is the answer to accessories showing nothing: a mesh in
@@ -3270,6 +3277,7 @@ export async function ensureAvatarCard(item: AvatarItem, me: string): Promise<st
     meshUrl,
     meshFormat: item.mesh_path ? formatOf(item.mesh_path) : null,
     textureUrl,
+    shape: item.shape ?? null,
   })
 
   // Only once the new one is saved, so a failure leaves the card it had
@@ -4769,6 +4777,8 @@ export async function drawAvatarCard(
     /** The real one, from the row's `file_path`: a signed address hides it. */
     meshFormat?: string | null
     textureUrl?: string | null
+    /** Which shape in the engine, for a body part. */
+    shape?: string | null
   },
 ): Promise<string | null> {
   /*
@@ -4809,6 +4819,11 @@ export async function createAvatarItem(input: {
   textureId?: string | null
   /** The Community it belongs to, if it is not yours. */
   communityId?: string | null
+  /**
+   * Which shape in the engine, for a body part. There is no file to send:
+   * the engine builds the geometry, and the row names which one.
+   */
+  shape?: string | null
 }): Promise<string> {
   return unwrap(await supabase.rpc('create_avatar_item', {
     item_kind: input.kind,
@@ -4820,6 +4835,7 @@ export async function createAvatarItem(input: {
     model: input.meshId ?? null,
     texture: input.textureId ?? null,
     maker: input.communityId ?? null,
+    form: input.shape ?? null,
   })) as string
 }
 
@@ -4904,6 +4920,8 @@ async function buildLook(worn: AvatarPiece[]): Promise<PortraitLook> {
       meshFormat: piece.mesh_format ?? (piece.mesh_path ? formatOf(piece.mesh_path) : null),
       textureUrl: piece.texture_path ? await assetUrl(piece.texture_path).catch(() => null) : null,
       fit: piece.fit ?? null,
+      /** Which shape in the engine, for a body part. */
+      shape: piece.shape ?? null,
       /** When it stopped selling, so a profile can say it was a limited. */
       sellsUntil: piece.sells_until ?? null,
     })),

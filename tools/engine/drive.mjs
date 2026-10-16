@@ -1940,6 +1940,14 @@ check('and a leg\'s inner face lands on the panel the sheet calls its inner one'
   legWrap.innerFaceInwards,
   `inner face inwards on both legs: ${legWrap.innerFaceInwards}`)
 
+const bodyPart = await p.evaluate(() => window.shapedWrap())
+check('a body part keeps the template coordinates it is wearing',
+  bodyPart.wrapped && bodyPart.allInside, `${bodyPart.facing} vertices facing front`)
+check('and stays inside the box the template is measured against',
+  bodyPart.insideItsBox, "widest half-width against the block's 1.8")
+check('and is actually pinched at the waist rather than the plain block',
+  bodyPart.pinched, 'waist narrower than the block')
+
 const faces = await p.evaluate(() => window.faceOnOff())
 check('a face goes on the front of the head and just in front of it',
   faces.on && faces.proud > 0 && faces.proud < 0.1,
