@@ -257,6 +257,33 @@ The standing rule holds until Staw says otherwise in as many words: the AI
 may warn, chat-suspend and suspend. **It may not delete an account.**
 `apply_ai_verdict` has no deletion door and that is deliberate.
 
+### Communities, in the console - what each rank may do
+
+Staw, 16 October, spelling out the Communities half of the above.
+
+- **A superadmin may transfer a Community's ownership**, and an **admin or
+  above may delete one** - both **without the owner's consent**. Staw: "we
+  can just do that if we have to". This is not a dispute-resolution flow
+  with the owner on the other end of it; it is the house taking a decision
+  about something on its own platform, and the console says who did it and
+  why in the record, which is where the accountability lives.
+- **Deleting is the same deletion a person's account gets**, and that is the
+  whole specification: the row is marked deleted, the page still exists and
+  says so rather than 404ing, everything in it is held, and **the real data
+  goes two months later**. Until then it is revertable, by the same ranks.
+  Reuse the account path rather than writing a second one - two ideas of
+  what "deleted" means is how a thing comes back half-restored.
+- **Verifying a Community, by hand**, the way a person is verified. Same
+  tick, same field, same panel.
+- **And automatically**: a Community gets the tick once its membership is a
+  high enough share of the platform's total accounts. Proportional, not a
+  fixed number - a thousand members means something different at ten
+  thousand accounts than at ten million, and a fixed threshold would hand
+  out ticks by the dozen within a year or never hand out one at all. The
+  share, where it is checked and whether it can be lost again are the three
+  things to settle when it is built; a tick that only ever goes on is a tick
+  that eventually means nothing.
+
 ## The machine runs when there is work
 
 Staw, 10 October: the AI should moderate when there is something to moderate,
