@@ -548,7 +548,7 @@ export default function CatalogItem() {
         name={item.name}
         kind={KIND_WORDS[item.kind] ?? item.kind}
         price={costs}
-        picture={cardFor(item)}
+        item={item}
         balance={profile?.pixels ?? 0}
         note={item.sells_until && !closed
           ? `A limited: it stops selling on ${new Date(item.sells_until).toLocaleDateString()}.`

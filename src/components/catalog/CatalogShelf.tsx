@@ -44,13 +44,15 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import {
   avatarShelf, buyAvatarItem, buyAvatarItems, wearAvatarItem, cardFor,
-  myFavouriteAvatarItems,
+  myFavouriteAvatarItems, favouriteAvatarItem,
   saleNow, priceNow, type CatalogSale,
 
   outfitShelf, buyOutfit, wearOutfit,
 } from '@/lib/api'
 import { useBasket, putInBasket, takeOutOfBasket, emptyBasket } from '@/hooks/useBasket'
 import { BasketDialog } from '@/components/catalog/BasketDialog'
+import { BuyDialog } from '@/components/catalog/BuyDialog'
+import { FavouritesDialog } from '@/components/catalog/FavouritesDialog'
 import type { ShelfOrder } from '@/lib/api'
 import { avatarTag, outfitTag } from '@/lib/kinds'
 import type { AvatarItem, AvatarKind } from '@/types/db'
@@ -153,8 +155,13 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
   const [most, setMost] = useState('')
   const [onlyLimited, setOnlyLimited] = useState(false)
   const [onlyFree, setOnlyFree] = useState(false)
-  /** The favourites shelf is a different question, so it is a different read. */
-  const [starredOnly, setStarredOnly] = useState(false)
+  /*
+   * The favourites are their own card now rather than a state of the shelf.
+   * Staw: "make that all the favourited items are in a popup card a bit
+   * like the basket card". As a filter it cost you the shop to look at
+   * them, and cost you them to get the shop back.
+   */
+  const [showStarred, setShowStarred] = useState(false)
   /** Whether the "Somebody…" field is open, which outlives an empty name. */
   const [pickingMaker, setPickingMaker] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
@@ -211,12 +218,20 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
   )
 
   const things = useAsync(
-    async () => (shelf === 'outfits' ? [] : starredOnly
-      ? myFavouriteAvatarItems()
-      : avatarShelf(
-        shelf === 'all' ? null : (shelf as AvatarKind), term, 60, by, order, filters,
-      )),
-    [shelf, term, by, order, filters, starredOnly],
+    async () => (shelf === 'outfits' ? [] : avatarShelf(
+      shelf === 'all' ? null : (shelf as AvatarKind), term, 60, by, order, filters,
+    )),
+    [shelf, term, by, order, filters],
+  )
+
+  /*
+   * Read when the card is opened and not before. Somebody who never opens it
+   * should not pay for the request, and somebody who does should not be
+   * shown what was starred when the page loaded an hour ago.
+   */
+  const starred = useAsync(
+    async () => (showStarred ? myFavouriteAvatarItems() : []),
+    [showStarred],
   )
 
   /*
@@ -227,10 +242,10 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
    */
   const [railWords, setRailWords] = useState<string[]>([])
   useEffect(() => {
-    if (term || by || narrowed || starredOnly) return
+    if (term || by || narrowed) return
     const found = keywordsFrom(things.data ?? [])
     if (found.length) setRailWords(found)
-  }, [things.data, term, by, narrowed, starredOnly])
+  }, [things.data, term, by, narrowed])
 
   /**
    * Buying a whole outfit: every piece they do not already own, then it goes
@@ -258,6 +273,23 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
    * sent somewhere else to wear it is two steps for one thought - and the
    * avatar page is where it goes if somebody changes their mind.
    */
+  /*
+   * Asked before the Brix move, the way the item page asks. A shelf card
+   * was the one place on the site where a press spent money with nothing
+   * in between, and the press is a small button in a grid of forty.
+   *
+   * Free, or already owned and so only being put on, goes straight through:
+   * a dialog that always appears teaches people to press through dialogs,
+   * which is the opposite of what one is for.
+   */
+  const [asking, setAsking] = useState<AvatarItem | null>(null)
+
+  const ask = (item: AvatarItem) => {
+    const costs = priceNow(item, sale.data ?? null)
+    if (item.owned || costs <= 0) { void take(item); return }
+    setAsking(item)
+  }
+
   const take = async (item: AvatarItem) => {
     setBusy(item.id)
     try {
@@ -300,7 +332,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
         * beside an avatar already has one of these above it, and two rows
         * of suggestions on one screen is a shop shouting.
         */}
-      {hero && !term && !starredOnly && <Recommended howMany={14} />}
+      {hero && !term && <Recommended howMany={14} />}
 
       {/*
         * A sale says so, at the top, with when it ends.
@@ -335,11 +367,9 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
       {profile && !profile.is_guest && (
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant={starredOnly ? 'primary' : 'subtle'}
+            variant="subtle"
             icon={faStar}
-            iconOn={starredOnly}
-            onClick={() => setStarredOnly(!starredOnly)}
-            aria-pressed={starredOnly}
+            onClick={() => setShowStarred(true)}
           >
             Favourites
           </Button>
@@ -350,11 +380,6 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
           >
             Basket{basket.length ? ` (${basket.length})` : ''}
           </Button>
-          {starredOnly && (
-            <span className="text-xs text-muted">
-              Showing what you have starred.
-            </span>
-          )}
         </div>
       )}
 
@@ -376,7 +401,6 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
         */}
       <div className={cn(
         'space-y-3 rounded-2xl border border-ink-line bg-ink-card p-3.5',
-        starredOnly && 'pointer-events-none opacity-40',
       )}>
         <div className="flex flex-wrap items-center gap-2">
           {/* The avatar page mounts this shelf without a heading above it,
@@ -610,18 +634,49 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
               busy={busy === item.id}
               canTake={!!profile && !profile.is_guest}
               inBasket={basket.some((one) => one.id === item.id)}
-              onTake={() => void take(item)}
+              onTake={() => ask(item)}
               sale={sale.data ?? null}
             />
           ))}
         </div>
       )}
 
+      <BuyDialog
+        open={!!asking}
+        onClose={() => setAsking(null)}
+        onBuy={async () => {
+          const one = asking
+          setAsking(null)
+          if (one) await take(one)
+        }}
+        busy={!!asking && busy === asking.id}
+        name={asking?.name ?? ''}
+        kind={asking?.kind ?? undefined}
+        price={asking ? priceNow(asking, sale.data ?? null) : 0}
+        item={asking}
+        balance={profile?.pixels ?? 0}
+        note={asking?.sells_until
+          ? `A limited: it stops selling on ${new Date(asking.sells_until).toLocaleDateString()}.`
+          : undefined}
+      />
+
+      <FavouritesDialog
+        open={showStarred}
+        onClose={() => setShowStarred(false)}
+        items={starred.data ?? []}
+        loading={starred.loading}
+        busy={busy}
+        canTake={!!profile && !profile.is_guest}
+        onTake={(item) => ask(item)}
+        onUnstar={(item) => { void favouriteAvatarItem(item.id, false) }}
+      />
+
       <BasketDialog
         open={showBasket}
         onClose={() => setShowBasket(false)}
         lines={basket}
         paying={paying}
+        balance={profile?.pixels ?? 0}
         onBuy={() => void (async () => {
           setPaying(true)
           try {

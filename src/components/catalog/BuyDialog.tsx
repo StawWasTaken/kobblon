@@ -17,10 +17,11 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { formatCount } from '@/lib/format'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { cn } from '@/lib/cn'
 
 export function BuyDialog({
-  open, onClose, onBuy, busy, name, kind, price, picture, balance, note,
+  open, onClose, onBuy, busy, name, kind, price, picture, item, balance, note,
 }: {
   open: boolean
   onClose: () => void
@@ -30,6 +31,21 @@ export function BuyDialog({
   kind?: string
   price: number
   picture?: string | null
+  /**
+   * The thing itself, where the caller has it. A garment has no plain
+   * address any more - its template is not its picture - so this card draws
+   * it on the mannequin like every other shelf does, and falls back to
+   * `picture` for anything that is its own picture.
+   */
+  item?: {
+    id: string
+    kind?: string | null
+    slot?: string | null
+    preview_path?: string | null
+    mesh_preview_path?: string | null
+    image_path?: string | null
+    image_bucket?: string | null
+  } | null
   /** What they hold now, so "what this leaves" is answered on the card. */
   balance: number
   /** One extra line, for a limited closing or anything else worth saying. */
@@ -56,9 +72,11 @@ export function BuyDialog({
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
-            {picture
-              ? <img src={picture} alt="" className="h-full w-full object-contain p-1" />
-              : <Glyph icon={faShirt} className="text-2xl text-white/25" />}
+            {item
+              ? <WornPicture item={item} className="p-1" />
+              : picture
+                ? <img src={picture} alt="" className="h-full w-full object-contain p-1" />
+                : <Glyph icon={faShirt} className="text-2xl text-white/25" />}
           </span>
           <div className="min-w-0">
             <p className="truncate font-display text-base font-extrabold">{name}</p>
