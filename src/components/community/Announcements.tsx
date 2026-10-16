@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faBullhorn, faPen, faTrash, faEllipsis, faPlus, faImage, faVideo, faXmark,
-  faThumbsUp, faThumbsDown,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
@@ -15,11 +14,13 @@ import { useToast } from '@/components/ui/Toast'
 import { MediaPlayer } from '@/components/create/MediaPlayer'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
+import { Reactions } from '@/components/social/Reactions'
+import { reactionsOnMany, type ReactionCount } from '@/lib/api'
 import {
-  listCommunityPosts, removeCommunityPost, saveAnnouncement, uploadCommunityImage, votePost,
+  listCommunityPosts, removeCommunityPost, saveAnnouncement, uploadCommunityImage,
 } from '@/lib/api'
 import { avatarOf } from '@/lib/avatars'
-import { formatCount, timeAgo } from '@/lib/format'
+import { timeAgo } from '@/lib/format'
 import { profileLink } from '@/lib/links'
 import type { CommunityOverview, CommunityPost } from '@/types/db'
 import { Verified } from '@/components/brand/Verified'
@@ -45,16 +46,17 @@ export function Announcements({
   const toast = useToast()
   const posts = useAsync(() => listCommunityPosts(communityId, true), [communityId])
 
+  /* Every announcement's faces in one call, not one call each. */
+  const ids = (posts.data ?? []).map((one) => String(one.id)).join(',')
+  const reactions = useAsync(
+    async () => (ids
+      ? reactionsOnMany('post', ids.split(','))
+      : {} as Record<string, ReactionCount[]>),
+    [ids],
+  )
+  const faces = reactions.data ?? {}
+
   /** Yes, no, or taking it back by pressing the one you already pressed. */
-  const vote = async (post: CommunityPost, up: boolean) => {
-    const already = up ? post.i_like : post.i_dislike
-    try {
-      await votePost(post.id, already ? null : up)
-      posts.reload()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'That did not go through.', 'error')
-    }
-  }
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CommunityPost | null>(null)
@@ -225,30 +227,22 @@ export function Announcements({
                 <MediaPlayer src={post.media_url} kind="video" className="mt-3" />
               )}
 
-              {/* An announcement is a Community talking to its members, and
-                  they should be able to answer with more than silence. */}
-              <div className="mt-4 flex items-center gap-2">
-                {([
-                  { up: true, icon: faThumbsUp, count: post.like_count, mine: post.i_like },
-                  { up: false, icon: faThumbsDown, count: post.dislike_count, mine: post.i_dislike },
-                ] as const).map((side) => (
-                  <button
-                    key={String(side.up)}
-                    onClick={() => vote(post, side.up)}
-                    aria-pressed={side.mine}
-                    aria-label={side.up ? 'Yes' : 'No'}
-                    className={cn(
-                      'inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors',
-                      side.mine
-                        ? 'border-brand-bright bg-brand/20 text-white'
-                        : 'border-ink-line bg-ink-raised text-white/60 hover:bg-ink-hover hover:text-white',
-                    )}
-                  >
-                    <Glyph icon={side.icon} />
-                    {formatCount(side.count ?? 0)}
-                  </button>
-                ))}
-              </div>
+              {/*
+                * An announcement is a Community talking to its members, and
+                * they should be able to answer with more than silence - and
+                * with more than yes or no. Staw: "Reactions are for
+                * announcements & posts, instead of simple likes/dislikes".
+                * This was the half of that which was still a thumb.
+                */}
+              <Reactions
+                className="mt-4"
+                what="post"
+                which={String(post.id)}
+                counts={faces[String(post.id)] ?? []}
+                canReact={!!profile && !profile.is_guest}
+                whyNot={profile ? undefined : 'Sign in to react.'}
+                onChanged={reactions.reload}
+              />
             </div>
           </article>
         ))}

@@ -19,10 +19,12 @@ import { cn } from '@/lib/cn'
  *
  * Fetched per card rather than in a batch above, which is the honest cost of
  * it: an outfit's pieces each need a signed address and the signing is a
- * request. Not turning and not draggable, because this sits in a grid where
- * a drag is the page being scrolled.
+ * request. Draggable where it is the subject of the page and not where it
+ * sits in a grid, because in a grid a drag is the page being scrolled.
  */
-export function OutfitStage({ outfitId, flat, turning = false, className }: {
+export function OutfitStage({
+  outfitId, flat, turning = false, handled, className,
+}: {
   outfitId: string
   /**
    * Flat, when somebody presses 2D.
@@ -36,6 +38,16 @@ export function OutfitStage({ outfitId, flat, turning = false, className }: {
   flat?: boolean
   /** Slowly turning, which a page wants and a card in a grid does not. */
   turning?: boolean
+  /**
+   * Draggable: turn it, tilt it, wheel to come closer.
+   *
+   * Staw: "the outfits 3d doesnt work you cant drag it its like an image".
+   * It was a live scene the whole time - the prop that makes `AvatarStage`
+   * listen for a pointer was simply never passed, so it rendered perfectly
+   * and ignored every drag, which is the most convincing way for a thing
+   * to look broken.
+   */
+  handled?: boolean
   className?: string
 }) {
   const [look, setLook] = useState<AvatarLook | null>(null)
@@ -88,6 +100,7 @@ export function OutfitStage({ outfitId, flat, turning = false, className }: {
             look={look}
             fill
             turning={turning && !flat}
+            handled={handled && !flat}
             className={cn('h-full w-full', flat && 'invisible')}
           />
           {flat && (

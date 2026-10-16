@@ -141,6 +141,7 @@ export default function OutfitPage() {
             <OutfitStage
               outfitId={one.id}
               flat={mode === 'picture'}
+              handled
               className="h-full w-full"
             />
             {/* The Catalog's own switch, because this is the Catalog's own

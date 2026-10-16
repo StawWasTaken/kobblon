@@ -38,6 +38,13 @@ thing rather than redrawn to taste:
 - **Say less.** One rectangle with an icon and a short line where there
   would have been a paragraph.
 
+**And the staff console.** Staw: "the staff console doesnt work sometime we
+gonna redesign it". Two separate things in one sentence and both are real:
+it is the densest page on the site and it is also the one where a function
+quietly refusing shows as a button that does nothing. The redesign comes
+with a pass over every control on it asking what the server actually says
+when a moderator presses it.
+
 Page by page, what is actually wrong with each today:
 
 - **Catalog.** Four rows of controls - search, chips, Favourites and
