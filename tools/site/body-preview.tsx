@@ -21,12 +21,12 @@ function Panel() {
 
   return (
     <Card className="max-w-4xl p-5">
-      <div className="grid gap-6 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:items-start">
-        <div className="rounded-2xl border border-ink-line bg-ink-raised p-5">
+      <div className="grid gap-5 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-start">
+        <div className="rounded-2xl border border-ink-line bg-ink-raised p-4">
           <BodyPicker
             colours={COLOURS}
             chosen={parts}
-            className="mx-auto max-w-[15rem]"
+            className="mx-auto max-w-[11rem]"
             onChoose={(one) => setParts((had) => (
               had.includes(one) ? had.filter((x) => x !== one) : [...had, one]
             ))}
@@ -36,11 +36,11 @@ function Panel() {
           <p className="font-display text-lg font-extrabold">
             {parts.length === 1 ? BODY_LABELS[parts[0]] : `${parts.length} parts`}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(2rem,1fr))] gap-2">
             {SHELF.map((colour) => (
               <span
                 key={colour}
-                className="h-10 w-10 rounded-xl border-2 border-ink-line"
+                className="aspect-square w-full rounded-xl border-2 border-ink-line"
                 style={{ background: colour }}
               />
             ))}

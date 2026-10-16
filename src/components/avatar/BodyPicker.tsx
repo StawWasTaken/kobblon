@@ -89,8 +89,13 @@ export function BodyPicker({ colours, chosen, onChoose, className }: {
               x={x} y={y} width={BODY[part].w} height={BODY[part].h}
               rx={0.26}
               fill={colours[part] ?? '#8d95a6'}
-              stroke={on ? '#3a50ff' : 'rgba(10,12,20,0.85)'}
-              strokeWidth={on ? 0.18 : 0.1}
+              /*
+                * One mark for being chosen, not two. The part kept its own
+                * brand-blue outline as well as the ring around it, which
+                * read as two selections stacked on one limb.
+                */
+              stroke="rgba(10,12,20,0.85)"
+              strokeWidth={0.1}
               className="cursor-pointer transition-all duration-200 hover:brightness-110"
               onClick={() => onChoose(part)}
               role="checkbox"
