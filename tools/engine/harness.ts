@@ -440,13 +440,21 @@ Object.assign(window, {
         && v >= box.v0 - 0.001 && v <= box.v1 + 0.001) inside += 1
     }
 
-    const shaped = body.parts.get('Torso')!.geometry.getAttribute('position')
+    /*
+     * Measured against the part's own height rather than a y it used to
+     * have: the shape is built from a profile, so which y its vertices land
+     * on moves whenever the profile does, and a band fixed in stons misses
+     * them all and reads as "no waist".
+     */
+    part.geometry.computeBoundingBox()
+    const bounds = part.geometry.boundingBox!
+    const low = bounds.min.y + (bounds.max.y - bounds.min.y) * 0.2
+    const high = bounds.min.y + (bounds.max.y - bounds.min.y) * 0.8
     let waist = Infinity
-    for (let i = 0; i < shaped.count; i += 1) {
-      // The middle third of the part, which is where a waist is.
-      const y = shaped.getY(i)
-      if (Math.abs(y - 5.5) > 0.4) continue
-      waist = Math.min(waist, Math.abs(shaped.getX(i)))
+    for (let i = 0; i < at.count; i += 1) {
+      const y = at.getY(i)
+      if (y < low || y > high) continue
+      waist = Math.min(waist, Math.abs(at.getX(i)))
     }
 
     body.dispose()
@@ -456,7 +464,9 @@ Object.assign(window, {
       /** It has to stay inside the box the template is measured against. */
       insideItsBox: widest <= 1.8 + 0.001,
       /** And it has to actually be a waist, or it is the plain block. */
-      pinched: waist < 1.8 * 0.95,
+      pinched: waist < widest * 0.95,
+      waist,
+      widest,
       facing,
     }
   },

@@ -32,6 +32,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
+  faPersonRays,
   faCircleNotch, faCheck, faPlus, faShuffle, faCamera, faMagnifyingGlass,
   faEraser, faBookmark, faImage, faCube, faClock,
 } from '@fortawesome/free-solid-svg-icons'
@@ -79,7 +80,15 @@ const DRAWERS = [
   { id: 'accessories', label: 'Accessories', short: 'Extras', icon: faHatCowboy },
   // Staw's own smiling face rather than Font Awesome's smiley.
   { id: 'face', label: 'Face', icon: faFaceSmile, ours: 'reaction-smile' as const },
-  { id: 'body', label: 'Body', icon: faPalette },
+  /*
+   * The colours. It says "Skin" rather than "Body" now, because a body part
+   * is a body thing too and one drawer called Body holding the colours and
+   * not the parts is the sort of thing somebody looks at once and does not
+   * look at twice. Staw: "i want a new category called body parts separate
+   * from the skin colour & other categories".
+   */
+  { id: 'body', label: 'Skin', icon: faPalette },
+  { id: 'bodyparts', label: 'Body parts', short: 'Parts', icon: faPersonRays },
   // Saved looks, which are not a kind of thing you own but a way of putting
   // the things you own back on.
   { id: 'outfits', label: 'Outfits', icon: faFolder },
@@ -123,11 +132,7 @@ const PARTS: Partial<Record<Drawer, { id: string; label: string; slots: AvatarSl
 const DRAWER_OF: Record<string, Drawer> = {
   shirt: 'clothing', trousers: 'clothing', tdecal: 'clothing',
   accessory: 'accessories', hair: 'accessories', face: 'face',
-  /*
-   * A body part goes in the Body drawer, beside the colours, because that
-   * is the drawer about the body itself rather than about what is on it.
-   */
-  bodypart: 'body',
+  bodypart: 'bodyparts',
 }
 
 /**
@@ -414,9 +419,6 @@ export default function MyAvatar() {
     .filter((one) => one.how_many > 0)
 
   const open_part = divisions.find((one) => one.id === part) ?? null
-
-  /** The body parts somebody owns, which the Body drawer shows itself. */
-  const shapesOwned = (owned.data ?? []).filter((item) => item.kind === 'bodypart')
 
   const shelf = drawerItems
     .filter((item) => !open_part || open_part.slots.includes(item.slot))
@@ -902,42 +904,6 @@ export default function MyAvatar() {
                 </div>
               </div>
 
-              {/*
-                * The shapes you own, in the same drawer as the colours.
-                *
-                * A body part is not worn over the body, it is the body - so
-                * it belongs beside the thing that changes the body and not
-                * in Clothing. Drawn only when somebody owns one: a shelf
-                * headed "Shape" with nothing under it is the wardrobe
-                * describing the database again.
-                */}
-              {shapesOwned.length > 0 && (
-                <div className="mt-5 border-t border-ink-line pt-5">
-                  <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-                    Shape
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted">
-                    One at a time. Taking one off puts the plain part back.
-                  </p>
-                  <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
-                    {shapesOwned.map((item, i) => (
-                      <WornTile
-                        key={item.id}
-                        item={item}
-                        nth={i}
-                        on={onNow.has(item.id)}
-                        busy={busy === `wear:${item.id}`}
-                        onToggle={() => void after(
-                          `wear:${item.id}`,
-                          () => (onNow.has(item.id)
-                            ? takeOffItem(item.id)
-                            : wearAvatarItem(item.id)),
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </Card>
           ) : owned.loading ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
