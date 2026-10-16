@@ -30,78 +30,116 @@ export type BodyShape = {
 }
 
 /**
- * Pulls a box in at the waist and lets it out again at the hips.
+ * A part built by cutting its silhouette and extruding it.
  *
- * Built by moving the vertices of the rounded box rather than by turning a
- * profile: the box already has the rounded edges every other part has, and a
- * lathe would have given the one part people look hardest at a different
- * surface from the arms either side of it.
+ * Three attempts went into this and the first two are worth writing down,
+ * because the obvious route does not work. `RoundedBoxGeometry`'s segment
+ * count is the rounding of its corners and nothing else: at three segments
+ * or at twelve, the flat faces have vertices only at the top and the
+ * bottom, so there is nothing in the middle to pull in. Measured, twice,
+ * after tuning numbers that could not have had any effect. A plain
+ * `BoxGeometry` with its sides divided does take a waist - and loses every
+ * rounded edge, which is what Staw saw: "ours is kinda ugly ngl and not
+ * rounded like other body parts we made".
  *
- * `narrow` is how far in the waist comes, as a fraction of the half width.
- * `shoulder` and `hip` take the ends in or let them out, and are zero on
- * the one shape there is: the block's own width at the top and the bottom,
- * tight in the middle, is exactly what was asked for.
+ * So the silhouette is cut as a shape and extruded through the depth, with
+ * the bevel doing the rounding. That gives both things at once: the sides
+ * are wherever the profile says, and every edge is rounded like the arms
+ * next to it. The profile is a list of straight lines rather than a curve,
+ * because Staw asked for "something a bit more geometrical like for the
+ * roblox girl torso" - straight diagonals meeting at the waist, not an
+ * organic bulge.
+ *
+ * The depth arithmetic: the bevel adds `r` to each face, so the extrusion
+ * is `d - 2r` deep and the shape is cut `r` inside the full width. What
+ * comes out measures exactly the part's own box, which is not a nicety -
+ * the clothing sheet is measured against that box.
  */
-function tapered(
+function extruded(
   size: { w: number; h: number; d: number },
-  { narrow, shoulder, hip, waistAt }:
-  { narrow: number; shoulder: number; hip: number; waistAt: number },
-) {
-  /*
-   * A plain box with the sides divided, not the rounded one every other part
-   * is built from.
+  /**
+   * How wide the part is at each height, as a fraction of its own box, cut
+   * into the silhouette so the bevel rounds the diagonals properly.
    *
-   * `RoundedBoxGeometry`'s segment count is the rounding of the corners and
-   * nothing else: however high it goes, the sides still have vertices only
-   * at the top and the bottom, so there is nothing in the middle to pull in.
-   * Measured rather than assumed, after two rounds of tuning numbers that
-   * could not have had any effect - the part came out 1.80 wide at the top
-   * and 1.80 at the bottom with a waist asked for in between.
-   *
-   * What is lost is the 0.075 rounding on the edges, which at this size is
-   * under a pixel on a card and invisible beside the arms.
+   * Width only, and that is a limit of the method rather than a taste: an
+   * extrusion is one thickness all the way through, and bringing the chest
+   * and the back in afterwards bends the flat face it was cut from - the
+   * front of the torso came out as a fan of creased triangles, which is
+   * what it looks like when a cap stops being flat. The reference does
+   * narrow through the depth as well, by about the same amount; at this
+   * size, against arms that do not, it is not worth a surface that reads as
+   * broken.
    */
-  const box = new THREE.BoxGeometry(size.w, size.h, size.d, 2, 24, 2)
-  const at = box.getAttribute('position') as THREE.BufferAttribute
+  profile: { up: number; across: number }[],
+  round = 0.075,
+) {
+  const r = Math.min(round, Math.min(size.w, size.d) / 4)
+  const half = size.w / 2 - r
+  const top = size.h / 2 - r
 
-  for (let i = 0; i < at.count; i += 1) {
-    const y = at.getY(i)
-    // 1 at the top of the part, 0 at the bottom.
-    const up = y / size.h + 0.5
-    /*
-     * One curve, read at three heights: the shoulders, the waist and the
-     * hips. `waistAt` is where the narrowest point sits - above the middle,
-     * because a waist is above a hip and a torso whose thinnest point is
-     * halfway up reads as an hourglass rather than a person.
-     */
-    /*
-     * Each side measured against its own half, not against the longer of
-     * the two: with one divisor the shorter side never reaches the end of
-     * the curve, so the hips kept a third of the waist's pinch and came out
-     * narrower than the shoulders on a shape whose whole point is that they
-     * are not.
-     */
-    const toWaist = up > waistAt
-      ? (up - waistAt) / (1 - waistAt)
-      : (waistAt - up) / waistAt
-    const pinch = narrow * (1 - Math.min(1, toWaist) ** 2)
-    const ends = up > waistAt
-      ? shoulder * ((up - waistAt) / (1 - waistAt)) ** 2
-      : -hip * ((waistAt - up) / waistAt) ** 2
+  // Up the left side and down the right, so the outline closes.
+  const line = new THREE.Shape()
+  const sorted = [...profile].sort((a, b) => a.up - b.up)
+  const at = (one: { up: number; across: number }) => ({
+    x: half * one.across,
+    y: -top + one.up * (top * 2),
+  })
 
-    /*
-     * Width only. Staw: "its normal blocky torso like the regular torso but
-     * in the middle on each side it gets tight, like a waist". The sides
-     * come in; the chest and the back stay where the block has them, so it
-     * is the same torso from the front and a waist from the side rather
-     * than a smaller person.
-     */
-    at.setX(i, at.getX(i) * (1 - pinch - ends))
+  const first = at(sorted[0])
+  line.moveTo(-first.x, first.y)
+  for (const one of sorted.slice(1)) {
+    const point = at(one)
+    line.lineTo(-point.x, point.y)
   }
+  for (const one of [...sorted].reverse()) {
+    const point = at(one)
+    line.lineTo(point.x, point.y)
+  }
+  line.closePath()
 
-  at.needsUpdate = true
-  box.computeVertexNormals()
-  return box
+  const made = new THREE.ExtrudeGeometry(line, {
+    depth: size.d - r * 2,
+    bevelEnabled: true,
+    bevelThickness: r,
+    bevelSize: r,
+    bevelOffset: 0,
+    bevelSegments: 3,
+    curveSegments: 1,
+  })
+
+  /*
+   * Extruded forwards from zero, so it is moved back onto the middle. A
+   * part that is half a depth out of its box wears its clothes half a depth
+   * out of them too.
+   */
+  made.translate(0, 0, -(size.d - r * 2) / 2 - r)
+
+  /*
+   * Then made to measure exactly the part's own box.
+   *
+   * The arithmetic above gets within a hundredth and not closer: a bevel
+   * grows the outline along the normal, and where two lines meet at a
+   * corner the two growths add, so the shoulders end up a touch wider than
+   * the width they were cut to. A hundredth of a ston is nothing to look at
+   * and it is not nothing to the rule - the sheet is measured against the
+   * box, and "inside the box" has to be true rather than nearly true.
+   */
+  made.computeBoundingBox()
+  const box = made.boundingBox!
+  const fit = (was: number, wanted: number) => (was > 0.0001 ? wanted / was : 1)
+  made.translate(
+    -(box.max.x + box.min.x) / 2,
+    -(box.max.y + box.min.y) / 2,
+    -(box.max.z + box.min.z) / 2,
+  )
+  made.scale(
+    fit(box.max.x - box.min.x, size.w),
+    fit(box.max.y - box.min.y, size.h),
+    fit(box.max.z - box.min.z, size.d),
+  )
+
+  made.computeVertexNormals()
+  return made
 }
 
 /**
@@ -115,9 +153,28 @@ export const BODY_SHAPES: Record<string, BodyShape> = {
   'torso-girl': {
     part: 'Torso',
     label: 'Girl torso',
-    build: (size) => tapered(size, {
-      narrow: 0.2, shoulder: 0, hip: 0, waistAt: 0.5,
-    }),
+    /*
+     * Full width at the shoulders and at the hips, straight in to the waist
+     * and straight out again. The chest and the back do not move - it is
+     * the same torso from the front and a waist from the side.
+     *
+     * The numbers are measured off the file Staw made rather than guessed:
+     * the waist sits at 0.38 of the way up, not halfway, and it comes in to
+     * 0.70 of the width and 0.68 of the depth. A waist halfway up reads as
+     * an hourglass; his sits low, which is why it reads as a person.
+     *
+     * Measured and not used. The file is a Roblox Studio export and says so
+     * in its first line - "This file is brought to you by Roblox
+     * Corporation" - so what it gave us is its proportions, and the surface
+     * is ours. It also could not have been used as it stands: a body part
+     * here is geometry the engine builds, so that it keeps the bone it is
+     * skinned to and the box the clothing sheet is measured against.
+     */
+    build: (size) => extruded(size, [
+      { up: 0, across: 1 },
+      { up: 0.38, across: 0.7 },
+      { up: 1, across: 1 },
+    ]),
   },
 }
 

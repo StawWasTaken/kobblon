@@ -47,7 +47,7 @@ function Card({ shape, label }: { shape: string | null; label: string }) {
 createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen bg-ink p-8 text-white">
     <div className="flex gap-6">
-      <Card shape="torso-girl" label="Waisted Torso, as a card" />
+      <Card shape="torso-girl" label="Girl Torso, as a card" />
       <Card shape={null} label="A shirt's card, for the framing" />
     </div>
   </div>,
