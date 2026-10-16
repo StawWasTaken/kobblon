@@ -51,7 +51,7 @@ export const kindCodes: Record<AssetKind, string> = {
  */
 export const avatarCodes: Record<string, string> = {
   shirt: 'SHRT', trousers: 'TRSR', tdecal: 'TDCL',
-  accessory: 'ACCS', hair: 'HAIR', face: 'FACE',
+  accessory: 'ACCS', hair: 'HAIR', face: 'FACE', bodypart: 'BODY',
 }
 
 /**
@@ -65,6 +65,11 @@ export const avatarCodes: Record<string, string> = {
 export const avatarKindLabels: Record<string, string> = {
   shirt: 'Shirt', trousers: 'Trousers', tdecal: 'T-decal',
   accessory: 'Accessory', hair: 'Hair', face: 'Face',
+  /*
+   * Said as two words where somebody reads it. The code and the column say
+   * `bodypart`, because that is one kind and not two.
+   */
+  bodypart: 'Body part',
 }
 
 /**

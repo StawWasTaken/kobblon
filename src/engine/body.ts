@@ -25,6 +25,7 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { BODY, type BodyPart } from './clothes'
+import { shapeFor, type WornShapes } from './bodyshapes'
 
 /**
  * Where each part sits when the body is standing still, and which bone
@@ -112,6 +113,39 @@ function roundedCylinder(radius: number, height: number, corner: number, turns =
 }
 
 /**
+ * The geometry one part is drawn with: its body shape where it has one, and
+ * the plain block otherwise.
+ *
+ * In one place because two callers want it - the body being built, and a
+ * part being given a different shape afterwards when somebody puts one on.
+ * A shape whose name this build does not know falls back to the block
+ * rather than to nothing: a row written by a newer version of the site is a
+ * body with a missing middle otherwise.
+ */
+export function partGeometry(part: BodyPart, shape?: string) {
+  const size = BODY[part]
+  const found = shapeFor(shape)
+  const made = found && found.part === part
+    ? found.build(size)
+    : part === 'Head'
+      ? roundedCylinder(size.w / 2, size.h, ROUNDING * 2)
+      : new RoundedBoxGeometry(
+        size.w, size.h, size.d, SEGMENTS,
+        Math.min(ROUNDING, Math.min(size.w, size.d) / 2 - 0.001),
+      )
+
+  /*
+   * Moved to where the part stands in the body, here rather than at the one
+   * call site that used to do it. A shape swapped in afterwards has to land
+   * in the same place, and the first version of this left the torso built
+   * correctly and standing at the avatar's feet.
+   */
+  const place = PLACES[part]
+  made.translate(place.middle[0], place.middle[1], place.middle[2])
+  return made
+}
+
+/**
  * Replaces a rigged body's geometry with boxes, keeping its skeleton.
  *
  * Each part becomes one box bound entirely to one bone, which is what makes
@@ -122,7 +156,7 @@ function roundedCylinder(radius: number, height: number, corner: number, turns =
  * every avatar in a World, and rewriting its geometry would rebuild
  * everybody's body including the ones already standing somewhere.
  */
-export function blockify(root: THREE.Object3D) {
+export function blockify(root: THREE.Object3D, shapes?: WornShapes) {
   root.traverse((child) => {
     const mesh = child as THREE.SkinnedMesh
     if (!mesh.isSkinnedMesh || !mesh.skeleton) return
@@ -148,13 +182,7 @@ export function blockify(root: THREE.Object3D) {
      * The head is turned, everything else is a box. The one part people
      * actually look at is the one worth a different shape.
      */
-    const box = part === 'Head'
-      ? roundedCylinder(size.w / 2, size.h, ROUNDING * 2)
-      : new RoundedBoxGeometry(
-        size.w, size.h, size.d, SEGMENTS,
-        Math.min(ROUNDING, Math.min(size.w, size.d) / 2 - 0.001),
-      )
-    box.translate(place.middle[0], place.middle[1], place.middle[2])
+    const box = partGeometry(part, shapes?.[part])
 
     /*
      * Every vertex belongs to one bone, completely. A rigid part is the

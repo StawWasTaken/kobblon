@@ -67,6 +67,7 @@ const SHELVES = [
   { value: 'accessory', label: 'Accessories' },
   { value: 'hair', label: 'Hair' },
   { value: 'face', label: 'Faces' },
+  { value: 'bodypart', label: 'Body parts' },
   // Not a kind of thing but a shelf of its own: an outfit is several things
   // sold together, and buying one buys each piece you do not already have.
   { value: 'outfits', label: 'Outfits' },

@@ -38,6 +38,8 @@ export function wornCard(item: {
   slot?: string | null
   image_path?: string | null
   image_bucket?: string | null
+  /** Which shape in the engine, for a body part. */
+  shape?: string | null
 }): Promise<string | null> {
   const had = drawn.get(item.id)
   if (had) return had
@@ -46,12 +48,17 @@ export function wornCard(item: {
     const picture = item.image_path
       ? catalogUrl(item.image_path, item.image_bucket ?? undefined)
       : null
-    if (!picture) return null
+    /*
+     * A garment needs its sheet and a body part needs its shape; neither
+     * can be drawn without the one thing it is made of.
+     */
+    if (!picture && !item.shape) return null
 
     const blob = await drawItemCard({
       kind: item.kind ?? 'shirt',
       slot: item.slot ?? item.kind ?? 'shirt',
       imageUrl: picture,
+      shape: item.shape ?? null,
       faceUrl: await mannequinFace().catch(() => null),
     }).catch(() => null)
 

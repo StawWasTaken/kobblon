@@ -18,6 +18,7 @@ import {
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
   faMagnifyingGlass, faClock, faUpload, faCircleCheck, faCircleExclamation,
   faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight, faUsers, faUser,
+  faPersonRays,
 } from '@fortawesome/free-solid-svg-icons'
 import { useSearchParams } from 'react-router-dom'
 import { Page } from '@/components/layout/AppShell'
@@ -54,7 +55,7 @@ import { FitEditor, PLAIN_FIT, fitIsPlain, asFit } from '@/components/avatar/Fit
 import { plainFace } from '@/lib/plainFace'
 import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import type { WornFit } from '@/engine'
-import { formatOf } from '@/engine'
+import { formatOf, BODY_SHAPES, SLOT_FOR_PART } from '@/engine'
 
 const KINDS: { kind: AvatarKind; label: string; about: string; template?: string }[] = [
   {
@@ -89,6 +90,12 @@ const KINDS: { kind: AvatarKind; label: string; about: string; template?: string
     label: 'Face',
     about: 'A picture on the front of the head. Kobblon only.',
   },
+  {
+    kind: 'bodypart',
+    label: 'Body part',
+    about: 'A part of the body built a different shape. No file: you choose '
+      + 'one of the shapes the engine knows. Kobblon only.',
+  },
 ]
 
 const PLACES: { slot: AvatarSlot; label: string }[] = [
@@ -114,6 +121,14 @@ export default function CreateAvatarItems() {
   const [name, setName] = useState('')
   const [about, setAbout] = useState('')
   const [picture, setPicture] = useState<File | null>(null)
+  /**
+   * Which shape a body part is, by its name in `BODY_SHAPES`.
+   *
+   * A choice rather than a file, and that is the whole difference between
+   * this kind and the other six: the geometry is the engine's, so what is
+   * being made is a row that names one of its shapes.
+   */
+  const [shape, setShape] = useState('')
   const [making, setMaking] = useState(false)
   const picked = useRef<HTMLInputElement>(null)
   const [meshId, setMeshId] = useState('')
@@ -241,7 +256,9 @@ export default function CreateAvatarItems() {
    * project does not do.
    */
   const tabs = useMemo(
-    () => KINDS.filter((one) => one.kind !== 'face' || profile?.is_admin),
+    () => KINDS.filter(
+      (one) => (one.kind !== 'face' && one.kind !== 'bodypart') || profile?.is_admin,
+    ),
     [profile?.is_admin],
   )
 
@@ -258,7 +275,20 @@ export default function CreateAvatarItems() {
    * One line decides it now, and the picker is only drawn where it means
    * something.
    */
-  const sendingSlot: AvatarSlot = kind === 'accessory' ? slot : (kind as AvatarSlot)
+  const isShape = kind === 'bodypart'
+
+  /*
+   * Where it is worn.
+   *
+   * An accessory is the one kind somebody chooses for; a body part is the
+   * one kind the *shape* chooses for, because a torso shape goes on the
+   * torso and nowhere else. Everything else is worn as what it is.
+   */
+  const sendingSlot: AvatarSlot = kind === 'accessory'
+    ? slot
+    : isShape
+      ? ((SLOT_FOR_PART[BODY_SHAPES[shape]?.part ?? ''] ?? 'torso') as AvatarSlot)
+      : (kind as AvatarSlot)
 
   const verified = !!profile && (profile.is_verified || profile.is_admin)
   /*
@@ -329,6 +359,21 @@ export default function CreateAvatarItems() {
    * empty mannequin that looks like a fault.
    */
   const fitting = useMemo<AvatarLook | null>(() => {
+    /*
+     * A body part is drawn the moment one is picked: there is nothing to
+     * upload and nothing to wait for, and the point of this panel is seeing
+     * the shape on the body it will be on everywhere else.
+     */
+    if (isShape) {
+      if (!shape) return null
+      return {
+        body: MANNEQUIN_BODY,
+        pieces: [
+          { slot: 'face', kind: 'face', imageUrl: face ?? plainFace() },
+          { slot: sendingSlot, kind: 'bodypart', shape },
+        ],
+      }
+    }
     if (!isModel || !fitUrls.mesh) return null
     return {
       body: MANNEQUIN_BODY,
@@ -347,7 +392,7 @@ export default function CreateAvatarItems() {
         },
       ],
     }
-  }, [isModel, fitUrls, sendingSlot, kind, fresh, meshFile, fit, face])
+  }, [isModel, isShape, shape, fitUrls, sendingSlot, kind, fresh, meshFile, fit, face])
 
 
   const make = async () => {
@@ -358,7 +403,10 @@ export default function CreateAvatarItems() {
       let usingMesh = meshId
       let usingTexture = textureId
 
-      if (!isModel) {
+      if (isShape) {
+        // Nothing to upload. The one thing it needs is which shape it is.
+        if (!shape) throw new Error('Choose a shape first.')
+      } else if (!isModel) {
         if (!picture) throw new Error('Choose a picture first.')
         imagePath = await uploadCatalogImage(profile.id, picture)
       } else if (fresh) {
@@ -399,6 +447,7 @@ export default function CreateAvatarItems() {
         imagePath,
         meshId: isModel ? usingMesh : null,
         textureId: isModel ? (usingTexture || null) : null,
+        shape: isShape ? shape : null,
         communityId: maker || null,
       })
 
@@ -438,6 +487,7 @@ export default function CreateAvatarItems() {
         meshUrl: mesh ? await assetUrl(mesh.file_path).catch(() => null) : null,
         meshFormat: mesh ? formatOf(mesh.file_path) : null,
         textureUrl: skin ? await assetUrl(skin.file_path).catch(() => null) : null,
+        shape: isShape ? shape : null,
       }).then(() => made.reload())
 
       say(
@@ -446,7 +496,7 @@ export default function CreateAvatarItems() {
           : 'Made. It goes for screening before anybody sees it.',
         'success',
       )
-      setName(''); setAbout(''); setPicture(null); setMeshId('')
+      setName(''); setAbout(''); setPicture(null); setMeshId(''); setShape('')
       setTextureId(''); setDecalTag(''); setDecal(null)
       setMeshFile(null); setSkinFile(null); setFit(PLAIN_FIT)
       setMaking(false)
@@ -862,6 +912,56 @@ export default function CreateAvatarItems() {
                     <p className="px-4 py-10 text-center text-xs text-muted">
                       Choose a model and it is drawn here, worn, so you can turn
                       it and see how it sits before you make it.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : isShape ? (
+            <div className="space-y-2">
+              <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                The shape
+              </p>
+              <Choices
+                label="Which shape"
+                size="sm"
+                tone="soft"
+                value={shape || null}
+                onChange={setShape}
+                options={Object.entries(BODY_SHAPES).map(([name, one]) => ({
+                  value: name,
+                  label: one.label,
+                  icon: faPersonRays,
+                }))}
+              />
+              <p className="text-[11px] leading-snug text-muted">
+                The shapes are built into the engine, so this list is what
+                there is. A new one is a change to the engine and arrives with
+                the next build, not from here.
+              </p>
+
+              {/*
+                * On the body, straight away. A part of the body is judged
+                * against the parts either side of it - a torso drawn on its
+                * own tells you nothing about whether it belongs on the same
+                * person as the arms.
+                */}
+              <div className="space-y-2 pt-2">
+                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                  On a body
+                </p>
+                <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+                  {fitting ? (
+                    <AvatarStage
+                      look={fitting}
+                      turning={false}
+                      handled
+                      className="aspect-square w-full"
+                    />
+                  ) : (
+                    <p className="px-4 py-10 text-center text-xs text-muted">
+                      Choose a shape and it is drawn here, on the body, so you
+                      can turn it before you make it.
                     </p>
                   )}
                 </div>

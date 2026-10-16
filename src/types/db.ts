@@ -868,11 +868,20 @@ export type Face = {
 // ------------------------------------------------------------ the avatar
 
 /** What a thing you wear is. The slot a `face` goes in is also `face`. */
-export type AvatarKind = 'shirt' | 'trousers' | 'tdecal' | 'accessory' | 'hair' | 'face'
+export type AvatarKind =
+  | 'shirt' | 'trousers' | 'tdecal' | 'accessory' | 'hair' | 'face'
+  /**
+   * A part of the body itself, which is a shape the engine knows how to
+   * build rather than a picture or a model. Kobblon's own: the shape has
+   * to exist in `@/engine/bodyshapes` before a row can name it.
+   */
+  | 'bodypart'
 
 export type AvatarSlot =
   | 'shirt' | 'trousers' | 'tdecal' | 'face' | 'hair'
   | 'hat' | 'front' | 'back' | 'neck' | 'waist' | 'leftHand' | 'rightHand'
+  /** Where a body part goes. One slot per part, and only the torso so far. */
+  | 'torso'
 
 /** What each kind costs to make and the least it may be sold for. */
 export type AvatarRule = {
@@ -912,6 +921,11 @@ export type AvatarPiece = {
   mesh_path: string | null
   mesh_format: string | null
   texture_path: string | null
+  /**
+   * Which shape in the engine this is, for a body part. Null for
+   * everything else, which is everything that is a picture or a model.
+   */
+  shape?: string | null
   /** How its maker placed it, applied on top of the automatic fit. */
   fit?: {
     p?: readonly [number, number, number]
@@ -944,6 +958,11 @@ export type AvatarItem = {
   /** The real format, from the stored filename. The page must not sniff it. */
   mesh_format?: string | null
   texture_path: string | null
+  /**
+   * Which shape in the engine, for a body part. Null for everything else:
+   * a body part is the one kind that is neither a picture nor a model.
+   */
+  shape?: string | null
   creator_id?: string
   creator_username?: string
   creator_display_name?: string
