@@ -39,6 +39,7 @@ import {
   makeOutfitFolder, listOutfit, renameOutfit, restyleOutfit, type Outfit,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
+import { cn } from '@/lib/cn'
 import { avatarKindLabels, outfitTag } from '@/lib/kinds'
 
 /** One saved look. */
@@ -76,9 +77,15 @@ function OutfitCard({ outfit, onChanged, onWear }: {
   }
 
   const pieces = Array.isArray(outfit.pieces) ? outfit.pieces : []
+  /*
+   * A bought one is somebody else's arrangement. It can be worn, renamed
+   * and thrown away like any other; it cannot be put up for sale, and the
+   * server refuses that too - this only keeps a menu from offering it.
+   */
+  const bought = !!outfit.bought_from
 
   return (
-    <Card className="animate-row-in overflow-hidden p-0 transition-colors hover:border-brand/40">
+    <Card className="flex h-full animate-row-in flex-col overflow-hidden p-0 transition-colors hover:border-brand/40">
       {/*
         * The outfit itself, standing up, which is what Staw asked for: "i
         * want to see each outfit in 3d". A grid of names and counts is a
@@ -108,20 +115,20 @@ function OutfitCard({ outfit, onChanged, onWear }: {
               </span>
             }
             items={[
-              {
+              ...(bought ? [] : [{
                 label: 'Update to what I am wearing',
                 icon: faArrowsRotate,
                 onSelect: () => void run('restyle', async () => {
                   await restyleOutfit(outfit.id)
                   setDrawn((n) => n + 1)
                 }, `${outfit.name} is what you have on now.`),
-              },
+              }]),
               { label: 'Rename', icon: faPenToSquare, onSelect: () => setRenaming(true) },
-              {
+              ...(bought ? [] : [{
                 label: outfit.is_public ? 'Change the price' : 'Sell it',
                 icon: faTag,
                 onSelect: () => setSelling(true),
-              },
+              }]),
               { label: 'Delete', icon: faTrash, danger: true, onSelect: () => setBinning(true) },
             ]}
           />
@@ -138,13 +145,27 @@ function OutfitCard({ outfit, onChanged, onWear }: {
         )}
       </div>
 
-      <div className="space-y-3 p-4">
+      {/*
+        * Everything under the picture in one column, with the buttons
+        * pushed to the bottom of it.
+        *
+        * Staw: "the outfits design is kinda bugged". It was: the line of
+        * pieces wrapped on an outfit with four things in it and not on one
+        * with three, so cards in the same row ended up different heights
+        * and their Wear it buttons sat at three heights across one shelf.
+        * One line of marks that cannot wrap, and a footer held down, fixes
+        * both without anything being measured.
+        */}
+      <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="min-w-0">
           <p className="truncate font-display text-sm font-extrabold">{outfit.name}</p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
             <span>{pieces.length} {pieces.length === 1 ? 'thing' : 'things'}</span>
             {outfit.folder_name && <span>· {outfit.folder_name}</span>}
             {outfit.is_public && <span>· in the Catalog</span>}
+            {bought && outfit.maker_username && (
+              <span>· by @{outfit.maker_username}</span>
+            )}
           </p>
         </div>
 
@@ -155,25 +176,25 @@ function OutfitCard({ outfit, onChanged, onWear }: {
           * the same number of things in them.
           */}
         {!!pieces.length && (
-          <ul className="flex flex-wrap gap-1.5">
-            {pieces.slice(0, 6).map((piece) => (
+          <ul className="flex gap-1.5">
+            {pieces.slice(0, 4).map((piece) => (
               <li
                 key={piece.content_id}
                 title={piece.name}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-[9px] font-bold uppercase text-white/40"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised text-[9px] font-bold uppercase text-white/40"
               >
                 {(avatarKindLabels[piece.kind] ?? piece.kind).slice(0, 2)}
               </li>
             ))}
-            {pieces.length > 6 && (
-              <li className="grid h-8 min-w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised px-1.5 text-[10px] font-bold text-white/40">
-                +{pieces.length - 6}
+            {pieces.length > 4 && (
+              <li className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised px-1.5 text-[10px] font-bold text-white/40">
+                +{pieces.length - 4}
               </li>
             )}
           </ul>
         )}
 
-        <div className="flex gap-2">
+        <div className="mt-auto flex gap-2">
           <Button
             size="sm"
             variant="yes"
@@ -319,6 +340,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
   const [folder, setFolder] = useState<string>('')
   const [busy, setBusy] = useState(false)
   const [newFolder, setNewFolder] = useState('')
+  const [tab, setTab] = useState<'mine' | 'bought'>('mine')
 
   const save = async () => {
     setBusy(true)
@@ -355,12 +377,25 @@ export function Outfits({ onWear }: { onWear: () => void }) {
    * than in the reader because it is a way of looking at a list, not a fact
    * about it - and the reader already hands back the folder each one is in.
    */
+  /*
+   * Two drawers, not one list.
+   *
+   * Staw: "for outfits i want two sections: purchased, created/saved". They
+   * behave differently and they always did - a bought one cannot go back on
+   * the Catalog and was not put together by the person holding it - so one
+   * shelf with both on it was a shelf where half the gear menu was wrong
+   * half the time. `bought_from` is the server's answer to which is which.
+   */
+  const mine = (outfits.data ?? []).filter((one) => !one.bought_from)
+  const bought = (outfits.data ?? []).filter((one) => one.bought_from)
+  const showing = tab === 'bought' ? bought : mine
+
   const grouped = (folders.data ?? []).map((one) => ({
     id: one.id,
     name: one.name,
-    outfits: (outfits.data ?? []).filter((o) => o.folder_id === one.id),
+    outfits: mine.filter((o) => o.folder_id === one.id),
   }))
-  const loose = (outfits.data ?? []).filter((o) => !o.folder_id)
+  const loose = mine.filter((o) => !o.folder_id)
 
   return (
     <div className="space-y-4">
@@ -387,6 +422,31 @@ export function Outfits({ onWear }: { onWear: () => void }) {
         </div>
       </div>
 
+      {!!bought.length && (
+        <div className="flex gap-2">
+          {([
+            { id: 'mine' as const, label: 'Saved', how_many: mine.length },
+            { id: 'bought' as const, label: 'Bought', how_many: bought.length },
+          ]).map((one) => (
+            <button
+              key={one.id}
+              type="button"
+              onClick={() => setTab(one.id)}
+              aria-current={tab === one.id}
+              className={cn(
+                'rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors',
+                tab === one.id
+                  ? 'border-brand bg-brand/15 text-white'
+                  : 'border-ink-line bg-ink-card text-white/50 hover:text-white',
+              )}
+            >
+              {one.label}
+              <span className="ml-1.5 text-[10px] text-white/40">{one.how_many}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {outfits.loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
@@ -396,6 +456,17 @@ export function Outfits({ onWear }: { onWear: () => void }) {
           Nothing saved yet. Put something together and keep it here; you can
           wear it again in one press, or sell it in the Catalog.
         </p>
+      ) : tab === 'bought' ? (
+        <div key="bought" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {showing.map((outfit) => (
+            <OutfitCard
+              key={outfit.id}
+              outfit={outfit}
+              onChanged={outfits.reload}
+              onWear={onWear}
+            />
+          ))}
+        </div>
       ) : (
         <div className="space-y-5">
           {grouped.filter((one) => one.outfits.length).map((one) => (

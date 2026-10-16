@@ -4203,6 +4203,14 @@ export type Outfit = {
   maker_share: number
   created_at: string
   pieces: { slot: string; kind: string; name: string; content_id: number }[]
+  /*
+   * Where it came from, when it was bought rather than put together. Null
+   * on your own: that is the whole difference between the two shelves.
+   */
+  bought_from: string | null
+  bought_at: string | null
+  maker_username: string | null
+  maker_display_name: string | null
 }
 
 export type OutfitFolder = { id: string; name: string; created_at: string; how_many: number }

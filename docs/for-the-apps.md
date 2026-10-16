@@ -7528,3 +7528,97 @@ square.
 **Still not built:** the moderation work from two rounds ago is still gone
 and still being redone. `my_account_standing`, `reactivate_my_account` and
 `ban_account` do not exist. Do not build against them yet.
+
+## Round eighty-five
+
+Eight migrations since the last round, and three shared components changed
+meaning. The components are the part that cannot wait: a copy on your side
+goes on compiling and quietly draws the wrong thing.
+
+**`Icon` paints with `currentColor` now.** `@/components/brand/Icon` used to
+draw Staw's icons exactly as the files are, which is white line art - so
+every one of them disappeared on a light surface. Staw, in capitals, about
+the Brix mark on a white card. The default is now the colour of the text it
+sits in:
+
+```tsx
+<Icon name="brix" />                 // takes the text colour
+<Icon name="brix" tone="#FFCC4D" />  // a colour you name
+<Icon name="brix" tone={null} />     // the file as drawn, colours and all
+```
+
+`undefined` and `null` are different answers and both are needed. The
+Workspace's own icons (`workspace/part`, `workspace/sound`, the rest) still
+default to as-drawn, because a flat green cylinder and a flat red part are
+the same picture.
+
+**Two faces have a second colour.** `reaction-heart-eyes` has red hearts and
+`reaction-winky-grin` a pink tongue, and they only appear when the face is
+painted its own colour rather than the text's. There are two new files in
+`public/icons/ui` for them, cut out of the originals by what they are in the
+picture - the hearts are the enclosed holes at eye height, the tongue is the
+white island not joined to the rest. If you draw these faces yourself, take
+the pair of masks; nothing was traced, so they line up exactly.
+
+**`Glyph` takes `name` and `on`.** `@/components/brand/Glyph` is the adapter
+that lets a Font Awesome call site turn into one of ours. `name` overrides
+the mapping, and `on` picks between the stroke and the filled drawing for
+the four that have both (star, heart, thumbs up, thumbs down). The rule Staw
+set: **stroke is the unselected state.**
+
+**`AvatarStage` takes `fill`.** Without it the stage is `aspect-square
+w-full` and frames the body to its own square, so a stage inside a wider box
+left two dead strips. With `fill` it takes the box it is given and fits the
+body to whatever aspect that is.
+
+**The database, in the order these should be applied:**
+
+* **0234** `recommended_avatar_items(how_many integer default 12)` - answers
+  in `avatar_shelf`'s exact columns. Empty socket counts for most, then what
+  they can afford, then how many people took and starred it, then the kinds
+  they keep buying, then a nudge for anything new. At most two per slot, so
+  it cannot come back as twelve hats. Signed out it quietly answers "popular
+  and new".
+* **0235** the Kobblon Klub. `profiles.membership` is one of
+  `none | lite | klub | life`, with `klub_until` and `klub_since`.
+  `klub_of(target)` reads it; `in_the_klub(target default auth.uid(),
+  at_least default 'lite')` is the one to ask, because it ranks the tiers
+  rather than comparing strings. `set_klub` is superadmin only. **There is
+  no way to buy it yet** - do not build a purchase flow against this.
+* **0236** `take_down_outfit(target uuid, note text default null)` -
+  moderator only, writes the admin log and notifies the owner, returns false
+  on a second attempt.
+* **0237** reactions. `react(what text, which text, face text)` toggles,
+  `reactions_on(what, which)` and `reactions_on_many(what, text[])` read.
+  `what` is `'post'` or `'world'`; the ten faces are the names above.
+  **One face per person**, so pressing a new one takes the old one off.
+  Reacting to a World needs `in_the_klub(me, 'lite')`; posts and
+  announcements are open to everybody. Worlds keep likes and dislikes as
+  they are - reactions sit beside that rating, they do not replace it.
+* **0238** the link allow-list. `allowed_link_hosts` is a table, seeded with
+  youtube, youtu.be, tiktok, discord.gg, discord.com, spotify, open.spotify
+  and kobblon. `offsite_link(input)` returns the first host that is not on
+  it, or null. `screen_text` asks about links first. Everything else is
+  blocked - so if the Launcher screens chat text itself, screen it through
+  this and not a pattern of your own.
+* **0239** a lifted sanction gives the points back. `behaviour_score` skips
+  timeouts with `lifted_at` set, which it did not before: somebody cleared on
+  appeal kept the penalty.
+* **0240** `avatar_of` and `outfit_look` gained a trailing `sells_until
+  timestamptz`. **This changes a shape you read.** Null is ordinary, a date
+  in the future is a limited still selling, a date in the past is one that
+  has closed. The website now says Limited and Closed everywhere it draws a
+  worn item, not only in the Catalog.
+* **0241** buying an outfit leaves you with the outfit. `buy_outfit` still
+  buys every piece and splits the money exactly as before, and now also
+  writes a copy of the arrangement into the buyer's drawer, marked
+  `bought_from` and `bought_at`. `my_outfits()` returns those two plus
+  `maker_username` and `maker_display_name`. A bought copy **cannot be put
+  on the Catalog** - a trigger refuses it, not a page. Staw's two sections,
+  Saved and Bought, are that column.
+
+**Still not built:** the moderation work is still gone and still being
+redone. `my_account_standing`, `reactivate_my_account` and `ban_account` do
+not exist. There is still no purchase path for the Klub. The five pages Staw
+wants reordered - Catalog, Communities, Discover, People, Settings - and the
+staff console are written down in `docs/roadmap.md` and not started.

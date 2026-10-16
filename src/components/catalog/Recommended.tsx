@@ -40,7 +40,7 @@ export function Recommended({
   howMany?: number
   title?: string
   /**
-   * `grid` wraps and fills the panel; `row` is a single line that scrolls.
+   * `grid` is two rows at the end of a page; `row` is a single line.
    *
    * Staw, of the avatar page: "i only want one line rather than multiple
    * here cuz its ugly". He is right about where each belongs - under a
@@ -76,24 +76,30 @@ export function Recommended({
       </div>
 
       {/*
-        * As many as fit a whole row, and never part of one. `auto-fill`
-        * adds columns rather than stretching the ones there are, so the
-        * cards stay the size they were drawn at whatever the panel is
-        * doing around them.
+        * Columns that are counted rather than fitted, and a fixed number
+        * of rows.
+        *
+        * `auto-fill` was honest about the panel and useless to look at:
+        * the number of cards per row changed with the width, so the row
+        * that ended the page was sometimes one card and the line under
+        * the avatar sometimes ran past the edge of the column it was in.
+        * Staw, of both: "the recommended line in the my avatar page is cut
+        * and not lined up with the rest of the elements", and the one on
+        * an asset page "is more than 2 lines too".
+        *
+        * So the count is written down, and anything past the last place is
+        * not drawn. Two rows at the end of a page, one line under a body.
+        * Nothing is cut, because nothing sits half in a row that exists.
         */}
       <div className={cn(
+        'grid gap-3',
         layout === 'row'
-          /*
-           * One line, scrolled sideways, with the bar hidden. Nothing is
-           * cut here either: a card is either on the line or scrolled to,
-           * and the line ends where the panel does.
-           */
-          ? 'flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:w-36 [&>*]:shrink-0'
-          : 'grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]',
+          ? 'grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 [&>*:nth-child(n+4)]:hidden sm:[&>*:nth-child(-n+4)]:block xl:[&>*:nth-child(-n+5)]:block'
+          : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 [&>*:nth-child(n+7)]:hidden sm:[&>*:nth-child(-n+8)]:block lg:[&>*:nth-child(-n+12)]:block',
       )}>
         {picked.loading
           ? Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className={cn('rounded-2xl', layout === 'row' ? 'h-52 w-36' : 'h-52')} />
+            <Skeleton key={i} className="h-52 rounded-2xl" />
           ))
           : picked.data!.map((item, i) => (
             <Card key={item.id} item={item} nth={i} />

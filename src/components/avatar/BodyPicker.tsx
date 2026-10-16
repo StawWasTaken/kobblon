@@ -66,13 +66,32 @@ export function BodyPicker({ colours, chosen, onChoose, className }: {
         const on = chosen.includes(part)
         return (
           <g key={part}>
+            {/*
+              * A ring that arrives when the part is taken, and goes when it
+              * is let go. Drawn under the part rather than as a thicker
+              * stroke on it, so choosing does not change the size of what
+              * you are looking at - the body stays the body and the choice
+              * sits around it.
+              */}
+            {on && (
+              <rect
+                x={x - 0.18} y={y - 0.18}
+                width={BODY[part].w + 0.36} height={BODY[part].h + 0.36}
+                rx={0.4}
+                fill="none"
+                stroke="#3a50ff"
+                strokeWidth={0.14}
+                className="origin-center animate-pop-in"
+                style={{ transformBox: 'fill-box' }}
+              />
+            )}
             <rect
               x={x} y={y} width={BODY[part].w} height={BODY[part].h}
               rx={0.26}
               fill={colours[part] ?? '#8d95a6'}
               stroke={on ? '#3a50ff' : 'rgba(10,12,20,0.85)'}
-              strokeWidth={on ? 0.22 : 0.1}
-              className="cursor-pointer transition-[stroke] duration-150"
+              strokeWidth={on ? 0.18 : 0.1}
+              className="cursor-pointer transition-all duration-200 hover:brightness-110"
               onClick={() => onChoose(part)}
               role="checkbox"
               aria-checked={on}
