@@ -12,11 +12,12 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
+import { Missing } from '@/components/brand/Missing'
 import {
   faShirt, faDownload, faImage, faCube, faLock, faPen, faSpinner,
   faTrash, faBoxArchive, faEllipsis, faPlus, faStore,
   faMagnifyingGlass, faClock, faUpload, faCircleCheck, faCircleExclamation,
-  faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight,
+  faCamera, faArrowUpRightFromSquare, faArrowsUpDownLeftRight, faUsers,
 } from '@fortawesome/free-solid-svg-icons'
 import { useSearchParams } from 'react-router-dom'
 import { Page } from '@/components/layout/AppShell'
@@ -24,6 +25,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Tabs } from '@/components/ui/Tabs'
 import { Choices } from '@/components/ui/Choices'
+import { Select } from '@/components/ui/Select'
 import { Menu } from '@/components/ui/Menu'
 import { Dialog } from '@/components/ui/Dialog'
 import { DateTimeField } from '@/components/ui/DateTimeField'
@@ -40,7 +42,7 @@ import {
   archiveAvatarItem, deleteAvatarItem, drawAvatarCard, assetUrl, cardFor,
   setLimited, decalBehind, reviewAvatarItem, ensureAvatarCard, uploadAsset,
   redrawAvatarCard, setAvatarFit,
-  mannequinFace,
+  mannequinFace, listMemberCommunities,
 } from '@/lib/api'
 import type { AvatarKind, AvatarSlot, AvatarRule, AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -141,6 +143,25 @@ export default function CreateAvatarItems() {
   const [showArchived, setShowArchived] = useState(false)
 
   const rules = useAsync(async () => avatarRules(), [])
+
+  /*
+   * Who this is being made for: you, or a Community you run.
+   *
+   * Staw: "either as you or as a community". A Community's item is sold
+   * under the Community's name and its money fills the Community's funds,
+   * and the Community pays the making fee - so the choice is made here,
+   * before anything is paid for, rather than being moved afterwards.
+   *
+   * Only the ones somebody actually runs. A member of forty Communities is
+   * not offered forty ways to spend somebody else's Brix, and the server
+   * refuses it anyway.
+   */
+  const [maker, setMaker] = useState('')
+  const myCommunities = useAsync(
+    async () => (profile ? listMemberCommunities(profile.id) : []),
+    [profile?.id],
+  )
+  const canMakeFor = (myCommunities.data ?? []).filter((one) => one.role !== 'member')
 
   const made = useAsync(async () => (profile ? myMadeAvatarItems() : []), [profile?.id])
   const meshes = useAsync(
@@ -379,6 +400,7 @@ export default function CreateAvatarItems() {
         imagePath,
         meshId: isModel ? usingMesh : null,
         textureId: isModel ? (usingTexture || null) : null,
+        communityId: maker || null,
       })
 
       // The placement, before the card is drawn, so the card shows the
@@ -878,10 +900,37 @@ export default function CreateAvatarItems() {
             </div>
           )}
 
+          {!!canMakeFor.length && (
+            <Select
+              label="Made by"
+              value={maker}
+              onChange={setMaker}
+              options={[
+                { value: '', label: 'You', note: 'Sold under your name' },
+                ...canMakeFor.map((one) => ({
+                  value: one.id,
+                  label: one.name,
+                  note: 'Sold under theirs, and paid into their funds',
+                })),
+              ]}
+            />
+          )}
+
           <Input label="Name" value={name} maxLength={60}
             onChange={(e) => setName(e.target.value)} />
           <Textarea label="Description" value={about} maxLength={400}
             onChange={(e) => setAbout(e.target.value)} />
+
+          {!!maker && (
+            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+              It will say it is by{' '}
+              <span className="font-bold text-white">
+                {canMakeFor.find((one) => one.id === maker)?.name}
+              </span>
+              , the fee comes out of their funds, and what it sells for goes back
+              into them.
+            </p>
+          )}
           {/*
             * No price here on purpose. Staw's rule: making something costs
             * what the kind costs, and the price is something you decide when
@@ -1051,7 +1100,11 @@ export function MadeCard({
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
         {picture
           ? <img src={picture} alt="" loading="lazy" className="h-full w-full object-contain" />
-          : <Glyph icon={faShirt} className="text-3xl text-white/25" />}
+          : (
+            /* Kobby with the empty box: the picture Staw picked for a
+               picture that is not there. */
+            <Missing why={item.status === 'rejected' ? 'Turned down' : undefined} />
+          )}
         <span className="absolute left-2 top-2 rounded-md bg-ink/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
           {item.kind}
         </span>
@@ -1080,6 +1133,14 @@ export function MadeCard({
             {typeof item.taken === 'number' && item.taken > 0
               && ` · ${item.taken} ${item.taken === 1 ? 'has it' : 'have it'}`}
           </p>
+          {/* Whose it is, when it is not yours. Three Communities' worth of
+              shirts in one list is otherwise one list of shirts. */}
+          {item.community_name && (
+            <p className="flex items-center gap-1.5 truncate text-[11px] font-semibold text-brand-bright">
+              <Glyph icon={faUsers} className="text-[10px]" />
+              For {item.community_name}
+            </p>
+          )}
         </div>
 
         <div className="mt-auto flex items-center gap-2">

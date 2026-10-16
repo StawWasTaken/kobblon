@@ -1931,6 +1931,12 @@ check('and the top of the body is the top of the panel',
 check('the body keeps the coordinates it was modelled with',
   shirtWrap.keptItsOwnUv, 'uv untouched, the template written to uv1')
 
+const legWrap = await p.evaluate(() => window.limbWrap())
+check('a leg lands its front on the panel the sheet calls its front',
+  legWrap.allInside, legWrap.facing)
+check('and that panel is the one the lid sits over, which is the sheet rule',
+  legWrap.lidOverFront, `lid over front on both legs: ${legWrap.lidOverFront}`)
+
 const faces = await p.evaluate(() => window.faceOnOff())
 check('a face goes on the front of the head and just in front of it',
   faces.on && faces.proud > 0 && faces.proud < 0.1,

@@ -918,6 +918,18 @@ export type AvatarItem = {
   creator_is_verified?: boolean
   /** Staff: the Kobblon k. Separate from verified; they mean different things. */
   creator_is_staff?: boolean
+  /**
+   * The Community that sells it, when one does.
+   *
+   * Beside the creator rather than instead of it: the person who pressed
+   * the button is still who made it, which is what a takedown and an audit
+   * entry read - and the byline is the Community, which is what a shopper
+   * reads. Staw: "i want it to be said to be 'by [community]' rather by the
+   * guy who uploaded it".
+   */
+  community_id?: string | null
+  community_slug?: string | null
+  community_name?: string | null
   created_at?: string
   owned?: boolean
   worn?: boolean

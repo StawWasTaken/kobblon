@@ -21,6 +21,7 @@ import {
   faBasketShopping, faCheck, faTrash, faCircleCheck, faEllipsis, faLink, faFlag,
   faPen,
   faStar,
+  faUsers,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -49,6 +50,7 @@ import {
   mannequinFace, favouriteAvatarItem,
 } from '@/lib/api'
 import { avatarTag, avatarNumber, avatarKindLabels } from '@/lib/kinds'
+import { communityLink } from '@/lib/links'
 import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
 import type { AvatarItem } from '@/types/db'
@@ -94,6 +96,21 @@ export default function CatalogItem() {
     [wanted],
   )
   const item = thing.data ?? null
+
+  /*
+   * Who it is by, decided once. A Community's item is by the Community, and
+   * every place on this page that names a maker reads this rather than
+   * reaching for `creator_username` and quietly disagreeing with the others.
+   */
+  const madeBy = {
+    community: !!(item?.community_id && item.community_slug),
+    name: item?.community_id && item.community_slug
+      ? (item.community_name ?? 'A Community')
+      : (item?.creator_display_name ?? ''),
+    to: item?.community_id && item.community_slug
+      ? communityLink({ slug: item.community_slug })
+      : `/u/${item?.creator_username ?? ''}`,
+  }
 
   useTitle(item ? item.name : 'Catalog')
 
@@ -287,7 +304,11 @@ export default function CatalogItem() {
                         say('Link copied.', 'success')
                       },
                     },
-                    { label: 'See who made it', icon: faUser, to: `/u/${item.creator_username}` },
+                    {
+                      label: madeBy.community ? 'See the Community' : 'See who made it',
+                      icon: madeBy.community ? faUsers : faUser,
+                      to: madeBy.to,
+                    },
                     { label: 'Report it', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
                     ...(canRemove ? [{
                       label: sureRemove ? 'Really take it down' : 'Take it down',
@@ -317,21 +338,30 @@ export default function CatalogItem() {
               </div>
             </div>
 
+            {/*
+              * By the Community when a Community sells it, and by the person
+              * otherwise. Staw: "i want it to be said to be 'by [community]'
+              * rather by the guy who uploaded it" - the maker is an employee
+              * there, and a shop that credits them publishes the staff rota.
+              */}
             <Link
-              to={`/u/${item.creator_username}`}
+              to={madeBy.to}
               className="flex items-center gap-2 text-sm text-white/75 transition-colors hover:text-white"
             >
               <span className="text-muted">By</span>
+              {madeBy.community && <Glyph icon={faUsers} className="text-xs" />}
               <span className="truncate font-semibold text-white/90">
-                {item.creator_display_name}
+                {madeBy.name}
               </span>
-              <NameMarks
-                person={{
-                  is_verified: item.creator_is_verified,
-                  is_admin: item.creator_is_staff,
-                }}
-                className="text-[11px]"
-              />
+              {!madeBy.community && (
+                <NameMarks
+                  person={{
+                    is_verified: item.creator_is_verified,
+                    is_admin: item.creator_is_staff,
+                  }}
+                  className="text-[11px]"
+                />
+              )}
             </Link>
 
             {/*

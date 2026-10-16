@@ -29,9 +29,10 @@ import { supabase } from '@/lib/supabase'
 import { communityLink } from '@/lib/links'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { LiveEventBar } from '@/components/community/LiveEventBar'
+import { Shop } from '@/components/catalog/Shop'
 import { Tabs } from '@/components/ui/Tabs'
 
-const tabs = ['About', 'Events', 'Members', 'Affiliates'] as const
+const tabs = ['About', 'Shop', 'Events', 'Members', 'Affiliates'] as const
 type Tab = (typeof tabs)[number]
 
 export default function CommunityPage() {
@@ -297,6 +298,23 @@ export default function CommunityPage() {
               ownerId={group.owner_id}
               rights={rights.data}
               onChanged={() => { community.reload(); rights.reload() }}
+            />
+          </div>
+        )}
+
+        {/*
+          * What the Community sells, under its own name.
+          *
+          * Second after About because it is the thing a stranger is most
+          * likely to have come for: a Community with a shop is a shop, and
+          * burying it behind the member list is hiding the front door.
+          */}
+        {tab === 'Shop' && (
+          <div className="mt-6">
+            <Shop
+              owner={{ community: group.id }}
+              who={group.name}
+              isMine={!!rights.data?.can_manage_community}
             />
           </div>
         )}

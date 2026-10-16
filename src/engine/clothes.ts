@@ -177,14 +177,23 @@ const TORSO_PANELS: Record<Side, Region> = {
  */
 const LIMBS: Record<'left' | 'right', { at: number; across: Side[]; flapAt: number }> = {
   /*
+   * **The lid sits over the front.** That is the one rule the whole sheet is
+   * laid out by, and it is how the torso reads too: the panel under the
+   * cross's top flap is the front, and the row runs left, front, right, back
+   * from there. The first version of this table was a column out on both
+   * limbs - the lid was over the front and the faces were written down as
+   * though it were over a side - so a pair of trousers came out with its
+   * front down the sides of the legs. Staw: "the front is on the sides for
+   * some reason".
+   *
    * Keyed by which arm or leg it is, and not by the order the parts happen
    * to be listed in, because the sheet puts the avatar's **right** limb on
    * the left of the page. Reading them off in list order put every sleeve on
    * the wrong arm - it survives being looked at, because a sleeve is nearly
    * symmetrical and most shirts do not care until one of them does.
    */
-  right: { at: 19, across: ['back', 'left', 'front', 'right'], flapAt: 3 },
-  left: { at: 308, across: ['left', 'front', 'right', 'back'], flapAt: 0 },
+  right: { at: 19, across: ['right', 'back', 'left', 'front'], flapAt: 3 },
+  left: { at: 308, across: ['front', 'right', 'back', 'left'], flapAt: 0 },
 }
 
 /** Panel to panel across a strip: 64 of panel and 2 of gap. */
