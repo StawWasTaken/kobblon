@@ -8177,3 +8177,39 @@ still "on the hat socket, roughly the right size".
 `tools/site/skin-preview.html` is new: the five tones on the rig rather than
 as squares, because a tone that reads warm in a 24-pixel swatch can read
 orange across a whole person.
+
+## Round ninety-five
+
+Mine, and it had been live since 0247.
+
+**An item made from a model and a picture was stored with no picture.**
+Staw: "for some reason the textures of the hairs dont appear". It is not
+hair. Uploading a model and its picture together makes one Decal and hangs
+it on the **mesh row**, and the page then creates the item naming no
+texture, because the model already wears one. 0130 added the fallback that
+reads it back: no texture named and a model given, take the model's.
+
+0247 rewrote `create_avatar_item` to carry a body part's shape and copied
+every line of it except that one. So since 0247, every accessory and every
+haircut made the ordinary way has had `texture_id` null and has rendered
+grey. The model was textured the whole time. Nothing threw, the upload
+succeeded, and the only symptom was a grey model - which reads as "the
+texture did not upload" and sends you looking in storage, where the picture
+is, correctly, attached to the mesh.
+
+**Migration 0251** puts the fallback back and backfills: every item with no
+texture of its own whose model wears one takes it. Only those - a maker who
+deliberately left a model bare has no Decal on the mesh either, so nothing
+anybody chose is overwritten. Nothing on this side needed changing; the
+pages were right and the function was not.
+
+The rule to take from it, because this is the second time in four rounds:
+**a function rewritten to add a column is a function rewritten.** The thing
+to check is not that the new column works - it is that every old one still
+does. The check that catches it is behavioural and not a column list: make
+the thing the ordinary way and read back what it got.
+
+Checked under two identities, as everything here now is: the owner's new
+haircut took its model's picture, a stranger naming that same mesh still
+gets "That model is not yours to use", and after the backfill nothing is
+left with a bare item over a textured model.
