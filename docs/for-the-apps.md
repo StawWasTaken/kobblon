@@ -8213,3 +8213,58 @@ Checked under two identities, as everything here now is: the owner's new
 haircut took its model's picture, a stranger naming that same mesh still
 gets "That model is not yours to use", and after the backfill nothing is
 left with a bare item over a textured model.
+
+## Round ninety-six
+
+The staff side of warnings and suspensions, which has been missing since
+sanctions existed.
+
+**The console could not sanction anybody.** Everything a sanction is made of
+- the rule, the reason the account is allowed to read, the violation row the
+standing page counts, the mail, the appeal that follows - is written by
+`take_report`, and `take_report` needs a report. Staff looking at somebody
+they already knew about had one control: a `Suspend` button that flipped
+`is_suspended` through `admin_set_standing`. No reason, no end, no violation,
+no mail. The person saw a locked account and a standing page telling them
+nothing was wrong with it, which is the worst version of a sanction: felt,
+and unappealable, because there is nothing on the record to appeal.
+
+**Migration 0252** adds `sanction_account(target, action, why, rule, days)`
+- `take_report`'s second half with the report taken out. Warning, chat
+suspension or account suspension; same violation row, same mail, same admin
+log, same rank rules. The reason has to be ten characters, not three: a
+sanction with no report behind it has nothing else explaining it.
+
+**The machine is refused this door by name**, the way `ban_account` refuses
+it. Not by rank - the worker holds a key that passes a staff check, that is
+the whole reason it has one. Kobby acts on reports; a sanction against
+somebody nobody reported is the machine choosing who to look at. Staw's line
+is unchanged and now true in two places: warnings and suspensions, and no
+door at all for closing an account.
+
+**`ban_account` and `lift_account_ban` have a caller.** They have existed
+since 0243 and nothing in the website called either, so a ban could not be
+handed out or lifted anywhere. Both are on the person's card now, for a
+superadmin, behind a confirmation that says what a ban is: locked out and
+told why, nothing deleted, appealable, and lifting it voids the decision
+rather than hiding it.
+
+**`admin_find_people` grew three columns and lost a rank check.** It now
+answers `is_banned`, `suspended_until` and `past_sanctions`, because each
+one was a control lying without it: a Suspend button on somebody already
+banned, an Unsuspend that would quietly undo a termination, and no way to
+see this is somebody's fourth warning while deciding the fifth. And it
+required an **admin** while the People section is a moderator's and the card
+draws them a panel written for them - so the one rank it was designed for
+could not open it. It is `is_moderator` now; every write behind it is
+unchanged and still refuses them.
+
+If the Workspace ever grows a staff panel, `sanction_account` is the one to
+call and `admin_set_standing` is not: the flag without the record is the bug
+this round is about.
+
+Checked under three identities, as everything here is now: a moderator
+warned somebody and the violation landed; a three-day suspension set the
+flag and the end, both read back through the console's own row; a ban made
+`is_banned` true and cleared the end; lifting it cleared both; a bare reason
+and an ordinary signed-in account were refused.

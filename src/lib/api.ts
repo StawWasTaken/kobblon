@@ -2948,6 +2948,48 @@ export type StaffPerson = {
   has_staff_badge: boolean
   is_guest: boolean
   created_at: string
+  /** Closed for good: a termination still standing on their record. */
+  is_banned: boolean
+  /** When a suspension runs out. Null on a ban, which never does. */
+  suspended_until: string | null
+  /** What is already on the record, so this decision knows the last one. */
+  past_sanctions: number
+}
+
+/**
+ * A sanction handed out without a report behind it.
+ *
+ * The same thing `takeReport` writes - a violation on the record, the mail,
+ * the appeal - for staff acting on somebody they already know about. There
+ * is no `termination` here and there is not going to be: closing an account
+ * is `banAccount`, which the moderation worker is refused by name.
+ */
+export type SanctionAction = 'warning' | 'chat_suspension' | 'suspension'
+
+export async function sanctionAccount(input: {
+  target: string
+  action: SanctionAction
+  why: string
+  rule?: string
+  days?: number | null
+}): Promise<{ action: string; violation: number; until: string | null }> {
+  return unwrap(await supabase.rpc('sanction_account', {
+    target: input.target,
+    action: input.action,
+    why: input.why,
+    which_rule: input.rule ?? 'other',
+    days: input.days ?? null,
+  })) as { action: string; violation: number; until: string | null }
+}
+
+/** Closing an account. A person's decision: the worker is refused this. */
+export async function banAccount(target: string, why: string, rule = 'other') {
+  unwrap(await supabase.rpc('ban_account', { target, said: why, which_rule: rule }))
+}
+
+/** Undoing one. Voids the terminations rather than deleting the record. */
+export async function liftAccountBan(target: string, why: string): Promise<number> {
+  return unwrap(await supabase.rpc('lift_account_ban', { target, said: why })) as number
 }
 
 export type FlaggedTerm = {

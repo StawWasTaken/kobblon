@@ -20,7 +20,7 @@ import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
-  faStethoscope,
+  faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
@@ -47,6 +47,7 @@ import { SupportQueue } from '@/components/staff/SupportQueue'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { avatarOf } from '@/lib/avatars'
 import { formatCount, timeAgo } from '@/lib/format'
+import { ruleWord } from '@/components/social/standing'
 import { avatarKindLabels, kindLabels } from '@/lib/kinds'
 import { useAsync } from '@/hooks/useAsync'
 import { cn } from '@/lib/cn'
@@ -60,10 +61,11 @@ import {
   reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
-  checkTheMachine,
+  checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
 } from '@/lib/api'
 import type {
   MachineStep, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
+  SanctionAction,
 } from '@/lib/api'
 import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
@@ -133,6 +135,149 @@ const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOr
 
 /* ------------------------------------------------------------------ people */
 
+/* ----------------------------------------------------------- a sanction */
+
+/** The house rules a decision is filed under, in the ledger's own words. */
+const RULES = [
+  'harassment', 'spam', 'sexual', 'violence', 'impersonation',
+  'illegal', 'hate', 'cheating', 'copyright', 'age', 'other',
+] as const
+
+const HOW_LONG = [
+  { value: '1', label: 'A day' },
+  { value: '3', label: 'Three days' },
+  { value: '7', label: 'A week' },
+  { value: '30', label: 'A month' },
+  { value: '', label: 'Until somebody lifts it' },
+]
+
+/**
+ * Acting on a person who has not been reported.
+ *
+ * The console had one control for this and it was a flag: `Suspend` wrote
+ * `is_suspended` and nothing else, so the account was locked out while its
+ * own standing page said nothing was wrong with it - felt, and unappealable,
+ * because there was nothing on the record to appeal. This writes what a
+ * report writes: the rule, the reason the person reads, the violation the
+ * standing page counts, the mail, and the appeal that follows from it.
+ *
+ * Closing an account is not in here. It is its own button, its own
+ * confirmation and a superadmin's, because it is the one decision nothing
+ * undoes by waiting.
+ */
+function SanctionDialog({ person, open, onClose, onDone }: {
+  person: StaffPerson
+  open: boolean
+  onClose: () => void
+  onDone: () => void
+}) {
+  const say = useToast()
+  const [action, setAction] = useState<SanctionAction>('warning')
+  const [rule, setRule] = useState('harassment')
+  const [why, setWhy] = useState('')
+  const [days, setDays] = useState('3')
+  const [busy, setBusy] = useState(false)
+
+  const send = async () => {
+    setBusy(true)
+    try {
+      await sanctionAccount({
+        target: person.id,
+        action,
+        why,
+        rule,
+        days: action === 'suspension' && days ? Number(days) : null,
+      })
+      say(
+        action === 'warning' ? 'Warned. It is on their record and in their Inbox.'
+          : action === 'chat_suspension' ? 'Chat suspended.'
+            : 'Suspended.',
+        'success',
+      )
+      setWhy('')
+      onClose()
+      onDone()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={`Act on @${person.username}`}
+      description="They are told what this says, and can appeal it from their standing."
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            variant={action === 'warning' ? 'primary' : 'danger'}
+            disabled={busy || why.trim().length < 10}
+            onClick={send}
+          >
+            <FontAwesomeIcon icon={faGavel} />
+            {action === 'warning' ? 'Warn them'
+              : action === 'chat_suspension' ? 'Suspend chat' : 'Suspend the account'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <Choices
+          label="What this is"
+          size="sm"
+          value={action}
+          onChange={(picked) => setAction(picked as SanctionAction)}
+          options={[
+            { value: 'warning', label: 'Warning', icon: faFlag },
+            { value: 'chat_suspension', label: 'Chat', icon: faCommentSlash },
+            { value: 'suspension', label: 'Account', icon: faUserSlash },
+          ]}
+        />
+
+        <Select
+          label="The rule"
+          value={rule}
+          onChange={setRule}
+          options={RULES.map((one) => ({ value: one, label: ruleWord[one] ?? one }))}
+        />
+
+        {action === 'suspension' && (
+          <Select
+            label="How long"
+            value={days}
+            onChange={setDays}
+            options={HOW_LONG}
+          />
+        )}
+
+        <Textarea
+          label="Why"
+          labelNote="they read this"
+          value={why}
+          onChange={(e) => setWhy(e.target.value)}
+          placeholder="What they did, in a sentence. A sanction with no reason cannot be appealed."
+          hint={why.trim().length < 10
+            ? 'At least a sentence. This is the whole of what they are told.'
+            : undefined}
+        />
+
+        {person.past_sanctions > 0 && (
+          <Note>
+            {person.past_sanctions === 1
+              ? 'One thing already on their record.'
+              : `${person.past_sanctions} things already on their record.`}
+          </Note>
+        )}
+      </div>
+    </Dialog>
+  )
+}
+
+
 export function PersonRow({ person, onChanged }: {
   person: StaffPerson
   onChanged: () => void
@@ -144,6 +289,9 @@ export function PersonRow({ person, onChanged }: {
   const [note, setNote] = useState('')
   const [saying, setSaying] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [acting, setActing] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const [opening, setOpening] = useState(false)
   const [why, setWhy] = useState('')
 
   /*
@@ -178,7 +326,11 @@ export function PersonRow({ person, onChanged }: {
             {person.is_admin && <Badge tone="brand">Admin</Badge>}
             {person.is_moderator && !person.is_admin && <Badge tone="brand">Moderator</Badge>}
             {person.is_verified && <Badge tone="space">Verified</Badge>}
-            {person.is_suspended && <Badge tone="danger">Suspended</Badge>}
+            {/* A closed account is suspended as well, so without this it
+                wore both badges and the heavier one read as the lesser. */}
+            {person.is_banned
+              ? <Badge tone="danger">Closed</Badge>
+              : person.is_suspended && <Badge tone="danger">Suspended</Badge>}
             {person.is_guest && <Badge>Guest</Badge>}
           </p>
           <p className="truncate text-xs text-muted">
@@ -201,7 +353,78 @@ export function PersonRow({ person, onChanged }: {
         * and the behaviour panel below, and acts through a report instead.
         */}
       {rank === 'moderator' && (
-        <Note>Standing, Brix and closing an account are an admin's; you act from the report.</Note>
+        <Note>Standing and Brix are an admin's. Warning, chat and suspending are yours.</Note>
+      )}
+
+      {/*
+        * What is already true of them, before anybody decides anything else.
+        * It was not on the card at all, so the decision about a fifth
+        * warning was taken without knowing about the four.
+        */}
+      {(person.is_banned || person.is_suspended || person.past_sanctions > 0) && (
+        <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
+          {person.is_banned && <Badge tone="danger">Closed</Badge>}
+          {person.is_suspended && !person.is_banned && (
+            <Badge tone="danger">
+              {person.suspended_until
+                ? `Suspended until ${new Date(person.suspended_until).toLocaleDateString()}`
+                : 'Suspended, no end'}
+            </Badge>
+          )}
+          {person.past_sanctions > 0 && (
+            <span>
+              {person.past_sanctions === 1
+                ? 'One thing on their record'
+                : `${person.past_sanctions} things on their record`}
+            </span>
+          )}
+        </p>
+      )}
+
+      {/*
+        * The sanction door, drawn for a moderator as well: this is the one
+        * thing on the card that is theirs, and it was the one thing they
+        * could not reach.
+        */}
+      {!person.is_admin && (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="subtle" disabled={busy} onClick={() => setActing(true)}>
+            <FontAwesomeIcon icon={faGavel} />
+            Warn or suspend
+          </Button>
+
+          {person.is_suspended && !person.is_banned && (
+            <Button
+              size="sm"
+              variant="subtle"
+              disabled={busy}
+              onClick={() => run('Suspension lifted.',
+                () => setStanding(person.id, { suspended: false }))}
+            >
+              <FontAwesomeIcon icon={faBan} />
+              Lift the suspension
+            </Button>
+          )}
+
+          {/*
+            * Closing an account and opening it again. `ban_account` refuses
+            * the moderation worker by name - Staw's line, and the reason it
+            * is written into the database rather than into a page.
+            */}
+          {rank === 'superadmin' && (
+            person.is_banned ? (
+              <Button size="sm" variant="subtle" disabled={busy} onClick={() => setOpening(true)}>
+                <FontAwesomeIcon icon={faDoorOpen} />
+                Open it again
+              </Button>
+            ) : (
+              <Button size="sm" variant="danger" disabled={busy} onClick={() => setClosing(true)}>
+                <FontAwesomeIcon icon={faDoorClosed} />
+                Close the account
+              </Button>
+            )
+          )}
+        </div>
       )}
 
       {rank !== 'moderator' && (
@@ -287,34 +510,14 @@ export function PersonRow({ person, onChanged }: {
           Notify
         </Button>
 
-        {/* An admin cannot be suspended or deleted from here, and the
-            database says so too. Not drawing the buttons saves somebody
-            pressing one to find out. */}
-        {!person.is_admin && (
-          <>
-            <Button
-              size="sm"
-              variant={person.is_suspended ? 'subtle' : 'danger'}
-              disabled={busy}
-              onClick={() => run(
-                person.is_suspended ? 'Suspension lifted.' : 'Suspended.',
-                () => setStanding(person.id, { suspended: !person.is_suspended }),
-              )}
-            >
-              <FontAwesomeIcon icon={person.is_suspended ? faBan : faUserSlash} />
-              {person.is_suspended ? 'Unsuspend' : 'Suspend'}
-            </Button>
-
-            {/* Closing an account is a superadmin's, and 0172 made the
-                database say so. Not drawing it for an admin saves them
-                pressing it to be refused. */}
-            {rank === 'superadmin' && (
-              <Button size="sm" variant="danger" disabled={busy} onClick={() => setRemoving(true)}>
-                <FontAwesomeIcon icon={faTrash} />
-                Delete
-              </Button>
-            )}
-          </>
+        {/* Sanctions live in their own row above, which a moderator gets
+            too. What is left here is an admin's: deleting, which is not a
+            sanction - it is the end of the account and everything in it. */}
+        {!person.is_admin && rank === 'superadmin' && (
+          <Button size="sm" variant="danger" disabled={busy} onClick={() => setRemoving(true)}>
+            <FontAwesomeIcon icon={faTrash} />
+            Delete
+          </Button>
         )}
       </div>
       )}
@@ -369,6 +572,59 @@ export function PersonRow({ person, onChanged }: {
           }}
         />
       </Dialog>
+
+      <SanctionDialog
+        person={person}
+        open={acting}
+        onClose={() => setActing(false)}
+        onDone={onChanged}
+      />
+
+      <Confirm
+        open={closing}
+        onClose={() => { setClosing(false); setWhy('') }}
+        onConfirm={() => run('Account closed.', async () => {
+          await banAccount(person.id, why)
+          setClosing(false)
+          setWhy('')
+        })}
+        title={`Close @${person.username}?`}
+        lead="They are locked out and told why. Nothing of theirs is deleted."
+        points={[
+          'It goes on their record as a termination, and they can appeal it.',
+          'Opening it again later voids that decision rather than hiding it.',
+          'The moderation worker cannot do this. Only a person can.',
+        ]}
+        confirmText="Close the account"
+      >
+        <Input
+          label="Why"
+          value={why}
+          onChange={(e) => setWhy(e.target.value)}
+          placeholder="A sentence they are allowed to read."
+        />
+      </Confirm>
+
+      <Confirm
+        open={opening}
+        onClose={() => { setOpening(false); setWhy('') }}
+        onConfirm={() => run('Open again.', async () => {
+          await liftAccountBan(person.id, why)
+          setOpening(false)
+          setWhy('')
+        })}
+        title={`Open @${person.username} again?`}
+        lead="The decision to close it is voided and they are told."
+        points={['The record of what was decided stays. It is marked as lifted.']}
+        confirmText="Open it again"
+      >
+        <Input
+          label="Why"
+          value={why}
+          onChange={(e) => setWhy(e.target.value)}
+          placeholder="Shown to them."
+        />
+      </Confirm>
 
       <Confirm
         open={removing}
