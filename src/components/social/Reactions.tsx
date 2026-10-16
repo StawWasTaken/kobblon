@@ -19,6 +19,12 @@ import { cn } from '@/lib/cn'
  * around it: on a post it is the whole of what you can say, and on a
  * World it sits beside a rating it does not touch.
  *
+ * **Three each.** It was one, and the one-per-person rule lived in the
+ * table's primary key; migration 0242 widened that key and the server
+ * refuses a fourth. Nothing is swapped out to make room: a press that
+ * cannot be kept says so, because a face that vanished on its own is a bug
+ * nobody can explain to themselves.
+ *
  * What is drawn is only the faces somebody actually pressed, plus the
  * button that opens the rest. A row of ten zeroes is ten things to read
  * with no information in any of them - and it is also a row that tells
@@ -101,7 +107,13 @@ export function Reactions({
     }
   }, [picking])
 
-  const mine = shown.find((one) => one.mine)?.face ?? null
+  /*
+   * Up to three, which is Staw's number and the server's rule. The page
+   * counts them so the tray can say when it is full rather than letting
+   * somebody press a fourth and be told off for it.
+   */
+  const mine = shown.filter((one) => one.mine).map((one) => one.face)
+  const full = mine.length >= 3
 
   const press = async (face: Face) => {
     if (!canReact) {
@@ -111,23 +123,24 @@ export function Reactions({
     setPicking(false)
 
     /*
-     * The guess. One face per person, so pressing a new one takes the old
-     * one off in the same breath - which is what the server does, and the
-     * count has to agree with that or it reads as two reactions from one
-     * person for a second.
+     * The guess. Each face stands on its own now: pressing one adds it,
+     * pressing it again takes it off, and three is as many as the server
+     * will keep. Nothing is taken off to make room - a fourth press is
+     * refused rather than quietly replacing the oldest, because a face
+     * disappearing on its own is a bug nobody can explain to themselves.
      */
-    const taking = mine === face
+    const taking = mine.includes(face)
+    if (!taking && full) {
+      say('Three faces is as much as anybody can say about one thing.', 'info')
+      return
+    }
+
     setShown((had) => {
-      let next = had.map((one) => (
-        one.face === mine ? { ...one, how_many: one.how_many - 1, mine: false } : one
-      ))
-      if (!taking) {
-        next = next.some((one) => one.face === face)
-          ? next.map((one) => (
-            one.face === face ? { ...one, how_many: one.how_many + 1, mine: true } : one
-          ))
-          : [...next, { face, how_many: 1, mine: true }]
-      }
+      const next = had.some((one) => one.face === face)
+        ? had.map((one) => (one.face === face
+          ? { ...one, how_many: one.how_many + (taking ? -1 : 1), mine: !taking }
+          : one))
+        : [...had, { face, how_many: 1, mine: true }]
       return next.filter((one) => one.how_many > 0)
     })
 
@@ -165,7 +178,12 @@ export function Reactions({
         </button>
       ))}
 
-      <Tooltip label={canReact ? 'React' : (whyNot ?? 'You cannot react to this')} side="top">
+      <Tooltip
+        label={canReact
+          ? (full ? 'Three is the most. Press one again to take it off.' : 'React')
+          : (whyNot ?? 'You cannot react to this')}
+        side="top"
+      >
         <button
           type="button"
           onClick={() => (canReact ? setPicking((v) => !v) : whyNot && say(whyNot, 'info'))}
@@ -203,7 +221,8 @@ export function Reactions({
               title={face.replace('-', ' ')}
               className={cn(
                 'grid h-14 w-14 animate-pop-in place-items-center rounded-xl transition-transform duration-150 hover:scale-110 active:scale-95',
-                mine === face && 'bg-brand/20',
+                mine.includes(face) && 'bg-brand/20',
+                !mine.includes(face) && full && 'opacity-40',
               )}
             >
               {/* In the tray every face is in colour: this is the place

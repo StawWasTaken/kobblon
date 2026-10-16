@@ -7622,3 +7622,54 @@ redone. `my_account_standing`, `reactivate_my_account` and `ban_account` do
 not exist. There is still no purchase path for the Klub. The five pages Staw
 wants reordered - Catalog, Communities, Discover, People, Settings - and the
 staff console are written down in `docs/roadmap.md` and not started.
+
+## Round eighty-six
+
+Two things here change meaning for anything that draws clothes or shows
+reactions.
+
+**The clothing template is the one everybody already has.** Staw, holding up
+a sheet made for somewhere else: "if i upload this to kobblon then it will
+work and become a proper shirt". So `templateFor` no longer lays regions out
+from the body's measurements; it returns the familiar sheet: **585 by 559**,
+64 pixel grid, torso unfolded across the top (front panel 128x128 at 231,74,
+its sides 64 wide), the two limbs unfolded side by side beneath it at y=346
+with their lids at y=282.
+
+Two details are easy to get wrong and both show as a sleeve on backwards:
+the limbs are **mirrored** - the left one's lid and floor sit over its fourth
+column, the right one's over its first - and the order of faces across the
+row differs between them for the same reason. Read `templateFor`; do not
+re-derive it.
+
+This replaces the layout the first templates used. Anything painted into the
+old sheet is laid on the body by the new one, which is a handful of items on
+a platform this age. The two PNGs in `public/templates` are regenerated from
+the code, by `tools/site/template-sheets.html` - never edited by hand.
+
+**Clear pixels in clothing show what is underneath.** They used to show
+white, because the fix for "the body colour tints the shirt" was to paint the
+part white under any picture, and white is exactly what a transparent patch
+then rendered.
+
+`K6` now patches the part's material: the skin colour stays on the material
+and the shader lays the garment over it by the garment's own alpha, with the
+layer below it drawn first. So a clear patch in a shirt shows the trousers
+under it, or the skin if there are none, and a half-clear garment is half
+clear. No second mesh and no second pass.
+
+If you build materials for K6 parts yourself, do not set them white under
+clothing any more, and do not assume `material.color` is white while a map is
+set. Two traps came up doing it and are worth repeating: three's
+`Material.copy` deep-copies `userData` through JSON but does **not** copy
+`onBeforeCompile`, so a "patched" flag in `userData` survives a clone that
+dropped the patch; and a texture must never be parked in `userData` for the
+same reason.
+
+**Three reactions each, not one** - migration **0242**. The one-per-person
+rule was the reactions table's primary key; the key now includes the face and
+`react` refuses a fourth with "Three faces is as much as anybody can say
+about one thing." Nothing is swapped out to make room. `reactions_on` and
+`reactions_on_many` are unchanged in shape, but `mine` can now be true on up
+to three rows for one person - a client that reads "the one that is mine"
+will show the wrong state.
