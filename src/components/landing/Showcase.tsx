@@ -66,31 +66,19 @@ export function Showcase() {
       <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-12 lg:grid-cols-[1fr_390px] lg:py-16">
         <div className="max-w-xl self-center">
           {/*
-            * The wordmark and one line under it, the way Roblox put "The
-            * Game Powered by Players." under theirs.
-            *
-            * The two share a width so the strip ends exactly where the
-            * wordmark does, and it is pulled up into the wordmark's own
-            * transparent edge so the two read as one mark rather than as a
-            * picture with a caption below it.
-            *
-            * The strip is there so the sentence is legible over sky or over
-            * a building without darkening the whole picture to suit it.
-            *
-            * The logo gets a higher stacking order than the strip so the
-            * glow/bottom edge of the letters sits above it rather than
-            * being covered by it where the two overlap.
+            * The lockup Staw drew: the wordmark and "The game built by
+            * players." as one piece of artwork rather than as a picture
+            * with a strip of text under it. It was two things kept in line
+            * by a negative margin, which is one layout change away from
+            * drifting apart; now it is the thing he made.
             */}
-          <div className="w-full max-w-[400px]">
-            <img
-              src={asset('/brand/wordmark2.png')}
-              alt="Kobblon"
-              className="relative z-10 block w-full select-none"
-            />
-            <p className="relative z-0 -mt-2.5 bg-ink/75 px-3 py-2 text-center font-display text-base text-white backdrop-blur-sm sm:text-lg">
-              The game built by players.
-            </p>
-          </div>
+          <img
+            src={asset('/brand/landing-lockup.png')}
+            alt="Kobblon - the game built by players."
+            width={727}
+            height={231}
+            className="block w-full max-w-[440px] select-none"
+          />
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button to="/discover" size="lg" variant="brand">

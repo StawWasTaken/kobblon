@@ -8325,3 +8325,15 @@ draw faster - a first look is still a fetch and a render, and only the
 second one is instant. Migrations **0249, 0250, 0251 and 0252 still need
 applying in the Supabase SQL editor, in that order**; everything in rounds
 ninety-four through ninety-six is deployed and waiting on them.
+
+## Round ninety-eight
+
+**The landing lockup is one piece of artwork now.** `public/brand/landing-lockup.png`
+(727x231, transparent) - the wordmark and "The game built by players." as
+Staw drew them, replacing `wordmark2.png` plus a text strip held in line by a
+negative margin. `wordmark2.png` is no longer used by anything on the site;
+it is still in `public/brand/` and nothing has been deleted. If the Launcher
+or the Workspace shows the same lockup, use the new file rather than
+rebuilding the two-piece version.
+
+Staw has applied migrations 0249 to 0252.
