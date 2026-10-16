@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import type { KobIcon } from '@/components/brand/Icon'
 import {
-  faComment, faFlag, faUserPlus, faClock, faUserCheck,
+  faComment, faFlag, faUserPlus, faClock,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
   faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart,
 } from '@fortawesome/free-solid-svg-icons'
@@ -655,9 +655,17 @@ export default function Profile() {
                         <Button icon={faUserPlus} onClick={addFriend} disabled={!me}>Add Friend</Button>
                       </GuestGate>
                     )}
+                    {/*
+                      * A heart, not a person with a tick. Staw: "make that
+                      * every icon for following someone is a heart instead
+                      * of a user" - the person icons belong to friendship,
+                      * which is a request and an answer, and following is
+                      * the one-sided thing the lists already mark with a
+                      * heart. Two icons for two different relations.
+                      */}
                     <Button
                       variant={following ? 'primary' : 'subtle'}
-                      icon={faUserCheck}
+                      icon={faHeart}
                       onClick={toggleFollow}
                       disabled={!me}
                     >
