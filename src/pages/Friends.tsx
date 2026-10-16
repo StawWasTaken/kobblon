@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faCheck, faComment, faEllipsis, faFilter, faInbox, faUserGroup, faUserPlus,
-  faUsers, faXmark, faHeart, faStar, faBan, faEyeSlash, faUser,
+  faUsers, faXmark, faHeart, faBan, faEyeSlash, faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -45,7 +45,10 @@ import { PersonAvatar } from '@/components/ui/PersonAvatar'
 const tabs = [
   { name: 'Friends', icon: faUserGroup, list: 'friends' },
   { name: 'Requests', icon: faInbox, list: 'requests', mineOnly: true },
-  { name: 'Followers', icon: faStar, list: 'followers' },
+  // Both sides of following wear the heart, because they are one relation
+  // read from either end. The star used to mark followers and said nothing
+  // about what a follower is.
+  { name: 'Followers', icon: faHeart, list: 'followers' },
   { name: 'Following', icon: faHeart, list: 'following' },
   { name: 'Ignored', icon: faEyeSlash, list: 'ignored', mineOnly: true },
   { name: 'Blocked', icon: faBan, list: 'blocked', mineOnly: true },
@@ -326,7 +329,7 @@ export default function Friends() {
           />
         )}
         <StatTile
-          icon={faStar}
+          icon={faHeart}
           value={followers.loading ? null : followers.data?.length ?? 0}
           label="Followers" active={current.name === 'Followers'} onClick={() => setTab('Followers')}
         />

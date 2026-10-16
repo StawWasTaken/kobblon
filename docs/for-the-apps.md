@@ -7673,3 +7673,57 @@ about one thing." Nothing is swapped out to make room. `reactions_on` and
 `reactions_on_many` are unchanged in shape, but `mine` can now be true on up
 to three rows for one person - a client that reads "the one that is mine"
 will show the wrong state.
+
+## Round eighty-seven
+
+**A suspension has not actually suspended anybody since migration 0215.**
+That is the one line in this round that matters to you, and it is not a new
+feature, it is a bug that was live for months.
+
+`guard_profile_update` honours transaction-local flags so a
+`security definer` function can write a column the guard otherwise pins back
+(CLAUDE.md's third trap). Migration 0178 added the `kobbleston.standing`
+branch for `is_suspended`, `suspended_until` and the standing columns.
+Migration 0215 rewrote the whole guard for another reason and **dropped that
+branch**. Everything downstream kept working: `suspend_account` wrote the
+violation, wrote the mail, wrote the admin log, returned successfully - and
+the guard put `is_suspended` straight back to false. Nothing threw. Only an
+admin, whose writes the guard exempts, could suspend anybody at all.
+
+Migration **0243** restores it. If an application reads `is_suspended` to
+decide whether somebody is locked out, that column is now telling the truth;
+anything that was working around it by reading the violations table instead
+can stop.
+
+Also in 0243, for the lockout the applications will eventually have to show:
+
+- `ban_account(target, said, which_rule default 'other')` - a permanent
+  termination. Needs `is_moderator()`, refuses the worker account by name
+  first, and refuses a reason under ten characters. Writes a `termination`
+  violation, sets `is_suspended`, sends the mail, logs to admin.
+- `lift_account_ban(target, said)` - voids the termination and returns the
+  account to clear. **Named `lift_account_ban`, not `lift_ban`**: `lift_ban`
+  already exists and is the Community one. Do not call the short name
+  expecting an account.
+- `my_account_standing()` - what to show the person themselves:
+  `level, headline, why, rule, decided_at, until, violation_id,
+  appeal_status, can_appeal, can_return`. `level` is `clear`, `warned`,
+  `suspended` or `banned`. `can_return` is true only when a suspension has
+  run out.
+- `reactivate_my_account()` - returns true when the account is back. Refuses
+  a running suspension with "This suspension has not run out yet." and
+  refuses a termination outright.
+
+No website UI for the lockout yet - the functions are there and nothing
+reads them. Said plainly so neither of us builds half of it twice.
+
+**ONLY WARNINGS AND SUSPENSIONS - nothing in this round deletes an account**,
+and nothing ever will. A termination is a flag and a row; the data stays.
+
+**Following is a heart now, everywhere.** Staw: "make that every icon for
+following someone is a heart instead of a user". The person-with-a-tick on
+the profile's Follow button and the star on the Followers list are both
+hearts. The split is worth copying: **person icons mean friendship** (a
+request and an answer, two-sided), **the heart means following** (one-sided,
+no answer). If a panel of yours has a Follow control on a person icon, swap
+it.
