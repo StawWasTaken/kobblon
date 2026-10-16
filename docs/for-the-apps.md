@@ -8005,3 +8005,91 @@ item after it is made - there is no `replace` for this kind, the way there
 is for a face's picture. And the staff side of warnings, suspensions and
 bans is still not built: nothing calls `ban_account` or `lift_account_ban`,
 and there is no suspend action in the console.
+
+
+## Round ninety-two
+
+Four corrections to last round, all of them Staw's, and the first is a bug
+worth reading even if you do not touch the Catalog.
+
+**A body part made in Create could not be worn.** Staw: "you cant wear
+body parts for some reason". Nothing to do with body parts, in the end:
+`create_avatar_item` lands everything `pending` and `wear_avatar_item`
+refuses anything pending, which is right for every kind that has a file in
+it and wrong for the one kind that has none. A body part uploads nothing -
+no picture, no model, no texture - and its name and description have
+already been through `screen_text` ten lines earlier, so the only thing
+left to screen is a shape Kobblon wrote into the engine. **Migration 0249**
+approves a `bodypart` on the way in, and only a `bodypart`: a shirt still
+goes for screening. It is still not listed on the way in; listing is a
+separate press for every kind, and that was not what was in the way.
+
+What made it hard to see from outside: the seeded one was inserted
+`approved`, so the database looked fine and the page looked broken.
+
+0249 also reaches backwards and approves any body part already stuck
+pending, because a row made yesterday is as unwearable as one made tomorrow
+and nobody was going to go and screen it.
+
+**It is called Girl Torso.** Staw: "we really want to call this a girl
+torso". "Waisted Torso" was me naming the shape rather than the thing.
+0249 renames the seeded row; the shape's own name in the engine,
+`torso-girl`, is unchanged and must stay unchanged - it is written into
+every row sold under it.
+
+**The shape is built a different way, and the old way could not have
+worked.** Staw: "ours is kinda ugly ngl and not rounded like other body
+parts we made", then "i wanted something a bit more geometrical like for
+the roblox girl torso". Both are now true of it, and getting there ruled
+out the obvious route for good:
+
+- `RoundedBoxGeometry`'s segment count is **the rounding of its corners and
+  nothing else**. At three segments or at twelve, the flat faces carry
+  vertices only at the top and the bottom. Measured twice. If you ever want
+  to deform a part of the body, this is not the geometry to start from.
+- A plain `BoxGeometry` with its sides divided does take a waist, and loses
+  every rounded edge - which is exactly what Staw was looking at.
+- What it is now: the silhouette is cut as a `Shape` and extruded through
+  the depth with a bevel, so the sides go wherever the profile says and
+  every edge is rounded like the arms beside it. The profile is straight
+  lines between its points, not a curve, which is the "geometrical" part.
+- Then it is scaled to measure its part's box exactly. A bevel grows the
+  outline along the normal and the growths add where two lines meet, so the
+  shoulders came out a hundredth of a ston wide. A hundredth is nothing to
+  look at and it is not nothing to the rule: the clothing sheet is measured
+  against that box.
+
+**The numbers are measured off a file Staw made rather than guessed.** The
+waist sits at **0.38** of the way up, not halfway, and comes in to **0.70**
+of the half width. A waist halfway up reads as an hourglass; his sits low,
+which is why it reads as a person. His file also narrows through the depth
+by about the same amount and ours does not - an extrusion is one thickness
+all the way through, and bringing the chest and the back in afterwards
+bends the flat face it was cut from. It came out as a fan of creased
+triangles across the front; at this size, next to arms that do not narrow,
+that is not a trade worth making. Said here because it is the one way ours
+differs from the reference on purpose.
+
+The file itself was measured and not used: it is a Roblox Studio export and
+says so in its first line. It could not have been used as it stands either,
+for the reason last round gave - a body part here is geometry the engine
+builds, so that it keeps the bone it is skinned to and the box the sheet is
+measured against.
+
+**Body parts are their own category in the wardrobe**, next to Clothing and
+Accessories rather than inside the colours. Staw: "i want a new category
+called body parts separate from the skin colour & other categories". The
+drawer that holds the colours is called **Skin** now, which is what it
+holds. The parts drawer is the ordinary shelf every other drawer uses -
+same tiles, same wear and take off - which is also why the bespoke shelf
+last round added inside the colours is gone.
+
+Engine check 175/175, and one of those checks had to be corrected rather
+than satisfied, which is worth saying out loud. The check for the waist
+sampled a fixed band of height - y 5.5 give or take 0.4 - and the rebuilt
+profile puts no vertices in it, so it reported "no waist" on a torso that
+has one. A check written against coordinates a shape happened to have is a
+check that fails the next time the shape moves. It now takes the middle of
+the part's own bounding box and compares the narrowest point to the widest,
+and prints both: **1.20 across at the waist against 1.80 at the
+shoulders**.
