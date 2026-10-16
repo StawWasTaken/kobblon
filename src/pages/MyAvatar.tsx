@@ -823,12 +823,17 @@ export default function MyAvatar() {
              * colours arrive for that arm.
              */
             <Card className="animate-pop-in p-5">
-              <div className="grid gap-6 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:items-start">
-                <div className="rounded-2xl border border-ink-line bg-ink-raised p-5">
+              {/*
+                * The figure gets what it needs and the colours get the
+                * rest. At 20rem the body was taking most of the panel and
+                * leaving the swatches a column two wide and a mile long.
+                */}
+              <div className="grid gap-5 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-start">
+                <div className="rounded-2xl border border-ink-line bg-ink-raised p-4">
                   <BodyPicker
                     colours={look.body ?? DEFAULT_BODY}
                     chosen={parts}
-                    className="mx-auto max-w-[15rem]"
+                    className="mx-auto max-w-[11rem]"
                     /*
                      * Pressing a chosen part lets go of it, including the
                      * last one.
@@ -1074,7 +1079,12 @@ function Swatches({ colours, current, busy, onPick }: {
   onPick: (colour: string) => void
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    /*
+      * As many across as the panel can take, rather than a wrapped row of
+      * fixed squares. Staw: "the colours are going too long towards the
+      * bottom" - which is what a two-wide column of forty swatches is.
+      */
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(2rem,1fr))] gap-2">
       {colours.map((colour) => (
         <button
           key={colour}
@@ -1084,7 +1094,7 @@ function Swatches({ colours, current, busy, onPick }: {
           title={colour}
           aria-label={colour}
           className={cn(
-            'grid h-10 w-10 place-items-center rounded-xl border-2',
+            'grid aspect-square w-full place-items-center rounded-xl border-2',
             'transition-transform duration-150 hover:scale-110 active:scale-95 disabled:opacity-50',
             current?.toLowerCase() === colour.toLowerCase()
               ? 'border-white'
