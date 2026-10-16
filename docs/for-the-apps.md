@@ -8268,3 +8268,60 @@ warned somebody and the violation landed; a three-day suspension set the
 flag and the end, both read back through the console's own row; a ban made
 `is_banned` true and cleared the end; lifting it cleared both; a bare reason
 and an ordinary signed-in account were refused.
+
+## Round ninety-seven
+
+Waiting, and the three places the site was making its own.
+
+**A refresh showed a blank dark screen** until the whole bundle had come
+down. Not a bug in anything - just that everything able to draw anything,
+the boot screen included, lived inside the bundle, and the boot screen's
+only content was `<img src="/brand/logomark.png">`, so even after the code
+arrived it was empty until a second request finished. `app.html` now carries
+a `#boot` block with the logomark inlined as a data URI and its own
+keyframes, so the mark is on screen at the first paint with no network at
+all; `main.tsx` removes it the moment React mounts. **If the Workspace shows
+a web view of the site, this is the thing to copy** - a document that paints
+its own loading state rather than one that waits for the bundle to paint it.
+
+**Signed asset links are reused now.** `assetUrl` bought a fresh signature
+from storage on every call - every model, every texture, every preview,
+every render, every reload. The waiting was the smaller half: a fresh
+signature is a different URL, so the browser's own cache missed pictures it
+already had on disk and downloaded them again. They are kept in
+`sessionStorage` under `kob.signed` and reused until a minute before expiry,
+and calls in flight for the same path share one request. **The signature of
+`assetUrl` is unchanged** (`(path, seconds?) => Promise<string | null>`), so
+nothing importing it needs to change; it is no longer `async`, which matters
+only if something was awaiting it for timing rather than for the value. An
+application with its own session gets its own cache, because the store is
+per-origin and per-tab.
+
+**The face queue was never a queue.** `headshots.ts` said one WebGL context
+at a time and chained `queue.then(() => work)` where `work` was an
+**already-started** promise - so the chain waited for each draw in order and
+every one of them had begun the moment it was asked for. Twenty faces on a
+page were twenty fetches and twenty contexts at once, which is the thing the
+queue was written to prevent. CLAUDE.md's second trap exactly: a guard that
+exists, is checked, and watches nothing. `work` is a function now and the
+queue calls it. Drawn faces also survive a reload: kept as data URLs under
+`kob.faces` for ten minutes, sixty most recent, cleared for anybody whose
+avatar you change through `forgetHeadshot`.
+
+**A meaning change, and it is the one to read twice: a profile picture is
+now always a picture of the avatar.** `portraitIsCurrent` used to accept any
+stored `avatar_url` it could not date - an uploaded image had no
+`portrait-<when>.webp` stamp, so it counted as current and was shown. Staw:
+"i want the profile picture to be always based on the avatar". Unstamped
+means not-a-portrait now, and the face is drawn from the avatar instead.
+Nothing is deleted and no row is written; the upload is still in
+`avatar_url`, it is simply not what gets shown. **If the Workspace reads
+`avatar_url` directly anywhere to show somebody's face, it will now disagree
+with the website for any account that uploaded one.** Use `useHeadshot`, or
+apply the same rule: only `portrait-<digits>.webp` counts.
+
+**Still not done**, and said plainly: nothing here makes the avatar itself
+draw faster - a first look is still a fetch and a render, and only the
+second one is instant. Migrations **0249, 0250, 0251 and 0252 still need
+applying in the Supabase SQL editor, in that order**; everything in rounds
+ninety-four through ninety-six is deployed and waiting on them.

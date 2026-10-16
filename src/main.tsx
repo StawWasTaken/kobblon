@@ -18,3 +18,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// The mark the document paints on its own, before any of this arrived. It has
+// done its job once there is something real to look at.
+document.getElementById('boot')?.remove()

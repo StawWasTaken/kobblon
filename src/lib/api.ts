@@ -642,9 +642,77 @@ export async function assetPreviewPath(assetId: string): Promise<string | null> 
  * what protects the work is that using it in a Space goes through the
  * permission check, not that the pixels are unreachable.
  */
-export async function assetUrl(path: string, seconds = 900): Promise<string | null> {
-  const { data } = await supabase.storage.from(assetBucket).createSignedUrl(path, seconds)
-  return data?.signedUrl ?? null
+/*
+ * Signed links already handed out, so a page does not buy the same one
+ * twice.
+ *
+ * Every model, texture and preview asked for its own signature every time
+ * it was drawn - a round trip each, repeated on every render, every page and
+ * every reload. Worse than the waiting: a fresh signature is a **new URL**,
+ * so the browser's own cache missed a picture it already had and downloaded
+ * it again. Staw: "images take time to load, previews take time to load".
+ *
+ * Kept for the life of the tab and reused until a minute before it expires,
+ * which is what makes a reload show the pictures it showed a second ago. In
+ * flight is shared too: twenty tiles of one thing are one signature.
+ *
+ * It grants nothing: a signature is handed to this browser for files it was
+ * allowed to ask about, and keeping it is the browser holding what it was
+ * already given. It dies with the tab.
+ */
+const SIGNED = 'kob.signed'
+const SIGNED_EARLY = 60_000
+
+type SignedLink = { url: string; until: number }
+
+const signing = new Map<string, Promise<string | null>>()
+
+function signedAll(): Record<string, SignedLink> {
+  try {
+    return JSON.parse(sessionStorage.getItem(SIGNED) ?? '{}') as Record<string, SignedLink>
+  } catch {
+    return {}
+  }
+}
+
+function signedKept(path: string): string | null {
+  const one = signedAll()[path]
+  if (!one || one.until - SIGNED_EARLY < Date.now()) return null
+  return one.url
+}
+
+function keepSigned(path: string, url: string, seconds: number) {
+  try {
+    const all = signedAll()
+    all[path] = { url, until: Date.now() + seconds * 1000 }
+    // Anything already dead goes on the way past, so this cannot grow for
+    // ever on a long session.
+    for (const [name, one] of Object.entries(all)) {
+      if (one.until < Date.now()) delete all[name]
+    }
+    sessionStorage.setItem(SIGNED, JSON.stringify(all))
+  } catch {
+    // A full or refused storage means asking again, which is what it did
+    // before this existed.
+  }
+}
+
+export function assetUrl(path: string, seconds = 900): Promise<string | null> {
+  const kept = signedKept(path)
+  if (kept) return Promise.resolve(kept)
+
+  const already = signing.get(path)
+  if (already) return already
+
+  const work = (async () => {
+    const { data } = await supabase.storage.from(assetBucket).createSignedUrl(path, seconds)
+    const url = data?.signedUrl ?? null
+    if (url) keepSigned(path, url, seconds)
+    return url
+  })().finally(() => { signing.delete(path) })
+
+  signing.set(path, work)
+  return work
 }
 
 /**

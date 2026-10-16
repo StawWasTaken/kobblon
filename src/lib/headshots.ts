@@ -38,9 +38,12 @@ import { drawPortrait } from './portrait'
  * and the database says when the avatar last changed. Older means the stored
  * picture is of who they used to be.
  *
- * Anything else stored under `avatar_url` has no stamp to read and is left
- * alone: unknown is not the same as old, and throwing away a picture nobody
- * can date would be throwing away every picture from before this existed.
+ * Anything else stored under `avatar_url` is not a picture of their avatar,
+ * and Staw's rule is that a profile picture always is one: "i want the
+ * profile picture to be always based on the avatar". So an uploaded or
+ * inherited picture does not count, and the face is drawn from the avatar
+ * instead. Nothing is deleted - the row keeps whatever it holds - it is
+ * simply not what gets shown.
  */
 export function portraitIsCurrent(person?: {
   avatar_url?: string | null
@@ -48,8 +51,74 @@ export function portraitIsCurrent(person?: {
 } | null): boolean {
   if (!person?.avatar_url) return false
   const stamp = /portrait-(\d+)\.webp/.exec(person.avatar_url)?.[1]
-  if (!stamp || !person.avatar_changed_at) return true
+  if (!stamp) return false
+  if (!person.avatar_changed_at) return true
   return Number(stamp) >= new Date(person.avatar_changed_at).getTime()
+}
+
+/*
+ * Faces drawn in an earlier page of this tab.
+ *
+ * A drawing costs a fetch, a WebGL context and a render, and a reload threw
+ * every one of them away - so every face on the page was drawn again from
+ * nothing, which is what "profile pictures take time to reload" is. They are
+ * kept for the life of the tab, as data rather than as a blob address: an
+ * object URL belongs to the page that made it and is dead on the next one.
+ *
+ * Ten minutes, because nothing here can tell whether somebody has changed
+ * their avatar since. Your own is not subject to it: changing anything calls
+ * `forgetHeadshot`, which clears this too.
+ */
+const KEPT = 'kob.faces'
+const KEPT_FOR = 10 * 60 * 1000
+const KEPT_MOST = 60
+
+type KeptFace = { at: number; url: string }
+
+function keptAll(): Record<string, KeptFace> {
+  try {
+    return JSON.parse(sessionStorage.getItem(KEPT) ?? '{}') as Record<string, KeptFace>
+  } catch {
+    return {}
+  }
+}
+
+function keptFace(userId: string): string | null {
+  const one = keptAll()[userId]
+  if (!one || Date.now() - one.at > KEPT_FOR) return null
+  return one.url
+}
+
+async function keepFace(userId: string, picture: Blob) {
+  try {
+    const url: string = await new Promise((done, fail) => {
+      const reader = new FileReader()
+      reader.onload = () => done(String(reader.result))
+      reader.onerror = () => fail(reader.error)
+      reader.readAsDataURL(picture)
+    })
+    const all = keptAll()
+    all[userId] = { at: Date.now(), url }
+    // Oldest first out, so a long session does not fill the tab's storage.
+    const names = Object.keys(all)
+      .sort((a, b) => all[b].at - all[a].at)
+      .slice(0, KEPT_MOST)
+    sessionStorage.setItem(KEPT, JSON.stringify(
+      Object.fromEntries(names.map((name) => [name, all[name]])),
+    ))
+  } catch {
+    // A full or refused storage is not worth failing a picture over.
+  }
+}
+
+function dropKeptFace(userId: string) {
+  try {
+    const all = keptAll()
+    delete all[userId]
+    sessionStorage.setItem(KEPT, JSON.stringify(all))
+  } catch {
+    // Same: nothing here is worth throwing for.
+  }
 }
 
 /** What has been drawn, by person. `null` means tried and could not. */
@@ -87,7 +156,13 @@ export function askForHeadshot(userId: string): Promise<string | null> {
   const already = drawing.get(userId)
   if (already) return already
 
-  const work = (async () => {
+  const kept = keptFace(userId)
+  if (kept) {
+    drawn.set(userId, kept)
+    return Promise.resolve(kept)
+  }
+
+  const work = async () => {
     /*
      * The look is fetched through `api`, which is imported here rather than
      * at the top on purpose: `api` decides its Supabase client at call time
@@ -99,13 +174,25 @@ export function askForHeadshot(userId: string): Promise<string | null> {
     const look = await lookOf(userId).catch(() => null)
     if (!look) return null
     const picture = await drawPortrait(look).catch(() => null)
-    return picture ? URL.createObjectURL(picture) : null
-  })()
+    if (!picture) return null
+    void keepFace(userId, picture)
+    return URL.createObjectURL(picture)
+  }
 
-  // One context at a time. The queue is the whole of it: each draw waits for
-  // the one before, so twenty faces appear one after another rather than
-  // nineteen of them failing to get a renderer.
-  const queued = queue.then(() => work).catch(() => null)
+  /*
+   * One context at a time, and this is the line that was wrong.
+   *
+   * It read `queue.then(() => work)` with `work` an **already started**
+   * promise, so the queue waited for each draw in order and every one of
+   * them had begun the moment it was asked for. Twenty faces on a page were
+   * twenty fetches and twenty WebGL contexts at once, which is exactly what
+   * the queue was written to prevent - the comment said one at a time and
+   * the code said all at once. CLAUDE.md's second trap: a guard that exists,
+   * is checked, and watches nothing.
+   *
+   * `work` is a function now, so the queue is what calls it.
+   */
+  const queued = queue.then(work).catch(() => null)
   queue = queued
 
   const held = queued.then((url) => {
@@ -134,7 +221,8 @@ export function watchHeadshots(listener: () => void): () => void {
  */
 export function forgetHeadshot(userId: string) {
   const had = drawn.get(userId)
-  if (had) URL.revokeObjectURL(had)
+  if (had && had.startsWith('blob:')) URL.revokeObjectURL(had)
+  dropKeptFace(userId)
   drawn.delete(userId)
   drawing.delete(userId)
   tell()
