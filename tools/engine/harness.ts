@@ -114,9 +114,14 @@ Object.assign(window, {
     const head = body.parts.get('Head')!
     const headBox = new THREE.Box3().setFromObject(head)
 
+    const worn = new THREE.Box3().setFromObject(thing)
     const answer = {
       at: at.toArray().map((n) => +n.toFixed(2)),
       headTop: +headBox.max.y.toFixed(2),
+      /** For hair, which is meant to be round the head rather than above it. */
+      headMiddle: +((headBox.max.y + headBox.min.y) / 2).toFixed(2),
+      /** The bottom of the thing itself, which is what says it came down. */
+      wornBottom: +worn.min.y.toFixed(2),
       headFront: +headBox.max.z.toFixed(2),
       parented: thing.parent?.name ?? null,
       wearing: body.wearing().size,

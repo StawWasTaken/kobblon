@@ -1916,6 +1916,20 @@ check('half a second into a walk the hat is still on the head',
   Math.abs(hatWalking.at[1] - hatWalking.headTop) < 0.1,
   `hat at y ${hatWalking.at[1]}, head top ${hatWalking.headTop}`)
 
+/*
+ * Hair hung off the hat socket, which is the top of the skull, and
+ * everything on that socket is pushed up by half its own height so it rests
+ * on the head. Right for a hat and wrong for a haircut, which the head goes
+ * inside - so these two say where hair is rather than that it is somewhere.
+ */
+const hair = await p.evaluate(() => window.wornAt('hair'))
+check('hair sits round the head rather than balanced on top of it',
+  Math.abs(hair.at[1] - hair.headMiddle) < 0.05 && hair.parented === 'socket:hair',
+  `hair at y ${hair.at[1]}, head middle ${hair.headMiddle}, parent ${hair.parented}`)
+check('and it comes down past the top of the head, which is what scalp means',
+  hair.wornBottom < hair.headTop,
+  `hair bottom ${hair.wornBottom}, head top ${hair.headTop}`)
+
 const hand = await p.evaluate(() => window.wornAt('rightHand'))
 check('and a slot on the other side of the body is on that side',
   hand.at[0] < -1 && hand.parented === 'socket:rightHand',

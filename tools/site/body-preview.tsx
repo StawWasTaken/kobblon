@@ -7,8 +7,8 @@ import { Card } from '@/components/ui/Card'
 import '@/index.css'
 
 const COLOURS: Record<string, string> = {
-  Head: '#f2d08a', Torso: '#1b34e8', LeftArm: '#f2d08a',
-  RightArm: '#f2d08a', LeftLeg: '#2a2f45', RightLeg: '#2a2f45',
+  Head: '#ebb591', Torso: '#1b34e8', LeftArm: '#ebb591',
+  RightArm: '#ebb591', LeftLeg: '#2a2f45', RightLeg: '#2a2f45',
 }
 
 const SHELF = [

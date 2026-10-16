@@ -143,7 +143,12 @@ const DRAWER_OF: Record<string, Drawer> = {
  * million is a muddle. Staw can lengthen it; nobody has to maintain a
  * picker.
  */
-const SKIN = ['#f2d08a', '#e8b878', '#d99a62', '#b9743f', '#8a5230', '#5e3620']
+/*
+ * Staw's five, and only these: "you keep everything except the colours of
+ * the skin section and replace them by the new ones". The row they replace
+ * was a yellow ramp of my own picking and read as six shades of one person.
+ */
+const SKIN = ['#53463e', '#87674f', '#b39b8b', '#d29a72', '#ebb591']
 /*
  * Three shelves rather than one row of sixteen.
  *
@@ -174,9 +179,14 @@ const DARK = [
   '#1a1420', '#241c16',
 ]
 
+/*
+ * A new body's colours, and the skin on it is one of the five above rather
+ * than a colour the shelf no longer offers: a default nobody can choose
+ * again is a body you cannot put back the way you found it.
+ */
 const DEFAULT_BODY: Record<string, string> = {
-  Head: '#f2d08a', Torso: '#1b34e8', LeftArm: '#f2d08a',
-  RightArm: '#f2d08a', LeftLeg: '#2a2f45', RightLeg: '#2a2f45',
+  Head: '#ebb591', Torso: '#1b34e8', LeftArm: '#ebb591',
+  RightArm: '#ebb591', LeftLeg: '#2a2f45', RightLeg: '#2a2f45',
 }
 
 const PART_LABELS: Record<K6Part, string> = {

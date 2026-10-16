@@ -31,7 +31,8 @@ export type K6Look = Partial<Record<K6Part, string>>
  * inside a skull. Reading them from the same table the geometry is built
  * from means a change to the body moves the hat with it.
  */
-const middleOf = (part: keyof typeof BODY) => PLACES[part].middle
+const middleOf = (part: keyof typeof BODY): readonly [number, number, number] =>
+  PLACES[part].middle as readonly [number, number, number]
 const top = (part: keyof typeof BODY): readonly [number, number, number] =>
   [middleOf(part)[0], middleOf(part)[1] + BODY[part].h / 2, middleOf(part)[2]]
 const bottom = (part: keyof typeof BODY): readonly [number, number, number] =>
@@ -55,8 +56,19 @@ const back = (part: keyof typeof BODY): readonly [number, number, number] =>
  * puts the hat on the head rather than beside it.
  */
 export const K6_POINTS = {
-  /** On top of the head: hats, hair, crowns. */
+  /** On top of the head: hats, crowns. */
   hat: { bone: 'J_Head', at: top('Head') },
+  /**
+   * Round the head, which is where a haircut goes.
+   *
+   * It hung off `hat` until Staw found it: the hat socket is the top of the
+   * skull and everything on it is pushed up by half its own height, so it
+   * rests on the head rather than inside it. That is right for a hat and
+   * wrong for hair, which is a thing the head goes *inside* - so every
+   * haircut floated above the scalp like a lid, and no amount of nudging
+   * brought it down, because the reach stopped before the head did.
+   */
+  hair: { bone: 'J_Head', at: middleOf('Head') },
   /** The front of the head, where a face goes. */
   face: { bone: 'J_Head', at: front('Head') },
   /** Round the neck: scarves, collars, chains. */
@@ -89,11 +101,12 @@ export type K6Point = keyof typeof K6_POINTS
  * same failure already half-happened. It is here now because the engine is
  * the one thing every client has.
  *
- * `hair` and `hat` share a socket on purpose: both sit on top of the head,
- * and K6 has no scalp of its own.
+ * `hair` and `hat` used to share a socket, and that was the bug: a hat sits
+ * **on** the head and hair sits **round** it, so one of the two is always
+ * wrong when they share a place and a direction.
  */
 export const SOCKET_FOR: Record<string, K6Point> = {
-  hat: 'hat', hair: 'hat', face: 'face', neck: 'neck',
+  hat: 'hat', hair: 'hair', face: 'face', neck: 'neck',
   back: 'back', front: 'front', waist: 'waist',
   leftHand: 'leftHand', rightHand: 'rightHand',
 }
@@ -146,6 +159,14 @@ const FACE_GAP = 0.02
  */
 const WORN_FIT: Record<K6Point, { across: number; out: readonly [number, number, number] }> = {
   hat: { across: BODY.Head.w * 1.3, out: [0, 1, 0] },
+  /*
+   * Centred on the head and pushed off nothing, which is the whole
+   * difference from a hat: `out` is how far a thing moves to stop being
+   * inside the body part, and hair is meant to be inside it. A touch wider
+   * than the head so a haircut has some volume at the sides before anybody
+   * touches a slider.
+   */
+  hair: { across: BODY.Head.w * 1.35, out: [0, 0, 0] },
   face: { across: K6_FACE_SIZE, out: [0, 0, 1] },
   neck: { across: BODY.Torso.w * 0.9, out: [0, 0, 0] },
   back: { across: BODY.Torso.w, out: [0, 0, -1] },
