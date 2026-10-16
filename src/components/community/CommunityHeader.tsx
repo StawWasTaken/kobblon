@@ -37,7 +37,13 @@ export function CommunityHeader({
 
   const isMember = Boolean(rights?.my_rank_id)
   const description = group.description ?? ''
-  const long = description.length > 220
+  /*
+   * Long enough to hide is not a character count on its own. Staw's own
+   * Community describes itself in nine short lines that come to under two
+   * hundred characters, so the count said "short" and the page ran ten lines
+   * deep before the tabs. Either measure being over is enough.
+   */
+  const long = description.length > 220 || description.split('\n').length > 3
 
   const copyLink = async () => {
     try {
@@ -154,7 +160,7 @@ export function CommunityHeader({
                   onClick={() => setExpanded((v) => !v)}
                   className="mt-1 text-sm font-bold text-white/80 underline hover:text-white"
                 >
-                  {expanded ? 'less' : 'more'}
+                  {expanded ? 'See less' : 'See more'}
                 </button>
               )}
             </div>

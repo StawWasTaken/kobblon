@@ -17,7 +17,7 @@ import type {
   AssetPageItem, AssetDay, CreatorAssetRow, Collaborator, UsernameRecord,
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
-  AccountStanding, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
+  AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
@@ -2090,6 +2090,29 @@ export async function getStanding(): Promise<AccountStanding | null> {
   return rows?.[0] ?? null
 }
 
+/**
+ * What a locked-out account is told, and the way back in.
+ *
+ * Asked only when the row already says somebody is shut out - the profile
+ * carries `is_suspended`, so a platform where nobody is suspended makes none
+ * of these calls.
+ */
+export async function accountStanding(): Promise<AccountLock | null> {
+  const rows = unwrap(await supabase.rpc('my_account_standing')) as AccountLock[] | null
+  return rows?.[0] ?? null
+}
+
+/**
+ * Coming back after a suspension has run out.
+ *
+ * Time does not lift it by itself: somebody has to say they are back, which
+ * is the moment the rules can be put in front of them again. Refuses a
+ * suspension still running and refuses a termination outright, and says so.
+ */
+export async function reactivateAccount(): Promise<boolean> {
+  return (unwrap(await supabase.rpc('reactivate_my_account')) as boolean) ?? false
+}
+
 export async function listViolations(): Promise<Violation[]> {
   const { data, error } = await supabase
     .from('violations')
@@ -3182,12 +3205,26 @@ export function catalogUrl(
  * square on one page and fine on the next.
  */
 export function cardFor(item: {
+  kind?: string | null
   preview_path?: string | null
   /** The card the Creator Hub already drew for this item's model. */
   mesh_preview_path?: string | null
   image_path?: string | null
   image_bucket?: string | null
 }): string | null {
+  /*
+   * A shirt or trousers never falls back to its own picture, because its
+   * own picture is the template sheet - the thing somebody paid for. Staw:
+   * "i want the previews for both trousers & shirts to be on dummies even
+   * in 2d instead of the template cuz then people can steal it and reupload
+   * it". Showing it at card size next to a Buy button is handing it over.
+   *
+   * Null here means "there is no card yet", and `WornPicture` answers that
+   * by drawing the mannequin in the browser rather than showing nothing.
+   */
+  if ((item.kind === 'shirt' || item.kind === 'trousers') && !item.preview_path) {
+    return null
+  }
   // Drawn for this item, then the model's own card, then the thing itself.
   //
   // The middle one is the answer to accessories showing nothing: a mesh in
@@ -4509,8 +4546,26 @@ export async function myAvatarItems(): Promise<AvatarItem[]> {
 }
 
 /** What somebody has made, for their own Create page. */
-export async function myMadeAvatarItems(): Promise<AvatarItem[]> {
-  return (unwrap(await supabase.rpc('my_made_avatar_items')) as AvatarItem[]) ?? []
+export async function myMadeAvatarItems(forCommunity?: string | null): Promise<AvatarItem[]> {
+  // Null is you personally, and that means your own things only - a
+  // Community's live on its own list, under its own Working as.
+  const rows = unwrap(await supabase.rpc('my_made_avatar_items', {
+    for_community: forCommunity ?? null,
+  })) as AvatarItem[] | null
+  return rows ?? []
+}
+
+/**
+ * Hands a thing to wear over to a Community, or takes it back.
+ *
+ * For everything made for a Community before there was a column saying so:
+ * it reads as its maker's own work, on their shop and with their name in the
+ * byline, and nothing but its maker knows otherwise.
+ */
+export async function moveAvatarItemMaker(itemId: string, toCommunity: string | null) {
+  unwrap(await supabase.rpc('move_avatar_item_maker', {
+    item_id: itemId, to_community: toCommunity,
+  }))
 }
 
 /** How the Catalog may be ordered. There is no "best rated": nothing rates these yet. */

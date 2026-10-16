@@ -54,6 +54,7 @@ import { communityLink } from '@/lib/links'
 import { MANNEQUIN_BODY } from '@/lib/mannequin'
 import { useBasket, putInBasket, takeOutOfBasket } from '@/hooks/useBasket'
 import type { AvatarItem } from '@/types/db'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { cn } from '@/lib/cn'
 
 /** Where a thing is worn, said as somebody would say it. */
@@ -629,6 +630,12 @@ function ItemView({ item }: { item: AvatarItem }) {
   const [model, setModel] = useState<{ mesh: string | null; skin: string | null } | null>(null)
 
   const flat = cardFor(item) ?? null
+  /*
+   * A garment always has a 2D view even with no card saved, because one can
+   * be drawn here from its texture. What it never has is its template shown
+   * flat - that is the thing being sold, and `cardFor` returns null for it.
+   */
+  const drawable = item.kind === 'shirt' || item.kind === 'trousers' || item.kind === 'tdecal'
 
   /** Whether it can be put on a body at all: a model, or a picture to lay on. */
   const canRig = !!item.mesh_path || !!item.image_path
@@ -724,13 +731,13 @@ function ItemView({ item }: { item: AvatarItem }) {
    * default wherever a picture exists, which is Staw's rule.
    */
   useEffect(() => {
-    if (!flat && canRig) setMode('body')
-  }, [flat, canRig])
+    if (!flat && !drawable && canRig) setMode('body')
+  }, [flat, drawable, canRig])
 
   const showing = mode === 'me' ? (onMe ?? look) : look
 
   const WAYS = [
-    { value: 'picture' as const, icon: faImage, label: '2D', on: !!flat },
+    { value: 'picture' as const, icon: faImage, label: '2D', on: !!flat || drawable },
     { value: 'body' as const, icon: faCube, label: '3D', on: canRig },
     { value: 'me' as const, icon: faUser, label: 'On me', on: canRig && !!profile && !profile.is_guest },
   ].filter((one) => one.on)
@@ -755,13 +762,8 @@ function ItemView({ item }: { item: AvatarItem }) {
           waiting
             ? <Skeleton className="h-full w-full" />
             : <AvatarStage look={showing} turning={false} handled className="h-full w-full" />
-        ) : flat ? (
-          <img
-            src={flat}
-            alt={item.name}
-            draggable={false}
-            className="h-full w-full select-none object-contain p-6"
-          />
+        ) : flat || drawable ? (
+          <WornPicture item={item} alt={item.name} className="select-none p-6" />
         ) : (
           <p className="max-w-[18rem] px-6 text-center text-sm leading-relaxed text-muted">
             <Glyph icon={faShirt} className="mb-2 block text-2xl text-white/20" />

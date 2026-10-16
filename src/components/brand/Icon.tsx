@@ -24,7 +24,8 @@ import { cn } from '@/lib/cn'
 
 /** Everything in `public/icons/ui`. */
 export const UI_ICONS = [
-  'add-user', 'admin', 'announcement', 'avatar', 'brix', 'chatbubble',
+  'add-user', 'admin', 'announcement', 'avatar', 'brix', 'broken-image',
+  'chatbubble',
   'check-user', 'checkmark', 'circle-user', 'click', 'clock-user',
   'cross-user', 'discount',
   'favourite-stroke', 'favourite', 'gear', 'heart-user', 'laurel-quest-stroke',

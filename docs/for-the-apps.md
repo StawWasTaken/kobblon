@@ -7837,3 +7837,73 @@ somebody buys it, unpublish it, and that person still has it.
 On the website side a Shop tab sits on profiles and on Communities, Roles
 wear a person icon rather than the staff badge, and a picture that will not
 load is Kobby holding the empty box rather than a broken-image frame.
+
+## Round ninety
+
+Six things, and one of them changes a shared meaning, so it goes first.
+
+**A garment's picture is never its template any more.** `cardFor` returns
+null for a shirt or trousers that has no drawn card, instead of falling back
+to `image_path`. That fallback was handing the texture itself - the thing
+somebody paid for - to anybody looking at a shelf, and Staw wants it gone:
+"then people can steal it and reupload it". If you call `cardFor` for a
+garment, expect null where you used to get an address, and draw the body
+instead. The website's answer is `WornPicture` (`src/components/catalog/`)
+over `wornCard` (`src/lib/wornCard.ts`), which draws the mannequin in the
+tab from `drawItemCard`, one at a time because each drawing takes a WebGL
+context, memoised per item and never uploaded. Both are importable. A face
+and an accessory are unchanged: those are pictures of themselves.
+
+**The limb faces on the clothing sheet are flipped again, and this is the
+second correction.** The first was a column out, which put the front down
+the sides. This one kept the front and back right and swapped each limb's
+inner face with its outer one - the two rows ran the same way round the
+limb, which is not a mirror. Staw: "the sides of the arms & legs that were
+supposed being the inside sides were replaced by the ones on the outside".
+`LIMBS` in `@/engine/clothes` now reads `left, back, right, front` for the
+avatar's right limb and `front, left, back, right` for its left. The sheets
+in `public/templates` are regenerated and their printed labels say the same.
+If you have anything that reads that table or ships its own copy of the
+numbers, take these. New engine check: a leg's inner face lands on the panel
+the sheet calls its inner one. 172/172.
+
+**A thing to wear belongs to a Community, and only its list shows it.**
+Migration 0245: `my_made_avatar_items` takes `for_community uuid default
+null`. Null is you personally and that now means your own things *only* -
+anything with a `community_id` is off that list and on the Community's,
+where every manager of it sees it. It also returns `creator_id` on the end,
+which the old arity did not. The old no-argument call is dropped; both
+arities are dropped at the top of the file so it can be run twice.
+
+In Create, who you are working for is the Working as menu and nothing else.
+The picker that was in the make dialog is gone - two controls for one
+question, and the list obeyed neither.
+
+**0245 also adds `move_avatar_item_maker(item_id, to_community)`**, which is
+for the half of this nothing could guess: everything uploaded for a
+Community before there was a column to record it carries `community_id`
+null, so it reads as its maker's own work on their shop and in the byline.
+Only whoever made it may move it, and only to a Community they may manage;
+moving it back needs nothing more than having made it. Copies already sold
+are untouched. The card's menu offers it both ways.
+
+**Migration 0246: Kobblon may replace the picture on its own shirt or
+trousers.** `replace_avatar_picture` took faces only. Staw: "in create, only
+the kobblon account can replace its own shirt & trousers images by a new
+one, instead of reuploading them" - when the template geometry moves under
+a garment, as it just did twice, the alternative is deleting it and
+everybody who owns one losing it. Still Kobblon's alone, still refused for
+anything else, and now also refused on a garment Kobblon did not make. It
+clears `preview_path`, so the card is drawn again from the new picture.
+Checked under two signed-in identities, with the row read back after the
+write.
+
+Small: a Community's description on its page is folded to three lines with
+See more, counting newlines as well as characters - Staw's own Community
+ran ten lines deep on under two hundred characters, so the count alone said
+"short".
+
+**Still not built, same as last round:** the staff side of warnings,
+suspensions and bans. Nothing calls `ban_account` or `lift_account_ban`, and
+there is no suspend action in the console. The person's side of it landed
+last round; the console's side has not.

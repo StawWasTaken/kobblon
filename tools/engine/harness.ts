@@ -366,10 +366,38 @@ Object.assign(window, {
       }
     })
 
+    /*
+     * And which panel each leg's inner face landed on, which is the half of
+     * this that survived being looked at twice. Front and back can be right
+     * while the two sides are swapped, and on a plain pair of trousers that
+     * looks like nothing at all.
+     *
+     * The inner face of the leg at +x points towards -x, and -x is the side
+     * `sideOf` calls 'right'. Read off the body rather than written down, so
+     * this says what the wrap did and not what the table claims.
+     */
+    const inner = ['LeftLeg', 'RightLeg'].map((name) => {
+      const part = body.parts.get(name)!
+      const uv = part.geometry.getAttribute('uv1') as THREE.BufferAttribute
+      const normal = part.geometry.getAttribute('normal')
+      const towards = name === 'LeftLeg' ? -1 : 1
+      const want = sheet.regions[`${name}.${towards < 0 ? 'right' : 'left'}`]
+      let faces = 0
+      let on = 0
+      for (let i = 0; i < normal.count; i += 1) {
+        if (normal.getX(i) * towards < 0.9) continue
+        faces += 1
+        const u = uv.getX(i) * sheet.width
+        if (u >= want.x - 1 && u <= want.x + want.w + 1) on += 1
+      }
+      return { name, right: faces > 0 && on === faces }
+    })
+
     body.dispose()
     return {
       allInside: legs.every((one) => one.allInside),
       lidOverFront: legs.every((one) => one.lidOverFront),
+      innerFaceInwards: inner.every((one) => one.right),
       facing: legs.map((one) => `${one.name} ${one.facing}`).join(', '),
     }
   },

@@ -27,7 +27,14 @@ const template = (() => {
   return sheet.toDataURL('image/png')
 })()
 
-function Card({ kind, slot }: { kind: string; slot: string }) {
+/* The real sheets as well, because what a card has to survive is a garment
+   drawn on one of these - Staw looks at these two and nothing else. */
+const SHEETS: Record<string, string> = {
+  shirt: '/templates/kobblon-shirt-template.png',
+  trousers: '/templates/kobblon-trousers-template.png',
+}
+
+function Card({ kind, slot, from }: { kind: string; slot: string; from?: string }) {
   const [url, setUrl] = useState<string | null>(null)
   const [trouble, setTrouble] = useState<string | null>(null)
 
@@ -35,7 +42,7 @@ function Card({ kind, slot }: { kind: string; slot: string }) {
     let live = true
     void (async () => {
       try {
-        const drawn = await drawItemCard({ kind, slot, imageUrl: template, faceUrl: null })
+        const drawn = await drawItemCard({ kind, slot, imageUrl: from ?? template, faceUrl: null })
         if (!live) return
         if (!drawn) { setTrouble('drawItemCard handed back nothing.'); return }
         setUrl(URL.createObjectURL(drawn))
@@ -44,7 +51,7 @@ function Card({ kind, slot }: { kind: string; slot: string }) {
       }
     })()
     return () => { live = false }
-  }, [kind, slot])
+  }, [kind, slot, from])
 
   return (
     <figure className="w-56">
@@ -53,7 +60,9 @@ function Card({ kind, slot }: { kind: string; slot: string }) {
           ? <img src={url} alt="" className="h-full w-full object-contain" />
           : <p className="p-4 text-xs text-muted">{trouble ?? 'Drawing…'}</p>}
       </div>
-      <figcaption className="mt-2 text-sm text-muted">{kind}</figcaption>
+      <figcaption className="mt-2 text-sm text-muted">
+        {kind}{from ? ' (the blank sheet, so the body shows through)' : ''}
+      </figcaption>
     </figure>
   )
 }
@@ -64,6 +73,8 @@ createRoot(document.getElementById('root')!).render(
       <Card kind="shirt" slot="shirt" />
       <Card kind="trousers" slot="trousers" />
       <Card kind="tdecal" slot="tdecal" />
+      <Card kind="shirt" slot="shirt" from={SHEETS.shirt} />
+      <Card kind="trousers" slot="trousers" from={SHEETS.trousers} />
     </div>
   </div>,
 )

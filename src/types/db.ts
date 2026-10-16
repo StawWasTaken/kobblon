@@ -35,7 +35,39 @@ export type Profile = {
   discord_display?: string | null
   discord_visibility?: 'everyone' | 'friends' | 'nobody'
   discord_linked_at?: string | null
+  /**
+   * Shut out, and until when.
+   *
+   * On the row rather than worked out, so the page can know before it asks
+   * anything: the card that explains a lockout costs a call, and a platform
+   * where nobody is suspended should not make that call on every load.
+   *
+   * A termination carries `is_suspended` too, with no `suspended_until`.
+   */
+  is_suspended?: boolean
+  suspended_until?: string | null
   created_at: string
+}
+
+/**
+ * What a shut-out account is told about itself.
+ *
+ * From `my_account_standing`, which answers for the person asking and nobody
+ * else. `can_return` is the one field with a decision in it: a suspension
+ * that has run out is not lifted by time passing, somebody has to come back,
+ * and this says the door is open.
+ */
+export type AccountLock = {
+  level: StandingLevel
+  headline: string
+  why: string | null
+  rule: string | null
+  decided_at: string | null
+  until: string | null
+  violation_id: string | null
+  appeal_status: string | null
+  can_appeal: boolean
+  can_return: boolean
 }
 
 export type Space = {

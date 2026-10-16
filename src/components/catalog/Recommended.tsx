@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
-import { faShirt, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { Glyph } from '@/components/brand/Glyph'
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/States'
 import { Price } from '@/components/brand/Currency'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { useAsync } from '@/hooks/useAsync'
-import { recommendedAvatarItems, cardFor } from '@/lib/api'
+import { recommendedAvatarItems } from '@/lib/api'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { avatarTag, avatarKindLabels } from '@/lib/kinds'
 import type { AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
@@ -110,7 +110,6 @@ export function Recommended({
 }
 
 function Card({ item, nth }: { item: AvatarItem; nth: number }) {
-  const picture = cardFor(item)
   const to = `/catalog/${avatarTag(item.kind, item.content_id)}`
 
   return (
@@ -134,17 +133,7 @@ function Card({ item, nth }: { item: AvatarItem; nth: number }) {
       >
         <span className="block p-2">
           <span className="grid aspect-square place-items-center overflow-hidden rounded-xl bg-media">
-            {picture ? (
-              <img
-                src={picture}
-                alt=""
-                loading="lazy"
-                draggable={false}
-                className="h-full w-full select-none object-contain"
-              />
-            ) : (
-              <Glyph icon={faShirt} className="text-2xl text-white/25" />
-            )}
+            <WornPicture item={item} className="select-none" />
           </span>
         </span>
         <span className="block px-3 pb-3 pt-0.5">
