@@ -37,24 +37,26 @@ createRoot(document.getElementById('root')!).render(
           <button
             key={one.id}
             className={cn(
-              'group relative grid h-[4.5rem] w-[4.5rem] shrink-0 place-items-center rounded-2xl border px-2 text-center transition-all lg:h-[5.5rem] lg:w-[5.5rem]',
+              'group relative flex h-[4.25rem] w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 transition-colors lg:h-[4.75rem] lg:w-[4.75rem]',
               i === 0
-                ? 'border-brand bg-brand/15 text-white shadow-[0_0_0_1px_var(--brand)]'
-                : 'border-ink-line bg-ink-card text-white/40',
+                ? 'border-brand bg-brand/15 text-white'
+                : 'border-ink-line bg-ink-card text-white/45',
             )}
           >
-            <FontAwesomeIcon icon={one.icon} className="text-xl" />
-            <span className="mt-1.5 font-display text-[10px] font-extrabold uppercase leading-none tracking-wide">
-              {one.label}
-            </span>
-            {!!one.count && (
-              <span className={cn(
-                'absolute right-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-extrabold leading-none',
-                i === 0 ? 'bg-brand text-white' : 'bg-ink-hover text-white/50',
-              )}>
-                {one.count}
+            <FontAwesomeIcon icon={one.icon} className="text-[1.35rem]" />
+            <span className="flex max-w-full items-center gap-1">
+              <span className="truncate font-display text-[9.5px] font-extrabold uppercase leading-none tracking-wide">
+                {one.short ?? one.label}
               </span>
-            )}
+              {!!one.count && (
+                <span className={cn(
+                  'shrink-0 text-[9px] font-bold leading-none',
+                  i === 0 ? 'text-white/70' : 'textateframe-white/30',
+                )}>
+                  {one.count}
+                </span>
+              )}
+            </span>
           </button>
         ))}
       </nav>

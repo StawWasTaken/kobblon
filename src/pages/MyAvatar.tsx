@@ -70,8 +70,14 @@ import { Studio } from '@/components/avatar/Studio'
 /** The drawers, in the order somebody opens them. */
 const DRAWERS = [
   { id: 'clothing', label: 'Clothing', icon: faShirt },
-  { id: 'accessories', label: 'Accessories', icon: faHatCowboy },
-  { id: 'face', label: 'Face', icon: faFaceSmile },
+  /*
+   * "Accessories" does not fit a tile and truncating it mid-word is what
+   * made the rail look cheap, so the tile says the short one and the
+   * tooltip and the heading say the whole word.
+   */
+  { id: 'accessories', label: 'Accessories', short: 'Extras', icon: faHatCowboy },
+  // Staw's own smiling face rather than Font Awesome's smiley.
+  { id: 'face', label: 'Face', icon: faFaceSmile, ours: 'reaction-smile' as const },
   { id: 'body', label: 'Body', icon: faPalette },
   // Saved looks, which are not a kind of thing you own but a way of putting
   // the things you own back on.
@@ -438,25 +444,40 @@ export default function MyAvatar() {
               type="button"
               onClick={() => { setDrawer(one.id); setTerm('') }}
               aria-current={drawer === one.id}
+              title={one.label}
               className={cn(
-                'group relative grid h-[4.5rem] w-[4.5rem] shrink-0 place-items-center rounded-2xl border px-2 text-center transition-all lg:h-[5.5rem] lg:w-[5.5rem]',
+                'group relative flex h-[4.25rem] w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 transition-colors lg:h-[4.75rem] lg:w-[4.75rem]',
                 drawer === one.id
-                  ? 'border-brand bg-brand/15 text-white shadow-[0_0_0_1px_var(--brand)]'
-                  : 'border-ink-line bg-ink-card text-white/40 hover:border-brand/40 hover:text-white',
+                  ? 'border-brand bg-brand/15 text-white'
+                  : 'border-ink-line bg-ink-card text-white/45 hover:border-brand/40 hover:text-white',
               )}
             >
-              <Glyph icon={one.icon} className="text-xl" />
-              <span className="mt-1.5 font-display text-[10px] font-extrabold uppercase leading-none tracking-wide">
-                {one.label}
-              </span>
-              {!!counts[one.id] && (
-                <span className={cn(
-                  'absolute right-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-extrabold leading-none transition-colors',
-                  drawer === one.id ? 'bg-brand text-white' : 'bg-ink-hover text-white/50',
-                )}>
-                  {counts[one.id]}
+              {/*
+                * Icon over a word, with the count on the word's line.
+                *
+                * It was a pill pinned to the top right of each tile, which
+                * sat over the icon and made every drawer look like it had
+                * an unread notification on it. On the line it is a number
+                * beside a label, which is what it is.
+                */}
+              <Glyph
+                icon={one.icon}
+                name={'ours' in one ? one.ours : undefined}
+                className="text-[1.3rem]"
+              />
+              <span className="flex max-w-full items-baseline gap-1">
+                <span className="font-display text-[9.5px] font-extrabold uppercase leading-none tracking-wide">
+                  {'short' in one ? one.short : one.label}
                 </span>
-              )}
+                {!!counts[one.id] && (
+                  <span className={cn(
+                    'text-[9px] font-bold leading-none',
+                    drawer === one.id ? 'text-white/70' : 'text-white/30',
+                  )}>
+                    {counts[one.id]}
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </nav>

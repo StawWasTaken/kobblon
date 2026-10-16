@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
-import { faFaceSmile, faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { Icon } from '@/components/brand/Icon'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
@@ -24,12 +24,42 @@ import { cn } from '@/lib/cn'
  * with no information in any of them - and it is also a row that tells
  * everybody which faces exist before anybody has used one.
  *
+ * **The faces are drawn as drawn, in colour when they are yours.** Staw
+ * picked the colours: #FFCC4D for all of them, which is the yellow an
+ * emoji face is, except the skull in bone grey and the angry one in red.
+ * Not yours, they take the colour of the text around them like every other
+ * icon on the site - so an unpressed face is quiet and a pressed one is
+ * the only coloured thing in the row, which is the whole job.
+ *
  * It counts optimistically and then asks. A reaction that takes a round
  * trip to light up is a reaction nobody presses twice, and the server's
  * answer replaces the guess rather than being merged with it: if the two
  * disagree the server is right, which is the only rule that keeps a count
  * from drifting over an evening.
  */
+/**
+ * What colour a face is when it is yours. Staw's numbers.
+ *
+ * One yellow for the lot, because they are one set and a set that is nine
+ * colours is nine things rather than a set - except the two that would be
+ * saying the wrong thing in it: a yellow skull is a smiley with no face
+ * and a yellow angry face is not angry.
+ */
+const FACE_YELLOW = '#FFCC4D'
+
+const FACE_COLOUR: Record<Face, string> = {
+  smile: FACE_YELLOW,
+  laugh: FACE_YELLOW,
+  'happy-grin': FACE_YELLOW,
+  'winky-grin': FACE_YELLOW,
+  'heart-eyes': FACE_YELLOW,
+  sunglasses: FACE_YELLOW,
+  shocked: FACE_YELLOW,
+  sad: FACE_YELLOW,
+  angry: '#DF1F2D',
+  skull: '#E6E7E8',
+}
+
 export function Reactions({
   what, which, counts, canReact = true, whyNot, onChanged, className,
 }: {
@@ -120,13 +150,17 @@ export function Reactions({
           onClick={() => void press(one.face)}
           aria-pressed={one.mine}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors',
+            'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-2.5 text-sm font-bold transition-colors',
             one.mine
               ? 'border-brand bg-brand/15 text-white'
               : 'border-ink-line bg-ink-raised text-white/70 hover:text-white',
           )}
         >
-          <Icon name={`reaction-${one.face}`} className="h-4 w-4" />
+          <Icon
+            name={`reaction-${one.face}`}
+            tone={one.mine ? FACE_COLOUR[one.face] : undefined}
+            className="h-5 w-5"
+          />
           {formatCount(one.how_many)}
         </button>
       ))}
@@ -138,12 +172,18 @@ export function Reactions({
           aria-label="React"
           aria-expanded={picking}
           className={cn(
-            'inline-flex items-center gap-1 rounded-full border border-ink-line bg-ink-raised px-2.5 py-1 text-xs text-white/60 transition-colors',
-            canReact ? 'hover:text-white' : 'opacity-50',
+            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1 pl-1.5 pr-2 transition-colors',
+            canReact ? 'text-white/60 hover:text-white' : 'text-white/40 opacity-60',
           )}
         >
-          <Glyph icon={faFaceSmile} />
-          <Glyph icon={faPlus} className="text-[9px]" />
+          {/*
+            * Staw's smiling face, not Font Awesome's - "for the faces svg
+            * icon use the reaction smiling instead of a smiley". In its own
+            * yellow, because this button is the one that says "there are
+            * faces here" and a grey one says the opposite.
+            */}
+          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-5 w-5" />
+          <Glyph icon={faPlus} className="text-[10px]" />
         </button>
       </Tooltip>
 
@@ -152,19 +192,23 @@ export function Reactions({
          * Above the button, because these sit at the bottom of a card and
          * a tray that opens downwards opens off the end of it.
          */
-        <div className="absolute bottom-full left-0 z-30 mb-1.5 flex gap-0.5 rounded-2xl border border-ink-line bg-ink-card p-1.5 shadow-pop">
+        <div className="absolute bottom-full left-0 z-30 mb-2 flex gap-1 rounded-2xl border border-ink-line bg-ink-card p-2 shadow-pop">
           {FACES.map((face) => (
             <button
               key={face}
               type="button"
               onClick={() => void press(face)}
               aria-label={face.replace('-', ' ')}
+              title={face.replace('-', ' ')}
               className={cn(
-                'grid h-9 w-9 place-items-center rounded-xl transition-transform hover:scale-110',
+                'grid h-11 w-11 place-items-center rounded-xl transition-transform hover:scale-110',
                 mine === face && 'bg-brand/20',
               )}
             >
-              <Icon name={`reaction-${face}`} className="h-6 w-6" />
+              {/* In the tray every face is in colour: this is the place
+                  somebody is choosing between them, and ten identical grey
+                  faces is a row nobody can choose from. */}
+              <Icon name={`reaction-${face}`} tone={FACE_COLOUR[face]} className="h-8 w-8" />
             </button>
           ))}
         </div>

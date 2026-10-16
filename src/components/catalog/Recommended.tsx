@@ -25,9 +25,14 @@ import { cn } from '@/lib/cn'
  * signed out that call quietly answers "popular and new", which is the
  * right answer about somebody we know nothing about.
  *
- * A row that scrolls sideways rather than a grid that wraps, because this
- * is a suggestion beside the thing somebody came to do. A wrapping grid of
- * twelve turns a hint into a second page.
+ * A grid that wraps, and no card half off the edge.
+ *
+ * It scrolled sideways and bled past the panel so the last card was cut,
+ * which was meant to say "there is more of it". Staw: "make sure that
+ * nothing in the recommended stuff gets cut". He is right that it reads as
+ * a mistake rather than as an invitation - a sliced card looks like a
+ * layout that overflowed. It fills the row it has and stops, and `See all`
+ * is the thing that says there is more.
  */
 export function Recommended({ howMany = 12, title = 'Recommended', className }: {
   howMany?: number
@@ -59,14 +64,15 @@ export function Recommended({ howMany = 12, title = 'Recommended', className }: 
       </div>
 
       {/*
-        * Sideways, with the scrollbar hidden and the row bleeding to the
-        * panel's edge, so the last card is cut rather than ending in a tidy
-        * margin - which is what says there is more of it.
+        * As many as fit a whole row, and never part of one. `auto-fill`
+        * adds columns rather than stretching the ones there are, so the
+        * cards stay the size they were drawn at whatever the panel is
+        * doing around them.
         */}
-      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
         {picked.loading
           ? Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-52 w-36 shrink-0 rounded-2xl" />
+            <Skeleton key={i} className="h-52 rounded-2xl" />
           ))
           : picked.data!.map((item) => <Card key={item.id} item={item} />)}
       </div>
@@ -79,7 +85,7 @@ function Card({ item }: { item: AvatarItem }) {
   const to = `/catalog/${avatarTag(item.kind, item.content_id)}`
 
   return (
-    <div className="relative w-36 shrink-0">
+    <div className="relative">
       {!item.price && <FreeCorner />}
       <Link
         to={to}

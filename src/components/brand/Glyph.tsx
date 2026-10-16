@@ -175,7 +175,7 @@ export function Glyph({
         label={label}
         title={title}
         style={style}
-        tone={tone ?? undefined}
+        tone={tone}
         className={cn(spin && 'animate-spin', className)}
       />
     )

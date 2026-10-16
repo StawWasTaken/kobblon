@@ -72,21 +72,45 @@ export function Icon({
   /** The hover tooltip the browser draws, where a call site wants one. */
   title?: string
   /**
-   * A colour to paint it, for the places it has to match the text beside
-   * it. `currentColor` takes the colour of whatever it sits in.
+   * What colour to paint it.
+   *
+   * **`currentColor` by default, and that is the important part.** These
+   * are white line art, so drawn as they are they vanish on a light
+   * background - Staw, in capitals: "FOR THE BRIX YOU KEPT ITS WHITENESS
+   * AND AGAINST WHITE BACKGROUND WE DONT SEE IT". Taking the colour of the
+   * text they sit in is the only default that cannot do that, in either
+   * theme, on any card.
+   *
+   * `tone={null}` draws the file as it is, colours and all. That is for
+   * the ones that are pictures rather than glyphs: the Workspace's
+   * coloured parts, and the reaction faces when they are meant to be
+   * yellow rather than the colour of the sentence around them.
    */
-  tone?: string
+  tone?: string | null
   style?: React.CSSProperties
   className?: string
 }) {
   const url = iconUrl(name)
+  /*
+   * Undefined means "nobody said", which is the case that was wrong.
+   * `null` is somebody saying "as drawn", which is a different answer and
+   * has to stay available.
+   */
+  const paint = tone === undefined
+    /*
+     * The Workspace's are pictures - a green cylinder, a red part - and
+     * painting one flat would throw away the thing that tells them apart
+     * at a glance. They are as drawn unless a caller asks otherwise.
+     */
+    ? (name.startsWith('workspace/') ? null : 'currentColor')
+    : tone
 
   /*
    * Painted as a mask rather than tinted with a filter. A filter has to be
    * worked out per colour and comes out approximately right; a mask keeps
    * the shape exactly and takes any colour the design system has.
    */
-  if (tone) {
+  if (paint) {
     return (
       <span
         role={label ? 'img' : undefined}
@@ -96,7 +120,7 @@ export function Icon({
         className={cn('inline-block h-[1em] w-[1em] align-[-0.125em]', className)}
         style={{
           ...style,
-          backgroundColor: tone === 'currentColor' ? 'currentColor' : tone,
+          backgroundColor: paint === 'currentColor' ? 'currentColor' : paint,
           maskImage: `url(${url})`,
           WebkitMaskImage: `url(${url})`,
           maskSize: 'contain',
