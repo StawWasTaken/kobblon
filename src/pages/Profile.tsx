@@ -25,6 +25,7 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Shop } from '@/components/catalog/Shop'
 import { Tabs } from '@/components/ui/Tabs'
 import { Emblem } from '@/components/community/Emblem'
 import { WearingPanel } from '@/components/avatar/WearingPanel'
@@ -163,7 +164,7 @@ export default function Profile() {
   const [following, setFollowingState] = useState(false)
   const [reporting, setReporting] = useState(false)
   const [about, setAbout] = useState(false)
-  const [tab, setTab] = useState<'About' | 'Creations'>('About')
+  const [tab, setTab] = useState<'About' | 'Creations' | 'Shop'>('About')
   const [bio, setBio] = useState('')
   const [writingBio, setWritingBio] = useState(false)
   const [savingBio, setSavingBio] = useState(false)
@@ -725,10 +726,27 @@ export default function Profile() {
         options={[
           { value: 'About', label: 'About' },
           { value: 'Creations', label: 'Creations' },
+          { value: 'Shop', label: 'Shop' },
         ]}
       />
 
-      {tab === 'Creations' ? (
+      {/*
+        * Their shop: what they sell, rather than everything they have made.
+        *
+        * The two are not the same list and the difference is the whole
+        * reason this tab exists - Creations is a portfolio, a shop is a
+        * shelf. Nothing waiting to be looked at is here; that lives in
+        * Create, where it can say what it is waiting for.
+        */}
+      {tab === 'Shop' && (
+        <Shop
+          owner={{ user: user.id }}
+          who={user.display_name}
+          isMine={isMe}
+        />
+      )}
+
+      {tab === 'Shop' ? null : tab === 'Creations' ? (
         <div className="space-y-10">
           <section>
             <Heading

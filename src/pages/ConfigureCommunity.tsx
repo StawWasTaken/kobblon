@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faCircleInfo, faGear, faUserGroup, faUserShield, faHandshake, faScroll,
+  faCircleInfo, faGear, faUserGroup, faUsers, faHandshake, faScroll,
   faMagnifyingGlass, faPlus, faSkull, faCalendarDay, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -50,7 +50,7 @@ const sections: {
   { name: 'Information', icon: faCircleInfo, group: 'Identity', note: 'Name, emblem, cover, description' },
   { name: 'Settings', icon: faGear, group: 'Identity', note: 'Joining, funds, closing it down' },
   { name: 'Members', icon: faUserGroup, group: 'People', note: 'Who is in, who is asking, who is banned' },
-  { name: 'Roles', icon: faUserShield, group: 'People', note: 'Ranks and what each one may do' },
+  { name: 'Roles', icon: faUsers, group: 'People', note: 'Ranks and what each one may do' },
   { name: 'Events', icon: faCalendarDay, group: 'Activity', note: 'What is on and who is coming' },
   { name: 'Affiliates', icon: faHandshake, group: 'Activity', note: 'Allies and enemies' },
   { name: 'Audit Log', icon: faScroll, group: 'Activity', note: 'Everything that has been done here' },

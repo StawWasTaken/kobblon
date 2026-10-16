@@ -320,6 +320,59 @@ Object.assign(window, {
    * how far the surface bends back from its middle to its edges. A plane
    * bends back by nothing.
    */
+  /**
+   * Where a leg's front lands.
+   *
+   * The torso has been checked since the first template and the limbs never
+   * were, which is how a pair of trousers shipped with its front down the
+   * sides of the legs. The sheet's rule is that the lid sits over the front
+   * panel, so this asks both halves of it: the +Z vertices land in the
+   * region called `front`, and that region is the column the lid is over.
+   */
+  async limbWrap() {
+    const { K6, loadK6Source } = await import('@/engine/k6')
+    const { templateFor } = await import('@/engine/clothes')
+    const body = new K6(await loadK6Source('/k6/k6.glb'))
+    body.dress('trousers', new THREE.Texture())
+    const sheet = templateFor('trousers')
+
+    const legs = ['LeftLeg', 'RightLeg'].map((name) => {
+      const part = body.parts.get(name)!
+      const uv = part.geometry.getAttribute('uv1') as THREE.BufferAttribute
+      const normal = part.geometry.getAttribute('normal')
+      const front = sheet.regions[`${name}.front`]
+      const lid = sheet.regions[`${name}.top`]
+      const box = {
+        u0: front.x / sheet.width,
+        u1: (front.x + front.w) / sheet.width,
+        v0: 1 - (front.y + front.h) / sheet.height,
+        v1: 1 - front.y / sheet.height,
+      }
+      let facing = 0
+      let inside = 0
+      for (let i = 0; i < normal.count; i += 1) {
+        if (normal.getZ(i) < 0.9) continue
+        facing += 1
+        const u = uv.getX(i)
+        const v = uv.getY(i)
+        if (u >= box.u0 - 0.001 && u <= box.u1 + 0.001
+          && v >= box.v0 - 0.001 && v <= box.v1 + 0.001) inside += 1
+      }
+      return {
+        name,
+        facing,
+        allInside: facing > 0 && inside === facing,
+        lidOverFront: lid.x === front.x,
+      }
+    })
+
+    body.dispose()
+    return {
+      allInside: legs.every((one) => one.allInside),
+      lidOverFront: legs.every((one) => one.lidOverFront),
+      facing: legs.map((one) => `${one.name} ${one.facing}`).join(', '),
+    }
+  },
   async faceOnOff() {
     const { K6, loadK6Source } = await import('@/engine/k6')
     const body = new K6(await loadK6Source('/k6/k6.glb'))

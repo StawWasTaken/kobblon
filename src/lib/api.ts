@@ -4566,6 +4566,35 @@ export async function avatarShelf(
 }
 
 /**
+ * A shop: what one person sells, or what a Community sells.
+ *
+ * Only what is on sale - approved, listed, still up. What somebody is still
+ * making lives in the Create tab, which is where it can say what it is
+ * waiting for; a shop that showed it would be showing strangers something
+ * nobody can buy.
+ */
+export async function shopShelf(
+  owner: { user: string } | { community: string },
+  howMany = 60,
+): Promise<AvatarItem[]> {
+  return (unwrap(await supabase.rpc('shop_shelf', {
+    owner_user: 'user' in owner ? owner.user : null,
+    owner_community: 'community' in owner ? owner.community : null,
+    how_many: howMany,
+  })) as AvatarItem[]) ?? []
+}
+
+/** How many things are on that shelf, for a tab that counts before it opens. */
+export async function shopSize(
+  owner: { user: string } | { community: string },
+): Promise<number> {
+  return (unwrap(await supabase.rpc('shop_size', {
+    owner_user: 'user' in owner ? owner.user : null,
+    owner_community: 'community' in owner ? owner.community : null,
+  })) as number) ?? 0
+}
+
+/**
  * Changing what you wrote about something you made, and what it costs.
  *
  * Not what it is: the kind, the slot and the picture are fixed once anybody
@@ -4723,6 +4752,8 @@ export async function createAvatarItem(input: {
   imagePath?: string | null
   meshId?: string | null
   textureId?: string | null
+  /** The Community it belongs to, if it is not yours. */
+  communityId?: string | null
 }): Promise<string> {
   return unwrap(await supabase.rpc('create_avatar_item', {
     item_kind: input.kind,
@@ -4733,6 +4764,7 @@ export async function createAvatarItem(input: {
     picture: input.imagePath ?? null,
     model: input.meshId ?? null,
     texture: input.textureId ?? null,
+    maker: input.communityId ?? null,
   })) as string
 }
 

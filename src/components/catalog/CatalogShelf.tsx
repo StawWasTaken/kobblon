@@ -22,6 +22,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Missing } from '@/components/brand/Missing'
+import { Byline } from '@/components/catalog/Byline'
 import {
   faShirt, faMagnifyingGlass, faPlus, faClock,
   faBasketShopping, faCheck, faStar, faSliders,
@@ -761,7 +763,10 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
               className="h-full w-full select-none object-contain"
             />
           ) : (
-            <Glyph icon={faShirt} className="text-3xl text-white/30" />
+            /* Kobby with the empty box, which is Staw's picture for a
+               picture that is not there. A shirt glyph said "this is a
+               shirt", which the card already says. */
+            <Missing />
           )}
 
           {/* Down in the corner, which is where Staw asked for it. */}
@@ -785,12 +790,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
               {item.name}
             </Link>
           </h3>
-          <span className="flex items-center gap-1.5 text-xs text-muted">
-            <span className="truncate">{item.creator_display_name}</span>
-            {isVerified({ is_verified: item.creator_is_verified }) && (
-              <Verified className="text-[10px]" />
-            )}
-          </span>
+          <Byline item={item} className="text-xs" />
           {closed && !item.owned ? (
             <Button block size="sm" disabled>Closed</Button>
           ) : (

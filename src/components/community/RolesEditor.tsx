@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
-import { faPlus, faTrash, faUserShield } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faTrash, faUser } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -149,7 +149,10 @@ export function RolesEditor({ communityId }: { communityId: string }) {
                   selected === rank.id ? 'bg-brand text-white' : 'text-white/70 hover:bg-ink-hover',
                 )}
               >
-                <Glyph icon={faUserShield} className="w-4 text-xs opacity-60" />
+                {/* A person, because a role is a person with a name for
+                    what they may do. The badge belonged to staff and said
+                    this was a staff thing, which it is not. */}
+                <Glyph icon={faUser} className="w-4 text-xs opacity-60" />
                 <span className="min-w-0 flex-1 truncate">{rank.name}</span>
                 <span className="shrink-0 text-xs opacity-60">{rank.rank}</span>
               </button>
