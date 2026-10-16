@@ -232,6 +232,8 @@ export default function MyAvatar() {
         meshUrl: null as string | null,
         meshFormat: p.mesh_format,
         textureUrl: null as string | null,
+        /** A body part is a shape the engine builds, not an address to sign. */
+        shape: p.shape ?? null,
         fit: p.fit ?? null,
       }))
     return { body: worn.data?.[0]?.body ?? DEFAULT_BODY, pieces }

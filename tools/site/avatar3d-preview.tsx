@@ -116,6 +116,20 @@ const hatted: AvatarLook = {
   ],
 }
 
+/*
+ * A body part worn the way a page hands one over: a piece with a shape and
+ * no address at all. It is here because a look that quietly drops that
+ * column draws the plain block, which looks exactly like nothing is worn.
+ */
+const shaped: AvatarLook = {
+  body: painted.body,
+  pieces: [
+    { slot: 'face', kind: 'face', imageUrl: face() },
+    { slot: 'shirt', kind: 'shirt', imageUrl: shirt() },
+    { slot: 'torso', kind: 'bodypart', shape: 'torso-girl' },
+  ],
+}
+
 /** The flat body you press to choose what a colour would paint. */
 function Picker() {
   const [chosen, setChosen] = useState<BodyPart[]>(['Torso', 'LeftArm', 'RightArm'])
@@ -137,13 +151,14 @@ function Picker() {
 createRoot(document.getElementById('root')!).render(
   <div className="min-h-screen space-y-6 bg-ink p-8 text-white">
     <h1 className="font-display text-xl">An avatar, with no website around it</h1>
-    <div className="grid w-[1200px] grid-cols-5 gap-5">
+    <div className="grid w-[1440px] grid-cols-6 gap-5">
       {([
         ['Nothing on', bare, false],
         ['Coloured', painted, false],
         ['Dressed, and draggable', dressed, false],
         ['The profile picture', dressed, true],
         ['A badly modelled hat', hatted, false],
+        ['Wearing a body part', shaped, false],
       ] as const).map(([label, look, portrait]) => (
         <div key={label} className="space-y-2">
           <p className="font-display text-[10px] uppercase tracking-wider text-muted">

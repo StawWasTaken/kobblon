@@ -8093,3 +8093,36 @@ check that fails the next time the shape moves. It now takes the middle of
 the part's own bounding box and compares the narrowest point to the widest,
 and prints both: **1.20 across at the waist against 1.80 at the
 shoulders**.
+
+## Round ninety-three
+
+One line's worth of bug, in the place it is most visible. Staw, with a
+screenshot of his own wardrobe: "make sure that the girl torso also applies
+everywhere its worn, like in the my avatar page where it doesnt appear".
+
+**My Avatar built its own look and dropped the shape.** The page maps
+`avatar_of`'s rows into the stage's pieces by hand rather than through
+`buildLook`, and that mapper named every column but `shape`. Everything
+else that draws an avatar - a profile, an outfit, the Catalog's try-on -
+goes through `buildLook`, which carries it, so the one page you actually
+dress on was the one page it did not reach.
+
+What makes it quiet, and the part to carry across: a body part has **no
+address of its own**. A hat with no `meshUrl` draws nothing and you know
+instantly; a body part with no `shape` draws the plain block, which is
+exactly what an avatar wearing nothing looks like. The wardrobe said
+"PARTS 1" and the body said otherwise.
+
+Two fixes, and the second is the one that matters to you:
+
+- The mapper passes `shape` now.
+- **`AvatarLook`'s piece type carries `shape`**, which it did not. The
+  stage was being handed it by `buildLook` and reading it through
+  `dressFrom` while the type in between never mentioned it, so a page that
+  forgot it was told nothing. If you assemble an `AvatarLook` yourself
+  anywhere, this is the column to check you are passing.
+
+`tools/site/avatar3d-preview.html` has a sixth stand now - "Wearing a body
+part" - which hands the stage a piece with a shape and no address, the way
+a page does. If the stage ever stops carrying it, that stand goes back to
+the plain block and says so.

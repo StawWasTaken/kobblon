@@ -55,6 +55,12 @@ export type AvatarLook = {
     meshUrl?: string | null
     meshFormat?: string | null
     textureUrl?: string | null
+    /**
+     * Which shape in the engine, for a body part. It has no address of its
+     * own - the engine builds it - so a look that drops this column draws
+     * the plain block and looks like nothing is worn at all.
+     */
+    shape?: string | null
     /** How its maker placed it, applied on top of the automatic fit. */
     fit?: WornFit | null
   }[]
