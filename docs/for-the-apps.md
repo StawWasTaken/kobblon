@@ -7771,3 +7771,69 @@ actually get wrong, since the two limbs do not read the same way.
 
 Nothing about wrapping, the two-layer alpha shader or `K6` changed in this
 round. 169 engine checks pass.
+
+## Round eighty-nine
+
+**Shops.** Migration **0244**. What somebody sells, under their own name or a
+Community's, in one place rather than scattered through the Catalog.
+
+New on the database side:
+
+- `avatar_items.community_id` - an avatar item can belong to a Community.
+  Assets have had this since 0029; items never could, so a Community could
+  sell Decals and models and not a single shirt.
+- `create_avatar_item` takes a ninth argument, `maker` (the Community, null
+  for yourself). **The eight-argument version is dropped**, because a
+  defaulted argument overloads rather than replaces and a call naming the
+  first eight would match both. If you call this, pass the new argument or
+  name your arguments.
+- `shop_shelf(owner_user, owner_community, how_many)` and
+  `shop_size(owner_user, owner_community)` - what is on sale, which is
+  approved, listed and not taken down. An item a Community owns is on the
+  Community's shelf and not on its maker's.
+- `buy_avatar_item` pays a Community item's share into that Community's
+  funds and logs it, the way `buy_asset` has since 0033. Kobblon's cut is
+  unchanged. The making fee comes out of the same purse that will be paid,
+  so a Community with empty funds is told so rather than the person quietly
+  paying for something they will never be paid for.
+- `list_avatar_item` may now be used by anybody who runs the Community an
+  item belongs to, and refuses to list anything not yet approved.
+
+**Three functions grew columns and had to be dropped to do it**:
+`avatar_shelf`, `avatar_item_page` and `my_made_avatar_items` each return
+`community_id, community_slug, community_name` at the end now. A
+`returns table` cannot grow a column in place - "cannot change return type of
+existing function" - so each is a drop and a create. If you select columns by
+position anywhere, re-check those three.
+
+**The byline is carried beside the creator, not written over it.** Staw: "i
+want it to be said to be 'by [community]' rather by the guy who uploaded
+it". `creator_id` and the creator columns still name the person who pressed
+the button, because that is what a takedown, an audit entry and a suspension
+read; the Community columns are what a shopper reads. Prefer them when they
+are set, and give a Community the people icon rather than the verified tick -
+the tick means a verified person and lending it to a Community says something
+nobody has checked.
+
+**Nothing unapproved goes on a body.** `wear_avatar_item` asked only whether
+you owned something. A maker owns what they made the moment they make it, so
+a maker could wear anything at all for as long as it took somebody to look at
+it, and keep wearing it after it was turned down - and everybody saw it on
+them the whole time. It now refuses `pending` ("still being looked at") and
+`rejected` ("was turned down"), separately, because a wait and an answer are
+not the same thing to say. Buying has always refused both; only wearing was
+open.
+
+Worth knowing for your own panels: **a mesh that is still pending can still
+be used as an accessory's model**, deliberately. The accessory it becomes is
+moderated as a whole, and requiring the mesh first would break making one in
+a single pass - the model is uploaded and used in the same breath.
+
+**Taking something off sale is not taking it away.** `list_avatar_item(id,
+false)` closes buying and nothing else: every copy sold stays owned, wearable
+and drawn. Checked explicitly, because Staw asked exactly this - sell it,
+somebody buys it, unpublish it, and that person still has it.
+
+On the website side a Shop tab sits on profiles and on Communities, Roles
+wear a person icon rather than the staff badge, and a picture that will not
+load is Kobby holding the empty box rather than a broken-image frame.
