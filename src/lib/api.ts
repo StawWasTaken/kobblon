@@ -3929,6 +3929,58 @@ export async function pokeState(): Promise<{
   return rows?.[0] ?? { wired: false, net_ready: false, last_at: null }
 }
 
+/**
+ * Everything the machine panel shows, in one call.
+ *
+ * `pokeState` answered whether the door is wired and nothing else, which is
+ * a third of the question somebody standing in front of this actually has:
+ * is it running, is anything scheduled to run it, and when did it last do
+ * something. No address and no key come back - that has not changed and
+ * must not.
+ */
+export type MachinePulse = {
+  is_on: boolean
+  mode: 'always' | 'slow' | 'busy' | null
+  /** The database knows the worker's address and key. */
+  wired: boolean
+  /** `pg_net` is installed, so a knock can physically go out. */
+  net_ready: boolean
+  /** The every-minute sweep is scheduled and switched on. */
+  beating: boolean
+  /** Its cron line, for showing how often. */
+  every: string | null
+  last_poke_at: string | null
+  last_decision_at: string | null
+  decided_today: number
+  waiting: number
+  oldest_minutes: number | null
+}
+
+export async function machinePulse(): Promise<MachinePulse | null> {
+  const rows = unwrap(await supabase.rpc('machine_pulse')) as MachinePulse[] | null
+  return rows?.[0] ?? null
+}
+
+/** The numbers the console opens on. Counts only, in one round trip. */
+export type StaffOverview = {
+  reports_open: number
+  appeals_open: number
+  tickets_open: number
+  tickets_urgent: number
+  screening: number
+  people_total: number
+  people_online: number
+  joined_today: number
+  sanctions_week: number
+  machine_on: boolean
+  machine_waiting: number
+}
+
+export async function staffOverview(): Promise<StaffOverview | null> {
+  const rows = unwrap(await supabase.rpc('staff_overview')) as StaffOverview[] | null
+  return rows?.[0] ?? null
+}
+
 export async function groqModels(): Promise<string[]> {
   const { data, error } = await supabase.functions.invoke('moderate', { body: { list: true } })
   if (error) {

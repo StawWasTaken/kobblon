@@ -8337,3 +8337,58 @@ or the Workspace shows the same lockup, use the new file rather than
 rebuilding the two-piece version.
 
 Staw has applied migrations 0249 to 0252.
+
+## Round ninety-nine
+
+The staff console is a page now, and the machine keeps its own time.
+
+**It was a card over the site and it is a page**, at `/staff` and
+`/staff/<panel>`. The card was the right shape for one decision and the
+wrong one for a shift: capped at 92vh on a monitor with twice the room, two
+scrollbars fighting over one wheel, no way to link a queue to somebody, and
+a reload dropped you back on the first panel. A panel is an address now, so
+`/staff/reports` is a thing staff can send each other. **If an application
+links into the console, link to the panel, not to `/staff`.**
+
+**It opens on an Overview** - the four queues as four doors with their
+depths, Kobby's state and its last five decisions, and the house's numbers
+as one line. The rail carries the same depths as badges, so nothing has to
+be opened to find out where the work is. Two new functions behind it, both
+moderator-gated and counts-only: `staff_overview()` and `machine_pulse()`.
+
+**People lists everybody when it opens**, instead of an empty box and a
+sentence explaining that pressing Look with nothing typed would list the
+newest accounts. Typing narrows what is loaded at once; Look still asks the
+database. Each row is one line until it is opened, because twenty accounts
+each carrying six rank buttons, a Brix box and a Delete was three hundred
+controls on one page.
+
+**Migration 0253: the machine runs all the time.** This is the part worth
+reading. Every way the worker got woken was an *event* - a trigger on an
+insert, or somebody pressing the button - and three things fell through
+that silently: the twenty-second debounce dropping a knock with nothing to
+knock again, a knock going out while the function was down (`pg_net` does
+not wait for an answer, by design), and 'slow' mode, which knocks never and
+had only a GitHub schedule coming back for it. `keep_the_worker_awake()` is
+a sweep: every minute, if anything is genuinely waiting under the current
+mode, it knocks. It is scheduled with `pg_cron` as the job
+**`kobblon-machine`**, looked up by name at apply time so a project without
+`pg_cron` applies the file cleanly and says so in the console instead.
+
+The sweep counts the queues itself rather than calling `ai_work_waiting`,
+and that is not duplication: that function demands `is_moderator() or
+is_the_worker()`, and cron runs as the job's owner with no JWT at all - it
+would have raised every minute, a schedule that is on, scheduled and
+failing. Caught by running it as `service_role` before trusting it, which
+is the check CLAUDE.md asks for.
+
+**The machine panel is rebuilt around three states, not one.** On, beating
+and wired are different questions and all three have been false here while
+the panel said On. Whatever is false is now a sentence with the fix in it.
+**For the applications: "the machine is on" is no longer the state to show.
+Read `machine_pulse()` and show it awake only when `is_on && beating &&
+wired && net_ready`.**
+
+**Not done, and needed from Staw:** apply 0253, and turn on `pg_cron` for
+the project - without it the heartbeat is not scheduled and the console
+will say so in as many words. Nothing else in the console depends on it.

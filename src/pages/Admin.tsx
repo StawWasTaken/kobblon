@@ -14,16 +14,16 @@
  * the bottom is a section rather than an afterthought.
  */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
+  faGaugeHigh, faArrowRight, faUsers, faBolt, faHeartPulse,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -62,16 +62,17 @@ import {
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
   checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
+  machinePulse, staffOverview,
 } from '@/lib/api'
 import type {
   MachineStep, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
-  SanctionAction,
+  SanctionAction, MachinePulse,
 } from '@/lib/api'
 import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
 import { WorldMap } from '@/components/staff/WorldMap'
 
-type Section = 'People' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'People' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -117,6 +118,7 @@ const rankLook: Record<StaffRank, string> = {
 const sections: {
   name: Section; icon: IconDefinition; blurb: string; needs: StaffRank
 }[] = [
+  { name: 'Overview', icon: faGaugeHigh, needs: 'moderator', blurb: 'What is waiting, and whether the machine is keeping up' },
   { name: 'Reports', icon: faFlag, needs: 'moderator', blurb: 'What people have reported, and what was done' },
   { name: 'Appeals', icon: faScaleBalanced, needs: 'moderator', blurb: 'People disagreeing with a decision, and the answer' },
   { name: 'Support', icon: faLifeRing, needs: 'moderator', blurb: 'What people have written in about, urgent first' },
@@ -132,6 +134,251 @@ const sections: {
 ]
 
 const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOrder[needs]
+
+/* ---------------------------------------------------------------- overview */
+
+/**
+ * A queue, as a thing to walk into rather than a statistic.
+ *
+ * The first version of this was four identical cards with an icon chip, a
+ * number and a line of grey text - the shape every dashboard has had since
+ * about 2015, which is exactly why it reads as nobody's. This is the
+ * Catalog's own card: the number in the display face at the size the number
+ * deserves, the name under it, and the whole block pressable. A queue with
+ * nothing in it says so in a word instead of showing a nought.
+ */
+function Queue({ icon, name, count, aside, delay, onClick }: {
+  icon: IconDefinition
+  name: string
+  count: number
+  aside?: string
+  delay: number
+  onClick: () => void
+}) {
+  const heavy = count > 10
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ animationDelay: `${delay}ms` }}
+      className={cn(
+        'group relative flex animate-row-in flex-col justify-between overflow-hidden rounded-2xl border p-4 text-left',
+        'transition-[transform,border-color] duration-150 hover:-translate-y-0.5',
+        count === 0
+          ? 'border-ink-line bg-ink-card hover:border-white/20'
+          : heavy
+            ? 'border-danger/40 bg-danger-soft hover:border-danger'
+            : 'border-brand/40 bg-brand/10 hover:border-brand-bright',
+      )}
+    >
+      <FontAwesomeIcon
+        icon={icon}
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-3 -right-2 text-6xl text-white/[0.04] transition-transform duration-200 group-hover:scale-110"
+      />
+      <span className={cn(
+        'font-display text-4xl leading-none',
+        count === 0 ? 'text-white/25' : heavy ? 'text-danger-bright' : 'text-white',
+      )}>
+        {count === 0 ? 'none' : count}
+      </span>
+      <span className="mt-3">
+        <span className="block font-display text-sm uppercase tracking-wide">{name}</span>
+        <span className="mt-0.5 block text-xs text-muted">{aside}</span>
+      </span>
+    </button>
+  )
+}
+
+/** The machine's own heartbeat, as a line somebody can read at a glance. */
+export function Heartbeat({ pulse, compact = false }: { pulse: MachinePulse | null; compact?: boolean }) {
+  /*
+   * Three states, not two. "On" is a setting somebody typed; "beating" is
+   * whether anything is actually scheduled to run it; "wired" is whether a
+   * knock can physically go out. The old panel showed the first one and
+   * called it the answer, which is how it sat switched on and idle.
+   */
+  const live = !!pulse?.is_on && !!pulse.beating && pulse.wired && pulse.net_ready
+  const word = !pulse?.is_on ? 'stopped'
+    : live ? 'awake' : 'on, but nothing is running it'
+  const tone = !pulse?.is_on ? 'text-white/50'
+    : live ? 'text-space-bright' : 'text-amber-300'
+
+  return (
+    <span className={cn('inline-flex items-center gap-2', compact ? 'text-xs' : 'text-sm')}>
+      <span className="relative grid size-2.5 place-items-center">
+        <span className={cn('size-2.5 rounded-full bg-current', tone)} />
+        {live && (
+          <span className={cn('absolute size-2.5 animate-pulse-ring rounded-full', tone)} aria-hidden="true" />
+        )}
+      </span>
+      <span className={cn('font-bold', tone)}>{word}</span>
+    </span>
+  )
+}
+
+/**
+ * What the console opens on.
+ *
+ * Staw asked for practical, and then for it not to feel like something a
+ * machine laid out - which is the same note twice, because the generic
+ * dashboard is generic precisely by not knowing what the work is. So: the
+ * four queues as four doors, in the order they are actually worked; one
+ * line of the house's own numbers rather than four more boxes of the same
+ * shape; and Kobby underneath, because the queues only mean anything if you
+ * know whether something is draining them.
+ *
+ * It keeps its own time - this sits open on a second monitor all day, and a
+ * count from an hour ago is worse than no count.
+ */
+export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
+  const rank = useStaffRank()
+  const counts = useAsync(async () => staffOverview(), [])
+  const pulse = useAsync(async () => machinePulse().catch(() => null), [])
+  const recent = useAsync(async () => aiRecent(8).catch(() => []), [])
+
+  useEffect(() => {
+    const again = window.setInterval(() => { counts.reload(); pulse.reload() }, 20_000)
+    return () => window.clearInterval(again)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const n = counts.data
+  const queues = [
+    { name: 'Reports', count: n?.reports_open ?? 0, icon: faFlag, to: 'Reports' as Section,
+      aside: 'somebody said something is wrong' },
+    { name: 'Appeals', count: n?.appeals_open ?? 0, icon: faScaleBalanced, to: 'Appeals' as Section,
+      aside: 'a decision being argued with' },
+    { name: 'Support', count: n?.tickets_open ?? 0, icon: faLifeRing, to: 'Support' as Section,
+      aside: n?.tickets_urgent ? `${n.tickets_urgent} asked for a person` : 'written in to the house' },
+    { name: 'Screening', count: n?.screening ?? 0, icon: faCircleCheck, to: 'Screening' as Section,
+      aside: 'made, and waiting on a yes' },
+  ]
+
+  const waiting = queues.reduce((sum, one) => sum + one.count, 0)
+
+  return (
+    <div className="space-y-5">
+      {counts.loading && !counts.data ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((one) => <Skeleton key={one} className="h-32" />)}
+        </div>
+      ) : counts.error ? (
+        <ErrorState
+          message={counts.error ?? 'The database did not answer.'}
+          onRetry={() => { counts.reload() }}
+        />
+      ) : (
+        <>
+          <p className="font-display text-lg">
+            {waiting === 0
+              ? 'Nothing is waiting on anybody. Good morning.'
+              : `${formatCount(waiting)} things are waiting on a person.`}
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {queues.map((one, i) => (
+              <Queue
+                key={one.name}
+                icon={one.icon}
+                name={one.name}
+                count={one.count}
+                aside={one.aside}
+                delay={i * 45}
+                onClick={() => onGo(one.to)}
+              />
+            ))}
+          </div>
+
+          {/* ------------------------------------------------ the machine */}
+          <Card className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className={cn(
+                'grid size-10 shrink-0 place-items-center rounded-2xl',
+                pulse.data?.is_on ? 'bg-brand text-white' : 'bg-ink-raised text-white/30',
+              )}>
+                <FontAwesomeIcon icon={faRobot} />
+              </span>
+              <div className="min-w-0">
+                <p className="flex flex-wrap items-center gap-2 font-display">
+                  Kobby is <Heartbeat pulse={pulse.data ?? null} />
+                </p>
+                <p className="text-xs text-muted">
+                  {!pulse.data?.is_on
+                    ? 'Everything in those queues is waiting for a person.'
+                    : pulse.data.beating
+                      ? `Swept every minute${pulse.data.last_poke_at ? `, last knocked ${timeAgo(pulse.data.last_poke_at)}` : ''}. ${formatCount(pulse.data.decided_today)} decided in the last day, ${pulse.data.waiting} in front of it.`
+                      : 'Nothing is scheduled to run it, so it only moves when work lands or somebody presses the button.'}
+                </p>
+              </div>
+              {allowed(rank, 'admin') && (
+                <Button size="sm" variant="ghost" className="ml-auto" onClick={() => onGo('Machine')}>
+                  Machine
+                </Button>
+              )}
+            </div>
+
+            {!!recent.data?.length && (
+              <div className="space-y-1.5 border-t border-ink-line pt-3">
+                {recent.data.slice(0, 5).map((one, i) => (
+                  <div
+                    key={one.id}
+                    style={{ animationDelay: `${i * 40}ms` }}
+                    className="flex animate-row-in items-baseline gap-2 text-xs"
+                  >
+                    <Badge tone={
+                      one.decision === 'rejected' || one.decision === 'suspended' ? 'danger'
+                        : one.decision === 'unsure' ? 'warm' : 'space'
+                    }>
+                      {one.decision}
+                    </Badge>
+                    <span className="text-muted">{one.subject}</span>
+                    <span className="min-w-0 flex-1 truncate text-white/70">{one.reason}</span>
+                    <span className="shrink-0 text-muted">{timeAgo(one.created_at)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/*
+            * The house, as a sentence.
+            *
+            * These four were four more cards of exactly the shape above,
+            * which is how a page starts looking like a template with the
+            * numbers swapped in. They are facts somebody glances at, not
+            * work, so they read as a line.
+            */}
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            <FontAwesomeIcon icon={faUsers} className="text-white/30" />
+            <button onClick={() => onGo('People')} className="font-bold text-white hover:underline">
+              {formatCount(n?.people_total ?? 0)} accounts
+            </button>
+            <span>·</span>
+            <span><span className="font-bold text-white">{formatCount(n?.joined_today ?? 0)}</span> joined today</span>
+            <span>·</span>
+            <span><span className="font-bold text-space-bright">{formatCount(n?.people_online ?? 0)}</span> here now</span>
+            <span>·</span>
+            <span><span className="font-bold text-white">{formatCount(n?.sanctions_week ?? 0)}</span> warnings and suspensions this week</span>
+            {pulse.data?.oldest_minutes != null && (
+              <>
+                <span>·</span>
+                <span>
+                  oldest thing waiting{' '}
+                  <span className={cn('font-bold', pulse.data.oldest_minutes > 180 ? 'text-danger-bright' : 'text-white')}>
+                    {pulse.data.oldest_minutes > 90
+                      ? `${Math.round(pulse.data.oldest_minutes / 60)} hours`
+                      : `${pulse.data.oldest_minutes} minutes`}
+                  </span>
+                </span>
+              </>
+            )}
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
 
 /* ------------------------------------------------------------------ people */
 
@@ -675,18 +922,39 @@ export function PeopleSection({ initial }: { initial?: string }) {
   }, [say])
 
   /*
-   * A term handed in by the command bar runs the search itself, because
-   * arriving at a box somebody has already typed into and still having to
-   * press Look is the shortcut not working.
+   * The list is there when the panel opens.
+   *
+   * It used to be an empty box and a sentence explaining that pressing Look
+   * with nothing typed would show the newest accounts - which is a console
+   * asking somebody to read instructions to see the thing the panel is
+   * named after. An empty search is what the database already answers with
+   * the newest accounts, so it is simply asked.
    */
   useEffect(() => {
-    if (initial) { setSearch(initial); void look(initial) }
+    void look(initial ?? '')
+    if (initial) setSearch(initial)
   }, [initial, look])
+
+  /*
+   * Typing filters what is on screen at once, and Look asks the database.
+   *
+   * Both, because they answer different questions: the narrowing is
+   * instant for the hundred names already here, and the search reaches the
+   * ones that are not. Nothing is hidden by the filter that a search would
+   * not also have to fetch.
+   */
+  const shown = (people ?? []).filter((person) => {
+    const term = search.trim().toLowerCase()
+    if (!term) return true
+    return person.username?.toLowerCase().includes(term)
+      || person.display_name?.toLowerCase().includes(term)
+      || person.id.toLowerCase().includes(term)
+  })
 
   return (
     <div className="space-y-4">
       <form
-        className="flex items-end gap-2"
+        className="sticky top-20 z-10 -mx-1 flex items-end gap-2 bg-ink/90 px-1 py-2 backdrop-blur-sm"
         onSubmit={(e) => { e.preventDefault(); void look(search) }}
       >
         <div className="min-w-0 flex-1">
@@ -703,27 +971,98 @@ export function PeopleSection({ initial }: { initial?: string }) {
         </Button>
       </form>
 
-      {people === null && (
+      <p className="text-xs text-muted">
+        {looking ? 'Looking…'
+          : people === null ? ''
+          : search.trim()
+            ? `${formatCount(shown.length)} of ${formatCount(people.length)} loaded accounts match. Press Look to search every account.`
+            : `The ${formatCount(people.length)} newest accounts. Type to narrow them, or search for anybody.`}
+      </p>
+
+      {looking && people === null && (
+        <div className="space-y-2">
+          {[0, 1, 2, 3, 4].map((one) => <Skeleton key={one} className="h-20" />)}
+        </div>
+      )}
+      {people !== null && shown.length === 0 && (
         <p className="py-8 text-center text-sm text-muted">
-          Search for somebody, or press Look with the box empty for the newest accounts.
+          Nobody here matches that. Press Look to ask the database.
         </p>
       )}
-      {people?.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted">Nobody matches that.</p>
-      )}
-      {people?.map((person) => (
-        <div key={person.id} className="space-y-2">
-          <PersonRow person={person} onChanged={() => void look(search)} />
-          <button
-            type="button"
-            onClick={() => setOpen(open?.id === person.id ? null : person)}
-            className="text-xs font-bold text-link hover:underline"
+      {shown.map((person, i) => {
+        const showing = open?.id === person.id
+        return (
+          <div
+            key={person.id}
+            style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
+            className="animate-row-in space-y-2"
           >
-            {open?.id === person.id ? 'Close the record' : 'Open the record'}
-          </button>
-          {open?.id === person.id && <PersonSheet person={person} rank={rank} />}
-        </div>
-      ))}
+            {/*
+              * A line each until somebody is opened.
+              *
+              * Every row used to carry the full set - six rank buttons, a
+              * Brix box, Notify, Delete - so twenty accounts was a page of
+              * three hundred controls, and the one person being looked for
+              * was somewhere in it. The controls are the same ones; they
+              * are behind the row rather than in front of every row.
+              */}
+            <button
+              type="button"
+              onClick={() => setOpen(showing ? null : person)}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left',
+                'transition-[background-color,border-color] duration-150',
+                showing
+                  ? 'border-brand-bright/60 bg-brand/10'
+                  : 'border-ink-line bg-ink-card hover:bg-ink-hover',
+              )}
+            >
+              <Avatar
+                src={avatarOf(person)}
+                name={person.display_name ?? person.username ?? '?'}
+                personId={person.id}
+                size="sm"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="truncate font-bold">
+                    {person.display_name ?? person.username}
+                  </span>
+                  {person.is_banned && <Badge tone="danger">Closed</Badge>}
+                  {!person.is_banned && person.is_suspended && <Badge tone="danger">Suspended</Badge>}
+                  {person.is_admin && <Badge tone="brand">Admin</Badge>}
+                  {!person.is_admin && person.is_moderator && <Badge tone="brand">Moderator</Badge>}
+                  {person.is_guest && <Badge tone="neutral">Guest</Badge>}
+                  {person.past_sanctions > 0 && (
+                    <Badge tone="warm">{person.past_sanctions} on the record</Badge>
+                  )}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-muted">
+                  @{person.username} · #{person.content_id} · here {timeAgo(person.created_at)}
+                </span>
+              </span>
+              <span className="hidden shrink-0 items-center gap-1 text-sm font-bold sm:flex">
+                <CurrencyMark className="h-3.5" />
+                {formatCount(person.pixels)}
+              </span>
+              <FontAwesomeIcon
+                icon={faArrowRight}
+                className={cn(
+                  'shrink-0 text-xs text-white/25 transition-transform duration-150',
+                  showing && 'rotate-90 text-brand-bright',
+                )}
+              />
+            </button>
+
+            {showing && (
+              <div className="animate-pop-in space-y-2">
+                <PersonRow person={person} onChanged={() => void look(search)} />
+                <PersonSheet person={person} rank={rank} />
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -1879,22 +2218,43 @@ export function NoticeSection() {
 /* -------------------------------------------------------------- the machine */
 
 /**
- * The moderation machine: whether it is on, when it works, and what it is
- * allowed to do.
+ * The machine: whether it is actually running, what it is allowed to do,
+ * and what it has been deciding.
  *
- * Every limit shown here is enforced in the database, not by this panel. The
- * panel is a way of setting a row; `apply_ai_verdict` is what actually
- * refuses to suspend when suspending is off, refuses to touch staff, and has
- * no word at all for deleting an account.
+ * Rebuilt because the old panel could not answer the only question anybody
+ * brings to it. It showed one switch called On, and On meant a boolean in a
+ * table - not that anything was scheduled to run the worker, not that the
+ * database knows its address, not that `pg_net` exists to knock with. All
+ * three of those have been false on this project while the panel said On,
+ * and the symptom each time was a queue quietly filling up.
+ *
+ * So the state is read as a pulse: on, beating, wired, net ready, when it
+ * last knocked, when it last decided anything. Whatever is false is said in
+ * a sentence with the fix in it, and the switches below are grouped by what
+ * they actually change rather than by which table column they are.
+ *
+ * Every limit here is enforced in the database. The panel sets a row;
+ * `apply_ai_verdict` is what refuses to suspend when suspending is off,
+ * refuses to touch staff, and has no word at all for closing an account.
  */
 export function MachineSection() {
   const say = useToast()
   const settings = useAsync(async () => aiSettings(), [])
+  const pulse = useAsync(async () => machinePulse(), [])
   const recent = useAsync(async () => aiRecent(30), [])
   const waiting = useAsync(async () => aiWork(50), [])
   const [busy, setBusy] = useState<string | null>(null)
   /** The self-check's answers, once somebody has asked for them. */
   const [checked, setChecked] = useState<MachineStep[] | null>(null)
+
+  /* A console left open on a second monitor is the normal way this is
+     watched, so it keeps its own time rather than showing the state it
+     had when somebody opened it. */
+  useEffect(() => {
+    const again = window.setInterval(() => { pulse.reload(); waiting.reload() }, 15_000)
+    return () => window.clearInterval(again)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /*
    * What the key can see. Asked once, on purpose: it is a call to Groq and
@@ -1919,6 +2279,7 @@ export function MachineSection() {
     try {
       await setAiSettings(input)
       settings.reload()
+      pulse.reload()
       waiting.reload()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
@@ -1935,14 +2296,11 @@ export function MachineSection() {
        * A run where the machine never answered is not a success, and it
        * used to read like one: "looked at 12, decided 0" is what a retired
        * model name looks like from here, and it is also what twelve
-       * genuinely unclear things look like. The function says which now,
-       * and this shows its words rather than summarising them away.
+       * genuinely unclear things look like.
        */
       if (done.trouble?.length) {
-        /*
-         * A spent rate limit is not a failure: the work was not lost, it
-         * was not reached. Red for it teaches somebody to ignore red.
-         */
+        /* A spent rate limit is not a failure: the work was not lost, it
+           was not reached. Red for it teaches somebody to ignore red. */
         const paused = done.trouble.every((one) => one.includes('is spent for this minute'))
         say(
           `Looked at ${done.looked}, decided ${done.decided}. ${done.trouble.join(' ')}`,
@@ -1958,6 +2316,7 @@ export function MachineSection() {
       }
       recent.reload()
       waiting.reload()
+      pulse.reload()
     } catch (error) {
       say(error instanceof Error ? error.message : 'That did not work.', 'error')
     } finally {
@@ -1976,20 +2335,30 @@ export function MachineSection() {
   }
 
   const on = settings.data?.is_on ?? false
+  const beat = pulse.data
+  /** Whatever is standing between "switched on" and "actually working". */
+  const faults = !on ? [] : [
+    !beat?.beating && {
+      what: 'Nothing is scheduled to run it',
+      fix: 'The every-minute sweep lives in the database as the pg_cron job "kobblon-machine". Install pg_cron on the project and apply migration 0253 again; until then it only moves when something lands or when somebody presses Run it now.',
+    },
+    !beat?.wired && {
+      what: 'The database does not know where the worker is',
+      fix: 'Its address and service key are set with one statement in the SQL editor, never from here - a key typed into a web page is a key that has been in a browser.',
+    },
+    beat && !beat.net_ready && {
+      what: 'There is nothing to knock with',
+      fix: 'pg_net is not installed, so the database cannot call the function at all.',
+    },
+  ].filter(Boolean) as { what: string; fix: string }[]
 
   return (
     <div className="space-y-4">
-      <Note icon={faRobot}>
-        Kobby answers approved, rejected or unsure, and unsure leaves the thing for a person.
-        It cannot close an account and it never touches staff.
-      </Note>
-
-      {settings.loading ? <Skeleton className="h-28" /> : !settings.data ? (
-        /*
-         * Only staff may read the settings row, so an empty answer here is
-         * either "not staff" or "could not reach it" - and a card full of
-         * controls that do nothing is worse than a sentence saying so.
-         */
+      {/* ------------------------------------------------- is it running */}
+      {settings.loading && !settings.data ? <Skeleton className="h-40" /> : !settings.data ? (
+        /* Only staff may read the settings row, so an empty answer here is
+           either "not staff" or "could not reach it" - and a card full of
+           controls that do nothing is worse than a sentence saying so. */
         <Card>
           <p className="text-sm text-muted">
             The machine's settings could not be read. Either this account is
@@ -1997,47 +2366,103 @@ export function MachineSection() {
           </p>
         </Card>
       ) : (
-        <Card className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge tone={on ? 'space' : 'neutral'}>{on ? 'On' : 'Off'}</Badge>
-            <span className="text-sm text-muted">
-              {waiting.data?.length
-                ? `${waiting.data.length} waiting for it right now.`
-                : 'Nothing waiting for it.'}
-            </span>
-            <div className="ml-auto flex items-center gap-2">
-              <Switch
-                className="w-auto"
-                on={on}
-                busy={busy === 'on'}
-                onChange={(next) => void change('on', { turn_on: next })}
-                label={on ? 'Running' : 'Stopped'}
-              />
-              <Button
-                size="sm"
-                variant="subtle"
-                icon={faRobot}
-                loading={busy === 'run'}
-                disabled={!on}
-                onClick={() => void runIt()}
-              >
-                Run it now
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                icon={faStethoscope}
-                loading={busy === 'check'}
-                onClick={() => void check()}
-              >
-                Check it
-              </Button>
-            </div>
-          </div>
+        <>
+          <Card className="space-y-4 p-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <span className={cn(
+                'grid size-12 shrink-0 place-items-center rounded-2xl text-xl transition-colors duration-200',
+                on ? 'bg-brand text-white' : 'bg-ink-raised text-white/30',
+              )}>
+                <FontAwesomeIcon icon={faRobot} />
+              </span>
+              <div className="min-w-0">
+                <p className="flex flex-wrap items-center gap-2 font-display text-lg leading-tight">
+                  Kobby <Heartbeat pulse={beat ?? null} />
+                </p>
+                <p className="text-xs text-muted">
+                  {!on ? 'Nothing is being screened by the machine; every queue waits for a person.'
+                    : beat?.beating
+                      ? `Swept every minute${beat.last_poke_at ? `, last knocked ${timeAgo(beat.last_poke_at)}` : ''}.`
+                      : 'Woken by new work only, because nothing is scheduled to sweep.'}
+                </p>
+              </div>
 
-          <div className="space-y-2">
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <Switch
+                  className="w-44"
+                  on={on}
+                  busy={busy === 'on'}
+                  onChange={(next) => void change('on', { turn_on: next })}
+                  label={on ? 'Running' : 'Stopped'}
+                />
+                <Button
+                  size="sm"
+                  variant="subtle"
+                  icon={faBolt}
+                  loading={busy === 'run'}
+                  disabled={!on}
+                  onClick={() => void runIt()}
+                >
+                  Run it now
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={faStethoscope}
+                  loading={busy === 'check'}
+                  onClick={() => void check()}
+                >
+                  Check it
+                </Button>
+              </div>
+            </div>
+
+            {/* The four numbers that say whether it is keeping up. */}
+            <div className="grid gap-2 sm:grid-cols-4">
+              {[
+                { value: beat?.waiting ?? 0, label: 'waiting for it' },
+                { value: beat?.decided_today ?? 0, label: 'decided in a day' },
+                {
+                  value: beat?.last_decision_at ? timeAgo(beat.last_decision_at) : 'never',
+                  label: 'last decision',
+                },
+                {
+                  value: beat?.oldest_minutes == null ? 'nothing'
+                    : beat.oldest_minutes > 90 ? `${Math.round(beat.oldest_minutes / 60)}h`
+                    : `${beat.oldest_minutes}m`,
+                  label: 'oldest wait',
+                },
+              ].map((one, i) => (
+                <div
+                  key={one.label}
+                  style={{ animationDelay: `${i * 40}ms` }}
+                  className="animate-row-in rounded-xl bg-ink-raised px-3 py-2"
+                >
+                  <p className="font-display text-lg leading-none">{one.value}</p>
+                  <p className="text-xs text-muted">{one.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Whatever is between "on" and "working", said plainly. */}
+            {faults.map((fault) => (
+              <div
+                key={fault.what}
+                className="flex animate-row-in items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3"
+              >
+                <FontAwesomeIcon icon={faHeartPulse} className="mt-0.5 shrink-0 text-amber-300" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-amber-300">{fault.what}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-muted">{fault.fix}</span>
+                </span>
+              </div>
+            ))}
+          </Card>
+
+          {/* ------------------------------------------- when it looks */}
+          <Card className="space-y-3 p-4">
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
-              When it works
+              When it looks at things
             </p>
             <Choices
               size="sm"
@@ -2051,30 +2476,27 @@ export function MachineSection() {
                 { value: 'busy', label: 'Only when the queue is long' },
               ]}
             />
-
-            {settings.data?.mode === 'always' && (
-              <p className="text-xs text-muted">
-                The database wakes it as each thing lands, so it answers at once rather than
-                on the quarter hour.
-              </p>
-            )}
-            {settings.data?.mode === 'slow' && (
-              <p className="text-xs text-muted">
-                Anything waiting more than{' '}
+            <p className="text-xs leading-relaxed text-muted">
+              {settings.data?.mode === 'always' && (
+                <>The database wakes it as each thing lands, and the sweep comes back every
+                minute for anything a knock missed.</>
+              )}
+              {settings.data?.mode === 'slow' && (
+                <>Anything waiting more than{' '}
                 <span className="font-bold text-white">{settings.data.after_minutes} minutes</span>.
-                It is never woken early; waiting is the point of this one.
-              </p>
-            )}
-            {settings.data?.mode === 'busy' && (
-              <p className="text-xs text-muted">
-                Only once more than{' '}
-                <span className="font-bold text-white">{settings.data.when_over}</span> things are waiting,
-                and it is woken as soon as the queue gets there.
-              </p>
-            )}
-          </div>
+                It is never woken early; the sweep is the only thing that comes back for it,
+                which is the whole point of this one.</>
+              )}
+              {settings.data?.mode === 'busy' && (
+                <>Only once more than{' '}
+                <span className="font-bold text-white">{settings.data.when_over}</span> things are
+                waiting, and it is woken as soon as the queue gets there.</>
+              )}
+            </p>
+          </Card>
 
-          <div className="space-y-2">
+          {/* ------------------------------------ what it may do to people */}
+          <Card className="space-y-3 p-4">
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
               What it may do to people
             </p>
@@ -2099,19 +2521,23 @@ export function MachineSection() {
                 note="There is no door for this, here or in the database."
               />
             </div>
-          </div>
+            <p className="text-[11px] leading-relaxed text-muted">
+              Kobby answers approved, rejected or unsure, and unsure leaves the thing for a
+              person. It never touches staff, and a sanction against somebody nobody reported
+              is refused to it by name.
+            </p>
+          </Card>
 
-          <div className="space-y-2">
+          {/* ------------------------------------------------ the models */}
+          <Card className="space-y-3 p-4">
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
               Which models it uses
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {/*
-                * Whatever is set is always an option, even when Groq no
-                * longer lists it. Otherwise the Select shows something else
-                * as the current value and the first save changes a setting
-                * nobody meant to change.
-                */}
+              {/* Whatever is set is always an option, even when Groq no
+                  longer lists it. Otherwise the Select shows something else
+                  as the current value and the first save changes a setting
+                  nobody meant to change. */}
               <Select
                 label="Reading"
                 value={settings.data?.model ?? ''}
@@ -2132,7 +2558,7 @@ export function MachineSection() {
                 ]}
               />
             </div>
-            <p className="text-[11px] text-muted">
+            <p className="text-[11px] leading-relaxed text-muted">
               {modelTrouble
                 ? `Groq's list could not be fetched, so only what is already set is offered. ${modelTrouble}`
                 : models.length
@@ -2141,8 +2567,8 @@ export function MachineSection() {
               {' '}The key lives in Supabase as <code>GROQ_API_KEY</code> and
               never reaches a browser.
             </p>
-          </div>
-        </Card>
+          </Card>
+        </>
       )}
 
       {!!checked?.length && (
@@ -2150,8 +2576,12 @@ export function MachineSection() {
           <p className="font-display text-[10px] uppercase tracking-wider text-muted">
             Why it has or has not run
           </p>
-          {checked.map((one) => (
-            <div key={one.step} className="flex items-start gap-3 text-sm">
+          {checked.map((one, i) => (
+            <div
+              key={one.step}
+              style={{ animationDelay: `${i * 40}ms` }}
+              className="flex animate-row-in items-start gap-3 text-sm"
+            >
               <FontAwesomeIcon
                 icon={one.ok ? faCircleCheck : faXmark}
                 className={cn('mt-1 text-xs', one.ok ? 'text-space-bright' : 'text-danger')}
@@ -2168,14 +2598,48 @@ export function MachineSection() {
         </Card>
       )}
 
+      {/* ------------------------------------------------- what is queued */}
+      {!!waiting.data?.length && (
+        <Card className="space-y-2 p-4">
+          <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+            In front of it right now
+          </p>
+          {waiting.data.slice(0, 12).map((one, i) => (
+            <div
+              key={`${one.subject}-${one.name}-${i}`}
+              style={{ animationDelay: `${i * 30}ms` }}
+              className="flex animate-row-in items-baseline gap-3 text-sm"
+            >
+              <Badge tone="neutral">{one.subject}</Badge>
+              <span className="min-w-0 flex-1 truncate text-white/75">{one.name}</span>
+              <span className="shrink-0 text-xs text-muted">
+                {one.waiting_minutes > 90
+                  ? `${Math.round(one.waiting_minutes / 60)}h`
+                  : `${one.waiting_minutes}m`} waiting
+              </span>
+            </div>
+          ))}
+          {waiting.data.length > 12 && (
+            <p className="text-[11px] text-muted">
+              And {formatCount(waiting.data.length - 12)} more.
+            </p>
+          )}
+        </Card>
+      )}
+
+      {/* --------------------------------------------- what it has decided */}
       <div className="space-y-2">
         <p className="font-display text-xs uppercase tracking-wider text-muted">
           What it has been deciding
         </p>
         {recent.loading ? <Skeleton className="h-24" /> : !recent.data?.length ? (
           <p className="text-sm text-muted">Nothing yet.</p>
-        ) : recent.data.map((one) => (
-          <Card key={one.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm">
+        ) : recent.data.map((one, i) => (
+          <Card
+            key={one.id}
+            style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
+            className="flex animate-row-in flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm"
+          >
             <Badge tone={
               one.decision === 'rejected' || one.decision === 'suspended' ? 'danger'
                 : one.decision === 'unsure' ? 'warm' : 'space'
@@ -2197,52 +2661,74 @@ export function MachineSection() {
 /**
  * The rail down the side of the console.
  *
- * It replaced a row of ten one-word tabs that wrapped onto three lines and
- * told nobody what any of them did. Each panel says what it is for and which
- * rank it wants, so somebody opening this for the first time does not have
- * to press all ten to find out, and a moderator is not shown four they
- * cannot use.
+ * Each panel says what it is for and which rank it wants, so somebody
+ * opening this for the first time does not have to press all twelve to find
+ * out, and a moderator is not shown the four they cannot use.
+ *
+ * `counts` is the addition that makes it a working rail rather than a menu:
+ * a queue with eleven things in it says so from here, so nobody has to open
+ * four panels to find the one that needs them. A queue at zero shows no
+ * badge at all - a row of grey noughts is a rail that teaches you to stop
+ * reading it.
  */
-export function ConsoleRail({ rank, value, onChange }: {
+export function ConsoleRail({ rank, value, onChange, counts }: {
   rank: StaffRank
   value: Section
   onChange: (next: Section) => void
+  counts?: Partial<Record<Section, number>>
 }) {
   return (
-    <nav className="space-y-1.5" aria-label="What to work on">
-      {sections.filter((one) => allowed(rank, one.needs)).map((one) => {
+    <nav className="space-y-1" aria-label="What to work on">
+      {sections.filter((one) => allowed(rank, one.needs)).map((one, i) => {
         const on = one.name === value
+        const many = counts?.[one.name] ?? 0
         return (
           <button
             key={one.name}
             type="button"
             aria-current={on ? 'page' : undefined}
             onClick={() => onChange(one.name)}
+            style={{ animationDelay: `${i * 25}ms` }}
             className={cn(
-              'flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left',
+              'group relative flex w-full animate-row-in items-center gap-3 rounded-xl border px-3 py-2.5 text-left',
               'transition-[background-color,border-color,transform] duration-150',
               on
-                ? 'border-brand-bright bg-brand/15'
-                : 'border-ink-line bg-ink-card hover:-translate-y-px hover:bg-ink-hover',
+                ? 'border-brand-bright/60 bg-brand/15'
+                : 'border-transparent hover:translate-x-0.5 hover:bg-ink-hover',
             )}
           >
+            {/* The bar that says where you are. It is on the border rather
+                than inside the padding so the rows keep one left edge. */}
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-bright',
+                'transition-opacity duration-150',
+                on ? 'opacity-100' : 'opacity-0',
+              )}
+            />
             <FontAwesomeIcon
               icon={one.icon}
-              className={cn('mt-0.5 shrink-0', on ? 'text-brand-bright' : 'text-white/40')}
+              className={cn('w-4 shrink-0 text-sm', on ? 'text-brand-bright' : 'text-white/35 group-hover:text-white/70')}
             />
-            <span className="min-w-0">
+            <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2">
-                <span className="font-bold">{one.name}</span>
+                <span className={cn('truncate text-sm font-bold', !on && 'text-white/85')}>{one.name}</span>
                 {one.needs !== 'moderator' && (
-                  <span className="rounded-full border border-ink-line px-1.5 text-[10px] font-extrabold uppercase tracking-wide text-muted">
+                  <span className="rounded border border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted">
                     {one.needs === 'superadmin' ? 'Super' : 'Admin'}
                   </span>
                 )}
               </span>
-              <span className="mt-0.5 block text-xs leading-relaxed text-muted">
-                {one.blurb}
-              </span>
             </span>
+            {many > 0 && (
+              <span className={cn(
+                'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums',
+                many > 10 ? 'bg-danger text-white' : 'bg-brand text-white',
+              )}>
+                {many > 99 ? '99+' : many}
+              </span>
+            )}
           </button>
         )
       })}
@@ -2251,59 +2737,28 @@ export function ConsoleRail({ rank, value, onChange }: {
 }
 
 /**
- * The console as a card over the site, rather than a page you go away to.
+ * The console as a page.
  *
- * Staw asked for it as a popup, and it is the right shape for what this
- * is: nobody opens the staff console as a destination. They are looking at
- * somebody's profile, or at a World, and they need to act on it - and a
- * full page navigation means losing whatever they were looking at and
- * finding their way back to it afterwards. A card over the top closes back
- * onto what was underneath.
+ * It was a card over the site: Staw asked for a popup originally, and
+ * working in it proved the opposite - "i want it to be a page directly
+ * rather than a card". A card is right for one decision and wrong for a
+ * shift. It capped the working area at 92vh on a monitor with room for
+ * twice that, it could not be linked to, a reload lost which panel you were
+ * in, and twelve panels inside a dialog meant two scrollbars fighting over
+ * the same wheel.
  *
- * Not `Dialog`: a dialog caps its body at 70vh and is built around one
- * short question. This is the opposite - it is tall on purpose, it holds
- * twelve panels, and it manages its own scrolling inside the card so the
- * rail stays put while a queue scrolls.
- *
- * Escape closes it. The backdrop does not, which is deliberate: a stray
- * click behind a half-written suspension reason is not a thing to be
- * relaxed about.
+ * So: its own page, its own chrome, the site's header left behind - nothing
+ * on this page wants a Catalog link across the top - and the rail sticky
+ * beside a column that scrolls with the window like a page should.
  */
-export function ConsoleCard({ onClose, children }: {
-  onClose: () => void
-  children: React.ReactNode
-}) {
-  useEffect(() => {
-    const { overflow } = document.body.style
-    document.body.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = overflow
-    }
-  }, [onClose])
-
-  return createPortal(
-    <div className="fixed inset-0 z-[55] flex items-center justify-center p-0 sm:p-6">
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" aria-hidden="true" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Staff console"
-        className="relative flex h-full w-full animate-pop-in flex-col overflow-hidden border-ink-line bg-ink-card shadow-pop sm:h-[min(56rem,92vh)] sm:max-w-6xl sm:rounded-3xl sm:border"
-      >
-        {children}
-      </div>
-    </div>,
-    document.body,
-  )
+function ConsolePage({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-dvh bg-ink">{children}</div>
 }
 
 export default function Admin() {
   const { profile, loading } = useAuth()
   const navigate = useNavigate()
-  const [section, setSection] = useState<Section>('Reports')
+  const { panel } = useParams()
   useTitle('Staff', 'Kobblon')
 
   /*
@@ -2314,16 +2769,11 @@ export default function Admin() {
    * The `??` is the part worth reading twice. A failed call is not a rank,
    * and the first version of this treated it as one: `asked.data ?? 'none'`
    * turned a database that had never been given `my_staff_rank` into a
-   * superadmin standing outside their own console. `ReportTriage` had the
-   * same bug the other way round for weeks - `?? 'moderator'` quietly
-   * promoted a failed call - and that is why nobody noticed the function was
-   * missing until 0205.
-   *
-   * So a refusal and a failure are told apart. An answer is believed,
-   * whatever it says. A failure falls back to the flags the profile already
-   * carries, which is the old behaviour and no worse than it: it decides
-   * which panels are drawn and nothing else, because every function behind
-   * every button checks again and that is the check that counts.
+   * superadmin standing outside their own console. A refusal and a failure
+   * are told apart now. An answer is believed, whatever it says. A failure
+   * falls back to the flags the profile already carries, which decides which
+   * panels are drawn and nothing else, because every function behind every
+   * button checks again and that is the check that counts.
    */
   const asked = useAsync(async () => myStaffRank(), [profile?.id])
 
@@ -2333,36 +2783,51 @@ export default function Admin() {
   const rank: StaffRank = asked.data ?? (asked.error ? fromProfile : 'none')
 
   /*
-   * Where closing the card goes. Back if there is somewhere to go back
-   * to - the console is nearly always opened from a profile or a World
-   * and that is the whole point of it being a card - and home if this
-   * address was typed or opened in a new tab, because there is no "back"
-   * out of a fresh tab and a close button that does nothing is worse than
-   * no close button.
+   * Which panel, from the address.
+   *
+   * `/staff/people` rather than a number in a component's head: a link to a
+   * queue is a thing staff send each other, and a reload that drops you back
+   * on the first panel is the console forgetting what you were doing.
    */
-  const leave = useCallback(() => {
-    if (window.history.length > 1) navigate(-1)
-    else navigate('/')
+  const fromUrl = sections.find(
+    (one) => one.name.toLowerCase() === (panel ?? '').toLowerCase(),
+  )?.name
+  const [section, setSection] = useState<Section>(fromUrl ?? 'Overview')
+  useEffect(() => { if (fromUrl && fromUrl !== section) setSection(fromUrl) }, [fromUrl])
+
+  const go = useCallback((next: Section) => {
+    setSection(next)
+    navigate(`/staff/${next.toLowerCase()}`, { replace: true })
   }, [navigate])
+
+  /* What is waiting, for the badges on the rail. Same call the Overview
+     makes, asked here so every panel's rail carries the numbers. */
+  const counts = useAsync(async () => staffOverview().catch(() => null), [profile?.id])
+  useEffect(() => {
+    const again = window.setInterval(() => counts.reload(), 30_000)
+    return () => window.clearInterval(again)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /* What the command bar asked People to look for, if anything. */
   const [lookFor, setLookFor] = useState<string | undefined>()
 
-  /*
-   * The one page that stays wide. The site's column is the profile's now,
-   * and a table of every account beside a map of the world does not fit in
-   * it - this is a console, which is the case `wide` exists for.
-   */
   if (loading || asked.loading) {
     return (
-      <ConsoleCard onClose={leave}>
-        <div className="p-5"><Skeleton className="h-96" /></div>
-      </ConsoleCard>
+      <ConsolePage>
+        <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6">
+          <Skeleton className="h-16" />
+          <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
+          </div>
+        </div>
+      </ConsolePage>
     )
   }
 
   /*
-   * Sent away rather than shown an empty panel. This is not what keeps
+   * Sent away rather than shown an empty page. This is not what keeps
    * anybody out - the functions do that - it is so a page that would refuse
    * every button is not drawn at all.
    */
@@ -2372,75 +2837,83 @@ export default function Admin() {
   const here = mine.find((one) => one.name === section) ?? mine[0]
   const open = here.name
 
+  const badges: Partial<Record<Section, number>> = {
+    Reports: counts.data?.reports_open ?? 0,
+    Appeals: counts.data?.appeals_open ?? 0,
+    Support: counts.data?.tickets_open ?? 0,
+    Screening: counts.data?.screening ?? 0,
+  }
+
   return (
-    <ConsoleCard onClose={leave}>
-      {/* ------------------------------------------------------- who you are */}
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-ink-line px-5 py-4">
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-white">
-          <FontAwesomeIcon icon={faUserShield} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h1 className="flex flex-wrap items-center gap-2 font-display text-xl">
-            Staff console
-            <span
-              className={cn(
-                'rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
-                rankLook[rank],
-              )}
-            >
-              {rankWord[rank]}
-            </span>
-          </h1>
-          <p className="text-sm text-muted">
-            {mine.length} of {sections.length} panels are yours at this rank.{' '}
-            <span className="whitespace-nowrap">
-              <kbd className="rounded-md border border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold">
-                Ctrl K
-              </kbd>{' '}
-              jumps anywhere.
-            </span>
-            {rank !== 'superadmin' && ' Closing an account, and clearing a behaviour record, are a superadmin’s.'}
-          </p>
+    <ConsolePage>
+      {/* --------------------------------------------------- who you are */}
+      <header className="sticky top-0 z-30 border-b border-ink-line bg-ink/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-white">
+            <FontAwesomeIcon icon={faUserShield} />
+          </span>
+          <div className="min-w-0">
+            <h1 className="flex flex-wrap items-center gap-2 font-display text-lg leading-tight">
+              Staff console
+              <span
+                className={cn(
+                  'rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide',
+                  rankLook[rank],
+                )}
+              >
+                {rankWord[rank]}
+              </span>
+            </h1>
+            <p className="text-xs text-muted">
+              {mine.length} of {sections.length} panels are yours.{' '}
+              <span className="whitespace-nowrap">
+                <kbd className="rounded border border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
+                  Ctrl K
+                </kbd>{' '}
+                jumps anywhere.
+              </span>
+            </p>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Button to="/" size="sm" variant="ghost" icon={faArrowRight}>
+              Back to Kobblon
+            </Button>
+          </div>
+
           {!!asked.error && (
-            <p className="mt-1 text-sm font-semibold text-amber-300">
+            <p className="w-full text-xs font-semibold text-amber-300">
               The database would not say what rank you hold, so this is read off your profile
               instead. Anything only a superadmin may do will refuse until that is fixed.
             </p>
           )}
         </div>
+      </header>
 
-        <button
-          type="button"
-          onClick={leave}
-          aria-label="Close the console"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <FontAwesomeIcon icon={faXmark} />
-        </button>
-      </div>
+      {/* Outside the grid: it is a portal when open and nothing when
+          closed, and a grid is not the place for either. */}
+      <CommandBar
+        panels={mine}
+        onGo={(name) => go(name as Section)}
+        onFindPerson={(term) => { setLookFor(term); go('People') }}
+      />
 
-      {/*
-       * The rail, rather than a row of ten word tabs that wrapped onto three
-       * lines and said nothing about what any of them did. Each panel says
-       * what it is for, so somebody who has never opened this does not have
-       * to press all ten to find out.
-       *
-       * Inside the card the two sides scroll separately: the rail stays
-       * where it is while a queue of eighty tickets goes past, which is the
-       * point of having a rail at all.
-       */}
-      <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-5 py-4 kob-scroll lg:grid-cols-[17rem_minmax(0,1fr)] lg:overflow-hidden">
-        <div className="min-h-0 lg:overflow-y-auto lg:pr-1 kob-scroll">
-          <ConsoleRail rank={rank} value={open} onChange={setSection} />
+      <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        {/*
+          * The rail sticks and the work scrolls. On a phone it is a plain
+          * block above the panel rather than a sticky strip eating a third
+          * of the screen.
+          */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <ConsoleRail rank={rank} value={open} onChange={go} counts={badges} />
+          {rank !== 'superadmin' && (
+            <p className="mt-3 px-3 text-[11px] leading-relaxed text-muted">
+              Closing an account, and clearing a behaviour record, are a superadmin's.
+            </p>
+          )}
         </div>
 
-        <CommandBar
-          panels={mine}
-          onGo={(name) => setSection(name as Section)}
-          onFindPerson={(term) => { setLookFor(term); setSection('People') }}
-        />
-
-        <div className="min-w-0 min-h-0 space-y-4 lg:overflow-y-auto lg:pr-1 kob-scroll">
+        <div className="min-w-0 space-y-4">
           <div className="flex items-center gap-3 border-b border-ink-line pb-3">
             <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />
             <h2 className="font-display text-lg font-extrabold">{here.name}</h2>
@@ -2448,6 +2921,7 @@ export default function Admin() {
           </div>
 
           <RankContext.Provider value={rank}>
+            {open === 'Overview' && <OverviewSection onGo={go} />}
             {open === 'People' && <PeopleSection initial={lookFor} />}
             {open === 'Reports' && <ReportsSection />}
             {open === 'Appeals' && <AppealsQueue />}
@@ -2463,6 +2937,6 @@ export default function Admin() {
           </RankContext.Provider>
         </div>
       </div>
-    </ConsoleCard>
+    </ConsolePage>
   )
 }

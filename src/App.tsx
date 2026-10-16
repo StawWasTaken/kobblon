@@ -193,6 +193,9 @@ export default function App() {
                   {/* The page sends anybody who is not staff away, and
                       every function it calls refuses them again. */}
                   <Route path="/staff" element={<Admin />} />
+                  {/* A panel is an address, so a queue can be linked to and
+                      a reload does not drop you back on the first one. */}
+                  <Route path="/staff/:panel" element={<Admin />} />
                   <Route path="/standing" element={<Standing />} />
                   <Route path="/standing/:id" element={<StandingItem />} />
                   <Route path="/inbox" element={<Inbox />} />
