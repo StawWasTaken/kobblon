@@ -129,9 +129,16 @@ Object.assign(window, {
    *
    * three.js multiplies `map` by `color`, so a shirt on a torso painted navy
    * came out navy-times-shirt - the body colour tinting the clothing, which
-   * Staw found by looking at it. The check is the sequence rather than one
-   * state, because the colour and the map change for different reasons and
-   * the bug lives in the case where only one of them changed.
+   * Staw found by looking at it. The first answer to that was to paint the
+   * part white under any picture, and it bought the other bug: a shirt with
+   * a clear patch in it showed white, because white is what the part was.
+   *
+   * So the part keeps its colour now and the shader lays the picture over
+   * it by the picture's own alpha. The check is the sequence rather than
+   * one state, because the colour and the map change for different reasons
+   * and the bug lives in the case where only one of them changed - and it
+   * reports whether the material is actually patched, since a part that
+   * kept its colour and did *not* get the patch is the navy shirt again.
    */
   async skinUnderClothes() {
     const { K6, loadK6Source } = await import('@/engine/k6')
@@ -151,8 +158,33 @@ Object.assign(window, {
     body.dress('shirt', new THREE.Texture())
     body.paint({ Torso: '#ff0033' })
     const afterRepaint = hex()
+    /*
+     * Whether the material will actually compile the patched programme, and
+     * asked **after** a repaint on purpose: `paint` clones the material, and
+     * a clone does not carry `onBeforeCompile`. A flag would have copied and
+     * said yes about a material that had quietly gone back to multiplying.
+     */
+    const material = body.parts.get('Torso')!.material as THREE.MeshStandardMaterial
+    const patched = Object.prototype.hasOwnProperty.call(material, 'onBeforeCompile')
 
-    return { painted, dressed, bare, afterRepaint }
+    /* Trousers under a shirt: the torso wears both, and a clear patch in the
+       shirt should show the trousers rather than the skin. */
+    body.dress('trousers', new THREE.Texture())
+    const twoLayers = (() => {
+      const shader = { uniforms: {} as Record<string, unknown>, fragmentShader: '#include <map_fragment>' }
+      const now = body.parts.get('Torso')!.material as THREE.MeshStandardMaterial
+      now.onBeforeCompile(shader as never, null as never)
+      return {
+        hasUnder: !!shader.uniforms.underMap,
+        underIsTrousers: (shader.uniforms.underMap as { value: unknown } | undefined)?.value
+          === body.wearingClothes().get('trousers'),
+        mixes: shader.fragmentShader.includes('underColour')
+          && shader.fragmentShader.includes('wornColour'),
+      }
+    })()
+
+    body.dispose()
+    return { painted, dressed, bare, afterRepaint, patched, twoLayers }
   },
   /**
    * Where a template lands on the body.

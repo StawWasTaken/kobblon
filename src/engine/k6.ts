@@ -313,6 +313,9 @@ export class K6 {
   private decal: THREE.Mesh | null = null
   /** Which parts have been given template coordinates, so it is done once. */
   private wrapped = new Set<string>()
+  /* Which materials have the clothing patch, and the layer under each part. */
+  private mixed = new WeakSet<THREE.Material>()
+  private under = new Map<string, { value: THREE.Texture | null }>()
   private clothes = new Map<Clothing, THREE.Texture>()
   /** The colour each part was painted, under whatever it is wearing. */
   private skin = new Map<K6Part, string>()
@@ -533,8 +536,8 @@ export class K6 {
       if (!mesh) continue
       const material = (mesh.material as THREE.MeshStandardMaterial).clone()
       mesh.material = material
-      // Remembered, because a part wearing clothing is drawn white and has
-      // to get its colour back when the clothing comes off.
+      // Remembered, because the clothing shader lays a picture over this
+      // colour: a clear pixel in a shirt shows the skin underneath.
       this.skin.set(name, colour)
     }
     this.redress()
@@ -652,6 +655,62 @@ export class K6 {
   }
 
   /*
+   * Teaches one part's material to lay a picture over a colour instead of
+   * multiplying the two.
+   *
+   * Done once per material and remembered on the material itself, because
+   * `paint` clones it: a flag kept on this object would say "patched" about
+   * a material that has since been replaced, which is the trap this project
+   * keeps falling into - a value captured before the thing that decides it
+   * exists.
+   */
+  private mixClothing(
+    part: string, material: THREE.MeshStandardMaterial, under: THREE.Texture | null,
+  ) {
+    /*
+     * The layer below, as a uniform the compiled programme holds on to.
+     *
+     * Kept here, keyed by part, and deliberately **not** on the material:
+     * `paint` clones the material, and three's clone deep-copies `userData`
+     * through JSON - which would either lose the link to the uniform or try
+     * to serialise a texture, depending on which day you found it.
+     *
+     * The same clone is why being patched is remembered in a WeakSet of
+     * materials rather than as a flag. A flag copies; the patch does not,
+     * because `onBeforeCompile` is an own property and `copy` leaves it
+     * behind. A material that says it is patched and is not is the
+     * navy-times-shirt bug back, with a note in the code saying it cannot
+     * be.
+     */
+    let below = this.under.get(part)
+    if (!below) {
+      below = { value: null as THREE.Texture | null }
+      this.under.set(part, below)
+    }
+    below.value = under
+
+    if (this.mixed.has(material)) return
+    this.mixed.add(material)
+    const holder = below
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.underMap = holder
+      shader.fragmentShader = `uniform sampler2D underMap;\n${shader.fragmentShader}`.replace(
+        '#include <map_fragment>',
+        `#ifdef USE_MAP
+          vec4 underColour = texture2D( underMap, vMapUv );
+          diffuseColor.rgb = mix( diffuseColor.rgb, underColour.rgb, underColour.a );
+          vec4 wornColour = texture2D( map, vMapUv );
+          diffuseColor.rgb = mix( diffuseColor.rgb, wornColour.rgb, wornColour.a );
+        #endif`,
+      )
+    }
+    /* Every patched material compiles the same programme; saying so keeps
+       three from building one per part. */
+    material.customProgramCacheKey = () => 'kob-worn'
+    material.needsUpdate = true
+  }
+
+  /*
    * Draws the layers that are on, in order.
    *
    * One material per part with one map is all three.js gives for free, so a
@@ -667,34 +726,42 @@ export class K6 {
         .filter((kind) => this.clothes.has(kind)
           && (COVERS[kind] as readonly string[]).includes(name))
       const top = over[over.length - 1]
+      const beneath = over.length > 1 ? over[over.length - 2] : undefined
       const material = mesh.material as THREE.MeshStandardMaterial
       const picture = top ? this.clothes.get(top) ?? null : null
+      const under = beneath ? this.clothes.get(beneath) ?? null : null
 
       if (material.map !== picture) {
         material.map = picture
-        if (picture) {
-          picture.channel = 1
-          picture.colorSpace = THREE.SRGBColorSpace
-          picture.needsUpdate = true
-        }
         material.needsUpdate = true
+      }
+      for (const cloth of [picture, under]) {
+        if (!cloth || cloth.channel === 1) continue
+        cloth.channel = 1
+        cloth.colorSpace = THREE.SRGBColorSpace
+        cloth.needsUpdate = true
       }
 
       /*
-       * White under a picture, and the painted colour under nothing.
+       * The skin stays under the clothes, and the clothes are not tinted by
+       * it.
        *
-       * three.js multiplies `map` by `color`, so a shirt on a torso painted
-       * navy came out navy-times-shirt - Staw: the body colour modifies the
-       * clothes and it should not. Skin is a colour; clothing is a picture;
-       * a picture tinted by what is underneath it is not the picture
-       * somebody drew.
+       * Both of those at once, which is why this is a shader patch rather
+       * than a colour. three.js multiplies `map` by `color`, so a shirt on
+       * a navy torso came out navy-times-shirt; the fix for that was to
+       * paint the part white under any picture, and the cost of it was the
+       * whole of the other bug - Staw: shirts and trousers with transparent
+       * parts render white. They were rendering the part, which was white,
+       * exactly as asked.
        *
-       * Set every time rather than only on a change of map, because the
-       * colour and the map change for different reasons - painting a part
-       * does not change what it wears, and that is exactly the case where
-       * the old colour would survive underneath.
+       * `mix` by the picture's own alpha answers both: an opaque pixel is
+       * the picture untouched by the colour underneath, a clear one is the
+       * skin, and a half-clear one is a half-clear garment over skin, which
+       * is what somebody drawing at 50% opacity meant. No second mesh and
+       * no second pass - twenty avatars in a World cost the same as before.
        */
-      const want = picture ? '#ffffff' : (this.skin.get(name) ?? null)
+      this.mixClothing(name, material, under)
+      const want = this.skin.get(name) ?? null
       if (want && material.color.getHexString() !== want.replace('#', '')) {
         material.color.set(want)
         material.needsUpdate = true

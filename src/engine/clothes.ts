@@ -88,13 +88,24 @@ export const COVERS = {
 export type Clothing = keyof typeof COVERS
 
 /**
- * How many pixels one ston of body is worth on a template.
+ * The grid the sheet is drawn on, in pixels.
  *
- * Big enough that a drawn seam is a few pixels rather than one, small enough
- * that a template is an image somebody can open. 48 puts the front of a
- * torso at 142 by 188, which is about what a person expects to be given.
+ * A body part a ston deep is one cell; two stons is two. The body happens to
+ * come in whole cells at 64 to the half-ston, which is what makes a fixed
+ * grid possible at all and is not a coincidence - K6's proportions were
+ * chosen to be the familiar ones.
  */
-export const PIXELS_PER_STON = 48
+export const CELL = 64
+
+/**
+ * Still exported under its old name, because the Workspace reads it.
+ *
+ * It was the scale the first sheet was laid out at - every region worked out
+ * from the part's real size in stons. The sheet is a fixed grid now, so this
+ * is the conversion that grid happens to use rather than the thing the
+ * layout is built from.
+ */
+export const PIXELS_PER_STON = CELL / 1.8
 
 /** A rectangle on the template, in pixels, top-left origin. */
 export type Region = { x: number; y: number; w: number; h: number }
@@ -109,44 +120,86 @@ export type Template = {
 
 const key = (part: BodyPart, side: Side) => `${part}.${side}`
 
+/** The sheet, which is one size whatever is being made. */
+export const SHEET = { width: 585, height: 559 }
+
 /**
  * Where everything sits on a template.
  *
- * Each part gets a strip: the four sides in a row, left to right, with the
- * top and bottom stacked above and below the front. It is the shape a person
- * recognises as "a thing unfolded", and it keeps the front - the only face
- * most people draw - in the middle where it is easy to find.
+ * **The layout everybody already has.** Staw, holding up a shirt sheet from
+ * somewhere else: "if i upload this to kobblon then it will work and become
+ * a proper shirt". That is the requirement and it is the right one - the
+ * people who will make clothes for Kobblon have been making them for years
+ * and have the files to prove it. A layout of our own would be correct,
+ * original, and would throw all of that away on the first day.
+ *
+ * So these are the numbers that sheet actually uses, measured off one
+ * rather than invented: 585 by 559, a 64 pixel grid, the torso unfolded
+ * across the top and the two limbs unfolded side by side underneath it. A
+ * torso panel is 128 wide and 128 tall with 64 wide sides; a limb panel is
+ * 64 by 128.
+ *
+ * Two details are easy to get wrong and both show up as a sleeve on back to
+ * front. **The limbs are mirrored**: the lid and floor of the left one sit
+ * over its fourth panel and the right one's over its first, so the two
+ * inner faces meet in the middle of the sheet. And **the order across is
+ * not the same for the two of them** either, for the same reason.
+ *
+ * It fits K6 because K6 is the familiar shape: a torso two wide, two tall
+ * and one deep, and limbs one by two by one.
+ *
+ * This replaces the layout the first Kobblon templates were drawn against.
+ * Anything uploaded before today was painted into a sheet that no longer
+ * exists and will be laid on the body by this one; on a platform this age
+ * that is a handful of items, and it is worth saying rather than working
+ * around.
  */
+
+/** The torso's six panels, which are the same on a shirt and on trousers. */
+const TORSO_PANELS: Record<Side, Region> = {
+  top: { x: 231, y: 10, w: 128, h: 64 },
+  left: { x: 167, y: 74, w: 64, h: 128 },
+  front: { x: 231, y: 74, w: 128, h: 128 },
+  right: { x: 359, y: 74, w: 64, h: 128 },
+  back: { x: 423, y: 74, w: 128, h: 128 },
+  bottom: { x: 231, y: 202, w: 128, h: 64 },
+}
+
+/*
+ * A limb's four faces, in the order they lie across its block, and which of
+ * those four the lid and floor sit over. The avatar's left limb and its
+ * right one are mirror images of each other on the sheet.
+ */
+const LIMBS = [
+  { at: 16, across: ['back', 'left', 'front', 'right'] as Side[], flapAt: 3 },
+  { at: 313, across: ['left', 'front', 'right', 'back'] as Side[], flapAt: 0 },
+]
+
+const LIMB_ROW = 346
+const LIMB_LID = 282
+const LIMB_FLOOR = 474
+
 export function templateFor(kind: Clothing): Template {
   const regions: Record<string, Region> = {}
-  const pad = 8
-  let y = pad
-  let widest = 0
+  const [body, ...limbs] = COVERS[kind]
 
-  for (const part of COVERS[kind]) {
-    const { w, h, d } = BODY[part]
-    const across = Math.round(w * PIXELS_PER_STON)
-    const deep = Math.round(d * PIXELS_PER_STON)
-    const tall = Math.round(h * PIXELS_PER_STON)
-
-    // The row of four, and the lid and floor above and below the front.
-    const row = y + deep
-    let x = pad
-    for (const side of ['left', 'front', 'right', 'back'] as const) {
-      const wide = side === 'left' || side === 'right' ? deep : across
-      regions[key(part, side)] = { x, y: row, w: wide, h: tall }
-      if (side === 'front') {
-        regions[key(part, 'top')] = { x, y, w: across, h: deep }
-        regions[key(part, 'bottom')] = { x, y: row + tall, w: across, h: deep }
-      }
-      x += wide
-    }
-
-    widest = Math.max(widest, x + pad)
-    y = row + tall + deep + pad
+  for (const side of SIDES) {
+    regions[key(body as BodyPart, side)] = { ...TORSO_PANELS[side] }
   }
 
-  return { kind, width: widest, height: y, regions }
+  limbs.forEach((part, nth) => {
+    const { at, across, flapAt } = LIMBS[nth]
+    across.forEach((side, column) => {
+      const x = at + column * CELL
+      regions[key(part as BodyPart, side)] = { x, y: LIMB_ROW, w: CELL, h: CELL * 2 }
+      if (column === flapAt) {
+        regions[key(part as BodyPart, 'top')] = { x, y: LIMB_LID, w: CELL, h: CELL }
+        regions[key(part as BodyPart, 'bottom')] = { x, y: LIMB_FLOOR, w: CELL, h: CELL }
+      }
+    })
+  })
+
+  return { kind, width: SHEET.width, height: SHEET.height, regions }
 }
 
 /**
@@ -245,6 +298,21 @@ export function wrapToTemplate(
  * layout the body does not actually use. Every region is outlined and named,
  * because an unlabelled template is a puzzle: somebody draws a sleeve, puts
  * it on, and finds it on the back of the other arm.
+ *
+ * Staw asked for it to be "a bit more like roblox but without copying them,
+ * and also make it aesthetic". What that means in practice is three things
+ * their sheet gets right and the first version here did not: the front of
+ * each part reads as the front at a glance, every panel says which way is
+ * up, and the whole sheet is one picture rather than a scatter of boxes.
+ *
+ * So each part is a strip with its name down the side, the front panel is
+ * the only one filled in the brand colour, the seams between panels are
+ * drawn as hairlines rather than full boxes, and there is a centre line and
+ * a corner tick on each panel - which is the thing you actually need when
+ * lining a pocket up with the one on the other side.
+ *
+ * Everything drawn here ends up in the texture if the creator does not paint
+ * over it, so it is all kept faint on purpose. Guides, not decoration.
  */
 export function drawTemplate(sheet: Template, canvas: HTMLCanvasElement) {
   canvas.width = sheet.width
@@ -253,20 +321,116 @@ export function drawTemplate(sheet: Template, canvas: HTMLCanvasElement) {
   if (!brush) return canvas
 
   brush.clearRect(0, 0, sheet.width, sheet.height)
-  brush.font = '11px system-ui, sans-serif'
   brush.textBaseline = 'top'
+
+  /*
+   * Grouped back into parts, because the sheet is laid out as one strip per
+   * part and the drawing wants to say so - a name down the side of a strip
+   * and a box around it, neither of which a loop over loose regions can do.
+   */
+  const strips = new Map<string, Region[]>()
+  for (const [name, region] of Object.entries(sheet.regions)) {
+    const part = name.split('.')[0]
+    const had = strips.get(part)
+    if (had) had.push(region)
+    else strips.set(part, [region])
+  }
+
+  for (const [part, regions] of strips) {
+    const left = Math.min(...regions.map((one) => one.x))
+    const right = Math.max(...regions.map((one) => one.x + one.w))
+    const top = Math.min(...regions.map((one) => one.y))
+    const bottom = Math.max(...regions.map((one) => one.y + one.h))
+
+    // The strip's own ground, so a part reads as one object unfolded.
+    brush.fillStyle = 'rgba(255,255,255,0.035)'
+    brush.fillRect(left, top, right - left, bottom - top)
+
+    /*
+     * The part's name, large and faint, in the band the lid leaves empty -
+     * on whichever side of the strip the lid is not. The limbs are mirrored,
+     * so a fixed corner puts the name inside a sleeve on one of them.
+     */
+    const lid = sheet.regions[`${part}.top`]
+    const lidLeftOfMiddle = lid
+      ? lid.x + lid.w / 2 < (left + right) / 2
+      : true
+    brush.save()
+    brush.fillStyle = 'rgba(27,52,232,0.12)'
+    brush.font = '700 22px system-ui, sans-serif'
+    brush.textAlign = lidLeftOfMiddle ? 'right' : 'left'
+    brush.textBaseline = 'bottom'
+    brush.fillText(
+      part.toUpperCase(),
+      lidLeftOfMiddle ? right - 4 : left + 4,
+      (lid ? lid.y + lid.h : top + 34) - 6,
+    )
+    brush.restore()
+    brush.textBaseline = 'top'
+  }
 
   for (const [name, region] of Object.entries(sheet.regions)) {
     const [part, side] = name.split('.')
-    brush.fillStyle = side === 'front' ? 'rgba(27,52,232,0.10)' : 'rgba(255,255,255,0.05)'
+    const front = side === 'front'
+
+    brush.fillStyle = front ? 'rgba(27,52,232,0.12)' : 'rgba(255,255,255,0.045)'
     brush.fillRect(region.x, region.y, region.w, region.h)
-    brush.strokeStyle = 'rgba(27,52,232,0.55)'
+
+    // The seam. A hairline, in the brand colour on the front and grey
+    // elsewhere, so the panel somebody is looking for is the lit one.
+    brush.strokeStyle = front ? 'rgba(27,52,232,0.55)' : 'rgba(140,150,180,0.35)'
     brush.lineWidth = 1
     brush.strokeRect(region.x + 0.5, region.y + 0.5, region.w - 1, region.h - 1)
-    brush.fillStyle = 'rgba(20,24,40,0.75)'
-    brush.fillText(side, region.x + 4, region.y + 4)
-    if (side === 'front') brush.fillText(part, region.x + 4, region.y + 18)
+
+    /*
+     * The centre line, dashed, down every panel. This is the guide that
+     * does real work: a logo on the chest and a stripe down a sleeve are
+     * both "find the middle", and counting pixels on a template is how
+     * everybody's first shirt ends up a little to the left.
+     */
+    const middle = Math.round(region.x + region.w / 2) + 0.5
+    brush.save()
+    brush.setLineDash([3, 5])
+    brush.strokeStyle = front ? 'rgba(27,52,232,0.30)' : 'rgba(140,150,180,0.18)'
+    brush.beginPath()
+    brush.moveTo(middle, region.y + 3)
+    brush.lineTo(middle, region.y + region.h - 3)
+    brush.stroke()
+    brush.restore()
+
+    /*
+     * A tick in the top two corners: which end is up, without a word for
+     * it. A panel upside down is the mistake that survives being looked at,
+     * because a sleeve is nearly symmetrical and a stripe does not care.
+     */
+    brush.strokeStyle = front ? 'rgba(27,52,232,0.5)' : 'rgba(140,150,180,0.3)'
+    brush.beginPath()
+    brush.moveTo(region.x + 0.5, region.y + 7.5)
+    brush.lineTo(region.x + 0.5, region.y + 0.5)
+    brush.lineTo(region.x + 7.5, region.y + 0.5)
+    brush.moveTo(region.x + region.w - 7.5, region.y + 0.5)
+    brush.lineTo(region.x + region.w - 0.5, region.y + 0.5)
+    brush.lineTo(region.x + region.w - 0.5, region.y + 7.5)
+    brush.stroke()
+
+    brush.font = `${front ? 700 : 500} 10px system-ui, sans-serif`
+    brush.fillStyle = front ? 'rgba(27,52,232,0.85)' : 'rgba(120,130,160,0.8)'
+    brush.fillText(side.toUpperCase(), region.x + 4, region.y + 4)
+    if (front) {
+      brush.fillStyle = 'rgba(27,52,232,0.6)'
+      brush.font = '500 10px system-ui, sans-serif'
+      brush.fillText(part, region.x + 4, region.y + 17)
+    }
   }
+
+  /*
+   * The sheet's own label, in the gap at the top left where no region sits.
+   * A downloaded file that says what it is and how big it is saves the one
+   * question everybody asks after resizing it by accident.
+   */
+  brush.font = '700 10px system-ui, sans-serif'
+  brush.fillStyle = 'rgba(27,52,232,0.45)'
+  brush.fillText(`KOBBLON ${sheet.kind.toUpperCase()} ${sheet.width}x${sheet.height}`, 2, 1)
 
   return canvas
 }

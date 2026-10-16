@@ -1814,12 +1814,29 @@ const skinned = await p.evaluate(() => window.skinUnderClothes())
 
 check('a painted part keeps its colour while it is bare',
   skinned.painted === '1b34e8', skinned.painted)
-check('and is drawn white under clothing, so the clothing is its own colour',
-  skinned.dressed === 'ffffff', skinned.dressed)
-check('and gets its colour back when the clothing comes off',
+/*
+ * These three said white, and they were corrected on purpose rather than
+ * quietly: painting the part white under a picture is what made a shirt with
+ * a clear patch in it render white. The part keeps its colour now and the
+ * shader mixes the picture over it by alpha, so the thing to check is that
+ * the colour survived *and* that the patch is on - a part that kept its
+ * colour without the patch is the navy-times-shirt bug coming back.
+ */
+check('and keeps it under clothing, so a clear patch shows skin',
+  skinned.dressed === '1b34e8', skinned.dressed)
+check('and the material lays the picture over that colour rather than multiplying it',
+  skinned.patched === true, String(skinned.patched))
+check('and it still does after being repainted, which clones the material',
+  skinned.patched === true, 'asked after the repaint')
+check('a shirt over trousers knows what is underneath it',
+  skinned.twoLayers.hasUnder === true && skinned.twoLayers.underIsTrousers === true,
+  `under: ${skinned.twoLayers.hasUnder}, and it is the trousers: ${skinned.twoLayers.underIsTrousers}`)
+check('and draws both, so a clear patch in a shirt shows the trousers',
+  skinned.twoLayers.mixes === true, String(skinned.twoLayers.mixes))
+check('and still has it when the clothing comes off',
   skinned.bare === '1b34e8', skinned.bare)
-check('painting while dressed does not tint the clothing either',
-  skinned.afterRepaint === 'ffffff', skinned.afterRepaint)
+check('painting while dressed changes the skin under the clothing',
+  skinned.afterRepaint === 'ff0033', skinned.afterRepaint)
 
 // -- several accessories on one socket, which Staw asked for
 const stacked = await p.evaluate(() => window.twoOnOneSocket(30))
