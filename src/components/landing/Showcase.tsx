@@ -20,6 +20,7 @@ import { SignupForm } from '@/components/auth/SignupForm'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { asset } from '@/lib/asset'
+import { cn } from '@/lib/cn'
 
 /** The World in the picture, and who made it. */
 const SHOWING = {
@@ -66,28 +67,44 @@ export function Showcase() {
       <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-12 lg:grid-cols-[1fr_390px] lg:py-16">
         <div className="max-w-xl self-center">
           {/*
-            * The wordmark and one line under it, the way Roblox put "The
+            * The logomark and the slogan under it, the way Roblox put "The
             * Game Powered by Players." under theirs.
             *
-            * The two share a width so the strip ends exactly where the
-            * wordmark does, and it is pulled up into the wordmark's own
-            * transparent edge so the two read as one mark rather than as a
-            * picture with a caption below it.
+            * Staw asked for the logomark here rather than the wordmark. The
+            * word is already in the tab title, the top bar and the address,
+            * and three of it on one screen is a page that introduces itself
+            * three times; the mark alone is the thing people learn to
+            * recognise, and it is the one that scales down to a phone
+            * without becoming a thin blue smear.
             *
-            * The strip is there so the sentence is legible over sky or over
-            * a building without darkening the whole picture to suit it.
-            *
-            * The logo gets a higher stacking order than the strip so the
-            * glow/bottom edge of the letters sits above it rather than
-            * being covered by it where the two overlap.
+            * The slogan is set rather than typed: the display face with the
+            * mark's own blue outline, so the two read as one piece of
+            * artwork rather than a logo with a caption under it. Drawn in
+            * CSS rather than shipped as a picture, because a picture of a
+            * sentence cannot be read out, searched for or translated, and
+            * this is the first sentence on the site.
             */}
           <div className="w-full max-w-[400px]">
             <img
-              src={asset('/brand/wordmark2.png')}
+              src={asset('/brand/logomark.png')}
               alt="Kobblon"
-              className="relative z-10 block w-full select-none"
+              className="relative z-10 block h-20 w-auto select-none drop-shadow-[0_4px_16px_rgba(0,0,0,0.55)] sm:h-24"
             />
-            <p className="relative z-0 -mt-2.5 bg-ink/75 px-3 py-2 text-center font-display text-base text-white backdrop-blur-sm sm:text-lg">
+            <p
+              className={cn(
+                'relative z-0 mt-4 font-display text-2xl uppercase leading-tight',
+                'tracking-tight text-white sm:text-3xl',
+              )}
+              style={{
+                // The outline the mark itself is drawn with, so the sentence
+                // belongs to it. Painted under the letters, not over them.
+                WebkitTextStrokeWidth: '5px',
+                // Brand blue, which is a fixed hex in the preset rather than
+                // a CSS variable, so it is written here as the preset has it.
+                WebkitTextStrokeColor: '#1B34E8',
+                paintOrder: 'stroke fill',
+              }}
+            >
               The game built by players.
             </p>
           </div>
