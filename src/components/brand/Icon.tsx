@@ -59,6 +59,30 @@ export function iconUrl(name: KobIcon) {
   return asset(`/icons/${name.startsWith('workspace/') ? name : `ui/${name}`}.png`)
 }
 
+/**
+ * The bits of a face that are not the face's colour.
+ *
+ * Staw: red in the eyes of the heart-eyes one, a pink tongue on the winky
+ * one. Both are a problem at first glance, because these icons are one
+ * silhouette and a mask takes one colour - the hearts are holes in the
+ * face and the tongue is an island inside the mouth, neither is a shape
+ * that can be addressed.
+ *
+ * So they were cut out of the originals into masks of their own, by what
+ * they actually are in the picture: the hearts are the two enclosed holes
+ * at eye height, the tongue is the one white island that is not joined to
+ * the rest. Found rather than traced, which is why they line up exactly -
+ * nothing was drawn twice.
+ *
+ * They are painted on top, and only when the face is being painted its own
+ * colour. An unpressed face takes the colour of the sentence around it and
+ * a red eye in a grey face is one detail shouting in a quiet row.
+ */
+const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
+  'reaction-heart-eyes': [{ part: 'reaction-heart-eyes-eyes', colour: '#DF1F2D' }],
+  'reaction-winky-grin': [{ part: 'reaction-winky-grin-tongue', colour: '#FF6F9C' }],
+}
+
 export function Icon({
   name, label, title, tone, style, className,
 }: {
@@ -111,7 +135,9 @@ export function Icon({
    * the shape exactly and takes any colour the design system has.
    */
   if (paint) {
-    return (
+    const details = paint === 'currentColor' ? undefined : DETAILS[name as UiIcon]
+
+    const face = (
       <span
         role={label ? 'img' : undefined}
         aria-label={label}
@@ -131,6 +157,59 @@ export function Icon({
           WebkitMaskPosition: 'center',
         }}
       />
+    )
+
+    if (!details) return face
+
+    return (
+      <span
+        className={cn('relative inline-block h-[1em] w-[1em] align-[-0.125em]', className)}
+        role={label ? 'img' : undefined}
+        aria-label={label}
+        aria-hidden={label ? undefined : true}
+        title={title}
+        style={style}
+      >
+        {/*
+          * The face itself, stretched to the wrapper rather than sized by
+          * the class the caller passed - that class is on the wrapper now,
+          * and sizing both would be the icon drawn at its own size inside
+          * a box of the asked-for one.
+          */}
+        <span
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            backgroundColor: paint,
+            maskImage: `url(${url})`,
+            WebkitMaskImage: `url(${url})`,
+            maskSize: 'contain',
+            WebkitMaskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            WebkitMaskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            WebkitMaskPosition: 'center',
+          }}
+        />
+        {details.map((one) => (
+          <span
+            key={one.part}
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              backgroundColor: one.colour,
+              maskImage: `url(${asset(`/icons/ui/${one.part}.png`)})`,
+              WebkitMaskImage: `url(${asset(`/icons/ui/${one.part}.png`)})`,
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              WebkitMaskPosition: 'center',
+            }}
+          />
+        ))}
+      </span>
     )
   }
 

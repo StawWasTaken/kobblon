@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Glyph } from '@/components/brand/Glyph'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import { Icon } from '@/components/brand/Icon'
+import { Reactions } from '@/components/social/Reactions'
 import { FACES } from '@/lib/api'
 import { Card } from '@/components/ui/Card'
 import { Price } from '@/components/brand/Currency'
@@ -29,30 +30,11 @@ createRoot(document.getElementById('root')!).render(
         about it instead.
       </p>
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {ON.map(([face, n, mine]) => (
-            <button
-              key={face}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-2.5 text-sm font-bold',
-                mine
-                  ? 'border-brand bg-brand/15 text-white'
-                  : 'border-ink-line bg-ink-raised text-white/70',
-              )}
-            >
-              <Icon
-                name={`reaction-${face}`}
-                tone={mine ? COLOUR[face] : undefined}
-                className="h-5 w-5"
-              />
-              {n}
-            </button>
-          ))}
-          <button className="inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1 pl-1.5 pr-2 text-white/60">
-            <Icon name="reaction-smile" tone={YELLOW} className="h-5 w-5" />
-            <Glyph icon={faPlus} className="text-[10px]" />
-          </button>
-        </div>
+        <Reactions
+          what="post"
+          which="preview"
+          counts={ON.map(([face, how_many, mine]) => ({ face, how_many, mine })) as never}
+        />
         <p className="text-xs text-muted">2 hours ago</p>
       </div>
     </Card>
@@ -66,11 +48,11 @@ createRoot(document.getElementById('root')!).render(
           <button
             key={face}
             className={cn(
-              'grid h-11 w-11 place-items-center rounded-xl transition-transform hover:scale-110',
+              'grid h-14 w-14 place-items-center rounded-xl transition-transform hover:scale-110',
               face === 'laugh' && 'bg-brand/20',
             )}
           >
-            <Icon name={`reaction-${face}`} tone={COLOUR[face]} className="h-8 w-8" />
+            <Icon name={`reaction-${face}`} tone={COLOUR[face]} className="h-10 w-10" />
           </button>
         ))}
       </div>

@@ -65,7 +65,6 @@ import { Recommended } from '@/components/catalog/Recommended'
 import { avatarKindLabels } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 import { BodyPicker, readsAsBare } from '@/components/avatar/BodyPicker'
-import { ColourPicker } from '@/components/ui/ColourPicker'
 import { Studio } from '@/components/avatar/Studio'
 
 /** The drawers, in the order somebody opens them. */
@@ -153,9 +152,15 @@ const QUIET = [
   '#c7b9a3', '#a8907a', '#8a5230', '#5e3620', '#7f8f6b', '#5c6e58',
 ]
 
+/*
+ * Deep, and not black. Staw: "dont put real black into the skin colours" -
+ * and he is right about what it does, which is nothing: a part at #000000
+ * takes no light at all, so it reads as a hole in the body rather than as
+ * a dark leg. The darkest here still has a colour in it.
+ */
 const DARK = [
-  '#4a5166', '#363c50', '#2a2f45', '#1c2033', '#14161f', '#0d1349',
-  '#111827', '#000000',
+  '#4a5166', '#363c50', '#2a2f45', '#1c2033', '#171a26', '#0d1349',
+  '#1a1420', '#241c16',
 ]
 
 const DEFAULT_BODY: Record<string, string> = {
@@ -800,12 +805,30 @@ export default function MyAvatar() {
              */
             <Outfits onWear={() => void after('outfit', async () => {})} />
           ) : drawer === 'body' ? (
-            <Card className="animate-pop-in space-y-5 p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="mx-auto w-32 shrink-0 rounded-2xl border border-ink-line bg-ink-raised p-3">
+            /*
+             * The body, big, and the colours only after a part is chosen.
+             *
+             * Staw: "i thought the body thing would be bigger and you click
+             * on one part or multiple parts and then you can select the
+             * colour, with ANIMATIONS ONCE AGAIN". It was a thumbnail with
+             * four shelves beside it, so the thing you point at was the
+             * smallest thing on the panel and the order of the job was not
+             * visible anywhere.
+             *
+             * Now the figure takes the width it needs, and the shelves are
+             * dimmed and unreachable until something is chosen - the panel
+             * says what to do by what is lit rather than by a sentence. The
+             * swatches are dealt in again on every change of selection,
+             * which is the keyed `row-in` below: pick an arm and the
+             * colours arrive for that arm.
+             */
+            <Card className="animate-pop-in p-5">
+              <div className="grid gap-6 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:items-start">
+                <div className="rounded-2xl border border-ink-line bg-ink-raised p-5">
                   <BodyPicker
                     colours={look.body ?? DEFAULT_BODY}
                     chosen={parts}
+                    className="mx-auto max-w-[15rem]"
                     /*
                      * Pressing a chosen part lets go of it, including the
                      * last one.
@@ -816,8 +839,6 @@ export default function MyAvatar() {
                      * where a swatch does nothing - except that a swatch
                      * doing nothing is obvious, and a part that will not
                      * let go is a control fighting the person using it.
-                     * Nothing chosen is a fine state; `paint` already
-                     * returns early on it and the hint below says so.
                      */
                     onChoose={(one) => setParts((had) => (
                       had.includes(one)
@@ -825,23 +846,8 @@ export default function MyAvatar() {
                         : [...had, one]
                     ))}
                   />
-                </div>
 
-                <div className="min-w-0 flex-1 space-y-3">
-                  <p className="text-sm font-bold">
-                    {parts.length === 0
-                      ? 'Nothing chosen'
-                      : parts.length === 1
-                        ? PART_LABELS[parts[0]]
-                        : `${parts.length} parts`}
-                  </p>
-                  <p className="text-xs leading-relaxed text-muted">
-                    {parts.length === 0
-                      ? 'Press a part of the body, then pick a colour.'
-                      : 'Press a part to add it, press it again to let go. Everything chosen changes at once.'}
-                  </p>
-
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                     <Quick onPick={() => setParts([...K6_PARTS])}>All of it</Quick>
                     <Quick onPick={() => setParts(['LeftArm', 'RightArm'])}>Both arms</Quick>
                     <Quick onPick={() => setParts(['LeftLeg', 'RightLeg'])}>Both legs</Quick>
@@ -850,34 +856,45 @@ export default function MyAvatar() {
                       <Quick onPick={() => setParts([])}>Let go</Quick>
                     )}
                   </div>
+                </div>
+
+                <div className="min-w-0 space-y-4">
+                  <div>
+                    <p className="font-display text-lg font-extrabold">
+                      {parts.length === 0
+                        ? 'Press a part'
+                        : parts.length === 1
+                          ? PART_LABELS[parts[0]]
+                          : `${parts.length} parts`}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted">
+                      {parts.length === 0
+                        ? 'Press the body on the left, as many parts as you like, then pick a colour.'
+                        : 'Press a part again to let go of it. Everything chosen changes at once.'}
+                    </p>
+                  </div>
 
                   {/*
-                    * Any colour at all, for the people who want the one
-                    * that is not on the shelf.
-                    *
-                    * The short list stays and stays first - every avatar
-                    * being one of thirty colours is a look and every
-                    * avatar being any of sixteen million is a muddle - but
-                    * refusing the wheel outright was the shelf deciding
-                    * something for somebody rather than suggesting it.
+                    * Keyed on what is chosen, so the shelves come back in
+                    * on every change rather than sitting there. It is the
+                    * one animation that carries information: the colours
+                    * arriving is the panel saying it heard the press.
                     */}
-                  <div className="flex items-center gap-2 border-t border-ink-line pt-3">
-                    <span className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
-                      Or any colour
-                    </span>
-                    <ColourPicker
-                      value={(parts.length === 1 ? look.body?.[parts[0]] : undefined) ?? '#3a50ff'}
-                      onChange={paint}
-                    />
+                  <div
+                    key={parts.join(',')}
+                    className={cn(
+                      'space-y-4 transition-opacity duration-200',
+                      parts.length
+                        ? 'animate-pop-in'
+                        : 'pointer-events-none select-none opacity-30',
+                    )}
+                  >
+                    <Shelf nth={0} label="Skin" colours={SKIN} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf nth={1} label="Bright" colours={BRIGHT} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf nth={2} label="Quiet" colours={QUIET} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf nth={3} label="Deep" colours={DARK} parts={parts} look={look} busy={busy} onPick={paint} />
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <Shelf label="Skin" colours={SKIN} parts={parts} look={look} busy={busy} onPick={paint} />
-                <Shelf label="Bright" colours={BRIGHT} parts={parts} look={look} busy={busy} onPick={paint} />
-                <Shelf label="Quiet" colours={QUIET} parts={parts} look={look} busy={busy} onPick={paint} />
-                <Shelf label="Dark" colours={DARK} parts={parts} look={look} busy={busy} onPick={paint} />
               </div>
             </Card>
           ) : owned.loading ? (
@@ -1025,8 +1042,10 @@ function Quick({ onPick, children }: { onPick: () => void; children: React.React
 }
 
 /** A labelled row of swatches. */
-function Shelf({ label, colours, parts, look, busy, onPick }: {
+function Shelf({ label, colours, parts, look, busy, onPick, nth }: {
   label: string
+  /** Where in the stack it sits, which is all the delay is worked out from. */
+  nth: number
   colours: string[]
   parts: K6Part[]
   look: AvatarLook
@@ -1034,7 +1053,7 @@ function Shelf({ label, colours, parts, look, busy, onPick }: {
   onPick: (colour: string) => void
 }) {
   return (
-    <div className="space-y-2">
+    <div className="animate-row-in space-y-2" style={{ animationDelay: `${nth * 45}ms` }}>
       <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
         {label}
       </p>
@@ -1065,7 +1084,7 @@ function Swatches({ colours, current, busy, onPick }: {
           title={colour}
           aria-label={colour}
           className={cn(
-            'grid h-9 w-9 place-items-center rounded-lg border-2',
+            'grid h-10 w-10 place-items-center rounded-xl border-2',
             'transition-transform duration-150 hover:scale-110 active:scale-95 disabled:opacity-50',
             current?.toLowerCase() === colour.toLowerCase()
               ? 'border-white'

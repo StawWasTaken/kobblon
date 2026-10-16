@@ -150,7 +150,7 @@ export function Reactions({
           onClick={() => void press(one.face)}
           aria-pressed={one.mine}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-2.5 text-sm font-bold transition-colors',
+            'inline-flex items-center gap-2 rounded-full border py-1.5 pl-2 pr-3.5 text-base font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
             one.mine
               ? 'border-brand bg-brand/15 text-white'
               : 'border-ink-line bg-ink-raised text-white/70 hover:text-white',
@@ -159,7 +159,7 @@ export function Reactions({
           <Icon
             name={`reaction-${one.face}`}
             tone={one.mine ? FACE_COLOUR[one.face] : undefined}
-            className="h-5 w-5"
+            className="h-7 w-7"
           />
           {formatCount(one.how_many)}
         </button>
@@ -172,7 +172,7 @@ export function Reactions({
           aria-label="React"
           aria-expanded={picking}
           className={cn(
-            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1 pl-1.5 pr-2 transition-colors',
+            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1.5 pl-2 pr-2.5 transition-transform duration-150 hover:scale-105 active:scale-95',
             canReact ? 'text-white/60 hover:text-white' : 'text-white/40 opacity-60',
           )}
         >
@@ -182,8 +182,8 @@ export function Reactions({
             * yellow, because this button is the one that says "there are
             * faces here" and a grey one says the opposite.
             */}
-          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-5 w-5" />
-          <Glyph icon={faPlus} className="text-[10px]" />
+          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-7 w-7" />
+          <Glyph icon={faPlus} className="text-[11px]" />
         </button>
       </Tooltip>
 
@@ -192,23 +192,24 @@ export function Reactions({
          * Above the button, because these sit at the bottom of a card and
          * a tray that opens downwards opens off the end of it.
          */
-        <div className="absolute bottom-full left-0 z-30 mb-2 flex gap-1 rounded-2xl border border-ink-line bg-ink-card p-2 shadow-pop">
-          {FACES.map((face) => (
+        <div className="absolute bottom-full left-0 z-30 mb-2 flex animate-pop-in gap-1 rounded-2xl border border-ink-line bg-ink-card p-2 shadow-pop">
+          {FACES.map((face, nth) => (
             <button
               key={face}
+              style={{ animationDelay: `${nth * 20}ms` }}
               type="button"
               onClick={() => void press(face)}
               aria-label={face.replace('-', ' ')}
               title={face.replace('-', ' ')}
               className={cn(
-                'grid h-11 w-11 place-items-center rounded-xl transition-transform hover:scale-110',
+                'grid h-14 w-14 animate-pop-in place-items-center rounded-xl transition-transform duration-150 hover:scale-110 active:scale-95',
                 mine === face && 'bg-brand/20',
               )}
             >
               {/* In the tray every face is in colour: this is the place
                   somebody is choosing between them, and ten identical grey
                   faces is a row nobody can choose from. */}
-              <Icon name={`reaction-${face}`} tone={FACE_COLOUR[face]} className="h-8 w-8" />
+              <Icon name={`reaction-${face}`} tone={FACE_COLOUR[face]} className="h-10 w-10" />
             </button>
           ))}
         </div>
