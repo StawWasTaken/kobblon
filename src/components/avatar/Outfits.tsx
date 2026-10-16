@@ -19,7 +19,7 @@ import { useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faFolder, faFolderPlus, faPlus, faShirt, faTrash, faTag, faCheck,
-  faGear, faPenToSquare, faArrowsRotate,
+  faGear, faPenToSquare, faArrowsRotate, faStore,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -28,6 +28,7 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/States'
 import { Menu } from '@/components/ui/Menu'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { Confirm } from '@/components/ui/Confirm'
 import { OutfitStage } from '@/components/avatar/OutfitStage'
 import { useToast } from '@/components/ui/Toast'
@@ -38,6 +39,7 @@ import {
   makeOutfitFolder, listOutfit, renameOutfit, restyleOutfit, type Outfit,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
+import { avatarKindLabels, outfitTag } from '@/lib/kinds'
 
 /** One saved look. */
 function OutfitCard({ outfit, onChanged, onWear }: {
@@ -76,17 +78,24 @@ function OutfitCard({ outfit, onChanged, onWear }: {
   const pieces = Array.isArray(outfit.pieces) ? outfit.pieces : []
 
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="animate-row-in overflow-hidden p-0 transition-colors hover:border-brand/40">
       {/*
         * The outfit itself, standing up, which is what Staw asked for: "i
         * want to see each outfit in 3d". A grid of names and counts is a
         * list of files; a grid of bodies is a wardrobe.
         */}
       <div className="relative">
+        {/*
+          * Bigger, and the figure turns slowly so a wardrobe of them reads
+          * as a rack rather than a sheet of stamps. Not draggable here:
+          * in a grid a drag is the page being scrolled, and the outfit's
+          * own page is where you turn it.
+          */}
         <OutfitStage
           key={`${outfit.id}:${drawn}`}
           outfitId={outfit.id}
-          className="aspect-[4/5] w-full"
+          turning
+          className="aspect-square w-full"
         />
 
         {/* The gear, top right, exactly where Staw's picture has it. */}
@@ -129,28 +138,75 @@ function OutfitCard({ outfit, onChanged, onWear }: {
         )}
       </div>
 
-      <div className="space-y-2.5 p-3">
+      <div className="space-y-3 p-4">
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold">{outfit.name}</p>
-          <p className="text-[11px] text-muted">
-            {pieces.length} {pieces.length === 1 ? 'thing' : 'things'}
-            {outfit.folder_name && <> · {outfit.folder_name}</>}
+          <p className="truncate font-display text-sm font-extrabold">{outfit.name}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
+            <span>{pieces.length} {pieces.length === 1 ? 'thing' : 'things'}</span>
+            {outfit.folder_name && <span>· {outfit.folder_name}</span>}
+            {outfit.is_public && <span>· in the Catalog</span>}
           </p>
         </div>
 
-        <Button
-          size="sm"
-          variant="yes"
-          icon={faShirt}
-          className="w-full"
-          loading={busy === 'wear'}
-          onClick={() => void run('wear', async () => {
-            await wearOutfit(outfit.id)
-            onWear()
-          }, `${outfit.name} is on.`)}
-        >
-          Wear it
-        </Button>
+        {/*
+          * What is in it, as a line of the pieces' own pictures. A name
+          * and a count says how many; this says which, which is the thing
+          * somebody is actually choosing between when two outfits have
+          * the same number of things in them.
+          */}
+        {!!pieces.length && (
+          <ul className="flex flex-wrap gap-1.5">
+            {pieces.slice(0, 6).map((piece) => (
+              <li
+                key={piece.content_id}
+                title={piece.name}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-[9px] font-bold uppercase text-white/40"
+              >
+                {(avatarKindLabels[piece.kind] ?? piece.kind).slice(0, 2)}
+              </li>
+            ))}
+            {pieces.length > 6 && (
+              <li className="grid h-8 min-w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised px-1.5 text-[10px] font-bold text-white/40">
+                +{pieces.length - 6}
+              </li>
+            )}
+          </ul>
+        )}
+
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="yes"
+            icon={faShirt}
+            className="flex-1"
+            loading={busy === 'wear'}
+            onClick={() => void run('wear', async () => {
+              await wearOutfit(outfit.id)
+              onWear()
+            }, `${outfit.name} is on.`)}
+          >
+            Wear it
+          </Button>
+
+          {/*
+            * Staw: "with the view on the catalog thing to see the asset
+            * page of your outfit". Only when it is listed, because an
+            * outfit that is not in the Catalog has a page nobody else can
+            * open and sending somebody to it is a door into an empty room.
+            */}
+          {outfit.is_public && (
+            <Tooltip label="See its Catalog page" side="top">
+              <Button
+                size="sm"
+                variant="subtle"
+                to={`/catalog/outfit/${outfitTag(outfit.content_id)}`}
+                aria-label="See it on the Catalog"
+              >
+                <Glyph icon={faStore} />
+              </Button>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
       <Dialog
@@ -332,7 +388,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
       </div>
 
       {outfits.loading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
       ) : !outfits.data?.length ? (
@@ -348,7 +404,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
                 <Glyph icon={faFolder} />
                 {one.name}
               </p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {one.outfits.map((outfit) => (
                   <OutfitCard
                     key={outfit.id}
@@ -362,7 +418,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
           ))}
 
           {!!loose.length && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {loose.map((outfit) => (
                 <OutfitCard
                   key={outfit.id}

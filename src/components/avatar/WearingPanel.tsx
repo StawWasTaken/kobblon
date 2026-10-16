@@ -17,6 +17,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { cn } from '@/lib/cn'
 import { faCube, faImage, faShirt } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/States'
@@ -121,7 +122,7 @@ export function WearingPanel({ look, loading }: {
               title={piece.name ?? undefined}
               className="rounded-xl border border-ink-line bg-ink-raised p-2 transition-colors hover:border-brand/60"
             >
-              <span className="block aspect-square overflow-hidden rounded-lg bg-ink-card">
+              <span className="relative block aspect-square overflow-hidden rounded-lg bg-ink-card">
                 {piece.cardUrl ? (
                   <img
                     src={piece.cardUrl}
@@ -132,6 +133,24 @@ export function WearingPanel({ look, loading }: {
                 ) : (
                   <span className="grid h-full w-full place-items-center text-white/30">
                     <Glyph icon={faShirt} />
+                  </span>
+                )}
+
+                {/*
+                  * A limited says so here too. Staw: "we dont show the
+                  * limited badge outside of the catalog" - and a profile
+                  * is the one page where somebody is deliberately showing
+                  * off what they own, so it is the page where the rarest
+                  * thing they have should not look like the commonest.
+                  */}
+                {piece.sellsUntil && (
+                  <span className={cn(
+                    'absolute bottom-1 left-1 rounded px-1 py-0.5 text-[8px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
+                    new Date(piece.sellsUntil).getTime() <= Date.now()
+                      ? 'bg-ink/85 text-white/60'
+                      : 'bg-amber-400/90 text-ink',
+                  )}>
+                    Limited
                   </span>
                 )}
               </span>

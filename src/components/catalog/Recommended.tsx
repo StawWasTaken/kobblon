@@ -34,9 +34,21 @@ import { cn } from '@/lib/cn'
  * layout that overflowed. It fills the row it has and stops, and `See all`
  * is the thing that says there is more.
  */
-export function Recommended({ howMany = 12, title = 'Recommended', className }: {
+export function Recommended({
+  howMany = 12, title = 'Recommended', layout = 'grid', className,
+}: {
   howMany?: number
   title?: string
+  /**
+   * `grid` wraps and fills the panel; `row` is a single line that scrolls.
+   *
+   * Staw, of the avatar page: "i only want one line rather than multiple
+   * here cuz its ugly". He is right about where each belongs - under a
+   * body it is a hint and three rows of hints is a second page, while on
+   * an asset page it is the end of the page and a row that trails off is
+   * a row with no end to it.
+   */
+  layout?: 'grid' | 'row'
   className?: string
 }) {
   const picked = useAsync(async () => recommendedAvatarItems(howMany), [howMany])
@@ -69,23 +81,42 @@ export function Recommended({ howMany = 12, title = 'Recommended', className }: 
         * cards stay the size they were drawn at whatever the panel is
         * doing around them.
         */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
+      <div className={cn(
+        layout === 'row'
+          /*
+           * One line, scrolled sideways, with the bar hidden. Nothing is
+           * cut here either: a card is either on the line or scrolled to,
+           * and the line ends where the panel does.
+           */
+          ? 'flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:w-36 [&>*]:shrink-0'
+          : 'grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]',
+      )}>
         {picked.loading
           ? Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-52 rounded-2xl" />
+            <Skeleton key={i} className={cn('rounded-2xl', layout === 'row' ? 'h-52 w-36' : 'h-52')} />
           ))
-          : picked.data!.map((item) => <Card key={item.id} item={item} />)}
+          : picked.data!.map((item, i) => (
+            <Card key={item.id} item={item} nth={i} />
+          ))}
       </div>
     </section>
   )
 }
 
-function Card({ item }: { item: AvatarItem }) {
+function Card({ item, nth }: { item: AvatarItem; nth: number }) {
   const picture = cardFor(item)
   const to = `/catalog/${avatarTag(item.kind, item.content_id)}`
 
   return (
-    <div className="relative">
+    /*
+     * Dealt in rather than appearing all at once, which is what `row-in`
+     * and an inline delay are for. Capped so a long row does not keep
+     * somebody waiting for the twelfth card.
+     */
+    <div
+      className="relative animate-row-in"
+      style={{ animationDelay: `${Math.min(nth, 8) * 35}ms` }}
+    >
       {!item.price && <FreeCorner />}
       <Link
         to={to}

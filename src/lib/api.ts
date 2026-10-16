@@ -4809,6 +4809,8 @@ async function buildLook(worn: AvatarPiece[]): Promise<PortraitLook> {
       meshFormat: piece.mesh_format ?? (piece.mesh_path ? formatOf(piece.mesh_path) : null),
       textureUrl: piece.texture_path ? await assetUrl(piece.texture_path).catch(() => null) : null,
       fit: piece.fit ?? null,
+      /** When it stopped selling, so a profile can say it was a limited. */
+      sellsUntil: piece.sells_until ?? null,
     })),
   )
 
