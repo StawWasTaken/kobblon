@@ -27,6 +27,13 @@
   --media: 13 19 73;
   --field: 11 17 63;
   --on-chrome: 255 255 255;
+  /*
+   * The bone the skull reaction is drawn in. Staw's #E6E7E8, which is a
+   * skull against a dark card and an empty space against a white one -
+   * the one reaction colour that cannot be the same number in both
+   * themes, because the others are a yellow and a red and those hold.
+   */
+  --face-bone: 230 231 232;
 }
 
 /* The same interface in daylight. Brand blue and Space green are
@@ -47,5 +54,6 @@
   --media: 226 232 244;
   --field: 255 255 255;
   --on-chrome: 16 22 64;
+  --face-bone: 122 130 145;
 }
 }

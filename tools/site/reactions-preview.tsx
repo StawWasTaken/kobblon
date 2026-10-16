@@ -14,7 +14,7 @@ const YELLOW = '#FFCC4D'
 const COLOUR: Record<string, string> = {
   smile: YELLOW, laugh: YELLOW, 'happy-grin': YELLOW, 'winky-grin': YELLOW,
   'heart-eyes': YELLOW, sunglasses: YELLOW, shocked: YELLOW, sad: YELLOW,
-  angry: '#DF1F2D', skull: '#E6E7E8',
+  angry: '#DF1F2D', skull: 'rgb(var(--face-bone))',
 }
 
 const ON = [
