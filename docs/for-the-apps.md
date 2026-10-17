@@ -8782,3 +8782,70 @@ for and not started - nothing of them exists to build against yet.
 Klub still does not exist. Migrations 0254 through 0262 are applied
 locally and not yet in production, and the `register` function is not
 deployed.
+
+## Round one hundred and six
+
+**1. The reload bug, and why it was never a loading bug.** If either
+application ever serves pages this way, this is the one to read. Every page
+under `u/`, `c/` and `worlds/` on the website is a real file, written at
+deploy time by whichever build last reached the database, and it names that
+build's pieces by their content hash. A build without the service key
+leaves those files alone - rightly, it has nothing to write - but it still
+replaces `assets/`, so the pieces those files name are deleted. The
+document then asks for a module that 404s, nothing in the bundle runs, and
+what is left on screen is the boot mark in the markup, for ever. Published
+profile pages were pointing at `app-x5VFj9wV.js` while the site had
+`app-B5YQDrYK.js`: 293 of them.
+
+Reloading cannot fix that, which is the part that misleads everybody,
+including the "Load it again" button we put under the mark. The file on the
+site is the thing that is wrong.
+
+Two fixes, and the second is the one worth copying: `publish-to-root` now
+points every published page at the build it is publishing whether or not it
+rewrote that page; and the document itself, if nothing in the bundle has
+run three seconds after load, hands the address to the index at the root -
+which every deploy rewrites and which is therefore never stale - as
+`/?to=<path>`, and `main.tsx` puts the address back before React looks.
+
+**2. The reveal plays once per tab, on arrival.** `REVEAL_MS` is still
+3950, but `releaseBoot` only waits it out when this tab has not seen it:
+session storage survives a reload and does not survive a new tab, which is
+exactly the distinction Staw asked for. Measured: 4011ms on arrival, 238ms
+on the refresh after it.
+
+**3. Theme appearances.** New and shared, so the Workspace can wear one:
+
+- `profiles.appearance` is `'default' | 'halloween' | 'christmas'`.
+  `public.appearances()` is the list, `appearance_on_offer(day)` is the
+  window (October; 15 November to 31 December), `my_appearances()` is what
+  somebody may wear, `claim_appearance(which)` takes the one on offer and
+  `set_appearance(which)` wears a claimed one. The date is checked in
+  `claim_appearance` and nowhere else matters.
+- An appearance is **not** the dark/light mode. The mode stays per device;
+  the appearance is on the account and both apply, because the art exists
+  for each season in both modes.
+- It is applied by writing `data-appearance` on the document element.
+  Everything that changes with it - the chrome tokens in
+  `design/tokens.css`, the marks, the backdrop - is chosen by CSS from that
+  attribute and never by a hook, so a panel mounted with no provider gets
+  the ordinary blue one instead of throwing. If the Workspace wants to
+  follow the website's appearance, write that attribute on its own document
+  and import `design/tokens.css` as it already does.
+- `--chrome`, `--media`, `--field` and `--on-chrome` move; nothing else
+  does. Brand blue, Space green and the red are untouched on purpose.
+- `@/lib/appearances` exports `APPEARANCES`, `LOOKS` and `marksOf`, which
+  is where the artwork paths live.
+
+**4. Smaller, and shared.** `Studio` now draws six backdrops and shows one;
+`Wordmark` and `Logomark` draw five marks each and show one. Both still
+need no provider, no router and no session. `tools/site/appearance-preview`
+is the bare page that proves it.
+
+**Still not done, said plainly:** the halloween wordmark and logomark and
+the christmas logomark are Staw's blue artwork with the hue moved, not his
+own drawings - his replace them by being dropped into `public/brand/` under
+the same names. The seasonal weather is mounted on Home and nowhere else.
+`pg_cron` is still not enabled for the `kobblon-machine` heartbeat, and the
+`register` function is still not deployed. Migrations through 0262 are
+applied in production; 0263 is new and is not.
