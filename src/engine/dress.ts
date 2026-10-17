@@ -72,6 +72,14 @@ export type WornLook = {
 }
 
 /**
+ * The slots that are a picture on the body rather than a model hung off it.
+ *
+ * Written down once, here, because the alternative was reading it off the
+ * row - and the row cannot tell them apart.
+ */
+const PAINTED_ON = new Set(['shirt', 'trousers', 'face', 'tdecal'])
+
+/**
  * Dress a body from a look, and hand back how to undo it.
  *
  * The disposer is the point of the return value: a World closed halfway
@@ -133,8 +141,21 @@ export async function dressFrom(
      * A picture is painted on rather than hung off: a shirt, a face and
      * the thing stuck to the torso are all textures on the body itself,
      * and none of them has a socket.
+     *
+     * Which of the two a piece is was decided by **whether it had a
+     * picture**, and that is what stopped haircuts appearing - reported on
+     * Discord as "why doesn't my hair show". Every catalog item has a
+     * picture: it is the thumbnail on its card. So a haircut came in here,
+     * matched none of the three painted-on slots, hit the `continue` at the
+     * bottom of this branch, and its model was never loaded at all. It was
+     * worn, it was in the look, and nothing drew it. Hats, accessories and
+     * everything else on a socket were one thumbnail away from the same
+     * fate.
+     *
+     * The slot says which kind of thing it is. The thumbnail never did.
      */
-    if (piece.imageUrl) {
+    if (PAINTED_ON.has(piece.slot)) {
+      if (!piece.imageUrl) continue
       const picture = await new THREE.TextureLoader()
         .loadAsync(piece.imageUrl).catch(() => null)
       if (!alive()) { if (picture) picture.dispose(); undo(); return () => {} }

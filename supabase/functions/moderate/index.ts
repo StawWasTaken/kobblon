@@ -128,6 +128,48 @@ The reason is shown to the person who wrote the line. Write it plainly, say what
 }
 
 /**
+ * The same rules, asked about a name rather than a line of chat.
+ *
+ * A separate prompt because the two readings are genuinely different. A
+ * handle is not a sentence: it has no context, no person it was said to and
+ * no punctuation, and the evasion in it is spelling - `f_u_c_k`, `n1gg4`,
+ * letters stretched out. And it is on every page the person appears on, so
+ * an innuendo that would be a shrug in chat is not one here. The other way
+ * too: a short string that merely looks like something is a false positive
+ * waiting to happen, and a handle with an innocent reading has one.
+ */
+function namePrompt(rules: { ord: number; code: string; title: string; body: string }[], field: string) {
+  const list = rules
+    .map((r) => `${r.ord}. [${r.code}] ${r.title}\n   ${r.body}`)
+    .join('\n')
+
+  const where = field === 'bio'
+    ? 'the few lines somebody wrote about themselves on their profile'
+    : field === 'display_name'
+      ? 'the name somebody chose to be shown under, which appears beside everything they do'
+      : 'somebody\'s handle, the @name on their profile and in every chat they speak in'
+
+  return `You read ${where} on Kobblon, a game platform used by children, and decide whether it breaks one of Kobblon's rules.
+
+THE RULES
+
+${list}
+
+HOW TO READ IT
+
+Work out what it says, including when it is spelled out, stretched out or written with digits for letters: f_u_c_k, n1gg3r and x-x-x are the words they are, and a name chosen to read as a slur breaks the hate rule however it is spelled. Judge what it says and not how it is spelled otherwise.
+
+Then be careful the other way. A name is short and a short string can look like anything; if it has an ordinary reading, that is the reading. Real words that contain rude ones inside them (class, grass, assassin, Scunthorpe) break nothing. A gamer handle is allowed to be silly, violent-sounding in the way a game is, or made of nonsense. Being odd is not breaking a rule, and nor is being rude about nobody in particular unless a rule says it is.
+
+If no rule is broken, say so. That is the usual answer and it is not a failure.
+
+Answer with JSON only:
+{"breaks": true|false, "rule": "<the code in brackets, or null>", "reason": "<one short sentence saying what it says>"}
+
+The reason is shown to the person who chose it. Say what the name does rather than what they are, and do not threaten them.`
+}
+
+/**
  * One ask of Groq, with a picture when there is one.
  *
  * It says why it failed rather than returning a bare null. Not for the
@@ -512,6 +554,37 @@ async function askGroqChat(model: string, rules: {
       breaks: breaks && Boolean(rule),
       rule,
       quote: typeof verdict.quote === 'string' ? verdict.quote.slice(0, 500) : null,
+      reason: String(verdict.reason ?? '').slice(0, 300),
+    }
+  } catch {
+    return { trouble: `${model} did not answer in JSON.` }
+  }
+}
+
+async function askGroqName(model: string, rules: {
+  ord: number; code: string; title: string; body: string
+}[], field: string, text: string): Promise<
+  { breaks: boolean; rule: string | null; reason: string } | { trouble: string }
+> {
+  const said = await postToGroq({
+    model,
+    temperature: 0,
+    max_tokens: 200,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: namePrompt(rules, field) },
+      { role: 'user', content: text },
+    ],
+  })
+  if ('trouble' in said) return said
+
+  try {
+    const verdict = firstJson(said.text) ?? JSON.parse(said.text)
+    const breaks = verdict.breaks === true
+    const rule = breaks ? tidyRule(verdict.rule) : null
+    return {
+      breaks: breaks && Boolean(rule),
+      rule,
       reason: String(verdict.reason ?? '').slice(0, 300),
     }
   } catch {
@@ -926,6 +999,51 @@ async function handle(request: Request): Promise<Response> {
         continue
       }
 
+      decided += 1
+      if (typeof did === 'string' && did !== 'nothing') {
+        acted[did] = (acted[did] ?? 0) + 1
+      }
+      continue
+    }
+
+    /*
+     * A handle, a display name or a bio. Judged against the same numbered
+     * rules as a line of chat, and settled by `judge_profile_text`, which
+     * takes the name away at every rung above nothing and decides the rung
+     * itself. Nothing here says what happens to anybody.
+     */
+    if (job.subject === 'profile_text') {
+      if (noRules || !rules.length) {
+        trouble.add(
+          noRules
+            ? `The rules could not be read, so no name was judged: ${noRules.message}`
+            : 'No rules are switched on, so no name was judged.',
+        )
+        continue
+      }
+
+      const verdict = await askGroqName(settings.model, rules, job.kind, job.words)
+      if ('trouble' in verdict) {
+        trouble.add(verdict.trouble)
+        continue
+      }
+
+      const { data: did, error: refusedName } = await db.rpc('judge_profile_text', {
+        entry: Number(job.subject_id),
+        breaks: verdict.breaks,
+        rule_code: verdict.rule,
+        reason: verdict.reason,
+        model: settings.model,
+      })
+      if (refusedName) {
+        trouble.add(`A name could not be judged: ${refusedName.message}`)
+        continue
+      }
+
+      if (did === 'unsure') {
+        unsure += 1
+        continue
+      }
       decided += 1
       if (typeof did === 'string' && did !== 'nothing') {
         acted[did] = (acted[did] ?? 0) + 1

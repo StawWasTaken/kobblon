@@ -162,6 +162,21 @@ const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOr
  * deserves, the name under it, and the whole block pressable. A queue with
  * nothing in it says so in a word instead of showing a nought.
  */
+/*
+ * What `ai_work` calls a job, in the words a person reading the console
+ * uses. The subject is the database's own word and it is handed through
+ * rather than translated there, so this is where it gets a label.
+ */
+const QUEUE_WORDS: Record<string, string> = {
+  avatar_item: 'catalog',
+  asset: 'upload',
+  report: 'report',
+  ticket: 'support',
+  appeal: 'appeal',
+  message: 'chat',
+  profile_text: 'name',
+}
+
 function Queue({ icon, art, name, count, aside, delay, onClick }: {
   icon: IconDefinition
   art?: KobIcon
@@ -2918,6 +2933,7 @@ export function MachineSection() {
                 { art: 'chatbubble' as KobIcon, what: 'Support', how: 'Answered, unless somebody asked for a person.' },
                 { art: 'voice-user' as KobIcon, what: 'Appeals', how: 'Only the ones no moderator decided; a person\u2019s decision is a person\u2019s to undo.' },
                 { art: 'mute-microphone' as KobIcon, what: 'Chat', how: 'Lines nobody has read yet, against the words list and the rules.' },
+                { art: 'circle-user' as KobIcon, what: 'Names', how: 'Handles, display names and bios. A name that breaks a rule is taken away and they are asked for another.' },
                 { art: 'people' as KobIcon, what: 'Sanctions', how: on && settings.data?.may_suspend
                   ? 'Warnings and suspensions, inside the limits above.'
                   : on && settings.data?.may_warn
@@ -3096,7 +3112,7 @@ export function MachineSection() {
               style={{ animationDelay: `${i * 30}ms` }}
               className="flex animate-row-in items-baseline gap-3 text-sm"
             >
-              <Badge tone="neutral">{one.subject}</Badge>
+              <Badge tone="neutral">{QUEUE_WORDS[one.subject] ?? one.subject}</Badge>
               <span className="min-w-0 flex-1 truncate text-white/75">{one.name}</span>
               <span className="shrink-0 text-xs text-muted">
                 {one.waiting_minutes > 90

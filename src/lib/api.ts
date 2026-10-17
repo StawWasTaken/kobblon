@@ -4267,6 +4267,8 @@ export type WorkWaiting = {
   appeals: number
   /** Chat, Space chat and Community posts waiting to be read. */
   lines: number
+  /** Handles, display names and bios waiting to be read. */
+  names: number
   total: number
   oldest_minutes: number | null
 }

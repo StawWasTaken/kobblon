@@ -8392,3 +8392,144 @@ wired && net_ready`.**
 **Not done, and needed from Staw:** apply 0253, and turn on `pg_cron` for
 the project - without it the heartbeat is not scheduled and the console
 will say so in as many words. Nothing else in the console depends on it.
+
+## Round one hundred
+
+Two batches: the console got Kobblon's own icons and a Words panel somebody
+can use, and then the moderation system got the thing it was missing - Kobby
+reading names, and a handle that spells itself out being caught.
+
+**Nothing in this round changes a shared signature you import.** The
+engine fix below changes behaviour, which is the part to read.
+
+### The engine: a haircut was never drawn, and a hat was one thumbnail away
+
+`dressFrom` in `@/engine/dress` decided whether a worn piece was *painted on
+the body* or *hung off a socket* by asking **whether the piece had a
+picture**:
+
+```ts
+if (piece.imageUrl) { /* shirt, trousers, face, tdecal */ continue }
+```
+
+Every catalog item has a picture - it is the thumbnail on its card. So a
+haircut arrived in that branch, matched none of the painted-on slots, hit the
+`continue`, and **its model was never loaded**. Worn, in the look, in the
+database, and nothing drew it. Reported on Discord as "why doesn't my hair
+show". Hats, accessories, wings and everything else on a socket were one
+thumbnail away from the same silence.
+
+It is the slot that decides now:
+
+```ts
+const PAINTED_ON = new Set(['shirt', 'trousers', 'face', 'tdecal'])
+```
+
+**If either application has its own dressing path, read it for the same
+test.** The symptom is not an error anywhere: the piece is simply absent, and
+a look that is right in the database renders short. The check that catches it
+is not "does the look contain the piece" - it does - it is **"is something
+parented to the socket afterwards"**.
+
+### Screening: spelling it out is still saying it
+
+`f_u_c_k` passed the handle check, and so did anything else anybody cared to
+space out. Not a gap in the word list - the word is on it - but the
+flattening in front of it: `normalize_for_screening` turns every separator
+into a **space**, so the patterns were handed `f u c k` and looked that up.
+
+`screen_text` reads the same text three ways now (migration 0254):
+
+- flattened, as before;
+- raw, as before;
+- **squashed**, with separators removed rather than replaced, so `f_u_c_k`,
+  `f.u.c.k` and `F U C K` all arrive as `fuck`.
+
+The squashed reading is used for everything in `identity` and `name` scope,
+and in chat only when the text is **actually spelled out** - three or more
+single letters each standing alone. The patterns' leading `(^|[^a-z])` guard
+is dropped against the squashed reading, and only for spelled-out text:
+dropping it for every handle would make `classy` an `ass`, which is the false
+positive the guard was written for. Checked both ways: the four evasions are
+caught, and `classic`, `grassroots`, `assembly`, `bassline`, `scunthorpe`,
+`passionfruit` and ordinary sentences are not.
+
+**Also in 0254, and worth a line of its own:** `screen_text` lost
+`security definer` in 0238, because `create or replace function` resets the
+attributes the old one had rather than keeping them. The term list is not
+granted to `authenticated` by design, so anything calling the screening
+*through* another `security definer` function carried on working - which is
+most of the platform, and why nobody saw it - while a page calling
+`screen_text` itself as a signed-in person got
+`permission denied for table moderation_terms`. If either application calls
+it directly, that is why it failed. It is a definer again.
+
+### Kobby reads names now
+
+Everything a person writes went past Kobby except the three pieces of writing
+on every page they appear on: their handle, their display name and their bio.
+Migrations 0255 and 0256:
+
+- **`names_to_read`** - a queue, fed by a trigger on `profiles` for an
+  inserted or changed `username`, `display_name` or `bio`. Guests and staff
+  are not queued. It honours `kobbleston.renaming`, so Kobby's own reset does
+  not hand Kobby the name it just chose, for ever.
+- **`ai_work`** gains a `profile_text` subject, whose `kind` is which field it
+  is - `username`, `display_name`, `bio`.
+- **`ai_work_waiting` gains a `names` column.** It is `drop`ped and rebuilt
+  rather than replaced, because a `returns table` cannot grow a column in
+  place. **A client that destructures its row by position, or types it
+  exactly, needs the extra field.** `total` includes it.
+- **`judge_profile_text(entry, breaks, rule_code, reason, model)`** - the same
+  shape as `judge_chat_line`: the model says whether a rule is broken and
+  which one, and the **database** decides what happens, from the rule's
+  gravity and the person's behaviour band. One rung is bent: `quieted` means
+  nothing for a name, so it reads as a warning.
+- What it may do: a bio is **emptied**, a display name goes back to the
+  handle, and a handle is **reset** to `player<content id>` with a row in
+  `username_history` and a notification saying they may pick a new one. At
+  every rung above nothing, because leaving a slur on a profile page while a
+  warning sits on a record answers the wrong question. **Never a deletion,
+  by Kobby or anything automated, at any rung.**
+- `keep_the_worker_awake` counts names too, or a project in `slow` mode with
+  nothing but a waiting handle would never wake.
+
+The worker has a `profile_text` branch with its own prompt, which is a
+separate prompt on purpose: a handle has no context, no person it was said
+to and no punctuation, its evasion is spelling, and it is short enough that
+an innocent reading is usually the right one.
+
+**The trap this one walked into and out of:** `judge_profile_text` is
+`security definer`, and both `guard_username` and `guard_profile_update` ask
+`auth.uid()` who is writing - which is the *caller*, not the definer. A
+rename would have been pinned straight back and a suspension dropped on the
+floor, with no error anywhere. It raises `kobbleston.renaming` and
+`kobbleston.standing` round its own writes and lowers them immediately, and
+the checks read the row back under a real signed-in identity rather than
+anonymously - anonymous checks pass for the wrong reason, because
+`auth.uid()` is null and the guards exempt the write.
+
+### The console, from the earlier batch
+
+- The rail and the panel headings use Kobblon's own drawings where one
+  exists - `@/components/brand/Icon`, `UI_ICONS` - and Font Awesome only
+  where there is none.
+- **Words** takes plain words and writes the guarded pattern itself, so
+  nobody is typing `(^|[^a-z])(…)` by hand. And it can be asked in a
+  sentence: "censor everything about X" gets a **draft** from Kobby which a
+  person reads, ticks and applies. Kobby drafts; it never writes to the term
+  list on its own.
+- The staff record is a ledger by day, with the whole of an entry in a popup,
+  and a person's record opens as one too.
+- The machine panel says what Kobby handles with nobody here, Names
+  included.
+
+### Still not done
+
+- The remaining console panels - Reports, Screening, Notice, Announce, Sale,
+  Map - are not redesigned yet.
+- **`pg_cron` must be enabled** for the `kobblon-machine` heartbeat, and 0254,
+  0255 and 0256 need applying. Until the extension is there, `machine_pulse`
+  answers `beating: false` and says so rather than failing.
+- No backfill: accounts that existed before 0255 are not queued. There is
+  `queue_profile_text(uuid)` for staff to ask for one account to be read.
