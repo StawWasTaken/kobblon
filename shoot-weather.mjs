@@ -1,0 +1,10 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const p = await b.newPage({ viewport: { width: 900, height: 1900 } })
+p.on('pageerror', (e) => console.log('[throw]', String(e).slice(0, 300)))
+await p.goto('http://localhost:5343/tools/site/appearance-preview.html', { waitUntil: 'networkidle' })
+await p.locator('[role="dialog"] button').first().click().catch(() => {})
+await p.waitForTimeout(6000)
+const box = await p.locator('[data-appearance="christmas"].relative').first().boundingBox()
+await p.screenshot({ path: '/tmp/weather.png', clip: { x: box.x, y: box.y, width: 870, height: 270 } })
+await b.close()

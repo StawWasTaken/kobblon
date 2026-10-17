@@ -22,6 +22,8 @@ export type Profile = {
   must_set_password?: boolean
   /** The Community shown at the front of their profile, if they picked one. */
   primary_community?: string | null
+  /** Which theme appearance they are wearing: 'default', 'halloween', ... */
+  appearance?: string | null
   pixels: number
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null

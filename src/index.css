@@ -103,11 +103,62 @@
   }
   .kob-scroll::-webkit-scrollbar-thumb:hover { background: rgb(var(--muted)); background-clip: content-box; }
 
-  /* the wordmark art is black, so it is inverted on a dark interface only */
   /* The wordmark ships white, for the dark interface it was drawn for.
-     Light mode flips it; the logomark is brand blue and needs neither. */
+     Light mode flips it; the logomark is brand blue and needs neither, and
+     the seasonal marks are drawings in their own colours so they are never
+     flipped at all. */
   .kob-wordmark { filter: none; }
   :root[data-theme='light'] .kob-wordmark { filter: invert(1); }
+
+  /*
+   * One mark showing, picked by the appearance on the document.
+   *
+   * Every one of them is in the markup and all but one are hidden, so
+   * nothing is fetched late and nothing changes a moment after the page has
+   * drawn. The first rule is written as "not either season" rather than
+   * "is default", because a page with no appearance set at all - the
+   * Workspace, a bare page, the way in before anybody has signed in - has
+   * to get the ordinary one.
+   */
+  /*
+   * One mark showing, and one backdrop, picked by the appearance.
+   *
+   * Everything is in the markup and all but one of each is hidden, so
+   * nothing is fetched late and nothing changes a moment after the page has
+   * drawn. The rules are written as "the ordinary one, unless an appearance
+   * says otherwise", because a page with no appearance set at all - the
+   * Workspace, a bare page, the way in before anybody has signed in - has
+   * to get the ordinary one; and they are descendant rules rather than
+   * `:root` ones so that a card showing an appearance it is not wearing,
+   * which is the card that offers one, gets the right art inside it.
+   */
+  .kob-mark { display: none; }
+  .kob-mark[data-look='default'] { display: block; }
+  [data-appearance='halloween'] .kob-mark[data-look='default'],
+  [data-appearance='christmas'] .kob-mark[data-look='default'],
+  [data-appearance='halloween'] .kob-mark[data-mode='light'],
+  [data-appearance='christmas'] .kob-mark[data-mode='light'] { display: none; }
+  [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'],
+  [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: block; }
+
+  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-mode='dark'],
+  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-mode='dark'] { display: none; }
+  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'],
+  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: block; }
+
+  .kob-backdrop { display: none; }
+  .kob-backdrop[data-look='default'][data-mode='dark'] { display: block; }
+  [data-appearance='halloween'] .kob-backdrop[data-look='default'],
+  [data-appearance='christmas'] .kob-backdrop[data-look='default'] { display: none; }
+  [data-appearance='halloween'] .kob-backdrop[data-look='halloween'][data-mode='dark'],
+  [data-appearance='christmas'] .kob-backdrop[data-look='christmas'][data-mode='dark'] { display: block; }
+
+  :root[data-theme='light'] .kob-backdrop[data-mode='dark'] { display: none; }
+  :root[data-theme='light'] .kob-backdrop[data-look='default'][data-mode='light'] { display: block; }
+  :root[data-theme='light'] [data-appearance='halloween'] .kob-backdrop[data-look='default'],
+  :root[data-theme='light'] [data-appearance='christmas'] .kob-backdrop[data-look='default'] { display: none; }
+  :root[data-theme='light'] [data-appearance='halloween'] .kob-backdrop[data-look='halloween'][data-mode='light'],
+  :root[data-theme='light'] [data-appearance='christmas'] .kob-backdrop[data-look='christmas'][data-mode='light'] { display: block; }
 
   /* The sunburst art behind the bar is painted for the dark interface. */
   :root[data-theme='light'] .dark-only { display: none; }
@@ -120,4 +171,11 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+@keyframes kob-fall {
+  0%   { transform: translate3d(0, -10%, 0) rotate(0deg); opacity: 0; }
+  12%  { opacity: 0.75; }
+  85%  { opacity: 0.55; }
+  100% { transform: translate3d(var(--drift, 0px), 105vh, 0) rotate(var(--spin, 180deg)); opacity: 0; }
 }

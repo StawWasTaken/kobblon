@@ -39,6 +39,31 @@ def tint(src, dst, hue):
     print(dst, im.size)
 
 
+def flat(src, dst, rgb):
+    """The flat mark, painted in one colour.
+
+    Light mode flips the ordinary wordmark to black, because a white
+    drawing on a pale bar is not there. The seasonal marks are drawings in
+    their own colours and flipping one gives a photographic negative, so
+    they get the same treatment the default gets instead: the flat
+    silhouette, in a deep version of the season's colour.
+    """
+    im = Image.open(B + src).convert('RGBA')
+    px = im.load()
+    w, h = im.size
+    for y in range(h):
+        for x in range(w):
+            a = px[x, y][3]
+            px[x, y] = (rgb[0], rgb[1], rgb[2], a)
+    im.save(B + dst)
+    print(dst, im.size)
+
+
 tint('wordmark2.png', 'wordmark-halloween.png', 26)
 tint('logomark.png', 'logomark-halloween.png', 26)
 tint('logomark.png', 'logomark-christmas.png', 354)
+
+flat('wordmark.png', 'wordmark-halloween-light.png', (138, 74, 23))
+flat('wordmark.png', 'wordmark-christmas-light.png', (155, 28, 28))
+flat('logomark.png', 'logomark-halloween-light.png', (138, 74, 23))
+flat('logomark.png', 'logomark-christmas-light.png', (155, 28, 28))

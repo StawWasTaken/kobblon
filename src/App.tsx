@@ -8,6 +8,8 @@ import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ThemeProvider } from '@/hooks/useTheme'
+import { AppearanceProvider } from '@/hooks/useAppearance'
+import { ClaimAppearance } from '@/components/brand/ClaimAppearance'
 import { LoadingScreen } from '@/components/ui/Loading'
 import { bootIsUp, holdBoot, releaseBoot } from '@/lib/boot'
 import Landing from '@/pages/Landing'
@@ -111,7 +113,12 @@ export default function App() {
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <ThemeProvider>
       <AuthProvider>
+        <AppearanceProvider>
         <ToastProvider>
+          {/* The one appearance that is being given away, offered once. It
+              is mounted here rather than on a page because it is about the
+              account and not about where somebody happens to be. */}
+          <ClaimAppearance />
           {/* A page that will not draw says so, rather than leaving a blank
               rectangle with nothing to press. */}
           <Boundary>
@@ -235,6 +242,7 @@ export default function App() {
           </Suspense>
           </Boundary>
         </ToastProvider>
+        </AppearanceProvider>
       </AuthProvider>
     </ThemeProvider>
     </BrowserRouter>

@@ -30,6 +30,9 @@ import { useTitle } from '@/hooks/useTitle'
 import { Avatar } from '@/components/ui/Avatar'
 import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
+import { asset } from '@/lib/asset'
+import { useAppearance } from '@/hooks/useAppearance'
+import { APPEARANCES, LOOKS, type Appearance } from '@/lib/appearances'
 
 /*
  * The money section is keyed rather than named, because what the currency is
@@ -330,6 +333,105 @@ function Appearance() {
   )
 }
 
+/**
+ * The appearances this account has, and which one it is wearing.
+ *
+ * Staw: "theres a claim button under which claims it in their theme
+ * appearances (in settings so that they can change appearances when they
+ * want) ... those who did not claim it wont be able to use it, but when you
+ * claimed it you can use it whenever you want".
+ *
+ * So this lists what is actually theirs and nothing else. One that was
+ * never claimed is not drawn greyed out with a lock on it: a control that
+ * cannot do anything is worse than no control, and "here is a thing you
+ * cannot have" is not news anybody needs on their settings page. What is
+ * said instead is when each of them comes round, which is the part somebody
+ * can act on.
+ *
+ * It sits under Mode rather than replacing it, because they are two
+ * different questions - the mode is about the light in the room and stays
+ * on this device, the appearance is about the account and travels with it.
+ */
+export function Appearances() {
+  const { appearance, owned, wear } = useAppearance()
+  const say = useToast()
+  const [changing, setChanging] = useState<string | null>(null)
+
+  const put = async (which: Appearance) => {
+    if (which === appearance) return
+    setChanging(which)
+    try {
+      await wear(which)
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not go through.', 'error')
+    } finally {
+      setChanging(null)
+    }
+  }
+
+  const missing = APPEARANCES.filter((one) => !owned.includes(one))
+
+  return (
+    <Card className="p-5 sm:p-6">
+      <h2 className="font-display text-lg font-extrabold">Theme appearances</h2>
+      <p className="mt-0.5 text-sm text-muted">
+        Yours for good once claimed, on whatever you sign in on.
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {APPEARANCES.filter((one) => owned.includes(one)).map((one) => {
+          const look = LOOKS[one]
+          const wearing = appearance === one
+          return (
+            <button
+              key={one}
+              onClick={() => void put(one)}
+              aria-pressed={wearing}
+              disabled={changing === one}
+              className={cn(
+                'overflow-hidden rounded-xl border text-left transition-colors',
+                wearing
+                  ? 'border-brand-bright bg-brand/15'
+                  : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
+              )}
+            >
+              {/* The chrome of the appearance itself, with its own mark on
+                  it - which is the only honest swatch for a thing whose
+                  whole job is what the bar looks like. */}
+              <span
+                data-appearance={one}
+                className="grid h-20 place-items-center bg-chrome"
+              >
+                <img
+                  src={asset(look.wordmark)}
+                  alt=""
+                  aria-hidden
+                  className="h-7 w-auto select-none"
+                />
+              </span>
+              <span className="flex items-center gap-2 p-4">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">{look.name}</span>
+                  <span className="block text-xs text-muted">{look.note}</span>
+                </span>
+                {wearing && <Glyph icon={faCheck} className="text-sm text-link" />}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {!!missing.length && (
+        <p className="mt-4 border-t border-ink-line pt-4 text-xs text-muted">
+          {missing.map((one) => LOOKS[one].when).join(' ')} A card shows up
+          while one is being given away, and claiming it is the only way to
+          keep it.
+        </p>
+      )}
+    </Card>
+  )
+}
+
 /* --------------------------------------------------------------- currency */
 
 function Money() {
@@ -495,6 +597,7 @@ export default function Settings() {
           {section === 'Security' && <Security />}
           {section === 'Connections' && <DiscordLink />}
           {section === 'Appearance' && <Appearance />}
+          {section === 'Appearance' && <Appearances />}
           {section === 'money' && <Money />}
           {section === 'Safety' && <Safety />}
         </div>

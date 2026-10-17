@@ -1,0 +1,11 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const p = await b.newPage({ viewport: { width: 900, height: 1400 } })
+p.on('pageerror', (e) => console.log('[throw]', String(e).slice(0, 300)))
+await p.goto('http://localhost:5343/tools/site/appearance-preview.html', { waitUntil: 'networkidle' })
+await p.waitForTimeout(1500)
+await p.screenshot({ path: '/tmp/appearance-dark.png', fullPage: true })
+await p.locator('button').first().click()
+await p.waitForTimeout(600)
+await p.screenshot({ path: '/tmp/appearance-light.png', fullPage: true })
+await b.close()

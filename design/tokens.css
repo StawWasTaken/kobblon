@@ -56,4 +56,53 @@
   --on-chrome: 16 22 64;
   --face-bone: 122 130 145;
 }
+
+/*
+ * The seasons.
+ *
+ * Staw: "the sidebar&topbar also gets an orange like colour, its
+ * proportional to the original blue colour but into orange". So these are
+ * not picked: they are the blues above with the hue moved and the
+ * saturation and the lightness left exactly where they were, which is what
+ * "proportional" means and is why the dark one is still dark and the light
+ * one is still barely tinted. Halloween is at 26 degrees, christmas at 148.
+ *
+ * Written for any element rather than only the document, so a card can
+ * show an appearance that is not the one being worn - which is what the
+ * popup offering one does, and the swatches in Settings.
+ *
+ * Only the chrome moves. `--ink`, the cards, the text and the lines are
+ * untouched, because the page is still the page; and brand blue, Space
+ * green and the red are not in this file at all, so a button means the
+ * same thing in every season.
+ */
+[data-appearance='halloween'] {
+  --chrome: 130 69 22;
+  --media: 73 39 13;
+  --field: 63 34 11;
+  --on-chrome: 255 255 255;
+}
+
+:root[data-theme='light'] [data-appearance='halloween'],
+:root[data-appearance='halloween'][data-theme='light'] {
+  --chrome: 255 232 214;
+  --media: 244 234 226;
+  --field: 255 255 255;
+  --on-chrome: 64 37 16;
+}
+
+[data-appearance='christmas'] {
+  --chrome: 18 84 50;
+  --media: 13 56 34;
+  --field: 11 48 29;
+  --on-chrome: 255 255 255;
+}
+
+:root[data-theme='light'] [data-appearance='christmas'],
+:root[data-appearance='christmas'][data-theme='light'] {
+  --chrome: 214 255 233;
+  --media: 226 244 234;
+  --field: 255 255 255;
+  --on-chrome: 16 64 38;
+}
 }

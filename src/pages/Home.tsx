@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Weather } from '@/components/brand/Weather'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
@@ -129,6 +130,12 @@ export default function Home() {
 
   return (
     <Page width="wide">
+      {/* "sometimes theres effects around the website ... not that much
+          either, just sometime and somewhere". Home is the somewhere: it is
+          the page somebody lands on, it has room above the fold, and it is
+          not a page anybody is trying to read carefully. It draws nothing
+          at all unless a seasonal appearance is being worn. */}
+      <Weather className="pointer-events-none fixed inset-0 z-0 overflow-hidden" />
       <h1 className="mb-6 font-display text-3xl font-extrabold sm:text-4xl">Home</h1>
 
       <FriendsRail />

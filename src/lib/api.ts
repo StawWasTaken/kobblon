@@ -5363,3 +5363,39 @@ export async function refreshPortrait(userId: string): Promise<string | null> {
   }
   return url
 }
+
+/* ---------------------------------------------------------- appearances */
+
+/**
+ * The appearances this person may wear.
+ *
+ * `default` is in the answer for everybody and has no date on it. The rest
+ * are what they claimed, with the day they claimed it, which is the thing
+ * that makes a seasonal one worth having: it says they were here that year.
+ */
+export async function myAppearances() {
+  const rows = unwrap(await supabase.rpc('my_appearances'))
+  return (rows ?? []) as { appearance: string; claimed_at: string | null }[]
+}
+
+/**
+ * What is being given away today, or nothing.
+ *
+ * Asked of the database rather than worked out from the clock on this
+ * machine: a date here is a guess about a rule, and the rule lives where
+ * the claim is checked. A browser set to December does not get christmas.
+ */
+export async function appearanceOnOffer() {
+  const which = unwrap(await supabase.rpc('appearance_on_offer'))
+  return (which ?? null) as string | null
+}
+
+/** Take the one on offer. It is applied straight away, which Staw asked for. */
+export async function claimAppearance(which: string) {
+  unwrap(await supabase.rpc('claim_appearance', { which }))
+}
+
+/** Wear one that has already been claimed. */
+export async function wearAppearance(which: string) {
+  unwrap(await supabase.rpc('set_appearance', { which }))
+}

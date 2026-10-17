@@ -1,0 +1,12 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const p = await b.newPage({ viewport: { width: 900, height: 1700 } })
+p.on('pageerror', (e) => console.log('[throw]', String(e).slice(0, 300)))
+await p.goto('http://localhost:5343/tools/site/appearance-preview.html', { waitUntil: 'networkidle' })
+await p.waitForTimeout(1500)
+await p.locator('[role="dialog"] button').first().click().catch(() => {})
+await p.waitForTimeout(400)
+const card = p.locator('h2', { hasText: 'Theme appearances' }).first()
+await card.scrollIntoViewIfNeeded()
+await p.screenshot({ path: '/tmp/settings-appear.png', fullPage: true })
+await b.close()
