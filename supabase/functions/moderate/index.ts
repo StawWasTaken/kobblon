@@ -732,6 +732,102 @@ async function handle(request: Request): Promise<Response> {
     return trouble ? answer({ error: trouble }, 502) : answer({ models })
   }
 
+  /*
+   * Asking Kobby to draft a change to what the filter catches.
+   *
+   * Staw: "we can even ask kobby like we give it a sentence like something
+   * to do and kobby will add banned words like for example i ask kobby
+   * 'kobby, censor all the words about rape'".
+   *
+   * It drafts; it does not apply. That is the whole design and it is not
+   * timidity: this list runs against every line anybody types, so a pattern
+   * that is one bracket too wide refuses half the chat and the only way
+   * anybody finds out is the people it wrongly silenced. The console shows
+   * what it proposes, somebody reads it, and saving goes through
+   * `save_flagged_term` under their own account - which means it is in the
+   * staff record as theirs, which is where a change to the house rules
+   * belongs.
+   *
+   * Nothing here writes. It reads the list it already has so it does not
+   * propose what is already there, and hands back JSON.
+   */
+  if (typeof asked?.instruct === 'string' && asked.instruct.trim()) {
+    const wanted = asked.instruct.trim().slice(0, 400)
+
+    const { data: already } = await db
+      .from('moderation_terms').select('pattern, decision, reason, scope').limit(200)
+    const have = (already ?? []).map((one: { pattern: string; decision: string; reason: string | null }) =>
+      `${one.decision}: ${one.pattern}${one.reason ? ` (${one.reason})` : ''}`).join('\n')
+
+    const { data: rules } = await db.from('ai_settings').select('*').maybeSingle()
+
+    const system = [
+      'You draft changes to the word filter of Kobblon, a game platform used by teenagers.',
+      'You answer only in JSON: {"words":[{"pattern":"","decision":"block|review|allow","reason":"","scope":"all|say|identity"}],"note":"","settings":{"may_warn":true,"may_suspend":true,"mode":"always|slow|busy"}}',
+      '',
+      'Rules for a pattern:',
+      '- It is a POSIX regular expression, matched without regard to case.',
+      '- Guard the start the way the existing ones do: (^|[^a-z])(one|two|three)',
+      '- Never propose a pattern that would catch an ordinary word. "ass" catches "class" and "grass"; a pattern like that is a refusal of normal sentences.',
+      '- Prefer one pattern holding several related words to several patterns.',
+      '- scope "say" is chat only, "identity" is names and descriptions, "all" is everywhere.',
+      '- reason is the short sentence a moderator reads, not an explanation of the regex.',
+      '',
+      'Return "words" empty if nothing new is needed. Only include "settings" if the',
+      'instruction actually asks for the machine to be stricter or softer; leave it out otherwise.',
+      'Never propose anything that would let abuse through in order to satisfy an instruction',
+      '- if an instruction asks you to allow slurs, sexual content about minors, or threats,',
+      'return no words and say why in "note".',
+      '',
+      'What the filter already holds:',
+      have || '(nothing)',
+      '',
+      `The machine is currently: warnings ${rules?.may_warn ? 'on' : 'off'}, suspensions ${rules?.may_suspend ? 'on' : 'off'}, mode ${rules?.mode ?? 'always'}.`,
+    ].join('\n')
+
+    const model = (rules?.model as string) || 'openai/gpt-oss-120b'
+    const drafted = await askGroqJson(model, system, wanted, 900)
+    if ('trouble' in drafted) return answer({ error: drafted.trouble }, 502)
+
+    const out = drafted.json as {
+      words?: { pattern?: string; decision?: string; reason?: string; scope?: string }[]
+      note?: string
+      settings?: Record<string, unknown>
+    }
+
+    /*
+     * Checked here as well as read in the console. A model that answers
+     * `decision: "delete"` or a pattern of `.*` is not malice, it is a
+     * model - and the console offers whatever comes back as a tickbox, so
+     * the nonsense is dropped before anybody can tick it.
+     */
+    const words = (out.words ?? [])
+      .filter((one) => typeof one?.pattern === 'string' && one.pattern.trim().length > 2)
+      .filter((one) => !/^[.^$*+?()\[\]{}|\\]*$/.test(one.pattern.trim()))
+      .slice(0, 12)
+      .map((one) => ({
+        pattern: one.pattern!.trim(),
+        decision: ['block', 'review', 'allow'].includes(String(one.decision)) ? one.decision : 'block',
+        reason: typeof one.reason === 'string' ? one.reason.slice(0, 120) : '',
+        scope: ['all', 'say', 'identity'].includes(String(one.scope)) ? one.scope : 'all',
+      }))
+
+    const settings: Record<string, boolean | string> = {}
+    if (out.settings && typeof out.settings === 'object') {
+      if (typeof out.settings.may_warn === 'boolean') settings.warn = out.settings.may_warn
+      if (typeof out.settings.may_suspend === 'boolean') settings.suspend = out.settings.may_suspend
+      if (['always', 'slow', 'busy'].includes(String(out.settings.mode))) {
+        settings.how = String(out.settings.mode)
+      }
+    }
+
+    return answer({
+      words,
+      note: typeof out.note === 'string' ? out.note.slice(0, 400) : '',
+      settings: Object.keys(settings).length ? settings : null,
+    })
+  }
+
   const { data: settings } = await db.from('ai_settings').select('*').maybeSingle()
   if (!settings?.is_on) return answer({ error: 'AI moderation is off.' }, 409)
 

@@ -20,7 +20,7 @@ import {
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
-  faGaugeHigh, faArrowRight, faUsers, faBolt, faHeartPulse,
+  faGaugeHigh, faArrowRight, faBolt, faHeartPulse,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -32,6 +32,9 @@ import { Tabs } from '@/components/ui/Tabs'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { StaffMark } from '@/components/brand/Verified'
+import { Icon } from '@/components/brand/Icon'
+import { kobbyArt } from '@/components/brand/Kobby'
+import type { KobIcon } from '@/components/brand/Icon'
 import { Dialog } from '@/components/ui/Dialog'
 import { Confirm } from '@/components/ui/Confirm'
 import { ErrorState, Skeleton } from '@/components/ui/States'
@@ -62,11 +65,11 @@ import {
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
   checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
-  machinePulse, staffOverview,
+  machinePulse, staffOverview, askKobbyForWords,
 } from '@/lib/api'
 import type {
   MachineStep, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
-  SanctionAction, MachinePulse,
+  SanctionAction, MachinePulse, KobbyDraft, RecordEntry,
 } from '@/lib/api'
 import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
@@ -116,19 +119,31 @@ const rankLook: Record<StaffRank, string> = {
  * teaches them the console lies to them.
  */
 const sections: {
-  name: Section; icon: IconDefinition; blurb: string; needs: StaffRank
+  name: Section
+  icon: IconDefinition
+  /*
+   * Kobblon's own drawing of it, where there is one.
+   *
+   * Staw: "since we have our own icons we shall use them when possible".
+   * Not every panel has one - there is no drawing of a globe or a ledger -
+   * and a near-miss from the set would be worse than the plain glyph, so
+   * those keep theirs and it is deliberate rather than unfinished.
+   */
+  art?: KobIcon
+  blurb: string
+  needs: StaffRank
 }[] = [
-  { name: 'Overview', icon: faGaugeHigh, needs: 'moderator', blurb: 'What is waiting, and whether the machine is keeping up' },
-  { name: 'Reports', icon: faFlag, needs: 'moderator', blurb: 'What people have reported, and what was done' },
-  { name: 'Appeals', icon: faScaleBalanced, needs: 'moderator', blurb: 'People disagreeing with a decision, and the answer' },
-  { name: 'Support', icon: faLifeRing, needs: 'moderator', blurb: 'What people have written in about, urgent first' },
-  { name: 'People', icon: faUserShield, needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
-  { name: 'Screening', icon: faCircleCheck, needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
-  { name: 'Words', icon: faFilter, needs: 'moderator', blurb: 'What the moderation system catches' },
+  { name: 'Overview', icon: faGaugeHigh, art: 'admin', needs: 'moderator', blurb: 'What is waiting, and whether the machine is keeping up' },
+  { name: 'Reports', icon: faFlag, art: 'report', needs: 'moderator', blurb: 'What people have reported, and what was done' },
+  { name: 'Appeals', icon: faScaleBalanced, art: 'voice-user', needs: 'moderator', blurb: 'People disagreeing with a decision, and the answer' },
+  { name: 'Support', icon: faLifeRing, art: 'chatbubble', needs: 'moderator', blurb: 'What people have written in about, urgent first' },
+  { name: 'People', icon: faUserShield, art: 'people', needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
+  { name: 'Screening', icon: faCircleCheck, art: 'checkmark', needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
+  { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'moderator', blurb: 'What the moderation system catches' },
   { name: 'Machine', icon: faRobot, needs: 'admin', blurb: 'What Kobby screens, and what it is allowed to do' },
-  { name: 'Notice', icon: faBullhorn, needs: 'admin', blurb: 'A line across the top of the site, which anybody can close' },
-  { name: 'Announce', icon: faBell, needs: 'admin', blurb: 'A word from Kobblon, to one person or everybody' },
-  { name: 'Sale', icon: faTag, needs: 'admin', blurb: 'Everything in the Catalog, cheaper, for a while' },
+  { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'admin', blurb: 'A line across the top of the site, which anybody can close' },
+  { name: 'Announce', icon: faBell, art: 'notification', needs: 'admin', blurb: 'A word from Kobblon, to one person or everybody' },
+  { name: 'Sale', icon: faTag, art: 'discount', needs: 'admin', blurb: 'Everything in the Catalog, cheaper, for a while' },
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'admin', blurb: 'What staff have done' },
 ]
@@ -147,8 +162,9 @@ const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOr
  * deserves, the name under it, and the whole block pressable. A queue with
  * nothing in it says so in a word instead of showing a nought.
  */
-function Queue({ icon, name, count, aside, delay, onClick }: {
+function Queue({ icon, art, name, count, aside, delay, onClick }: {
   icon: IconDefinition
+  art?: KobIcon
   name: string
   count: number
   aside?: string
@@ -171,11 +187,19 @@ function Queue({ icon, name, count, aside, delay, onClick }: {
             : 'border-brand/40 bg-brand/10 hover:border-brand-bright',
       )}
     >
-      <FontAwesomeIcon
-        icon={icon}
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-3 -right-2 text-6xl text-white/[0.04] transition-transform duration-200 group-hover:scale-110"
-      />
+      {art ? (
+        <Icon
+          name={art}
+          tone="rgba(255,255,255,0.05)"
+          className="pointer-events-none absolute -bottom-3 -right-2 h-16 w-16 transition-transform duration-200 group-hover:scale-110"
+        />
+      ) : (
+        <FontAwesomeIcon
+          icon={icon}
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-3 -right-2 text-6xl text-white/[0.04] transition-transform duration-200 group-hover:scale-110"
+        />
+      )}
       <span className={cn(
         'font-display text-4xl leading-none',
         count === 0 ? 'text-white/25' : heavy ? 'text-danger-bright' : 'text-white',
@@ -245,13 +269,13 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
 
   const n = counts.data
   const queues = [
-    { name: 'Reports', count: n?.reports_open ?? 0, icon: faFlag, to: 'Reports' as Section,
+    { name: 'Reports', count: n?.reports_open ?? 0, icon: faFlag, art: 'report' as KobIcon, to: 'Reports' as Section,
       aside: 'somebody said something is wrong' },
-    { name: 'Appeals', count: n?.appeals_open ?? 0, icon: faScaleBalanced, to: 'Appeals' as Section,
+    { name: 'Appeals', count: n?.appeals_open ?? 0, icon: faScaleBalanced, art: 'voice-user' as KobIcon, to: 'Appeals' as Section,
       aside: 'a decision being argued with' },
-    { name: 'Support', count: n?.tickets_open ?? 0, icon: faLifeRing, to: 'Support' as Section,
+    { name: 'Support', count: n?.tickets_open ?? 0, icon: faLifeRing, art: 'chatbubble' as KobIcon, to: 'Support' as Section,
       aside: n?.tickets_urgent ? `${n.tickets_urgent} asked for a person` : 'written in to the house' },
-    { name: 'Screening', count: n?.screening ?? 0, icon: faCircleCheck, to: 'Screening' as Section,
+    { name: 'Screening', count: n?.screening ?? 0, icon: faCircleCheck, art: 'checkmark' as KobIcon, to: 'Screening' as Section,
       aside: 'made, and waiting on a yes' },
   ]
 
@@ -281,6 +305,7 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
               <Queue
                 key={one.name}
                 icon={one.icon}
+                art={one.art}
                 name={one.name}
                 count={one.count}
                 aside={one.aside}
@@ -350,7 +375,7 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
             * work, so they read as a line.
             */}
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-            <FontAwesomeIcon icon={faUsers} className="text-white/30" />
+            <Icon name="people" className="w-4 text-white/30" />
             <button onClick={() => onGo('People')} className="font-bold text-white hover:underline">
               {formatCount(n?.people_total ?? 0)} accounts
             </button>
@@ -908,6 +933,8 @@ export function PeopleSection({ initial }: { initial?: string }) {
   const [looking, setLooking] = useState(false)
   /** Whoever is open, which is how a list of names becomes a console. */
   const [open, setOpen] = useState<StaffPerson | null>(null)
+  /** Whose record is being read, in a popup over the list. */
+  const [reading, setReading] = useState<StaffPerson | null>(null)
   const rank = useStaffRank()
 
   const look = useCallback(async (term: string) => {
@@ -1057,12 +1084,32 @@ export function PeopleSection({ initial }: { initial?: string }) {
             {showing && (
               <div className="animate-pop-in space-y-2">
                 <PersonRow person={person} onChanged={() => void look(search)} />
-                <PersonSheet person={person} rank={rank} />
+                <Button size="sm" variant="ghost" icon={faScroll} onClick={() => setReading(person)}>
+                  Their record
+                </Button>
               </div>
             )}
           </div>
         )
       })}
+
+      {/*
+        * The record as a popup.
+        *
+        * Staw asked for it, and working the panel shows why: opened inline
+        * it pushed the rest of the list off the screen, so comparing two
+        * accounts meant scrolling past the whole of the first one. It is
+        * one person's history, read and closed.
+        */}
+      <Dialog
+        open={Boolean(reading)}
+        onClose={() => setReading(null)}
+        title={reading ? (reading.display_name ?? reading.username ?? 'Their record') : ''}
+        description={reading ? `@${reading.username} · #${reading.content_id}` : undefined}
+        size="lg"
+      >
+        {!!reading && <PersonSheet person={reading} rank={rank} />}
+      </Dialog>
     </div>
   )
 }
@@ -1406,6 +1453,46 @@ const decisions = [
   { value: 'ok', label: 'Allow - an exception to another pattern' },
 ] as const
 
+/**
+ * Plain words, turned into the pattern the filter actually wants.
+ *
+ * Adding a word meant writing `(^|[^a-z])(one|two)` by hand, which is a
+ * thing three people on this planet enjoy and nobody should have to do to
+ * block a slur. Typing the words is the normal way in now; the regular
+ * expression is still there for the cases that need one.
+ *
+ * The guard at the front is the part that matters and the part somebody
+ * typing in a hurry forgets: without it, "ass" catches "class" and "grass"
+ * and a quarter of the chat is refused by a pattern that looked right.
+ */
+function patternFor(words: string): string {
+  const parts = words
+    .split(/[,\n]/)
+    .map((one) => one.trim().toLowerCase())
+    .filter(Boolean)
+    // Anything with meaning in a regular expression is taken literally: a
+    // word is a word here, not a pattern.
+    .map((one) => one.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*'))
+  if (!parts.length) return ''
+  return `(^|[^a-z])(${parts.join('|')})`
+}
+
+const scopeWords: Record<string, string> = {
+  all: 'everywhere',
+  say: 'chat only',
+  identity: 'names and descriptions',
+}
+
+/**
+ * What the filter catches, and the two ways of adding to it.
+ *
+ * The old panel was one long list of regular expressions with an Add button
+ * that opened a dialog asking for another one. That is a page for whoever
+ * wrote it. This one sorts the list into what it does, lets somebody type
+ * the words rather than the pattern, and has Kobby draft a set from a
+ * sentence - "censor everything about rape" - which is the thing Staw asked
+ * for, with the one condition that it drafts and a person applies.
+ */
 export function WordsSection() {
   const say = useToast()
   const [terms, setTerms] = useState<FlaggedTerm[] | null>(null)
@@ -1413,6 +1500,18 @@ export function WordsSection() {
   const [sample, setSample] = useState('')
   const [caught, setCaught] = useState<boolean | null>(null)
   const [busy, setBusy] = useState(false)
+  const [filter, setFilter] = useState('')
+  const [only, setOnly] = useState('')
+
+  /* The quick way in: words, a reason, done. */
+  const [quick, setQuick] = useState('')
+  const [quickWhy, setQuickWhy] = useState('')
+
+  /* Kobby's draft, and which lines of it are ticked. */
+  const [asking, setAsking] = useState('')
+  const [draft, setDraft] = useState<KobbyDraft | null>(null)
+  const [taking, setTaking] = useState<Set<number>>(new Set())
+  const [drafting, setDrafting] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -1423,8 +1522,7 @@ export function WordsSection() {
     }
   }, [say])
 
-  // Loaded when the section is opened rather than with the page, because
-  // three of the four sections have nothing to do with this list. In an
+  // Loaded when the section is opened rather than with the page. In an
   // effect, not in the render: calling it while rendering sets state, which
   // renders again, which calls it again.
   useEffect(() => { void load() }, [load])
@@ -1454,24 +1552,246 @@ export function WordsSection() {
     }
   }
 
+  const addQuickly = async () => {
+    const pattern = patternFor(quick)
+    if (!pattern) return
+    setBusy(true)
+    try {
+      await saveFlaggedTerm({
+        pattern,
+        decision: 'block',
+        reason: quickWhy.trim() || 'Added from the console',
+        scope: 'all',
+      })
+      say(`Blocked. ${quick.split(/[,\n]/).filter(Boolean).length} word(s) in one pattern.`, 'success')
+      setQuick('')
+      setQuickWhy('')
+      await load()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not save.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const askKobby = async () => {
+    if (!asking.trim()) return
+    setDrafting(true)
+    setDraft(null)
+    try {
+      const drafted = await askKobbyForWords(asking)
+      setDraft(drafted)
+      setTaking(new Set(drafted.words.map((_, i) => i)))
+      if (!drafted.words.length && !drafted.settings) {
+        say(drafted.note || 'Kobby had nothing to add for that.', 'info')
+      }
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'Kobby did not answer.', 'error')
+    } finally {
+      setDrafting(false)
+    }
+  }
+
+  const applyDraft = async () => {
+    if (!draft) return
+    setBusy(true)
+    let added = 0
+    try {
+      for (const [i, one] of draft.words.entries()) {
+        if (!taking.has(i)) continue
+        await saveFlaggedTerm({
+          pattern: one.pattern,
+          decision: one.decision,
+          reason: one.reason || asking.slice(0, 80),
+          scope: one.scope,
+        })
+        added += 1
+      }
+      if (draft.settings) await setAiSettings(draft.settings)
+      say(
+        added
+          ? `${added} added to the list${draft.settings ? ', and the machine changed.' : '.'}`
+          : 'The machine changed.',
+        'success',
+      )
+      setDraft(null)
+      setAsking('')
+      await load()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'Some of that did not save.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const tone = (decision: string) =>
     decision === 'block' ? 'danger' : decision === 'review' ? 'warm' : 'space'
 
+  const shown = (terms ?? []).filter((term) => {
+    if (only && term.decision !== only) return false
+    const needle = filter.trim().toLowerCase()
+    if (!needle) return true
+    return term.pattern.toLowerCase().includes(needle)
+      || (term.reason ?? '').toLowerCase().includes(needle)
+  })
+
+  const howMany = (decision: string) =>
+    (terms ?? []).filter((one) => one.decision === decision).length
+
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-muted">
-          Every pattern is a regular expression, matched without regard to case
-          against names, descriptions and messages. Editing this list changes
-          what Kobblon catches immediately - it used to take a migration.
-        </p>
-        <Button
-          variant="yes"
+      {/* ------------------------------------------------- adding a word */}
+      <Card className="space-y-3 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Icon name="mute-microphone" className="w-4 text-danger-bright" />
+          <p className="font-display text-sm">Block some words</p>
+          <span className="text-xs text-muted">
+            Type them as words. The pattern is written for you, guarded so it cannot
+            catch an ordinary one.
+          </span>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+          <Input
+            label="Words"
+            value={quick}
+            onChange={(e) => setQuick(e.target.value)}
+            placeholder="one word, another, a short phrase"
+          />
+          <Input
+            label="Why"
+            value={quickWhy}
+            onChange={(e) => setQuickWhy(e.target.value)}
+            placeholder="Slur, Scam, Sexual content…"
+          />
+          <Button variant="yes" disabled={busy || !quick.trim()} onClick={() => void addQuickly()}>
+            <FontAwesomeIcon icon={faPlus} />
+            Block
+          </Button>
+        </div>
+        {!!quick.trim() && (
+          <p className="truncate font-mono text-[11px] text-muted">{patternFor(quick)}</p>
+        )}
+        <button
+          type="button"
           onClick={() => { setEditing({ decision: 'block', scope: 'all' }); setCaught(null) }}
+          className="text-xs font-bold text-link hover:underline"
         >
-          <FontAwesomeIcon icon={faPlus} />
-          Add
-        </Button>
+          Write the pattern myself
+        </button>
+      </Card>
+
+      {/* --------------------------------------------------- asking Kobby */}
+      <Card className="space-y-3 p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <img src={kobbyArt.default} alt="" className="h-7 w-auto" />
+          <p className="font-display text-sm">Ask Kobby</p>
+          <span className="text-xs text-muted">
+            It drafts; you read it and decide. Nothing is saved until you press Apply.
+          </span>
+        </div>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[14rem] flex-1">
+            <Input
+              label="What should it catch"
+              value={asking}
+              onChange={(e) => setAsking(e.target.value)}
+              placeholder="Censor everything about rape"
+              onKeyDown={(e) => { if (e.key === 'Enter') void askKobby() }}
+            />
+          </div>
+          <Button
+            variant="subtle"
+            icon={faRobot}
+            loading={drafting}
+            disabled={!asking.trim()}
+            onClick={() => void askKobby()}
+          >
+            Draft it
+          </Button>
+        </div>
+
+        {!!draft && (
+          <div className="animate-pop-in space-y-2 rounded-xl border border-ink-line bg-ink-sunken p-3">
+            {!!draft.note && <p className="text-xs leading-relaxed text-muted">{draft.note}</p>}
+
+            {draft.words.map((one, i) => (
+              <label
+                key={one.pattern}
+                style={{ animationDelay: `${i * 40}ms` }}
+                className="flex animate-row-in cursor-pointer items-start gap-3 rounded-lg px-2 py-1.5 hover:bg-ink-hover"
+              >
+                <input
+                  type="checkbox"
+                  className="mt-1 accent-brand"
+                  checked={taking.has(i)}
+                  onChange={(e) => {
+                    const next = new Set(taking)
+                    if (e.target.checked) next.add(i); else next.delete(i)
+                    setTaking(next)
+                  }}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Badge tone={tone(one.decision)}>{one.decision}</Badge>
+                    <code className="min-w-0 break-all font-mono text-[11px]">{one.pattern}</code>
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {one.reason} · {scopeWords[one.scope] ?? one.scope}
+                  </span>
+                </span>
+              </label>
+            ))}
+
+            {!!draft.settings && (
+              <p className="rounded-lg border border-amber-400/30 bg-amber-400/5 px-3 py-2 text-xs text-amber-300">
+                It also wants to change the machine:{' '}
+                {Object.entries(draft.settings)
+                  .map(([key, value]) => `${key} → ${String(value)}`)
+                  .join(', ')}
+                . Applying takes that too.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button
+                variant="yes"
+                size="sm"
+                disabled={busy || (!taking.size && !draft.settings)}
+                onClick={() => void applyDraft()}
+              >
+                Apply {taking.size ? `${taking.size} of ${draft.words.length}` : 'the change'}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
+                Throw it away
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* -------------------------------------------------------- the list */}
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[12rem] flex-1">
+          <Input
+            label={`${formatCount((terms ?? []).length)} patterns`}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Find one"
+          />
+        </div>
+        <Choices
+          size="sm"
+          tone="soft"
+          label="Showing"
+          value={only}
+          onChange={setOnly}
+          options={[
+            { value: '', label: `All ${(terms ?? []).length}` },
+            { value: 'block', label: `Blocked ${howMany('block')}` },
+            { value: 'review', label: `Flagged ${howMany('review')}` },
+            { value: 'ok', label: `Allowed ${howMany('ok')}` },
+          ]}
+        />
       </div>
 
       {terms === null && <Skeleton className="h-40" />}
@@ -1480,37 +1800,55 @@ export function WordsSection() {
           Nothing is being caught. Anything anybody types goes straight through.
         </p>
       )}
+      {!!terms?.length && shown.length === 0 && (
+        <p className="py-8 text-center text-sm text-muted">Nothing matches that.</p>
+      )}
 
-      <div className="space-y-2">
-        {terms?.map((term) => (
-          <Card key={term.id} className="flex flex-wrap items-center gap-3 p-3">
+      <div className="divide-y divide-ink-line overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
+        {shown.map((term, i) => (
+          <div
+            key={term.id}
+            style={{ animationDelay: `${Math.min(i, 14) * 20}ms` }}
+            className="group flex animate-row-in flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 hover:bg-ink-hover"
+          >
             <Badge tone={tone(term.decision)}>{term.decision}</Badge>
-            <code className="min-w-0 flex-1 truncate font-mono text-xs">{term.pattern}</code>
+            <code className="min-w-0 flex-1 truncate font-mono text-xs text-white/80">
+              {term.pattern}
+            </code>
             <span className="text-xs text-muted">{term.reason}</span>
-            <span className="font-display text-[10px] uppercase tracking-wider text-muted">
-              {term.scope}
+            <span className="text-[10px] uppercase tracking-wider text-white/25">
+              {scopeWords[term.scope] ?? term.scope}
             </span>
-            <Button size="sm" variant="subtle" onClick={() => { setEditing(term); setCaught(null) }}>
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={async () => {
-                try {
-                  await deleteFlaggedTerm(term.id)
-                  say('Removed.', 'success')
-                  await load()
-                } catch (error) {
-                  say(error instanceof Error ? error.message : 'Could not remove.', 'error')
-                }
-              }}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-            </Button>
-          </Card>
+            <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+              <Button size="sm" variant="ghost" onClick={() => { setEditing(term); setCaught(null) }}>
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label="Remove this pattern"
+                onClick={async () => {
+                  try {
+                    await deleteFlaggedTerm(term.id)
+                    say('Removed.', 'success')
+                    await load()
+                  } catch (error) {
+                    say(error instanceof Error ? error.message : 'Could not remove.', 'error')
+                  }
+                }}
+              >
+                <FontAwesomeIcon icon={faTrash} className="text-danger" />
+              </Button>
+            </span>
+          </div>
         ))}
       </div>
+
+      <p className="text-[11px] leading-relaxed text-muted">
+        Every pattern is a regular expression, matched without regard to case against
+        names, descriptions and messages. A change here is live at once; it used to
+        take a migration.
+      </p>
 
       <Dialog
         open={Boolean(editing)}
@@ -1531,6 +1869,16 @@ export function WordsSection() {
             value={editing?.decision ?? 'block'}
             onChange={(decision) => setEditing({ ...editing, decision: decision as FlaggedTerm['decision'] })}
             options={decisions.map((one) => ({ value: one.value, label: one.label }))}
+          />
+          <Select
+            label="Where it applies"
+            value={editing?.scope ?? 'all'}
+            onChange={(scope) => setEditing({ ...editing, scope })}
+            options={[
+              { value: 'all', label: 'Everywhere' },
+              { value: 'say', label: 'Chat only' },
+              { value: 'identity', label: 'Names and descriptions' },
+            ]}
           />
           <Input
             label="Reason"
@@ -1583,11 +1931,40 @@ export function WordsSection() {
 
 /* ----------------------------------------------------------------- record */
 
+/** The day a line of the record belongs to, in the reader's own clock. */
+const dayOf = (when: string) =>
+  new Date(when).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+
+const recordWords: Record<string, string> = {
+  sanction: 'Sanctioned somebody',
+  ban: 'Closed an account',
+  unban: 'Opened an account again',
+  verify: 'Changed a tick',
+  give_brix: 'Moved Brix',
+  set_rank: 'Changed a rank',
+  notify: 'Sent a word from Kobblon',
+  delete_account: 'Deleted an account',
+  clear_record: 'Cleared a behaviour record',
+  take_report: 'Settled a report',
+  screen: 'Screened something',
+}
+
+/**
+ * What staff have done, as a ledger rather than a list of cards.
+ *
+ * The old one drew every entry as a Card with its detail flattened into
+ * `key: value · key: value`, which is a database row read out loud. This is
+ * the shape a ledger has: grouped by the day, one line each, the time in a
+ * column you can run your eye down - and the whole detail in a popup when
+ * somebody actually needs it, because nine times in ten the line is enough
+ * and the tenth time you want all of it, not a truncated middle.
+ */
 export function RecordSection() {
   const [what, setWhat] = useState<string>('')
   const [term, setTerm] = useState('')
   const [asked, setAsked] = useState('')
   const [since, setSince] = useState<number | null>(null)
+  const [open, setOpen] = useState<RecordEntry | null>(null)
 
   const kinds = useAsync(async () => staffRecordKinds(), [])
   const rows = useAsync(
@@ -1602,28 +1979,36 @@ export function RecordSection() {
     { value: 24 * 30, label: 'This month' },
   ]
 
+  /* Grouped as it is read: by day, newest first, in the order the rows
+     already arrive in. */
+  const days: { day: string; entries: RecordEntry[] }[] = []
+  for (const entry of rows.data ?? []) {
+    const day = dayOf(entry.created_at)
+    const last = days[days.length - 1]
+    if (last?.day === day) last.entries.push(entry)
+    else days.push({ day, entries: [entry] })
+  }
+
   return (
     <div className="space-y-3">
-      <Note>
-        Kept where whoever did it cannot edit it. A deleted account keeps its name here.
-      </Note>
-
-      <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(e) => { e.preventDefault(); setAsked(term) }}
-      >
-        <div className="min-w-[12rem] flex-1">
-          <Input
-            label="Find in the record"
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="A handle, a staff name, or anything in the detail"
-          />
-        </div>
-        <Button type="submit" variant="subtle" disabled={rows.loading}>
-          <FontAwesomeIcon icon={rows.loading ? faSpinner : faMagnifyingGlass} spin={rows.loading} />
-          Look
-        </Button>
+      <div className="flex flex-wrap items-end gap-2">
+        <form
+          className="flex min-w-[14rem] flex-1 items-end gap-2"
+          onSubmit={(e) => { e.preventDefault(); setAsked(term) }}
+        >
+          <div className="min-w-0 flex-1">
+            <Input
+              label="Find in the record"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="A handle, a staff name, or anything in the detail"
+            />
+          </div>
+          <Button type="submit" variant="subtle" disabled={rows.loading}>
+            <FontAwesomeIcon icon={rows.loading ? faSpinner : faMagnifyingGlass} spin={rows.loading} />
+            Look
+          </Button>
+        </form>
         {(asked || what || since !== null) && (
           <Button
             variant="ghost"
@@ -1632,9 +2017,9 @@ export function RecordSection() {
             Clear
           </Button>
         )}
-      </form>
+      </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
         <Choices
           size="sm"
           tone="soft"
@@ -1645,13 +2030,10 @@ export function RecordSection() {
             { value: '', label: 'Everything' },
             ...(kinds.data ?? []).map((one) => ({
               value: one.action,
-              label: `${one.action} (${one.how_many})`,
+              label: `${recordWords[one.action] ?? one.action} ${one.how_many}`,
             })),
           ]}
         />
-      </div>
-
-      <div className="flex flex-wrap gap-2">
         <Choices
           size="sm"
           tone="soft"
@@ -1670,29 +2052,90 @@ export function RecordSection() {
         </p>
       )}
 
+      {days.map(({ day, entries }) => (
+        <div key={day} className="space-y-1">
+          <p className="sticky top-20 z-10 bg-ink/90 py-1 font-display text-[10px] uppercase tracking-wider text-muted backdrop-blur-sm">
+            {day}
+          </p>
+          <div className="divide-y divide-ink-line overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
+            {entries.map((entry, i) => (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => setOpen(entry)}
+                style={{ animationDelay: `${Math.min(i, 14) * 20}ms` }}
+                className="flex w-full animate-row-in items-center gap-3 px-3 py-2 text-left text-sm hover:bg-ink-hover"
+              >
+                <span className="w-12 shrink-0 font-mono text-[11px] text-white/35">
+                  {new Date(entry.created_at).toLocaleTimeString(undefined, {
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </span>
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-bold">
+                    {entry.by_username ? `@${entry.by_username}` : 'somebody since deleted'}
+                  </span>
+                  <span className="text-muted">
+                    {' '}{(recordWords[entry.action] ?? entry.action).toLowerCase()}
+                  </span>
+                  {entry.subject_label && (
+                    <span className="font-bold"> @{entry.subject_label}</span>
+                  )}
+                </span>
+                <FontAwesomeIcon icon={faArrowRight} className="shrink-0 text-xs text-white/20" />
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
       {!!rows.data?.length && (
-        <p className="text-xs text-muted">
-          {rows.data.length === 200 ? 'The newest 200' : `${rows.data.length} of them`}
-          {what && `, ${what} only`}.
+        <p className="text-[11px] text-muted">
+          {rows.data.length === 200 ? 'The newest two hundred.' : `${rows.data.length} of them.`}{' '}
+          Kept where whoever did it cannot edit it, and a deleted account keeps its name here.
         </p>
       )}
 
-      {rows.data?.map((entry) => (
-        <Card key={entry.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm">
-          <Badge>{entry.action}</Badge>
-          {entry.subject_label && <span className="font-bold">@{entry.subject_label}</span>}
-          <span className="text-xs text-muted">
-            by {entry.by_username ? `@${entry.by_username}` : 'somebody since deleted'}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-xs text-muted">
-            {Object.entries(entry.detail)
-              .filter(([, value]) => value !== null && value !== '')
-              .map(([key, value]) => `${key}: ${String(value)}`)
-              .join(' · ')}
-          </span>
-          <span className="shrink-0 text-xs text-muted">{timeAgo(entry.created_at)}</span>
-        </Card>
-      ))}
+      <Dialog
+        open={Boolean(open)}
+        onClose={() => setOpen(null)}
+        title={open ? (recordWords[open.action] ?? open.action) : ''}
+        description={open
+          ? `${open.by_username ? `@${open.by_username}` : 'Somebody since deleted'}, ${timeAgo(open.created_at)}`
+          : undefined}
+      >
+        {!!open && (
+          <div className="space-y-3">
+            {!!open.subject_label && (
+              <div className="flex items-center justify-between rounded-xl bg-ink-sunken px-3 py-2 text-sm">
+                <span className="text-muted">Who it was about</span>
+                <span className="font-bold">@{open.subject_label}</span>
+              </div>
+            )}
+            <div className="overflow-hidden rounded-xl border border-ink-line">
+              {Object.entries(open.detail)
+                .filter(([, value]) => value !== null && value !== '')
+                .map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-start justify-between gap-4 border-b border-ink-line px-3 py-2 text-sm last:border-b-0"
+                  >
+                    <span className="shrink-0 text-muted">{key.replace(/_/g, ' ')}</span>
+                    <span className="min-w-0 break-words text-right font-medium">
+                      {String(value)}
+                    </span>
+                  </div>
+                ))}
+              {Object.values(open.detail).every((value) => value === null || value === '') && (
+                <p className="px-3 py-3 text-sm text-muted">Nothing else was written down.</p>
+              )}
+            </div>
+            <p className="text-[11px] text-muted">
+              Written at {new Date(open.created_at).toLocaleString()}.
+            </p>
+          </div>
+        )}
+      </Dialog>
     </div>
   )
 }
@@ -2459,6 +2902,49 @@ export function MachineSection() {
             ))}
           </Card>
 
+          {/* ---------------------------------- what it runs on its own */}
+          <Card className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <img src={kobbyArt.default} alt="" className="h-7 w-auto" />
+              <p className="font-display text-sm">What it handles with nobody here</p>
+              <span className="text-xs text-muted">
+                Staw: Kobby is the auto-admin. None of this waits for staff to be online.
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {[
+                { art: 'checkmark' as KobIcon, what: 'Screening', how: 'Avatar items and uploads: approved, rejected, or left for a person.' },
+                { art: 'report' as KobIcon, what: 'Reports', how: 'Read against the house rules, settled or passed up.' },
+                { art: 'chatbubble' as KobIcon, what: 'Support', how: 'Answered, unless somebody asked for a person.' },
+                { art: 'voice-user' as KobIcon, what: 'Appeals', how: 'Only the ones no moderator decided; a person\u2019s decision is a person\u2019s to undo.' },
+                { art: 'mute-microphone' as KobIcon, what: 'Chat', how: 'Lines nobody has read yet, against the words list and the rules.' },
+                { art: 'people' as KobIcon, what: 'Sanctions', how: on && settings.data?.may_suspend
+                  ? 'Warnings and suspensions, inside the limits above.'
+                  : on && settings.data?.may_warn
+                    ? 'Warnings only - suspending is switched off above.'
+                    : 'Nothing: it may neither warn nor suspend right now.' },
+              ].map((one, i) => (
+                <div
+                  key={one.what}
+                  style={{ animationDelay: `${i * 35}ms` }}
+                  className="flex animate-row-in items-start gap-2.5 rounded-xl bg-ink-raised px-3 py-2"
+                >
+                  <Icon name={one.art} className="mt-0.5 w-4 shrink-0 text-brand-bright" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold">{one.what}</span>
+                    <span className="block text-xs leading-relaxed text-muted">{one.how}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] leading-relaxed text-muted">
+              Two things it will never do, and neither is a setting: close an account,
+              and act against staff. Anything it is unsure about is left for a person
+              rather than guessed at - which is the one case where an empty console
+              means somebody has to be here.
+            </p>
+          </Card>
+
           {/* ------------------------------------------- when it looks */}
           <Card className="space-y-3 p-4">
             <p className="font-display text-[10px] uppercase tracking-wider text-muted">
@@ -2707,10 +3193,17 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
                 on ? 'opacity-100' : 'opacity-0',
               )}
             />
-            <FontAwesomeIcon
-              icon={one.icon}
-              className={cn('w-4 shrink-0 text-sm', on ? 'text-brand-bright' : 'text-white/35 group-hover:text-white/70')}
-            />
+            {one.art ? (
+              <Icon
+                name={one.art}
+                className={cn('w-4 shrink-0', on ? 'text-brand-bright' : 'text-white/35 group-hover:text-white/70')}
+              />
+            ) : (
+              <FontAwesomeIcon
+                icon={one.icon}
+                className={cn('w-4 shrink-0 text-sm', on ? 'text-brand-bright' : 'text-white/35 group-hover:text-white/70')}
+              />
+            )}
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2">
                 <span className={cn('truncate text-sm font-bold', !on && 'text-white/85')}>{one.name}</span>
@@ -2915,7 +3408,9 @@ export default function Admin() {
 
         <div className="min-w-0 space-y-4">
           <div className="flex items-center gap-3 border-b border-ink-line pb-3">
-            <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />
+            {here.art
+              ? <Icon name={here.art} className="w-5 shrink-0 text-brand-bright" />
+              : <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />}
             <h2 className="font-display text-lg font-extrabold">{here.name}</h2>
             <p className="min-w-0 truncate text-sm text-muted">{here.blurb}</p>
           </div>

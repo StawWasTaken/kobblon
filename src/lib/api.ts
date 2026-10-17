@@ -3981,6 +3981,38 @@ export async function staffOverview(): Promise<StaffOverview | null> {
   return rows?.[0] ?? null
 }
 
+/**
+ * Asking Kobby to draft a change to the word filter.
+ *
+ * It drafts and nothing else: what comes back is a proposal the console
+ * shows, and saving each line goes through `saveFlaggedTerm` under the
+ * account that ticked it - so a change to what the house catches is in the
+ * staff record as somebody's, not the machine's.
+ */
+export type KobbyDraft = {
+  words: {
+    pattern: string
+    decision: FlaggedTerm['decision']
+    reason: string
+    scope: string
+  }[]
+  note: string
+  /** Only when the instruction actually asked for the machine to change. */
+  settings: Partial<{ warn: boolean; suspend: boolean; how: 'always' | 'slow' | 'busy' }> | null
+}
+
+export async function askKobbyForWords(instruct: string): Promise<KobbyDraft> {
+  const { data, error } = await supabase.functions.invoke('moderate', { body: { instruct } })
+  if (error) {
+    const context = (error as { context?: Response }).context
+    if (!context) throw new Error(await whyNoFunction('moderate', error.message))
+    const said = await context.json?.().catch(() => null)
+    throw new Error(said?.error ?? error.message)
+  }
+  const out = data as KobbyDraft
+  return { words: out.words ?? [], note: out.note ?? '', settings: out.settings ?? null }
+}
+
 export async function groqModels(): Promise<string[]> {
   const { data, error } = await supabase.functions.invoke('moderate', { body: { list: true } })
   if (error) {

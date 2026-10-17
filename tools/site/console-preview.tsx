@@ -42,6 +42,26 @@ const answers: Record<string, unknown> = {
     { subject: 'asset', name: 'town-square.glb', waiting_minutes: 22 },
     { subject: 'report', name: 'A world called Test', waiting_minutes: 14 },
   ],
+  admin_terms: [
+    { id: 1, pattern: '(^|[^a-z])(admin|moderator|staff|official|kobbleston)', decision: 'review', reason: 'Sounds official', scope: 'identity', created_at: when(900) },
+    { id: 2, pattern: '(^|[^a-z])(nigg|f[a4]gg|tr[a4]nny|ret[a4]rd)', decision: 'block', reason: 'Slur', scope: 'all', created_at: when(900) },
+    { id: 3, pattern: '(^|[^a-z])(kys|kill\\s*your\\s*self)', decision: 'block', reason: 'Telling someone to hurt themselves', scope: 'all', created_at: when(900) },
+    { id: 4, pattern: '(^|[^a-z])(t\\.me|bit\\.ly|tinyurl)', decision: 'block', reason: 'Links cannot be posted in chat', scope: 'say', created_at: when(900) },
+    { id: 5, pattern: '(^|[^a-z])(free\\s*(brix|robux))', decision: 'block', reason: 'That is how people get scammed', scope: 'say', created_at: when(900) },
+  ],
+  staff_record_kinds: [
+    { action: 'sanction', how_many: 18 },
+    { action: 'verify', how_many: 4 },
+    { action: 'give_brix', how_many: 2 },
+  ],
+  staff_record: [
+    { id: 9, action: 'sanction', subject_label: 'troublemaker', by_username: 'stawrer',
+      detail: { rule: 'harassment', days: 3, why: 'Repeated after a warning.' }, created_at: when(70) },
+    { id: 8, action: 'verify', subject_label: 'previewer', by_username: 'stawrer',
+      detail: { verified: true }, created_at: when(300) },
+    { id: 7, action: 'give_brix', subject_label: 'previewer', by_username: 'stawrer',
+      detail: { amount: 250, why: 'Event prize' }, created_at: when(900) },
+  ],
   admin_find_people: [
     { id: '1', username: 'stawrer', display_name: 'Staw', avatar_url: null, content_id: 1001,
       pixels: 128400, is_verified: true, is_moderator: true, is_suspended: false,
