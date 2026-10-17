@@ -25,7 +25,7 @@ export function SignupForm({
   claiming?: boolean
   onClaimed?: () => void
 }) {
-  const { signUp, claimAccount } = useAuth()
+  const { signUp, signUpWithoutEmail, claimAccount } = useAuth()
 
   const [birthday, setBirthday] = useState<Birthday>(emptyBirthday)
   const [username, setUsername] = useState('')
@@ -109,9 +109,18 @@ export function SignupForm({
       if (claiming) {
         await claimAccount(details)
         onClaimed?.()
-      } else {
+      } else if (email.trim()) {
         await signUp(details)
         onSent(email)
+      } else {
+        /*
+         * No address, so no confirmation to wait for: the account is made
+         * behind the service role and this tab is signed in by the time
+         * the call comes back. `onSent('')` is what the page reads as
+         * "there is nothing to go and check".
+         */
+        await signUpWithoutEmail(details)
+        onSent('')
       }
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : 'That did not go through. Try again.' })
@@ -153,14 +162,25 @@ export function SignupForm({
         />
       </Reveal>
 
+      {/*
+        * Optional, and said so on the label rather than in a note
+        * underneath, because a field that looks required is required.
+        *
+        * Staw: "make that emails are not required to make a kobblon
+        * account". What an address is actually for is getting back in when
+        * a password is forgotten, so that is what the hint says - there is
+        * no other way back, and somebody deciding to skip it should be
+        * deciding that rather than finding out later.
+        */}
       <Input
         label="Email"
+        labelNote="optional"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         autoComplete="email"
-        required
         error={errors.email}
+        hint="Without one there is no way to reset a forgotten password."
       />
 
       <Input

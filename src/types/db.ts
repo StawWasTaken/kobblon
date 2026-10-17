@@ -16,6 +16,10 @@ export type Profile = {
   is_admin: boolean
   is_verified: boolean
   is_guest: boolean
+  /** False when the account was made without one, or is still a guest. */
+  has_email?: boolean
+  /** Staff made this guest real; the site asks them for a password. */
+  must_set_password?: boolean
   pixels: number
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null

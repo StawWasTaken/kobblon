@@ -8,6 +8,7 @@ import { NoticeBar } from './NoticeBar'
 import { ChatDock } from '@/components/chat/ChatDock'
 import { FriendRequestWatcher } from '@/components/social/FriendRequestToast'
 import { GuestNudge } from '@/components/auth/GuestNudge'
+import { SetPasswordCard } from '@/components/auth/SetPasswordCard'
 import { mobileNav } from './nav'
 import { cn } from '@/lib/cn'
 import { AdsProvider } from '@/components/ads/AdBanner'
@@ -48,6 +49,13 @@ export function AppShell() {
         </a>
 
         <AppTopbar onOpenNav={() => setNavOpen(true)} />
+        {/*
+          * Part of the bar rather than the top of the page: fixed directly
+          * under it, so it stays there while the page moves. Everything
+          * below starts under whatever height it is actually using, which
+          * `NoticeBar` measures and writes into `--notice-height`.
+          */}
+        <NoticeBar />
         <AppSidebar />
 
         {navOpen && (
@@ -59,9 +67,11 @@ export function AppShell() {
           </div>
         )}
 
-        <main id="main" className="pb-20 pt-14 lg:pb-0 lg:pl-56">
-          {/* Under the real bar, across the page, and closeable. */}
-          <NoticeBar />
+        <main
+          id="main"
+          className="pb-20 lg:pb-0 lg:pl-56"
+          style={{ paddingTop: 'calc(3.5rem + var(--notice-height, 0px))' }}
+        >
           {/* Pages put their own ad slots where they want them; this only
               makes sure two slots on one page do not land on one ad. */}
           <AdsProvider>
@@ -117,6 +127,7 @@ export function AppShell() {
       {/* A friend request that arrives while you are doing something else. */}
       <FriendRequestWatcher />
       <GuestNudge />
+      <SetPasswordCard />
     </ChatDock>
   )
 }

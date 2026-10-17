@@ -13,11 +13,11 @@
  * who is not staff and writes down what was done, which is why the record at
  * the bottom is a section rather than an afterthought.
  */
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
-  faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage,
+  faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage, faUserCheck,
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
   faGaugeHigh, faArrowRight, faBolt, faHeartPulse,
@@ -54,6 +54,7 @@ import { ruleWord } from '@/components/social/standing'
 import { avatarKindLabels, kindLabels } from '@/lib/kinds'
 import { useAsync } from '@/hooks/useAsync'
 import { cn } from '@/lib/cn'
+import { noticeColours, noticeStripes } from '@/components/layout/NoticeBar'
 import {
   deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff,
   staffRecord, staffRecordKinds,
@@ -61,7 +62,8 @@ import {
   saveFlaggedTerm, setStaffRank, setStanding, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
-  reportQueue, settleReport, wherePeopleAre, noticeNow, putUpNotice, takeDownNotice,
+  reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice,
+  type NoticeColour, makeAccountReal,
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
   checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
@@ -70,10 +72,12 @@ import {
 import type {
   MachineStep, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
   SanctionAction, MachinePulse, KobbyDraft, RecordEntry,
+  PeopleFilter, PeopleOrder,
 } from '@/lib/api'
 import { ReportTriage } from '@/components/staff/ReportTriage'
 import { PersonSheet } from '@/components/staff/PersonSheet'
-import { WorldMap } from '@/components/staff/WorldMap'
+import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
+import { placeOfZone } from '@/lib/places'
 
 type Section = 'Overview' | 'People' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
@@ -619,6 +623,8 @@ export function PersonRow({ person, onChanged }: {
               ? <Badge tone="danger">Closed</Badge>
               : person.is_suspended && <Badge tone="danger">Suspended</Badge>}
             {person.is_guest && <Badge>Guest</Badge>}
+            {person.must_set_password && <Badge tone="warm">Setting a password</Badge>}
+            {!person.is_guest && !person.has_email && <Badge tone="neutral">No email</Badge>}
           </p>
           <p className="truncate text-xs text-muted">
             @{person.username} · #{person.content_id} · here {timeAgo(person.created_at)}
@@ -698,6 +704,32 @@ export function PersonRow({ person, onChanged }: {
             * the moderation worker by name - Staw's line, and the reason it
             * is written into the database rather than into a page.
             */}
+          {/*
+            * A guest made into a real account.
+            *
+            * Staw: "make that superadmins can force guest accounts to
+            * become normal accounts (the user when coming back to the
+            * website will already be logged in but therell be a card to
+            * ask them to put a password)". That is what happens: nothing
+            * is signed out, nothing they made is touched, and the card is
+            * what the site shows them next time rather than anything done
+            * to their session now.
+            */}
+          {rank === 'superadmin' && person.is_guest && (
+            <Button
+              size="sm"
+              variant="subtle"
+              disabled={busy}
+              onClick={() => run(
+                'Done. They will be asked for a password when they come back.',
+                () => makeAccountReal(person.id),
+              )}
+            >
+              <FontAwesomeIcon icon={faUserCheck} />
+              Make it a real account
+            </Button>
+          )}
+
           {rank === 'superadmin' && (
             person.is_banned ? (
               <Button size="sm" variant="subtle" disabled={busy} onClick={() => setOpening(true)}>
@@ -941,27 +973,94 @@ export function PersonRow({ person, onChanged }: {
   )
 }
 
+/*
+ * What the People panel can be asked, beyond a name.
+ *
+ * Staw: "for kobblon users make that we can filter by number of brix, or
+ * when joined, or if you are a klub member (we'll add klub stuff later),
+ * etc, put a lot of filters, verified, staff etc".
+ *
+ * Every one of these is a `where` in the database rather than a filter over
+ * what was already fetched, because the list is the fifty the database
+ * chose: narrowing fifty rows in the browser answers "who of these" and the
+ * question is "who of everybody".
+ */
+const WHO: { value: PeopleFilter | 'all'; label: string }[] = [
+  { value: 'all', label: 'Everybody' },
+  { value: 'staff', label: 'Staff' },
+  { value: 'admin', label: 'Admins' },
+  { value: 'moderator', label: 'Moderators' },
+  { value: 'verified', label: 'Verified' },
+  { value: 'klub', label: 'Klub' },
+  { value: 'guest', label: 'Guests' },
+  { value: 'real', label: 'Real accounts' },
+  { value: 'no_email', label: 'No email' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'banned', label: 'Closed' },
+]
+
+const ORDER: { value: PeopleOrder; label: string }[] = [
+  { value: 'rank', label: 'Rank' },
+  { value: 'new', label: 'Newest' },
+  { value: 'old', label: 'Oldest' },
+  { value: 'rich', label: 'Most Brix' },
+  { value: 'poor', label: 'Least Brix' },
+  { value: 'name', label: 'A to Z' },
+]
+
+const JOINED: { value: string; label: string; days: number | null }[] = [
+  { value: 'any', label: 'Any time', days: null },
+  { value: 'day', label: 'Today', days: 1 },
+  { value: 'week', label: 'This week', days: 7 },
+  { value: 'month', label: 'This month', days: 30 },
+  { value: 'year', label: 'This year', days: 365 },
+]
+
 export function PeopleSection({ initial }: { initial?: string }) {
   const say = useToast()
   const [search, setSearch] = useState(initial ?? '')
   const [people, setPeople] = useState<StaffPerson[] | null>(null)
   const [looking, setLooking] = useState(false)
+  const [who, setWho] = useState<PeopleFilter | 'all'>('all')
+  const [order, setOrder] = useState<PeopleOrder>('rank')
+  const [joined, setJoined] = useState('any')
+  const [leastBrix, setLeastBrix] = useState('')
+  const [mostBrix, setMostBrix] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   /** Whoever is open, which is how a list of names becomes a console. */
   const [open, setOpen] = useState<StaffPerson | null>(null)
   /** Whose record is being read, in a popup over the list. */
   const [reading, setReading] = useState<StaffPerson | null>(null)
   const rank = useStaffRank()
 
+  const since = JOINED.find((one) => one.value === joined)?.days ?? null
+
+  /* How many are actually narrowing anything, for the button's own label. */
+  const narrowed = [
+    who !== 'all', joined !== 'any', order !== 'rank',
+    leastBrix.trim() !== '', mostBrix.trim() !== '',
+  ].filter(Boolean).length
+
   const look = useCallback(async (term: string) => {
     setLooking(true)
     try {
-      setPeople(await findPeopleAsStaff(term))
+      setPeople(await findPeopleAsStaff({
+        search: term,
+        kind: who === 'all' ? null : who,
+        order,
+        minPixels: leastBrix.trim() === '' ? null : Number(leastBrix),
+        maxPixels: mostBrix.trim() === '' ? null : Number(mostBrix),
+        joinedSince: since === null
+          ? null
+          : new Date(Date.now() - since * 86_400_000).toISOString(),
+        limit: 100,
+      }))
     } catch (error) {
       say(error instanceof Error ? error.message : 'Could not look.', 'error')
     } finally {
       setLooking(false)
     }
-  }, [say])
+  }, [say, who, order, leastBrix, mostBrix, since])
 
   /*
    * The list is there when the panel opens.
@@ -975,6 +1074,8 @@ export function PeopleSection({ initial }: { initial?: string }) {
   useEffect(() => {
     void look(initial ?? '')
     if (initial) setSearch(initial)
+    // `look` is rebuilt whenever a filter changes, which is what makes
+    // picking one ask again rather than wait for the button.
   }, [initial, look])
 
   /*
@@ -1011,7 +1112,97 @@ export function PeopleSection({ initial }: { initial?: string }) {
           <FontAwesomeIcon icon={looking ? faSpinner : faMagnifyingGlass} spin={looking} />
           Look
         </Button>
+        <Button
+          type="button"
+          variant={showFilters ? 'primary' : 'ghost'}
+          onClick={() => setShowFilters((was) => !was)}
+        >
+          <FontAwesomeIcon icon={faFilter} />
+          Filters{narrowed > 0 ? ` (${narrowed})` : ''}
+        </Button>
       </form>
+
+      {showFilters && (
+        <Card className="animate-pop-in space-y-4">
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">Who</span>
+            <Choices
+              size="sm"
+              tone="soft"
+              label="Who to show"
+              value={who}
+              options={WHO}
+              onChange={setWho}
+            />
+            {who === 'klub' && (
+              <p className="text-xs text-muted">
+                The Klub does not exist yet, so this one is empty on purpose
+                rather than showing everybody.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">Joined</span>
+            <Choices
+              size="sm"
+              tone="soft"
+              label="When they joined"
+              value={joined}
+              options={JOINED}
+              onChange={setJoined}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">Order</span>
+            <Choices
+              size="sm"
+              tone="soft"
+              label="What order"
+              value={order}
+              options={ORDER}
+              onChange={setOrder}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-36"><Input
+              label="Brix, at least"
+              type="number"
+              min={0}
+              value={leastBrix}
+              onChange={(e) => setLeastBrix(e.target.value)}
+              placeholder="0"
+              className="w-36"
+            /></div>
+            <div className="w-36"><Input
+              label="Brix, at most"
+              type="number"
+              min={0}
+              value={mostBrix}
+              onChange={(e) => setMostBrix(e.target.value)}
+              placeholder="any"
+              className="w-36"
+            /></div>
+            {narrowed > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setWho('all')
+                  setOrder('rank')
+                  setJoined('any')
+                  setLeastBrix('')
+                  setMostBrix('')
+                }}
+              >
+                Clear them
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       <p className="text-xs text-muted">
         {looking ? 'Looking…'
@@ -1291,70 +1482,104 @@ export function ReportsSection() {
 
 /** Roughly where people are, and what that does and does not mean. */
 export function MapSection() {
-  const dots = useAsync(async () => wherePeopleAre(30), [])
-  /** Whichever zone the pointer is on, in the list or on the map itself. */
+  const [days, setDays] = useState(30)
+  const dots = useAsync(async () => wherePeopleAre(days), [days])
+  /** Whichever country the pointer is on, on the map or in the list. */
   const [over, setOver] = useState<string | null>(null)
 
-  const all = dots.data ?? []
-  const total = all.reduce((sum, one) => sum + one.how_many, 0)
-  const lit = all.find((one) => one.zone === over) ?? null
+  const zones = dots.data ?? []
+  const countries = useMemo(() => sharesByCountry(zones), [zones])
+  const total = countries.reduce((sum, one) => sum + one.how_many, 0)
+  const lit = countries.find((one) => one.code === over) ?? null
+  const zonesOf = (code: string) =>
+    zones.filter((one) => (placeOfZone(one.zone)?.country ?? one.country) === code)
 
   return (
-    <div className="space-y-3">
-      <Note icon={faGlobe}>
-        A dot per time zone, sized by how many accounts have been seen there this month.
-        A zone is a setting on somebody's machine, so it is a hint.
-      </Note>
+    <div className="space-y-4">
+      {/* --------------------------------------------------- how far back */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted">
+          A country is shaded by its share of everybody seen in that time. The
+          zone is a setting on somebody&rsquo;s machine, so it is a hint and
+          never evidence.
+        </p>
+        <Choices
+          value={String(days)}
+          onChange={(next) => setDays(Number(next))}
+          options={[
+            { value: '1', label: 'Today' },
+            { value: '7', label: 'This week' },
+            { value: '30', label: 'This month' },
+            { value: '365', label: 'This year' },
+          ]}
+        />
+      </div>
 
-      {dots.loading
+      {/* ------------------------------------------------------- the world */}
+      {dots.loading && !dots.data
         ? <Skeleton className="aspect-[2/1] w-full rounded-2xl" />
-        : <WorldMap dots={all} active={over} onHover={setOver} />}
+        : <CountryMap countries={countries} active={over} onHover={setOver} />}
 
-      <p className="flex flex-wrap items-baseline gap-x-3 text-sm">
+      {/* ------------------------------------- what the pointer is telling */}
+      <div className="flex min-h-[2.75rem] flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl bg-ink-raised px-4 py-2.5">
         {lit ? (
           <>
-            <span className="font-bold">{lit.zone}</span>
-            <span className="text-muted">{lit.country ?? 'somewhere'}</span>
-            <span className="ml-auto font-bold tabular-nums">
-              {lit.how_many} of {total}
+            <span className="font-display text-sm">{lit.name}</span>
+            <span className="text-xs text-muted">
+              {zonesOf(lit.code).map((one) => one.zone).join(', ') || 'no zone'}
+            </span>
+            <span className="ml-auto text-sm font-bold tabular-nums">
+              {formatCount(lit.how_many)}
+              <span className="ml-2 font-normal text-muted">
+                {(lit.share * 100).toFixed(lit.share < 0.1 ? 1 : 0)}% of everybody
+              </span>
             </span>
           </>
         ) : (
-          <span className="text-muted">
-            {total} accounts across {all.length} zones. Point at one.
+          <span className="text-sm text-muted">
+            {total === 0
+              ? 'Nobody has been seen anywhere in that time.'
+              : `${formatCount(total)} accounts, ${countries.length} ${countries.length === 1 ? 'country' : 'countries'}, ${zones.length} zones. Point at one.`}
           </span>
         )}
-      </p>
+      </div>
 
-      {!!all.length && (
-        <ul className="grid gap-1 sm:grid-cols-2">
-          {all.slice(0, 12).map((one) => (
-            <li key={one.zone}>
-              <button
-                type="button"
-                onMouseEnter={() => setOver(one.zone)}
-                onMouseLeave={() => setOver(null)}
-                onFocus={() => setOver(one.zone)}
-                onBlur={() => setOver(null)}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-2 py-1 text-left text-sm transition-colors',
-                  over === one.zone ? 'bg-ink-hover text-white' : 'text-muted hover:bg-ink-hover',
-                )}
-              >
-                <span className="min-w-0 flex-1 truncate">{one.zone}</span>
-                <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-ink-line">
-                  <span
-                    className="block h-full rounded-full bg-brand-bright"
-                    style={{ width: `${Math.round((one.how_many / Math.max(1, all[0].how_many)) * 100)}%` }}
-                  />
-                </span>
-                <span className="w-8 shrink-0 text-right font-bold tabular-nums text-white">
-                  {one.how_many}
-                </span>
-              </button>
-            </li>
+      {/* ------------------------------------------------------- the table */}
+      {!!countries.length && (
+        <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          {countries.map((one, i) => (
+            <button
+              key={one.code}
+              type="button"
+              style={{ animationDelay: `${Math.min(i, 16) * 25}ms` }}
+              onMouseEnter={() => setOver(one.code)}
+              onMouseLeave={() => setOver(null)}
+              onFocus={() => setOver(one.code)}
+              onBlur={() => setOver(null)}
+              className={cn(
+                'flex animate-row-in items-center gap-3 rounded-lg px-2 py-1.5 text-left text-sm transition-colors',
+                over === one.code ? 'bg-ink-hover text-white' : 'text-muted hover:bg-ink-hover',
+              )}
+            >
+              <span className="w-7 shrink-0 font-display text-[11px] uppercase tracking-wider">
+                {one.code}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{one.name}</span>
+              <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-ink-line">
+                <span
+                  className="block h-full rounded-full bg-brand-bright"
+                  style={{ width: `${Math.round((one.how_many / countries[0].how_many) * 100)}%` }}
+                />
+              </span>
+              <span className="w-7 shrink-0 text-right font-bold tabular-nums text-white">
+                {one.how_many}
+              </span>
+              <span className="w-10 shrink-0 text-right text-xs tabular-nums">
+                {(one.share * 100).toFixed(0)}%
+              </span>
+            </button>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   )
@@ -2440,7 +2665,35 @@ export function ScreeningSection() {
  * to, what happens to limiteds - is the database's, and deliberately not
  * offered here: a console that lets somebody choose "include limiteds" is a
  * console that lets somebody break the promise a limited makes.
+ *
+ * Rebuilt from a row of number boxes, which is the shape of the table and
+ * not the shape of the decision. The decision is "how much off, for how
+ * long", and both of those are picked from the handful anybody actually
+ * picks, with a box beside them for the one time somebody wants 37. What a
+ * sale does to a price is shown rather than left to be worked out, and
+ * while one is on, the panel leads with when it ends, because that is the
+ * only question anybody opens this panel to answer twice.
  */
+
+const OFF = [10, 20, 30, 50]
+const FOR_DAYS = [
+  { value: '1', label: 'A day' },
+  { value: '3', label: '3 days' },
+  { value: '7', label: 'A week' },
+  { value: '14', label: 'A fortnight' },
+]
+
+/** Long enough that a number is a sentence: "2 days, 4 hours". */
+function howLongLeft(until: string) {
+  const left = new Date(until).getTime() - Date.now()
+  if (left <= 0) return 'any moment'
+  const hours = Math.floor(left / 3_600_000)
+  const days = Math.floor(hours / 24)
+  if (days >= 1) return `${days} day${days === 1 ? '' : 's'}, ${hours % 24}h left`
+  const minutes = Math.floor(left / 60_000)
+  return hours >= 1 ? `${hours}h ${minutes % 60}m left` : `${minutes}m left`
+}
+
 export function SaleSection() {
   const say = useToast()
   const [percent, setPercent] = useState('20')
@@ -2449,6 +2702,9 @@ export function SaleSection() {
   const [busy, setBusy] = useState(false)
 
   const sale = useAsync(async () => saleNow(), [])
+
+  const off = Number(percent)
+  const sane = Number.isFinite(off) && off >= 1 && off <= 75
 
   const start = async () => {
     setBusy(true)
@@ -2479,73 +2735,144 @@ export function SaleSection() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <p className="text-sm text-muted">
         Everything in the Catalog comes down by the same percentage until it
         ends. Limiteds keep their price - somebody paid what a limited cost
         because it was closing - and nothing ever comes down to nothing.
       </p>
 
-      {sale.loading ? <Skeleton className="h-20" /> : sale.data ? (
-        <Card className="flex flex-wrap items-center gap-3">
-          <Badge tone="space">{sale.data.percent_off}% off</Badge>
-          <span className="text-sm">
-            until{' '}
-            <span className="font-bold">
-              {new Date(sale.data.ends_at).toLocaleString(undefined, {
-                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
-              })}
-            </span>
-          </span>
-          {sale.data.note && <span className="text-sm text-muted">{sale.data.note}</span>}
-          <Button
-            className="ml-auto"
-            variant="danger"
-            size="sm"
-            loading={busy}
-            onClick={() => void stop()}
-          >
-            End it now
-          </Button>
+      {sale.loading ? <Skeleton className="h-28" /> : sale.data ? (
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink-line bg-space/10 px-5 py-4">
+            <div>
+              <p className="font-display text-4xl font-extrabold leading-none text-space-bright">
+                {sale.data.percent_off}% off
+              </p>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+                On right now
+              </p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold">{howLongLeft(sale.data.ends_at)}</p>
+              <p className="truncate text-xs text-muted">
+                Ends {new Date(sale.data.ends_at).toLocaleString(undefined, {
+                  weekday: 'long', day: 'numeric', month: 'long',
+                  hour: '2-digit', minute: '2-digit',
+                })}
+              </p>
+            </div>
+            <Button
+              className="ml-auto"
+              variant="danger"
+              loading={busy}
+              onClick={() => void stop()}
+            >
+              End it now
+            </Button>
+          </div>
+          {sale.data.note && (
+            <p className="px-5 py-3 text-sm text-muted">
+              Shown on the Catalog as <span className="font-bold text-white">{sale.data.note}</span>
+            </p>
+          )}
         </Card>
       ) : (
-        <Card className="space-y-3">
-          <p className="text-sm font-bold">Nothing is on sale.</p>
-          <div className="flex flex-wrap items-end gap-3">
-            <Input
-              label="Percent off"
-              type="number"
-              min={1}
-              max={75}
-              value={percent}
-              onChange={(e) => setPercent(e.target.value)}
-              className="w-28"
-            />
-            <Input
-              label="For how many days"
-              type="number"
-              min={1}
-              max={90}
-              value={days}
-              onChange={(e) => setDays(e.target.value)}
-              className="w-36"
-            />
+        <Card className="space-y-5">
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">
+              How much off
+            </span>
+            <div className="flex flex-wrap items-end gap-3">
+              <Choices
+                size="sm"
+                tone="soft"
+                label="How much off"
+                value={OFF.includes(off) ? String(off) : null}
+                options={OFF.map((one) => ({ value: String(one), label: `${one}%` }))}
+                onChange={setPercent}
+              />
+              <div className="w-28"><Input
+                label="Or type one"
+                type="number"
+                min={1}
+                max={75}
+                value={percent}
+                onChange={(e) => setPercent(e.target.value)}
+                className="w-28"
+              /></div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">
+              For how long
+            </span>
+            <div className="flex flex-wrap items-end gap-3">
+              <Choices
+                size="sm"
+                tone="soft"
+                label="For how long"
+                value={FOR_DAYS.some((one) => one.value === days) ? days : null}
+                options={FOR_DAYS}
+                onChange={setDays}
+              />
+              <div className="w-28"><Input
+                label="Or days"
+                type="number"
+                min={1}
+                max={90}
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="w-28"
+              /></div>
+            </div>
+          </div>
+
+          <div className="w-full sm:w-80">
             <Input
               label="Why (shown on the Catalog)"
               value={why}
               onChange={(e) => setWhy(e.target.value)}
               placeholder="Halloween"
-              className="w-full sm:w-72"
             />
-            <Button
-              variant="yes"
-              loading={busy}
-              disabled={!percent || !days}
-              onClick={() => void start()}
-            >
-              Start it
-            </Button>
           </div>
+
+          {/*
+            * What it does to a price, so the number above means something
+            * before anybody presses the button. Three real prices from the
+            * Catalog's own range rather than one, because 10% off reads as
+            * nothing at 50 Brix and as a lot at 1,200.
+            */}
+          {sane && (
+            <div className="rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted">
+                What that looks like
+              </p>
+              <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5 text-sm">
+                {[50, 250, 1200].map((was) => (
+                  <span key={was} className="flex items-center gap-2">
+                    <span className="text-muted line-through">{formatCount(was)}</span>
+                    <FontAwesomeIcon icon={faArrowRight} className="text-[10px] text-white/30" />
+                    <span className="flex items-center gap-1 font-bold">
+                      <CurrencyMark className="h-3.5" />
+                      {formatCount(Math.max(1, Math.round(was * (1 - off / 100))))}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Button
+            variant="yes"
+            size="lg"
+            loading={busy}
+            disabled={!sane || !days}
+            onClick={() => void start()}
+          >
+            Start it
+          </Button>
         </Card>
       )}
     </div>
@@ -2555,25 +2882,72 @@ export function SaleSection() {
 
 /* ------------------------------------------------------------- the notice */
 
-/**
- * The green bar across the top of the site.
+/*
+ * The bar across the top of the site: what is up, and writing another.
  *
  * Kobblon only, and the database says so - not a moderator. A notice is the
  * platform speaking in its own voice to everybody at once, which is a
  * different job from moderating.
  *
- * The link is its own field rather than something somebody writes into the
- * words, because then it can be checked: a path here or an https address,
- * and nothing else. The bar renders text and an anchor, never markup.
+ * Rebuilt because the panel was a form that turned into a row and back
+ * again, and neither of them looked like the thing being made. Two are
+ * allowed up at once now, so the panel is a list of what is live with the
+ * colour each one is actually wearing, and under it the form, with the bar
+ * drawn exactly as the site will draw it while the words are still being
+ * typed. The link is its own field rather than something somebody writes
+ * into the words, because then it can be checked: a path here or an https
+ * address, and nothing else. The bar renders text and an anchor, never
+ * markup.
  */
+
+const NOTICE_COLOURS: { value: NoticeColour; label: string; swatch: string }[] = [
+  { value: 'blue', label: 'Blue', swatch: 'bg-brand' },
+  { value: 'green', label: 'Green', swatch: 'bg-space' },
+  { value: 'red', label: 'Red', swatch: 'bg-danger' },
+  { value: 'orange', label: 'Orange', swatch: 'bg-[#F08A24]' },
+  { value: 'white', label: 'White', swatch: 'bg-[#F4F4F6]' },
+]
+
+const MOST_NOTICES = 2
+
+/** The bar as the site draws it, for something that is not up yet. */
+function NoticeLook({ colour, words, label }: {
+  colour: NoticeColour
+  words: string
+  label?: string
+}) {
+  const look = noticeColours[colour]
+  return (
+    <div className={cn('relative overflow-hidden rounded-xl', look.panel, look.ink)}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: noticeStripes(look.stripe) }}
+      />
+      <div className="relative flex items-center gap-3 px-4 py-2 text-sm">
+        <FontAwesomeIcon icon={faBullhorn} className="shrink-0 text-xs opacity-80" />
+        <p className="min-w-0 flex-1 truncate font-semibold">
+          {words || 'What it says goes here.'}
+          {label && <span className="ml-2 font-bold underline underline-offset-2">{label}</span>}
+        </p>
+        <FontAwesomeIcon icon={faXmark} className="shrink-0 opacity-70" />
+      </div>
+    </div>
+  )
+}
+
 export function NoticeSection() {
   const say = useToast()
-  const live = useAsync(async () => noticeNow(), [])
+  const live = useAsync(async () => noticesNow(), [])
   const [words, setWords] = useState('')
   const [link, setLink] = useState('')
   const [label, setLabel] = useState('')
   const [days, setDays] = useState('7')
+  const [colour, setColour] = useState<NoticeColour>('blue')
   const [busy, setBusy] = useState(false)
+
+  const up = live.data ?? []
+  const room = MOST_NOTICES - up.length
 
   const put = async () => {
     setBusy(true)
@@ -2582,7 +2956,7 @@ export function NoticeSection() {
         words: words.trim(),
         link: link.trim() || null,
         linkWords: label.trim() || null,
-        tone: 'good',
+        tone: colour,
         until: days
           ? new Date(Date.now() + Number(days) * 24 * 60 * 60 * 1000).toISOString()
           : null,
@@ -2599,10 +2973,10 @@ export function NoticeSection() {
     }
   }
 
-  const down = async () => {
+  const down = async (which?: string) => {
     setBusy(true)
     try {
-      await takeDownNotice()
+      await takeDownNotice(which)
       say('Taken down.', 'success')
       live.reload()
     } catch (error) {
@@ -2613,61 +2987,125 @@ export function NoticeSection() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <p className="text-sm text-muted">
         A line across the top of every page, under the bar. Anybody can close
-        it, and it stays closed for them.
+        it, and it stays closed for them. Two can be up at once.
       </p>
 
-      {live.loading ? <Skeleton className="h-16" /> : live.data ? (
-        <Card className="flex flex-wrap items-center gap-3">
-          <Badge tone="space">Up now</Badge>
-          <span className="min-w-0 flex-1 truncate text-sm font-bold">{live.data.body}</span>
-          {live.data.link && <span className="truncate text-xs text-muted">{live.data.link}</span>}
-          <Button variant="danger" size="sm" loading={busy} onClick={() => void down()}>
-            Take it down
-          </Button>
-        </Card>
-      ) : (
-        <Card className="space-y-3">
-          <Input
-            label="What it says"
-            value={words}
-            maxLength={300}
-            onChange={(e) => setWords(e.target.value)}
-            placeholder="Halloween is on. Everything is 30% off."
-          />
-          <div className="flex flex-wrap gap-3">
-            <Input
-              label="Where it goes (optional)"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="/catalog"
-              className="w-full sm:w-64"
-              hint="A path here, or an https address."
-            />
-            <Input
-              label="The link's words"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Open the Catalog"
-              className="w-full sm:w-56"
-            />
-            <Input
-              label="For how many days"
-              type="number"
-              min={1}
-              max={90}
-              value={days}
-              onChange={(e) => setDays(e.target.value)}
-              className="w-36"
-            />
+      <section className="space-y-3">
+        <header className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">
+            Up now
+          </h3>
+          <span className="text-xs text-muted">{up.length} of {MOST_NOTICES}</span>
+        </header>
+
+        {live.loading ? <Skeleton className="h-14" /> : up.length === 0 ? (
+          <Card className="text-sm text-muted">Nothing is up.</Card>
+        ) : (
+          <div className="space-y-2">
+            {up.map((one) => (
+              <div key={one.id} className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <NoticeLook
+                    colour={(NOTICE_COLOURS.find((c) => c.value === one.tone)?.value) ?? 'blue'}
+                    words={one.body}
+                    label={one.link ? one.link_words || 'Have a look' : undefined}
+                  />
+                </div>
+                <Button variant="danger" size="sm" loading={busy} onClick={() => void down(one.id)}>
+                  Take it down
+                </Button>
+              </div>
+            ))}
           </div>
-          <Button variant="yes" loading={busy} disabled={!words.trim()} onClick={() => void put()}>
-            Put it up
-          </Button>
-        </Card>
-      )}
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">
+          Write one
+        </h3>
+
+        {room <= 0 ? (
+          <Card className="text-sm text-muted">
+            Two is the most that can be up. Take one down and this comes back.
+          </Card>
+        ) : (
+          <Card className="space-y-4">
+            <NoticeLook
+              colour={colour}
+              words={words}
+              label={link.trim() ? label.trim() || 'Have a look' : undefined}
+            />
+
+            <Input
+              label="What it says"
+              value={words}
+              maxLength={300}
+              onChange={(e) => setWords(e.target.value)}
+              placeholder="Halloween is on. Everything is 30% off."
+            />
+
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted">
+                Colour
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {NOTICE_COLOURS.map((one) => (
+                  <button
+                    key={one.value}
+                    type="button"
+                    onClick={() => setColour(one.value)}
+                    aria-pressed={colour === one.value}
+                    className={cn(
+                      'flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+                      colour === one.value
+                        ? 'border-white/60 bg-white/10 text-white'
+                        : 'border-ink-line text-muted hover:text-white',
+                    )}
+                  >
+                    <span className={cn('h-3.5 w-3.5 rounded-full', one.swatch)} />
+                    {one.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Input
+                label="Where it goes (optional)"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="/catalog"
+                className="w-full sm:w-64"
+                hint="A path here, or an https address."
+              />
+              <Input
+                label="The link's words"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="Open the Catalog"
+                className="w-full sm:w-56"
+              />
+              <Input
+                label="For how many days"
+                type="number"
+                min={1}
+                max={90}
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="w-36"
+              />
+            </div>
+
+            <Button variant="yes" loading={busy} disabled={!words.trim()} onClick={() => void put()}>
+              Put it up
+            </Button>
+          </Card>
+        )}
+      </section>
     </div>
   )
 }

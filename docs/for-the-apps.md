@@ -8625,3 +8625,92 @@ Worth copying in the Workspace and the Launcher, whatever their own session
 code looks like: a `then` with no `catch` on a session read, a network read
 with no deadline behind a loading flag, and a splash screen with no way out
 are all the same bug wearing different hats.
+
+## Round one hundred and four
+
+Five things, and three of them change something shared.
+
+**1. An account no longer needs an email.** `auth.signUp` still works
+exactly as it did when there is an address. When there is not, the browser
+calls the new `register` edge function (`action: 'signup'`), which creates
+the account behind the service role with a stand-in address at
+`no-email.kobblon.com` and hands back `access_token` / `refresh_token` -
+so the tab is signed in by the time the call returns and there is no
+confirmation to wait for. `@/lib/api` exports `registerWithoutEmail`, and
+`useAuth` exports `signUpWithoutEmail(details)` beside `signUp`.
+
+**This is a meaning change you need:** `profiles.has_email` is a new
+column, and **it is decided in the database from the address itself**, not
+from anything the client claims. False means there is nobody to write to -
+a guest, or somebody who skipped the box. Anywhere an application says
+"check your email", "we sent you a link" or offers a password reset, read
+`has_email` first. The old assumption - every account has a reachable
+address - is no longer true.
+
+**2. A superadmin can turn a guest into a real account.**
+`admin_make_real(target uuid)` flips `is_guest` to false, grants the
+hundred Brix a new account gets, and sets a second new column,
+`profiles.must_set_password`. Nothing is signed out and nothing of theirs
+moves; the account keeps its `Guest48213` handle until they change it.
+`@/lib/api` exports `makeAccountReal(target)`.
+
+**What an application has to do about it:** when
+`profile.must_set_password` is true, that person is signed in to an account
+with no password - the session in hand is the only way into it. The website
+shows `SetPasswordCard` (`@/components/auth/SetPasswordCard`) over the
+page; it cannot be dismissed, and it calls `register` with
+`action: 'set-password'` and the caller's own token, which is what actually
+converts the anonymous auth user into a permanent one. If the Workspace
+holds its own session it must do the same, or somebody signs out there and
+can never get back in. Both new columns are pinned in
+`guard_profile_update`: nobody can clear them for themselves.
+
+**3. The notice bar is five colours, two at a time, and part of the top
+bar.** `site_notices.tone` is no longer `good | warn | plain`; it is
+`green | blue | red | orange | white`, picked by whoever writes the notice.
+The three old names are still accepted by `put_up_notice` and are mapped
+(`good`→green, `warn`→orange, `plain`→white), and the rows that existed
+were moved, so nothing breaks - but a mood is not a colour any more, and a
+panel that labels amber "warning" is now lying.
+
+- `notice_now()` returns **up to two rows**, not one. `@/lib/api`'s
+  `noticeNow(): SiteNotice | null` is gone and `noticesNow():
+  SiteNotice[]` replaces it. `putUpNotice` takes `tone?: NoticeColour`
+  and refuses a third notice while two are up. `takeDownNotice(which?)`
+  takes one down by id, or all of them when nothing is named.
+- `NoticeBar` is `position: fixed` under the bar now (Staw: "shall follow
+  the topbar"), and writes its own height into the CSS variable
+  `--notice-height` on `documentElement`. Anything that offsets itself
+  from the top of the window reads that variable; the website's shell and
+  sidebar do. If the Workspace mounts `NoticeBar`, it has to leave room
+  the same way, or the notice covers whatever is under it.
+- `NoticeLine` is exported for drawing one where you put it, along with
+  `noticeColours` and `noticeStripes(colour)` if you are drawing your own.
+
+**4. The staff map draws countries.** `public/brand/world-countries.svg`
+is one path per country with the ISO alpha-2 code as its id, in plain
+equirectangular coordinates in a 0 0 360 180 box, built by
+`tools/map/build-countries.mjs`. `@/components/staff/CountryMap` shades a
+country by its share of accounts and puts a ring on the ones too small to
+draw. Nothing in the applications depends on it; it is here because the
+file is shared and somebody will want it.
+
+The bug in the first version is worth having: `x = lon + 180` draws a band
+straight across the map for every country that crosses the antimeridian -
+Russia, Fiji, Antarctica - because the ring runs off one edge and carries
+on from the other, and laying the points down in order fills everything
+under the return line. `d3-geo`'s `geoPath` cuts the ring at the edge. If
+either application ever plots coordinates by hand, that is the trap.
+
+**5. The moderation worker says what came back.** `postToGroq` now retries
+once with four times the token budget when a model stops on `length`,
+falls back to `choice.message.reasoning` when `content` is empty, and every
+parse failure names the model and quotes the first 120 characters of what
+it actually said. "did not answer in JSON" with nothing after it was
+unanswerable.
+
+**Still not done, said plainly:** the Klub does not exist, so the People
+panel's Klub filter returns nobody rather than everybody - deliberately.
+`pg_cron` is still not enabled for the `kobblon-machine` heartbeat.
+Migrations 0254 through 0258 are applied locally and not yet in
+production.

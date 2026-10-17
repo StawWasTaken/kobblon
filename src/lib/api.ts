@@ -3022,6 +3022,30 @@ export type StaffPerson = {
   suspended_until: string | null
   /** What is already on the record, so this decision knows the last one. */
   past_sanctions: number
+  is_superadmin: boolean
+  /** False when the account was made without one, or is a guest. */
+  has_email: boolean
+  /** Staff made this guest real and the site is waiting for a password. */
+  must_set_password: boolean
+}
+
+/** What the People panel can be asked for, beyond a name. */
+export type PeopleFilter =
+  | 'staff' | 'admin' | 'moderator' | 'verified'
+  | 'guest' | 'real' | 'suspended' | 'banned'
+  | 'no_email' | 'klub'
+
+export type PeopleOrder = 'rank' | 'new' | 'old' | 'rich' | 'poor' | 'name'
+
+export type PeopleQuery = {
+  search?: string
+  kind?: PeopleFilter | null
+  minPixels?: number | null
+  maxPixels?: number | null
+  joinedSince?: string | null
+  joinedBefore?: string | null
+  order?: PeopleOrder
+  limit?: number
 }
 
 /**
@@ -3079,8 +3103,90 @@ export type AdminLogEntry = {
   created_at: string
 }
 
-export async function findPeopleAsStaff(search: string): Promise<StaffPerson[]> {
-  return unwrap(await supabase.rpc('admin_find_people', { search })) as StaffPerson[]
+/**
+ * The People panel's question, whole.
+ *
+ * Every filter is optional and the database treats nothing as "do not
+ * care", so asking for a name and nothing else is what it always was. The
+ * filtering is there rather than here for the usual reason: rows a browser
+ * never asked for are rows it cannot be trusted to hide.
+ */
+export async function findPeopleAsStaff(query: string | PeopleQuery = {}): Promise<StaffPerson[]> {
+  const asked: PeopleQuery = typeof query === 'string' ? { search: query } : query
+  return unwrap(await supabase.rpc('admin_find_people', {
+    search: asked.search ?? null,
+    only_kind: asked.kind ?? null,
+    min_pixels: asked.minPixels ?? null,
+    max_pixels: asked.maxPixels ?? null,
+    joined_since: asked.joinedSince ?? null,
+    joined_before: asked.joinedBefore ?? null,
+    order_by: asked.order ?? 'rank',
+    how_many: asked.limit ?? 50,
+  })) as StaffPerson[]
+}
+
+/**
+ * A guest made into a real account, by a superadmin.
+ *
+ * Nothing they made is touched and nothing is signed out: the same row,
+ * the same id, the same session in whatever tab they left open. What
+ * changes is that the account is no longer throwaway and the site has a
+ * password to ask them for when they come back.
+ */
+/**
+ * Signing up without an email.
+ *
+ * Supabase wants an address for every account it holds, so one made
+ * without one gets a stand-in at a domain that receives nothing - and that
+ * has to happen behind the service role, in the `register` function, or
+ * every account made this way sends a confirmation email into the void.
+ * What comes back is a session, the same as signing in.
+ */
+export async function registerWithoutEmail(details: {
+  username: string
+  password: string
+  displayName: string
+  birthDate: string
+  gender: string
+}): Promise<{ access_token: string; refresh_token: string }> {
+  const { data, error } = await supabase.functions.invoke('register', {
+    body: {
+      action: 'signup',
+      username: details.username,
+      password: details.password,
+      display_name: details.displayName,
+      birth_date: details.birthDate,
+      gender: details.gender,
+    },
+  })
+
+  if (error) {
+    const response = (error as { context?: Response }).context
+    const detail = await response?.json?.().catch(() => null)
+    throw new Error(detail?.error ?? 'That did not go through. Try again.')
+  }
+
+  return data as { access_token: string; refresh_token: string }
+}
+
+/**
+ * The password somebody is asked for after staff made their guest account
+ * real. Only the account the site is actually waiting on; the function
+ * checks that itself, against the caller's own token.
+ */
+export async function setMyFirstPassword(password: string) {
+  const { error } = await supabase.functions.invoke('register', {
+    body: { action: 'set-password', password },
+  })
+  if (error) {
+    const response = (error as { context?: Response }).context
+    const detail = await response?.json?.().catch(() => null)
+    throw new Error(detail?.error ?? 'That did not go through. Try again.')
+  }
+}
+
+export async function makeAccountReal(target: string) {
+  unwrap(await supabase.rpc('admin_make_real', { target }))
 }
 
 /** Any flag left undefined is left alone, rather than sent back as it was. */
@@ -4318,9 +4424,15 @@ export type SiteNotice = {
   body: string
   link: string | null
   link_words: string | null
-  tone: 'good' | 'warn' | 'plain'
+  tone: NoticeColour
   ends_at: string | null
 }
+
+/**
+ * The five a notice can be. Whoever writes it picks one, so these are
+ * colours and not moods: `warn` was the site deciding what amber meant.
+ */
+export type NoticeColour = 'green' | 'blue' | 'red' | 'orange' | 'white'
 
 /**
  * The house account, so a word from Kobblon wears Kobblon's face.
@@ -4353,29 +4465,30 @@ export function houseAccount() {
   return houseKnown
 }
 
-export async function noticeNow(): Promise<SiteNotice | null> {
-  const rows = unwrap(await supabase.rpc('notice_now')) as SiteNotice[]
-  return rows?.[0] ?? null
+/** Whatever is up, newest first. Two at the most; the database says so. */
+export async function noticesNow(): Promise<SiteNotice[]> {
+  return (unwrap(await supabase.rpc('notice_now')) as SiteNotice[]) ?? []
 }
 
 export async function putUpNotice(input: {
   words: string
   link?: string | null
   linkWords?: string | null
-  tone?: 'good' | 'warn' | 'plain'
+  tone?: NoticeColour
   until?: string | null
 }): Promise<string> {
   return unwrap(await supabase.rpc('put_up_notice', {
     words: input.words,
     where_to: input.link ?? null,
     link_label: input.linkWords ?? null,
-    mood: input.tone ?? 'good',
+    mood: input.tone ?? 'blue',
     until: input.until ?? null,
   })) as string
 }
 
-export async function takeDownNotice() {
-  unwrap(await supabase.rpc('take_down_notice'))
+/** One of them by id, or every one that is up when nothing is named. */
+export async function takeDownNotice(which?: string) {
+  unwrap(await supabase.rpc('take_down_notice', { which: which ?? null }))
 }
 
 // ---------------------------------------------------------------- reselling

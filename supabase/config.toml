@@ -31,3 +31,10 @@ verify_jwt = false
 # itself that the asker is Kobblon, and a service-role key - which is how a
 # schedule calls it - is a signed token too, so it gets through the same
 # door. Default behaviour is the right behaviour for this one.
+
+# Joining without an email happens before there is anybody to be, the same
+# as logging in. The second half of this function - setting a password on an
+# account staff made real - reads the caller's own token itself rather than
+# trusting anything in the body.
+[functions.register]
+verify_jwt = false

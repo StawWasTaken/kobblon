@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import {
   claimGuestAccount, endSession, refreshPortrait, setSessionCountry,
-  signInWithUsername, touchSession, uploadAvatar,
+  registerWithoutEmail, signInWithUsername, touchSession, uploadAvatar,
 } from '@/lib/api'
 import { myZone, placeOfZone } from '@/lib/places'
 import { clearAccountSession, rememberAccount, updateAccountSession } from '@/lib/accounts'
@@ -17,6 +17,8 @@ type AuthValue = {
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (details: SignupDetails) => Promise<void>
+  /** The same, for somebody who left the email box empty. */
+  signUpWithoutEmail: (details: SignupDetails) => Promise<void>
   /** A guest keeping what they made, rather than starting again. */
   claimAccount: (details: SignupDetails) => Promise<void>
   signInWithName: (username: string, password: string) => Promise<void>
@@ -319,6 +321,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (details.avatarFile) {
           pendingAvatar = details.avatarFile
         }
+      },
+      async signUpWithoutEmail(details) {
+        /*
+         * The account is made behind the service role - see `register` -
+         * because Supabase would otherwise send a confirmation email to a
+         * stand-in address that nobody can read. What comes back is a
+         * session, so this tab is signed in by the time it returns and
+         * there is nothing to go and check.
+         */
+        const tokens = await registerWithoutEmail({
+          username: details.username,
+          password: details.password,
+          displayName: details.displayName || details.username,
+          birthDate: details.birthDate,
+          gender: details.gender,
+        })
+
+        const { error } = await supabase.auth.setSession(tokens)
+        if (error) throw new Error(error.message)
+
+        rememberAccount({
+          id: (await supabase.auth.getUser()).data.user?.id ?? '',
+          email: '',
+          username: details.username,
+          displayName: details.displayName || details.username,
+          avatarUrl: null,
+        })
       },
       async claimAccount(details) {
         /*

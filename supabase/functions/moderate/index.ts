@@ -221,6 +221,19 @@ function waitFromGroq(said: string): number {
 }
 
 /** The first `{...}` in a reply, for a model that wrapped it in words. */
+/**
+ * What to say when a reply cannot be read as JSON.
+ *
+ * With the reply's own first words in it, because "did not answer in JSON"
+ * is the same sentence whether the model refused, wrote a paragraph, or
+ * was cut off mid-brace, and those need different fixes. Trimmed hard: it
+ * goes on a console, not in a log.
+ */
+function whatCameBack(model: string, text: string) {
+  const start = text.trim().replace(/\s+/g, ' ').slice(0, 120)
+  return `${model} did not answer in JSON. It began: ${start || '(nothing)'}`
+}
+
 function firstJson(text: string): Record<string, unknown> | null {
   const from = text.indexOf('{')
   const to = text.lastIndexOf('}')
@@ -238,6 +251,7 @@ async function postToGroq(
   const model = String(body.model ?? '')
   let waited = false
   let plain = false
+  let roomier = false
 
   for (;;) {
     const said = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -253,8 +267,36 @@ async function postToGroq(
 
     if (said.ok) {
       const answer = await said.json().catch(() => null)
-      const text = answer?.choices?.[0]?.message?.content
-      if (typeof text !== 'string') return { trouble: `${model} answered with no text.` }
+      const choice = answer?.choices?.[0]
+      /*
+       * A reasoning model keeps two things in one reply: what it worked
+       * out, in `reasoning`, and what it decided, in `content`. Spend the
+       * token budget on the first and the second arrives **empty** - which
+       * read here as "did not answer in JSON", which is what Staw saw:
+       * "Looked at 1, decided 0". So a reply cut short for room is asked
+       * again with more of it, once, and the thinking is read as a last
+       * resort because the answer is usually in there too.
+       */
+      if (choice?.finish_reason === 'length' && !roomier) {
+        roomier = true
+        body.max_tokens = Math.min(Number(body.max_tokens ?? 250) * 4, 2000)
+        continue
+      }
+
+      const text = typeof choice?.message?.content === 'string'
+          && choice.message.content.trim()
+        ? choice.message.content
+        : typeof choice?.message?.reasoning === 'string'
+          ? choice.message.reasoning
+          : null
+
+      if (typeof text !== 'string' || !text.trim()) {
+        return {
+          trouble: `${model} answered with no text`
+            + (choice?.finish_reason ? ` (it stopped on "${choice.finish_reason}")` : '')
+            + '.',
+        }
+      }
       return { text }
     }
 
@@ -337,7 +379,7 @@ async function askGroq(
   } catch {
     // A model that did not answer in the shape it was asked for is a model
     // that has not answered. Nothing is decided on a half-read reply.
-    return { trouble: `${model} did not answer in JSON.` }
+    return { trouble: whatCameBack(model, text) }
   }
 }
 
@@ -484,7 +526,7 @@ async function askGroqJson(
   try {
     return { json: firstJson(text) ?? JSON.parse(text) }
   } catch {
-    return { trouble: `${model} did not answer in JSON.` }
+    return { trouble: whatCameBack(model, text) }
   }
 }
 
@@ -515,7 +557,7 @@ async function askGroqReport(model: string, rules: {
       reason: String(verdict.reason ?? '').slice(0, 300),
     }
   } catch {
-    return { trouble: `${model} did not answer in JSON.` }
+    return { trouble: whatCameBack(model, text) }
   }
 }
 
@@ -557,7 +599,7 @@ async function askGroqChat(model: string, rules: {
       reason: String(verdict.reason ?? '').slice(0, 300),
     }
   } catch {
-    return { trouble: `${model} did not answer in JSON.` }
+    return { trouble: whatCameBack(model, text) }
   }
 }
 
@@ -588,7 +630,7 @@ async function askGroqName(model: string, rules: {
       reason: String(verdict.reason ?? '').slice(0, 300),
     }
   } catch {
-    return { trouble: `${model} did not answer in JSON.` }
+    return { trouble: whatCameBack(model, text) }
   }
 }
 

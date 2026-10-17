@@ -31,6 +31,12 @@ export function placeOfZone(zone?: string | null): Place | null {
   return { country: found[0], countryName: COUNTRIES[found[0]] ?? found[0], lat: found[1], lon: found[2] };
 }
 
+/** What a country code is called, for a code no zone in the table points at. */
+export function countryName(code?: string | null): string | null {
+  if (!code) return null;
+  return COUNTRIES[code.toUpperCase()] ?? code;
+}
+
 /** The zone this browser is set to, which is all anybody here ever asks it. */
 export function myZone(): string | null {
   try {
@@ -40,7 +46,3 @@ export function myZone(): string | null {
   }
 }
 
-/** A country's name from its two letters, for a console that shows a list. */
-export function countryName(code?: string | null): string | null {
-  return code ? COUNTRIES[code] ?? code : null;
-}

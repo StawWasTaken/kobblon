@@ -199,7 +199,16 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                         : 'Log in with your username.'}
                     </p>
 
-                    {isSignup ? <SignupForm onSent={setSentTo} /> : <LoginForm />}
+                    {isSignup
+                      ? (
+                        /*
+                         * An empty address means there was nothing to send,
+                         * so there is nothing to wait for: the account is
+                         * made and this tab is already signed in to it.
+                         */
+                        <SignupForm onSent={(to) => (to ? setSentTo(to) : navigate('/home'))} />
+                      )
+                      : <LoginForm />}
 
                     <div className="my-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-white/25">
                       <span className="h-px flex-1 bg-white/10" />
