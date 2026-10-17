@@ -1,7 +1,7 @@
 // Copies the build into the repository root, which is what GitHub Pages
 // publishes when its source is a branch. Run by the deploy workflow after
 // `npm run build`; `npm run deploy` does both by hand.
-import { cpSync, existsSync, readdirSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { pageRoots } from './site-pages.mjs'
 
 // The addresses that point at something get their own files too, written
@@ -65,4 +65,63 @@ for (const name of built) {
   copied.push(name)
 }
 
+/*
+ * The pages that were left alone still have to point at this build.
+ *
+ * This is the bug Staw kept hitting and it was never a loading bug: "when
+ * you reload a profile page or a community page or worlds, then it says
+ * this and doesn't load and it keeps doing that". Every page under u/, c/
+ * and worlds/ is a real file, written by whichever build last reached the
+ * database, and it names that build's pieces by their content hash. A
+ * build that cannot reach the database leaves those files alone - rightly,
+ * it has nothing to write - but it still replaces assets/, so the pieces
+ * those files name are deleted. The document then fetches a module that
+ * 404s, nothing runs, and the mark in the markup sits there for ever. The
+ * page is not slow, it is pointing at a build that no longer exists.
+ *
+ * Reloading cannot fix that, which is why the "Load it again" button under
+ * the mark never did. So every published page is brought up to this
+ * build's pieces here, whether or not it was rewritten: the head block has
+ * the same shape in all of them because they all come out of the same
+ * template.
+ */
+const assetBlock = /<script type="module"[^>]*><\/script>(?:\s*<link rel="modulepreload"[^>]*>)*\s*<link rel="stylesheet"[^>]*>/
+
+/*
+ * The boot script goes over too, for the same reason: it is the part that
+ * rescues a page which cannot load itself, and a page written before it
+ * existed does not have it. There is exactly one script with no attributes
+ * in the template, which is that one.
+ */
+const bootScript = /<script>[\s\S]*?<\/script>/
+
+const fresh = readFileSync('dist/404.html', 'utf8')
+const current = fresh.match(assetBlock)?.[0]
+const currentBoot = fresh.match(bootScript)?.[0]
+
+let freshened = 0
+
+if (!current) {
+  console.warn('Could not find the asset block in dist/404.html; pages left as they are.')
+} else {
+  for (const root of itemBearing) {
+    if (!existsSync(root)) continue
+    for (const file of readdirSync(root, { recursive: true, withFileTypes: true })) {
+      if (!file.isFile() || !file.name.endsWith('.html')) continue
+      const path = `${file.parentPath ?? file.path}/${file.name}`
+      const page = readFileSync(path, 'utf8')
+      const had = page.match(assetBlock)?.[0]
+      const hadBoot = page.match(bootScript)?.[0]
+      if ((!had || had === current) && (!currentBoot || hadBoot === currentBoot)) continue
+      let next = had ? page.replace(assetBlock, () => current) : page
+      if (currentBoot && hadBoot && hadBoot !== currentBoot) {
+        next = next.replace(bootScript, () => currentBoot)
+      }
+      writeFileSync(path, next)
+      freshened += 1
+    }
+  }
+}
+
 console.log(`Published to the repository root: ${copied.join(', ')}`)
+console.log(`Pointed ${freshened} already-published pages at this build.`)

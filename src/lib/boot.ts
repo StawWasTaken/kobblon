@@ -28,7 +28,37 @@ declare global {
   interface Window {
     /** When the reveal's first frame was drawn. `app.html` sets it. */
     __kobBootAt?: number
+    /** Set by `main.tsx`, so the document's rescue knows the bundle ran. */
+    __kobUp?: boolean
   }
+}
+
+/*
+ * The full play is for arriving, not for every reload.
+ *
+ * Staw: "i want that the loading screen take time to show the loading gif
+ * to be played fully at least once ONLY when you arrive onto the website,
+ * like if you are already on the website and that you refresh then it only
+ * takes the time to load instead of having a timer preset". A reload is a
+ * fresh document and looks identical from in here - except for the one
+ * thing that survives it and does not survive a new tab, which is session
+ * storage. So the first load in a tab gets the film and every load after it
+ * in that tab gets out of the way as soon as the page is ready.
+ */
+const SEEN = 'kobblon.reveal-seen'
+
+function alreadyWatched() {
+  try {
+    return sessionStorage.getItem(SEEN) === '1'
+  } catch {
+    // A blocked store means every load looks like the first, which is the
+    // side to err on: the film is the thing he asked for.
+    return false
+  }
+}
+
+function watched() {
+  try { sessionStorage.setItem(SEEN, '1') } catch { /* nothing to do */ }
 }
 
 /* Starts at one: the document itself holds it until `App` has committed. */
@@ -55,7 +85,10 @@ export function releaseBoot() {
   if (holds || coming) return
 
   const began = window.__kobBootAt
-  const left = began === undefined ? 0 : Math.max(0, REVEAL_MS - (Date.now() - began))
+  const left = began === undefined || alreadyWatched()
+    ? 0
+    : Math.max(0, REVEAL_MS - (Date.now() - began))
+  watched()
 
   coming = window.setTimeout(() => {
     coming = 0

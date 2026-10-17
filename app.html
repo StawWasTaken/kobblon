@@ -111,10 +111,47 @@
       </p>
     </div>
     <script>
+      /*
+       * The rescue for a document that cannot load itself.
+       *
+       * Every page under /u/, /c/ and /worlds/ is a real file written at
+       * deploy time, and each one names the pieces of that build by their
+       * content hash. The pieces are replaced on the next deploy and the
+       * old names stop existing - so a page written by a build that could
+       * not reach the database, which is every build run without the
+       * service key, goes on pointing at pieces that were deleted weeks
+       * ago. The module 404s, nothing in the bundle ever runs, and what is
+       * left on screen is this mark, for ever. Staw: "when you reload a
+       * page that is not like... made by us directly, like when you reload
+       * a profile page or a community page or worlds, then it says this
+       * and doesn't load and it keeps doing that".
+       *
+       * Reloading cannot fix it, because the file on the site is the thing
+       * that is wrong - which is why the button under the mark never
+       * helped. The index at the root is rewritten by every deploy, so it
+       * is always current: this hands the address to it and lets it do the
+       * routing. `main.tsx` puts the address back before React looks.
+       *
+       * Three seconds after the window has loaded, because by then either
+       * the bundle has run or it is not going to. Once per tab, so a site
+       * that is genuinely down cannot turn this into a loop.
+       */
       setTimeout(function () {
         var boot = document.getElementById('boot')
         if (boot) boot.className += ' slow'
       }, 12000)
+
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          if (window.__kobUp) return
+          if (location.pathname === '/') return
+          try {
+            if (sessionStorage.getItem('kobblon.rescued')) return
+            sessionStorage.setItem('kobblon.rescued', '1')
+          } catch (e) { /* a blocked store is no reason not to try once */ }
+          location.replace('/?to=' + encodeURIComponent(location.pathname + location.search + location.hash))
+        }, 3000)
+      })
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
