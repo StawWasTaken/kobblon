@@ -57,17 +57,24 @@ export type KobIcon = UiIcon | `workspace/${WorkspaceIcon}`
 
 /** Where one lives, which is the only place this is written down. */
 /**
- * Whether the caller already said how big it should be.
+ * The default size, for whichever axis the caller did not name.
  *
- * The default size here is `h-[1em] w-[1em]`, and Tailwind emits arbitrary
- * values after the scale ones - so `h-9` passed in sat *earlier* in the
- * stylesheet and lost to it. Every icon on the site that asked for a size
- * was drawn at one line of text instead, which reads as "the icons are
- * small" rather than as a bug, and that is how it survived. `cn` here joins
- * classes, it does not merge them, so the default is left off instead.
+ * The default is `h-[1em] w-[1em]`, and Tailwind emits arbitrary values
+ * after the scale ones - so `h-9` passed in sat *earlier* in the stylesheet
+ * and lost to it. Every icon on the site that asked for a size was drawn at
+ * one line of text instead, which reads as "the icons are small" rather than
+ * as a bug, and that is how it survived. `cn` here joins classes, it does
+ * not merge them, so the default is left off instead.
+ *
+ * Per axis, and that part is not a detail: dropping both the moment either
+ * one was named is what made the sidebar's icons disappear. They pass
+ * `w-5` and nothing else, so they had a width, no height, and nothing to
+ * paint a mask onto.
  */
-function saysItsSize(className?: string) {
-  return !!className && /(^|\s)(h|w|size)-/.test(className)
+function missingSize(className?: string) {
+  const says = (axis: string) =>
+    !!className && new RegExp(`(^|\\s)(${axis}|size)-`).test(className)
+  return cn(!says('h') && 'h-[1em]', !says('w') && 'w-[1em]')
 }
 
 export function iconUrl(name: KobIcon) {
@@ -167,7 +174,7 @@ export function Icon({
         aria-label={label}
         aria-hidden={label ? undefined : true}
         title={title}
-        className={cn('inline-block align-[-0.125em]', !saysItsSize(className) && 'h-[1em] w-[1em]', className)}
+        className={cn('inline-block align-[-0.125em]', missingSize(className), className)}
         style={{
           ...style,
           backgroundColor: paint === 'currentColor' ? 'currentColor' : paint,
@@ -187,7 +194,7 @@ export function Icon({
 
     return (
       <span
-        className={cn('relative inline-block align-[-0.125em]', !saysItsSize(className) && 'h-[1em] w-[1em]', className)}
+        className={cn('relative inline-block align-[-0.125em]', missingSize(className), className)}
         role={label ? 'img' : undefined}
         aria-label={label}
         aria-hidden={label ? undefined : true}
@@ -245,7 +252,7 @@ export function Icon({
       title={title}
       style={style}
       draggable={false}
-      className={cn('inline-block select-none align-[-0.125em] object-contain', !saysItsSize(className) && 'h-[1em] w-[1em]', className)}
+      className={cn('inline-block select-none align-[-0.125em] object-contain', missingSize(className), className)}
     />
   )
 }

@@ -8863,3 +8863,39 @@ change.
 
 Both still pick their appearance from `data-appearance` through CSS, so
 none of this needs a provider.
+
+## Round one hundred and eight
+
+Two things that compiled on both sides and were wrong on screen. Both are
+in files the applications import, so both matter over there.
+
+**`Icon`'s default size is now decided one axis at a time.** The last round
+dropped `h-[1em] w-[1em]` whenever the caller named *any* size, so a call
+site passing `w-5` and nothing else - which the sidebar's navigation does -
+got a width, no height, and a mask painted onto a box zero pixels tall. The
+icons did not shrink, they vanished. It now keeps `h-[1em]` unless the class
+names a height (`h-` or `size-`) and keeps `w-[1em]` unless it names a
+width. If the Workspace has its own copy of that helper, this is the fix:
+per axis, not per call.
+
+**The seasonal chrome never reached the document.** `[data-appearance=
+'halloween']` in `design/tokens.css` is one class of specificity;
+`:root[data-theme='dark']`, which sets `--chrome` to brand blue, is two -
+and both attributes sit on `html`, so the two rules were fighting over the
+same declaration on the same element and the season lost. The wordmark
+swapped, the sidebar and the topbar stayed blue. The seasonal blocks now
+carry `:root[data-appearance='…']` and
+`:root[data-theme='dark'][data-appearance='…']` alongside the bare
+selector, which is still there so a card can show an appearance it is not
+wearing. Measured in Chromium with both attributes on `html`: halloween
+dark is `rgb(130, 69, 22)`, christmas dark `rgb(18, 84, 50)`, and light
+keeps its pale tints. Anything over there painting chrome from `--chrome`
+gets this for free by pulling the file; anything that hard-codes brand blue
+for its bar will not follow a season.
+
+Still missing, unchanged from the last round: the halloween wordmark and
+logomark and the christmas logomark in `public/brand/` are Staw's blue
+artwork with the hue moved, not drawings of his - he has said he does not
+like them and they are waiting on his own files under the same names.
+Migration 0263 is still not applied in production, `register` is still not
+deployed, and `pg_cron` is still not enabled.
