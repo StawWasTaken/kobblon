@@ -80,6 +80,16 @@
 }
 
 @layer components {
+  /*
+   * Anything that sticks to the top of a page sticks under the bar, and the
+   * bar is 3.5rem plus however many notices are up. A class rather than
+   * `top-14` on each of them, because the notices can be closed while the
+   * page is open and a number written into a class would be wrong a second
+   * later.
+   */
+  .kob-under-bar { top: calc(3.5rem + var(--notice-height, 0px)); }
+  .kob-under-bar-tall { height: calc(100dvh - 3.5rem - var(--notice-height, 0px)); }
+
   .kob-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgb(var(--ink-line)) transparent;

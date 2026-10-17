@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { Boundary } from '@/components/layout/Boundary'
@@ -9,6 +9,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { LoadingScreen } from '@/components/ui/Loading'
+import { bootIsUp, holdBoot, releaseBoot } from '@/lib/boot'
 import Landing from '@/pages/Landing'
 import Auth from '@/pages/Auth'
 import Home from '@/pages/Home'
@@ -58,9 +59,29 @@ const CatalogItem = lazyPage(() => import('@/pages/CatalogItem'))
 const OutfitPage = lazyPage(() => import('@/pages/OutfitPage'))
 const MyAvatar = lazyPage(() => import('@/pages/MyAvatar'))
 
-/* The one wait the whole site shows. `LoadingScreen` is where it lives. */
+/*
+ * The one wait the whole site shows.
+ *
+ * While the document's own mark is still up - which is every cold load,
+ * every reload, and the whole of reading the session - this draws nothing
+ * and holds that mark instead. Drawing a second reveal over the first is
+ * what restarted the film a fifth of the way in. See `lib/boot`.
+ *
+ * Once the mark is gone, a wait is an ordinary wait inside the site, so it
+ * gets `LoadingScreen` - quietly, because a chunk that arrives in two
+ * hundred milliseconds should not flash a four-second reveal at anybody.
+ */
 function Booting() {
-  return <LoadingScreen />
+  const [underTheMark] = useState(bootIsUp)
+
+  useEffect(() => {
+    if (!underTheMark) return
+    holdBoot()
+    return releaseBoot
+  }, [underTheMark])
+
+  if (underTheMark) return <div className="min-h-dvh bg-ink" />
+  return <LoadingScreen quiet />
 }
 
 /** Signed-out visitors get the landing page rather than a bounce to a form. */
@@ -78,12 +99,13 @@ function RootRoute() {
 
 export default function App() {
   /*
-   * The mark in the document comes down here, after React has committed -
-   * an effect runs once something is actually on screen. See `main.tsx`.
+   * The document holds its own mark until here: an effect runs once React
+   * has actually put something on screen. If what React put on screen is
+   * itself a wait, `Booting` has taken a hold of its own by now - a child's
+   * effects run before its parent's - and the mark stays up. See
+   * `lib/boot`.
    */
-  useEffect(() => {
-    document.getElementById('boot')?.remove()
-  }, [])
+  useEffect(releaseBoot, [])
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>

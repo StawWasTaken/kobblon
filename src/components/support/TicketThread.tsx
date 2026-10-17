@@ -68,7 +68,9 @@ export function TicketThread({
   const send = async () => {
     setSending(true)
     try {
-      await replyTicket(number, words.trim())
+      /* As themselves. This is the person's own help page, and a moderator
+         reading their own ticket here is a person, not the house. */
+      await replyTicket(number, words.trim(), false)
       setWords('')
       thread.reload()
       ticket.reload()

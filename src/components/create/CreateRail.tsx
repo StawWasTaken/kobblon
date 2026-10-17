@@ -30,7 +30,7 @@ export const createSections: {
 export function CreateRail({ ownedCount = 0 }: { ownedCount?: number }) {
   return (
     <aside
-      className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-60 shrink-0 flex-col overflow-y-auto border-r border-ink-line px-3 pb-6 pt-4 lg:flex kob-scroll"
+      className="sticky kob-under-bar kob-under-bar-tall hidden w-60 shrink-0 flex-col overflow-y-auto border-r border-ink-line px-3 pb-6 pt-4 lg:flex kob-scroll"
       aria-label="Kobblon Create"
     >
       <p className="mb-2 px-2 font-display text-base font-extrabold">Create</p>

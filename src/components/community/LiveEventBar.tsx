@@ -32,7 +32,7 @@ export function LiveEventBar({ communityId }: { communityId: string }) {
   if (!event || closed) return null
 
   return (
-    <div className="sticky top-14 z-30 border-b border-space/40 bg-space/15 backdrop-blur">
+    <div className="sticky kob-under-bar z-30 border-b border-space/40 bg-space/15 backdrop-blur">
       {/* What is on is said in the middle of the bar; the way in and the way
           out sit at the ends without pushing it off centre. */}
       <div className="relative flex items-center justify-center gap-3 px-16 py-2.5">

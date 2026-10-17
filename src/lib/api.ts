@@ -2410,10 +2410,28 @@ export async function readAllMail() {
 
 // ---------------------------------------------------------------- support
 
+/**
+ * The tickets on the Support page: this person's own, and nobody else's.
+ *
+ * The `eq` is the whole of the fix for what Staw found - "WHY CAN I SEE
+ * TICKETS MADE BY OTHER PEOPLE" - and it is worth saying what it is not.
+ * `tickets_read` lets a moderator read every ticket, on purpose, because
+ * that is what the console's Support queue is built on. So a moderator
+ * asking this table for everything gets everything, correctly, and the
+ * help page was asking for everything. It asks for theirs now.
+ *
+ * This narrowing is a page saying what it wants, not a wall. The wall is
+ * the policy, and it still holds for anybody who is not staff.
+ */
 export async function listTickets(): Promise<Ticket[]> {
+  const { data: who } = await supabase.auth.getUser()
+  const me = who?.user?.id
+  if (!me) return []
+
   const { data, error } = await supabase
     .from('support_tickets')
     .select('id, topic, subject, status, contact_email, first_name, device, wants_human, updated_at, created_at')
+    .eq('user_id', me)
     .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
   return (data ?? []) as Ticket[]
@@ -2502,8 +2520,22 @@ export async function openTicket(card: {
   })) as number
 }
 
-export async function replyTicket(id: number, body: string) {
-  unwrap(await supabase.rpc('reply_ticket', { ticket: id, body }))
+/**
+ * Writing on a ticket.
+ *
+ * `as_staff` is which hat: left off, whichever the writer holds, which is
+ * what the console wants. `false` is the person's own name, which is what
+ * the Support page wants - and what a moderator reading their own help page
+ * got wrong before, answering themselves as Kobblon. The database refuses
+ * either hat to somebody who has no right to it; this only says which was
+ * meant.
+ */
+export async function replyTicket(id: number, body: string, asStaff?: boolean) {
+  unwrap(await supabase.rpc('reply_ticket', {
+    ticket: id,
+    body,
+    as_staff: asStaff ?? null,
+  }))
 }
 
 export async function closeTicket(id: number) {

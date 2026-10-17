@@ -102,7 +102,7 @@
     <div id="root"></div>
     <div id="boot">
       <img alt="" src="/brand/logo-reveal.gif"
-        onload="document.getElementById('boot').classList.add('drawing')" />
+        onload="window.__kobBootAt = Date.now(); document.getElementById('boot').classList.add('drawing')" />
       <p>
         This is taking longer than it should. Loading the page again usually
         fixes it.

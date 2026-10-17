@@ -102,8 +102,8 @@ export function NoticeLine({ notice, onClose }: { notice: SiteNotice; onClose?: 
         className="pointer-events-none absolute inset-0"
         style={{ backgroundImage: noticeStripes(look.stripe) }}
       />
-      <div className="relative mx-auto flex max-w-[86rem] items-center gap-3 px-4 py-2 text-sm">
-        <Glyph icon={faBullhorn} className="shrink-0 text-xs opacity-80" />
+      <div className="relative flex items-center gap-3 px-4 py-2.5 pr-12 text-sm sm:px-6 sm:pr-14">
+        <Glyph icon={faBullhorn} className="shrink-0 text-sm opacity-80" />
         <p className="min-w-0 flex-1 font-semibold">
           {notice.body}
           {notice.link && (
@@ -128,7 +128,7 @@ export function NoticeLine({ notice, onClose }: { notice: SiteNotice; onClose?: 
           onClick={() => onClose?.()}
           aria-label="Close this notice"
           className={cn(
-            'grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors',
+            'absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg transition-colors sm:right-3',
             look.ink === 'text-ink' ? 'hover:bg-black/10' : 'hover:bg-white/20',
           )}
         >
@@ -143,10 +143,13 @@ export function NoticeLine({ notice, onClose }: { notice: SiteNotice; onClose?: 
  * How much of the top of the page the notices are using.
  *
  * Staw: "the announcement topbar shall follow the topbar (like as if its
- * apart of it)". So it is fixed under the real bar rather than sitting at
- * the top of the page and scrolling away with it - and once it is fixed,
- * it covers whatever is behind it unless everything below knows how tall
- * it is. One can be up, or two, or none, and closing one changes it while
+ * apart of it)", and then: "its going ontop of the sidebar i want it to
+ * stop at the sidebar ... i want the topbars to push the page under
+ * itself". So it is fixed under the real bar rather than sitting at the top
+ * of the page and scrolling away with it; it starts where the rail ends, so
+ * the rail runs the full height of the window under the bar and the notice
+ * sits beside it rather than over it; and once it is fixed, it covers
+ * whatever is behind it unless everything below knows how tall it is. One can be up, or two, or none, and closing one changes it while
  * the page is open, so a number written into a class would be wrong within
  * a second of being right. The shell reads this variable instead.
  */
@@ -194,7 +197,7 @@ export function NoticeBar() {
   return (
     <div
       ref={box}
-      className="fixed inset-x-0 top-14 z-40 divide-y divide-black/10 shadow-lg shadow-black/20"
+      className="fixed right-0 top-14 z-30 divide-y divide-black/10 shadow-lg shadow-black/20 left-0 lg:left-56"
     >
       {notices.map((one) => (
         <NoticeLine

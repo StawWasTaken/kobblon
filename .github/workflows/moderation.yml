@@ -2,8 +2,9 @@
 #
 # The console has a "Run it now" button and this is the same thing on a
 # clock, because "whenever anything is waiting" is not a thing a button can
-# mean. Every quarter of an hour, which is well inside the half hour the
-# "only what has waited too long" setting defaults to.
+# mean. Every five minutes, which is well inside the half hour the
+# "only what has waited too long" setting defaults to - and the console
+# sweeps every minute of its own while somebody has the Machine panel open.
 #
 # It does nothing at all unless two repository secrets exist:
 #
@@ -25,14 +26,14 @@
 # had never answered anything.
 #
 # One more thing worth knowing before blaming this file: **GitHub does not
-# honour `*/15` on a quiet repository.** Runs here have landed four or five
+# honour `*/5` on a quiet repository.** Runs here have landed four or five
 # hours apart. If moderation has to be prompt, Supabase's own scheduler
 # calls the same function on a real clock.
 name: Moderation
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 concurrency:

@@ -144,8 +144,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AppSidebar() {
   return (
     <aside
-      className="fixed bottom-0 left-0 z-30 hidden w-56 lg:block"
-      style={{ top: 'calc(3.5rem + var(--notice-height, 0px))' }}
+      className="fixed bottom-0 left-0 top-14 z-40 hidden w-56 lg:block"
       aria-label="Sidebar"
     >
       <SidebarContent />

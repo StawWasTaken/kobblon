@@ -527,7 +527,7 @@ export function CreateMarketplace() {
       </section>
 
       {/* What kind of thing, and in what order */}
-      <div className="sticky top-14 z-20 -mx-4 flex flex-wrap items-center gap-2 bg-ink/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky kob-under-bar z-20 -mx-4 flex flex-wrap items-center gap-2 bg-ink/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <Choices
           label="What kind of content"
           value={kind}

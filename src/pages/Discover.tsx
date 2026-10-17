@@ -111,7 +111,7 @@ export default function Discover() {
         placeholder="Search Worlds by name"
       />
 
-      <div className="sticky top-14 z-20 -mx-4 mb-6 mt-4 space-y-3 bg-ink/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky kob-under-bar z-20 -mx-4 mb-6 mt-4 space-y-3 bg-ink/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
           {!browsing && (
             <>

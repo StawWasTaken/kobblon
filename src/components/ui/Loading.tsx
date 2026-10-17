@@ -24,19 +24,46 @@ import { cn } from '@/lib/cn'
 export function LoadingScreen({
   label = 'Loading Kobblon',
   className,
+  quiet = false,
 }: {
   label?: string
   className?: string
+  /**
+   * Hold the mark back for half a second.
+   *
+   * A page of this site arrives in a couple of hundred milliseconds once
+   * the document is up, and a four-second reveal started and killed inside
+   * that window reads as a glitch rather than as a wait. So a wait inside
+   * the site shows nothing until it is long enough to be worth saying
+   * something about. The document's own wait is never quiet: it is the
+   * one Staw wants the film to play right through.
+   */
+  quiet?: boolean
 }) {
+  const show = useAfterAMoment(quiet ? 500 : 0)
+
   return (
     <div className={cn('grid min-h-dvh place-items-center bg-ink px-6', className)}>
       <div className="flex flex-col items-center">
-        <LoadingMark />
+        {show && <LoadingMark />}
         <span className="sr-only">{label}</span>
-        <TakingTooLong />
+        {show && <TakingTooLong />}
       </div>
     </div>
   )
+}
+
+/** True once `ms` has gone by, and straight away when there is nothing to wait for. */
+function useAfterAMoment(ms: number) {
+  const [yet, setYet] = useState(ms === 0)
+
+  useEffect(() => {
+    if (ms === 0) return
+    const timer = window.setTimeout(() => setYet(true), ms)
+    return () => window.clearTimeout(timer)
+  }, [ms])
+
+  return yet
 }
 
 /** The mark on its own, for a wait inside a page rather than instead of one. */

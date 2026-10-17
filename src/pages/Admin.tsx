@@ -20,6 +20,7 @@ import {
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage, faUserCheck,
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
+  faUnlock, faCoins, faEnvelope, faEraser, faEye, faClipboardList,
   faGaugeHigh, faArrowRight, faBolt, faHeartPulse,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -985,6 +986,25 @@ export function PersonRow({ person, onChanged }: {
  * chose: narrowing fifty rows in the browser answers "who of these" and the
  * question is "who of everybody".
  */
+/**
+ * A label over a control, in the console's one label style.
+ *
+ * `Input` draws its own; `Select` does not, and the two have to read as the
+ * same thing stacked in the same grid. The spacing is the point: Staw on
+ * the first version of this card, which had none, "ADD SPACING OMFG YOU
+ * DONT ADD SPACINGS THATS WHY ITS UGLY".
+ */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <span className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wide text-muted">
+        {label}
+      </span>
+      {children}
+    </div>
+  )
+}
+
 const WHO: { value: PeopleFilter | 'all'; label: string }[] = [
   { value: 'all', label: 'Everybody' },
   { value: 'staff', label: 'Staff' },
@@ -1095,7 +1115,7 @@ export function PeopleSection({ initial }: { initial?: string }) {
   })
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <form
         className="sticky top-20 z-10 -mx-1 flex items-end gap-2 bg-ink/90 px-1 py-2 backdrop-blur-sm"
         onSubmit={(e) => { e.preventDefault(); void look(search) }}
@@ -1123,69 +1143,77 @@ export function PeopleSection({ initial }: { initial?: string }) {
       </form>
 
       {showFilters && (
-        <Card className="animate-pop-in space-y-4">
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">Who</span>
-            <Choices
-              size="sm"
-              tone="soft"
-              label="Who to show"
-              value={who}
-              options={WHO}
-              onChange={setWho}
-            />
-            {who === 'klub' && (
-              <p className="text-xs text-muted">
-                The Klub does not exist yet, so this one is empty on purpose
-                rather than showing everybody.
-              </p>
-            )}
+        /*
+         * Dropdowns, in a grid, with room between them.
+         *
+         * This was eleven pills, then five, then six, wrapped across three
+         * rows - Staw: "i HATE the filters design for the people, no
+         * spacing, ugly, JUST MAKE IT A NORMAL DROPDOWN LIST". He is right
+         * about why: a row of pills is for three or four choices somebody
+         * compares at a glance, and eleven of them is a list that has been
+         * pretending to be a toolbar. A dropdown says its current answer in
+         * one word and keeps the other ten out of the way.
+         */
+        <Card className="animate-pop-in space-y-5 p-5">
+          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Field label="Who">
+              <Select
+                label="Who to show"
+                value={who}
+                options={WHO}
+                onChange={(next) => setWho(next as PeopleFilter | 'all')}
+              />
+              {who === 'klub' && (
+                <p className="mt-2 text-xs text-muted">
+                  The Klub does not exist yet, so this one is empty on purpose
+                  rather than showing everybody.
+                </p>
+              )}
+            </Field>
+
+            <Field label="Joined">
+              <Select
+                label="When they joined"
+                value={joined}
+                options={JOINED}
+                onChange={setJoined}
+              />
+            </Field>
+
+            <Field label="Order">
+              <Select
+                label="What order"
+                value={order}
+                options={ORDER}
+                onChange={(next) => setOrder(next as PeopleOrder)}
+              />
+            </Field>
+
+            <Field label="Brix, at least">
+              <Input
+                aria-label="Brix, at least"
+                type="number"
+                min={0}
+                value={leastBrix}
+                onChange={(e) => setLeastBrix(e.target.value)}
+                placeholder="0"
+              />
+            </Field>
+
+            <Field label="Brix, at most">
+              <Input
+                aria-label="Brix, at most"
+                type="number"
+                min={0}
+                value={mostBrix}
+                onChange={(e) => setMostBrix(e.target.value)}
+                placeholder="any"
+              />
+            </Field>
           </div>
 
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">Joined</span>
-            <Choices
-              size="sm"
-              tone="soft"
-              label="When they joined"
-              value={joined}
-              options={JOINED}
-              onChange={setJoined}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">Order</span>
-            <Choices
-              size="sm"
-              tone="soft"
-              label="What order"
-              value={order}
-              options={ORDER}
-              onChange={setOrder}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="w-36"><Input
-              label="Brix, at least"
-              type="number"
-              min={0}
-              value={leastBrix}
-              onChange={(e) => setLeastBrix(e.target.value)}
-              placeholder="0"
-              className="w-36"
-            /></div>
-            <div className="w-36"><Input
-              label="Brix, at most"
-              type="number"
-              min={0}
-              value={mostBrix}
-              onChange={(e) => setMostBrix(e.target.value)}
-              placeholder="any"
-              className="w-36"
-            /></div>
-            {narrowed > 0 && (
+          {narrowed > 0 && (
+            <div className="flex justify-end border-t border-ink-line pt-4">
               <Button
                 variant="ghost"
                 size="sm"
@@ -1199,8 +1227,8 @@ export function PeopleSection({ initial }: { initial?: string }) {
               >
                 Clear them
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       )}
 
@@ -1372,7 +1400,7 @@ export function ReportsSection() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <p className="text-sm text-muted">
         What people have reported. Opening one shows the thing, who it is
         about and what has been decided about them before, and the action
@@ -1495,7 +1523,7 @@ export function MapSection() {
     zones.filter((one) => (placeOfZone(one.zone)?.country ?? one.country) === code)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* --------------------------------------------------- how far back */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
@@ -1611,7 +1639,7 @@ function NoteSender({ onSend, action = 'Send' }: {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <Textarea
         label="What it says"
         value={message}
@@ -1640,7 +1668,7 @@ export function AnnounceSection() {
   const [confirming, setConfirming] = useState('')
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <Card className="space-y-3 p-5">
         <div>
           <h2 className="font-display text-sm uppercase tracking-wider">Everybody</h2>
@@ -1879,7 +1907,7 @@ export function WordsSection() {
     (terms ?? []).filter((one) => one.decision === decision).length
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* ------------------------------------------------- adding a word */}
       <Card className="space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -2189,6 +2217,137 @@ const recordWords: Record<string, string> = {
   screen: 'Screened something',
 }
 
+/*
+ * A mark for each kind of thing staff do, and a colour that says how heavy
+ * it is.
+ *
+ * Red is a decision against somebody's account, orange is one that leans
+ * that way, green is one in their favour, and blue is everything else -
+ * which is the same three-colour rule the rest of the site runs on, so a
+ * row nobody has read yet still says something from across the room.
+ */
+const recordMarks: Record<string, { icon: IconDefinition; tone: 'red' | 'orange' | 'green' | 'blue' }> = {
+  sanction: { icon: faGavel, tone: 'orange' },
+  ban: { icon: faBan, tone: 'red' },
+  unban: { icon: faUnlock, tone: 'green' },
+  verify: { icon: faCircleCheck, tone: 'blue' },
+  give_brix: { icon: faCoins, tone: 'blue' },
+  set_rank: { icon: faUserShield, tone: 'blue' },
+  notify: { icon: faEnvelope, tone: 'blue' },
+  delete_account: { icon: faTrash, tone: 'red' },
+  clear_record: { icon: faEraser, tone: 'green' },
+  take_report: { icon: faFlag, tone: 'orange' },
+  screen: { icon: faEye, tone: 'blue' },
+}
+
+const recordTones = {
+  red:    { chip: 'bg-danger/15 text-danger', edge: 'bg-danger' },
+  orange: { chip: 'bg-[#F08A24]/15 text-[#F6A858]', edge: 'bg-[#F08A24]' },
+  green:  { chip: 'bg-space/15 text-space-bright', edge: 'bg-space' },
+  blue:   { chip: 'bg-brand/20 text-brand-bright', edge: 'bg-brand' },
+} as const
+
+const markFor = (action: string) =>
+  recordMarks[action] ?? { icon: faClipboardList, tone: 'blue' as const }
+
+/**
+ * The two or three things from an entry's detail worth reading without
+ * opening it: the length of a sanction, the number of Brix, the rank
+ * somebody was given. Whatever is left stays in the popup.
+ */
+function recordGist(entry: RecordEntry): string[] {
+  const out: string[] = []
+  const d = entry.detail
+  const text = (key: string) => (typeof d[key] === 'string' ? d[key] as string : null)
+  const number = (key: string) => (typeof d[key] === 'number' ? d[key] as number : null)
+
+  const days = number('days')
+  if (days !== null) out.push(days === 0 ? 'a warning' : `${days} ${days === 1 ? 'day' : 'days'}`)
+  const amount = number('amount')
+  if (amount !== null) out.push(`${formatCount(Math.abs(amount))} Brix`)
+  for (const key of ['rule', 'rank', 'decision', 'why', 'reason']) {
+    const said = text(key)
+    if (said) out.push(said.replace(/_/g, ' '))
+  }
+  if (typeof d.verified === 'boolean') out.push(d.verified ? 'given' : 'taken away')
+
+  return out.slice(0, 3)
+}
+
+/**
+ * One thing somebody did, as a card you can read at a glance.
+ *
+ * Staw: "I WANT A NEW FREAKING DESIGN FOR THE RECORD CARDS SO IT LOOKS
+ * COOL". What was there was a ledger line - a time, a sentence, an arrow -
+ * which is dense and readable and says nothing until you have read it. This
+ * says what kind of thing it was before you read anything: a coloured edge
+ * down the left, a marked chip for the action, the sentence, and the two or
+ * three numbers out of the detail that the line used to hide. The whole
+ * detail is still a press away, because three of them is a summary and all
+ * of them is a database row read out loud.
+ */
+function RecordCard({ entry, delay, onOpen }: {
+  entry: RecordEntry
+  delay: number
+  onOpen: () => void
+}) {
+  const mark = markFor(entry.action)
+  const tone = recordTones[mark.tone]
+  const gist = recordGist(entry)
+  const at = new Date(entry.created_at)
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{ animationDelay: `${delay}ms` }}
+      className="group relative flex w-full animate-row-in items-start gap-3.5 overflow-hidden rounded-2xl border border-ink-line bg-ink-card p-3.5 text-left transition-colors hover:border-white/15 hover:bg-ink-hover sm:gap-4 sm:p-4"
+    >
+      <span className={cn('absolute inset-y-0 left-0 w-1', tone.edge)} aria-hidden />
+
+      <span className={cn(
+        'ml-1 grid size-10 shrink-0 place-items-center rounded-xl text-base',
+        tone.chip,
+      )}>
+        <FontAwesomeIcon icon={mark.icon} />
+      </span>
+
+      <span className="min-w-0 flex-1 space-y-1.5">
+        <span className="block font-display text-sm leading-tight">
+          {recordWords[entry.action] ?? entry.action}
+          {entry.subject_label && (
+            <span className="text-muted"> · <span className="text-white">@{entry.subject_label}</span></span>
+          )}
+        </span>
+
+        <span className="block text-xs text-muted">
+          {entry.by_username ? `@${entry.by_username}` : 'somebody since deleted'}
+          {' · '}
+          {at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+        </span>
+
+        {gist.length > 0 && (
+          <span className="flex flex-wrap gap-1.5 pt-0.5">
+            {gist.map((bit, i) => (
+              <span
+                key={`${bit}-${i}`}
+                className="truncate rounded-lg border border-ink-line bg-ink-raised px-2 py-1 text-[11px] font-semibold text-white/70"
+              >
+                {bit}
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
+
+      <FontAwesomeIcon
+        icon={faArrowRight}
+        className="mt-3 shrink-0 text-xs text-white/20 transition-transform group-hover:translate-x-0.5 group-hover:text-white/45"
+      />
+    </button>
+  )
+}
+
 /**
  * What staff have done, as a ledger rather than a list of cards.
  *
@@ -2230,7 +2389,7 @@ export function RecordSection() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-end gap-2">
         <form
           className="flex min-w-[14rem] flex-1 items-end gap-2"
@@ -2259,29 +2418,36 @@ export function RecordSection() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
-        <Choices
-          size="sm"
-          tone="soft"
-          label="Which kind"
-          value={what}
-          onChange={setWhat}
-          options={[
-            { value: '', label: 'Everything' },
-            ...(kinds.data ?? []).map((one) => ({
-              value: one.action,
-              label: `${recordWords[one.action] ?? one.action} ${one.how_many}`,
-            })),
-          ]}
-        />
-        <Choices
-          size="sm"
-          tone="soft"
-          label="How far back"
-          value={String(since)}
-          onChange={(picked) => setSince(picked === 'null' ? null : Number(picked))}
-          options={when.map((one) => ({ value: String(one.value), label: one.label }))}
-        />
+      {/* Two rows, each said out loud. They were one wrapping line, and
+          both of them start with a chip called "Everything" - so the row
+          read as one list with the same word twice in it. */}
+      <div className="space-y-3.5">
+        <Field label="Which kind">
+          <Choices
+            size="sm"
+            tone="soft"
+            label="Which kind"
+            value={what}
+            onChange={setWhat}
+            options={[
+              { value: '', label: 'Everything' },
+              ...(kinds.data ?? []).map((one) => ({
+                value: one.action,
+                label: `${recordWords[one.action] ?? one.action} ${one.how_many}`,
+              })),
+            ]}
+          />
+        </Field>
+        <Field label="How far back">
+          <Choices
+            size="sm"
+            tone="soft"
+            label="How far back"
+            value={String(since)}
+            onChange={(picked) => setSince(picked === 'null' ? null : Number(picked))}
+            options={when.map((one) => ({ value: String(one.value), label: one.label }))}
+          />
+        </Field>
       </div>
 
       {rows.loading && <Skeleton className="h-40" />}
@@ -2293,37 +2459,21 @@ export function RecordSection() {
       )}
 
       {days.map(({ day, entries }) => (
-        <div key={day} className="space-y-1">
-          <p className="sticky top-20 z-10 bg-ink/90 py-1 font-display text-[10px] uppercase tracking-wider text-muted backdrop-blur-sm">
+        <div key={day} className="space-y-2 pt-1">
+          <p className="sticky kob-under-bar z-10 -mx-1 bg-ink/90 px-1 py-1.5 font-display text-[11px] uppercase tracking-wider text-muted backdrop-blur-sm">
             {day}
+            <span className="ml-2 font-sans normal-case tracking-normal text-white/25">
+              {entries.length}
+            </span>
           </p>
-          <div className="divide-y divide-ink-line overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
+          <div className="space-y-2">
             {entries.map((entry, i) => (
-              <button
+              <RecordCard
                 key={entry.id}
-                type="button"
-                onClick={() => setOpen(entry)}
-                style={{ animationDelay: `${Math.min(i, 14) * 20}ms` }}
-                className="flex w-full animate-row-in items-center gap-3 px-3 py-2 text-left text-sm hover:bg-ink-hover"
-              >
-                <span className="w-12 shrink-0 font-mono text-[11px] text-white/35">
-                  {new Date(entry.created_at).toLocaleTimeString(undefined, {
-                    hour: '2-digit', minute: '2-digit',
-                  })}
-                </span>
-                <span className="min-w-0 flex-1 truncate">
-                  <span className="font-bold">
-                    {entry.by_username ? `@${entry.by_username}` : 'somebody since deleted'}
-                  </span>
-                  <span className="text-muted">
-                    {' '}{(recordWords[entry.action] ?? entry.action).toLowerCase()}
-                  </span>
-                  {entry.subject_label && (
-                    <span className="font-bold"> @{entry.subject_label}</span>
-                  )}
-                </span>
-                <FontAwesomeIcon icon={faArrowRight} className="shrink-0 text-xs text-white/20" />
-              </button>
+                entry={entry}
+                delay={Math.min(i, 14) * 20}
+                onOpen={() => setOpen(entry)}
+              />
             ))}
           </div>
         </div>
@@ -2587,7 +2737,7 @@ export function ScreeningSection() {
   })
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <p className="text-sm text-muted">
         Everything a person has to look at. Most uploads never reach here -
         the screener approves or refuses them as they arrive - so what is
@@ -2993,7 +3143,7 @@ export function NoticeSection() {
         it, and it stays closed for them. Two can be up at once.
       </p>
 
-      <section className="space-y-3">
+      <section className="space-y-3.5">
         <header className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">
             Up now
@@ -3002,7 +3152,7 @@ export function NoticeSection() {
         </header>
 
         {live.loading ? <Skeleton className="h-14" /> : up.length === 0 ? (
-          <Card className="text-sm text-muted">Nothing is up.</Card>
+          <Card className="p-4 text-sm text-muted">Nothing is up.</Card>
         ) : (
           <div className="space-y-2">
             {up.map((one) => (
@@ -3023,17 +3173,17 @@ export function NoticeSection() {
         )}
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3.5">
         <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">
           Write one
         </h3>
 
         {room <= 0 ? (
-          <Card className="text-sm text-muted">
+          <Card className="p-4 text-sm text-muted">
             Two is the most that can be up. Take one down and this comes back.
           </Card>
         ) : (
-          <Card className="space-y-4">
+          <Card className="space-y-5 p-5">
             <NoticeLook
               colour={colour}
               words={words}
@@ -3048,11 +3198,11 @@ export function NoticeSection() {
               placeholder="Halloween is on. Everything is 30% off."
             />
 
-            <div className="space-y-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted">
+            <div className="space-y-2">
+              <span className="font-display text-xs font-bold uppercase tracking-wide text-muted">
                 Colour
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {NOTICE_COLOURS.map((one) => (
                   <button
                     key={one.value}
@@ -3073,13 +3223,19 @@ export function NoticeSection() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            {/*
+              * A grid rather than a wrapping row. `Input` draws a `w-full`
+              * box around itself, so a width class on the field inside it
+              * sizes the field and not the box - which is why these three
+              * were each a full line of their own with nothing beside
+              * them. The columns are the widths.
+              */}
+            <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_8rem]">
               <Input
                 label="Where it goes (optional)"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
                 placeholder="/catalog"
-                className="w-full sm:w-64"
                 hint="A path here, or an https address."
               />
               <Input
@@ -3087,7 +3243,6 @@ export function NoticeSection() {
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="Open the Catalog"
-                className="w-full sm:w-56"
               />
               <Input
                 label="For how many days"
@@ -3096,7 +3251,6 @@ export function NoticeSection() {
                 max={90}
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
-                className="w-36"
               />
             </div>
 
@@ -3232,11 +3386,64 @@ export function MachineSection() {
 
   const on = settings.data?.is_on ?? false
   const beat = pulse.data
+
+  /*
+   * Switched on means working.
+   *
+   * Staw: "i want kobby to be when on 'running' IT REALLY RUNS, no need to
+   * press 'Run now'". Three things are meant to set it going and two of
+   * them are out of this page's hands: pg_net knocks on the worker the
+   * moment something lands, and a schedule sweeps for whatever the knock
+   * missed. The schedule is a pg_cron job that is not installed on this
+   * project, so until it is, "Running" and "running" were two different
+   * words on the same switch.
+   *
+   * So while somebody is standing in front of this panel and it is on with
+   * work waiting, the panel runs it. Not a replacement for the sweep - a
+   * console nobody has open does nothing, and the fault list below still
+   * says so in as many words - but it does mean the button is no longer
+   * the only thing in the building that actually starts it.
+   *
+   * `sweeping` rather than `busy`: an automatic run must not take the
+   * buttons away under somebody's hand, and it must not start a second one
+   * on top of its own.
+   */
+  const sweeping = useRef(false)
+  useEffect(() => {
+    if (!on) return
+    let live = true
+
+    const sweep = async () => {
+      if (!live || sweeping.current) return
+      /* Nothing waiting is not a run worth making: it is a call to Groq
+         and a row in the log to say nothing happened. */
+      if ((pulse.data?.waiting ?? 0) < 1) return
+      sweeping.current = true
+      try {
+        await runModeration()
+        if (!live) return
+        recent.reload()
+        waiting.reload()
+        pulse.reload()
+      } catch {
+        /* Quietly: an automatic run that fails puts a red toast on a page
+           somebody is reading something else on. The fault list and the
+           self-check are where a failure is read. */
+      } finally {
+        sweeping.current = false
+      }
+    }
+
+    void sweep()
+    const again = window.setInterval(() => { void sweep() }, 60_000)
+    return () => { live = false; window.clearInterval(again) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on, pulse.data?.waiting])
   /** Whatever is standing between "switched on" and "actually working". */
   const faults = !on ? [] : [
     !beat?.beating && {
       what: 'Nothing is scheduled to run it',
-      fix: 'The every-minute sweep lives in the database as the pg_cron job "kobblon-machine". Install pg_cron on the project and apply migration 0253 again; until then it only moves when something lands or when somebody presses Run it now.',
+      fix: 'The every-minute sweep lives in the database as the pg_cron job "kobblon-machine". Install pg_cron on the project and apply migration 0253 again. Until then it moves when something lands, every five minutes from the schedule on the repository, and every minute while this panel is open - but a console nobody has open sweeps nothing.',
     },
     !beat?.wired && {
       what: 'The database does not know where the worker is',
@@ -3249,7 +3456,7 @@ export function MachineSection() {
   ].filter(Boolean) as { what: string; fix: string }[]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* ------------------------------------------------- is it running */}
       {settings.loading && !settings.data ? <Skeleton className="h-40" /> : !settings.data ? (
         /* Only staff may read the settings row, so an empty answer here is
@@ -3762,7 +3969,7 @@ export default function Admin() {
   if (loading || asked.loading) {
     return (
       <ConsolePage>
-        <div className="mx-auto max-w-[1500px] space-y-4 px-4 py-6">
+        <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-8 sm:px-6">
           <Skeleton className="h-16" />
           <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
             <Skeleton className="h-96" />
@@ -3795,7 +4002,7 @@ export default function Admin() {
     <ConsolePage>
       {/* --------------------------------------------------- who you are */}
       <header className="sticky top-0 z-30 border-b border-ink-line bg-ink/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-4 px-4 py-4 sm:px-6">
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-white">
             <FontAwesomeIcon icon={faUserShield} />
           </span>
@@ -3845,7 +4052,7 @@ export default function Admin() {
         onFindPerson={(term) => { setLookFor(term); go('People') }}
       />
 
-      <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
         {/*
           * The rail sticks and the work scrolls. On a phone it is a plain
           * block above the panel rather than a sticky strip eating a third
@@ -3860,8 +4067,8 @@ export default function Admin() {
           )}
         </div>
 
-        <div className="min-w-0 space-y-4">
-          <div className="flex items-center gap-3 border-b border-ink-line pb-3">
+        <div className="min-w-0 space-y-6">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-ink-line pb-4">
             {here.art
               ? <Icon name={here.art} className="w-5 shrink-0 text-brand-bright" />
               : <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />}
