@@ -8588,3 +8588,40 @@ fetch starts while the document is still being read. `LoadingScreen` and
 `LoadingMark` in `@/components/ui/Loading` are unchanged in name and take
 the same props; `LoadingMark` is now the image itself rather than a wrapper
 around two of them.
+
+## Round one hundred and three
+
+**A loading screen that can never finish, and the three ways this one
+could.** Staw: "you refresh and the page doesn't load any more", on pages
+other than the home page. All three are the same shape - something the site
+waits on that is not guaranteed to come back - and the applications wait on
+the same things.
+
+1. **`supabase.auth.getSession()` was handled with `then` and no `catch`.**
+   It reads the stored tokens and may go to Supabase to refresh them, so on
+   a dropped connection it **rejects** - and the flag the whole site waits
+   on was only ever cleared inside `then`. One rejected promise and the
+   loading screen is permanent. It now treats a rejection as "nobody is
+   signed in in this tab", which is recoverable where a screen that never
+   finishes is not.
+2. **The profile read had no deadline.** `fetch` has none of its own, so a
+   request that neither answers nor fails leaves the promise pending for
+   ever and `finally` never runs. There is an eight second deadline on it
+   now; the site starts without the profile, which is a page that fills in
+   a moment later rather than a page that never comes.
+3. **The boot mark came down on the line after `render`** - and `render`
+   only schedules. So the document's own mark was removed whether or not
+   anything replaced it, and a first render that threw left an empty page.
+   It comes down in an effect now, which runs after React has actually
+   committed.
+
+And both loading screens - the one in the document and `LoadingScreen` -
+**say something after twelve seconds** and offer to reload, rather than
+sitting there looking like they are working. The causes above are fixed
+where they are; the next cause will be a different one, and a screen that
+waits for ever should be able to admit it.
+
+Worth copying in the Workspace and the Launcher, whatever their own session
+code looks like: a `then` with no `catch` on a session read, a network read
+with no deadline behind a loading flag, and a splash screen with no way out
+are all the same bug wearing different hats.

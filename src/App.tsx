@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { Boundary } from '@/components/layout/Boundary'
@@ -77,6 +77,14 @@ function RootRoute() {
 }
 
 export default function App() {
+  /*
+   * The mark in the document comes down here, after React has committed -
+   * an effect runs once something is actually on screen. See `main.tsx`.
+   */
+  useEffect(() => {
+    document.getElementById('boot')?.remove()
+  }, [])
+
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <ThemeProvider>

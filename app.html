@@ -53,8 +53,10 @@
       #boot {
         position: fixed;
         inset: 0;
-        display: grid;
-        place-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         background: #101012;
       }
       #boot img {
@@ -64,6 +66,36 @@
         transition: opacity 200ms ease;
       }
       #boot.drawing img { opacity: 1; }
+      /*
+       * The way out of a boot screen that is never going to finish.
+       *
+       * Everything here is in the document, and everything that replaces it
+       * is in the bundle - so if the bundle does not arrive, this is the
+       * last thing the page ever does. A browser holding an old index asks
+       * for pieces that were published over and gets nothing, which is
+       * exactly what a refresh does, and the mark sat there for ever
+       * saying nothing. After twelve seconds it says so and offers the one
+       * thing that fixes it.
+       */
+      #boot p {
+        margin: 1.5rem 0 0;
+        display: none;
+        max-width: 22rem;
+        text-align: center;
+        font: 500 14px/1.6 Inter, system-ui, sans-serif;
+        color: #8b8b94;
+      }
+      #boot.slow p { display: block; }
+      #boot button {
+        margin-top: 0.75rem;
+        border: 0;
+        border-radius: 999px;
+        padding: 0.5rem 1.1rem;
+        background: #1b34e8;
+        color: #fff;
+        font: 700 13px Inter, system-ui, sans-serif;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -71,7 +103,19 @@
     <div id="boot">
       <img alt="" src="/brand/logo-reveal.gif"
         onload="document.getElementById('boot').classList.add('drawing')" />
+      <p>
+        This is taking longer than it should. Loading the page again usually
+        fixes it.
+        <br />
+        <button type="button" onclick="location.reload()">Load it again</button>
+      </p>
     </div>
+    <script>
+      setTimeout(function () {
+        var boot = document.getElementById('boot')
+        if (boot) boot.className += ' slow'
+      }, 12000)
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

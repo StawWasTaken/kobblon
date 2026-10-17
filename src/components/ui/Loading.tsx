@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
@@ -29,9 +29,12 @@ export function LoadingScreen({
   className?: string
 }) {
   return (
-    <div className={cn('grid min-h-dvh place-items-center bg-ink', className)}>
-      <LoadingMark />
-      <span className="sr-only">{label}</span>
+    <div className={cn('grid min-h-dvh place-items-center bg-ink px-6', className)}>
+      <div className="flex flex-col items-center">
+        <LoadingMark />
+        <span className="sr-only">{label}</span>
+        <TakingTooLong />
+      </div>
     </div>
   )
 }
@@ -53,5 +56,42 @@ export function LoadingMark({ className }: { className?: string }) {
       )}
       onLoad={() => setDrawing(true)}
     />
+  )
+}
+
+/**
+ * A way out of a wait that is not going to end.
+ *
+ * A loading screen with nothing behind it is the worst thing this site can
+ * show, because it looks like it is working. Staw: "you refresh and the
+ * page doesn't load any more". The causes are fixed where they are - a
+ * rejected session read, a request that never answers - but a screen that
+ * waits for ever should also be able to say so, because the next cause
+ * will be a different one.
+ */
+function TakingTooLong() {
+  const [slow, setSlow] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 12_000)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  if (!slow) return null
+
+  return (
+    <div className="mt-6 max-w-sm text-center">
+      <p className="text-sm text-muted">
+        This is taking longer than it should. Loading the page again usually
+        fixes it.
+      </p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-3 rounded-full bg-brand px-4 py-2 text-[13px] font-bold text-white"
+      >
+        Load it again
+      </button>
+    </div>
   )
 }

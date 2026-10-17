@@ -95,10 +95,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      if (!data.session) setLoading(false)
-    })
+    /*
+     * Both ways out of this, because one of them was missing and it was the
+     * one that happens.
+     *
+     * `getSession` reads the stored tokens and may go to Supabase to
+     * refresh them. On a connection that drops, or anything that blocks the
+     * request, it **rejects** - and the only handler here was `then`. So
+     * `loading` stayed true, and `loading` is what the whole site waits on:
+     * a refresh sat on the loading screen for ever and never said why.
+     * Reported by Staw as "you refresh and the page doesn't load any more".
+     *
+     * A rejection means nobody is signed in as far as this tab is
+     * concerned. That is recoverable - they sign in again - where a screen
+     * that never finishes is not.
+     */
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        setSession(data.session)
+        if (!data.session) setLoading(false)
+      })
+      .catch(() => {
+        setSession(null)
+        setLoading(false)
+      })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next)
@@ -152,8 +172,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setLoading(false)
     })
 
+    /*
+     * And a deadline on it, for the case `finally` cannot cover: a request
+     * that neither answers nor fails. `fetch` has no timeout of its own, so
+     * a stalled connection leaves this promise pending for ever and the
+     * site waits behind it.
+     *
+     * The profile arriving late is a page that fills in a moment later.
+     * The profile never arriving and the site never starting is the bug.
+     * So after eight seconds the site goes ahead without it; `profile` is
+     * allowed to be null and everything that reads it already copes.
+     */
+    const deadline = window.setTimeout(() => {
+      if (!cancelled) setLoading(false)
+    }, 8_000)
+
     return () => {
       cancelled = true
+      window.clearTimeout(deadline)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loadProfile])

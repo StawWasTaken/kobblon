@@ -19,6 +19,13 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// The mark the document paints on its own, before any of this arrived. It has
-// done its job once there is something real to look at.
-document.getElementById('boot')?.remove()
+/*
+ * The document's own mark is taken down by `App`, once React has actually
+ * put something on screen.
+ *
+ * It used to come down here, on the line after `render` - and `render` only
+ * *schedules* the work. So the mark went the moment the bundle ran, whether
+ * or not anything replaced it, and if the first render threw, what was left
+ * was an empty page. A boot screen that stays up until there is something
+ * behind it can at least offer to reload; a blank one cannot.
+ */
