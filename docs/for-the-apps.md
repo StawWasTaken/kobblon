@@ -8899,3 +8899,26 @@ artwork with the hue moved, not drawings of his - he has said he does not
 like them and they are waiting on his own files under the same names.
 Migration 0263 is still not applied in production, `register` is still not
 deployed, and `pg_cron` is still not enabled.
+
+## Round one hundred and nine
+
+**The ordinary wordmark is now a drawing per mode, not a filter.**
+`public/brand/wordmark.png` is the white silhouette, for the dark interface
+it was drawn for; light mode was inverting it, which gives a flat black
+name rather than the mark. `public/brand/wordmark2.png` - the blue-outlined
+one, which has been in the repository since the start and was used nowhere -
+is the daylight drawing, and `.kob-wordmark` and its `filter: invert(1)`
+are gone from `src/index.css`. If an application has a copy of that filter,
+drop it and point light mode at `wordmark2.png` instead.
+
+So `LOOKS` in `@/components/brand/Wordmark` is six entries now, a look and a
+mode each, and the CSS picks the ordinary one by mode the way it already
+picked the seasons. Measured in Chromium, exactly one mark is visible per
+slot in each of the six combinations: dark gets `wordmark.png`,
+`wordmark-halloween.png`, `wordmark-christmas.png`; light gets
+`wordmark2.png` and the two `-light` silhouettes. The logomark is brand
+blue in both modes and is unchanged.
+
+The seasonal art is still Staw's blue artwork with the hue moved and still
+waiting on his own drawings. 0263 is still not applied, `register` is still
+not deployed, `pg_cron` is still not enabled.

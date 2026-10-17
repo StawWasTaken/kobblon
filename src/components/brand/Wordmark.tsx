@@ -5,9 +5,11 @@ import { asset } from '@/lib/asset'
 /**
  * The name and the mark, in whichever appearance is being worn.
  *
- * The ordinary wordmark is white artwork for the dark interface, flipped in
- * light mode; the logomark is brand blue and reads on either. The seasonal
- * ones are drawings in their own colours and are flipped by nothing.
+ * There is a drawing for each mode rather than a filter: the white
+ * silhouette for the dark interface it was drawn for, and `wordmark2`,
+ * the blue-outlined one, for daylight. Inverting the white one gave a
+ * flat black name, which is not the mark and never was. Nothing is
+ * flipped here now; the logomark is brand blue and reads on either.
  *
  * **Chosen by CSS, not by a hook.** All of them are in the markup and all
  * but one are hidden, the same way the avatar backdrop does it. Two reasons
@@ -21,18 +23,18 @@ import { asset } from '@/lib/asset'
  * and any page mounted alone - the ordinary one is drawn, which is right.
  */
 const LOOKS = [
-  { look: 'default', mode: 'dark', wordmark: '/brand/wordmark.png', logomark: '/brand/logomark.png', flips: true },
-  { look: 'halloween', mode: 'dark', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png', flips: false },
-  { look: 'christmas', mode: 'dark', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png', flips: false },
+  { look: 'default', mode: 'dark', wordmark: '/brand/wordmark.png', logomark: '/brand/logomark.png' },
+  { look: 'halloween', mode: 'dark', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png' },
+  { look: 'christmas', mode: 'dark', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png' },
   /*
-   * Light mode gets the flat silhouette in a deep version of the season's
-   * colour, which is the same treatment the ordinary mark gets - it is
-   * flipped to black. The three-dimensional ones are nearly white inside
-   * and simply vanish on a pale bar, and flipping one gives a negative
-   * rather than a dark version of it.
+   * Daylight. The ordinary one is `wordmark2`, which is drawn with the
+   * blue outline that carries it on a pale bar. The seasons get the flat
+   * silhouette in a deep version of their colour instead, because their
+   * three-dimensional drawings are nearly white inside and vanish there.
    */
-  { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween-light.png', logomark: '/brand/logomark-halloween-light.png', flips: false },
-  { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas-light.png', logomark: '/brand/logomark-christmas-light.png', flips: false },
+  { look: 'default', mode: 'light', wordmark: '/brand/wordmark2.png', logomark: '/brand/logomark.png' },
+  { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween-light.png', logomark: '/brand/logomark-halloween-light.png' },
+  { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas-light.png', logomark: '/brand/logomark-christmas-light.png' },
 ] as const
 
 /*
@@ -87,7 +89,7 @@ export function Wordmark({ className, to = '/', always = false }: {
             src={asset(one.wordmark)}
             alt={one.look === 'default' ? 'Kobblon' : ''}
             aria-hidden={one.look === 'default' ? undefined : true}
-            className={cn('kob-mark h-full w-auto select-none', one.flips && 'kob-wordmark')}
+            className="kob-mark h-full w-auto select-none"
           />
         ))}
       </span>
