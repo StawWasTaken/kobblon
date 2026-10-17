@@ -33,8 +33,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://use.typekit.net/lqk3dkx.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <style>#boot{background:#101012;place-items:center;display:grid;position:fixed;inset:0}#boot img{opacity:0;width:auto;height:150px;transition:opacity .2s}#boot.drawing img{opacity:1}</style>
-    <script type="module" crossorigin src="/assets/app-DFDsIzfa.js"></script>
+    <style>#boot{background:#101012;flex-direction:column;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}#boot img{opacity:0;width:auto;height:150px;transition:opacity .2s}#boot.drawing img{opacity:1}#boot p{text-align:center;color:#8b8b94;max-width:22rem;margin:1.5rem 0 0;font:500 14px/1.6 Inter,system-ui,sans-serif;display:none}#boot.slow p{display:block}#boot button{color:#fff;cursor:pointer;background:#1b34e8;border:0;border-radius:999px;margin-top:.75rem;padding:.5rem 1.1rem;font:700 13px Inter,system-ui,sans-serif}</style>
+    <script type="module" crossorigin src="/assets/app-BUgXA65e.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/free-solid-svg-icons-BE8nk3Vb.js">
     <link rel="modulepreload" crossorigin href="/assets/format-BggNTQ1j.js">
     <link rel="modulepreload" crossorigin href="/assets/api-0_Dbj8Tq.js">
@@ -43,13 +43,25 @@
     <link rel="modulepreload" crossorigin href="/assets/Dialog-DAmeH2EL.js">
     <link rel="modulepreload" crossorigin href="/assets/currency-C73piBVI.js">
     <link rel="modulepreload" crossorigin href="/assets/Cropper-DQJ_ZB05.js">
-    <link rel="stylesheet" crossorigin href="/assets/app-BMqpb_T9.css">
+    <link rel="stylesheet" crossorigin href="/assets/app-D8-DVas_.css">
   </head>
   <body>
     <div id="root"></div>
     <div id="boot">
       <img alt="" src="/brand/logo-reveal.gif"
         onload="document.getElementById('boot').classList.add('drawing')" />
+      <p>
+        This is taking longer than it should. Loading the page again usually
+        fixes it.
+        <br />
+        <button type="button" onclick="location.reload()">Load it again</button>
+      </p>
     </div>
+    <script>
+      setTimeout(function () {
+        var boot = document.getElementById('boot')
+        if (boot) boot.className += ' slow'
+      }, 12000)
+    </script>
   </body>
 </html>
