@@ -9,7 +9,7 @@
  */
 import { createRoot } from 'react-dom/client'
 import { useState } from 'react'
-import { Wordmark, Logomark } from '@/components/brand/Wordmark'
+import { Wordmark } from '@/components/brand/Wordmark'
 import { Studio } from '@/components/avatar/Studio'
 import { LOOKS, APPEARANCES } from '@/lib/appearances'
 import { Button } from '@/components/ui/Button'
@@ -24,7 +24,8 @@ function Bar({ look }: { look: string }) {
   return (
     <div data-appearance={look} className="overflow-hidden rounded-2xl border border-ink-line">
       <div className="flex items-center gap-3 bg-chrome px-4 py-3">
-        <Logomark className="h-6" />
+        {/* The bar as it actually is: the name, which becomes the mark on
+            its own when the bar is too narrow for it. */}
         <Wordmark to={null} className="h-5" />
         <span className="ml-auto rounded-full bg-field px-3 py-1.5 text-xs text-onbrand/70">
           Search Kobblon

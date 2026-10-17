@@ -57,7 +57,8 @@ export function SiteFooter({ className }: { className?: string }) {
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
           <div>
-            <Wordmark to="/" className="h-5" />
+            {/* A line of its own, so the name stays the name at every width. */}
+            <Wordmark to="/" className="h-5" always />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/50">
               A place to make something, put it somewhere, and have people turn up to see it.
             </p>

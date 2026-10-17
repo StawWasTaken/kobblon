@@ -35,20 +35,62 @@ const LOOKS = [
   { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas-light.png', logomark: '/brand/logomark-christmas-light.png', flips: false },
 ] as const
 
-export function Wordmark({ className, to = '/' }: { className?: string; to?: string | null }) {
+/*
+ * The name, falling back to the mark where the name will not fit.
+ *
+ * Staw: "for the logomark its only when the wordmark is too small". So the
+ * two are not a lockup and are never drawn side by side - the logomark is
+ * what the wordmark becomes when there is no room for nine letters, which
+ * on this site is the bar at phone width, where it shares a line with the
+ * menu button, the search and everything on the right.
+ *
+ * The swap is a breakpoint rather than a measurement: a component that
+ * measures its own box has to render once to find out, and the one thing
+ * this must not do is change a moment after the page has drawn.
+ */
+export function Wordmark({ className, to = '/', always = false }: {
+  className?: string
+  to?: string | null
+  /**
+   * Keep the full wordmark at every width.
+   *
+   * For the places that have a line to themselves - the footer, the story
+   * pages - where the mark on its own would just look like something
+   * failed to load.
+   */
+  always?: boolean
+}) {
   const img = (
     <span className={cn('inline-flex h-5 items-center sm:h-6', className)}>
-      {LOOKS.map((one) => (
-        <img
-          key={`${one.look}-${one.mode}`}
-          data-look={one.look}
-          data-mode={one.mode}
-          src={asset(one.wordmark)}
-          alt={one.look === 'default' ? 'Kobblon' : ''}
-          aria-hidden={one.look === 'default' ? undefined : true}
-          className={cn('kob-mark h-full w-auto select-none', one.flips && 'kob-wordmark')}
-        />
-      ))}
+      {!always && (
+        <span className="inline-flex h-full items-center sm:hidden">
+          {LOOKS.map((one) => (
+            <img
+              key={`${one.look}-${one.mode}`}
+              data-look={one.look}
+              data-mode={one.mode}
+              src={asset(one.logomark)}
+              alt={one.look === 'default' ? 'Kobblon' : ''}
+              aria-hidden={one.look === 'default' ? undefined : true}
+              className="kob-mark h-full w-auto select-none"
+            />
+          ))}
+        </span>
+      )}
+
+      <span className={cn('h-full items-center', always ? 'inline-flex' : 'hidden sm:inline-flex')}>
+        {LOOKS.map((one) => (
+          <img
+            key={`${one.look}-${one.mode}`}
+            data-look={one.look}
+            data-mode={one.mode}
+            src={asset(one.wordmark)}
+            alt={one.look === 'default' ? 'Kobblon' : ''}
+            aria-hidden={one.look === 'default' ? undefined : true}
+            className={cn('kob-mark h-full w-auto select-none', one.flips && 'kob-wordmark')}
+          />
+        ))}
+      </span>
     </span>
   )
   return to ? (
@@ -60,6 +102,13 @@ export function Wordmark({ className, to = '/' }: { className?: string; to?: str
   )
 }
 
+/**
+ * The mark on its own, for somewhere there is no room for the name at all.
+ *
+ * Mostly this is not what you want: `Wordmark` already falls back to it at
+ * phone width, which is the case Staw was describing. This is for a square
+ * - a favicon-sized corner, a tile - where the name was never going to go.
+ */
 export function Logomark({ className }: { className?: string }) {
   return (
     <span className={cn('inline-flex h-7 items-center', className)} aria-hidden="true">

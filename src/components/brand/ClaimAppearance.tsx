@@ -112,8 +112,12 @@ export function ClaimAppearance({ offer }: {
     >
       {/*
         * The artwork is the whole point of the card, so it is the card: the
-        * mark on the season's own chrome colour, drawn at the size it is
-        * actually worth seeing rather than as an icon beside a sentence.
+        * wordmark on the season's own chrome colour, drawn at the size it
+        * is actually worth seeing rather than as an icon beside a sentence.
+        *
+        * The wordmark alone - Staw: "for the logomark its only when the
+        * wordmark is too small". They are not a lockup, and a card has all
+        * the room in the world.
         */}
       <div
         data-appearance={offered}
@@ -123,12 +127,6 @@ export function ClaimAppearance({ offer }: {
           src={asset(look.wordmark)}
           alt={`The ${look.name} wordmark`}
           className="h-14 w-auto select-none"
-        />
-        <img
-          src={asset(look.logomark)}
-          alt=""
-          aria-hidden
-          className="h-12 w-auto select-none"
         />
       </div>
     </Dialog>
