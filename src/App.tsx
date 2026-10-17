@@ -8,7 +8,7 @@ import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ThemeProvider } from '@/hooks/useTheme'
-import { Logomark } from '@/components/brand/Wordmark'
+import { LoadingScreen } from '@/components/ui/Loading'
 import Landing from '@/pages/Landing'
 import Auth from '@/pages/Auth'
 import Home from '@/pages/Home'
@@ -58,13 +58,9 @@ const CatalogItem = lazyPage(() => import('@/pages/CatalogItem'))
 const OutfitPage = lazyPage(() => import('@/pages/OutfitPage'))
 const MyAvatar = lazyPage(() => import('@/pages/MyAvatar'))
 
+/* The one wait the whole site shows. `LoadingScreen` is where it lives. */
 function Booting() {
-  return (
-    <div className="grid min-h-dvh place-items-center bg-ink">
-      <Logomark className="h-10 animate-bob" />
-      <span className="sr-only">Loading Kobblon</span>
-    </div>
-  )
+  return <LoadingScreen />
 }
 
 /** Signed-out visitors get the landing page rather than a bounce to a form. */

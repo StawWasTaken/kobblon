@@ -8533,3 +8533,34 @@ anonymously - anonymous checks pass for the wrong reason, because
   answers `beating: false` and says so rather than failing.
 - No backfill: accounts that existed before 0255 are not queued. There is
   `queue_profile_text(uuid)` for staff to ask for one account to be read.
+
+## Round one hundred and one
+
+**Staw's logo reveal is the loading screen, and the applications should use
+it too.**
+
+The file is in this repository at **`public/brand/logo-reveal.gif`** -
+420x215, 20fps, transparent background, loops. It is the full-size original
+cut down from 1.2MB to 494KB; the original is at
+`design/art/logo-reveal-source.gif` (820x420), which is deliberately outside
+`public/` so it is not served.
+
+Transparent, so it sits on whatever the panel's background is. Checked on
+`#101012` with no white fringing.
+
+**`LoadingScreen` and `LoadingMark` in `@/components/ui/Loading`** are the
+website's two loading states and are yours to import. `LoadingScreen` is the
+whole-window one; `LoadingMark` is the mark on its own for a wait inside a
+panel. Neither takes a provider, a router or a session - `tools/site/
+loading-preview.html` mounts `LoadingScreen` with nothing around it, which
+is the check that it stays mountable.
+
+**The one thing worth copying rather than the GIF itself:** half a megabyte
+is not on screen at the first paint. Both loading states draw the still
+logomark immediately and fade the reveal in over it on `load`, so a wait
+that is over in 200ms shows the still mark and never flickers, and a wait
+long enough to notice gets the animation. The website's own document
+(`app.html`) does the same with an inlined data-address logomark, because
+there the bundle has not arrived either. If a panel shows the GIF alone, a
+cold start is a blank rectangle for as long as it takes to fetch - which is
+the bug the boot screen was written to fix in the first place.
