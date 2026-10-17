@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { AppearancePreview } from '@/components/brand/AppearancePreview'
 import {
   faCube, faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck, faTriangleExclamation,
@@ -30,7 +31,6 @@ import { useTitle } from '@/hooks/useTitle'
 import { Avatar } from '@/components/ui/Avatar'
 import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
-import { asset } from '@/lib/asset'
 import { useAppearance } from '@/hooks/useAppearance'
 import { APPEARANCES, LOOKS, type Appearance } from '@/lib/appearances'
 
@@ -395,20 +395,11 @@ export function Appearances() {
                   : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
               )}
             >
-              {/* The chrome of the appearance itself, with its own mark on
-                  it - which is the only honest swatch for a thing whose
-                  whole job is what the bar looks like. */}
-              <span
-                data-appearance={one}
-                className="grid h-20 place-items-center bg-chrome"
-              >
-                <img
-                  src={asset(look.wordmark)}
-                  alt=""
-                  aria-hidden
-                  className="h-7 w-auto select-none"
-                />
-              </span>
+              {/* The site wearing it, drawn small. A strip of the bar's
+                  colour was the old swatch and it said nothing about the
+                  cards, the lines or the links, which an appearance moves
+                  too now. */}
+              <AppearancePreview which={one} />
               <span className="flex items-center gap-2 p-4">
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold">{look.name}</span>

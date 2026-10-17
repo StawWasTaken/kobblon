@@ -8922,3 +8922,41 @@ blue in both modes and is unchanged.
 The seasonal art is still Staw's blue artwork with the hue moved and still
 waiting on his own drawings. 0263 is still not applied, `register` is still
 not deployed, `pg_cron` is still not enabled.
+
+## Round one hundred and ten
+
+Staw, of what the last two rounds shipped: "the appearance system just
+sucks its really not at all what i had asked". Two of the three things he
+named are in `design/tokens.css` and `@/components/brand`, so they matter
+on your side too.
+
+**The seasonal colours are picked now, not derived.** Moving the blue's hue
+and keeping its saturation and lightness is arithmetic, not a colour:
+halloween came out `#824516`, which is a brown, and christmas `#125432`,
+which is an olive. They are `#B85209` and `#0E6638` now, chosen to look
+like the season and then checked against white text (4.9:1 and 7.0:1, past
+the 4.5 a small bold label on the rail needs).
+
+**And a season reaches past the bar.** `--ink`, `--ink-raised`,
+`--ink-card`, `--ink-hover`, `--ink-line`, `--link` and `--bubble` are in
+the seasonal blocks now, so the page's black is a warm one under halloween
+and a green-black under christmas, and the cards and lines come with it.
+The page is still black or white - that part of the brief has not moved -
+it is the same black with a cast on it. **Anything over there that reads
+those tokens changes with the season now, where before only `--chrome`
+did.** Buttons are untouched: brand blue, Space green and the red are not
+in this file.
+
+**New: `AppearancePreview` in `@/components/brand/AppearancePreview`.**
+`<AppearancePreview which="halloween" />` draws the site small - bar, rail
+with a selected entry, a card, the buttons - out of the real tokens inside
+`data-appearance`, so it cannot drift from the site the way a screenshot
+would. It takes `className`, mounts with no provider and no router, and it
+is what Settings now offers an appearance with; the strip of bar colour
+with a wordmark on it is gone. If the Workspace ever offers these, use
+this rather than drawing a swatch.
+
+Still Staw's to supply and still the third thing he named: the halloween
+wordmark and logomark and the christmas logomark are my hue-rotated
+stand-ins. 0263 is still not applied, `register` is still not deployed,
+`pg_cron` is still not enabled.

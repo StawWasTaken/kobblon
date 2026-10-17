@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ClaimAppearance } from '@/components/brand/ClaimAppearance'
 import { Appearances } from '@/pages/Settings'
+import { AppearancePreview } from '@/components/brand/AppearancePreview'
 import { Weather } from '@/components/brand/Weather'
 import { AppearanceProvider } from '@/hooks/useAppearance'
 import '@/index.css'
@@ -70,6 +71,13 @@ function Page() {
       >
         {light ? 'Dark' : 'Light'}
       </button>
+      {/* The little drawing of the page that Settings offers one with. */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        {APPEARANCES.map((look) => (
+          <AppearancePreview key={look} which={look} className="rounded-xl border border-ink-line" />
+        ))}
+      </div>
+
       {APPEARANCES.map((look) => <Bar key={look} look={look} />)}
 
       {/* The Settings card, signed out, which is the state that shows

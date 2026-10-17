@@ -60,59 +60,94 @@
 /*
  * The seasons.
  *
- * Staw: "the sidebar&topbar also gets an orange like colour, its
- * proportional to the original blue colour but into orange". So these are
- * not picked: they are the blues above with the hue moved and the
- * saturation and the lightness left exactly where they were, which is what
- * "proportional" means and is why the dark one is still dark and the light
- * one is still barely tinted. Halloween is at 26 degrees, christmas at 148.
+ * Picked, not derived. The first pass moved the blue's hue and left its
+ * saturation and lightness alone, which is arithmetic rather than a colour:
+ * halloween came out #824516, a brown, and christmas #125432, an olive.
+ * Staw, of that: "the appearance system just sucks". These are chosen to
+ * look like the season and then checked against white text instead -
+ * #B85209 is 4.9:1 and #0E6638 is 7.0:1, both past the 4.5 a small bold
+ * label on the rail needs.
  *
- * Written for any element rather than only the document, so a card can
- * show an appearance that is not the one being worn - which is what the
- * popup offering one does, and the swatches in Settings.
+ * And they reach past the bar now. The page keeps its black or its white -
+ * that part of the brief has not moved - but the black is a warm one under
+ * halloween and a green-black under christmas, and the cards, the lines,
+ * the hovers and the links come with it. A season that stopped at the bar
+ * read as a bar somebody had recoloured by mistake.
+ *
+ * What still never moves: brand blue, Space green and the red. They are not
+ * in this file at all, so a button means the same thing in every season.
+ * "for the buttons, we gonna keep the blue & green & red".
+ *
+ * Written for any element rather than only the document, so a card can show
+ * an appearance that is not the one being worn - the popup that offers one,
+ * and the previews in Settings, which are whole little pages and need every
+ * one of these.
  *
  * And written for the document *as well*, which is not a duplicate. Both
  * attributes sit on `html`, so the bare `[data-appearance]` selector was
  * competing with `:root[data-theme='dark']` over the same declaration on
  * the same element - and losing it, one class of specificity to two. The
  * season reached the wordmark and never the sidebar.
- *
- * Only the chrome moves. `--ink`, the cards, the text and the lines are
- * untouched, because the page is still the page; and brand blue, Space
- * green and the red are not in this file at all, so a button means the
- * same thing in every season.
  */
 [data-appearance='halloween'],
 :root[data-appearance='halloween'],
 :root[data-theme='dark'][data-appearance='halloween'] {
-  --chrome: 130 69 22;
-  --media: 73 39 13;
-  --field: 63 34 11;
+  --chrome: 184 82 9;
+  --media: 94 40 6;
+  --field: 74 32 5;
   --on-chrome: 255 255 255;
+  --ink: 20 15 12;
+  --ink-raised: 28 21 16;
+  --ink-card: 32 24 18;
+  --ink-hover: 44 32 23;
+  --ink-line: 59 42 29;
+  --link: 255 178 102;
+  --bubble: 48 35 25;
 }
 
 :root[data-theme='light'] [data-appearance='halloween'],
 :root[data-theme='light'][data-appearance='halloween'] {
-  --chrome: 255 232 214;
-  --media: 244 234 226;
+  --chrome: 255 229 206;
+  --media: 247 236 227;
   --field: 255 255 255;
-  --on-chrome: 64 37 16;
+  --on-chrome: 92 42 8;
+  --ink: 250 244 238;
+  --ink-raised: 255 255 255;
+  --ink-card: 255 255 255;
+  --ink-hover: 247 236 226;
+  --ink-line: 232 216 201;
+  --link: 168 74 8;
+  --bubble: 46 32 22;
 }
 
 [data-appearance='christmas'],
 :root[data-appearance='christmas'],
 :root[data-theme='dark'][data-appearance='christmas'] {
-  --chrome: 18 84 50;
-  --media: 13 56 34;
-  --field: 11 48 29;
+  --chrome: 14 102 56;
+  --media: 10 56 32;
+  --field: 8 46 27;
   --on-chrome: 255 255 255;
+  --ink: 13 19 15;
+  --ink-raised: 19 27 22;
+  --ink-card: 22 31 25;
+  --ink-hover: 30 43 34;
+  --ink-line: 40 58 46;
+  --link: 126 226 164;
+  --bubble: 34 48 39;
 }
 
 :root[data-theme='light'] [data-appearance='christmas'],
 :root[data-theme='light'][data-appearance='christmas'] {
-  --chrome: 214 255 233;
-  --media: 226 244 234;
+  --chrome: 214 243 226;
+  --media: 230 244 236;
   --field: 255 255 255;
-  --on-chrome: 16 64 38;
+  --on-chrome: 10 61 35;
+  --ink: 242 248 244;
+  --ink-raised: 255 255 255;
+  --ink-card: 255 255 255;
+  --ink-hover: 232 243 236;
+  --ink-line: 206 227 214;
+  --link: 12 92 50;
+  --bubble: 22 40 29;
 }
 }

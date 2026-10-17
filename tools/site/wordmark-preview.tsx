@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')!).render(
         <div key={look} data-appearance={look} className="mb-4 flex h-16 items-center gap-6 rounded-xl bg-chrome px-6">
           <Wordmark to={null} always className="h-7" />
           <Wordmark to={null} className="h-7" />
-          <span className="text-xs font-bold uppercase tracking-wide text-onchrome/70">{look}</span>
+          <span className="text-xs font-bold uppercase tracking-wide text-onbrand/70">{look}</span>
         </div>
       ))}
     </div>
