@@ -8849,3 +8849,17 @@ the same names. The seasonal weather is mounted on Home and nowhere else.
 `pg_cron` is still not enabled for the `kobblon-machine` heartbeat, and the
 `register` function is still not deployed. Migrations through 0262 are
 applied in production; 0263 is new and is not.
+
+## Round one hundred and seven
+
+**The logomark is not half of a lockup.** Staw: "for the logomark its only
+when the wordmark is too small". `Wordmark` in `@/components/brand/Wordmark`
+draws the name, and under the `sm` breakpoint it draws the logomark
+instead - the two are never on screen together. `always` keeps the full
+wordmark at every width, for somewhere with a line of its own. `Logomark`
+is still exported for a square where the name was never going to go, but
+if an application is drawing both beside each other, that is the thing to
+change.
+
+Both still pick their appearance from `data-appearance` through CSS, so
+none of this needs a provider.
