@@ -176,7 +176,7 @@ export function Reactions({
           onClick={() => void press(one.face)}
           aria-pressed={one.mine}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-3 text-base font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-1 pr-2.5 text-sm font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
             one.mine
               ? 'border-brand bg-brand/15 text-white'
               : 'border-ink-line bg-ink-raised text-white/70 hover:text-white',
@@ -185,7 +185,7 @@ export function Reactions({
           <Icon
             name={`reaction-${one.face}`}
             tone={one.mine ? FACE_COLOUR[one.face] : undefined}
-            className="h-9 w-9"
+            className="h-7 w-7"
           />
           {formatCount(one.how_many)}
         </button>
@@ -203,7 +203,7 @@ export function Reactions({
           aria-label="React"
           aria-expanded={picking}
           className={cn(
-            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1 pl-1.5 pr-2 transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-0.5 pl-1 pr-2 transition-transform duration-150 hover:scale-105 active:scale-95',
             canReact ? 'text-white/60 hover:text-white' : 'text-white/40 opacity-60',
           )}
         >
@@ -213,7 +213,7 @@ export function Reactions({
             * yellow, because this button is the one that says "there are
             * faces here" and a grey one says the opposite.
             */}
-          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-9 w-9" />
+          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-7 w-7" />
           <Glyph icon={faPlus} className="text-[11px]" />
         </button>
       </Tooltip>
