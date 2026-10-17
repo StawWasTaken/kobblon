@@ -8714,3 +8714,71 @@ panel's Klub filter returns nobody rather than everybody - deliberately.
 `pg_cron` is still not enabled for the `kobblon-machine` heartbeat.
 Migrations 0254 through 0258 are applied locally and not yet in
 production.
+
+## Round one hundred and five
+
+**1. `Icon` was drawing at one line of text, whatever size you asked for.**
+This is the one to read even if nothing else here touches you. `Icon`
+defaulted to `h-[1em] w-[1em]` and joined the caller's class after it -
+but `cn` here joins, it does not merge, and Tailwind emits arbitrary
+values *after* the scale ones. So `<Icon className="h-9 w-9" />` lost in
+the stylesheet and came out 16px. Measured in the browser: 16, now 36.
+The default is left off now when the class names a size. If the Workspace
+has quietly compensated for small icons anywhere - a wrapper with its own
+width, a bumped font size - that compensation is now doubling.
+
+**2. A fire reaction, and the face list has one home.** Migration 0262
+adds `public.reaction_faces()` (immutable, returns `text[]`), and both the
+`reactions_face_check` constraint and `react()` read it. The list was
+written twice before, which is exactly how `fire` ended up accepted by the
+constraint and refused by the function. `FACES` in `@/lib/api` is eleven
+now, with `'fire'` between `'sunglasses'` and `'shocked'`; anything that
+switches on a face exhaustively needs the arm.
+
+Artwork: `reaction-fire.png`, plus `reaction-sad-tears.png` and
+`reaction-laugh-tears.png` as detail masks painted `#4AA3F0` over their
+faces, the way the tongue and the hearts already were. `FACE_COLOUR` in
+`Reactions.tsx` gives fire `#F6861F` rather than the face yellow, because
+a yellow flame is not a flame.
+
+**3. A main Community.** `member_communities(target)` returns one more
+column: `is_primary boolean`, and the main one sorts first (0261). The
+column behind it is `profiles.primary_community`, set through
+`set_primary_community(community uuid)` - `null` clears it. `MemberCommunity`
+and `Profile` in `@/types/db` carry the new fields. If an application
+lists somebody's Communities, the order is now meaningful and the flag is
+there to mark it.
+
+Worth knowing why that migration needed a second go: `set_primary_community`
+is `security definer`, wrote the column, and `guard_profile_update` pinned
+it straight back, because the guard asks `auth.uid()` and `security definer`
+changes a function's rights and not who it reports as. The project's third
+trap, fourth time. It raises `kobbleston.community` around the write now
+and the guard honours that. The first check missed it because it ran as
+@kobblon, and the guard returns early for admins - a guard whose subject is
+identity is never proven by one identity.
+
+**4. Sending Brix to somebody.** `sendBrix(to, amount, note?)` returns
+`{ sent, cut, arrived, balance }`, and `sendingShare()` is the percentage
+Kobblon keeps (5 today; read it, do not write it down). Between 10 and
+100000. It writes two rows in `pixel_transactions`, kinds `gift_sent` and
+`gift_received` - the kind check constraint was replaced to allow them, so
+anything of yours that enumerates transaction kinds wants those two.
+
+**5. Smaller shared things.** `MenuItem` takes `separated?: boolean`,
+which rules off a group above it. `removeCommunityPost` goes through the
+`remove_community_post` RPC now rather than an update - a soft delete
+against a SELECT policy that tests `not is_removed` is refused, because a
+SELECT policy applies to the *new* row of an UPDATE. `listTickets` asks
+only for your own tickets, and `replyTicket(id, body, asStaff?)` takes a
+third argument: left off, staff answer as Kobblon and everybody else
+answers as themselves, and the server refuses the combinations that do not
+make sense rather than trusting the flag.
+
+**Still not done, said plainly:** theme appearances (dark, light,
+halloween, christmas, the claim card and the seasonal windows) are asked
+for and not started - nothing of them exists to build against yet.
+`pg_cron` is still not enabled for the `kobblon-machine` heartbeat. The
+Klub still does not exist. Migrations 0254 through 0262 are applied
+locally and not yet in production, and the `register` function is not
+deployed.
