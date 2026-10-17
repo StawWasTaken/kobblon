@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/Button'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ClaimAppearance } from '@/components/brand/ClaimAppearance'
 import { Appearances } from '@/pages/Settings'
-import { AppearancePreview } from '@/components/brand/AppearancePreview'
 import { Weather } from '@/components/brand/Weather'
 import { AppearanceProvider } from '@/hooks/useAppearance'
 import '@/index.css'
@@ -24,7 +23,15 @@ import '@/index.css'
 function Bar({ look }: { look: string }) {
   return (
     <div data-appearance={look} className="overflow-hidden rounded-2xl border border-ink-line">
-      <div className="flex items-center gap-3 bg-chrome px-4 py-3">
+      <div className="relative flex items-center gap-3 bg-chrome px-4 py-3">
+        {/* the sunburst, which belongs to the blue appearance in the dark
+            and has to be gone in every other case */}
+        <img
+          src="/brand/topbar.png"
+          alt=""
+          aria-hidden
+          className="kob-sunburst absolute inset-0 -z-10 h-full w-full object-cover opacity-90"
+        />
         {/* The bar as it actually is: the name, which becomes the mark on
             its own when the bar is too narrow for it. */}
         <Wordmark to={null} className="h-5" />
@@ -38,7 +45,7 @@ function Bar({ look }: { look: string }) {
             <p
               key={item}
               className={at === 0
-                ? 'rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white'
+                ? 'rounded-xl bg-pick px-3 py-2 text-sm font-bold text-pick-on'
                 : 'rounded-xl px-3 py-2 text-sm font-bold text-onbrand/75'}
             >
               {item}
@@ -71,13 +78,6 @@ function Page() {
       >
         {light ? 'Dark' : 'Light'}
       </button>
-      {/* The little drawing of the page that Settings offers one with. */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {APPEARANCES.map((look) => (
-          <AppearancePreview key={look} which={look} className="rounded-xl border border-ink-line" />
-        ))}
-      </div>
-
       {APPEARANCES.map((look) => <Bar key={look} look={look} />)}
 
       {/* The Settings card, signed out, which is the state that shows

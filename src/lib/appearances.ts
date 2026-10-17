@@ -51,7 +51,7 @@ export const LOOKS: Record<Appearance, AppearanceLook> = {
     name: 'Kobblon',
     note: 'The blue one. Everybody has this.',
     wordmark: '/brand/wordmark2.png',
-    logomark: '/brand/logomark.png',
+    logomark: '/brand/logomark-darkmode.png',
     when: '',
   },
   halloween: {

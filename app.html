@@ -59,6 +59,23 @@
         justify-content: center;
         background: #101012;
       }
+      /*
+       * The same page the site is about to be, not a black rectangle.
+       *
+       * Staw: "i want it to be the background colour (applying theme
+       * appearances & modes) and nothing else". The bundle is not here yet,
+       * so these cannot be read from the tokens - they are the six values
+       * of `--ink`, and the script below picks one off what this device
+       * last had. They have to be kept in step with `design/tokens.css`,
+       * which is the price of the boot screen matching the page it turns
+       * into instead of flashing black first.
+       */
+      #boot[data-ink='dark-default'] { background: #101012; }
+      #boot[data-ink='light-default'] { background: #f2f3f7; }
+      #boot[data-ink='dark-halloween'] { background: #140f0c; }
+      #boot[data-ink='light-halloween'] { background: #faf4ee; }
+      #boot[data-ink='dark-christmas'] { background: #0d130f; }
+      #boot[data-ink='light-christmas'] { background: #f2f8f4; }
       #boot img {
         width: auto;
         height: 150px;
@@ -111,6 +128,29 @@
       </p>
     </div>
     <script>
+      /*
+       * What colour the wait is.
+       *
+       * The mode is this device's and the appearance is the account's, but
+       * both were on screen last time and both are remembered here, so the
+       * boot screen can be the page's own background rather than black on
+       * the way to a white one.
+       */
+      (function () {
+        var mode = 'dark'
+        var look = 'default'
+        try {
+          var saved = localStorage.getItem('kobblon.theme')
+          if (saved === 'light' || saved === 'dark') mode = saved
+          else if (saved === 'system' || saved === null) {
+            mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+          }
+          var worn = localStorage.getItem('kobblon.appearance')
+          if (worn === 'halloween' || worn === 'christmas') look = worn
+        } catch (e) {}
+        document.getElementById('boot').setAttribute('data-ink', mode + '-' + look)
+      })()
+
       /*
        * The rescue for a document that cannot load itself.
        *

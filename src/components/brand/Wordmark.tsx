@@ -5,11 +5,11 @@ import { asset } from '@/lib/asset'
 /**
  * The name and the mark, in whichever appearance is being worn.
  *
- * There is a drawing for each mode rather than a filter: the white
- * silhouette for the dark interface it was drawn for, and `wordmark2`,
- * the blue-outlined one, for daylight. Inverting the white one gave a
- * flat black name, which is not the mark and never was. Nothing is
- * flipped here now; the logomark is brand blue and reads on either.
+ * A drawing for each mode rather than a filter. `wordmark2` and the
+ * light-filled logomark are for the dark interface; the dark-filled pair
+ * is for daylight. The flat white silhouette is not used by either any
+ * more - inverting it gave a black name, which is not the mark and never
+ * was.
  *
  * **Chosen by CSS, not by a hook.** All of them are in the markup and all
  * but one are hidden, the same way the avatar backdrop does it. Two reasons
@@ -23,18 +23,22 @@ import { asset } from '@/lib/asset'
  * and any page mounted alone - the ordinary one is drawn, which is right.
  */
 const LOOKS = [
-  { look: 'default', mode: 'dark', wordmark: '/brand/wordmark.png', logomark: '/brand/logomark.png' },
+  { look: 'default', mode: 'dark', wordmark: '/brand/wordmark2.png', logomark: '/brand/logomark-darkmode.png' },
   { look: 'halloween', mode: 'dark', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png' },
   { look: 'christmas', mode: 'dark', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png' },
   /*
-   * Daylight. The ordinary one is `wordmark2`, which is drawn with the
-   * blue outline that carries it on a pale bar. The seasons get the flat
-   * silhouette in a deep version of their colour instead, because their
-   * three-dimensional drawings are nearly white inside and vanish there.
+   * Daylight. Staw drew the mark twice, a light fill for the dark
+   * interface and a dark one for here, and the wordmark only once -
+   * `wordmark-lightmode.png` is his own recolour learned off that pair of
+   * logomarks, pixel for pixel, rather than a filter or a guess.
+   *
+   * The seasonal logomarks are one drawing each and are not flipped: they
+   * are his, they carry their own colours, and they read on the pale bar
+   * and the deep one alike.
    */
-  { look: 'default', mode: 'light', wordmark: '/brand/wordmark2.png', logomark: '/brand/logomark.png' },
-  { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween-light.png', logomark: '/brand/logomark-halloween-light.png' },
-  { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas-light.png', logomark: '/brand/logomark-christmas-light.png' },
+  { look: 'default', mode: 'light', wordmark: '/brand/wordmark-lightmode.png', logomark: '/brand/logomark-lightmode.png' },
+  { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween-light.png', logomark: '/brand/logomark-halloween.png' },
+  { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas-light.png', logomark: '/brand/logomark-christmas.png' },
 ] as const
 
 /*

@@ -109,7 +109,7 @@ export function AppShell() {
                       <span
                         className={cn(
                           'grid h-7 w-12 place-items-center rounded-lg text-base transition-colors',
-                          isActive && 'bg-brand text-white',
+                          isActive && 'bg-pick text-pick-on',
                         )}
                       >
                         <Glyph icon={item.icon} name={item.ours} />

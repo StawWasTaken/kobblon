@@ -85,13 +85,14 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 h-14">
-      {/* the brand sunburst runs the full width of the bar, sidebar included */}
+      {/* the brand sunburst runs the full width of the bar, sidebar included -
+          in the dark, and only for the blue appearance; it is blue artwork */}
       <div className="absolute inset-0 -z-10 bg-chrome">
         <img
           src={asset('/brand/topbar.png')}
           alt=""
           aria-hidden="true"
-          className="h-full w-full object-cover object-center opacity-90 dark-only"
+          className="kob-sunburst h-full w-full object-cover object-center opacity-90"
         />
       </div>
 

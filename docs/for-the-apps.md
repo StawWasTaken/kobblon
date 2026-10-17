@@ -8960,3 +8960,50 @@ Still Staw's to supply and still the third thing he named: the halloween
 wordmark and logomark and the christmas logomark are my hue-rotated
 stand-ins. 0263 is still not applied, `register` is still not deployed,
 `pg_cron` is still not enabled.
+
+## Round one hundred and eleven
+
+Staw's own art, the duplicate wordmark found and explained, and the chooser
+made plain. Most of this is in files you import.
+
+**The marks are his drawings now, two per mode.** `wordmark2.png` and
+`logomark-darkmode.png` are the dark interface; `wordmark-lightmode.png`
+and `logomark-lightmode.png` are daylight. He drew the logomark both ways
+and the wordmark only once, so the daylight wordmark is his own recolour
+learned off that pair of logomarks pixel for pixel
+(`tools/brand/dark-fill.py`), not a filter. `logomark-halloween.png` and
+`logomark-christmas.png` are his too and replace my hue-rotated ones; the
+seasonal logomarks are one drawing each and serve both modes, so
+`logomark-*-light.png` are gone. The flat white `wordmark.png` is used by
+nothing now.
+
+**The duplicate wordmark is fixed, and it was a specificity bug worth
+knowing.** `:root[data-theme='light'] .kob-mark[data-look='default']
+[data-mode='light']` is two attributes plus a class plus `:root`; the rule
+hiding the ordinary mark inside a season was one attribute plus a class
+plus an attribute - *less* - so in light mode with a season on, both the
+ordinary wordmark and the season's drew, overlapping. The whole wrapper
+matrix is written out now, and written twice: once plain, once prefixed
+with `[data-appearance] ` so a card always outranks the document, because
+the document carries `data-appearance` as well and otherwise the file's
+order decides. Measured in Chromium across all six wearing/mode
+combinations: exactly one mark per wrapper, and each wrapper shows its own.
+
+**Three smaller ones.** The selected entry in the rail is `--pick` /
+`--on-pick` now rather than brand blue - a blue pill on an orange rail was
+the last thing saying the season had not happened - and it is the one piece
+of blue that moves; buttons are still untouched. The sunburst behind the
+bar carries `.kob-sunburst` and is shown only in the dark and only for the
+blue appearance, since it is blue artwork. And christmas is a deeper pine
+(`#0A4F31`), far enough from Space green that a bar can never read as a
+yes.
+
+**The boot screen is the page's own background.** `app.html` reads the
+remembered mode and appearance before anything else and sets `data-ink` on
+`#boot`, so a wait is the colour the site is about to be rather than black
+on the way to white. The six values are copied from `--ink` in
+`design/tokens.css` and have to be kept in step with it - the bundle is not
+there yet to be asked.
+
+Migration 0263 is still not applied, `register` is still not deployed,
+`pg_cron` is still not enabled.

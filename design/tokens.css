@@ -28,6 +28,18 @@
   --field: 11 17 63;
   --on-chrome: 255 255 255;
   /*
+   * The entry you are on, in the rail and the drawer.
+   *
+   * Brand blue on the blue bar, which is what it has always been - but it
+   * is a token now rather than `bg-brand`, because Staw: "i dont want the
+   * blue selector for other theme appearances yk". A blue pill on an
+   * orange rail was the one thing on the bar still announcing the season
+   * had not happened. It is not a button, so it is not bound by the rule
+   * that buttons never change.
+   */
+  --pick: 27 52 232;
+  --on-pick: 255 255 255;
+  /*
    * The bone the skull reaction is drawn in. Staw's #E6E7E8, which is a
    * skull against a dark card and an empty space against a white one -
    * the one reaction colour that cannot be the same number in both
@@ -54,6 +66,8 @@
   --media: 226 232 244;
   --field: 255 255 255;
   --on-chrome: 16 22 64;
+  --pick: 27 52 232;
+  --on-pick: 255 255 255;
   --face-bone: 122 130 145;
 }
 
@@ -93,6 +107,8 @@
 :root[data-appearance='halloween'],
 :root[data-theme='dark'][data-appearance='halloween'] {
   --chrome: 184 82 9;
+  --pick: 110 44 4;
+  --on-pick: 255 255 255;
   --media: 94 40 6;
   --field: 74 32 5;
   --on-chrome: 255 255 255;
@@ -108,6 +124,8 @@
 :root[data-theme='light'] [data-appearance='halloween'],
 :root[data-theme='light'][data-appearance='halloween'] {
   --chrome: 255 229 206;
+  --pick: 168 74 8;
+  --on-pick: 255 255 255;
   --media: 247 236 227;
   --field: 255 255 255;
   --on-chrome: 92 42 8;
@@ -123,9 +141,11 @@
 [data-appearance='christmas'],
 :root[data-appearance='christmas'],
 :root[data-theme='dark'][data-appearance='christmas'] {
-  --chrome: 14 102 56;
-  --media: 10 56 32;
-  --field: 8 46 27;
+  --chrome: 10 79 49;
+  --pick: 4 48 29;
+  --on-pick: 255 255 255;
+  --media: 8 48 30;
+  --field: 6 40 25;
   --on-chrome: 255 255 255;
   --ink: 13 19 15;
   --ink-raised: 19 27 22;
@@ -138,7 +158,9 @@
 
 :root[data-theme='light'] [data-appearance='christmas'],
 :root[data-theme='light'][data-appearance='christmas'] {
-  --chrome: 214 243 226;
+  --chrome: 211 240 223;
+  --pick: 10 79 49;
+  --on-pick: 255 255 255;
   --media: 230 244 236;
   --field: 255 255 255;
   --on-chrome: 10 61 35;

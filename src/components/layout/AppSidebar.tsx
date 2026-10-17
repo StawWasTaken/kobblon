@@ -105,7 +105,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 cn(
                   'flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-sm font-bold transition-colors',
                   isActive
-                    ? 'bg-brand text-white'
+                    ? 'bg-pick text-pick-on'
                     : 'text-onbrand/75 hover:bg-onbrand/10 hover:text-onbrand',
                 )
               }

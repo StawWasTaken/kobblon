@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { AppearancePreview } from '@/components/brand/AppearancePreview'
+import { Logomark } from '@/components/brand/Wordmark'
 import {
   faCube, faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck, faTriangleExclamation,
@@ -378,7 +378,7 @@ export function Appearances() {
         Yours for good once claimed, on whatever you sign in on.
       </p>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {APPEARANCES.filter((one) => owned.includes(one)).map((one) => {
           const look = LOOKS[one]
           const wearing = appearance === one
@@ -389,24 +389,32 @@ export function Appearances() {
               aria-pressed={wearing}
               disabled={changing === one}
               className={cn(
-                'overflow-hidden rounded-xl border text-left transition-colors',
+                'flex items-center gap-3 rounded-xl border p-4 text-left transition-colors',
                 wearing
                   ? 'border-brand-bright bg-brand/15'
                   : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
               )}
             >
-              {/* The site wearing it, drawn small. A strip of the bar's
-                  colour was the old swatch and it said nothing about the
-                  cards, the lines or the links, which an appearance moves
-                  too now. */}
-              <AppearancePreview which={one} />
-              <span className="flex items-center gap-2 p-4">
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold">{look.name}</span>
-                  <span className="block text-xs text-muted">{look.note}</span>
-                </span>
-                {wearing && <Glyph icon={faCheck} className="text-sm text-link" />}
+              {/*
+               * The mark on its own bar colour, the way the mode above is a
+               * moon on black and a sun on white. Staw: "keep it simple
+               * (but use the logomarks instead of the sun/moon icons)".
+               *
+               * `data-appearance` on the tile is what makes the row show
+               * its own appearance rather than the one being worn - the
+               * chrome under the mark and the mark itself both come off it.
+               */}
+              <span
+                data-appearance={one}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-chrome"
+              >
+                <Logomark className="h-6" />
               </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold">{look.name}</span>
+                <span className="block text-xs text-muted">{look.note}</span>
+              </span>
+              {wearing && <Glyph icon={faCheck} className="ml-auto text-sm text-link" />}
             </button>
           )
         })}
@@ -583,7 +591,7 @@ export default function Settings() {
           ))}
         </nav>
 
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-5">
           {section === 'Account info' && <AccountInfo />}
           {section === 'Security' && <Security />}
           {section === 'Connections' && <DiscordLink />}

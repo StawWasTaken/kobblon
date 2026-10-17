@@ -39,6 +39,12 @@ export default {
         /* The search field that sits on the chrome. */
         field: 'rgb(var(--field) / <alpha-value>)',
         onbrand: 'rgb(var(--on-chrome) / <alpha-value>)',
+        /* The entry you are on in the rail. Brand blue in the blue
+           appearance and the season's own deep colour in the others. */
+        pick: {
+          DEFAULT: 'rgb(var(--pick) / <alpha-value>)',
+          on: 'rgb(var(--on-pick) / <alpha-value>)',
+        },
         brand: {
           DEFAULT: '#1B34E8',
           bright: '#3A50FF',
