@@ -9,7 +9,7 @@ import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 /**
- * The ten faces, on a post or on a World.
+ * The eleven faces, on a post or on a World.
  *
  * Staw: "Reactions are for announcements & posts, instead of simple
  * likes/dislikes while worlds keep the dislikes & likes only, but klub
@@ -59,6 +59,8 @@ const FACE_YELLOW = '#FFCC4D'
 
 const FACE_COLOUR: Record<Face, string> = {
   smile: FACE_YELLOW,
+  /* Not a face, so not the face yellow: the orange a flame is. */
+  fire: '#F6861F',
   laugh: FACE_YELLOW,
   'happy-grin': FACE_YELLOW,
   'winky-grin': FACE_YELLOW,
@@ -158,8 +160,15 @@ export function Reactions({
     }
   }
 
+  /*
+   * Bigger and closer together, which is Staw: "for reactions they should
+   * be bigger and less spaced on kobblon ... the reactions when they are
+   * added should also be bigger". A face is a picture, and a picture that
+   * is the size of a line of text is a picture nobody looks at; the gap
+   * between them was doing the work the border already does.
+   */
   return (
-    <div ref={box} className={cn('relative flex flex-wrap items-center gap-1.5', className)}>
+    <div ref={box} className={cn('relative flex flex-wrap items-center gap-1', className)}>
       {shown.map((one) => (
         <button
           key={one.face}
@@ -167,7 +176,7 @@ export function Reactions({
           onClick={() => void press(one.face)}
           aria-pressed={one.mine}
           className={cn(
-            'inline-flex items-center gap-2 rounded-full border py-1.5 pl-2 pr-3.5 text-base font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-3 text-base font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
             one.mine
               ? 'border-brand bg-brand/15 text-white'
               : 'border-ink-line bg-ink-raised text-white/70 hover:text-white',
@@ -176,7 +185,7 @@ export function Reactions({
           <Icon
             name={`reaction-${one.face}`}
             tone={one.mine ? FACE_COLOUR[one.face] : undefined}
-            className="h-7 w-7"
+            className="h-9 w-9"
           />
           {formatCount(one.how_many)}
         </button>
@@ -194,7 +203,7 @@ export function Reactions({
           aria-label="React"
           aria-expanded={picking}
           className={cn(
-            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1.5 pl-2 pr-2.5 transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-1 pl-1.5 pr-2 transition-transform duration-150 hover:scale-105 active:scale-95',
             canReact ? 'text-white/60 hover:text-white' : 'text-white/40 opacity-60',
           )}
         >
@@ -204,37 +213,60 @@ export function Reactions({
             * yellow, because this button is the one that says "there are
             * faces here" and a grey one says the opposite.
             */}
-          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-7 w-7" />
+          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-9 w-9" />
           <Glyph icon={faPlus} className="text-[11px]" />
         </button>
       </Tooltip>
 
       {picking && (
         /*
-         * Above the button, because these sit at the bottom of a card and
-         * a tray that opens downwards opens off the end of it.
+         * Above the button, because these sit at the bottom of a card and a
+         * tray that opens downwards opens off the end of it.
+         *
+         * Shaped like a tooltip, pointer and all - Staw: "for the selector,
+         * the selector must have the same design as an hover tooltip -
+         * basically i want the arrow pointer for it too". It is the same
+         * thing a tooltip is: something that belongs to the button under it
+         * rather than a panel of its own, and without the pointer it floats
+         * over the card looking like it belongs to the card.
+         *
+         * The pointer is a square turned on its corner, sitting half out of
+         * the bottom edge with two of its sides bordered - which is the
+         * only way to draw one that keeps the border running round the
+         * whole shape. Anything over it would show the join, so nothing is.
          */
-        <div className="absolute bottom-full left-0 z-30 mb-2 flex animate-pop-in gap-1 rounded-2xl border border-ink-line bg-ink-card p-2 shadow-pop">
-          {FACES.map((face, nth) => (
-            <button
-              key={face}
-              style={{ animationDelay: `${nth * 20}ms` }}
-              type="button"
-              onClick={() => void press(face)}
-              aria-label={face.replace('-', ' ')}
-              title={face.replace('-', ' ')}
-              className={cn(
-                'grid h-14 w-14 animate-pop-in place-items-center rounded-xl transition-transform duration-150 hover:scale-110 active:scale-95',
-                mine.includes(face) && 'bg-brand/20',
-                !mine.includes(face) && full && 'opacity-40',
-              )}
-            >
-              {/* In the tray every face is in colour: this is the place
-                  somebody is choosing between them, and ten identical grey
-                  faces is a row nobody can choose from. */}
-              <Icon name={`reaction-${face}`} tone={FACE_COLOUR[face]} className="h-10 w-10" />
-            </button>
-          ))}
+        <div
+          role="menu"
+          className="absolute bottom-full left-0 z-30 mb-3 animate-pop-in rounded-2xl border border-ink-line bg-ink-card p-1.5 shadow-pop"
+        >
+          <div className="flex gap-0.5">
+            {FACES.map((face, nth) => (
+              <button
+                key={face}
+                style={{ animationDelay: `${nth * 20}ms` }}
+                type="button"
+                role="menuitem"
+                onClick={() => void press(face)}
+                aria-label={face.replace('-', ' ')}
+                title={face.replace('-', ' ')}
+                className={cn(
+                  'grid h-12 w-12 animate-pop-in place-items-center rounded-xl transition-transform duration-150 hover:scale-110 active:scale-95',
+                  mine.includes(face) && 'bg-brand/20',
+                  !mine.includes(face) && full && 'opacity-40',
+                )}
+              >
+                {/* In the tray every face is in colour: this is the place
+                    somebody is choosing between them, and eleven identical
+                    grey faces is a row nobody can choose from. */}
+                <Icon name={`reaction-${face}`} tone={FACE_COLOUR[face]} className="h-10 w-10" />
+              </button>
+            ))}
+          </div>
+
+          <span
+            aria-hidden
+            className="absolute -bottom-[7px] left-7 h-3 w-3 rotate-45 border-b border-r border-ink-line bg-ink-card"
+          />
         </div>
       )}
     </div>

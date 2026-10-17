@@ -20,18 +20,28 @@ export function eventWhen(iso: string) {
 }
 
 export function EventCard({
-  event, onJoin, className,
+  event, onJoin, className, past = false,
 }: {
   event: CommunityEvent
   onJoin?: (going: boolean) => void
   className?: string
+  /** Drawn in a list of things that have already happened, so it is quieter. */
+  past?: boolean
 }) {
-  const over = new Date(event.ends_at ?? event.starts_at) < new Date()
+  /*
+   * Over according to the database, falling back to this machine's clock
+   * for anything that reaches this card from somewhere that does not say -
+   * the editor builds one out of a draft, and a draft has no answer yet.
+   * The database's is the one to prefer: it is the clock the event was set
+   * by, and the reader's may be minutes or a day out.
+   */
+  const over = event.is_over ?? new Date(event.ends_at ?? event.starts_at) < new Date()
 
   return (
     <article
       className={cn(
         'flex flex-col overflow-hidden rounded-2xl border border-ink-line bg-ink-card',
+        past && 'opacity-75 transition-opacity hover:opacity-100',
         className,
       )}
     >

@@ -1777,10 +1777,62 @@ export async function postToCommunity(input: {
   }).select('id').single())
 }
 
+/**
+ * Taking a post down.
+ *
+ * Through a function rather than an update, and the reason is worth keeping
+ * because it is not an obvious one. `update community_posts set is_removed
+ * = true` is refused - "new row violates row-level security policy" - and
+ * the policy it means is the *read* one, not the write one. Postgres runs a
+ * table's SELECT policies against the new row of an UPDATE as well, and
+ * `community_posts_read` is `using (not is_removed ...)`, so the row this
+ * statement writes is a row the author may no longer read, and the write is
+ * refused for that reason and no other. Writing the post and editing it
+ * both worked; only taking it down did not, which is why it reached Staw as
+ * "we cant delete any" rather than as anything a test caught.
+ *
+ * Widening the read policy to let an author see their own removed posts
+ * would also have fixed it, and would have meant removed posts coming back
+ * on the wall. So: a `security definer` function, which checks the same
+ * three rights the policy would have - the author, somebody who may
+ * moderate the wall, or somebody who may manage the Community when it is an
+ * announcement - and writes past the policy once it is satisfied.
+ */
 export async function removeCommunityPost(id: number) {
-  const { error } = await supabase.from('community_posts')
-    .update({ is_removed: true }).eq('id', id)
-  if (error) throw new Error(error.message)
+  unwrap(await supabase.rpc('remove_community_post', { target: id }))
+}
+
+/**
+ * The Community somebody puts at the front of their profile.
+ *
+ * `null` takes it back off. The database checks they are actually in it;
+ * this only asks.
+ */
+export async function setPrimaryCommunity(communityId: string | null) {
+  unwrap(await supabase.rpc('set_primary_community', { target: communityId }))
+}
+
+/**
+ * Sending Brix to somebody, with Kobblon's cut taken out of what arrives.
+ *
+ * The sender pays `amount`; `cut` of it is the house's and `arrived` is what
+ * the other person actually gets. The split is the database's to decide and
+ * is read back from it rather than worked out here - a number this page
+ * calculates is a number that can disagree with the one that moved.
+ */
+export async function sendBrix(
+  to: string, amount: number, note?: string | null,
+): Promise<{ sent: number; cut: number; arrived: number; balance: number }> {
+  const rows = unwrap(await supabase.rpc('send_brix', {
+    to_user: to, amount, note: note?.trim() || null,
+  })) as { sent: number; cut: number; arrived: number; balance: number }[]
+  if (!rows?.[0]) throw new Error('That did not send.')
+  return rows[0]
+}
+
+/** What share of a gift Kobblon keeps, as a whole number of per cent. */
+export async function sendingShare(): Promise<number> {
+  return (unwrap(await supabase.rpc('sending_share')) as number) ?? 5
 }
 
 // ------------------------------------------------------- community Spaces
@@ -4743,10 +4795,18 @@ export async function inTheKlub(
   })) as boolean
 }
 
-/** The ten faces, in the order they are offered. */
+/**
+ * The eleven faces, in the order they are offered.
+ *
+ * `fire` is not a face and sits with them anyway, which is how everybody
+ * else's set works too: it is the one thing in a row of expressions that is
+ * about the post rather than about how reading it felt. It goes after the
+ * happy ones and before the unhappy ones, which is where the eye expects
+ * the loud one.
+ */
 export const FACES = [
   'smile', 'laugh', 'happy-grin', 'winky-grin', 'heart-eyes',
-  'sunglasses', 'shocked', 'sad', 'angry', 'skull',
+  'sunglasses', 'fire', 'shocked', 'sad', 'angry', 'skull',
 ] as const
 
 export type Face = (typeof FACES)[number]

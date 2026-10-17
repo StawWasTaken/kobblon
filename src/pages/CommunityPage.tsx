@@ -76,10 +76,28 @@ export default function CommunityPage() {
     },
     [group?.owner_id],
   )
+  /*
+   * Three lists out of the one call, and the split is the database's.
+   *
+   * `is_over` is "its last moment has passed" and `just_over` is "and that
+   * was within the day", both decided where the clock is. A cancelled event
+   * is in none of them: it did not happen and is not going to.
+   */
   const events = useAsync(
     async () => (group ? listCommunityEvents(group.id) : []),
     [group?.id],
   )
+
+  const live = (events.data ?? []).filter((one) => !one.is_cancelled)
+  /** Still to happen. */
+  const coming = live.filter((one) => !one.is_over)
+  /** Still on the About page: coming up, or finished within the day. */
+  const onNow = live.filter((one) => !one.is_over || one.just_over)
+  /** Been and gone, newest first. */
+  const gone = live
+    .filter((one) => one.is_over)
+    .slice()
+    .reverse()
   const store = useAsync(
     async () => (group ? listCommunityAssets(group.id) : []),
     [group?.id],
@@ -195,8 +213,24 @@ export default function CommunityPage() {
             <div className="min-w-0 space-y-8">
             <Announcements communityId={group.id} rights={rights.data} />
 
-            {/* What is on, kept short here with the rest under its own tab. */}
-            {!!events.data?.filter((e) => !e.is_cancelled).length && (
+            {/*
+              * What is on, kept short here with the rest under its own tab.
+              *
+              * Staw: "when events are finished they still display in the
+              * about part of the community but then disappears after a day
+              * and gets stored into the past events in the events tab". So
+              * this is the upcoming ones plus whatever ended within the
+              * day - an event people turned up to yesterday evening is
+              * still the thing the Community is talking about this
+              * morning, and a page that drops it the second it ends reads
+              * as though nothing ever happened there.
+              *
+              * `is_over` and `just_over` are the database's answers, not
+              * this page's. A clock comparison written here is a clock
+              * comparison against the reader's machine, which is a
+              * different clock from the one the event was set by.
+              */}
+            {!!onNow.length && (
               <section>
                 <div className="mb-3 flex items-center gap-3">
                   <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
@@ -211,7 +245,7 @@ export default function CommunityPage() {
                   </button>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {events.data.filter((e) => !e.is_cancelled).slice(0, 3).map((event) => (
+                  {onNow.slice(0, 3).map((event) => (
                     <EventCard
                       key={event.id}
                       event={event}
@@ -270,23 +304,41 @@ export default function CommunityPage() {
               </Card>
             )}
 
-            {!!events.data?.length && (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {events.data.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    onJoin={async (going) => {
-                      try {
-                        await setEventAttendance(event.id, going)
-                        events.reload()
-                      } catch (err) {
-                        toast(err instanceof Error ? err.message : 'That did not work.', 'error')
-                      }
-                    }}
-                  />
-                ))}
-              </div>
+            {!!coming.length && (
+              <section className="space-y-3">
+                <h2 className="font-display text-xl font-extrabold">Coming up</h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {coming.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onJoin={async (going) => {
+                        try {
+                          await setEventAttendance(event.id, going)
+                          events.reload()
+                        } catch (err) {
+                          toast(err instanceof Error ? err.message : 'That did not work.', 'error')
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Everything that has been and gone, kept rather than
+                dropped: a Community with nothing behind it looks like one
+                nothing has ever happened in. Newest first, which is the
+                opposite order from what is coming. */}
+            {!!gone.length && (
+              <section className="space-y-3">
+                <h2 className="font-display text-xl font-extrabold">Past events</h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {gone.map((event) => (
+                    <EventCard key={event.id} event={event} past />
+                  ))}
+                </div>
+              </section>
             )}
           </div>
         )}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faEllipsis, faGear, faRightFromBracket, faLink, faFlag, faUserPlus, faClock,
+  faStar, faStarHalfStroke,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -14,6 +15,9 @@ import { cn } from '@/lib/cn'
 import { Emblem } from '@/components/community/Emblem'
 import type { Community, CommunityOverview } from '@/types/db'
 import { Verified } from '@/components/brand/Verified'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/components/ui/Toast'
+import { setPrimaryCommunity } from '@/lib/api'
 
 /**
  * The top of a Community: its cover fading into the page, the emblem sitting
@@ -34,8 +38,38 @@ export function CommunityHeader({
 }) {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
+  const { profile, refreshProfile } = useAuth()
+  const toast = useToast()
 
   const isMember = Boolean(rights?.my_rank_id)
+
+  /*
+   * The one somebody puts at the front of their profile.
+   *
+   * Staw: "on communities in the more button we can click on a button to
+   * make the community primary which displays it as your main community on
+   * your profile and in your communities sidebar". Only one at a time, so
+   * picking a second does not need the first taken off first - the function
+   * simply writes the new one over it. Pressing it on the one that is
+   * already there takes it off, which is what a person expects of a thing
+   * that is either on or not.
+   */
+  const isMain = profile?.primary_community === group.id
+
+  const makeMain = async () => {
+    try {
+      await setPrimaryCommunity(isMain ? null : group.id)
+      await refreshProfile()
+      toast(
+        isMain
+          ? `${group.name} is no longer your main Community.`
+          : `${group.name} is your main Community now.`,
+        'success',
+      )
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'That did not work.', 'error')
+    }
+  }
   const description = group.description ?? ''
   /*
    * Long enough to hide is not a character count on its own. Staw's own
@@ -130,10 +164,23 @@ export function CommunityHeader({
                     ? [{ label: 'Configure Community', icon: faGear, to: `/c/${group.slug}/configure` }]
                     : []),
                   ...(isMember
-                    ? [{ label: 'Leave Community', icon: faRightFromBracket, onSelect: onLeave }]
+                    ? [{
+                        label: isMain ? 'Remove as my main' : 'Make this my main',
+                        icon: isMain ? faStarHalfStroke : faStar,
+                        onSelect: () => void makeMain(),
+                      }]
                     : []),
                   { label: copied ? 'Link copied' : 'Copy link', icon: faLink, onSelect: copyLink },
-                  { label: 'Report abuse', icon: faFlag, onSelect: onReport },
+                  ...(isMember
+                    ? [{
+                        label: 'Leave Community', icon: faRightFromBracket,
+                        separated: true, danger: true, onSelect: onLeave,
+                      }]
+                    : []),
+                  {
+                    label: 'Report abuse', icon: faFlag,
+                    separated: !isMember, danger: true, onSelect: onReport,
+                  },
                 ]}
               />
             </div>

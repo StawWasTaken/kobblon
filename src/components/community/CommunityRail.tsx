@@ -97,16 +97,40 @@ export function CommunityRail() {
           <p className="px-2 py-5 text-sm text-muted">You have not joined any yet.</p>
         )}
 
-        {shown.map((community) => (
-          <RailRow
-            key={community.id}
-            community={community}
-            name={community.name}
-            icon={community.icon_url}
-            members={community.member_count}
-            note={community.role === 'member' ? undefined : community.role}
-            active={community.content_id === activeId || community.slug === activeSlug}
-          />
+        {/*
+          * The main one sits at the top under a heading of its own, which
+          * is the other half of what Staw asked for: "displays it as your
+          * main community on your profile and in your communities
+          * sidebar". `member_communities` already puts it first, so this is
+          * only saying out loud why it is there - a row that is simply
+          * first says nothing, and the rail is sorted by member count, so
+          * a small Community at the top looks like a bug.
+          *
+          * The search runs over both, and when something is typed the
+          * heading goes: it is a list of what matched then, not a shelf.
+          */}
+        {!term.trim() && shown.some((one) => one.is_primary) && (
+          <p className="px-2 pb-1 pt-1 font-display text-[10px] uppercase tracking-wider text-muted">
+            My main one
+          </p>
+        )}
+
+        {shown.map((community, at) => (
+          <div key={community.id}>
+            {!term.trim() && at > 0 && shown[at - 1].is_primary && (
+              <p className="px-2 pb-1 pt-3 font-display text-[10px] uppercase tracking-wider text-muted">
+                The rest
+              </p>
+            )}
+            <RailRow
+              community={community}
+              name={community.name}
+              icon={community.icon_url}
+              members={community.member_count}
+              note={community.role === 'member' ? undefined : community.role}
+              active={community.content_id === activeId || community.slug === activeSlug}
+            />
+          </div>
         ))}
       </div>
 

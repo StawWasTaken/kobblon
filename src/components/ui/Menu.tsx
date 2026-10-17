@@ -12,6 +12,14 @@ export type MenuItem = {
   to?: string
   onSelect?: () => void
   danger?: boolean
+  /**
+   * Draw a line above this one.
+   *
+   * A menu with "Copy link" and "Block" the same distance apart is a menu
+   * somebody picks the wrong thing out of. The line is where the quiet
+   * entries end and the ones that change something begin.
+   */
+  separated?: boolean
 }
 
 const WIDTH = 224
@@ -100,7 +108,7 @@ export function Menu({
           style={{ left: box?.left ?? -9999, top: box?.top ?? -9999, width: WIDTH }}
           className="fixed z-[85] animate-pop-in overflow-hidden rounded-xl border border-ink-line bg-ink-card py-1 shadow-pop"
         >
-          {items.map((item) => {
+          {items.map((item, at) => {
             const body = (
               <>
                 {item.icon && <Glyph icon={item.icon} className="w-4" />}
@@ -108,6 +116,11 @@ export function Menu({
               </>
             )
             const tone = item.danger ? 'text-danger' : 'text-white/80 hover:text-white'
+            /* Never above the first entry: a line there is a line against
+               the top of the card. */
+            const rule = item.separated && at > 0
+              ? 'mt-1 border-t border-ink-line pt-1'
+              : undefined
 
             return item.to ? (
               <Hop
@@ -115,7 +128,7 @@ export function Menu({
                 to={item.to}
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className={cn(itemClass, tone)}
+                className={cn(itemClass, tone, rule)}
               >
                 {body}
               </Hop>
@@ -124,7 +137,7 @@ export function Menu({
                 key={item.label}
                 role="menuitem"
                 onClick={() => { setOpen(false); item.onSelect?.() }}
-                className={cn(itemClass, tone)}
+                className={cn(itemClass, tone, rule)}
               >
                 {body}
               </button>

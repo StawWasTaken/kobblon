@@ -20,6 +20,8 @@ export type Profile = {
   has_email?: boolean
   /** Staff made this guest real; the site asks them for a password. */
   must_set_password?: boolean
+  /** The Community shown at the front of their profile, if they picked one. */
+  primary_community?: string | null
   pixels: number
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null
@@ -474,6 +476,8 @@ export type MemberCommunity = {
   member_count: number
   content_id: number | null
   role: CommunityRole
+  /** The one this person leads with. At most one of them, and it is first. */
+  is_primary: boolean
 }
 
 export type CommunityEvent = {
@@ -492,6 +496,11 @@ export type CommunityEvent = {
   community_slug: string
   community_name: string
   community_icon: string | null
+  /** Its last moment has been and gone. */
+  is_over: boolean
+  /** Over, but within the day it stays on the About page before moving
+      into Past events. */
+  just_over: boolean
 }
 
 export type EventPage = CommunityEvent & {

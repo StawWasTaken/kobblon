@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  faBan, faCircleCheck, faEyeSlash, faEye, faUserMinus, faUnlock,
+  faBan, faCircleCheck, faEyeSlash, faEye, faUserMinus, faUnlock, faFlag,
 } from '@fortawesome/free-solid-svg-icons'
 import type { MenuItem } from '@/components/ui/Menu'
 import { Confirm } from '@/components/ui/Confirm'
@@ -61,33 +61,68 @@ export function usePersonActions(onChanged?: () => void) {
     }
   }
 
-  /** The menu entries for one person, given where you stand with them. */
-  const itemsFor = (person: Person, standing: Standing): MenuItem[] => {
+  /**
+   * The menu entries for one person, given where you stand with them.
+   *
+   * In two groups, and the grouping is the point. Staw, on the profile's
+   * menu: "i would like the more button to be reordered correctly and
+   * properly". What was there ran Report, Remove friend, Ignore, Block -
+   * the heaviest thing in the list second, the two that only change how
+   * quiet somebody is sitting between two that do not. So: how you two
+   * stand first, then a line, then the two that are about them rather than
+   * about the pair of you.
+   *
+   * `onReport` is passed by whoever has a report dialog to open. It goes in
+   * the second group rather than at the top, where it was.
+   */
+  const itemsFor = (
+    person: Person,
+    standing: Standing,
+    extras?: { onReport?: () => void },
+  ): MenuItem[] => {
     if (person.id === profile?.id) return []
     const items: MenuItem[] = []
 
     if (standing.i_blocked) {
       items.push({
-        label: 'Unblock', icon: faUnlock, onSelect: () => setAsk({ kind: 'unblock', person }),
+        label: 'Unblock', icon: faUnlock, separated: true,
+        onSelect: () => setAsk({ kind: 'unblock', person }),
       })
       return items
     }
 
+    /* How you two stand. */
     if (standing.are_friends) {
       items.push({
-        label: 'Remove friend', icon: faUserMinus, danger: true,
+        label: 'Remove friend', icon: faUserMinus, separated: true,
         onSelect: () => setAsk({ kind: 'unfriend', person }),
       })
     }
 
     items.push(
       standing.i_ignore
-        ? { label: 'Stop ignoring', icon: faEye, onSelect: () => void run({ kind: 'unignore', person }) }
-        : { label: 'Ignore', icon: faEyeSlash, onSelect: () => setAsk({ kind: 'ignore', person }) },
+        ? {
+            label: 'Stop ignoring', icon: faEye,
+            separated: !standing.are_friends,
+            onSelect: () => void run({ kind: 'unignore', person }),
+          }
+        : {
+            label: 'Ignore', icon: faEyeSlash,
+            separated: !standing.are_friends,
+            onSelect: () => setAsk({ kind: 'ignore', person }),
+          },
     )
 
+    /* About them. */
+    if (extras?.onReport) {
+      items.push({
+        label: 'Report', icon: faFlag, danger: true, separated: true,
+        onSelect: extras.onReport,
+      })
+    }
+
     items.push({
-      label: 'Block', icon: faBan, danger: true,
+      label: 'Block', icon: faBan, danger: true, separated: !extras?.onReport,
       onSelect: () => setAsk({ kind: 'block', person }),
     })
 

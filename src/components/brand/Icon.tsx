@@ -30,7 +30,7 @@ export const UI_ICONS = [
   'cross-user', 'discount',
   'favourite-stroke', 'favourite', 'gear', 'heart-user', 'laurel-quest-stroke',
   'laurel-quest', 'microphone', 'mute-microphone', 'notification', 'people',
-  'reaction-angry', 'reaction-happy-grin', 'reaction-heart-eyes',
+  'reaction-angry', 'reaction-fire', 'reaction-happy-grin', 'reaction-heart-eyes',
   'reaction-laugh', 'reaction-sad', 'reaction-shocked', 'reaction-skull',
   'klub', 'klub-badge',
   'reaction-smile', 'reaction-sunglasses', 'reaction-winky-grin',
@@ -56,6 +56,20 @@ export type WorkspaceIcon = (typeof WORKSPACE_ICONS)[number]
 export type KobIcon = UiIcon | `workspace/${WorkspaceIcon}`
 
 /** Where one lives, which is the only place this is written down. */
+/**
+ * Whether the caller already said how big it should be.
+ *
+ * The default size here is `h-[1em] w-[1em]`, and Tailwind emits arbitrary
+ * values after the scale ones - so `h-9` passed in sat *earlier* in the
+ * stylesheet and lost to it. Every icon on the site that asked for a size
+ * was drawn at one line of text instead, which reads as "the icons are
+ * small" rather than as a bug, and that is how it survived. `cn` here joins
+ * classes, it does not merge them, so the default is left off instead.
+ */
+function saysItsSize(className?: string) {
+  return !!className && /(^|\s)(h|w|size)-/.test(className)
+}
+
 export function iconUrl(name: KobIcon) {
   return asset(`/icons/${name.startsWith('workspace/') ? name : `ui/${name}`}.png`)
 }
@@ -82,6 +96,15 @@ export function iconUrl(name: KobIcon) {
 const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
   'reaction-heart-eyes': [{ part: 'reaction-heart-eyes-eyes', colour: '#DF1F2D' }],
   'reaction-winky-grin': [{ part: 'reaction-winky-grin-tongue', colour: '#FF6F9C' }],
+  /*
+   * Tears, which were not in the drawings at all - Staw: "update the sad &
+   * laughing reactions ... you gonna do that for the tears too". So they
+   * are drawn rather than cut out, in `tools/icons/draw-reaction-details.py`,
+   * and drawn as their own files so his faces are untouched and the tears
+   * can be their own colour while the face stays yellow.
+   */
+  'reaction-sad': [{ part: 'reaction-sad-tears', colour: '#4AA3F0' }],
+  'reaction-laugh': [{ part: 'reaction-laugh-tears', colour: '#4AA3F0' }],
 }
 
 export function Icon({
@@ -144,7 +167,7 @@ export function Icon({
         aria-label={label}
         aria-hidden={label ? undefined : true}
         title={title}
-        className={cn('inline-block h-[1em] w-[1em] align-[-0.125em]', className)}
+        className={cn('inline-block align-[-0.125em]', !saysItsSize(className) && 'h-[1em] w-[1em]', className)}
         style={{
           ...style,
           backgroundColor: paint === 'currentColor' ? 'currentColor' : paint,
@@ -164,7 +187,7 @@ export function Icon({
 
     return (
       <span
-        className={cn('relative inline-block h-[1em] w-[1em] align-[-0.125em]', className)}
+        className={cn('relative inline-block align-[-0.125em]', !saysItsSize(className) && 'h-[1em] w-[1em]', className)}
         role={label ? 'img' : undefined}
         aria-label={label}
         aria-hidden={label ? undefined : true}
@@ -222,7 +245,7 @@ export function Icon({
       title={title}
       style={style}
       draggable={false}
-      className={cn('inline-block h-[1em] w-[1em] select-none align-[-0.125em] object-contain', className)}
+      className={cn('inline-block select-none align-[-0.125em] object-contain', !saysItsSize(className) && 'h-[1em] w-[1em]', className)}
     />
   )
 }

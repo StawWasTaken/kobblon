@@ -94,6 +94,9 @@ const OURS: Record<string, KobIcon> = {
   gear: 'gear',
   'circle-check': 'checkmark',
   percent: 'discount',
+  /* Money on this site is Brix and has its own mark; `faCoins` on a menu
+     entry or a record card means Brix and nothing else. */
+  coins: 'brix',
   'hand-pointer': 'click',
 
   /*

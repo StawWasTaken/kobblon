@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import type { KobIcon } from '@/components/brand/Icon'
 import {
-  faComment, faFlag, faUserPlus, faClock,
+  faComment, faUserPlus, faClock, faCoins, faStar,
   faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
   faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart,
 } from '@fortawesome/free-solid-svg-icons'
@@ -17,6 +17,7 @@ import { Hop } from '@/components/ui/Hop'
 import { EmptyState, ErrorState, SpaceCardSkeleton, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { ReportDialog } from '@/components/social/ReportDialog'
+import { SendBrixDialog } from '@/components/social/SendBrixDialog'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { BadgeTile } from '@/components/social/BadgeGrid'
 import { AssetTile } from '@/components/create/AssetTile'
@@ -48,6 +49,7 @@ import {
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
+import { cn } from '@/lib/cn'
 import { avatarOf } from '@/lib/avatars'
 import { NameMarks } from '@/components/brand/Verified'
 import { PenIcon } from '@/components/brand/PenIcon'
@@ -163,6 +165,8 @@ export default function Profile() {
 
   const [following, setFollowingState] = useState(false)
   const [reporting, setReporting] = useState(false)
+  /** The Send Brix card, which is a profile's own and nothing else's. */
+  const [sending, setSending] = useState(false)
   const [about, setAbout] = useState(false)
   const [tab, setTab] = useState<'About' | 'Creations' | 'Shop'>('About')
   const [bio, setBio] = useState('')
@@ -685,7 +689,20 @@ export default function Profile() {
                   <Glyph icon={faEllipsis} />
                 </span>
               }
+              /*
+                * What you can do *for* them, then what you can do *about*
+                * them, with a line between. `itemsFor` draws the second
+                * half and puts the lines in; this half is the two that are
+                * only on a profile.
+                */
               items={[
+                ...(me && !isMe && !standing?.i_blocked
+                  ? [{
+                      label: 'Send Brix',
+                      icon: faCoins,
+                      onSelect: () => setSending(true),
+                    }]
+                  : []),
                 {
                   label: 'Copy link',
                   icon: faLink,
@@ -695,19 +712,15 @@ export default function Profile() {
                   },
                 },
                 ...(me && !isMe
-                  ? [
+                  ? people.itemsFor(
+                      user,
                       {
-                        label: 'Report',
-                        icon: faFlag,
-                        danger: true,
-                        onSelect: () => setReporting(true),
-                      },
-                      ...people.itemsFor(user, {
                         are_friends: standing?.are_friends,
                         i_blocked: standing?.i_blocked,
                         i_ignore: standing?.i_ignore,
-                      }),
-                    ]
+                      },
+                      { onReport: () => setReporting(true) },
+                    )
                   : []),
               ]}
             />
@@ -873,17 +886,35 @@ export default function Profile() {
                     to={communityLink(community)}
                     className="group rounded-2xl transition-colors"
                   >
-                    <Emblem
-                      src={community.icon_url}
-                      name={community.name}
-                      rounded="rounded-xl"
-                      className="aspect-square h-auto w-full text-3xl transition-colors group-hover:brightness-110"
-                    />
+                    {/*
+                      * The main one wears a ring and says so. It is already
+                      * first - `member_communities` orders by it - and
+                      * first on its own is not something anybody reads as
+                      * meaning anything.
+                      */}
+                    <div className="relative">
+                      <Emblem
+                        src={community.icon_url}
+                        name={community.name}
+                        rounded="rounded-xl"
+                        className={cn(
+                          'aspect-square h-auto w-full text-3xl transition-colors group-hover:brightness-110',
+                          community.is_primary && 'ring-2 ring-brand-bright ring-offset-2 ring-offset-ink',
+                        )}
+                      />
+                      {community.is_primary && (
+                        <span className="absolute -right-1.5 -top-1.5 grid size-7 place-items-center rounded-full border-2 border-ink bg-brand text-[11px] text-white">
+                          <Glyph icon={faStar} />
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-2 truncate text-sm font-bold group-hover:text-link">
                       {community.name}
                     </p>
                     <p className="text-xs text-muted">
-                      {formatCount(community.member_count)} members
+                      {community.is_primary
+                        ? 'Their main Community'
+                        : `${formatCount(community.member_count)} members`}
                     </p>
                   </Link>
                 ))}
@@ -1008,6 +1039,15 @@ export default function Profile() {
       >
         <ColourPicker value={accent} onChange={saveColour} />
       </Dialog>
+
+      {me && !isMe && (
+        <SendBrixDialog
+          open={sending}
+          onClose={() => setSending(false)}
+          to={user.id}
+          name={user.display_name}
+        />
+      )}
 
       <ReportDialog
         open={reporting}
