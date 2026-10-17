@@ -8564,3 +8564,27 @@ long enough to notice gets the animation. The website's own document
 there the bundle has not arrived either. If a panel shows the GIF alone, a
 cold start is a blank rectangle for as long as it takes to fetch - which is
 the bug the boot screen was written to fix in the first place.
+
+## Round one hundred and two
+
+**Correction to the last round: the still mark underneath is gone, and if
+you copied that part, take it out.**
+
+Round one hundred and one said to draw the still logomark immediately and
+fade the reveal in over it, so a short wait shows something rather than
+nothing. Staw looked at it running and it was wrong twice:
+
+- a load quick enough never reached the reveal, so what you actually saw
+  was the blue logomark - which is not the loading screen anybody asked
+  for;
+- while both were up the logomark sat **beside** the reveal rather than
+  under it, because the two drawings are not the same shape in the same
+  box. Overlapping two marks only works if they are the same mark.
+
+So it is the reveal alone, faded in on `load` against the dark the screen is
+going to be anyway, and the document **preloads** it
+(`<link rel="preload" as="image" href="/brand/logo-reveal.gif">`) so the
+fetch starts while the document is still being read. `LoadingScreen` and
+`LoadingMark` in `@/components/ui/Loading` are unchanged in name and take
+the same props; `LoadingMark` is now the image itself rather than a wrapper
+around two of them.

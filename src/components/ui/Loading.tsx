@@ -1,17 +1,20 @@
 import { useState } from 'react'
-import { Logomark } from '@/components/brand/Wordmark'
 import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
 /**
  * The wait, with Staw's reveal on it.
  *
- * Two marks in one place: the logomark, which is an inline drawing and is
- * therefore already here, and the reveal, which is half a megabyte of GIF
- * and is not. The reveal fades in over the logomark the moment it has
- * loaded and the logomark fades out under it. A wait that is over in 200ms
- * shows the still mark and nothing flickers; a wait long enough to notice
- * gets the animation, which is when it is worth having.
+ * One mark. It had the still logomark underneath, fading out as the GIF
+ * faded in, so that a wait too short to matter showed something rather than
+ * nothing - and that was wrong on both counts Staw found: the blue mark was
+ * what you actually saw on a quick load, and the two drawings are not the
+ * same shape in the same box, so while both were up the logomark sat beside
+ * the reveal rather than under it.
+ *
+ * So the reveal alone, faded in on `load` against the same dark the page is
+ * going to be anyway. `app.html` preloads it, so by the time anything
+ * React draws is waiting on something, it is in the cache.
  *
  * Nothing here needs a provider, a router or a session, so an application
  * can mount it on its own. `tools/site/loading-preview.html` is that, and
@@ -38,24 +41,17 @@ export function LoadingMark({ className }: { className?: string }) {
   const [drawing, setDrawing] = useState(false)
 
   return (
-    <span className={cn('grid place-items-center', className)}>
-      <Logomark
-        className={cn(
-          'col-start-1 row-start-1 h-10 transition-opacity duration-200',
-          drawing ? 'opacity-0' : 'animate-bob opacity-100',
-        )}
-      />
-      <img
-        src={asset('/brand/logo-reveal.gif')}
-        alt=""
-        width={420}
-        height={215}
-        className={cn(
-          'col-start-1 row-start-1 h-40 w-auto select-none transition-opacity duration-200',
-          drawing ? 'opacity-100' : 'opacity-0',
-        )}
-        onLoad={() => setDrawing(true)}
-      />
-    </span>
+    <img
+      src={asset('/brand/logo-reveal.gif')}
+      alt=""
+      width={420}
+      height={215}
+      className={cn(
+        'h-40 w-auto select-none transition-opacity duration-200',
+        drawing ? 'opacity-100' : 'opacity-0',
+        className,
+      )}
+      onLoad={() => setDrawing(true)}
+    />
   )
 }
