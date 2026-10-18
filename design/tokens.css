@@ -103,6 +103,50 @@
  * the same element - and losing it, one class of specificity to two. The
  * season reached the wordmark and never the sidebar.
  */
+/*
+ * The blue one, written for an element as well as for the document.
+ *
+ * `:root` is where the blue lives, and a card deeper in the page inherits
+ * whatever the document is wearing - so the row marked Kobblon in the
+ * chooser had an orange bar behind its mark while halloween was on. Staw:
+ * "the normal kobblon changes colour everytime you change theme
+ * appearances while it should just stay blue". A declaration on the card
+ * itself settles it; on the document these lose to `:root` and say the
+ * same thing anyway.
+ */
+[data-appearance='default'] {
+  --chrome: 22 35 130;
+  --media: 13 19 73;
+  --field: 11 17 63;
+  --on-chrome: 255 255 255;
+  --pick: 27 52 232;
+  --on-pick: 255 255 255;
+  --ink: 16 16 18;
+  --ink-raised: 22 22 26;
+  --ink-card: 26 26 32;
+  --ink-hover: 33 33 40;
+  --ink-line: 42 42 51;
+  --link: 159 173 255;
+  --bubble: 38 38 47;
+}
+
+:root[data-theme='light'] [data-appearance='default'],
+:root[data-theme='light'][data-appearance] [data-appearance='default'] {
+  --chrome: 214 230 255;
+  --media: 226 232 244;
+  --field: 255 255 255;
+  --on-chrome: 16 22 64;
+  --pick: 27 52 232;
+  --on-pick: 255 255 255;
+  --ink: 242 243 247;
+  --ink-raised: 255 255 255;
+  --ink-card: 255 255 255;
+  --ink-hover: 234 236 243;
+  --ink-line: 214 218 228;
+  --link: 27 52 232;
+  --bubble: 24 25 32;
+}
+
 [data-appearance='halloween'],
 :root[data-appearance='halloween'],
 :root[data-theme='dark'][data-appearance='halloween'] {
@@ -122,6 +166,7 @@
 }
 
 :root[data-theme='light'] [data-appearance='halloween'],
+:root[data-theme='light'][data-appearance] [data-appearance='halloween'],
 :root[data-theme='light'][data-appearance='halloween'] {
   --chrome: 255 229 206;
   --pick: 168 74 8;
@@ -157,6 +202,7 @@
 }
 
 :root[data-theme='light'] [data-appearance='christmas'],
+:root[data-theme='light'][data-appearance] [data-appearance='christmas'],
 :root[data-theme='light'][data-appearance='christmas'] {
   --chrome: 211 240 223;
   --pick: 10 79 49;

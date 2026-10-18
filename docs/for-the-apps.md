@@ -9007,3 +9007,45 @@ there yet to be asked.
 
 Migration 0263 is still not applied, `register` is still not deployed,
 `pg_cron` is still not enabled.
+
+## Round one hundred and twelve
+
+The duplicate wordmark again, and this time the reason is worth the room.
+
+**A compound on `:root` cannot also be an ancestor of itself.** The rules
+hiding the ordinary mark inside a season were written
+`:root[data-theme='light'] [data-appearance='halloween'] .kob-mark…`, which
+asks for an appearance *inside* the root. The document is where
+`data-appearance` actually lives, so in daylight with a season on, that
+rule matched nothing, the ordinary mark stayed shown and drew on top of the
+season's. Dark mode never showed it because its rules had no `:root` on the
+front. Staw: "when on light mode with other theme appearances theres two
+wordmarks".
+
+So the matrix in `src/index.css` is written three times now, weakest to
+strongest: a wrapper with nothing above it (a bare page, the Workspace),
+then the document itself (`:root[data-appearance='…']`, and
+`:root[data-theme='light'][data-appearance='…']` with no space), then a
+wrapper inside a document that has one
+(`:root[data-theme='light'][data-appearance] [data-appearance='…']`), which
+has to win because that is the chooser. Measured in Chromium, all twelve
+cases: one mark per wrapper, one for a mark with no wrapper, each the
+right one.
+
+**The same hole was in `design/tokens.css`.** There was no element-level
+block for the blue appearance, so a card marked default inherited whatever
+the document wore and the row marked Kobblon had an orange bar behind its
+mark. `[data-appearance='default']` now carries the blue values, and the
+seasonal light rules gained the re-rooted form as well. Every card keeps
+its own `--chrome` whatever the document is wearing.
+
+**The halloween wordmark is Staw's.** He drew the daylight one;
+`tools/brand/flip-fill.py` makes the dark-interface one by turning the fill's
+lightness over and leaving the outline alone, which is what his own pair of
+logomarks does (checked against them: within two levels per channel on
+average). The christmas wordmark - red glitter in a silver outline - is one
+drawing for both modes, so `wordmark-christmas-light.png` is gone, and so is
+`tools/brand/tint-marks.py`: nothing on the site is hue-rotated art any more.
+
+0263 is still not applied, `register` is still not deployed, `pg_cron` is
+still not enabled.
