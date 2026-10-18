@@ -54,6 +54,7 @@ const CreateAvatarItems = lazyPage(() => import('@/pages/CreateAvatarItems'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
 const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
+const Quests = lazyPage(() => import('@/pages/Quests'))
 const Profile = lazyPage(() => import('@/pages/Profile'))
 const Settings = lazyPage(() => import('@/pages/Settings'))
 const Admin = lazyPage(() => import('@/pages/Admin'))
@@ -215,6 +216,7 @@ export default function App() {
                     <Route path="/c/:slug/configure" element={<ConfigureCommunity />} />
                   </Route>
                   <Route path="/friends" element={<Friends />} />
+                  <Route path="/quests" element={<Quests />} />
                   <Route path="/brix" element={<Brix />} />
                   <Route path="/brix/codes" element={<BrixCodes />} />
                   <Route path="/library" element={<Library />} />

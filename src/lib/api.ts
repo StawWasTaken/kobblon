@@ -18,7 +18,7 @@ import type {
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
-  World,
+  World, Quest, QuestRequest,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,} from '@/types/db'
@@ -4804,9 +4804,19 @@ export async function inTheKlub(
  * happy ones and before the unhappy ones, which is where the eye expects
  * the loud one.
  */
+/*
+ * The order they are offered in, which is the order they are drawn in.
+ *
+ * Ten faces and then the flame. It sat seventh, in the middle of the row,
+ * and it is the one thing in the set that is not a face - so the row read
+ * as two halves with a gap in it rather than as a set. Staw: "just reorder
+ * them so the fire isnt in the middle". The faces run from the mildest to
+ * the worst-tempered and the flame, which is not an expression at all,
+ * goes on the end.
+ */
 export const FACES = [
   'smile', 'laugh', 'happy-grin', 'winky-grin', 'heart-eyes',
-  'sunglasses', 'fire', 'shocked', 'sad', 'angry', 'skull',
+  'sunglasses', 'shocked', 'sad', 'angry', 'skull', 'fire',
 ] as const
 
 export type Face = (typeof FACES)[number]
@@ -5398,4 +5408,56 @@ export async function claimAppearance(which: string) {
 /** Wear one that has already been claimed. */
 export async function wearAppearance(which: string) {
   unwrap(await supabase.rpc('set_appearance', { which }))
+}
+
+// ------------------------------------------------------------------ quests
+
+/*
+ * The quest tab.
+ *
+ * Everything here is one RPC each, because every one of these is a thing
+ * the database has to decide rather than a row the browser may read: how
+ * far somebody has got, whether today's claim is still there, whether a
+ * reward has been taken. A page that worked any of that out from rows it
+ * selected would be a page that could be told a different answer.
+ */
+export async function questBoard(): Promise<Quest[]> {
+  return (unwrap(await supabase.rpc('quest_board')) as Quest[]) ?? []
+}
+
+/** Says you are doing it, which is also where the counting starts from. */
+export async function startQuest(id: string) {
+  unwrap(await supabase.rpc('start_quest', { quest: id }))
+}
+
+/** Takes the reward. Returns the balance it left behind. */
+export async function claimQuest(id: string): Promise<number> {
+  return unwrap(await supabase.rpc('claim_quest', { quest: id })) as number
+}
+
+export async function dailyWaiting(): Promise<boolean> {
+  return (unwrap(await supabase.rpc('daily_waiting')) as boolean) ?? false
+}
+
+export async function claimDaily(): Promise<number> {
+  return unwrap(await supabase.rpc('claim_daily')) as number
+}
+
+/** A verified creator asking for their World to be one. */
+export async function requestWorldQuest(input: {
+  world: string
+  minutes: number
+  reward: number
+  tag?: string | null
+}): Promise<string> {
+  return unwrap(await supabase.rpc('request_world_quest', {
+    world: input.world,
+    minutes: input.minutes,
+    reward: input.reward,
+    tag: input.tag?.trim() || null,
+  })) as string
+}
+
+export async function myQuestRequests(): Promise<QuestRequest[]> {
+  return (unwrap(await supabase.rpc('my_quest_requests')) as QuestRequest[]) ?? []
 }

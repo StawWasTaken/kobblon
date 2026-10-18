@@ -1026,3 +1026,50 @@ export type AvatarItem = {
     s?: number
   } | null
 }
+
+/**
+ * A quest on the tab, with where the person looking has got to.
+ *
+ * `goal` and `done` are in the same unit as each other and nothing else -
+ * seconds for a quest about time in a World, a plain count for the rest -
+ * so a page draws the bar from the two of them without having to know which
+ * sort it is holding, and only has to ask when it writes the words.
+ */
+export type QuestCounted = 'world_time' | 'friends_made' | 'worlds_played' | 'by_hand'
+
+export type Quest = {
+  id: string
+  counted: QuestCounted
+  title: string
+  lead: string | null
+  goal: number
+  reward: number
+  world_tag: string | null
+  /** Null until an admin has approved the creator's own tag. */
+  custom_tag: string | null
+  background_url: string | null
+  world_id: string | null
+  world_content_id: number | null
+  world_slug: string | null
+  world_name: string | null
+  world_emblem: string | null
+  author_name: string | null
+  ends_at: string | null
+  done: number
+  /** When they started it. Null means they have not, so nothing is counting. */
+  started: string | null
+  claimed_at: string | null
+}
+
+export type QuestRequest = {
+  id: string
+  title: string
+  goal: number
+  reward: number
+  world_tag: string | null
+  custom_tag: string | null
+  custom_tag_approved: boolean
+  status: 'pending' | 'live' | 'refused' | 'ended'
+  refusal: string | null
+  created_at: string
+}

@@ -21,7 +21,7 @@ import { cn } from '@/lib/cn'
  * report it.
  */
 export function ChatSuspended({
-  minutes, until, over, reason, evidence, ruleOrd, ruleTitle, channels,
+  minutes, until, over, reason, evidence, ruleOrd, ruleTitle, channels, source,
   spoken, onUnderstand, onAppeal, appealBusy, appealed, className,
 }: {
   /** How long it was given for, in minutes. */
@@ -48,6 +48,18 @@ export function ChatSuspended({
    * and leaves the microphone live is a voice suspension that does not exist.
    */
   channels?: string[] | null
+  /**
+   * Who decided it: `'kobby'`, `'filter'` or `'staff'`.
+   *
+   * It used to be one word, `'machine'`, meaning both the model and the
+   * pattern list, and a card carrying it could not tell anybody which had
+   * acted - including us. They do different things for different reasons
+   * and only one of them can be argued with sensibly, so the card says.
+   * `'machine'` is still read, as the old rows that carry it: those were
+   * all the filter, but the word is left where it was rather than
+   * rewritten, so it is shown as the vaguer sentence it honestly is.
+   */
+  source?: string | null
   /**
    * Whether this came out of voice chat rather than something typed.
    *
@@ -126,6 +138,15 @@ export function ChatSuspended({
           <p className="text-sm font-bold text-ink-strong">
             {minutes} minute suspension{ways.includes('voice') ? ', chat and voice' : ''}
           </p>
+
+          {!!source && (
+            <p className="mt-1.5 text-xs text-muted">
+              {source === 'kobby' ? 'Decided by Kobby, reading what was said.'
+                : source === 'filter' ? 'Given by the word filter.'
+                : source === 'staff' ? 'Given by a moderator.'
+                : 'Given automatically.'}
+            </p>
+          )}
 
           {!!ruleTitle && (
             <p className="mt-2 text-xs font-extrabold uppercase tracking-wide text-muted">

@@ -1,60 +1,30 @@
-/* The reaction bar, with its tray open, with nothing around it. */
+/* The reaction row and its tray, with nothing around them. */
 import { createRoot } from 'react-dom/client'
-import { Icon } from '@/components/brand/Icon'
 import { Reactions } from '@/components/social/Reactions'
-import { Card } from '@/components/ui/Card'
-import { Price } from '@/components/brand/Currency'
+import { ToastProvider } from '@/components/ui/Toast'
+import type { ReactionCount } from '@/lib/api'
 import '@/index.css'
 
-const YELLOW = '#FFCC4D'
-
-const ON = [
-  ['laugh', 12, true], ['heart-eyes', 5, false], ['fire', 8, false],
-  ['sad', 3, false], ['skull', 2, false], ['angry', 1, false],
-] as const
+const some: ReactionCount[] = [
+  { face: 'sunglasses', how_many: 8, mine: true },
+  { face: 'heart-eyes', how_many: 7, mine: true },
+  { face: 'laugh', how_many: 5, mine: false },
+  { face: 'smile', how_many: 2, mine: false },
+  { face: 'fire', how_many: 1, mine: true },
+]
 
 createRoot(document.getElementById('root')!).render(
-  <div className="min-h-screen space-y-10 bg-ink p-10">
-    <Card className="max-w-xl space-y-3 p-4">
-      <p className="text-sm text-white/85">
-        A post on a Community wall. The thumb is gone; these are what you say
-        about it instead.
-      </p>
-      <div className="flex flex-wrap items-center gap-3">
-        <Reactions
-          what="post"
-          which="preview"
-          counts={ON.map(([face, how_many, mine]) => ({ face, how_many, mine })) as never}
-        />
-        <p className="text-xs text-muted">2 hours ago</p>
+  <ToastProvider>
+    <div className="min-h-screen space-y-10 bg-ink p-10">
+      <div className="rounded-2xl border border-ink-line bg-ink-card p-4">
+        <p className="mb-3 text-sm text-muted">A post, with reactions on it.</p>
+        <Reactions what="post" which="preview" counts={some} />
       </div>
-    </Card>
 
-    {/*
-      * The tray is the component's own, opened by the shoot script pressing
-      * the button - a hand-made copy of it beside the real one is how two
-      * trays with different padding ended up in one screenshot.
-      */}
-    <div>
-      <p className="mb-2 font-display text-xs uppercase tracking-wider text-muted">
-        The tray, pressed open
-      </p>
-      <div className="pt-24">
-        <Reactions what="post" which="tray" counts={[]} />
+      <div className="rounded-2xl border border-ink-line bg-ink-card p-4">
+        <p className="mb-3 text-sm text-muted">Nothing pressed yet.</p>
+        <Reactions what="post" which="preview-2" counts={[]} />
       </div>
     </div>
-
-    <div>
-      <p className="mb-2 font-display text-xs uppercase tracking-wider text-muted">
-        On a light card, where the white ones used to vanish
-      </p>
-      <div className="inline-flex items-center gap-4 rounded-2xl bg-white p-4 text-ink">
-        <Price amount={1250} className="text-lg font-bold" />
-        <Icon name="users" className="h-6 w-6" />
-        <Icon name="notification" className="h-6 w-6" />
-        <Icon name="report" className="h-6 w-6" />
-        <Icon name="reaction-smile" tone={YELLOW} className="h-6 w-6" />
-      </div>
-    </div>
-  </div>,
+  </ToastProvider>,
 )

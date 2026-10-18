@@ -905,6 +905,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
             ruleOrd={quiet.standing.rule_ord}
             ruleTitle={quiet.standing.rule_title}
             channels={quiet.standing.channels}
+            source={quiet.standing.source}
             onUnderstand={quiet.read}
           />
         </div>

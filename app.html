@@ -53,6 +53,17 @@
       #boot {
         position: fixed;
         inset: 0;
+        /*
+         * Over everything, and the number is deliberate.
+         *
+         * Nothing in the bundle gets to paint over the wait - not the bar
+         * at 40, not a dialog at 50, not a toast. Without this the boot
+         * screen is simply an element with no z-index of its own and a
+         * positioned thing in the page could land on top of it, which is a
+         * wait with half a page showing through. Staw: "i really want it to
+         * be over everything else".
+         */
+        z-index: 2147483647;
         display: flex;
         flex-direction: column;
         align-items: center;

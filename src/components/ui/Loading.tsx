@@ -43,7 +43,22 @@ export function LoadingScreen({
   const show = useAfterAMoment(quiet ? 500 : 0)
 
   return (
-    <div className={cn('grid min-h-dvh place-items-center bg-ink px-6', className)}>
+    <div
+      role="status"
+      aria-busy="true"
+      className={cn(
+        /*
+         * The whole window, over whatever is behind it. A wait that leaves
+         * the bar and the rail showing is not a wait, it is a page missing
+         * its middle - and the one in the document covers everything, so
+         * this one has to as well or the two look like different states of
+         * the same load. Staw: "the loader is just the loading screen
+         * without the sidebar without the topbar, without anything".
+         */
+        'fixed inset-0 z-[2147483000] grid place-items-center bg-ink px-6',
+        className,
+      )}
+    >
       <div className="flex flex-col items-center">
         {show && <LoadingMark />}
         <span className="sr-only">{label}</span>

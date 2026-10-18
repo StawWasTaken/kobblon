@@ -9078,3 +9078,149 @@ rather than one that was dismissed in 2026 for ever.
 0263 is still not applied - and it is now the only thing between this and
 anybody but the Kobblon account seeing any of it. `register` is still not
 deployed, `pg_cron` is still not enabled.
+
+## Round one hundred and fourteen
+
+Quests exist. Kobby reads what people actually said, and Kobby is the one who
+suspends chat. Two migrations, **0264** and **0265**, both applied twice here
+with behavioural checks under two identities.
+
+### The quest tab
+
+`/quests` on the website, in the left rail under Friends. Three sorts of thing
+on it, and the Launcher is involved in exactly one of them.
+
+**New tables:** `quests`, `quest_progress`, `daily_claims`. Grants in the same
+file as each table; no insert or update granted to anybody, so every write goes
+through a function.
+
+**New functions, and what they are for:**
+
+| | |
+| --- | --- |
+| `quest_board()` | the whole tab in one call: the live quests with this person's `done`, `started` and `claimed_at` on each |
+| `start_quest(quest)` | says you are doing it, and is where the counting starts from. Idempotent |
+| `claim_quest(quest)` | takes the reward. Refuses an unfinished one and refuses a second claim |
+| `daily_waiting()` / `claim_daily()` | the daily 30 Brix, which has to be claimed and is one row per person per day |
+| `request_world_quest(world, minutes, reward, tag)` | a verified creator asking for their own published World |
+| `my_quest_requests()` | what they asked for and what became of it |
+| `quests_waiting()` / `decide_quest(quest, approve, tag_too, why)` | admin and superadmin |
+| `add_quest(...)` | superadmin, arbitrary |
+| `end_quest(quest)`, `credit_quest(quest, who, amount)` | admin |
+
+**What a quest counts is a closed list** - `world_time`, `friends_made`,
+`worlds_played`, `by_hand` - and every word in it is something the database can
+already answer truthfully. There is deliberately **no `invite_friends`**:
+nothing on this platform records an invitation, so a quest for one would be a
+control implying something the runtime does not do. When invitations exist the
+word gets added and the tab needs no changes.
+
+**`still_in_world(server)` has changed, and this is the line that matters to
+the Launcher.** It is still the same call, with the same arguments, and it
+still means "I am here". It now also adds up time towards `world_time` quests:
+it reads `last_seen` *before* it writes it, and credits
+`least(clock_timestamp() - last_seen, stale_after())` - ninety seconds.
+
+So, in the apps' own words, which we kept: **the Launcher gets an open session
+it heartbeats into and nothing else.** No duration in the message, no "I earned
+this", no field for anybody to lie in. Two consequences worth knowing:
+
+- heartbeating faster credits **nothing** extra. The gap is the gap; the total
+  cannot run faster than real time. Measured here: three heartbeats in a row
+  credit 0 seconds.
+- a two hour pause credits **ninety seconds**, not two hours, because nothing
+  here knows they were playing in between. Also measured.
+
+If the window wants to show a timer, read it back off `quest_board().done`
+rather than counting locally - otherwise the number on screen becomes the
+number people try to make true.
+
+**The ledger has two new words**, `quest` and `quest_tag`, so anything reading
+`pixel_transactions.kind` as a closed list needs them. A custom tag costs the
+creator **100 Brix**, charged at the asking whether or not it is approved,
+through `move_pixels` rather than a second path.
+
+### Kobby reads the original, and Kobby is the one who suspends
+
+Staw asked whether the chat suspensions were ours or Kobby's. **They were never
+Kobby's.** `words_are_censored` counted how many times the regular expressions
+objected to somebody in ten minutes and called `mute_chat` itself at three. The
+row said `source = 'machine'`, which has meant the pattern list since 0171 and
+reads like the AI to anybody looking at a card.
+
+And Kobby has only ever been handed the **masked** line - `queue_for_the_machine`
+is an `after insert` trigger, so by then `new.body` is bullets. The model has
+been asked to judge `•••• off you ••••••`.
+
+0265 changes three things:
+
+1. **`chat_to_read.said`** - a new column holding the line as it was typed. The
+   `before` trigger carries it to the `after` trigger in a transaction-local
+   setting, the same way `kobbleston.money` works. `ai_work` now hands over
+   `coalesce(said, body)`. Voice does the same through `heard_in_voice`.
+   Profile text was never censored on the way in, so names and bios were
+   already fine.
+2. **Evidence stays censored, whoever writes it.** The model can now quote a
+   real slur, and `judge_chat_line` stores its quote as evidence on a card a
+   person reads. So there is now a `before insert or update` trigger on
+   `ai_reviews.looked_at` and `chat_timeouts.evidence` that runs `censor_text`.
+   **This is the one to know about if you render evidence**: it is still
+   censored, 0208's rule still holds, and it now holds on purpose rather than
+   by accident.
+3. **`chat_timeouts.source` is now `'kobby'`, `'filter'`, `'staff'` or the old
+   `'machine'`.** The filter passes `'filter'`; every other caller was Kobby,
+   so `mute_chat` maps `'machine'` to `'kobby'`. **Old rows keep `'machine'`** -
+   they were all the filter, but relabelling them is rewriting a record, so
+   they stay and read as the vaguer thing they honestly are.
+
+   `ChatSuspended` takes a new optional `source` prop and says one line under
+   the title: "Decided by Kobby, reading what was said", "Given by the word
+   filter", "Given by a moderator", or "Given automatically" for an old row.
+   It is optional, so a window that does not pass it loses nothing.
+
+**The filter no longer suspends while Kobby is on.** Strikes are still
+recorded - they are what `behaviour_score` weighs - but the decision is the
+model's through the ladder in 0209. **One exception, and it is not a hedge:**
+when Kobby is switched off, or is not allowed to suspend, the patterns go back
+to doing it, because somebody turning the AI off in the console should not be
+silently turning chat enforcement off with it. The serious cases - a threat, an
+instruction to self-harm - still suspend immediately from the filter and are
+written as `'filter'`; waiting on a model for the next minute of that
+conversation is not a thing to do.
+
+### Not done, and it is not code
+
+**Kobby still needs somebody to press "Run it now", and no change in this repo
+fixes that.** The automation is written: 0224 knocks when work lands, 0253 is a
+sweep every minute. Both look up what they need **at apply time** -
+`pg_net` for the knock and `pg_cron` for the schedule - and quietly do nothing
+when it is not there. Neither extension is enabled on the live project, so
+neither has ever been wired.
+
+The fix is two switches and a re-run, in this order: enable `pg_net` and
+`pg_cron` under Database → Extensions, then re-apply 0224 and 0253. Both are
+idempotent. `machine_pulse()` says which of the two is still missing, and the
+console reads it.
+
+### Smaller, and shared
+
+- **`FACES` is reordered.** The flame was seventh, in the middle of a row of
+  faces, and it is the only thing in the set that is not a face. It is last now.
+  Anything drawing the tray from `FACES` follows automatically; anything with
+  its own copy of the order does not.
+- **Reaction chips are smaller** - a 20px face instead of 28, `text-xs` - and
+  the tray's pointer now hangs off the react button rather than off the row, so
+  it points at the button wherever along the row it has ended up. Measured: the
+  pointer's centre and the button's centre are the same pixel.
+- **`LiveEventBar` is rebuilt out of the same parts as the site notice above
+  it**: flat `bg-space`, white words, and the diagonal stripes imported from
+  `noticeStripes` rather than copied, so the two bars cannot drift. It takes an
+  optional `showing` prop so it can be mounted with no database behind it;
+  `tools/site/event-bar-preview.html` does that.
+- **The loading screen is over everything.** `#boot` in `app.html` and
+  `LoadingScreen` are both at the top of the stack now, and `#boot` already
+  wore the page's own background per theme and appearance.
+
+Still not done: `register` is not deployed, and the five-page redesign and the
+mobile pass are still waiting. 0263 **is** applied - that line in round one
+hundred and thirteen is out of date.

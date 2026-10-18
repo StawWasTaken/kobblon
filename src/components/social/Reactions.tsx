@@ -176,7 +176,7 @@ export function Reactions({
           onClick={() => void press(one.face)}
           aria-pressed={one.mine}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full border py-0.5 pl-1 pr-2.5 text-sm font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1 rounded-full border py-0.5 pl-1 pr-2 text-xs font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
             one.mine
               ? 'border-brand bg-brand/15 text-white'
               : 'border-ink-line bg-ink-raised text-white/70 hover:text-white',
@@ -185,12 +185,27 @@ export function Reactions({
           <Icon
             name={`reaction-${one.face}`}
             tone={one.mine ? FACE_COLOUR[one.face] : undefined}
-            className="h-7 w-7"
+            className="h-5 w-5"
           />
           {formatCount(one.how_many)}
         </button>
       ))}
 
+      {/*
+        * The button, in a box of its own.
+        *
+        * The tray opens against the row, because it is nearly as wide as
+        * the card and anything anchored to the button falls off the right
+        * edge of it. The pointer cannot be anchored to the row as well:
+        * it sat at `left-7` and pointed at whatever happened to be there,
+        * which with three reactions already pressed was a reaction. Staw:
+        * "the arrow must point at where the reaction button is".
+        *
+        * So the pointer lives here instead, over the button, at exactly
+        * the height the tray's bottom edge is - and it points at the
+        * button wherever along the row the button has ended up.
+        */}
+      <span className="relative inline-flex">
       <Tooltip
         label={canReact
           ? (full ? 'Three is the most. Press one again to take it off.' : 'React')
@@ -203,7 +218,7 @@ export function Reactions({
           aria-label="React"
           aria-expanded={picking}
           className={cn(
-            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-0.5 pl-1 pr-2 transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-0.5 pl-1 pr-1.5 transition-transform duration-150 hover:scale-105 active:scale-95',
             canReact ? 'text-white/60 hover:text-white' : 'text-white/40 opacity-60',
           )}
         >
@@ -213,10 +228,18 @@ export function Reactions({
             * yellow, because this button is the one that says "there are
             * faces here" and a grey one says the opposite.
             */}
-          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-7 w-7" />
-          <Glyph icon={faPlus} className="text-[11px]" />
+          <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-5 w-5" />
+          <Glyph icon={faPlus} className="text-[10px]" />
         </button>
       </Tooltip>
+
+        {picking && (
+          <span
+            aria-hidden
+            className="absolute bottom-full left-1/2 z-40 mb-[6px] h-3 w-3 -translate-x-1/2 rotate-45 border-b border-r border-ink-line bg-ink-card"
+          />
+        )}
+      </span>
 
       {picking && (
         /*
@@ -262,11 +285,6 @@ export function Reactions({
               </button>
             ))}
           </div>
-
-          <span
-            aria-hidden
-            className="absolute -bottom-[7px] left-7 h-3 w-3 rotate-45 border-b border-r border-ink-line bg-ink-card"
-          />
         </div>
       )}
     </div>
