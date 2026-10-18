@@ -32,14 +32,13 @@ const LOOKS = [
    * `wordmark-lightmode.png` is his own recolour learned off that pair of
    * logomarks, pixel for pixel, rather than a filter or a guess.
    *
-   * The seasonal logomarks are one drawing each and so is the christmas
-   * wordmark - red glitter in a silver outline, which reads on the deep
-   * green bar and the pale one alike. Halloween is a pair: Staw drew the
-   * daylight one and `tools/brand/flip-fill.py` turned its fill over for
-   * the dark interface, the same way his own two logomarks differ.
+   * The seasonal drawings are one each, Staw's, and they are not flipped
+   * or tinted: halloween is a dark fill in an orange outline and christmas
+   * is red glitter in a silver one, and both read on the deep bar and the
+   * pale one. Only the blue pair is drawn twice, because he drew it twice.
    */
   { look: 'default', mode: 'light', wordmark: '/brand/wordmark-lightmode.png', logomark: '/brand/logomark-lightmode.png' },
-  { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween-light.png', logomark: '/brand/logomark-halloween.png' },
+  { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png' },
   { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png' },
 ] as const
 

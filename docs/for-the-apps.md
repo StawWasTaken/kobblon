@@ -9049,3 +9049,32 @@ drawing for both modes, so `wordmark-christmas-light.png` is gone, and so is
 
 0263 is still not applied, `register` is still not deployed, `pg_cron` is
 still not enabled.
+
+## Round one hundred and thirteen
+
+**Halloween's wordmark is Staw's own drawing, one for both modes.** A dark
+fill in an orange outline, and it reads on the deep bar and the pale one
+alike - so `wordmark-halloween-light.png` is gone, and so is
+`tools/brand/flip-fill.py`. The only mark on the site drawn twice is the
+blue one, because that is the one he drew twice.
+
+**`AppearanceLook` has a `reveal` now.** `@/lib/appearances` carries
+`reveal?: string` beside `wordmark` and `logomark`, and halloween's is
+`/brand/logo-reveal-halloween.gif` - the blue mark turning into the orange
+one, 123 frames, about five seconds. The card that offers an appearance
+plays it where there is one and stands the wordmark still where there is
+not, so a season without a film is not a card pretending to animate. It is
+only ever fetched by a card that is on screen: it is a megabyte and a half
+and nothing preloads it.
+
+**The claim card is no longer hidden by owning the appearance.** Staw:
+"make that even if you already claimed it you should see the card again".
+It shows for as long as the window is open; for somebody who already has
+it the button puts it on instead of claiming it, reads "Wear it", and is
+disabled with "You have it on" if it is already being worn. The device's
+note of having seen it carries the year, so next October is a new card
+rather than one that was dismissed in 2026 for ever.
+
+0263 is still not applied - and it is now the only thing between this and
+anybody but the Kobblon account seeing any of it. `register` is still not
+deployed, `pg_cron` is still not enabled.

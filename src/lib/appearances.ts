@@ -43,6 +43,14 @@ export type AppearanceLook = {
   when: string
   /** The falling thing, if it has one. */
   weather?: 'snow' | 'leaves'
+  /**
+   * The mark turning into this appearance's, for the card that offers it.
+   *
+   * Staw drew one for halloween: the blue Kobblon becoming the orange one.
+   * A still wordmark is what a season without a film gets, and that is the
+   * honest version rather than a card that pretends to animate.
+   */
+  reveal?: string
 }
 
 export const LOOKS: Record<Appearance, AppearanceLook> = {
@@ -62,6 +70,7 @@ export const LOOKS: Record<Appearance, AppearanceLook> = {
     logomark: '/brand/logomark-halloween.png',
     when: 'Given away every October.',
     weather: 'leaves',
+    reveal: '/brand/logo-reveal-halloween.gif',
   },
   christmas: {
     id: 'christmas',
