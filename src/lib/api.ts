@@ -18,7 +18,7 @@ import type {
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
-  World, Quest, QuestRequest, StaffCommunity,
+  World, Quest, QuestCounted, QuestRequest, StaffCommunity,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,} from '@/types/db'
@@ -5481,6 +5481,37 @@ export async function requestWorldQuest(input: {
     minutes: input.minutes,
     reward: input.reward,
     tag: input.tag?.trim() || null,
+  })) as string
+}
+
+/**
+ * Writing one outright, which is a superadmin's and nobody else's.
+ *
+ * No fee, no approval and no waiting: the board belongs to Kobblon, and the
+ * request path above is for a creator asking for one about their own World.
+ * Any kind, including time in a World, as long as the World is named.
+ */
+export async function addQuest(input: {
+  title: string
+  counted: QuestCounted
+  goal: number
+  reward: number
+  lead?: string | null
+  tag?: string | null
+  background?: string | null
+  until?: string | null
+  world?: string | null
+}): Promise<string> {
+  return unwrap(await supabase.rpc('add_quest', {
+    title: input.title.trim(),
+    counted: input.counted,
+    goal: input.goal,
+    reward: input.reward,
+    lead: input.lead?.trim() || null,
+    tag: input.tag?.trim() || null,
+    background: input.background?.trim() || null,
+    until: input.until || null,
+    world: input.world || null,
   })) as string
 }
 

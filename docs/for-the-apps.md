@@ -9422,3 +9422,63 @@ has been locked" - and nothing else.
   `sweep_closed_accounts` and `sweep_closed_communities` only run by hand.
 - Staw has not yet applied 0267 or 0268. Neither is live.
 - 0266 is still waiting to be applied too.
+
+## Round one hundred and seventeen - the board, and a cover that is not there
+
+`0269_a_quest_board_worth_looking_at.sql`. Applied twice here, checked
+behaviourally under a superadmin and an ordinary account. **It needs 0264
+applied first**, which is still outstanding.
+
+**`add_quest` takes a World now and will write any kind of quest.** It
+refused `world_time` outright - "requested against that World" - which is
+right for a creator asking about their own World and wrong for the person
+who owns the board. New signature:
+
+```
+add_quest(title, counted, goal, reward, lead, tag, background, until, world)
+```
+
+The arguments changed rather than widened, so the eight-argument version is
+dropped; a ninth with a default would have left every existing call
+ambiguous. The only refusal left is the one that cannot work: `world_time`
+with no World named.
+
+**`quest_board()` gained `author_verified`** and its return type widened, so
+it is dropped and recreated - re-read the column list if you call it. Two
+other changes inside it: the promoter is now the World's creator where there
+is a World (the quest's author otherwise, which is Kobblon for Staw's own),
+and the card's picture falls back to the World's cover before giving up.
+
+**`Quest` gained `author_verified: boolean`. `Profile` gained
+`is_superadmin?: boolean`** - it was never on the type, which is why nothing
+on the website could gate on the top rank without a round trip.
+
+### The card
+
+`QuestCard` is rebuilt to the layout Staw sent and is still exported from
+`@/pages/Quests`: a 16/9 picture, "Promoted by <name> <tick>" with the end
+date opposite, then a panel carrying the reward and what has to be done, then
+two doors - "Play now" into the World and "Accept quest" / "Claim N". The
+progress bar only appears once something has been started; before that it was
+a row of zeroes. A quest with no picture gets the laurel mark on brand ink,
+never a stock photograph.
+
+### Two smaller ones that change what a thing means
+
+- **A Community with no cover now has no cover.** It used to fall back to
+  `/brand/banner3.png`, so every Community without a banner wore the same
+  picture. There is no gap where it would have been either - the header
+  starts at the emblem. If you draw a Community header, drop the fallback.
+- **Quests left the sidebar.** It is reached from the Brix menu in the top
+  bar, where it sits above "My transactions" and now draws Staw's own
+  `laurel-quest` icon rather than a Font Awesome wand. `MenuItem` gained
+  `ours?: KobIcon` for that, so any menu entry can name one of ours.
+
+### Still not done
+
+- 0264, 0266, 0267, 0268 and now 0269 are all waiting to be applied. 0264
+  first; 0269 depends on it.
+- `pg_cron` and `pg_net` are still not enabled, so Kobby and both sweeps run
+  by hand.
+- The deleted-account rename reaches profiles and avatars; friend lists and
+  chat rows still show the stored name.

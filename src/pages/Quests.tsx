@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  faCalendarDay, faCircleCheck, faClock, faHandshake, faPlus, faTag, faWandMagicSparkles,
+  faCalendarDay, faCircleCheck, faClock, faHandshake, faPlus, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
@@ -23,14 +22,15 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  claimDaily, claimQuest, dailyWaiting, myQuestRequests, myWorlds,
+  addQuest, claimDaily, claimQuest, dailyWaiting, myQuestRequests, myWorlds,
   questBoard, requestWorldQuest, startQuest,
 } from '@/lib/api'
 import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
 import { worldLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
-import type { Quest } from '@/types/db'
+import { Verified } from '@/components/brand/Verified'
+import type { Quest, QuestCounted } from '@/types/db'
 
 /*
  * Quests: the reason to come back.
@@ -98,6 +98,26 @@ function Bar({ done, goal }: { done: number; goal: number }) {
 }
 
 /** One quest. The button is whatever this person's next move actually is. */
+/** The day a quest stops, written the short way the card has room for. */
+function endsOn(when: string) {
+  const day = new Date(when)
+  return `${day.getDate()}/${day.getMonth() + 1}`
+}
+
+/**
+ * One quest, as Staw drew it.
+ *
+ * The picture leads, because a quest about a World is really an invitation
+ * to the World and the picture is the only part of the card that says which
+ * one. Under it the promoter and the day it stops, then the reward and what
+ * has to be done for it in a panel of its own, then the two doors: the one
+ * that takes you to the thing, and the one that takes the quest on.
+ *
+ * Everything with a number in it comes from the database. The bar is `done`
+ * against `goal` as the server counted it, and the claim is refused there
+ * rather than here - this page cannot tell anybody it played for fifteen
+ * minutes, which is the point of counting it in the heartbeat.
+ */
 export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => void }) {
   const say = useToast()
   const { refreshProfile } = useAuth()
@@ -107,12 +127,20 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
   const finished = quest.done >= quest.goal
   const claimed = !!quest.claimed_at
 
+  const where = quest.world_content_id
+    ? worldLink({
+      content_id: quest.world_content_id,
+      slug: quest.world_slug,
+      name: quest.world_name ?? quest.world_tag ?? 'World',
+    })
+    : null
+
   const press = async () => {
     setBusy(true)
     try {
       if (!quest.started) {
         await startQuest(quest.id)
-        say('Started. It counts from now.', 'success')
+        say('Taken on. It counts from now.', 'success')
       } else {
         const left = await claimQuest(quest.id)
         await refreshProfile()
@@ -126,87 +154,104 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
     }
   }
 
+  const cover = quest.background_url ?? quest.world_emblem
+
   return (
-    <Card className={cn('overflow-hidden', claimed && 'opacity-70')}>
-      {quest.background_url && (
-        <div
-          className="h-20 bg-cover bg-center"
-          style={{ backgroundImage: `url(${quest.background_url})` }}
-          aria-hidden
-        />
-      )}
-
-      <div className="space-y-3 p-4">
-        <div className="flex items-start gap-3">
-          {quest.world_emblem ? (
-            <img
-              src={quest.world_emblem}
-              alt=""
-              className="h-11 w-11 shrink-0 rounded-xl object-cover"
-            />
-          ) : (
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink-hover">
-              <Icon name="laurel-quest" className="w-5 text-brand-bright" />
-            </span>
-          )}
-
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-sm font-bold">{quest.title}</p>
-            {quest.lead && <p className="mt-0.5 text-xs leading-relaxed text-muted">{quest.lead}</p>}
-            {quest.author_name && !quest.world_id && (
-              <p className="mt-0.5 text-xs text-muted">From {quest.author_name}</p>
-            )}
+    <Card className={cn('flex flex-col overflow-hidden p-0', claimed && 'opacity-70')}>
+      {/* The picture, and what it is of. A quest with no picture gets the
+          mark rather than a stock photograph of somebody else's game. */}
+      <div className="relative aspect-[16/9] shrink-0 overflow-hidden bg-media">
+        {cover ? (
+          <img src={cover} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-brand-ink">
+            <Icon name="laurel-quest" className="h-14 w-14 text-brand-bright/60" />
           </div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+        {quest.world_emblem && quest.background_url && (
+          <img
+            src={quest.world_emblem}
+            alt=""
+            className="absolute bottom-2 left-2 h-9 w-9 rounded-lg border border-white/15 object-cover"
+          />
+        )}
+      </div>
 
-          <span className="inline-flex shrink-0 items-center gap-1 font-display text-sm font-extrabold tabular-nums text-space-bright">
-            <CurrencyMark className="h-[0.85em] w-[0.85em]" />
-            {formatCount(quest.reward)}
+      <div className="flex items-center justify-between gap-2 px-3 py-2 text-[11px]">
+        <span className="flex min-w-0 items-center gap-1 text-muted">
+          Promoted by
+          <span className="truncate font-bold text-white/85">
+            {quest.author_name ?? 'Kobblon'}
           </span>
-        </div>
+          {quest.author_verified && <Verified className="shrink-0 text-[11px]" />}
+        </span>
+        {quest.ends_at && (
+          <span className="shrink-0 text-muted">Ends {endsOn(quest.ends_at)}</span>
+        )}
+      </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          {quest.world_tag && quest.world_content_id ? (
-            <Link
-              to={worldLink({
-                content_id: quest.world_content_id,
-                slug: quest.world_slug,
-                name: quest.world_name ?? quest.world_tag,
-              })}
-            >
-              <Badge tone="brand" icon={faTag}>{quest.world_tag}</Badge>
-            </Link>
-          ) : quest.world_tag ? (
-            <Badge tone="brand" icon={faTag}>{quest.world_tag}</Badge>
-          ) : null}
-          {quest.custom_tag && <Badge tone="space" icon={faTag}>{quest.custom_tag}</Badge>}
-        </div>
+      {/* What it pays and what for, in a panel of its own so the two never
+          read as one sentence running on. */}
+      <div className="mx-3 flex-1 rounded-xl border border-ink-line bg-ink-raised p-3">
+        <div className="flex gap-3">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink">
+            <Icon name="laurel-quest" className="h-8 w-8 text-brand-bright" />
+          </span>
 
-        <div className="space-y-1.5">
-          <Bar done={quest.done} goal={quest.goal} />
-          <div className="flex items-center justify-between text-xs text-muted">
-            <span className="tabular-nums">{bits.done} of {bits.goal}</span>
-            <span className={cn(finished && 'font-bold text-space-bright')}>
-              {claimed ? 'Claimed' : quest.started ? bits.left : 'Not started'}
-            </span>
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="truncate font-display text-[10px] font-bold uppercase tracking-wider text-brand-bright">
+              {(quest.custom_tag ?? quest.world_tag ?? 'Kobblon')} quest
+            </p>
+            <p className="flex items-center gap-1.5 font-display text-sm font-extrabold">
+              Claim
+              <span className="inline-flex items-center gap-1 tabular-nums text-space-bright">
+                <CurrencyMark className="h-[0.85em] w-[0.85em]" />
+                {formatCount(quest.reward)}
+              </span>
+            </p>
+            <p className="text-xs leading-relaxed text-muted">
+              {quest.lead ?? quest.title}
+            </p>
           </div>
         </div>
+
+        {/* The bar only once there is something on it. Before that it is a
+            row of zeroes saying nothing anybody needs. */}
+        {quest.started && !claimed && (
+          <div className="mt-3 space-y-1.5">
+            <Bar done={quest.done} goal={quest.goal} />
+            <div className="flex items-center justify-between text-[11px] text-muted">
+              <span className="tabular-nums">{bits.done} of {bits.goal}</span>
+              <span className={cn(finished && 'font-bold text-space-bright')}>{bits.left}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-2 p-3">
+        {where && (
+          <Button variant="subtle" className="flex-1" to={where}>
+            Play now
+          </Button>
+        )}
 
         {claimed ? (
-          <p className="flex items-center gap-2 text-xs font-bold text-space-bright">
+          <span className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-ink-raised py-2 text-xs font-bold text-space-bright">
             <Glyph icon={faCircleCheck} className="w-3.5" />
-            Done and paid.
-          </p>
+            Claimed
+          </span>
         ) : (
           <GuestGate action="do quests">
             <Button
-              className="w-full"
-              variant={finished && quest.started ? 'primary' : 'subtle'}
+              className={cn(where ? 'flex-1' : 'w-full')}
+              variant={finished && quest.started ? 'primary' : quest.started ? 'subtle' : 'primary'}
               loading={busy}
               disabled={!!quest.started && !finished}
               onClick={() => void press()}
             >
               {!quest.started
-                ? 'Start it'
+                ? 'Accept quest'
                 : finished
                   ? `Claim ${formatCount(quest.reward)}`
                   : 'In progress'}
@@ -389,6 +434,164 @@ function AskForOne({ open, onClose, onDone }: {
   )
 }
 
+/**
+ * Staw writing one, which goes straight on the board.
+ *
+ * Separate from the dialog above and deliberately so: that one is a
+ * creator asking for a quest about their own World, with a fee and an
+ * approval behind it. This is the board's owner, so there is no fee, no
+ * approval and no restriction on what is counted - including time in a
+ * World, which `add_quest` refused outright until migration 0269.
+ */
+function WriteOne({ open, onClose, onDone }: {
+  open: boolean
+  onClose: () => void
+  onDone: () => void
+}) {
+  const say = useToast()
+  const [title, setTitle] = useState('')
+  const [lead, setLead] = useState('')
+  const [counted, setCounted] = useState<QuestCounted>('worlds_played')
+  const [goal, setGoal] = useState('3')
+  const [reward, setReward] = useState('100')
+  const [tag, setTag] = useState('')
+  const [background, setBackground] = useState('')
+  const [world, setWorld] = useState('')
+  const [until, setUntil] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const worlds = useAsync(async () => (open ? myWorlds() : []), [open])
+  const needsWorld = counted === 'world_time'
+
+  const send = async () => {
+    setBusy(true)
+    try {
+      await addQuest({
+        title,
+        counted,
+        /* Minutes read better than seconds and the server counts seconds. */
+        goal: needsWorld ? Number(goal) * 60 : Number(goal),
+        reward: Number(reward),
+        lead,
+        tag,
+        background,
+        until: until ? new Date(until).toISOString() : null,
+        world: needsWorld ? world : null,
+      })
+      say('It is on the board.', 'success')
+      setTitle(''); setLead(''); setTag(''); setBackground(''); setUntil('')
+      onDone()
+      onClose()
+    } catch (err) {
+      say(err instanceof Error ? err.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Write a quest"
+      description="It goes live the moment you send it."
+      size="lg"
+      footer={
+        <Button
+          loading={busy}
+          disabled={!title.trim() || (needsWorld && !world)}
+          onClick={() => void send()}
+        >
+          Put it on the board
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <Input
+          label="Title"
+          placeholder="Play three Worlds you have never played"
+          maxLength={80}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <Input
+          label="The line under it"
+          placeholder="Anything you like, as long as it is three of them."
+          maxLength={140}
+          value={lead}
+          onChange={(e) => setLead(e.target.value)}
+        />
+
+        <Select
+          label="What is counted"
+          value={counted}
+          onChange={(value) => setCounted(value as QuestCounted)}
+          options={[
+            { value: 'worlds_played', label: 'Worlds played' },
+            { value: 'friends_made', label: 'Friends made' },
+            { value: 'world_time', label: 'Time in one World' },
+            { value: 'by_hand', label: 'By hand, credited by staff' },
+          ]}
+        />
+
+        {needsWorld && (
+          <Select
+            label="Which World"
+            value={world}
+            onChange={setWorld}
+            options={[
+              { value: '', label: 'Pick one' },
+              ...(worlds.data ?? []).map((one) => ({ value: one.id, label: one.name })),
+            ]}
+          />
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            label={needsWorld ? 'Minutes of play' : 'How many'}
+            type="number"
+            min={1}
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          />
+          <Input
+            label={`${currency.plural} won`}
+            type="number"
+            min={1}
+            value={reward}
+            onChange={(e) => setReward(e.target.value)}
+          />
+        </div>
+
+        <Input
+          label="A tag"
+          placeholder="seasonal"
+          maxLength={24}
+          value={tag}
+          onChange={(e) => setTag(e.target.value)}
+        />
+
+        <Input
+          label="A picture for the card"
+          placeholder="https://"
+          value={background}
+          onChange={(e) => setBackground(e.target.value)}
+          hint="Left empty, the card shows the mark. Nothing stock is ever put there."
+        />
+
+        <Input
+          label="Ends"
+          type="datetime-local"
+          value={until}
+          onChange={(e) => setUntil(e.target.value)}
+          hint="Left empty, it runs until you end it."
+        />
+      </div>
+    </Dialog>
+  )
+}
+
 /** What a creator has asked for, and what became of it. */
 function MyRequests({ reloadKey }: { reloadKey: number }) {
   const rows = useAsync(() => myQuestRequests(), [reloadKey])
@@ -436,18 +639,37 @@ export default function Quests() {
   useTitle('Quests')
   const { profile } = useAuth()
   const [asking, setAsking] = useState(false)
+  const [writing, setWriting] = useState(false)
   const [round, setRound] = useState(0)
+  const [order, setOrder] = useState<'suggested' | 'ending' | 'reward'>('suggested')
 
   const board = useAsync(() => questBoard(), [profile?.id, round])
   const again = () => setRound((n) => n + 1)
 
+  /*
+   * Sorted here rather than asked for again, because the board is one call
+   * and a handful of rows: three round trips to reorder what is already in
+   * the page would be three round trips for nothing.
+   *
+   * "Suggested" is the order the server sent, which is what is running and
+   * newest first. The other two are what somebody actually wants when they
+   * reach for the control: the one about to stop, and the one worth most.
+   */
   const { waiting, done } = useMemo(() => {
-    const all = board.data ?? []
+    const all = [...(board.data ?? [])]
+    if (order === 'ending') {
+      all.sort((a, b) => {
+        if (!a.ends_at) return 1
+        if (!b.ends_at) return -1
+        return new Date(a.ends_at).getTime() - new Date(b.ends_at).getTime()
+      })
+    }
+    if (order === 'reward') all.sort((a, b) => b.reward - a.reward)
     return {
       waiting: all.filter((one) => !one.claimed_at),
       done: all.filter((one) => !!one.claimed_at),
     }
-  }, [board.data])
+  }, [board.data, order])
 
   return (
     <Page className="space-y-5">
@@ -457,11 +679,18 @@ export default function Quests() {
         title="Things to go and do"
         lead={`Play, turn up, and come back for what it is worth. Every one of these pays in ${currency.plural}.`}
         actions={
-          profile?.is_verified && (
-            <Button icon={faPlus} onClick={() => setAsking(true)}>
-              Ask for a quest
-            </Button>
-          )
+          <>
+            {profile?.is_superadmin && (
+              <Button icon={faPlus} onClick={() => setWriting(true)}>
+                Write a quest
+              </Button>
+            )}
+            {profile?.is_verified && !profile?.is_superadmin && (
+              <Button icon={faPlus} onClick={() => setAsking(true)}>
+                Ask for a quest
+              </Button>
+            )}
+          </>
         }
         aside={
           profile && (
@@ -493,10 +722,28 @@ export default function Quests() {
       ) : (
         <>
           {waiting.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {waiting.map((one) => (
-                <QuestCard key={one.id} quest={one} onChange={again} />
-              ))}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-display text-lg font-extrabold">Available quests</h2>
+                <div className="w-44 shrink-0">
+                  <Select
+                    label="Order"
+                    value={order}
+                    onChange={(value) => setOrder(value as typeof order)}
+                    options={[
+                      { value: 'suggested', label: 'Suggested' },
+                      { value: 'ending', label: 'Ending soonest' },
+                      { value: 'reward', label: `Most ${currency.plural}` },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {waiting.map((one) => (
+                  <QuestCard key={one.id} quest={one} onChange={again} />
+                ))}
+              </div>
             </div>
           )}
 
@@ -521,7 +768,11 @@ export default function Quests() {
         what keeps the number worth something.
       </Note>
 
-      {profile?.is_verified && (
+      {profile?.is_superadmin && (
+        <WriteOne open={writing} onClose={() => setWriting(false)} onDone={again} />
+      )}
+
+      {profile?.is_verified && !profile?.is_superadmin && (
         <>
           <MyRequests reloadKey={round} />
           <AskForOne open={asking} onClose={() => setAsking(false)} onDone={again} />

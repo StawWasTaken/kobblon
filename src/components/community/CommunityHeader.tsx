@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Menu } from '@/components/ui/Menu'
 import { formatCount } from '@/lib/format'
-import { asset } from '@/lib/asset'
 import { PAGE_WIDTH } from '@/components/layout/AppShell'
 import { cn } from '@/lib/cn'
 import { Emblem } from '@/components/community/Emblem'
@@ -91,18 +90,21 @@ export function CommunityHeader({
 
   return (
     <header className="relative">
-      {/* The cover does not stop at an edge, it dissolves into the page. */}
-      <div className="absolute inset-x-0 top-0 h-56 overflow-hidden sm:h-72">
-        <img
-          src={group.banner_url ?? asset('/brand/banner3.png')}
-          alt=""
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10" />
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink to-transparent" />
-      </div>
+      {/*
+        * The cover does not stop at an edge, it dissolves into the page -
+        * and a Community without one has no cover at all rather than a
+        * stock picture. Staw: no image, and no gap where the image would
+        * have been either, so the page starts at the emblem.
+        */}
+      {group.banner_url && (
+        <div className="absolute inset-x-0 top-0 h-56 overflow-hidden sm:h-72">
+          <img src={group.banner_url} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink to-transparent" />
+        </div>
+      )}
 
-      <div className="relative pt-40 sm:pt-52">
+      <div className={cn('relative', group.banner_url ? 'pt-40 sm:pt-52' : 'pt-6')}>
         <div className={cn('mx-auto w-full px-4 sm:px-6', PAGE_WIDTH.narrow)}>
           <div className="flex items-start gap-4">
             <Emblem

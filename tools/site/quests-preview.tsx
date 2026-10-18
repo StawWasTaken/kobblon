@@ -14,8 +14,8 @@ const base: Quest = {
   world_tag: 'First Ground', custom_tag: 'parkour', background_url: null,
   world_id: 'w', world_content_id: 1069, world_slug: 'first-ground',
   world_name: 'First Ground', world_emblem: null,
-  author_name: null, ends_at: null,
-  done: 0, started: null, claimed_at: null,
+  author_name: 'imCooki3', ends_at: new Date(Date.now() + 864e5 * 2).toISOString(),
+  done: 0, started: null, claimed_at: null, author_verified: true,
 }
 
 const states: [string, Quest][] = [

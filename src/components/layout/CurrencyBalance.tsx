@@ -31,7 +31,7 @@ export function CurrencyBalance({ amount }: { amount: number }) {
         </span>
       }
       items={[
-        { label: 'Quests', icon: faWandMagicSparkles, to: '/quests' },
+        { label: 'Quests', icon: faWandMagicSparkles, ours: 'laurel-quest', to: '/quests' },
         { label: 'My transactions', icon: faReceipt, to: '/brix' },
         { label: 'Redeem a code', icon: faGift, to: '/brix/codes' },
         { label: `Spend ${currency.plural}`, icon: faStore, to: '/style' },

@@ -3,12 +3,20 @@ import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Hop } from '@/components/ui/Hop'
 import { Glyph } from '@/components/brand/Glyph'
+import type { KobIcon } from '@/components/brand/Icon'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
 export type MenuItem = {
   label: string
   icon?: IconDefinition
+  /**
+   * Name one of ours outright, where Staw drew the thing this entry is.
+   *
+   * The Font Awesome icon stays as the fallback, the way it does in the
+   * rail: `Glyph` takes both and prefers ours.
+   */
+  ours?: KobIcon
   to?: string
   onSelect?: () => void
   danger?: boolean
@@ -111,7 +119,7 @@ export function Menu({
           {items.map((item, at) => {
             const body = (
               <>
-                {item.icon && <Glyph icon={item.icon} className="w-4" />}
+                {item.icon && <Glyph icon={item.icon} name={item.ours} className="w-4" />}
                 {item.label}
               </>
             )

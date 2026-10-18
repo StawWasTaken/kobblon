@@ -14,6 +14,8 @@ export type Profile = {
   /** Wears the Kobblon k with no permission attached. Power implies it too. */
   has_staff_badge?: boolean
   is_admin: boolean
+  /** The top rank. Implies admin, which implies moderator. */
+  is_superadmin?: boolean
   is_verified: boolean
   is_guest: boolean
   /** False when the account was made without one, or is still a guest. */
@@ -1094,6 +1096,8 @@ export type Quest = {
   /** When they started it. Null means they have not, so nothing is counting. */
   started: string | null
   claimed_at: string | null
+  /** Whether the promoter's name carries the tick. */
+  author_verified: boolean
 }
 
 export type QuestRequest = {
