@@ -71,7 +71,7 @@ import {
   machinePulse, staffOverview, askKobbyForWords,
   staffCommunities, flagCommunity, verifyCommunity, staffCloseCommunity,
   staffReopenCommunity, staffTransferCommunity, eraseCommunity,
-  searchProfiles, type CommunityTab,
+  searchProfiles, type CommunityTab, reopenAccount, eraseAccount,
 } from '@/lib/api'
 import { Glyph } from '@/components/brand/Glyph'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
@@ -964,6 +964,7 @@ export function PersonRow({ person, onChanged }: {
   const [note, setNote] = useState('')
   const [saying, setSaying] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [erasing, setErasing] = useState(false)
   const [acting, setActing] = useState(false)
   const [closing, setClosing] = useState(false)
   const [opening, setOpening] = useState(false)
@@ -1038,9 +1039,18 @@ export function PersonRow({ person, onChanged }: {
         * It was not on the card at all, so the decision about a fifth
         * warning was taken without knowing about the four.
         */}
-      {(person.is_banned || person.is_suspended || person.past_sanctions > 0) && (
+      {(person.is_banned || person.is_suspended || person.closed_at
+        || person.past_sanctions > 0) && (
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
           {person.is_banned && <Badge tone="danger">Closed</Badge>}
+          {person.closed_at && (
+            <Badge tone="danger">
+              Deleting &middot; data goes {person.erase_after
+                ? new Date(person.erase_after).toLocaleDateString(undefined,
+                  { day: 'numeric', month: 'short', year: 'numeric' })
+                : 'in two months'}
+            </Badge>
+          )}
           {person.is_suspended && !person.is_banned && (
             <Badge tone="danger">
               {person.suspended_until
@@ -1216,11 +1226,34 @@ export function PersonRow({ person, onChanged }: {
         {/* Sanctions live in their own row above, which a moderator gets
             too. What is left here is an admin's: deleting, which is not a
             sanction - it is the end of the account and everything in it. */}
-        {!person.is_admin && rank === 'superadmin' && (
+        {/*
+          * Deleting is a date now, not a moment: migration 0268 gives an
+          * account the same two months a Community gets, so this schedules
+          * it and the two buttons beside it are what the wait is for.
+          */}
+        {!person.is_admin && rank === 'superadmin' && !person.closed_at && (
           <Button size="sm" variant="danger" disabled={busy} onClick={() => setRemoving(true)}>
             <FontAwesomeIcon icon={faTrash} />
             Delete
           </Button>
+        )}
+
+        {!person.is_admin && rank === 'superadmin' && person.closed_at && (
+          <>
+            <Button
+              size="sm"
+              variant="subtle"
+              disabled={busy}
+              onClick={() => run('Put back. It is staying.', () => reopenAccount(person.id))}
+            >
+              <FontAwesomeIcon icon={faDoorOpen} />
+              Put it back
+            </Button>
+            <Button size="sm" variant="danger" disabled={busy} onClick={() => setErasing(true)}>
+              <FontAwesomeIcon icon={faTrash} />
+              Delete for real
+            </Button>
+          </>
         )}
       </div>
       )}
@@ -1332,19 +1365,19 @@ export function PersonRow({ person, onChanged }: {
       <Confirm
         open={removing}
         onClose={() => { setRemoving(false); setWhy('') }}
-        onConfirm={() => run('Account deleted.', async () => {
+        onConfirm={() => run('Deleting. Two months before the data goes.', async () => {
           await deleteAccountAsStaff(person.id, why)
           setRemoving(false)
           setWhy('')
         })}
         title={`Delete @${person.username}?`}
-        lead="This cannot be undone."
+        lead="Two months, and then it is gone for good."
         points={[
-          'Their account, profile and everything hanging off it goes.',
-          'Their uploads, Worlds and Communities go with it.',
-          'The record keeps their name and your reason. Nothing else survives.',
+          'They are locked out now and told why.',
+          'Their profile reads "Account Deleted" to everybody else.',
+          'Nothing is actually erased until the two months are up, so this can be called off.',
         ]}
-        confirmText="Delete for good"
+        confirmText="Start deleting"
       >
         <Input
           label="Why"
@@ -1353,6 +1386,25 @@ export function PersonRow({ person, onChanged }: {
           placeholder="Required. Kept in the record."
         />
       </Confirm>
+
+      {/* The one that does not wait. Only after the account is already on
+          its way out, which is the whole of what makes it recoverable. */}
+      <Confirm
+        open={erasing}
+        onClose={() => setErasing(false)}
+        onConfirm={() => run('Gone.', async () => {
+          await eraseAccount(person.id)
+          setErasing(false)
+        })}
+        title={`Erase @${person.username} now?`}
+        lead="This cannot be undone."
+        points={[
+          'Their account, profile and everything hanging off it goes.',
+          'Their uploads, Worlds and Communities go with it.',
+          'The record keeps their name and the reason it was closed. Nothing else survives.',
+        ]}
+        confirmText="Delete for real"
+      />
     </Card>
   )
 }
@@ -1400,6 +1452,7 @@ const WHO: { value: PeopleFilter | 'all'; label: string }[] = [
   { value: 'no_email', label: 'No email' },
   { value: 'suspended', label: 'Suspended' },
   { value: 'banned', label: 'Closed' },
+  { value: 'closing', label: 'Being deleted' },
 ]
 
 const ORDER: { value: PeopleOrder; label: string }[] = [

@@ -54,6 +54,16 @@ export type Profile = {
    */
   is_suspended?: boolean
   suspended_until?: string | null
+  /** Closed for good. A banned profile is not readable by anybody else. */
+  is_banned?: boolean
+  /**
+   * On its way out, with two months before the data actually goes.
+   *
+   * Readable by everybody on purpose, unlike a ban: a friend who is gone
+   * reads as "Account Deleted" in a list rather than disappearing out of it.
+   */
+  closed_at?: string | null
+  erase_after?: string | null
   created_at: string
 }
 
@@ -66,7 +76,7 @@ export type Profile = {
  * and this says the door is open.
  */
 export type AccountLock = {
-  level: StandingLevel
+  level: LockLevel
   headline: string
   why: string | null
   rule: string | null
@@ -76,6 +86,15 @@ export type AccountLock = {
   appeal_status: string | null
   can_appeal: boolean
   can_return: boolean
+  /**
+   * Whether the checkbox on the card is allowed to do anything. A warning
+   * is answerable at once, a suspension only once its time is spent, and a
+   * closed account never - that one is lifted by a person or not at all.
+   */
+  can_acknowledge: boolean
+  /** Already said they had read it. */
+  acknowledged: boolean
+  is_banned: boolean
 }
 
 export type Space = {
@@ -375,6 +394,15 @@ export type Community = {
   member_count: number
   funds: number
   is_removed: boolean
+  /**
+   * Closed by staff, with two months before the data goes for good.
+   *
+   * The row stays readable while that runs - migration 0268 - because the
+   * members deserve the sentence rather than a page saying it never existed.
+   */
+  closed_at?: string | null
+  closed_reason?: string | null
+  erase_after?: string | null
   content_id: number | null
   created_at: string
 }
@@ -615,6 +643,13 @@ export type CommunityAuditEntry = {
 // ------------------------------------------------------ standing and safety
 
 export type StandingLevel = 'clear' | 'warned' | 'limited' | 'suspended' | 'terminated'
+
+/**
+ * What `my_account_standing` answers, which is not quite the same list: it
+ * says `banned` where the record says `terminated`, because the card is
+ * telling somebody what is happening to them rather than naming a sanction.
+ */
+export type LockLevel = 'clear' | 'warned' | 'limited' | 'suspended' | 'banned'
 
 export type AccountStanding = {
   level: StandingLevel

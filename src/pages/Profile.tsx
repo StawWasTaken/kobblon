@@ -50,7 +50,7 @@ import {
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
-import { avatarOf } from '@/lib/avatars'
+import { avatarOf, isGone } from '@/lib/avatars'
 import { NameMarks } from '@/components/brand/Verified'
 import { PenIcon } from '@/components/brand/PenIcon'
 
@@ -406,6 +406,34 @@ export default function Profile() {
             body={`There is no @${username} on Kobblon.`}
             action={<Button to="/discover">Discover Worlds</Button>}
           />
+        </Card>
+      </Page>
+    )
+  }
+
+  /*
+   * An account that is gone, or on its way. The row is readable so that
+   * this can be said - Staw sent the picture of it: the name and the handle
+   * both read "Account Deleted", the picture will not load, and there is
+   * nothing else on the page because there is nothing else left.
+   */
+  if (isGone(user)) {
+    return (
+      <Page width="narrow" className="py-10">
+        <Card className="flex flex-col items-center gap-4 py-10 text-center">
+          <PersonAvatar
+            person={user}
+            size="3xl"
+            className="h-24 w-24"
+          />
+          <div>
+            <h1 className="font-display text-2xl font-extrabold">Account Deleted</h1>
+            <p className="mt-1 text-sm text-muted">@Account Deleted</p>
+          </div>
+          <p className="max-w-sm text-sm leading-relaxed text-muted">
+            This account was deleted. What was here has gone with it.
+          </p>
+          <Button to="/discover" variant="subtle">Discover Worlds</Button>
         </Card>
       </Page>
     )

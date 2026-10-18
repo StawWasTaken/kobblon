@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Weather } from '@/components/brand/Weather'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -10,12 +10,15 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { FriendsRail } from '@/components/social/FriendsRail'
+import { AccountStatusCard } from '@/components/social/AccountStatusCard'
+import { useToast } from '@/components/ui/Toast'
 import { worldIcon } from '@/lib/naming'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
+  accountStanding, acknowledgeStanding,
   listFavouriteWorlds, listMemberCommunities, listWorlds, myWorlds,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
@@ -124,6 +127,34 @@ export default function Home() {
     [profile?.id],
   )
 
+  /*
+   * Whatever has been decided about this account, at the top of the page
+   * somebody lands on. A warning does not shut anything, so without this it
+   * had nowhere at all to appear and sat unread on the standing page; a
+   * suspension and a closure get the whole screen instead, so here this is
+   * the one that is doing the work.
+   */
+  const say = useToast()
+  const standing = useAsync(async () => (profile ? accountStanding() : null), [profile?.id])
+  const [answering, setAnswering] = useState(false)
+
+  const answer = async () => {
+    setAnswering(true)
+    try {
+      const what = await acknowledgeStanding()
+      say(
+        what === 'back' ? 'Welcome back. Keep it clean.' : 'Noted. Your account is clear.',
+        'success',
+      )
+      standing.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not go through.', 'error')
+    }
+    setAnswering(false)
+  }
+
+  const decided = standing.data && standing.data.level !== 'clear' ? standing.data : null
+
   const shown = suggested.data ?? []
   const first = shown.slice(0, 8)
   const rest = shown.slice(8, 24)
@@ -137,6 +168,15 @@ export default function Home() {
           at all unless a seasonal appearance is being worn. */}
       <Weather className="pointer-events-none fixed inset-0 z-0 overflow-hidden" />
       <h1 className="mb-6 font-display text-3xl font-extrabold sm:text-4xl">Home</h1>
+
+      {decided && (
+        <AccountStatusCard
+          standing={decided}
+          busy={answering}
+          onAcknowledge={decided.can_acknowledge ? () => void answer() : undefined}
+          className="relative z-10 mb-8"
+        />
+      )}
 
       <FriendsRail />
 

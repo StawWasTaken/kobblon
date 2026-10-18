@@ -1,3 +1,5 @@
+import { Glyph } from '@/components/brand/Glyph'
+import { faUserLarge } from '@fortawesome/free-solid-svg-icons'
 import { useHeadshot } from '@/hooks/useHeadshot'
 import { cn } from '@/lib/cn'
 
@@ -19,6 +21,7 @@ export function Avatar({
   size = 'md',
   className,
   style,
+  unavailable,
 }: {
   src?: string | null
   name: string
@@ -39,20 +42,33 @@ export function Avatar({
   size?: AvatarSize
   className?: string
   style?: React.CSSProperties
+  /**
+   * Nobody is behind this one any more, so nothing is drawn for it.
+   *
+   * Not an error state dressed up: the account is gone or going, and the
+   * picture is a shot of an avatar that no longer exists. Initials would be
+   * worse - they are the initials of somebody who is not there.
+   */
+  unavailable?: boolean
 }) {
   const initials = name.slice(0, 2).toUpperCase()
-  const picture = useHeadshot(personId, src, changedAt)
+  const picture = useHeadshot(unavailable ? null : personId, unavailable ? null : src, changedAt)
   return (
     <span
       className={cn(
-        'inline-grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-brand-deep font-bold uppercase text-white/90',
+        'inline-grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 font-bold uppercase',
+        unavailable ? 'bg-ink-raised text-muted' : 'bg-brand-deep text-white/90',
         sizes[size],
         className,
       )}
       style={style}
       aria-hidden="true"
     >
-      {picture ? <img src={picture} alt="" className="h-full w-full object-cover" loading="lazy" /> : initials}
+      {unavailable
+        ? <Glyph icon={faUserLarge} title="This picture could not load" />
+        : picture
+          ? <img src={picture} alt="" className="h-full w-full object-cover" loading="lazy" />
+          : initials}
     </span>
   )
 }

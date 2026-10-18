@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faCalendarDay } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarDay, faLock } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -178,6 +178,32 @@ export default function CommunityPage() {
             body={`There is no community at "${slug}".`}
             action={<Button to="/communities">All communities</Button>}
           />
+        </Card>
+      </Page>
+    )
+  }
+
+  /*
+   * Closed by staff, and serving the two months before the data goes. The
+   * row is readable for exactly this - one sentence, and nothing else on
+   * the page, because everything else on it belongs to a Community that is
+   * running and this one is not.
+   */
+  if (group.closed_at) {
+    return (
+      <Page width="narrow" className="py-10">
+        <Card className="flex flex-col items-center gap-4 py-10 text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl border border-ink-line bg-ink-raised text-xl text-muted">
+            <Glyph icon={faLock} />
+          </span>
+          <h1 className="font-display text-2xl font-extrabold">
+            This community has been locked
+          </h1>
+          <p className="max-w-sm text-sm leading-relaxed text-muted">
+            A moderator closed it. Nothing in it can be read or posted to while
+            that stands, and the owner was told why.
+          </p>
+          <Button to="/communities" variant="subtle">All communities</Button>
         </Card>
       </Page>
     )

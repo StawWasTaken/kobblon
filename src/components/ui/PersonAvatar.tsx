@@ -2,7 +2,7 @@ import { PresenceLabel, StatusDot, presenceWords } from '@/components/ui/StatusD
 import { Avatar } from '@/components/ui/Avatar'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useLivePresence } from '@/hooks/usePresenceStore'
-import { avatarOf } from '@/lib/avatars'
+import { avatarOf, isGone, nameOf } from '@/lib/avatars'
 import { cn } from '@/lib/cn'
 
 type Somebody = {
@@ -16,6 +16,10 @@ type Somebody = {
   in_space_id?: string | null
   activity?: string | null
   last_seen_at?: string | null
+  /** On its way out, with two months before the data actually goes. */
+  closed_at?: string | null
+  /** Closed for good. */
+  is_banned?: boolean | null
 }
 
 const sizes = {
@@ -74,6 +78,13 @@ export function PersonAvatar({
    */
   const presence = useLivePresence(person)
 
+  /*
+   * An account that is gone, or going. Its picture will not load because
+   * there is nothing left to draw, and the dot would be saying something
+   * about somebody who is not coming back, so neither is shown.
+   */
+  const gone = isGone(person)
+
   return (
     <span className={cn('relative inline-block shrink-0', sizes[size], className)}>
       {/* Anything worn behind goes under the picture; the picture itself is
@@ -88,7 +99,8 @@ export function PersonAvatar({
           src={avatarOf(person ?? undefined)}
           personId={person?.id}
           changedAt={person?.avatar_changed_at}
-          name={person?.display_name ?? '?'}
+          name={nameOf(person)}
+          unavailable={gone}
           size="md"
           className={cn('h-full w-full', square ? 'rounded-xl' : 'rounded-full')}
         />
@@ -96,6 +108,7 @@ export function PersonAvatar({
       </span>
 
 
+      {!gone && (
       <Tooltip label={presenceWords[presence]} side="top">
         <StatusDot
           presence={presence}
@@ -111,6 +124,7 @@ export function PersonAvatar({
           )}
         />
       </Tooltip>
+      )}
     </span>
   )
 }

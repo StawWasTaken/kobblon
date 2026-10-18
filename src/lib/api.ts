@@ -2233,6 +2233,29 @@ export async function reactivateAccount(): Promise<boolean> {
   return (unwrap(await supabase.rpc('reactivate_my_account')) as boolean) ?? false
 }
 
+/**
+ * Saying you have read it.
+ *
+ * One door for a warning and for a suspension whose time is spent, because
+ * to the person pressing it they are the same sentence. Comes back saying
+ * which of the two happened, so the page can say the right thing instead
+ * of reloading and guessing.
+ */
+export async function acknowledgeStanding(): Promise<'warning_cleared' | 'back' | 'nothing'> {
+  const what = unwrap(await supabase.rpc('acknowledge_my_standing'))
+  return (what as 'warning_cleared' | 'back' | 'nothing') ?? 'nothing'
+}
+
+/** Calling off a deletion while there is still something to call off. */
+export async function reopenAccount(target: string, why?: string) {
+  unwrap(await supabase.rpc('reopen_account', { target, why: why ?? null }))
+}
+
+/** The real one. Superadmin, and only on an account already on its way out. */
+export async function eraseAccount(target: string) {
+  unwrap(await supabase.rpc('erase_account', { target }))
+}
+
 export async function listViolations(): Promise<Violation[]> {
   const { data, error } = await supabase
     .from('violations')
@@ -3111,12 +3134,15 @@ export type StaffPerson = {
   has_email: boolean
   /** Staff made this guest real and the site is waiting for a password. */
   must_set_password: boolean
+  /** On its way out, and the day the data actually goes. */
+  closed_at: string | null
+  erase_after: string | null
 }
 
 /** What the People panel can be asked for, beyond a name. */
 export type PeopleFilter =
   | 'staff' | 'admin' | 'moderator' | 'verified'
-  | 'guest' | 'real' | 'suspended' | 'banned'
+  | 'guest' | 'real' | 'suspended' | 'banned' | 'closing'
   | 'no_email' | 'klub'
 
 export type PeopleOrder = 'rank' | 'new' | 'old' | 'rich' | 'poor' | 'name'

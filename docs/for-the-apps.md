@@ -9324,3 +9324,101 @@ is **not built**. Only the by-hand tick is.
 - `CommunityCard` and `QuestCard` are exported, and
   `tools/site/communities-preview.html` and `tools/site/quests-preview.html`
   mount them with no session, no console and no database. Both were looked at.
+
+## Round one hundred and sixteen - a decision somebody can read, and answer
+
+**Nobody is signed out for a sanction any more, and that is the whole point
+of the round.** A warning, a suspension and a closure all leave the session
+alone. The three places somebody needs after a decision - their record, the
+appeal on it, and support - are all behind a sign-in, so signing them out
+was taking away the only doors they had. If the Workspace or the Launcher
+signs anybody out on `is_suspended`, stop doing that.
+
+### Two migrations, both applied twice here and checked behaviourally
+
+`0267_a_state_you_can_read_and_answer.sql`
+`0268_an_account_on_its_way_out.sql`
+
+**`profiles` has three new shared meanings.**
+
+- `is_banned boolean not null default false` - closed for good. New column,
+  backfilled from the non-void terminations. It is the one thing that now
+  hides a profile.
+- `closed_at`, `closed_by`, `closed_reason`, `erase_after` - on its way out,
+  with two months before the data actually goes. `erase_after` is the day.
+
+**The profile visibility rule changed meaning, which is the line to read
+twice.** `profiles_read` was `not is_suspended`, so a suspended account was
+invisible to everybody for as long as the suspension lasted. It is now
+`not is_banned or is_moderator()`. So:
+
+- **warned and suspended profiles are readable and look entirely normal.**
+  Anything on your side that assumed a suspended person vanishes from a list
+  is now wrong.
+- **a closed account is readable too**, on purpose, and reads as
+  "Account Deleted" with a picture that will not load - not a 404.
+- **only a ban goes dark.**
+
+**`my_account_standing()` gained three columns and a state.** It now answers
+`warned` (an unacknowledged warning), which it used to answer `clear` for -
+so the one state the product wanted a card for was the one state the server
+reported as nothing. New columns: `can_acknowledge`, `acknowledged`,
+`is_banned`. Note the level word for a closure is `banned`, not
+`terminated`; the website had `=== 'terminated'` in its lockout card and it
+had never once matched.
+
+**`acknowledge_my_standing()` is new.** One door for both answerable states:
+
+- a **warning** is answerable at once, and acknowledging it puts the account
+  straight back to normal standing. That is the whole sanction.
+- a **suspension** is answerable only once its time is spent; before then it
+  raises, and the card shows no control at all.
+- a **ban** is never answerable by the account. It raises.
+
+`reactivate_my_account()` still exists and still works; the new one does the
+same thing plus the acknowledgment, and is what the card calls.
+
+**Deleting an account is a date now, not a moment.** `admin_delete_account`
+keeps its name and its arguments and no longer drops the `auth.users` row:
+it sets `closed_at`, `erase_after = now() + held_for()` (two months, the same
+function Communities use), locks the account out and writes the letter. New
+beside it: `reopen_account(target, why)` for an admin, `erase_account(target)`
+for a superadmin and only on something already closed - same refusal sentence
+as `erase_community`, "Close it first. The two months are what makes this
+undoable." - and `sweep_closed_accounts()`, revoked from anon and
+authenticated, for when `pg_cron` is finally enabled.
+
+`admin_find_people` returns `closed_at` and `erase_after` and takes a new
+filter `closing`. Its return type changed, so it is dropped and recreated;
+if you call it, re-read the column list.
+
+**A closed Community stays readable.** `communities_read` gained
+`or closed_at is not null`. 0266's close set `is_removed`, so the two months
+were served behind a 404 and members who wondered where it had gone were
+told it had never existed. The page now shows one sentence - "This community
+has been locked" - and nothing else.
+
+### Shared components
+
+- **`@/components/social/AccountStatusCard`** is new and is yours to mount.
+  No router, no provider, no session: `standing` (an `AccountLock`),
+  `onAcknowledge`, `busy`, and optional hrefs for the record, support, the
+  rules and the appeal. It carries the checkbox with Staw's exact sentence
+  and refuses to show any control a ban would make a lie. `tools/site/
+  standing-preview.html` mounts it bare in all four states.
+- **`Avatar`** gained `unavailable`, which draws a grey `faUserLarge` instead
+  of the picture or the initials. `PersonAvatar` sets it itself from the row,
+  and hides the presence dot with it.
+- **`@/lib/avatars`** gained `isGone(person)` and `nameOf(person)`. A row with
+  `closed_at` or `is_banned` is gone, and is called "Account Deleted".
+  A warning and a suspension are **not** this.
+- `Locked` was rebuilt around the card and is now a thin page.
+
+### What is still not done
+
+- The homepage card is on the website's Home only. Nothing equivalent exists
+  in the applications yet; the card is there to be mounted.
+- `pg_cron` and `pg_net` are still not enabled on the live project, so
+  `sweep_closed_accounts` and `sweep_closed_communities` only run by hand.
+- Staw has not yet applied 0267 or 0268. Neither is live.
+- 0266 is still waiting to be applied too.

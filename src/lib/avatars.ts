@@ -25,3 +25,36 @@ export function avatarOf(
 ): string | null {
   return person?.avatar_url || null
 }
+
+/**
+ * Somebody who is not there any more.
+ *
+ * Two different things end up here and they look the same from outside: an
+ * account on its way out, which carries `closed_at` and the two months
+ * before the data actually goes, and one closed for good. The row is still
+ * readable in both cases on purpose - Staw: an old friend in a list should
+ * read "Account Deleted" with a picture that will not load, not vanish and
+ * leave somebody wondering whether they were blocked.
+ *
+ * A warning and a suspension are not this. A suspended account looks
+ * entirely normal to everybody else, which is the whole of the change to
+ * `profiles_read` in migration 0267.
+ */
+export function isGone(
+  person?: { closed_at?: string | null; is_banned?: boolean | null } | null,
+): boolean {
+  return !!person && (!!person.closed_at || !!person.is_banned)
+}
+
+/** What to call them once there is nobody behind the name. */
+export function nameOf(
+  person?: {
+    display_name?: string | null
+    closed_at?: string | null
+    is_banned?: boolean | null
+  } | null,
+  fallback = '?',
+): string {
+  if (isGone(person)) return 'Account Deleted'
+  return person?.display_name || fallback
+}
