@@ -2,15 +2,19 @@ import { Menu } from '@/components/ui/Menu'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
-import { faReceipt, faGift, faStore } from '@fortawesome/free-solid-svg-icons'
+import { faReceipt, faGift, faStore, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons'
 
 /**
  * What you have, and what you can do about it.
  *
  * Pressing the number used to drop you in settings, which is where the
  * balance happened to live rather than where somebody looking at their money
- * wants to be. It opens the three things instead: where it went, how to get
- * more, and where to spend it.
+ * wants to be. It opens what you can do about it instead: where to earn it,
+ * where it went, how to redeem a code, and where to spend it.
+ *
+ * Quests leads, because it is the only one of the four that answers "how do
+ * I get more", which is what somebody pressing their own balance is usually
+ * asking.
  */
 export function CurrencyBalance({ amount }: { amount: number }) {
   return (
@@ -27,6 +31,7 @@ export function CurrencyBalance({ amount }: { amount: number }) {
         </span>
       }
       items={[
+        { label: 'Quests', icon: faWandMagicSparkles, to: '/quests' },
         { label: 'My transactions', icon: faReceipt, to: '/brix' },
         { label: 'Redeem a code', icon: faGift, to: '/brix/codes' },
         { label: `Spend ${currency.plural}`, icon: faStore, to: '/style' },

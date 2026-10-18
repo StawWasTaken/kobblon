@@ -49,13 +49,28 @@ begin;
  *
  * `daily` is already in the list and keeps its meaning.
  */
-alter table public.pixel_transactions drop constraint if exists pixel_transactions_kind_check;
-alter table public.pixel_transactions add constraint pixel_transactions_kind_check
-  check (kind in (
+/*
+ * The list is 0259's, with two words added. This first went out as 0231's
+ * list plus the two, and 0231 is three widenings out of date: it has no
+ * `gift_sent` or `gift_received`, which 0259 added and the live table has
+ * rows of. Dropping a constraint and adding a narrower one does not fail
+ * at the narrowing - it fails on `is violated by some row`, naming the
+ * constraint and not the word, which is a long way from the mistake.
+ *
+ * So it is written as an addition to what is there rather than as a fresh
+ * list, and `not valid` says the existing rows are not re-examined. They
+ * were written under the rule of their own day and are not this migration's
+ * to re-judge; every row written from here on is checked normally.
+ */
+alter table public.pixel_transactions
+  drop constraint if exists pixel_transactions_kind_check;
+alter table public.pixel_transactions
+  add constraint pixel_transactions_kind_check check (kind = any (array[
     'signup_grant', 'daily', 'purchase', 'sale', 'refund', 'admin',
     'username_change', 'donation', 'ad_budget', 'ad_refund', 'ad_earning',
     'listing_fee', 'listing_refund', 'platform_fee', 'burn', 'code',
-    'item_edit', 'quest', 'quest_tag'));
+    'item_edit', 'gift_sent', 'gift_received', 'quest', 'quest_tag'
+  ])) not valid;
 
 -- -------------------------------------------------------------- the quests
 

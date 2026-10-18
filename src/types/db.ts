@@ -1073,3 +1073,34 @@ export type QuestRequest = {
   refusal: string | null
   created_at: string
 }
+
+/**
+ * A Community as the staff console sees it.
+ *
+ * The owner is folded in rather than looked up per row, because the panel
+ * acts on the owner as often as on the Community - a flag is about what
+ * they did with it - and a list that asks once per card asks fifty times.
+ */
+export type StaffCommunity = {
+  id: string
+  content_id: number | null
+  slug: string
+  name: string
+  icon_url: string | null
+  member_count: number
+  funds: number
+  is_public: boolean
+  is_verified: boolean
+  is_removed: boolean
+  /** Null unless somebody closed it. The two months run from here. */
+  closed_at: string | null
+  erase_after: string | null
+  closed_reason: string | null
+  created_at: string
+  owner_id: string | null
+  owner_username: string | null
+  owner_name: string | null
+  owner_avatar: string | null
+  owner_suspended: boolean
+  open_reports: number
+}

@@ -9224,3 +9224,103 @@ console reads it.
 Still not done: `register` is not deployed, and the five-page redesign and the
 mobile pass are still waiting. 0263 **is** applied - that line in round one
 hundred and thirteen is out of date.
+
+## Round one hundred and fifteen
+
+A correction to 0264, Communities in the staff console, and Quests reachable
+from the balance in the top bar.
+
+### 0264 would not apply, and why
+
+It failed in the SQL editor with
+`check constraint "pixel_transactions_kind_check" of relation
+"pixel_transactions" is violated by some row`.
+
+The cause was mine. 0264 re-asserted the ledger's `kind` list from **0231**,
+and 0231 is out of date: **0259** added `gift_sent` and `gift_received`, and
+the live table has rows of both. Dropping a constraint and adding a narrower
+one does not fail at the narrowing, it fails on the rows - and the message
+names the constraint, not the word, which is a long way from the mistake. It
+got past a grep because 0259 writes `check (kind = any (array[...]))` where
+every earlier one wrote `check (kind in (...))`.
+
+**0264 in the repository is fixed.** The list is now 0259's plus `quest` and
+`quest_tag`, and the constraint is added `not valid`, so rows written under
+an older rule are not re-judged while everything from here on is checked
+normally. Re-run it; nothing else in the file changed.
+
+A thing worth carrying: **anything reading `pixel_transactions.kind` as a
+closed list should read it from the database rather than hold a copy.** Two
+copies of that list is how this happened.
+
+### Communities in the console - 0266
+
+The ranks, as Staw set them out:
+
+| rank | what it may do |
+| --- | --- |
+| moderator | flag one for review; act on the owner through the People panel |
+| admin | verify or unverify; close one, and put a closed one back |
+| superadmin | hand one to somebody else; delete one for real |
+
+**Flagging opens a report** rather than inventing a second kind of mark, so
+it lands in the Reports console where "something needs looking at" already
+lives. It goes in as `reason = 'other'` with the note prefixed "Flagged by
+staff:", because `reports.reason` is the closed list of words a *member*
+picks and there is no word in it for this.
+
+**Closing is not deleting**, and this is the part for the apps to read. New
+columns on `communities`: `closed_at`, `closed_by`, `closed_reason`,
+`erase_after`. A close sets all four plus `is_removed`, the owner is told,
+and `erase_after` is `now() + held_for()` - two months, from one function so
+the number is in one place. Any admin may put it back the whole time. Nothing
+deletes data except `erase_community`, which is a superadmin's and **refuses
+a Community nobody closed**.
+
+The roadmap said to reuse the account path for this. It could not be followed
+literally: `admin_delete_account` deletes immediately and has no wait at all.
+Rather than write a second idea of "deleted" and leave two, the wait is built
+here as something general - `held_for()` - so when accounts get the same
+treatment they take the same two months from the same place. **Accounts still
+delete immediately. That has not changed and is not done.**
+
+`sweep_closed_communities()` is the two months coming up. It is `revoke`d
+from `anon` and `authenticated` and wants `pg_cron`, which is still not
+enabled.
+
+**Three functions are named `staff_` and it matters**, because the plain
+names already exist and mean something else:
+
+- `staff_close_community(community, why)` - 0034's `close_community(target,
+  closed)` is the **owner** shutting their own, and holds nothing.
+- `staff_reopen_community(community, why)`
+- `staff_transfer_community(community, to_whom, why)` - 0034's
+  `transfer_community(target, to_user)` is the **owner** handing theirs on.
+
+A window calling the short name is calling the owner's version. The new ones
+also move the `community_members.role` across, so the new owner is actually
+in it at the top - an owner who is not a member cannot open their own
+settings.
+
+`staff_communities(look, which, how_many)` is the list behind the panel;
+`which` is `'all'`, `'flagged'`, `'closed'` or `'verified'`. It checks the
+rank itself before returning anything, so being `security definer` does not
+make it a back door.
+
+Verified automatically by membership share, which the roadmap also asks for,
+is **not built**. Only the by-hand tick is.
+
+### Smaller
+
+- **Quests are on the balance menu** in the top bar, first, above My
+  transactions - it is the only one of those four that answers "how do I get
+  more".
+- **`bg-ok` and `text-ok` are not real classes.** I used them for the quest
+  progress bar and they did nothing; the bar is `bg-space` now. Worth a look
+  on your side: **`text-yes` is not real either** and is used in
+  `ChatSuspended` and `OutfitPage` today. Left alone rather than changed
+  underneath you, but it means the tick on the "chat is back" card is the
+  inherited colour rather than green.
+- `CommunityCard` and `QuestCard` are exported, and
+  `tools/site/communities-preview.html` and `tools/site/quests-preview.html`
+  mount them with no session, no console and no database. Both were looked at.

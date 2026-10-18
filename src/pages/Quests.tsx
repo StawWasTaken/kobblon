@@ -89,7 +89,7 @@ function Bar({ done, goal }: { done: number; goal: number }) {
       <span
         className={cn(
           'block h-full rounded-full transition-[width] duration-500',
-          part >= 1 ? 'bg-ok' : 'bg-brand-bright',
+          part >= 1 ? 'bg-space' : 'bg-brand-bright',
         )}
         style={{ width: `${part * 100}%` }}
       />
@@ -98,7 +98,7 @@ function Bar({ done, goal }: { done: number; goal: number }) {
 }
 
 /** One quest. The button is whatever this person's next move actually is. */
-function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => void }) {
+export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => void }) {
   const say = useToast()
   const { refreshProfile } = useAuth()
   const [busy, setBusy] = useState(false)
@@ -158,7 +158,7 @@ function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => void }) 
             )}
           </div>
 
-          <span className="inline-flex shrink-0 items-center gap-1 font-display text-sm font-extrabold tabular-nums text-ok">
+          <span className="inline-flex shrink-0 items-center gap-1 font-display text-sm font-extrabold tabular-nums text-space-bright">
             <CurrencyMark className="h-[0.85em] w-[0.85em]" />
             {formatCount(quest.reward)}
           </span>
@@ -185,14 +185,14 @@ function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => void }) 
           <Bar done={quest.done} goal={quest.goal} />
           <div className="flex items-center justify-between text-xs text-muted">
             <span className="tabular-nums">{bits.done} of {bits.goal}</span>
-            <span className={cn(finished && 'font-bold text-ok')}>
+            <span className={cn(finished && 'font-bold text-space-bright')}>
               {claimed ? 'Claimed' : quest.started ? bits.left : 'Not started'}
             </span>
           </div>
         </div>
 
         {claimed ? (
-          <p className="flex items-center gap-2 text-xs font-bold text-ok">
+          <p className="flex items-center gap-2 text-xs font-bold text-space-bright">
             <Glyph icon={faCircleCheck} className="w-3.5" />
             Done and paid.
           </p>

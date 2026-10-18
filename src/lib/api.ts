@@ -18,7 +18,7 @@ import type {
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
-  World, Quest, QuestRequest,
+  World, Quest, QuestRequest, StaffCommunity,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,} from '@/types/db'
@@ -5460,4 +5460,65 @@ export async function requestWorldQuest(input: {
 
 export async function myQuestRequests(): Promise<QuestRequest[]> {
   return (unwrap(await supabase.rpc('my_quest_requests')) as QuestRequest[]) ?? []
+}
+
+// ------------------------------------------------- communities, for staff
+
+/*
+ * The Communities panel.
+ *
+ * Every one of these is a rank the database decides, not this file: the
+ * console hides what a rank cannot do so nobody presses a button to be
+ * told no, and the function refuses it anyway so hiding it is a courtesy
+ * rather than the security.
+ */
+export type CommunityTab = 'all' | 'flagged' | 'closed' | 'verified'
+
+export async function staffCommunities(
+  { look = null, which = 'all', howMany = 50 }:
+  { look?: string | null; which?: CommunityTab; howMany?: number } = {},
+): Promise<StaffCommunity[]> {
+  return (unwrap(await supabase.rpc('staff_communities', {
+    look, which, how_many: howMany,
+  })) as StaffCommunity[]) ?? []
+}
+
+/** Moderator and up: opens a report, so it lands where reports are read. */
+export async function flagCommunity(id: string, why: string): Promise<number> {
+  return unwrap(await supabase.rpc('flag_community', { community: id, why })) as number
+}
+
+/** Admin and up. */
+export async function verifyCommunity(id: string, yes: boolean, why?: string) {
+  return unwrap(await supabase.rpc('verify_community', {
+    community: id, yes, why: why?.trim() || null,
+  })) as boolean
+}
+
+/** Admin and up. Returns when the real data goes, two months out. */
+/*
+ * `staff` on the front of both, because 0034 already has a
+ * `close_community` that is the owner shutting their own Community, and it
+ * holds nothing for two months. Different thing, different name.
+ */
+export async function staffCloseCommunity(id: string, why: string): Promise<string> {
+  return unwrap(await supabase.rpc('staff_close_community', { community: id, why })) as string
+}
+
+export async function staffReopenCommunity(id: string, why?: string) {
+  unwrap(await supabase.rpc('staff_reopen_community', {
+    community: id, why: why?.trim() || null,
+  }))
+}
+
+/** Superadmin. Named apart from the owner's own `transfer_community`. */
+export async function staffTransferCommunity(id: string, toWhom: string, why?: string) {
+  unwrap(await supabase.rpc('staff_transfer_community', {
+    community: id, to_whom: toWhom, why: why?.trim() || null,
+  }))
+}
+
+/** Superadmin, and only on one that has been closed. */
+export async function eraseCommunity(id: string) {
+  unwrap(await supabase.rpc('erase_community', { community: id }))
 }

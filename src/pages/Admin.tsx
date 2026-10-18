@@ -21,7 +21,7 @@ import {
   faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
   faUnlock, faCoins, faEnvelope, faEraser, faEye, faClipboardList,
-  faGaugeHigh, faArrowRight, faBolt, faHeartPulse,
+  faGaugeHigh, faArrowRight, faBolt, faHeartPulse, faPeopleGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -69,7 +69,14 @@ import {
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
   checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
   machinePulse, staffOverview, askKobbyForWords,
+  staffCommunities, flagCommunity, verifyCommunity, staffCloseCommunity,
+  staffReopenCommunity, staffTransferCommunity, eraseCommunity,
+  searchProfiles, type CommunityTab,
 } from '@/lib/api'
+import { Glyph } from '@/components/brand/Glyph'
+import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { EmptyState } from '@/components/ui/States'
+import type { StaffCommunity, Profile } from '@/types/db'
 import type {
   MachineStep, FlaggedTerm, ReportRow, ReportTicket, StaffPerson, StaffRank,
   SanctionAction, MachinePulse, KobbyDraft, RecordEntry,
@@ -80,7 +87,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'People' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -143,6 +150,7 @@ const sections: {
   { name: 'Appeals', icon: faScaleBalanced, art: 'voice-user', needs: 'moderator', blurb: 'People disagreeing with a decision, and the answer' },
   { name: 'Support', icon: faLifeRing, art: 'chatbubble', needs: 'moderator', blurb: 'What people have written in about, urgent first' },
   { name: 'People', icon: faUserShield, art: 'people', needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
+  { name: 'Communities', icon: faPeopleGroup, art: 'people', needs: 'moderator', blurb: 'Flag one, verify one, close one, or hand it on' },
   { name: 'Screening', icon: faCircleCheck, art: 'checkmark', needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
   { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'moderator', blurb: 'What the moderation system catches' },
   { name: 'Machine', icon: faRobot, needs: 'admin', blurb: 'What Kobby screens, and what it is allowed to do' },
@@ -154,6 +162,381 @@ const sections: {
 ]
 
 const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOrder[needs]
+
+
+/* ------------------------------------------------------------ communities */
+
+/*
+ * Communities, and what each rank may do about one.
+ *
+ * Staw, 16 October: a moderator flags one for review and sanctions its
+ * owner for what they do with it; an admin verifies one and closes one; a
+ * superadmin hands one to somebody else and deletes one for real. None of
+ * it needs the owner's consent.
+ *
+ * The buttons a rank cannot use are not drawn, which is a courtesy and not
+ * the security - every one of these functions asks the database who is
+ * calling and refuses on its own. A console that shows a moderator the
+ * delete button teaches them the console lies to them.
+ *
+ * Closing is the thing to read the wording on: it is held for two months
+ * and is revertable the whole time, and the card says the date rather than
+ * "deleted", because those are different promises.
+ */
+/* Exported so `tools/site/communities-preview.html` can mount it with no
+ * console, no session and no database behind it - which is the only way to
+ * look at all three ranks' versions of it side by side. */
+export function CommunityCard({ row, rank, onChanged }: {
+  row: StaffCommunity
+  rank: StaffRank
+  onChanged: () => void
+}) {
+  const say = useToast()
+  const [busy, setBusy] = useState<string | null>(null)
+  const [asking, setAsking] = useState<'flag' | 'close' | 'transfer' | 'erase' | null>(null)
+  const [why, setWhy] = useState('')
+  const [toWhom, setToWhom] = useState<Profile | null>(null)
+  const [lookingFor, setLookingFor] = useState('')
+
+  const people = useAsync(
+    () => (asking === 'transfer' ? searchProfiles(lookingFor, row.owner_id ?? undefined, 8) : Promise.resolve([])),
+    [asking, lookingFor, row.owner_id],
+  )
+
+  const isAdmin = rankOrder[rank] >= rankOrder['admin']
+  const isSuper = rankOrder[rank] >= rankOrder['superadmin']
+  const closed = !!row.closed_at
+
+  const run = async (name: string, work: () => Promise<unknown>, done: string) => {
+    setBusy(name)
+    try {
+      await work()
+      say(done, 'success')
+      setAsking(null)
+      setWhy('')
+      setToWhom(null)
+      onChanged()
+    } catch (err) {
+      say(err instanceof Error ? err.message : 'That did not go through.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Card className={cn('space-y-3 p-4', closed && 'border-danger/40')}>
+      <div className="flex items-start gap-3">
+        {row.icon_url ? (
+          <img src={row.icon_url} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+        ) : (
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink-hover">
+            <Glyph icon={faPeopleGroup} className="text-muted" />
+          </span>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 truncate font-display text-sm font-bold">
+            {row.name}
+            {row.is_verified && <Glyph icon={faCircleCheck} className="text-xs text-brand-bright" />}
+          </p>
+          <p className="truncate text-xs text-muted">
+            /c/{row.slug} &middot; {formatCount(row.member_count)} member
+            {row.member_count === 1 ? '' : 's'} &middot; {formatCount(row.funds)} in funds
+          </p>
+          <p className="truncate text-xs text-muted">
+            Owned by{' '}
+            <span className="font-bold text-white/80">
+              @{row.owner_username ?? 'nobody'}
+            </span>
+            {row.owner_suspended && <span className="text-danger"> (suspended)</span>}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {closed && (
+            <Badge tone="danger">
+              {/* `timeAgo` reads a future date as "just now", which on this
+                  badge said the data had already gone. A date is the right
+                  answer anyway: somebody deciding whether to put it back
+                  wants to know how long they have, not how long it is
+                  been. */}
+              Closed &middot; data goes {row.erase_after
+                ? new Date(row.erase_after).toLocaleDateString(undefined,
+                    { day: 'numeric', month: 'short', year: 'numeric' })
+                : 'in two months'}
+            </Badge>
+          )}
+          {!row.is_public && <Badge tone="neutral">Private</Badge>}
+          {row.open_reports > 0 && (
+            <Badge tone="warm">{row.open_reports} open report{row.open_reports === 1 ? '' : 's'}</Badge>
+          )}
+        </div>
+      </div>
+
+      {closed && row.closed_reason && (
+        <p className="rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-xs leading-relaxed text-muted">
+          <span className="font-bold text-white/80">Closed because:</span> {row.closed_reason}
+        </p>
+      )}
+
+      {/* Everything a rank may actually press. */}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="subtle" to={`/c/${row.slug}`}>Open it</Button>
+
+        {row.owner_username && (
+          <Button size="sm" variant="subtle" to={`/staff/people?look=${row.owner_username}`}>
+            The owner
+          </Button>
+        )}
+
+        <Button
+          size="sm"
+          variant="subtle"
+          icon={faFlag}
+          onClick={() => setAsking(asking === 'flag' ? null : 'flag')}
+        >
+          Flag for review
+        </Button>
+
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant="subtle"
+            loading={busy === 'verify'}
+            onClick={() => void run('verify',
+              () => verifyCommunity(row.id, !row.is_verified),
+              row.is_verified ? 'The tick is off.' : 'Verified.')}
+          >
+            {row.is_verified ? 'Take the tick off' : 'Verify it'}
+          </Button>
+        )}
+
+        {isAdmin && !closed && (
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => setAsking(asking === 'close' ? null : 'close')}
+          >
+            Close it
+          </Button>
+        )}
+
+        {isAdmin && closed && (
+          <Button
+            size="sm"
+            loading={busy === 'reopen'}
+            onClick={() => void run('reopen', () => staffReopenCommunity(row.id), 'Open again.')}
+          >
+            Put it back
+          </Button>
+        )}
+
+        {isSuper && (
+          <Button
+            size="sm"
+            variant="subtle"
+            onClick={() => setAsking(asking === 'transfer' ? null : 'transfer')}
+          >
+            Hand it over
+          </Button>
+        )}
+
+        {isSuper && closed && (
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => setAsking(asking === 'erase' ? null : 'erase')}
+          >
+            Delete for real
+          </Button>
+        )}
+      </div>
+
+      {asking === 'flag' && (
+        <div className="space-y-2 rounded-xl border border-ink-line bg-ink-raised p-3">
+          <Textarea
+            label="What is wrong with it"
+            rows={2}
+            value={why}
+            onChange={(e) => setWhy(e.target.value)}
+            hint="This opens a report, so it lands where reports are read rather than only here."
+          />
+          <Button
+            size="sm"
+            loading={busy === 'flag'}
+            disabled={!why.trim()}
+            onClick={() => void run('flag', () => flagCommunity(row.id, why), 'Flagged. It is in Reports.')}
+          >
+            Flag it
+          </Button>
+        </div>
+      )}
+
+      {asking === 'close' && (
+        <div className="space-y-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
+          <p className="text-xs leading-relaxed text-muted">
+            It is marked closed and held for two months. The page stays and says so, nothing
+            in it is lost, and any admin can put it back until the date runs out. The owner
+            is told, with this reason.
+          </p>
+          <Textarea
+            label="Why it is being closed"
+            rows={2}
+            value={why}
+            onChange={(e) => setWhy(e.target.value)}
+          />
+          <Button
+            size="sm"
+            variant="danger"
+            loading={busy === 'close'}
+            disabled={!why.trim()}
+            onClick={() => void run('close', () => staffCloseCommunity(row.id, why),
+              'Closed, and held for two months.')}
+          >
+            Close it
+          </Button>
+        </div>
+      )}
+
+      {asking === 'transfer' && (
+        <div className="space-y-2 rounded-xl border border-ink-line bg-ink-raised p-3">
+          <Input
+            label="Who gets it"
+            placeholder="Search by name"
+            value={lookingFor}
+            onChange={(e) => setLookingFor(e.target.value)}
+          />
+          {toWhom ? (
+            <p className="text-xs">
+              Handing it to <span className="font-bold">@{toWhom.username}</span>.{' '}
+              <button
+                type="button"
+                className="underline underline-offset-2"
+                onClick={() => setToWhom(null)}
+              >
+                pick somebody else
+              </button>
+            </p>
+          ) : (
+            <div className="max-h-40 space-y-1 overflow-y-auto">
+              {(people.data ?? []).map((one) => (
+                <button
+                  key={one.id}
+                  type="button"
+                  onClick={() => setToWhom(one)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-ink-hover"
+                >
+                  <PersonAvatar person={one} size="sm" />
+                  <span className="min-w-0 flex-1 truncate">
+                    {one.display_name}{' '}
+                    <span className="text-muted">@{one.username}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          <Textarea
+            label="Why"
+            rows={2}
+            value={why}
+            onChange={(e) => setWhy(e.target.value)}
+          />
+          <Button
+            size="sm"
+            loading={busy === 'transfer'}
+            disabled={!toWhom}
+            onClick={() => void run('transfer',
+              () => staffTransferCommunity(row.id, toWhom!.id, why),
+              'Handed over. They have been told.')}
+          >
+            Hand it over
+          </Button>
+        </div>
+      )}
+
+      {asking === 'erase' && (
+        <div className="space-y-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
+          <p className="text-xs font-bold leading-relaxed text-danger">
+            This removes the data. Every post, every member, the funds and the audit go with
+            it, and nothing here brings any of it back.
+          </p>
+          <Button
+            size="sm"
+            variant="danger"
+            loading={busy === 'erase'}
+            onClick={() => void run('erase', () => eraseCommunity(row.id), 'Gone.')}
+          >
+            Yes, delete {row.name} for real
+          </Button>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function CommunitiesSection() {
+  const rank = useStaffRank()
+  const [which, setWhich] = useState<CommunityTab>('all')
+  const [look, setLook] = useState('')
+  const [round, setRound] = useState(0)
+
+  const rows = useAsync(
+    () => staffCommunities({ look: look.trim() || null, which }),
+    [which, look, round],
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Choices
+          size="sm"
+          tone="soft"
+          label="Which"
+          value={which}
+          onChange={(picked) => setWhich(picked as CommunityTab)}
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'flagged', label: 'Reported' },
+            { value: 'verified', label: 'Verified' },
+            { value: 'closed', label: 'Closed' },
+          ]}
+        />
+        <Input
+          className="min-w-[14rem] flex-1"
+          placeholder="A name, a handle, or an owner"
+          value={look}
+          onChange={(e) => setLook(e.target.value)}
+        />
+      </div>
+
+      {rows.error ? (
+        <ErrorState message={rows.error} onRetry={rows.reload} />
+      ) : rows.loading ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}
+        </div>
+      ) : (rows.data ?? []).length === 0 ? (
+        <Card>
+          <EmptyState
+            title="Nothing here"
+            body={look.trim() ? 'No community matches that.' : 'There are none in this list.'}
+          />
+        </Card>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {(rows.data ?? []).map((row) => (
+            <CommunityCard
+              key={row.id}
+              row={row}
+              rank={rank}
+              onChanged={() => setRound((n) => n + 1)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 /* ---------------------------------------------------------------- overview */
 
@@ -4079,6 +4462,7 @@ export default function Admin() {
           <RankContext.Provider value={rank}>
             {open === 'Overview' && <OverviewSection onGo={go} />}
             {open === 'People' && <PeopleSection initial={lookFor} />}
+            {open === 'Communities' && <CommunitiesSection />}
             {open === 'Reports' && <ReportsSection />}
             {open === 'Appeals' && <AppealsQueue />}
             {open === 'Support' && <SupportQueue />}
