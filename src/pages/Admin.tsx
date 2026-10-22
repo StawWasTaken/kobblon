@@ -3288,6 +3288,20 @@ const kindWords: Record<string, string> = {
 const dayLabel = (day: string) =>
   new Date(day).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 
+/*
+ * When a limited stops selling. `timeAgo` answers "just now" for anything
+ * ahead of the clock, which on a column headed "Closes" reads as a limited
+ * that has already gone - so a date ahead gets the date.
+ */
+const closesOn = (when: string) => {
+  const left = new Date(when).getTime() - Date.now()
+  if (left <= 0) return 'Closed'
+  const days = Math.floor(left / 86_400_000)
+  if (days >= 1) return `in ${days} day${days === 1 ? '' : 's'}`
+  const hours = Math.max(1, Math.floor(left / 3_600_000))
+  return `in ${hours}h`
+}
+
 /** A figure with its name under it, for the row across the top. */
 function Figure({ label, value, mark, tone, note }: {
   label: string
@@ -3297,13 +3311,13 @@ function Figure({ label, value, mark, tone, note }: {
   note?: string
 }) {
   return (
-    <div className="rounded-2xl border border-ink-line bg-ink-card px-4 py-3">
+    <div className="rounded-2xl border border-ink-line bg-ink-card px-5 py-4">
       <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{label}</p>
-      <p className={cn('mt-1 flex items-center gap-1.5 font-display text-2xl font-extrabold leading-none', tone)}>
+      <p className={cn('mt-2 flex items-center gap-1.5 font-display text-2xl font-extrabold leading-none', tone)}>
         {mark && <CurrencyMark className="h-4" />}
         {formatCount(value)}
       </p>
-      {note && <p className="mt-1 truncate text-[11px] text-muted">{note}</p>}
+      {note && <p className="mt-1.5 truncate text-[11px] text-muted">{note}</p>}
     </div>
   )
 }
@@ -3448,7 +3462,7 @@ function OneAccount({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-5 p-5 sm:p-6">
       <div>
         <h3 className="font-display text-lg font-extrabold">Give or take, one account</h3>
         <p className="mt-1 text-sm text-muted">
@@ -3550,8 +3564,8 @@ export function EconomySection() {
   const figures = now.data
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="max-w-xl text-sm text-muted">
           What exists, where it came from and where it went. Nothing on this
           page is an estimate - it is the ledger, read back.
@@ -3570,7 +3584,7 @@ export function EconomySection() {
       {now.loading || !figures ? (
         <Skeleton className="h-24" />
       ) : (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Figure
             label="In circulation"
             value={figures.in_circulation}
@@ -3601,11 +3615,11 @@ export function EconomySection() {
       )}
 
       {/* -------------------------------------------------------- the shape */}
-      <Card className="space-y-4">
+      <Card className="space-y-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-extrabold">In and out</h3>
-            <p className="text-sm text-muted">
+            <p className="mt-1 text-sm text-muted">
               What was written onto accounts each day, against what came off
               them. The two crossing is the month the supply turned around.
             </p>
@@ -3625,10 +3639,10 @@ export function EconomySection() {
         )}
       </Card>
 
-      <Card className="space-y-4">
+      <Card className="space-y-5 p-5 sm:p-6">
         <div>
           <h3 className="font-display text-lg font-extrabold">Everything anybody holds</h3>
-          <p className="text-sm text-muted">
+          <p className="mt-1 text-sm text-muted">
             The total on every account at the end of each day, walked back off
             today's figure. A line that only goes up is a currency nothing
             takes out again.
@@ -3651,8 +3665,8 @@ export function EconomySection() {
       </Card>
 
       {/* --------------------------------------------------- where it goes */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="space-y-4">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card className="space-y-5 p-5 sm:p-6">
           <div>
             <h3 className="flex items-center gap-2 font-display text-lg font-extrabold">
               <Glyph icon={faArrowTrendUp} className="text-space-bright" />
@@ -3674,7 +3688,7 @@ export function EconomySection() {
           )}
         </Card>
 
-        <Card className="space-y-4">
+        <Card className="space-y-5 p-5 sm:p-6">
           <div>
             <h3 className="flex items-center gap-2 font-display text-lg font-extrabold">
               <Glyph icon={faArrowTrendDown} className="text-danger" />
@@ -3698,10 +3712,10 @@ export function EconomySection() {
       </div>
 
       {/* ----------------------------------------------------- the limiteds */}
-      <Card className="space-y-4 overflow-hidden">
+      <Card className="space-y-5 overflow-hidden p-5 sm:p-6">
         <div>
           <h3 className="font-display text-lg font-extrabold">The limiteds</h3>
-          <p className="text-sm text-muted">
+          <p className="mt-1 text-sm text-muted">
             What each one has been going for inside this window, against what
             it went for before it. Two numbers rather than a percentage: an
             item with one sale either side is not "up 300%".
@@ -3711,16 +3725,16 @@ export function EconomySection() {
         {market.loading ? <Skeleton className="h-40" /> : !market.data?.length ? (
           <p className="text-sm text-muted">Nothing is limited yet.</p>
         ) : (
-          <div className="-mx-5 overflow-x-auto px-5">
+          <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
             <table className="w-full min-w-[42rem] text-sm">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
-                  <th className="pb-2 font-bold">Item</th>
-                  <th className="pb-2 font-bold">Closes</th>
-                  <th className="pb-2 text-right font-bold">Going for</th>
-                  <th className="pb-2 text-right font-bold">Was</th>
-                  <th className="pb-2 text-right font-bold">Sales</th>
-                  <th className="pb-2 text-right font-bold">On offer</th>
+                  <th className="pb-2.5 font-bold">Item</th>
+                  <th className="pb-2.5 font-bold">Closes</th>
+                  <th className="pb-2.5 text-right font-bold">Going for</th>
+                  <th className="pb-2.5 text-right font-bold">Was</th>
+                  <th className="pb-2.5 text-right font-bold">Sales</th>
+                  <th className="pb-2.5 text-right font-bold">On offer</th>
                 </tr>
               </thead>
               <tbody>
@@ -3730,16 +3744,16 @@ export function EconomySection() {
                     : 0
                   return (
                     <tr key={one.item_id} className="border-t border-ink-line">
-                      <td className="py-2 pr-3">
+                      <td className="py-2.5 pr-3">
                         <span className="font-bold">{one.name}</span>
                         <span className="ml-2 text-xs text-muted">
                           listed at {formatCount(one.price)}
                         </span>
                       </td>
-                      <td className="py-2 pr-3 text-xs text-muted">
-                        {one.closed ? 'Closed' : timeAgo(one.sells_until)}
+                      <td className="py-2.5 pr-3 text-xs text-muted">
+                        {one.closed ? 'Closed' : closesOn(one.sells_until)}
                       </td>
-                      <td className="py-2 pr-3 text-right font-bold tabular-nums">
+                      <td className="py-2.5 pr-3 text-right font-bold tabular-nums">
                         {one.average_window ? formatCount(one.average_window) : '-'}
                         {moved !== 0 && (
                           <span className={cn('ml-1.5 text-xs', moved > 0 ? 'text-space-bright' : 'text-danger')}>
@@ -3747,14 +3761,14 @@ export function EconomySection() {
                           </span>
                         )}
                       </td>
-                      <td className="py-2 pr-3 text-right tabular-nums text-muted">
+                      <td className="py-2.5 pr-3 text-right tabular-nums text-muted">
                         {one.average_before ? formatCount(one.average_before) : '-'}
                       </td>
-                      <td className="py-2 pr-3 text-right tabular-nums">
+                      <td className="py-2.5 pr-3 text-right tabular-nums">
                         {formatCount(one.sold_window)}
                         <span className="ml-1 text-xs text-muted">/ {formatCount(one.sold_total)}</span>
                       </td>
-                      <td className="py-2 text-right tabular-nums">
+                      <td className="py-2.5 text-right tabular-nums">
                         {one.offers
                           ? <>{formatCount(one.offers)} <span className="text-xs text-muted">from {formatCount(one.cheapest ?? 0)}</span></>
                           : <span className="text-muted">-</span>}
@@ -3769,11 +3783,11 @@ export function EconomySection() {
       </Card>
 
       {/* ------------------------------------------------------- the levers */}
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="space-y-5 border-t border-ink-line pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="font-display text-xl font-extrabold">Putting it in, taking it out</h3>
-            <p className="text-sm text-muted">
+            <p className="mt-1 text-sm text-muted">
               Two ways in - a handout anybody may claim, or a number onto one
               account - and one way of making everything cost less.
             </p>
@@ -3783,10 +3797,8 @@ export function EconomySection() {
 
         <OneAccount onDone={reload} />
 
-        <Card className="space-y-4">
-          <div>
-            <h3 className="font-display text-lg font-extrabold">A sale across the Catalog</h3>
-          </div>
+        <Card className="space-y-5 p-5 sm:p-6">
+          <h3 className="font-display text-lg font-extrabold">A sale across the Catalog</h3>
           <SaleSection />
         </Card>
       </div>

@@ -9762,3 +9762,34 @@ somebody who decides; nothing here decides.
 Still waiting: `pg_cron` and `pg_net`. Not started: Kobby knowing an
 account's standing so it stops warning the official account, the CEO,
 admins, staff and mods over their bios.
+
+## Round one hundred and twenty-four - the Economy page gets its padding
+
+Correction, and it is worth writing down because the other session can make
+the same mistake in an afternoon.
+
+**`Card` has no padding.** It is `rounded-2xl border bg-ink-card shadow-card`
+and nothing else; every caller adds its own `p-5`. The Economy panel went
+out with `<Card className="space-y-4">` throughout, so every heading, chart
+and table in it sat flush against the card's border. Staw, looking at it:
+"the new economy tab looks like a mess". It was.
+
+Every card in the panel is `p-5 sm:p-6` now, the blocks are `space-y-8`
+apart rather than `space-y-6`, the figure tiles are `px-5 py-4`, the levers
+sit under a rule, and the limiteds table pulls out to the card's own
+padding at both widths.
+
+Also fixed while looking: the limiteds table ran `timeAgo` on
+`sells_until`, which answers "just now" for anything ahead of the clock -
+so a limited with three days left read as one that had already closed in a
+column headed "Closes". It says "in 3 days" now.
+
+**If the Workspace imports `Card`, it has to bring its own padding.** The
+same is true of `CardHeader`, which has `px-5 pt-5` built in and is a
+different thing.
+
+The preview at `tools/site/economy-preview.html` now swaps the Supabase
+client for one that answers the four economy reads with fixtures, so the
+panel can be looked at with numbers in it rather than on its empty states.
+That seam is `setSupabaseClient` from `@/lib/supabase` - the same one the
+applications use - and it is worth knowing it works for a preview this way.
