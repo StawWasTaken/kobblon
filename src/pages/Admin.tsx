@@ -18,10 +18,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage, faUserCheck,
-  faTag, faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
+  faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
   faUnlock, faCoins, faEnvelope, faEraser, faEye, faClipboardList,
   faGaugeHigh, faArrowRight, faBolt, faHeartPulse, faPeopleGroup,
+  faChartLine, faArrowTrendUp, faArrowTrendDown, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -72,8 +73,10 @@ import {
   staffCommunities, flagCommunity, verifyCommunity, staffCloseCommunity,
   staffReopenCommunity, staffTransferCommunity, eraseCommunity,
   searchProfiles, type CommunityTab, reopenAccount, eraseAccount,
+  economyNow, economyFlow, economyByKind, limitedMarket, addQuest,
 } from '@/lib/api'
 import { Glyph } from '@/components/brand/Glyph'
+import { LineGraph, BarRows } from '@/components/ui/Graph'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { EmptyState } from '@/components/ui/States'
 import type { StaffCommunity, Profile } from '@/types/db'
@@ -87,7 +90,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Sale' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -156,7 +159,7 @@ const sections: {
   { name: 'Machine', icon: faRobot, needs: 'admin', blurb: 'What Kobby screens, and what it is allowed to do' },
   { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'admin', blurb: 'A line across the top of the site, which anybody can close' },
   { name: 'Announce', icon: faBell, art: 'notification', needs: 'admin', blurb: 'A word from Kobblon, to one person or everybody' },
-  { name: 'Sale', icon: faTag, art: 'discount', needs: 'admin', blurb: 'Everything in the Catalog, cheaper, for a while' },
+  { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'admin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'admin', blurb: 'What staff have done' },
 ]
@@ -3242,6 +3245,555 @@ export function ScreeningSection() {
 }
 
 
+/* ----------------------------------------------------------------- economy */
+
+/**
+ * The Brix, in one page.
+ *
+ * Staw: "turn the sale category into economy page where we can regulate the
+ * brix in circulation, get stats with graphics, evolution of the limited
+ * items, we can stil put promotions on the whole catalog, we can also
+ * create quests that is a brix claim".
+ *
+ * The console already had both levers - `admin_move_brix` on one account,
+ * a sale across the Catalog - and no gauge beside either. So the reading
+ * comes first and the levers sit under it: what exists, where it came from
+ * this month, where it went, what the limiteds are doing, and then the two
+ * ways of putting Brix into the world (a handout quest anybody may claim,
+ * or a number onto one account) and the one way of taking the prices down.
+ *
+ * Every figure is the database's - four `security definer` reads, all
+ * `require_admin()`, none of which can write. The ledger's own policy is
+ * untouched: `pixel_transactions` is still only readable by the person it
+ * belongs to.
+ */
+
+const WINDOWS = [
+  { value: '7', label: '7 days' },
+  { value: '30', label: '30 days' },
+  { value: '90', label: '90 days' },
+]
+
+/** The ledger's reasons, in words rather than in column values. */
+const kindWords: Record<string, string> = {
+  signup_grant: 'Signing up', daily: 'Daily', purchase: 'Bought something',
+  sale: 'Sold something', refund: 'Refunds', admin: 'Staff handed out',
+  username_change: 'Name changes', donation: 'Donations', ad_budget: 'Ad budgets',
+  ad_refund: 'Ad refunds', ad_earning: 'Ad earnings', listing_fee: 'Listing fees',
+  listing_refund: 'Listing refunds', platform_fee: 'Platform fees', burn: 'Burned',
+  code: 'Codes', item_edit: 'Item edits', gift_sent: 'Gifts sent',
+  gift_received: 'Gifts received', quest: 'Quests', quest_tag: 'Quest tags',
+}
+
+const dayLabel = (day: string) =>
+  new Date(day).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+
+/** A figure with its name under it, for the row across the top. */
+function Figure({ label, value, mark, tone, note }: {
+  label: string
+  value: number
+  mark?: boolean
+  tone?: string
+  note?: string
+}) {
+  return (
+    <div className="rounded-2xl border border-ink-line bg-ink-card px-4 py-3">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{label}</p>
+      <p className={cn('mt-1 flex items-center gap-1.5 font-display text-2xl font-extrabold leading-none', tone)}>
+        {mark && <CurrencyMark className="h-4" />}
+        {formatCount(value)}
+      </p>
+      {note && <p className="mt-1 truncate text-[11px] text-muted">{note}</p>}
+    </div>
+  )
+}
+
+/** Handing Brix out in the open: a quest with nothing to do but accept it. */
+function HandOut({ onDone }: { onDone: () => void }) {
+  const say = useToast()
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [lead, setLead] = useState('')
+  const [reward, setReward] = useState('100')
+  const [days, setDays] = useState('7')
+  const [busy, setBusy] = useState(false)
+
+  const amount = Number(reward)
+  const sane = !!title.trim() && Number.isFinite(amount) && amount >= 1 && amount <= 100000
+
+  const write = async () => {
+    setBusy(true)
+    try {
+      await addQuest({
+        title: title.trim(),
+        counted: 'claim',
+        goal: 1,
+        reward: amount,
+        lead: lead.trim() || null,
+        until: new Date(Date.now() + Number(days) * 86_400_000).toISOString(),
+      })
+      say(`${formatCount(amount)} Brix, there for anybody who wants them.`, 'success')
+      setTitle(''); setLead('')
+      setOpen(false)
+      onDone()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <Button variant="subtle" icon={faWandMagicSparkles} onClick={() => setOpen(true)}>
+        Hand out Brix
+      </Button>
+
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Brix for anybody"
+        description={
+          'A quest with nothing to do: it turns up on the board, anybody may '
+          + 'accept it, and claiming it pays out. One each, and it stops when '
+          + 'the window closes.'
+        }
+        footer={(
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="subtle" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="yes" loading={busy} disabled={!sane} onClick={() => void write()}>
+              Put it on the board
+            </Button>
+          </div>
+        )}
+      >
+        <div className="space-y-4">
+          <Input
+            label="What it is called"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Happy Halloween"
+          />
+          <Textarea
+            label="A line under it"
+            value={lead}
+            onChange={(e) => setLead(e.target.value)}
+            rows={2}
+            placeholder="On us. Nothing to do."
+          />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-32">
+              <Input
+                label="How much"
+                type="number"
+                min={1}
+                max={100000}
+                value={reward}
+                onChange={(e) => setReward(e.target.value)}
+              />
+            </div>
+            <Choices
+              size="sm"
+              tone="soft"
+              label="For how long"
+              value={days}
+              options={WINDOWS.map((one) => ({ value: one.value, label: one.label }))}
+              onChange={setDays}
+            />
+          </div>
+
+          {/*
+            * What it costs if everybody takes it. A handout is the one thing
+            * in this panel that can move the whole supply in a day, and the
+            * number nobody works out beforehand is this one.
+            */}
+          {sane && (
+            <Note tone="brand">
+              Every account that claims it gets {formatCount(amount)}. A thousand
+              claims is {formatCount(amount * 1000)} Brix into circulation.
+            </Note>
+          )}
+        </div>
+      </Dialog>
+    </>
+  )
+}
+
+/** Giving to, or taking from, one account. */
+function OneAccount({ onDone }: { onDone: () => void }) {
+  const say = useToast()
+  const [term, setTerm] = useState('')
+  const [picked, setPicked] = useState<Profile | null>(null)
+  const [amount, setAmount] = useState('')
+  const [why, setWhy] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const found = useAsync(async () => (term.trim().length > 1 ? searchProfiles(term) : []), [term])
+  const moving = Number(amount)
+  const sane = !!picked && Number.isFinite(moving) && moving !== 0
+
+  const move = async () => {
+    if (!picked) return
+    setBusy(true)
+    try {
+      const left = await moveBrixAsStaff(picked.id, moving, why.trim() || undefined)
+      say(`${picked.display_name} now holds ${formatCount(left)}.`, 'success')
+      setAmount(''); setWhy('')
+      onDone()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card className="space-y-4">
+      <div>
+        <h3 className="font-display text-lg font-extrabold">Give or take, one account</h3>
+        <p className="mt-1 text-sm text-muted">
+          A negative number takes. Taking more than somebody has takes what
+          they have - there is no debt here. Every move is written to the
+          staff record with whoever made it.
+        </p>
+      </div>
+
+      {picked ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-3 py-2">
+          <Avatar src={avatarOf(picked)} personId={picked.id} name={picked.display_name} size="sm" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold">{picked.display_name}</p>
+            <p className="truncate text-xs text-muted">
+              @{picked.username} · holds {formatCount(picked.pixels ?? 0)}
+            </p>
+          </div>
+          <Button
+            className="ml-auto"
+            size="sm"
+            variant="ghost"
+            icon={faXmark}
+            aria-label="Pick somebody else"
+            onClick={() => setPicked(null)}
+          />
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Input
+            icon={faMagnifyingGlass}
+            label="Who"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="A name or a handle"
+          />
+          {!!found.data?.length && (
+            <div className="max-h-44 overflow-y-auto rounded-xl border border-ink-line">
+              {found.data.map((one) => (
+                <button
+                  key={one.id}
+                  type="button"
+                  onClick={() => { setPicked(one); setTerm('') }}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-ink-hover"
+                >
+                  <Avatar src={avatarOf(one)} personId={one.id} name={one.display_name} size="xs" />
+                  <span className="truncate text-sm font-semibold">{one.display_name}</span>
+                  <span className="truncate text-xs text-muted">@{one.username}</span>
+                  <span className="ml-auto text-xs font-bold tabular-nums">
+                    {formatCount(one.pixels ?? 0)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-36">
+          <Input
+            label="How much"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="500"
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <Input
+            label="Why (kept on the record)"
+            value={why}
+            onChange={(e) => setWhy(e.target.value)}
+            placeholder="Competition prize"
+          />
+        </div>
+        <Button loading={busy} disabled={!sane} onClick={() => void move()}>
+          {moving < 0 ? 'Take it' : 'Give it'}
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+export function EconomySection() {
+  const [days, setDays] = useState('30')
+  const span = Number(days)
+
+  const now = useAsync(async () => economyNow(), [])
+  const flow = useAsync(async () => economyFlow(span), [span])
+  const kinds = useAsync(async () => economyByKind(span), [span])
+  const market = useAsync(async () => limitedMarket(span), [span])
+
+  const reload = () => { now.reload(); flow.reload(); kinds.reload() }
+
+  const rows = flow.data ?? []
+  const labels = rows.map((row) => dayLabel(row.day))
+
+  const figures = now.data
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-xl text-sm text-muted">
+          What exists, where it came from and where it went. Nothing on this
+          page is an estimate - it is the ledger, read back.
+        </p>
+        <Choices
+          size="sm"
+          tone="soft"
+          label="Over"
+          value={days}
+          options={WINDOWS}
+          onChange={setDays}
+        />
+      </div>
+
+      {/* ----------------------------------------------------- the figures */}
+      {now.loading || !figures ? (
+        <Skeleton className="h-24" />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Figure
+            label="In circulation"
+            value={figures.in_circulation}
+            mark
+            note={`${formatCount(figures.holders)} accounts holding any`}
+          />
+          <Figure
+            label="Made, 30 days"
+            value={figures.minted}
+            mark
+            tone="text-space-bright"
+            note={`${formatCount(figures.movements)} movements`}
+          />
+          <Figure
+            label="Spent, 30 days"
+            value={figures.burned}
+            mark
+            tone="text-danger"
+            note={`${formatCount(figures.resold)} of it on resales`}
+          />
+          <Figure
+            label="Average held"
+            value={figures.average}
+            mark
+            note={`biggest holder has ${formatCount(figures.richest)}`}
+          />
+        </div>
+      )}
+
+      {/* -------------------------------------------------------- the shape */}
+      <Card className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="font-display text-lg font-extrabold">In and out</h3>
+            <p className="text-sm text-muted">
+              What was written onto accounts each day, against what came off
+              them. The two crossing is the month the supply turned around.
+            </p>
+          </div>
+        </div>
+
+        {flow.loading ? <Skeleton className="h-48" /> : rows.length ? (
+          <LineGraph
+            labels={labels}
+            series={[
+              { label: 'Made', values: rows.map((row) => row.minted), tone: 'text-space-bright' },
+              { label: 'Spent', values: rows.map((row) => row.burned), tone: 'text-danger' },
+            ]}
+          />
+        ) : (
+          <p className="text-sm text-muted">Nothing has moved in this window.</p>
+        )}
+      </Card>
+
+      <Card className="space-y-4">
+        <div>
+          <h3 className="font-display text-lg font-extrabold">Everything anybody holds</h3>
+          <p className="text-sm text-muted">
+            The total on every account at the end of each day, walked back off
+            today's figure. A line that only goes up is a currency nothing
+            takes out again.
+          </p>
+        </div>
+        {flow.loading ? <Skeleton className="h-40" /> : rows.length ? (
+          <LineGraph
+            labels={labels}
+            height={150}
+            series={[{
+              label: 'Held',
+              values: rows.map((row) => row.held),
+              tone: 'text-brand-bright',
+              summary: 'last',
+            }]}
+          />
+        ) : (
+          <p className="text-sm text-muted">Nothing to draw yet.</p>
+        )}
+      </Card>
+
+      {/* --------------------------------------------------- where it goes */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="space-y-4">
+          <div>
+            <h3 className="flex items-center gap-2 font-display text-lg font-extrabold">
+              <Glyph icon={faArrowTrendUp} className="text-space-bright" />
+              Where it comes from
+            </h3>
+          </div>
+          {kinds.loading ? <Skeleton className="h-40" /> : (
+            <BarRows
+              rows={(kinds.data ?? [])
+                .filter((one) => one.came > 0)
+                .slice(0, 8)
+                .map((one) => ({
+                  label: kindWords[one.kind] ?? one.kind,
+                  value: one.came,
+                  tone: 'bg-space',
+                  note: `· ${formatCount(one.movements)}`,
+                }))}
+            />
+          )}
+        </Card>
+
+        <Card className="space-y-4">
+          <div>
+            <h3 className="flex items-center gap-2 font-display text-lg font-extrabold">
+              <Glyph icon={faArrowTrendDown} className="text-danger" />
+              Where it goes
+            </h3>
+          </div>
+          {kinds.loading ? <Skeleton className="h-40" /> : (
+            <BarRows
+              rows={(kinds.data ?? [])
+                .filter((one) => one.went > 0)
+                .slice(0, 8)
+                .map((one) => ({
+                  label: kindWords[one.kind] ?? one.kind,
+                  value: one.went,
+                  tone: 'bg-danger',
+                  note: `· ${formatCount(one.movements)}`,
+                }))}
+            />
+          )}
+        </Card>
+      </div>
+
+      {/* ----------------------------------------------------- the limiteds */}
+      <Card className="space-y-4 overflow-hidden">
+        <div>
+          <h3 className="font-display text-lg font-extrabold">The limiteds</h3>
+          <p className="text-sm text-muted">
+            What each one has been going for inside this window, against what
+            it went for before it. Two numbers rather than a percentage: an
+            item with one sale either side is not "up 300%".
+          </p>
+        </div>
+
+        {market.loading ? <Skeleton className="h-40" /> : !market.data?.length ? (
+          <p className="text-sm text-muted">Nothing is limited yet.</p>
+        ) : (
+          <div className="-mx-5 overflow-x-auto px-5">
+            <table className="w-full min-w-[42rem] text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                  <th className="pb-2 font-bold">Item</th>
+                  <th className="pb-2 font-bold">Closes</th>
+                  <th className="pb-2 text-right font-bold">Going for</th>
+                  <th className="pb-2 text-right font-bold">Was</th>
+                  <th className="pb-2 text-right font-bold">Sales</th>
+                  <th className="pb-2 text-right font-bold">On offer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {market.data.map((one) => {
+                  const moved = one.average_before > 0 && one.average_window > 0
+                    ? one.average_window - one.average_before
+                    : 0
+                  return (
+                    <tr key={one.item_id} className="border-t border-ink-line">
+                      <td className="py-2 pr-3">
+                        <span className="font-bold">{one.name}</span>
+                        <span className="ml-2 text-xs text-muted">
+                          listed at {formatCount(one.price)}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3 text-xs text-muted">
+                        {one.closed ? 'Closed' : timeAgo(one.sells_until)}
+                      </td>
+                      <td className="py-2 pr-3 text-right font-bold tabular-nums">
+                        {one.average_window ? formatCount(one.average_window) : '-'}
+                        {moved !== 0 && (
+                          <span className={cn('ml-1.5 text-xs', moved > 0 ? 'text-space-bright' : 'text-danger')}>
+                            {moved > 0 ? '+' : ''}{formatCount(moved)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums text-muted">
+                        {one.average_before ? formatCount(one.average_before) : '-'}
+                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums">
+                        {formatCount(one.sold_window)}
+                        <span className="ml-1 text-xs text-muted">/ {formatCount(one.sold_total)}</span>
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {one.offers
+                          ? <>{formatCount(one.offers)} <span className="text-xs text-muted">from {formatCount(one.cheapest ?? 0)}</span></>
+                          : <span className="text-muted">-</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* ------------------------------------------------------- the levers */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-display text-xl font-extrabold">Putting it in, taking it out</h3>
+            <p className="text-sm text-muted">
+              Two ways in - a handout anybody may claim, or a number onto one
+              account - and one way of making everything cost less.
+            </p>
+          </div>
+          <HandOut onDone={reload} />
+        </div>
+
+        <OneAccount onDone={reload} />
+
+        <Card className="space-y-4">
+          <div>
+            <h3 className="font-display text-lg font-extrabold">A sale across the Catalog</h3>
+          </div>
+          <SaleSection />
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 /* -------------------------------------------------------------------- sale */
 
 /**
@@ -4522,7 +5074,7 @@ export default function Admin() {
             {open === 'Screening' && <ScreeningSection />}
             {open === 'Machine' && <MachineSection />}
             {open === 'Map' && <MapSection />}
-            {open === 'Sale' && <SaleSection />}
+            {open === 'Economy' && <EconomySection />}
             {open === 'Notice' && <NoticeSection />}
             {open === 'Announce' && <AnnounceSection />}
             {open === 'Words' && <WordsSection />}

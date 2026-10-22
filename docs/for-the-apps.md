@@ -9678,3 +9678,87 @@ closed box rather than a corner of it. The square is drawn after the card
 now, with `z-10`, so its fill covers that border where the two meet and the
 shape is continuous. Same trick anywhere the Workspace needs a pointed
 panel - the pointer goes last, not first.
+
+## Round one hundred and twenty-three - the Economy page, and a quest that is only a claim
+
+**Migration 0270 - apply it.** It is written and applied twice locally with
+behavioural checks under two identities.
+
+### A new quest kind: `claim`
+
+`quests.counted` accepts `'claim'` alongside the four it had. A claim quest
+asks nothing: `quest_done` answers the goal the moment somebody has started
+it, so accepting it and claiming it pays out. The row in `quest_progress` is
+still what makes it claimable and `claim_quest` still refuses a second
+claim, so "one each" holds exactly as it does for the counted kinds.
+
+**This changes a shared type.** `QuestCounted` in `@/types/db` is now
+`'world_time' | 'friends_made' | 'worlds_played' | 'by_hand' | 'claim'`. Any
+switch over it in the Workspace needs the fifth arm, and a quest card that
+draws a progress bar should know that a claim quest is complete on sight -
+there is nothing to show progress through.
+
+Staw asked for it as "quests that is a brix claim (no need to do anything
+else)". `by_hand` was the near miss and is wrong: nothing credits it, so
+such a quest would sit at zero for ever.
+
+### Four reads for the economy
+
+All `require_admin()`, all `security definer`, none of them able to write.
+`pixel_transactions` keeps its policy - still readable only by the person it
+belongs to - and these read across it on an admin's behalf.
+
+- `economy_now()` - `in_circulation`, `holders`, `richest`, `average`, and
+  `minted` / `burned` / `movements` over 30 days, plus `limiteds` and
+  `resold`. In circulation is the sum of what accounts hold, because that is
+  what exists: Brix are not minted into a treasury.
+- `economy_flow(days)` - a row per day, oldest first, days of no movement
+  included: `minted`, `burned`, `net`, and `held` (the total on every
+  account at the end of that day, walked back off today's figure).
+- `economy_by_kind(days)` - `came`, `went` and `movements` per ledger kind.
+- `limited_market(days)` - per limited: `average_window` against
+  `average_before`, `sold_window` / `sold_total`, `cheapest` and `offers`.
+  Two averages rather than a percentage, because an item with one sale
+  either side is not "up 300%".
+
+### The console
+
+The **Sale** category is now **Economy** (`faChartLine`), admin and up. The
+sale panel is not gone - it is a block inside it, unchanged. Above it: the
+four figures, two line charts (in and out, then everything held), the two
+bar lists of where Brix come from and go, and the limiteds table. Below it,
+the two ways of putting Brix in: a handout quest anybody may claim, and the
+existing per-account give-or-take, which was already `admin_move_brix` and
+is now beside the gauge that says what it does to the supply.
+
+### A chart component, which the Workspace may want
+
+**New: `@/components/ui/Graph`**, exporting `LineGraph` and `BarRows`. Plain
+SVG, no chart library - everything needed is a line over time and a run of
+bars, and a library is 50kB on every page that imports the panel plus a
+second set of colours to keep in step with `design/preset.js`. These take
+`tone` as a Tailwind text colour and inherit the tokens.
+
+`LineGraph` takes `series: { label, values, tone, summary? }[]` and
+`labels: string[]`. `summary` is `'sum'` (the default, right for a flow) or
+`'last'` (right for a level - adding thirty daily totals of the same money
+gives a number that means nothing). It is provider-free and router-free.
+
+One thing learned building it, for anybody drawing SVG this way: a chart
+drawn in a 100x100 box with `preserveAspectRatio="none"` stretches circles
+into ellipses along with everything else, so the hover dots are HTML spans
+placed at the same percentages rather than `<circle>` elements.
+`vector-effect` fixes strokes, not fills.
+
+Previewed at `tools/site/graph-preview.html` (`shoot-graphs.mjs`) and the
+whole panel bare, signed out, at `tools/site/economy-preview.html`
+(`shoot-economy.mjs`) - which is the check that it stands up on its empty
+states rather than throwing.
+
+Not built, and deliberately: no automatic supply control, no target for how
+much should exist, nothing that prices a limited. The numbers are shown to
+somebody who decides; nothing here decides.
+
+Still waiting: `pg_cron` and `pg_net`. Not started: Kobby knowing an
+account's standing so it stops warning the official account, the CEO,
+admins, staff and mods over their bios.

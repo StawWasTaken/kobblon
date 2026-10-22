@@ -5579,3 +5579,66 @@ export async function staffTransferCommunity(id: string, toWhom: string, why?: s
 export async function eraseCommunity(id: string) {
   unwrap(await supabase.rpc('erase_community', { community: id }))
 }
+
+/* ------------------------------------------------------------- economy */
+
+export type EconomyNow = {
+  in_circulation: number
+  holders: number
+  richest: number
+  average: number
+  minted: number
+  burned: number
+  movements: number
+  limiteds: number
+  resold: number
+}
+
+export type EconomyDay = {
+  day: string
+  minted: number
+  burned: number
+  net: number
+  held: number
+}
+
+export type EconomyKind = { kind: string; came: number; went: number; movements: number }
+
+export type LimitedRow = {
+  item_id: string
+  content_id: number
+  name: string
+  price: number
+  sells_until: string
+  closed: boolean
+  sold_total: number
+  sold_window: number
+  average_window: number
+  average_before: number
+  cheapest: number | null
+  offers: number
+}
+
+/** What the currency looks like right now. Admin and up; the database says so. */
+export async function economyNow(): Promise<EconomyNow> {
+  const rows = unwrap(await supabase.rpc('economy_now')) as EconomyNow[]
+  return rows?.[0] ?? {
+    in_circulation: 0, holders: 0, richest: 0, average: 0,
+    minted: 0, burned: 0, movements: 0, limiteds: 0, resold: 0,
+  }
+}
+
+/** A day a row, oldest first, with days of no movement still in it. */
+export async function economyFlow(days = 30): Promise<EconomyDay[]> {
+  return (unwrap(await supabase.rpc('economy_flow', { days })) ?? []) as EconomyDay[]
+}
+
+/** Where it came from and where it went, by the ledger's own reason. */
+export async function economyByKind(days = 30): Promise<EconomyKind[]> {
+  return (unwrap(await supabase.rpc('economy_by_kind', { days })) ?? []) as EconomyKind[]
+}
+
+/** The limiteds and what they have been going for. */
+export async function limitedMarket(days = 30): Promise<LimitedRow[]> {
+  return (unwrap(await supabase.rpc('limited_market', { days })) ?? []) as LimitedRow[]
+}

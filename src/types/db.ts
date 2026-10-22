@@ -1072,7 +1072,11 @@ export type AvatarItem = {
  * so a page draws the bar from the two of them without having to know which
  * sort it is holding, and only has to ask when it writes the words.
  */
-export type QuestCounted = 'world_time' | 'friends_made' | 'worlds_played' | 'by_hand'
+/**
+ * What a quest asks of you. `claim` asks nothing: accept it and the Brix
+ * are yours, which is how the Economy page hands money out in the open.
+ */
+export type QuestCounted = 'world_time' | 'friends_made' | 'worlds_played' | 'by_hand' | 'claim'
 
 export type Quest = {
   id: string
