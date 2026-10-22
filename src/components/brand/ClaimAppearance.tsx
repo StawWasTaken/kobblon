@@ -24,15 +24,22 @@ import { lookOf, type Appearance } from '@/lib/appearances'
  * when the button is pressed. The card is a way of showing somebody that
  * something is there; it is not what decides that it is.
  *
- * **Once a year.** Shown for as long as the window is open, and put away
- * on this device once somebody has pressed either button - a popup that
- * comes back on every page is not an offer, it is a nag. Owning the
- * appearance no longer hides it: Staw, "make that even if you already
- * claimed it you should see the card again", and he is right that a
- * season arriving is worth saying either way. The card knows the
- * difference - there is nothing to claim twice, so for somebody who has
- * it the button simply puts it on. The device's note of having seen it
- * carries the year, so next October is a new card.
+ * **Once a year, and per account rather than per browser.** An account
+ * that has not claimed this season's appearance is shown the card for as
+ * long as the window is open - on every machine it signs in on, and
+ * however many times it has closed the thing, because the offer is the
+ * account's and runs out with the window. Staw: "if an account didnt get
+ * it yet then keep showing it until the time period is over". Once it is
+ * claimed the card still comes round - Staw, "make that even if you
+ * already claimed it you should see the card again" - and then closing it
+ * puts it away, keyed on the account, the appearance and the year, so
+ * next October is a new card and a second account on the same browser
+ * gets its own. The card knows the difference: there is nothing to claim
+ * twice, so for somebody who has it the button simply puts it on.
+ *
+ * Which means the decision waits for `settled` - the database's answer
+ * about what this account owns. Deciding off the empty list that stands
+ * in before it arrives would show an owner the card they put away.
  *
  * **Not on the way in.** It waits for a profile, so nobody signing up meets
  * a card about October before they have an account to put it on.
@@ -41,6 +48,10 @@ const PUT_AWAY = 'kobblon.offer-seen'
 
 /** A card seen this October is not a card seen next October. */
 const thisYear = () => new Date().getFullYear()
+
+/** The note of having put the card away, which belongs to one account. */
+const putAwayKey = (who: string, which: Appearance) =>
+  `${PUT_AWAY}:${who}:${which}:${thisYear()}`
 
 export function ClaimAppearance({ offer }: {
   /**
@@ -54,7 +65,7 @@ export function ClaimAppearance({ offer }: {
 } = {}) {
   const auth = useMaybeAuth()
   const profile = auth?.profile ?? null
-  const { appearance, owned, claim, wear } = useAppearance()
+  const { appearance, owned, settled, claim, wear } = useAppearance()
   const say = useToast()
 
   const [offered, setOffered] = useState<Appearance | null>(offer ?? null)
@@ -72,17 +83,23 @@ export function ClaimAppearance({ offer }: {
 
   useEffect(() => {
     if (offer) return
-    if (!offered || !profile) return
-    try {
-      if (localStorage.getItem(`${PUT_AWAY}:${offered}:${thisYear()}`)) return
-    } catch { /* a blocked store means it is shown, which is the right way round */ }
+    if (!offered || !profile || !settled) return
+    /*
+     * Not claimed yet means shown, whatever this browser remembers. The
+     * note only speaks for an account that already has the thing.
+     */
+    if (owned.includes(offered)) {
+      try {
+        if (localStorage.getItem(putAwayKey(profile.id, offered))) return
+      } catch { /* a blocked store means it is shown, which is the right way round */ }
+    }
     setOpen(true)
-  }, [offer, offered, owned, profile])
+  }, [offer, offered, owned, settled, profile])
 
   const putAway = () => {
-    if (offered) {
+    if (offered && profile) {
       try {
-        localStorage.setItem(`${PUT_AWAY}:${offered}:${thisYear()}`, '1')
+        localStorage.setItem(putAwayKey(profile.id, offered), '1')
       } catch { /* nothing to do */ }
     }
     setOpen(false)

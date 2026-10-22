@@ -27,6 +27,8 @@ type Value = {
   appearance: Appearance
   /** What may be worn, which is the default plus whatever was claimed. */
   owned: Appearance[]
+  /** Whether the list above is the database's answer yet. */
+  settled: boolean
   /** Put one on. Refused by the database if it was never claimed. */
   wear: (which: Appearance) => Promise<void>
   /** Take the one being given away. It is put on straight away. */
@@ -37,6 +39,7 @@ type Value = {
 const AppearanceContext = createContext<Value>({
   appearance: 'default',
   owned: ['default'],
+  settled: false,
   wear: async () => {},
   claim: async () => {},
   reload: () => {},
@@ -68,6 +71,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
   const profile = auth?.profile ?? null
 
   const [owned, setOwned] = useState<Appearance[]>(['default'])
+  const [settled, setSettled] = useState(false)
   const [appearance, setAppearance] = useState<Appearance>(remembered)
 
   /*
@@ -88,11 +92,13 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
   const reload = useCallback(() => {
     if (!profile) {
       setOwned(['default'])
+      setSettled(false)
       return
     }
     void myAppearances()
       .then((rows) => setOwned(rows.map((row) => known(row.appearance))))
       .catch(() => setOwned(['default']))
+      .finally(() => setSettled(true))
   }, [profile])
 
   useEffect(reload, [reload])
@@ -100,6 +106,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
   const value = useMemo<Value>(() => ({
     appearance,
     owned,
+    settled,
     /*
      * Drawn straight away and then asked for. A switch that waits on a
      * round trip is a switch somebody presses twice; if the database
@@ -125,7 +132,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
       await auth?.refreshProfile?.()
     },
     reload,
-  }), [appearance, owned, auth, reload])
+  }), [appearance, owned, settled, auth, reload])
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>
 }

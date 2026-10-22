@@ -7,6 +7,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { peopleList } from '@/lib/api'
 import { profileLink } from '@/lib/links'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { FriendPeek } from '@/components/social/FriendPeek'
 
 /**
  * How many faces a row shows before it says "See all".
@@ -71,16 +72,17 @@ export function FriendsRail() {
           ))}
 
         {friends.slice(0, SHOWN).map((friend) => (
-          <Link
-            key={friend.id}
-            to={profileLink(friend)}
-            className="flex flex-col items-center gap-2 text-center"
-          >
-            <PersonAvatar person={friend} size="2xl" className="mx-auto h-20 w-20" />
-            <span className="w-full truncate text-sm font-semibold text-white/80">
-              {friend.display_name}
-            </span>
-          </Link>
+          <FriendPeek key={friend.id} friend={friend}>
+            <Link
+              to={profileLink(friend)}
+              className="flex flex-col items-center gap-2 text-center"
+            >
+              <PersonAvatar person={friend} size="2xl" className="mx-auto h-20 w-20" />
+              <span className="w-full truncate text-sm font-semibold text-white/80">
+                {friend.display_name}
+              </span>
+            </Link>
+          </FriendPeek>
         ))}
       </div>
     </section>

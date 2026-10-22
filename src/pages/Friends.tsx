@@ -33,6 +33,7 @@ import { cn } from '@/lib/cn'
 import { NameMarks } from '@/components/brand/Verified'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { FriendPeek } from '@/components/social/FriendPeek'
 
 /*
  * One page for everybody you are tied to, and everybody you are not.
@@ -90,9 +91,11 @@ function PersonLine({
         quiet && 'opacity-70',
       )}
     >
-      <Link to={profileLink(person)} className="shrink-0">
-        <PersonAvatar person={person} size="md" square ring="ring-ink-card" />
-      </Link>
+      <FriendPeek friend={person} className="shrink-0">
+        <Link to={profileLink(person)} className="block">
+          <PersonAvatar person={person} size="md" square ring="ring-ink-card" />
+        </Link>
+      </FriendPeek>
 
       <div className="min-w-0 flex-1">
         <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">

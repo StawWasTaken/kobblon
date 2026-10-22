@@ -9482,3 +9482,74 @@ never a stock photograph.
   by hand.
 - The deleted-account rename reaches profiles and avatars; friend lists and
   chat rows still show the stored name.
+
+## Round one hundred and eighteen - an offer the account owns, and a card behind a face
+
+Two things, both website-side, no migration.
+
+**The appearance offer is per account now, not per browser.** Staw: "its not
+per browser, it should be per account, like if an account didnt get it yet
+then keep showing it until the time period is over." `ClaimAppearance` was
+writing a `kobblon.offer-seen:<appearance>:<year>` note into `localStorage`
+the moment either button was pressed and never asking again, so somebody who
+closed the card on one machine lost the whole season's offer, and a second
+account on the same machine never saw it at all.
+
+The rule now:
+
+- **Not claimed yet** - the card is shown for as long as the window is open,
+  on every machine, whatever that machine remembers. The offer belongs to
+  the account and runs out with the window, not with a click.
+- **Already claimed** - the card still comes round once (that part has not
+  changed), and closing it puts it away under
+  `kobblon.offer-seen:<account id>:<appearance>:<year>`. The account id is
+  the new part: two accounts on one browser no longer share a note.
+
+For that to be decidable, `useAppearance` gained **`settled: boolean`** on
+its context value - whether `owned` is the database's answer yet, rather
+than the `['default']` that stands in before `my_appearances()` returns.
+The card waits on it; deciding off the placeholder would show an owner a
+card they had put away. **If the Workspace mounts `AppearanceProvider` or
+reads the context, that is a new field on the value - additive, nothing
+renamed.** `claim_appearance` and `appearance_on_offer()` are unchanged, and
+the date is still the database's answer, not the machine's clock.
+
+**New component: `FriendPeek`** (`@/components/social/FriendPeek`). Staw:
+"when hovering a profile from your friends in your friendlist, you can see
+this card (with an arrow pointer ofc) to see the profile of that friend or
+open chat with them." It wraps a face and shows, on hover or focus, a small
+card pointed at that face with an arrow: the person's name, their live
+presence across the top ("Offline"), then **View profile** and **Chat with
+&lt;name&gt;**. The chat door calls `startConversation` and hands the id to
+`openConversation` on the chat dock, the same path the Friends page's own
+chat button takes. A 120ms grace before it closes, so crossing the gap
+between the face and the card does not take the card away mid-reach.
+
+```tsx
+<FriendPeek friend={person} className="shrink-0">
+  <Link to={profileLink(person)}><PersonAvatar person={person} size="md" /></Link>
+</FriendPeek>
+```
+
+`friend` wants `id`, `username`, `display_name`, and optionally
+`content_id` and the presence fields (`is_online`, `in_space_id`,
+`activity`, `last_seen_at`). It is mounted on the home page's friends rail
+and on every line of `/friends`.
+
+**It is not provider-free.** It uses `useChatDock` and `useToast`, and it
+renders a `<Link>`, so it needs a router. The chat context has a no-op
+default so it will not throw outside the dock, but the chat door does
+nothing there - if the Workspace wants this card, say so and I will split
+the doors out behind props the way `AccountStatusCard` is. Previewed bare
+at `tools/site/peek-preview.html`, shot with `shoot-peek.mjs`.
+
+Still outstanding from Staw's list and not started: the staff console's
+Sale category becoming an Economy page (Brix in circulation, graphs, limited
+items over time, catalog-wide promotions kept, quests that are a plain Brix
+claim), and Kobby knowing an account's standing so it stops warning the
+official account, the CEO, admins, staff and mods over what they write in
+their bios.
+
+Unchanged and still waiting: 0264, 0266, 0267, 0268, 0269 are all written
+and verified locally and none of them is live; `pg_cron` and `pg_net` are
+still off, so Kobby and both sweeps run by hand.
