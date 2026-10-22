@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faCheck, faComment, faEllipsis, faFilter, faInbox, faUserGroup, faUserPlus,
@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Menu } from '@/components/ui/Menu'
-import { StatTile } from '@/components/ui/StatTile'
 import { Avatar } from '@/components/ui/Avatar'
 import type { Presence } from '@/components/ui/StatusDot'
+import { StatusDot } from '@/components/ui/StatusDot'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { useLivePresence } from '@/hooks/usePresenceStore'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -70,10 +71,20 @@ const presenceWord: Record<Presence, string> = {
 }
 
 /**
- * A person in one of your lists: the picture, whether they are about, and
- * what you can do with them, on a single line you can run your eye down.
+ * One person, on a card.
+ *
+ * It was a line before, three across, and the line had everything on it at
+ * the same weight: a small square picture, the name, the presence and the
+ * buttons all on one row, so nothing in it read first. Staw, about the
+ * page: "it sucks". He is right, and this is the part that made it so.
+ *
+ * So: the face at a size worth looking at, the name under nothing else, the
+ * presence as its own line with the dot that means it, and the doors along
+ * the bottom where the eye lands last. The "..." only shows on hover or
+ * when something in it has focus, because six of them in a grid is a row
+ * of dots and nothing else.
  */
-function PersonLine({
+export function PersonCard({
   person, note, actions, menu, quiet,
 }: {
   person: Person
@@ -87,56 +98,125 @@ function PersonLine({
   return (
     <li
       className={cn(
-        'flex items-center gap-3 rounded-2xl border border-ink-line bg-ink-card p-3 transition-colors hover:border-brand/60',
+        'group relative flex flex-col gap-3 rounded-2xl border border-ink-line bg-ink-card p-4',
+        'transition-colors hover:border-brand/60',
         quiet && 'opacity-70',
       )}
     >
-      <FriendPeek friend={person} className="shrink-0">
-        <Link to={profileLink(person)} className="block">
-          <PersonAvatar person={person} size="md" square ring="ring-ink-card" />
-        </Link>
-      </FriendPeek>
+      {menu && (
+        <div className="absolute right-2 top-2 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          {menu}
+        </div>
+      )}
 
-      <div className="min-w-0 flex-1">
-        <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">
-          {/* A best friend, who is also at the top of the list: the mark is
-              what stops that ordering reading as random. */}
-          {person.best && (
-            <Tooltip label="Best friends" side="top">
-              <Glyph icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
-            </Tooltip>
-          )}
-          <span className="truncate text-sm font-bold">{person.display_name}</span>
-          <NameMarks person={person} className="text-[11px]" />
-          {person.i_ignore && (
-            <span
-              title="You are ignoring this person"
-              className="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted"
-            >
-              Ignored
+      <div className="flex items-center gap-3">
+        <FriendPeek friend={person} className="shrink-0">
+          <Link to={profileLink(person)} className="block">
+            <PersonAvatar person={person} size="lg" className="h-14 w-14" ring="ring-ink-card" />
+          </Link>
+        </FriendPeek>
+
+        <div className="min-w-0 flex-1 pr-6">
+          <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">
+            {/* A best friend, who is also at the top of the list: the mark is
+                what stops that ordering reading as random. */}
+            {person.best && (
+              <Tooltip label="Best friends" side="top">
+                <Glyph icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
+              </Tooltip>
+            )}
+            <span className="truncate font-display text-base font-extrabold leading-tight">
+              {person.display_name}
             </span>
-          )}
-        </Link>
-        <p className="truncate text-xs text-muted">
-          @{person.username}
-          <span className={cn(presence === 'in-space' && 'text-space-bright')}>
-            {' · '}{note ?? presenceWord[presence]}
-          </span>
-        </p>
+            <NameMarks person={person} className="text-[11px]" />
+          </Link>
+
+          <p className="truncate text-xs text-muted">@{person.username}</p>
+
+          <p className="mt-1 flex items-center gap-1.5 text-xs">
+            <StatusDot presence={presence} size="md" />
+            <span className={cn('truncate', presence === 'in-space' ? 'text-space-bright' : 'text-muted')}>
+              {note ?? presenceWord[presence]}
+            </span>
+            {person.i_ignore && (
+              <span
+                title="You are ignoring this person"
+                className="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted"
+              >
+                Ignored
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
-      {actions && <div className="flex shrink-0 items-center gap-1.5">{actions}</div>}
-      {menu}
+      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </li>
   )
 }
 
+/**
+ * One of the lists, as a tab.
+ *
+ * The six numbers used to be six big tiles across the top, which gave
+ * "Blocked" the same weight on the page as "Friends" and pushed the people
+ * below the fold. A tab with its count beside it says the same thing in a
+ * row that leaves the page to the list.
+ */
+export function ListTab({
+  icon, name, count, active, onClick,
+}: {
+  icon: IconDefinition
+  name: string
+  count: number | null
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-colors',
+        active ? 'bg-brand text-white' : 'text-muted hover:bg-ink-hover hover:text-white',
+      )}
+    >
+      <Glyph icon={icon} className="text-xs" />
+      {name}
+      <span
+        className={cn(
+          'rounded-full px-1.5 py-0.5 text-[11px] tabular-nums',
+          active ? 'bg-black/25 text-white' : 'bg-white/10 text-white/70',
+        )}
+      >
+        {count ?? '·'}
+      </span>
+    </button>
+  )
+}
+
+/** A heading over a run of people, with how many are in it. */
+function Band({ icon, children, count }: {
+  icon: IconDefinition
+  children: React.ReactNode
+  count?: number
+}) {
+  return (
+    <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-muted">
+      <Glyph icon={icon} />
+      {children}
+      {count !== undefined && <span className="text-white/35 tabular-nums">({count})</span>}
+    </h2>
+  )
+}
+
 function List({ children }: { children: React.ReactNode }) {
-  return <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">{children}</ul>
+  return <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{children}</ul>
 }
 
 function Loading() {
-  return <List>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-[4.75rem] rounded-2xl" />)}</List>
+  return <List>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-[8.5rem] rounded-2xl" />)}</List>
 }
 
 export default function Friends() {
@@ -167,9 +247,21 @@ export default function Friends() {
   const who = id ? viewed.data : profile
   const isMe = !id || who?.id === profile?.id
 
-  const [tab, setTab] = useState<Tab>(
-    fromQuery[(search.get('list') ?? '').toLowerCase()] ?? 'Friends',
-  )
+  /*
+   * One address for your own list.
+   *
+   * Staw: "id like that the pages /u/1010/stawrer/friends?list=friends and
+   * /friends be actually the same". They rendered the same component
+   * already, but as two addresses - which meant two entries in the back
+   * button, two things to link to, and a page that had to fetch your own
+   * profile by number before it could draw a list it already had. Reaching
+   * your own through a profile now lands on /friends, carrying whichever
+   * list was asked for.
+   */
+  const mineAtTheirAddress = !!id && !!profile && viewed.data?.id === profile.id
+
+  const asked = (search.get('list') ?? '').toLowerCase()
+  const [tab, setTab] = useState<Tab>(fromQuery[asked] ?? 'Friends')
   const shownTabs = tabs.filter((one) => isMe || !('mineOnly' in one && one.mineOnly))
   const current = shownTabs.find((one) => one.name === tab) ?? shownTabs[0]
 
@@ -288,16 +380,91 @@ export default function Friends() {
     Blocked: { title: 'Nobody blocked', body: 'Blocking ends everything between you and somebody, both ways.' },
   }
 
+  /*
+   * Friends split by whether anybody is there. The page is mostly used to
+   * start something with somebody, and somebody who is not there cannot be
+   * started with, so the ones who are go first and say so.
+   */
+  const here = current.name === 'Friends' ? shown.filter((one) => one.is_online) : []
+  const away = current.name === 'Friends' ? shown.filter((one) => !one.is_online) : shown
+
+  const doorsFor = (person: Person) => (
+    current.name === 'Blocked'
+      ? (
+        <Button
+          size="sm" variant="subtle" block
+          onClick={() => people.askFor({ kind: 'unblock', person })}
+        >
+          Unblock
+        </Button>
+      )
+      : current.name === 'Ignored'
+        ? (
+          <Button size="sm" variant="subtle" block onClick={() => people.act('unignore', person)}>
+            Stop ignoring
+          </Button>
+        )
+        : (
+          <>
+            <Button size="sm" variant="subtle" className="flex-1" to={profileLink(person)}>
+              Profile
+            </Button>
+            {isMe && current.name === 'Friends' && (
+              <Button size="sm" icon={faComment} className="flex-1" onClick={() => chat(person.id)}>
+                Chat
+              </Button>
+            )}
+          </>
+        )
+  )
+
+  const cardFor = (person: Person) => (
+    <PersonCard
+      key={person.id}
+      person={person}
+      quiet={current.name === 'Blocked' || person.i_ignore}
+      note={
+        current.name === 'Blocked' ? `Blocked ${timeAgo(person.since)}`
+          : current.name === 'Ignored' ? `Ignored ${timeAgo(person.since)}`
+            : undefined
+      }
+      actions={doorsFor(person)}
+      menu={isMe && current.name !== 'Blocked' && current.name !== 'Ignored'
+        ? menuFor(person, {
+          are_friends: current.name === 'Friends',
+          i_ignore: person.i_ignore,
+        })
+        : undefined}
+    />
+  )
+
+  if (mineAtTheirAddress) {
+    return <Navigate to={asked ? `/friends?list=${asked}` : '/friends'} replace />
+  }
+
   return (
     <Page className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {!isMe && who && (
+      {/*
+        * One band across the top: who this list belongs to, how many are in
+        * it, the way to find more, and the filter - rather than a title, a
+        * row of six tiles and a search box stacked down the page before
+        * anybody appears.
+        */}
+      <header className="overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
+        <div className="flex flex-wrap items-center gap-4 bg-gradient-to-br from-brand/25 via-ink-raised to-ink-raised px-5 py-5 sm:px-6">
+          {who && (
             <Link to={profileLink(who)} className="shrink-0">
-              <Avatar src={avatarOf(who)} personId={who.id} name={who.display_name} size="lg" className="rounded-2xl" />
+              <Avatar
+                src={avatarOf(who)}
+                personId={who.id}
+                name={who.display_name}
+                size="xl"
+                className="rounded-2xl ring-2 ring-white/10"
+              />
             </Link>
           )}
-          <div>
+
+          <div className="min-w-0 flex-1">
             <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
               {isMe ? 'My friends' : who ? `${who.display_name}'s friends` : 'Friends'}
             </h1>
@@ -309,63 +476,52 @@ export default function Friends() {
                   : 'No friends yet.'}
             </p>
           </div>
+
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            {current.name !== 'Requests' && (
+              <Input
+                icon={faFilter}
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder={`Filter ${current.name.toLowerCase()}`}
+                aria-label={`Filter ${current.name.toLowerCase()}`}
+                className="w-full sm:w-56"
+              />
+            )}
+            {isMe
+              ? <Button variant="subtle" icon={faUsers} to="/people" className="shrink-0">Find people</Button>
+              : who && (
+                <Button variant="subtle" to={profileLink(who)} className="shrink-0">
+                  Their profile
+                </Button>
+              )}
+          </div>
         </div>
 
-        {isMe
-          ? <Button variant="subtle" icon={faUsers} to="/people">Find people</Button>
-          : who && <Button variant="subtle" to={profileLink(who)}>Back to their profile</Button>}
+        {/* The lists, as tabs. On a phone it scrolls sideways, which is the
+            one place sideways is right: six words, not sixty faces. */}
+        <nav
+          aria-label="Lists"
+          className="flex gap-1 overflow-x-auto border-t border-ink-line px-2 py-2"
+        >
+          {shownTabs.map((one) => {
+            const of = {
+              Friends: friends, Requests: incoming, Followers: followers,
+              Following: following, Ignored: ignored, Blocked: blocked,
+            }[one.name]
+            return (
+              <ListTab
+                key={one.name}
+                icon={one.icon}
+                name={one.name}
+                count={of.loading ? null : of.data?.length ?? 0}
+                active={current.name === one.name}
+                onClick={() => setTab(one.name)}
+              />
+            )
+          })}
+        </nav>
       </header>
-
-      {/* The numbers are the lists, and each one is the way in. */}
-      <div className={cn('grid grid-cols-2 gap-2.5', isMe ? 'sm:grid-cols-3 xl:grid-cols-6' : 'sm:grid-cols-3')}>
-        <StatTile
-          icon={faUserGroup}
-          value={friends.loading ? null : friends.data?.length ?? 0}
-          label="Friends" active={current.name === 'Friends'} onClick={() => setTab('Friends')}
-        />
-        {isMe && (
-          <StatTile
-            icon={faInbox}
-            value={incoming.loading ? null : waiting}
-            label={waiting === 1 ? 'Request' : 'Requests'}
-            active={current.name === 'Requests'} onClick={() => setTab('Requests')}
-          />
-        )}
-        <StatTile
-          icon={faHeart}
-          value={followers.loading ? null : followers.data?.length ?? 0}
-          label="Followers" active={current.name === 'Followers'} onClick={() => setTab('Followers')}
-        />
-        <StatTile
-          icon={faHeart}
-          value={following.loading ? null : following.data?.length ?? 0}
-          label="Following" active={current.name === 'Following'} onClick={() => setTab('Following')}
-        />
-        {isMe && (
-          <>
-            <StatTile
-              icon={faEyeSlash}
-              value={ignored.loading ? null : ignored.data?.length ?? 0}
-              label="Ignored" active={current.name === 'Ignored'} onClick={() => setTab('Ignored')}
-            />
-            <StatTile
-              icon={faBan}
-              value={blocked.loading ? null : blocked.data?.length ?? 0}
-              label="Blocked" active={current.name === 'Blocked'} onClick={() => setTab('Blocked')}
-            />
-          </>
-        )}
-      </div>
-
-      {current.name !== 'Requests' && (
-        <Input
-          icon={faFilter}
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder={`Filter ${current.name.toLowerCase()}`}
-          aria-label={`Filter ${current.name.toLowerCase()}`}
-        />
-      )}
 
       {source.error && <ErrorState message={source.error} onRetry={source.reload} />}
       {source.loading && <Loading />}
@@ -373,24 +529,21 @@ export default function Friends() {
       {current.name === 'Requests' && isMe ? (
         <div className="space-y-6">
           <section>
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-muted">
-              <Glyph icon={faInbox} />
-              Waiting on you
-            </h2>
+            <Band icon={faInbox} count={waiting}>Waiting on you</Band>
             {!incoming.loading && !incoming.data?.length && (
               <p className="text-sm text-muted">Nobody has asked.</p>
             )}
             {!!incoming.data?.length && (
               <List>
                 {incoming.data.map((person) => (
-                  <PersonLine
+                  <PersonCard
                     key={person.id}
                     person={person}
                     note={`Asked ${timeAgo(person.since)}`}
                     actions={
                       <>
                         <Button
-                          size="sm" icon={faCheck}
+                          size="sm" icon={faCheck} className="flex-1"
                           onClick={() => person.link_id && respond(person.link_id, true)}
                         >
                           Accept
@@ -410,22 +563,19 @@ export default function Friends() {
           </section>
 
           <section>
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-muted">
-              <Glyph icon={faUserPlus} />
-              You asked
-            </h2>
+            <Band icon={faUserPlus} count={outgoing.data?.length ?? 0}>You asked</Band>
             {!outgoing.data?.length ? (
               <p className="text-sm text-muted">You have not asked anybody.</p>
             ) : (
               <List>
                 {outgoing.data.map((person) => (
-                  <PersonLine
+                  <PersonCard
                     key={person.id}
                     person={person}
                     note={`Sent ${timeAgo(person.since)}`}
                     actions={
                       <Button
-                        size="sm" variant="subtle"
+                        size="sm" variant="subtle" block
                         onClick={() => person.link_id && cancel(person.link_id)}
                       >
                         Take back
@@ -456,50 +606,20 @@ export default function Friends() {
             </Card>
           )}
 
-          {!!shown.length && (
-            <List>
-              {shown.map((person) => (
-                <PersonLine
-                  key={person.id}
-                  person={person}
-                  quiet={current.name === 'Blocked' || person.i_ignore}
-                  note={
-                    current.name === 'Blocked' ? `Blocked ${timeAgo(person.since)}`
-                      : current.name === 'Ignored' ? `Ignored ${timeAgo(person.since)}`
-                        : undefined
-                  }
-                  actions={
-                    current.name === 'Blocked'
-                      ? (
-                        <Button
-                          size="sm" variant="subtle"
-                          onClick={() => people.askFor({ kind: 'unblock', person })}
-                        >
-                          Unblock
-                        </Button>
-                      )
-                      : current.name === 'Ignored'
-                        ? (
-                          <Button
-                            size="sm" variant="subtle"
-                            onClick={() => people.act('unignore', person)}
-                          >
-                            Stop ignoring
-                          </Button>
-                        )
-                        : current.name === 'Friends' && isMe
-                          ? <Button size="sm" icon={faComment} onClick={() => chat(person.id)}>Chat</Button>
-                          : <Button size="sm" variant="subtle" to={profileLink(person)}>Profile</Button>
-                  }
-                  menu={isMe && current.name !== 'Blocked' && current.name !== 'Ignored'
-                    ? menuFor(person, {
-                      are_friends: current.name === 'Friends',
-                      i_ignore: person.i_ignore,
-                    })
-                    : undefined}
-                />
-              ))}
-            </List>
+          {!!here.length && (
+            <section>
+              <Band icon={faUserGroup} count={here.length}>Around now</Band>
+              <List>{here.map(cardFor)}</List>
+            </section>
+          )}
+
+          {!!away.length && (
+            <section>
+              {current.name === 'Friends' && !!here.length && (
+                <Band icon={faUserGroup} count={away.length}>Everybody else</Band>
+              )}
+              <List>{away.map(cardFor)}</List>
+            </section>
           )}
         </>
       )}

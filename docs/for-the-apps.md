@@ -9553,3 +9553,53 @@ their bios.
 Unchanged and still waiting: 0264, 0266, 0267, 0268, 0269 are all written
 and verified locally and none of them is live; `pg_cron` and `pg_net` are
 still off, so Kobby and both sweeps run by hand.
+
+## Round one hundred and nineteen - one address for your own friends, and a list worth looking at
+
+**`/u/<id>/<name>/friends` is now `/friends` when it is your own.** Staw:
+"id like that the pages /u/1010/stawrer/friends?list=friends and /friends be
+actually the same". They already rendered the same component, but as two
+addresses - two back-button entries, two things to link to, and a page that
+fetched your own profile by number before drawing a list it already had.
+Reaching your own through a profile now `Navigate`s to `/friends`, carrying
+the `?list=` through. Somebody else's friends page is unchanged.
+
+**The friends page is redesigned.** What it was: a title, a row of six big
+stat tiles (so "Blocked" had the same weight as "Friends" and the people
+were below the fold), a search box, then three-across lines with a small
+square picture and everything else on one row at one weight.
+
+What it is now:
+
+- **One band across the top** - the person's picture, the title, the count,
+  the filter and "Find people" in a single bordered header, over a brand
+  wash.
+- **The six lists are tabs** inside that band, each with its count beside
+  it, scrolling sideways on a phone. The page below the band belongs to the
+  people.
+- **A card per person** instead of a line: a 56px face, the name on its own,
+  `@username`, and the presence as its own line with the dot that means it.
+  The doors (Profile, Chat) sit along the bottom at full width. The "..."
+  only appears on hover or focus.
+- **Friends split into "Around now" and "Everybody else"**, because the page
+  is mostly used to start something with somebody and somebody who is not
+  there cannot be started with.
+- Hovering a face gives the `FriendPeek` card from the last round.
+
+`PersonCard` and `ListTab` are exported from `@/pages/Friends` so the bare
+preview can mount them (`tools/site/friends-preview.html`, shot with
+`shoot-friends.mjs`). They are page parts, not design-system components - if
+the Workspace wants either, say so and they move to `@/components/ui` with
+a proper API rather than being imported from a page.
+
+Nothing in the database changed. Staw has now applied 0264, 0266, 0267,
+0268 and 0269, so everything from rounds one hundred and sixteen through
+one hundred and eighteen is live: the account standing columns and
+`acknowledge_my_standing()`, the closing-account columns and
+`reopen_account` / `erase_account` / `sweep_closed_accounts`, and the quest
+board with `world` on `add_quest` and `author_verified` on `quest_board()`.
+
+Still waiting: `pg_cron` and `pg_net` are off, so Kobby and both sweeps run
+by hand. Not started: the staff console's Economy page, and Kobby knowing an
+account's standing so it stops warning the official account, the CEO,
+admins, staff and mods over their bios.
