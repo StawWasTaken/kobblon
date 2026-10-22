@@ -9603,3 +9603,38 @@ Still waiting: `pg_cron` and `pg_net` are off, so Kobby and both sweeps run
 by hand. Not started: the staff console's Economy page, and Kobby knowing an
 account's standing so it stops warning the official account, the CEO,
 admins, staff and mods over their bios.
+
+## Round one hundred and twenty - air in the row, and a card that behaves
+
+Small pass over the two things from the last two rounds, both on Staw's
+notes against the row he drew them from.
+
+**The home friends rail has air in it.** `gap-4` between 80px faces read as
+one strip rather than as people, and the names underneath ran into each
+other. It is `gap-x-6 gap-y-7`, and `sm:gap-x-8` once there are six across;
+the picture and the name under it sit `2.5` apart instead of `2`.
+
+**`FriendPeek` is smaller, animated and tidier.** Staw's three notes were
+that it took too much space, had no animation and was not polished. So:
+
+- 176px wide instead of 192, with the rows at `py-1.5`.
+- **"Message"** rather than "Chat with &lt;name&gt;", which was as long as
+  whatever somebody called themselves.
+- The site's own `animate-pop-in`, with `origin-top` so it grows out of the
+  edge it is pinned to rather than appearing.
+- Rows light up in `brand/20` on hover instead of grey, the icons sit in
+  `text-muted` so the words lead, and the card is `rounded-2xl` on
+  `bg-ink-raised` with a real shadow.
+- The spinner replaces the message icon while the conversation is being
+  opened, rather than the row just going dim.
+
+**One thing worth knowing if the Workspace builds anything with an arrow
+pointer:** the arrow has to live *inside* the animated element, not beside
+it. `animate-pop-in` puts a transform on the wrapper, and a transform makes
+that wrapper the containing block for anything absolutely positioned under
+it - so an arrow positioned against the outer box lands behind the card and
+simply never appears. It is the same shape as this project's usual trap: it
+renders, nothing throws, and it is wrong. It is positioned at `-top-[6px]`
+within the card's own wrapper now.
+
+Nothing else changed, and nothing in the database.

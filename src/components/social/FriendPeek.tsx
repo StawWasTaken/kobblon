@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { faUser, faComment } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
-import { PresenceLabel, presenceOf } from '@/components/ui/StatusDot'
+import { StatusDot, presenceOf, presenceWords } from '@/components/ui/StatusDot'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { useToast } from '@/components/ui/Toast'
 import { startConversation } from '@/lib/api'
@@ -34,6 +34,12 @@ type Friend = {
  * because what is inside it are two links, which the keyboard already
  * knows how to walk. The arrow is one rotated square under the card's own
  * border, which is the only way to get a pointer that keeps the edge.
+ *
+ * Kept small and quick on purpose - Staw's three notes on the first draft
+ * were that it took too much space, had no animation and was not polished.
+ * So: 176 pixels wide, two short words rather than "Chat with somebody" at
+ * whatever length their name is, the site's own `pop-in` from the top edge
+ * it is pinned to, and rows that light up in brand rather than grey.
  */
 export function FriendPeek({ friend, children, className }: {
   friend: Friend
@@ -44,6 +50,7 @@ export function FriendPeek({ friend, children, className }: {
   const [open, setOpen] = useState(false)
   const [opening, setOpening] = useState(false)
   const away = useRef<number | null>(null)
+  const presence = presenceOf(friend)
   const { openConversation } = useChatDock()
   const say = useToast()
 
@@ -83,37 +90,47 @@ export function FriendPeek({ friend, children, className }: {
       {children}
 
       {open && (
-        <div className="absolute left-1/2 top-full z-30 w-48 -translate-x-1/2 pt-2">
-          {/* The pointer: a square turned on its corner, with the two
-              sides that show carrying the card's border. */}
-          <span className="absolute left-1/2 top-[3px] h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t border-ink-line bg-ink-card" />
+        <div className="absolute left-1/2 top-full z-30 w-44 -translate-x-1/2 pt-2">
+          <div className="origin-top animate-pop-in">
+            {/* The pointer: a square turned on its corner, with the two
+                sides that show carrying the card's border. */}
+            <span className="absolute -top-[6px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 rounded-[3px] border-l border-t border-ink-line bg-ink-raised" />
 
-          <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-card shadow-xl">
-            <div className="truncate border-b border-ink-line px-3 py-2">
-              <p className="truncate text-sm font-bold text-white">{friend.display_name}</p>
-              <PresenceLabel presence={presenceOf(friend)} />
+            <div className="relative overflow-hidden rounded-2xl border border-ink-line bg-ink-raised shadow-2xl shadow-black/60">
+              <div className="border-b border-ink-line px-3 py-2">
+                <p className="truncate text-[13px] font-bold leading-tight text-white">
+                  {friend.display_name}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                  <StatusDot presence={presence} size="sm" />
+                  {presenceWords[presence]}
+                </p>
+              </div>
+
+              <div className="p-1">
+                <Link
+                  to={profileLink(friend)}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-[13px] font-semibold text-white/75 transition-colors hover:bg-brand/20 hover:text-white"
+                >
+                  <Glyph icon={faUser} className="w-3.5 text-[11px] text-muted" />
+                  Profile
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => void chat()}
+                  disabled={opening}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-[13px] font-semibold text-white/75 transition-colors hover:bg-brand/20 hover:text-white disabled:opacity-60"
+                >
+                  <Glyph icon={opening ? faSpinner : faComment} className={cn('w-3.5 text-[11px] text-muted', opening && 'animate-spin')} />
+                  Message
+                </button>
+              </div>
             </div>
-
-            <Link
-              to={profileLink(friend)}
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm font-semibold text-white/80 hover:bg-ink-hover hover:text-white"
-            >
-              <Glyph icon={faUser} className="w-4 text-xs" />
-              View profile
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => void chat()}
-              disabled={opening}
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-semibold text-white/80 hover:bg-ink-hover hover:text-white disabled:opacity-60"
-            >
-              <Glyph icon={faComment} className="w-4 text-xs" />
-              <span className="truncate">Chat with {friend.display_name}</span>
-            </button>
           </div>
         </div>
       )}
+
     </div>
   )
 }
