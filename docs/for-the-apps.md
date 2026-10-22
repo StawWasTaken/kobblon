@@ -9669,3 +9669,12 @@ the `pop-in` and the "Message" wording from the last round stay.
 
 Previewed with three faces at `tools/site/peek-preview.html`; `shoot-peek.mjs`
 now counts the cards up mid-move and asserts it never sees two.
+
+## Round one hundred and twenty-two - the arrow joins the card
+
+One fix. `FriendPeek`'s pointer was drawn before the card, so the card's own
+1px top border painted straight across its base: a nub floating above a
+closed box rather than a corner of it. The square is drawn after the card
+now, with `z-10`, so its fill covers that border where the two meet and the
+shape is continuous. Same trick anywhere the Workspace needs a pointed
+panel - the pointer goes last, not first.

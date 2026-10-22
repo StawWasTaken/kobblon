@@ -118,7 +118,15 @@ export function FriendPeek({ friend, children, className }: {
       {open && (
         <div className="absolute left-1/2 top-full z-30 w-44 -translate-x-1/2 pt-2">
           <div className="relative origin-top animate-pop-in">
-            <span className="absolute -top-[6px] left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 rounded-[3px] border-l border-t border-ink-line bg-ink-card" />
+            {/*
+              * The pointer, drawn after the card rather than before it.
+              * A square on its corner carrying two of the card's borders -
+              * and painted last, so its fill covers the card's own top
+              * border where the two meet. Underneath the card it sat
+              * behind that 1px line, which read as a nub floating above a
+              * closed box rather than as a corner of it.
+              */}
+            <span className="absolute -top-[6px] left-1/2 z-10 h-3 w-3 -translate-x-1/2 rotate-45 rounded-[2px] border-l border-t border-ink-line bg-ink-card" />
 
             <div className="relative overflow-hidden rounded-xl border border-ink-line bg-ink-card shadow-xl shadow-black/50">
               <div className="border-b border-ink-line px-3 py-2">
