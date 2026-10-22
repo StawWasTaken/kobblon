@@ -9638,3 +9638,34 @@ renders, nothing throws, and it is wrong. It is positioned at `-top-[6px]`
 within the card's own wrapper now.
 
 Nothing else changed, and nothing in the database.
+
+## Round one hundred and twenty-one - one card at a time
+
+Two corrections to `FriendPeek`, both from Staw looking at it in a real
+friends list.
+
+**Only ever one card up on the page.** Staw: "i dont want to see this on
+two like accounts, like in the friendlists when u hover one guy it appears
+then you hover another guy it disappears and then it appears for the next
+guy". Each card deciding for itself is exactly that: the one being left
+takes its grace period to go while the one being entered is already there,
+so for a moment there are two and then a gap. There is now one module-level
+value for which card is up, read with `useSyncExternalStore`, so opening a
+new one is what closes the old one, in the same tick. Moving along a row
+hands the card from face to face with nothing in between. The grace period
+(now 140ms) still covers the gap between a face and its own card; entering
+another face does not wait for it.
+
+If the Workspace mounts more than one of these, that store is per module
+instance, which is per bundle - it does not reach across windows, and does
+not need to.
+
+**The surface is back to the site's.** The polish pass had moved the card
+onto `bg-ink-raised` with `rounded-2xl` and a brand-tinted hover, which
+under a warm appearance read as a brown box that belonged to nothing. It is
+`bg-ink-card`, `rounded-xl`, `border-ink-line`, `hover:bg-ink-hover` again -
+the same surface as every other card and menu on the site. The small size,
+the `pop-in` and the "Message" wording from the last round stay.
+
+Previewed with three faces at `tools/site/peek-preview.html`; `shoot-peek.mjs`
+now counts the cards up mid-move and asserts it never sees two.
