@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { FriendsRail } from '@/components/social/FriendsRail'
+import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { WorldTile } from '@/components/worlds/Shelf'
+import { greeting } from '@/lib/greeting'
 import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import { useToast } from '@/components/ui/Toast'
 import { worldIcon } from '@/lib/naming'
@@ -19,7 +22,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
   accountStanding, acknowledgeStanding,
-  listFavouriteWorlds, listMemberCommunities, listWorlds, myWorlds,
+  listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds, listWorlds, myWorlds,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { communityLink, worldLink } from '@/lib/links'
@@ -123,6 +126,15 @@ export default function Home() {
    * personalised one that has nothing to personalise from.
    */
   const suggested = useAsync(() => listWorlds({ sort: 'trending', limit: 24 }), [profile?.id])
+  /*
+   * Where you have already been, which is the first thing anybody opening
+   * Home is actually after. It needs an account, so signed out it asks for
+   * nothing at all rather than asking and being told no.
+   */
+  const played = useAsync(
+    async () => (profile ? listRecentlyPlayedWorlds(14) : []),
+    [profile?.id],
+  )
   const saved = useAsync(
     async () => (profile ? listFavouriteWorlds(profile.id) : []),
     [profile?.id],
@@ -160,6 +172,13 @@ export default function Home() {
 
   const decided = standing.data && standing.data.level !== 'clear' ? standing.data : null
 
+  /*
+   * Worked out once a render from the clock. Not state and not an effect:
+   * there is nothing to keep in sync, and a greeting that arrives a frame
+   * after the page did is a greeting that flickers.
+   */
+  const hello = greeting(profile?.display_name || profile?.username || 'there')
+
   const shown = suggested.data ?? []
   const first = shown.slice(0, 8)
   const rest = shown.slice(8, 24)
@@ -172,7 +191,22 @@ export default function Home() {
           not a page anybody is trying to read carefully. It draws nothing
           at all unless a seasonal appearance is being worn. */}
       <Weather className="pointer-events-none fixed inset-0 z-0 overflow-hidden" />
-      <h1 className="mb-6 font-display text-3xl font-extrabold sm:text-4xl">Home</h1>
+      {/* Not the word "Home". Somebody who has just signed in knows where
+          they are; what they do not get anywhere else on the site is being
+          greeted by name, with their own avatar beside it - the same thing
+          the Workspace opens with, from the same two lines of copy. */}
+      <header className="relative z-10 mb-6 flex items-center gap-4">
+        {/* Bigger than anything else on the page, the way the Workspace opens.
+            The responsive pair wins over the size prop's own classes because
+            Tailwind writes its breakpoints after its base utilities. */}
+        {profile && <PersonAvatar person={profile} size="2xl" className="sm:h-28 sm:w-28" />}
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-4xl">
+            {hello.hello}
+          </h1>
+          <p className="mt-1 text-sm text-muted sm:text-base">{hello.aside}</p>
+        </div>
+      </header>
 
       {decided && (
         <AccountStatusCard
@@ -184,6 +218,23 @@ export default function Home() {
       )}
 
       <FriendsRail />
+
+      {/*
+        * Where you were last, before anything anybody else is doing. The
+        * marks rather than the covers: a World's emblem is what it chose to
+        * be known by, and a shelf of squares is for recognising something
+        * you have already played rather than being sold it.
+        *
+        * It only appears once there is a history to show. Signed out, and
+        * on a first visit, the trending shelf below takes the top of the
+        * page instead - an empty row headed "Recently played" says nothing
+        * except that the page has a hole in it.
+        */}
+      {!!played.data?.length && (
+        <Row title="Recently played" more={{ to: '/library', label: 'Your library' }}>
+          {played.data.map((world) => <WorldTile key={world.id} world={world} />)}
+        </Row>
+      )}
 
       <Row title="Being played right now" more={{ to: '/discover', label: 'Discover more' }}>
         {suggested.loading

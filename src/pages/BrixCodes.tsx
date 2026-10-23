@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { BackLink } from '@/components/ui/BackLink'
-import { Balance } from '@/components/money/Balance'
 import { Kobby } from '@/components/brand/Kobby'
 import { useAuth } from '@/hooks/useAuth'
 import { useTitle } from '@/hooks/useTitle'
@@ -22,7 +21,7 @@ import { currency } from '@/lib/currency'
  */
 export default function BrixCodes() {
   useTitle('Redeem a code')
-  const { profile, refreshProfile } = useAuth()
+  const { refreshProfile } = useAuth()
 
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
@@ -53,12 +52,6 @@ export default function BrixCodes() {
         icon={faGift}
         title="Redeem a code"
         lead={`Codes turn up in Kobblon events, from the people who run them, and now and then for no reason at all. One go each.`}
-        aside={
-          <div className="rounded-2xl border border-ink-line bg-ink-raised px-5 py-4 text-right">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted">Your balance</p>
-            <Balance amount={profile?.pixels ?? 0} size="lg" label={false} className="mt-1" />
-          </div>
-        }
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">

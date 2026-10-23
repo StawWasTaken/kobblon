@@ -40,7 +40,7 @@ function Faces({ server }: { server: RunningServer }) {
         </div>
       ))}
       {rest > 0 && (
-        <div className="-ml-2.5 flex h-10 w-10 items-center justify-center rounded-full border border-ink-line bg-ink text-xs font-semibold text-ink-soft ring-2 ring-ink-card">
+        <div className="-ml-2.5 flex h-10 w-10 items-center justify-center rounded-full border border-ink-line bg-ink text-xs font-semibold text-muted ring-2 ring-ink-card">
           +{rest}
         </div>
       )}
@@ -85,12 +85,12 @@ export function ServerList({
             <Faces server={server} />
 
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink-strong">
+              <p className="text-sm font-semibold text-white">
                 {server.how_many} of {server.capacity} people
               </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-sunken">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink">
                 <div
-                  className={cn('h-full rounded-full', full ? 'bg-ink-soft' : 'bg-space')}
+                  className={cn('h-full rounded-full', full ? 'bg-muted' : 'bg-space')}
                   style={{ width: `${Math.min(100, (server.how_many / server.capacity) * 100)}%` }}
                 />
               </div>

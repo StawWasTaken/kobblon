@@ -23,7 +23,7 @@ export function AlsoJoinedRow({ worlds }: { worlds: AlsoJoined[] }) {
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-strong">People also join</h2>
+      <h2 className="text-lg font-semibold text-white">People also join</h2>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {worlds.map((world) => {
@@ -38,7 +38,7 @@ export function AlsoJoinedRow({ worlds }: { worlds: AlsoJoined[] }) {
               to={worldLink(world)}
               className="group min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <div className="aspect-square overflow-hidden rounded-2xl border border-ink-line bg-ink-sunken transition-colors group-hover:border-brand/70">
+              <div className="aspect-square overflow-hidden rounded-2xl border border-ink-line bg-ink transition-colors group-hover:border-brand/70">
                 {picture ? (
                   <img
                     src={picture}
@@ -47,15 +47,15 @@ export function AlsoJoinedRow({ worlds }: { worlds: AlsoJoined[] }) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl font-black text-ink-soft">
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-black text-muted">
                     {world.name.slice(0, 1).toUpperCase()}
                   </div>
                 )}
               </div>
 
-              <p className="mt-2 truncate text-sm font-semibold text-ink-strong">{world.name}</p>
+              <p className="mt-2 truncate text-sm font-semibold text-white">{world.name}</p>
 
-              <div className="mt-1 flex items-center gap-3 text-xs text-ink-soft">
+              <div className="mt-1 flex items-center gap-3 text-xs text-muted">
                 {score !== null && (
                   <span className="inline-flex items-center gap-1">
                     <Glyph icon={faThumbsUp} />

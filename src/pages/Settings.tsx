@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { Logomark } from '@/components/brand/Wordmark'
 import {
-  faCube, faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
+  faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck, faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -11,8 +11,6 @@ import { Page } from '@/components/layout/AppShell'
 import { BrowseRail, BrowseFrame } from '@/components/browse/BrowseRail'
 import { Button } from '@/components/ui/Button'
 import { DiscordLink } from '@/components/social/DiscordLink'
-import { Balance } from '@/components/money/Balance'
-import { Transactions } from '@/components/money/Transactions'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
@@ -22,7 +20,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
 import { useAsync } from '@/hooks/useAsync'
 import {
-  USERNAME_CHANGE_COST, changeUsername, getStanding, listPixelTransactions, updateProfile,
+  USERNAME_CHANGE_COST, changeUsername, getStanding, updateProfile,
    usernameHistory,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
@@ -35,19 +33,14 @@ import { profileLink } from '@/lib/links'
 import { useAppearance } from '@/hooks/useAppearance'
 import { APPEARANCES, LOOKS, type Appearance } from '@/lib/appearances'
 
-/*
- * The money section is keyed rather than named, because what the currency is
- * called is not settled and is read from one place. The rest are named for
- * what they are, which does not change.
- */
-type Section = 'Account info' | 'Security' | 'Connections' | 'Appearance' | 'money' | 'Safety'
+/* Each section is named for what it is. */
+type Section = 'Account info' | 'Security' | 'Connections' | 'Appearance' | 'Safety'
 
 const sections: { name: Section; label: string; icon: IconDefinition }[] = [
   { name: 'Account info', label: 'Account info', icon: faUser },
   { name: 'Security', label: 'Security', icon: faLock },
   { name: 'Connections', label: 'Connections', icon: faLink },
   { name: 'Appearance', label: 'Appearance', icon: faPalette },
-  { name: 'money', label: currency.plural, icon: faCube },
   { name: 'Safety', label: 'Safety', icon: faShieldHalved },
 ]
 
@@ -140,7 +133,9 @@ function AccountInfo() {
             />
           </div>
 
-          <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+          {/* A note, not a field. Boxed and bordered it read as a second
+              input somebody had greyed out, directly under a real one. */}
+          <p className="max-w-md text-xs leading-relaxed text-muted">
             Your picture, your bio and your colour are on your profile, where you can see what
             they look like while you change them.
           </p>
@@ -440,25 +435,15 @@ export function Appearances() {
   )
 }
 
-/* --------------------------------------------------------------- currency */
-
-function Money() {
-  const { profile } = useAuth()
-  const ledger = useAsync(
-    async () => (profile ? listPixelTransactions(profile.id) : []),
-    [profile?.id],
-  )
-
-  return (
-    <Card className="overflow-hidden">
-      <div className="border-b border-ink-line px-5 py-4">
-        <Balance amount={profile?.pixels ?? 0} size="lg" />
-      </div>
-
-      <Transactions rows={ledger.data} loading={ledger.loading} />
-    </Card>
-  )
-}
+/*
+ * There is no money panel here any more.
+ *
+ * Staw: "why in settings u can see ur brix stuff while theres the
+ * transacation page bruh". He is right and it was literally the same two
+ * things - a balance and `Transactions` over `listPixelTransactions` - as
+ * the Brix page already shows, so whichever one somebody found first, the
+ * other was a second copy that could drift.
+ */
 
 /* ----------------------------------------------------------------- safety */
 
@@ -581,9 +566,6 @@ export default function Settings() {
         </div>
         {!!profile && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-xl border border-ink-line bg-ink-raised px-3 py-2">
-              <Balance amount={profile.pixels} size="sm" label={false} />
-            </span>
             <Button size="sm" variant="subtle" to={profileLink(profile)}>Your profile</Button>
           </div>
         )}
@@ -611,7 +593,6 @@ export default function Settings() {
           {section === 'Connections' && <DiscordLink />}
           {section === 'Appearance' && <Appearance />}
           {section === 'Appearance' && <Appearances />}
-          {section === 'money' && <Money />}
           {section === 'Safety' && <Safety />}
         </div>
       </BrowseFrame>

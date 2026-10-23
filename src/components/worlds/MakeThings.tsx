@@ -20,7 +20,7 @@ function Field({ label, hint, children }: {
     <div>
       <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">{label}</p>
       {children}
-      {hint && <p className="mt-1 text-xs text-ink-soft">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </div>
   )
 }
@@ -42,7 +42,7 @@ function TheNumber({ id }: { id: number }) {
         void navigator.clipboard?.writeText(String(id))
         toast('Number copied.', 'success')
       }}
-      className="inline-flex items-center gap-1.5 rounded-lg bg-ink-sunken px-2 py-1 font-mono text-xs text-ink-soft transition-colors hover:text-ink-strong"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-2 py-1 font-mono text-xs text-muted transition-colors hover:text-white"
       title="Copy this number for a script"
     >
       {id}
@@ -152,12 +152,12 @@ export function MakeThings({
               key={one.id}
               className="flex items-center gap-3 rounded-xl border border-ink-line p-3"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-sunken">
-                <Glyph icon={badge ? faAward : faBagShopping} className="text-ink-soft" />
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink">
+                <Glyph icon={badge ? faAward : faBagShopping} className="text-muted" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-ink-strong">{one.name}</span>
-                <span className="text-xs text-ink-soft">
+                <span className="block truncate text-sm font-semibold text-white">{one.name}</span>
+                <span className="text-xs text-muted">
                   {badge
                     ? `${formatCount((one as WorldBadge).awarded_count)} earned`
                     : ((one as WorldPass).price > 0

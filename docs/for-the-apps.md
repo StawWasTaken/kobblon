@@ -10132,3 +10132,125 @@ Not done, and said plainly:
   something else.
 * The Catalog is 3581px at 390px. That is twelve recommendations and a full
   shelf, three across, which is content rather than layout.
+
+## Round one hundred and thirty - a greeting instead of a heading, Charts on Discover, and the Brix that were shown three times
+
+### New shared component: `@/components/worlds/Shelf`
+
+Three exports, and the Workspace can mount all of them bare - they need a
+router for their links and nothing else:
+
+- `Shelf({ title, note?, more?, children, className? })` - a row of Worlds
+  that slides sideways, with the arrows only where there is a mouse. `more`
+  is either `{ to, label? }` or `{ onClick, label? }`; given one, the title
+  gets a chevron and becomes the link, and a "Show all" appears at the right
+  from `sm` up. Home had a private copy of this and Discover had none, which
+  is how the two pages about the same Worlds came to look like two products.
+- `WorldTile({ world })` - the **square** tile: `emblem_url`, falling back to
+  `cover_url`, then the globe. Name on two lines under it, then approval and
+  visits.
+- `WorldFeature({ world })` - the wide one: `cover_url` 16/9 with the emblem
+  and the name over the bottom of it.
+
+Approval is `like / (like + dislike)` as a whole percent, and it is **not
+drawn at all** where nobody has said anything. A World with no opinions on it
+shows visits only; it does not show 0% or 100%.
+
+The white text over the cover is `text-[#fff]`, not `text-white`. `white` is
+`--fg` and flips with the theme, so `text-white` over a dark gradient is
+black text in daylight. Worth knowing wherever you draw on top of an image.
+
+### New call: `listRecentlyPlayedWorlds(limit = 12)`
+
+Reads `world_visits` and folds it: one row per person per World per day, so a
+World played all week is several rows and only the newest day counts. **No
+`eq` on the person** - the row-level policy on `world_visits` already allows
+each account its own rows and nothing else, and a filter written in a client
+is a filter anybody can take back out. Signed out it must not be called;
+there is nothing to read and the page asks for nothing instead.
+
+### New shared module: `@/lib/greeting`
+
+`greeting(name, at = new Date()) -> { hello, aside }`. Four times of day
+(morning, afternoon, evening, after eleven) and **two** lines for each, so it
+is not the same sentence every morning. Which of the two is decided by the
+day number, not by `Math.random`: a random pick changes under you when a
+panel re-renders, and a greeting that rewrites itself mid-sentence reads as a
+bug. This exists here because the Workspace opens with the same thing over
+the same avatar - **please import it rather than writing a second set of
+lines.** Two products greeting the same person in two different voices is the
+"Model" and "Mesh" problem again.
+
+### Home
+
+The `<h1>Home</h1>` is gone. In its place: the person's own avatar at
+`size="2xl"` (`sm:h-28 sm:w-28`) with the greeting beside it. Somebody who
+has just signed in knows where they are.
+
+"Being played right now" is still there, but **above** it there is now
+"Recently played", built from `listRecentlyPlayedWorlds` and drawn with
+`WorldTile` - the square marks, not the covers. It appears only once there is
+a history: an empty row headed "Recently played" says nothing except that the
+page has a hole in it, so signed out and on a first visit the trending shelf
+takes the top instead.
+
+### Discover is a charts page now
+
+The rail's first entry is **Charts**, and it is the default. It is not a
+fourth ordering of the grid, it is a different page: a "Featured" row of four
+`WorldFeature` cards (picked by most-liked, so it is not the same four
+Worlds as the shelf under it), then three `Shelf` rows - Being played, Just
+published, Most liked - each with a "Show all" that switches the rail to that
+sort and drops into the existing grid.
+
+Searching or picking a kind of World leaves the charts on their own and shows
+the grid, even while the rail still says Charts, because a shelf of eighteen
+is not an answer to a search. The three shelves are three orderings of one
+table so they cannot be one query, but they are one `await`, and they are
+only asked for while the charts are on screen.
+
+### The Brix that were shown three times
+
+Staw: "why in settings u can see ur brix stuff while theres the transacation
+page bruh". Removed, and these are the ones that are gone:
+
+- **Settings' whole money panel.** It was a literal second copy of `/brix` -
+  the same `Balance` over the same `listPixelTransactions`. The section is
+  out of the rail entirely.
+- Settings' header balance chip.
+- The "Your balance" aside on Quests.
+- The "Your balance" aside on Redeem a code.
+
+What deliberately **stays**: every "You have X" that sits at a spend
+decision - the username change cost, the three on Create an advert, the new
+Community dialog, the Quests tag fee, the buy dialogs. A balance beside a
+price answers "can I afford this"; a balance on its own is the topbar again.
+If the Workspace shows one anywhere, the same test applies.
+
+### Two fixes worth copying
+
+- **The dead-colour sweep.** Forty-one uses across eleven files of `text-yes`,
+  `ink-soft`, `ink-strong` and `ink-sunken`. **None of those tokens exist** -
+  not in `design/preset.js`, not in `design/tokens.css` - so every one of them
+  rendered as nothing at all. The progress tracks on the World page had been
+  invisible for however long. If the Workspace has any of those four class
+  names in it, they are doing nothing: `text-yes` meant `text-space-bright`,
+  `ink-soft` meant `muted`, `ink-strong` meant `white`, `ink-sunken` meant
+  `ink`.
+- **The chat dock covering things.** It is `fixed` bottom-right and nothing
+  scrolls out from under it, so on Settings it sat over the one button on
+  each row. `ChatDock` now sets `--dock-space: 20rem` on the document while
+  its desktop column is mounted and clears it on unmount, and
+  `.kob-dock-gutter` (in `src/index.css`) turns that into right padding on
+  `main` **from 1280px up only** - narrower than that, a twenty-rem gutter
+  costs the page more than the dock does.
+
+### Not built
+
+- Nothing shows how long ago a World was played; "Recently played" is an
+  order, not a date, and the day is all `world_visits` stores anyway.
+- There is no per-genre shelf on Discover. One query per genre to fill a
+  front page is not worth it yet.
+- `listRecentlyPlayedWorlds` reads a table rather than an RPC. If the
+  Workspace wants it under a different session it works the same way through
+  `setSupabaseClient`, but it does depend on that policy staying as it is.

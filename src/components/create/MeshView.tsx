@@ -317,7 +317,7 @@ export function MeshView({
       )}
 
       {said && (
-        <span className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-ink-sunken/90 px-3 py-1 text-[11px] font-bold text-white/80">
+        <span className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-ink/90 px-3 py-1 text-[11px] font-bold text-white/80">
           {said}
         </span>
       )}

@@ -353,7 +353,7 @@ export default function OutfitPage() {
                     </span>
                     <span className={cn(
                       'shrink-0 text-xs font-bold',
-                      piece.owned ? 'text-yes' : 'text-white/85',
+                      piece.owned ? 'text-space-bright' : 'text-white/85',
                     )}>
                       {piece.owned ? (
                         <Glyph icon={faCheck} />

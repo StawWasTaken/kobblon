@@ -120,10 +120,10 @@ export function ChatSuspended({
     >
       <Glyph
         icon={over ? faComments : faTriangleExclamation}
-        className={cn('text-3xl', over ? 'text-yes' : 'text-white')}
+        className={cn('text-3xl', over ? 'text-space-bright' : 'text-white')}
       />
 
-      <h2 id="chat-suspended-title" className="mt-3 font-display text-lg font-bold text-ink-strong">
+      <h2 id="chat-suspended-title" className="mt-3 font-display text-lg font-bold text-white">
         {over ? `${what} is back` : `${what} suspended`}
       </h2>
 
@@ -135,7 +135,7 @@ export function ChatSuspended({
         </p>
       ) : (
         <>
-          <p className="text-sm font-bold text-ink-strong">
+          <p className="text-sm font-bold text-white">
             {minutes} minute suspension{ways.includes('voice') ? ', chat and voice' : ''}
           </p>
 
@@ -164,7 +164,7 @@ export function ChatSuspended({
                 What we acted on
               </p>
               <blockquote className="rounded-xl rounded-tl-md border border-ink-line bg-ink-raised px-3 py-2">
-                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-strong">
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white">
                   {evidence}
                 </p>
               </blockquote>
@@ -174,7 +174,7 @@ export function ChatSuspended({
           <p className="mt-3 text-sm text-muted">
             If this keeps happening, the next one is longer.
           </p>
-          <p className="mt-4 font-display text-2xl font-bold tabular-nums text-ink-strong">
+          <p className="mt-4 font-display text-2xl font-bold tabular-nums text-white">
             {left}
           </p>
         </>
@@ -208,7 +208,7 @@ export function ChatSuspended({
             type="button"
             onClick={onAppeal}
             disabled={appealBusy}
-            className="font-bold text-ink-strong underline underline-offset-2 hover:text-brand-bright disabled:opacity-60"
+            className="font-bold text-white underline underline-offset-2 hover:text-brand-bright disabled:opacity-60"
           >
             {spoken ? 'I did not say that' : 'Let us know'}
           </button>

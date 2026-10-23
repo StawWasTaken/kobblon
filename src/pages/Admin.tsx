@@ -2148,7 +2148,7 @@ export function AnnounceSection() {
         ]}
         confirmText="Send it"
       >
-        <p className="rounded-xl border border-ink-line bg-ink-sunken p-3 text-sm">
+        <p className="rounded-xl border border-ink-line bg-ink p-3 text-sm">
           {confirming}
         </p>
       </Confirm>
@@ -2422,7 +2422,7 @@ export function WordsSection() {
         </div>
 
         {!!draft && (
-          <div className="animate-pop-in space-y-2 rounded-xl border border-ink-line bg-ink-sunken p-3">
+          <div className="animate-pop-in space-y-2 rounded-xl border border-ink-line bg-ink p-3">
             {!!draft.note && <p className="text-xs leading-relaxed text-muted">{draft.note}</p>}
 
             {draft.words.map((one, i) => (
@@ -2601,7 +2601,7 @@ export function WordsSection() {
           {/* Trying it first, because this list runs against everything
               anybody types and a pattern that catches too much is only
               discovered through the people it wrongly refuses. */}
-          <div className="space-y-2 rounded-xl border border-ink-line bg-ink-sunken p-3">
+          <div className="space-y-2 rounded-xl border border-ink-line bg-ink p-3">
             <Input
               label="Try it against"
               value={sample}
@@ -2940,7 +2940,7 @@ export function RecordSection() {
         {!!open && (
           <div className="space-y-3">
             {!!open.subject_label && (
-              <div className="flex items-center justify-between rounded-xl bg-ink-sunken px-3 py-2 text-sm">
+              <div className="flex items-center justify-between rounded-xl bg-ink px-3 py-2 text-sm">
                 <span className="text-muted">Who it was about</span>
                 <span className="font-bold">@{open.subject_label}</span>
               </div>

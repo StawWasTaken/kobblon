@@ -376,7 +376,7 @@ export default function WorldPage() {
             {thing.cover_url ? (
               <img src={thing.cover_url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-brand-deep to-ink-sunken" />
+              <div className="h-full w-full bg-gradient-to-br from-brand-deep to-ink" />
             )}
             {/* So the words stay readable over whatever somebody uploaded. */}
             <div className="absolute inset-0 bg-gradient-to-t from-ink-card via-ink-card/60 to-ink-card/10" />

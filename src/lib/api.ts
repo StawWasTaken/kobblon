@@ -2700,6 +2700,39 @@ export async function listWorlds(options: {
   return (data ?? []) as World[]
 }
 
+/**
+ * The Worlds this person has been in, most recent first.
+ *
+ * `world_visits` keeps one row per person per World per day, so the same
+ * World played all week is several rows and the list has to fold them: the
+ * first time a World appears is the last day it was played, and every later
+ * row for it is the same World on an older day.
+ *
+ * No `eq` on the person. The row-level policy on `world_visits` allows each
+ * account its own rows and nothing else, which is the only place that can
+ * be enforced - a filter written here would be a filter anybody could take
+ * back out.
+ */
+export async function listRecentlyPlayedWorlds(limit = 12): Promise<World[]> {
+  const { data, error } = await supabase
+    .from('world_visits')
+    .select(`on_day, world:worlds!world_id (${WORLD_FIELDS})`)
+    .order('on_day', { ascending: false })
+    .limit(limit * 4)
+  if (error) throw new Error(error.message)
+
+  const seen = new Set<string>()
+  const out: World[] = []
+  for (const row of (data ?? []) as unknown as { world: World | null }[]) {
+    const world = row.world
+    if (!world || world.is_published === false || seen.has(world.id)) continue
+    seen.add(world.id)
+    out.push(world)
+    if (out.length >= limit) break
+  }
+  return out
+}
+
 /** The Worlds somebody kept. */
 export async function listFavouriteWorlds(userId: string): Promise<World[]> {
   const { data, error } = await supabase

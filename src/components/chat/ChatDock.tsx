@@ -784,6 +784,21 @@ export function ChatDock({ children }: { children: ReactNode }) {
 
   const openChat = useCallback(() => setPhone('list'), [])
 
+  /*
+   * How much room the dock is taking, told to the page rather than guessed
+   * by it. The column is `w-72` inside `px-6`, so this is that plus the
+   * padding - written once, here, by the thing that knows whether the
+   * column is on screen at all. A number copied into a stylesheet would be
+   * wrong the first time the panel changes width.
+   */
+  const docked = !!profile && !profile.is_guest
+  useEffect(() => {
+    const root = document.documentElement
+    if (!docked) return
+    root.style.setProperty('--dock-space', '20rem')
+    return () => { root.style.removeProperty('--dock-space') }
+  }, [docked])
+
   const value = useMemo(
     () => ({ openConversation, quiet, openChat, chatOpen: !!phone, chatUnread: unread }),
     [openConversation, quiet, openChat, phone, unread],
@@ -793,7 +808,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
     <ChatContext.Provider value={value}>
       {children}
 
-      {profile && !profile.is_guest && (
+      {docked && (
         <div className="pointer-events-none fixed bottom-0 right-0 z-40 hidden items-end gap-2 px-6 md:flex">
           {making && (
             <NewGroupDialog

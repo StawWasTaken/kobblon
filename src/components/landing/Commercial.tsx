@@ -20,7 +20,7 @@ import { asset } from '@/lib/asset'
 
 export function Commercial() {
   return (
-    <section className="border-y border-ink-line bg-ink-sunken">
+    <section className="border-y border-ink-line bg-ink">
       <div className="mx-auto grid max-w-[1400px] items-center gap-10 px-4 py-14 lg:grid-cols-[1fr_1.15fr]">
         <div>
           <p className="font-display text-xs uppercase tracking-[0.24em] text-brand-bright">

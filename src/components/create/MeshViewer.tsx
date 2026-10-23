@@ -338,7 +338,7 @@ export function MeshViewer({
         /* Left, not centred: the view switch sits bottom right, and a
            centred hint ran straight into it once that switch had a word on
            it. */
-        <span className="pointer-events-none absolute bottom-2 left-3 rounded-full bg-ink-sunken/80 px-3 py-1 font-display text-[10px] uppercase tracking-wider text-white/40">
+        <span className="pointer-events-none absolute bottom-2 left-3 rounded-full bg-ink/80 px-3 py-1 font-display text-[10px] uppercase tracking-wider text-white/40">
           Drag to turn
         </span>
       )}

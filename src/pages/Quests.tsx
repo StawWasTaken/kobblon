@@ -15,7 +15,6 @@ import { Note } from '@/components/ui/Note'
 import { Select } from '@/components/ui/Select'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { GuestGate } from '@/components/ui/GuestGate'
-import { Balance } from '@/components/money/Balance'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -691,14 +690,6 @@ export default function Quests() {
               </Button>
             )}
           </>
-        }
-        aside={
-          profile && (
-            <div className="rounded-2xl border border-ink-line bg-ink-raised px-5 py-4 text-right">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted">Your balance</p>
-              <Balance amount={profile.pixels ?? 0} size="lg" className="mt-1 justify-end" />
-            </div>
-          )
         }
       />
 

@@ -123,7 +123,7 @@ export function SendBrixDialog({ open, onClose, to, name, onSent }: {
           * cut is not a surprise that appears once somebody has committed
           * to a number.
           */}
-        <div className="space-y-2 rounded-xl border border-ink-line bg-ink-sunken p-3.5 text-sm">
+        <div className="space-y-2 rounded-xl border border-ink-line bg-ink p-3.5 text-sm">
           <div className="flex items-center justify-between gap-4">
             <span className="text-muted">Leaves you</span>
             <span className="font-bold"><Price amount={sane ? typed : 0} free="0" /></span>

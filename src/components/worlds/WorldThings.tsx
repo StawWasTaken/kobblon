@@ -22,10 +22,10 @@ function AddTile({ to, says }: { to: string; says: string }) {
       to={to}
       className="group flex w-32 flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center outline-none transition-colors hover:border-ink-line focus-visible:border-brand"
     >
-      <span className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-dashed border-ink-line text-2xl text-ink-soft transition-colors group-hover:border-brand group-hover:text-brand">
+      <span className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-dashed border-ink-line text-2xl text-muted transition-colors group-hover:border-brand group-hover:text-brand">
         <Glyph icon={faPlus} />
       </span>
-      <span className="text-sm font-semibold text-ink-soft transition-colors group-hover:text-ink-strong">
+      <span className="text-sm font-semibold text-muted transition-colors group-hover:text-white">
         {says}
       </span>
     </Link>
@@ -43,15 +43,15 @@ function Thing({
 }) {
   return (
     <div className="flex w-32 flex-col items-center gap-3 p-4 text-center">
-      <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-ink-line bg-ink-sunken">
+      <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-ink-line bg-ink">
         {picture ? (
           <img src={picture} alt="" className="h-full w-full object-cover" />
         ) : (
-          <Glyph icon={fallback} className="text-2xl text-ink-soft" />
+          <Glyph icon={fallback} className="text-2xl text-muted" />
         )}
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-sm font-semibold text-ink-strong">{name}</span>
+        <span className="block truncate text-sm font-semibold text-white">{name}</span>
         {under}
       </span>
     </div>
@@ -113,7 +113,7 @@ export function WorldThings({
               picture={one.icon_url}
               fallback={faAward}
               under={
-                <span className="mt-0.5 block text-xs text-ink-soft">
+                <span className="mt-0.5 block text-xs text-muted">
                   {formatCount(one.awarded_count)} earned
                 </span>
               }
@@ -126,7 +126,7 @@ export function WorldThings({
               picture={one.icon_url}
               fallback={faBagShopping}
               under={
-                <span className="mt-0.5 block text-xs font-bold text-ink-soft">
+                <span className="mt-0.5 block text-xs font-bold text-muted">
                   {one.price > 0
                     ? <><CurrencyMark className="mr-0.5" />{formatCount(one.price)}</>
                     : 'Free'}
