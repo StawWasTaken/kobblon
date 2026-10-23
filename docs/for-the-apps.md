@@ -10751,3 +10751,80 @@ expect a larger opening - no API changed, the sizes did.
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and forty-one
+
+Staw: "i also want a proper redesign of the Contact us popup card and also of
+the popup cards for each violation". Both are shared components the Workspace
+mounts, so read this one.
+
+### `Dialog` takes a `head`
+
+`@/components/ui/Dialog` has a new optional prop:
+
+```ts
+head?: ReactNode   // drawn instead of the title and description
+```
+
+When it is given, the title bar is replaced by whatever you pass, and the
+close button is drawn over it at the top right. `title` is still required and
+is still the accessible name - a crest says nothing to a screen reader.
+Nothing that does not pass `head` changes. The body's scroll cap is now
+`max-h-[65vh]` on a phone and `70vh` from `sm` up, so a card with a tall head
+still shows its footer.
+
+### `TicketCard` is a wizard now, and the order changed
+
+It was four steps rendered at once inside a 70vh scroller - about two and a
+half phone screens of form with a numbered rail counting steps nobody was
+being walked through. It now shows **one step at a time** with a pressable
+progress strip across the head and Back/Next in the footer.
+
+What this means if you mount it:
+
+- **The props did not change.** `open`, `username`, `onClose`, `onSend`,
+  `sending`, and the same `onSend` payload. A Workspace panel mounting it
+  needs no edit.
+- **`Step` is no longer exported** from `@/pages/Support`. If anything over
+  there imported it, it is gone; the one-step-at-a-time card has no use for a
+  numbered rail. `Tiles`, `topics`, `statusLook` and `lookOf` are unchanged.
+- **The order of the steps changed**: about, what happened, device, you. It
+  used to open on "who you are", which is the part Kobblon already knows and
+  the part that is optional. If you screenshot or document this flow, it is
+  four different screens now.
+- The last step ticks green only once it has been reached, and amber is kept
+  for the one thing on the form that can actually be wrong rather than
+  unanswered: an email that does not parse or two that do not match.
+
+### `RowCard` - the violation popup
+
+Same three shapes as Settings, Account standing and Support: a head, groups of
+rows, an action bar. The verdict, the date and whether it is still on are in a
+tinted head - red while it is on, blue once it has been taken back - and the
+facts are now `Line`s from `@/components/settings/Panel`, so "Who decided it /
+Kobby" is drawn by the same code as "Username / @staw". The reason is
+left-aligned rather than centred, because it runs to a paragraph on a bad day.
+
+Two things that matter to you:
+
+- **The appeal bar no longer scrolls away.** "Appeal this", "Close" and
+  "Open on its own page" are in the Dialog's footer. On a long record the
+  appeal button used to be below the fold, which is exactly where somebody
+  who wants to appeal cannot find it.
+- **A `<Link>` was in there and is now a plain `<a href>`.** That was the
+  fourth instance of the bug that has taken a Workspace panel down three
+  times: this card is mounted by your panels, which have no router, and a
+  `<Link>` outside one throws. If you mount `RowCard` today, it would have
+  blanked the panel the moment a row with a `violation_id` opened. Fixed
+  here; nothing for you to do but know it was real.
+
+### Where to look at them
+
+`tools/site/popups-preview.html?v=ticket|live|void|warn` mounts both cards
+with **no router, no auth provider and no toast provider**, which is how you
+mount them. If either throws there, your panel goes blank instead. Both were
+walked through end to end in a browser against the built source.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

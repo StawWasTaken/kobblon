@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faShieldHalved, faComments, faArrowRight, faRobot, faClock,
   faCircleCheck, faGavel, faArrowUpRightFromSquare, faWandMagicSparkles,
-  faMicrophoneSlash,
+  faMicrophoneSlash, faScaleBalanced, faUserShield, faChartLine,
 } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
 import { Panel, Group, Line, PageTop } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
@@ -129,43 +129,65 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
 
 /* --------------------------------------------------------- the popup card */
 
-/*
- * Redrawn to match the suspension card the Launcher shows.
+/**
+ * Everything Kobblon did about one thing, in one card.
  *
- * Staw asked for them to be the same thing, and they should have been from
- * the start: a person who has just been quieted in a World sees one of
- * these, taps through to their standing, and sees the other about the same
- * sanction. Two layouts for one event reads as two systems.
+ * Staw: "a proper redesign ... of the popup cards for each violation". What
+ * it was: a centred crest, a centred verdict, a centred paragraph, then a
+ * two-column grid of facts, then the rule, then the appeal. Centred text is
+ * right for four words and wrong for forty, and a two-column grid of
+ * label-over-value is a shape this product uses nowhere else - so the one
+ * card a person reads when they are upset was also the one card that did not
+ * look like anything else they had read that day.
  *
- * So this takes the suspension card's shape - the icon in a disc, the one
- * line that says what happened, a hairline, then the facts - rather than
- * the stack of bordered rows it was. What it keeps that the small card
- * cannot carry: the rule in full, the appeal and its answer, and the bar.
+ * It is now the same three shapes as Settings, Account standing and Support:
+ * a head, groups of rows, and an action bar that does not scroll away. The
+ * facts are `Line`s, so "Who decided it / A moderator" is drawn by the same
+ * code as "Username / @staw", and the appeal is a panel of its own rather
+ * than a card wedged between two others.
+ *
+ * The verdict, the date and whether it is still on live in the head, which
+ * is tinted by how it ended - red while it is on, blue once it has been
+ * taken back. That is the first thing somebody wants and it is now the first
+ * thing on the card, above the fold on a phone.
  */
 
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">{label}</p>
-      <div className="mt-1 text-sm leading-relaxed">{children}</div>
-    </div>
-  )
+/** One fact about the sanction, drawn the way a setting is. */
+function Fact({ label, value, icon, danger }: {
+  label: string
+  value: React.ReactNode
+  icon?: IconDefinition
+  danger?: boolean
+}) {
+  return <Line label={label} value={value} icon={icon} danger={danger} />
 }
 
-/** The disc at the top: the action's own icon, tinted by how it ended. */
+/** The disc in the head: the action's own icon, tinted by how it ended. */
 function Crest({ one }: { one: ModerationRow }) {
   const tone = one.is_void
-    ? 'border-space/40 bg-space/10 text-space-bright'
+    ? 'border-space/40 bg-space/15 text-space-bright'
     : stillOn(one)
-      ? 'border-danger/40 bg-danger/10 text-danger'
+      ? 'border-danger/40 bg-danger/15 text-danger'
       : 'border-ink-line bg-ink-raised text-white/70'
 
   return (
     <span className={cn(
-      'mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border',
+      'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border',
       tone,
     )}>
       <Glyph icon={historyIcon[one.action] ?? faShieldHalved} className="text-xl" />
+    </span>
+  )
+}
+
+/** A word on the head, for a state worth saying before anything is read. */
+function Flag({ tone, children }: { tone: string; children: React.ReactNode }) {
+  return (
+    <span className={cn(
+      'rounded-full border px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+      tone,
+    )}>
+      {children}
     </span>
   )
 }
@@ -224,52 +246,88 @@ export function RowCard({ one, onClose, onAppealed }: {
   const over = !!one.until && new Date(one.until) < new Date()
   const live = stillOn(one)
 
+  /* The row's own channels, not the action's name: a timeout stored as
+     `chat_timeout` that took voice as well is called "Chat suspended" by the
+     word list, and the person whose microphone is dead has been told
+     something untrue. */
+  const verdict = one.action === 'chat_timeout' && one.channels.includes('voice')
+    ? 'Chat and voice suspended'
+    : historyWord[one.action] ?? one.action
+
+  const band = one.is_void
+    ? 'from-space/20'
+    : live
+      ? 'from-danger/20'
+      : 'from-white/[0.06]'
+
   return (
-    <Dialog open onClose={onClose} title={rowTitle(one)} size="lg">
-      <div className="space-y-5">
-        {/* ------------------------------------------------- the head */}
-        <div className="text-center">
-          <Crest one={one} />
-
-          <p className="mt-3 font-display text-xl font-extrabold leading-tight">
-            {/* The row's own channels, not the action's name: a timeout
-                stored as `chat_timeout` that took voice as well is called
-                "Chat suspended" by the word list, and the person whose
-                microphone is dead has been told something untrue. */}
-            {one.action === 'chat_timeout' && one.channels.includes('voice')
-              ? 'Chat and voice suspended'
-              : historyWord[one.action] ?? one.action}
-          </p>
-
-          <p className="mt-1 text-sm text-muted">
-            {stamp(one.at)}
-            {heldFor(one) && <> · {heldFor(one)}</>}
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            <ByBadge rank={one.by_rank} />
-            {live && (
-              <span className="rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-danger">
-                Still on
-              </span>
-            )}
-            {one.is_void && (
-              <span className="rounded-full border border-space/40 bg-space/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
-                Taken back
-              </span>
-            )}
-            {spoken && (
-              <span className="rounded-full border border-ink-line bg-ink-raised px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                Heard in voice
-              </span>
-            )}
+    <Dialog
+      open
+      onClose={onClose}
+      title={rowTitle(one)}
+      size="lg"
+      head={
+        <div className={cn('bg-gradient-to-br to-ink-card px-5 py-5', band)}>
+          <div className="flex items-start gap-4 pr-10">
+            <Crest one={one} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                {stamp(one.at)}
+                {heldFor(one) && <> · {heldFor(one)}</>}
+              </p>
+              <h2 className="mt-1 font-display text-xl font-extrabold leading-tight sm:text-2xl">
+                {verdict}
+              </h2>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <ByBadge rank={one.by_rank} />
+                {live && (
+                  <Flag tone="border-danger/40 bg-danger/10 text-danger">Still on</Flag>
+                )}
+                {one.is_void && (
+                  <Flag tone="border-space/40 bg-space/10 text-space-bright">Taken back</Flag>
+                )}
+                {spoken && (
+                  <Flag tone="border-ink-line bg-ink-raised text-muted">Heard in voice</Flag>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+      }
+      footer={
+        <div className="flex w-full flex-wrap items-center gap-3">
+          {/*
+            * A plain anchor, not <Link>. This card is mounted by the
+            * Workspace's panels, which have no router, and a <Link> outside
+            * one throws and takes the panel down - that has already happened
+            * three times on this platform, and this was the fourth waiting
+            * to be found.
+            */}
+          {one.violation_id ? (
+            <a
+              href={`/standing/${one.violation_id}`}
+              className="flex min-w-0 items-center gap-2 text-sm font-bold text-link hover:underline"
+            >
+              <span className="truncate">Open on its own page</span>
+              <Glyph icon={faArrowUpRightFromSquare} className="shrink-0 text-xs" />
+            </a>
+          ) : <span className="flex-1" />}
 
-        <hr className="border-ink-line" />
-
-        {/* --------------------------------------------- what and why */}
-        <p className="whitespace-pre-wrap text-center text-sm leading-relaxed text-white/75">
+          <div className="ml-auto flex items-center gap-3">
+            {one.appealable && !writing && (
+              <Button variant="subtle" icon={faGavel} onClick={() => setWriting(true)}>
+                Appeal this
+              </Button>
+            )}
+            <Button variant="ghost" onClick={onClose}>Close</Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-5">
+        {/* Why, in the words it was written in. Left-aligned: this runs to a
+            paragraph on a bad day, and centred prose is a poster. */}
+        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-white/85">
           {one.reason}
         </p>
 
@@ -289,117 +347,130 @@ export function RowCard({ one, onClose, onAppealed }: {
           gravity={one.gravity}
         />
 
-        {one.by_rank === 'kobby' && (
-          <Note icon={faRobot}>{kobbyLine}</Note>
-        )}
+        {one.by_rank === 'kobby' && <Note icon={faRobot}>{kobbyLine}</Note>}
 
         {/* ------------------------------------------------- the facts */}
-        <Card className="grid gap-4 p-4 sm:grid-cols-2">
-          <Fact label="Who decided it">
-            <span className="font-bold">{byWord[one.by_rank]}</span>
-          </Fact>
+        <div className="space-y-2.5">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            The facts of it
+          </h3>
+          <Group>
+            <Fact
+              label="Who decided it"
+              icon={one.by_rank === 'kobby' ? faRobot : faUserShield}
+              value={byWord[one.by_rank]}
+            />
 
-          {heldFor(one) && (
-            <Fact label="For how long">
-              <span className="font-bold">{heldFor(one)}</span>
-              {one.until && (
-                <span className="text-white/60">
-                  {over ? `, ended ${day(one.until)}` : `, until ${day(one.until)}`}
-                </span>
-              )}
-            </Fact>
-          )}
-
-          <Fact label="What it was about">
-            <span className="font-bold">
-              {one.rule_ord ? `Rule ${one.rule_ord}, ` : ''}
-              {one.rule_title ?? ruleWord[one.rule] ?? one.rule}
-            </span>
-            {!!one.gravity && (
-              <span className="text-white/60">
-                {' '}· {(gravityWord[one.gravity] ?? '').toLowerCase()}.
-              </span>
+            {heldFor(one) && (
+              <Fact
+                label="For how long"
+                icon={faClock}
+                value={
+                  <>
+                    {heldFor(one)}
+                    {one.until && (over ? `, ended ${day(one.until)}` : `, until ${day(one.until)}`)}
+                  </>
+                }
+              />
             )}
-          </Fact>
 
-          {(one.kind === 'chat' || !!one.channels.length || !!one.blocks.length) && (
-            <Fact label="What it switched off">
-              <span className="font-bold">
-                {one.blocks.length
-                  ? one.blocks.map((b) => blockWord[b] ?? b).join(', ')
-                  : channelsLine(one.channels)}
-              </span>
-            </Fact>
-          )}
+            <Fact
+              label="What it was about"
+              icon={faScaleBalanced}
+              value={
+                <>
+                  {one.rule_ord ? `Rule ${one.rule_ord}, ` : ''}
+                  {one.rule_title ?? ruleWord[one.rule] ?? one.rule}
+                  {!!one.gravity && <> · {(gravityWord[one.gravity] ?? '').toLowerCase()}</>}
+                </>
+              }
+            />
 
-          <Fact label="On your behaviour bar">
-            {one.counts && one.weight >= 1 ? (
-              <span className="font-bold">
-                {Math.round(one.weight)} points, fading as it ages.
-              </span>
-            ) : (
-              <span className="font-bold text-space-bright">
-                Nothing. Faded, taken back, or cleared.
-              </span>
+            {(one.kind === 'chat' || !!one.channels.length || !!one.blocks.length) && (
+              <Fact
+                label="What it switched off"
+                icon={faComments}
+                value={
+                  one.blocks.length
+                    ? one.blocks.map((b) => blockWord[b] ?? b).join(', ')
+                    : channelsLine(one.channels)
+                }
+              />
             )}
-          </Fact>
 
-          {one.is_void && (
-            <Fact label="This was taken back">
-              <p className="text-space-bright">
-                {one.void_reason ?? 'An appeal was upheld, so this no longer counts against you.'}
-              </p>
-            </Fact>
-          )}
-        </Card>
+            <Fact
+              label="On your behaviour bar"
+              icon={faChartLine}
+              value={
+                one.counts && one.weight >= 1
+                  ? `${Math.round(one.weight)} points, fading as it ages`
+                  : 'Nothing. Faded, taken back, or cleared.'
+              }
+            />
+
+            {one.is_void && (
+              <Line
+                label="This was taken back"
+                icon={faCircleCheck}
+                note={one.void_reason
+                  ?? 'An appeal was upheld, so this no longer counts against you.'}
+              />
+            )}
+          </Group>
+        </div>
 
         {/* ------------------------------------------------- the appeal */}
         {one.appeal_status && (
-          <Card className="space-y-3 p-4">
-            <p className="flex items-center gap-2 font-display text-base font-extrabold">
-              <Glyph
-                icon={one.appeal_status === 'upheld' ? faCircleCheck : faGavel}
-                className={cn(
-                  'text-sm',
-                  one.appeal_status === 'upheld' ? 'text-space-bright'
-                    : one.appeal_status === 'worsened' ? 'text-danger'
-                      : one.appeal_status === 'declined' ? 'text-muted' : 'text-brand-bright',
+          <div className="space-y-2.5">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              Your appeal
+            </h3>
+            <Card className="space-y-3 p-4">
+              <p className="flex flex-wrap items-center gap-2 font-display text-base font-extrabold">
+                <Glyph
+                  icon={one.appeal_status === 'upheld' ? faCircleCheck : faGavel}
+                  className={cn(
+                    'text-sm',
+                    one.appeal_status === 'upheld' ? 'text-space-bright'
+                      : one.appeal_status === 'worsened' ? 'text-danger'
+                        : one.appeal_status === 'declined' ? 'text-muted' : 'text-brand-bright',
+                  )}
+                />
+                {one.appeal_status === 'upheld' ? 'Your appeal was upheld'
+                  : one.appeal_status === 'worsened' ? 'We looked again, and it went the other way'
+                    : one.appeal_status === 'declined' ? 'Your appeal was declined'
+                      : 'Your appeal is being looked at'}
+                {one.appeals_used > 1 && (
+                  <span className="text-sm font-bold text-muted">· second go</span>
                 )}
-              />
-              {one.appeal_status === 'upheld' ? 'Your appeal was upheld'
-                : one.appeal_status === 'worsened' ? 'We looked again, and it went the other way'
-                  : one.appeal_status === 'declined' ? 'Your appeal was declined'
-                    : 'Your appeal is being looked at'}
-              {one.appeals_used > 1 && (
-                <span className="text-sm font-bold text-muted">· second go</span>
+              </p>
+              <p className="text-sm leading-relaxed text-muted">
+                {one.appeal_status === 'open'
+                  ? 'It is with somebody who was not part of the decision. You will be told either way, here and in your inbox.'
+                  : `Answered ${one.appeal_decided_at ? stamp(one.appeal_decided_at) : ''}.`}
+              </p>
+              {one.appeal_body && (
+                <div>
+                  <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                    What you sent
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+                    {one.appeal_body}
+                  </p>
+                </div>
               )}
-            </p>
-            <p className="text-sm leading-relaxed text-muted">
-              {one.appeal_status === 'open'
-                ? 'It is with somebody who was not part of the decision. You will be told either way, here and in your inbox.'
-                : `Answered ${one.appeal_decided_at ? stamp(one.appeal_decided_at) : ''}.`}
-            </p>
-            {one.appeal_body && (
-              <div>
-                <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                  What you sent
-                </p>
-                <p className="whitespace-pre-wrap rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
-                  {one.appeal_body}
-                </p>
-              </div>
-            )}
-            {one.appeal_note && (
-              <div>
-                <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                  What we said
-                </p>
-                <p className="whitespace-pre-wrap rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
-                  {one.appeal_note}
-                </p>
-              </div>
-            )}
-          </Card>
+              {one.appeal_note && (
+                <div>
+                  <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                    What we said
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+                    {one.appeal_note}
+                  </p>
+                </div>
+              )}
+            </Card>
+          </div>
         )}
 
         {writing && (
@@ -435,7 +506,7 @@ export function RowCard({ one, onClose, onAppealed }: {
         )}
 
         {one.appealable && !writing && (
-          <p className="text-center text-sm text-muted">
+          <p className="text-sm leading-relaxed text-muted">
             {one.appeals_used ? 'You have one more go at this' : 'You can appeal this'}
             {one.appeal_closes_at && <> until <span className="font-bold text-white">{day(one.appeal_closes_at)}</span></>}.
             {spoken && one.timeout_id && (
@@ -454,25 +525,6 @@ export function RowCard({ one, onClose, onAppealed }: {
             )}
           </p>
         )}
-
-        {/* ------------------------------------------------- the footer */}
-        <div className="flex flex-wrap items-center gap-3 border-t border-ink-line pt-4">
-          {one.violation_id && (
-            <Link
-              to={`/standing/${one.violation_id}`}
-              className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
-            >
-              Open this on its own page
-              <Glyph icon={faArrowUpRightFromSquare} className="text-xs" />
-            </Link>
-          )}
-          <div className="ml-auto flex items-center gap-3">
-            {one.appealable && !writing && (
-              <Button variant="subtle" onClick={() => setWriting(true)}>Appeal this</Button>
-            )}
-            <Button variant="ghost" onClick={onClose}>Close</Button>
-          </div>
-        </div>
       </div>
     </Dialog>
   )

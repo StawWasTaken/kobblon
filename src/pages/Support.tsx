@@ -5,7 +5,7 @@ import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
   faCircleQuestion, faCheck, faUser, faEnvelope,
-  faBolt,
+  faBolt, faArrowLeft, faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -99,40 +99,6 @@ export const lookOf = (status: string) =>
 /** An email, loosely. The server checks it too, and neither check is proof. */
 const looksLikeEmail = (text: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text.trim())
 
-/* ------------------------------------------------------- one numbered step */
-
-export function Step({ n, title, note, children, done, last }: {
-  n: number
-  title: string
-  note?: string
-  children: React.ReactNode
-  done?: boolean
-  /** The last step draws no line down from it. `last:` cannot do this: the
-   *  steps are siblings of a Dialog's other children, not of each other. */
-  last?: boolean
-}) {
-  return (
-    <section className={cn('relative flex gap-4', last ? 'pb-0' : 'pb-7')}>
-      {!last && <span className="absolute bottom-0 left-[15px] top-9 w-px bg-ink-line" />}
-      <span
-        className={cn(
-          'relative grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm font-extrabold',
-          done
-            ? 'border-space/50 bg-space/15 text-space-bright'
-            : 'border-ink-line bg-ink-raised text-white/70',
-        )}
-      >
-        {done ? <Glyph icon={faCheck} className="text-xs" /> : n}
-      </span>
-      <div className="min-w-0 flex-1 pt-1">
-        <h3 className="font-display text-lg font-extrabold leading-none">{title}</h3>
-        {note && <p className="mt-1.5 text-sm leading-relaxed text-muted">{note}</p>}
-        <div className="mt-3">{children}</div>
-      </div>
-    </section>
-  )
-}
-
 /** The tile row the device and category pick from, which is the visual bit. */
 export function Tiles<T extends string>({ value, onChange, options, label }: {
   value: T | null
@@ -169,21 +135,85 @@ export function Tiles<T extends string>({ value, onChange, options, label }: {
   )
 }
 
+/* --------------------------------------------------------- the four steps */
+
 /**
- * The card itself, which the page opens and nothing else needs.
- *
- * It is its own component so it can be mounted on its own under
- * `tools/site/` and looked at - and because the page should not be the only
- * place this shape exists. It takes no provider it cannot be given: the
- * username is a prop rather than a `useAuth` call, which is the mistake that
- * has taken a Workspace panel down three times.
+ * The names on the progress strip, in order. Short enough that four of them
+ * fit across a phone, which is the only constraint on them.
  */
+const STEP_NAMES = ['About', 'What happened', 'Device', 'You'] as const
+
+/**
+ * The strip across the top of the card: where you are, where you have been,
+ * and how much is left.
+ *
+ * It is pressable, and that is the point of drawing it rather than printing
+ * "Step 2 of 4". Going back is the thing somebody actually wants from a form
+ * - to change the one answer they got wrong - and a Back button only reaches
+ * the step behind. Forward is allowed only where everything before it is
+ * answered, so the strip never promises a step the form will refuse to take.
+ */
+function Progress({ at, done, go }: {
+  at: number
+  done: boolean[]
+  go: (i: number) => void
+}) {
+  return (
+    <ol className="flex gap-1.5">
+      {STEP_NAMES.map((name, i) => {
+        const here = i === at
+        const reachable = i <= at || done.slice(0, i).every(Boolean)
+        return (
+          <li key={name} className="min-w-0 flex-1">
+            <button
+              type="button"
+              disabled={!reachable}
+              onClick={() => go(i)}
+              aria-current={here ? 'step' : undefined}
+              className="w-full text-left disabled:cursor-default"
+            >
+              <span
+                className={cn(
+                  'block h-1 rounded-full transition-colors',
+                  here ? 'bg-brand-bright' : done[i] ? 'bg-space' : 'bg-white/15',
+                )}
+              />
+              <span
+                className={cn(
+                  'mt-1.5 flex items-center gap-1 truncate text-[11px] font-extrabold uppercase tracking-wide',
+                  here ? 'text-white' : done[i] ? 'text-space-bright' : 'text-white/35',
+                )}
+              >
+                {done[i] && !here && <Glyph icon={faCheck} className="text-[9px]" />}
+                <span className="truncate">{name}</span>
+              </span>
+            </button>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
 /**
  * The card itself, as a popup.
  *
- * Staw wanted it over the page rather than pushed into it, which is also
- * what the Dialog already gives for free: Escape closes it, focus is trapped
- * inside it while it is open, and the page behind stops scrolling.
+ * Staw: "i also want a proper redesign of the Contact us popup card". What
+ * was wrong with it was not the paint. All four steps were on screen at once
+ * inside a box that scrolls at 70vh, so the form was a column about two and a
+ * half phone screens long with a numbered rail down the side of it counting
+ * steps nobody was being walked through. A stepper that shows every step is
+ * a long form wearing a stepper's clothes.
+ *
+ * So it is one step at a time, and the four ticks at the top are now worth
+ * something: they are where you are, and they are how you get back to the
+ * answer you want to change.
+ *
+ * The order changed with it. It used to open on "who you are", which is the
+ * one part Kobblon already knows and the one part that is optional - a person
+ * who clicked Contact us was met by a form asking for their email twice
+ * before it asked what was wrong. Now it opens on what it is about and ends
+ * on how to reach you, which is also the order the ticket is read in.
  *
  * It is its own component so it can be mounted on its own under
  * `tools/site/` and looked at - and it takes no provider it cannot be given:
@@ -205,6 +235,12 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
   }) => void
   sending?: boolean
 }) {
+  const [at, setAt] = useState(0)
+  /* How far anybody has actually got. The last step is optional, so without
+     this it ticks itself green before it has been seen - a form congratulating
+     somebody for answering a question it never asked. */
+  const [furthest, setFurthest] = useState(0)
+  const go = (i: number) => { setAt(i); setFurthest((f) => Math.max(f, i)) }
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [again, setAgain] = useState('')
@@ -216,53 +252,176 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
 
   const emailGiven = email.trim().length > 0
   const emailOk = !emailGiven || (looksLikeEmail(email) && email.trim() === again.trim())
-  const ready = !!topic && !!device && emailOk
-    && subject.trim().length >= 3 && body.trim().length >= 10
+  const said = subject.trim().length >= 3 && body.trim().length >= 10
+
+  /* One per step, in the strip's order. `ready` is all four. */
+  const done = [!!topic, said, !!device, emailOk && furthest >= 3]
+  const ready = done.every(Boolean)
+  const last = at === STEP_NAMES.length - 1
+
+  /*
+   * What the footer says when the step is not finished. It names the thing
+   * that is missing rather than printing "required": a person who has typed
+   * a subject and no description should be told which half is short, not
+   * that the form is unhappy with them in general.
+   */
+  const wrongEmail = at === 3 && emailGiven && !emailOk
+  const missing = [
+    'Pick the one that fits best.',
+    subject.trim().length < 3
+      ? 'A line saying what it is about.'
+      : 'A few more words about what happened.',
+    'Pick what you were on.',
+    emailGiven && !looksLikeEmail(email)
+      ? 'That does not look like an email address.'
+      : 'The two emails do not match.',
+  ][at]
+
+  const topicHere = topics.find((one) => one.value === topic)
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title="Contact us"
-      description="Four steps."
       size="lg"
+      head={
+        <div className="space-y-3.5 bg-ink-raised px-5 py-4">
+          <div className="pr-10">
+            <h2 className="font-display text-xl font-extrabold leading-none">Contact us</h2>
+            <p className="mt-1.5 text-sm text-muted">
+              {[
+                'What is this about?',
+                'Tell us what happened.',
+                'What were you using at the time?',
+                'How we reach you, if we need to.',
+              ][at]}
+            </p>
+          </div>
+          <Progress at={at} done={done} go={go} />
+        </div>
+      }
       footer={
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="min-w-0 flex-1 text-sm text-muted">
-            {ready
-              ? 'Ready to send.'
-              : 'Fill in the four steps and Continue switches on.'}
+        <div className="flex w-full flex-wrap items-center gap-3">
+          <p className={cn(
+            /* Above the buttons on a phone, beside them on a desktop. Under
+               them, the sentence that says what is missing is the last thing
+               on the card and the first thing a thumb covers. */
+            'order-first w-full min-w-0 text-sm sm:order-none sm:w-auto sm:flex-1',
+            /* A prompt is not an error. Amber is kept for the one thing on
+               this form that can actually be wrong rather than unanswered:
+               an email that does not parse, or two that do not match. */
+            wrongEmail ? 'text-amber-300' : 'text-muted',
+          )}>
+            {done[at]
+              ? last
+                ? ready ? 'That is everything. Send it.' : 'Finish the ticked steps above.'
+                : 'Looks good.'
+              : missing}
           </p>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+
           <Button
-            icon={faArrowRight}
-            loading={sending}
-            disabled={!ready}
-            onClick={() => {
-              if (!topic || !device) return
-              onSend({
-                topic,
-                subject: subject.trim(),
-                body: body.trim(),
-                contact_email: emailGiven ? email.trim() : null,
-                first_name: firstName.trim() || null,
-                device,
-                wants_human: wantsHuman,
-              })
-            }}
+            variant="ghost"
+            icon={faArrowLeft}
+            onClick={() => (at === 0 ? onClose() : setAt(at - 1))}
           >
-            Continue
+            {at === 0 ? 'Cancel' : 'Back'}
           </Button>
+
+          {last ? (
+            <Button
+              icon={faPaperPlane}
+              loading={sending}
+              disabled={!ready}
+              onClick={() => {
+                if (!topic || !device) return
+                onSend({
+                  topic,
+                  subject: subject.trim(),
+                  body: body.trim(),
+                  contact_email: emailGiven ? email.trim() : null,
+                  first_name: firstName.trim() || null,
+                  device,
+                  wants_human: wantsHuman,
+                })
+              }}
+            >
+              Send ticket
+            </Button>
+          ) : (
+            <Button icon={faArrowRight} disabled={!done[at]} onClick={() => go(at + 1)}>
+              Next
+            </Button>
+          )}
         </div>
       }
     >
-      <Step
-        n={1}
-        title="Who you are"
-        note="Your account is already on this ticket. An email is only needed if the account itself is the problem."
-        done={emailOk && emailGiven}
-      >
+      {at === 0 && (
         <div className="space-y-3">
+          <Tiles
+            label="What it is about"
+            value={topic}
+            onChange={(value) => { setTopic(value); go(1) }}
+            options={topics.map((one) => ({
+              value: one.value, label: one.short, icon: one.icon,
+            }))}
+          />
+          {topicHere && (
+            <p className="flex items-start gap-2.5 rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+              <Glyph icon={topicHere.icon} className="mt-0.5 shrink-0 text-sm text-brand-bright" />
+              <span><span className="font-bold text-white">{topicHere.label}</span> · {topicHere.note}</span>
+            </p>
+          )}
+        </div>
+      )}
+
+      {at === 1 && (
+        <div className="space-y-3.5">
+          <Input
+            label="In one line"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            maxLength={140}
+            placeholder="The short version"
+          />
+          <div>
+            <label
+              htmlFor="ticket-body"
+              className="mb-1.5 block text-sm font-bold"
+            >
+              What happened
+            </label>
+            <textarea
+              id="ticket-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={7}
+              maxLength={4000}
+              placeholder="What you did, what you expected, and what happened instead."
+              className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+            />
+            <p className="mt-1.5 text-xs text-muted">{4000 - body.length} characters left.</p>
+          </div>
+
+          <Tickbox
+            on={wantsHuman}
+            onChange={setWantsHuman}
+            label="Have a person read this one"
+          />
+        </div>
+      )}
+
+      {at === 2 && (
+        <Tiles
+          label="What you were on"
+          value={device}
+          onChange={(value) => { setDevice(value); go(3) }}
+          options={devices}
+        />
+      )}
+
+      {at === 3 && (
+        <div className="space-y-3.5">
           {username && (
             <div className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
               <Glyph icon={faUser} className="text-sm text-brand-bright" />
@@ -274,6 +433,11 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
               </span>
             </div>
           )}
+
+          <p className="text-sm leading-relaxed text-muted">
+            The reply lands on this ticket and in your inbox either way. An email is only
+            needed if the account itself is the problem - then it is the way back.
+          </p>
 
           <Input
             label="First name (optional)"
@@ -303,16 +467,6 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
             />
           </div>
 
-          {emailGiven && !looksLikeEmail(email) && (
-            <p className="text-sm font-semibold text-amber-300">
-              That does not look like an email address.
-            </p>
-          )}
-          {emailGiven && looksLikeEmail(email) && email.trim() !== again.trim() && (
-            <p className="text-sm font-semibold text-amber-300">
-              The two emails do not match.
-            </p>
-          )}
           {emailGiven && emailOk && (
             <p className="flex items-center gap-2 text-sm font-semibold text-space-bright">
               <Glyph icon={faEnvelope} className="text-xs" />
@@ -320,66 +474,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
             </p>
           )}
         </div>
-      </Step>
-
-      <Step
-        n={2}
-        title="What you were on"
-        note="It halves the questions we have to ask you back."
-        done={!!device}
-      >
-        <Tiles label="What you were on" value={device} onChange={setDevice} options={devices} />
-      </Step>
-
-      <Step n={3} title="What it is about" done={!!topic}>
-        <Tiles
-          label="What it is about"
-          value={topic}
-          onChange={setTopic}
-          options={topics.map((one) => ({
-            value: one.value, label: one.short, icon: one.icon,
-          }))}
-        />
-        {topic && (
-          <p className="mt-2.5 text-sm leading-relaxed text-muted">
-            {topics.find((one) => one.value === topic)?.note}
-          </p>
-        )}
-      </Step>
-
-      <Step
-        n={4}
-        title="Describe your issue"
-        note="What you did, what you expected, and what happened instead."
-        done={subject.trim().length >= 3 && body.trim().length >= 10}
-        last
-      >
-        <div className="space-y-3">
-          <Input
-            label="In one line"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            maxLength={140}
-            placeholder="The short version"
-          />
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={6}
-            maxLength={4000}
-            placeholder="What happened, in your own words."
-            aria-label="Describe your issue"
-            className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
-          />
-          <p className="text-xs text-muted">{4000 - body.length} characters left.</p>
-
-          <Tickbox
-            on={wantsHuman}
-            onChange={setWantsHuman}
-            label="Have a person read this one"
-          />
-        </div>
-      </Step>
+      )}
     </Dialog>
   )
 }

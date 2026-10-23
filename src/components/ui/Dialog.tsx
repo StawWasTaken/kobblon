@@ -16,6 +16,7 @@ export function Dialog({
   description,
   children,
   footer,
+  head,
   size = 'md',
 }: {
   open: boolean
@@ -24,6 +25,16 @@ export function Dialog({
   description?: string
   children?: ReactNode
   footer?: ReactNode
+  /**
+   * Drawn instead of the title and description, for a card whose top is the
+   * thing itself rather than a label for it - a sanction's crest and verdict,
+   * a form's progress. The close button stays wherever this goes, because a
+   * popup that can only be left by guessing at Escape is not a popup.
+   *
+   * `title` is still required and still the accessible name: a screen reader
+   * reads the card out by it, and a crest says nothing to one.
+   */
+  head?: ReactNode
   size?: 'sm' | 'md' | 'lg'
 }) {
   const panel = useRef<HTMLDivElement>(null)
@@ -102,20 +113,33 @@ export function Dialog({
           size === 'lg' && 'sm:max-w-2xl',
         )}
       >
-        <div className="flex items-start gap-4 border-b border-ink-line px-5 py-4">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-extrabold">{title}</h2>
-            {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+        {head ? (
+          <div className="relative overflow-hidden rounded-t-2xl border-b border-ink-line">
+            {head}
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-lg bg-black/25 text-white/70 backdrop-blur-sm transition-colors hover:bg-black/45 hover:text-white"
+            >
+              <Glyph icon={faXmark} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <Glyph icon={faXmark} />
-          </button>
-        </div>
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-5 kob-scroll">{children}</div>
+        ) : (
+          <div className="flex items-start gap-4 border-b border-ink-line px-5 py-4">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-extrabold">{title}</h2>
+              {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+            </div>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <Glyph icon={faXmark} />
+            </button>
+          </div>
+        )}
+        <div className="max-h-[65vh] overflow-y-auto px-5 py-5 kob-scroll sm:max-h-[70vh]">{children}</div>
         {footer && (
           <div className="flex items-center justify-end gap-2 border-t border-ink-line px-5 py-4">{footer}</div>
         )}
