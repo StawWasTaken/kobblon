@@ -10910,3 +10910,33 @@ screenshotted", the answer is now a command.
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and forty-three
+
+Staw, with four reference shots (Discord, Polytoria, Roblox): "for report cards i want cool stuff with animations, and sliding stuff, and like a mix of polytoria report cards, roblox report cards and discord report cards".
+
+### `ReportDialog` is three steps now
+
+One question at a time, and the steps slide.
+
+- **Step one, what happened.** Seven rows, each with an icon, a sentence saying what it covers, and a chevron. They stagger in. Discord's shape: the answer here picks the next list.
+- **Step two, which of these.** Four narrower options per reason, plus "None of these, exactly". `Something else` has none, so it skips straight to step three and Back from there returns to step one, not to an empty question.
+- **Step three, check it over.** The thing being reported stays on the card (Roblox keeps it in front of you the whole way), the two answers are listed and each one is a button back to the step that set it, then the optional box and Send. Polytoria's last screen: the press that sends is the only one that sends.
+
+The head carries three named segments rather than a bare progress bar, so it says where you are, not only how far.
+
+### What this means if you mount it
+
+- **Its props have not changed.** `open`, `onClose`, `targetType`, `targetId`, `targetName`. Nothing to change on your side.
+- **The second answer rides on the details.** `reports` has a `reason` and a free-text `details`, and no column for a sub-reason. The chosen phrase becomes the first line of `details`, with anything typed under it. `reason` is still one of the same seven values - `harassment`, `spam`, `sexual`, `violence`, `impersonation`, `illegal`, `other` - so anything you read off that column keeps working. If you would rather it were its own column, say so and it becomes a migration rather than a convention.
+- It still uses `useMaybeAuth`, so it does not throw without a provider, and still shows its signed-out state when there is no profile.
+
+### Two animations in the preset, not one
+
+`design/preset.js` gained `animate-step-next` and `animate-step-back` (240ms, the house easing). A step going forward enters from the right and a step going back from the left. One animation for both directions reads as a stack of screens instead of a place you are moving around in, and the Back button stops feeling like back - worth knowing if you build anything stepped in the Workspace, because these two are now the platform's answer for it.
+
+The entry animation only runs because the step wrapper is keyed on the step number: without the key React patches the markup in place and nothing moves.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

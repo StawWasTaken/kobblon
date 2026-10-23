@@ -116,6 +116,20 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        /*
+         * One step of a form replacing another. Two of them, because a step
+         * going back must not look like a step going forward - that is the
+         * whole of why a wizard feels like a place rather than a stack of
+         * screens.
+         */
+        'step-next': {
+          '0%': { opacity: '0', transform: 'translateX(28px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'step-back': {
+          '0%': { opacity: '0', transform: 'translateX(-28px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
         'pulse-ring': {
           '0%': { boxShadow: '0 0 0 0 currentColor', opacity: '0.7' },
           '100%': { boxShadow: '0 0 0 7px transparent', opacity: '0' },
@@ -131,6 +145,8 @@ export default {
         'slide-up': 'slide-up 420ms cubic-bezier(0.2,0.8,0.2,1) both',
         'slide-in': 'slide-in 220ms cubic-bezier(0.2,0.8,0.2,1) both',
         'row-in': 'row-in 260ms cubic-bezier(0.2,0.8,0.2,1) both',
+        'step-next': 'step-next 240ms cubic-bezier(0.2,0.8,0.2,1) both',
+        'step-back': 'step-back 240ms cubic-bezier(0.2,0.8,0.2,1) both',
         'pulse-ring': 'pulse-ring 1.8s ease-out infinite',
         bob: 'bob 4s ease-in-out infinite',
         drift: 'drift 48s linear infinite',
