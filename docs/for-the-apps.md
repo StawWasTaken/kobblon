@@ -10680,3 +10680,43 @@ the favourites list are called exactly as before.
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and thirty-nine
+
+### Account standing and Support joined the settings language
+
+Staw: "i want these pages to be redesigned to be compatible and coherent
+with the settings page". They are the same journey - somebody in trouble
+goes Settings, standing, ticket in one sitting - and they opened three
+different ways: an avatar over a gradient, a kicker above a 48px heading
+with an icon, and the same again in another colour.
+
+So all three now open with **`PageTop`** (a name, one line, and whatever the
+page is for on the right - no kicker, because small caps above a heading
+repeats the heading) and are built from the same `Panel` / `Group` / `Line`
+/ `Choice` as Settings. `PageTop` is exported from
+`@/components/settings/Panel` with the rest.
+
+What that actually changed, beyond chrome:
+
+- **Standing.** The behaviour score keeps its own card, because a score, its
+  band and the bar are one picture and cutting that into labelled rows would
+  be coherence doing damage. Everything after it - what a suspension would
+  cost today, what is switched off, a cleared record, a closed account - is
+  a `Line` in one `Group`. The `Bought` note component is gone.
+- **Support.** The two link cards are a `Group` of two `Line`s, the same
+  shape Settings uses for exactly those two links, and a ticket is a `Line`
+  with its status as the action. The list of tickets reads like a list of
+  settings now, which is correct: they are rows you open.
+
+Two changes inside `Line` that came out of it and are worth copying:
+
+- **Value before note.** A row reads name, what it is set to, then why. The
+  other way round it is an explanation that happens to end in an answer.
+- **The name wraps rather than truncating**, up to two lines. On a phone a
+  ticket called "I cannot sig…" beside a badge is a row nobody can tell from
+  the one under it.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

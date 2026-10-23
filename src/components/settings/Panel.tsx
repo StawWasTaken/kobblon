@@ -77,7 +77,12 @@ export function Group({ children, className }: { children: ReactNode; className?
 export function Line({
   label, note, value, icon, to, onClick, action, danger, className,
 }: {
-  label: string
+  /**
+   * Usually a string. It takes a node for the rows that carry a badge
+   * beside the name - a ticket that is urgent, a sanction that is still on -
+   * because that badge belongs on the name's line and nowhere else.
+   */
+  label: ReactNode
   /** One short line. Where it would take two, it wants its own page. */
   note?: ReactNode
   /** What it is set to right now, for a row that is showing rather than asking. */
@@ -102,11 +107,19 @@ export function Line({
       )}
 
       <span className="min-w-0 flex-1">
-        <span className={cn('block text-sm font-bold', danger && 'text-danger')}>{label}</span>
-        {note && <span className="mt-0.5 block text-xs leading-relaxed text-muted">{note}</span>}
+        {/* Wraps rather than truncates: a row's name is the thing it is, and
+            on a phone "I cannot sig…" beside a badge is a row nobody can
+            tell from the one under it. Two lines, then it gives up. */}
+        <span className={cn('block line-clamp-2 text-sm font-bold', danger && 'text-danger')}>
+          {label}
+        </span>
+        {/* What it is set to, then why - in that order. The other way
+            round, a row reads as an explanation that happens to end in an
+            answer, and the answer is the thing somebody came for. */}
         {value !== undefined && (
-          <span className="mt-1 block truncate text-sm text-white/70">{value}</span>
+          <span className="mt-0.5 block truncate text-sm text-white/70">{value}</span>
         )}
+        {note && <span className="mt-0.5 block text-xs leading-relaxed text-muted">{note}</span>}
       </span>
 
       {action && <span className="ml-auto shrink-0 pl-2">{action}</span>}
@@ -180,5 +193,39 @@ export function Choice({ on, onClick, swatch, title, note, disabled }: {
         />
       )}
     </button>
+  )
+}
+
+/**
+ * The top of a page in this family: a name, one line, and whatever the page
+ * is for on the right.
+ *
+ * Settings, Account standing and Support are one journey - somebody who is
+ * in trouble goes through all three in a sitting - and they used to open
+ * three different ways: an avatar and a gradient, a kicker over a 48px
+ * heading with an icon, and the same again in another colour. Staw: "i want
+ * these pages to be redesigned to be compatible and coherent with the
+ * settings page".
+ *
+ * So one opening for all three. No kicker: a word in small caps above a
+ * heading repeats what the heading already says, and the rail or the back
+ * link says where you are better than it ever did.
+ */
+export function PageTop({ title, note, aside, action }: {
+  title: string
+  note?: string
+  /** A face, where the page is about one person's account. */
+  aside?: ReactNode
+  action?: ReactNode
+}) {
+  return (
+    <header className="flex flex-wrap items-center gap-3">
+      {aside}
+      <div className="min-w-0 flex-1">
+        <h1 className="truncate font-display text-2xl font-extrabold sm:text-3xl">{title}</h1>
+        {note && <p className="mt-0.5 text-sm text-muted">{note}</p>}
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
+    </header>
   )
 }

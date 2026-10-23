@@ -7,7 +7,7 @@ import {
   faMicrophoneSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { Panel, Group, Line, PageTop } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
@@ -50,28 +50,6 @@ import type { ModerationRow } from '@/types/db'
  * server, because a number a page could compute is a number a page could
  * compute differently from the thing enforcing it.
  */
-
-/**
- * The one line that says what the bar bought, and when it climbs back.
- *
- * Two boxes, which is one too many: the only thing anybody wants off this
- * part of the page is how long a suspension would be today and when the
- * number moves.
- */
-export function Bought({ minutes, next }: { minutes: number; next?: string | null }) {
-  const said = minutes < 60
-    ? `${minutes} minutes`
-    : minutes < 1440
-      ? `${Math.round(minutes / 60)} hours`
-      : `${Math.round(minutes / 1440)} day`
-
-  return (
-    <Note icon={faClock}>
-      A chat suspension today would last <span className="font-bold text-white">{said}</span>
-      {next && <>, and the bar climbs again <span className="font-bold text-white">{next}</span></>}.
-    </Note>
-  )
-}
 
 /* -------------------------------------------------------------- one row */
 
@@ -518,12 +496,13 @@ export default function Standing() {
   const me = bar.data
 
   return (
-    <Page width="narrow" className="space-y-6">
-      <PageHeader
-        kicker="Your account"
-        icon={faShieldHalved}
+    /* The same column a settings panel is read in. These three pages are
+       one journey and a row of settings that is half as wide on one of them
+       reads as a different product. */
+    <Page className="space-y-7 [&>*]:max-w-3xl">
+      <PageTop
         title="Account standing"
-        lead="Where your behaviour stands, and everything ever decided about this account."
+        note="Where your behaviour stands, and everything ever decided about this account."
       />
 
       {/* ------------------------------------------------------- the bar */}
@@ -531,93 +510,106 @@ export default function Standing() {
       {bar.error && <ErrorState message={bar.error} onRetry={bar.reload} />}
 
       {!!me && (
-        <Card className="space-y-5 p-6 sm:p-7">
-          <div className="flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-muted">
-                Behaviour
-              </p>
-              <h2
-                className={cn(
-                  'mt-1 font-display text-2xl font-extrabold sm:text-3xl',
-                  bandTone[me.band],
-                )}
-              >
+        <Panel
+          title="Behaviour"
+          note="A better bar is a gentler version of every rule, and it climbs back on its own."
+        >
+          {/*
+           * The one thing on this page that is not a row of settings, and
+           * it keeps its own card: a score, its band and the bar itself are
+           * a single picture, and cutting them into labelled rows would be
+           * coherence doing damage. Everything that follows it is a row.
+           */}
+          <Card className="space-y-5 p-5 sm:p-6">
+            <div className="flex items-end justify-between gap-4">
+              <h3 className={cn('font-display text-2xl font-extrabold sm:text-3xl', bandTone[me.band])}>
                 {bandWord[me.band]}
-              </h2>
+              </h3>
+              <p className={cn('shrink-0 font-display text-3xl font-extrabold tabular-nums sm:text-4xl', bandTone[me.band])}>
+                {me.score}
+                <span className="text-lg text-muted">/100</span>
+              </p>
             </div>
-            <p className={cn('shrink-0 font-display text-4xl font-extrabold tabular-nums sm:text-5xl', bandTone[me.band])}>
-              {me.score}
-              <span className="text-xl text-muted">/100</span>
-            </p>
-          </div>
 
-          <BehaviourBar score={me.score} band={me.band} tall />
+            <BehaviourBar score={me.score} band={me.band} tall />
 
-          <p className="leading-relaxed text-white/70">{bandLine[me.band]}</p>
+            <p className="text-sm leading-relaxed text-white/70">{bandLine[me.band]}</p>
+          </Card>
 
-          <Bought
-            minutes={me.timeout_minutes}
-            next={me.score < 100 && !me.permanent && me.next_at ? inDays(me.next_at) : null}
-          />
+          <Group>
+            <Line
+              label="A chat suspension today"
+              note={
+                me.score < 100 && !me.permanent && me.next_at
+                  ? `The bar climbs again ${inDays(me.next_at)}.`
+                  : undefined
+              }
+              icon={faClock}
+              value={
+                me.timeout_minutes < 60
+                  ? `${me.timeout_minutes} minutes`
+                  : me.timeout_minutes < 1440
+                    ? `${Math.round(me.timeout_minutes / 60)} hours`
+                    : `${Math.round(me.timeout_minutes / 1440)} day`
+              }
+            />
 
-          {me.permanent && (
-            <p className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm leading-relaxed text-white/80">
-              This account has been closed. That does not fade, and the bar does not climb back.
-              The decision and the appeal are still readable below.
-            </p>
-          )}
+            {!!live && (level !== 'clear' || !!live.blocks.length) && (
+              <Line
+                label="This account"
+                note={
+                  live.blocks.length
+                    ? `Switched off right now: ${live.blocks.map((one) => blockWord[one] ?? one).join(', ')}${live.until ? ` until ${day(live.until)}` : ''}.`
+                    : undefined
+                }
+                icon={faGavel}
+                value={levelWord[level]}
+                danger
+              />
+            )}
 
-          {me.score === 100 && !me.cleared_at && (
-            <p className="flex items-center gap-2 text-sm font-semibold text-space-bright">
-              <Glyph icon={faCircleCheck} className="text-xs" />
-              Nothing is pressing on your bar. Keep it that way and this page stays boring.
-            </p>
-          )}
+            {me.permanent && (
+              <Line
+                label="This account has been closed"
+                note="That does not fade, and the bar does not climb back. The decision and the appeal are still readable below."
+                icon={faGavel}
+                danger
+              />
+            )}
 
-          {me.cleared_at && (
-            <p className="flex items-start gap-3 rounded-xl border border-space/40 bg-space/10 px-4 py-3 text-sm leading-relaxed text-white/80">
-              <Glyph icon={faWandMagicSparkles} className="mt-0.5 text-space-bright" />
-              <span>
-                A superadmin cleared your record on {day(me.cleared_at)}. Everything before then
-                stops counting against you.
-                {me.cleared_note && <> They wrote: “{me.cleared_note}”</>}
-              </span>
-            </p>
-          )}
-        </Card>
-      )}
+            {me.score === 100 && !me.cleared_at && !me.permanent && (
+              <Line
+                label="Nothing is pressing on your bar"
+                note="Keep it that way and this page stays boring."
+                icon={faCircleCheck}
+              />
+            )}
 
-      {/* --------------------------------------------- what is switched off */}
-      {!!live && (level !== 'clear' || !!live.blocks.length) && (
-        <Card className="flex flex-wrap items-center gap-4 p-5">
-          <span className="text-xs font-extrabold uppercase tracking-wide text-muted">
-            Account
-          </span>
-          <span className="font-bold">{levelWord[level]}</span>
-          {!!live.blocks.length && (
-            <span className="min-w-0 flex-1 text-sm leading-relaxed text-white/70">
-              Switched off right now:{' '}
-              <span className="font-bold text-white">
-                {live.blocks.map((one) => blockWord[one] ?? one).join(', ')}
-              </span>
-              {live.until && ` until ${day(live.until)}`}.
-            </span>
-          )}
-        </Card>
+            {me.cleared_at && (
+              <Line
+                label={`A superadmin cleared your record on ${day(me.cleared_at)}`}
+                note={
+                  <>
+                    Everything before then stops counting against you.
+                    {me.cleared_note && <> They wrote: &ldquo;{me.cleared_note}&rdquo;</>}
+                  </>
+                }
+                icon={faWandMagicSparkles}
+              />
+            )}
+          </Group>
+        </Panel>
       )}
 
       {/* ------------------------------------------------------ the history */}
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-xl font-extrabold">Everything on record</h2>
-          {!!history.data?.length && (
-            <p className="text-sm text-muted">
-              {history.data.length} in total · tap one for the whole story
-            </p>
-          )}
-        </div>
-
+      <Panel
+        title="Everything on record"
+        note={
+          history.data?.length
+            ? `${history.data.length} in total. Open one for the whole story.`
+            : undefined
+        }
+      >
         {history.loading && <Skeleton className="h-32 rounded-2xl" />}
         {history.error && <ErrorState message={history.error} onRetry={history.reload} />}
 
@@ -633,30 +625,25 @@ export default function Standing() {
         )}
 
         {!!history.data?.length && (
-          <Card className="overflow-hidden p-0">
+          <Group>
             <ul className="divide-y divide-ink-line">
               {history.data.map((one) => (
                 <HistoryRow key={one.key} one={one} onOpen={() => setOpen(one.key)} />
               ))}
             </ul>
-          </Card>
+          </Group>
         )}
-      </section>
+      </Panel>
 
-      <Note
-        icon={faComments}
-        side={
-          <Link
-            to="/support"
-            className="flex items-center gap-2 text-sm font-bold text-link hover:underline"
-          >
-            Open a ticket
-            <Glyph icon={faArrowRight} className="text-xs" />
-          </Link>
-        }
-      >
-        Appeals go on the decision itself, in its card above.
-      </Note>
+      {/* The way out of this page, in the shape the other two use for it. */}
+      <Group>
+        <Line
+          label="Write to us"
+          note="Appeals go on the decision itself, in its card above. Anything else is a ticket."
+          icon={faComments}
+          to="/support"
+        />
+      </Group>
 
       {showing && (
         <RowCard

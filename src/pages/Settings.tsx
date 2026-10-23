@@ -9,7 +9,7 @@ import {
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
 import { BrowseRail, BrowseFrame } from '@/components/browse/BrowseRail'
-import { Panel, Group, Line, Choice } from '@/components/settings/Panel'
+import { Panel, Group, Line, Choice, PageTop } from '@/components/settings/Panel'
 import { Button } from '@/components/ui/Button'
 import { DiscordLink } from '@/components/social/DiscordLink'
 import { Input } from '@/components/ui/Input'
@@ -481,21 +481,19 @@ export default function Settings() {
        * normal case for this platform - and nothing else is, because the
        * rail says what the page holds and the panel says where you are.
        */}
-      <header className="flex items-center gap-3">
-        <Avatar
-          src={avatarOf(profile)}
-          personId={profile?.id}
-          name={profile?.display_name ?? 'You'}
-          size="md"
-          className="rounded-xl"
-        />
-        <div className="min-w-0">
-          <h1 className="truncate font-display text-2xl font-extrabold sm:text-3xl">Settings</h1>
-          <p className="truncate text-sm text-muted">
-            {profile ? `@${profile.username}` : 'Your account'}
-          </p>
-        </div>
-      </header>
+      <PageTop
+        title="Settings"
+        note={profile ? `@${profile.username}` : 'Your account'}
+        aside={
+          <Avatar
+            src={avatarOf(profile)}
+            personId={profile?.id}
+            name={profile?.display_name ?? 'You'}
+            size="md"
+            className="rounded-xl"
+          />
+        }
+      />
 
       <BrowseFrame
         rail={

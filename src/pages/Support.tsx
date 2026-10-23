@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
@@ -9,13 +9,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { Panel, Group, Line, PageTop } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
 import { GuestGate } from '@/components/ui/GuestGate'
-import { Note } from '@/components/ui/Note'
 import { Tickbox } from '@/components/ui/Tickbox'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -431,60 +430,51 @@ export default function Support() {
   }
 
   return (
-    <Page width="narrow" className="space-y-6">
-      <PageHeader
-        kicker="Help"
-        icon={faHeadset}
+    /* The same column a settings panel is read in. These three pages are
+       one journey and a row of settings that is half as wide on one of them
+       reads as a different product. */
+    <Page className="space-y-7 [&>*]:max-w-3xl">
+      <PageTop
         title="Support"
-        lead="Write to us. Everything you send, and everything we say back, stays on this page."
-        actions={
+        note="Write to us. Everything you send, and everything we say back, stays on this page."
+        action={
           <GuestGate action="write to support">
-            <Button
-              icon={faPlus}
-              onClick={startWriting}
-              disabled={!profile || writing}
-            >
+            <Button icon={faPlus} onClick={startWriting} disabled={!profile || writing}>
               New ticket
             </Button>
           </GuestGate>
         }
       />
 
-      {/* The two things most people are actually looking for. */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Link
+      {/* The two places most people actually meant to go, in the shape
+          Settings uses for exactly this. */}
+      <Group>
+        <Line
+          label="Where you stand"
+          note="A decision against your account is appealed there, not here."
+          icon={faScaleBalanced}
           to="/standing"
-          className="flex items-start gap-4 rounded-2xl border border-ink-line bg-ink-card p-5 transition-colors hover:bg-ink-hover"
-        >
-          <Glyph icon={faScaleBalanced} className="mt-1 text-lg text-brand-bright" />
-          <span className="min-w-0">
-            <span className="block font-bold">Where you stand</span>
-            <span className="mt-0.5 block text-sm leading-relaxed text-muted">
-              A decision against your account is appealed there, not here.
-            </span>
-          </span>
-        </Link>
-        <Link
+        />
+        <Line
+          label="The rules"
+          note="Every policy, split by subject, each with the day it last changed."
+          icon={faScroll}
           to="/policies"
-          className="flex items-start gap-4 rounded-2xl border border-ink-line bg-ink-card p-5 transition-colors hover:bg-ink-hover"
-        >
-          <Glyph icon={faScroll} className="mt-1 text-lg text-brand-bright" />
-          <span className="min-w-0">
-            <span className="block font-bold">The rules</span>
-            <span className="mt-0.5 block text-sm leading-relaxed text-muted">
-              Every policy, split by subject, each with the day it last changed.
-            </span>
-          </span>
-        </Link>
-      </div>
+        />
+      </Group>
 
-      <section className="space-y-3">
-        <h2 className="font-display text-xl font-extrabold">Your tickets</h2>
-
+      <Panel
+        title="Your tickets"
+        note={
+          tickets.data?.length
+            ? 'A reply lands here and in your inbox.'
+            : undefined
+        }
+      >
         {tickets.loading && <Skeleton className="h-24 rounded-2xl" />}
         {tickets.error && <ErrorState message={tickets.error} onRetry={tickets.reload} />}
 
-        {!tickets.loading && !tickets.data?.length && (
+        {!tickets.loading && !tickets.data?.length && !tickets.error && (
           <Card>
             <EmptyState
               mood="emptyBox"
@@ -501,62 +491,65 @@ export default function Support() {
           </Card>
         )}
 
-        {tickets.data?.map((ticket) => {
-          const look = lookOf(ticket.status)
-          const was = devices.find((one) => one.value === ticket.device)
-          return (
-            <button
-              key={ticket.id}
-              type="button"
-              onClick={() => setReading(ticket.id)}
-              className="block w-full text-left"
-            >
-              <Card className="flex flex-wrap items-center gap-3 p-5 transition-colors hover:bg-ink-hover">
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
-                      {topics.find((one) => one.value === ticket.topic)?.label ?? ticket.topic}
-                    </span>
-                    <span className="text-xs text-muted">·</span>
-                    <span className="text-xs text-muted">
-                      Last moved {timeAgo(ticket.updated_at)}
-                    </span>
-                    {was && (
-                      <>
-                        <span className="text-xs text-muted">·</span>
-                        <span className="flex items-center gap-1.5 text-xs text-muted">
-                          <Glyph icon={was.icon} className="text-[10px]" />
-                          {was.label}
+        {!!tickets.data?.length && (
+          <Group>
+            {tickets.data.map((ticket) => {
+              const look = lookOf(ticket.status)
+              const was = devices.find((one) => one.value === ticket.device)
+              return (
+                <Line
+                  key={ticket.id}
+                  onClick={() => setReading(ticket.id)}
+                  label={
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      {ticket.wants_human && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
+                          <Glyph icon={faBolt} className="text-[9px]" />
+                          Urgent
                         </span>
-                      </>
-                    )}
-                  </span>
-                  <span className="mt-1 flex items-center gap-2">
-                    {ticket.wants_human && (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
-                        <Glyph icon={faBolt} className="text-[9px]" />
-                        Urgent
+                      )}
+                      <span className="min-w-0">{ticket.subject}</span>
+                    </span>
+                  }
+                  note={
+                    <span className="flex flex-wrap items-center gap-x-2">
+                      <span>{topics.find((one) => one.value === ticket.topic)?.label ?? ticket.topic}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>Last moved {timeAgo(ticket.updated_at)}</span>
+                      {was && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Glyph icon={was.icon} className="text-[10px]" />
+                            {was.label}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                  }
+                  action={
+                    <span className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                          look.look,
+                        )}
+                      >
+                        {look.word}
                       </span>
-                    )}
-                    <span className="min-w-0 truncate font-bold">{ticket.subject}</span>
-                  </span>
-                </span>
-                <span
-                  className={cn(
-                    'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
-                    look.look,
-                  )}
-                >
-                  {look.word}
-                </span>
-                <Glyph icon={faArrowRight} className="text-xs text-muted" />
-              </Card>
-            </button>
-          )
-        })}
-      </section>
+                      <Glyph icon={faArrowRight} className="hidden text-xs text-muted sm:block" />
+                    </span>
+                  }
+                />
+              )
+            })}
+          </Group>
+        )}
+      </Panel>
 
-      <Note>Kobblon never asks for your password, here or anywhere else.</Note>
+      <p className="px-1 text-xs leading-relaxed text-muted">
+        Kobblon never asks for your password, here or anywhere else.
+      </p>
 
       {reading !== null && (
         <TicketThread number={reading} onClose={shutCard} onChanged={tickets.reload} />
