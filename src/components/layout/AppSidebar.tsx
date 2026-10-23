@@ -5,12 +5,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { unreadMail } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import { sideNav } from './nav'
+import { sideNav, topNav } from './nav'
 import { profileLink } from '@/lib/links'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 
 /** Pending friend requests waiting on an answer from this person. */
-function useFriendRequestCount() {
+export function useFriendRequestCount() {
   const { profile } = useAuth()
   const [count, setCount] = useState(0)
 
@@ -45,7 +45,7 @@ function useFriendRequestCount() {
 }
 
 /** Unread post from Kobblon, which is counted apart from the bell. */
-function useMailCount() {
+export function useMailCount() {
   const { profile } = useAuth()
   const [count, setCount] = useState(0)
 
@@ -120,6 +120,38 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </NavLink>
           )
         })}
+
+        {/*
+          * The sections bar lives across the top and is hidden on a phone,
+          * so without this the drawer is half a menu there: Communities and
+          * the Catalog had no way in at all on a phone that was not the
+          * search field. It is a second group rather than more rows, because
+          * the rail is yours and these are the platform's, and running them
+          * together is how the two menus stopped meaning anything distinct.
+          */}
+        <p className="px-3.5 pb-1 pt-4 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-onbrand/40 lg:hidden">
+          Browse
+        </p>
+        <div className="space-y-1.5 lg:hidden">
+          {topNav.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-sm font-bold transition-colors',
+                  isActive
+                    ? 'bg-pick text-pick-on'
+                    : 'text-onbrand/75 hover:bg-onbrand/10 hover:text-onbrand',
+                )
+              }
+            >
+              <Glyph icon={item.icon} name={item.ours} className="w-5 text-[15px]" />
+              <span className="flex-1">{item.label}</span>
+            </NavLink>
+          ))}
+        </div>
       </nav>
 
       {profile && (

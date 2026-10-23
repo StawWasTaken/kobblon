@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Locked } from '@/components/social/Locked'
-import { AppSidebar, SidebarContent } from './AppSidebar'
+import { AppSidebar, SidebarContent, useFriendRequestCount, useMailCount } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
+import { PhoneBar } from './PhoneBar'
 import { NoticeBar } from './NoticeBar'
 import { ChatDock } from '@/components/chat/ChatDock'
 import { FriendRequestWatcher } from '@/components/social/FriendRequestToast'
 import { GuestNudge } from '@/components/auth/GuestNudge'
 import { SetPasswordCard } from '@/components/auth/SetPasswordCard'
-import { mobileNav } from './nav'
 import { cn } from '@/lib/cn'
 import { AdsProvider } from '@/components/ads/AdBanner'
 import { usePresence, useMyActivity, useMySpace } from '@/hooks/usePresence'
@@ -20,6 +19,8 @@ export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
   const location = useLocation()
   const { session, profile } = useAuth()
+  const requests = useFriendRequestCount()
+  const mail = useMailCount()
 
   // The dots on everybody's picture are only worth anything if the page
   // keeps saying that its person is here: once a minute into the row, for
@@ -87,41 +88,7 @@ export function AppShell() {
           </AdsProvider>
         </main>
 
-        <nav
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-line bg-ink-raised/95 backdrop-blur lg:hidden"
-          aria-label="Primary"
-        >
-          <ul className="flex" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-            {mobileNav.map((item) => (
-              <li key={item.to} className="flex-1">
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex flex-col items-center gap-1 py-2.5 text-[11px] font-bold transition-colors',
-                      isActive ? 'text-white' : 'text-white/50',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <span
-                        className={cn(
-                          'grid h-7 w-12 place-items-center rounded-lg text-base transition-colors',
-                          isActive && 'bg-pick text-pick-on',
-                        )}
-                      >
-                        <Glyph icon={item.icon} name={item.ours} />
-                      </span>
-                      {item.label}
-                    </>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <PhoneBar requests={requests} mail={mail} />
       </div>
 
       {/* A friend request that arrives while you are doing something else. */}

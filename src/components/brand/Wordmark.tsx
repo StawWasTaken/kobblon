@@ -101,7 +101,17 @@ export function Wordmark({ className, to = '/', always = false }: {
     </span>
   )
   return to ? (
-    <Link to={to} className="inline-flex items-center" aria-label="Kobblon home">
+    /*
+     * `shrink-0` on the link itself, not only on the span inside it.
+     *
+     * In the top bar this sits in a flex row beside a search field that
+     * asks for `w-full`, so the link - which had nothing saying otherwise -
+     * was squeezed to six pixels while the mark inside it stayed thirteen.
+     * The K then hung out of its own box and under the search field, which
+     * is the clipped logo on a phone. Staw: "the logomark looks weird on
+     * how you put it".
+     */
+    <Link to={to} className="inline-flex shrink-0 items-center" aria-label="Kobblon home">
       {img}
     </Link>
   ) : (

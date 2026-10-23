@@ -4829,8 +4829,24 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
   onChange: (next: Section) => void
   counts?: Partial<Record<Section, number>>
 }) {
+  /*
+   * A column beside the work on a monitor, a scrolling row above it on a
+   * phone.
+   *
+   * Stacked, fourteen panels is six hundred pixels of navigation before the
+   * first thing waiting to be done - so the console opened on a list of
+   * places to go rather than on the work, which is most of what "the
+   * dashboard fails on mobile" was. A row scrolls sideways inside its own
+   * box and costs one line.
+   */
   return (
-    <nav className="space-y-1" aria-label="What to work on">
+    <nav
+      className={cn(
+        'flex gap-1.5 overflow-x-auto pb-1 kob-scroll',
+        'lg:block lg:space-y-1 lg:overflow-visible lg:pb-0',
+      )}
+      aria-label="What to work on"
+    >
       {sections.filter((one) => allowed(rank, one.needs)).map((one, i) => {
         const on = one.name === value
         const many = counts?.[one.name] ?? 0
@@ -4842,11 +4858,12 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
             onClick={() => onChange(one.name)}
             style={{ animationDelay: `${i * 25}ms` }}
             className={cn(
-              'group relative flex w-full animate-row-in items-center gap-3 rounded-xl border px-3 py-2.5 text-left',
+              'group relative flex shrink-0 animate-row-in items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left',
+              'lg:w-full lg:gap-3',
               'transition-[background-color,border-color,transform] duration-150',
               on
                 ? 'border-brand-bright/60 bg-brand/15'
-                : 'border-transparent hover:translate-x-0.5 hover:bg-ink-hover',
+                : 'border-ink-line lg:border-transparent lg:hover:translate-x-0.5 lg:hover:bg-ink-hover',
             )}
           >
             {/* The bar that says where you are. It is on the border rather
@@ -4854,7 +4871,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
             <span
               aria-hidden="true"
               className={cn(
-                'absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-bright',
+                'absolute left-0 top-1/2 hidden h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-bright lg:block',
                 'transition-opacity duration-150',
                 on ? 'opacity-100' : 'opacity-0',
               )}
@@ -4870,11 +4887,11 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
                 className={cn('w-4 shrink-0 text-sm', on ? 'text-brand-bright' : 'text-white/35 group-hover:text-white/70')}
               />
             )}
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 lg:flex-1">
               <span className="flex items-center gap-2">
-                <span className={cn('truncate text-sm font-bold', !on && 'text-white/85')}>{one.name}</span>
+                <span className={cn('whitespace-nowrap text-sm font-bold lg:truncate', !on && 'text-white/85')}>{one.name}</span>
                 {one.needs !== 'moderator' && (
-                  <span className="rounded border border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted">
+                  <span className="hidden rounded border border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted lg:inline">
                     {one.needs === 'superadmin' ? 'Super' : 'Admin'}
                   </span>
                 )}
@@ -5057,13 +5074,18 @@ export default function Admin() {
         onFindPerson={(term) => { setLookFor(term); go('People') }}
       />
 
-      <div className="mx-auto grid max-w-[1500px] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      {/* `grid-cols-[minmax(0,1fr)]` for the one-column case, not a bare
+          grid: a single track is `auto`, so it sizes to its widest child,
+          and the rail on a phone is a scrolling row that is wider than the
+          screen on purpose. Without this the console scrolled sideways by
+          twelve hundred pixels and every panel was clipped. */}
+      <div className="mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
         {/*
           * The rail sticks and the work scrolls. On a phone it is a plain
           * block above the panel rather than a sticky strip eating a third
           * of the screen.
           */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <ConsoleRail rank={rank} value={open} onChange={go} counts={badges} />
           {rank !== 'superadmin' && (
             <p className="mt-3 px-3 text-[11px] leading-relaxed text-muted">

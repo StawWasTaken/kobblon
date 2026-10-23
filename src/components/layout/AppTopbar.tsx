@@ -96,16 +96,20 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
         />
       </div>
 
-      <div className="flex h-14 items-center gap-2 border-b-2 border-brand-ink/40 px-3 sm:gap-4 sm:px-4">
-        <button
-          onClick={onOpenNav}
-          aria-label="Open navigation"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 lg:hidden"
-        >
-          <Glyph icon={faBars} />
-        </button>
-
-        <Wordmark to="/home" className="h-5 shrink-0" />
+      <div className="flex h-14 items-center gap-3 border-b-2 border-brand-ink/40 px-3 sm:gap-4 sm:px-4">
+        {/*
+          * The mark goes first and the burger goes last, which is the one
+          * arrangement that stops the mark reading as wrong.
+          *
+          * It was between the burger and the search field, and Staw kept
+          * saying it looked off centre. It was not: measured, the gaps were
+          * twelve pixels either side and all three sat on one centre line.
+          * The fault was weight - a fifteen-pixel-wide K between two
+          * thirty-six-pixel blocks looks like something that fell in the
+          * gap, however exactly it is centred. At the edge it has a side of
+          * its own and nothing to be compared against.
+          */}
+        <Wordmark to="/home" className="h-7 shrink-0" />
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Sections">
           {topNav.map((item) => (
@@ -183,6 +187,14 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
           )}
 
           <UserMenu />
+
+          <button
+            onClick={onOpenNav}
+            aria-label="Open navigation"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 lg:hidden"
+          >
+            <Glyph icon={faBars} />
+          </button>
         </div>
       </div>
 

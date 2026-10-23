@@ -9967,3 +9967,87 @@ For looking at them: `npx vite --config vite.pages.config.mjs` then
 `node shoot-five-pages.mjs [width]`. It mounts each page from source with a
 fixture client and a signed-in fixture, because the signed-out shape is the
 one shape that cannot be checked against what Staw sees.
+
+## Round one hundred and twenty-eight - the phone: a bottom bar with a middle, and the mark moved to the edge
+
+**Nothing in this round changes a signature, a field or a limit.** It is the
+site's own chrome on a phone. The one line in it that matters most to you is
+the grid trap at the bottom, because it is the same one that cost the five
+pages in round one hundred and twenty-seven and it is now confirmed on a
+second page.
+
+**`@/components/layout/nav.ts` changed meaning, so it gets a line even though
+nothing breaks.**
+
+* `topNav` is now `NavItem[]` rather than `{to,label}[]`, and every entry
+  carries an `icon`. Anything of yours reading that list for labels still
+  works; anything typing it as the old shape does not.
+* `NavItem` gained `face?: boolean`. A slot with it shows the person's own
+  picture instead of a drawing.
+* `mobileNav` is a different five: **Home, Discover, You, Catalog, Friends**.
+  Create and Communities left it. They are not lost - see the drawer below -
+  but if you mirrored that array anywhere, it no longer says what it did.
+
+**The bottom bar is a component now: `@/components/layout/PhoneBar.tsx`.** It
+takes `requests` and `mail` as numbers and asks for nothing else, so it
+mounts outside the website; it reads `useAuth` for the picture, which means
+it needs that provider, and it is the one piece of this round that does.
+
+What it does, and why, because Staw sent Polytoria's bar and said he likes
+that part of theirs:
+
+* Five flush slots, icon over a small word, **no fill behind the one you are
+  on**. Ours had a solid `bg-pick` block behind the active icon, which on a
+  dark bar reads as a button somebody left pressed.
+* **The middle slot is the person's own avatar**, going to My Avatar. That is
+  the whole trick of theirs: the bar gets a middle instead of five things in
+  a line, and the one slot that is about you looks like you.
+* The slot you are on is said by a short brand bar **over** the slot, not
+  under the word, where the home indicator eats it.
+* **The counts are rendered.** `mobileNav` has declared `badge` since it was
+  written and the bar never drew one, so an unanswered friend request was
+  invisible on a phone. Friends keeps the fifth slot for exactly that reason:
+  it is the only slot that can carry a number.
+
+**The drawer on a phone now carries both menus.** The sections bar across the
+top is `lg:flex`, so on a phone it is not there at all - which meant
+Communities and the Catalog had **no way in on a phone except the search
+field**, and had not since the sections bar was written. `SidebarContent`
+renders `topNav` as a second group under a "Browse" heading, `lg:hidden`.
+
+**The mark in the top bar: it is at the left edge now and the burger is at
+the right.** Staw said twice that it looked wrong between them. It was not
+mis-centred - measured, the gaps were twelve pixels either side and all three
+sat on one centre line. The fault was weight: a fifteen-pixel-wide K between
+two thirty-six-pixel blocks looks like something that fell down a gap however
+exactly it is centred. At the edge it has a side of its own and nothing to be
+compared against. It is `h-7` rather than `h-5`. **If your window copies the
+old arrangement, it will draw the same complaint.**
+
+**The grid trap again, on the console.** `Admin.tsx` scrolled sideways by
+1231px on a phone for the same reason the five pages did: a single-column
+grid track is `auto`, so it sizes to its widest child, and the console rail
+is a scrolling row that is wider than the screen on purpose. It asks for
+`grid-cols-[minmax(0,1fr)]` now, with `min-w-0` on the column. Twice in two
+rounds. **Any grid of yours with one column and a scrolling row in it has
+this.**
+
+Measured, not judged by eye: all fifteen pages this harness reaches now
+report **0px** of sideways scroll at 390px, where the console was 1231px and
+four of the five pages were over before the last round.
+
+Not done, and said plainly:
+
+* The phone pass is the chrome and the overflow. The **pages themselves** at
+  390px have been measured, not redesigned - nothing on them was re-laid out
+  this round.
+* The console's panel lead is still truncated mid-word on a phone
+  ("whether the machine is keepin...").
+* The avatar in the middle slot draws from `useHeadshot` like everywhere
+  else, so it is the same picture, with the same wait, as the rail's.
+
+For looking at it: `npx vite --config vite.pages.config.mjs` then
+`node shoot-phone.mjs 390 [page...]`. It mounts the **real `AppShell`**, so
+the top bar, the drawer, the bottom bar and the chat dock are all in the
+shot, which is where most of what breaks on a phone actually lives. It prints
+each page's sideways spill and names anything sticking out past the edge.
