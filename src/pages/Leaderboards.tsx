@@ -213,16 +213,15 @@ function Podium({ top, unit }: { top: Entry[]; unit?: string }) {
       />
 
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-        {across.map((at, i) => {
+        {across.map((at) => {
           const one = top[at]
           const metal = metals[at]
           return (
             <Link
               key={one.key}
               to={one.to}
-              style={{ animationDelay: `${i * 90}ms` }}
               className={cn(
-                'group flex animate-row-in items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-ink-hover sm:flex-1 sm:flex-col sm:items-center sm:gap-0 sm:p-0 sm:hover:bg-transparent',
+                'group flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-ink-hover sm:flex-1 sm:flex-col sm:items-center sm:gap-0 sm:p-0 sm:hover:bg-transparent',
                 one.mine && 'ring-2 ring-brand-bright sm:ring-0',
               )}
             >
@@ -287,11 +286,10 @@ function Podium({ top, unit }: { top: Entry[]; unit?: string }) {
  * eye goes down the numbers, and the line says how far behind the leader
  * each one is without colouring the name.
  */
-function Row({ one, place, top, at, unit }: {
+function Row({ one, place, top, unit }: {
   one: Entry
   place: number
   top: number
-  at: number
   unit?: string
 }) {
   const part = top > 0 ? Math.max(0.02, one.amount / top) : 0
@@ -299,9 +297,8 @@ function Row({ one, place, top, at, unit }: {
   return (
     <Link
       to={one.to}
-      style={{ animationDelay: `${Math.min(at, 12) * 25}ms` }}
       className={cn(
-        'relative flex animate-row-in items-center gap-3 border-b border-ink-line/70 px-4 py-3 transition-colors last:border-0 hover:bg-ink-hover',
+        'relative flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 transition-colors last:border-0 hover:bg-ink-hover',
         one.mine && 'bg-brand/10',
       )}
     >
@@ -435,7 +432,7 @@ export default function Leaderboards() {
         <div className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h2 key={board} className="animate-step-next font-display text-2xl font-extrabold">
+              <h2 className="font-display text-2xl font-extrabold">
                 {chosen.label}
               </h2>
             </div>
@@ -482,7 +479,7 @@ export default function Leaderboards() {
               />
             </Card>
           ) : (
-            <div key={`${board}-${realSide}`} className="animate-step-next space-y-4">
+            <div key={`${board}-${realSide}`} className="space-y-4">
               <Podium top={top} unit={chosen.unit} />
 
               {rest.length > 0 && (
@@ -492,7 +489,7 @@ export default function Leaderboards() {
                     <p className="text-xs text-muted">{all.length} on the board</p>
                   </div>
                   {rest.map((one, at) => (
-                    <Row key={one.key} one={one} place={at + 4} at={at} top={leader} unit={chosen.unit} />
+                    <Row key={one.key} one={one} place={at + 4} top={leader} unit={chosen.unit} />
                   ))}
                 </Card>
               )}

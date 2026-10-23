@@ -75,7 +75,7 @@ function Question({ one }: { one: { q: string; a: string } }) {
       </summary>
       {/* The answer slides rather than appearing, which is the one bit of
           movement an accordion needs to read as one. */}
-      <p className="animate-step-next px-5 pb-4 text-sm text-muted">{one.a}</p>
+      <p className="px-5 pb-4 text-sm text-muted">{one.a}</p>
     </details>
   )
 }

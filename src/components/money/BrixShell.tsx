@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -11,7 +11,6 @@ import { CurrencyMark } from '@/components/brand/Currency'
 import { Page } from '@/components/layout/AppShell'
 import { useAuth } from '@/hooks/useAuth'
 import { useNewQuests } from '@/hooks/useNewQuests'
-import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -42,33 +41,6 @@ export const BRIX_TABS: { to: string; label: string; icon: IconDefinition; ours?
   { to: '/brix/codes', label: 'Redeem a code', icon: faGift },
 ]
 
-/** Counts up to a number rather than snapping to it. */
-function useCountUp(to: number, run: boolean) {
-  const reduced = useReducedMotion()
-  const [shown, setShown] = useState(reduced || !run ? to : 0)
-
-  useEffect(() => {
-    if (reduced || !run) {
-      setShown(to)
-      return
-    }
-    const from = 0
-    const started = performance.now()
-    const span = 650
-    let frame = 0
-    const tick = (now: number) => {
-      const part = Math.min(1, (now - started) / span)
-      /* Ease out: the number races away and settles, rather than crawling
-         the whole way at one speed. */
-      setShown(Math.round(from + (to - from) * (1 - (1 - part) ** 3)))
-      if (part < 1) frame = requestAnimationFrame(tick)
-    }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [to, run, reduced])
-
-  return shown
-}
 
 function Rail() {
   const { pathname } = useLocation()
@@ -126,9 +98,6 @@ function Rail() {
                 className="absolute right-1.5 top-1.5 flex h-2.5 w-2.5"
                 aria-label={`${unseen} new`}
               >
-                {/* The ring is the part that says "this arrived while you
-                    were elsewhere" rather than "this is a count". */}
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full text-brand-bright" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand-bright" />
               </span>
             )}
@@ -162,7 +131,6 @@ export function BrixShell({
 }) {
   const { profile } = useAuth()
   const balance = profile?.pixels ?? 0
-  const shown = useCountUp(balance, !!profile)
 
   return (
     <Page className="space-y-5">
@@ -180,7 +148,7 @@ export function BrixShell({
         />
 
         <div className="relative flex flex-wrap items-end justify-between gap-5 p-5 pb-4 sm:p-8 sm:pb-5">
-          <div className="min-w-0 animate-slide-up">
+          <div className="min-w-0">
             {/* The kicker carries the mark itself. The page's own glyph is
                 beside the title in the rail below; the word up here is the
                 currency, so the thing next to it is the currency. */}
@@ -198,13 +166,13 @@ export function BrixShell({
             {actions && <div className="mt-5 flex flex-wrap items-center gap-2">{actions}</div>}
           </div>
 
-          <div className="animate-slide-up rounded-2xl border border-ink-line bg-ink-raised/80 px-5 py-4 backdrop-blur-sm">
+          <div className="rounded-2xl border border-ink-line bg-ink-raised/80 px-5 py-4 backdrop-blur-sm">
             <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
               Your balance
             </p>
             <p className="mt-1 flex items-center gap-2 font-display text-3xl font-extrabold tabular-nums">
               <CurrencyMark className="h-7 w-7" />
-              {formatCount(shown)}
+              {formatCount(balance)}
             </p>
           </div>
         </div>
@@ -216,7 +184,7 @@ export function BrixShell({
 
       {/* Keyed on nothing: each page mounts its own children, and the one
           animation here is the page arriving under a rail that stayed put. */}
-      <div className="animate-slide-up">{children}</div>
+      <div>{children}</div>
     </Page>
   )
 }

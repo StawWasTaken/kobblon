@@ -11174,3 +11174,34 @@ Everything else this round is the page:
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and fifty - the Brix pages stop moving
+
+Staw: the four Brix pages have too much animation next to the rest of the
+site, which has none. He is right - Catalog, People, Communities, Discover,
+Library and Home contain not one `animate-` class between them, so these
+four read as a different product.
+
+Taken out:
+
+- `BrixShell`: the header and the page no longer slide up on arrival, and
+  **the balance no longer counts up** - `useCountUp` is deleted, not
+  disabled. The number is just the number.
+- The new-quest dot keeps the dot and loses the pulsing ring around it.
+- Leaderboards: the podium and the rows no longer fly in with staggered
+  delays, and the heading and board no longer slide when you change board.
+- The FAQ answer no longer slides in.
+
+Left in, and the only animation on the four: the reward card when a code
+takes, and the refusal when it does not. That one is a response to
+something you did, not page furniture.
+
+The `step-next`, `step-back`, `row-in`, `slide-up` and `pulse-ring`
+keyframes all still exist in `design/preset.js` and are still used
+elsewhere - nothing was removed from the design system, so a copy of it on
+your side needs no change. This was a decision about where to use them.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.
