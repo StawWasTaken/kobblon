@@ -85,8 +85,12 @@ const card = (
 Deno.serve(async (request) => {
   const asked = new URL(request.url)
   // Either ?path=/c/1016/name, or whatever follows the function's own name.
-  const path = asked.searchParams.get('path')
-    ?? asked.pathname.replace(/^\/functions\/v1\/og/, '')
+  // The parens are not style: Deno's bundler refuses ?? beside || without
+  // them, which is why this function has been failing to deploy since it
+  // was written. Asked first, then what follows the function's own name,
+  // then the front page.
+  const path = (asked.searchParams.get('path')
+    ?? asked.pathname.replace(/^\/functions\/v1\/og/, ''))
     || '/'
 
   const url = `${SITE}${path.startsWith('/') ? path : `/${path}`}`

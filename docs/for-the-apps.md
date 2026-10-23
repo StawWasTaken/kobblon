@@ -9867,3 +9867,31 @@ Kobblon's own official account - the platform itself." beside the two rows.
 
 Still waiting: `pg_cron` and `pg_net` are off, so Kobby and both sweeps run
 by hand. 0270 (the economy) also still needs applying if it has not been.
+
+## Round one hundred and twenty-six - the moderate function is live, and og never was
+
+Staw applied 0271 and asked for the worker to be redeployed. It deploys
+itself: `.github/workflows/functions.yml` runs on any push that touches
+`supabase/functions/**`, so the push in the last round already did it -
+"Deploying Function: moderate (script size: 86 kB) ... Deployed Functions on
+project". **Kobby is reading the standing line now.**
+
+What the log also showed: that workflow has been **red on every run**, and
+not because of the moderate function. It deploys the folder one function at
+a time and `og` fails to bundle:
+
+```
+Nullish coalescing operator(??) requires parens when mixing with logical
+operators at supabase/functions/og/index.ts:88
+```
+
+So `og` - the link-preview function, the thing that gives a Kobblon link its
+card in Discord and elsewhere - **has never deployed since it was written**,
+and because it is last in the loop alphabetically after moderate, everything
+before it went out and the red tick looked like a deploy failure of whatever
+was in that push. Parenthesised, which is what Deno wants, and this round's
+push takes it out.
+
+Worth carrying across: the Workspace's own functions, if it ever adds any,
+go out through the same loop, and one unbundleable file stops every function
+after it in the alphabet.
