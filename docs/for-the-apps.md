@@ -11338,3 +11338,16 @@ than at the landing page.
 - The wiki, the forum and the newsroom are ideas; nothing links to them.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 
+
+## Round one hundred and fifty-five - the footer hovers blue
+
+Every link in the footer goes to `brand-bright` on hover, not white - the
+column links, the social links, and the Discord and YouTube marks with
+them. Kobblue is the hover colour down there.
+
+### Still open
+
+- The landing page is still the old one.
+- `StoryPage` has not moved onto `AboutShell`.
+- The wiki, the forum and the newsroom are ideas; nothing links to them.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

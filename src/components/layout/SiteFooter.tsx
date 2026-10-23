@@ -66,7 +66,7 @@ function Column({ heading, links }: {
           <li key={one.to + one.label}>
             <Link
               to={one.to}
-              className="text-sm font-semibold text-white/55 transition-colors hover:text-white"
+              className="text-sm font-semibold text-white/55 transition-colors hover:text-brand-bright"
             >
               {one.label}
             </Link>
@@ -114,11 +114,11 @@ export function SiteFooter({ className }: { className?: string }) {
                     href={one.href}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="group flex items-center gap-2.5 text-sm font-semibold text-white/55 transition-colors hover:text-white"
+                    className="group flex items-center gap-2.5 text-sm font-semibold text-white/55 transition-colors hover:text-brand-bright"
                   >
                     <Glyph
                       icon={one.icon}
-                      className="h-4 w-4 text-white/35 transition-colors group-hover:text-white"
+                      className="h-4 w-4 text-white/35 transition-colors group-hover:text-brand-bright"
                     />
                     {one.label}
                   </a>
