@@ -11058,3 +11058,58 @@ changed, no migration. Four pages are still four pages and still mount on
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and forty-seven - the redeem page, the podium, and a copy pass
+
+Three things Staw asked for: the redeem page in the shape Roblox's own has
+but simpler, a new top three and list on the leaderboards, and the website
+being less wordy everywhere.
+
+### Redeem a code
+
+Rebuilt around the reference's layout. The box on the left is the whole
+form - label, input, Redeem, one line of small print with Terms and Privacy,
+and your balance under it where the reference puts its credit. The right
+column is a list of links ("Earn more from quests", "See where you stand",
+"Your transactions", "A code would not take") and one art card. The cards
+with copy on them are gone.
+
+Nothing about redeeming changed: `redeem_code` is the same RPC, the database
+still decides whether a code is real, still going, already had, and what it
+is worth, and the page still just says what came back.
+
+### The leaderboards' top three
+
+The three cards became a podium: the three stand on blocks of different
+heights, first in the middle and tallest, and the place is a medal disc on
+the avatar rather than the word "First" written out. On a phone there is no
+podium - they stack in placing order, which is the only thing that fits.
+
+The rows below changed too: the proportion bar used to fill the row from the
+left and read as a highlight on whoever was near the top; it is a two-pixel
+rule along the bottom of the row now, and the place sits in a chip.
+
+Both are presentation. `leaderboard`, `world_leaderboard` and `person_places`
+are untouched, and so are their columns.
+
+### Less copy, site-wide
+
+A pass over the pages people browse, cutting leads, empty states, hints and
+notes to one short line: People, Communities, Landing, Auth, Create (uploads,
+Worlds, ads, the hub), Download, Settings, the asset page's listing-fee note
+and the catalog item's. **Facts were kept, wording was cut.** The listing fee
+still names the fee, the quarter back, what you keep and Kobblon's share;
+Settings still says fifteen and over and that a report is never shown to the
+person reported; the delete dialog still says it cannot be undone.
+
+Deliberately left alone: the policies, the guidelines, Support and the
+standing pages. Those are read once, when something has gone wrong, and
+short copy there is worse than long copy.
+
+If the Workspace carries any of this text, it does not have to follow - none
+of it was a rule change.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

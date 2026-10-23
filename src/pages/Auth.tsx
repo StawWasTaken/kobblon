@@ -103,12 +103,12 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               <Promise_
                 icon={faLayerGroup}
                 title="Your own World"
-                body="Built the way you want it, published when you say so, visited by whoever you share it with."
+                body="Built your way, published when you say so."
               />
               <Promise_
                 icon={faShapes}
                 title="Everything in Create"
-                body="Decals, sounds, video and fonts made by people here, used by their number so the credit sticks."
+                body="Decals, sounds, video and fonts, made by people here."
               />
               <Promise_
                 icon={faUsers}

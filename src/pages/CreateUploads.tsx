@@ -248,7 +248,7 @@ export default function CreateUploads() {
           <EmptyState
             mood="emptyBox"
             title="Nothing uploaded yet"
-            body="Decals, sounds, video, fonts and models. Everything you upload gets its own number, and that number is how it is used everywhere else."
+            body="Decals, sounds, video, fonts and models. Each one gets a number, and that is how it is used."
             action={<Button icon={faUpload} onClick={openUpload}>Upload something</Button>}
           />
         </Card>
@@ -259,7 +259,7 @@ export default function CreateUploads() {
           <EmptyState
             mood="noResults"
             title="Nothing here"
-            body="No upload of yours matches that. Try a shorter word, or put the filters back to everything."
+            body="Nothing of yours matches that."
             action={
               <Button
                 variant="subtle"

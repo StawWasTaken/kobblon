@@ -163,63 +163,130 @@ type Entry = {
   mine: boolean
 }
 
-function Step({ one, at, unit }: { one: Entry; at: number; unit?: string }) {
-  const metal = metals[at]
-  /* Second, first, third from the left on a wide screen, which is what a
-     podium is. On a phone they stack in the order they placed. */
-  const order = ['sm:order-2', 'sm:order-1', 'sm:order-3'][at]
-  const tall = ['sm:pt-10', 'sm:pt-4', 'sm:pt-14'][at]
-
+function Face({ one, size }: { one: Entry; size: 'lg' | 'md' | 'sm' }) {
+  if (one.face) {
+    return (
+      <PersonAvatar
+        person={{ display_name: one.name, avatar_url: one.image }}
+        size={size === 'lg' ? '2xl' : size === 'md' ? 'xl' : 'sm'}
+        ring="ring-ink-card"
+        className="relative"
+      />
+    )
+  }
   return (
-    <Link
-      to={one.to}
-      style={{ animationDelay: `${at * 90}ms` }}
+    <span
       className={cn(
-        'group flex animate-row-in flex-col items-center rounded-2xl border bg-ink-card p-5 text-center transition-colors hover:bg-ink-hover',
-        metal.ring, order, tall,
-        one.mine && 'ring-2 ring-brand-bright',
+        'relative block shrink-0 overflow-hidden border border-ink-line bg-media',
+        size === 'sm' ? 'h-8 w-12 rounded-lg' : size === 'md' ? 'h-16 w-24 rounded-2xl' : 'h-20 w-32 rounded-2xl',
       )}
     >
-      <span className={cn('mb-3 font-display text-xs font-extrabold uppercase tracking-widest', metal.text)}>
-        {at === 0 && <Glyph icon={faCrown} className="mr-1.5" />}
-        {['First', 'Second', 'Third'][at]}
-      </span>
-
-      {one.face ? (
-        <PersonAvatar
-          person={{ display_name: one.name, avatar_url: one.image }}
-          size={at === 0 ? '2xl' : 'xl'}
-          ring="ring-ink-card"
-        />
-      ) : (
-        <span
-          className={cn(
-            'overflow-hidden rounded-2xl border border-ink-line bg-media',
-            at === 0 ? 'h-20 w-32' : 'h-16 w-28',
-          )}
-        >
-          {one.image
-            ? <img src={one.image} alt="" className="h-full w-full object-cover" />
-            : (
-              <span className="grid h-full w-full place-items-center text-muted">
-                <Icon name="world" tone="currentColor" className="h-7 w-7" />
-              </span>
-            )}
-        </span>
-      )}
-
-      <span className="mt-3 flex max-w-full items-center gap-1.5">
-        <span className="truncate font-display text-base font-extrabold">{one.name}</span>
-        {one.ticked && <Verified className="text-xs" />}
-      </span>
-      <span className="w-full truncate text-xs text-muted">{one.under}</span>
-      <span className={cn('mt-3', metal.text)}>
-        <Amount value={one.amount} unit={unit} size={at === 0 ? 'lg' : 'md'} />
-      </span>
-    </Link>
+      {one.image
+        ? <img src={one.image} alt="" className="h-full w-full object-cover" />
+        : (
+          <span className="grid h-full w-full place-items-center text-muted">
+            <Icon name="world" tone="currentColor" className="h-6 w-6" />
+          </span>
+        )}
+    </span>
   )
 }
 
+/**
+ * The podium.
+ *
+ * Three cards side by side said who was first by writing the word; this
+ * stands them on blocks of three different heights, which says it without
+ * a word at all. Second, first, third across the top on a wide screen,
+ * stacked in placing order on a phone, where there is no room for a
+ * podium and the order is the whole point.
+ */
+function Podium({ top, unit }: { top: Entry[]; unit?: string }) {
+  const across = [1, 0, 2].filter((at) => top[at])
+  const blocks = ['h-32', 'h-20', 'h-14']
+
+  return (
+    <Card className="relative overflow-hidden p-5 sm:px-6 sm:pb-0 sm:pt-8">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
+      />
+
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+        {across.map((at, i) => {
+          const one = top[at]
+          const metal = metals[at]
+          return (
+            <Link
+              key={one.key}
+              to={one.to}
+              style={{ animationDelay: `${i * 90}ms` }}
+              className={cn(
+                'group flex animate-row-in items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-ink-hover sm:flex-1 sm:flex-col sm:items-center sm:gap-0 sm:p-0 sm:hover:bg-transparent',
+                one.mine && 'ring-2 ring-brand-bright sm:ring-0',
+              )}
+            >
+              <span className="relative shrink-0 sm:mb-3">
+                <Face one={one} size={at === 0 ? 'lg' : 'md'} />
+                <span
+                  className={cn(
+                    'absolute -left-1 -top-1 grid h-7 w-7 place-items-center rounded-full border-2 border-ink-card bg-ink-raised font-display text-xs font-extrabold tabular-nums',
+                    metal.text,
+                  )}
+                >
+                  {at === 0 ? <Glyph icon={faCrown} className="h-3 w-3" /> : at + 1}
+                </span>
+              </span>
+
+              <span className="min-w-0 flex-1 sm:w-full sm:flex-none sm:text-center">
+                <span className="flex items-center gap-1.5 sm:justify-center">
+                  <span className={cn(
+                    'truncate font-display font-extrabold',
+                    at === 0 ? 'text-lg' : 'text-base',
+                  )}>
+                    {one.name}
+                  </span>
+                  {one.ticked && <Verified className="text-xs" />}
+                </span>
+                <span className="block truncate text-xs text-muted sm:text-center">{one.under}</span>
+              </span>
+
+              <span className={cn('shrink-0 sm:mt-2', metal.text)}>
+                <Amount value={one.amount} unit={unit} size={at === 0 ? 'lg' : 'md'} />
+              </span>
+
+              {/* The block itself. Phones get none of this: there is no
+                  room for it and the list below says the same thing. */}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'hidden w-full rounded-t-2xl border-x border-t transition-[height] duration-500 sm:mt-4 sm:block',
+                  blocks[at], metal.ring,
+                )}
+              >
+                <span className={cn(
+                  'grid h-full place-items-center font-display text-3xl font-extrabold tabular-nums opacity-50',
+                  metal.text,
+                )}>
+                  {at + 1}
+                </span>
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
+
+/**
+ * A row of the rest.
+ *
+ * The bar used to fill the row from the left, which read as a highlight on
+ * whoever happened to be near the top. It is a rule under the row now: the
+ * eye goes down the numbers, and the line says how far behind the leader
+ * each one is without colouring the name.
+ */
 function Row({ one, place, top, at, unit }: {
   one: Entry
   place: number
@@ -234,35 +301,23 @@ function Row({ one, place, top, at, unit }: {
       to={one.to}
       style={{ animationDelay: `${Math.min(at, 12) * 25}ms` }}
       className={cn(
-        'relative flex animate-row-in items-center gap-3 overflow-hidden border-b border-ink-line/70 px-4 py-3 transition-colors last:border-0 hover:bg-ink-hover',
+        'relative flex animate-row-in items-center gap-3 border-b border-ink-line/70 px-4 py-3 transition-colors last:border-0 hover:bg-ink-hover',
         one.mine && 'bg-brand/10',
       )}
     >
-      {/* The bar is behind the row rather than beside it: a leaderboard is
-          read down the amounts, and a column of little bars pushes the names
-          about. */}
       <span
         aria-hidden="true"
-        className="absolute inset-y-0 left-0 bg-brand/10 transition-[width] duration-700 ease-out"
+        className="absolute bottom-0 left-0 h-[2px] bg-brand-bright/70 transition-[width] duration-700 ease-out"
         style={{ width: `${part * 100}%` }}
       />
-      <span className="relative w-8 shrink-0 text-center font-display text-sm font-extrabold tabular-nums text-muted">
+
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-ink-raised font-display text-xs font-extrabold tabular-nums text-muted">
         {place}
       </span>
 
-      {one.face ? (
-        <PersonAvatar
-          person={{ display_name: one.name, avatar_url: one.image }}
-          size="sm"
-          className="relative"
-        />
-      ) : (
-        <span className="relative h-8 w-12 shrink-0 overflow-hidden rounded-lg border border-ink-line bg-media">
-          {one.image && <img src={one.image} alt="" className="h-full w-full object-cover" />}
-        </span>
-      )}
+      <Face one={one} size="sm" />
 
-      <span className="relative min-w-0 flex-1">
+      <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate text-sm font-bold">{one.name}</span>
           {one.ticked && <Verified className="text-[11px]" />}
@@ -270,7 +325,7 @@ function Row({ one, place, top, at, unit }: {
         <span className="block truncate text-xs text-muted">{one.under}</span>
       </span>
 
-      <span className="relative shrink-0">
+      <span className="shrink-0">
         <Amount value={one.amount} unit={unit} />
       </span>
     </Link>
@@ -415,9 +470,7 @@ export default function Leaderboards() {
             <ErrorState message={rows.error} onRetry={rows.reload} />
           ) : rows.loading ? (
             <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 rounded-2xl" />)}
-              </div>
+              <Skeleton className="h-64 rounded-2xl" />
               <Skeleton className="h-72 rounded-2xl" />
             </div>
           ) : all.length === 0 ? (
@@ -430,11 +483,7 @@ export default function Leaderboards() {
             </Card>
           ) : (
             <div key={`${board}-${realSide}`} className="animate-step-next space-y-4">
-              <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
-                {top.map((one, at) => (
-                  <Step key={one.key} one={one} at={at} unit={chosen.unit} />
-                ))}
-              </div>
+              <Podium top={top} unit={chosen.unit} />
 
               {rest.length > 0 && (
                 <Card className="overflow-hidden">

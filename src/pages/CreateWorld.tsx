@@ -169,7 +169,7 @@ export default function CreateWorld() {
     <div className="space-y-6">
       <PageHeader
         title={world.name}
-        lead="What this World says about itself. Creator writes the scene; this is everything else."
+        lead="Creator writes the scene; this is everything else."
       />
 
       <div className="flex flex-wrap items-center gap-2">

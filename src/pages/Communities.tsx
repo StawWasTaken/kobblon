@@ -151,7 +151,7 @@ export default function Communities() {
     <Page width="wide" className="space-y-6">
       <BrowseHero
         title="Communities"
-        lead="Fan clubs, build teams, hobby corners. Each one has its own wall, its own ranks and its own Spaces."
+        lead="Fan clubs, build teams, hobby corners."
         icon={faUsers}
         value={term}
         onChange={setTerm}

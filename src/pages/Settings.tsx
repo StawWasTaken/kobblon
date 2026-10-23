@@ -457,9 +457,8 @@ function Safety() {
       {/* Two sentences. The rest of it is on the pages above, which exist
           for exactly this and are kept up to date in one place. */}
       <p className="px-1 text-xs leading-relaxed text-muted">
-        Kobblon is for people aged 15 and over. Report anything that should not be here with
-        the flag on a profile or a World - reports go straight to moderators, and the person
-        you report is never told who reported them.
+        Kobblon is for people aged 15 and over. Reports go straight to moderators, and the
+        person you report is never told who reported them.
       </p>
     </Panel>
   )

@@ -353,7 +353,7 @@ export function CreateWorlds() {
         open={Boolean(removing)}
         onClose={() => setRemoving(null)}
         title={removing ? `Delete ${removing.name}?` : ''}
-        lead="Its pictures and its manifest go with it, and that cannot be undone. Archiving puts a World away without destroying anything."
+        lead="Its pictures and its manifest go too, and that cannot be undone. Archiving puts it away instead."
         confirmText="Delete it"
         icon={faTrash}
         tone="danger"

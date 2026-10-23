@@ -840,11 +840,10 @@ export default function AssetPage() {
                         const keeps = asked - Math.round((asked * PLATFORM_SHARE) / 100)
                         return (
                           <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
-                            Putting this up for sale costs <span className="font-bold text-white">{fee}</span>{' '}
-                            {currency.plural}, paid to Kobblon now. Taking it back off sale later hands a
-                            quarter of that back. On each sale you keep{' '}
-                            <span className="font-bold text-white">{keeps}</span> of the{' '}
-                            {asked}; the other {PLATFORM_SHARE}% is Kobblon's share.
+                            Listing costs <span className="font-bold text-white">{fee}</span>{' '}
+                            {currency.plural} now, a quarter back if you take it off sale. You keep{' '}
+                            <span className="font-bold text-white">{keeps}</span> of every {asked};
+                            Kobblon's share is {PLATFORM_SHARE}%.
                           </p>
                         )
                       }

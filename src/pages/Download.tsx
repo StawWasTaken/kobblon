@@ -81,8 +81,7 @@ export default function Download() {
               Not released yet
             </p>
             <p className="mt-2 leading-relaxed text-white/60">
-              It is being built. There is nothing to download today, and this page will carry the
-              installers the day there are. Nothing here will pretend otherwise in the meantime.
+              Nothing to download today. The installers land here the day there are.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-6 text-sm font-bold text-white/30">

@@ -195,7 +195,7 @@ export default function People() {
     <Page width="wide" className="space-y-6">
       <BrowseHero
         title="People"
-        lead="Everybody on Kobblon. Search a name, a username, or the words somebody wrote about themselves."
+        lead="Everybody on Kobblon."
         icon={faUsers}
         value={term}
         onChange={setTerm}

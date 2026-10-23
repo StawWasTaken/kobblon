@@ -151,7 +151,7 @@ export default function Landing() {
           kicker="Worlds"
           title="Somewhere"
           accent="To Go"
-          body="Every Space is somebody's own page, built the way they wanted it. Walk in, look around, leave a mark, and come back when they have changed it."
+          body="Somebody's own page, built the way they wanted it. Walk in, leave a mark."
           to="/discover"
           action="Find a World"
         />
@@ -181,7 +181,7 @@ export default function Landing() {
             kicker="Kobblon Create"
             title="Built From"
             accent="Real Work"
-            body={`Decals, sounds, video and fonts, made by people here and checked before anybody sees them. Take what you need, use it by its number, and sell what you make for ${currency.plural}.`}
+            body={`Decals, sounds, video and fonts, made by people here and checked before anybody sees them. Take what you need, and sell what you make for ${currency.plural}.`}
             to="/create/marketplace"
             action="Open the marketplace"
           />
@@ -209,7 +209,7 @@ export default function Landing() {
           kicker="Communities"
           title="People To"
           accent="Build With"
-          body="Fan clubs, build teams and hobby corners, each with its own wall, its own ranks, its own events, its own funds and its own Worlds."
+          body="Fan clubs, build teams and hobby corners, each with its own wall, ranks, events and funds."
           to="/communities"
           action="Browse Communities"
         />
