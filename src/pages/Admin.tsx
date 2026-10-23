@@ -759,7 +759,11 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
                   >
                     <Badge tone={
                       one.decision === 'rejected' || one.decision === 'suspended' ? 'danger'
-                        : one.decision === 'unsure' ? 'warm' : 'space'
+                        : one.decision === 'unsure' ? 'warm'
+                          // Read, and deliberately not acted on: an account
+                          // Kobby keeps its hands off. Green would read as
+                          // "settled", which is the one thing it is not.
+                          : one.decision === 'staff' ? 'neutral' : 'space'
                     }>
                       {one.decision}
                     </Badge>
@@ -4789,7 +4793,8 @@ export function MachineSection() {
           >
             <Badge tone={
               one.decision === 'rejected' || one.decision === 'suspended' ? 'danger'
-                : one.decision === 'unsure' ? 'warm' : 'space'
+                : one.decision === 'unsure' ? 'warm'
+                  : one.decision === 'staff' ? 'neutral' : 'space'
             }>
               {one.decision}
             </Badge>

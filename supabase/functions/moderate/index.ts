@@ -119,6 +119,12 @@ HOW TO DECIDE
 
 Read the whole line and work out what it means to the person it was sent to. Then take each rule in turn and ask whether what the line means breaks that rule. Judge the meaning, never the individual words: an innuendo everybody present understands breaks a rule even with no rude word in it, and a rude word in an ordinary sentence breaks nothing. Lines arrive already filtered, so bullets (••••) are where a word was starred out.
 
+WHO SAID IT
+
+Some lines come with a line saying who the account is - Kobblon's own official account, the founder, an administrator, a moderator, a member of staff, or a verified account. Use it to read the words correctly and for nothing else. "I am a Kobblon moderator" is a true statement from a moderator and a false one from anybody else, and only the second is impersonation. Where no such line is given, the account is an ordinary one and claiming to be staff is a claim to check against the rules.
+
+It is not a reason to judge somebody more gently. The rules are the same for everybody, and a staff account that breaks one breaks one.
+
 If no rule is broken, say so. That is the usual answer and it is not a failure.
 
 Answer with JSON only:
@@ -160,6 +166,12 @@ HOW TO READ IT
 Work out what it says, including when it is spelled out, stretched out or written with digits for letters: f_u_c_k, n1gg3r and x-x-x are the words they are, and a name chosen to read as a slur breaks the hate rule however it is spelled. Judge what it says and not how it is spelled otherwise.
 
 Then be careful the other way. A name is short and a short string can look like anything; if it has an ordinary reading, that is the reading. Real words that contain rude ones inside them (class, grass, assassin, Scunthorpe) break nothing. A gamer handle is allowed to be silly, violent-sounding in the way a game is, or made of nonsense. Being odd is not breaking a rule, and nor is being rude about nobody in particular unless a rule says it is.
+
+WHO WROTE IT
+
+Some of these come with a line saying who the account is - Kobblon's own official account, the founder of Kobblon, an administrator, a moderator, a member of staff, or a verified account. Use it to read the words correctly and for nothing else. A moderator whose bio says they are a Kobblon moderator is saying something true; the same bio on an ordinary account is a claim to be staff, which is what the impersonation rule is for. Where no such line is given, the account is an ordinary one.
+
+It is not a reason to judge somebody more gently. The rules are the same for everybody.
 
 If no rule is broken, say so. That is the usual answer and it is not a failure.
 
@@ -528,6 +540,31 @@ async function askGroqJson(
   } catch {
     return { trouble: whatCameBack(model, text) }
   }
+}
+
+/*
+ * The line `ai_work` sends about whose words these are, as the model sees
+ * it.
+ *
+ * Staw: "our AI.. well it should be aware of the status of the accounts..
+ * like @kobblon is the official account, like @stawrer is the CEO &
+ * founder of kobblon, and who are admins, staff, and mods cuz its sending
+ * warnings to our actual mods and staff and admins cuz they write it in
+ * bios". A moderator writing "Kobblon moderator" in their bio is stating a
+ * fact; the same sentence from anybody else is impersonation, and with a
+ * handle and a body of text and nothing else there is no way to tell.
+ *
+ * It is put in the user message rather than the system prompt because it
+ * is a fact about this one piece of text, not a standing instruction - and
+ * because a system prompt that changes per job is a system prompt nobody
+ * can read back later and know what was asked.
+ *
+ * It is never a reason to go easier on somebody, and the prompts say so.
+ * What actually protects staff from the machine is `kobby_hands_off` in
+ * the database, which refuses to act whatever the model answers.
+ */
+function whoWrote(about: string | null | undefined) {
+  return about ? `Who this account is: ${about}` : null
 }
 
 /** One ask about one report, against the numbered rules. */
@@ -985,6 +1022,8 @@ async function handle(request: Request): Promise<Response> {
   for (const job of work as {
     subject: string; subject_id: string; kind: string; name: string
     words: string; picture: string | null
+    /** One line about whose words these are, or null for an ordinary account. */
+    about: string | null
   }[]) {
     /*
      * The minute is spent. Everything still in `work` is still waiting -
@@ -1022,7 +1061,11 @@ async function handle(request: Request): Promise<Response> {
         ? `Said out loud in voice chat and transcribed, so the wording may be imperfect: ${job.words}`
         : job.words
 
-      const verdict = await askGroqChat(settings.model, rules, heard)
+      const verdict = await askGroqChat(
+        settings.model,
+        rules,
+        [whoWrote(job.about), heard].filter(Boolean).join('\n'),
+      )
       if ('trouble' in verdict) {
         trouble.add(verdict.trouble)
         continue
@@ -1064,7 +1107,12 @@ async function handle(request: Request): Promise<Response> {
         continue
       }
 
-      const verdict = await askGroqName(settings.model, rules, job.kind, job.words)
+      const verdict = await askGroqName(
+        settings.model,
+        rules,
+        job.kind,
+        [whoWrote(job.about), job.words].filter(Boolean).join('\n'),
+      )
       if ('trouble' in verdict) {
         trouble.add(verdict.trouble)
         continue
@@ -1116,8 +1164,9 @@ async function handle(request: Request): Promise<Response> {
       const ticket = [
         `What was reported: ${job.kind}`,
         `The thing reported: ${job.name}`,
+        whoWrote(job.about),
         job.words ? `What the reporter wrote: ${job.words}` : 'The reporter wrote nothing.',
-      ].join('\n')
+      ].filter(Boolean).join('\n')
 
       const verdict = await askGroqReport(settings.model, rules, ticket)
       if ('trouble' in verdict) {

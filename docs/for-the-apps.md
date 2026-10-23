@@ -9793,3 +9793,77 @@ client for one that answers the four economy reads with fixtures, so the
 panel can be looked at with numbers in it rather than on its empty states.
 That seam is `setSupabaseClient` from `@/lib/supabase` - the same one the
 applications use - and it is worth knowing it works for a preview this way.
+
+## Round one hundred and twenty-five - Kobby knows whose words it is reading
+
+**Migration 0271 - apply it**, and **redeploy the `moderate` edge
+function**, which is the one change here that is not in the database.
+
+Staw: "our AI.. well it should be aware of the status of the accounts.. like
+@kobblon is the official account, like @stawrer is the CEO & founder of
+kobblon, and who are admins, staff, and mods cuz its sending warnings to our
+actual mods and staff and admins cuz they write it in bios and etc".
+
+Two separate faults, and only one of them was the prompt's.
+
+### The machine's hands were off some staff and not others
+
+`judge_chat_line` and `judge_profile_text` both stopped at
+`is_admin or is_moderator or is_superadmin`. Neither knew about
+`has_staff_badge` - which is exactly the person Staw means by "staff", an
+account with the badge and none of the keys - and **`judge_report` had no
+such check at all**, so a report somebody filed about a moderator was the
+machine's to settle.
+
+One function answers it for all three now:
+
+- **`kobby_hands_off(who uuid) -> boolean`** - true for Kobblon's own
+  account, the founder, superadmins, admins, moderators and anybody
+  carrying the staff badge.
+- **`founder_account()` / `is_founder(who)`** - Staw's account, found by
+  handle the way `kobblon_account()` finds Kobblon's.
+
+The machine still reads their words and still records what it thought. What
+it no longer does is warn, rename, quiet or suspend them. A person can,
+through the console, which is what the console is for.
+
+`ai_reviews.decision` accepts **`'staff'`**, and those readings are now
+written rather than returned silently - what Kobby thought about a
+moderator's line is worth seeing, and a judgement that vanishes is how
+nobody notices the machine disagreeing with the team. The console draws that
+badge in neutral, not green: green reads as "settled", which it is not.
+
+### The model was told nothing about whose words it was reading
+
+A moderator whose bio says "Kobblon moderator" is stating a fact; the same
+sentence from anybody else is impersonation, and the model had a handle, a
+body of text and nothing else to tell them apart. So:
+
+- **`who_is(who uuid) -> text`** - one line, or null for an ordinary
+  account: Kobblon's own official account, the founder and chief executive,
+  runs Kobblon, an administrator, a moderator, a member of staff, a verified
+  account. Only what changes how a sentence should be read.
+- **`ai_work` gains a column, `about`.** It is dropped and recreated, since
+  a new column is a new return type. The column carries `who_is` for
+  `message`, `profile_text`, `report` (the reported thing's owner) and
+  `ticket`; uploads and appeals keep null, being judged on what they are
+  rather than on who sent them. **Anything reading `ai_work` positionally
+  needs the extra column.**
+
+The worker puts that line in the **user** message, not the system prompt -
+it is a fact about one piece of text, not a standing instruction, and a
+system prompt that changes per job cannot be read back later. Both the chat
+and the name prompts gained a short section saying what to do with it, and
+both say plainly that it is never a reason to judge somebody more gently.
+The rules are the same for everybody; what protects staff from the machine
+is the database check, which cannot be argued with.
+
+Verified locally under two identities: an ordinary account writing "I am a
+Kobblon moderator" is still warned and still has the bio taken down; the
+same account carrying only the staff badge comes back `staff`, keeps its
+bio, gains nothing on its record, and leaves a `staff` row in `ai_reviews`;
+and `ai_work` hands back "This is a member of Kobblon staff." and "This is
+Kobblon's own official account - the platform itself." beside the two rows.
+
+Still waiting: `pg_cron` and `pg_net` are off, so Kobby and both sweeps run
+by hand. 0270 (the economy) also still needs applying if it has not been.
