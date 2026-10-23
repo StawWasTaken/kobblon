@@ -74,7 +74,7 @@ export function AppShell() {
            * page ended underneath that button - on People it was sitting on
            * somebody's Profile link.
            */
-          className="kob-dock-gutter pb-28 md:pb-24 lg:pb-0 lg:pl-56"
+          className="pb-28 lg:pb-0 lg:pl-56"
           style={{ paddingTop: 'calc(3.5rem + var(--notice-height, 0px))' }}
         >
           {/* Pages put their own ad slots where they want them; this only

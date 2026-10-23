@@ -32,7 +32,7 @@ export function FriendsRail() {
     .sort((a, b) => Number(b.is_online) - Number(a.is_online))
 
   return (
-    <section className="mb-8">
+    <section className="mb-10 sm:mb-12">
       <div className="mb-3 flex items-center gap-3">
         <h2 className="font-display text-xl font-extrabold sm:text-2xl">
           Friends {!loading && <span className="text-white/40">({friends.length})</span>}

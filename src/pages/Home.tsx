@@ -43,7 +43,7 @@ function Row({ title, children, more }: {
   }
 
   return (
-    <section className="mb-9">
+    <section className="mb-10 sm:mb-12">
       <div className="mb-3 flex items-center gap-3">
         <h2 className="font-display text-xl font-extrabold sm:text-2xl">{title}</h2>
         {more && (
@@ -195,7 +195,7 @@ export default function Home() {
           they are; what they do not get anywhere else on the site is being
           greeted by name, with their own avatar beside it - the same thing
           the Workspace opens with, from the same two lines of copy. */}
-      <header className="relative z-10 mb-6 flex items-center gap-4">
+      <header className="relative z-10 mb-8 flex items-center gap-4 pt-1 sm:mb-10 sm:gap-5 sm:pt-2">
         {/* Bigger than anything else on the page, the way the Workspace opens.
             The responsive pair wins over the size prop's own classes because
             Tailwind writes its breakpoints after its base utilities. */}
@@ -247,7 +247,7 @@ export default function Home() {
       </Row>
 
       {!suggested.loading && !shown.length && (
-        <Card className="mb-9">
+        <Card className="mb-10 sm:mb-12">
           <EmptyState
             mood="construction"
             title="Nothing to suggest yet"
@@ -263,7 +263,7 @@ export default function Home() {
         </Row>
       )}
 
-      <AdBanner className="mb-9" quiet />
+      <AdBanner className="mb-10 sm:mb-12" quiet />
 
       {rest.length > 0 && (
         <>

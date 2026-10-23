@@ -10254,3 +10254,39 @@ If the Workspace shows one anywhere, the same test applies.
 - `listRecentlyPlayedWorlds` reads a table rather than an RPC. If the
   Workspace wants it under a different session it works the same way through
   `setSupabaseClient`, but it does depend on that policy staying as it is.
+
+## Round one hundred and thirty-one - the dock gutter is gone, and Home breathes
+
+Two things, and the first one undoes something from the round before it.
+
+### `--dock-space` and `.kob-dock-gutter` no longer exist
+
+Last round, `ChatDock` set `--dock-space: 20rem` on the document and `main`
+turned it into right padding from 1280px up, so the dock would stop sitting
+over the buttons on Settings. **If the Workspace copied either of those, take
+them out.**
+
+What it actually did: every page inside `main` is `mx-auto` inside a
+max-width, so twenty rem of right padding moved the centred block bodily to
+the left and ate the right-hand gutter. Staw, looking at the live site:
+"either theres no spaces on both sides anymore either theyre left-centered".
+Measured at 1920 it was 384 left against 160 right; it is 160 against 160
+now.
+
+The lesson is the one worth carrying: **padding on the element that centres
+something is not spacing, it is a shove.** A fixed overlay that wants room
+has to take it from outside the centred box or not at all. The dock sits in
+the right-hand gutter at wide widths anyway, which is most of the problem
+solved for nothing.
+
+So the dock overlaps again under about 1280px, the way every chat dock on
+the web does. If it needs solving properly it will be by moving the dock,
+not by squeezing the page.
+
+### Home's spacing
+
+The greeting block is a tall thing where a line of text used to be, so the
+old gaps read as half of what they were. Shelves and the friends rail are
+`mb-10 sm:mb-12` rather than `mb-8`/`mb-9`, and the header carries
+`mb-8 sm:mb-10` with a little room above it. Appearance only - nothing moved
+and nothing changed meaning.

@@ -90,19 +90,6 @@
   .kob-under-bar { top: calc(3.5rem + var(--notice-height, 0px)); }
   .kob-under-bar-tall { height: calc(100dvh - 3.5rem - var(--notice-height, 0px)); }
 
-  /*
-   * Room beside the chat dock, where there is room to give.
-   *
-   * The dock is fixed to the bottom right and nothing scrolls out from
-   * under it, so on Settings it sat over the one button on each row. Only
-   * from `xl` up: narrower than that and a twenty-rem gutter costs the page
-   * more than the dock does, and the dock behaves like every other one on
-   * the web instead.
-   */
-  @media (min-width: 1280px) {
-    .kob-dock-gutter { padding-right: var(--dock-space, 0px); }
-  }
-
   .kob-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgb(var(--ink-line)) transparent;
