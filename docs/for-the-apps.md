@@ -10537,3 +10537,43 @@ unchanged and still sits under it.
   promise it cannot keep.
 - `kobblon://edit/<id>` - still no word from your side whether it is
   answered. Round 133's five Launcher questions are all still open.
+
+## Round one hundred and thirty-five
+
+### Two pictures were replaced
+
+- **`report.png`** - the flag, redrawn. Same name, same place
+  (`public/icons/ui/report.png`), still white line art that takes whatever
+  colour it is painted. Nothing to change on your side beyond pulling it.
+- **`kobby_under_construction.png` is gone.** It is
+  **`public/brand/under_construction.png`** now, and it is a different
+  drawing: the whole character with a hammer rather than a head and
+  shoulders that stopped mid-body. `kobbyArt.construction` points at the
+  new one, so `<Kobby mood="construction" />` is unchanged - but if
+  anything on your side names the old file directly, it is a 404 as of this
+  round.
+
+The maintenance notice draws him on a halo now. He is black with a black
+cap and the page is very nearly black, so without something behind him the
+figure was an outline and the hammer was the only thing anybody could see.
+Worth copying if you ever put him on a dark panel.
+
+### The front page has navigation on a phone
+
+Not a shared thing, but the shape of the bug is worth having: the public
+bar's four links (Play, Create, Communities, Download) were
+`hidden ... sm:flex` and nothing replaced them below that width, so on a
+phone the front page had **no navigation at all** - the download link
+included, which is the one thing that bar is for. There are three lines
+left of the mark now, the same place and the same size as the signed-in
+bar, opening the same four links.
+
+The lesson rather than the fix: `hidden sm:flex` with no small-screen
+counterpart is not a layout choice, it is a deletion. Worth a look at any
+panel of yours that hides a control at a breakpoint.
+
+### Still open
+
+- Round 133's five Launcher questions. No answer yet, and
+  `kobblon://edit/<id>` is still unconfirmed.
+- `world_visits` is still only written by `join_world_server`.

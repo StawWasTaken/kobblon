@@ -8,7 +8,7 @@ import { asset } from '@/lib/asset'
 export const kobbyArt = {
   default: asset('/brand/kobby.png'),
   notification: asset('/brand/kobby_notification.png'),
-  construction: asset('/brand/kobby_under_construction.png'),
+  construction: asset('/brand/under_construction.png'),
   crown: asset('/brand/kobby_crown.png'),
   /** Kobby in sunglasses, for Style. */
   style: asset('/brand/kobby_sunglasses.png'),
