@@ -2716,7 +2716,7 @@ export async function listWorlds(options: {
 export async function listRecentlyPlayedWorlds(limit = 12): Promise<World[]> {
   const { data, error } = await supabase
     .from('world_visits')
-    .select(`on_day, world:worlds!world_id (${WORLD_FIELDS})`)
+    .select(`on_day, world:worlds (${WORLD_FIELDS})`)
     .order('on_day', { ascending: false })
     .limit(limit * 4)
   if (error) throw new Error(error.message)

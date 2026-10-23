@@ -257,9 +257,13 @@ export default function Home() {
         </Card>
       )}
 
+      {/* The marks again, for the same reason Recently played has them:
+          these are Worlds you already know, so the shelf is for finding one
+          rather than for being sold one. The covers stay on the shelves of
+          Worlds you have not seen before. */}
       {!!mine.data?.length && (
         <Row title="Your Worlds" more={{ to: '/create/worlds', label: 'All of them' }}>
-          {mine.data.map((world) => <Suggestion key={world.id} world={world} />)}
+          {mine.data.map((world) => <WorldTile key={world.id} world={world} />)}
         </Row>
       )}
 
@@ -281,7 +285,7 @@ export default function Home() {
 
       {!!saved.data?.length && (
         <Row title="Saved" more={{ to: '/library', label: 'Your library' }}>
-          {saved.data.map((world) => <Suggestion key={world.id} world={world} />)}
+          {saved.data.map((world) => <WorldTile key={world.id} world={world} />)}
         </Row>
       )}
 

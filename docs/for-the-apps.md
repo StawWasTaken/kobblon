@@ -10290,3 +10290,52 @@ old gaps read as half of what they were. Shelves and the friends rail are
 `mb-10 sm:mb-12` rather than `mb-8`/`mb-9`, and the header carries
 `mb-8 sm:mb-10` with a little room above it. Appearance only - nothing moved
 and nothing changed meaning.
+
+## Round one hundred and thirty-two - where the square marks go, and what fills Recently played
+
+### The emblem tiles now carry three shelves on Home
+
+`WorldTile` (the square `emblem_url`, from `@/components/worlds/Shelf`) is on
+**Recently played**, **Your Worlds** and **Saved**. The wide covers stay on
+"Being played right now" and the two shelves of Worlds nobody has seen yet.
+
+The rule behind the split, worth holding to in the Workspace as well: **a
+cover sells a World, a mark finds one.** A shelf of things you already know -
+yours, saved, last played - is a shelf you are scanning for one you recognise,
+and the marks are both denser and quicker to recognise. A shelf of Worlds you
+have never met needs the picture.
+
+### Recently played is empty for nearly everybody, and that is correct
+
+It reads `world_visits`, and the only thing that ever writes a row there is
+`join_world_server` - **actually joining a server from the client.** Opening
+a World's page on the website writes nothing. So anybody who has not played
+through the client has no history and the shelf does not draw at all, which
+is why it is nowhere to be seen on the live site today.
+
+Nothing was "fixed" about that and nothing should be: a World you looked at
+is not a World you played, and making the page view count would put Worlds
+you never entered on a shelf headed Recently played. It fills in as people
+play. If the Workspace wants the same shelf it is the same call and the same
+condition.
+
+One change to the call: the embed hint is gone, `world:worlds (…)` rather
+than `world:worlds!world_id (…)`. `world_visits` has exactly one foreign key
+to `worlds`, so the hint was never needed, and it matches how
+`listFavouriteWorlds` has always read.
+
+### The gutters, checked everywhere
+
+After last round's revert, every page was measured at 1920 rather than
+eyeballed - the left and right space either side of the page's own block,
+inside `main`:
+
+- Home, Discover, People, Communities, Catalog, My Avatar: 160 and 160.
+- Settings, Friends, Library, Quests, Brix, Inbox, Standing, Support:
+  304 and 304.
+- The staff console is full-bleed by design - its bar spans the window - and
+  its contents are centred inside `max-w-[1500px]`.
+
+So nothing else carried that fault; it was the dock gutter alone. Home's
+shelves are `mb-10 sm:mb-12` as of last round and the other pages were left
+as they were.
