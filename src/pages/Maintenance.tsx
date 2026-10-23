@@ -34,7 +34,7 @@ export default function Maintenance({ note }: { note?: string | null }) {
         </p>
 
         <h1 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">
-          Kobblon is having its insides moved around
+          Kobblon will be right back
         </h1>
 
         <p className="mt-3 text-white/70">

@@ -100,6 +100,14 @@ export function iconUrl(name: KobIcon) {
  * colour. An unpressed face takes the colour of the sentence around it and
  * a red eye in a grey face is one detail shouting in a quiet row.
  */
+/*
+ * The blue the tears are, taken off Staw's own drawings of the redrawn
+ * joy and sad faces rather than picked: he painted them #5DADEC and
+ * #5CA7E0, which are the same blue to anybody looking at a 20px face, so
+ * they are one value here. One set, one blue.
+ */
+const TEAR_BLUE = '#5DADEC'
+
 const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
   'reaction-heart-eyes': [{ part: 'reaction-heart-eyes-eyes', colour: '#DF1F2D' }],
   'reaction-winky-grin': [{ part: 'reaction-winky-grin-tongue', colour: '#FF6F9C' }],
@@ -110,8 +118,8 @@ const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
    * and drawn as their own files so his faces are untouched and the tears
    * can be their own colour while the face stays yellow.
    */
-  'reaction-sad': [{ part: 'reaction-sad-tears', colour: '#4AA3F0' }],
-  'reaction-laugh': [{ part: 'reaction-laugh-tears', colour: '#4AA3F0' }],
+  'reaction-sad': [{ part: 'reaction-sad-tears', colour: TEAR_BLUE }],
+  'reaction-laugh': [{ part: 'reaction-laugh-tears', colour: TEAR_BLUE }],
 }
 
 export function Icon({

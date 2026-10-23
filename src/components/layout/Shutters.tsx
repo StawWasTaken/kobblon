@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { siteState, type SiteState } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 import Maintenance from '@/pages/Maintenance'
 
 /**
@@ -23,8 +24,12 @@ import Maintenance from '@/pages/Maintenance'
  *
  * Three things it is careful about:
  *
- *   * **It asks again, every minute.** Somebody left looking at this screen
- *     should see the site come back without being told to reload.
+ *   * **It is told, rather than finding out.** The one row is published, so
+ *     the switch reaches every open tab the moment it is thrown - Staw: "i
+ *     want that the shutters appear instantly rather than having to refresh
+ *     the page". The minute's ask stays underneath it, because a socket
+ *     that quietly dropped an hour ago is a tab that would never hear, and
+ *     the one thing worse than a slow curtain is one that never arrives.
  *   * **A failed ask is not a shut site.** `siteState` answers null when the
  *     call fails and null draws the website, because the alternative is a
  *     hiccup in one request taking Kobblon down for everybody.
@@ -50,7 +55,24 @@ export function Shutters({ children }: { children: React.ReactNode }) {
     }
     void ask()
     const again = window.setInterval(() => { void ask() }, 60_000)
-    return () => { wanted = false; window.clearInterval(again) }
+
+    /*
+     * The row itself, as it changes. It carries `maintenance` and `note`,
+     * which is the whole of what this draws, so nothing is asked again -
+     * and `replica identity full` in 0273 is what makes that true.
+     */
+    const channel = supabase
+      .channel('shutters')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'site_state' },
+        (payload) => { if (wanted) setState(payload.new as SiteState) })
+      .subscribe()
+
+    return () => {
+      wanted = false
+      window.clearInterval(again)
+      void supabase.removeChannel(channel)
+    }
   }, [])
 
   const staff = !!profile?.is_admin || !!profile?.is_superadmin

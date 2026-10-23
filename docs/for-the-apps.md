@@ -10464,3 +10464,76 @@ Worth checking wherever the applications have a bar of their own.
 - Maintenance does not close the API, as above.
 - `/login` stays open while the shutters are down, so an admin who is signed
   out can get a session to turn it off. Everything else is the notice.
+
+## Round one hundred and thirty-four
+
+### The joy, sad and fire faces were redrawn
+
+Staw redrew three of the eleven: `laugh`, `sad` and `fire`. Same names, same
+eleven, same places they are used - **nothing about the contract moved**, so
+this is a pull and not a change. The files are
+`public/icons/ui/reaction-laugh.png`, `reaction-sad.png` and
+`reaction-fire.png`, plus the two detail masks beside them.
+
+One thing to copy if you draw the faces yourselves rather than importing
+`Icon`: the tears are a **separate file painted on top**, not part of the
+face. The face is a white silhouette painted `#FFCC4D` (the fire
+`#F6861F`), and `reaction-laugh-tears.png` / `reaction-sad-tears.png` go
+over it in **`#5DADEC`**, which is new - it was `#4AA3F0` and is now the
+blue Staw actually used in his own drawings. A face drawn without the
+detail pass is a yellow face with yellow tears, which reads as nothing at
+all.
+
+The cut is `tools/icons/cut-reaction-details.py` and it changed shape: the
+tears used to be found by where they sat (drops are islands, streams are
+holes) and are now found by colour - every blue pixel in Staw's coloured
+original is a tear. His coloured originals live in `tools/icons/source/`
+so the cut can be run again without going back to a chat log. The old rule
+would have broken on this redraw; the new one does not care where he puts
+them next time.
+
+### The shutters reach you now, rather than within a minute
+
+Round 133 gave the switch and the website asked `site_state` once a minute.
+Staw, having watched it: "i want that the shutters appear instantly rather
+than having to refresh the page".
+
+**Migration 0273** publishes the row: `site_state` is in
+`supabase_realtime` and has `replica identity full`, so an update carries
+the whole row - `maintenance` and `note` both - and nothing has to be asked
+again afterwards.
+
+**For the applications, if you ever want to honour it:** subscribe to
+`postgres_changes`, `UPDATE`, `public.site_state`, no filter (there is one
+row). Nothing is opened up by this - realtime delivers a row only to
+somebody whose row level security would have let them read it, and the
+policy there is "everybody reads", because it is the notice on the door and
+the door is read before anybody signs in.
+
+**And the warning from round 133 stands, harder now that it is instant:**
+this is a curtain, not a lock. Every table and every function answers
+exactly as before while the shutters are down. A Workspace or Launcher
+holding a session carries on working, and *should* - the switch means "do
+not use the site while I move something", not "nobody may touch the data".
+If you decide to draw something of your own on it, that is a courtesy you
+are choosing, not a rule being enforced on you.
+
+The website keeps the minute's poll underneath the socket. A socket that
+quietly dropped an hour ago is a tab that would never hear, and the one
+thing worse than a slow curtain is one that never arrives.
+
+### The notice reads differently
+
+"Kobblon is having its insides moved around" is now **"Kobblon will be right
+back"**. Staw asked for it to change. The optional note an admin types is
+unchanged and still sits under it.
+
+### Not built, still
+
+- Nothing writes `world_visits` except `join_world_server`, so "Recently
+  played" on Home is empty until somebody actually joins a server from the
+  client. That is a true empty row and not a bug to work around.
+- No countdown and no "back at" time on the notice: the switch holds no
+  promise it cannot keep.
+- `kobblon://edit/<id>` - still no word from your side whether it is
+  answered. Round 133's five Launcher questions are all still open.
