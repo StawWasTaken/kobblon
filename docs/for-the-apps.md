@@ -11255,3 +11255,20 @@ wiki, about page, forum and newsroom are actually being built.
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and fifty-two - the footer's mark
+
+Staw picked the first of the two options for the footer's left column: the
+wordmark as type with **The game built by players** under it and the
+copyright under that, rather than the drawn `landing-lockup.png`.
+
+It is `<Wordmark always />` from `@/components/brand/Wordmark`, so it stays
+sharp at any size and follows the theme, which a flat picture of a lockup
+cannot. The lockup image is untouched and still used on the landing page.
+
+### Still open
+
+- The landing page redesign, waiting on what the front page should claim
+  and which About pages are actually being built.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

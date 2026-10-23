@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { faDiscord, faYoutube } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
-import { asset } from '@/lib/asset'
+import { Wordmark } from '@/components/brand/Wordmark'
 import { cn } from '@/lib/cn'
 
 /*
@@ -80,16 +80,14 @@ export function SiteFooter({ className }: { className?: string }) {
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
-            {/* Staw's lockup: the wordmark with the line under it, drawn as
-                one picture so the two never drift apart. */}
-            <Link to="/" className="inline-block">
-              <img
-                src={asset('/brand/landing-lockup.png')}
-                alt="Kobblon - the game built by players"
-                className="h-16 w-auto"
-              />
-            </Link>
-            <p className="mt-5 text-xs text-white/35">© {year} Kobblon</p>
+            {/* The wordmark as type rather than as a picture, with the
+                line under it. It stays sharp at any size and takes the
+                theme with it, which the drawn lockup cannot. */}
+            <Wordmark to="/" className="h-6" always />
+            <p className="mt-3 font-display text-sm font-extrabold text-white/70">
+              The game built by players
+            </p>
+            <p className="mt-4 text-xs text-white/35">© {year} Kobblon</p>
           </div>
 
           <Column heading="Kobblon" links={kobblon} />
