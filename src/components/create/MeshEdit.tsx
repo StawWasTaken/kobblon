@@ -162,7 +162,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
         <p className="text-xs text-muted">
           Free. Turn the model above to the side you want people to see, then
           press this. A mesh file does not say which way it faces, so Kobblon
-          has to guess at first &mdash; you are the only one who actually
+          has to guess at first; you are the only one who actually
           knows. It also takes the Decal into account, which the picture taken
           at upload may predate.
         </p>

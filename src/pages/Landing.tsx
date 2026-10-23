@@ -290,10 +290,10 @@ export default function Landing() {
             </p>
             <p className="leading-relaxed">
               Every Space runs shut off from the rest of the site, so what somebody builds cannot
-              reach anybody else&rsquo;s account.
+              reach anybody else's account.
             </p>
             <p className="leading-relaxed">
-              Nothing on this page is invented. The numbers are the platform&rsquo;s own, and when
+              Nothing on this page is invented. The numbers are the platform's own, and when
               there is nothing to show, it says so.
             </p>
 

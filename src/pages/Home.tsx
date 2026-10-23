@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import React, { useState } from 'react'
+import { useRail } from '@/hooks/useRail'
 import { Weather } from '@/components/brand/Weather'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -31,16 +32,25 @@ import { Emblem } from '@/components/community/Emblem'
 import type { World } from '@/types/db'
 
 /** A row that slides, with the arrows only where there is a mouse to use them. */
-function Row({ title, children, more }: {
+function Row({ title, children, more, empty }: {
   title: string
   children: React.ReactNode
   more?: { to: string; label: string }
+  /**
+   * What stands in for the shelf when it has nothing on it.
+   *
+   * Without this the page drew the heading, then an empty scroller, then a
+   * card underneath repeating the same thing - a title, eighty pixels of
+   * nothing, and the answer. The comment on "Recently played" above already
+   * says an empty row headed with a title "says nothing except that the page
+   * has a hole in it"; this is that rule finally applied to the shelf it was
+   * written about.
+   */
+  empty?: React.ReactNode
 }) {
-  const track = useRef<HTMLDivElement>(null)
+  const { track, can, nudge, measure, scrollable } = useRail(children)
 
-  const nudge = (way: 1 | -1) => {
-    track.current?.scrollBy({ left: way * (track.current.clientWidth * 0.85), behavior: 'smooth' })
-  }
+  const bare = !React.Children.toArray(children).length
 
   return (
     <section className="mb-10 sm:mb-12">
@@ -51,26 +61,32 @@ function Row({ title, children, more }: {
             {more.label}
           </Link>
         )}
-        <div className="ml-auto hidden gap-1 sm:flex">
-          {([-1, 1] as const).map((way) => (
-            <button
-              key={way}
-              onClick={() => nudge(way)}
-              aria-label={way === -1 ? `Scroll ${title} left` : `Scroll ${title} right`}
-              className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/60 transition-colors hover:bg-ink-hover hover:text-white"
-            >
-              <Glyph icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
-            </button>
-          ))}
-        </div>
+        {scrollable && !bare && (
+          <div className="ml-auto hidden gap-1 sm:flex">
+            {([-1, 1] as const).map((way) => (
+              <button
+                key={way}
+                onClick={() => nudge(way)}
+                disabled={way === -1 ? !can.left : !can.right}
+                aria-label={way === -1 ? `Scroll ${title} left` : `Scroll ${title} right`}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/60 transition-colors hover:bg-ink-hover hover:text-white disabled:pointer-events-none disabled:opacity-35"
+              >
+                <Glyph icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div
-        ref={track}
-        className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll"
-      >
-        {children}
-      </div>
+      {bare && empty ? empty : (
+        <div
+          ref={track}
+          onScroll={measure}
+          className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll"
+        >
+          {children}
+        </div>
+      )}
     </section>
   )
 }
@@ -236,7 +252,20 @@ export default function Home() {
         </Row>
       )}
 
-      <Row title="Being played right now" more={{ to: '/discover', label: 'Discover more' }}>
+      <Row
+        title="Being played right now"
+        more={{ to: '/discover', label: 'Discover more' }}
+        empty={
+          <Card>
+            <EmptyState
+              mood="construction"
+              title="Nothing to suggest yet"
+              body="When people publish Worlds, the ones worth a look land here."
+              action={<Button to="/discover" icon={faCompass}>See what there is</Button>}
+            />
+          </Card>
+        }
+      >
         {suggested.loading
           ? [0, 1, 2, 3].map((i) => (
             <div key={i} className="w-64 shrink-0 sm:w-72">
@@ -245,17 +274,6 @@ export default function Home() {
           ))
           : first.map((world) => <Suggestion key={world.id} world={world} />)}
       </Row>
-
-      {!suggested.loading && !shown.length && (
-        <Card className="mb-10 sm:mb-12">
-          <EmptyState
-            mood="construction"
-            title="Nothing to suggest yet"
-            body="When people publish Worlds, the ones worth a look land here."
-            action={<Button to="/discover" icon={faCompass}>See what there is</Button>}
-          />
-        </Card>
-      )}
 
       {/* The marks again, for the same reason Recently played has them:
           these are Worlds you already know, so the shelf is for finding one

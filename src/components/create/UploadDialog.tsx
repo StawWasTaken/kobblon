@@ -226,7 +226,7 @@ export function UploadDialog({
           </p>
           <p className="mt-1 text-xs leading-relaxed text-white/55">
             What the mesh wears. Upload one and it becomes a Decal of yours, or use a
-            Decal that already exists - one of yours, or anybody else&rsquo;s that is on
+            Decal that already exists - one of yours, or anybody else's that is on
             the Marketplace.
           </p>
 

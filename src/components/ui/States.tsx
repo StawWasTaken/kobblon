@@ -35,7 +35,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
       <span className="grid h-12 w-12 place-items-center rounded-xl bg-danger/15 text-danger">
         <Glyph icon={faTriangleExclamation} className="text-lg" />
       </span>
-      <h3 className="mt-4 text-base font-bold">That didn&apos;t load</h3>
+      <h3 className="mt-4 text-base font-bold">That did not load</h3>
       <p className="mt-1 max-w-sm text-sm text-muted">{message}</p>
       {onRetry && (
         <Button variant="subtle" size="sm" icon={faRotateRight} className="mt-4" onClick={onRetry}>

@@ -167,7 +167,7 @@ export function WorkingAsNote() {
   const { target } = useWorkingAs()
   if (!target) return null
   return (
-    <p className="flex items-center gap-2 rounded-lg border border-brand/35 bg-brand/10 px-3 py-2 text-xs text-[#b9c3ff]">
+    <p className="flex items-center gap-2 rounded-lg border border-brand/35 bg-brand/10 px-3 py-2 text-xs text-link">
       <Glyph icon={faUser} />
       This will belong to {target.name}, and anything it earns goes into its funds.
     </p>

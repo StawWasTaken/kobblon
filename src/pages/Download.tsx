@@ -3,6 +3,8 @@ import { Glyph } from '@/components/brand/Glyph'
 import { faWindows, faApple, faLinux } from '@fortawesome/free-brands-svg-icons'
 import { faCube, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { Wordmark } from '@/components/brand/Wordmark'
+import { Button } from '@/components/ui/Button'
+import { PUBLIC_LINKS } from '@/components/layout/PublicLayout'
 import { PixelField } from '@/components/brand/PixelField'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { useForceDark } from '@/hooks/useTheme'
@@ -31,11 +33,34 @@ export default function Download() {
       <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/85 to-ink" />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-8">
-        <header className="flex items-center justify-between py-6">
+        {/*
+          * The same four links as every other public bar, rather than the
+          * single grey "Discover" that used to be here. This page sits
+          * outside `PublicLayout` because it keeps its own hero, and the
+          * cost of that was a dead end: a stranger who followed Download
+          * out of the front page's header had one way back into the site
+          * and no way to sign in.
+          */}
+        <header className="flex items-center gap-4 py-6 sm:gap-6">
           <Wordmark to="/" className="h-6" />
-          <Link to="/discover" className="text-sm font-semibold text-white/50 hover:text-white">
-            Discover
+          <nav aria-label="Kobblon" className="hidden items-center gap-5 sm:flex">
+            {PUBLIC_LINKS.map((one) => (
+              <Link
+                key={one.to}
+                to={one.to}
+                className="text-sm font-bold text-white/55 transition-colors hover:text-white"
+              >
+                {one.label}
+              </Link>
+            ))}
+          </nav>
+          <Link
+            to="/login"
+            className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-white"
+          >
+            Log in
           </Link>
+          <Button to="/signup" size="sm" variant="yes">Sign up</Button>
         </header>
 
         <section className="py-12 sm:py-20">

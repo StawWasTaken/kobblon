@@ -130,8 +130,13 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                 size="sm"
                 bob={false}
                 /* Left of the card: on a wide screen the right corner is
-                   where the header link lives. */
-                className="pointer-events-none absolute -left-6 -top-11 hidden h-20 -rotate-6 sm:block"
+                   where the header link lives.
+                   `-top-16` and not `-top-11`: at forty-four pixels up, half
+                   of an eighty-pixel Kobby sat behind the card, and since he
+                   is drawn as separate pieces - hat, hands, face - half of
+                   him reads as a couple of stray blue shapes rather than as
+                   somebody leaning on the corner. He clears the edge now. */
+                className="pointer-events-none absolute -left-5 -top-16 hidden h-20 -rotate-6 sm:block"
               />
 
               <div className="relative">

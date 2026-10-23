@@ -250,7 +250,7 @@ export function RowCard({ one, onClose, onAppealed }: {
      `chat_timeout` that took voice as well is called "Chat suspended" by the
      word list, and the person whose microphone is dead has been told
      something untrue. */
-  const verdict = one.action === 'chat_timeout' && one.channels.includes('voice')
+  const verdict = one.action === 'chat_timeout' && one.channels?.includes('voice')
     ? 'Chat and voice suspended'
     : historyWord[one.action] ?? one.action
 
@@ -386,12 +386,12 @@ export function RowCard({ one, onClose, onAppealed }: {
               }
             />
 
-            {(one.kind === 'chat' || !!one.channels.length || !!one.blocks.length) && (
+            {(one.kind === 'chat' || !!one.channels?.length || !!one.blocks?.length) && (
               <Fact
                 label="What it switched off"
                 icon={faComments}
                 value={
-                  one.blocks.length
+                  one.blocks?.length
                     ? one.blocks.map((b) => blockWord[b] ?? b).join(', ')
                     : channelsLine(one.channels)
                 }
@@ -613,11 +613,16 @@ export default function Standing() {
               }
             />
 
-            {!!live && (level !== 'clear' || !!live.blocks.length) && (
+            {/* `?.` on every one of these. The columns behind them are
+                arrays in the type and nullable in the schema, and
+                `null.length` here does not read as a missing value - it
+                white-screens Account standing, which is the page a suspended
+                person is sent to. */}
+            {!!live && (level !== 'clear' || !!live.blocks?.length) && (
               <Line
                 label="This account"
                 note={
-                  live.blocks.length
+                  live.blocks?.length
                     ? `Switched off right now: ${live.blocks.map((one) => blockWord[one] ?? one).join(', ')}${live.until ? ` until ${day(live.until)}` : ''}.`
                     : undefined
                 }

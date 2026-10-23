@@ -17,7 +17,7 @@ const groups: { heading: string; permissions: { key: keyof CommunityRank; label:
     heading: 'Wall',
     permissions: [
       { key: 'can_post_wall', label: 'Post on the wall' },
-      { key: 'can_moderate_wall', label: 'Remove anyone’s posts' },
+      { key: 'can_moderate_wall', label: "Remove anyone's posts" },
     ],
   },
   {
@@ -225,7 +225,7 @@ export function RolesEditor({ communityId }: { communityId: string }) {
             </div>
 
             {isTop && (
-              <p className="mt-3 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs leading-relaxed text-[#b9c3ff]">
+              <p className="mt-3 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs leading-relaxed text-link">
                 Rank 254 always has everything, and the owner keeps every permission
                 whatever their rank says. That is what makes it the top of the ladder.
               </p>

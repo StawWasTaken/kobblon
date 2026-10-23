@@ -175,7 +175,7 @@ export function NewCommunityDialog({ open, onClose }: { open: boolean; onClose: 
                   value={policy.value}
                   checked={joinPolicy === policy.value}
                   onChange={() => setJoinPolicy(policy.value)}
-                  className="mt-0.5 accent-[#1B34E8]"
+                  className="mt-0.5 accent-brand-bright"
                 />
                 <span>
                   <span className="block text-sm font-bold">{policy.label}</span>

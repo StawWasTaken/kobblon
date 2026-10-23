@@ -190,7 +190,7 @@ export default function StandingItem() {
             <p className="mt-0.5 font-bold">{actionWord[one.action]}</p>
           </div>
 
-          {!!one.blocks.length && (
+          {!!one.blocks?.length && (
             <div className="px-5 py-4">
               <p className="text-sm text-muted">What it switched off</p>
               <p className="mt-0.5 font-bold">

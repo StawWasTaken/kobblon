@@ -844,7 +844,7 @@ export default function AssetPage() {
                             {currency.plural}, paid to Kobblon now. Taking it back off sale later hands a
                             quarter of that back. On each sale you keep{' '}
                             <span className="font-bold text-white">{keeps}</span> of the{' '}
-                            {asked}; the other {PLATFORM_SHARE}% is Kobblon&rsquo;s share.
+                            {asked}; the other {PLATFORM_SHARE}% is Kobblon's share.
                           </p>
                         )
                       }

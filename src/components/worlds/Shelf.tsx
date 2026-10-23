@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRail } from '@/hooks/useRail'
 import { Link } from 'react-router-dom'
 import { faChevronLeft, faChevronRight, faThumbsUp, faEye } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
@@ -26,11 +26,7 @@ export function Shelf({ title, note, more, children, className }: {
   children: React.ReactNode
   className?: string
 }) {
-  const track = useRef<HTMLDivElement>(null)
-
-  const nudge = (way: 1 | -1) => {
-    track.current?.scrollBy({ left: way * (track.current.clientWidth * 0.85), behavior: 'smooth' })
-  }
+  const { track, can, nudge, measure, scrollable } = useRail(children)
 
   const head = (
     <span className="inline-flex items-baseline gap-1.5">
@@ -70,13 +66,17 @@ export function Shelf({ title, note, more, children, className }: {
               {more.label ?? 'Show all'}
             </button>
           )}
-          {([-1, 1] as const).map((way) => (
+          {/* Only where there is somewhere to go. A rail that fits on the
+              screen has nothing to scroll, and two buttons over it that move
+              nothing are a control lying about what the page does. */}
+          {scrollable && ([-1, 1] as const).map((way) => (
             <button
               key={way}
               type="button"
               onClick={() => nudge(way)}
+              disabled={way === -1 ? !can.left : !can.right}
               aria-label={way === -1 ? `Scroll ${title} left` : `Scroll ${title} right`}
-              className="hidden h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-muted transition-colors hover:bg-ink-hover hover:text-white sm:grid"
+              className="hidden h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-muted transition-colors hover:bg-ink-hover hover:text-white disabled:pointer-events-none disabled:opacity-35 sm:grid"
             >
               <Glyph icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
             </button>
@@ -86,6 +86,7 @@ export function Shelf({ title, note, more, children, className }: {
 
       <div
         ref={track}
+        onScroll={measure}
         className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-4 sm:px-0 kob-scroll"
       >
         {children}

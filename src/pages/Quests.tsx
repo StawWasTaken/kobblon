@@ -292,7 +292,7 @@ function Daily({ onChange }: { onChange: () => void }) {
         <Glyph icon={faCalendarDay} className="w-5 text-brand-bright" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-sm font-bold">Today&rsquo;s {currency.plural}</p>
+        <p className="font-display text-sm font-bold">Today's {currency.plural}</p>
         <p className="text-xs leading-relaxed text-muted">
           {there
             ? `${DAILY} for coming to look. It resets at midnight, and it does not stack.`

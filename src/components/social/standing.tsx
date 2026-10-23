@@ -76,7 +76,7 @@ export const ruleWord: Record<string, string> = {
   illegal: 'Something illegal',
   hate: 'Hate',
   cheating: 'Cheating the system',
-  copyright: 'Somebody else’s work',
+  copyright: "Somebody else's work",
   age: 'Age',
   other: 'Something else',
 }
@@ -359,7 +359,7 @@ export const rowTitle = (one: ModerationRow) => {
     // The row carries what it actually took, so the heading says it. A
     // card headed "chat" over a suspension that also took the microphone
     // is the one thing somebody appeals and is right about.
-    return one.channels.includes('voice')
+    return one.channels?.includes('voice')
       ? 'Your chat and voice were suspended'
       : 'Your chat was suspended'
   }

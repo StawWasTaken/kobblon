@@ -10828,3 +10828,85 @@ walked through end to end in a browser against the built source.
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and forty-two
+
+Staw: "now the same for the report popup card", and "i want you to look at the
+entire website and polish it, so it looks better, theres less bugs, and it
+looks less AI-generated but human-written".
+
+### `ReportDialog` redrawn, and two things in it that were wrong
+
+Same head-plus-groups shape as Contact us and the violation card. It was the
+oldest card on the platform - native radio inputs with `accent-[#1B34E8]`
+typed into the class list, no icons, and its own copy of the tile picker.
+
+Two of them were behaviour, not paint, and if you mount this card they matter:
+
+- **It opened with "Harassment or bullying" already selected.** Press Send
+  without reading and you had accused somebody of harassment. It starts on
+  nothing now and Send is off until a reason is picked.
+- **Signed out, Send did nothing.** `if (!profile) return`, no error, no
+  toast. The card now says why before anything is typed, and the button is
+  disabled rather than inert.
+- It also reset nothing between openings, so reporting a second thing began
+  pre-filled with what was said about the first.
+
+It now uses `useMaybeAuth`, not `useAuth`, so it no longer throws when you
+mount it without an `AuthProvider` - but with no provider it has no profile
+and will show its signed-out state. If you want it to send under your own
+session, say so and it takes a `reporterId`; it does not take one today.
+
+### `Tiles` moved
+
+`@/components/ui/Tiles` is where the tile picker lives now. `@/pages/Support`
+re-exports it, so an existing import keeps working. It gained `columns`: pass
+`2` where the labels are sentences.
+
+### `Dialog` skips a field on open
+
+A field marked `data-nofocus` is not what the card focuses when it opens. The
+report card's only box is the optional one, and focusing it put the cursor
+past the question being asked.
+
+### Bugs found and fixed while going over the site
+
+- **Null arrays white-screened Account standing.** `blocks` and `channels` are
+  arrays in the type and nullable in the schema, and `null.length` took the
+  whole page down - the page a suspended person is sent to. Guarded in
+  `Standing`, `StandingItem`, and `rowTitle` in `@/components/social/standing`.
+  If you read those columns, guard them too.
+- **Both shelves drew arrows that scrolled nothing.** The scroll logic is now
+  `@/hooks/useRail`, used by `@/components/worlds/Shelf` and Home's row: the
+  arrows appear only when there is somewhere to go and each one dims at its
+  end. If you mount `Shelf`, this is the only change to it.
+- Home's "Being played right now" drew a heading, an empty scroller and then
+  a card underneath saying the shelf was empty. `Row` takes an `empty` now.
+- `/download` had a header with one grey "Discover" link in it and no way to
+  sign in - a dead end for a stranger who followed Download off the front
+  page. It carries the same `PUBLIC_LINKS` as every other public bar, which
+  is now exported from `@/components/layout/PublicLayout`.
+- Nine HTML entities (`&apos;`, `&rsquo;`, one `&mdash;`) replaced with plain
+  text. The em dash was the only one on the platform.
+- `text-[#b9c3ff]` in two places: a hardcoded pale blue on a themed
+  background, so it would have been unreadable in light mode. Both are
+  `text-link` now.
+- Kobby on the sign-in card sat half behind it, and since he is drawn as
+  separate pieces, half of him reads as stray blue shapes. Raised.
+
+### `tools/shots/` is checked in
+
+`node tools/shots/shoot.mjs <out-dir> [name=/route ...]` serves `dist/`, stubs
+the database, and shoots every page at 1440 and 390. It had been rewritten
+from memory three rounds running, so it is in the repository now with the two
+traps written down in it: Playwright's **last** matching route wins, so the
+specific stubs sit below the catch-all; and the boot splash covers the page
+for `REVEAL_MS`, so a shot taken early is a logomark on black. It also prints
+anything that threw - which is how the Account standing crash above was found.
+
+Nothing in it is of use to you directly, but if you ever ask "was this
+screenshotted", the answer is now a command.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

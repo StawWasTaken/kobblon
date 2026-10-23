@@ -6,12 +6,13 @@
  * mistake this project has made four times. If either throws on this page,
  * a panel over there goes blank instead.
  *
- * `?v=` picks one: ticket, live, void, warn.
+ * `?v=` picks one: ticket, live, void, warn, report.
  */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { TicketCard } from '@/pages/Support'
 import { RowCard } from '@/pages/Standing'
+import { ReportDialog } from '@/components/social/ReportDialog'
 import type { ModerationRow } from '@/types/db'
 import '@/index.css'
 
@@ -108,6 +109,14 @@ function Preview() {
           username="stawrer"
           onClose={() => setOpen(false)}
           onSend={(card) => { console.log(card); setOpen(false) }}
+        />
+      ) : which === 'report' ? (
+        <ReportDialog
+          open={open}
+          onClose={() => setOpen(false)}
+          targetType="space"
+          targetId="1"
+          targetName="Tower of Hell but Worse"
         />
       ) : open ? (
         <RowCard

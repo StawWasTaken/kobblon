@@ -79,9 +79,11 @@ export function Dialog({
     document.addEventListener('keydown', onKey)
 
     // Land on the first thing somebody would type in, not on the close
-    // button, and only when the card opens.
+    // button, and only when the card opens. A field marked `data-nofocus` is
+    // skipped: on the report card the only box is the optional one, and
+    // focusing it puts the cursor past the question the card is asking.
     const first = panel.current?.querySelector<HTMLElement>(
-      'input:not([type="file"]), textarea',
+      'input:not([type="file"]):not([data-nofocus]), textarea:not([data-nofocus])',
     )
     first?.focus()
 

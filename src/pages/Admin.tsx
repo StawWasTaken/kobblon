@@ -1973,7 +1973,7 @@ export function MapSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           A country is shaded by its share of everybody seen in that time. The
-          zone is a setting on somebody&rsquo;s machine, so it is a hint and
+          zone is a setting on somebody's machine, so it is a hint and
           never evidence.
         </p>
         <Choices

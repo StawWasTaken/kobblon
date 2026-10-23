@@ -779,7 +779,7 @@ function ItemView({ item }: { item: AvatarItem }) {
         ) : (
           <p className="max-w-[18rem] px-6 text-center text-sm leading-relaxed text-muted">
             <Glyph icon={faShirt} className="mb-2 block text-2xl text-white/20" />
-            No picture of this one yet. Its maker&rsquo;s card is drawn the next
+            No picture of this one yet. Its maker's card is drawn the next
             time they open Things to Wear.
           </p>
         )}

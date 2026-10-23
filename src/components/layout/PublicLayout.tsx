@@ -11,8 +11,8 @@ import { useAuth } from '@/hooks/useAuth'
  * The side of Kobblon anyone can see without an account: the front page
  * and the policy pages. The signed-in side has its own layout.
  */
-/** The four places a stranger might be going. One list, both bars. */
-const PUBLIC_LINKS = [
+/** The four places a stranger might be going. One list, every public bar. */
+export const PUBLIC_LINKS = [
   { to: '/discover', label: 'Play' },
   { to: '/create', label: 'Create' },
   { to: '/communities', label: 'Communities' },

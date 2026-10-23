@@ -1,1 +1,0 @@
-import{Fr as e,Pr as t,Vr as n,Wr as r}from"./free-solid-svg-icons-BN75tsk6.js";var i=r(n(),1);function a(n){let{pathname:r,search:a,hash:o}=t(),s=e();(0,i.useEffect)(()=>{n&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(n).replace(/\/+$/,``)&&s(`${n}${a}${o}`,{replace:!0})},[n,r,a,o,s])}export{a as t};
