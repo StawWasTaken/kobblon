@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faArrowDown, faArrowUp, faGift, faReceipt, faStore,
+  faArrowDown, faArrowUp, faGift, faReceipt, faScaleBalanced,
 } from '@fortawesome/free-solid-svg-icons'
-import { Page } from '@/components/layout/AppShell'
-import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Choices } from '@/components/ui/Choices'
 import { ErrorState } from '@/components/ui/States'
-import { Balance } from '@/components/money/Balance'
 import { Transactions } from '@/components/money/Transactions'
+import { BrixShell } from '@/components/money/BrixShell'
+import { LineGraph } from '@/components/ui/Graph'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { GuestGate } from '@/components/ui/GuestGate'
 import { useAuth } from '@/hooks/useAuth'
@@ -36,14 +35,39 @@ const ranges = [
   { value: '0', label: 'Everything' },
 ] as const
 
+/* Not "Everything": the range beside it already has one, and two chips with
+   the same word on them a centimetre apart is a control nobody can read. */
 const kinds = [
-  { value: 'all', label: 'Everything' },
+  { value: 'all', label: 'Both ways' },
   { value: 'in', label: 'Coming in' },
   { value: 'out', label: 'Going out' },
 ] as const
 
 type Range = (typeof ranges)[number]['value']
 type Side = (typeof kinds)[number]['value']
+
+/** A total with its own colour, big enough to read across the page. */
+function Tile({ icon, label, amount, tone }: {
+  icon: typeof faArrowDown
+  label: string
+  amount: number
+  tone: string
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-ink-line bg-ink-card px-4 py-3.5">
+      <span className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-raised', tone)}>
+        <Glyph icon={icon} />
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5 font-display text-xl font-extrabold tabular-nums leading-none">
+          <CurrencyMark className="h-[0.8em] w-[0.8em]" />
+          {formatCount(Math.abs(amount))}
+        </span>
+        <span className="mt-1 block text-xs text-muted">{label}</span>
+      </span>
+    </div>
+  )
+}
 
 /** One line of the summary: what a kind of movement added up to. */
 function Line({ label, amount, muted }: { label: string; amount: number; muted?: boolean }) {
@@ -98,104 +122,157 @@ export default function Brix() {
     }
   }, [rows.data])
 
+  /*
+   * A day a row, for the chart. Days with nothing on them are still days:
+   * a line with the quiet weeks taken out of it is a line that lies about
+   * how fast anything happened.
+   *
+   * "Everything" has no window to draw, so it falls back to the last ninety
+   * days rather than inventing an axis from the first movement on the
+   * account.
+   */
+  const daily = useMemo(() => {
+    const days = Number(range) || 90
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    start.setDate(start.getDate() - (days - 1))
+
+    const inPer: number[] = Array.from({ length: days }, () => 0)
+    const outPer: number[] = Array.from({ length: days }, () => 0)
+    const labels: string[] = []
+
+    for (let i = 0; i < days; i += 1) {
+      const day = new Date(start)
+      day.setDate(start.getDate() + i)
+      labels.push(`${day.getDate()}/${day.getMonth() + 1}`)
+    }
+
+    for (const row of rows.data ?? []) {
+      const when = new Date(row.created_at)
+      when.setHours(0, 0, 0, 0)
+      const at = Math.round((when.getTime() - start.getTime()) / 86_400_000)
+      if (at < 0 || at >= days) continue
+      if (row.amount > 0) inPer[at] += row.amount
+      else outPer[at] += -row.amount
+    }
+
+    return { labels, inPer, outPer, anything: (rows.data ?? []).length > 0 }
+  }, [rows.data, range])
+
   return (
-    <Page className="space-y-5">
-      <PageHeader
-        kicker={currency.plural}
-        icon={faReceipt}
-        title="My transactions"
-        lead={`Everything that has moved on your account, and what it was for.`}
-        actions={
-          <>
-            <GuestGate action="redeem codes">
-              <Button icon={faGift} to="/brix/codes">Redeem a code</Button>
-            </GuestGate>
-            <Button variant="subtle" icon={faStore} to="/style">
-              Spend {currency.plural}
-            </Button>
-          </>
-        }
-        aside={
-          <div className="rounded-2xl border border-ink-line bg-ink-raised px-5 py-4 text-right">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted">Your balance</p>
-            <Balance amount={profile?.pixels ?? 0} size="lg" label={false} className="mt-1" />
-          </div>
-        }
-      />
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Choices
-          label="How far back"
-          value={range}
-          options={ranges.map((one) => ({ value: one.value, label: one.label }))}
-          onChange={(next) => setRange(next as Range)}
-        />
-        <Choices
-          label="Which way"
-          tone="soft"
-          value={side}
-          options={kinds.map((one) => ({ value: one.value, label: one.label }))}
-          onChange={(next) => setSide(next as Side)}
-        />
-      </div>
-
-      {rows.error && <ErrorState message={rows.error} onRetry={rows.reload} />}
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
-        {/* ------------------------------------------------------ summary */}
-        <Card className="p-5">
-          <h2 className="flex items-center gap-2 font-display text-lg font-extrabold">
-            <Glyph icon={faArrowDown} className="text-space-bright" />
-            Coming in
-          </h2>
-          <div className="mt-2">
-            {summary.incoming.length
-              ? summary.incoming.map(([kind, amount]) => (
-                <Line key={kind} label={movementWords(kind)} amount={amount} />
-              ))
-              : <p className="py-2 text-sm text-muted">Nothing came in.</p>}
-            <Line label="Total" amount={summary.inTotal} />
-          </div>
-
-          <h2 className="mt-6 flex items-center gap-2 font-display text-lg font-extrabold">
-            <Glyph icon={faArrowUp} className="text-danger" />
-            Going out
-          </h2>
-          <div className="mt-2">
-            {summary.outgoing.length
-              ? summary.outgoing.map(([kind, amount]) => (
-                <Line key={kind} label={movementWords(kind)} amount={amount} />
-              ))
-              : <p className="py-2 text-sm text-muted">Nothing went out.</p>}
-            <Line label="Total" amount={summary.outTotal} />
-          </div>
-
-          <p className="mt-5 border-t border-ink-line pt-4 text-xs leading-relaxed text-muted">
-            {currency.plural} are a number on your account for use inside Kobblon. They are
-            not money, and they cannot be cashed out.
-          </p>
-        </Card>
-
-        {/* --------------------------------------------------------- list */}
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between gap-3 border-b border-ink-line px-5 py-3.5">
-            <h2 className="font-display text-lg font-extrabold">Every movement</h2>
-            <p className="text-xs text-muted">
-              {shown.length} {shown.length === 1 ? 'line' : 'lines'}
-            </p>
-          </div>
-
-          <Transactions
-            rows={shown}
-            loading={rows.loading}
-            empty={
-              side === 'all'
-                ? 'Nothing has moved in this stretch.'
-                : side === 'in' ? 'Nothing came in.' : 'Nothing went out.'
-            }
+    <BrixShell
+      icon={faReceipt}
+      title="My transactions"
+      lead="Everything that has moved on your account, what it was for, and what it adds up to."
+      actions={
+        <GuestGate action="redeem codes">
+          <Button icon={faGift} to="/brix/codes">Redeem a code</Button>
+        </GuestGate>
+      }
+    >
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Choices
+            label="How far back"
+            value={range}
+            options={ranges.map((one) => ({ value: one.value, label: one.label }))}
+            onChange={(next) => setRange(next as Range)}
           />
-        </Card>
+          <Choices
+            label="Which way"
+            tone="soft"
+            value={side}
+            options={kinds.map((one) => ({ value: one.value, label: one.label }))}
+            onChange={(next) => setSide(next as Side)}
+          />
+        </div>
+
+        {rows.error && <ErrorState message={rows.error} onRetry={rows.reload} />}
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Tile icon={faArrowDown} label="Came in" amount={summary.inTotal} tone="text-space-bright" />
+          <Tile icon={faArrowUp} label="Went out" amount={summary.outTotal} tone="text-danger" />
+          <Tile
+            icon={faScaleBalanced}
+            label={summary.inTotal + summary.outTotal >= 0 ? 'Up over the stretch' : 'Down over the stretch'}
+            amount={summary.inTotal + summary.outTotal}
+            tone="text-brand-bright"
+          />
+        </div>
+
+        {daily.anything && (
+          <Card className="p-5">
+            <h2 className="font-display text-lg font-extrabold">Day by day</h2>
+            <p className="mt-1 text-xs text-muted">
+              What came in and what went out, each day of the stretch.
+            </p>
+            <LineGraph
+              className="mt-4"
+              labels={daily.labels}
+              series={[
+                { label: 'Came in', values: daily.inPer, tone: 'text-space-bright', summary: 'sum' },
+                { label: 'Went out', values: daily.outPer, tone: 'text-danger', summary: 'sum' },
+              ]}
+            />
+          </Card>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
+          {/* ---------------------------------------------------- summary */}
+          <Card className="p-5">
+            <h2 className="flex items-center gap-2 font-display text-lg font-extrabold">
+              <Glyph icon={faArrowDown} className="text-space-bright" />
+              Coming in
+            </h2>
+            <div className="mt-2">
+              {summary.incoming.length
+                ? summary.incoming.map(([kind, amount]) => (
+                  <Line key={kind} label={movementWords(kind)} amount={amount} />
+                ))
+                : <p className="py-2 text-sm text-muted">Nothing came in.</p>}
+              <Line label="Total" amount={summary.inTotal} />
+            </div>
+
+            <h2 className="mt-6 flex items-center gap-2 font-display text-lg font-extrabold">
+              <Glyph icon={faArrowUp} className="text-danger" />
+              Going out
+            </h2>
+            <div className="mt-2">
+              {summary.outgoing.length
+                ? summary.outgoing.map(([kind, amount]) => (
+                  <Line key={kind} label={movementWords(kind)} amount={amount} />
+                ))
+                : <p className="py-2 text-sm text-muted">Nothing went out.</p>}
+              <Line label="Total" amount={summary.outTotal} />
+            </div>
+
+            <p className="mt-5 border-t border-ink-line pt-4 text-xs leading-relaxed text-muted">
+              {currency.plural} are a number on your account for use inside Kobblon. They are
+              not money, and they cannot be cashed out.
+            </p>
+          </Card>
+
+          {/* ------------------------------------------------------- list */}
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between gap-3 border-b border-ink-line px-5 py-3.5">
+              <h2 className="font-display text-lg font-extrabold">Every movement</h2>
+              <p className="text-xs text-muted">
+                {shown.length} {shown.length === 1 ? 'line' : 'lines'}
+              </p>
+            </div>
+
+            <Transactions
+              rows={shown}
+              loading={rows.loading}
+              empty={
+                side === 'all'
+                  ? 'Nothing has moved in this stretch.'
+                  : side === 'in' ? 'Nothing came in.' : 'Nothing went out.'
+              }
+            />
+          </Card>
+        </div>
       </div>
-    </Page>
+    </BrixShell>
   )
 }

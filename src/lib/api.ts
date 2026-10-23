@@ -9,7 +9,8 @@ import { FLOOR_FACE } from './mannequin'
 import { plainFace } from './plainFace'
 import { timeAgo } from './format'
 import type {
-  ActivityEvent, AssetKind, Community, EarnedBadge, MarketAsset,
+  ActivityEvent, AssetKind, BoardRow, BoardSide, Community, EarnedBadge, MarketAsset,
+  OwnerBoard, PersonPlace, WorldBoard, WorldBoardRow,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
   ProfileOverview, Space, SpaceBadge, SpaceCategory, SpaceMessage, SpaceStats, Conversation,
   CommunityMember, CommunityOverview, CommunityPost, CommunityRank, CommunityRequest,
@@ -5492,6 +5493,36 @@ export async function startQuest(id: string) {
 /** Takes the reward. Returns the balance it left behind. */
 export async function claimQuest(id: string): Promise<number> {
   return unwrap(await supabase.rpc('claim_quest', { quest: id })) as number
+}
+
+/**
+ * One board of accounts, either side of the switch.
+ *
+ * Fifty rows and one total each: the ledger behind the Brix boards stays
+ * private to the person it belongs to, and nothing here says what anybody
+ * bought or when.
+ *
+ * A side with no honest answer comes back empty rather than wrong - a
+ * Community cannot own a World, so there is no Communities side to either
+ * World board, and `worth` on that side would be a second copy of `brix`.
+ */
+export async function leaderboard(board: OwnerBoard, side: BoardSide): Promise<BoardRow[]> {
+  return (unwrap(await supabase.rpc('leaderboard', { board, side })) as BoardRow[]) ?? []
+}
+
+/** A board of Worlds: most liked, or most visited. */
+export async function worldLeaderboard(board: WorldBoard): Promise<WorldBoardRow[]> {
+  return (unwrap(await supabase.rpc('world_leaderboard', { board })) as WorldBoardRow[]) ?? []
+}
+
+/**
+ * What one account has on every player board, and where that puts them.
+ *
+ * Takes a person, because the profile shows somebody else's: left empty it
+ * reads whoever is asking, which is what the leaderboard page wants.
+ */
+export async function personPlaces(who?: string): Promise<PersonPlace[]> {
+  return (unwrap(await supabase.rpc('person_places', who ? { who } : {})) as PersonPlace[]) ?? []
 }
 
 export async function dailyWaiting(): Promise<boolean> {

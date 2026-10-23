@@ -28,6 +28,7 @@ import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Shop } from '@/components/catalog/Shop'
 import { Tabs } from '@/components/ui/Tabs'
+import { Places } from '@/components/social/Places'
 import { Emblem } from '@/components/community/Emblem'
 import { WearingPanel } from '@/components/avatar/WearingPanel'
 
@@ -789,6 +790,10 @@ export default function Profile() {
 
       {tab === 'Shop' ? null : tab === 'Creations' ? (
         <div className="space-y-10">
+          {/* What they have made, counted, with their place on the board
+              where they are on one. Same read as the Leaderboards page. */}
+          <Places who={user.id} />
+
           <section>
             <Heading
               icon={worldIcon}

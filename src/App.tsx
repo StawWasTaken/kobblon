@@ -55,6 +55,7 @@ const CreateAvatarItems = lazyPage(() => import('@/pages/CreateAvatarItems'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
 const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
+const Leaderboards = lazyPage(() => import('@/pages/Leaderboards'))
 const Quests = lazyPage(() => import('@/pages/Quests'))
 const Profile = lazyPage(() => import('@/pages/Profile'))
 const Settings = lazyPage(() => import('@/pages/Settings'))
@@ -223,6 +224,7 @@ export default function App() {
                   <Route path="/quests" element={<Quests />} />
                   <Route path="/brix" element={<Brix />} />
                   <Route path="/brix/codes" element={<BrixCodes />} />
+                  <Route path="/leaderboards" element={<Leaderboards />} />
                   <Route path="/library" element={<Library />} />
                   {/* Your avatar is yours. Signed out there is nothing to
                       show but an empty face and an @ with no name after it,

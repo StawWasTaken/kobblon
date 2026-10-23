@@ -47,6 +47,10 @@ export type Movement =
   | 'signup_grant' | 'daily' | 'purchase' | 'sale' | 'refund' | 'admin'
   | 'username_change' | 'donation' | 'ad_budget' | 'ad_refund' | 'ad_earning'
   | 'listing_fee' | 'listing_refund' | 'platform_fee' | 'burn'
+  /* The ledger has written these six for months and none of them had words
+     here, so a quest reward read as "quest" and a tag as "quest tag" - the
+     database's own column name, shown to the person who earned it. */
+  | 'code' | 'item_edit' | 'gift_sent' | 'gift_received' | 'quest' | 'quest_tag'
 
 export const movements: Record<Movement, string> = {
   signup_grant: 'Welcome',
@@ -64,6 +68,12 @@ export const movements: Record<Movement, string> = {
   listing_refund: 'Taken off sale',
   platform_fee: "Kobblon's share",
   burn: 'Burned',
+  code: 'Redeemed a code',
+  item_edit: 'Changed something you made',
+  gift_sent: 'Gift sent',
+  gift_received: 'Gift received',
+  quest: 'Quest reward',
+  quest_tag: 'Paid for a quest tag',
 }
 
 /** What a movement reads as, falling back to the word itself. */

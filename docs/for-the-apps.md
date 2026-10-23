@@ -10940,3 +10940,55 @@ The entry animation only runs because the step wrapper is keyed on the step numb
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and forty-four
+
+Staw, carrying a suggestion from imCooki3 on the Discord: "i want a brix leaderboard so we can see the richest player on kobblon. like most spent, most brix currently, and brix networth (not account progress)". Then, while this was being built: "actually for the leaderboards i was kinda thinking we could make more than just brix leaderboard, and put all the leaderboards together [...] world visits per user, catalog item sales, marketplace assets created, and worlds with the most likes [...] for each leaderboard theres a switch for players and communities". And: a redesign of all four Brix pages, no more "Spend Brix", the daily claim shown as a normal quest, and a blue dot when there are new quests.
+
+### Migration 0274 - the boards
+
+Three reads, all `security definer`, all granted to `authenticated` and `anon`:
+
+- **`leaderboard(board text, side text)`** - one board of accounts, fifty rows. `board` is one of `brix`, `spent`, `worth`, `visits`, `sales`, `assets`; `side` is `players` or `communities`, and anything else raises. Every row is the same shape whatever it is a board of: `place, kind ('player'|'community'), subject_id, content_id, name, handle, image_url, is_verified, amount`.
+- **`world_leaderboard(board text)`** - `likes` or `visits`. A board *of Worlds*, so the row is a World with its cover and its owner's name: `place, world_id, content_id, slug, name, cover_url, owner_name, owner_username, owner_verified, amount`.
+- **`person_places(who uuid default auth.uid())`** - what one account has on each of the six player boards and where that puts them: `board, amount, place, of_how_many`. `place` is null where they have nothing on that board. It takes a person because the profile shows somebody else's.
+
+`everybody_at(text)` is the inside of the last two and is explicitly **revoked** from `authenticated`, `anon` and `public`: it is every account's number on a board with no limit, which is not a page's to ask for.
+
+**Two sides are deliberately empty, and the page says so rather than drawing an empty board.** A World belongs to a person - nothing in the schema lets a Community own one - so neither World board has a Communities side. And `worth` on the Communities side would be a second copy of `brix`, since a Community has funds and owns no avatar items. If Worlds should be ownable by a Community, that is a schema change and the boards follow it for free.
+
+**What this makes public.** `pixel_transactions` is still readable only by the person it belongs to and that policy has not changed. But a total built from it is a disclosure that cannot be taken back: "most spent" says roughly how much the top accounts have put through the economy. Fifty rows, one total per row, no movement, date or reason ever exposed, and guests, suspended accounts and accounts on their way out are left off. Said plainly here because it is a decision rather than an implementation detail.
+
+Checked locally, applied twice, under two identities: the three Brix boards rank correctly, a suspended account with the highest balance is absent, a Community's funds and outgoings rank on the Communities side, `visits` on that side returns nothing, the World boards rank by `like_count` and `visit_count`, a bad side raises, `person_places` reads correctly as yourself and for somebody else, and `everybody_at` is refused as `authenticated`.
+
+### `quest_board()` gained a last column
+
+`created_at timestamptz`, at the end. Everything before it is unchanged and in the same order, so anything already reading the board keeps working - **but the function was dropped and recreated**, so if you have a typed wrapper over it, add the column.
+
+It is there because nothing could tell a quest that went up this morning from one that has been there a fortnight, which is exactly what the new-quest dot is.
+
+### The four Brix pages are one place now
+
+`/quests`, `/leaderboards`, `/brix`, `/brix/codes` share a shell: the same header, the same balance, and a rail across the four with a measured underline that slides between them. **`/brix/leaderboard` does not exist; the route is `/leaderboards`.**
+
+- **"Spend Brix" is gone** from the balance menu. It went to the Style shop, which is one of several places Brix are spent and not the obvious one. Leaderboards took its place.
+- The daily claim is **a quest card like any other** now, built client-side as a `claim` quest with `id: 'daily'` - still claimed through `claim_daily`, still reset by the server's midnight. If you draw quests anywhere, note that the id `daily` is not a row in `quests`.
+- **A blue dot** marks new quests on the balance and on the Quests tab: quests whose `created_at` is later than the last time this account opened the board, remembered per account in `localStorage`. Opening the board puts it out. On the top bar it carries a ring of the bar's own colour, because a blue dot on a blue bar is a dot nobody sees.
+- Transactions gained totals and a day-by-day line of what came in against what went out.
+
+### Six movements had no words
+
+`code`, `item_edit`, `gift_sent`, `gift_received`, `quest` and `quest_tag` were all in the ledger with nothing in `@/lib/kinds`' movement words, so a quest reward read as "quest" and a tag as "quest tag" - the database's own column name, shown to the person who earned it. All six have words now. **If you show a movement anywhere, take the new words.**
+
+### On a profile
+
+`@/components/social/Places` draws World visits, catalog sales and assets made, with the place where there is one, from the same `person_places`. The money boards are deliberately **not** on profiles: fifty accounts on a leaderboard is something somebody went looking for; the same number beside everybody's face is every account's wallet on their profile.
+
+### Icons
+
+Staw: "we do have an icon for brix so it should be used". The three money boards and the shell's kicker draw the mark itself, not a Font Awesome coin.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

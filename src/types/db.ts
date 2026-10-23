@@ -1102,6 +1102,56 @@ export type Quest = {
   claimed_at: string | null
   /** Whether the promoter's name carries the tick. */
   author_verified: boolean
+  /** When it went up. The blue dot on the Brix menu is this against what
+      you have already looked at. */
+  created_at: string
+}
+
+/**
+ * The boards.
+ *
+ * Six of them are a board of accounts - a player or a Community - and two
+ * are a board of Worlds, which is a different row and a different read.
+ */
+export type OwnerBoard = 'brix' | 'spent' | 'worth' | 'visits' | 'sales' | 'assets'
+export type WorldBoard = 'likes' | 'visits'
+export type BoardSide = 'players' | 'communities'
+
+/** One place on an account board. `amount` is whichever board asked. */
+export type BoardRow = {
+  place: number
+  kind: 'player' | 'community'
+  subject_id: string
+  content_id: number | null
+  name: string
+  /** A username, or a Community's slug. */
+  handle: string
+  image_url: string | null
+  is_verified: boolean
+  amount: number
+}
+
+/** One place on a board of Worlds. */
+export type WorldBoardRow = {
+  place: number
+  world_id: string
+  content_id: number | null
+  slug: string
+  name: string
+  cover_url: string | null
+  owner_name: string | null
+  owner_username: string | null
+  owner_verified: boolean
+  amount: number
+}
+
+/** What one account has, and where that puts them, on every player board. */
+export type PersonPlace = {
+  board: OwnerBoard
+  amount: number
+  /** Null where they have nothing on that board, so there is no place. */
+  place: number | null
+  of_how_many: number
 }
 
 export type QuestRequest = {

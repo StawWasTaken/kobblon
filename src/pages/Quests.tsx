@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  faCalendarDay, faCircleCheck, faClock, faHandshake, faPlus, faWandMagicSparkles,
+  faCircleCheck, faClock, faHandshake, faPlus, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
-import { Page } from '@/components/layout/AppShell'
-import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -15,11 +13,13 @@ import { Note } from '@/components/ui/Note'
 import { Select } from '@/components/ui/Select'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { GuestGate } from '@/components/ui/GuestGate'
+import { BrixShell } from '@/components/money/BrixShell'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
+import { forgetQuests, questsSeen } from '@/hooks/useNewQuests'
 import {
   addQuest, claimDaily, claimQuest, dailyWaiting, myQuestRequests, myWorlds,
   questBoard, requestWorldQuest, startQuest,
@@ -49,6 +49,50 @@ import type { Quest, QuestCounted } from '@/types/db'
  */
 
 const DAILY = 30
+
+/**
+ * The daily, written as a quest.
+ *
+ * Staw: "make that the everyday claim is a viewed as a normal quest too
+ * (just that it reappears everyday)". It had its own strip above the board
+ * - its own layout, its own button, its own idea of what claimed looks like
+ * - which made the one thing everybody comes here for the one thing that did
+ * not look like the rest of the page.
+ *
+ * It is a row the server does not have, so it is built here rather than
+ * read: `claim` is the kind for a quest with nothing to do, the goal is one,
+ * and whether it is done is `daily_waiting()` saying so. Claiming still goes
+ * through `claim_daily`, which is the only thing that can give it, and the
+ * reset is the server's midnight rather than anything this page counts.
+ */
+export const DAILY_ID = 'daily'
+
+function dailyQuest(waiting: boolean): Quest {
+  const now = new Date().toISOString()
+  return {
+    id: DAILY_ID,
+    counted: 'claim',
+    title: `Today's ${currency.plural}`,
+    lead: 'For turning up. It comes back tomorrow, and it does not stack.',
+    goal: 1,
+    done: 1,
+    reward: DAILY,
+    world_tag: null,
+    custom_tag: 'Daily',
+    background_url: null,
+    world_id: null,
+    world_content_id: null,
+    world_slug: null,
+    world_name: null,
+    world_emblem: null,
+    author_name: 'Kobblon',
+    ends_at: null,
+    started: now,
+    claimed_at: waiting ? null : now,
+    author_verified: true,
+    created_at: now,
+  }
+}
 
 /** The goal and what has been done, in words that suit what is counted. */
 function howFar(quest: Quest) {
@@ -137,7 +181,11 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
   const press = async () => {
     setBusy(true)
     try {
-      if (!quest.started) {
+      if (quest.id === DAILY_ID) {
+        const left = await claimDaily()
+        await refreshProfile()
+        say(`${currency.amount(DAILY)} yours. ${currency.amount(left)} in all.`, 'success')
+      } else if (!quest.started) {
         await startQuest(quest.id)
         say('Taken on. It counts from now.', 'success')
       } else {
@@ -258,57 +306,6 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
           </GuestGate>
         )}
       </div>
-    </Card>
-  )
-}
-
-/** The daily, which is a claim rather than a gift. */
-function Daily({ onChange }: { onChange: () => void }) {
-  const say = useToast()
-  const { refreshProfile } = useAuth()
-  const waiting = useAsync(() => dailyWaiting(), [])
-  const [busy, setBusy] = useState(false)
-
-  const press = async () => {
-    setBusy(true)
-    try {
-      const left = await claimDaily()
-      await refreshProfile()
-      say(`${currency.amount(DAILY)} yours. ${currency.amount(left)} in all.`, 'success')
-      waiting.reload()
-      onChange()
-    } catch (err) {
-      say(err instanceof Error ? err.message : 'That did not work.', 'error')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const there = waiting.data === true
-
-  return (
-    <Card className="flex flex-wrap items-center gap-4 p-4">
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand/15">
-        <Glyph icon={faCalendarDay} className="w-5 text-brand-bright" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="font-display text-sm font-bold">Today's {currency.plural}</p>
-        <p className="text-xs leading-relaxed text-muted">
-          {there
-            ? `${DAILY} for coming to look. It resets at midnight, and it does not stack.`
-            : 'Claimed. Another one tomorrow.'}
-        </p>
-      </div>
-      <GuestGate action="claim the daily">
-        <Button
-          variant={there ? 'primary' : 'subtle'}
-          loading={busy || waiting.loading}
-          disabled={!there}
-          onClick={() => void press()}
-        >
-          {there ? `Claim ${DAILY}` : 'Claimed'}
-        </Button>
-      </GuestGate>
     </Card>
   )
 }
@@ -637,13 +634,24 @@ function MyRequests({ reloadKey }: { reloadKey: number }) {
 export default function Quests() {
   useTitle('Quests')
   const { profile } = useAuth()
+  const today = useAsync(() => dailyWaiting(), [profile?.id])
   const [asking, setAsking] = useState(false)
   const [writing, setWriting] = useState(false)
   const [round, setRound] = useState(0)
   const [order, setOrder] = useState<'suggested' | 'ending' | 'reward'>('suggested')
 
   const board = useAsync(() => questBoard(), [profile?.id, round])
-  const again = () => setRound((n) => n + 1)
+  const again = () => {
+    forgetQuests()
+    today.reload()
+    setRound((n) => n + 1)
+  }
+
+  /* Looking at the board is what puts the dot out, so it goes out here
+     rather than on a button somebody has to find. */
+  useEffect(() => {
+    if (profile?.id && board.data) questsSeen(profile.id)
+  }, [profile?.id, board.data])
 
   /*
    * Sorted here rather than asked for again, because the board is one call
@@ -656,6 +664,10 @@ export default function Quests() {
    */
   const { waiting, done } = useMemo(() => {
     const all = [...(board.data ?? [])]
+    /* The daily is a quest like the others now, so it is sorted with them -
+       except that it leads the board while it is unclaimed, because it is
+       the one thing on this page that is gone by tomorrow. */
+    const daily = profile && today.data !== null ? dailyQuest(today.data === true) : null
     if (order === 'ending') {
       all.sort((a, b) => {
         if (!a.ends_at) return 1
@@ -664,37 +676,34 @@ export default function Quests() {
       })
     }
     if (order === 'reward') all.sort((a, b) => b.reward - a.reward)
+    if (daily) all.unshift(daily)
     return {
       waiting: all.filter((one) => !one.claimed_at),
       done: all.filter((one) => !!one.claimed_at),
     }
-  }, [board.data, order])
+  }, [board.data, order, profile, today.data])
 
   return (
-    <Page className="space-y-5">
-      <PageHeader
-        kicker="Quests"
-        icon={faWandMagicSparkles}
-        title="Things to go and do"
-        lead={`Play, turn up, and come back for what it is worth. Every one of these pays in ${currency.plural}.`}
-        actions={
-          <>
-            {profile?.is_superadmin && (
-              <Button icon={faPlus} onClick={() => setWriting(true)}>
-                Write a quest
-              </Button>
-            )}
-            {profile?.is_verified && !profile?.is_superadmin && (
-              <Button icon={faPlus} onClick={() => setAsking(true)}>
-                Ask for a quest
-              </Button>
-            )}
-          </>
-        }
-      />
-
-      <Daily onChange={again} />
-
+    <BrixShell
+      icon={faWandMagicSparkles}
+      title="Things to go and do"
+      lead={`Play, turn up, and come back for what it is worth. Every one of these pays in ${currency.plural}.`}
+      actions={
+        <>
+          {profile?.is_superadmin && (
+            <Button icon={faPlus} onClick={() => setWriting(true)}>
+              Write a quest
+            </Button>
+          )}
+          {profile?.is_verified && !profile?.is_superadmin && (
+            <Button icon={faPlus} onClick={() => setAsking(true)}>
+              Ask for a quest
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className="space-y-5">
       {board.error ? (
         <ErrorState message={board.error} onRetry={board.reload} />
       ) : board.loading ? (
@@ -706,7 +715,7 @@ export default function Quests() {
           <EmptyState
             mood="emptyBox"
             title="Nothing to do just yet"
-            body="Quests come from Worlds and from Kobblon, and there are none running. The daily above is still yours."
+            body="Quests come from Worlds and from Kobblon, and there are none running just now."
             action={<Button variant="subtle" to="/discover">Go and find a World</Button>}
           />
         </Card>
@@ -775,6 +784,7 @@ export default function Quests() {
           Worlds get onto this tab when a verified creator asks and an admin agrees.
         </Note>
       )}
-    </Page>
+      </div>
+    </BrixShell>
   )
 }

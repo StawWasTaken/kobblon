@@ -80,11 +80,93 @@ const me = {
    the other way round, why People threw `find is not a function` for a
    while: a list query handed one object. PostgREST decides by the Accept
    header, and so does the stub below. */
+const people = [
+  ['Varko', 'varko', 182400], ['imCooki3', 'imcooki3', 96200], ['Loskwea', 'loskwea', 74050],
+  ['UrNotLucky', 'urnotlucky', 51200], ['WarKing', 'warking', 42900],
+  ['zelittlecrab', 'zelittlecrab', 31800], ['ilikefishes', 'ilikefishes', 24100],
+  ['cooki', 'cooki', 18400], ['Staw', 'stawrer', 5400],
+]
+
+const day = (n) => new Date(Date.now() + n * 86400000).toISOString()
+
 const RPC = {
   my_behaviour: [{ score: 72, band: 'mixed' }],
   my_standing: [{ level: 'clear' }],
   my_moderation_history: [],
   my_worlds: [], my_tickets: [], world_genres: [],
+
+  /* Every account board returns the same row, so one fixture does for all
+     of them: the stub cannot know which was asked for and does not need to. */
+  leaderboard: people.map(([name, handle, amount], at) => ({
+    place: at + 1,
+    kind: 'player',
+    subject_id: `00000000-0000-4000-8000-00000000000${at}`,
+    content_id: 1000 + at,
+    name, handle, image_url: null,
+    is_verified: at < 2,
+    amount,
+  })),
+  world_leaderboard: [
+    ['Tower of Hell but Worse', 'tower-of-hell-but-worse', 'Loskwea', 4120],
+    ['Brick Racers', 'brick-racers', 'UrNotLucky', 2880],
+    ['The Long Hallway', 'the-long-hallway', 'imCooki3', 2010],
+    ['Sandbox 64', 'sandbox-64', 'WarKing', 940],
+  ].map(([name, slug, owner, amount], at) => ({
+    place: at + 1,
+    world_id: `11111111-0000-4000-8000-00000000000${at}`,
+    content_id: 2200 + at, slug, name, cover_url: null,
+    owner_name: owner, owner_username: String(owner).toLowerCase(),
+    owner_verified: at === 0, amount,
+  })),
+  person_places: [
+    { board: 'brix', amount: 5400, place: 9, of_how_many: 214 },
+    { board: 'spent', amount: 3100, place: 14, of_how_many: 180 },
+    { board: 'worth', amount: 9200, place: 7, of_how_many: 214 },
+    { board: 'visits', amount: 1280, place: 11, of_how_many: 96 },
+    { board: 'sales', amount: 42, place: 18, of_how_many: 120 },
+    { board: 'assets', amount: 9, place: 23, of_how_many: 140 },
+  ],
+
+  daily_waiting: true,
+  quest_board: [
+    {
+      id: 'q1', counted: 'world_time', title: 'Fifteen minutes in Tower of Hell but Worse',
+      lead: 'Stay on the tower for a quarter of an hour. Falling counts.',
+      goal: 900, reward: 120, world_tag: 'parkour', custom_tag: null,
+      background_url: null, world_id: 'w1', world_content_id: 2201,
+      world_slug: 'tower-of-hell-but-worse', world_name: 'Tower of Hell but Worse',
+      world_emblem: null, author_name: 'Loskwea', ends_at: day(4),
+      done: 540, started: day(-1), claimed_at: null, author_verified: true,
+      created_at: day(-1),
+    },
+    {
+      id: 'q2', counted: 'worlds_played', title: 'Play three Worlds you have never played',
+      lead: 'Anything you like, as long as it is three of them.',
+      goal: 3, reward: 100, world_tag: null, custom_tag: 'seasonal',
+      background_url: null, world_id: null, world_content_id: null,
+      world_slug: null, world_name: null, world_emblem: null,
+      author_name: 'Kobblon', ends_at: null, done: 3, started: day(-3),
+      claimed_at: null, author_verified: true, created_at: day(-3),
+    },
+    {
+      id: 'q3', counted: 'friends_made', title: 'Make two friends',
+      lead: 'Somebody has to ask first.', goal: 2, reward: 60,
+      world_tag: null, custom_tag: null, background_url: null, world_id: null,
+      world_content_id: null, world_slug: null, world_name: null,
+      world_emblem: null, author_name: 'Kobblon', ends_at: null,
+      done: 2, started: day(-9), claimed_at: day(-8), author_verified: true,
+      created_at: day(-9),
+    },
+  ],
+  my_transactions: [
+    { id: 1, amount: 30, kind: 'daily', note: null, created_at: day(-0.2) },
+    { id: 2, amount: -450, kind: 'purchase', note: 'Pilot Cap', created_at: day(-1) },
+    { id: 3, amount: 120, kind: 'quest', note: null, created_at: day(-2) },
+    { id: 4, amount: -100, kind: 'quest_tag', note: null, created_at: day(-4) },
+    { id: 5, amount: 800, kind: 'sale', note: 'Starfield Shirt', created_at: day(-6) },
+    { id: 6, amount: -240, kind: 'ad_budget', note: null, created_at: day(-9) },
+    { id: 7, amount: 1000, kind: 'code', note: 'welcome26', created_at: day(-14) },
+  ],
 }
 
 async function shoot(routes, outDir) {
@@ -155,6 +237,8 @@ const DEFAULT = [
   ['people', '/people'], ['communities', '/communities'], ['library', '/library'],
   ['settings', '/settings'], ['standing', '/standing'], ['support', '/support'],
   ['avatar', '/avatar'], ['create', '/create'],
+  ['quests', '/quests'], ['leaderboards', '/leaderboards'],
+  ['brix', '/brix'], ['codes', '/brix/codes'],
   ['landing', '~/'], ['login', '~/login'], ['download', '~/download'],
 ]
 
