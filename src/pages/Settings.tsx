@@ -8,6 +8,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
+import { BrowseRail, BrowseFrame } from '@/components/browse/BrowseRail'
 import { Button } from '@/components/ui/Button'
 import { DiscordLink } from '@/components/social/DiscordLink'
 import { Balance } from '@/components/money/Balance'
@@ -127,13 +128,17 @@ function AccountInfo() {
     <div className="space-y-5">
       <form onSubmit={save} className="space-y-4">
         <Card className="space-y-5 p-5 sm:p-6">
-          <Input
-            label="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            maxLength={32}
-            required
-          />
+          {/* Capped. A name is at most thirty-two characters, so a box
+              the width of the panel tells the reader to write an essay. */}
+          <div className="max-w-md">
+            <Input
+              label="Display name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              maxLength={32}
+              required
+            />
+          </div>
 
           <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
             Your picture, your bio and your colour are on your profile, where you can see what
@@ -234,24 +239,28 @@ function Security() {
     <div className="space-y-5">
       <Card className="p-5 sm:p-6">
         <h2 className="font-display text-lg font-extrabold">Password</h2>
+        {/* The two belong side by side: they are one answer typed twice,
+            and stacked full width they read as two separate questions. */}
         <form onSubmit={change} className="mt-4 space-y-4">
-          <Input
-            label="New password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-          />
-          {password.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Confirm password"
+              label="New password"
               type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
-              icon={password && password === confirm ? faCheck : undefined}
             />
-          )}
+            {password.length > 0 && (
+              <Input
+                label="Confirm password"
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                autoComplete="new-password"
+                icon={password && password === confirm ? faCheck : undefined}
+              />
+            )}
+          </div>
           <div className="flex justify-end">
             <Button type="submit" loading={pending} disabled={!password}>Change password</Button>
           </div>
@@ -540,11 +549,23 @@ export default function Settings() {
   const { profile } = useAuth()
   const [section, setSection] = useState<Section>('Account info')
 
+  /*
+   * The rail was right and stays; what was wrong was the panel beside it.
+   * Staw: "a rail and a panel, which is right, and then one field in a card
+   * the width of the page." A display-name box stretched across sixty-eight
+   * rem is not a form, it is a field that lost its label's company - so the
+   * panel is capped at the width a form is actually read at and the page
+   * centres what is left, which is the same rule My Avatar's stage got.
+   *
+   * The rail itself is the shared one now, so Settings, the Catalog,
+   * Communities, Discover and People all carry the same column rather than
+   * five hand-rolled ones that drifted apart.
+   */
   return (
     <Page width="narrow" className="space-y-6">
       {/* Whose settings these are, and the two things people come here to
           check, before any of the panels. */}
-      <header className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink-line bg-ink-card p-4">
+      <header className="relative flex flex-wrap items-center gap-4 overflow-hidden rounded-3xl border border-ink-line bg-gradient-to-br from-brand/20 via-ink-card to-ink-card p-5">
         <Avatar
           src={avatarOf(profile)}
           personId={profile?.id}
@@ -568,30 +589,23 @@ export default function Settings() {
         )}
       </header>
 
-      <div className="grid gap-6 md:grid-cols-[13rem_1fr] md:items-start">
-        <nav
-          aria-label="Settings sections"
-          className="flex gap-1.5 overflow-x-auto rounded-xl border border-ink-line bg-ink-card p-1.5 md:sticky md:top-20 md:block md:overflow-visible kob-scroll"
-        >
-          {sections.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => setSection(item.name)}
-              aria-current={section === item.name ? 'page' : undefined}
-              className={cn(
-                'flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors md:w-full',
-                section === item.name
-                  ? 'bg-brand text-white'
-                  : 'text-white/65 hover:bg-ink-hover hover:text-white',
-              )}
-            >
-              <Glyph icon={item.icon} className="w-4 text-xs opacity-70" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="min-w-0 space-y-5">
+      <BrowseFrame
+        rail={
+          <BrowseRail
+            label="Settings sections"
+            items={sections.map((one) => ({
+              value: one.name,
+              label: one.label,
+              icon: one.icon,
+            }))}
+            value={section}
+            onChange={setSection}
+          />
+        }
+      >
+        {/* Capped, and centred in what is left. A form is read at about
+            forty rem whatever the window is doing. */}
+        <div className="mx-auto min-w-0 max-w-2xl space-y-5">
           {section === 'Account info' && <AccountInfo />}
           {section === 'Security' && <Security />}
           {section === 'Connections' && <DiscordLink />}
@@ -600,7 +614,7 @@ export default function Settings() {
           {section === 'money' && <Money />}
           {section === 'Safety' && <Safety />}
         </div>
-      </div>
+      </BrowseFrame>
     </Page>
   )
 }

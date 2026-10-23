@@ -27,7 +27,8 @@ import { WornPicture } from '@/components/catalog/WornPicture'
 import {
   faShirt, faMagnifyingGlass, faPlus, faClock,
   faBasketShopping, faCheck, faStar, faSliders,
-  faTag,
+  faTag, faLayerGroup, faPersonRunning, faGlasses,
+  faScissors, faFaceSmile, faHand, faUserTie,
 } from '@fortawesome/free-solid-svg-icons'
 import { OutfitStage } from '@/components/avatar/OutfitStage'
 import { Recommended } from '@/components/catalog/Recommended'
@@ -57,7 +58,9 @@ import type { ShelfOrder } from '@/lib/api'
 import { avatarTag, outfitTag } from '@/lib/kinds'
 import type { AvatarItem, AvatarKind } from '@/types/db'
 import { cn } from '@/lib/cn'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { BrowseHero, ChipRail } from '@/components/browse/BrowseHero'
+import { BrowseRail, BrowseFrame, BrowseHeading } from '@/components/browse/BrowseRail'
 
 const SHELVES = [
   { value: 'all', label: 'Everything' },
@@ -72,6 +75,26 @@ const SHELVES = [
   // sold together, and buying one buys each piece you do not already have.
   { value: 'outfits', label: 'Outfits' },
 ] as const
+
+/**
+ * One drawing per shelf, so the rail reads at a glance.
+ *
+ * A column of nine identical rows of text is a dropdown that takes up a
+ * column. Named by what the shelf holds, not by what the glyph resembles -
+ * the trousers shelf gets the running figure because Font Awesome has no
+ * trousers and legs are what the shelf is about.
+ */
+const SHELF_ICONS: Record<string, IconDefinition> = {
+  all: faLayerGroup,
+  shirt: faShirt,
+  trousers: faPersonRunning,
+  tdecal: faTag,
+  accessory: faGlasses,
+  hair: faScissors,
+  face: faFaceSmile,
+  bodypart: faHand,
+  outfits: faUserTie,
+}
 
 /*
  * Words that are on nearly everything and so narrow nothing. Without this
@@ -306,6 +329,291 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
     }
   }
 
+  /** Which shelf is open, by the word the rail shows for it. */
+  const shelfLabel = SHELVES.find((one) => one.value === shelf)?.label ?? 'Everything'
+
+  /** How many the shelf came to, which is the only count we can honestly give. */
+  const howMany = (shelf === 'outfits' ? outfits.data : things.data)?.length ?? 0
+  const counting = shelf === 'outfits' ? outfits.loading : things.loading
+
+  /*
+   * Everything that narrows the shelf, on one row and no longer in a card of
+   * its own.
+   *
+   * It was four rows before a single item - the search, the chips, the
+   * Favourites and Basket pair, the shelf tabs, then this in a bordered
+   * panel. Staw: a shop where you scroll past five rows of controls to reach
+   * the shop. The tabs are the rail now, the collecting pair is at the foot
+   * of it, and these sit on the shelf's own heading line.
+   */
+  const narrowing = (
+    <>
+      <Select
+        label="Made by"
+        value={madeByChoice}
+        onChange={(next) => {
+          if (next === 'anybody') { setMaker(''); setMakerDraft('') }
+          else if (next === 'kobblon') { setMaker('kobblon'); setMakerDraft('kobblon') }
+          else { setMaker(''); setMakerDraft('') }
+          setPickingMaker(next === 'somebody')
+        }}
+        className="w-36"
+        options={[
+          { value: 'anybody', label: 'All creators' },
+          { value: 'kobblon', label: 'Kobblon' },
+          { value: 'somebody', label: 'Somebody…' },
+        ]}
+      />
+
+      {(pickingMaker || madeByChoice === 'somebody') && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
+          className="flex items-center gap-1.5"
+        >
+          <span className="text-xs text-muted">@</span>
+          <input
+            value={makerDraft}
+            onChange={(e) => setMakerDraft(e.target.value)}
+            onBlur={() => setMaker(makerDraft.trim())}
+            placeholder="username"
+            aria-label="Made by which person"
+            className="h-9 w-32 rounded-xl border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+          />
+        </form>
+      )}
+
+      <Select
+        label="Price"
+        value={band}
+        onChange={(next) => {
+          setOnlyFree(next === 'free')
+          const [low, high] = BANDS[next] ?? ['', '']
+          setLeast(low)
+          setMost(high)
+        }}
+        className="w-36"
+        options={[
+          { value: 'any', label: 'Any price' },
+          { value: 'free', label: 'Free' },
+          { value: 'under', label: 'Under 50' },
+          { value: 'mid', label: '50 – 250' },
+          { value: 'over', label: '250 and up' },
+        ]}
+      />
+
+      {/*
+        * No "best rated": nothing rates an avatar item yet, and a sort
+        * that quietly falls back to something else is worse than one
+        * that is not offered, because it looks like it worked.
+        */}
+      <Select
+        label="Order"
+        value={order}
+        onChange={(next) => setOrder(next as ShelfOrder)}
+        className="w-36"
+        options={[
+          { value: 'newest', label: 'Newest' },
+          { value: 'oldest', label: 'Oldest' },
+          { value: 'taken', label: 'Most taken' },
+          { value: 'cheapest', label: 'Cheapest' },
+          { value: 'dearest', label: 'Dearest' },
+        ]}
+      />
+
+      {/*
+        * Only two, because the reader can only answer two. There is no
+        * "regular only" behind it, so it is not offered.
+        */}
+      <Select
+        label="Sale kind"
+        value={onlyLimited ? 'limited' : 'any'}
+        onChange={(next) => setOnlyLimited(next === 'limited')}
+        className="w-36"
+        options={[
+          { value: 'any', label: 'Any kind' },
+          { value: 'limited', label: 'Limiteds only' },
+        ]}
+      />
+
+      <button
+        type="button"
+        onClick={() => setShowFilters(!showFilters)}
+        aria-expanded={showFilters}
+        className={cn(
+          'inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors',
+          showFilters
+            ? 'border-brand bg-brand/15 text-white'
+            : 'border-ink-line text-white/65 hover:text-white',
+        )}
+      >
+        <Glyph icon={faSliders} />
+        Exact price
+      </button>
+
+      {(narrowed || by) && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setLeast(''); setMost(''); setOnlyFree(false); setOnlyLimited(false)
+            setMaker(''); setMakerDraft(''); setPickingMaker(false)
+          }}
+        >
+          Clear
+        </Button>
+      )}
+    </>
+  )
+
+  /** The two exact numbers, folded away until somebody asks for them. */
+  const exactPrice = showFilters && (
+    <div className="mb-4 flex flex-wrap items-end gap-3 rounded-2xl border border-ink-line bg-ink-card p-3.5">
+      {/*
+        * Sized by a wrapper, not by a class on the Input.
+        *
+        * `cn` joins and does not merge, so `w-28` next to the field's
+        * own `w-full` is decided by which lands later in the
+        * stylesheet - and `w-full` won, which is why these two were
+        * the width of the card.
+        */}
+      <div className="w-28">
+        <Input
+          label="At least"
+          labelNote="Brix"
+          type="number"
+          min={0}
+          value={least}
+          onChange={(e) => setLeast(e.target.value)}
+        />
+      </div>
+      <div className="w-28">
+        <Input
+          label="At most"
+          labelNote="Brix"
+          type="number"
+          min={0}
+          value={most}
+          onChange={(e) => setMost(e.target.value)}
+        />
+      </div>
+    </div>
+  )
+
+  /*
+   * A sale says so, at the top, with when it ends.
+   *
+   * Said once here rather than on every card: a card shows the price it
+   * will charge, and this says why that price is what it is. Without a
+   * line like this a sale is a shop whose prices quietly changed.
+   */
+  const saleLine = sale.data && (
+    <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
+      {/* A sale, so it is `discount` and not a price tag. Staw, in
+          capitals: "AND FOR DISCOUNTS ITS THIS ONE". */}
+      <Glyph icon={faTag} name="discount" className="text-space-bright" />
+      <span className="font-bold text-space-bright">
+        {sale.data.percent_off}% off the Catalog
+      </span>
+      <span className="text-muted">
+        until {new Date(sale.data.ends_at).toLocaleString(undefined, {
+          day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+        })}
+        . Limiteds keep their price.
+      </span>
+      {sale.data.note && <span className="text-white/70">{sale.data.note}</span>}
+    </p>
+  )
+
+  /*
+   * The basket and the favourites, at the foot of the rail.
+   *
+   * They belong beside the shop rather than behind a page header - both are
+   * things you collect while shopping and want back without leaving - and a
+   * row of their own above the shelf was the fourth row of controls.
+   */
+  const collecting = profile && !profile.is_guest && (
+    <div className="space-y-2">
+      <Button variant="subtle" icon={faStar} block onClick={() => setShowStarred(true)}>
+        Favourites
+      </Button>
+      <Button
+        variant="subtle"
+        icon={faBasketShopping}
+        block
+        onClick={() => setShowBasket(true)}
+      >
+        Basket{basket.length ? ` (${basket.length})` : ''}
+      </Button>
+    </div>
+  )
+
+  /** The shelf itself, which is the thing the page is for. */
+  const grid = shelf === 'outfits' ? (
+    outfits.loading ? (
+      <div className={cn('grid gap-4', compact
+        ? 'grid-cols-2 xl:grid-cols-3'
+        : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4')}>
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+        ))}
+      </div>
+    ) : !outfits.data?.length ? (
+      <EmptyState
+        mood="noResults"
+        title="No outfits yet"
+        body="Put a look together on your avatar, save it, and sell it here."
+        action={profile ? <Button to="/avatar" icon={faShirt}>My Avatar</Button> : undefined}
+      />
+    ) : (
+      <div className={cn('grid gap-4', compact
+        ? 'grid-cols-2 xl:grid-cols-3'
+        : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4')}>
+        {outfits.data.map((outfit) => (
+          <OutfitShelfCard
+            key={outfit.id}
+            outfit={outfit}
+            busy={busy === outfit.id}
+            canTake={!!profile && !profile.is_guest}
+            onTake={() => void takeOutfit(outfit)}
+          />
+        ))}
+      </div>
+    )
+  ) : things.loading ? (
+    <div className={cn('grid gap-4', compact
+      ? 'grid-cols-2 xl:grid-cols-3'
+      : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5')}>
+      {Array.from({ length: 10 }, (_, i) => (
+        <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+      ))}
+    </div>
+  ) : things.error ? (
+    <ErrorState message={things.error} onRetry={things.reload} />
+  ) : (things.data ?? []).length === 0 ? (
+    <EmptyState
+      mood="noResults"
+      title="Nothing on this shelf yet"
+      body={term ? 'Nothing by that name.' : 'Be the first to put something here.'}
+      action={profile ? <Button to="/create/avatar" icon={faPlus}>Make one</Button> : undefined}
+    />
+  ) : (
+    <div className={cn('grid gap-4', compact
+      ? 'grid-cols-2 xl:grid-cols-3'
+      : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5')}>
+      {(things.data ?? []).map((item) => (
+        <ShelfCard
+          key={item.id}
+          item={item}
+          busy={busy === item.id}
+          canTake={!!profile && !profile.is_guest}
+          inBasket={basket.some((one) => one.id === item.id)}
+          onTake={() => ask(item)}
+          sale={sale.data ?? null}
+        />
+      ))}
+    </div>
+  )
+
   return (
     <div className="space-y-5">
       {hero && (
@@ -328,318 +636,90 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
       )}
 
       {/*
-        * Picked for whoever is looking, before the shelf they came to
-        * browse. Only on the full page: the Catalog squeezed into a panel
-        * beside an avatar already has one of these above it, and two rows
-        * of suggestions on one screen is a shop shouting.
+        * On its own page the shelves are a rail down the side; mounted in a
+        * panel beside an avatar they stay a row of tabs, because a rail
+        * inside a column that is already narrow takes the shop's width.
         */}
-      {hero && !term && <Recommended howMany={14} />}
-
-      {/*
-        * A sale says so, at the top, with when it ends.
-        *
-        * Said once here rather than on every card: a card shows the price it
-        * will charge, and this says why that price is what it is. Without a
-        * line like this a sale is a shop whose prices quietly changed.
-        */}
-      {sale.data && (
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
-          {/* A sale, so it is `discount` and not a price tag. Staw, in
-              capitals: "AND FOR DISCOUNTS ITS THIS ONE". */}
-          <Glyph icon={faTag} name="discount" className="text-space-bright" />
-          <span className="font-bold text-space-bright">
-            {sale.data.percent_off}% off the Catalog
-          </span>
-          <span className="text-muted">
-            until {new Date(sale.data.ends_at).toLocaleString(undefined, {
-              day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
-            })}
-            . Limiteds keep their price.
-          </span>
-          {sale.data.note && <span className="text-white/70">{sale.data.note}</span>}
-        </p>
-      )}
-
-      {/*
-        * The basket and the favourites, where somebody looks for them:
-        * beside the shop rather than behind a page header, because both are
-        * things you collect while shopping and want back without leaving.
-        */}
-      {profile && !profile.is_guest && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="subtle"
-            icon={faStar}
-            onClick={() => setShowStarred(true)}
-          >
-            Favourites
-          </Button>
-          <Button
-            variant="subtle"
-            icon={faBasketShopping}
-            onClick={() => setShowBasket(true)}
-          >
-            Basket{basket.length ? ` (${basket.length})` : ''}
-          </Button>
-        </div>
-      )}
-
-      <Tabs
-        value={shelf}
-        onChange={setShelf}
-        options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
-      />
-
-      {/*
-        * Everything that narrows the shelf, on one row.
-        *
-        * Staw asked for the Roblox marketplace's shape here and this is the
-        * part of it worth copying: the narrowings are visible rather than
-        * behind a "More", because a shop where you cannot see that a filter
-        * is on is a shop that silently shows you a tenth of itself. The
-        * exact numbers stay folded away - those are for somebody hunting a
-        * hat under forty Brix, and the bands cover everybody else.
-        */}
-      <div className={cn(
-        'space-y-3 rounded-2xl border border-ink-line bg-ink-card p-3.5',
-      )}>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* The avatar page mounts this shelf without a heading above it,
-              so the search has to live on the row instead. */}
-          {!hero && (
-            <Input
-              className="max-w-xs flex-1"
-              placeholder="Name"
-              icon={faMagnifyingGlass}
-              value={term}
-              onChange={(e) => settle(e.target.value)}
+      {hero ? (
+        <BrowseFrame
+          rail={
+            <BrowseRail
+              label="Which shelf"
+              heading="Shelves"
+              items={SHELVES.map((one) => ({
+                value: one.value,
+                label: one.label,
+                icon: SHELF_ICONS[one.value] ?? faShirt,
+              }))}
+              value={shelf}
+              onChange={setShelf}
+              foot={collecting || undefined}
             />
-          )}
-
-          <Select
-            label="Made by"
-            value={madeByChoice}
-            onChange={(next) => {
-              if (next === 'anybody') { setMaker(''); setMakerDraft('') }
-              else if (next === 'kobblon') { setMaker('kobblon'); setMakerDraft('kobblon') }
-              else { setMaker(''); setMakerDraft('') }
-              setPickingMaker(next === 'somebody')
-            }}
-            className="w-44"
-            options={[
-              { value: 'anybody', label: 'All creators' },
-              { value: 'kobblon', label: 'Kobblon' },
-              { value: 'somebody', label: 'Somebody…' },
-            ]}
-          />
-
-          {(pickingMaker || madeByChoice === 'somebody') && (
-            <form
-              onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
-              className="flex items-center gap-1.5"
-            >
-              <span className="text-xs text-muted">@</span>
-              <input
-                value={makerDraft}
-                onChange={(e) => setMakerDraft(e.target.value)}
-                onBlur={() => setMaker(makerDraft.trim())}
-                placeholder="username"
-                aria-label="Made by which person"
-                className="h-9 w-36 rounded-xl border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
-              />
-            </form>
-          )}
-
-          <Select
-            label="Price"
-            value={band}
-            onChange={(next) => {
-              setOnlyFree(next === 'free')
-              const [low, high] = BANDS[next] ?? ['', '']
-              setLeast(low)
-              setMost(high)
-            }}
-            className="w-40"
-            options={[
-              { value: 'any', label: 'Any price' },
-              { value: 'free', label: 'Free' },
-              { value: 'under', label: 'Under 50' },
-              { value: 'mid', label: '50 – 250' },
-              { value: 'over', label: '250 and up' },
-            ]}
-          />
+          }
+        >
+          {saleLine}
 
           {/*
-            * No "best rated": nothing rates an avatar item yet, and a sort
-            * that quietly falls back to something else is worse than one
-            * that is not offered, because it looks like it worked.
+            * Picked for whoever is looking, before the shelf they came to
+            * browse. Only with nothing typed and on the whole shop: a row
+            * of suggestions over a shelf somebody has already narrowed is
+            * the shop answering a question nobody asked.
             */}
-          <Select
-            label="Order"
-            value={order}
-            onChange={(next) => setOrder(next as ShelfOrder)}
-            className="w-40"
-            options={[
-              { value: 'newest', label: 'Newest' },
-              { value: 'oldest', label: 'Oldest' },
-              { value: 'taken', label: 'Most taken' },
-              { value: 'cheapest', label: 'Cheapest' },
-              { value: 'dearest', label: 'Dearest' },
-            ]}
-          />
+          {!term && shelf === 'all' && (
+            /* Room under it. The shelf's own heading landing a few pixels
+               below the last recommended card reads as one run-on block. */
+            <div className="mb-8">
+              <Recommended howMany={12} />
+            </div>
+          )}
 
-          {/*
-            * Only two, because the reader can only answer two. There is no
-            * "regular only" behind it, so it is not offered.
-            */}
-          <Select
-            label="Sale kind"
-            value={onlyLimited ? 'limited' : 'any'}
-            onChange={(next) => setOnlyLimited(next === 'limited')}
-            className="w-40"
-            options={[
-              { value: 'any', label: 'Any kind' },
-              { value: 'limited', label: 'Limiteds only' },
-            ]}
-          />
-
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            aria-expanded={showFilters}
-            className={cn(
-              'inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors',
-              showFilters
-                ? 'border-brand bg-brand/15 text-white'
-                : 'border-ink-line text-white/65 hover:text-white',
-            )}
+          <BrowseHeading
+            title={shelfLabel}
+            note={counting ? 'Looking…' : `${howMany} to look at`}
           >
-            <Glyph icon={faSliders} />
-            Exact price
-          </button>
+            {narrowing}
+          </BrowseHeading>
 
-          {(narrowed || by) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setLeast(''); setMost(''); setOnlyFree(false); setOnlyLimited(false)
-                setMaker(''); setMakerDraft(''); setPickingMaker(false)
-              }}
-            >
-              Clear
-            </Button>
-          )}
+          {exactPrice}
+          {grid}
 
-          {/* What the narrowing came to, which is the thing a shop should
-              say back to you before you scroll. */}
-          {!things.error && (
-            <span className="ml-auto text-xs text-muted">
-              {things.loading || outfits.loading
-                ? 'Looking…'
-                : `${(shelf === 'outfits' ? outfits.data : things.data)?.length ?? 0} to look at`}
-            </span>
-          )}
-        </div>
-
-        {showFilters && (
-          <div className="flex flex-wrap items-end gap-3 border-t border-ink-line pt-3">
-            {/*
-              * Sized by a wrapper, not by a class on the Input.
-              *
-              * `cn` joins and does not merge, so `w-28` next to the field's
-              * own `w-full` is decided by which lands later in the
-              * stylesheet - and `w-full` won, which is why these two were
-              * the width of the card.
-              */}
-            <div className="w-28">
-              <Input
-                label="At least"
-                labelNote="Brix"
-                type="number"
-                min={0}
-                value={least}
-                onChange={(e) => setLeast(e.target.value)}
-              />
-            </div>
-            <div className="w-28">
-              <Input
-                label="At most"
-                labelNote="Brix"
-                type="number"
-                min={0}
-                value={most}
-                onChange={(e) => setMost(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {shelf === 'outfits' ? (
-        outfits.loading ? (
-          <div className={cn('grid gap-4', compact
-            ? 'grid-cols-2 xl:grid-cols-3'
-            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4')}>
-            {Array.from({ length: 8 }, (_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
-            ))}
-          </div>
-        ) : !outfits.data?.length ? (
-          <EmptyState
-            mood="noResults"
-            title="No outfits yet"
-            body="Put a look together on your avatar, save it, and sell it here."
-            action={profile ? <Button to="/avatar" icon={faShirt}>My Avatar</Button> : undefined}
-          />
-        ) : (
-          <div className={cn('grid gap-4', compact
-            ? 'grid-cols-2 xl:grid-cols-3'
-            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4')}>
-            {outfits.data.map((outfit) => (
-              <OutfitShelfCard
-                key={outfit.id}
-                outfit={outfit}
-                busy={busy === outfit.id}
-                canTake={!!profile && !profile.is_guest}
-                onTake={() => void takeOutfit(outfit)}
-              />
-            ))}
-          </div>
-        )
-      ) : things.loading ? (
-        <div className={cn("grid gap-4", compact
-            ? "grid-cols-2 xl:grid-cols-3"
-            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5")}>
-          {Array.from({ length: 10 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
-          ))}
-        </div>
-      ) : things.error ? (
-        <ErrorState message={things.error} onRetry={things.reload} />
-      ) : (things.data ?? []).length === 0 ? (
-        <EmptyState
-          mood="noResults"
-          title="Nothing on this shelf yet"
-          body={term ? 'Nothing by that name.' : 'Be the first to put something here.'}
-          action={profile ? <Button to="/create/avatar" icon={faPlus}>Make one</Button> : undefined}
-        />
+          {/* On a phone the rail's foot is hidden, so the two things you
+              collect while shopping go under the shelf instead. */}
+          {collecting && <div className="mt-6 lg:hidden">{collecting}</div>}
+        </BrowseFrame>
       ) : (
-        <div className={cn("grid gap-4", compact
-            ? "grid-cols-2 xl:grid-cols-3"
-            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5")}>
-          {(things.data ?? []).map((item) => (
-            <ShelfCard
-              key={item.id}
-              item={item}
-              busy={busy === item.id}
-              canTake={!!profile && !profile.is_guest}
-              inBasket={basket.some((one) => one.id === item.id)}
-              onTake={() => ask(item)}
-              sale={sale.data ?? null}
-            />
-          ))}
-        </div>
+        <>
+          <Tabs
+            value={shelf}
+            onChange={setShelf}
+            options={SHELVES.map((one) => ({ value: one.value, label: one.label }))}
+          />
+
+          {saleLine}
+
+          <div className="space-y-3 rounded-2xl border border-ink-line bg-ink-card p-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* The avatar page mounts this shelf without a heading above
+                  it, so the search has to live on the row instead. */}
+              <Input
+                className="max-w-xs flex-1"
+                placeholder="Name"
+                icon={faMagnifyingGlass}
+                value={term}
+                onChange={(e) => settle(e.target.value)}
+              />
+              {narrowing}
+              {!things.error && (
+                <span className="ml-auto text-xs text-muted">
+                  {counting ? 'Looking…' : `${howMany} to look at`}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {exactPrice}
+          {grid}
+        </>
       )}
 
       <BuyDialog

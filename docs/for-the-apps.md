@@ -9895,3 +9895,75 @@ push takes it out.
 Worth carrying across: the Workspace's own functions, if it ever adds any,
 go out through the same loop, and one unbundleable file stops every function
 after it in the alphabet.
+
+## Round one hundred and twenty-seven - the five pages, and one shared rail
+
+Staw asked for the redesign he named a while back: Catalog, Communities,
+Discover, People and Settings, "the same way we did put order into the my
+avatar page". So the rules are My Avatar's, not new taste - one subject as
+big as the page allows, navigation down the side rather than tabs over a
+grid, good ratios with nothing twice the size of anything else, padding and
+a second line, and say less.
+
+**There is a new shared component and the applications can mount it.**
+`@/components/browse/BrowseRail` exports three things:
+
+* `BrowseRail` - the column of names with counts, which becomes a scrolling
+  row under `lg`. Items are `{ value, label, icon?, art?, count? }`.
+* `BrowseFrame` - the rail beside a body, rail fixed at `13rem`, body takes
+  the slack.
+* `BrowseHeading` - the name of what is on screen, its count, and a slot for
+  controls belonging to that body.
+
+It imports `Glyph` and `cn` and nothing else: no router, no `useAuth`, no
+Supabase, no assumption that it is on a page. That is deliberate, and it is
+the fourth time the point has come up here - mount it wherever you like.
+
+**`icon` on a rail item is optional**, and that is a meaning change worth a
+line if you copy the type: left out, the row gets a small dot instead. It
+exists because Discover's genres have no drawing, and six identical compasses
+in a column is six icons that say nothing.
+
+What changed on each page, briefly:
+
+* **Catalog.** The nine shelves are the rail; Favourites and Basket are at
+  the foot of it; the narrowing selects are on the shelf's heading line. That
+  is four rows of controls before a single item down to none. **The shelf
+  mounted without `hero` - which is how the avatar page mounts it, and how
+  the Workspace would - is unchanged**: still tabs, still the search on the
+  filter row, still `compact` for the narrow column. Only the full page got
+  the rail.
+* **Communities.** One list and one card. "The biggest" and "Just started"
+  were two sections over the same communities in two card shapes, so the same
+  Community appeared twice on one screen looking like a bug. They are two
+  orders on the rail now, with Verified and Yours beside them.
+* **Discover.** One grid as wide as the page, and the three rows are three
+  entries on the rail. It was running four queries, three of them the same
+  forty Worlds in three orders; it runs one.
+* **People.** Your own card is a strip above the grid rather than a tile
+  inside it, a friend's card says so and offers a message instead of
+  offering to befriend somebody already befriended, and the advert is out of
+  the middle of the grid.
+* **Settings.** The rail was already right; the panel is capped at `max-w-2xl`
+  and centred, and the display-name and password fields no longer stretch the
+  width of the page.
+
+**One real bug came out of the screenshots, and it was mine.** A single
+column CSS grid track is `auto`, which sizes to its widest child - and the
+rail on a phone is a scrolling row that is wider than the screen on purpose.
+So every one of the five pages scrolled sideways on a phone with each card
+clipped at the right edge: 98px over on People, 635px on the Catalog. The
+frame asks for `grid-cols-[minmax(0,1fr)]` now and all five measure zero.
+**If you build anything that puts a horizontally scrolling row inside a grid
+column, this is waiting for you too.**
+
+Not done, and said plainly: the mobile pass as a whole is still not done -
+this fixed the overflow the rail caused and nothing else. The advert slots
+still answer with nothing until `pick_ad` has something to give. Nothing on
+these pages changed what the database is asked for, except Discover asking
+once instead of four times.
+
+For looking at them: `npx vite --config vite.pages.config.mjs` then
+`node shoot-five-pages.mjs [width]`. It mounts each page from source with a
+fixture client and a signed-in fixture, because the signed-out shape is the
+one shape that cannot be checked against what Staw sees.

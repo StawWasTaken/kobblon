@@ -1,0 +1,1 @@
+import{Ar as e,Br as t,Lr as n,jr as r}from"./free-solid-svg-icons-ApP6rdNL.js";var i=t(n(),1);function a(t){let{pathname:n,search:a,hash:o}=e(),s=r();(0,i.useEffect)(()=>{t&&decodeURIComponent(n).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,n,a,o,s])}export{a as t};

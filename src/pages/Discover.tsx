@@ -1,65 +1,51 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { faCompass } from '@fortawesome/free-solid-svg-icons'
+import {
+  faCompass, faFire, faSeedling, faHeart, faLayerGroup,
+} from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
-import { Choices } from '@/components/ui/Choices'
 import { BrowseHero } from '@/components/browse/BrowseHero'
-import { SectionHeader } from '@/components/ui/SectionHeader'
+import { BrowseRail, BrowseFrame, BrowseHeading } from '@/components/browse/BrowseRail'
+import type { RailItem } from '@/components/browse/BrowseRail'
+import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, SpaceCardSkeleton } from '@/components/ui/States'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { useAsync } from '@/hooks/useAsync'
 import { listWorlds, worldGenres } from '@/lib/api'
 import type { WorldSort } from '@/lib/api'
-import type { World } from '@/types/db'
+import { formatCount } from '@/lib/format'
 import { useTitle } from '@/hooks/useTitle'
 import { AdBanner } from '@/components/ads/AdBanner'
 
-const sorts: { value: WorldSort; label: string }[] = [
-  { value: 'trending', label: 'Trending' },
-  { value: 'new', label: 'New' },
-  { value: 'popular', label: 'Most liked' },
-]
-
-/**
- * A section of the directory: a heading and a grid under it, rather than a
- * rail you push sideways. Looking through what people have made should feel
- * like looking through a shelf, not operating a carousel.
+/*
+ * Discover, put in order.
+ *
+ * Staw, on what was wrong with it: "three headed rows down a narrow column
+ * with an advert beside them, so the Worlds are the smallest thing on a page
+ * about Worlds."
+ *
+ * He is right and it is worth being precise about how it happened. The page
+ * had an `xl:grid-cols-[minmax(0,1fr)_160px]` around its body for the tall
+ * advert, each row then capped itself at eight cards, and the grid inside
+ * that was still asking for four columns - so on an ordinary laptop the
+ * Worlds came out three narrow cards wide in a column with a banner over it,
+ * a sticky filter bar under that, and an advert to the right. Four things
+ * competing for a page whose subject is the Worlds.
+ *
+ * Now: one grid, as wide as the page allows, and the three rows are three
+ * entries on the rail instead - because "trending" is not a section, it is
+ * an order, and giving an order its own heading and its own eight-card row
+ * is what made the page feel like three pages stacked.
  */
-function Shelf({ title, worlds, genres, loading, live }: {
-  title: string
-  worlds: World[] | null
-  genres: Awaited<ReturnType<typeof worldGenres>> | null
-  loading: boolean
-  /** A shelf about what is happening now wears the colour that means now. */
-  live?: boolean
-}) {
-  if (!loading && !worlds?.length) return null
 
-  return (
-    <section className="mb-9">
-      <SectionHeader
-        title={
-          live
-            ? (
-              <span className="flex items-center gap-2.5">
-                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-space-bright" />
-                {title}
-              </span>
-            )
-            : title
-        }
-      />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {loading
-          ? [0, 1, 2, 3].map((i) => <SpaceCardSkeleton key={i} />)
-          : (worlds ?? []).slice(0, 8).map((world) => (
-            <WorldCard key={world.id} world={world} genres={genres ?? undefined} />
-          ))}
-      </div>
-    </section>
-  )
-}
+type Shelf = WorldSort
+
+const SHELVES: { value: Shelf; label: string; icon: typeof faFire }[] = [
+  { value: 'trending', label: 'Being played', icon: faFire },
+  { value: 'new', label: 'Just published', icon: faSeedling },
+  { value: 'popular', label: 'Most liked', icon: faHeart },
+]
 
 export default function Discover() {
   useTitle('Discover')
@@ -78,30 +64,46 @@ export default function Discover() {
     return () => window.clearTimeout(timer)
   }, [term, setParams])
 
-  // With nothing typed and nothing filtered, Discover reads as rows to
-  // browse. The moment you search or pick a category it becomes a grid of
-  // results, because then you are looking for something specific.
-  const browsing = !debounced && genre === 'all'
-
+  /*
+   * One query for the whole page. It used to run four - the grid, plus one
+   * per row - and three of them were the same forty Worlds in three orders,
+   * which is three requests to answer a question the first one answered.
+   */
   const { data, error, loading, reload } = useAsync(
-    async () => (browsing ? [] : listWorlds({ sort, genre, search: debounced, limit: 36 })),
-    [sort, genre, debounced, browsing],
+    async () => listWorlds({ sort, genre, search: debounced, limit: 48 }),
+    [sort, genre, debounced],
   )
-  const trending = useAsync(
-    async () => (browsing ? listWorlds({ sort: 'trending', limit: 18 }) : []),
-    [browsing],
-  )
-  const fresh = useAsync(async () => (browsing ? listWorlds({ sort: 'new', limit: 18 }) : []), [browsing])
-  const liked = useAsync(async () => (browsing ? listWorlds({ sort: 'popular', limit: 18 }) : []), [browsing])
+
+  const found = data ?? []
 
   /*
-   * Wide, and the same panel the Catalog and Communities wear. The three
-   * are the same activity - search, narrow, grid - and Staw asked for them
-   * to read as one place rather than three sites that happen to share a
-   * header.
+   * No counts on the sorts. They would each have shown the length of
+   * whatever is on screen, which is the same number beside all three and
+   * true of only one of them - and the heading says it once already.
    */
+  const sorts: RailItem<Shelf>[] = SHELVES.map((one) => ({
+    value: one.value,
+    label: one.label,
+    icon: one.icon,
+  }))
+
+  const kinds: RailItem<string>[] = [
+    { value: 'all', label: 'Everything', icon: faLayerGroup },
+    /* No icon: there is no drawing of "roleplay", and six compasses in a
+       column is six icons that say nothing. */
+    ...(genres.data ?? []).map((one) => ({
+      value: one.id,
+      label: one.label,
+    })),
+  ]
+
+  const named = SHELVES.find((one) => one.value === sort)?.label ?? 'Worlds'
+  const kindName = genre === 'all'
+    ? null
+    : (genres.data ?? []).find((one) => one.id === genre)?.label ?? null
+
   return (
-    <Page width="wide">
+    <Page width="wide" className="space-y-6">
       <BrowseHero
         title="Discover"
         lead="What people are building and playing right now."
@@ -111,92 +113,102 @@ export default function Discover() {
         placeholder="Search Worlds by name"
       />
 
-      <div className="sticky kob-under-bar z-20 -mx-4 mb-6 mt-4 space-y-3 bg-ink/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <div className="flex flex-wrap items-center gap-2">
-          {!browsing && (
-            <>
-              <Choices label="How to sort" value={sort} options={sorts} onChange={setSort} />
-              <span className="mx-1 hidden h-6 w-px bg-ink-line sm:block" />
-            </>
+      <BrowseFrame
+        rail={
+          <>
+            {/* Two questions, so two columns rather than one unbroken
+                list of eleven buttons that reads as a single choice. */}
+            <BrowseRail
+              label="How to sort the Worlds"
+              heading="What to see"
+              items={sorts}
+              value={sort}
+              onChange={setSort}
+            />
+            <BrowseRail
+              label="What kind of World"
+              heading="What kind"
+              items={kinds}
+              value={genre}
+              onChange={setGenre}
+              foot={<AdBanner size="tall" quiet />}
+            />
+          </>
+        }
+      >
+        <BrowseHeading
+          title={kindName ? `${named}: ${kindName}` : named}
+          note={
+            loading
+              ? 'Looking…'
+              : debounced
+                ? `${formatCount(found.length)} for "${debounced}"`
+                : `${formatCount(found.length)} ${found.length === 1 ? 'World' : 'Worlds'}`
+          }
+        >
+          {(debounced || genre !== 'all') && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { setTerm(''); setGenre('all') }}
+            >
+              Clear
+            </Button>
           )}
-          <Choices
-            label="What kind of World"
-            tone="soft"
-            value={genre}
-            options={[
-              { value: 'all', label: 'Everything' },
-              ...(genres.data ?? []).map((one) => ({ value: one.id, label: one.label })),
-            ]}
-            onChange={setGenre}
-          />
-        </div>
-      </div>
+        </BrowseHeading>
 
-      {/* The one slot that says what it is when it is empty, so there is
-          somewhere on the site that invites an advertiser in. */}
-      <AdBanner className="mb-6" />
+        {loading && (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <SpaceCardSkeleton key={i} />)}
+          </div>
+        )}
 
-      {/* Everything there is to look at sits beside a tall one, where the
-          screen is wide enough to hold both. */}
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_160px] xl:items-start">
-        <div className="min-w-0 space-y-6">
+        {error && <ErrorState message={error} onRetry={reload} />}
 
-      {browsing && (
-        <>
-          <Shelf
-            title="Being played right now"
-            live
-            worlds={trending.data}
-            genres={genres.data}
-            loading={trending.loading}
-          />
-          <Shelf title="Just published" worlds={fresh.data} genres={genres.data} loading={fresh.loading} />
-          <Shelf title="Most liked" worlds={liked.data} genres={genres.data} loading={liked.loading} />
-          {!trending.loading && !trending.data?.length && (
-            <Card>
-              <EmptyState
-                mood="construction"
-                title="Nothing published yet"
-                body="Be the first person to publish something here."
-              />
-            </Card>
-          )}
-        </>
-      )}
+        {!loading && !error && !found.length && (
+          <Card className="p-5">
+            <EmptyState
+              mood={debounced || genre !== 'all' ? 'noResults' : 'construction'}
+              title={
+                debounced || genre !== 'all'
+                  ? 'Kobby could not find anything'
+                  : 'Nothing published yet'
+              }
+              body={
+                debounced
+                  ? `No World matches "${debounced}". Try a shorter word, or look at everything.`
+                  : genre !== 'all'
+                    ? 'Nothing of this kind yet. Try everything instead.'
+                    : 'Be the first person to publish something here.'
+              }
+              action={
+                debounced || genre !== 'all'
+                  ? (
+                    <Button
+                      variant="subtle"
+                      onClick={() => { setTerm(''); setGenre('all') }}
+                    >
+                      Everything
+                    </Button>
+                  )
+                  : <Button to="/create/worlds">Make a World</Button>
+              }
+            />
+          </Card>
+        )}
 
-      {!browsing && loading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {[0, 1, 2, 3, 4, 5].map((i) => <SpaceCardSkeleton key={i} />)}
-        </div>
-      )}
+        {!loading && !!found.length && (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {found.map((world) => (
+              <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
+            ))}
+          </div>
+        )}
 
-      {error && <ErrorState message={error} onRetry={reload} />}
-
-      {!browsing && !loading && !error && data?.length === 0 && (
-        <Card>
-          <EmptyState
-            mood="noResults"
-            title={debounced ? 'Kobby couldn’t find anything' : 'Nothing published yet'}
-            body={
-              debounced
-                ? `No World matches "${debounced}". Try a shorter word, or look at everything.`
-                : 'Be the first person to publish something here.'
-            }
-          />
-        </Card>
-      )}
-
-      {!browsing && !!data?.length && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {data.map((world) => (
-            <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
-          ))}
-        </div>
-      )}
-        </div>
-
-        <AdBanner size="tall" quiet className="hidden xl:sticky xl:top-[4.5rem] xl:block" />
-      </div>
+        {/* The rail's foot is hidden on a phone, so the one slot that says
+            what it is when it is empty goes under the grid there. */}
+        {!loading && !!found.length && <AdBanner className="mt-6 lg:hidden" />}
+      </BrowseFrame>
     </Page>
   )
 }
