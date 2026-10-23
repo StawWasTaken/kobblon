@@ -11351,3 +11351,100 @@ them. Kobblue is the hover colour down there.
 - `StoryPage` has not moved onto `AboutShell`.
 - The wiki, the forum and the newsroom are ideas; nothing links to them.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and fifty-six - the About side has its own design system
+
+The About pages - what Kobblon is, Download, the rules, every policy -
+were the signed-in design with the rail taken off: one narrow column,
+everything in a rounded card, every card the same size. That reads as a
+settings page, and these are the only pages somebody sees before they
+decide whether Kobblon is worth an account. They are rebuilt from
+scratch, as their own system rather than as a variation on the
+application's.
+
+### What the system is
+
+`src/components/about/` is new and is the whole of it:
+
+- **`Band`** - the unit of an About page. Full width of the window, owns
+  its background, holds one idea. Four tones that mean something rather
+  than being a palette: `night` (the floor), `raised` (a change of
+  subject), `brand` (the one band per page that asks for something),
+  `clear` (over the hero's wash). A band never sits inside another band.
+  `Lane` is the one measure everything lines up to.
+- **`Reveal`** - the one motion gesture. Sixteen pixels up and a fade, as
+  a band comes into view, staggered by about seventy milliseconds down a
+  row. Fires once. Reduced motion gets the end state and no transition.
+- **`Figure`** and **`Character`** - the one way a picture is framed, and
+  the one way a character is not: a cut-out with a pool of light under it,
+  because a drawing in a rounded border stops being a character and
+  becomes a thumbnail of one.
+- **`Tally`** - a platform number that counts up the first time it is
+  seen, on a quartic ease-out.
+- **`PixelGrid`** - the pixel motif as two repeating gradients, for the
+  corners of cards. `PixelField` is a canvas and stays where it earns
+  that: the top of the page, one per page.
+- **`Hero`** and **`Type`** (`Eyebrow`, `Title`, `Lead`, `BandHead`) - one
+  opening and three sizes of type, instead of the five headings four
+  pages had between them.
+
+`AboutShell` now owns the chrome and nothing else - the bar, the wash at
+the top, the foot. It no longer imposes the page's measure, which is what
+made every About page the same narrow column. `AboutNav` sticks, so the
+sign-up button is still there four bands down a page whose job is to get
+somebody to sign up; it is transparent over the hero and frosts as soon
+as the page moves.
+
+### What it means for the applications
+
+Nothing changes in anything shared. `design/preset.js` is untouched - no
+new colour, no new animation, no new token. The whole system is built out
+of what the preset already has, which is the point: if the About side had
+needed a colour Kobblon does not have, that would have been a sign the
+design was wrong rather than a reason to add one.
+
+`src/components/about/*` is website chrome, not a shared component. An
+application has no use for a Band. Nothing there is mounted in
+`tools/site/`, and nothing there should be imported by the Workspace or
+the Launcher.
+
+One thing is worth copying rather than importing, if either application
+ever grows a page like these: the rule that there is **one** motion
+gesture. Six different animations on one page is how a build stops
+looking built and starts looking decorated.
+
+### The icons
+
+Staw: "stop using different svg icons for stuff that we already have
+like for quests we already have quest icons images". The About pages were
+reaching for Font Awesome shapes for things he has drawn. They ask for
+his by name now - `world` for a World, `assets` for the marketplace,
+`people` for a Community, `avatar` for an avatar, `laurel-quest` for a
+quest, the Brix mark for Brix. Font Awesome is left for the one or two
+ideas there is no drawing of yet.
+
+**This applies on both sides.** `Glyph` already swaps a Font Awesome name
+for ours where there is one, so most call sites are already right; the
+ones to check are the places that chose a glyph because it *looked* like
+the thing. A laurel is a quest, not a trophy. A filled star means
+somebody pressed it.
+
+### The mascot
+
+The character with the hammer (`/brand/under_construction.png`) carries
+the Download page and the band on the About page that says what is not
+finished. Nothing from the Kobby set is used anywhere on this side -
+Staw is replacing that art, so building a page around it would be
+building a page that has to be rebuilt.
+
+### Still open
+
+- **The landing page is still the old one.** It is in this family and it
+  is next; Staw has said so twice. It is not done here because it is the
+  one page with a job the others do not have.
+- The wiki, the forum and the newsroom are ideas. Nothing links to them,
+  and the forum, if it happens, is to be inspired by Discourse rather
+  than by anything on the site today.
+- Support and the standing page have not moved onto the new system yet.
+  They are long, they work, and they are honest; they are a later pass.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

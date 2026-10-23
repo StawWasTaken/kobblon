@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
@@ -11,9 +11,15 @@ import { cn } from '@/lib/cn'
  *
  * Staw's three kinds of page: the ones you use signed in, the ones that
  * sign an application in, and these - the pages that say what Kobblon is
- * to somebody who has not decided yet. They had three different headers
- * between them, which is how a side of a site stops looking like one site.
- * This is the one bar they share.
+ * to somebody who has not decided yet. This is the one bar they share.
+ *
+ * It sticks, and that is the part worth explaining. The About pages are
+ * long now, several bands deep, and a sign-up button that scrolls away at
+ * the top of a page whose whole job is to get somebody to sign up is the
+ * button not being there. It rides along instead - transparent over the
+ * hero so the pixel wash is not cut in half, and frosted the moment the
+ * page moves, which is what keeps the links readable once a render of a
+ * World is passing behind them.
  */
 export const ABOUT_LINKS = [
   { to: '/about', label: 'What Kobblon is' },
@@ -25,12 +31,31 @@ export const ABOUT_LINKS = [
 export function AboutNav({ className }: { className?: string }) {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
+  const [moved, setMoved] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setMoved(window.scrollY > 12)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // A link followed with the menu open leaves the menu open over the new page.
+  useEffect(() => setOpen(false), [pathname])
 
   const here = (to: string) => pathname.startsWith(to)
 
   return (
-    <header className={cn('relative', className)}>
-      <div className="flex items-center gap-5 py-6">
+    <header
+      className={cn(
+        'sticky top-0 z-40 transition-colors duration-300',
+        moved || open
+          ? 'border-b border-white/[0.08] bg-ink/85 backdrop-blur-xl'
+          : 'border-b border-transparent',
+        className,
+      )}
+    >
+      <div className="mx-auto flex max-w-6xl items-center gap-5 px-5 py-4 sm:px-8">
         <button
           type="button"
           onClick={() => setOpen((was) => !was)}
@@ -43,24 +68,31 @@ export function AboutNav({ className }: { className?: string }) {
 
         <Wordmark to="/" className="h-6" always />
 
-        <nav className="ml-6 hidden items-center gap-6 sm:flex">
+        <nav className="ml-7 hidden items-center gap-1 sm:flex">
           {ABOUT_LINKS.map((one) => (
             <Link
               key={one.to}
               to={one.to}
               className={cn(
-                'text-sm font-semibold transition-colors',
+                'relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
                 here(one.to) ? 'text-white' : 'text-white/50 hover:text-white',
               )}
             >
               {one.label}
+              {/* The page you are on, marked under the word rather than behind it. */}
+              <span
+                className={cn(
+                  'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-bright transition-opacity',
+                  here(one.to) ? 'opacity-100' : 'opacity-0',
+                )}
+              />
             </Link>
           ))}
         </nav>
 
         <Link
           to="/login"
-          className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-white"
+          className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-brand-bright"
         >
           Log in
         </Link>
@@ -68,12 +100,11 @@ export function AboutNav({ className }: { className?: string }) {
       </div>
 
       {open && (
-        <nav className="absolute inset-x-0 top-full z-20 rounded-2xl border border-white/10 bg-ink-card p-2 sm:hidden">
+        <nav className="border-t border-white/10 px-3 pb-3 pt-2 sm:hidden">
           {ABOUT_LINKS.map((one) => (
             <Link
               key={one.to}
               to={one.to}
-              onClick={() => setOpen(false)}
               className={cn(
                 'block rounded-xl px-4 py-3 text-sm font-bold transition-colors',
                 here(one.to) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',

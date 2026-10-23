@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { PixelField } from '@/components/brand/PixelField'
-import { SiteFooter } from './SiteFooter'
-import { AboutNav } from './AboutNav'
-import { useForceDark } from '@/hooks/useTheme'
+import { AboutShell } from './AboutShell'
+import { Band } from '@/components/about/Band'
+import { Hero } from '@/components/about/Hero'
+import { Reveal } from '@/components/about/Reveal'
 import { cn } from '@/lib/cn'
 
 export type StorySection = {
@@ -30,10 +30,21 @@ const toneWord: Record<string, string> = {
 }
 
 /**
- * The pages that speak for Kobblon rather than being part of using it:
- * the terms, the guidelines, what is coming. They are written for one look,
- * so they hold dark whatever the rest of the site is set to, and they carry
- * their own contents rail rather than a wall of text.
+ * The pages that are a rule rather than a pitch: the terms, the
+ * guidelines, the nine policies.
+ *
+ * They sit on the same shell as the rest of the About side now - the same
+ * sticky bar, the same wash at the top, the same foot - but they keep
+ * their own body, and that is deliberate. The other About pages are bands
+ * of pictures you scroll past; a policy is a document you read, and a
+ * document wants one column, a contents rail that follows the reading,
+ * and numbered sections you can point somebody at. Giving this page the
+ * showcase treatment would be decorating a thing whose whole job is to be
+ * read carefully.
+ *
+ * What it does take from the new system: nothing here draws its own
+ * background any more, so a policy page and the page that links to it are
+ * finally the same colour.
  */
 export function StoryPage({
   eyebrow, title, intro, sections, footnote, updated, tagline = true,
@@ -47,7 +58,6 @@ export function StoryPage({
   updated?: string
   tagline?: boolean
 }) {
-  useForceDark()
   const [active, setActive] = useState(sections[0]?.id ?? '')
 
   // The rail follows the reading rather than the clicking, so it is right
@@ -70,43 +80,37 @@ export function StoryPage({
   }, [sections])
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-ink text-white">
-      <PixelField className="opacity-30" />
-      <div className="absolute inset-0 bg-[radial-gradient(80rem_44rem_at_50%_-15%,rgba(27,52,232,0.4),transparent_62%)]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/85 to-ink" />
-
-      <div className="relative mx-auto max-w-6xl px-4 pb-24 sm:px-8">
-        <AboutNav />
-
-        {/* ------------------------------------------------------- hero */}
-        <section className="py-12 sm:py-20">
-          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-white/40">
-            {eyebrow}
-          </p>
-          <h1 className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.9] sm:text-7xl">
-            {title}
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/60">{intro}</p>
-          {updated && (
-            <p className="mt-6 text-sm font-semibold text-white/40">
-              Last changed{' '}
-              {new Date(updated).toLocaleDateString(undefined, {
-                day: 'numeric', month: 'long', year: 'numeric',
-              })}
-            </p>
-          )}
-
-          {tagline && (
-            <p className="mt-8 font-display text-sm font-extrabold uppercase tracking-[0.18em] text-brand-bright">
-              Make Something Nobody Else Has
-            </p>
-          )}
-        </section>
-
+    <AboutShell
+      hero={
+        <Hero
+          eyebrow={eyebrow}
+          title={title}
+          lead={intro}
+          note={
+            <>
+              {updated && (
+                <>
+                  Last changed{' '}
+                  {new Date(updated).toLocaleDateString(undefined, {
+                    day: 'numeric', month: 'long', year: 'numeric',
+                  })}
+                </>
+              )}
+              {tagline && (
+                <span className="mt-4 block font-display text-sm font-extrabold uppercase tracking-[0.18em] text-brand-bright">
+                  Make Something Nobody Else Has
+                </span>
+              )}
+            </>
+          }
+        />
+      }
+    >
+      <Band tone="raised" edge>
         <div className="grid gap-10 lg:grid-cols-[15rem_1fr] lg:gap-14">
           {/* --------------------------------------------------- contents */}
           <aside className="hidden lg:block">
-            <div className="sticky top-10">
+            <div className="sticky top-24">
               <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
                 Contents
               </p>
@@ -136,54 +140,56 @@ export function StoryPage({
           {/* ---------------------------------------------------- sections */}
           <div className="min-w-0 space-y-4">
             {sections.map((section, index) => (
-              <section
+              <Reveal
                 key={section.id}
-                id={section.id}
-                className="scroll-mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm sm:p-8"
+                as="section"
+                className="scroll-mt-24 rounded-3xl border border-white/10 bg-ink-card/60 p-6 sm:p-8"
               >
-                <div className="flex items-baseline gap-4">
-                  <span className="font-display text-3xl font-extrabold leading-none text-brand">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <h2 className="font-display text-2xl font-extrabold sm:text-3xl">
-                    {section.heading}
-                  </h2>
+                <div id={section.id} className="-mt-24 pt-24">
+                  <div className="flex items-baseline gap-4">
+                    <span className="font-display text-3xl font-extrabold leading-none text-brand">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <h2 className="font-display text-2xl font-extrabold sm:text-3xl">
+                      {section.heading}
+                    </h2>
+                  </div>
+
+                  {section.body.map((paragraph) => (
+                    <p key={paragraph} className="mt-4 leading-relaxed text-white/65">
+                      {paragraph}
+                    </p>
+                  ))}
+
+                  {!!section.points?.length && (
+                    <ul className="mt-5 space-y-2.5">
+                      {section.points.map((point) => (
+                        <li
+                          key={point.label}
+                          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-white/10 bg-ink-raised/60 px-4 py-3"
+                        >
+                          <span className="min-w-0 flex-1 text-sm font-bold">{point.label}</span>
+                          {point.note && (
+                            <span className="w-full text-sm leading-relaxed text-white/55 sm:w-auto sm:flex-1">
+                              {point.note}
+                            </span>
+                          )}
+                          {point.tone && (
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                                toneLook[point.tone],
+                              )}
+                            >
+                              {toneWord[point.tone]}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-
-                {section.body.map((paragraph) => (
-                  <p key={paragraph} className="mt-4 leading-relaxed text-white/65">
-                    {paragraph}
-                  </p>
-                ))}
-
-                {!!section.points?.length && (
-                  <ul className="mt-5 space-y-2.5">
-                    {section.points.map((point) => (
-                      <li
-                        key={point.label}
-                        className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-white/10 bg-ink-card/70 px-4 py-3"
-                      >
-                        <span className="min-w-0 flex-1 text-sm font-bold">{point.label}</span>
-                        {point.note && (
-                          <span className="w-full text-sm leading-relaxed text-white/55 sm:w-auto sm:flex-1">
-                            {point.note}
-                          </span>
-                        )}
-                        {point.tone && (
-                          <span
-                            className={cn(
-                              'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
-                              toneLook[point.tone],
-                            )}
-                          >
-                            {toneWord[point.tone]}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+              </Reveal>
             ))}
 
             {footnote && (
@@ -191,27 +197,22 @@ export function StoryPage({
             )}
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
-              <a
-                href="#top"
-                onClick={(e) => {
-                  e.preventDefault()
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                }}
+              <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 className="inline-flex items-center gap-2 text-sm font-bold text-link hover:underline"
               >
                 <Glyph icon={faArrowUp} className="text-xs" />
                 Back to the top
-              </a>
+              </button>
               <Link to="/policies" className="text-sm font-semibold text-white/45 hover:text-white">
                 All policies
               </Link>
             </div>
           </div>
         </div>
-      </div>
-
-      <SiteFooter className="relative mt-20 border-white/10 bg-transparent" />
-    </div>
+      </Band>
+    </AboutShell>
   )
 }
 
