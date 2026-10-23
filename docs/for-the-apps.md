@@ -11113,3 +11113,33 @@ of it was a rule change.
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and forty-eight - the redeem box is the page
+
+Staw: drop the Kobby card, make the box itself the middle of the page with
+the letters spaced the way a code is written, the agreement line under it,
+and the questions beside it. And no sample code printed in the field - a
+real one in a placeholder is a code given away.
+
+- The redeem box is a tall panel, centred, taking most of the page: gift
+  disc, "Enter your code", one field at `tracking-[0.35em]` in uppercase
+  mono that upper-cases what you type, a full-width Redeem, and the answer
+  (the amount counting up, or the refusal) under it.
+- The placeholder is six dashes, not a code.
+- Under the button: by redeeming you agree to the Terms of Use, the
+  **{currency} policy** (`/policies/money`) and the community guidelines,
+  and one go per account.
+- Beside it: a five-question FAQ in `<details>` rows, and the balance.
+  Every answer is something the site actually does - where codes come from,
+  one per account, why one is refused, that the amount lands on the
+  balance and on your transactions, and that nobody will ask for your
+  password for one.
+- Gone: the Kobby "codes turn up at events" card and the Elsewhere list.
+
+Still just `redeem_code`. The database decides real, still going, already
+had, and what it is worth; the page types it and reports back.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

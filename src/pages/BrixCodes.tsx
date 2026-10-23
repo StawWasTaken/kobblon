@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  faGift, faCircleCheck, faCircleXmark, faChevronRight,
+  faGift, faCircleCheck, faCircleXmark, faChevronDown,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Kobby } from '@/components/brand/Kobby'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { BrixShell } from '@/components/money/BrixShell'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,19 +21,50 @@ import { currency } from '@/lib/currency'
  * still going, whether you have had it, and what it is worth. This page types
  * it in and says what came back, which is the whole of its job.
  *
- * Staw asked for the shape Roblox's own redeem page has, simpler: the box on
- * the left with the balance under it, and a short list of places to go on
- * the right instead of paragraphs explaining the page to somebody who is
- * already on it.
+ * Staw asked for the box itself to be the page: one field in the middle,
+ * letters spaced out the way a code is written, the agreement line under it,
+ * and the questions beside it rather than in front of it. No placeholder
+ * code either - a real one printed in the box is a code given away.
  */
 
-/** The list on the right. Every one of these is a page that exists. */
-const elsewhere: { to: string; label: string }[] = [
-  { to: '/quests', label: 'Earn more from quests' },
-  { to: '/leaderboards', label: 'See where you stand' },
-  { to: '/brix', label: 'Your transactions' },
-  { to: '/support', label: 'A code would not take' },
+/** Asked and answered. Nothing here promises anything the site does not do. */
+const questions: { q: string; a: string }[] = [
+  {
+    q: 'Where do codes come from?',
+    a: 'Kobblon events, announcements, and things worth celebrating. They are never sold and never traded.',
+  },
+  {
+    q: 'How many times can I use one?',
+    a: 'Once per account. A code you have already taken will be refused.',
+  },
+  {
+    q: 'Mine was refused. Why?',
+    a: 'It has run out, it has closed, or that account has had it. The box says which.',
+  },
+  {
+    q: `Where do the ${currency.plural} go?`,
+    a: 'Straight onto your balance, and onto your transactions as a line you can go back and read.',
+  },
+  {
+    q: 'Somebody is offering me a code.',
+    a: 'Nobody on Kobblon will ever ask for your password or your account for one. Report anybody who does.',
+  },
 ]
+
+function Question({ one }: { one: { q: string; a: string } }) {
+  return (
+    <details className="group border-b border-ink-line last:border-0">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm font-bold transition-colors hover:bg-ink-hover">
+        <span className="min-w-0 flex-1">{one.q}</span>
+        <Glyph
+          icon={faChevronDown}
+          className="h-3 w-3 shrink-0 text-muted transition-transform group-open:rotate-180"
+        />
+      </summary>
+      <p className="px-5 pb-4 text-sm text-muted">{one.a}</p>
+    </details>
+  )
+}
 
 export default function BrixCodes() {
   useTitle('Redeem a code')
@@ -63,23 +92,34 @@ export default function BrixCodes() {
 
   return (
     <BrixShell icon={faGift} title="Redeem a code">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-start">
-        {/* --------------------------------------------------- the box */}
-        <div className="space-y-4">
-          <Card className="space-y-4 p-5">
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
-                Code
-              </span>
-              <Input
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:items-start">
+        {/* ------------------------------------------------- the box */}
+        <Card className="relative overflow-hidden">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
+          />
+
+          <div className="relative mx-auto flex min-h-[34rem] w-full max-w-xl flex-col items-center justify-center px-5 py-12 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl border border-ink-line bg-ink-raised text-xl text-brand-bright">
+              <Glyph icon={faGift} />
+            </span>
+
+            <h2 className="mt-5 font-display text-3xl font-extrabold">Enter your code</h2>
+
+            <label className="mt-7 block w-full">
+              <span className="sr-only">Your code</span>
+              <input
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => { if (e.key === 'Enter') void redeem() }}
-                placeholder="welcome26"
                 autoComplete="off"
+                autoCapitalize="characters"
                 spellCheck={false}
-                aria-label="Code"
-                className="font-mono tracking-wide"
+                maxLength={32}
+                placeholder="------"
+                aria-label="Your code"
+                className="h-16 w-full rounded-2xl border border-ink-line bg-ink-raised text-center font-mono text-2xl font-extrabold uppercase tracking-[0.35em] text-white outline-none transition-colors placeholder:text-white/15 focus:border-brand-bright"
               />
             </label>
 
@@ -88,7 +128,8 @@ export default function BrixCodes() {
               onClick={redeem}
               loading={busy}
               disabled={busy || !code.trim()}
-              className="w-full"
+              size="lg"
+              className="mt-4 w-full"
             >
               Redeem
             </Button>
@@ -101,77 +142,62 @@ export default function BrixCodes() {
                 role="status"
                 className={
                   said.good
-                    ? 'animate-pop-in overflow-hidden rounded-2xl border border-space/40 bg-gradient-to-br from-space/20 to-ink-raised p-5 text-center'
-                    : 'animate-pop-in rounded-2xl border border-danger/40 bg-danger/10 p-4'
+                    ? 'mt-5 w-full animate-pop-in overflow-hidden rounded-2xl border border-space/40 bg-gradient-to-br from-space/20 to-ink-raised p-5'
+                    : 'mt-5 w-full animate-pop-in rounded-2xl border border-danger/40 bg-danger/10 p-4'
                 }
               >
                 {said.good ? (
                   <>
-                    <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-space/40 bg-space/15 text-space-bright">
-                      <Glyph icon={faGift} className="text-lg" />
-                    </span>
                     {!!said.reward && (
-                      <p className="mt-3 flex items-center justify-center gap-2 font-display text-3xl font-extrabold tabular-nums text-space-bright">
-                        <CurrencyMark className="h-7 w-7" />
+                      <p className="flex items-center justify-center gap-2 font-display text-4xl font-extrabold tabular-nums text-space-bright">
+                        <CurrencyMark className="h-8 w-8" />
                         {formatCount(said.reward)}
                       </p>
                     )}
                     <p className="mt-2 text-sm font-bold">{said.words}</p>
                   </>
                 ) : (
-                  <p className="flex items-start gap-3 text-sm font-bold">
-                    <Glyph icon={faCircleXmark} className="mt-0.5 shrink-0 text-danger" />
+                  <p className="flex items-center justify-center gap-3 text-sm font-bold">
+                    <Glyph icon={faCircleXmark} className="shrink-0 text-danger" />
                     {said.words}
                   </p>
                 )}
               </div>
             )}
 
-            {/* The one line of small print this page needs, and the balance
-                under it the way the reference has its credit. */}
-            <p className="border-t border-ink-line pt-4 text-xs text-muted">
-              One go per account.{' '}
-              <Link to="/terms" className="font-bold text-white/70 hover:text-white">Terms</Link>
-              {' · '}
-              <Link to="/privacy" className="font-bold text-white/70 hover:text-white">Privacy</Link>
+            <p className="mt-6 text-xs text-muted">
+              By redeeming a code you agree to the{' '}
+              <Link to="/terms" className="font-bold text-white/70 hover:text-white">Terms of Use</Link>
+              {', the '}
+              <Link to="/policies/money" className="font-bold text-white/70 hover:text-white">
+                {currency.plural} policy
+              </Link>
+              {' and the '}
+              <Link to="/guidelines" className="font-bold text-white/70 hover:text-white">
+                community guidelines
+              </Link>
+              . One go per account.
             </p>
-            <p className="flex items-center gap-2 font-display text-base font-extrabold">
-              Your {currency.plural}
-              <span className="ml-auto flex items-center gap-1.5 tabular-nums">
-                <CurrencyMark className="h-4 w-4" />
-                {formatCount(profile?.pixels ?? 0)}
-              </span>
-            </p>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
-        {/* ------------------------------------------------ the sidebar */}
+        {/* ------------------------------------------------- questions */}
         <div className="space-y-4">
           <Card className="overflow-hidden">
             <h2 className="border-b border-ink-line px-5 py-3.5 font-display text-base font-extrabold">
-              Elsewhere
+              Questions
             </h2>
-            {elsewhere.map((one) => (
-              <Link
-                key={one.to}
-                to={one.to}
-                className="flex items-center gap-3 border-b border-ink-line px-5 py-3.5 text-sm font-bold transition-colors last:border-0 hover:bg-ink-hover"
-              >
-                <span className="min-w-0 flex-1 truncate">{one.label}</span>
-                <Glyph icon={faChevronRight} className="h-3 w-3 shrink-0 text-muted" />
-              </Link>
-            ))}
+            {questions.map((one) => <Question key={one.q} one={one} />)}
           </Card>
 
-          <Card className="relative flex items-center gap-5 overflow-hidden bg-gradient-to-br from-brand/25 to-ink-card p-6">
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-space/20 blur-3xl"
-            />
-            <Kobby mood="notification" size="lg" bob={false} />
-            <p className="relative font-display text-2xl font-extrabold leading-tight">
-              Codes turn up at events.
-            </p>
+          <Card className="flex items-center gap-3 p-5">
+            <span className="min-w-0 flex-1 font-display text-sm font-extrabold">
+              Your {currency.plural}
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5 font-display text-lg font-extrabold tabular-nums">
+              <CurrencyMark className="h-4 w-4" />
+              {formatCount(profile?.pixels ?? 0)}
+            </span>
           </Card>
         </div>
       </div>
