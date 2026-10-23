@@ -11272,3 +11272,28 @@ cannot. The lockup image is untouched and still used on the landing page.
   and which About pages are actually being built.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and fifty-three - the footer, polished
+
+Staw: polish it, and take the "Kobblon is for people aged 15 and over" line
+off the bottom.
+
+- That line is gone from the footer. **It is still said where it belongs**:
+  in Settings, and in the Terms, which the About column links to. It was a
+  sentence at the bottom of every page, which is where a rule goes to be
+  ignored.
+- Column headings are small, spaced capitals rather than white headings
+  shouting beside the wordmark.
+- The two social links are chips with the mark in a disc that lights blue
+  on hover, instead of a bare list that looked like the other columns.
+- One brand hairline fades across the top of the whole footer; the bottom
+  rule and its row are gone with the age line.
+- The columns are two across on a tablet rather than four squeezed, and the
+  whole thing breathes more.
+
+### Still open
+
+- The landing page redesign, waiting on what the front page should claim
+  and which About pages are actually being built.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

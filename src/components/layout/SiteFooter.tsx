@@ -48,7 +48,9 @@ const social: { href: string; label: string; icon: IconDefinition }[] = [
 
 function Heading({ children }: { children: string }) {
   return (
-    <p className="font-display text-sm font-extrabold text-white">{children}</p>
+    <p className="font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40">
+      {children}
+    </p>
   )
 }
 
@@ -62,7 +64,10 @@ function Column({ heading, links }: {
       <ul className="mt-4 space-y-2.5">
         {links.map((one) => (
           <li key={one.to + one.label}>
-            <Link to={one.to} className="text-sm text-white/55 transition-colors hover:text-white">
+            <Link
+              to={one.to}
+              className="text-sm font-semibold text-white/55 transition-colors hover:text-white"
+            >
               {one.label}
             </Link>
           </li>
@@ -76,18 +81,25 @@ export function SiteFooter({ className }: { className?: string }) {
   const year = new Date().getFullYear()
 
   return (
-    <footer className={cn('border-t border-white/10 bg-ink', className)}>
-      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8">
-        <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
+    <footer className={cn('relative border-t border-white/10 bg-ink', className)}>
+      {/* One brand line along the top, which is the whole of the decoration
+          this needs: it says where the page ends without a slab of colour. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-bright/50 to-transparent"
+      />
+
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
+        <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            {/* The wordmark as type rather than as a picture, with the
-                line under it. It stays sharp at any size and takes the
-                theme with it, which the drawn lockup cannot. */}
+            {/* The wordmark as type rather than as a picture, with the line
+                under it. It stays sharp at any size and takes the theme
+                with it, which the drawn lockup cannot. */}
             <Wordmark to="/" className="h-6" always />
-            <p className="mt-3 font-display text-sm font-extrabold text-white/70">
+            <p className="mt-3.5 font-display text-sm font-extrabold text-white/70">
               The game built by players
             </p>
-            <p className="mt-4 text-xs text-white/35">© {year} Kobblon</p>
+            <p className="mt-5 text-xs text-white/30">© {year} Kobblon</p>
           </div>
 
           <Column heading="Kobblon" links={kobblon} />
@@ -95,16 +107,18 @@ export function SiteFooter({ className }: { className?: string }) {
 
           <div>
             <Heading>Social</Heading>
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-4 space-y-2">
               {social.map((one) => (
                 <li key={one.href}>
                   <a
                     href={one.href}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="group flex items-center gap-2.5 text-sm text-white/55 transition-colors hover:text-white"
+                    className="group inline-flex items-center gap-3 rounded-xl border border-white/10 py-2 pl-2.5 pr-4 text-sm font-semibold text-white/60 transition-colors hover:border-white/25 hover:bg-white/5 hover:text-white"
                   >
-                    <Glyph icon={one.icon} className="h-4 w-4 text-white/40 transition-colors group-hover:text-brand-bright" />
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/50 transition-colors group-hover:bg-brand/20 group-hover:text-brand-bright">
+                      <Glyph icon={one.icon} className="h-3.5 w-3.5" />
+                    </span>
                     {one.label}
                   </a>
                 </li>
@@ -112,10 +126,6 @@ export function SiteFooter({ className }: { className?: string }) {
             </ul>
           </div>
         </div>
-
-        <p className="mt-12 border-t border-white/10 pt-6 text-xs text-white/35">
-          Kobblon is for people aged 15 and over.
-        </p>
       </div>
     </footer>
   )
