@@ -11143,3 +11143,34 @@ had, and what it is worth; the page types it and reports back.
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and forty-nine - what a code is
+
+**A code's shape is now settled, and this one matters for anything that
+takes a code on your side.** Staw: codes are always written like
+`welcome26` or `spookytreat5` - lower case letters and digits, no capitals,
+no spaces, nothing else, for ever.
+
+The field enforces it as you type rather than letting the database refuse
+you afterwards: `said.toLowerCase().replace(/[^a-z0-9]/g, '')`. If the
+Workspace or the Launcher ever has a code box, do the same thing - somebody
+pasting `WELCOME26 ` should not be told no.
+
+Everything else this round is the page:
+
+- The balance card beside the box is gone. It was the third place on one
+  screen saying the same number, after the topbar and the page header.
+- No icon on the Redeem button.
+- The panel is polished: the pixel wash behind it, a lit gift disc, a
+  taller field with a focus glow, and a taller button.
+- "Questions" is "Frequently asked questions", the rows have a chevron in
+  a disc that turns and lights up, and the open row is tinted.
+- Six answers now, Staw's own information rephrased. The new facts in
+  them: most codes go out in the **#codes channel on the Kobblon Discord**,
+  and a code is lower case letters and numbers. No invite link is printed -
+  there is none in this repository to print.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.
