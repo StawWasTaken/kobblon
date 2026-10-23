@@ -496,10 +496,17 @@ export default function Standing() {
   const me = bar.data
 
   return (
-    /* The same column a settings panel is read in. These three pages are
-       one journey and a row of settings that is half as wide on one of them
-       reads as a different product. */
-    <Page className="space-y-7 [&>*]:max-w-3xl">
+    /*
+     * The site's own column, centred, with nothing capped inside it.
+     *
+     * It was held to 48rem for a day to sit at the width a settings panel
+     * is read at - but a settings panel is narrow because a rail is beside
+     * it, and these two have no rail, so the cap was a column pinned to the
+     * left of a page with a third of it empty. Staw: "arent center-centered,
+     * and too small in my opinion". Right on both counts: without a rail,
+     * the page is the column.
+     */
+    <Page className="space-y-8">
       <PageTop
         title="Account standing"
         note="Where your behaviour stands, and everything ever decided about this account."

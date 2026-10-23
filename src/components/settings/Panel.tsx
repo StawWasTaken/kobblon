@@ -222,8 +222,8 @@ export function PageTop({ title, note, aside, action }: {
     <header className="flex flex-wrap items-center gap-3">
       {aside}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate font-display text-2xl font-extrabold sm:text-3xl">{title}</h1>
-        {note && <p className="mt-0.5 text-sm text-muted">{note}</p>}
+        <h1 className="truncate font-display text-3xl font-extrabold sm:text-4xl">{title}</h1>
+        {note && <p className="mt-1 text-sm text-muted sm:text-base">{note}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </header>

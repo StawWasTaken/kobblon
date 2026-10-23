@@ -10720,3 +10720,34 @@ Two changes inside `Line` that came out of it and are worth copying:
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and forty
+
+### The OG card
+
+`public/brand/og.png` is Staw's new artwork. It arrived at 1280x746, which is
+not the card ratio; it was cropped 74px evenly off the top and bottom (keeping
+the lockup centred) and resized to 1200x630, so it matches the
+`og:image:width` / `og:image:height` the head has always declared. Nothing in
+the markup changed. If an application ships its own share card or an installer
+splash from this file, take the new one; the path is the same.
+
+### Settings, Account standing and Support are wider now
+
+Round one hundred and thirty-nine put Account standing and Support on the
+settings design, and capped them at 48rem to read at the width a settings
+panel does. That was wrong and Staw said so: "the new support & account
+standing stuff arent center-centered, and too small in my opinion". A settings
+panel is narrow because a rail sits beside it. These two have no rail, so the
+cap was a column pinned to the left of a page with a third of it empty. The
+cap is gone; the page is the column.
+
+`PageTop` also grew, and this is the part that matters outside those two
+pages: its heading is now `text-3xl sm:text-4xl` and its note
+`text-sm sm:text-base`. Settings uses `PageTop` too, so Settings grew with
+them. If the Workspace mounts any of these three, or mounts `PageTop` itself,
+expect a larger opening - no API changed, the sizes did.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
