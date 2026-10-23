@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { Shutters } from '@/components/layout/Shutters'
 import { AppShell } from '@/components/layout/AppShell'
 import { Boundary } from '@/components/layout/Boundary'
 import { lazyPage } from '@/lib/lazyPage'
@@ -124,6 +125,9 @@ export default function App() {
               rectangle with nothing to press. */}
           <Boundary>
           <Suspense fallback={<Booting />}>
+            {/* In front of the whole router: while the shutters are down
+                there is one page, and admins walk past it. */}
+            <Shutters>
             <Routes>
               <Route path="/terms" element={<Terms />} />
               <Route path="/guidelines" element={<Guidelines />} />
@@ -241,6 +245,7 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
+            </Shutters>
           </Suspense>
           </Boundary>
         </ToastProvider>

@@ -1,0 +1,12 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const p = await b.newPage({ viewport: { width: 390, height: 780 } })
+p.on('pageerror', e => console.log('THREW', e.message))
+await p.goto('http://localhost:5347/tools/site/phone-preview.html?page=home', { waitUntil: 'networkidle' })
+const btn = p.locator('button[aria-label="Open navigation"]')
+console.log('count', await btn.count(), 'visible', await btn.first().isVisible())
+await btn.first().click()
+await p.waitForTimeout(500)
+await p.screenshot({ path: '/tmp/burger.png' })
+console.log('drawer links', await p.locator('.fixed.inset-0.z-40 a').count())
+await b.close()

@@ -10339,3 +10339,128 @@ inside `main`:
 So nothing else carried that fault; it was the dock gutter alone. Home's
 shelves are `mb-10 sm:mb-12` as of last round and the other pages were left
 as they were.
+
+## Round one hundred and thirty-three - the shutters, the burger, and a question for you about the Launcher
+
+### **Read this part first: Play cannot reach the Launcher**
+
+Staw, with a screenshot from a machine with the current Launcher on it.
+Pressing Play on a World gives a Windows dialog:
+
+```
+Error launching app
+Unable to find Electron app at
+  ...\e0000000-0000-4000-8000-000000000001?code=c1ea7c2172004858b5b26bbf1bd4b2b8857...
+Cannot find module
+  ...\e0000000-0000-4000-8000-000000000001?code=c1ea7c2172004858b5b26bbf1bd4b2b8857...
+```
+
+That is Electron being handed the deep link **as the path to the application
+to run**. It is not the website failing to send one: the website sent
+exactly what it has always sent, and the string in the dialog is the tail of
+it. So this one is in the protocol registration on your side, and it is
+yours to fix - but here is everything about what arrives, so you can fix it
+against the real thing rather than against a guess.
+
+**What the website sends, unchanged:**
+
+```
+kobblon://play/<worldId>?code=<code>      -- Play on a World page
+kobblon://edit/<worldId>                  -- Open in the Workspace
+```
+
+`<worldId>` matches `^[A-Za-z0-9_-]{1,64}$` - today it is a UUID, so it has
+dashes in it. `<code>` matches `^[A-Za-z0-9_-]{32,128}$`. It is minted by
+`mint_app_code('launcher')`, is good for **two minutes**, and can be claimed
+**once**: the server side spends it with `claim_app_code(code, 'launcher')`,
+which is a single `update ... returning` so two racing applications cannot
+both win. Nothing else personal is in the link, deliberately - a protocol URL
+ends up in shell history and crash logs.
+
+The website hands it over with `window.location.href = link` and then
+watches for the page being hidden; if nothing takes the screen within about
+a second it offers the download instead. So **from here, a Launcher that
+throws this dialog looks identical to a Launcher that is not installed**:
+Windows did answer the scheme, which is why the download prompt does not
+appear.
+
+**What we need you to tell us** (Staw will carry the answers back):
+
+1. How is the scheme registered on Windows in the build people have now -
+   `app.setAsDefaultProtocolClient('kobblon')` from a packaged build, from a
+   dev build, or a registry entry written by the installer? The message
+   names Electron looking for an app directory, which is what an unpackaged
+   registration does when it is not given `process.execPath` plus the app
+   path as its arguments.
+2. Does the Launcher handle `second-instance` and the `open-url` event, or
+   only `process.argv` on first launch? The failing case above never reaches
+   application code at all, but the answer decides what happens the second
+   time somebody presses Play while it is already open.
+3. Does it still expect `kobblon://play/<id>?code=<code>`, or did the recent
+   work change the shape it parses? If it changed, say what it is now and
+   **the website will send that instead** - this is one of ours to move, and
+   it is three lines in `src/lib/app.ts`.
+4. Is `kobblon://edit/<id>` answered yet? The website has been sending it
+   since round one hundred and nine and has never been told.
+5. Which binary holds the handler now that the Launcher and the Workspace
+   are separate applications? If both register `kobblon://`, the last one
+   installed wins on Windows and Play opens the Workspace.
+
+If it helps, the quickest check on a machine that is failing:
+`reg query HKCR\kobblon\shell\open\command` prints exactly what Windows is
+running, and the fault will be visible in that one line.
+
+### The staff console can close the website
+
+New migration, **`0272_the_shutters.sql`** - not applied yet; Staw applies it
+in the SQL editor. A new panel in the console, **Shutters**, admin and above.
+
+- `public.site_state`, one row for ever (`only_row boolean primary key check
+  (only_row)`), holding `maintenance`, an optional `note` of up to 300
+  characters, and who set it when. `grant select` to **anon and
+  authenticated** - the site asks before anybody has signed in - and no
+  insert, update or delete to anybody.
+- `public.set_maintenance(shut boolean, words text default null)`,
+  `security definer`, which checks `my_staff_rank()` is `admin` or
+  `superadmin` and returns the row it wrote.
+- Who still sees the website while it is down: **admins and superadmins
+  only. A moderator is shut out with everybody else** - Staw, asked
+  directly: "mods are still affected tho".
+
+Proved against a real PostgreSQL with the whole migration history on it,
+applied twice, under three identities with `auth.uid()` printed first so the
+checks could not pass by being anonymous: an ordinary account refused, a
+moderator refused, a direct `update` refused with `permission denied for
+table site_state`, the admin's write read back correctly by a stranger and
+by the signed out, and one row at the end.
+
+**What it is, and this matters for the Workspace and the Launcher:**
+
+> It is a curtain, not a lock. The **website** stops drawing itself. Every
+> table and every function answers exactly as it did before, so **an
+> application holding a session carries on working while maintenance is on**.
+
+So if the desktop applications should also stand down during a window, that
+is a thing you decide to honour: read `site_state` (one row, readable by
+anybody) and show your own screen. Nothing will stop you if you do not, and
+nothing here will break if you do. If a window ever needs the real thing -
+nobody may touch this data while it moves - that is `revoke` on the tables in
+question, written for the one occasion, and it is not this switch.
+
+### The burger is on the left now
+
+On a phone the navigation button has moved from the right-hand end of the
+bar to **the left of the wordmark**, and it is 40px rather than 36. It was
+the furthest thing on the bar from the thumb that opens it, and a tap at the
+very edge of a phone screen is a tap the browser can take for a back
+gesture - which is how pressing it ended up on a page saying nothing is here.
+Worth checking wherever the applications have a bar of their own.
+
+### Not built
+
+- Nothing tells a person *when* maintenance will end. A time would be a
+  promise the switch cannot keep; the note field says whatever the person
+  throwing it wants to say.
+- Maintenance does not close the API, as above.
+- `/login` stays open while the shutters are down, so an admin who is signed
+  out can get a session to turn it off. Everything else is the notice.

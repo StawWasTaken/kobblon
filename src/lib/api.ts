@@ -5675,3 +5675,45 @@ export async function economyByKind(days = 30): Promise<EconomyKind[]> {
 export async function limitedMarket(days = 30): Promise<LimitedRow[]> {
   return (unwrap(await supabase.rpc('limited_market', { days })) ?? []) as LimitedRow[]
 }
+
+/*
+ * The shutters.
+ *
+ * One row that says whether the website is drawing itself or showing the
+ * maintenance notice, and it is readable signed out because the first thing
+ * the site does is ask - before anybody has signed in.
+ *
+ * It is a curtain and not a lock: the API carries on while it is down, and
+ * anything that must actually be closed is closed in the database. Said
+ * again here because this is the function somebody will reach for when they
+ * mean the other thing.
+ */
+export type SiteState = {
+  maintenance: boolean
+  note: string | null
+  set_at: string
+  set_by: string | null
+}
+
+export async function siteState(): Promise<SiteState | null> {
+  const { data, error } = await supabase
+    .from('site_state')
+    .select('maintenance, note, set_at, set_by')
+    .maybeSingle()
+  /*
+   * A failure is not a shut site. The row is read on every load by
+   * everybody, so a hiccup that answered "maintenance" would take the
+   * website down for the length of the hiccup - the one direction this must
+   * never fail in.
+   */
+  if (error) return null
+  return (data as SiteState) ?? null
+}
+
+/** Throw the switch. Admins and superadmins only; the database decides. */
+export async function setMaintenance(shut: boolean, words?: string): Promise<SiteState> {
+  return unwrap(await supabase.rpc('set_maintenance', {
+    shut,
+    words: words?.trim() ? words.trim() : null,
+  })) as SiteState
+}

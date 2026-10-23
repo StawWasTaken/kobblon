@@ -42,6 +42,7 @@ import { Confirm } from '@/components/ui/Confirm'
 import { ErrorState, Skeleton } from '@/components/ui/States'
 import { Note } from '@/components/ui/Note'
 import { Switch } from '@/components/ui/Switch'
+import { faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons'
 import { Choices } from '@/components/ui/Choices'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -64,7 +65,7 @@ import {
   saveFlaggedTerm, setStaffRank, setStanding, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
-  reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice,
+  reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice, siteState, setMaintenance,
   type NoticeColour, makeAccountReal,
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
@@ -90,7 +91,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -162,6 +163,7 @@ const sections: {
   { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'admin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'admin', blurb: 'What staff have done' },
+  { name: 'Shutters', icon: faScrewdriverWrench, needs: 'admin', blurb: 'Put the whole website behind a maintenance notice' },
 ]
 
 const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOrder[needs]
@@ -4090,6 +4092,139 @@ function NoticeLook({ colour, words, label }: {
   )
 }
 
+/*
+ * The shutters.
+ *
+ * One switch, and it is the most consequential control in this console: it
+ * takes the website away from everybody who is not an admin, moderators
+ * included. So it says what it is going to do before it does it, it names
+ * who threw it last and when, and the confirmation is typed rather than
+ * clicked - a dialog with a button on it is a dialog people press.
+ *
+ * It does not pretend to be more than it is. The words under the switch say
+ * out loud that this is the website refusing to draw itself and not the
+ * database refusing to answer, because somebody will one day reach for this
+ * meaning the other thing.
+ */
+export function ShuttersSection() {
+  const say = useToast()
+  const state = useAsync(async () => siteState(), [])
+  const [note, setNote] = useState('')
+  const [typed, setTyped] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const down = !!state.data?.maintenance
+
+  useEffect(() => { setNote(state.data?.note ?? '') }, [state.data?.note])
+
+  const throwIt = async (shut: boolean) => {
+    setBusy(true)
+    try {
+      const now = await setMaintenance(shut, shut ? note : undefined)
+      say(now.maintenance ? 'The shutters are down.' : 'Kobblon is open again.', 'success')
+      setTyped('')
+      state.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-muted">
+        Puts the whole website behind a maintenance notice. Admins and
+        superadmins carry on as normal; everybody else sees the notice,
+        moderators included.
+      </p>
+
+      <Card className={cn('space-y-4 p-5', down && 'border-danger/50')}>
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={cn(
+              'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wide',
+              down ? 'bg-danger/15 text-danger-bright' : 'bg-space/15 text-space-bright',
+            )}
+          >
+            <FontAwesomeIcon icon={down ? faScrewdriverWrench : faCircleCheck} />
+            {state.loading ? 'Asking' : down ? 'Shutters down' : 'Open'}
+          </span>
+
+          {state.data?.set_at && (
+            <span className="text-xs text-muted">
+              Last changed {new Date(state.data.set_at).toLocaleString()}
+            </span>
+          )}
+        </div>
+
+        {!down && (
+          <>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
+                What the notice says (optional)
+              </span>
+              <Input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={300}
+                placeholder="Back in ten minutes."
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
+                Type CLOSE to confirm
+              </span>
+              <Input
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                placeholder="CLOSE"
+                autoComplete="off"
+                spellCheck={false}
+                className="font-mono tracking-widest"
+              />
+            </label>
+
+            <Button
+              variant="danger"
+              icon={faScrewdriverWrench}
+              disabled={busy || typed.trim().toUpperCase() !== 'CLOSE'}
+              onClick={() => void throwIt(true)}
+            >
+              Close Kobblon
+            </Button>
+          </>
+        )}
+
+        {down && (
+          <>
+            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-sm">
+              {state.data?.note?.trim()
+                ? state.data.note
+                : 'The notice is showing the words the page carries.'}
+            </p>
+            <Button
+              icon={faCircleCheck}
+              disabled={busy}
+              onClick={() => void throwIt(false)}
+            >
+              Open Kobblon again
+            </Button>
+          </>
+        )}
+
+        <p className="text-xs leading-relaxed text-muted">
+          This is the website declining to draw itself, not the database
+          declining to answer. Anything that must actually be closed - a
+          table nobody may write to while it is being moved - is closed in
+          the database, and this switch is not that.
+        </p>
+      </Card>
+    </div>
+  )
+}
+
 export function NoticeSection() {
   const say = useToast()
   const live = useAsync(async () => noticesNow(), [])
@@ -5126,6 +5261,7 @@ export default function Admin() {
             {open === 'Announce' && <AnnounceSection />}
             {open === 'Words' && <WordsSection />}
             {open === 'Record' && <RecordSection />}
+            {open === 'Shutters' && <ShuttersSection />}
           </RankContext.Provider>
         </div>
       </div>

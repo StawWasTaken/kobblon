@@ -98,17 +98,28 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
 
       <div className="flex h-14 items-center gap-3 border-b-2 border-brand-ink/40 px-3 sm:gap-4 sm:px-4">
         {/*
-          * The mark goes first and the burger goes last, which is the one
-          * arrangement that stops the mark reading as wrong.
+          * The burger, then the mark.
           *
-          * It was between the burger and the search field, and Staw kept
-          * saying it looked off centre. It was not: measured, the gaps were
-          * twelve pixels either side and all three sat on one centre line.
-          * The fault was weight - a fifteen-pixel-wide K between two
-          * thirty-six-pixel blocks looks like something that fell in the
-          * gap, however exactly it is centred. At the edge it has a side of
-          * its own and nothing to be compared against.
+          * It sat at the right-hand end for a while, which read fine and
+          * was wrong twice over: it was the furthest thing on the bar from
+          * the thumb that opens it, and a tap at the very edge of a phone
+          * screen is a tap the browser may take for a back gesture - which
+          * is how pressing it ended up on a page saying nothing is here.
+          * Staw: "i want u to put it left to the kobblon logomark".
+          *
+          * Forty pixels square rather than thirty-six. It is the one
+          * control on the bar that a phone has to hit first time.
           */}
+        <button
+          type="button"
+          onClick={onOpenNav}
+          aria-label="Open navigation"
+          aria-haspopup="menu"
+          className="-ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 lg:hidden"
+        >
+          <Glyph icon={faBars} className="text-lg" />
+        </button>
+
         <Wordmark to="/home" className="h-7 shrink-0" />
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Sections">
@@ -187,14 +198,6 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
           )}
 
           <UserMenu />
-
-          <button
-            onClick={onOpenNav}
-            aria-label="Open navigation"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 lg:hidden"
-          >
-            <Glyph icon={faBars} />
-          </button>
         </div>
       </div>
 
