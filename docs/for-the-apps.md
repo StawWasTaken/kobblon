@@ -10625,3 +10625,58 @@ something else and the next thing to ask for is the address bar.
 ### Still open
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and thirty-eight
+
+### Settings and the Library were redrawn, and Settings is now four shapes
+
+Staw, on Settings: "i dont want it overcrowded, with too much infos, but i
+want it to the best design ever, like a brand new design, thats so good that
+we dont need to change it for two years."
+
+The two-year part is what decided the design, and it is the part worth
+copying. A settings page rots because each new setting arrives in whatever
+shape its author felt like, so the tenth one needs a redesign to fit. So
+there are **four shapes and only four**, in
+`src/components/settings/Panel.tsx`, and a new setting is a new `Line`:
+
+- **`Panel`** - one subject. A title, one line of note, children.
+- **`Group`** - a card of settings that belong together. Dividers inside,
+  space between cards: that pairing is what says how many subjects are on a
+  screen before a word of it is read.
+- **`Line`** - one setting: its name, one short note, what it is set to, and
+  the control that changes it. It is a `div`, or a `Link` with `to`, or a
+  `button` with `onClick` - so a row that leads somewhere is the whole row,
+  not a word at the end of it.
+- **`Choice`** - one option among a few, as a tile with a swatch you can see
+  the answer in. Mode and the theme appearances were two copies of this and
+  had already drifted by a radius and a hover colour.
+
+**These are importable** - `@/components/settings/Panel` - and they are a
+good fit for the Workspace's own settings window, which is the same problem.
+They need no provider and no router unless you use `to`.
+
+One rule inside `Line` that is worth taking even if you draw your own: **one
+row at every width.** It used to stack the control under the name on a
+phone, which put the chevron on a line of its own pointing at nothing and
+the control furthest from the thumb. The name truncates, the note wraps, the
+control keeps its corner.
+
+What came out of the page, because uncrowded is a decision and not a wish:
+the gradient hero, the always-open password form (a row that opens a dialog
+now), the paragraph explaining where the picture and bio live (a row that
+goes there instead), and two of the three sentences of policy prose.
+
+### The Library
+
+Now the same rail-and-body frame as Discover, the Catalog, People and
+Settings, rather than three number tiles that were also the switch - a count
+that is pressable reads as a filter and a filter that counts reads as a
+statistic, and neither wins. The counts are on the rail, the two facts about
+the whole shelf (published, visits) are in the header, and the shelf's own
+words are beside its heading. Nothing about the data moved: `my_worlds` and
+the favourites list are called exactly as before.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
