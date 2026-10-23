@@ -26,19 +26,10 @@ export default function Maintenance({ note }: { note?: string | null }) {
       <div className="relative flex w-full max-w-lg flex-col items-center text-center">
         <Wordmark to="/" className="h-8" always />
 
-        {/*
-          * A halo behind him, which is not decoration: he is drawn in black
-          * with a black cap, and `bg-ink` is very nearly black - without
-          * something behind him the figure is an outline and the hammer is
-          * the only thing anybody can see.
-          */}
-        <span className="relative mt-8 grid place-items-center">
-          <span
-            aria-hidden="true"
-            className="absolute h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.10),transparent_70%)]"
-          />
-          <Kobby mood="construction" size="xl" className="relative" />
-        </span>
+        {/* Nothing behind him. There was a halo here for a day because he
+            is black on a nearly black page; Staw: "dont add a shining
+            stuff behind the under construction". */}
+        <Kobby mood="construction" size="xl" className="mt-8" />
 
         <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-ink-line bg-ink-card px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted">
           <Glyph icon={faScrewdriverWrench} className="text-[10px]" />

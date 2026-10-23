@@ -10577,3 +10577,17 @@ panel of yours that hides a control at a breakpoint.
 - Round 133's five Launcher questions. No answer yet, and
   `kobblon://edit/<id>` is still unconfirmed.
 - `world_visits` is still only written by `join_world_server`.
+
+## Round one hundred and thirty-six
+
+A correction to round 135, in the one direction that matters: **the halo
+behind the under-construction drawing is gone.** Staw: "just for the
+shutters dont add a shining stuff behind the under construction". He is
+drawn on the page as he is, at `xl`, with nothing behind him.
+
+So ignore the "worth copying if you ever put him on a dark panel" line in
+135 - that was me solving a problem Staw does not think is one. The
+drawing on `bg-ink` is the look he wants.
+
+Nothing else moved: same file (`public/brand/under_construction.png`),
+same `kobbyArt.construction`, same page.
