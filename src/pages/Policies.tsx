@@ -3,10 +3,8 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowRight, faScaleBalanced, faShieldHalved, faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons'
-import { PixelField } from '@/components/brand/PixelField'
 import { StoryPage } from '@/components/layout/StoryPage'
-import { SiteFooter } from '@/components/layout/SiteFooter'
-import { AboutNav } from '@/components/layout/AboutNav'
+import { AboutShell } from '@/components/layout/AboutShell'
 import { policies, policyBySlug } from '@/content/policies'
 import { useForceDark } from '@/hooks/useTheme'
 import { useTitle } from '@/hooks/useTitle'
@@ -41,27 +39,13 @@ export default function PolicyHub() {
   useTitle('Policies')
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-ink text-white">
-      <PixelField className="opacity-30" />
-      <div className="absolute inset-0 bg-[radial-gradient(80rem_44rem_at_50%_-15%,rgba(27,52,232,0.4),transparent_62%)]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/85 to-ink" />
-
-      <div className="relative mx-auto max-w-6xl px-4 pb-24 sm:px-8">
-        <AboutNav />
-
-        <section className="py-12 sm:py-20">
-          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-white/40">
-            The rules
-          </p>
-          <h1 className="mt-4 max-w-3xl font-display text-5xl font-extrabold leading-[0.9] sm:text-7xl">
-            Policies
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/60">
-            Everything Kobblon expects of you and everything you can expect back, split by
-            subject so a rule can be pointed at rather than searched for.
-          </p>
-        </section>
-
+    <AboutShell
+      eyebrow="The rules"
+      title="Policies"
+      lead="Everything Kobblon expects of you and everything you can expect back, one subject at a time."
+      wide
+    >
+      <div className="space-y-10">
         <div className="grid gap-3 sm:grid-cols-2">
           {policies.map((policy) => (
             <Link
@@ -86,7 +70,7 @@ export default function PolicyHub() {
         </div>
 
         {/* Where the rules stop being reading and start being your account. */}
-        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Link
             to="/standing"
             className="flex items-start gap-4 rounded-3xl border border-white/10 bg-ink-card/70 p-6 transition-colors hover:border-white/25"
@@ -113,16 +97,13 @@ export default function PolicyHub() {
           </Link>
         </div>
 
-        <p className="mb-14 mt-10 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-relaxed text-white/45">
+        <p className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-white/45">
           <Glyph icon={faCircleInfo} className="mt-0.5 text-white/30" />
-          These pages are written plainly and say what actually happens. They have not been
-          through a lawyer yet. They will be before Kobblon opens widely, and this note will go
-          when that is done rather than before.
+          These pages say what actually happens. They have not been through a lawyer yet, and
+          will be before Kobblon opens widely.
         </p>
       </div>
-
-      <SiteFooter className="relative border-white/10 bg-transparent" />
-    </div>
+    </AboutShell>
   )
 }
 

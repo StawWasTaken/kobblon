@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
  * This is the one bar they share.
  */
 export const ABOUT_LINKS = [
-  { to: '/', label: 'What Kobblon is' },
+  { to: '/about', label: 'What Kobblon is' },
   { to: '/download', label: 'Download' },
   { to: '/policies', label: 'The rules' },
   { to: '/support', label: 'Support' },
@@ -26,7 +26,7 @@ export function AboutNav({ className }: { className?: string }) {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
 
-  const here = (to: string) => (to === '/' ? pathname === '/' : pathname.startsWith(to))
+  const here = (to: string) => pathname.startsWith(to)
 
   return (
     <header className={cn('relative', className)}>

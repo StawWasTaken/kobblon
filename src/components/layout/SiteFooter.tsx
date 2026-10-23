@@ -27,7 +27,7 @@ const kobblon = [
 ]
 
 const about = [
-  { to: '/', label: 'What Kobblon is' },
+  { to: '/about', label: 'What Kobblon is' },
   { to: '/support', label: 'Support' },
   { to: '/policies', label: 'The rules' },
   { to: '/terms', label: 'Terms of Use' },
@@ -107,18 +107,19 @@ export function SiteFooter({ className }: { className?: string }) {
 
           <div>
             <Heading>Social</Heading>
-            <ul className="mt-4 space-y-2">
+            <ul className="mt-4 space-y-2.5">
               {social.map((one) => (
                 <li key={one.href}>
                   <a
                     href={one.href}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="group inline-flex items-center gap-3 rounded-xl border border-white/10 py-2 pl-2.5 pr-4 text-sm font-semibold text-white/60 transition-colors hover:border-white/25 hover:bg-white/5 hover:text-white"
+                    className="group flex items-center gap-2.5 text-sm font-semibold text-white/55 transition-colors hover:text-white"
                   >
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-white/50 transition-colors group-hover:bg-brand/20 group-hover:text-brand-bright">
-                      <Glyph icon={one.icon} className="h-3.5 w-3.5" />
-                    </span>
+                    <Glyph
+                      icon={one.icon}
+                      className="h-4 w-4 text-white/35 transition-colors group-hover:text-white"
+                    />
                     {one.label}
                   </a>
                 </li>

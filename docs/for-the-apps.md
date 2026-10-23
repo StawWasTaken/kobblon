@@ -11297,3 +11297,44 @@ off the bottom.
   and which About pages are actually being built.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and fifty-four - the About side gets a shell, and a page of its own
+
+Two things. First, the footer's social links are a plain list again with the
+mark inline - Staw did not want chips with the mark in a disc.
+
+### `AboutShell`
+
+`@/components/layout/AboutShell` is the About side's chrome, once: the pixel
+wash, the light at the top, `AboutNav`, the hero (eyebrow, title, lead,
+actions) and `SiteFooter`. It forces dark, because these pages are what
+Kobblon looks like to somebody who has never had the chance to pick a theme.
+
+The policies hub and Download each drew that background and those gradients
+themselves; they are on the shell now and are shorter for it. The policy
+pages (`StoryPage`) still draw their own - they have a contents rail and a
+different rhythm, and moving them is the next job rather than a rushed one.
+
+### `/about` - "What Kobblon is"
+
+A new page, and the first one built for the About side rather than inherited.
+It says what the platform is to a stranger: the four things you can do here
+(Worlds, building and the marketplace, Communities, the avatar and Catalog),
+the three pieces it runs on (**the website, the Launcher, Creator** - your
+two, named and described), what {currency} are and are not, that the rules
+are written down and arguable, and a sign-up at the end.
+
+**Everything on it is something the platform does today.** The numbers come
+from `platform_stats`; there is no roadmap on the page, and nothing is
+claimed that is not built.
+
+`AboutNav` and the footer now point "What Kobblon is" at `/about` rather
+than at the landing page.
+
+### Still open
+
+- The landing page is still the old one.
+- `StoryPage` has not moved onto the shell.
+- The wiki, the forum and the newsroom are ideas; nothing links to them.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+

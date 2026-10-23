@@ -46,6 +46,7 @@ const StandingItem = lazyPage(() => import('@/pages/StandingItem'))
 const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const Download = lazyPage(() => import('@/pages/Download'))
+const About = lazyPage(() => import('@/pages/About'))
 const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
@@ -133,6 +134,7 @@ export default function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/about" element={<About />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
               {/* Where a Kobblon application sends somebody to sign in. Named
