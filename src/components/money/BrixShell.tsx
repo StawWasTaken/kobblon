@@ -6,6 +6,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
+import type { KobIcon } from '@/components/brand/Icon'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { Page } from '@/components/layout/AppShell'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,8 +32,11 @@ import { cn } from '@/lib/cn'
  * their system for less motion gets the same rail with nothing moving.
  */
 
-export const BRIX_TABS: { to: string; label: string; icon: IconDefinition }[] = [
-  { to: '/quests', label: 'Quests', icon: faWandMagicSparkles },
+/* `ours` is one of Staw's drawings, which `Glyph` prefers over the Font
+   Awesome one behind it. The quest laurel and the Brix mark are his; there
+   is no drawing of a receipt or a gift, so those two stay Font Awesome. */
+export const BRIX_TABS: { to: string; label: string; icon: IconDefinition; ours?: KobIcon }[] = [
+  { to: '/quests', label: 'Quests', icon: faWandMagicSparkles, ours: 'laurel-quest' },
   { to: '/leaderboards', label: 'Leaderboards', icon: faRankingStar },
   { to: '/brix', label: 'My transactions', icon: faReceipt },
   { to: '/brix/codes', label: 'Redeem a code', icon: faGift },
@@ -115,7 +119,7 @@ function Rail() {
               here ? 'text-white' : 'text-white/45 hover:text-white/80',
             )}
           >
-            <Glyph icon={tab.icon} className="mr-2 text-xs" />
+            <Glyph icon={tab.icon} name={tab.ours} className="mr-2 inline-block h-3.5 w-3.5 align-[-2px]" />
             {tab.label}
             {tab.to === '/quests' && unseen > 0 && (
               <span
@@ -145,11 +149,13 @@ function Rail() {
 }
 
 export function BrixShell({
-  title, lead, icon, actions, children,
+  title, lead, icon, ours, actions, children,
 }: {
   title: string
   lead: ReactNode
   icon: IconDefinition
+  /** One of Staw's, where there is one for what this page is. */
+  ours?: KobIcon
   actions?: ReactNode
   children: ReactNode
 }) {
@@ -183,7 +189,7 @@ export function BrixShell({
             </p>
             <h1 className="mt-3 flex items-center gap-3 font-display text-3xl font-extrabold leading-[0.95] sm:text-4xl">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-raised text-base text-brand-bright">
-                <Glyph icon={icon} />
+                <Glyph icon={icon} name={ours} className="h-5 w-5" />
               </span>
               {title}
             </h1>

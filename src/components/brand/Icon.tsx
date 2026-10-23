@@ -24,7 +24,7 @@ import { cn } from '@/lib/cn'
 
 /** Everything in `public/icons/ui`. */
 export const UI_ICONS = [
-  'add-user', 'admin', 'announcement', 'avatar', 'brix', 'broken-image',
+  'add-user', 'admin', 'announcement', 'assets', 'avatar', 'brix', 'broken-image',
   'chatbubble',
   'check-user', 'checkmark', 'circle-user', 'click', 'clock-user',
   'cross-user', 'discount',
@@ -36,6 +36,12 @@ export const UI_ICONS = [
   'reaction-smile', 'reaction-sunglasses', 'reaction-winky-grin',
   'remove-user', 'report', 'search-user', 'send', 'thumbs-down-stroke',
   'thumbs-down', 'thumbs-up-stroke', 'thumbs-up', 'user', 'users', 'voice-user',
+  /*
+   * Staw's own drawings of a World and of an asset, added for the boards.
+   * The Workspace's `world` is a different picture for a different job -
+   * that one is a node in a tree - so this is the website's, under `ui`.
+   */
+  'world',
 ] as const
 
 /**

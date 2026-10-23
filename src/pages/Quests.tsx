@@ -686,6 +686,7 @@ export default function Quests() {
   return (
     <BrixShell
       icon={faWandMagicSparkles}
+      ours="laurel-quest"
       title="Things to go and do"
       lead={`Play, turn up, and come back for what it is worth. Every one of these pays in ${currency.plural}.`}
       actions={

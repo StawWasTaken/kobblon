@@ -1,4 +1,5 @@
-import { faDoorOpen, faTags, faCubes, faRankingStar } from '@fortawesome/free-solid-svg-icons'
+import { faTags, faShapes, faRankingStar } from '@fortawesome/free-solid-svg-icons'
+import { worldIcon } from '@/lib/naming'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -23,9 +24,9 @@ import type { OwnerBoard } from '@/types/db'
  * made, which is what a profile is for.
  */
 const shown: { board: OwnerBoard; label: string; unit: string; icon: IconDefinition }[] = [
-  { board: 'visits', label: 'World visits', unit: 'visits', icon: faDoorOpen },
+  { board: 'visits', label: 'World visits', unit: 'visits', icon: worldIcon },
   { board: 'sales', label: 'Catalog sales', unit: 'sold', icon: faTags },
-  { board: 'assets', label: 'Assets made', unit: 'made', icon: faCubes },
+  { board: 'assets', label: 'Assets made', unit: 'made', icon: faShapes },
 ]
 
 export function Places({ who, className }: { who: string; className?: string }) {

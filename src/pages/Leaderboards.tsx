@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  faRankingStar, faCrown, faCoins, faFire, faSackDollar, faDoorOpen,
-  faTags, faCubes, faHeart, faUsers, faUser,
+  faRankingStar, faCrown, faCoins, faFire, faSackDollar,
+  faTags, faShapes, faUsers, faUser,
 } from '@fortawesome/free-solid-svg-icons'
+import { worldIcon } from '@/lib/naming'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
 import type { KobIcon } from '@/components/brand/Icon'
 import { Card } from '@/components/ui/Card'
 import { Choices } from '@/components/ui/Choices'
@@ -84,7 +86,8 @@ const boards: {
   {
     value: 'visits',
     label: 'World visits',
-    icon: faDoorOpen,
+    icon: worldIcon,
+    ours: 'world',
     lead: 'Everybody who has walked into a World they own, added up across all of them.',
     unit: 'visits',
     sides: ['players'],
@@ -100,7 +103,8 @@ const boards: {
   {
     value: 'assets',
     label: 'Assets made',
-    icon: faCubes,
+    icon: faShapes,
+    ours: 'assets',
     lead: 'Meshes, textures, sounds and the rest, published to the marketplace for anybody to build with.',
     unit: 'made',
     sides: ['players', 'communities'],
@@ -108,8 +112,8 @@ const boards: {
   {
     value: 'world_likes',
     label: 'Worlds by likes',
-    icon: faHeart,
-    ours: 'thumbs-up',
+    icon: worldIcon,
+    ours: 'world',
     lead: 'The Worlds people liked the most. This board is of Worlds rather than of the people who made them.',
     unit: 'likes',
     sides: ['players'],
@@ -117,7 +121,8 @@ const boards: {
   {
     value: 'world_visits',
     label: 'Worlds by visits',
-    icon: faDoorOpen,
+    icon: worldIcon,
+    ours: 'world',
     lead: 'The Worlds most walked into. Of Worlds, again, rather than of their owners.',
     unit: 'visits',
     sides: ['players'],
@@ -204,7 +209,11 @@ function Step({ one, at, unit }: { one: Entry; at: number; unit?: string }) {
         >
           {one.image
             ? <img src={one.image} alt="" className="h-full w-full object-cover" />
-            : <span className="grid h-full w-full place-items-center text-muted"><Glyph icon={faCubes} /></span>}
+            : (
+              <span className="grid h-full w-full place-items-center text-muted">
+                <Icon name="world" tone="currentColor" className="h-7 w-7" />
+              </span>
+            )}
         </span>
       )}
 

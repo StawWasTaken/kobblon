@@ -98,6 +98,13 @@ const OURS: Record<string, KobIcon> = {
      entry or a record card means Brix and nothing else. */
   coins: 'brix',
   'hand-pointer': 'click',
+  /* Staw: "for worlds, the world svg icon should be this image [...] and
+     for assets its the second one". `faEarthEurope` is the mark a World
+     wears everywhere (`worldIcon` in `@/lib/naming`) and `faShapes` is what
+     the marketplace is drawn with, so both are his drawings now wherever
+     they appear - rail, search, Create, the boards. */
+  'earth-europe': 'world',
+  shapes: 'assets',
 
   /*
    * Deliberately absent, each for a reason:

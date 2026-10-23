@@ -10992,3 +10992,25 @@ Staw: "we do have an icon for brix so it should be used". The three money boards
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and forty-five
+
+Staw: "we also have our own quest svg icon bruh use it, and for worlds, the world svg icon should be this image (use a colour overlay ofc), and for assets its the second one".
+
+### Two drawings added, and both are site-wide
+
+`public/icons/ui/world.png` and `public/icons/ui/assets.png` - his globe and his three shapes. `UI_ICONS` in `@/components/brand/Icon` carries `world` and `assets`, so `<Icon name="world" tone="..." />` works the same way the mark and the laurel do, painted as a mask so it takes whatever colour the row it is in is.
+
+They are not only on the new pages. `@/components/brand/Glyph`'s table now maps:
+
+- `earth-europe` → `world`. That is `worldIcon` from `@/lib/naming`, the mark a World wears everywhere, so every place that draws a World gets his drawing without being touched.
+- `shapes` → `assets`. That is what the Creator Marketplace is drawn with - the rail, search, Create - so the same holds there.
+
+The quest laurel was already in the set and is asked for by name (`ours: 'laurel-quest'`), because it is never mapped from a Font Awesome glyph: it went on every trophy and medal the last time it was.
+
+**If you draw a World or an asset in the Workspace or the Launcher, take these two.** Note `workspace/world` is a different picture for a different job - that one is a node in a tree - and it is untouched.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.
