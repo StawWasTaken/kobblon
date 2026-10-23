@@ -2,11 +2,9 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faWindows, faApple, faLinux } from '@fortawesome/free-brands-svg-icons'
 import { faCube, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { Wordmark } from '@/components/brand/Wordmark'
-import { Button } from '@/components/ui/Button'
-import { PUBLIC_LINKS } from '@/components/layout/PublicLayout'
 import { PixelField } from '@/components/brand/PixelField'
 import { SiteFooter } from '@/components/layout/SiteFooter'
+import { AboutNav } from '@/components/layout/AboutNav'
 import { useForceDark } from '@/hooks/useTheme'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 
@@ -41,27 +39,7 @@ export default function Download() {
           * out of the front page's header had one way back into the site
           * and no way to sign in.
           */}
-        <header className="flex items-center gap-4 py-6 sm:gap-6">
-          <Wordmark to="/" className="h-6" />
-          <nav aria-label="Kobblon" className="hidden items-center gap-5 sm:flex">
-            {PUBLIC_LINKS.map((one) => (
-              <Link
-                key={one.to}
-                to={one.to}
-                className="text-sm font-bold text-white/55 transition-colors hover:text-white"
-              >
-                {one.label}
-              </Link>
-            ))}
-          </nav>
-          <Link
-            to="/login"
-            className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-white"
-          >
-            Log in
-          </Link>
-          <Button to="/signup" size="sm" variant="yes">Sign up</Button>
-        </header>
+        <AboutNav />
 
         <section className="py-12 sm:py-20">
           <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-white/40">

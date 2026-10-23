@@ -1,0 +1,1 @@
+import{Hr as e,Jr as t,Vr as n,Zr as r}from"./Button-DO84_rlO.js";var i=r(t(),1);function a(t){let{pathname:r,search:a,hash:o}=n(),s=e();(0,i.useEffect)(()=>{t&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,r,a,o,s])}export{a as t};

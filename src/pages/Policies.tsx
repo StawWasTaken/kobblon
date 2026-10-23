@@ -3,10 +3,10 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faArrowRight, faScaleBalanced, faShieldHalved, faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons'
-import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
 import { StoryPage } from '@/components/layout/StoryPage'
 import { SiteFooter } from '@/components/layout/SiteFooter'
+import { AboutNav } from '@/components/layout/AboutNav'
 import { policies, policyBySlug } from '@/content/policies'
 import { useForceDark } from '@/hooks/useTheme'
 import { useTitle } from '@/hooks/useTitle'
@@ -47,13 +47,7 @@ export default function PolicyHub() {
       <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/85 to-ink" />
 
       <div className="relative mx-auto max-w-6xl px-4 pb-24 sm:px-8">
-        <header className="flex items-center justify-between py-6">
-          <Wordmark to="/" className="h-6" />
-          <nav className="flex items-center gap-5 text-sm font-semibold text-white/50">
-            <Link to="/support" className="hover:text-white">Support</Link>
-            <Link to="/standing" className="hover:text-white">Your standing</Link>
-          </nav>
-        </header>
+        <AboutNav />
 
         <section className="py-12 sm:py-20">
           <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-white/40">

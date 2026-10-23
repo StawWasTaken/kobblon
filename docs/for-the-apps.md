@@ -11205,3 +11205,53 @@ your side needs no change. This was a decision about where to use them.
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and fifty-one - a foot for the whole site, and one bar for the About side
+
+Staw named the three kinds of page this website has, which is worth having
+written down because the applications sit against the third kind:
+
+1. **The signed-in pages** - home, People, Friends, the Brix pages.
+2. **The About pages** - the landing page, the policies, and the wiki, the
+   about page, the forum and the newsroom he wants later. These exist to
+   show the world what Kobblon is.
+3. **The sign-in pages for the applications** - `/creator/sign-in`,
+   `/launcher/sign-in`. Yours. Untouched by any of this.
+
+### The new footer
+
+Staw's shape, inspired by Polytoria's without copying it. Left: the landing
+lockup (`/brand/landing-lockup.png`, the wordmark with "The game built by
+players" under it) and `© 2026 Kobblon`. Then three columns:
+
+- **Kobblon** - the pages of the product a stranger can reach: Play,
+  Create, Communities, People, Download.
+- **About** - What Kobblon is, Support, The rules, Terms of Use, Privacy,
+  Community guidelines, Your standing.
+- **Social** - **Discord: `https://discord.gg/SsjvR6rmez`** and **YouTube:
+  `https://www.youtube.com/channel/UCjFPtUjIY7mDFFOv-LuB7hQ`**, with the
+  Font Awesome brand marks. If the Workspace or the Launcher ever shows
+  "join the Discord", that is the invite to use.
+
+A Reddit is coming and is not in yet; the wiki, newsroom and forum are not
+either. Nothing links to a page nobody has built.
+
+### One bar for the About side
+
+`@/components/layout/AboutNav` - wordmark, then What Kobblon is / Download /
+The rules / Support, then Log in and Sign up. The policies hub, every policy
+page (`StoryPage`) and Download had three different headers between them;
+they share this one now, and all three end on the new footer.
+
+### Not done, and said plainly
+
+**The landing page itself is not redesigned yet.** It has the new footer and
+it is in the same family, but the page is still the old five-section one
+Staw called a mess. That is the next round, and it wants decisions rather
+than code: what the front page should claim, in what order, and which of the
+wiki, about page, forum and newsroom are actually being built.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

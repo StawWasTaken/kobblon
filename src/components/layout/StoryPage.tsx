@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
 import { SiteFooter } from './SiteFooter'
+import { AboutNav } from './AboutNav'
 import { useForceDark } from '@/hooks/useTheme'
 import { cn } from '@/lib/cn'
 
@@ -76,13 +76,7 @@ export function StoryPage({
       <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/85 to-ink" />
 
       <div className="relative mx-auto max-w-6xl px-4 pb-24 sm:px-8">
-        <header className="flex items-center justify-between py-6">
-          <Wordmark to="/" className="h-6" />
-          <nav className="flex items-center gap-5 text-sm font-semibold text-white/50">
-            <Link to="/policies" className="hover:text-white">All policies</Link>
-            <Link to="/support" className="hover:text-white">Support</Link>
-          </nav>
-        </header>
+        <AboutNav />
 
         {/* ------------------------------------------------------- hero */}
         <section className="py-12 sm:py-20">
