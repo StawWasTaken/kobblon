@@ -10591,3 +10591,37 @@ drawing on `bg-ink` is the look he wants.
 
 Nothing else moved: same file (`public/brand/under_construction.png`),
 same `kobbyArt.construction`, same page.
+
+## Round one hundred and thirty-seven
+
+### The three lines, and why a button was changing the address
+
+Staw, twice: the mobile menu button "sends me to the 404 page". It could
+not be reproduced in a mobile browser at 390 wide - the button is there,
+nothing covers it, the drawer opens, and all twelve links in it land on
+their own page - which is the part that gives the answer away. **A button
+cannot navigate.** If the address changes when one is pressed, the press
+was not what moved it.
+
+`-ml-1` put its left edge eight pixels from the side of the screen, which
+is inside the strip iOS hands to the back gesture. A tap there that slides
+a couple of pixels is not a tap at all: it is the browser going back, and
+back from the page you just opened is whatever was there before - which is
+how pressing a menu lands on a 404 and reads as "the menu is broken". It
+is now twenty pixels in, which leaves the gesture its strip and the button
+its taps, plus `touch-action: manipulation` so a double press is not read
+as a zoom.
+
+**Worth having on your side even though you are not a browser:** it is the
+same mistake as a control under a window's drag region. Anything whose
+edge sits in a strip the system has already claimed loses, and the symptom
+is never "my control is in the wrong place" - it is "my control does not
+work", reported by somebody who is pressing exactly the right thing.
+
+Said plainly, because it is a guess with good evidence rather than a
+reproduction: if Staw still lands on the 404 after this, the cause is
+something else and the next thing to ask for is the address bar.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

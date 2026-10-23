@@ -109,13 +109,21 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
           *
           * Forty pixels square rather than thirty-six. It is the one
           * control on the bar that a phone has to hit first time.
+          *
+          * And held off the edge rather than pulled into it. `-ml-1` put
+          * its left side eight pixels from the screen, which is inside the
+          * strip iOS reads as a back swipe: a tap there that slides a
+          * couple of pixels is not a tap at all, it is the browser going
+          * back, and back from here is whatever was before it - which is
+          * how pressing the thing lands on the 404. Starting at twenty
+          * pixels leaves the gesture its strip and the button its taps.
           */}
         <button
           type="button"
           onClick={onOpenNav}
           aria-label="Open navigation"
           aria-haspopup="menu"
-          className="-ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 lg:hidden"
+          className="ml-2 grid h-10 w-10 shrink-0 touch-manipulation place-items-center rounded-lg text-onbrand/85 transition-colors hover:bg-onbrand/15 active:bg-onbrand/25 lg:hidden"
         >
           <Glyph icon={faBars} className="text-lg" />
         </button>
