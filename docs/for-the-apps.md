@@ -11014,3 +11014,47 @@ The quest laurel was already in the set and is asked for by name (`ours: 'laurel
 
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
 - Worlds cannot belong to a Community, which is the only reason two boards have one side.
+
+## Round one hundred and forty-six - the Brix pages, with the words taken out
+
+Staw, on the four pages Round one hundred and forty-four shipped: "i wanted
+something way more simpler, less text, less blah blah, more visual thing, and
+still separated pages but uniformized by their design."
+
+So this round removes copy and nothing else. No signature changed, no RPC
+changed, no migration. Four pages are still four pages and still mount on
+`BrixShell`.
+
+### What changed, for anything that copies these
+
+- **`BrixShell`'s `lead` is now optional.** It was `lead: ReactNode`
+  (required); it is `lead?: ReactNode` and the paragraph is only rendered
+  when there is one. Quests, My transactions, Leaderboards and Redeem a code
+  now pass none. A copy of the shell on your side that still requires it
+  will not break, but a page passing nothing is now the normal case.
+- **`Leaderboards`' board table no longer has a `lead` field.** If the
+  Workspace reads that table for anything, the field is gone - `value`,
+  `label`, `icon`, `ours`, `unit`, `sides` are what is left. The board's
+  name is now the whole heading.
+- A board with one side used to explain itself in a paragraph; it now shows
+  a small chip ("Players only", or "Worlds") with the reason on its
+  `title`. The reason is unchanged and still true: a World belongs to a
+  person, and a Community owns no avatar items.
+- "Where you stand" is now the place as a number - `#9` with `of 214`
+  under it - rather than a sentence.
+- Gone entirely: the leaderboards footer about who is left off, the note on
+  My transactions that Brix are not money, the Quests note about how time
+  in a World is counted, and the block on Redeem a code about where codes
+  come from. **Nothing about the behaviour they described changed.** Guests,
+  suspended accounts and accounts on their way out are still off every
+  board; the ledger behind the money boards is still private to its
+  account; time is still counted by Kobblon from the session the Launcher
+  keeps open, and still cannot be added to by the Launcher or the player.
+  If the Workspace says any of that anywhere, keep saying it - the website
+  stopped saying it on these four pages, which is a copy decision, not a
+  rule change.
+
+### Still open
+
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+- Worlds cannot belong to a Community, which is the only reason two boards have one side.

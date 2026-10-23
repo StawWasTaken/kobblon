@@ -12,7 +12,6 @@ import { BrixShell } from '@/components/money/BrixShell'
 import { useAuth } from '@/hooks/useAuth'
 import { useTitle } from '@/hooks/useTitle'
 import { redeemCode } from '@/lib/api'
-import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
 
 /**
@@ -56,7 +55,6 @@ export default function BrixCodes() {
     <BrixShell
       icon={faGift}
       title="Redeem a code"
-      lead="Codes turn up in Kobblon events, from the people who run them, and now and then for no reason at all. One go each."
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">
         <Card className="space-y-4 p-5">
@@ -110,9 +108,6 @@ export default function BrixCodes() {
                     </p>
                   )}
                   <p className="mt-2 text-sm font-bold">{said.words}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    Already on your account; the balance above has it.
-                  </p>
                 </>
               ) : (
                 <p className="flex items-start gap-3 text-sm font-bold">
@@ -123,21 +118,15 @@ export default function BrixCodes() {
             </div>
           )}
 
-          <p className="text-xs leading-relaxed text-muted">
-            Capital letters and spaces do not matter. A code can be taken once per account, and
-            some run out or stop working on a date.
-          </p>
         </Card>
 
         <div className="space-y-4">
           <Card className="flex flex-wrap items-center gap-5 p-5">
             <Kobby mood="notification" size="md" bob={false} />
             <div className="min-w-0 flex-1">
-              <h2 className="font-display text-xl font-extrabold">Where codes come from</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                Kobblon hands them out at events, in announcements, and alongside things worth
-                celebrating. Nobody on Kobblon will ever ask you for your password in exchange
-                for one, and anybody who does is worth reporting.
+              <h2 className="font-display text-xl font-extrabold">One go per account</h2>
+              <p className="mt-1 text-sm text-muted">
+                Nobody here will ask for your password for a code.
               </p>
             </div>
           </Card>
@@ -149,24 +138,16 @@ export default function BrixCodes() {
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/15 text-brand-bright">
                 <Glyph icon={faWandMagicSparkles} />
               </span>
-              <h3 className="mt-3 font-display text-base font-extrabold">Quests pay every day</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted">
-                The daily is yours for turning up, and the board changes as Worlds ask to be
-                on it.
-              </p>
-              <Button className="mt-4" variant="subtle" to="/quests">Go to the board</Button>
+              <h3 className="mt-3 font-display text-base font-extrabold">Quests</h3>
+              <Button className="mt-3" variant="subtle" to="/quests">The board</Button>
             </Card>
 
             <Card className="p-5">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-space/15 text-space-bright">
                 <Glyph icon={faRankingStar} />
               </span>
-              <h3 className="mt-3 font-display text-base font-extrabold">See where you stand</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted">
-                The richest accounts on Kobblon, the biggest spenders, and what each is worth
-                in {currency.plural}.
-              </p>
-              <Button className="mt-4" variant="subtle" to="/leaderboards">Leaderboard</Button>
+              <h3 className="mt-3 font-display text-base font-extrabold">Leaderboards</h3>
+              <Button className="mt-3" variant="subtle" to="/leaderboards">Where you stand</Button>
             </Card>
           </div>
         </div>

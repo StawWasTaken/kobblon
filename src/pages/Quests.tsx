@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  faCircleCheck, faClock, faHandshake, faPlus, faWandMagicSparkles,
+  faCircleCheck, faHandshake, faPlus, faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
@@ -688,7 +688,6 @@ export default function Quests() {
       icon={faWandMagicSparkles}
       ours="laurel-quest"
       title="Things to go and do"
-      lead={`Play, turn up, and come back for what it is worth. Every one of these pays in ${currency.plural}.`}
       actions={
         <>
           {profile?.is_superadmin && (
@@ -763,11 +762,6 @@ export default function Quests() {
         </>
       )}
 
-      <Note tone="brand" icon={faClock}>
-        Time in a World is counted by Kobblon while you play, from the session the
-        Launcher keeps open. Nothing you or the Launcher can say adds to it, which is
-        what keeps the number worth something.
-      </Note>
 
       {profile?.is_superadmin && (
         <WriteOne open={writing} onClose={() => setWriting(false)} onDone={again} />
@@ -782,7 +776,7 @@ export default function Quests() {
 
       {!profile?.is_verified && (
         <Note tone="brand" icon={faHandshake}>
-          Worlds get onto this tab when a verified creator asks and an admin agrees.
+          Verified creators can ask for a World to be on this board.
         </Note>
       )}
       </div>

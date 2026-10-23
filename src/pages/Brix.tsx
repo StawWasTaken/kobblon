@@ -163,7 +163,6 @@ export default function Brix() {
     <BrixShell
       icon={faReceipt}
       title="My transactions"
-      lead="Everything that has moved on your account, what it was for, and what it adds up to."
       actions={
         <GuestGate action="redeem codes">
           <Button icon={faGift} to="/brix/codes">Redeem a code</Button>
@@ -246,10 +245,6 @@ export default function Brix() {
               <Line label="Total" amount={summary.outTotal} />
             </div>
 
-            <p className="mt-5 border-t border-ink-line pt-4 text-xs leading-relaxed text-muted">
-              {currency.plural} are a number on your account for use inside Kobblon. They are
-              not money, and they cannot be cashed out.
-            </p>
           </Card>
 
           {/* ------------------------------------------------------- list */}

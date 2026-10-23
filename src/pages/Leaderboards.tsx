@@ -53,7 +53,6 @@ const boards: {
      money boards are drawn with his mark; the Font Awesome one behind it
      is only what `Glyph` falls back to if the file ever goes missing. */
   ours?: KobIcon
-  lead: string
   /** What the number is, where it is not an amount of Brix. */
   unit?: string
   /** The sides this board can honestly be drawn for. */
@@ -64,7 +63,6 @@ const boards: {
     label: `${currency.plural} held`,
     icon: faCoins,
     ours: 'brix',
-    lead: 'What is sitting on the account today. It moves the moment somebody buys something.',
     sides: ['players', 'communities'],
   },
   {
@@ -72,7 +70,6 @@ const boards: {
     label: `${currency.plural} spent`,
     icon: faFire,
     ours: 'brix',
-    lead: 'Everything that has ever left the account: items, gifts, adverts, the lot. Nothing about what it went on is shown, only the total.',
     sides: ['players', 'communities'],
   },
   {
@@ -80,7 +77,6 @@ const boards: {
     label: 'Net worth',
     icon: faSackDollar,
     ours: 'brix',
-    lead: 'The balance plus what their avatar items are listed at today. Brix and Brix added up, and nothing about levels or time played.',
     sides: ['players'],
   },
   {
@@ -88,7 +84,6 @@ const boards: {
     label: 'World visits',
     icon: worldIcon,
     ours: 'world',
-    lead: 'Everybody who has walked into a World they own, added up across all of them.',
     unit: 'visits',
     sides: ['players'],
   },
@@ -96,7 +91,6 @@ const boards: {
     value: 'sales',
     label: 'Catalog sales',
     icon: faTags,
-    lead: 'How many of the things they made are being worn by somebody else.',
     unit: 'sold',
     sides: ['players', 'communities'],
   },
@@ -105,7 +99,6 @@ const boards: {
     label: 'Assets made',
     icon: faShapes,
     ours: 'assets',
-    lead: 'Meshes, textures, sounds and the rest, published to the marketplace for anybody to build with.',
     unit: 'made',
     sides: ['players', 'communities'],
   },
@@ -114,7 +107,6 @@ const boards: {
     label: 'Worlds by likes',
     icon: worldIcon,
     ours: 'world',
-    lead: 'The Worlds people liked the most. This board is of Worlds rather than of the people who made them.',
     unit: 'likes',
     sides: ['players'],
   },
@@ -123,7 +115,6 @@ const boards: {
     label: 'Worlds by visits',
     icon: worldIcon,
     ours: 'world',
-    lead: 'The Worlds most walked into. Of Worlds, again, rather than of their owners.',
     unit: 'visits',
     sides: ['players'],
   },
@@ -351,7 +342,6 @@ export default function Leaderboards() {
     <BrixShell
       icon={faRankingStar}
       title="Leaderboards"
-      lead="Who is top of Kobblon, at each of the things it counts. Fifty places on every board, and everybody starts on none of them."
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:items-start">
         {/* ------------------------------------------------ which board */}
@@ -390,12 +380,9 @@ export default function Leaderboards() {
         <div className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h2 className="font-display text-2xl font-extrabold">{chosen.label}</h2>
-              {/* Keyed on the board so the sentence changes with a movement
-                  rather than swapping underneath the cursor. */}
-              <p key={board} className="mt-1 max-w-xl animate-step-next text-sm leading-relaxed text-muted">
-                {chosen.lead}
-              </p>
+              <h2 key={board} className="animate-step-next font-display text-2xl font-extrabold">
+                {chosen.label}
+              </h2>
             </div>
 
             {chosen.sides.length > 1 && (
@@ -409,17 +396,20 @@ export default function Leaderboards() {
                 onChange={setSide}
               />
             )}
+
+            {chosen.sides.length === 1 && (
+              <span
+                title={isWorlds
+                  ? 'A World belongs to a person, so this board has no Communities side.'
+                  : `Net worth counts avatar items, which a Community does not have.`}
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-xs font-bold text-muted"
+              >
+                <Glyph icon={faUser} className="h-3.5 w-3.5" />
+                {isWorlds ? 'Worlds' : 'Players only'}
+              </span>
+            )}
           </div>
 
-          {/* Why a board has no switch, said where somebody would look for
-              one rather than in a note at the bottom. */}
-          {chosen.sides.length === 1 && (
-            <p className="rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-xs leading-relaxed text-muted">
-              {isWorlds
-                ? 'A World belongs to a person, so there is no Communities side to this board. The day a Community can own one, it gets a switch like the others.'
-                : `Net worth counts the avatar items an account owns, which a Community does not have. Its ${currency.plural} are on the first board.`}
-            </p>
-          )}
 
           {rows.error ? (
             <ErrorState message={rows.error} onRetry={rows.reload} />
@@ -466,12 +456,15 @@ export default function Leaderboards() {
             <Card className="flex flex-wrap items-center gap-4 p-4">
               <PersonAvatar person={profile} size="md" />
               <div className="min-w-0 flex-1">
-                <p className="font-display text-sm font-bold">Where you stand</p>
-                <p className="text-xs leading-relaxed text-muted">
-                  {mine?.place !== null && mine?.place !== undefined
-                    ? `Number ${formatCount(mine.place)} of ${formatCount(mine.of_how_many)} on ${chosen.label.toLowerCase()}.`
-                    : `Nothing counts towards ${chosen.label.toLowerCase()} on your account yet.`}
-                </p>
+                {mine?.place !== null && mine?.place !== undefined ? (
+                  <p className="font-display text-lg font-extrabold tabular-nums">
+                    #{formatCount(mine.place)}
+                    <span className="ml-1.5 text-xs font-bold text-muted">of {formatCount(mine.of_how_many)}</span>
+                  </p>
+                ) : (
+                  <p className="font-display text-sm font-bold text-muted">Not on this board</p>
+                )}
+                <p className="text-xs font-bold text-muted">You</p>
               </div>
               {!!mine?.amount && (
                 <span className="shrink-0 text-right">
@@ -481,12 +474,6 @@ export default function Leaderboards() {
             </Card>
           )}
 
-          <p className="text-xs leading-relaxed text-muted">
-            Guests, suspended accounts and accounts on their way out are left off, and so are
-            Worlds nobody can open. Nothing here says what anybody bought or when: every board
-            is one total per row, and the ledger behind the {currency.plural} boards stays
-            private to the account it belongs to.
-          </p>
         </div>
       </div>
     </BrixShell>
