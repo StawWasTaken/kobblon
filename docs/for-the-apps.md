@@ -10051,3 +10051,84 @@ For looking at it: `npx vite --config vite.pages.config.mjs` then
 the top bar, the drawer, the bottom bar and the chat dock are all in the
 shot, which is where most of what breaks on a phone actually lives. It prints
 each page's sideways spill and names anything sticking out past the edge.
+
+## Round one hundred and twenty-nine - the phone, the pages themselves
+
+Round one hundred and twenty-eight did the chrome. This is the pages, and
+one thing in it changes a shared component's **behaviour**, so read the
+first two bullets even if you skip the rest.
+
+**`@/components/chat/ChatDock` - `useChatDock()` returns three more things.**
+
+```ts
+openChat: () => void    // open the chat on a phone
+chatOpen: boolean       // whether the phone sheet is showing
+chatUnread: number      // unread across every conversation
+```
+
+The context keeps its default, so reading it outside the provider still does
+not throw - that stays true and is worth keeping true. **The round floating
+chat button is gone.** Staw: "replace the friends thing by the messages
+thing (chat docks on the pc website)". The bottom bar has a Chat slot that
+calls `openChat`, which is also where Roblox puts it. If your window drew its
+own floating button to match ours, it is now matching nothing.
+
+Related, same file: `List` no longer draws its own header when `full`. The
+phone sheet has its own title bar, so "Friends Chat" was appearing twice down
+the top of the screen, and the inner header's collapse chevron did nothing
+there because `full` forces the list open. **The desktop dock is unchanged** -
+it still has its header, its chevron and its remembered open state.
+
+**`mobileNav` is four entries now, not five**: Home, Discover, You, Catalog.
+Chat is the fifth slot on the bar and is deliberately **not** in that array,
+because it is not a route - the bar adds it itself. If you read `mobileNav`
+expecting the whole bar, you will be one short.
+
+**The shape the phone pages now take, which is the part worth copying:**
+
+* **Two cards across, not one.** `WorldCard` grids on Discover and the
+  Library were one column below `sm`, so a shelf of Worlds was one card per
+  screen and Discover ran to 4977px. They ask for `grid-cols-2` at every
+  width now. Profile already did this; it was the odd one out that was
+  right.
+* **`WorldCard` drops its description and its genre below `sm`.** Two across
+  leaves room for the name, who made it, and one line of numbers. With the
+  description it was a block again, and with the genre the numbers line
+  wrapped on one card and not its neighbour, so a tidy grid came out ragged.
+* **`CommunityTile` stacks its emblem over its name below `sm`.** Side by
+  side in a half-width tile, the 56px emblem left about eighty pixels for
+  the name: every Community read "Sta..." and "The ...", and the member
+  count broke across two lines.
+* **`BrowseHero` is much smaller on a phone** - `px-4 py-5`, `text-2xl`, the
+  lead clamped to two lines, a 48px field. It was 400px of title on Discover
+  before anything somebody came for.
+* **Home's shelves use `w-44` cards below `sm`.** At `w-64` one card filled
+  the screen, so a shelf read as a single World with an edge beside it.
+* **The console**: its panel lead wraps instead of truncating mid-word
+  ("whether the machine is keepin..."), its stat tiles are two across, and it
+  no longer advertises `Ctrl K` on a device with no Ctrl key.
+
+**One wrong sentence, fixed, and it was wrong everywhere and not only on a
+phone.** My Avatar said "Nothing yet. Press something on the right to put it
+on." The shelf is **under** the body at every width - the comment three lines
+below it in the same file says so. It now says "from the shelf below".
+
+Measured: all fifteen pages still report **0px** of sideways scroll at 390px,
+and the four longest are shorter by a lot - Discover 4977 to 1935, Library
+2181 to 1056, Communities 2345 to 1577, the console's overview from four
+screens to one.
+
+Not done, and said plainly:
+
+* **People is still a full-width list, 2853px of it**, and that is the
+  longest page left that is not simply long because it has a lot in it. A
+  person's card carries Message and Profile, which a denser row would lose,
+  so it was left alone rather than halved badly.
+* **The friends row on Home is still a wrapping grid, on purpose.** Roblox
+  scrolls theirs sideways and Staw's screenshot shows that, but he asked for
+  this one specifically: "you shouldnt have to scroll left or right to see
+  all of your friends ... but just have a limit max that we can display with
+  a view all". It was not changed on the strength of a screenshot about
+  something else.
+* The Catalog is 3581px at 390px. That is twelve recommendations and a full
+  shelf, three across, which is content rather than layout.

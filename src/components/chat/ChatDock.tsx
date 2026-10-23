@@ -45,10 +45,32 @@ import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
  * learned it was not the copy that draws it. One standing, shared.
  */
 type Quiet = ReturnType<typeof useChatStanding>
-type ChatValue = { openConversation: (id: string) => void; quiet: Quiet }
+type ChatValue = {
+  openConversation: (id: string) => void
+  quiet: Quiet
+  /**
+   * Open the chat on a phone. The bottom bar carries the chat now, so the
+   * thing that opens it is no longer inside this file.
+   */
+  openChat: () => void
+  /** Whether the phone sheet is showing, so the bar can say it is on. */
+  chatOpen: boolean
+  /** Unread across every conversation, for the bar's number. */
+  chatUnread: number
+}
+
+/*
+ * A default, and it matters: `useChatDock` is read by things that mount
+ * outside this provider - the Workspace's panels among them - and a context
+ * with no default throws there. `useAuth` does throw, and that has taken a
+ * panel down twice.
+ */
 const ChatContext = createContext<ChatValue>({
   openConversation: () => {},
   quiet: { standing: null, left: '', read: () => {}, ask: () => {} },
+  openChat: () => {},
+  chatOpen: false,
+  chatUnread: 0,
 })
 
 /** Lets any page pop a conversation open in the dock. */
@@ -484,6 +506,13 @@ function List({
       )}
       aria-label="Friends Chat"
     >
+      {/*
+        * No header in the sheet. The phone sheet draws its own title bar
+        * with a way out of it, so this one made "Friends Chat" appear twice
+        * down the top of the screen - and its collapse chevron did nothing
+        * there, because `full` forces the list open.
+        */}
+      {!full && (
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-3">
         <button
           onClick={() => setOpen((v) => !v)}
@@ -513,6 +542,7 @@ function List({
           <Glyph icon={open ? faChevronDown : faChevronUp} />
         </button>
       </header>
+      )}
 
       {open && (
         <>
@@ -752,7 +782,12 @@ export function ChatDock({ children }: { children: ReactNode }) {
 
   const unread = conversations.reduce((all, one) => all + (one.unread_count ?? 0), 0)
 
-  const value = useMemo(() => ({ openConversation, quiet }), [openConversation, quiet])
+  const openChat = useCallback(() => setPhone('list'), [])
+
+  const value = useMemo(
+    () => ({ openConversation, quiet, openChat, chatOpen: !!phone, chatUnread: unread }),
+    [openConversation, quiet, openChat, phone, unread],
+  )
 
   return (
     <ChatContext.Provider value={value}>
@@ -799,28 +834,12 @@ export function ChatDock({ children }: { children: ReactNode }) {
       {profile && !profile.is_guest && (
         <div className="md:hidden">
           {/*
-            * The button, above the thumb and clear of the bottom bar.
-            *
-            * Hidden while the sheet is open rather than drawn under it: a
-            * round button floating over a full-screen conversation is a
-            * second way to do the thing already on screen.
+            * There is no floating button any more. The bottom bar has a
+            * Chat slot, which is where Staw asked for it and where Roblox
+            * puts it - and the round button had been sitting over the
+            * bottom-right corner of every page, on People right on top of
+            * somebody's Profile link.
             */}
-          {!phone && (
-            <button
-              type="button"
-              onClick={() => setPhone('list')}
-              aria-label="Friends Chat"
-              className="fixed bottom-20 right-4 z-40 grid h-14 w-14 place-items-center rounded-full border-b-[3px] border-brand-ink bg-brand text-white shadow-pop transition-colors hover:bg-brand-bright active:bottom-[4.8rem] active:border-b-0"
-            >
-              <Icon name="chatbubble" className="h-6 w-6" />
-              {unread > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-danger px-1 text-[10px] font-extrabold text-white">
-                  {unread > 9 ? '9+' : unread}
-                </span>
-              )}
-            </button>
-          )}
-
           {phone && (
             <div className="fixed inset-0 z-[60] flex flex-col bg-ink">
               <div className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line px-3">

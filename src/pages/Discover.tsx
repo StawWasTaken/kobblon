@@ -158,7 +158,7 @@ export default function Discover() {
         </BrowseHeading>
 
         {loading && (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
             {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <SpaceCardSkeleton key={i} />)}
           </div>
         )}
@@ -198,7 +198,7 @@ export default function Discover() {
         )}
 
         {!loading && !!found.length && (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
             {found.map((world) => (
               <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
             ))}

@@ -58,8 +58,15 @@ export function WorldCard({
           By {world.creator_name ?? 'Kobblon'}
         </p>
 
+        {/* Not on a phone. Two of these cards fit across a phone, which is
+            the only way a shelf of Worlds is not one card per screen - and
+            at that width two clamped lines of description is what turns a
+            card back into a block. The name, who made it and the numbers
+            are what somebody is choosing between. */}
         {world.description && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-white/50">{world.description}</p>
+          <p className="hidden line-clamp-2 text-xs leading-relaxed text-white/50 sm:block">
+            {world.description}
+          </p>
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] font-bold text-muted">
@@ -73,8 +80,11 @@ export function WorldCard({
               {score}%
             </span>
           )}
+          {/* Not on a phone: two cards across leaves room for one line of
+              numbers, and with the genre on it the line wrapped on one card
+              and not the other, so a tidy grid came out ragged. */}
           {genre && (
-            <span className="inline-flex items-center gap-1 truncate">
+            <span className="hidden sm:inline-flex items-center gap-1 truncate">
               <Glyph icon={faTag} />
               {genre.label}
             </span>

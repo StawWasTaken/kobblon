@@ -690,7 +690,7 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
   return (
     <div className="space-y-5">
       {counts.loading && !counts.data ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           {[0, 1, 2, 3].map((one) => <Skeleton key={one} className="h-32" />)}
         </div>
       ) : counts.error ? (
@@ -706,7 +706,7 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
               : `${formatCount(waiting)} things are waiting on a person.`}
           </p>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {queues.map((one, i) => (
               <Queue
                 key={one.name}
@@ -5042,7 +5042,9 @@ export default function Admin() {
             </h1>
             <p className="text-xs text-muted">
               {mine.length} of {sections.length} panels are yours.{' '}
-              <span className="whitespace-nowrap">
+              {/* Nothing on a phone has a Ctrl key, so nothing on a phone
+                  should be told about one. */}
+              <span className="hidden whitespace-nowrap lg:inline">
                 <kbd className="rounded border border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
                   Ctrl K
                 </kbd>{' '}
@@ -5100,7 +5102,13 @@ export default function Admin() {
               ? <Icon name={here.art} className="w-5 shrink-0 text-brand-bright" />
               : <FontAwesomeIcon icon={here.icon} className="text-brand-bright" />}
             <h2 className="font-display text-lg font-extrabold">{here.name}</h2>
-            <p className="min-w-0 truncate text-sm text-muted">{here.blurb}</p>
+            {/* It wraps on a phone. `truncate` on a line that only shares
+                its row from `sm` up cut the console's one sentence of
+                explanation mid-word - "whether the machine is keepin..." -
+                on every panel. */}
+            <p className="min-w-0 basis-full text-sm text-muted sm:basis-auto sm:truncate">
+              {here.blurb}
+            </p>
           </div>
 
           <RankContext.Provider value={rank}>

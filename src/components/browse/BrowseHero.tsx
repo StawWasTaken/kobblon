@@ -39,7 +39,12 @@ export function BrowseHero({
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-3xl border border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9',
+        /* Tighter on a phone, and not by a little. At the full size this
+           panel was 250px on People and 400px on Discover before a single
+           thing somebody came for - half a screen of title. It is the same
+           panel, asked for less room. */
+        'relative overflow-hidden rounded-3xl border border-ink-line bg-ink-card px-4 py-5',
+        'sm:px-8 sm:py-9',
         className,
       )}
     >
@@ -51,26 +56,33 @@ export function BrowseHero({
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="flex items-center gap-3 font-display text-3xl font-extrabold sm:text-4xl">
+            <h1 className="flex items-center gap-2.5 font-display text-2xl font-extrabold sm:gap-3 sm:text-4xl">
               {icon && <Glyph icon={icon} className="text-brand-bright" />}
               {title}
             </h1>
-            {lead && <p className="mt-1.5 max-w-xl text-sm text-muted">{lead}</p>}
+            {/* Two lines on a phone. People's ran to three, which is
+                ninety pixels of explaining a page whose title already said
+                it; the whole sentence is still there on anything wider. */}
+            {lead && (
+              <p className="mt-1.5 line-clamp-2 max-w-xl text-sm text-muted sm:line-clamp-none">
+                {lead}
+              </p>
+            )}
           </div>
           {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
 
-        <div className="relative mt-5">
+        <div className="relative mt-4 sm:mt-5">
           <Glyph
             icon={faMagnifyingGlass}
-            className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/35"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35 sm:left-5"
           />
           <input
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             aria-label={placeholder}
-            className="h-14 w-full rounded-2xl border border-ink-line bg-ink-raised pl-12 pr-12 text-base font-semibold shadow-card transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+            className="h-12 w-full rounded-2xl sm:h-14 border border-ink-line bg-ink-raised pl-11 pr-11 text-base sm:pl-12 sm:pr-12 font-semibold shadow-card transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
           />
           {value && (
             <button

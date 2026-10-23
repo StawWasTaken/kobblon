@@ -722,7 +722,7 @@ export default function MyAvatar() {
 
               {!wearing.length ? (
                 <p className="mt-1.5 text-xs text-muted">
-                  Nothing yet. Press something on the right to put it on.
+                  Nothing yet. Pick something from the shelf below to put it on.
                 </p>
               ) : (
                 <ul className="mt-2 flex flex-wrap gap-2">

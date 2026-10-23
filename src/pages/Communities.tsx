@@ -184,7 +184,7 @@ export default function Communities() {
         />
 
         {all.loading && (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-[11.5rem] rounded-2xl" />
             ))}
@@ -231,7 +231,7 @@ export default function Communities() {
         {/* One card, one size, one grid. `auto-rows-fr` is what stops a
             long description making a tall card out of its row. */}
         {!all.loading && !!shown.length && (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
             {shown.map((community) => (
               <CommunityTile
                 key={community.id}
@@ -293,14 +293,23 @@ function CommunityTile({ community, joined }: {
       </div>
 
       <div className="relative z-10 flex flex-col gap-2.5 px-4 pb-4">
-        <div className="flex items-start gap-3">
+        {/*
+          * Stacked on a phone, side by side from `sm`.
+          *
+          * Two of these tiles fit across a phone, and side by side the
+          * fifty-six pixel emblem left about eighty for the name: every
+          * Community on the page read "Sta..." and "The ...", and the
+          * member count broke across two lines. Under the emblem the name
+          * gets the whole card.
+          */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
           <span className="-mt-7 grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-brand-deep font-display text-base font-extrabold ring-4 ring-ink-card">
             {community.icon_url
               ? <img src={community.icon_url} alt="" className="h-full w-full object-cover" />
               : community.name.slice(0, 2).toUpperCase()}
           </span>
 
-          <span className="min-w-0 flex-1 pt-0.5">
+          <span className="min-w-0 flex-1 sm:pt-0.5">
             <span className="flex items-center gap-1.5">
               <span className="truncate font-bold">{community.name}</span>
               {community.is_verified && <Verified className="text-xs" />}

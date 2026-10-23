@@ -73,7 +73,7 @@ export default function Library() {
       {saved.error && shelf === 'Saved' && <ErrorState message={saved.error} onRetry={saved.reload} />}
 
       {loading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4">
           {[0, 1, 2].map((i) => <SpaceCardSkeleton key={i} />)}
         </div>
       )}
@@ -103,7 +103,7 @@ export default function Library() {
       )}
 
       {!!shown.length && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4">
           {shown.map((world) => (
             <div key={world.id} className="group/tile relative">
               <WorldCard world={world} genres={genres.data ?? undefined} />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Locked } from '@/components/social/Locked'
-import { AppSidebar, SidebarContent, useFriendRequestCount, useMailCount } from './AppSidebar'
+import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { PhoneBar } from './PhoneBar'
 import { NoticeBar } from './NoticeBar'
@@ -19,8 +19,6 @@ export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
   const location = useLocation()
   const { session, profile } = useAuth()
-  const requests = useFriendRequestCount()
-  const mail = useMailCount()
 
   // The dots on everybody's picture are only worth anything if the page
   // keeps saying that its person is here: once a minute into the row, for
@@ -70,7 +68,13 @@ export function AppShell() {
 
         <main
           id="main"
-          className="pb-20 lg:pb-0 lg:pl-56"
+          /*
+           * `pb-28` and not `pb-20`. The bar is 72px and the chat button
+           * floats 80px up from the bottom, so at pb-20 the last row of a
+           * page ended underneath that button - on People it was sitting on
+           * somebody's Profile link.
+           */
+          className="pb-28 lg:pb-0 lg:pl-56"
           style={{ paddingTop: 'calc(3.5rem + var(--notice-height, 0px))' }}
         >
           {/* Pages put their own ad slots where they want them; this only
@@ -88,7 +92,7 @@ export function AppShell() {
           </AdsProvider>
         </main>
 
-        <PhoneBar requests={requests} mail={mail} />
+        <PhoneBar />
       </div>
 
       {/* A friend request that arrives while you are doing something else. */}

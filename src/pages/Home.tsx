@@ -80,7 +80,12 @@ function Row({ title, children, more }: {
  */
 function Suggestion({ world }: { world: World }) {
   return (
-    <article className="w-64 shrink-0 sm:w-72">
+    /* `w-44` on a phone and not `w-64`: at two hundred and fifty-six pixels
+       one card filled the screen and the shelf read as a single World with
+       an edge beside it, which is the opposite of what a shelf is for. At
+       this width two fit with a third showing, and it matches the two-up
+       grid the rest of the phone now uses. */
+    <article className="w-44 shrink-0 sm:w-72">
       <Link
         to={worldLink(world)}
         className="block aspect-[16/9] overflow-hidden rounded-xl border border-ink-line bg-media"

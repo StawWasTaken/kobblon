@@ -69,6 +69,10 @@ export const sideNav: NavItem[] = [
  * your own character rather than a sixth icon, so the bar has a middle
  * instead of five things in a line. Ours does the same with the avatar.
  *
+ * These are the four that are pages. The fifth slot on the bar is Chat, and
+ * it is not here because it is not a route - it opens the dock. The bar
+ * adds it itself.
+ *
  * It is five and it is not the whole site. Everything else - Communities,
  * Friends, Inbox, Settings - is in the drawer, which on a phone now carries
  * both menus, because the sections bar is hidden there.
@@ -78,9 +82,4 @@ export const mobileNav: NavItem[] = [
   { to: '/discover', label: 'Discover', icon: faCompass },
   { to: '/avatar', label: 'You', icon: faShirt, ours: 'avatar', face: true },
   { to: '/catalog', label: 'Catalog', icon: faShirt },
-  /* Friends and not Create, because this is the only slot on the bar that
-     can carry a number, and an unanswered friend request is the one thing
-     on a phone that goes unseen otherwise. Create is a section and sits in
-     the drawer with the rest of them. */
-  { to: '/friends', label: 'Friends', icon: faUserGroup, badge: 'friends' },
 ]
