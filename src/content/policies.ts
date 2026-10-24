@@ -330,6 +330,17 @@ const privacy: StorySection[] = [
     ],
   },
   {
+    id: 'storage',
+    heading: 'Storage on your device',
+    body: [
+      'Kobblon sets no cookie of its own, and no cookie is set on the platform for advertising, for behavioural profiling, or for measuring you across any other website. There is no analytics product embedded in the website and no advertising network is permitted to place a tag in it.',
+      'What the platform does keep is data held in the storage which your browser or the application provides to the site itself. That data remains on the device and is read only by the platform code running on that device; it is not transmitted to Kobblon as a matter of course and is not transmitted to any third party.',
+      'The items so held are: the authentication token which keeps you signed in and the record of the accounts you have signed into on that device; the theme and appearance you have chosen; the contents of your basket; the identity you are currently creating as; and a small number of markers recording that you have already been shown a particular notice, prompt or dialog, so that it is not shown to you repeatedly.',
+      'None of this is optional in the sense in which consent is ordinarily sought, because none of it exists for any purpose other than operating the features you have asked for; a session which is not retained is a session which ends at every page. You may erase all of it at any time by clearing the site data in your browser, with the consequence that you will be signed out and your stated preferences will return to their defaults.',
+      'The infrastructure on which the platform runs may set a cookie strictly necessary to route or secure a request. Where it does so, it is for that purpose alone and the recipients identified above are the only recipients.',
+    ],
+  },
+  {
     id: 'who-sees',
     heading: 'What other people can see',
     body: [

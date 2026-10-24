@@ -1,0 +1,1 @@
+import{Hr as e,Qr as t,Vr as n,Yr as r}from"./Button-yrMN-gYo.js";var i=t(r(),1);function a(t){let{pathname:r,search:a,hash:o}=n(),s=e();(0,i.useEffect)(()=>{t&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(t).replace(/\/+$/,``)&&s(`${t}${a}${o}`,{replace:!0})},[t,r,a,o,s])}export{a as t};

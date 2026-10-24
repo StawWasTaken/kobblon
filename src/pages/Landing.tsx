@@ -17,6 +17,7 @@ import { StatTile } from '@/components/about/Tally'
 import { PixelGrid } from '@/components/about/Motif'
 import { BandHead, Title } from '@/components/about/Type'
 import { PixelField } from '@/components/brand/PixelField'
+import { CookieNote } from '@/components/layout/CookieNote'
 import { useAsync } from '@/hooks/useAsync'
 import { getPlatformStats, listAssets, listCommunities, listWorlds, avatarShelf } from '@/lib/api'
 import { asset } from '@/lib/asset'
@@ -342,6 +343,8 @@ export default function Landing() {
           </div>
         </Reveal>
       </Band>
+
+      <CookieNote />
     </div>
   )
 }

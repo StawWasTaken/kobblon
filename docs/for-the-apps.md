@@ -11916,3 +11916,32 @@ Two smaller things on the website:
 
 Still not built, unchanged: the newsroom, the wiki, the forum. `world_visits`
 is still only written by `join_world_server`.
+
+## Round one hundred and sixty-six
+
+**A storage note now appears in the bottom left corner** of the landing page
+and of every At Kobblon page - What is Kobblon, Download, Policies and all
+nine policy documents. One component, `CookieNote`, mounted once in
+`AboutShell` and once on the landing page, so there is exactly one wording
+of it on the website.
+
+What it says, and why it matters to you: **Kobblon sets no cookie of its
+own and no tracking or advertising cookie at all.** What the website keeps
+on the device is browser storage belonging to the site itself - the session
+token, the accounts signed into on that device, the theme, the basket, the
+identity you are creating as, and the "already shown" markers. If the
+Workspace or the Launcher shows a notice of this kind, it must say the same
+thing, and it must not describe a consent choice: there is nothing to
+switch off, because none of it exists for anybody but the person using it.
+
+The privacy policy has a new clause to match, **`storage` - "Storage on
+your device"**, sitting between recipients and what other people can see.
+It is the clause the card links to, and it is the only place the list of
+stored items is written down; link there rather than restating it.
+
+Dismissal is remembered under the key `kob.cookies.read` in `localStorage`,
+and every read and write of it is wrapped, because a private window throws.
+The card comes back in a private window, which is correct.
+
+Still not built, unchanged: the newsroom, the wiki, the forum. `world_visits`
+is still only written by `join_world_server`.

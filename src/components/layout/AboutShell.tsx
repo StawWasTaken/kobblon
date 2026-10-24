@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { PixelField } from '@/components/brand/PixelField'
 import { SiteFooter } from './SiteFooter'
 import { AboutNav } from './AboutNav'
+import { CookieNote } from './CookieNote'
 import { useForceDark } from '@/hooks/useTheme'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/cn'
@@ -121,6 +122,8 @@ export function AboutShell({
       <main>{children}</main>
 
       <SiteFooter className="relative border-white/[0.08] bg-transparent" />
+
+      <CookieNote />
     </div>
   )
 }
