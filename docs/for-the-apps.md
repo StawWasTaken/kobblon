@@ -12905,3 +12905,19 @@ own now. Screenshot caught it; nothing else would have.
   `pg_net`/`pg_cron` and the re-apply of 0224 and 0253, automatic Community
   verification by membership share, `register` not being deployed, and
   `world_visits` only being written by `join_world_server`.
+
+### A correction to Round one hundred and seventy-four, found on the way out
+
+The deploy from this container was deleting every forum card page - the
+`forum/t/<id>` and `forum/u/<name>` files that make a topic or a forum
+profile unfurl when it is pasted. `publish-to-root.mjs` keeps a list of
+roots that hold cards written from the database, and leaves those alone
+when the build could not reach it. `forum` was never added to that list,
+so it was wiped and rebuilt from nothing on every run. It is in the list
+now, and the forty-two cards survived this deploy and were repointed at
+the current bundle.
+
+It had been happening for a while and showed up only as pull conflicts.
+Nothing on your side depends on it; it is here because it is the fourth
+time this project has lost data to a value that was right for every case
+somebody had thought of.

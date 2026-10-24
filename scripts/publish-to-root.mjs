@@ -16,8 +16,19 @@ import { pageRoots } from './site-pages.mjs'
 // keep clearing the dead ones out; nothing writes there any more.
 const itemRoots = ['worlds', 'c', 'u', 'e', 'catalog', 'style']
 
-/** Roots that hold item cards as well as pages written from site-pages.mjs. */
-const itemBearing = [...itemRoots, 'create']
+/**
+ * Roots that hold item cards as well as pages written from site-pages.mjs.
+ *
+ * `forum` belongs here and was missing, which is the same bug this file
+ * already documents further down, happening to a root nobody had added.
+ * Topic and profile cards are written under `forum/t/` and `forum/u/` by
+ * `write-item-pages`, and the forum's own page comes from `site-pages` - so
+ * `forum` was in `built` but not in this list, and every deploy from a
+ * machine that could not reach the database deleted every forum card on the
+ * site on its way past. It was found by a pull: the cards kept coming back
+ * as conflicts because the other end of the repository still had them.
+ */
+const itemBearing = [...itemRoots, 'create', 'forum']
 
 /*
  * Everything in public/ is served as it stands, so everything in public/ is
