@@ -1,0 +1,1 @@
+import{Ur as e,Wr as t,Zr as n,ei as r}from"./Button-iUHhKabd.js";var i=r(n(),1);function a(n){let{pathname:r,search:a,hash:o}=e(),s=t();(0,i.useEffect)(()=>{n&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(n).replace(/\/+$/,``)&&s(`${n}${a}${o}`,{replace:!0})},[n,r,a,o,s])}export{a as t};

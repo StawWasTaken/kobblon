@@ -22,7 +22,8 @@ import type {
   World, Quest, QuestCounted, QuestRequest, StaffCommunity,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
-  TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,} from '@/types/db'
+  TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,
+  ForumBoard, ForumTopic, ForumReply, ForumSort, ForumStatus,} from '@/types/db'
 
 const SPACE_FIELDS =
   'id, owner_id, slug, name, description, category, cover_url, is_published, visit_count, ' +
@@ -5747,4 +5748,141 @@ export async function setMaintenance(shut: boolean, words?: string): Promise<Sit
     shut,
     words: words?.trim() ? words.trim() : null,
   })) as SiteState
+}
+
+/* ---------------------------------------------------------------- forum */
+
+/**
+ * Attachments live in their own public bucket.
+ *
+ * Public because a thread whose screenshot nobody can see is a thread with
+ * no screenshot, and a signed link that expires is a thread that rots a
+ * month after it was useful. The folder is the uploader's own id, which is
+ * what the storage policy checks, so nothing can be written against
+ * somebody else's name.
+ */
+export const forumBucket = 'forum'
+
+export function forumImageUrl(path: string): string {
+  return supabase.storage.from(forumBucket).getPublicUrl(path).data.publicUrl
+}
+
+/** Puts one picture up and hands back its path, or throws with the reason. */
+export async function uploadForumImage(file: File, userId: string): Promise<string> {
+  const dot = file.name.lastIndexOf('.')
+  const ending = dot > -1 ? file.name.slice(dot + 1).toLowerCase() : 'png'
+  const path = `${userId}/${crypto.randomUUID()}.${ending}`
+  const put = await supabase.storage.from(forumBucket)
+    .upload(path, file, { contentType: file.type || 'image/png', upsert: false })
+  if (put.error) throw new Error(put.error.message)
+  return path
+}
+
+/** The categories, each with what is going on in it. */
+export async function forumBoards(): Promise<ForumBoard[]> {
+  return (unwrap(await supabase.rpc('forum_boards')) as ForumBoard[]) ?? []
+}
+
+/**
+ * A board, or the whole forum when no category is named - which is what
+ * the shelves on the front page are.
+ */
+export async function forumTopics(input: {
+  category?: string | null
+  sort?: ForumSort
+  limit?: number
+  offset?: number
+  unanswered?: boolean
+} = {}): Promise<ForumTopic[]> {
+  return (unwrap(await supabase.rpc('forum_topics_list', {
+    in_category: input.category ?? null,
+    in_sort: input.sort ?? 'active',
+    in_limit: input.limit ?? 20,
+    in_offset: input.offset ?? 0,
+    in_unanswered: input.unanswered ?? false,
+  })) as ForumTopic[]) ?? []
+}
+
+/** One topic. Null rather than a throw when it is not there to be read. */
+export async function forumTopic(id: number): Promise<ForumTopic | null> {
+  const rows = (unwrap(await supabase.rpc('forum_topic', { in_id: id })) as ForumTopic[]) ?? []
+  return rows[0] ?? null
+}
+
+export async function forumReplies(
+  topic: number, limit = 50, offset = 0,
+): Promise<ForumReply[]> {
+  return (unwrap(await supabase.rpc('forum_replies', {
+    in_topic: topic, in_limit: limit, in_offset: offset,
+  })) as ForumReply[]) ?? []
+}
+
+/** Opening a topic. Returns its number, which is where the page then goes. */
+export async function forumCreateTopic(input: {
+  category: string; title: string; body: string; images?: string[]
+}): Promise<number> {
+  return unwrap(await supabase.rpc('forum_topic_create', {
+    in_category: input.category,
+    in_title: input.title,
+    in_body: input.body,
+    in_images: input.images ?? [],
+  })) as number
+}
+
+export async function forumReply(input: {
+  topic: number; body: string; images?: string[]; replyTo?: number | null
+}): Promise<number> {
+  return unwrap(await supabase.rpc('forum_reply', {
+    in_topic: input.topic,
+    in_body: input.body,
+    in_images: input.images ?? [],
+    in_reply_to: input.replyTo ?? null,
+  })) as number
+}
+
+export async function forumEdit(
+  what: 'topic' | 'post', id: number, body: string, title?: string,
+): Promise<void> {
+  unwrap(await supabase.rpc('forum_edit', {
+    in_what: what, in_id: id, in_body: body, in_title: title ?? null,
+  }))
+}
+
+/** The author deleting their own, or staff taking it down. Same flag. */
+export async function forumRemove(what: 'topic' | 'post', id: number): Promise<void> {
+  unwrap(await supabase.rpc('forum_remove', { in_what: what, in_id: id }))
+}
+
+/** Staff marking a topic. The server refuses a mark the category has not got. */
+export async function forumSetStatus(topic: number, status: ForumStatus): Promise<void> {
+  unwrap(await supabase.rpc('forum_set_status', { in_topic: topic, in_status: status }))
+}
+
+export async function forumSetFlags(
+  topic: number, flags: { pinned?: boolean; locked?: boolean },
+): Promise<void> {
+  unwrap(await supabase.rpc('forum_set_flags', {
+    in_topic: topic,
+    in_pinned: flags.pinned ?? null,
+    in_locked: flags.locked ?? null,
+  }))
+}
+
+/** The person who asked saying what answered them. Staff can too. */
+export async function forumMarkAnswer(post: number): Promise<void> {
+  unwrap(await supabase.rpc('forum_mark_answer', { in_post: post }))
+}
+
+/** The one mark. Pressing it again takes it off; returns whether it is on. */
+export async function forumLike(what: 'topic' | 'post', id: number): Promise<boolean> {
+  return unwrap(await supabase.rpc('forum_like', { in_what: what, in_id: id })) as boolean
+}
+
+/**
+ * Having read it. One account, once, ever - a guest moves nothing, which is
+ * why this can be called without checking first and does nothing when
+ * nobody is signed in.
+ */
+export async function forumSeen(topic: number): Promise<void> {
+  await supabase.rpc('forum_seen', { in_topic: topic })
 }

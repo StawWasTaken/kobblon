@@ -13,9 +13,9 @@ import { cn } from '@/lib/cn'
  * reach without an account; the At Kobblon pages, which are what Kobblon
  * says about itself; and where we are elsewhere.
  *
- * Only places that exist are listed. The wiki, the newsroom and the forum
- * are ideas, so they are not here - a link to a page nobody has built is
- * worse than no link.
+ * Only places that exist are listed. The wiki and the newsroom are ideas,
+ * so they are not here - a link to a page nobody has built is worse than
+ * no link. The forum is built, so it is.
  */
 
 const kobblon = [
@@ -36,6 +36,7 @@ const kobblon = [
 const atKobblon = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/download', label: 'Download' },
+  { to: '/forum', label: 'Forum' },
   { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },

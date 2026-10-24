@@ -24,6 +24,7 @@ import { cn } from '@/lib/cn'
 export const ABOUT_LINKS = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/download', label: 'Download' },
+  { to: '/forum', label: 'Forum' },
   { to: '/policies', label: 'Policies' },
 ]
 

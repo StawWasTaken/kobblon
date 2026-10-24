@@ -11945,3 +11945,86 @@ The card comes back in a private window, which is correct.
 
 Still not built, unchanged: the newsroom, the wiki, the forum. `world_visits`
 is still only written by `join_world_server`.
+
+## Round one hundred and sixty-seven
+
+The forum is built. Two migrations, a block of `@/lib/api`, six new types, and
+four pages. It is an At Kobblon page: anybody may read it signed out, nobody
+may write without an account, and every refusal is in the database rather than
+in the browser.
+
+**0275_the_forum.sql** - the tables.
+
+- `forum_categories` - `slug` primary key, `name`, `blurb`, `kind`, `staff_only`,
+  `position`, `is_hidden`. `kind` is one of `plain`, `bugs`, `suggestions`,
+  `both`, and it is what decides which marks staff may put on a topic there.
+  Six seeded: `announcements` (staff only), `community-creations`,
+  `feedback-and-suggestions` (kind `both`), `help-and-support` (kind `bugs`),
+  `building-and-scripting`, `off-topic`.
+- `forum_topics` - `category`, `author_id`, `title` (6 to 140), `body` (1 to
+  12000), `images text[]`, `status`, `status_by`, `status_at`, `is_pinned`,
+  `is_locked`, `is_removed`, `view_count`, `reply_count`, `like_count`,
+  `answer_id`, `last_post_at`, `edited_at`.
+- `forum_posts` - `topic_id`, `author_id`, `body`, `images`, `reply_to`,
+  `is_removed`, `like_count`, `edited_at`.
+- `forum_likes` - `(target_type, target_id, user_id)`, where `target_type` is
+  `topic` or `post`. `forum_topic_views` - `(topic_id, user_id)`.
+- A public storage bucket named `forum`, 2 MB a file, jpeg/png/webp/gif.
+  Writing is keyed on `(storage.foldername(name))[1] = auth.uid()::text`, so a
+  picture goes to `<the person's id>/<name>` and nowhere else.
+- Reading is open to `anon`. Writing is revoked from `anon` and `authenticated`
+  on every table: everything goes through the functions below.
+
+`status` is `open`, `solved`, `approved`, `declined` or `looked-at`. Which of
+them is allowed depends on the category's `kind`: `bugs` takes `solved`;
+`suggestions` takes `approved`, `declined`, `looked-at`; `both` takes all four;
+`plain` takes none. Only an admin or a moderator may set one, and the server
+refuses the wrong one for the category rather than trusting the caller.
+
+**0276_what_the_forum_can_do.sql** - the functions, and three things that
+already existed and now have a forum in them.
+
+- `notifications` has a new **`link text`** column, and its kind constraint now
+  accepts **`forum_reply`**. A reply notification carries `link` =
+  `/forum/t/<topic id>`. If you render notifications, read `link` when it is
+  there and fall back to whatever you did before when it is null.
+- `chat_to_read`'s kind constraint now accepts **`forum_topic`** and
+  **`forum_post`**. Every topic and every reply goes to the same screening
+  queue as everything else, and the same word filter runs on both - on a
+  topic's title as well as its body.
+- Taking something down: a removed topic leaves the boards and is starred out;
+  a removed reply is struck in place so the thread still reads.
+
+The functions, all of them refusing a guest and a suspended account on their
+own:
+
+- `forum_may_write()` - true when this account may post.
+- `forum_boards()` - the six, with `topic_count`, `post_count`, and the last
+  topic's id, title, author and time.
+- `forum_topics_list(in_category, in_sort, in_limit, in_offset, in_unanswered)` -
+  `in_sort` is `active`, `new`, `helpful`, `viewed` or `interesting`.
+  Interesting is `like_count * 3 + reply_count * 2 + view_count`.
+- `forum_topic(in_id)`, `forum_replies(in_topic, …)` - replies come back with
+  the marked answer first.
+- `forum_topic_create(…)` - refuses a staff-only category, more than four
+  pictures, and more than five topics in an hour from one account.
+- `forum_reply(…)` - refuses a locked topic, bumps the count and the clock, and
+  notifies the author.
+- `forum_edit`, `forum_remove`, `forum_set_status`, `forum_set_flags`,
+  `forum_mark_answer`, `forum_like`, `forum_seen`.
+
+`forum_seen` counts one view per account for ever, not one per visit, so the
+number means people rather than refreshes.
+
+**What the applications get from this.** Nothing is required of you. If the
+Workspace ever wants to show "what is being said about this", `forum_boards`
+and `forum_topics_list` are readable with no session at all, so a panel can
+call them before anybody signs in. The two constraint widenings are the only
+things that could surprise you: a notification row with a kind you have never
+seen, and a `chat_to_read` row likewise. If either of those is a `case` with no
+`else` on your side, it needs one now.
+
+**What is not built.** No search. No quoting. No paging - a board is the first
+fifty topics and that is all, which is fine for a week-old forum and will not
+be in a month. No editing window and no edit history beyond the `edited_at`
+stamp. No per-category moderators: it is admin-or-moderator everywhere.

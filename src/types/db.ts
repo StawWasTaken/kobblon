@@ -1197,3 +1197,83 @@ export type StaffCommunity = {
   owner_suspended: boolean
   open_reports: number
 }
+
+/* ------------------------------------------------------------- the forum */
+
+/**
+ * A board. The list is a table rather than a constant in here, because a
+ * category in the code means the Workspace ships a copy of the list and
+ * the day somebody adds one is two deploys instead of one insert.
+ *
+ * `kind` is which marks staff may put on a topic in it: nothing is solved
+ * in a showcase, and nothing is declined in a help thread.
+ */
+export type ForumBoard = {
+  slug: string
+  name: string
+  blurb: string
+  kind: 'plain' | 'bugs' | 'suggestions' | 'both'
+  staff_only: boolean
+  topic_count: number
+  post_count: number
+  last_post_at: string | null
+  last_title: string | null
+  last_topic_id: number | null
+  last_author: string | null
+  last_author_avatar: string | null
+}
+
+export type ForumStatus = 'open' | 'solved' | 'approved' | 'declined' | 'looked-at'
+
+/** Whoever wrote it, with the two marks their name carries. */
+export type ForumAuthor = {
+  author_id: string
+  author_username: string
+  author_name: string
+  author_avatar: string | null
+  author_is_verified: boolean
+  author_is_admin: boolean
+  author_is_moderator: boolean
+}
+
+export type ForumTopic = ForumAuthor & {
+  id: number
+  category: string
+  category_name: string
+  category_kind?: ForumBoard['kind']
+  title: string
+  body: string
+  images: string[]
+  status: ForumStatus
+  status_at?: string | null
+  status_by_name?: string | null
+  is_pinned: boolean
+  is_locked: boolean
+  is_removed: boolean
+  view_count: number
+  reply_count: number
+  like_count: number
+  answer_id: number | null
+  last_post_at: string
+  created_at: string
+  edited_at?: string | null
+  liked: boolean
+}
+
+export type ForumReply = ForumAuthor & {
+  id: number
+  topic_id: number
+  body: string
+  images: string[]
+  reply_to: number | null
+  reply_to_name: string | null
+  is_removed: boolean
+  like_count: number
+  created_at: string
+  edited_at: string | null
+  is_answer: boolean
+  liked: boolean
+}
+
+/** What the tabs over a board, and the shelves on the front page, ask for. */
+export type ForumSort = 'active' | 'new' | 'helpful' | 'viewed' | 'interesting'

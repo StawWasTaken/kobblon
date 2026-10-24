@@ -47,6 +47,10 @@ const StandingItem = lazyPage(() => import('@/pages/StandingItem'))
 const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const Download = lazyPage(() => import('@/pages/Download'))
+const Forum = lazyPage(() => import('@/pages/Forum'))
+const ForumCategory = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumCategory })))
+const ForumTopicPage = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumTopicPage })))
+const ForumNew = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumNew })))
 const About = lazyPage(() => import('@/pages/About'))
 const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
@@ -142,6 +146,14 @@ export default function App() {
               <Route path="/about" element={<About />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
+              {/* The forum is an At Kobblon page: readable by anybody,
+                  writable by anybody signed in. The order matters - /new
+                  before nothing else could claim it, and the two prefixed
+                  routes so a category named "t" could never be a topic. */}
+              <Route path="/forum" element={<Forum />} />
+              <Route path="/forum/new" element={<ForumNew />} />
+              <Route path="/forum/c/:slug" element={<ForumCategory />} />
+              <Route path="/forum/t/:id" element={<ForumTopicPage />} />
               {/* Where a Kobblon application sends somebody to sign in. Named
                   one at a time rather than by pattern: /anything/sign-in
                   should be nothing, not a sign-in page for an app that does
