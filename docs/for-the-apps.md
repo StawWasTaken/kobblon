@@ -11448,3 +11448,54 @@ building a page that has to be rebuilt.
 - Support and the standing page have not moved onto the new system yet.
   They are long, they work, and they are honest; they are a later pass.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and fifty-seven - the About page is a pitch now
+
+The system from the last round was right and the page written on it was
+not. Staw: "it looks like a ChatGPT answer" - four tiles of three
+sentences each, a heading that asked a question, and a band that
+apologised for what is not finished yet. That is a manual, not a pitch,
+and this is the only page somebody reads before deciding whether Kobblon
+is worth an account.
+
+It follows the shape a company's own film follows now. One claim per
+band, a sentence at a time, each standing next to the thing it is about:
+what Kobblon is, the numbers, Worlds, the three things underneath,
+Communities, the three pieces, the rules. Nothing on it is a list.
+Nothing on it is three sentences where one will do.
+
+### What this means for anything you write
+
+Two rules came out of it that are worth carrying into the applications'
+own copy:
+
+- **The old slogan is dead.** "Make Something Nobody Else Has" is gone
+  from the About side, including from every policy page, which was
+  printing it under the title. The slogan is **The game built by
+  players**, which is what the footer says. If either application still
+  has the old one in a splash, an installer or an about box, it is wrong.
+- **The About pages and the landing page must not say the same thing.**
+  The landing page shows you the site; the About page says what the site
+  *is*. The same sentence in both is a sentence doing nothing in one of
+  them.
+
+### The three renders
+
+Staw drew three glass pieces - shapes, bricks, a laurel - and they are in
+`public/about/` as `marketplace.png`, `brix.png` and `quests.png`. They
+carry the band about what runs underneath: the Marketplace, Brix and
+Quests, one card each, picture bleeding into the card rather than framed
+in it (`Plate`, new, in `src/components/about/`).
+
+They are About-side art and the applications have no call on them. The
+laurel there is the same idea as the `laurel-quest` icon, not a
+replacement for it: a quest in an interface is still the icon.
+
+### Still open
+
+- The landing page is next, and it is the one that has to not repeat this
+  one.
+- The wiki, the forum and the newsroom are ideas; the forum, if it
+  happens, takes after Discourse.
+- Support and the standing page have not moved onto the new system.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

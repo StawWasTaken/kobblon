@@ -47,7 +47,7 @@ const toneWord: Record<string, string> = {
  * finally the same colour.
  */
 export function StoryPage({
-  eyebrow, title, intro, sections, footnote, updated, tagline = true,
+  eyebrow, title, intro, sections, footnote, updated,
 }: {
   eyebrow: string
   title: string
@@ -56,7 +56,6 @@ export function StoryPage({
   footnote?: string
   /** The day the wording last changed, for a page that is a rule. */
   updated?: string
-  tagline?: boolean
 }) {
   const [active, setActive] = useState(sections[0]?.id ?? '')
 
@@ -87,21 +86,14 @@ export function StoryPage({
           title={title}
           lead={intro}
           note={
-            <>
-              {updated && (
-                <>
-                  Last changed{' '}
-                  {new Date(updated).toLocaleDateString(undefined, {
-                    day: 'numeric', month: 'long', year: 'numeric',
-                  })}
-                </>
-              )}
-              {tagline && (
-                <span className="mt-4 block font-display text-sm font-extrabold uppercase tracking-[0.18em] text-brand-bright">
-                  Make Something Nobody Else Has
-                </span>
-              )}
-            </>
+            updated && (
+              <>
+                Last changed{' '}
+                {new Date(updated).toLocaleDateString(undefined, {
+                  day: 'numeric', month: 'long', year: 'numeric',
+                })}
+              </>
+            )
           }
         />
       }

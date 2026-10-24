@@ -37,7 +37,6 @@ export function PolicyPage() {
       updated={policy.updated}
       sections={policy.sections}
       footnote={policy.footnote}
-      tagline={false}
     />
   )
 }
