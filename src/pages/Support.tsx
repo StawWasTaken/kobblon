@@ -6,6 +6,7 @@ import {
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
   faCircleQuestion, faCheck, faUser, faEnvelope,
   faBolt, faArrowLeft, faPaperPlane,
+  faBriefcase, faHandshake, faChartLine, faNewspaper, faRightToBracket,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutShell } from '@/components/layout/AboutShell'
@@ -16,7 +17,6 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
-import { GuestGate } from '@/components/ui/GuestGate'
 import { Tickbox } from '@/components/ui/Tickbox'
 import { Tiles } from '@/components/ui/Tiles'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -28,7 +28,7 @@ import { listTickets, openTicket } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { TicketThread } from '@/components/support/TicketThread'
-import type { Ticket, TicketDevice, TicketTopic } from '@/types/db'
+import type { Ticket, TicketDevice, TicketKind, TicketTopic } from '@/types/db'
 
 /*
  * Writing to Kobblon.
@@ -107,13 +107,83 @@ const looksLikeEmail = (text: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(te
    round's worth of breakage on the other side. */
 export { Tiles } from '@/components/ui/Tiles'
 
-/* --------------------------------------------------------- the four steps */
+/**
+ * The business form's own list.
+ *
+ * Staw: "for business its for other companies (not individuals, excepted
+ * investors but we're not a public traded company, so investors invest into
+ * kobblon without receiving stuff back unless negociated directly with the
+ * CEO of Kobblon, Staw) if u wanna invest in kobblon or make a partnership,
+ * or if u have issues with some of our content on the platform".
+ *
+ * So four, and `other`, which is the one value both forms share. The note
+ * under Investing is the part that matters and the part a prettier form
+ * would have left out: there is nothing on sale here, and saying so on the
+ * form is the difference between an enquiry and a misunderstanding.
+ */
+export const businessTopics: {
+  value: TicketTopic; label: string; short: string; note: string; icon: IconDefinition
+}[] = [
+  {
+    value: 'invest', short: 'Investing', label: 'Investing in Kobblon',
+    note: 'Kobblon is not a publicly traded company and nothing here is on sale. An investment buys nothing back unless it is negotiated directly with Staw, Kobblon’s CEO.',
+    icon: faChartLine,
+  },
+  {
+    value: 'partner', short: 'Partnership', label: 'A partnership',
+    note: 'Working together on something: your game, your brand, your event, ours.',
+    icon: faHandshake,
+  },
+  {
+    value: 'content', short: 'Content', label: 'Content on the platform',
+    note: 'Something of yours is on Kobblon, or something on Kobblon is a problem for you.',
+    icon: faScaleBalanced,
+  },
+  {
+    value: 'press', short: 'Press', label: 'Press and media',
+    note: 'You are writing or filming something about Kobblon.',
+    icon: faNewspaper,
+  },
+  {
+    value: 'other', short: 'Other', label: 'Something else',
+    note: 'Anything the list above does not cover.',
+    icon: faBriefcase,
+  },
+]
+
+/** Both lists, for anywhere that has a topic and needs its word. */
+export const topicWord = (topic: string) =>
+  [...topics, ...businessTopics].find((one) => one.value === topic)?.label ?? topic
+
+/* --------------------------------------------------------------- the steps */
 
 /**
- * The names on the progress strip, in order. Short enough that four of them
- * fit across a phone, which is the only constraint on them.
+ * The form is two forms, and the first step is which.
+ *
+ * Staw: "theres two categories like for the players users etc and 'business'
+ * ... and its a cool sliding thing". The slider was already there - four
+ * steps, one at a time - so this is a step in front of it and two different
+ * runs of steps behind it. A company is not asked what device it was on, and
+ * a player is not asked for their job title.
+ *
+ * Named steps rather than numbered ones, because the two runs are different
+ * lengths and `at === 2` meaning "device" on one form and "your message" on
+ * the other is the kind of thing that reads fine and sends the wrong field.
  */
-const STEP_NAMES = ['About', 'What happened', 'Device', 'You'] as const
+type Step = 'who' | 'topic' | 'said' | 'device' | 'you'
+
+const stepsOf = (kind: TicketKind | null): Step[] =>
+  kind === 'business'
+    ? ['who', 'topic', 'said', 'you']
+    : ['who', 'topic', 'said', 'device', 'you']
+
+const STEP_NAME: Record<Step, string> = {
+  who: 'Who',
+  topic: 'About',
+  said: 'Message',
+  device: 'Device',
+  you: 'You',
+}
 
 /**
  * The strip across the top of the card: where you are, where you have been,
@@ -125,18 +195,19 @@ const STEP_NAMES = ['About', 'What happened', 'Device', 'You'] as const
  * the step behind. Forward is allowed only where everything before it is
  * answered, so the strip never promises a step the form will refuse to take.
  */
-function Progress({ at, done, go }: {
+function Progress({ steps, at, done, go }: {
+  steps: Step[]
   at: number
   done: boolean[]
   go: (i: number) => void
 }) {
   return (
     <ol className="flex gap-1.5">
-      {STEP_NAMES.map((name, i) => {
+      {steps.map((step, i) => {
         const here = i === at
         const reachable = i <= at || done.slice(0, i).every(Boolean)
         return (
-          <li key={name} className="min-w-0 flex-1">
+          <li key={step} className="min-w-0 flex-1">
             <button
               type="button"
               disabled={!reachable}
@@ -157,13 +228,54 @@ function Progress({ at, done, go }: {
                 )}
               >
                 {done[i] && !here && <Glyph icon={faCheck} className="text-[9px]" />}
-                <span className="truncate">{name}</span>
+                <span className="truncate">{STEP_NAME[step]}</span>
               </span>
             </button>
           </li>
         )
       })}
     </ol>
+  )
+}
+
+/** One of the two boxes on the first step. */
+function WhoBox({ picked, onPick, icon, title, lead, points }: {
+  picked: boolean
+  onPick: () => void
+  icon: IconDefinition
+  title: string
+  lead: string
+  points: string[]
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={picked}
+      onClick={onPick}
+      className={cn(
+        'flex h-full flex-col rounded-2xl border p-4 text-left transition-colors',
+        picked
+          ? 'border-brand-bright bg-brand/20'
+          : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
+      )}
+    >
+      <span className="flex items-center gap-2.5">
+        <Glyph
+          icon={icon}
+          className={cn('text-lg', picked ? 'text-brand-bright' : 'text-white/40')}
+        />
+        <span className="font-display text-base font-extrabold">{title}</span>
+      </span>
+      <span className="mt-2 block text-sm leading-relaxed text-white/60">{lead}</span>
+      <span className="mt-3 block space-y-1">
+        {points.map((one) => (
+          <span key={one} className="flex items-start gap-2 text-xs text-white/45">
+            <Glyph icon={faCheck} className="mt-[3px] shrink-0 text-[9px] text-space" />
+            <span>{one}</span>
+          </span>
+        ))}
+      </span>
+    </button>
   )
 }
 
@@ -177,7 +289,7 @@ function Progress({ at, done, go }: {
  * steps nobody was being walked through. A stepper that shows every step is
  * a long form wearing a stepper's clothes.
  *
- * So it is one step at a time, and the four ticks at the top are now worth
+ * So it is one step at a time, and the ticks at the top are now worth
  * something: they are where you are, and they are how you get back to the
  * answer you want to change.
  *
@@ -190,46 +302,93 @@ function Progress({ at, done, go }: {
  * It is its own component so it can be mounted on its own under
  * `tools/site/` and looked at - and it takes no provider it cannot be given:
  * the username is a prop rather than a `useAuth` call, which is the mistake
- * that has taken a Workspace panel down three times.
+ * that has taken a Workspace panel down three times. `signedIn` is a prop
+ * for the same reason, and it decides whether an email is optional: with no
+ * account behind the ticket, the address is the only way back, so the server
+ * insists on one and the form says so rather than letting the send fail.
  */
-export function TicketCard({ open, username, onClose, onSend, sending }: {
+export function TicketCard({
+  open, username, signedIn, startKind, onClose, onSend, sending,
+}: {
   open: boolean
   username?: string | null
+  /**
+   * Which of the two boxes is already picked. For the row on the page that
+   * says "business enquiries": the first step still shows, with its answer
+   * in it, so nobody is dropped into a form without being told which one
+   * they are filling in.
+   */
+  startKind?: TicketKind | null
+  /**
+   * Whether there is a session behind this. Defaults to whether a username
+   * was given, which is what every caller before 0293 meant by it.
+   */
+  signedIn?: boolean
   onClose: () => void
   onSend: (card: {
+    kind: TicketKind
     topic: TicketTopic
     subject: string
     body: string
     contact_email: string | null
     first_name: string | null
-    device: TicketDevice
+    device: TicketDevice | null
     wants_human: boolean
+    org: string | null
+    org_role: string | null
   }) => void
   sending?: boolean
 }) {
+  const [kind, setKind] = useState<TicketKind | null>(startKind ?? null)
   const [at, setAt] = useState(0)
-  /* How far anybody has actually got. The last step is optional, so without
-     this it ticks itself green before it has been seen - a form congratulating
-     somebody for answering a question it never asked. */
+  /* How far anybody has actually got. The last step is optional for a
+     signed-in player, so without this it ticks itself green before it has
+     been seen - a form congratulating somebody for answering a question it
+     never asked. */
   const [furthest, setFurthest] = useState(0)
   const go = (i: number) => { setAt(i); setFurthest((f) => Math.max(f, i)) }
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [again, setAgain] = useState('')
+  const [org, setOrg] = useState('')
+  const [orgRole, setOrgRole] = useState('')
   const [device, setDevice] = useState<TicketDevice | null>(null)
   const [topic, setTopic] = useState<TicketTopic | null>(null)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [wantsHuman, setWantsHuman] = useState(false)
 
+  const here = signedIn ?? !!username
+  const business = kind === 'business'
+  const list = business ? businessTopics : topics
+  const steps = stepsOf(kind)
+
+  /*
+   * When an address is the only way back, it is required rather than
+   * offered: nobody signed in, or a company that will be answered by mail
+   * either way. The server refuses the ticket without one, so the form has
+   * to ask for it on the same terms.
+   */
+  const mustMail = !here || business
   const emailGiven = email.trim().length > 0
-  const emailOk = !emailGiven || (looksLikeEmail(email) && email.trim() === again.trim())
+  const emailOk = emailGiven
+    ? looksLikeEmail(email) && email.trim() === again.trim()
+    : !mustMail
+  const named = !business || (firstName.trim().length > 0 && org.trim().length > 0)
   const said = subject.trim().length >= 3 && body.trim().length >= 10
 
-  /* One per step, in the strip's order. `ready` is all four. */
-  const done = [!!topic, said, !!device, emailOk && furthest >= 3]
+  /* One per step, in the strip's order. `ready` is all of them. */
+  const lastStep = steps.length - 1
+  const done = steps.map((step, i) => {
+    if (step === 'who') return !!kind
+    if (step === 'topic') return !!topic
+    if (step === 'said') return said
+    if (step === 'device') return !!device
+    return emailOk && named && furthest >= i
+  })
   const ready = done.every(Boolean)
-  const last = at === STEP_NAMES.length - 1
+  const last = at === lastStep
+  const step = steps[at]
 
   /*
    * What the footer says when the step is not finished. It names the thing
@@ -237,19 +396,22 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
    * a subject and no description should be told which half is short, not
    * that the form is unhappy with them in general.
    */
-  const wrongEmail = at === 3 && emailGiven && !emailOk
-  const missing = [
-    'Pick the one that fits best.',
-    subject.trim().length < 3
-      ? 'A line saying what it is about.'
-      : 'A few more words about what happened.',
-    'Pick what you were on.',
-    emailGiven && !looksLikeEmail(email)
-      ? 'That does not look like an email address.'
-      : 'The two emails do not match.',
-  ][at]
+  const wrongEmail = step === 'you' && emailGiven && !emailOk
+  const missing =
+    step === 'who' ? 'Pick which one of these you are.'
+    : step === 'topic' ? 'Pick the one that fits best.'
+    : step === 'said'
+      ? subject.trim().length < 3
+        ? 'A line saying what it is about.'
+        : 'A few more words about what happened.'
+    : step === 'device' ? 'Pick what you were on.'
+    : business && !firstName.trim() ? 'Your name, so we know who we are writing to.'
+    : business && !org.trim() ? 'The name of the company.'
+    : emailGiven && !looksLikeEmail(email) ? 'That does not look like an email address.'
+    : emailGiven ? 'The two emails do not match.'
+    : 'An email address, because it is the only way back to you.'
 
-  const topicHere = topics.find((one) => one.value === topic)
+  const topicHere = list.find((one) => one.value === topic)
 
   return (
     <Dialog
@@ -262,15 +424,15 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
           <div className="pr-10">
             <h2 className="font-display text-xl font-extrabold leading-none">Contact us</h2>
             <p className="mt-1.5 text-sm text-muted">
-              {[
-                'What is this about?',
-                'Tell us what happened.',
-                'What were you using at the time?',
-                'How we reach you, if we need to.',
-              ][at]}
+              {step === 'who' ? 'Kobblon will be glad to hear from you.'
+                : step === 'topic' ? 'What is this about?'
+                : step === 'said' ? 'Tell us what happened.'
+                : step === 'device' ? 'What were you using at the time?'
+                : business ? 'Who you are, and where to write back.'
+                : 'How we reach you, if we need to.'}
             </p>
           </div>
-          <Progress at={at} done={done} go={go} />
+          <Progress steps={steps} at={at} done={done} go={go} />
         </div>
       }
       footer={
@@ -306,19 +468,23 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
               loading={sending}
               disabled={!ready}
               onClick={() => {
-                if (!topic || !device) return
+                if (!kind || !topic) return
+                if (kind === 'player' && !device) return
                 onSend({
+                  kind,
                   topic,
                   subject: subject.trim(),
                   body: body.trim(),
                   contact_email: emailGiven ? email.trim() : null,
                   first_name: firstName.trim() || null,
-                  device,
+                  device: kind === 'business' ? null : device,
                   wants_human: wantsHuman,
+                  org: kind === 'business' ? org.trim() || null : null,
+                  org_role: kind === 'business' ? orgRole.trim() || null : null,
                 })
               }}
             >
-              Send ticket
+              Send it
             </Button>
           ) : (
             <Button icon={faArrowRight} disabled={!done[at]} onClick={() => go(at + 1)}>
@@ -328,13 +494,62 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
         </div>
       }
     >
-      {at === 0 && (
+      {step === 'who' && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <WhoBox
+            picked={kind === 'player'}
+            onPick={() => {
+              /* Picking the other one mid-form clears the answer that does
+                 not carry: the two lists share only `other`, and a topic
+                 from the wrong list is refused by the server. */
+              if (kind !== 'player') setTopic(null)
+              setKind('player')
+              go(1)
+            }}
+            icon={faUser}
+            title="I use Kobblon"
+            lead="You play, build, or have an account with us."
+            points={[
+              'Signing in, names, money, moderation',
+              'Something is broken, or somebody is a problem',
+              'Uploads, selling, your work elsewhere',
+            ]}
+          />
+          <WhoBox
+            picked={kind === 'business'}
+            onPick={() => {
+              if (kind !== 'business') setTopic(null)
+              setKind('business')
+              go(1)
+            }}
+            icon={faBriefcase}
+            title="Business"
+            lead="A company writing to Kobblon. Investors too, and nobody else writing for themselves."
+            points={[
+              'Investing in Kobblon, or a partnership',
+              'Your content on the platform, or ours',
+              'Press and media',
+            ]}
+          />
+        </div>
+      )}
+
+      {step === 'topic' && (
         <div className="space-y-3">
+          {/*
+            * Picking one does not move the form on, and that is a change.
+            * It used to jump straight to the next step, which meant the
+            * line under the tiles - what this topic actually covers - was
+            * drawn for about a tenth of a second and read by nobody. On
+            * the business form that line is the one that says Kobblon is
+            * not publicly traded and an investment buys nothing back, so
+            * it has to survive being looked at.
+            */}
           <Tiles
             label="What it is about"
             value={topic}
-            onChange={(value) => { setTopic(value); go(1) }}
-            options={topics.map((one) => ({
+            onChange={setTopic}
+            options={list.map((one) => ({
               value: one.value, label: one.short, icon: one.icon,
             }))}
           />
@@ -347,7 +562,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
         </div>
       )}
 
-      {at === 1 && (
+      {step === 'said' && (
         <div className="space-y-3.5">
           <Input
             label="In one line"
@@ -361,7 +576,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
               htmlFor="ticket-body"
               className="mb-1.5 block text-sm font-bold"
             >
-              What happened
+              {business ? 'What you would like to talk about' : 'What happened'}
             </label>
             <textarea
               id="ticket-body"
@@ -369,30 +584,34 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
               onChange={(e) => setBody(e.target.value)}
               rows={7}
               maxLength={4000}
-              placeholder="What you did, what you expected, and what happened instead."
+              placeholder={business
+                ? 'Who you are, what you have in mind, and what you are hoping for from us.'
+                : 'What you did, what you expected, and what happened instead.'}
               className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
             />
             <p className="mt-1.5 text-xs text-muted">{4000 - body.length} characters left.</p>
           </div>
 
-          <Tickbox
-            on={wantsHuman}
-            onChange={setWantsHuman}
-            label="Have a person read this one"
-          />
+          {!business && (
+            <Tickbox
+              on={wantsHuman}
+              onChange={setWantsHuman}
+              label="Have a person read this one"
+            />
+          )}
         </div>
       )}
 
-      {at === 2 && (
+      {step === 'device' && (
         <Tiles
           label="What you were on"
           value={device}
-          onChange={(value) => { setDevice(value); go(3) }}
+          onChange={(value) => { setDevice(value); go(at + 1) }}
           options={devices}
         />
       )}
 
-      {at === 3 && (
+      {step === 'you' && (
         <div className="space-y-3.5">
           {username && (
             <div className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
@@ -407,21 +626,43 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
           )}
 
           <p className="text-sm leading-relaxed text-muted">
-            The reply lands on this ticket and in your inbox either way. An email is only
-            needed if the account itself is the problem - then it is the way back.
+            {business
+              ? 'We answer business enquiries by email. Nothing here is published and nothing is passed on.'
+              : here
+                ? 'The reply lands on this ticket and in your inbox either way. An email is only needed if the account itself is the problem - then it is the way back.'
+                : 'You are not signed in, so this ticket has no page of its own to come back to. The reply goes to the address you give here, and nowhere else.'}
           </p>
 
           <Input
-            label="First name (optional)"
+            label={business ? 'Your name' : 'First name (optional)'}
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             maxLength={60}
-            placeholder="What we should call you"
+            placeholder={business ? 'Who we are writing to' : 'What we should call you'}
           />
+
+          {business && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input
+                label="Company"
+                value={org}
+                onChange={(e) => setOrg(e.target.value)}
+                maxLength={120}
+                placeholder="Who you are writing for"
+              />
+              <Input
+                label="Your role there (optional)"
+                value={orgRole}
+                onChange={(e) => setOrgRole(e.target.value)}
+                maxLength={120}
+                placeholder="What you do there"
+              />
+            </div>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Input
-              label="Email (optional)"
+              label={mustMail ? 'Email' : 'Email (optional)'}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -442,7 +683,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
           {emailGiven && emailOk && (
             <p className="flex items-center gap-2 text-sm font-semibold text-space-bright">
               <Glyph icon={faEnvelope} className="text-xs" />
-              We will write there as well as here.
+              {here ? 'We will write there as well as here.' : 'We will write there.'}
             </p>
           )}
         </div>
@@ -461,6 +702,8 @@ export default function Support() {
   const [writing, setWriting] = useState(false)
   const [sending, setSending] = useState(false)
   const [opened, setOpened] = useState(0)
+  /* Which box the card opens with, for the row that says "business". */
+  const [asKind, setAsKind] = useState<TicketKind | null>(null)
 
   /*
    * Which ticket is open on top of the list, if any.
@@ -480,13 +723,22 @@ export default function Support() {
     if (fromAddress) navigate('/support', { replace: true })
   }
 
-  const startWriting = () => { setOpened((n) => n + 1); setWriting(true) }
+  const startWriting = (kind: TicketKind | null = null) => {
+    setAsKind(kind)
+    setOpened((n) => n + 1)
+    setWriting(true)
+  }
 
   const send = async (filled: Parameters<Parameters<typeof TicketCard>[0]['onSend']>[0]) => {
     setSending(true)
     try {
       await openTicket(filled)
-      toast('Sent. The reply lands here and in your inbox.', 'success')
+      toast(
+        profile
+          ? 'Sent. The reply lands here and in your inbox.'
+          : 'Sent. We will write to the address you gave.',
+        'success',
+      )
       setWriting(false)
       tickets.reload()
     } catch (err) {
@@ -518,16 +770,32 @@ export default function Support() {
               Write to us.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
-              Everything you send, and everything we say back, stays on this page. A reply lands here and in your inbox.
+              {profile
+                ? 'Everything you send, and everything we say back, stays on this page. A reply lands here and in your inbox.'
+                : 'An account is not needed. Tell us where to write back and the reply goes there - and if you are a company, there is a form of your own on the first step.'}
             </p>
           </Reveal>
           <Reveal delay={140}>
-            <div className="mt-8">
-              <GuestGate action="write to support">
-                <Button icon={faPlus} size="lg" variant="yes" onClick={startWriting} disabled={!profile || writing}>
-                  New ticket
-                </Button>
-              </GuestGate>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {/*
+                * No `GuestGate` and no `disabled={!profile}` any more. The
+                * page is readable and writable without an account since
+                * 0293, which is the only honest arrangement for a support
+                * page: the person who cannot sign in is exactly the person
+                * who needs it.
+                */}
+              <Button icon={faPlus} size="lg" variant="yes" onClick={() => startWriting()} disabled={writing}>
+                New ticket
+              </Button>
+              <Button
+                icon={faBriefcase}
+                size="lg"
+                variant="subtle"
+                onClick={() => startWriting('business')}
+                disabled={writing}
+              >
+                Business enquiry
+              </Button>
             </div>
           </Reveal>
         </Lane>
@@ -538,20 +806,58 @@ export default function Support() {
       {/* The two places most people actually meant to go, in the shape
           Settings uses for exactly this. */}
       <Group>
-        <Line
-          label="Where you stand"
-          note="A decision against your account is appealed there, not here."
-          icon={faScaleBalanced}
-          to="/standing"
-        />
+        {/*
+          * Account standing is a signed-in page and stays one - everything
+          * on it is about one account and it is reached from the account
+          * menu. So the row is only here for somebody who has an account to
+          * look at, rather than being a door into a page that would bounce
+          * them to the landing page.
+          */}
+        {profile && (
+          <Line
+            label="Where you stand"
+            note="A decision against your account is appealed there, not here."
+            icon={faScaleBalanced}
+            to="/standing"
+          />
+        )}
         <Line
           label="Policies"
           note="Every policy, split by subject, each with the day it last changed."
           icon={faScroll}
           to="/policies"
         />
+        {!profile && (
+          <Line
+            label="Sign in"
+            note="With an account, every ticket and every reply is on this page instead of only in your email."
+            icon={faRightToBracket}
+            to="/login"
+          />
+        )}
       </Group>
 
+      {!profile ? (
+        /*
+          * Nothing to list. A ticket written without an account is readable
+          * by staff and by nobody else - `user_id = auth.uid()` is null
+          * rather than true - so there is no list to show here, and saying
+          * that plainly is better than an empty box that looks broken.
+          */
+        <Panel title="Where the reply goes">
+          <Card className="space-y-3 p-5">
+            <p className="text-sm leading-relaxed text-white/70">
+              You are writing without an account, so this page has nothing to list: a
+              ticket sent that way is held for support and shown to nobody else, not even
+              to the next person on this page. The reply goes to the address you give on
+              the form.
+            </p>
+            <p className="text-sm leading-relaxed text-muted">
+              Signed in, every ticket and every reply sits here instead, and in your inbox.
+            </p>
+          </Card>
+        </Panel>
+      ) : (
       <Panel
         title="Your tickets"
         note={
@@ -570,11 +876,9 @@ export default function Support() {
               title="Nothing open"
               body="You have not written to us yet."
               action={
-                <GuestGate action="write to support">
-                  <Button icon={faPlus} onClick={startWriting} disabled={!profile}>
-                    Write to us
-                  </Button>
-                </GuestGate>
+                <Button icon={faPlus} onClick={() => startWriting()}>
+                  Write to us
+                </Button>
               }
             />
           </Card>
@@ -602,7 +906,14 @@ export default function Support() {
                   }
                   note={
                     <span className="flex flex-wrap items-center gap-x-2">
-                      <span>{topics.find((one) => one.value === ticket.topic)?.label ?? ticket.topic}</span>
+                      {ticket.kind === 'business' && (
+                        <span className="inline-flex items-center gap-1.5 font-bold text-space-bright">
+                          <Glyph icon={faBriefcase} className="text-[10px]" />
+                          {ticket.org ?? 'Business'}
+                        </span>
+                      )}
+                      {ticket.kind === 'business' && <span aria-hidden="true">·</span>}
+                      <span>{topicWord(ticket.topic)}</span>
                       <span aria-hidden="true">·</span>
                       <span>Last moved {timeAgo(ticket.updated_at)}</span>
                       {was && (
@@ -635,6 +946,7 @@ export default function Support() {
           </Group>
         )}
       </Panel>
+      )}
 
       <p className="px-1 text-xs leading-relaxed text-muted">
         Kobblon never asks for your password, here or anywhere else.
@@ -653,6 +965,8 @@ export default function Support() {
         key={opened}
         open={writing}
         username={profile?.username}
+        signedIn={!!profile}
+        startKind={asKind}
         sending={sending}
         onClose={() => setWriting(false)}
         onSend={send}

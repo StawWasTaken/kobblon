@@ -807,8 +807,17 @@ export type Letter = {
   created_at: string
 }
 
+/**
+ * The seven a person writes about, then the four only a company does.
+ * `other` is on both forms; the server refuses a business topic sent as a
+ * player ticket and the other way round, so these are not interchangeable.
+ */
 export type TicketTopic =
   | 'account' | 'money' | 'safety' | 'bug' | 'creator' | 'privacy' | 'other'
+  | 'invest' | 'partner' | 'content' | 'press'
+
+/** Who is writing: somebody who uses Kobblon, or a company. */
+export type TicketKind = 'player' | 'business'
 
 /** What they were on when it happened, which halves the questions back. */
 export type TicketDevice =
@@ -824,6 +833,7 @@ export type TicketStatus =
 
 export type Ticket = {
   id: number
+  kind: TicketKind
   topic: TicketTopic
   subject: string
   status: TicketStatus
@@ -833,6 +843,9 @@ export type Ticket = {
   device: TicketDevice | null
   /** They asked for a person to read this one. Sorts to the front. */
   wants_human: boolean
+  /** Business tickets only: the company, and what they do there. */
+  org: string | null
+  org_role: string | null
   updated_at: string
   created_at: string
 }

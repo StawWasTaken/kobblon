@@ -24,20 +24,27 @@ const kobblon = [
   { to: '/create', label: 'Create' },
   { to: '/communities', label: 'Communities' },
   { to: '/people', label: 'People' },
-  { to: '/support', label: 'Support' },
-  { to: '/standing', label: 'Your standing' },
 ]
 
 /*
  * The At Kobblon pages: the ones that speak for Kobblon rather than being
- * part of using it. Support and standing are **not** among them, which
- * Staw settled - a ticket and your own record are things you do here, not
- * things Kobblon says about itself - so they are in the column above.
+ * part of using it.
+ *
+ * Support moved here, and account standing left the foot entirely. Staw
+ * had settled the opposite once - "a ticket and your own record are
+ * things you do here" - and then changed one half of it: Support takes
+ * anybody now, with or without an account, which makes it a page Kobblon
+ * offers rather than a page of yours. Standing is the other half of that
+ * same decision and went the other way, behind the rail, so a link to it
+ * in a foot that is drawn on the landing page is a link that would bounce
+ * a stranger to the landing page. It is in the account menu, where the
+ * person who has one will find it.
  */
 const atKobblon = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/download', label: 'Download' },
   { to: '/forum', label: 'Forum' },
+  { to: '/support', label: 'Support' },
   { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },

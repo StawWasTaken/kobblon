@@ -6,7 +6,11 @@
  * mistake this project has made four times. If either throws on this page,
  * a panel over there goes blank instead.
  *
- * `?v=` picks one: ticket, live, void, warn, report.
+ * `?v=` picks one: ticket, business, out, live, void, warn, report.
+ *
+ * `business` opens the card with the business box already picked, and `out`
+ * opens it as nobody - which is what the page is for anybody not signed in
+ * since 0293, and the one case where the email stops being optional.
  */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -103,10 +107,12 @@ function Preview() {
         Open it again
       </button>
 
-      {which === 'ticket' ? (
+      {which === 'ticket' || which === 'business' || which === 'out' ? (
         <TicketCard
           open={open}
-          username="stawrer"
+          username={which === 'out' ? null : 'stawrer'}
+          signedIn={which !== 'out'}
+          startKind={which === 'business' ? 'business' : null}
           onClose={() => setOpen(false)}
           onSend={(card) => { console.log(card); setOpen(false) }}
         />

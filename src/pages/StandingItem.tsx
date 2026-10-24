@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faChevronLeft, faGavel, faDiamond } from '@fortawesome/free-solid-svg-icons'
-import { AboutShell } from '@/components/layout/AboutShell'
+import { Page } from '@/components/layout/AppShell'
 import { cn } from '@/lib/cn'
-import { Band, Lane } from '@/components/about/Band'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -279,17 +278,14 @@ export default function StandingItem() {
  * One decision, on the At Kobblon chrome rather than the app's.
  *
  * Standing is read from a link in an email as often as from inside the
- * site, and it is on the side of Kobblon that explains itself: the same
- * bar, the same foot, the same dark. The column stays narrow, because a
- * single decision read line by line is the one place on this side a wide
- * measure would be wrong.
+ * site, and it is a page about one account - so it wears the signed-in
+ * chrome, with the rail and the bar, rather than the chrome of the pages
+ * that explain Kobblon to a stranger. The column stays narrow, because a
+ * single decision read line by line is the one place a wide measure would
+ * be wrong.
  */
 function Frame({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <AboutShell>
-      <Band tone="raised">
-        <Lane className={cn('max-w-3xl', className)}>{children}</Lane>
-      </Band>
-    </AboutShell>
+    <Page className={cn('max-w-3xl', className)}>{children}</Page>
   )
 }

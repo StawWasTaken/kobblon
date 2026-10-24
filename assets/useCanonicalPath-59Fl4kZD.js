@@ -1,1 +1,0 @@
-import{Js as e}from"./api-6Uw_PPCm.js";import{di as t,fi as n,yi as r}from"./Input-kaIPwoSa.js";var i=e(r(),1);function a(e){let{pathname:r,search:a,hash:o}=t(),s=n();(0,i.useEffect)(()=>{e&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,r,a,o,s])}export{a as t};

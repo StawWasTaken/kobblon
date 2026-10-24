@@ -22,7 +22,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faBolt, faLifeRing, faClock, faCircleCheck, faPaperPlane, faArrowUp,
   faEnvelope, faDesktop, faMobileScreen, faTabletScreenButton, faGamepad,
-  faRocket, faCircleQuestion, faUser, faHourglassHalf, faInbox,
+  faRocket, faCircleQuestion, faUser, faHourglassHalf, faInbox, faBriefcase,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Card } from '@/components/ui/Card'
@@ -63,11 +63,14 @@ const statusLook: Record<TicketStatus, { word: string; tone: 'brand' | 'warm' | 
 const topicWord: Record<string, string> = {
   account: 'Account', money: 'Brix and money', safety: 'Safety', bug: 'Something broken',
   creator: 'Making things', privacy: 'Privacy', other: 'Something else',
+  /* The four a company writes about, from 0293. */
+  invest: 'Investing', partner: 'Partnership', content: 'Content on the platform',
+  press: 'Press',
 }
 
 export function SupportQueue() {
   const say = useToast()
-  const [which, setWhich] = useState<'open' | 'urgent' | 'closed' | 'all'>('open')
+  const [which, setWhich] = useState<'open' | 'urgent' | 'closed' | 'business' | 'all'>('open')
   const [open, setOpen] = useState<TicketRow | null>(null)
 
   const queue = useAsync(async () => ticketQueue(which), [which])
@@ -114,6 +117,7 @@ export function SupportQueue() {
         options={[
           { value: 'open', label: 'Open' },
           { value: 'urgent', label: 'Urgent' },
+          { value: 'business', label: 'Business' },
           { value: 'closed', label: 'Closed' },
           { value: 'all', label: 'Everything' },
         ]}
@@ -173,6 +177,15 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
           : 'border-ink-line bg-ink-raised hover:border-white/25',
       )}
     >
+      {one.kind === 'business' && (
+        /* A company, not a player. Different form, different answer, and
+           the row says which before anybody opens it. */
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-space/50 bg-space/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+          <Glyph icon={faBriefcase} />
+          Business
+        </span>
+      )}
+
       {one.wants_human && one.status !== 'closed' && (
         <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-amber-400/50 bg-amber-400/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-amber-200 shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
           <Glyph icon={faBolt} />
@@ -192,8 +205,19 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
           <span className="flex items-center gap-1.5">
             <Glyph icon={faUser} />
             {one.first_name ?? one.username ?? 'somebody'}
-            {one.username && <span className="text-white/40">@{one.username}</span>}
+            {one.username
+              ? <span className="text-white/40">@{one.username}</span>
+              /* Nobody was signed in. The address is the only way back to
+                 them, so it is on the row rather than one tap further in. */
+              : <span className="text-white/40">{one.contact_email ?? 'no account'}</span>}
           </span>
+          {one.org && (
+            <span className="flex items-center gap-1.5">
+              <Glyph icon={faBriefcase} />
+              {one.org}
+              {one.org_role && <span className="text-white/40">{one.org_role}</span>}
+            </span>
+          )}
           <span>{topicWord[one.topic] ?? one.topic}</span>
           {one.device && (
             <span className="flex items-center gap-1.5">
@@ -256,6 +280,9 @@ export function TicketDrawer({ one, onClose, onMove, onReplied }: {
       badge={
         <>
           <Badge tone={look.tone}>{look.word}</Badge>
+          {one.kind === 'business' && (
+            <Badge tone="space" icon={faBriefcase}>Business</Badge>
+          )}
           {one.wants_human && (
             <Badge tone="warm" icon={faBolt}>Asked for a person</Badge>
           )}
@@ -306,14 +333,25 @@ export function TicketDrawer({ one, onClose, onMove, onReplied }: {
         <Card className="grid gap-x-6 gap-y-3 p-4 sm:grid-cols-2">
           <Fact label="Who" icon={faUser}>
             {one.first_name ?? '-'}
-            {one.username && <span className="text-muted"> · @{one.username}</span>}
+            {one.username
+              ? <span className="text-muted"> · @{one.username}</span>
+              /* No account behind it, which changes the answer: the email is
+                 the only channel, and there is no profile to look at. */
+              : <span className="text-muted"> · not signed in</span>}
           </Fact>
           <Fact label="Write back to" icon={faEnvelope}>
             {one.contact_email ?? <span className="text-muted">They left none</span>}
           </Fact>
-          <Fact label="What they were on" icon={deviceIcon[one.device ?? 'other'] ?? faCircleQuestion}>
-            {one.device ?? <span className="text-muted">Not said</span>}
-          </Fact>
+          {one.kind === 'business' ? (
+            <Fact label="Company" icon={faBriefcase}>
+              {one.org ?? <span className="text-muted">Not said</span>}
+              {one.org_role && <span className="text-muted"> · {one.org_role}</span>}
+            </Fact>
+          ) : (
+            <Fact label="What they were on" icon={deviceIcon[one.device ?? 'other'] ?? faCircleQuestion}>
+              {one.device ?? <span className="text-muted">Not said</span>}
+            </Fact>
+          )}
           <Fact label="Last moved" icon={faClock}>{timeAgo(one.updated_at)}</Fact>
         </Card>
 

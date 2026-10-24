@@ -154,21 +154,25 @@ export default function App() {
                   before nothing else could claim it, and the two prefixed
                   routes so a category named "t" could never be a topic. */}
               {/*
-                * Support and Standing wear the At Kobblon chrome, so they
-                * sit outside `AppShell` rather than inside it: nested, the
-                * page would draw this side's bar and foot underneath the
-                * app's, which is two of each.
+                * Support is an At Kobblon page and takes no account at
+                * all.
                 *
-                * They still need an account - everything on them is about
-                * one - so `RequireAuth` is here instead, and the only
-                * thing that changed is which frame is around them.
+                * Staw: "the support page can become an at kobblon page and
+                * even ppl who arent logged in can make tickets". That is
+                * the only honest arrangement for it - somebody locked out
+                * of their account cannot sign in to say so, and a company
+                * writing about a partnership has no account to sign in
+                * with. `open_ticket` takes an anonymous caller since 0293
+                * and insists on an email address instead, because without
+                * one the ticket has nowhere to be answered.
+                *
+                * It sits outside `AppShell` because it wears that side's
+                * chrome: nested, it would draw this side's bar and foot
+                * underneath the app's, which is two of each. Standing went
+                * the other way, into `AppShell` below.
                 */}
-              <Route element={<RequireAuth />}>
-                <Route path="/standing" element={<Standing />} />
-                <Route path="/standing/:id" element={<StandingItem />} />
-                <Route path="/support" element={<Support />} />
-                <Route path="/support/:id" element={<Support />} />
-              </Route>
+              <Route path="/support" element={<Support />} />
+              <Route path="/support/:id" element={<Support />} />
 
               <Route path="/forum" element={<Forum />} />
               <Route path="/forum/new" element={<ForumNew />} />
@@ -201,6 +205,17 @@ export default function App() {
               </Route>
 
               <Route element={<AppShell />}>
+                {/*
+                  * Account standing is one account's own record - the bar,
+                  * the history, every appeal - so it is a signed-in page
+                  * and lives behind the rail with the rest of the account.
+                  * `AppShell`'s own list of pages a suspension must not
+                  * close already names it.
+                  */}
+                <Route element={<RequireAuth />}>
+                  <Route path="/standing" element={<Standing />} />
+                  <Route path="/standing/:id" element={<StandingItem />} />
+                </Route>
                 {/* open to guests so a shared link works logged out */}
                 <Route path="/discover" element={<Discover />} />
                 {/* A World is readable by anybody; playing it needs the

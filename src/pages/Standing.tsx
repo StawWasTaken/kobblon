@@ -6,10 +6,8 @@ import {
   faMicrophoneSlash, faScaleBalanced, faUserShield, faChartLine,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { AboutShell } from '@/components/layout/AboutShell'
-import { Band, Lane } from '@/components/about/Band'
-import { Reveal } from '@/components/about/Reveal'
-import { Panel, Group, Line } from '@/components/settings/Panel'
+import { Page } from '@/components/layout/AppShell'
+import { Panel, Group, Line, PageTop } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
@@ -551,35 +549,23 @@ export default function Standing() {
 
   return (
     /*
-     * The site's own column, centred, with nothing capped inside it.
+     * A signed-in page, and it stays one.
      *
-     * It was held to 48rem for a day to sit at the width a settings panel
-     * is read at - but a settings panel is narrow because a rail is beside
-     * it, and these two have no rail, so the cap was a column pinned to the
-     * left of a page with a third of it empty. Staw: "arent center-centered,
-     * and too small in my opinion". Right on both counts: without a rail,
-     * the page is the column.
+     * Staw: "make sure that the account standing page stays a logged in
+     * page while the support page can become an at kobblon page". The two
+     * had been sitting side by side in the At Kobblon chrome, and they are
+     * not the same kind of page: Support is Kobblon talking to anybody who
+     * writes in, with or without an account, and this is one account's own
+     * record. Everything on it - the bar, the history, every appeal - is
+     * about the person reading it, so it belongs behind the rail with the
+     * rest of their account.
      */
-    <AboutShell
-      hero={
-        <Lane className="flex min-h-[34vh] flex-col justify-center py-16">
-          <Reveal>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
-              Your account
-            </p>
-            <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[0.98] tracking-tight">
-              Where you stand.
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
-              Your behaviour, and everything ever decided about this account. Nothing here is hidden from you, and every decision on it can be appealed.
-            </p>
-          </Reveal>
-          
-        </Lane>
-      }
-    >
-      <Band tone="raised" edge>
-        <Lane className="space-y-8">
+    <Page className="space-y-8">
+      <PageTop
+        title="Where you stand"
+        note="Your behaviour, and everything ever decided about this account. Every decision on it can be appealed."
+      />
+
       {/* ------------------------------------------------------- the bar */}
       {bar.loading && <Skeleton className="h-56 rounded-2xl" />}
       {bar.error && <ErrorState message={bar.error} onRetry={bar.reload} />}
@@ -732,8 +718,6 @@ export default function Standing() {
           onAppealed={() => { history.reload(); bar.reload() }}
         />
       )}
-        </Lane>
-      </Band>
-    </AboutShell>
+    </Page>
   )
 }

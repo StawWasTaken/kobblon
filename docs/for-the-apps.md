@@ -12921,3 +12921,124 @@ It had been happening for a while and showed up only as pull conflicts.
 Nothing on your side depends on it; it is here because it is the fourth
 time this project has lost data to a value that was right for every case
 somebody had thought of.
+
+---
+
+## Round one hundred and seventy-five
+
+Support takes a ticket from somebody with no account, and from a company.
+Account standing went the other way, behind the rail.
+
+### Anybody can write to support now
+
+`open_ticket` has raised **"Sign in first."** since 0072. That is the oldest
+hole on this platform's support page: the person who cannot get into their
+account is exactly the person who cannot sign in to say so. 0293 closes it.
+
+The function is granted to `anon` as well as `authenticated` and takes a
+caller with no session. What it insists on instead is an email address,
+because a ticket with no account behind it has no page to be answered on -
+there is nothing for that person to come back to as themselves.
+
+**For the Launcher and the Workspace, this is the line that matters:** a
+sign-in failure, a locked account, a device that will not authorise - any
+of those can now offer "write to support" without a session, by calling
+`open_ticket` with `kind => 'player'` and an address. Before this round the
+only honest thing an application could do with a signed-out person was send
+them to a page that would refuse them.
+
+What anonymity costs and what pays for it:
+
+* **The row is readable by staff and by nobody else.** `tickets_read` is
+  `user_id = auth.uid() or is_moderator()`, and `null = anything` is null
+  rather than true, so an account-less ticket cannot be read by the next
+  anonymous person on that page. No grant to `anon` on the table is added
+  and none is wanted: the form posts through the function and reads nothing
+  back. Checked under three identities - anonymous, a signed-in stranger, a
+  moderator - and the stranger counts zero.
+* **Rate limiting loses its subject.** Three open tickets an hour per
+  account still holds. With no account it counts the address instead, case
+  insensitively, and holds a ceiling of sixty account-less tickets an hour
+  over all of them together, because an address is a thing anybody can
+  invent. Neither is a wall; both are a cost.
+* **A guest is no longer refused outright.** The old refusal was "so we can
+  write back". With an address there is a way back, so the refusal is now
+  about exactly that: a guest with no email is still turned away, a guest
+  with one is not.
+
+### Two forms, and the first step is which
+
+Staw: "theres two categories like for the players users etc and 'business'
+like in the sliding thing theres two boxes".
+
+`support_tickets` grows `kind` (`player` | `business`), `org` and
+`org_role`. The business form has four topics of its own - `invest`,
+`partner`, `content`, `press` - beside `other`, which is the one value both
+lists share. **The server refuses a business topic sent as a player ticket
+and the other way round**, so these are not interchangeable in a call.
+
+The business form asks for a name, a company and an email, all required,
+and never asks what device anybody was on - `device` is forced null for it
+rather than carrying whatever the form last held. A player ticket is
+unchanged except that its email is required when there is no session.
+
+One thing on that form is worth repeating exactly, because it is a claim
+about the company and not a label: **Kobblon is not a publicly traded
+company and nothing is on sale. An investment buys nothing back unless it
+is negotiated directly with Staw, Kobblon's CEO.** That sentence is on the
+card under the Investing tile. Picking a tile no longer jumps to the next
+step, which it used to - that is what made the line under the tiles
+unreadable.
+
+### What changed in the shared pieces
+
+* **`openTicket(card)`** in `@/lib/api` takes three more fields:
+  `kind?: 'player' | 'business'`, `org`, `org_role`. All defaulted, so an
+  existing call still compiles and still sends a player ticket.
+* **`Ticket`** in `@/types/db` grows `kind`, `org`, `org_role`.
+  **`TicketTopic`** grows the four business values. **`TicketRow`**, which
+  the staff queue reads, grows the same three and its `user_id` is now
+  `string | null`. If you read `TicketRow.user_id` anywhere, that is a
+  nullable now and it means "nobody was signed in".
+* **`TicketCard`** takes `signedIn?: boolean` and
+  `startKind?: 'player' | 'business' | null`. It still takes no provider it
+  cannot be given - no `useAuth`, no router, no toast - and it is mounted
+  bare at `tools/site/popups-preview.html?v=ticket|business|out`.
+* **`ticket_queue`** gained a `'business'` filter and returns `kind`, `org`
+  and `org_role`. It was **dropped and recreated**, not replaced, because
+  its return table changed; if anything of yours calls it, the old
+  two-argument signature is gone and the new one has the same name.
+
+### Account standing is a signed-in page and stays one
+
+Staw: "make sure that the account standing page stays a logged in page
+while the support page can become an at kobblon page". Both had been
+sitting side by side in the At Kobblon chrome and they are not the same
+kind of page. Support is Kobblon talking to anybody who writes in;
+standing is one account's own record. So `/standing` and `/standing/:id`
+moved inside `AppShell`, behind the rail, and `/support` moved out of
+`RequireAuth` entirely.
+
+The foot follows: Support is in the At Kobblon column now, and "Your
+standing" left the foot altogether, because the foot is drawn on the
+landing page and a link there would have bounced a stranger straight back
+to it. It is in the account menu, where somebody who has an account will
+find it.
+
+### Still not done
+
+The two reorders Staw said he would send - the rail and the top bar, and
+the account menu - are still waiting on his lists. Nothing in this round is
+that reorder.
+
+`TopTopics` from the last round has still never been drawn with real rows
+in it; this container has no route to Supabase. Worth a look on the live
+site.
+
+### For the applications
+
+Nothing here breaks a build of yours. The three type additions are
+additive, the one dropped function is a staff-console RPC, and `openTicket`
+still works called the old way. The piece worth acting on is the first
+section: support no longer needs a session, so a signed-out failure path in
+the Launcher can offer a real ticket instead of a dead end.

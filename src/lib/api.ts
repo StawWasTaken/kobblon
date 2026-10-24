@@ -22,7 +22,7 @@ import type {
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
   World, Quest, QuestCounted, QuestRequest, StaffCommunity,
-  Behaviour, ModerationRow, StaffModerationRow, TicketDevice,
+  Behaviour, ModerationRow, StaffModerationRow, TicketDevice, TicketKind,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,
   ForumBoard, ForumTopic, ForumReply, ForumSort, ForumStatus,} from '@/types/db'
@@ -2559,7 +2559,7 @@ export async function listTickets(): Promise<Ticket[]> {
 
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, status, contact_email, first_name, device, wants_human, updated_at, created_at')
+    .select('id, kind, topic, subject, status, contact_email, first_name, device, wants_human, org, org_role, updated_at, created_at')
     .eq('user_id', me)
     .order('updated_at', { ascending: false })
   if (error) throw new Error(error.message)
@@ -2570,6 +2570,7 @@ export async function listTickets(): Promise<Ticket[]> {
 
 export type TicketRow = {
   id: number
+  kind: TicketKind
   topic: TicketTopic
   subject: string
   status: TicketStatus
@@ -2577,8 +2578,11 @@ export type TicketRow = {
   contact_email: string | null
   device: TicketDevice | null
   wants_human: boolean
+  org: string | null
+  org_role: string | null
   username: string | null
-  user_id: string
+  /** Null for a ticket written by somebody who was not signed in. */
+  user_id: string | null
   /** The first message, so a queue can be triaged without opening each one. */
   opener: string | null
   replies: number
@@ -2590,7 +2594,7 @@ export type TicketRow = {
 
 /** Urgent first, then whoever has been waiting longest. Staff only. */
 export async function ticketQueue(
-  which: 'open' | 'urgent' | 'closed' | 'all' = 'open',
+  which: 'open' | 'urgent' | 'closed' | 'business' | 'all' = 'open',
 ) {
   return (unwrap(await supabase.rpc('ticket_queue', { which })) as TicketRow[]) ?? []
 }
@@ -2612,7 +2616,7 @@ export async function setTicketStatus(ticket: number, status: TicketStatus) {
 export async function getTicket(id: number): Promise<Ticket | null> {
   const { data, error } = await supabase
     .from('support_tickets')
-    .select('id, topic, subject, contact_email, first_name, device, wants_human, updated_at, created_at')
+    .select('id, kind, topic, subject, status, contact_email, first_name, device, wants_human, org, org_role, updated_at, created_at')
     .eq('id', id)
     .maybeSingle()
   if (error) throw new Error(error.message)
@@ -2629,6 +2633,15 @@ export async function listTicketMessages(id: number): Promise<TicketMessage[]> {
   return (data ?? []) as TicketMessage[]
 }
 
+/**
+ * Writing a ticket.
+ *
+ * Callable with no session since 0293: somebody locked out of their account
+ * cannot sign in to say so, and a company writing about a partnership has no
+ * account at all. The server asks for an email in both of those cases,
+ * because without one the ticket has no way back - the reply lands on this
+ * page only for somebody who can get to this page as themselves.
+ */
 export async function openTicket(card: {
   topic: TicketTopic
   subject: string
@@ -2637,6 +2650,10 @@ export async function openTicket(card: {
   first_name?: string | null
   device?: TicketDevice | null
   wants_human?: boolean
+  kind?: TicketKind
+  /** Business tickets only; the server drops them from a player's. */
+  org?: string | null
+  org_role?: string | null
 }): Promise<number> {
   return unwrap(await supabase.rpc('open_ticket', {
     topic: card.topic,
@@ -2646,6 +2663,9 @@ export async function openTicket(card: {
     first_name: card.first_name ?? null,
     device: card.device ?? null,
     wants_human: card.wants_human ?? false,
+    kind: card.kind ?? 'player',
+    org: card.org ?? null,
+    org_role: card.org_role ?? null,
   })) as number
 }
 
