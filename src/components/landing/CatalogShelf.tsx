@@ -1,9 +1,7 @@
 import { Skeleton } from '@/components/ui/States'
-import { Glyph } from '@/components/brand/Glyph'
-import { faShirt } from '@fortawesome/free-solid-svg-icons'
 import { Price } from '@/components/brand/Currency'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { catalogUrl } from '@/lib/api'
 import type { AvatarItem } from '@/types/db'
 import { cn } from '@/lib/cn'
 
@@ -78,20 +76,18 @@ export function CatalogShelf({ items, loading }: { items: AvatarItem[]; loading:
 }
 
 function Card({ item }: { item: AvatarItem }) {
-  const picture = catalogUrl(item.image_path, item.image_bucket ?? undefined)
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-ink-card">
-      <div className="grid aspect-square place-items-center overflow-hidden bg-ink-raised">
-        {picture ? (
-          <img
-            src={picture}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-contain p-4"
-          />
-        ) : (
-          <Glyph icon={faShirt} className="text-3xl text-white/25" />
-        )}
+      {/*
+       * `WornPicture`, not the item's own file. A shirt's own file is the
+       * template sheet, and this shelf was showing nine of them: flat
+       * unwrapped squares with "LEFT ARM" written on them, which is both
+       * not what the thing looks like and the one file a buyer is paying
+       * for. `WornPicture` shows the saved 2D card, and draws the garment
+       * on the mannequin in this tab when there is none.
+       */}
+      <div className="grid aspect-square place-items-center overflow-hidden bg-ink-raised p-4">
+        <WornPicture item={item} />
       </div>
 
       <div className="border-t border-white/10 p-3">

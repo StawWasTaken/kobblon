@@ -99,26 +99,31 @@ export function StoryPage({
       }
     >
       <Band tone="raised" edge>
-        <div className="grid gap-10 lg:grid-cols-[15rem_1fr] lg:gap-14">
+        <div className="grid gap-10 lg:grid-cols-[14rem_minmax(0,46rem)] lg:gap-20">
           {/* --------------------------------------------------- contents */}
           <aside className="hidden lg:block">
             <div className="sticky top-24">
-              <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+              <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
                 Contents
               </p>
-              <ul className="space-y-1">
+              {/*
+               * A rule down the side with the reading marked on it, rather
+               * than a stack of filled pills. The rail is a map of a
+               * document; a pill per line reads as nine buttons.
+               */}
+              <ul className="border-l border-white/10">
                 {sections.map((section, index) => (
                   <li key={section.id}>
                     <a
                       href={`#${section.id}`}
                       className={cn(
-                        'flex gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+                        '-ml-px flex gap-3 border-l-2 py-2 pl-4 text-sm font-semibold transition-colors',
                         active === section.id
-                          ? 'bg-white/[0.08] text-white'
-                          : 'text-white/45 hover:bg-white/5 hover:text-white',
+                          ? 'border-brand-bright text-white'
+                          : 'border-transparent text-white/40 hover:border-white/25 hover:text-white',
                       )}
                     >
-                      <span className="tabular-nums text-white/30">
+                      <span className="tabular-nums text-white/25">
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       <span className="min-w-0 flex-1">{section.heading}</span>
@@ -130,39 +135,50 @@ export function StoryPage({
           </aside>
 
           {/* ---------------------------------------------------- sections */}
-          <div className="min-w-0 space-y-4">
+          {/*
+           * One column of text, not nine dark boxes.
+           *
+           * Staw: "we also need a better design for the policies rather than
+           * this". What was there put every section in a rounded card on a
+           * card-coloured panel, so a page whose whole job is to be read
+           * looked like a settings screen and read like one - nine
+           * containers of equal weight, none of which is a paragraph you
+           * settle into. A document is a measure, a size of type, and air:
+           * the section number sits in the margin on a wide screen, the
+           * heading has a hairline over it, and the body is at reading size
+           * on the page's own floor with nothing boxing it in.
+           */}
+          <div className="min-w-0">
             {sections.map((section, index) => (
               <Reveal
                 key={section.id}
                 as="section"
-                className="scroll-mt-24 rounded-3xl border border-white/10 bg-ink-card/60 p-6 sm:p-8"
+                className="scroll-mt-24 border-t border-white/10 pt-10 first:border-t-0 first:pt-0 [&+section]:mt-14"
               >
                 <div id={section.id} className="-mt-24 pt-24">
-                  <div className="flex items-baseline gap-4">
-                    <span className="font-display text-3xl font-extrabold leading-none text-brand">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <h2 className="font-display text-2xl font-extrabold sm:text-3xl">
-                      {section.heading}
-                    </h2>
-                  </div>
+                  <p className="font-display text-sm font-extrabold tabular-nums tracking-[0.2em] text-brand-bright">
+                    {String(index + 1).padStart(2, '0')}
+                  </p>
+                  <h2 className="mt-3 font-display text-[clamp(1.6rem,2.6vw,2.25rem)] font-extrabold leading-tight">
+                    {section.heading}
+                  </h2>
 
                   {section.body.map((paragraph) => (
-                    <p key={paragraph} className="mt-4 leading-relaxed text-white/65">
+                    <p key={paragraph} className="mt-5 text-[1.0625rem] leading-[1.75] text-white/70">
                       {paragraph}
                     </p>
                   ))}
 
                   {!!section.points?.length && (
-                    <ul className="mt-5 space-y-2.5">
+                    <ul className="mt-7 border-t border-white/[0.07]">
                       {section.points.map((point) => (
                         <li
                           key={point.label}
-                          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-white/10 bg-ink-raised/60 px-4 py-3"
+                          className="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-b border-white/[0.07] py-3.5"
                         >
                           <span className="min-w-0 flex-1 text-sm font-bold">{point.label}</span>
                           {point.note && (
-                            <span className="w-full text-sm leading-relaxed text-white/55 sm:w-auto sm:flex-1">
+                            <span className="w-full text-sm leading-relaxed text-white/55 sm:w-auto sm:flex-[2]">
                               {point.note}
                             </span>
                           )}
@@ -185,10 +201,12 @@ export function StoryPage({
             ))}
 
             {footnote && (
-              <p className="px-2 pt-2 text-sm leading-relaxed text-white/40">{footnote}</p>
+              <p className="mt-14 border-t border-white/10 pt-8 text-sm leading-relaxed text-white/40">
+                {footnote}
+              </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            <div className="mt-10 flex flex-wrap items-center gap-5">
               <button
                 type="button"
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

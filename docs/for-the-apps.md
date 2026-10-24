@@ -11812,3 +11812,49 @@ Also on the website, nothing you need to copy:
 Still not built, unchanged from last round: the newsroom, the wiki, the
 forum. `world_visits` is still only written by `join_world_server`, so
 "Recently played" is empty for everybody.
+
+## Round one hundred and sixty-four
+
+One change of meaning in here, and it is one the Workspace will care about
+if it ever shows something somebody wears.
+
+**A garment's own file is never its picture.** The landing page's Catalog
+shelf was drawing `catalogUrl(item.image_path)` directly, so nine shirts on
+the front page were their *template sheets* - the flat unwrapped squares
+with LEFT ARM and TORSO written on them, which is both not what the thing
+looks like and the one file the buyer is paying for. Anything showing a
+Catalog item uses `WornPicture` (`@/components/catalog/WornPicture`), which
+asks `cardFor` for the saved 2D card and draws the garment on the mannequin
+in the tab when there is none. `cardFor` returns **null** for a shirt,
+trousers or a body part with no saved card, on purpose - do not treat that
+null as "no picture, fall back to the file".
+
+**`WorldStage` and `CommunityRow` are deleted.** If the Workspace imported
+either, it now imports nothing. `WorldChart` and `CommunityWall` replace
+them, in `@/components/landing/`, with the same props (`worlds`/`loading`
+and `communities`/`loading`).
+
+The rest is this side's own appearance, Staw's list on the front page:
+
+- The landing page was rebuilt rather than restyled. His note was that it
+  was "elements from multiple pages shoved together", and it was: a held
+  opening copied off What is Kobblon, a whole band asking for an account,
+  and three sentences of explanation over every shelf. Now the sign-up card
+  is **in the opening**, beside the line, there is no second sign-up band,
+  and each band is a heading and the thing itself.
+- Worlds are a chart - rank in the margin, cover as a strip, name on the
+  page's own floor - instead of three posters at three sizes with the name
+  written over somebody's cover. Communities are cards with the emblem,
+  the name, verification and the member count. Both are new components.
+- The closing band is the What is Kobblon safety band (Report, Block,
+  Ignore, Moderation) with Staw's signed note kept under it.
+- "Shop" is **Catalog** everywhere on that page.
+- A policy page is a document again: one column of reading-size type, the
+  section number in the margin, a hairline between sections, and a rail
+  with the reading marked on it. The nine dark boxes are gone.
+- Log in and Sign up fit one desktop screen with nothing to scroll: the
+  words sit beside the card from `lg` up. Below that it is one column.
+
+Still not built, unchanged: the newsroom, the wiki, the forum.
+`world_visits` is still only written by `join_world_server`, so "Recently
+played" is empty for everybody.

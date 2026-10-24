@@ -76,61 +76,68 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-ink text-white">
+    /*
+     * One screen, no scrolling on a desktop. Staw: "it must be as simple
+     * that the whole card is visible in the screen theres no need to scroll
+     * down (when on pc actually)". The card is as short as the fields allow,
+     * so the only way to fit it under a headline was to stop stacking them:
+     * the words sit beside the form from `lg` up and the pair is centred in
+     * the window. Below that it is one column and it scrolls, which is what
+     * a phone does anyway.
+     */
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-ink text-white">
       <PixelField className="opacity-30" />
       <div className="absolute inset-0 bg-[radial-gradient(90rem_50rem_at_50%_-20%,rgba(27,52,232,0.5),transparent_62%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/80 to-ink" />
       <Floaters />
 
-      <div className="relative">
-        <Lane>
-          <header className="flex items-center justify-between py-6">
-            <Wordmark to="/" className="h-6" />
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition-colors hover:text-white"
-            >
-              <Glyph icon={faArrowLeft} />
-              Back to the front
-            </Link>
-          </header>
-        </Lane>
+      <Lane>
+        <header className="relative flex items-center justify-between py-5">
+          <Wordmark to="/" className="h-6" />
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition-colors hover:text-white"
+          >
+            <Glyph icon={faArrowLeft} />
+            Back to the front
+          </Link>
+        </header>
+      </Lane>
 
-        <Lane>
-          <main className="pb-24 pt-10 sm:pt-16">
-            {/* ------------------------------------------------- the words */}
-            <div className="mx-auto max-w-3xl text-center">
-              <Reveal>
-                <Eyebrow>{claiming ? 'You have been looking around' : 'Kobblon'}</Eyebrow>
-              </Reveal>
-              <Reveal delay={70}>
-                <Title level={1} className="mt-5">
-                  {claiming ? (
-                    <>
-                      Keep what you
-                      <span className="block text-brand-bright">already made</span>
-                    </>
-                  ) : (
-                    <>
-                      Sign up and
-                      <span className="block text-brand-bright">start building</span>
-                    </>
-                  )}
-                </Title>
-              </Reveal>
-              {claiming && (
-                <Reveal delay={140}>
-                  <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/60">
-                    The Worlds you entered, the people you met and anything you collected stay
-                    exactly where they are.
-                  </p>
-                </Reveal>
-              )}
-            </div>
+      <Lane className="flex flex-1 items-center">
+        <main className="grid w-full items-center gap-10 py-10 lg:grid-cols-[1fr_24rem] lg:gap-20 lg:py-6">
+          {/* ------------------------------------------------- the words */}
+          <div className="text-center lg:text-left">
+            <Reveal>
+              <Eyebrow>{claiming ? 'You have been looking around' : 'Kobblon'}</Eyebrow>
+            </Reveal>
+            <Reveal delay={70}>
+              <Title level={1} className="mt-4">
+                {claiming ? (
+                  <>
+                    Keep what you
+                    <span className="block text-brand-bright">already made</span>
+                  </>
+                ) : (
+                  <>
+                    Sign up and
+                    <span className="block text-brand-bright">start building</span>
+                  </>
+                )}
+              </Title>
+            </Reveal>
+            <Reveal delay={140}>
+              <p className="mx-auto mt-5 max-w-md leading-relaxed text-white/55 lg:mx-0">
+                {claiming
+                  ? 'The Worlds you entered, the people you met and anything you collected stay exactly where they are.'
+                  : 'Free, and it opens the whole of Kobblon.'}
+              </p>
+            </Reveal>
+          </div>
 
-            {/* ----------------------------------------------- the card */}
-            <section className="mx-auto mt-12 w-full max-w-md">
-            <div className="relative rounded-3xl border border-white/10 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl sm:p-8">
+          {/* ----------------------------------------------- the card */}
+          <section className="mx-auto w-full max-w-md lg:mx-0">
+            <div className="relative rounded-3xl border border-white/10 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl">
               <span
                 aria-hidden="true"
                 className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-b from-white/10 to-transparent opacity-60"
@@ -168,7 +175,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </>
                 ) : (
                   <>
-                    <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
+                    <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
                       {(['login', 'signup'] as const).map((which) => (
                         <Link
                           key={which}
@@ -186,15 +193,6 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       ))}
                     </div>
 
-                    <h1 className="font-display text-2xl font-extrabold">
-                      {isSignup ? 'Make an account' : 'Welcome back'}
-                    </h1>
-                    <p className="mb-5 mt-1 text-sm text-white/55">
-                      {isSignup
-                        ? 'Free, and it takes about a minute.'
-                        : 'Log in with your username.'}
-                    </p>
-
                     {isSignup
                       ? (
                         /*
@@ -206,7 +204,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       )
                       : <LoginForm />}
 
-                    <div className="my-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-white/25">
+                    <div className="my-4 flex items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-white/25">
                       <span className="h-px flex-1 bg-white/10" />
                       or
                       <span className="h-px flex-1 bg-white/10" />
@@ -218,27 +216,21 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                     {guestError && (
                       <p className="mt-2 text-center text-xs text-danger">{guestError}</p>
                     )}
-                    <p className="mt-2 text-center text-[11px] text-white/35">
-                      Guests can look around. Making things needs an account, and you can turn a
-                      guest into one later without losing anything.
-                    </p>
                   </>
                 )}
               </div>
             </div>
 
-              <p className="mt-5 text-center text-xs text-white/35">
-                <Link to="/policies/terms" className="font-semibold hover:text-white">Terms</Link>
-                <span className="px-2">·</span>
-                <Link to="/policies/guidelines" className="font-semibold hover:text-white">Guidelines</Link>
-                <span className="px-2">·</span>
-                <Link to="/policies" className="font-semibold hover:text-white">Policies</Link>
-              </p>
-            </section>
-
-          </main>
-        </Lane>
-      </div>
+            <p className="mt-4 text-center text-xs text-white/35">
+              <Link to="/policies/terms" className="font-semibold hover:text-white">Terms</Link>
+              <span className="px-2">&middot;</span>
+              <Link to="/policies/guidelines" className="font-semibold hover:text-white">Guidelines</Link>
+              <span className="px-2">&middot;</span>
+              <Link to="/policies" className="font-semibold hover:text-white">Policies</Link>
+            </p>
+          </section>
+        </main>
+      </Lane>
     </div>
   )
 }
