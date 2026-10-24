@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faUsers } from '@fortawesome/free-solid-svg-icons'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { communityLink, profileLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 import type { AvatarItem } from '@/types/db'
@@ -32,8 +32,15 @@ export function Byline({ item, className }: { item: AvatarItem; className?: stri
     <>
       {community && <Glyph icon={faUsers} className="shrink-0 text-[10px]" />}
       <span className="truncate">{name}</span>
-      {!community && isVerified({ is_verified: item.creator_is_verified }) && (
-        <Verified className="text-[10px]" />
+      {!community && (
+        <NameMarks
+          id={item.creator_id}
+          person={{
+            is_verified: item.creator_is_verified,
+            has_staff_badge: item.creator_is_staff,
+          }}
+          className="text-[10px]"
+        />
       )}
     </>
   )

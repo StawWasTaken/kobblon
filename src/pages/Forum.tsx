@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faComment, faEye, faLock, faPlus, faThumbsUp, faThumbtack,
-  faCheck, faXmark, faClockRotateLeft, faLayerGroup, faFlag,
+  faCheck, faClockRotateLeft, faLayerGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { Avatar } from '@/components/ui/Avatar'
@@ -15,12 +15,14 @@ import { useAsync } from '@/hooks/useAsync'
 import { ForumShell, BoardMark, BoardStrip, BOARD_COLOUR } from '@/components/forum/Shell'
 import { TopicRow } from '@/components/forum/TopicRow'
 import { Composer } from '@/components/forum/Composer'
+import { PostMenu } from '@/components/forum/PostMenu'
+import { ReadingRail, RelatedTopics, SignedOutNote } from '@/components/forum/Reading'
 import {
   Attachments, Byline, Flags, Helpful, PostBody, StatusPill,
 } from '@/components/forum/Pieces'
 import {
-  forumBoards, forumCreateTopic, forumLike, forumMarkAnswer, forumRemove,
-  forumReplies, forumReply, forumSeen, forumSetFlags, forumSetStatus,
+  forumBoards, forumCreateTopic, forumEdit, forumLike, forumMarkAnswer, forumRelated,
+  forumRemove, forumReplies, forumReply, forumSeen, forumSetFlags, forumSetStatus,
   forumTopic as getTopic, forumTopics,
 } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
@@ -92,7 +94,9 @@ export default function Forum() {
   return (
     <ForumShell boards={boards.data ?? []} loading={boards.loading}>
       <header className="flex flex-wrap items-center gap-4 border-b border-white/[0.07] pb-5">
-        <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">Forum</h1>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+          Community Forum
+        </h1>
         <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-ink-card/60 p-1">
           <Switch on={view === 'categories'} onPress={() => go('categories')}>Categories</Switch>
           <Switch on={view === 'latest'} onPress={() => go('latest')}>Latest</Switch>
@@ -530,6 +534,15 @@ export function ForumTopicPage() {
   const [flagging, setFlagging] = useState<
     { type: 'forum_topic' | 'forum_post'; id: number; name: string } | null
   >(null)
+  /*
+   * What is open in the editor, or null. The whole page again rather than
+   * per post, for the same reason: one thing is edited at a time, and a
+   * composer mounted under every reply is twenty composers.
+   */
+  const [editing, setEditing] = useState<{ what: 'topic' | 'post'; id: number } | null>(null)
+  const [saving, setSaving] = useState(false)
+  /* What the rail measures. The posts, and not the page they are on. */
+  const thread = useRef<HTMLDivElement>(null)
 
   const staff = !!(profile?.is_admin || profile?.is_moderator)
   const mine = topic?.author_id === profile?.id
@@ -541,6 +554,11 @@ export function ForumTopicPage() {
     setReplies(said)
     setLoading(false)
   }, [number])
+
+  const related = useAsync(
+    () => (Number.isFinite(number) ? forumRelated(number) : Promise.resolve([])),
+    [number],
+  )
 
   useEffect(() => {
     if (!Number.isFinite(number)) return
@@ -562,8 +580,41 @@ export function ForumTopicPage() {
       await load()
     } catch (wrong) {
       toast(wrong instanceof Error ? wrong.message : 'That did not post.', 'error')
+      /* Thrown on so the composer keeps what was written. */
+      throw wrong
     } finally {
       setSending(false)
+    }
+  }
+
+  /*
+   * Saving an edit. The whole thread is read back rather than the one row
+   * being patched in place: the censor runs on the way in, so what is
+   * stored is not always what was typed, and showing the typed version
+   * would be the page disagreeing with the database until the next load.
+   */
+  const save = async (body: string) => {
+    if (!editing) return
+    setSaving(true)
+    try {
+      await forumEdit(editing.what, editing.id, body)
+      setEditing(null)
+      await load()
+    } catch (wrong) {
+      toast(wrong instanceof Error ? wrong.message : 'That edit did not save.', 'error')
+      throw wrong
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const take = async (what: 'topic' | 'post', which: number) => {
+    try {
+      await forumRemove(what, which)
+      if (what === 'topic') navigate(`/forum/c/${topic?.category ?? ''}`)
+      else await load()
+    } catch (wrong) {
+      toast(wrong instanceof Error ? wrong.message : 'That did not come down.', 'error')
     }
   }
 
@@ -630,7 +681,8 @@ export function ForumTopicPage() {
        * pixel; a thread is prose, and a line of text a thousand pixels wide
        * is one the eye loses its place in on the way back.
        */}
-      <div className="max-w-4xl">
+      <div className="flex gap-8">
+      <div className="min-w-0 max-w-4xl flex-1">
       <header className="border-b border-white/[0.07] pb-5">
         <nav className="flex items-center gap-2 text-xs font-bold text-white/35">
           <Link to="/forum" className="transition-colors hover:text-brand-bright">Forum</Link>
@@ -653,17 +705,47 @@ export function ForumTopicPage() {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <Byline person={topic} when={topic.created_at} edited={topic.edited_at} large />
+          <Byline person={topic} when={topic.created_at} edited={topic.edited_at} large op />
           <span className="flex items-center gap-4 text-xs font-bold tabular-nums text-white/35">
             <span>{formatCount(topic.view_count)} views</span>
             <span>{formatCount(topic.reply_count)} replies</span>
           </span>
+          <span className="ml-auto">
+            <PostMenu
+              link={postLink(topic.id)}
+              canEdit={mine}
+              canRemove={mine || staff}
+              canReport={!!profile && !mine}
+              onEdit={() => setEditing({ what: 'topic', id: topic.id })}
+              onRemove={() => void take('topic', topic.id)}
+              onReport={() => setFlagging({
+                type: 'forum_topic', id: topic.id, name: topic.title,
+              })}
+            />
+          </span>
         </div>
       </header>
 
+      <div ref={thread}>
       <article className="border-b border-white/[0.07] py-6">
-        <PostBody body={topic.body} />
-        <Attachments images={topic.images} />
+        {editing?.what === 'topic' ? (
+          <Composer
+            key={`edit-topic-${topic.id}`}
+            placeholder="Say it again, better."
+            action="Save"
+            busy={saving}
+            initial={topic.body}
+            keepOnSend
+            autoFocus
+            onSend={(body) => save(body)}
+            onCancel={() => setEditing(null)}
+          />
+        ) : (
+          <>
+            <PostBody body={topic.body} />
+            <Attachments images={topic.images} />
+          </>
+        )}
 
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <Helpful
@@ -672,29 +754,6 @@ export function ForumTopicPage() {
             disabled={!profile}
             onPress={() => press('topic', topic.id)}
           />
-          {profile && !mine && (
-            <Button
-              size="sm"
-              variant="ghost"
-              icon={faFlag}
-              onClick={() => setFlagging({ type: 'forum_topic', id: topic.id, name: topic.title })}
-            >
-              Report
-            </Button>
-          )}
-          {(mine || staff) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              icon={faXmark}
-              onClick={async () => {
-                await forumRemove('topic', topic.id)
-                navigate(`/forum/c/${topic.category}`)
-              }}
-            >
-              Take it down
-            </Button>
-          )}
           {staff && (
             <span className="ml-auto flex flex-wrap items-center gap-2">
               <Button
@@ -742,12 +801,19 @@ export function ForumTopicPage() {
                 canMark={(mine || staff) && !reply.is_answer}
                 canUnmark={(mine || staff) && reply.is_answer}
                 mine={reply.author_id === profile?.id}
+                op={reply.author_id === topic.author_id}
                 staff={staff}
                 signedIn={!!profile}
+                link={postLink(topic.id, reply.id)}
+                editing={editing?.what === 'post' && editing.id === reply.id}
+                saving={saving}
                 onLike={() => press('post', reply.id)}
                 onAnswer={() => forumMarkAnswer(reply.id).then(load)}
-                onRemove={() => forumRemove('post', reply.id).then(load)}
+                onRemove={() => void take('post', reply.id)}
                 onReply={() => setAnswering(reply)}
+                onEdit={() => setEditing({ what: 'post', id: reply.id })}
+                onSave={save}
+                onStopEditing={() => setEditing(null)}
                 onFlag={() => setFlagging({
                   type: 'forum_post', id: reply.id, name: `${reply.author_name}'s reply`,
                 })}
@@ -756,6 +822,10 @@ export function ForumTopicPage() {
           ))}
         </ul>
 
+      </section>
+      </div>
+
+      <section>
         <div className="mt-6" id="reply">
           {topic.is_locked && !staff ? (
             <p className="rounded-2xl border border-white/10 bg-ink-card/60 p-5 text-center text-sm text-white/50">
@@ -786,6 +856,10 @@ export function ForumTopicPage() {
         </div>
       </section>
 
+      {!profile && <SignedOutNote back={`/forum/t/${topic.id}`} />}
+
+      <RelatedTopics topics={related.data ?? []} loading={related.loading} />
+
       <ReportDialog
         open={!!flagging}
         onClose={() => setFlagging(null)}
@@ -794,24 +868,55 @@ export function ForumTopicPage() {
         targetName={flagging?.name ?? ''}
       />
       </div>
+
+      <ReadingRail
+        of={thread}
+        started={topic.created_at}
+        last={topic.last_post_at}
+        count={replies.length + 1}
+      />
+      </div>
     </ForumShell>
   )
 }
 
+/**
+ * The address of a post, absolute, for the clipboard and for a card.
+ *
+ * Absolute because this is the thing somebody pastes into Discord, and a
+ * path on its own pasted anywhere is not a link. Built from
+ * `window.location.origin` rather than a constant, so it is right on the
+ * site, on a preview build and on somebody's own machine - three places a
+ * hard-coded domain is wrong in two of them.
+ */
+function postLink(topic: number, post?: number) {
+  const where = `/forum/t/${topic}${post ? `#post-${post}` : ''}`
+  if (typeof window === 'undefined') return where
+  return `${window.location.origin}${where}`
+}
+
 function Reply({
-  reply, canMark, canUnmark, mine, staff, signedIn,
-  onLike, onAnswer, onRemove, onReply, onFlag,
+  reply, canMark, canUnmark, mine, op, staff, signedIn, link, editing, saving,
+  onLike, onAnswer, onRemove, onReply, onEdit, onSave, onStopEditing, onFlag,
 }: {
   reply: ForumReply
   canMark: boolean
   canUnmark: boolean
   mine: boolean
+  /** Whether this is the person who opened the thread. */
+  op: boolean
   staff: boolean
   signedIn: boolean
+  link: string
+  editing: boolean
+  saving: boolean
   onLike: () => void
   onAnswer: () => void
   onRemove: () => void
   onReply: () => void
+  onEdit: () => void
+  onSave: (body: string) => Promise<void>
+  onStopEditing: () => void
   onFlag: () => void
 }) {
   if (reply.is_removed) {
@@ -823,10 +928,13 @@ function Reply({
   }
 
   return (
-    <div className={cn(
-      'rounded-2xl border p-5',
-      reply.is_answer ? 'border-space/50 bg-space/[0.07]' : 'border-white/10 bg-ink-card/40',
-    )}>
+    <div
+      id={`post-${reply.id}`}
+      className={cn(
+        'scroll-mt-24 rounded-2xl border p-5',
+        reply.is_answer ? 'border-space/50 bg-space/[0.07]' : 'border-white/10 bg-ink-card/40',
+      )}
+    >
       {reply.is_answer && (
         <p className="mb-3 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-space-bright">
           <Glyph icon={faCheck} />
@@ -834,15 +942,45 @@ function Reply({
         </p>
       )}
 
-      <Byline person={reply} when={reply.created_at} edited={reply.edited_at} />
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <Byline person={reply} when={reply.created_at} edited={reply.edited_at} op={op} />
+        </div>
+        <PostMenu
+          link={link}
+          canEdit={mine}
+          canRemove={mine || staff}
+          canReport={signedIn && !mine}
+          onEdit={onEdit}
+          onRemove={onRemove}
+          onReport={onFlag}
+        />
+      </div>
 
       {reply.reply_to_name && (
         <p className="mt-3 text-xs font-bold text-white/30">Replying to {reply.reply_to_name}</p>
       )}
 
       <div className="mt-3">
-        <PostBody body={reply.body} />
-        <Attachments images={reply.images} />
+        {editing ? (
+          <Composer
+            key={`edit-post-${reply.id}`}
+            placeholder="Say it again, better."
+            action="Save"
+            busy={saving}
+            initial={reply.body}
+            keepOnSend
+            autoFocus
+            compact
+            onSend={(body) => onSave(body)}
+            onCancel={onStopEditing}
+          />
+        ) : (
+          <>
+            <PostBody body={reply.body} />
+            <Attachments images={reply.images} />
+          </>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.07] pt-3">
@@ -859,12 +997,6 @@ function Reply({
           >
             {canUnmark ? 'Not the answer' : 'This is the answer'}
           </Button>
-        )}
-        {signedIn && !mine && (
-          <Button size="sm" variant="ghost" icon={faFlag} onClick={onFlag}>Report</Button>
-        )}
-        {(mine || staff) && (
-          <Button size="sm" variant="ghost" icon={faXmark} onClick={onRemove}>Take it down</Button>
         )}
       </div>
     </div>

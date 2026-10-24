@@ -19,7 +19,7 @@ import {
 import type { CommunityOverview, CommunityPost } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
-import { Verified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 
 /** The author, in the shape the avatar and link helpers expect. */
 const authorOf = (post: CommunityPost) => ({
@@ -162,7 +162,11 @@ export function CommunityWall({
                     className="inline-flex items-center gap-1.5 font-bold hover:underline"
                   >
                     {post.author_display_name}
-                    {post.author_is_verified && <Verified className="text-xs" />}
+                    <NameMarks
+                      id={post.author_id}
+                      person={{ is_verified: post.author_is_verified }}
+                      className="text-xs"
+                    />
                   </Link>
                   {post.author_rank && (
                     <Badge tone="neutral">{post.author_rank}</Badge>

@@ -23,11 +23,17 @@ import { cn } from '@/lib/cn'
  * page moves, which is what keeps the links readable once a render of a
  * World is passing behind them.
  */
+/*
+ * Staw: "rearrange the navbar of the at kobblon pages so its What is
+ * Kobblon, Forum, Policies, Download". Download last rather than second,
+ * which is the order somebody actually moves through these: what this is,
+ * where everybody is, what the rules are, and then the thing you install.
+ */
 export const ABOUT_LINKS = [
   { to: '/about', label: 'What is Kobblon' },
-  { to: '/download', label: 'Download' },
   { to: '/forum', label: 'Forum' },
   { to: '/policies', label: 'Policies' },
+  { to: '/download', label: 'Download' },
 ]
 
 export function AboutNav({ className }: { className?: string }) {

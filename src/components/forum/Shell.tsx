@@ -8,6 +8,7 @@ import {
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutNav } from '@/components/layout/AboutNav'
 import { SiteFooter } from '@/components/layout/SiteFooter'
+import { CookieNote } from '@/components/layout/CookieNote'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/States'
 import { useForceDark } from '@/hooks/useTheme'
@@ -130,7 +131,14 @@ export function ForumShell({
   return (
     <div className="relative flex min-h-dvh flex-col bg-ink text-white">
       <AboutNav />
-      <ForumDoor />
+      {/*
+       * The front page only, and mounted rather than told. Unmounting it
+       * on the way into a thread is what makes coming back an arrival
+       * again - Staw asked for the dots "everytime you go onto the forum
+       * page", and a component that stays mounted and is asked to replay
+       * itself is a component with a second idea of when it has played.
+       */}
+      {pathname === '/forum' && <ForumDoor waiting={loading} />}
 
       <div className="mx-auto flex w-full max-w-[88rem] flex-1 gap-8 px-4 py-6 sm:px-6 lg:py-8">
         {/*
@@ -170,6 +178,16 @@ export function ForumShell({
       </div>
 
       <SiteFooter className="relative border-white/[0.08]" />
+
+      {/*
+       * Staw: "'We use cookies' doesnt appear in the forums". It did not,
+       * because it is mounted by `AboutShell` and the forum is not on
+       * that shell - the one page of the At Kobblon side with its own
+       * frame was the one page without the notice. It is the same card,
+       * not a second one; a second wording of what the site stores is a
+       * second claim about it.
+       */}
+      <CookieNote />
     </div>
   )
 }

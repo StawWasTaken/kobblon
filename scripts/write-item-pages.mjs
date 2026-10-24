@@ -141,7 +141,7 @@ export async function writeItemPages(into = 'dist') {
 
   const add = (path, page) => pages.push({ path, ...page })
 
-  const [worlds, communities, people, events, wearables, assets] = await Promise.all([
+  const [worlds, communities, people, topics, events, wearables, assets] = await Promise.all([
     /*
      * Worlds, which were Spaces and are read from `worlds` under their own
      * names now. The address moved too: a World lives at /worlds/:id/:slug,
@@ -151,7 +151,23 @@ export async function writeItemPages(into = 'dist') {
      */
     read('worlds', 'select=content_id,slug,name,description,cover_url,emblem_url,visit_count,like_count,dislike_count,owner:profiles!worlds_owner_id_fkey(username,display_name)&is_published=eq.true&is_removed=eq.false&limit=5000'),
     read('communities', 'select=content_id,slug,name,description,icon_url,banner_url,member_count,owner:profiles!communities_owner_id_fkey(username,display_name)&is_public=eq.true&is_removed=eq.false&limit=5000'),
-    read('profiles', 'select=content_id,username,display_name,bio,avatar_url,created_at&is_suspended=eq.false&limit=5000'),
+    read('profiles', 'select=id,content_id,username,display_name,bio,avatar_url,created_at&is_suspended=eq.false&limit=5000'),
+    /*
+     * Forum topics, so a thread pasted into Discord unfurls with its own
+     * title and its first words rather than the site's card.
+     *
+     * Staw: "i want the link to be embeddable when sending it on discord or
+     * somewhere else, like an X/Twitter post". That is this file's whole
+     * job - a robot building a preview does not run a router, so the
+     * address has to be a real file with the card written into it.
+     *
+     * Read with the publishable key, which means the anon policy on
+     * `forum_topics` decides what is here. A topic in a hidden category or
+     * one that has been taken down is not readable by a stranger and so
+     * gets no card, which is the behaviour we want and not a thing to
+     * filter for twice.
+     */
+    read('forum_topics', 'select=id,title,body,images,created_at,reply_count,view_count,category:forum_categories!forum_topics_category_fkey(name,is_hidden),author:profiles!forum_topics_author_id_fkey(username,display_name)&is_removed=eq.false&order=last_post_at.desc&limit=5000'),
     read('community_events', 'select=content_id,title,subtitle,description,cover_url,starts_at,attending_count,community:communities(name,icon_url,banner_url)&is_cancelled=eq.false&limit=5000'),
     /*
      * Catalog items, which were Style items and are `avatar_items` now.
@@ -235,6 +251,75 @@ export async function writeItemPages(into = 'dist') {
     }
     if (person.content_id) add(`u/${person.content_id}/${slug(person.username)}`, page)
     add(`u/${slug(person.username)}`, page)
+  }
+
+  for (const topic of topics) {
+    if (topic.category?.is_hidden) continue
+
+    const who = topic.author?.display_name ?? topic.author?.username
+    const page = {
+      type: 'article',
+      title: `${topic.title} | Kobblon Forum`,
+      description: lines(
+        shorten(topic.body, 180),
+        /*
+         * The counts go after the words rather than instead of them. A
+         * preview whose whole description is "12 replies" tells somebody
+         * nothing about whether to click it.
+         */
+        who ? `Posted by ${who} in ${topic.category?.name ?? 'the Kobblon Forum'}.` : null,
+      ),
+      imageAlt: topic.title,
+    }
+
+    /*
+     * The first attached picture, where there is one. Wide rather than
+     * square, because a screenshot of somebody's World is a landscape and
+     * a square card would crop the middle out of it.
+     */
+    const shot = Array.isArray(topic.images) && topic.images.length
+      ? pictureIn('forum', topic.images[0])
+      : null
+    if (shot) page.image = shot
+
+    add(`forum/t/${topic.id}`, page)
+  }
+
+  /*
+   * The forum bios that have been written, where one has. A forum profile
+   * whose bio is null means "the one on my Kobblon profile", so this is a
+   * map of the overrides rather than a bio per person.
+   *
+   * Asked quietly on purpose: this table is newer than the deploy script,
+   * and a 404 from a database that has not had 0282 applied yet would
+   * otherwise count as a table refusing to answer and leave every
+   * published card on the site untouched. Not knowing the overrides costs
+   * one line of one preview; getting that wrong costs all of them.
+   */
+  const forumBios = new Map(
+    ((await read('forum_profiles', 'select=user_id,bio&bio=not.is.null&limit=5000', true)) ?? [])
+      .map((row) => [row.user_id, row.bio]),
+  )
+
+  for (const person of people) {
+    /*
+     * The same name again, on the forum's own page for them - with their
+     * forum bio if they have written one, because the card and the page it
+     * is a preview of saying two different things about somebody is worse
+     * than the card saying less.
+     */
+    const page = {
+      type: 'profile',
+      title: `${person.display_name} | Kobblon Forum`,
+      description: lines(
+        `${person.display_name} on the Kobblon Community Forum.`,
+        shorten(forumBios.get(person.id) ?? person.bio, 160),
+      ),
+      image: picture(person.avatar_url),
+      square: !!picture(person.avatar_url),
+      imageAlt: person.display_name,
+    }
+    add(`forum/u/${slug(person.username)}`, page)
   }
 
   for (const event of events) {

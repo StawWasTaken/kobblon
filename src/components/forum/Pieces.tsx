@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
-import { Verified, Staff, isStaff, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { Glyph } from '@/components/brand/Glyph'
 import { faCheck, faThumbsUp, faLock, faThumbtack } from '@fortawesome/free-solid-svg-icons'
 import { forumImageUrl } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import { Markup } from '@/components/forum/Markup'
+import { OpTag } from '@/components/forum/Reading'
 import { cn } from '@/lib/cn'
 import type { ForumAuthor, ForumStatus } from '@/types/db'
 
@@ -21,9 +22,10 @@ import type { ForumAuthor, ForumStatus } from '@/types/db'
  *
  * Staw's rule from the badges themselves: a mark is part of the display
  * name rather than an ornament beside it, so every place a name is written
- * on the forum writes it through here. Staff carry the k; a verified
- * account carries the tick; staff are verified without being told so, which
- * is `isVerified`'s own rule and not a second copy of it here.
+ * on the forum writes it through here - and here asks `NameMarks`, which
+ * asks the database. It used to draw one mark or the other, never both,
+ * which is half of what Staw was seeing: staff wore the k and lost the
+ * tick they had also earned.
  */
 export function Name({
   person, className, large,
@@ -40,16 +42,15 @@ export function Name({
 
   return (
     <Link
-      to={`/u/${person.author_username}`}
+      to={`/forum/u/${person.author_username}`}
       className={cn(
         'inline-flex min-w-0 items-center gap-1.5 font-display font-extrabold text-white transition-colors hover:text-brand-bright',
         large ? 'text-base' : 'text-sm',
         className,
       )}
     >
-      <span className="truncate">{person.author_name}</span>
-      {isStaff(asPerson) && <Staff className="text-[0.85em]" />}
-      {!isStaff(asPerson) && isVerified(asPerson) && <Verified className="text-[0.85em]" />}
+      <span className="truncate">{person.author_name || person.author_username}</span>
+      <NameMarks id={person.author_id} person={asPerson} className="text-[0.85em]" />
     </Link>
   )
 }
@@ -205,18 +206,31 @@ export function Helpful({
   )
 }
 
-/** Avatar, name, role and when. The line every post opens with. */
+/**
+ * Avatar, name, role and when. The line every post opens with.
+ *
+ * `op` marks the person who opened the thread, on their own replies as
+ * well as on the first post. Staw asked for it and it is worth more on a
+ * forum than it looks: half of reading a long thread is working out which
+ * replies are the person with the problem and which are people answering
+ * it.
+ *
+ * The name goes to their forum profile rather than their Kobblon one -
+ * this is the forum, and the forum profile has the button across to the
+ * other.
+ */
 export function Byline({
-  person, when, edited, large,
+  person, when, edited, large, op,
 }: {
   person: ForumAuthor
   when: string
   edited?: string | null
   large?: boolean
+  op?: boolean
 }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <Link to={`/u/${person.author_username}`} className="shrink-0">
+      <Link to={`/forum/u/${person.author_username}`} className="shrink-0">
         <Avatar
           src={person.author_avatar}
           name={person.author_name}
@@ -227,11 +241,12 @@ export function Byline({
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Name person={person} large={large} />
+          {op && <OpTag />}
           <Role person={person} />
         </div>
         <p className="mt-0.5 text-xs text-white/35">
           {timeAgo(when)}
-          {edited && <span> · edited</span>}
+          {edited && <span className="text-white/30"> (edited)</span>}
         </p>
       </div>
     </div>

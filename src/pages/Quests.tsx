@@ -28,7 +28,7 @@ import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
 import { worldLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
-import { Verified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import type { Quest, QuestCounted } from '@/types/db'
 
 /*
@@ -86,6 +86,8 @@ function dailyQuest(waiting: boolean): Quest {
     world_name: null,
     world_emblem: null,
     author_name: 'Kobblon',
+    /* Nobody promoted it; the house did, and the house has no account. */
+    author_id: null,
     ends_at: null,
     started: now,
     claimed_at: waiting ? null : now,
@@ -231,7 +233,11 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
           <span className="truncate font-bold text-white/85">
             {quest.author_name ?? 'Kobblon'}
           </span>
-          {quest.author_verified && <Verified className="shrink-0 text-[11px]" />}
+          <NameMarks
+            id={quest.author_id}
+            person={{ is_verified: quest.author_verified }}
+            className="shrink-0 text-[11px]"
+          />
         </span>
         {quest.ends_at && (
           <span className="shrink-0 text-muted">Ends {endsOn(quest.ends_at)}</span>

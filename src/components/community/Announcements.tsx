@@ -23,7 +23,7 @@ import { avatarOf } from '@/lib/avatars'
 import { timeAgo } from '@/lib/format'
 import { profileLink } from '@/lib/links'
 import type { CommunityOverview, CommunityPost } from '@/types/db'
-import { Verified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { overlayButton } from '@/lib/overlay'
 import { cn } from '@/lib/cn'
 
@@ -177,7 +177,11 @@ export function Announcements({
                       className="inline-flex items-center gap-1 font-bold text-white/80 hover:underline"
                     >
                       {post.author_display_name}
-                      {post.author_is_verified && <Verified className="text-[11px]" />}
+                      <NameMarks
+                        id={post.author_id}
+                        person={{ is_verified: post.author_is_verified }}
+                        className="text-[11px]"
+                      />
                     </Link>
                     {post.author_rank && <span> · {post.author_rank}</span>}
                     <span> · {timeAgo(post.created_at)}</span>

@@ -12,7 +12,7 @@ import { formatCount } from '@/lib/format'
 import { currency } from '@/lib/currency'
 import type { MarketAsset } from '@/types/db'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { overlayChip } from '@/lib/overlay'
 import { cn } from '@/lib/cn'
@@ -122,15 +122,19 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
         <span className="mt-1 flex items-center gap-1.5 text-xs text-muted">
           <span className="truncate">{item.creator_display_name}</span>
           {/*
-            * Through the one rule, rather than this card's own reading of
-            * `is_admin`. Verified and staff are different things and the
-            * tick is for both; deciding it here is how a card came to show
-            * it to staff only.
+            * Asked of the database rather than read off this card's own
+            * columns. Deciding it here is how a card came to show the tick
+            * to staff only, and how `creator_is_staff` sat in the row
+            * unused while a moderator's name wore nothing.
             */}
-          {isVerified({
-            is_admin: item.creator_is_admin,
-            is_verified: item.creator_is_verified,
-          }) && <Verified className="text-[11px]" />}
+          <NameMarks
+            username={item.creator_username}
+            person={{
+              is_admin: item.creator_is_admin,
+              is_verified: item.creator_is_verified,
+            }}
+            className="text-[11px]"
+          />
         </span>
         <p className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/40">
           {typeof item.score === 'number' && item.score !== null ? (

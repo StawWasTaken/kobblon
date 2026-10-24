@@ -72,6 +72,7 @@ const MARKS: Mark[][] = [
 
 export function Composer({
   placeholder, action, withTitle, busy, onSend, onCancel, autoFocus, compact,
+  initial, keepOnSend,
 }: {
   placeholder: string
   /** What the button says. "Post it", "Reply". */
@@ -82,12 +83,30 @@ export function Composer({
   onCancel?: () => void
   autoFocus?: boolean
   compact?: boolean
+  /**
+   * What is already in the box: an edit opening on what was written.
+   *
+   * The initial value of the state and nothing more - it is not watched.
+   * Watching it would mean an edit being typed is thrown away the moment
+   * the thread reloads underneath it, and a reply box that refills itself
+   * from a prop is a reply box that cannot be cleared. Which post is being
+   * edited is decided by the caller mounting a different composer, and the
+   * `key` on it is what makes a second edit open on the right words.
+   */
+  initial?: string
+  /**
+   * Leave what was typed in place after a send that worked.
+   *
+   * For an edit, whose box is taken away by the caller the moment the save
+   * lands - clearing it first is a flash of an empty box on the way out.
+   */
+  keepOnSend?: boolean
 }) {
   const { profile } = useAuth()
   const toast = useToast()
   const file = useRef<HTMLInputElement>(null)
   const box = useRef<HTMLTextAreaElement>(null)
-  const [body, setBody] = useState('')
+  const [body, setBody] = useState(initial ?? '')
   const [images, setImages] = useState<string[]>([])
   const [putting, setPutting] = useState(false)
 
@@ -187,7 +206,20 @@ export function Composer({
 
   const send = async () => {
     if (!body.trim()) return
-    await onSend(body.trim(), images)
+    /*
+     * Cleared only if it actually went. It used to clear unconditionally,
+     * which meant a reply refused by the server - a closed topic, a
+     * suspension, a dropped connection - took what somebody had written
+     * with it and left a toast where the words had been. So the callers
+     * throw after they have said what went wrong, and this keeps the box
+     * exactly as it was.
+     */
+    try {
+      await onSend(body.trim(), images)
+    } catch {
+      return
+    }
+    if (keepOnSend) return
     setBody('')
     setImages([])
   }

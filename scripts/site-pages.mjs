@@ -49,6 +49,16 @@ export const pages = [
     description: 'Everybody on Kobblon. Search a name, a username, or the words somebody wrote about themselves.',
   },
   {
+    path: 'forum',
+    title: 'Community Forum | At Kobblon',
+    description: 'Ask, answer, show what you made and say what is wrong with Kobblon. Readable by anybody; writeable with an account.',
+  },
+  {
+    path: 'forum/new',
+    title: 'Start a topic | Kobblon Forum',
+    description: 'Open a topic on the Kobblon Community Forum.',
+  },
+  {
     path: 'login',
     title: 'Log in to Kobblon',
     description: 'Log in with your username and carry on building.',

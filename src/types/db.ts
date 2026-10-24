@@ -1102,6 +1102,11 @@ export type Quest = {
   claimed_at: string | null
   /** Whether the promoter's name carries the tick. */
   author_verified: boolean
+  /**
+   * Whose name is shown, so the marks beside it can be asked for rather
+   * than guessed from the one flag this row used to carry.
+   */
+  author_id: string | null
   /** When it went up. The blue dot on the Brix menu is this against what
       you have already looked at. */
   created_at: string
@@ -1277,3 +1282,69 @@ export type ForumReply = ForumAuthor & {
 
 /** What the tabs over a board, and the shelves on the front page, ask for. */
 export type ForumSort = 'active' | 'new' | 'helpful' | 'viewed' | 'interesting'
+
+/* ------------------------------------------------------- forum profiles */
+
+/** One of the words somebody may put beside their name on the forum. */
+export type ForumTagOption = {
+  code: string
+  label: string
+  /** Given rather than chosen. `staff` is the only one. */
+  automatic: boolean
+}
+
+/**
+ * Somebody's forum profile.
+ *
+ * `tags` holds the codes and `tag_labels` the words, in the same order, so
+ * a page can draw the words without a second copy of the list and a styling
+ * rule can key off the code. Staff comes first where it is there at all.
+ */
+export type ForumPerson = {
+  user_id: string
+  username: string
+  display_name: string
+  avatar_url: string | null
+  marks: string[]
+  tags: string[]
+  tag_labels: string[]
+  /** Their forum bio, or their Kobblon one where they have not written one. */
+  bio: string | null
+  /** Whether that bio is the forum's own rather than the Kobblon profile's. */
+  bio_is_own: boolean
+  /** Null when they have not linked one, or have not shown it to you. */
+  discord: string | null
+  joined_at: string
+  topic_count: number
+  post_count: number
+  is_me: boolean
+}
+
+/** A thing somebody wrote on the forum: a topic, or a reply inside one. */
+export type ForumWritten = {
+  kind: 'topic' | 'reply'
+  id: number
+  topic_id: number
+  category: string
+  category_name: string
+  /** The topic's title, for a reply as well as for the topic itself. */
+  title: string
+  body: string
+  like_count: number
+  created_at: string
+  edited_at: string | null
+}
+
+/** What else to read after a topic. */
+export type ForumRelated = {
+  id: number
+  category: string
+  category_name: string
+  title: string
+  reply_count: number
+  view_count: number
+  like_count: number
+  last_post_at: string
+  /** How many words its title shares with the one being read. */
+  shared: number
+}

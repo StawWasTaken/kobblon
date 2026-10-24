@@ -1024,7 +1024,14 @@ export default function Profile() {
           </section>
 
           <section>
-            <h3 className="mb-2 font-display text-base font-extrabold">Previous names</h3>
+            {/*
+              * Staw: "rename 'previous usernames' to 'previously known as'".
+              * It is every name this account has ever held and let go of,
+              * in the order they were let go - including one taken back
+              * and then left again, which appears once because a list of
+              * names is a list of names and not a diary.
+              */}
+            <h3 className="mb-2 font-display text-base font-extrabold">Previously known as</h3>
             {names.data?.length ? (
               <div className="flex flex-wrap gap-2">
                 {names.data.map((row) => (
@@ -1037,7 +1044,7 @@ export default function Profile() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted">No previous names.</p>
+              <p className="text-sm text-muted">Nothing but this one.</p>
             )}
           </section>
 

@@ -40,7 +40,7 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { BuyButton } from '@/components/money/BuyButton'
 import { FreeCorner } from '@/components/brand/FreeBadge'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import {
@@ -799,6 +799,7 @@ function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
     owner_username: string
     owner_display_name: string
     owner_is_verified: boolean
+    owner_is_staff: boolean
     pieces: { slot: string; kind: string; name: string; content_id: number }[]
   }
   busy: boolean
@@ -835,9 +836,14 @@ function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
         </Link>
         <span className="flex items-center gap-1.5 text-xs text-muted">
           <span className="truncate">{outfit.owner_display_name}</span>
-          {isVerified({ is_verified: outfit.owner_is_verified }) && (
-            <Verified className="text-[10px]" />
-          )}
+          <NameMarks
+            username={outfit.owner_username}
+            person={{
+              is_verified: outfit.owner_is_verified,
+              has_staff_badge: outfit.owner_is_staff,
+            }}
+            className="text-[10px]"
+          />
         </span>
 
         <p className="text-[11px] text-muted">

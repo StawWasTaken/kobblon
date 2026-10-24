@@ -1,4 +1,5 @@
 import { Tooltip } from '@/components/ui/Tooltip'
+import { useNameMarks } from '@/hooks/useNameMarks'
 import { cn } from '@/lib/cn'
 
 /*
@@ -118,21 +119,40 @@ export function Staff({
  * answered at twenty-one call sites, each deciding for itself whether staff
  * counts as verified, and that is how one page ends up showing a tick where
  * another shows nothing for the same person.
+ *
+ * Pass `id` wherever one is in hand, which is almost everywhere. The row's
+ * own flags are drawn immediately as a first guess so nothing arrives late,
+ * and the database's answer replaces it the moment it lands - because the
+ * guess is only ever as good as the columns that list happened to select,
+ * and that is exactly what was wrong. With no `id` it stays a guess, which
+ * is better than nothing and is said out loud here rather than hidden.
  */
-export function NameMarks({ person, className }: {
+export function NameMarks({ person, id, username, className }: {
   person?: {
     is_verified?: boolean | null
     is_admin?: boolean | null
     is_moderator?: boolean | null
+    is_superadmin?: boolean | null
     has_staff_badge?: boolean | null
   } | null
+  /** The person's account id, so the marks can be asked rather than guessed. */
+  id?: string | null
+  /** Their username, for the lists that carry that and not an id. */
+  username?: string | null
   className?: string
 }) {
-  if (!person) return null
+  const said = useNameMarks(id, username)
+
+  const wears = said ?? [
+    isVerified(person) && 'verified',
+    isStaff(person) && 'staff',
+  ].filter(Boolean) as string[]
+
   const marks = [
-    isVerified(person) && <Verified key="v" className={className} />,
-    isStaff(person) && <Staff key="s" className={className} />,
+    wears.includes('verified') && <Verified key="v" className={className} />,
+    wears.includes('staff') && <Staff key="s" className={className} />,
   ].filter(Boolean)
+
   if (!marks.length) return null
   return <span className="inline-flex shrink-0 items-center gap-1 align-middle">{marks}</span>
 }

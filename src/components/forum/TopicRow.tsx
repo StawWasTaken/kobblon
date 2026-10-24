@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { Glyph } from '@/components/brand/Glyph'
 import { faComment, faEye, faThumbsUp } from '@fortawesome/free-solid-svg-icons'
-import { Verified, Staff, isStaff, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { StatusPill, Flags } from '@/components/forum/Pieces'
 import { formatCount } from '@/lib/format'
 import { timeAgo } from '@/lib/format'
@@ -64,9 +64,7 @@ export function TopicRow({
           <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/40">
             <span className="inline-flex items-center gap-1 font-bold text-white/55">
               {topic.author_name}
-              {isStaff(author)
-                ? <Staff className="text-[0.9em]" />
-                : isVerified(author) && <Verified className="text-[0.9em]" />}
+              <NameMarks id={topic.author_id} person={author} className="text-[0.9em]" />
             </span>
             <span aria-hidden="true">·</span>
             <span>{timeAgo(topic.last_post_at)}</span>

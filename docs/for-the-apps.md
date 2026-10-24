@@ -12160,3 +12160,147 @@ Still not done, and unchanged since the last round: `ConfigureCommunity`
 writes `communities.name` directly and the name guard pins it back, so
 **renaming a community through that page still does nothing**.
 `rename_community` is the call it needs.
+
+## Round one hundred and seventy - a name wears the same marks everywhere, and the forum grows a profile
+
+The long one. Most of it is the forum, but the first part is not, and the
+first part is the one that touches you.
+
+### A name wears the same marks everywhere
+
+Staw: "i dont see all of the badges ... sometimes its just the staff badge,
+sometimes just the verified badge, sometimes NEITHER".
+
+This was never a drawing bug. Twenty-odd lists each decided which marks
+somebody wears from whatever columns its own RPC happened to return, so one
+person wore the tick on one page, the k on another and nothing on a third.
+The authoritative answer already existed - `name_marks` and `name_marks_for`,
+shipped in 0180 - and the website had never once called it.
+
+So there is now one client-side resolver, `useNameMarks(id?, username?)`, and
+`NameMarks` asks it. It batches: every name on a page lands in one set, one
+`name_marks_for` call answers all of them, and a key that comes back absent
+means "wears nothing" rather than "not asked yet". A failed call leaves keys
+unanswered on purpose, so a flaky network does not cache somebody into
+wearing nothing for the rest of the session.
+
+**What this means for you.** If the Workspace draws names with marks, do the
+same thing: ask the database, do not infer from whatever columns your query
+returned. `name_marks_for(uuid[])` takes ids. New this round:
+
+```
+name_marks_by_name(text[]) -> table (username text, marks text[])
+```
+
+Case-insensitive in, the real username out. It exists because the five large
+Catalog RPCs return `creator_username` and no `creator_id`, and adding one
+small function beat drop-and-recreating five big ones. Use whichever key you
+already hold.
+
+Until the resolver answers, `NameMarks` falls back to whatever the row said.
+That is deliberate - it is the cold-load path - but it means a row with
+stale columns shows stale marks for one tick. If that matters to you, hold
+the marks rather than the booleans.
+
+### Forum profiles - a new surface, and two new tables
+
+`/forum/u/:username` exists now. Avatar, display name with its marks, the
+username, a tag, the Kobblon bio unless a forum bio has been written, the
+Discord handle if one is connected, counts, buttons across to the Kobblon
+profile and the usual add-friend / block / report, and everything the person
+has written.
+
+New in 0282:
+
+- **`forum_tags`** - 18 rows, `code` / `label` / `position` / `automatic`.
+  `staff` is automatic: it is given to anybody wearing the k and nobody can
+  choose it. The rest are chosen - player, builder, scripter, programmer,
+  developer, modeller, artist, designer, animator, musician, sound-designer,
+  writer, translator, tester, content-creator, teacher, learning. Null is
+  "no tag" and is a real answer, not a missing one.
+- **`forum_profiles`** - `user_id`, `tag`, `bio`, `updated_at`. Both grants
+  and a public read policy; `insert`, `update` and `delete` are revoked from
+  everybody including the owner.
+
+Read with `forum_profile(in_username)`, `forum_tag_list()` and
+`forum_posts_of(uuid, int, int)`. Write with `set_forum_profile(tag, bio)`,
+which refuses automatic tags and unknown tags, caps the bio at 500
+characters, and queues the words to `names_to_read` **only when they
+actually changed**.
+
+**A bio of null means "the one on my Kobblon profile", asked at the moment
+of use.** It is not copied at signup and it is not copied when the Kobblon
+bio changes. If you show a forum bio anywhere, coalesce at read time or you
+will show a stale copy - this is the trap this project keeps falling into,
+wearing its fifth disguise.
+
+### Editing, and the hole it would have opened
+
+The three dots on a post: copy link, edit (author only), report, delete.
+`forum_edit` is author-only, not even staff - staff take a post down, they
+do not rewrite somebody's words.
+
+The hole: **an edited forum post was never read by Kobby.** Posting was
+screened and editing was not, so the edit button would have been a way to
+post anything by posting something harmless and then changing it. 0280 adds
+`after update` triggers on `forum_topics` and `forum_posts` that queue the
+new text to the machine, skipping when the text is unchanged.
+
+If the Workspace ever grows a way to edit forum text, it goes through
+`forum_edit`. Do not write the column.
+
+### The smaller forum things
+
+- The door: three blue dots on ink, on `/forum` only, every arrival, tied to
+  the real fetch with a 450ms floor so a cached answer does not flash.
+- `OP` on the opener's posts, `(edited)` where something was edited.
+- A reading rail down the right of a thread, a signed-out note at the foot
+  of one, and related topics underneath - `forum_related(bigint, int)`,
+  ranked by shared title words, then same category, then views. It returns
+  nothing when nothing is shared rather than padding with the newest.
+- Boards now draw their mark in their own colour, not six times in brand
+  blue.
+- The forum's title is "Community Forum", the cookie note appears there now,
+  the At Kobblon navbar is What is Kobblon / Forum / Policies / Download,
+  and the footer's social column carries the forum under our own logomark.
+- `name_marks` aside, every forum read now falls back to the username when
+  somebody has no display name, which several of them did not.
+
+### Previously known as
+
+"Previous usernames" is "Previously known as" now, and it is the whole
+history rather than the distinct set: stawrer, staw, stawrer again,
+someguystaw all show. 0283 drops the `limit 20` and orders by `h.id desc`
+instead of `changed_at`.
+
+**Worth copying if you list these.** `now()` is the transaction clock, so
+rows written in one transaction share a timestamp to the microsecond and
+ordering by that column is not deterministic. Order by the `bigserial`.
+
+### What is not done, plainly
+
+- **The forum pages themselves have not been looked at in this container.**
+  There is no route to Supabase from here, so the index, a topic and the new
+  profile page are entirely data and render empty. What *was* built and
+  looked at is `tools/site/forum-preview.html`, which mounts the new pieces
+  on nothing - bylines, the OP tag, the open menu, the signed-out note,
+  related topics, the rail, the six board marks. Nothing threw outside a
+  provider, which is the check that directory exists for.
+- **The link-preview cards for forum topics and forum profiles are written
+  but unverified against the real database.** The code is proven against a
+  stubbed fetch - a topic in a hidden board correctly gets no card, the
+  topic card is `og:type article` with a large image, the profile card
+  prefers the forum bio over the Kobblon one - but `npm run deploy` here
+  reported "7 of the tables did not answer", so no card has actually been
+  written from live rows. It leaves published cards alone when the database
+  does not answer, so nothing was damaged; it simply has not run for real.
+- **`ConfigureCommunity` still writes `communities.name` directly**, which
+  `guard_community_name` pins back. Renaming a community through that page
+  still does nothing. Named in Round 168 and still true; it has to move onto
+  `rename_community`.
+- No page offers somebody their retired usernames to pick from, though
+  `username_history_of` returns them.
+- The forum has no search, no quoting, no paging past fifty topics, and no
+  per-category moderators.
+- `npm run check:migrations` reports six findings. All six are in 0247,
+  0260, 0261 and 0263 and predate this batch; none are in 0280 to 0283.

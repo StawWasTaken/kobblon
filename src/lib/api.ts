@@ -9,7 +9,8 @@ import { FLOOR_FACE } from './mannequin'
 import { plainFace } from './plainFace'
 import { timeAgo } from './format'
 import type {
-  ActivityEvent, AssetKind, BoardRow, BoardSide, Community, EarnedBadge, MarketAsset,
+  ActivityEvent, AssetKind, BoardRow, BoardSide, Community, EarnedBadge,
+  ForumPerson, ForumRelated, ForumTagOption, ForumWritten, MarketAsset,
   OwnerBoard, PersonPlace, WorldBoard, WorldBoardRow,
   MemberCommunity, Message, Notification, OwnAsset, PixelTransaction, PlatformStats, Profile,
   ProfileOverview, Space, SpaceBadge, SpaceCategory, SpaceMessage, SpaceStats, Conversation,
@@ -4586,6 +4587,21 @@ export async function nameMarksFor(who: string[]): Promise<Map<string, string[]>
   return new Map((rows ?? []).map((row) => [row.id, row.marks ?? []]))
 }
 
+/**
+ * The same again, for the lists that carry a username and no id.
+ *
+ * Most of the Catalog is one of those: `browse_market` and its four
+ * neighbours select `creator_username` and never `creator_id`, so the only
+ * way to ask about those names without rewriting five large functions is
+ * to ask by the name itself. It is the same `name_marks` underneath.
+ */
+export async function nameMarksByName(names: string[]): Promise<Map<string, string[]>> {
+  if (!names.length) return new Map()
+  const rows = unwrap(await supabase.rpc('name_marks_by_name', { names })) as
+    { username: string; marks: string[] }[]
+  return new Map((rows ?? []).map((row) => [row.username, row.marks ?? []]))
+}
+
 export async function aiWorkWaiting(): Promise<WorkWaiting | null> {
   const rows = unwrap(await supabase.rpc('ai_work_waiting')) as WorkWaiting[]
   return rows?.[0] ?? null
@@ -5919,4 +5935,49 @@ export async function forumLike(what: 'topic' | 'post', id: number): Promise<boo
  */
 export async function forumSeen(topic: number): Promise<void> {
   await supabase.rpc('forum_seen', { in_topic: topic })
+}
+
+
+/* ------------------------------------------------------- forum profiles */
+
+/** What else to read after this one. */
+export async function forumRelated(topic: number, howMany = 5): Promise<ForumRelated[]> {
+  const rows = unwrap(await supabase.rpc('forum_related', {
+    in_topic: topic, in_limit: howMany,
+  }))
+  return (rows as ForumRelated[]) ?? []
+}
+
+/** Somebody's forum profile, by username. */
+export async function forumProfile(username: string): Promise<ForumPerson | null> {
+  const rows = (unwrap(await supabase.rpc('forum_profile', {
+    in_username: username,
+  })) as ForumPerson[]) ?? []
+  return rows[0] ?? null
+}
+
+/** Everything somebody has written on the forum, newest first. */
+export async function forumPostsOf(
+  who: string, howMany = 20, from = 0,
+): Promise<ForumWritten[]> {
+  const rows = unwrap(await supabase.rpc('forum_posts_of', {
+    in_user: who, in_limit: howMany, in_offset: from,
+  }))
+  return (rows as ForumWritten[]) ?? []
+}
+
+/** The tags somebody may pick, and the one nobody may. */
+export async function forumTagList(): Promise<ForumTagOption[]> {
+  const rows = unwrap(await supabase.rpc('forum_tag_list'))
+  return (rows as ForumTagOption[]) ?? []
+}
+
+/**
+ * Your own tag and your own bio, both at once.
+ *
+ * A bio of null hands the question back to your Kobblon profile rather
+ * than leaving an empty sentence on the forum.
+ */
+export async function setForumProfile(tag: string | null, bio: string | null): Promise<void> {
+  unwrap(await supabase.rpc('set_forum_profile', { in_tag: tag, in_bio: bio }))
 }

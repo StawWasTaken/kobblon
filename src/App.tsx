@@ -51,6 +51,7 @@ const Forum = lazyPage(() => import('@/pages/Forum'))
 const ForumCategory = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumCategory })))
 const ForumTopicPage = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumTopicPage })))
 const ForumNew = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumNew })))
+const ForumProfile = lazyPage(() => import('@/pages/ForumProfile'))
 const About = lazyPage(() => import('@/pages/About'))
 const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
@@ -154,6 +155,13 @@ export default function App() {
               <Route path="/forum/new" element={<ForumNew />} />
               <Route path="/forum/c/:slug" element={<ForumCategory />} />
               <Route path="/forum/t/:id" element={<ForumTopicPage />} />
+              {/*
+               * Somebody, on the forum. A page of its own rather than a
+               * band on the Kobblon profile: Staw asked for it to be "a
+               * bit more professioanl", which means it shows what a
+               * stranger reading a thread wants and not the rest.
+               */}
+              <Route path="/forum/u/:username" element={<ForumProfile />} />
               {/* Where a Kobblon application sends somebody to sign in. Named
                   one at a time rather than by pattern: /anything/sign-in
                   should be nothing, not a sign-in page for an app that does

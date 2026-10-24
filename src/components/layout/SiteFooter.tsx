@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { faDiscord, faYoutube } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
-import { Wordmark } from '@/components/brand/Wordmark'
+import { Wordmark, Logomark } from '@/components/brand/Wordmark'
 import { cn } from '@/lib/cn'
 
 /*
@@ -43,8 +43,28 @@ const atKobblon = [
   { to: '/guidelines', label: 'Community guidelines' },
 ]
 
-/** Ours, elsewhere. Every one of these is a real address. */
-const social: { href: string; label: string; icon: IconDefinition }[] = [
+/**
+ * Ours, elsewhere - and the one that is not elsewhere at all.
+ *
+ * Staw: "to social, instead of adding our reddit forum we'll add the
+ * Kobblon Forums/ Community Forum (chose the name that u want to use
+ * between these two) and use the kobblon logomark for that". Community
+ * Forum, because that is what the page calls itself and what its tab title
+ * says, and two names for one room is how a link gets clicked twice.
+ *
+ * It is the only entry here that is ours rather than somebody else's, so
+ * it carries our mark rather than a brand glyph, and it is a `to` rather
+ * than an `href`: a router link, not a new tab out of the site into the
+ * site. Every other one of these is a real address and opens away.
+ */
+const social: {
+  href?: string
+  to?: string
+  label: string
+  icon?: IconDefinition
+  mark?: boolean
+}[] = [
+  { to: '/forum', label: 'Community Forum', mark: true },
   { href: 'https://discord.gg/SsjvR6rmez', label: 'Discord', icon: faDiscord },
   {
     href: 'https://www.youtube.com/channel/UCjFPtUjIY7mDFFOv-LuB7hQ',
@@ -115,22 +135,43 @@ export function SiteFooter({ className }: { className?: string }) {
           <div>
             <Heading>Social</Heading>
             <ul className="mt-4 space-y-2.5">
-              {social.map((one) => (
-                <li key={one.href}>
-                  <a
-                    href={one.href}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="group flex items-center gap-2.5 text-sm font-semibold text-white/55 transition-colors hover:text-brand-bright"
-                  >
-                    <Glyph
-                      icon={one.icon}
-                      className="h-4 w-4 text-white/35 transition-colors group-hover:text-brand-bright"
-                    />
+              {social.map((one) => {
+                /*
+                 * The mark's height is arbitrary, not `h-4`. `Logomark`
+                 * carries `h-7` of its own and `cn` joins rather than
+                 * merges, so two scale classes would be decided by
+                 * Tailwind's own order - which puts `h-7` last and would
+                 * draw our mark half again the size of the glyphs beside
+                 * it. Arbitrary values are emitted after the scale, so
+                 * this one wins where it is meant to.
+                 */
+                const inside = (
+                  <>
+                    {one.mark ? (
+                      <Logomark className="h-[1rem] shrink-0" />
+                    ) : (
+                      <Glyph
+                        icon={one.icon as IconDefinition}
+                        className="h-4 w-4 text-white/35 transition-colors group-hover:text-brand-bright"
+                      />
+                    )}
                     {one.label}
-                  </a>
-                </li>
-              ))}
+                  </>
+                )
+                const look = 'group flex items-center gap-2.5 text-sm font-semibold text-white/55 transition-colors hover:text-brand-bright'
+
+                return (
+                  <li key={one.label}>
+                    {one.to ? (
+                      <Link to={one.to} className={look}>{inside}</Link>
+                    ) : (
+                      <a href={one.href} target="_blank" rel="noreferrer noopener" className={look}>
+                        {inside}
+                      </a>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         </div>

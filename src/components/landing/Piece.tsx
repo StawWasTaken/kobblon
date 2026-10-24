@@ -4,7 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { faImage, faMusic, faVideo, faFont, faCube, faShapes } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { CurrencyMark } from '@/components/brand/Currency'
-import { Verified, isVerified } from '@/components/brand/Verified'
+import { NameMarks } from '@/components/brand/Verified'
 import { useSignedUrl, usePictureUrl } from '@/hooks/useSignedUrl'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { contentTag } from '@/components/create/AssetTile'
@@ -224,10 +224,14 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
 
       <span className="mt-0.5 flex items-center gap-1.5 text-sm text-white/45">
         {item.creator_display_name}
-        {isVerified({
-          is_admin: item.creator_is_admin,
-          is_verified: item.creator_is_verified,
-        }) && <Verified className="text-[10px]" />}
+        <NameMarks
+          username={item.creator_username}
+          person={{
+            is_admin: item.creator_is_admin,
+            is_verified: item.creator_is_verified,
+          }}
+          className="text-[10px]"
+        />
       </span>
     </Link>
   )
