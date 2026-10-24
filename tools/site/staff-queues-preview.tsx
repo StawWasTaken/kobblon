@@ -10,7 +10,9 @@ import { createRoot } from 'react-dom/client'
 import { ToastProvider } from '@/components/ui/Toast'
 import { TicketLine, TicketDrawer } from '@/components/staff/SupportQueue'
 import { AppealLine, AppealDrawer } from '@/components/staff/AppealsQueue'
+import { TopicLine } from '@/components/staff/ForumQueue'
 import type { TicketRow, AppealRow } from '@/lib/api'
+import type { ForumTopic } from '@/types/db'
 import '@/index.css'
 
 const ago = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString()
@@ -65,6 +67,47 @@ const appeals: AppealRow[] = [
   },
 ]
 
+/*
+ * Three forum rows: a pinned one, a locked one and one that has been taken
+ * down. The removed one is the row that matters here - it is the only
+ * place on the whole platform that draws a removed topic, so it is the
+ * only place the Restore button can be looked at.
+ */
+const author = {
+  author_id: 'f', author_username: 'brickjo', author_name: 'Jo',
+  author_avatar: null, author_is_verified: false,
+  author_is_admin: false, author_is_moderator: false,
+}
+
+const topics: ForumTopic[] = [
+  {
+    ...author, id: 512, category: 'help', category_name: 'Help',
+    title: 'How do I make a door that only opens for one team?',
+    body: 'I have the door and the team, I cannot work out the check.',
+    images: [], status: 'open', is_pinned: true, is_locked: false,
+    is_removed: false, view_count: 412, reply_count: 7, like_count: 12,
+    answer_id: 9001, last_post_at: ago(2), created_at: ago(30), liked: false,
+  },
+  {
+    ...author, id: 509, category: 'ideas', category_name: 'Ideas',
+    author_username: 'meshsam', author_name: 'Sam',
+    title: 'Please let a World belong to a Community',
+    body: 'Right now a Community has members and nothing it owns.',
+    images: [], status: 'looked-at', is_pinned: false, is_locked: true,
+    is_removed: false, view_count: 1840, reply_count: 63, like_count: 211,
+    answer_id: null, last_post_at: ago(9), created_at: ago(200), liked: false,
+  },
+  {
+    ...author, id: 498, category: 'general', category_name: 'General',
+    author_username: 'nineline', author_name: 'nineline',
+    title: 'free brix generator 100% working no scam click here',
+    body: 'just go to this site and put your password in',
+    images: [], status: 'open', is_pinned: false, is_locked: false,
+    is_removed: true, view_count: 96, reply_count: 2, like_count: 0,
+    answer_id: null, last_post_at: ago(40), created_at: ago(41), liked: false,
+  },
+]
+
 function Everything() {
   const [ticket, setTicket] = useState<TicketRow | null>(tickets[0])
   const [appeal, setAppeal] = useState<AppealRow | null>(null)
@@ -85,6 +128,23 @@ function Everything() {
         <ul className="space-y-2">
           {appeals.map((one) => (
             <li key={one.id}><AppealLine one={one} onOpen={() => setAppeal(one)} /></li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="font-display text-lg font-extrabold">Forum</h2>
+        <ul className="space-y-2">
+          {topics.map((one) => (
+            <li key={one.id}>
+              <TopicLine
+                one={one}
+                onPin={() => {}}
+                onLock={() => {}}
+                onRestore={() => {}}
+                onTakeDown={() => {}}
+              />
+            </li>
           ))}
         </ul>
       </section>

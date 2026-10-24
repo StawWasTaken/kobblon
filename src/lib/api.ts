@@ -6064,6 +6064,46 @@ export async function forumRemove(what: 'topic' | 'post', id: number): Promise<v
   unwrap(await supabase.rpc('forum_remove', { in_what: what, in_id: id }))
 }
 
+/**
+ * Taking a forum post down as staff, with the author told why.
+ *
+ * `forumRemove` above is the same flag and no words: it is the author
+ * deleting their own. This one is a moderation decision - it writes the
+ * record, tells the person and points them at their standing so they can
+ * appeal - and it is what the console uses.
+ */
+export async function takeDownForum(
+  what: 'forum_topic' | 'forum_post', id: number, why: string,
+): Promise<void> {
+  unwrap(await supabase.rpc('take_down_forum', { what, which: id, said: why }))
+}
+
+/** Putting one back. Staff only, and the author is told that too. */
+export async function forumRestore(what: 'topic' | 'post', id: number): Promise<void> {
+  unwrap(await supabase.rpc('forum_restore', { in_what: what, in_id: id }))
+}
+
+/**
+ * Every topic, the taken-down ones included. Staff only.
+ *
+ * The forum's own reading functions all filter `not is_removed`, so this
+ * is the only way a console can show what has been removed - see 0295 for
+ * why that is a second door rather than a wider one.
+ */
+export async function forumStaffTopics(input: {
+  which?: 'all' | 'live' | 'removed' | 'locked' | 'pinned'
+  category?: string | null
+  limit?: number
+  offset?: number
+} = {}): Promise<ForumTopic[]> {
+  return (unwrap(await supabase.rpc('forum_staff_topics', {
+    in_which: input.which ?? 'all',
+    in_category: input.category ?? null,
+    in_limit: input.limit ?? 60,
+    in_offset: input.offset ?? 0,
+  })) as ForumTopic[]) ?? []
+}
+
 /** Staff marking a topic. The server refuses a mark the category has not got. */
 export async function forumSetStatus(topic: number, status: ForumStatus): Promise<void> {
   unwrap(await supabase.rpc('forum_set_status', { in_topic: topic, in_status: status }))

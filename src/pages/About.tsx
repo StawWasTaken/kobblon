@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { faArrowRight, faArrowDown } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
-import { TopTopics } from '@/components/forum/TopTopics'
+import { TopicCard, useTopTopics } from '@/components/forum/TopicCard'
 import { Button } from '@/components/ui/Button'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
@@ -77,6 +77,8 @@ const safety: { icon: KobIcon; name: string; body: string }[] = [
 
 export default function About() {
   useAtTitle('What is Kobblon')
+  /* Three real posts in the forum band, and no band at all without them. */
+  const talk = useTopTopics(3)
   useSocialCard({
     title: 'What is Kobblon',
     description: 'An online sandbox platform filled with user-generated 3D worlds.',
@@ -308,22 +310,44 @@ export default function About() {
       </Band>
 
       {/* ------------------------------------------------------------ forum */}
-      <Band tone="night" edge>
-        <Reveal>
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <BandHead
-              eyebrow="Community Forum"
-              title="Where it gets decided."
-              lead="Most of what is on this page started as somebody asking for it on the forum."
-            />
-            <Button to="/forum" variant="subtle" iconRight={faArrowRight}>
-              Open the forum
-            </Button>
-          </div>
-        </Reveal>
+      {/*
+        * Post cards, not a list.
+        *
+        * Staw: "for the what is kobblon page i was more expecting to see
+        * post cards rather than this". The band above this one is three
+        * big cards with pictures in them and the band below is policies in
+        * cards; five thin bordered rows in between read as a settings
+        * panel that had wandered in. Three real posts, in the shape this
+        * page uses for everything else.
+        *
+        * The whole band goes when the forum is quiet. An At Kobblon page
+        * saying "where it gets decided" over an empty rectangle is worse
+        * than not making the claim.
+        */}
+      {!!talk.length && (
+        <Band tone="night" edge>
+          <Reveal>
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <BandHead
+                eyebrow="Community Forum"
+                title="Where it gets decided."
+                lead="Most of what is on this page started as somebody asking for it on the forum."
+              />
+              <Button to="/forum" variant="subtle" iconRight={faArrowRight}>
+                Open the forum
+              </Button>
+            </div>
+          </Reveal>
 
-        <TopTopics className="mt-10" head={false} />
-      </Band>
+          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+            {talk.slice(0, 3).map((topic, at) => (
+              <Reveal key={topic.id} delay={at * 80}>
+                <TopicCard topic={topic} look="glass" className="h-full" />
+              </Reveal>
+            ))}
+          </div>
+        </Band>
+      )}
 
       {/* --------------------------------------------------------- policies */}
       <Band tone="raised" edge>

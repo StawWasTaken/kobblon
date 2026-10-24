@@ -97,8 +97,15 @@ export function AppShell() {
             * offset and the phone bar's clearance without knowing either
             * number. A foot that has to be told the sidebar is 14rem wide is
             * a foot that goes wrong the next time the sidebar changes.
+            *
+            * `mt-24` and not `mt-12`. Staw: "i want bigger spacing between
+            * the logged in pages footer & its content". At twelve the foot
+            * read as the last row of the page rather than as the end of it,
+            * which is the whole job of a foot - every page on this side ends
+            * in cards, and a card followed by a column of links twelve units
+            * down is one more card.
             */}
-          <SiteFooter compact className="mt-12" />
+          <SiteFooter compact className="mt-24 sm:mt-28" />
         </main>
 
         <PhoneBar />

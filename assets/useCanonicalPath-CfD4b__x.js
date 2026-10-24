@@ -1,0 +1,1 @@
+import{Zs as e}from"./api-kSkOdROX.js";import{mi as t,pi as n,xi as r}from"./Input-DfSEkjpM.js";var i=e(r(),1);function a(e){let{pathname:r,search:a,hash:o}=n(),s=t();(0,i.useEffect)(()=>{e&&decodeURIComponent(r).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,r,a,o,s])}export{a as t};

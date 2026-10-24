@@ -7,7 +7,7 @@ import { Icon, type KobIcon } from '@/components/brand/Icon'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faCircleQuestion, faHammer, faComment, faLock, faPlus, faLayerGroup,
-  faMagnifyingGlass, faXmark, faShieldHalved,
+  faMagnifyingGlass, faXmark, faShieldHalved, faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutNav } from '@/components/layout/AboutNav'
@@ -222,6 +222,7 @@ export function ForumShell({
               <RailLink to="/forum" here={pathname === '/forum'} icon={faLayerGroup}>
                 All topics
               </RailLink>
+              <YouLink here={pathname.startsWith('/forum/u/')} />
               <MineLink here={pathname === '/forum/mine'} />
             </nav>
 
@@ -298,6 +299,30 @@ function RailLink({
  * pages anybody can read - signed out, `useAuth` throws and the whole
  * forum goes blank rather than the one link not appearing.
  */
+/**
+ * Your own forum profile, from the forum's own rail.
+ *
+ * It lived in the account menu for a round and came out again with
+ * everything else Staw called "a lot of stuff": a menu that is the same on
+ * both halves of the site cannot carry one half's pages. The forum is
+ * where somebody wants their forum profile, so it is on the forum's rail,
+ * next to the two other links that are about them.
+ *
+ * `useMaybeAuth` for the reason the link below gives: signed out, `useAuth`
+ * throws and the whole forum goes blank rather than one link not drawing.
+ */
+function YouLink({ here }: { here: boolean }) {
+  const auth = useMaybeAuth()
+  const profile = auth?.profile ?? null
+  if (!profile || profile.is_guest) return null
+
+  return (
+    <RailLink to={`/forum/u/${profile.username}`} here={here} icon={faUser}>
+      Your profile
+    </RailLink>
+  )
+}
+
 function MineLink({ here }: { here: boolean }) {
   const auth = useMaybeAuth()
   const profile = auth?.profile ?? null

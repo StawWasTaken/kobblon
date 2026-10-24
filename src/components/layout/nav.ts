@@ -1,6 +1,6 @@
 import {
-  faHouse, faCompass, faUserGroup, faBookmark, faShirt, faGear, faShapes, faUser, faUsers,
-  faPeopleGroup, faEnvelope, faComments, faCircleInfo, faDownload, faScroll,
+  faHouse, faCompass, faUserGroup, faBookmark, faShirt, faShapes, faUser, faUsers,
+  faPeopleGroup, faEnvelope, faComments, faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import type { KobIcon } from '@/components/brand/Icon'
@@ -53,12 +53,22 @@ export const topNav: NavItem[] = [
 export const sideNav: NavItem[] = [
   { to: '/home', label: 'Home', icon: faHouse, end: true },
   { to: '/profile', label: 'Profile', icon: faUser },
+  { to: '/avatar', label: 'My Avatar', icon: faShirt, ours: 'avatar' },
   { to: '/friends', label: 'Friends', icon: faUserGroup, badge: 'friends' },
   { to: '/people', label: 'People', icon: faUsers },
-  { to: '/avatar', label: 'My Avatar', icon: faShirt, ours: 'avatar' },
   { to: '/library', label: 'Library', icon: faBookmark },
   { to: '/inbox', label: 'Inbox', icon: faEnvelope, badge: 'mail' },
-  { to: '/settings', label: 'Settings', icon: faGear },
+  /*
+   * Settings left the rail. It is in the account menu under the gear, and
+   * it was in both - the same page reached two ways from one screen, which
+   * is half of what made this side feel like a lot of stuff. Staw, with
+   * Roblox's menu beside ours: "the logged in pages sidebar+topbar
+   * navigating stuff are too confusing".
+   *
+   * My Avatar moved up beside Profile for the same reason the other way
+   * round: those two are both you, and they read as one pair rather than
+   * as two entries three rows apart.
+   */
 ]
 
 /**
@@ -85,20 +95,24 @@ export const mobileNav: NavItem[] = [
 ]
 
 /**
- * The way out of the signed-in pages and into the ones that speak for
- * Kobblon - the forum first.
+ * The door across, and it is a door rather than a wing of the building.
  *
- * Staw: the two halves of this site had no door between them. From a
- * signed-in page the only route to the forum or to What is Kobblon was the
- * footer, which on those pages did not exist, or the address bar. So it is
- * a third group at the foot of the rail, drawn smaller than the rail's own
- * rows, because it is where you leave rather than where you are.
+ * Staw: "i want that in the main navigating areas of logged in/at kobblon
+ * theres navigating stuff around their own pages ... and to go from at
+ * kobblon to logged in pages idk theres one singular or maybe two or three
+ * portals to do that, make it coherent and clear rather than this mess".
  *
- * Only pages that exist. The wiki and the newsroom are ideas.
+ * So this was four rows at the foot of the rail - Forum, What is Kobblon,
+ * Download, Policies - and it is two. The whole At Kobblon side is listed
+ * in that side's own bar and in the foot of every page; repeating four of
+ * them in this rail is the mess, because then neither menu is about one
+ * thing.
+ *
+ * The two that are left are the two people actually cross for: the forum,
+ * which is a room they are in rather than a page about Kobblon, and What
+ * is Kobblon, which is the way into everything else over there.
  */
 export const outNav: NavItem[] = [
   { to: '/forum', label: 'Forum', icon: faComments },
   { to: '/about', label: 'What is Kobblon', icon: faCircleInfo },
-  { to: '/download', label: 'Download', icon: faDownload },
-  { to: '/policies', label: 'Policies', icon: faScroll },
 ]

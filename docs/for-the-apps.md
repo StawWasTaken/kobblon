@@ -13042,3 +13042,133 @@ additive, the one dropped function is a staff-console RPC, and `openTicket`
 still works called the old way. The piece worth acting on is the first
 section: support no longer needs a session, so a signed-out failure path in
 the Launcher can offer a real ticket instead of a dead end.
+
+## Round one hundred and seventy-six
+
+Navigation split in two, Contact & Support cut down to what it is for, the
+forum quotation rebuilt as real post cards, and a forum panel in the staff
+console - which turned up two server bugs that meant forum moderation had
+never worked at all.
+
+### Removing a forum post raised an error every single time
+
+`take_report` calls `take_down(target_type, target_id::uuid, said)`. A
+forum id is a `bigint`, so `'412'::uuid` raises *invalid input syntax for
+type uuid*. Every Remove on a forum report since the forum shipped has
+failed with that, and the second wall behind it is that
+`violations.target_type`'s check constraint has no forum values, so even a
+working cast would have been refused on the write.
+
+`0294_a_reported_forum_post_can_actually_be_taken_down.sql` widens that
+constraint with `forum_topic` and `forum_post`, adds
+`take_down_forum(what text, which bigint, said text)` - staff only, flags
+the row, notifies the author, mails them, points them at `/standing` and
+writes the admin log - and gives `take_report` a branch so a forum target
+goes there and everything else still goes to `take_down`.
+
+Worth saying how it was found: not by reading it. The first version of
+`take_down_forum` named a local variable `title`, which collides with
+`forum_topics.title`, and Postgres refused the function outright. Running a
+migration twice against a real database is the check; reading it is not.
+
+### Staff could take a forum post down and then never see it again
+
+Every reading function on the forum filters `not is_removed`, so a removed
+topic is reachable from nowhere - including by the person who removed it.
+`0295_the_forum_from_the_console.sql` adds the one door that does not
+filter: `forum_staff_topics(in_which, in_category, in_limit, in_offset)`,
+staff only, where `in_which` is `all`, `live`, `removed`, `locked` or
+`pinned`, returning the same columns as `forum_topics_list`. And
+`forum_restore(in_what, in_id)`, staff only, which clears the flag, logs it
+and tells the author.
+
+`forum_topics_list` is deliberately untouched. A wider reading function
+with a staff branch inside it is one function that behaves differently
+depending on who asks, and that is the shape that quietly leaks.
+
+**Both migrations need applying in the SQL editor**, along with 0293 from
+the last round if that has not been run yet.
+
+New in `@/lib/api`: `forumStaffTopics`, `forumRestore`, `takeDownForum`.
+`takeDownForum` is not `forumRemove` - that one is the author deleting
+their own and says nothing to anybody; this one is a moderation decision
+with words attached that the person can appeal.
+
+### Navigation: each half lists its own half
+
+Staw: "at kobblon's navbar will mainly display navigating stuff around at
+kobblon, while logged in pages shall mainly show navigating around logged
+in pages, and to go from at kobblon to logged in pages idk theres one
+singular or maybe two or three portals".
+
+So: `outNav` - the way out of the signed-in rail - is two entries now,
+Forum and What is Kobblon. Download, Settings and Policies are gone from
+it; Settings has a gear of its own and the other two live in the At
+Kobblon bar, which is where they belong. The At Kobblon bar gains
+`Contact`. Nothing is in both lists any more except the two portals, which
+is what a portal is.
+
+The account menu was eight rows and is now five or six: Settings, Account
+standing, Contact & Support, Switch Accounts, Log Out, plus Staff for staff
+and Keep this account for a guest. My Avatar moved to the rail and the
+forum profile moved to the forum's own rail, which now has a Your profile
+entry above Mine. The rule that came out of Staw's Roblox comparison:
+**this menu is the account, not the site.**
+
+The signed-in pages' footer sits on `mt-24 sm:mt-28` instead of `mt-12`.
+
+### Contact & Support
+
+Renamed from Support, and cut down. Staw: "we just need a contact us card
+thing and prevuious tickets or awaiting tickets and thats it". It is a
+hero, one card with the two buttons on it, and your tickets. The policies
+block, the sign-in block and the "where the reply goes" panel are gone.
+
+The investor wording is Staw's own, verbatim in substance: investing in
+Kobblon means giving - money, time, a word in the right place, dedication -
+for little or nothing back, unless something is agreed directly with him.
+Nothing is on sale and Kobblon is not publicly traded. If the Launcher or
+the Workspace ever says anything about investing, say that.
+
+A screenshot caught a real bug while this was being checked: picking a
+topic auto-advanced the step, so the line under the tiles - which on the
+business form is that disclaimer - was drawn for a tenth of a second and
+gone. It no longer advances on its own.
+
+### The forum, where it is quoted
+
+`src/components/forum/TopicCard.tsx` is new and is the only thing that
+draws a forum topic outside the forum now. Two looks: `tile` for the
+signed-in home's shelves, which is the same card the rest of that page's
+shelves use, and `glass` for the At Kobblon bands. Both carry the board
+chip, the time, the title, the first lines of the body, and the author with
+the reply and like counts. It exports `useTopTopics(limit)`.
+
+The home page's "From the forum" is a `Row` like every other row on that
+page, and What is Kobblon's band is three glass cards instead of a list
+that matched nothing around it. Both hide entirely when there are no
+topics, rather than drawing a heading over nothing.
+
+Still never drawn with real rows - no route to Supabase from this
+container. Third round saying so; it wants a look on the live site.
+
+### The console
+
+A Forum panel, moderator and up: every topic including the removed ones,
+tabs for Everything, Live, Removed, Locked and Pinned, and Pin, Lock,
+Remove and Restore on the rows. Remove asks for words first and will not
+send without them, because a removal with no reason cannot be appealed.
+`tools/site/staff-queues-preview.tsx` now draws three forum rows beside the
+ticket and appeal rows, which is where the removed-row look was checked.
+
+### For the applications
+
+Nothing here changes a signature you call. `take_down_forum`,
+`forum_restore` and `forum_staff_topics` are new and staff-only; the three
+api wrappers are additive. If the Workspace ever grows a staff view, those
+three are what it would read.
+
+What is still not built, said plainly: the newsroom, the wiki, a World
+belonging to a Community, and Round 133's five Launcher questions, which
+have now been open for long enough that it is worth saying whether they
+are dead rather than leaving them listed.

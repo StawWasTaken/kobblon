@@ -28,12 +28,22 @@ import { cn } from '@/lib/cn'
  * Kobblon, Forum, Policies, Download". Download last rather than second,
  * which is the order somebody actually moves through these: what this is,
  * where everybody is, what the rules are, and then the thing you install.
+ *
+ * Contact on the end, where Staw put it: "the support/contact us page
+ * should be in the navbar of the at kobblon texts". It belongs on this
+ * side now - it takes anybody, with or without an account - and this bar
+ * is the only thing on this side that lists this side's pages.
+ *
+ * **These are At Kobblon pages and nothing else.** Where a bar belongs to
+ * one half of the site it carries that half's pages; the way across is a
+ * door of its own, not a fifth entry pretending to be a sibling of these.
  */
 export const ABOUT_LINKS = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/forum', label: 'Forum' },
   { to: '/policies', label: 'Policies' },
   { to: '/download', label: 'Download' },
+  { to: '/support', label: 'Contact' },
 ]
 
 export function AboutNav({ className }: { className?: string }) {

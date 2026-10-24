@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faGear, faShieldHalved, faRightFromBracket, faScroll, faRightLeft, faUserPlus,
-  faUserShield, faShirt,
-  faHeadset, faComments,
+  faGear, faShieldHalved, faRightFromBracket, faRightLeft, faUserPlus,
+  faUserShield, faHeadset,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { SwitchAccounts } from './SwitchAccounts'
@@ -26,6 +25,20 @@ type Item = { to?: string; label: string; icon: IconDefinition; onSelect?: () =>
  * on it theres a menu (like when u click on settings in the logged in
  * pages)". It is the same menu rather than a second one that looks like it,
  * because two of these is two places for "Log Out" to stop working.
+ *
+ * **Four rows and a sign-out, and that is the ceiling.** Staw, with a
+ * screenshot of Roblox's beside ours: "the card lists are also very
+ * confusing theres a lot of stuff while roblox' is way less confusing".
+ * Ours had eight. What came out went somewhere it belongs rather than
+ * nowhere: My Avatar is a row on the rail and a section of the top bar,
+ * and your forum profile is on the forum's own rail, beside the other two
+ * links about you.
+ *
+ * The rule that keeps it short: **this menu is the account, not the site.**
+ * It is drawn on both halves of Kobblon, so anything in it that is a page
+ * of one half is a page the other half is advertising. Settings, standing,
+ * writing to us, switching, leaving - those are about the account wherever
+ * you are standing.
  */
 export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) {
   const { profile, signOut } = useAuth()
@@ -58,31 +71,15 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
     ...(profile?.is_admin
       ? [{ to: '/staff', label: 'Staff', icon: faUserShield }]
       : []),
-    ...(profile && !profile.is_guest
-      ? [
-          { to: '/avatar', label: 'My Avatar', icon: faShirt },
-          /*
-           * Your forum profile, from anywhere.
-           *
-           * On an At Kobblon page this menu is the only thing that knows
-           * who you are, and the forum's own shell only links to a profile
-           * through a post - so somebody who had not posted yet had no way
-           * to their own. It is the forum's address rather than the site's:
-           * `/forum/u/<username>` is the page with the forum tags, the
-           * forum bio and the button across to the Kobblon profile.
-           */
-          { to: `/forum/u/${profile.username}`, label: 'Forum profile', icon: faComments },
-        ]
-      : []),
     { to: '/settings', label: 'Settings', icon: faGear },
     ...(profile
       ? [
           { to: '/standing', label: 'Account standing', icon: faShieldHalved },
-          { to: '/support', label: 'Support', icon: faHeadset },
+          { to: '/support', label: 'Contact & Support', icon: faHeadset },
           { label: 'Switch Accounts', icon: faRightLeft, onSelect: () => setSwitching(true) },
           { label: 'Log Out', icon: faRightFromBracket, onSelect: () => signOut() },
         ]
-      : [{ to: '/policies', label: 'Policies', icon: faScroll }]),
+      : [{ to: '/support', label: 'Contact & Support', icon: faHeadset }]),
   ]
 
   return (

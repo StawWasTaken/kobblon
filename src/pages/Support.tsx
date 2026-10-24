@@ -6,7 +6,7 @@ import {
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
   faCircleQuestion, faCheck, faUser, faEnvelope,
   faBolt, faArrowLeft, faPaperPlane,
-  faBriefcase, faHandshake, faChartLine, faNewspaper, faRightToBracket,
+  faBriefcase, faHandshake, faChartLine, faNewspaper,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutShell } from '@/components/layout/AboutShell'
@@ -126,7 +126,7 @@ export const businessTopics: {
 }[] = [
   {
     value: 'invest', short: 'Investing', label: 'Investing in Kobblon',
-    note: 'Kobblon is not a publicly traded company and nothing here is on sale. An investment buys nothing back unless it is negotiated directly with Staw, Kobblon’s CEO.',
+    note: 'Kobblon is not publicly traded and nothing here is on sale. Investing in Kobblon means giving - money, time, a word in the right place, dedication - for little or nothing back, unless something is agreed directly with Staw, Kobblon’s CEO.',
     icon: faChartLine,
   },
   {
@@ -693,7 +693,7 @@ export function TicketCard({
 }
 
 export default function Support() {
-  useTitle('Support')
+  useTitle('Contact & Support')
   const { profile } = useAuth()
   const toast = useToast()
 
@@ -750,227 +750,189 @@ export default function Support() {
 
   return (
     /*
-     * The site's own column, centred, with nothing capped inside it.
+     * One card and a list, and nothing else.
      *
-     * It was held to 48rem for a day to sit at the width a settings panel
-     * is read at - but a settings panel is narrow because a rail is beside
-     * it, and these two have no rail, so the cap was a column pinned to the
-     * left of a page with a third of it empty. Staw: "arent center-centered,
-     * and too small in my opinion". Right on both counts: without a rail,
-     * the page is the column.
+     * Staw: "make this page much simpler, we just need a contact us card
+     * thing and prevuious tickets or awaiting tickets and thats it". What
+     * was here besides those two was a row to Policies, a row to the
+     * sign-in page, a row to account standing and a panel explaining where
+     * a reply goes - four signposts around a page whose whole job is one
+     * button. The foot already carries Policies, the bar already carries
+     * sign-in, and standing is in the account menu.
      */
     <AboutShell
       hero={
-        <Lane className="flex min-h-[34vh] flex-col justify-center py-16">
+        <Lane className="flex min-h-[30vh] flex-col justify-center py-14">
           <Reveal>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
-              Support
+              Contact &amp; Support
             </p>
             <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[0.98] tracking-tight">
               Write to us.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
-              {profile
-                ? 'Everything you send, and everything we say back, stays on this page. A reply lands here and in your inbox.'
-                : 'An account is not needed. Tell us where to write back and the reply goes there - and if you are a company, there is a form of your own on the first step.'}
+              Kobblon will be glad to hear from you. An account is not needed - tell us
+              where to write back and the reply goes there.
             </p>
-          </Reveal>
-          <Reveal delay={140}>
-            <div className="mt-8 flex flex-wrap gap-3">
-              {/*
-                * No `GuestGate` and no `disabled={!profile}` any more. The
-                * page is readable and writable without an account since
-                * 0293, which is the only honest arrangement for a support
-                * page: the person who cannot sign in is exactly the person
-                * who needs it.
-                */}
-              <Button icon={faPlus} size="lg" variant="yes" onClick={() => startWriting()} disabled={writing}>
-                New ticket
-              </Button>
-              <Button
-                icon={faBriefcase}
-                size="lg"
-                variant="subtle"
-                onClick={() => startWriting('business')}
-                disabled={writing}
-              >
-                Business enquiry
-              </Button>
-            </div>
           </Reveal>
         </Lane>
       }
     >
       <Band tone="raised" edge>
-        <Lane className="space-y-8">
-      {/* The two places most people actually meant to go, in the shape
-          Settings uses for exactly this. */}
-      <Group>
-        {/*
-          * Account standing is a signed-in page and stays one - everything
-          * on it is about one account and it is reached from the account
-          * menu. So the row is only here for somebody who has an account to
-          * look at, rather than being a door into a page that would bounce
-          * them to the landing page.
-          */}
-        {profile && (
-          <Line
-            label="Where you stand"
-            note="A decision against your account is appealed there, not here."
-            icon={faScaleBalanced}
-            to="/standing"
-          />
-        )}
-        <Line
-          label="Policies"
-          note="Every policy, split by subject, each with the day it last changed."
-          icon={faScroll}
-          to="/policies"
-        />
-        {!profile && (
-          <Line
-            label="Sign in"
-            note="With an account, every ticket and every reply is on this page instead of only in your email."
-            icon={faRightToBracket}
-            to="/login"
-          />
-        )}
-      </Group>
-
-      {!profile ? (
-        /*
-          * Nothing to list. A ticket written without an account is readable
-          * by staff and by nobody else - `user_id = auth.uid()` is null
-          * rather than true - so there is no list to show here, and saying
-          * that plainly is better than an empty box that looks broken.
-          */
-        <Panel title="Where the reply goes">
-          <Card className="space-y-3 p-5">
-            <p className="text-sm leading-relaxed text-white/70">
-              You are writing without an account, so this page has nothing to list: a
-              ticket sent that way is held for support and shown to nobody else, not even
-              to the next person on this page. The reply goes to the address you give on
-              the form.
-            </p>
-            <p className="text-sm leading-relaxed text-muted">
-              Signed in, every ticket and every reply sits here instead, and in your inbox.
-            </p>
-          </Card>
-        </Panel>
-      ) : (
-      <Panel
-        title="Your tickets"
-        note={
-          tickets.data?.length
-            ? 'A reply lands here and in your inbox.'
-            : undefined
-        }
-      >
-        {tickets.loading && <Skeleton className="h-24 rounded-2xl" />}
-        {tickets.error && <ErrorState message={tickets.error} onRetry={tickets.reload} />}
-
-        {!tickets.loading && !tickets.data?.length && !tickets.error && (
-          <Card>
-            <EmptyState
-              mood="emptyBox"
-              title="Nothing open"
-              body="You have not written to us yet."
-              action={
-                <Button icon={faPlus} onClick={() => startWriting()}>
-                  Write to us
+        <Lane className="space-y-10">
+          {/* ------------------------------------------------- the card */}
+          <Card className="overflow-hidden p-0">
+            <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
+              <div className="min-w-0">
+                <h2 className="font-display text-2xl font-extrabold">Contact us</h2>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/60">
+                  Four short steps: who you are, what it is about, what happened, and
+                  where to write back. A company writing about investment, a
+                  partnership, our content or the press has a form of its own on the
+                  first step.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button icon={faPlus} size="lg" variant="yes" onClick={() => startWriting()} disabled={writing}>
+                  New ticket
                 </Button>
-              }
-            />
+                <Button
+                  icon={faBriefcase}
+                  size="lg"
+                  variant="subtle"
+                  onClick={() => startWriting('business')}
+                  disabled={writing}
+                >
+                  Business
+                </Button>
+              </div>
+            </div>
           </Card>
-        )}
 
-        {!!tickets.data?.length && (
-          <Group>
-            {tickets.data.map((ticket) => {
-              const look = lookOf(ticket.status)
-              const was = devices.find((one) => one.value === ticket.device)
-              return (
-                <Line
-                  key={ticket.id}
-                  onClick={() => setReading(ticket.id)}
-                  label={
-                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      {ticket.wants_human && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
-                          <Glyph icon={faBolt} className="text-[9px]" />
-                          Urgent
-                        </span>
-                      )}
-                      <span className="min-w-0">{ticket.subject}</span>
-                    </span>
-                  }
-                  note={
-                    <span className="flex flex-wrap items-center gap-x-2">
-                      {ticket.kind === 'business' && (
-                        <span className="inline-flex items-center gap-1.5 font-bold text-space-bright">
-                          <Glyph icon={faBriefcase} className="text-[10px]" />
-                          {ticket.org ?? 'Business'}
-                        </span>
-                      )}
-                      {ticket.kind === 'business' && <span aria-hidden="true">·</span>}
-                      <span>{topicWord(ticket.topic)}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>Last moved {timeAgo(ticket.updated_at)}</span>
-                      {was && (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Glyph icon={was.icon} className="text-[10px]" />
-                            {was.label}
+          {/* ------------------------------------------------ the tickets */}
+          {profile ? (
+            <Panel
+              title="Your tickets"
+              note="Open ones first. A reply lands here and in your inbox."
+            >
+              {tickets.loading && <Skeleton className="h-24 rounded-2xl" />}
+              {tickets.error && <ErrorState message={tickets.error} onRetry={tickets.reload} />}
+
+              {!tickets.loading && !tickets.data?.length && !tickets.error && (
+                <Card>
+                  <EmptyState
+                    mood="emptyBox"
+                    title="Nothing open"
+                    body="You have not written to us yet."
+                    action={
+                      <Button icon={faPlus} onClick={() => startWriting()}>
+                        Write to us
+                      </Button>
+                    }
+                  />
+                </Card>
+              )}
+
+              {!!tickets.data?.length && (
+                <Group>
+                  {tickets.data.map((ticket) => {
+                    const look = lookOf(ticket.status)
+                    const was = devices.find((one) => one.value === ticket.device)
+                    return (
+                      <Line
+                        key={ticket.id}
+                        onClick={() => setReading(ticket.id)}
+                        label={
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            {ticket.wants_human && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
+                                <Glyph icon={faBolt} className="text-[9px]" />
+                                Urgent
+                              </span>
+                            )}
+                            <span className="min-w-0">{ticket.subject}</span>
                           </span>
-                        </>
-                      )}
-                    </span>
-                  }
-                  action={
-                    <span className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
-                          look.look,
-                        )}
-                      >
-                        {look.word}
-                      </span>
-                      <Glyph icon={faArrowRight} className="hidden text-xs text-muted sm:block" />
-                    </span>
-                  }
-                />
-              )
-            })}
-          </Group>
-        )}
-      </Panel>
-      )}
+                        }
+                        note={
+                          <span className="flex flex-wrap items-center gap-x-2">
+                            {ticket.kind === 'business' && (
+                              <>
+                                <span className="inline-flex items-center gap-1.5 font-bold text-space-bright">
+                                  <Glyph icon={faBriefcase} className="text-[10px]" />
+                                  {ticket.org ?? 'Business'}
+                                </span>
+                                <span aria-hidden="true">·</span>
+                              </>
+                            )}
+                            <span>{topicWord(ticket.topic)}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>Last moved {timeAgo(ticket.updated_at)}</span>
+                            {was && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Glyph icon={was.icon} className="text-[10px]" />
+                                  {was.label}
+                                </span>
+                              </>
+                            )}
+                          </span>
+                        }
+                        action={
+                          <span className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                                look.look,
+                              )}
+                            >
+                              {look.word}
+                            </span>
+                            <Glyph icon={faArrowRight} className="hidden text-xs text-muted sm:block" />
+                          </span>
+                        }
+                      />
+                    )
+                  })}
+                </Group>
+              )}
+            </Panel>
+          ) : (
+            /*
+              * Nothing to list, and one line saying why rather than a panel
+              * about it. A ticket written without an account is held for
+              * support and shown to nobody else - `user_id = auth.uid()` is
+              * null, not true - so there is no list to draw here.
+              */
+            <p className="text-sm leading-relaxed text-muted">
+              Signed in, every ticket and every reply sits on this page. Writing without
+              an account, the reply goes to the address you give and nowhere else.
+            </p>
+          )}
 
-      <p className="px-1 text-xs leading-relaxed text-muted">
-        Kobblon never asks for your password, here or anywhere else.
-      </p>
+          <p className="text-xs leading-relaxed text-muted">
+            Kobblon never asks for your password, here or anywhere else.
+          </p>
 
-      {reading !== null && (
-        <TicketThread number={reading} onClose={shutCard} onChanged={tickets.reload} />
-      )}
+          {reading !== null && (
+            <TicketThread number={reading} onClose={shutCard} onChanged={tickets.reload} />
+          )}
 
-      {/*
-        * Keyed on how many times it has been opened, so a card that was
-        * cancelled half-filled does not come back half-filled. The state
-        * lives inside it; remounting is how it is cleared.
-        */}
-      <TicketCard
-        key={opened}
-        open={writing}
-        username={profile?.username}
-        signedIn={!!profile}
-        startKind={asKind}
-        sending={sending}
-        onClose={() => setWriting(false)}
-        onSend={send}
-      />
+          {/*
+            * Keyed on how many times it has been opened, so a card that was
+            * cancelled half-filled does not come back half-filled. The state
+            * lives inside it; remounting is how it is cleared.
+            */}
+          <TicketCard
+            key={opened}
+            open={writing}
+            username={profile?.username}
+            signedIn={!!profile}
+            startKind={asKind}
+            sending={sending}
+            onClose={() => setWriting(false)}
+            onSend={send}
+          />
         </Lane>
       </Band>
     </AboutShell>

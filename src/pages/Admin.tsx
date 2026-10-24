@@ -50,6 +50,7 @@ import { useTitle } from '@/hooks/useTitle'
 import { CommandBar } from '@/components/staff/CommandBar'
 import { AppealsQueue } from '@/components/staff/AppealsQueue'
 import { SupportQueue } from '@/components/staff/SupportQueue'
+import { ForumQueue } from '@/components/staff/ForumQueue'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { avatarOf } from '@/lib/avatars'
 import { formatCount, timeAgo } from '@/lib/format'
@@ -92,7 +93,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -154,6 +155,7 @@ const sections: {
   { name: 'Reports', icon: faFlag, art: 'report', needs: 'moderator', blurb: 'What people have reported, and what was done' },
   { name: 'Appeals', icon: faScaleBalanced, art: 'voice-user', needs: 'moderator', blurb: 'People disagreeing with a decision, and the answer' },
   { name: 'Support', icon: faLifeRing, art: 'chatbubble', needs: 'moderator', blurb: 'What people have written in about, urgent first' },
+  { name: 'Forum', icon: faComments, needs: 'moderator', blurb: 'Every topic, the taken-down ones included - pin, lock, remove or put back' },
   { name: 'People', icon: faUserShield, art: 'people', needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
   { name: 'Communities', icon: faPeopleGroup, art: 'people', needs: 'moderator', blurb: 'Flag one, verify one, close one, or hand it on' },
   { name: 'Screening', icon: faCircleCheck, art: 'checkmark', needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
@@ -5366,6 +5368,7 @@ export default function Admin() {
             {open === 'Reports' && <ReportsSection />}
             {open === 'Appeals' && <AppealsQueue />}
             {open === 'Support' && <SupportQueue />}
+            {open === 'Forum' && <ForumQueue />}
             {open === 'Screening' && <ScreeningSection />}
             {open === 'Machine' && <MachineSection />}
             {open === 'Map' && <MapSection />}
