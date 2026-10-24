@@ -586,6 +586,13 @@ export type SpaceMessage = {
 export type ConversationMember = Pick<
   Profile,
   'id' | 'username' | 'display_name' | 'avatar_url' | 'is_online' | 'in_space_id'
+  /*
+   * Whether there is still anybody behind the name. 0292 adds both to what
+   * `my_conversations` hands back; before it they are undefined, and
+   * `isGone` reads that as "still here", which is what the dock did
+   * anyway.
+   */
+  | 'closed_at' | 'is_banned'
 > & { is_guest?: boolean }
 
 export type Conversation = {

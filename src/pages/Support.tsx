@@ -8,8 +8,10 @@ import {
   faBolt, faArrowLeft, faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { Page } from '@/components/layout/AppShell'
-import { Panel, Group, Line, PageTop } from '@/components/settings/Panel'
+import { AboutShell } from '@/components/layout/AboutShell'
+import { Band, Lane } from '@/components/about/Band'
+import { Reveal } from '@/components/about/Reveal'
+import { Panel, Group, Line } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -505,19 +507,34 @@ export default function Support() {
      * and too small in my opinion". Right on both counts: without a rail,
      * the page is the column.
      */
-    <Page className="space-y-8">
-      <PageTop
-        title="Support"
-        note="Write to us. Everything you send, and everything we say back, stays on this page."
-        action={
-          <GuestGate action="write to support">
-            <Button icon={faPlus} onClick={startWriting} disabled={!profile || writing}>
-              New ticket
-            </Button>
-          </GuestGate>
-        }
-      />
-
+    <AboutShell
+      hero={
+        <Lane className="flex min-h-[34vh] flex-col justify-center py-16">
+          <Reveal>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
+              Support
+            </p>
+            <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[0.98] tracking-tight">
+              Write to us.
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
+              Everything you send, and everything we say back, stays on this page. A reply lands here and in your inbox.
+            </p>
+          </Reveal>
+          <Reveal delay={140}>
+            <div className="mt-8">
+              <GuestGate action="write to support">
+                <Button icon={faPlus} size="lg" variant="yes" onClick={startWriting} disabled={!profile || writing}>
+                  New ticket
+                </Button>
+              </GuestGate>
+            </div>
+          </Reveal>
+        </Lane>
+      }
+    >
+      <Band tone="raised" edge>
+        <Lane className="space-y-8">
       {/* The two places most people actually meant to go, in the shape
           Settings uses for exactly this. */}
       <Group>
@@ -640,6 +657,8 @@ export default function Support() {
         onClose={() => setWriting(false)}
         onSend={send}
       />
-    </Page>
+        </Lane>
+      </Band>
+    </AboutShell>
   )
 }

@@ -12723,3 +12723,100 @@ or the panel goes blank.**
   friend lists or chat rows, automatic Community verification by membership
   share, `register` not being deployed, `world_visits` only being written by
   `join_world_server`, and Support and Standing still being on the old shell.
+
+## Round one hundred and seventy-three: a search that reads the replies, a name that is gone everywhere, and a bell that could not render
+
+Three migrations to apply, in order: `0290`, `0291`, `0292`. One of them
+fixes a leak and one of them fixes a bug I shipped in Round one hundred and
+seventy-two. Both are below, named.
+
+### A bug I shipped, and the shape of it
+
+`NotificationsPanel` kept a lookup of marks by notification kind and read it
+directly. Round one hundred and seventy-two added `forum_reply` as a kind
+the database can now store, and did not add it to that lookup - so the first
+person to get a forum reply got `undefined.icon` and a blank panel, not a
+missing icon. A list that renders other people's data by a key it was
+written against will do this again every time the database learns a new
+value, so the fix is both: the two kinds are added, and `markFor(kind)`
+falls back to `marks.system` for anything it has never heard of. If the
+Workspace maps notification kinds anywhere, it wants the same fallback - the
+set is open-ended now.
+
+### A visibility leak, fixed in 0290
+
+`forum_search` always filtered hidden boards. `forum_topics_list` never did.
+So a hidden board's topics were out of search and still on the front page.
+0290 rewrites `forum_topics_list` whole with the one added line
+`and not c.is_hidden`. If the Workspace lists topics through anything of its
+own rather than through `forum_topics_list`, check it for the same hole.
+
+### 0290 - a search reads the replies too
+
+- A GIN index `forum_posts_text` over `to_tsvector('english', body)`.
+- `forum_search` now matches a topic on its own title and body **or** on any
+  of its non-removed replies. Still one row per topic; a topic whose answer
+  matches comes back once, not once per reply.
+- New: `forum_search_count(in_terms, in_category)` and
+  `forum_topics_count(in_category, in_unanswered)`. These exist so a pager
+  can print "Page 2 of 7" instead of "Page 2" - the list functions page by
+  limit and offset and never knew the total.
+
+Searching matches words, not fragments: there is no `pg_trgm` here, so "mesh"
+finds "mesh" and "meshes" and does not find "remesh". `websearch_to_tsquery`
+joins words with AND, so two words means both.
+
+### 0291 - being put in charge is told to you
+
+`notifications_kind_check` gains `'forum_staff'`, and
+`set_forum_board_staff` now inserts a notification linking to
+`/forum/c/<category>` - but only when the write actually changed a row
+(`get diagnostics changed = row_count`), so setting somebody who is already
+staff is silent rather than a second bell. Notifications now carry an
+optional `link`, and the panel prefers it over anything it works out itself.
+
+### 0292 - a name that is gone is gone in the lists too
+
+The retired-name work landed on profiles and never reached friend lists or
+chat rows, so somebody who closed their account still read by their old
+display name there. `people_list` now returns `closed_at` and `is_banned`,
+and `my_conversations`' member objects carry both. The website prints every
+one of those through `nameOf(person)`.
+
+**`people_list` changed its return table**, which means `drop function if
+exists` then recreate - `create or replace` cannot do it. Anything on your
+side typed against the old shape gains two columns.
+
+### What else is in the website now
+
+- Search results pick the words out in the title and show the line of the
+  post they were found in (`Marked`, `snippetOf`).
+- Quoting: the post menu's **Quote** takes the selection if there is one
+  inside that post (up to twelve lines) and the first four lines otherwise,
+  and appends it to the composer. `Composer` gained an `insert` prop -
+  `{ text, at }`, where `at` is a counter, so quoting the same post twice
+  inserts twice.
+- `/forum/mine` lists the boards somebody is staff of, and says plainly what
+  that does and does not let them do.
+- Support, Your standing and a single standing item are on the At Kobblon
+  chrome now, not the old `Page`/`PageTop` shell.
+
+### A trap, for the fourth time
+
+Mounting `Composer` bare in `tools/site/` threw `useAuth must be used inside
+<AuthProvider>`. `AuthContext` is exported from `@/hooks/useAuth` for exactly
+this: hand it a session and the component mounts with no provider, no router
+and no page around it. If a shared component of ours takes your panel down on
+mount, that is the first thing to try.
+
+### What is not done, plainly
+
+- Neither the forum pages nor Support nor Standing have been rendered
+  against real rows: this container has no route to Supabase. The SQL is
+  checked against a local Postgres under four identities; the pages are
+  checked for chrome and for not throwing, and nothing more.
+- Still open from before: the newsroom, the wiki, Round one hundred and
+  thirty-three's five Launcher questions, Worlds belonging to a Community,
+  `pg_net`/`pg_cron` and the re-apply of 0224 and 0253, automatic Community
+  verification by membership share, `register` not being deployed, and
+  `world_visits` only being written by `join_world_server`.

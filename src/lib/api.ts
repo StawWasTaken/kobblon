@@ -8,6 +8,7 @@ import { formatOf, socketFor, type WornFit } from '@/engine'
 import { FLOOR_FACE } from './mannequin'
 import { plainFace } from './plainFace'
 import { timeAgo } from './format'
+import { nameOf } from './avatars'
 import type {
   ActivityEvent, AssetKind, BoardRow, BoardSide, Community, EarnedBadge,
   ForumPerson, ForumRelated, ForumTagOption, ForumWritten, MarketAsset,
@@ -1621,7 +1622,12 @@ export async function createGroupConversation(title: string, memberIds: string[]
 /** What a conversation is called when it has no name of its own. */
 export function conversationName(conversation: Conversation) {
   if (conversation.title) return conversation.title
-  const names = conversation.members.map((m) => m.display_name)
+  /*
+   * `nameOf`, so a chat with somebody whose account has gone is titled
+   * "Account Deleted" rather than a name that belongs to nobody. 0292 is
+   * what makes the row able to say so.
+   */
+  const names = conversation.members.map((m) => nameOf(m))
   if (!names.length) return 'Empty chat'
   if (names.length <= 2) return names.join(' and ')
   return `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`

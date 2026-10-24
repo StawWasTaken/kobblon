@@ -28,7 +28,7 @@ import {
   startConversation, usernameById,
 } from '@/lib/api'
 import type { PeopleList, PersonRow as Person } from '@/lib/api'
-import { avatarOf } from '@/lib/avatars'
+import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -127,7 +127,7 @@ export function PersonCard({
               </Tooltip>
             )}
             <span className="truncate font-display text-base font-extrabold leading-tight">
-              {person.display_name}
+              {nameOf(person)}
             </span>
             <NameMarks person={person} className="text-[11px]" />
           </Link>
@@ -369,7 +369,7 @@ export default function Friends() {
     ]
     return (
       <Menu
-        label={`Options for ${person.display_name}`}
+        label={`Options for ${nameOf(person)}`}
         trigger={
           <span className="grid h-8 w-8 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white">
             <Glyph icon={faEllipsis} />
@@ -566,7 +566,7 @@ export default function Friends() {
                         </Button>
                         <Button
                           size="sm" variant="ghost" icon={faXmark}
-                          aria-label={`Decline ${person.display_name}`}
+                          aria-label={`Decline ${nameOf(person)}`}
                           onClick={() => person.link_id && respond(person.link_id, false)}
                         />
                       </>

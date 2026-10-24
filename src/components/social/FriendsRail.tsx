@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { peopleList } from '@/lib/api'
 import { profileLink } from '@/lib/links'
+import { nameOf } from '@/lib/avatars'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { FriendPeek } from '@/components/social/FriendPeek'
 import { presenceNow, usePresenceVersion } from '@/hooks/usePresenceStore'
@@ -102,7 +103,7 @@ export function FriendsRail() {
             >
               <PersonAvatar person={friend} size="2xl" className="mx-auto h-16 w-16 sm:h-20 sm:w-20" />
               <span className="w-full truncate text-xs font-semibold text-white/80 sm:text-sm">
-                {friend.display_name}
+                {nameOf(friend)}
               </span>
             </Link>
           </FriendPeek>

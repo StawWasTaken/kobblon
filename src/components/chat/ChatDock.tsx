@@ -31,7 +31,7 @@ import { supabase } from '@/lib/supabase'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { Conversation, Message } from '@/types/db'
-import { avatarOf } from '@/lib/avatars'
+import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
 
@@ -314,9 +314,9 @@ function Window({
                   to={profileLink(member)}
                   className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-ink-hover"
                 >
-                  <Avatar src={avatarOf(member)} personId={member.id} name={member.display_name} size="sm" />
+                  <Avatar src={avatarOf(member)} personId={member.id} name={nameOf(member)} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{member.display_name}</span>
+                    <span className="block truncate text-sm font-bold">{nameOf(member)}</span>
                     <LivePresenceLabel person={member} />
                   </span>
                 </Link>
@@ -465,7 +465,7 @@ function Window({
           onClose={() => setReporting(false)}
           targetType="profile"
           targetId={solo.id}
-          targetName={solo.display_name}
+          targetName={nameOf(solo)}
         />
       )}
 

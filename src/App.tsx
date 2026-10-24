@@ -153,6 +153,23 @@ export default function App() {
                   writable by anybody signed in. The order matters - /new
                   before nothing else could claim it, and the two prefixed
                   routes so a category named "t" could never be a topic. */}
+              {/*
+                * Support and Standing wear the At Kobblon chrome, so they
+                * sit outside `AppShell` rather than inside it: nested, the
+                * page would draw this side's bar and foot underneath the
+                * app's, which is two of each.
+                *
+                * They still need an account - everything on them is about
+                * one - so `RequireAuth` is here instead, and the only
+                * thing that changed is which frame is around them.
+                */}
+              <Route element={<RequireAuth />}>
+                <Route path="/standing" element={<Standing />} />
+                <Route path="/standing/:id" element={<StandingItem />} />
+                <Route path="/support" element={<Support />} />
+                <Route path="/support/:id" element={<Support />} />
+              </Route>
+
               <Route path="/forum" element={<Forum />} />
               <Route path="/forum/new" element={<ForumNew />} />
               <Route path="/forum/c/:slug" element={<ForumCategory />} />
@@ -268,11 +285,7 @@ export default function App() {
                   {/* A panel is an address, so a queue can be linked to and
                       a reload does not drop you back on the first one. */}
                   <Route path="/staff/:panel" element={<Admin />} />
-                  <Route path="/standing" element={<Standing />} />
-                  <Route path="/standing/:id" element={<StandingItem />} />
                   <Route path="/inbox" element={<Inbox />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/support/:id" element={<Support />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

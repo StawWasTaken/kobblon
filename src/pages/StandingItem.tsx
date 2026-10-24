@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faChevronLeft, faGavel, faDiamond } from '@fortawesome/free-solid-svg-icons'
-import { Page } from '@/components/layout/AppShell'
+import { AboutShell } from '@/components/layout/AboutShell'
+import { cn } from '@/lib/cn'
+import { Band, Lane } from '@/components/about/Band'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -87,20 +89,22 @@ export default function StandingItem() {
   }
 
   if (decision.loading) {
-    return <Page width="narrow"><Skeleton className="h-72 rounded-2xl" /></Page>
+    return (
+      <Frame><Skeleton className="h-72 rounded-2xl" /></Frame>
+    )
   }
 
   if (decision.error) {
     return (
-      <Page width="narrow">
+      <Frame>
         <ErrorState message={decision.error} onRetry={decision.reload} />
-      </Page>
+      </Frame>
     )
   }
 
   if (!decision.data) {
     return (
-      <Page width="narrow">
+      <Frame>
         <Card>
           <EmptyState
             mood="noResults"
@@ -109,7 +113,7 @@ export default function StandingItem() {
             action={<Button to="/standing">Account status</Button>}
           />
         </Card>
-      </Page>
+      </Frame>
     )
   }
 
@@ -118,7 +122,7 @@ export default function StandingItem() {
   const answered = appeal.data?.status === 'upheld' || appeal.data?.status === 'declined'
 
   return (
-    <Page width="narrow" className="space-y-6">
+    <Frame className="space-y-6">
       <div>
         <Link
           to="/standing"
@@ -267,6 +271,25 @@ export default function StandingItem() {
           )}
         </Card>
       )}
-    </Page>
+    </Frame>
+  )
+}
+
+/**
+ * One decision, on the At Kobblon chrome rather than the app's.
+ *
+ * Standing is read from a link in an email as often as from inside the
+ * site, and it is on the side of Kobblon that explains itself: the same
+ * bar, the same foot, the same dark. The column stays narrow, because a
+ * single decision read line by line is the one place on this side a wide
+ * measure would be wrong.
+ */
+function Frame({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <AboutShell>
+      <Band tone="raised">
+        <Lane className={cn('max-w-3xl', className)}>{children}</Lane>
+      </Band>
+    </AboutShell>
   )
 }
