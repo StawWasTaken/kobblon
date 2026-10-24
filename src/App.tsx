@@ -7,6 +7,7 @@ import { lazyPage } from '@/lib/lazyPage'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
+import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { AppearanceProvider } from '@/hooks/useAppearance'
@@ -115,6 +116,10 @@ export default function App() {
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      {/* Inside the router and above everything else: a page opened from a
+          link starts at the top of itself, which the browser does for a
+          document load and a router does not. */}
+      <ScrollToTop />
       <ThemeProvider>
       <AuthProvider>
         <AppearanceProvider>

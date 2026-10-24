@@ -22,7 +22,7 @@ import { cn } from '@/lib/cn'
  * World is passing behind them.
  */
 export const ABOUT_LINKS = [
-  { to: '/about', label: 'What Kobblon is' },
+  { to: '/about', label: 'What is Kobblon' },
   { to: '/download', label: 'Download' },
   { to: '/policies', label: 'Policies' },
   { to: '/support', label: 'Support' },

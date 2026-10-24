@@ -11711,3 +11711,60 @@ Wrap it in an absolutely positioned div instead.
 Still not built: the newsroom, the wiki, the forum. Support and Standing
 carry the At Kobblon tab but are still on the old shell - they are the next
 two pages on this side.
+
+## Round one hundred and sixty-two
+
+The opening of the What is Kobblon page is **held**, the landing page and
+the door are actually on this side's design now, and a router bug that has
+been there since the beginning is fixed.
+
+- **It is called "What is Kobblon" now**, not "What Kobblon is". The nav,
+  the footer, the tab and the social card. `/about` is unchanged.
+- **The held opening.** `AboutShell` takes a `pin` prop: the opening
+  becomes a runway that many screens tall with the words stuck to the top
+  of it, so the wheel turns, the title arrives, and the page under it only
+  begins to move once the runway is spent. Staw: "i want that you scroll
+  down but its locked onto the topthing and when the title appears it lets
+  you scroll down the website for real."
+
+  Two things to copy if you ever do this over there. It is `position:
+  sticky` and **not** catching the wheel - a page that eats scroll events
+  takes the keyboard, the scrollbar, find-in-page and a trackpad fling with
+  it and gives nothing back. And the trap: `overflow: hidden` on an
+  ancestor makes that ancestor a scroll container, so a sticky child sticks
+  inside *it* rather than inside the window. The first version had
+  `overflow-hidden` on the runway and the pane tracked the scroll one for
+  one; the hold did nothing, and it looked exactly like the pin was not
+  implemented. The clipping lives on the pinned pane instead. Nothing is
+  held for reduced motion - a screen of scrolling that moves nothing is the
+  worst version of this idea, not the gentlest.
+- **A new page starts at the top of itself.** `ScrollToTop` is mounted
+  inside the router. A router swaps what is drawn and leaves the window
+  where it was, so a footer link - as far down a page as it is possible to
+  be - opened the next page at the foot of itself. Going **back** is left
+  alone on purpose, because being thrown to the top of a list you were
+  halfway down is the same bug wearing the other hat, and a `#hash` is left
+  alone so `/policies/terms#appeals` still lands on its section.
+- **The landing page is rebuilt on this side's pieces**, which is what Staw
+  asked for twice: the held opening, `Band`, the type scale, `Reveal`, the
+  drift, the floating faces. `Showcase` is **deleted** - if anything of
+  yours imported it, it is gone; the sign-up form on the front page lives
+  in `@/components/landing/JoinPanel` now, which is `SignupForm` in a card
+  and handles its own "check your email" state.
+- **The public top bar is dark.** `PublicLayout`'s bar was flat brand blue
+  while every other page shown to a stranger had the dark one; it now goes
+  clear over the opening and solid on scroll the way `AboutNav` does, and
+  it keeps its links and its inline log-in. The page starts *behind* it
+  (`-mt-16`) rather than below it.
+- **The door is one centred column.** No photograph behind it - Staw asked
+  for the towers off that page - just the pixel wash, the brand light and
+  the faces. The pitch that used to sit beside the form is three cards
+  under it, so a phone gets it too; before, the whole left half was
+  `hidden` on a phone and the headline had to be written twice.
+
+The landing page and the What is Kobblon page still deliberately say
+different things: that one explains, this one shows the stock, and the two
+headings over the same four numbers are different sentences on purpose.
+
+Still not built: the newsroom, the wiki, the forum. Support and Standing
+are the last two pages on this side still on the old shell.

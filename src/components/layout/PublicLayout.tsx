@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { SiteFooter } from './SiteFooter'
 import { useAuth } from '@/hooks/useAuth'
+import { useForceDark } from '@/hooks/useTheme'
+import { cn } from '@/lib/cn'
 
 /**
  * The side of Kobblon anyone can see without an account: the front page
@@ -25,6 +27,19 @@ function PublicTopbar() {
   const [password, setPassword] = useState('')
   const [failed, setFailed] = useState(false)
   const [menu, setMenu] = useState(false)
+  /*
+   * Transparent over the opening and solid once the page has moved, which
+   * is `AboutNav`'s behaviour. The front door had a flat blue bar on it
+   * while every other page Kobblon shows a stranger had this one, and the
+   * bar is the first thing anybody sees.
+   */
+  const [moved, setMoved] = useState(false)
+  useEffect(() => {
+    const look = () => setMoved(window.scrollY > 12)
+    look()
+    window.addEventListener('scroll', look, { passive: true })
+    return () => window.removeEventListener('scroll', look)
+  }, [])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,8 +52,15 @@ function PublicTopbar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b-2 border-brand-ink bg-brand-deep">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:gap-6 sm:px-6">
+    <header
+      className={cn(
+        'sticky top-0 z-40 transition-colors duration-300',
+        moved || menu
+          ? 'border-b border-white/[0.08] bg-ink/85 backdrop-blur-xl'
+          : 'border-b border-transparent',
+      )}
+    >
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-5 sm:gap-6 sm:px-8">
         {/*
           * The four links below are `sm:flex`, so on a phone the front page
           * had no navigation at all: Play, Create, Communities and the
@@ -51,7 +73,7 @@ function PublicTopbar() {
           onClick={() => setMenu((open) => !open)}
           aria-label={menu ? 'Close navigation' : 'Open navigation'}
           aria-expanded={menu}
-          className="-ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white/85 transition-colors hover:bg-white/15 sm:hidden"
+          className="-ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white/85 transition-colors hover:bg-white/10 sm:hidden"
         >
           <Glyph icon={menu ? faXmark : faBars} className="text-lg" />
         </button>
@@ -78,7 +100,7 @@ function PublicTopbar() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
-            className="hidden h-8 w-36 rounded-md border border-white/20 bg-black/30 px-2.5 text-sm text-white placeholder:text-white/40 focus:border-white/50 md:block"
+            className="hidden h-9 w-36 rounded-xl border border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
           />
           <label className="sr-only" htmlFor="public-password">Password</label>
           <input
@@ -87,7 +109,7 @@ function PublicTopbar() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="hidden h-8 w-32 rounded-md border border-white/20 bg-black/30 px-2.5 text-sm text-white placeholder:text-white/40 focus:border-white/50 md:block"
+            className="hidden h-9 w-32 rounded-xl border border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
           />
           <Button type="submit" size="sm" variant="subtle" className="hidden md:inline-flex">Log In</Button>
           <Button size="sm" to="/login" className="md:hidden">Log In</Button>
@@ -101,7 +123,7 @@ function PublicTopbar() {
 
       {menu && (
         <nav
-          className="border-t border-onbrand/10 bg-brand-deep px-4 pb-3 pt-1 sm:hidden"
+          className="border-t border-white/[0.08] bg-ink/95 px-5 pb-3 pt-1 backdrop-blur-xl sm:hidden"
           aria-label="Site"
         >
           {PUBLIC_LINKS.map((link) => (
@@ -109,7 +131,7 @@ function PublicTopbar() {
               key={link.to}
               to={link.to}
               onClick={() => setMenu(false)}
-              className="block rounded-lg px-2 py-2.5 text-sm font-bold text-white/85 hover:bg-white/10 hover:text-white"
+              className="block rounded-xl px-3 py-2.5 text-sm font-bold text-white/85 hover:bg-white/10 hover:text-white"
             >
               {link.label}
             </Link>
@@ -121,8 +143,15 @@ function PublicTopbar() {
 }
 
 export function PublicLayout() {
+  /*
+   * Dark, like every other page Kobblon shows somebody who has not signed
+   * in. They have not had the chance to choose a theme yet, so there is no
+   * theme to follow.
+   */
+  useForceDark()
+
   return (
-    <div className="min-h-dvh bg-ink">
+    <div className="min-h-dvh bg-ink text-white">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-semibold"
@@ -132,7 +161,9 @@ export function PublicLayout() {
 
       <PublicTopbar />
 
-      <main id="main">
+      {/* `-mt-16`: the bar is transparent over the opening, so the page has
+          to start behind it rather than below it. */}
+      <main id="main" className="-mt-16">
         <Outlet />
       </main>
 

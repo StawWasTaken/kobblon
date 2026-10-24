@@ -21,7 +21,7 @@ import { getPlatformStats } from '@/lib/api'
 import { currency } from '@/lib/currency'
 
 /**
- * What Kobblon is, for somebody who has never heard of it.
+ * What is Kobblon, for somebody who has never heard of it.
  *
  * The page is a scroll, in Staw's order: a few words over something
  * somebody built, then the paragraph that says what this is, then the
@@ -75,9 +75,9 @@ const safety: { icon: KobIcon; name: string; body: string }[] = [
 ]
 
 export default function About() {
-  useAtTitle('What Kobblon is')
+  useAtTitle('What is Kobblon')
   useSocialCard({
-    title: 'What Kobblon is',
+    title: 'What is Kobblon',
     description: 'An online sandbox platform filled with user-generated 3D worlds.',
     image: null,
   })
@@ -87,6 +87,13 @@ export default function About() {
 
   return (
     <AboutShell
+      /*
+       * One extra screen of holding. The title is fully in at about
+       * two-thirds of it, so the opening keeps still for a moment after it
+       * has arrived and then hands the page over - which is the bit that
+       * makes it read as "it let go" rather than as "it stuck".
+       */
+      pin={1}
       backdrop={
         <Parallax strength={90} className="absolute inset-0">
           <img
@@ -98,11 +105,12 @@ export default function About() {
         </Parallax>
       }
       hero={
-        <Lane className="flex min-h-[78vh] flex-col justify-center py-24 text-center">
+        <Lane className="flex h-full flex-col justify-center py-24 text-center">
           {/* ScrollIn rather than Reveal: this is the first screen, so it is
               already on screen at load and a Reveal would have finished before
-              anybody scrolled. Staw wants it to arrive on the way down. */}
-          <ScrollIn>
+              anybody scrolled. Staw wants it to arrive on the way down, and
+              the shell holds the page still while it does. */}
+          <ScrollIn over={0.66}>
             <h1 className="font-display text-[clamp(2.6rem,7vw,5.5rem)] font-extrabold leading-[0.95] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
               Everything you see here,
               <br />

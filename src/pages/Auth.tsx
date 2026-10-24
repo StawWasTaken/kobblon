@@ -7,42 +7,44 @@ import { Icon } from '@/components/brand/Icon'
 import { Button } from '@/components/ui/Button'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
-import { Parallax } from '@/components/about/Parallax'
 import { Reveal } from '@/components/about/Reveal'
-import { Title } from '@/components/about/Type'
+import { Floaters } from '@/components/about/Floaters'
+import { Lane } from '@/components/about/Band'
+import { Eyebrow, Title } from '@/components/about/Type'
 import { SignupForm } from '@/components/auth/SignupForm'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { useAuth } from '@/hooks/useAuth'
 import { useForceDark } from '@/hooks/useTheme'
 import { useTitle } from '@/hooks/useTitle'
-import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
 /*
  * The door.
  *
- * Built out of the same pieces as the landing page and the At Kobblon
- * pages: a World behind it with the same drift, the same type scale, the
- * same dark glass card. Before this it was its own thing with its own
- * headline - and the headline was the slogan Kobblon stopped using, which
- * is how a page nobody redesigns keeps saying last year's words.
+ * One column down the middle rather than the pitch-beside-the-form it was:
+ * the words, the form, and what an account is for underneath it. The split
+ * layout only ever worked on a wide screen - on a phone the whole left half
+ * was `hidden`, so half of the page did not exist for most of the people
+ * using it, and the headline had to be written twice.
  *
- * The three lines beside the form are drawn with Staw's own icons rather
+ * No photograph behind it. Staw asked for the towers off this page, and a
+ * World behind a password field was arguing for the platform at the one
+ * moment somebody has already agreed; what is left is the pixel wash every
+ * At Kobblon page opens on, the brand light, and the faces drifting in the
+ * margins.
+ *
+ * The three lines under the form are drawn with Staw's own icons rather
  * than with Font Awesome glyphs, because there are pictures of a World, of
  * the marketplace and of people in this product already.
  */
 
-/** One line about what an account is for, beside the form that makes one. */
+/** One line about what an account is for, under the form that makes one. */
 function Promise_({ icon, title, body }: { icon: KobIcon; title: string; body: string }) {
   return (
-    <li className="flex gap-4">
-      <span className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.06]">
-        <Icon name={icon} tone="currentColor" className="h-5 w-5 text-brand-bright" />
-      </span>
-      <span className="min-w-0">
-        <span className="block font-display text-base font-extrabold text-white">{title}</span>
-        <span className="mt-1 block text-sm leading-relaxed text-white/55">{body}</span>
-      </span>
+    <li className="rounded-3xl border border-white/10 bg-ink-card/50 p-6">
+      <Icon name={icon} tone="currentColor" className="h-7 w-7 text-brand-bright" />
+      <span className="mt-4 block font-display text-lg font-extrabold text-white">{title}</span>
+      <span className="mt-2 block text-sm leading-relaxed text-white/55">{body}</span>
     </li>
   )
 }
@@ -83,93 +85,58 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-ink text-white">
-      {/*
-       * A World behind the door, drifting, under the pixels. Somebody
-       * signing up is being asked to take the place seriously, and a flat
-       * gradient asks for less than a photograph of the thing itself.
-       */}
-      <Parallax strength={60} className="absolute inset-0">
-        <img
-          src={asset('/brand/landing-towers.webp')}
-          alt=""
-          aria-hidden="true"
-          className="h-[112%] w-full object-cover object-[50%_35%]"
-        />
-      </Parallax>
-      <PixelField className="opacity-25" />
-      <div className="absolute inset-0 bg-[radial-gradient(90rem_50rem_at_15%_-10%,rgba(27,52,232,0.45),transparent_60%)]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/75 via-ink/88 to-ink" />
+      <PixelField className="opacity-30" />
+      <div className="absolute inset-0 bg-[radial-gradient(90rem_50rem_at_50%_-20%,rgba(27,52,232,0.5),transparent_62%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/80 to-ink" />
+      <Floaters />
 
-      <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col px-4 sm:px-8">
-        <header className="flex items-center justify-between py-6">
-          <Wordmark to="/" className="h-6" />
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition-colors hover:text-white"
-          >
-            <Glyph icon={faArrowLeft} />
-            Back to the front
-          </Link>
-        </header>
+      <div className="relative">
+        <Lane>
+          <header className="flex items-center justify-between py-6">
+            <Wordmark to="/" className="h-6" />
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition-colors hover:text-white"
+            >
+              <Glyph icon={faArrowLeft} />
+              Back to the front
+            </Link>
+          </header>
+        </Lane>
 
-        <main className="grid flex-1 items-center gap-10 pb-16 lg:grid-cols-[1fr_26rem] lg:gap-16">
-          {/* -------------------------------------------------- the pitch */}
-          <section className="hidden lg:block">
-            <Reveal>
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
-                {claiming ? 'You have been looking around' : 'Kobblon'}
-              </p>
-            </Reveal>
-            <Reveal delay={70}>
-              <Title level={1} className="mt-5">
-                {claiming ? (
-                  <>
-                    Keep what you
-                    <span className="block text-brand-bright">already made</span>
-                  </>
-                ) : (
-                  <>
-                    One account,
-                    <span className="block text-brand-bright">every World</span>
-                  </>
-                )}
-              </Title>
-            </Reveal>
-            <Reveal delay={140}>
-              <p className="mt-6 max-w-md text-lg leading-relaxed text-white/60">
-                {claiming
-                  ? 'The Worlds you entered, the people you met and anything you collected stay exactly where they are. Pick a name and a password and this same account becomes yours.'
-                  : 'Kobblon is an online sandbox platform filled with user-generated 3D worlds. Build one, publish it, and walk into anybody else’s.'}
-              </p>
-            </Reveal>
-
-            <ul className="mt-10 max-w-md space-y-6">
-              <Reveal as="li" delay={200}>
-                <Promise_
-                  icon="world"
-                  title="Your own World"
-                  body="Built your way in Kobblon Workspace, published when you say so."
-                />
+        <Lane>
+          <main className="pb-24 pt-10 sm:pt-16">
+            {/* ------------------------------------------------- the words */}
+            <div className="mx-auto max-w-3xl text-center">
+              <Reveal>
+                <Eyebrow>{claiming ? 'You have been looking around' : 'Kobblon'}</Eyebrow>
               </Reveal>
-              <Reveal as="li" delay={260}>
-                <Promise_
-                  icon="assets"
-                  title="Everything in Create"
-                  body="Meshes, decals, sounds and fonts, made by people here and sold to each other."
-                />
+              <Reveal delay={70}>
+                <Title level={1} className="mt-5">
+                  {claiming ? (
+                    <>
+                      Keep what you
+                      <span className="block text-brand-bright">already made</span>
+                    </>
+                  ) : (
+                    <>
+                      One account,
+                      <span className="block text-brand-bright">every World</span>
+                    </>
+                  )}
+                </Title>
               </Reveal>
-              <Reveal as="li" delay={320}>
-                <Promise_
-                  icon="people"
-                  title="People to build with"
-                  body="Friends, Communities with their own walls and ranks, and events worth turning up to."
-                />
+              <Reveal delay={140}>
+                <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/60">
+                  {claiming
+                    ? 'The Worlds you entered, the people you met and anything you collected stay exactly where they are. Pick a name and a password and this same account becomes yours.'
+                    : 'Kobblon is an online sandbox platform filled with user-generated 3D worlds. Build one, publish it, and walk into anybody else\u2019s.'}
+                </p>
               </Reveal>
-            </ul>
-          </section>
+            </div>
 
-          {/* --------------------------------------------------- the card */}
-          <section className="w-full justify-self-center lg:justify-self-end">
+            {/* ----------------------------------------------- the card */}
+            <section className="mx-auto mt-12 w-full max-w-md">
             <div className="relative rounded-3xl border border-white/10 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl sm:p-8">
               <span
                 aria-hidden="true"
@@ -177,12 +144,6 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               />
 
               <div className="relative">
-                {/* On a phone the pitch is gone, so the line comes here. */}
-                <h2 className="mb-6 font-display text-3xl font-extrabold leading-[0.95] lg:hidden">
-                  One account,
-                  <span className="block text-brand-bright">every World</span>
-                </h2>
-
                 {sentTo ? (
                   <div className="text-center">
                     <h1 className="font-display text-2xl font-extrabold">Check your email</h1>
@@ -273,15 +234,41 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               </div>
             </div>
 
-            <p className="mt-5 text-center text-xs text-white/35">
-              <Link to="/policies/terms" className="font-semibold hover:text-white">Terms</Link>
-              <span className="px-2">·</span>
-              <Link to="/policies/guidelines" className="font-semibold hover:text-white">Guidelines</Link>
-              <span className="px-2">·</span>
-              <Link to="/policies" className="font-semibold hover:text-white">Policies</Link>
-            </p>
-          </section>
-        </main>
+              <p className="mt-5 text-center text-xs text-white/35">
+                <Link to="/policies/terms" className="font-semibold hover:text-white">Terms</Link>
+                <span className="px-2">·</span>
+                <Link to="/policies/guidelines" className="font-semibold hover:text-white">Guidelines</Link>
+                <span className="px-2">·</span>
+                <Link to="/policies" className="font-semibold hover:text-white">Policies</Link>
+              </p>
+            </section>
+
+            {/* ------------------------------------ what it is an account for */}
+            <ul className="mx-auto mt-16 grid max-w-5xl gap-3 sm:grid-cols-3">
+              <Reveal as="li" delay={120} className="h-full">
+                <Promise_
+                  icon="world"
+                  title="Your own World"
+                  body="Built your way in Kobblon Workspace, published when you say so."
+                />
+              </Reveal>
+              <Reveal as="li" delay={190} className="h-full">
+                <Promise_
+                  icon="assets"
+                  title="Everything in Create"
+                  body="Meshes, decals, sounds and fonts, made by people here and sold to each other."
+                />
+              </Reveal>
+              <Reveal as="li" delay={260} className="h-full">
+                <Promise_
+                  icon="people"
+                  title="People to build with"
+                  body="Friends, Communities with their own walls and ranks, and events worth turning up to."
+                />
+              </Reveal>
+            </ul>
+          </main>
+        </Lane>
       </div>
     </div>
   )

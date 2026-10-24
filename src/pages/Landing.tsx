@@ -1,115 +1,60 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faArrowRight, faShieldHalved, faStore, faEye, faUserAstronaut, faBolt, faLayerGroup,
+  faArrowDown, faArrowRight, faShieldHalved, faStore,
 } from '@fortawesome/free-solid-svg-icons'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
 import { Signature } from '@/components/brand/Signature'
-import { Showcase } from '@/components/landing/Showcase'
 import { Commercial } from '@/components/landing/Commercial'
 import { WorldStage } from '@/components/landing/WorldStage'
 import { CreatorShelf } from '@/components/landing/CreatorShelf'
 import { CommunityRow } from '@/components/landing/CommunityRow'
 import { CatalogShelf } from '@/components/landing/CatalogShelf'
+import { JoinPanel } from '@/components/landing/JoinPanel'
 import { Band, Lane } from '@/components/about/Band'
 import { Reveal } from '@/components/about/Reveal'
+import { ScrollIn } from '@/components/about/ScrollIn'
 import { Parallax } from '@/components/about/Parallax'
 import { Floaters } from '@/components/about/Floaters'
-import { Title } from '@/components/about/Type'
+import { StatTile } from '@/components/about/Tally'
+import { BandHead, Title } from '@/components/about/Type'
+import { PixelField } from '@/components/brand/PixelField'
 import { useAsync } from '@/hooks/useAsync'
-import { useForceDark } from '@/hooks/useTheme'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { getPlatformStats, listAssets, listCommunities, listWorlds, avatarShelf } from '@/lib/api'
 import { currency } from '@/lib/currency'
 import { asset } from '@/lib/asset'
-import { formatCount } from '@/lib/format'
 import type { MarketAsset } from '@/types/db'
 
 /*
- * The front door.
+ * The front door, built out of the At Kobblon pieces.
  *
- * It is built out of the same pieces as the At Kobblon pages - `Band`,
- * `Reveal`, `Parallax`, the type scale - and it deliberately does not say
- * what they say. At Kobblon explains what this is; this page shows the
- * stock. Everything down it is live: the Worlds are the trending ones, the
- * shelf is what people actually uploaded, the Communities are the biggest
- * ones that exist. A front page that argues is a brochure, and a front page
- * that shows what is in the building is a shop with the lights on.
+ * Staw, twice: it is to be the same design as those pages. So it is - the
+ * held opening, `Band`, the type scale, `Reveal`, the drift on every
+ * picture, the floating faces - and the bar above it is dark and goes
+ * clear over the opening the way `AboutNav` does.
  *
- * Which is also why nothing here is invented. Where there is nothing to
- * show, the section says so in one line instead of showing a mock-up of
- * what it would look like if there were.
+ * What it is **not** is the same page. At Kobblon explains what Kobblon is;
+ * this shows the stock. Everything down it is live: the Worlds are the
+ * trending ones, the shelf is what people actually uploaded, the
+ * Communities are the biggest ones that exist, and where there is nothing
+ * yet it says so in one line rather than drawing a mock-up of what it would
+ * look like if there were.
  */
 
-/* ------------------------------------------------------------------ parts */
-
-/**
- * The top of a section: a number, a kicker, a heading with one word in the
- * brand colour, and the way through.
- *
- * The numbering is this page's own device and not the About side's - these
- * are stops on a tour of a real catalogue, and a tour has an order.
- */
-function Opening({
-  number, kicker, title, accent, body, to, action,
-}: {
-  number: string
-  kicker: string
-  title: string
-  accent: string
-  body: string
-  to: string
-  action: string
-}) {
-  return (
-    <Reveal>
-      <div className="flex flex-wrap items-end justify-between gap-x-12 gap-y-7">
-        <div className="max-w-xl">
-          <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/35">
-            <span className="font-display text-base tabular-nums text-brand-bright">{number}</span>
-            <span className="h-px w-8 bg-white/20" />
-            {kicker}
-          </p>
-
-          <Title className="mt-4">
-            {title}
-            <span className="block text-brand-bright">{accent}</span>
-          </Title>
-
-          <p className="mt-5 text-base leading-relaxed text-white/55">{body}</p>
-        </div>
-
-        <Link
-          to={to}
-          className="group inline-flex items-center gap-3 rounded-full border border-white/12 px-6 py-3 text-sm font-extrabold uppercase tracking-wide transition-colors hover:border-brand-bright hover:bg-brand/15"
-        >
-          {action}
-          <Glyph
-            icon={faArrowRight}
-            className="text-xs transition-transform group-hover:translate-x-1"
-          />
-        </Link>
-      </div>
-    </Reveal>
-  )
-}
-
-function Ticker({ icon, value, label }: { icon: IconDefinition; value: string; label: string }) {
-  return (
-    <span className="flex items-baseline gap-3">
-      <Glyph icon={icon} className="text-sm text-white/40" />
-      <span className="font-display text-xl font-extrabold tabular-nums">{value}</span>
-      <span className="text-xs uppercase tracking-wide text-white/40">{label}</span>
-    </span>
-  )
+/** The World in the opening, and who made it. */
+const SHOWING = {
+  world: 'Kobblon HQ',
+  builder: 'kobblon',
+  picture: '/brand/landing-towers.webp',
 }
 
 /**
  * What a section says when there is genuinely nothing in it yet.
  *
- * One line and a border, which is the whole point: an empty shelf dressed
- * up with artwork reads as a feature, and this has to read as "nobody has
- * done this yet, and you could be the first".
+ * One line and a dashed border, which is the whole point: an empty shelf
+ * dressed up with artwork reads as a feature, and this has to read as
+ * "nobody has done this yet, and you could be the first".
  */
 function Nothing({ children }: { children: string }) {
   return (
@@ -121,10 +66,8 @@ function Nothing({ children }: { children: string }) {
   )
 }
 
-/* --------------------------------------------------------------- the page */
-
 export default function Landing() {
-  useForceDark()
+  const reduced = useReducedMotion()
   const stats = useAsync(getPlatformStats, [])
   const spaces = useAsync(() => listWorlds({ sort: 'trending', limit: 5 }), [])
   /*
@@ -151,58 +94,124 @@ export default function Landing() {
   const biggest = [...(communities.data ?? [])]
     .sort((a, b) => b.member_count - a.member_count)
     .slice(0, 8)
+  const it = stats.data
 
   return (
     <div className="bg-ink text-white">
+      {/* ------------------------------------------------------- the opening */}
       {/*
-        * The picture and the sign-up, in the shape Staw asked for. The bar
-        * above it is PublicLayout's, which already carried the log-in
-        * fields - a second one here would have been two bars saying the
-        * same thing, which is what nearly happened.
+        * Held still for a screen of scrolling, the way the What is Kobblon
+        * page is: the wheel turns, the line arrives, and the page under it
+        * only starts to move once the runway is spent. Sticky rather than
+        * catching the wheel, and not held at all for somebody who asked for
+        * less motion.
         */}
-      <Showcase />
+      <div
+        className="relative"
+        style={reduced ? undefined : { height: 'calc(100dvh + 100dvh)' }}
+      >
+        <div className={reduced ? 'relative overflow-hidden' : 'sticky top-0 h-dvh overflow-hidden'}>
+          <Parallax strength={80} className="absolute inset-0">
+            <img
+              src={asset(SHOWING.picture)}
+              alt={`${SHOWING.world}, built on Kobblon`}
+              className="h-[112%] w-full object-cover object-[50%_38%]"
+            />
+          </Parallax>
+          <PixelField className="opacity-25" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70rem_40rem_at_50%_-20%,rgba(27,52,232,0.4),transparent_65%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/70 to-ink" />
+
+          <Lane className="flex h-full min-h-[34rem] flex-col justify-center py-24 text-center">
+            <ScrollIn over={0.66}>
+              <h1 className="font-display text-[clamp(2.6rem,7vw,5.5rem)] font-extrabold leading-[0.95] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
+                Somebody built this.
+                <br />
+                <span className="text-brand-bright">Walk in</span>.
+              </h1>
+            </ScrollIn>
+            <Reveal delay={240}>
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+                <Button to="/discover" variant="yes" size="lg">Start playing</Button>
+                <Button to="/signup" variant="subtle" size="lg">Make an account</Button>
+              </div>
+            </Reveal>
+            <Reveal delay={320}>
+              <p className="mt-8 flex items-center justify-center gap-2.5 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/45">
+                Keep going
+                <Glyph icon={faArrowDown} className="text-xs" />
+              </p>
+            </Reveal>
+          </Lane>
+
+          {/*
+            * The credit, the way Roblox credited a builder on theirs. It is
+            * the claim above made checkable: a name, and a page you can open
+            * to see what else they made.
+            */}
+          <p className="absolute bottom-5 left-0 w-full px-5 font-display text-sm text-white/70 sm:px-8">
+            {SHOWING.world}
+            <span className="block text-xs text-white/50">
+              Built by{' '}
+              <Link to={`/u/${SHOWING.builder}`} className="text-white/70 hover:text-white hover:underline">
+                @{SHOWING.builder}
+              </Link>
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {/* ----------------------------------------------------- make one now */}
+      <Band tone="raised" edge>
+        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_24rem] lg:gap-16">
+          <Reveal>
+            <BandHead
+              eyebrow="Free, and it stays free"
+              title="It takes about a minute."
+              lead="One account opens the whole website: building, selling, Communities, people. Fifteen and over."
+            />
+            <p className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <Link to="/login" className="font-bold text-white underline-offset-4 hover:underline">
+                Already have one? Log in
+              </Link>
+              <Link to="/download" className="font-bold text-white/60 underline-offset-4 hover:text-white hover:underline">
+                Get the Launcher
+              </Link>
+            </p>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <JoinPanel />
+          </Reveal>
+        </div>
+      </Band>
 
       {/* ---------------------------------------------------------- numbers */}
-      {/*
-        * A strip and not the four counting tiles the At Kobblon page uses.
-        * Same four numbers, and they are the only thing the two pages have
-        * in common, so they are presented as a line of live readings rather
-        * than as a second set of the same cards.
-        */}
-      {!stats.loading && stats.data && (
-        <section className="border-b border-white/5 bg-white/[0.02]">
-          <Lane>
-            <div className="flex flex-wrap items-center gap-x-12 gap-y-4 py-6">
-              <Ticker
-                icon={faLayerGroup}
-                value={formatCount(stats.data.published_spaces)}
-                label={stats.data.published_spaces === 1 ? 'World' : 'Worlds'}
-              />
-              <Ticker icon={faEye} value={formatCount(stats.data.total_visits)} label="Visits" />
-              <Ticker
-                icon={faUserAstronaut}
-                value={formatCount(stats.data.total_accounts)}
-                label="People"
-              />
-              <Ticker icon={faBolt} value={formatCount(stats.data.people_online)} label="Online now" />
-            </div>
-          </Lane>
-        </section>
+      {it && (
+        <Band tone="night" edge decor={<Floaters />}>
+          <Reveal>
+            <BandHead eyebrow="Right now" title="Live, this minute." />
+          </Reveal>
+          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatTile value={it.published_spaces} label="Worlds published" icon="world" />
+            <StatTile value={it.total_visits} label="Visits" icon="click" delay={70} />
+            <StatTile value={it.total_accounts} label="People" icon="people" delay={140} />
+            <StatTile value={it.people_online} label="Online now" icon="circle-user" delay={210} />
+          </div>
+        </Band>
       )}
 
       {/* ----------------------------------------------------------- Worlds */}
-      <Band tone="night">
-        <Opening
-          number="01"
-          kicker="Worlds"
-          title="Somewhere"
-          accent="to go tonight"
-          body="Somebody's own place, built the way they wanted it. Walk in, leave a mark, come back tomorrow."
-          to="/discover"
-          action="Find a World"
-        />
+      <Band tone="raised" edge>
+        <Reveal>
+          <BandHead
+            eyebrow="Worlds"
+            title="Somewhere to go tonight."
+            lead="Somebody's own place, built the way they wanted it. Walk in, leave a mark, come back tomorrow."
+          />
+        </Reveal>
 
-        <div className="mt-14">
+        <div className="mt-12">
           {!spaces.loading && !spaces.data?.length ? (
             <Nothing>
               Nobody has published a World yet. Yours would be the first one on this page.
@@ -214,6 +223,12 @@ export default function Landing() {
             />
           )}
         </div>
+
+        <Reveal delay={120}>
+          <div className="mt-10">
+            <Button to="/discover" variant="subtle" iconRight={faArrowRight}>Find a World</Button>
+          </div>
+        </Reveal>
       </Band>
 
       {/* The advert, under the fold, loaded only when asked for. */}
@@ -221,19 +236,17 @@ export default function Landing() {
 
       {/* ----------------------------------------------------------- Create */}
       <Band tone="raised" edge>
-        <Opening
-          number="02"
-          kicker="Kobblon Create"
-          title="Built from"
-          accent="real work"
-          body={`Decals, sounds, video and fonts, made by people here and checked before anybody sees them. Take what you need, and sell what you make for ${currency.plural}.`}
-          to="/create/marketplace"
-          action="Open the marketplace"
-        />
+        <Reveal>
+          <BandHead
+            eyebrow="Kobblon Create"
+            title="Built from real work."
+            lead={`Meshes, decals, sounds and fonts, made by people here and checked before anybody sees them. Take what you need, and sell what you make for ${currency.plural}.`}
+          />
+        </Reveal>
       </Band>
 
       {/* Full width, because a shelf should run off the edge of the page. */}
-      <div className="-mt-10 bg-ink-raised/60 pb-24 sm:pb-32">
+      <div className="bg-ink-raised/60 pb-24 sm:pb-32">
         {!assets.loading && !assets.data?.length ? (
           <Lane>
             <Nothing>The marketplace is empty. Upload the first image, sound or font.</Nothing>
@@ -241,27 +254,42 @@ export default function Landing() {
         ) : (
           <CreatorShelf items={assets.data ?? []} loading={assets.loading} />
         )}
+        <Lane>
+          <Reveal>
+            <div className="mt-12">
+              <Button to="/create/marketplace" variant="subtle" iconRight={faArrowRight}>
+                Open the marketplace
+              </Button>
+            </div>
+          </Reveal>
+        </Lane>
       </div>
 
       {/* ------------------------------------------------------ Communities */}
       <Band tone="night" edge decor={<Floaters />}>
-        <Opening
-          number="03"
-          kicker="Communities"
-          title="People to"
-          accent="build with"
-          body="Fan clubs, build teams and hobby corners, each with its own wall, ranks, events and funds."
-          to="/communities"
-          action="Browse Communities"
-        />
+        <Reveal>
+          <BandHead
+            eyebrow="Communities"
+            title="People to build with."
+            lead="Fan clubs, build teams and hobby corners, each with its own wall, ranks, events and funds."
+          />
+        </Reveal>
 
-        <div className="mt-14">
+        <div className="mt-12">
           {!communities.loading && !biggest.length ? (
             <Nothing>No Communities yet. Start the first one and people can join it.</Nothing>
           ) : (
             <CommunityRow communities={biggest} loading={communities.loading} />
           )}
         </div>
+
+        <Reveal delay={120}>
+          <div className="mt-10">
+            <Button to="/communities" variant="subtle" iconRight={faArrowRight}>
+              Browse Communities
+            </Button>
+          </div>
+        </Reveal>
       </Band>
 
       {/* ------------------------------------------------------------ Style */}
@@ -278,20 +306,12 @@ export default function Landing() {
           </div>
 
           <Reveal delay={90}>
-            <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/35">
-              <span className="font-display text-base tabular-nums text-brand-bright">04</span>
-              <span className="h-px w-8 bg-white/20" />
-              Style
-            </p>
-            <Title className="mt-4">
-              Wear it
-              <span className="block text-brand-bright">everywhere</span>
-            </Title>
-            <p className="mt-5 text-base leading-relaxed text-white/60">
-              Hats, hair and whatever else people make, worn on your own picture. Put one on and
-              it comes with you into every World you walk into.
-            </p>
-            <Button className="mt-7" to="/catalog" icon={faStore}>Open the shop</Button>
+            <BandHead
+              eyebrow="Style"
+              title="Wear it everywhere."
+              lead="Hats, hair and whatever else people make, worn on your own picture. Put one on and it comes with you into every World you walk into."
+            />
+            <Button className="mt-8" to="/catalog" icon={faStore}>Open the shop</Button>
           </Reveal>
         </div>
       </Band>
@@ -303,10 +323,7 @@ export default function Landing() {
             <span className="grid h-16 w-16 place-items-center rounded-2xl border-b-4 border-brand-ink bg-brand text-2xl text-onbrand shadow-pop">
               <Glyph icon={faShieldHalved} />
             </span>
-            <Title className="mt-7">
-              Built to be
-              <span className="block text-brand-bright">worth trusting</span>
-            </Title>
+            <Title className="mt-7">Built to be worth trusting.</Title>
             <div className="mt-7 flex flex-wrap gap-4 text-sm font-bold">
               <Link to="/policies/guidelines" className="text-link hover:underline">Community Guidelines</Link>
               <Link to="/policies/terms" className="text-link hover:underline">Terms of Service</Link>
@@ -340,52 +357,6 @@ export default function Landing() {
           </Reveal>
         </div>
       </Band>
-
-      {/* ------------------------------------------------------------ close */}
-      {/*
-        * A World behind the last ask rather than a flat brand-coloured
-        * banner: the page opened on something somebody built and it closes
-        * on one too.
-        */}
-      <section className="relative isolate overflow-hidden border-t border-white/[0.08]">
-        <Parallax strength={70} className="absolute inset-0 -z-10">
-          <img
-            src={asset('/brand/landing-towers.webp')}
-            alt=""
-            aria-hidden="true"
-            className="h-[115%] w-full object-cover object-center"
-          />
-        </Parallax>
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-ink/85 via-ink/75 to-ink" />
-
-        <Lane>
-          <div className="py-28 text-center sm:py-36">
-            <Reveal>
-              <Title level={1}>
-                It is free, and it
-                <span className="block text-brand-bright">takes five minutes</span>
-              </Title>
-            </Reveal>
-            <Reveal delay={120}>
-              <p className="mx-auto mt-6 max-w-md leading-relaxed text-white/60">
-                Make an account and the whole website opens: building, selling, Communities,
-                people.
-              </p>
-            </Reveal>
-            <Reveal delay={200}>
-              <div className="mt-10 flex flex-wrap justify-center gap-3">
-                <Button size="lg" variant="yes" to="/signup">Make an account</Button>
-                <Button size="lg" variant="subtle" to="/login">Log in</Button>
-              </div>
-            </Reveal>
-            <Reveal delay={260}>
-              <p className="mt-6 text-sm font-semibold text-white/35">
-                For people aged 15 and over.
-              </p>
-            </Reveal>
-          </div>
-        </Lane>
-      </section>
     </div>
   )
 }

@@ -8,7 +8,7 @@ const DEFAULT_ICON = asset('/brand/favicon.png')
  * The pages that speak for Kobblon rather than being part of using it -
  * what Kobblon is, the Launcher, the rules, every policy, Support,
  * standing - are the **At Kobblon** pages. Staw's name for the family, so
- * their tabs carry it: "What Kobblon is - At Kobblon".
+ * their tabs carry it: "What is Kobblon | At Kobblon".
  *
  * It is only the tab and the way we talk about them. The addresses stay
  * where they are; renaming `/about` would break every link anybody has

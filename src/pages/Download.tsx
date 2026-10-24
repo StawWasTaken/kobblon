@@ -178,7 +178,7 @@ export default function Download() {
             <div className="flex flex-wrap gap-3">
               <Button to="/signup" variant="yes" size="lg">Make an account</Button>
               <Button to="/about" variant="subtle" size="lg" iconRight={faArrowRight}>
-                What Kobblon is
+                What is Kobblon
               </Button>
             </div>
           </Reveal>

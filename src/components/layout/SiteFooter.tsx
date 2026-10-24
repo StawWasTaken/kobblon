@@ -27,7 +27,7 @@ const kobblon = [
 ]
 
 const about = [
-  { to: '/about', label: 'What Kobblon is' },
+  { to: '/about', label: 'What is Kobblon' },
   { to: '/support', label: 'Support' },
   { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
