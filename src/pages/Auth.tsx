@@ -8,7 +8,7 @@ import { PixelField } from '@/components/brand/PixelField'
 import { Reveal } from '@/components/about/Reveal'
 import { Floaters } from '@/components/about/Floaters'
 import { Lane } from '@/components/about/Band'
-import { Eyebrow, Title } from '@/components/about/Type'
+import { Eyebrow } from '@/components/about/Type'
 import { SignupForm } from '@/components/auth/SignupForm'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { useAuth } from '@/hooks/useAuth'
@@ -77,13 +77,17 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
 
   return (
     /*
-     * One screen, no scrolling on a desktop. Staw: "it must be as simple
-     * that the whole card is visible in the screen theres no need to scroll
-     * down (when on pc actually)". The card is as short as the fields allow,
-     * so the only way to fit it under a headline was to stop stacking them:
-     * the words sit beside the form from `lg` up and the pair is centred in
-     * the window. Below that it is one column and it scrolls, which is what
-     * a phone does anyway.
+     * One column down the middle, and one screen with nothing to scroll on
+     * a desktop. Staw asked for both: "make the card in the center", and
+     * before that "the whole card is visible in the screen theres no need to
+     * scroll down (when on pc actually)".
+     *
+     * Centred and fitting are in tension, because the form is as tall as its
+     * fields and a headline above it has to come out of the same 900 pixels.
+     * What gives is the headline: it is one size down from the At Kobblon
+     * `Title`, the lead is a single short line, and the header is tight. The
+     * card itself is untouched - shrinking the thing somebody has to fill in
+     * to make room for the words would be the wrong way round.
      */
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-ink text-white">
       <PixelField className="opacity-30" />
@@ -104,15 +108,34 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
         </header>
       </Lane>
 
-      <Lane className="flex flex-1 items-center">
-        <main className="grid w-full items-center gap-10 py-10 lg:grid-cols-[1fr_24rem] lg:gap-20 lg:py-6">
+      <Lane className="flex flex-1 items-center justify-center">
+        <main className="w-full max-w-xl py-10 lg:py-2">
           {/* ------------------------------------------------- the words */}
-          <div className="text-center lg:text-left">
-            <Reveal>
-              <Eyebrow>{claiming ? 'You have been looking around' : 'Kobblon'}</Eyebrow>
-            </Reveal>
+          {/*
+           * One line, and in the ordinary case nothing else. The eyebrow and
+           * the explaining sentence only appear for a guest claiming their
+           * account, whose card is shorter by a tab row and a guest button
+           * and so has the room for them.
+           */}
+          <div className="text-center">
+            {claiming && (
+              <Reveal>
+                <Eyebrow>You have been looking around</Eyebrow>
+              </Reveal>
+            )}
             <Reveal delay={70}>
-              <Title level={1} className="mt-4">
+              {/*
+               * Written out rather than `Title level={1}`, because `cn`
+               * joins and does not merge: a second `text-[clamp(...)]` beside
+               * the one Title already carries loses to whichever Tailwind
+               * emitted later, and the heading stayed at the page-title size
+               * however small the override said. Same trap as `Character`
+               * and its `relative`.
+               */}
+              <h1 className={cn(
+                'font-display text-[clamp(1.8rem,2.6vw,2.2rem)] font-extrabold leading-[1.05] tracking-tight',
+                claiming && 'mt-4',
+              )}>
                 {claiming ? (
                   <>
                     Keep what you
@@ -120,24 +143,24 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </>
                 ) : (
                   <>
-                    Sign up and
-                    <span className="block text-brand-bright">start building</span>
+                    Sign up and <span className="text-brand-bright">start building</span>
                   </>
                 )}
-              </Title>
+              </h1>
             </Reveal>
-            <Reveal delay={140}>
-              <p className="mx-auto mt-5 max-w-md leading-relaxed text-white/55 lg:mx-0">
-                {claiming
-                  ? 'The Worlds you entered, the people you met and anything you collected stay exactly where they are.'
-                  : 'Free, and it opens the whole of Kobblon.'}
-              </p>
-            </Reveal>
+            {claiming && (
+              <Reveal delay={140}>
+                <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-white/55">
+                  The Worlds you entered, the people you met and anything you collected stay exactly
+                  where they are.
+                </p>
+              </Reveal>
+            )}
           </div>
 
           {/* ----------------------------------------------- the card */}
-          <section className="mx-auto w-full max-w-md lg:mx-0">
-            <div className="relative rounded-3xl border border-white/10 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl">
+          <section className="mx-auto mt-6 w-full max-w-md">
+            <div className="relative rounded-3xl border border-white/10 bg-ink-card/85 p-5 shadow-pop backdrop-blur-xl sm:p-6">
               <span
                 aria-hidden="true"
                 className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-b from-white/10 to-transparent opacity-60"
@@ -175,7 +198,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </>
                 ) : (
                   <>
-                    <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
+                    <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
                       {(['login', 'signup'] as const).map((which) => (
                         <Link
                           key={which}
@@ -204,7 +227,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       )
                       : <LoginForm />}
 
-                    <div className="my-4 flex items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-white/25">
+                    <div className="my-3.5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-white/25">
                       <span className="h-px flex-1 bg-white/10" />
                       or
                       <span className="h-px flex-1 bg-white/10" />
@@ -221,7 +244,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               </div>
             </div>
 
-            <p className="mt-4 text-center text-xs text-white/35">
+            <p className="mt-3.5 text-center text-xs text-white/35">
               <Link to="/policies/terms" className="font-semibold hover:text-white">Terms</Link>
               <span className="px-2">&middot;</span>
               <Link to="/policies/guidelines" className="font-semibold hover:text-white">Guidelines</Link>

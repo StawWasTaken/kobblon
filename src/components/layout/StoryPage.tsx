@@ -163,8 +163,22 @@ export function StoryPage({
                     {section.heading}
                   </h2>
 
-                  {section.body.map((paragraph) => (
-                    <p key={paragraph} className="mt-5 text-[1.0625rem] leading-[1.75] text-white/70">
+                  {/*
+                   * Numbered clauses, because these documents are now long
+                   * enough that "the bit about guest accounts" is not a
+                   * reference anybody can act on. Support, moderation and an
+                   * appeal can all cite 3.5 and mean one sentence. The number
+                   * is in the margin on a wide screen so the measure of the
+                   * text is unaffected, and inline under it.
+                   */}
+                  {section.body.map((paragraph, line) => (
+                    <p
+                      key={paragraph}
+                      className="relative mt-5 text-[1.0625rem] leading-[1.75] text-white/70 sm:pl-14 sm:[text-indent:0]"
+                    >
+                      <span className="mr-2 font-display text-sm font-extrabold tabular-nums text-white/25 sm:absolute sm:left-0 sm:top-1 sm:mr-0">
+                        {index + 1}.{line + 1}
+                      </span>
                       {paragraph}
                     </p>
                   ))}

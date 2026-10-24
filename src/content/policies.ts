@@ -1,4 +1,5 @@
 import { currency } from '@/lib/currency'
+import { MINIMUM_AGE } from '@/lib/age'
 import type { StorySection } from '@/components/layout/StoryPage'
 
 /*
@@ -6,8 +7,31 @@ import type { StorySection } from '@/components/layout/StoryPage'
  * date. Support and moderation point at a rule rather than at a page, which
  * only works if a rule has somewhere to be pointed at.
  *
- * None of this has been through a lawyer yet. The hub says so, and it will
- * stop saying so on the day it stops being true, not before.
+ * These were rewritten against the platform as it is actually built rather
+ * than against what it was when the first draft was written. Staw: "survey,
+ * inspect and look around all of the entire platform of kobblon and update
+ * all of our policies based on that so that we are talking about the same
+ * stuff thats here on kobblon". So every clause below names something that
+ * exists in this repository - a route, a table, an RPC, an edge function, a
+ * ledger movement - and the things that do not exist yet are named as not
+ * existing instead of being described in the present tense.
+ *
+ * Three rules for anybody editing these:
+ *
+ *   * **Define the word once and then use it.** "Content", "Account",
+ *     "Decision" and the rest are defined in clause 1 of the Terms and mean
+ *     the same thing in all nine documents. Do not introduce a synonym.
+ *   * **Never promise a number these pages cannot show.** The platform fee,
+ *     the listing fee and the price ceilings are set in the database and
+ *     displayed on the form that charges them, so the documents say where
+ *     the figure is shown rather than repeating a figure that can drift.
+ *   * **A capability the runtime does not have is not described.** Saying
+ *     Kobblon does a thing it does not do is the kind of sentence a
+ *     regulator reads back to you.
+ *
+ * None of this has been through a lawyer yet. Every document says so in its
+ * own footnote, and they will stop saying so on the day it stops being true,
+ * not before.
  */
 
 export type Policy = {
@@ -23,391 +47,615 @@ export type Policy = {
   footnote?: string
 }
 
+const NOT_LAWYERED =
+  'This document states the operating practice of the Kobblon platform in binding terms and is '
+  + 'intended to be relied upon. It has not yet been reviewed by a qualified legal practitioner, '
+  + 'and it will be before Kobblon opens to the general public. Where any clause of this document '
+  + 'conflicts with a mandatory right conferred on you by the law of your country of residence, '
+  + 'that right prevails and the remainder of this document continues in force.'
+
+/* ------------------------------------------------------------------ terms */
+
 const terms: StorySection[] = [
   {
-    id: 'who',
-    heading: 'Who can use Kobblon',
+    id: 'definitions',
+    heading: 'Definitions and interpretation',
     body: [
-      'You need to be 15 or over. We ask for your birthday when you sign up and we act on the answer.',
-      'One account per person. Do not share it, sell it, or hand it to someone under 15.',
-      'A guest account is a real account that we treat as temporary. Guests can look around and enter Worlds. Guests that have not been seen for a day are cleared out, so if you want to keep anything, turn yours into a proper account first.',
+      'In this document and in every other policy published at kobblon.com/policies, the following expressions bear the following meanings, and they bear no other meaning anywhere on the platform.',
+      '"Kobblon", "we", "us" and "our" mean the operator of the Kobblon platform, comprising the website at kobblon.com, the Kobblon Workspace desktop application, the Kobblon Launcher, the runtime that executes Worlds, and every service, database and storage bucket operated in support of them.',
+      '"You" and "your" mean the natural person who has registered an Account or who otherwise accesses the platform. An Account may be held only by a natural person; it may not be held by a company, a group of people, an automated agent, or a person acting on behalf of any of those.',
+      '"Account" means the record created when you register, comprising your username, display name, hashed credential, date of birth, optional electronic mail address, inventory, balance, standing and every associated record.',
+      '"Content" means anything submitted to, uploaded to, generated on, or published through the platform by any person other than Kobblon, including Worlds, meshes, images, decals, audio, video, fonts, builds, Catalog items, body parts, outfits, usernames, display names, biographies, posts, comments, reactions, chat messages, support tickets, appeals, Community names, Community walls, announcements and events.',
+      `"${currency.plural}" means the non-redeemable internal unit of account recorded against your Account and described in the ${currency.plural} and spending policy.`,
+      '"World" means an interactive three-dimensional place authored in Kobblon Workspace and published for other people to enter, together with any scripts, assets and configuration forming part of it.',
+      '"Community" means a group created on the platform with its own membership, ranks, wall, announcements, events and funds.',
+      '"Decision" means a moderation outcome recorded against an Account under the Moderation and appeals policy, being one of: a warning, a removal of Content, a restriction of a feature, a suspension of chat, a suspension of the Account, or a termination of the Account.',
+      '"Guidelines" means the Community Guidelines. "Policies" means these Terms together with every other document published at kobblon.com/policies, each of which is incorporated into these Terms by reference and forms part of the agreement between you and Kobblon.',
+      'Headings are for navigation and do not affect construction. The singular includes the plural. "Including" means "including without limitation" and does not restrict the generality of the words preceding it. A reference to a page, route or feature is a reference to it as it exists from time to time.',
+    ],
+  },
+  {
+    id: 'agreement',
+    heading: 'The agreement you are entering',
+    body: [
+      'By registering an Account, by signing in, or by using any part of the platform, you accept these Terms and every policy incorporated into them. If you do not accept them, you must not use the platform, and any Account you hold should be closed.',
+      'These Terms, together with the incorporated policies, constitute the entire agreement between you and Kobblon in respect of the platform and supersede every prior statement, representation, forum post, Discord message or announcement about how the platform works. Nothing said by a member of staff, a moderator, a volunteer or an automated system varies these Terms unless it is published at kobblon.com/policies.',
+      'Where a provision of these Terms conflicts with a provision of a more specific policy, the more specific policy prevails in respect of its subject matter, and these Terms prevail in all other respects.',
+      'If any provision of these Terms is held to be invalid, unlawful or unenforceable, that provision is severed to the minimum extent necessary and the remainder continues in full force.',
+      'A failure or delay by Kobblon in enforcing any provision of these Terms is not a waiver of that provision, and a waiver given on one occasion does not operate as a waiver on any subsequent occasion.',
+    ],
+  },
+  {
+    id: 'who',
+    heading: 'Eligibility and registration',
+    body: [
+      `The platform is made available only to natural persons aged ${MINIMUM_AGE} years or over. You warrant on each occasion that you access the platform that you meet that requirement.`,
+      'Registration requires a date of birth, a username and a credential. The date of birth is used to determine eligibility and is not published. Submitting a date of birth which is not your own in order to obtain access is a material breach of these Terms and is a ground for immediate termination of the Account without notice and without appeal on the merits of the underlying conduct.',
+      'An electronic mail address is optional at registration. Where no address is supplied, no credential reset is possible and the Account cannot be recovered if the credential is lost. That consequence is stated on the registration form and you accept it by registering without an address.',
+      'One Account per person. You may not operate, control or benefit from more than one Account, and you may not sell, rent, lend, gift, trade, bequeath or otherwise transfer an Account or any credential to any other person. An Account is personal to you and conveys no property right capable of assignment.',
+      'A guest Account is a genuine Account which Kobblon treats as temporary. A guest may browse the website and enter published Worlds. A guest Account which has not been seen for a day is liable to be cleared, together with everything recorded against it, without notice. Converting a guest Account into a registered Account preserves what is on it; failing to convert it does not.',
+      'You are responsible for every action taken through your Account, whether or not you authorised it, save to the extent that the action results from a failure of the platform itself. You must keep your credential confidential. Kobblon will never ask you for it, and any person who does is attempting to defraud you.',
     ],
   },
   {
     id: 'yours',
-    heading: 'What you make stays yours',
+    heading: 'Ownership of your Content and the licence you grant',
     body: [
-      'Your Worlds and your uploads belong to you. By putting them on Kobblon you let us store them, show them to other people, and let others use what you publish to Create.',
-      'Take something down whenever you want. Copies other people already built with may stay in their Worlds.',
-      'Content on the Creator Marketplace is used by its number rather than copied, so whoever made a thing stays attached to it wherever it turns up.',
+      'As between you and Kobblon, you retain all right, title and interest in and to the Content you create. Nothing in these Terms transfers ownership of your Content to Kobblon.',
+      'By submitting Content to the platform you grant Kobblon a worldwide, non-exclusive, royalty-free, sub-licensable and transferable licence to host, store, cache, reproduce, adapt for technical purposes, encode, re-encode, index, display, perform, transmit and distribute that Content for the purposes of operating, securing, moderating, promoting and improving the platform. The licence subsists for as long as the Content remains on the platform and for the limited further period required to remove it from backups, caches and derived records.',
+      'The adaptations contemplated by the licence are technical only. They include generating preview images and cards, generating thumbnails and headshots, transcoding audio and video, compressing and converting meshes and textures, and rendering a garment or body part onto the mannequin so that it can be displayed without disclosing the underlying template sheet. They do not include creative alteration of your Content.',
+      'Where you publish Content to the Creator Marketplace or to the Catalog, you additionally grant every other user of the platform a non-exclusive, non-transferable, revocable licence to use that Content by reference within their own Worlds and on their own avatar, on the terms set out in the Catalog and uploads policy. That licence is a licence to use by reference only. It is not a licence to copy the file, to redistribute it, to resell it, or to use it off the platform.',
+      'Content on the Creator Marketplace is referenced by identifier rather than duplicated, so attribution to the person who made a thing survives wherever that thing is used. Withdrawing Content removes it from circulation prospectively; it does not retrospectively invalidate uses already made of it, and a World already built with a withdrawn item continues to function.',
+      'You may remove your own Content at any time. Removal takes effect on the platform. It does not operate to recall copies lawfully taken before removal, nor to reverse a completed purchase, nor to extinguish the entitlement of a person who has already acquired the item.',
+      'You warrant that you own or are licensed to grant every right you purport to grant under this clause, and that the exercise of those rights by Kobblon and by other users will not infringe the rights of any third party.',
     ],
   },
   {
     id: 'brix',
-    heading: `${currency.plural} and buying things`,
+    heading: `${currency.plural}, purchases and entitlements`,
     body: [
-      `${currency.plural} are a number on your account for use inside Kobblon. They are not money, they cannot be cashed out, and they have no value off the platform.`,
-      'Getting something from the Creator Marketplace puts it in your inventory and lets you use its number in your Worlds. It does not give you the file to keep, and it is not a resale right.',
-      `An account removed for breaking the rules loses whatever is on it. We do not refund ${currency.plural} spent before that.`,
+      `${currency.plural} are an internal unit of account recorded as a number against your Account. They are not money, not electronic money, not a payment instrument, not a security, not a deposit and not a store of value. They cannot be exchanged for money, withdrawn, cashed out or transferred off the platform, and they carry no value outside it. A balance is a record of what you may spend on the platform, not a sum held on your behalf.`,
+      `Acquiring an item with ${currency.plural} confers a personal, non-exclusive, non-transferable, revocable entitlement to use that item on the platform in the manner the platform permits. It does not transfer ownership of the item, any copyright in it, any right to the underlying file, or any right of resale.`,
+      `Any offer by any person to purchase your ${currency.plural} for money, to sell you ${currency.plural} for money, or to exchange them for anything off the platform, is a breach of these Terms by the person making it, is very likely an attempt to defraud you, and must be reported.`,
+      `Where an Account is terminated for breach, every ${currency.plural} balance, entitlement and item recorded against it is forfeit. ${currency.plural} already spent are not refunded. This is a consequence of the breach and not a penalty assessed against you.`,
+      'Every movement of value on your Account is recorded in a ledger and displayed on your transactions page with the reason for the movement. That ledger is the record Kobblon will examine if you query a movement, and you should query a movement by pointing at it.',
+    ],
+  },
+  {
+    id: 'conduct',
+    heading: 'Acceptable use',
+    body: [
+      'You must comply with the Community Guidelines at all times and in every part of the platform, including inside a World you own. The Guidelines are not advisory and they do not stop at the door of a World.',
+      'You must not attempt to circumvent, disable, probe, scan, reverse engineer or defeat any security control, rate limit, access control, moderation check, row-level security policy or sandbox boundary operated by Kobblon, nor attempt to access any Account, record, bucket or service you have not been granted access to.',
+      'You must not use the platform to collect credentials, to imitate a Kobblon sign-in page, to impersonate Kobblon staff or any other person, to distribute malware, to run a phishing operation, or to direct any person to a location which does any of those things.',
+      'You must not interfere with the operation of the platform, including by automated access at a rate or volume which degrades service, by generating artificial engagement, by manipulating a leaderboard, a chart or a ranking, or by acquiring your own listings through other Accounts.',
+      'You must not use the platform in a manner that is unlawful in your jurisdiction or in the jurisdiction from which the platform is operated, and you must not use it to facilitate any unlawful act by another person.',
+      'A breach of this clause is a ground for a Decision up to and including termination, and the gravest categories listed in the Guidelines are a ground for immediate termination without a prior warning.',
     ],
   },
   {
     id: 'ours',
-    heading: 'What we can do',
+    heading: 'Our rights over Content and Accounts',
     body: [
-      'We can remove anything that breaks the Community Guidelines, and suspend accounts that keep doing it.',
-      'Uploads are screened automatically when they arrive, and a person looks at anything the check is unsure about. We can hold something back while that happens.',
-      'We can change how Kobblon works. If something big changes, we will say so rather than hoping nobody notices.',
+      'Kobblon may remove, restrict, withhold, unlist, de-index or refuse to publish any Content which it reasonably considers to breach the Policies, to be unlawful, to infringe the rights of a third party, or to present a risk to the safety of users or to the integrity of the platform.',
+      'Content submitted to the platform is screened automatically on arrival, and a human reviewer examines anything the automated check flags as uncertain. Content may be withheld from publication while that process is carried out. The operation of the automated check does not waive any right to act later, and the absence of a prior objection to Content does not constitute approval of it.',
+      'Kobblon may restrict a feature, suspend chat, suspend an Account or terminate an Account in accordance with the Moderation and appeals policy, which sets out the available outcomes, the matters taken into account, the notice given and the appeal mechanism.',
+      'Kobblon may modify, suspend, add to or withdraw any feature of the platform. Where a change materially affects how Content you have published behaves, what you may do with your Account, or the terms on which you sell, Kobblon will publish notice of it rather than making the change silently.',
+      'Kobblon may vary these Terms. The date of the most recent change to each document appears on the document and on the policy hub. Continued use of the platform after a change takes effect constitutes acceptance of the changed terms. Where a change materially reduces your rights, notice will be given through the platform before it takes effect.',
     ],
   },
   {
-    id: 'limits',
-    heading: 'What we cannot promise',
+    id: 'availability',
+    heading: 'Availability, warranties and the allocation of risk',
     body: [
-      'Kobblon is free and small. Things will break sometimes and data can be lost. Keep your own copy of anything you would be upset to lose.',
-      'Nothing here is a promise that a feature will keep existing, that your World will be visited, or that a number on the site will only go up.',
+      'The platform is provided free of charge and is supplied on an "as is" and "as available" basis. To the fullest extent permitted by applicable law, Kobblon excludes all warranties, conditions, representations and terms, whether express or implied by statute, common law or otherwise, including any implied warranty of satisfactory quality, fitness for a particular purpose, uninterrupted availability, accuracy or non-infringement.',
+      'Kobblon does not warrant that the platform will be available at any particular time, that it will be free of defects, that Content will be preserved, that data will not be lost, or that any particular feature will continue to exist. The platform is operated by a very small team and defects and outages are to be expected. You should retain your own copy of anything you would be unwilling to lose; Kobblon is not a backup service and does not hold itself out as one.',
+      'Kobblon gives no undertaking as to the conduct of any other user, as to the content, safety, accuracy or legality of any World, Catalog item or upload authored by a user, or as to the outcome of any interaction between users. Content authored by users is not endorsed by Kobblon and is not reviewed for merit.',
+      'To the fullest extent permitted by applicable law, Kobblon is not liable for any indirect, incidental, special, consequential, exemplary or punitive loss, nor for any loss of profit, revenue, opportunity, goodwill, anticipated saving, data, Content or balance, howsoever arising and whether or not foreseeable.',
+      'To the fullest extent permitted by applicable law, the aggregate liability of Kobblon arising out of or in connection with the platform, whether in contract, tort, breach of statutory duty or otherwise, is limited in each case to the greater of the amount of money you have paid to Kobblon in the twelve months preceding the event giving rise to the claim, which at present is nil, and the minimum amount permitted by law.',
+      'Nothing in these Terms excludes or limits liability for death or personal injury caused by negligence, for fraud or fraudulent misrepresentation, or for any other liability which cannot lawfully be excluded or limited. Where your country of residence confers rights on consumers which cannot be excluded, this clause applies only to the extent that it is consistent with those rights.',
+      'You agree to indemnify Kobblon against any claim, demand, proceeding, loss, liability, damage, cost or expense, including reasonable legal costs, brought by a third party and arising out of Content you submitted, your breach of the Policies, or your unlawful use of the platform. This clause does not apply to the extent that the claim arises from Kobblon’s own act or omission, and it does not apply to a consumer where applicable law prohibits it.',
     ],
   },
   {
     id: 'leaving',
-    heading: 'Leaving',
+    heading: 'Suspension, termination and closure',
     body: [
-      'You can stop using Kobblon whenever you like. Ask us and your account goes with everything on it.',
-      'Some things survive on purpose: a World somebody else built with your published upload keeps working, and moderation records of a removed account are kept so the same behaviour is not simply restarted.',
+      'You may stop using the platform at any time, and you may request closure of your Account from Settings or by opening a support ticket. On closure, the Account and the Content recorded against it are deleted, subject to the retention described in the Privacy policy and in the following clause.',
+      'Certain records survive closure by design and for stated reasons: moderation records of a terminated Account are retained so that the same conduct cannot simply be restarted under a new registration; a World built by another person using a Catalog item you published continues to function, because it references the item rather than containing a copy of it; and records which applicable law requires to be kept are kept for the period required.',
+      'Kobblon may suspend or terminate an Account in accordance with the Moderation and appeals policy. A termination is a decision taken by a human administrator. No automated system on this platform is permitted to terminate an Account, and that restriction is enforced in the database and not merely as a matter of practice.',
+      'Kobblon may suspend access to the platform in whole or in part, without prior notice, where it reasonably considers that suspension is necessary to protect users, to comply with law, or to address a security incident or a serious defect.',
+      'The clauses of these Terms which by their nature are intended to survive termination survive it, including the definitions, the licence to the extent necessary to operate Content already published by others, the warranty exclusions, the limitation of liability, the indemnity and this clause.',
+    ],
+  },
+  {
+    id: 'law',
+    heading: 'Law, disputes and notices',
+    body: [
+      'Kobblon is not yet an incorporated undertaking, and no governing law or forum is nominated in these Terms for that reason. This clause will nominate both before Kobblon opens to the general public, and the nomination will be published as a change to this document rather than applied retrospectively to a dispute already on foot.',
+      'Until a governing law is nominated, nothing in these Terms purports to remove, and nothing shall be construed as removing, any mandatory protection conferred on you by the law of your country of residence, including any right to bring proceedings in the courts of that country.',
+      'Before commencing any proceeding you are asked, but not required, to raise the matter through a support ticket so that it can be examined and, where appropriate, corrected without a dispute.',
+      'Notices to you are given through the platform, being the Kobblon inbox for anything concerning a Decision or the standing of your Account, and by electronic mail where you have supplied an address. Notices to Kobblon are given by support ticket.',
+      'You may not assign or transfer your rights under these Terms. Kobblon may assign or transfer its rights and obligations to a successor in the operation of the platform, and will publish notice of any such transfer.',
+      'No person who is not a party to these Terms has any right to enforce any provision of them.',
     ],
   },
 ]
 
+/* ------------------------------------------------------------- guidelines */
+
 const guidelines: StorySection[] = [
   {
-    id: 'person',
-    heading: 'Be a person, not a problem',
+    id: 'scope',
+    heading: 'What these Guidelines govern',
     body: [
-      'Disagreeing is fine. Arguing is fine. Being weird is encouraged. Following someone around to make them miserable is not.',
-      'No harassment, no pile-ons, no threats, and nothing aimed at someone because of who they are.',
+      'These Guidelines govern every act of expression on the Kobblon platform. They apply to your username, your display name, your biography, your avatar, your profile, your Worlds and everything built into them, your uploads, your Catalog items, your outfits, your Community and its wall, announcements and events, your posts, your comments, your reactions, your chat messages in every channel including inside a World, your support tickets and your appeals.',
+      'They apply equally to Content which is public and to Content which is visible only to a small number of people. A direct message is not exempt. A Community wall is not a private residence. A World you own is not a jurisdiction of its own.',
+      'They apply to conduct as well as to Content. A sequence of acts, each of which would be unobjectionable in isolation, breaches these Guidelines where the sequence is directed at making a person’s use of the platform intolerable.',
+      'Breach of these Guidelines is a breach of the Terms of Service and is a ground for a Decision under the Moderation and appeals policy.',
+    ],
+  },
+  {
+    id: 'person',
+    heading: 'Conduct towards other people',
+    body: [
+      'Disagreement is permitted. Argument is permitted. Eccentricity is encouraged. Pursuing a person in order to distress them is not permitted in any form.',
+      'The following are prohibited: harassment; targeted insult; coordinated pile-ons; encouraging others to harass a person; threats of violence or of harm of any kind, whether or not the person making them intends to carry them out; sexual harassment; and any attack directed at a person by reason of race, ethnicity, national origin, religion, disability, age, sex, sexual orientation or gender identity.',
+      'Encouraging or instructing any person to injure themselves, to take their own life, or to adopt a disordered pattern of eating, is prohibited absolutely, including where it is framed as humour.',
+      'Evading a block, an ignore, a chat suspension or an Account suspension, whether by a second Account, by a Community, by a World, or by asking another person to carry a message, is itself a breach and is treated as an aggravation of the matter that led to the original restriction.',
     ],
   },
   {
     id: 'limits',
-    heading: 'Hard limits',
+    heading: 'Absolute prohibitions',
     body: [
-      'No sexual content involving minors, ever, in any form. This gets reported, not just removed.',
-      'No real violence, no doxxing, no selling illegal things, no malware, and no pretending to be someone you are not.',
-      'Nothing here is a grey area, and nothing here gets a warning first.',
+      'The following categories are prohibited without exception, without any requirement of intent, and without a prior warning. Content falling into any of them is removed and the Account responsible is terminated. Where the law requires a report to an authority, a report is made.',
+      'Any sexual depiction, description, solicitation or sexualisation of a minor, in any medium, in any style, however stylised, abstracted or claimed to be fictional. There is no artistic, comedic or ironic reading of this category.',
+      'Grooming, or any attempt by any person to establish a relationship with a minor for a sexual purpose, including any attempt to move such a conversation to another service.',
+      'Depictions of real violence against real people or animals offered as entertainment, and material produced by or promoting a terrorist or violent extremist organisation.',
+      'Material which facilitates serious crime, including instructions for weapons or explosives, trafficking in controlled substances, trafficking in persons, or the sale of stolen credentials or payment details.',
+      'Malware, exploit code directed at Kobblon or at its users, credential harvesting, and any Content which imitates a Kobblon sign-in page or a Kobblon staff communication.',
+      'Disclosure of another person’s private information without their consent, including a legal name, an address, a school, a workplace, a telephone number or an image of them in a private setting.',
+    ],
+  },
+  {
+    id: 'mature',
+    heading: 'Material not suitable for the platform',
+    body: [
+      `The platform admits people aged ${MINIMUM_AGE} and over and is not an adults-only service. Content which would be suitable only for an adult audience is not admitted, whether or not it is labelled, gated, placed behind an interstitial or confined to a Community.`,
+      'Prohibited on this basis: pornography and sexually explicit material; depictions of self-harm or suicide; gratuitous gore; and the promotion of gambling, tobacco, controlled substances or alcohol.',
+      'Hostility directed at a group of people, and the symbols, slogans and numerology of organised hatred, are prohibited whether or not any individual is named.',
+      'Content whose evident purpose is to test the boundary of this clause is treated as falling on the wrong side of it.',
     ],
   },
   {
     id: 'spaces',
-    heading: 'Worlds and what goes in them',
+    heading: 'Worlds and what may be built into them',
     body: [
-      'A World is yours to build, and it is still on Kobblon. Everything in this page applies inside one.',
-      'A World cannot be used to collect passwords, pretend to be a login page, or push people somewhere that does. Every World runs shut off from the rest of the site, and trying to get around that is a reason to lose the account rather than a clever trick.',
+      'A World is yours to build and it remains part of Kobblon. Everything in these Guidelines applies inside one, to its geometry, its textures, its audio, its scripts, its user interface, its title, its description and its thumbnail.',
+      'A World must not be used to collect credentials, to imitate a sign-in page of Kobblon or of any other service, to imitate a Kobblon staff communication, or to direct a person to any location which does any of those things.',
+      'Every World executes in isolation from the remainder of the platform and has no access to your Account, your messages, your friendships or your balance. Attempting to defeat that isolation, or to induce another person to supply information which the World cannot lawfully obtain, is a ground for termination. It is not a challenge left in the product for people to solve.',
+      'A World must not be constructed to exhaust the resources of a visitor’s machine, to crash the runtime, or to lock a visitor into a state they cannot leave.',
+      'The owner of a World is answerable for what is built into it, including Content contributed by collaborators and Content generated by its scripts.',
     ],
   },
   {
     id: 'uploads',
-    heading: 'Uploads to Create',
+    heading: 'Uploads, the Catalog and the Marketplace',
     body: [
-      'Upload what you made or what you have the right to share. Do not upload other people’s work and put your name on it.',
-      'Everything is reviewed before anyone else sees it. Trying to sneak something past review is its own reason to lose the account.',
-      'Pricing what you sell is up to you, inside the ceiling for that kind of content. Do not use listings as a way to advertise something else.',
+      'Upload only work you made or work you hold a licence to publish and to sub-license on the terms set out in the Catalog and uploads policy. If you are uncertain whether you hold that licence, you do not hold it.',
+      'Everything is screened on arrival and nothing is visible to any other person before that screening has concluded. Disguising Content in order to pass screening, including by splitting it across uploads, encoding it, or misdescribing it, is treated as an aggravation of the underlying breach rather than as a mitigation of it.',
+      'Do not misdescribe what you are selling, do not use a listing as an advertisement for something else, do not publish the same item repeatedly under different names to occupy the shelf, and do not use an item title, description or preview to carry a message that would breach these Guidelines if posted directly.',
+      'Spelling a prohibited word differently, substituting characters for letters, or transliterating it, does not place it outside these Guidelines. The platform reads what was said rather than how it was typed.',
     ],
   },
   {
     id: 'communities',
     heading: 'Communities',
     body: [
-      'A Community can set its own tone, its own ranks and its own rules on top of these. It cannot set rules that undo these.',
-      'Running a Community means being answerable for what goes up on its wall and in its announcements. Ignoring that is how a Community loses its owner.',
+      'A Community may set its own tone, its own ranks and its own additional rules. It may not set a rule which purports to disapply these Guidelines, and a member cannot consent to their disapplication.',
+      'The owner and the ranks of a Community holding moderation powers are answerable for what is published on its wall, in its announcements and at its events. Persistent failure to act on Content which plainly breaches these Guidelines is a ground for a Decision against the Account holding the power, and for the removal of the Community.',
+      'A Community must not be constituted for the purpose of coordinating harassment, of evading a restriction imposed on an Account, or of distributing Content which could not be published individually.',
     ],
   },
   {
     id: 'reporting',
-    heading: 'Reporting',
+    heading: 'Reporting and misuse of reporting',
     body: [
-      'Use the flag on any profile, World or message. Reports are private and the person you report is not told who sent it.',
-      'Reporting things that are fine, over and over, to bother someone, is also against the rules.',
+      'Use the report control on any profile, World, Community, item or message. A report is confidential: the person reported is never told who reported them, and the identity of a reporter is not disclosed to them in any Decision, notice or appeal outcome.',
+      'A report should state what is wrong and where it is. A report is examined on the Content, not on the standing of the person who sent it.',
+      'Submitting reports which you know to be unfounded, submitting reports repeatedly in order to harass a person, and inducing others to report a person en masse, are each breaches of these Guidelines and are themselves grounds for a Decision.',
     ],
   },
 ]
 
+/* ----------------------------------------------------------------- privacy */
 
 const privacy: StorySection[] = [
   {
+    id: 'scope',
+    heading: 'Scope, controller and contact',
+    body: [
+      'This policy describes the personal data processed by the Kobblon platform, the purposes for which it is processed, the legal bases relied upon where those bases apply, the recipients to whom it is disclosed, the periods for which it is retained, and the rights available to you in respect of it.',
+      'Kobblon determines the purposes and means of the processing described here and is therefore the controller of it. Kobblon is not yet an incorporated undertaking, and the identity and establishment of the controller will be stated in this clause when it is. The route for every request under this policy is a support ticket, which reaches a person.',
+      'This policy applies to the website at kobblon.com, to the Kobblon Workspace desktop application, to the Kobblon Launcher when it is released, and to the services operated in support of them. It does not apply to a World authored by a user, which cannot read your Account; nor to Discord, nor to any other service you choose to visit from a link on the platform.',
+    ],
+  },
+  {
     id: 'what',
-    heading: 'What Kobblon keeps',
+    heading: 'Categories of data processed',
     body: [
-      'An account: your username, your display name, your password in a hashed form we cannot read back, your email if you gave one, and your birthday, which decides whether you are old enough to be here.',
-      'What you make and do: Worlds, uploads, Catalog items, communities, posts, messages, friendships, blocks, reports, and what you own and are wearing.',
-      `Your ${currency.plural} and everything that has moved on your account, which is what the transactions page shows you.`,
-      'Being here: whether you are online, what you are doing in broad terms, and when you were last seen. This is what the dot beside your picture is drawn from.',
-      'Technical records kept by the services Kobblon runs on, including addresses your browser connects from, which exist so we can keep the place working and deal with abuse.',
+      'Registration and identity: username, display name, date of birth, the credential in a hashed form which cannot be reversed by Kobblon, and an electronic mail address where you have supplied one. An address is optional, and the consequence of not supplying one is that the Account cannot be recovered.',
+      'Profile and presentation: biography, profile picture, avatar configuration, claimed appearances, outfits, badges, and the Community shown first on your profile.',
+      'Content and activity: Worlds and their configuration, uploads, Catalog items, body parts, posts, comments, reactions, chat messages, Community membership and ranks, events, friendships, follows, blocks and ignores, inventory, and what you are currently wearing.',
+      `Economic records: your ${currency.plural} balance and every movement recorded against it, including welcome grants, daily rewards, quest rewards, purchases, sales, refunds, listing fees and refunds, the platform share, advertising budgets, advertising earnings and refunds, codes redeemed, gifts sent and received, item edit charges, username change charges, donations and burns.`,
+      'Presence: whether you are signed in, a broad description of what you are doing, and when you were last seen. This is the data from which the indicator beside your picture is drawn.',
+      'Safety records: reports you have made and reports made about you, Decisions recorded against your Account, appeals and their outcomes, support tickets and their correspondence, and the records which associate an Account with a device or network for the purpose of detecting evasion of a restriction.',
+      'Technical records generated by the infrastructure on which the platform runs, including the network address from which your browser or application connects, timestamps, and diagnostic logs. These exist in order to operate and secure the service.',
     ],
   },
   {
-    id: 'discord',
-    heading: 'If you connect Discord',
+    id: 'bases',
+    heading: 'Purposes and legal bases',
     body: [
-      'Connecting Discord stores your Discord id, the name Discord shows for you, and when you connected it. Nothing else: we ask Discord only who you are, never about your servers, your friends or your messages.',
-      'Your Discord name then appears on your profile, and your Discord id leads to your profile, which is the point of connecting it.',
-      'Unlinking removes all three straight away, and you can do it yourself in Settings.',
+      'Performance of a contract with you: creating and maintaining your Account, authenticating you, storing and serving your Content to the people you published it to, operating friendships, chat and Communities, operating the Catalog and the Marketplace, and recording and settling movements on your balance.',
+      'Compliance with a legal obligation: retaining what the law requires to be retained, responding to a lawful request from a competent authority, and reporting material whose reporting is mandatory.',
+      'Legitimate interests: keeping the platform secure and available; detecting, investigating and preventing abuse, fraud, manipulation and evasion of restrictions; moderating Content; defending legal claims; and understanding in aggregate how the platform is used. Where legitimate interests are relied upon, the interest has been balanced against your rights and freedoms, and you may object to the processing as described below.',
+      `Protection of a person: establishing that a user meets the minimum age of ${MINIMUM_AGE}, and acting on Content which indicates a risk of serious harm.`,
+      'Consent, where it is sought: linking a Discord account, and any optional feature which states that it operates on consent. Consent may be withdrawn at any time, and withdrawal does not affect the lawfulness of processing carried out before it.',
+      'Kobblon does not sell personal data, does not disclose it to data brokers, and does not disclose it to advertisers. Advertising on the platform is bought against placements on pages of the website; it is not targeted against a profile of a person, and no advertising identifier is created.',
     ],
   },
   {
-    id: 'why',
-    heading: 'What it is used for',
+    id: 'automated',
+    heading: 'Automated screening and automated decisions',
     body: [
-      'Running the place: signing you in, showing your things to the people you meant to show them to, keeping friends and chat working, and paying creators what they are owed.',
-      'Keeping it safe: moderation, reports, working out who is behind abuse, and stopping somebody who has been removed from simply coming back.',
-      'Nothing else. Kobblon does not sell what it knows about you, and does not hand it to advertisers. Ads on Kobblon are bought against places on the site, not against people.',
+      'Content submitted to the platform is screened by an automated system before it becomes visible to other people. The system examines the Content itself, together with a statement of the status of the Account which submitted it, where that status is material to reading the words correctly; it does not profile you, and it does not examine your other Content in order to assess you as a person.',
+      'The automated system may record a warning, remove Content, restrict chat or suspend an Account. The automated system cannot terminate an Account. A termination is taken only by a human administrator, and that restriction is enforced by the database rather than by convention.',
+      'Where a Decision is taken by the automated system, you are notified in your Kobblon inbox, you are told which rule was applied and what was done, and you may appeal. An appeal is examined afresh, and is not examined by the person or the system that took the original Decision. The Moderation and appeals policy sets out the time limits and the procedure.',
+      'To the extent that any Decision constitutes a decision based solely on automated processing which produces legal effects or similarly significantly affects you, the appeal described above is the means by which you obtain human intervention, express your point of view and contest the Decision.',
+    ],
+  },
+  {
+    id: 'processors',
+    heading: 'Recipients and processors',
+    body: [
+      'Supabase, which provides the database, authentication, storage buckets and edge functions on which the platform runs. All Account data, Content metadata and uploaded files are processed there.',
+      'GitHub Pages, which serves the website itself. Requests for the website reach GitHub, and GitHub records the technical details of those requests.',
+      'Groq, which provides the inference service used by the automated screening described above. Text and the descriptive metadata of Content submitted for screening are transmitted to that service for the purpose of classification. The service is instructed to process the material only for that purpose.',
+      'Discord, where and only where you choose to link a Discord account. Kobblon then stores your Discord identifier, the name Discord publishes for you, and the time of linking. Kobblon asks Discord who you are and nothing else: not your servers, not your friends, not your messages. Unlinking removes all three immediately, and you may unlink from Settings without assistance.',
+      'A competent authority, where disclosure is required by law or is necessary to report material whose reporting is mandatory, and a professional adviser where disclosure is necessary to establish, exercise or defend a legal claim.',
+      'A successor in the operation of the platform, where the platform is transferred, subject to the successor assuming obligations no less protective than those in this policy, and subject to notice being published before the transfer takes effect.',
+      'These recipients operate in jurisdictions which may differ from your own. Where personal data is transferred outside your jurisdiction, the transfer is made on the basis of the mechanism offered by the recipient for that purpose, including standard contractual clauses where they are applicable.',
     ],
   },
   {
     id: 'who-sees',
-    heading: 'Who can see what',
+    heading: 'What other people can see',
     body: [
-      'Public: your profile, your username, your picture and avatar, your published Worlds, what you have made, your communities, your badges, and whether you are around.',
-      'Private: your email, your birthday, your messages, your reports, and anything you have not published. Moderators can see reports and what was reported.',
-      'Other people on Kobblon see what you have published and nothing else. A World or a game you go into never receives your account: it gets whatever narrow thing it has been given permission to ask for, and no more.',
+      'Public: your username, your display name, your profile picture and avatar, your biography, your badges, your published Worlds, the Content you have published to the Catalog and the Marketplace, the Communities you are in, your friend count, and whether you are around.',
+      'Visible only to you and to Kobblon: your electronic mail address, your date of birth, your balance and its movements, your inventory, your chat messages, the reports you have made, your support tickets and your appeals.',
+      'Visible to moderators and administrators in the course of their duties: reports and the Content reported, Decisions and their reasons, appeals, support tickets, and the records necessary to detect evasion of a restriction. Staff access is confined to what is necessary for the matter in hand.',
+      'A World never receives your Account. It receives only the narrow items of information it has been granted permission to request, and it receives nothing because it asserts that it requires it.',
+      'Uploaded files are private by default and are fetched through a short-lived link rather than residing at an address which can be guessed.',
+    ],
+  },
+  {
+    id: 'retention',
+    heading: 'Retention',
+    body: [
+      'Account data is retained for as long as the Account exists. Content is retained until you remove it or the Account is closed, subject to the exceptions stated in the Terms of Service.',
+      'A guest Account which has not been seen for a day is liable to be cleared together with everything recorded against it.',
+      'Economic records are retained for as long as is necessary to evidence the movements on an Account and to resolve a dispute about them.',
+      'Safety records are retained after closure of an Account where retention is necessary to prevent the resumption of serious misconduct under a new registration, and in any event only for as long as that necessity subsists.',
+      'Technical and diagnostic records are retained for the shorter of the period necessary to operate and secure the service and the period applied by the infrastructure provider.',
+      'Backups are retained on a rolling basis and are overwritten in the ordinary course. Deletion from the live platform therefore precedes deletion from backups by the length of that cycle.',
     ],
   },
   {
     id: 'yours',
-    heading: 'What you can do about it',
+    heading: 'Your rights',
     body: [
-      'Change your name, your picture, your bio and your settings whenever you like, from your profile and from Settings.',
-      'Delete what you have made. Taking something down removes it from the site.',
-      'Ask for your account to be deleted, and we will delete it and what is on it. Some records have to outlive that: moderation records about serious harm, and anything a law says must be kept.',
-      'Write to us and ask what is held about you.',
+      'You may access what is held about you, and much of it is available to you directly: your profile, your Settings, your transactions page, your inventory, your standing page and your inbox.',
+      'You may rectify what is inaccurate. Your display name, biography, picture, avatar and settings are editable by you; your username is changeable subject to the charge displayed on the form; your date of birth is corrected through a support ticket because it governs eligibility.',
+      'You may erase your Content by removing it, and you may request erasure of your Account, which deletes the Account and what is recorded against it subject to the retention described above.',
+      'You may object to processing carried out on the basis of legitimate interests, and you may request restriction of processing while an objection or a question of accuracy is examined.',
+      'You may request a copy of the data you provided to Kobblon in a structured, commonly used and machine-readable form, and you may withdraw any consent you have given.',
+      'A request under this clause is made by support ticket and is answered by a person. Where a request is refused, the reason is given. Where you consider that a request has been handled improperly, you may complain to the supervisory authority of your country of residence.',
     ],
   },
   {
-    id: 'where',
-    heading: 'Where it lives',
+    id: 'security',
+    heading: 'Security',
     body: [
-      'Kobblon runs on Supabase, which stores the database and the files people upload, and on GitHub Pages, which serves the website itself.',
-      'Passwords are never stored in a form anybody at Kobblon can read. Nobody at Kobblon will ever ask you for yours.',
-      'Uploads are private by default: a file is fetched with a short lived link rather than sitting at an address anybody can guess.',
+      'Credentials are stored only in a hashed form which cannot be reversed by Kobblon. No member of staff can read your credential and no member of staff will ever ask you for it.',
+      'Access to data in the database is constrained by row-level security policies evaluated for the identity making the request, so that a record is reachable only by a person entitled to reach it, and privileged operations are carried out by defined functions rather than by granting broad access.',
+      'Uploaded files are private by default and are served through short-lived links.',
+      'No system is perfectly secure. Where a breach of security affecting personal data occurs and is likely to result in a risk to your rights and freedoms, Kobblon will notify the people affected and, where applicable law requires it, the supervisory authority, within the period that law prescribes.',
     ],
   },
   {
     id: 'age',
     heading: 'Age',
     body: [
-      'Kobblon is for people aged 15 and over, and we ask for a birthday at signup for that reason.',
-      'If we find an account belongs to somebody under that age, we remove it.',
-    ],
-  },
-  {
-    id: 'standing',
-    heading: 'Where this page stands',
-    body: [
-      'This is written plainly, and it says what actually happens rather than covering every possibility in language nobody reads.',
-      'It has not yet been through a lawyer. It will be before Kobblon is open widely, and this page will say so when it has.',
-      'If something here is wrong or out of date, tell us and it gets fixed.',
+      `The platform is for people aged ${MINIMUM_AGE} and over, and a date of birth is collected at registration for the purpose of determining that.`,
+      'Where Kobblon establishes that an Account is held by a person below that age, the Account is closed and the data recorded against it is deleted, save for the minimum record necessary to prevent immediate re-registration.',
+      'Kobblon does not knowingly process the personal data of a child below that age, and any such processing which comes to light is ended.',
     ],
   },
 ]
+
+/* ----------------------------------------------------------------- catalog */
 
 const catalog: StorySection[] = [
   {
     id: 'what-it-is',
-    heading: 'What the Catalog is',
+    heading: 'What the Catalog and the Marketplace are',
     body: [
-      'The Catalog is everything people have made for other people to use: decals, sounds, video, fonts, models, and the Style items you wear on your face.',
-      'A Catalog item is used by its number rather than copied. Whoever made a thing stays attached to it wherever it turns up, and taking it down takes it out of circulation rather than rewriting history.',
+      'The Creator Marketplace is the collection of building material published by users for other users to build with: images and decals, audio, video, fonts, meshes and builds. The Catalog is the collection of items published by users to be worn on an avatar: hats, hair, faces, garments, accessories, body parts and outfits assembled from them.',
+      'An item in either collection is referenced by identifier rather than duplicated. Attribution to the person who made a thing therefore travels with it wherever it is used, and withdrawing an item removes it from circulation prospectively rather than rewriting the Worlds already built with it.',
+      'Acquiring an item confers the entitlement described in the Terms of Service: a personal, non-exclusive, non-transferable, revocable licence to use the item on the platform in the manner the platform permits. It confers no ownership of the item, no right to the underlying file, and no right of resale.',
     ],
   },
   {
     id: 'uploading',
-    heading: 'What you may put in it',
+    heading: 'What may be published',
     body: [
-      'Your own work, or work you hold the right to share. If you are not sure whether you hold that right, you do not.',
-      'Everything is screened when it arrives and a person looks at anything the check is unsure about. Nothing is visible to anybody else until that has happened.',
-      'Getting something past review by disguising it is treated as worse than uploading it plainly, not better.',
+      'Your own work, or work in respect of which you hold a licence permitting you both to publish it on the platform and to sub-license it to other users on the terms set out here. A licence which permits personal use only does not permit publication here. If you cannot identify the licence you are relying on, you do not hold one.',
+      'You must not publish work generated from, derived from or trained on another person’s work in a manner which that person has not permitted, nor work extracted from another platform, game or application.',
+      'Everything is screened on arrival. Nothing is visible to any other person before that screening has concluded, and an item may be withheld while a human reviewer examines it. A body part submitted by Kobblon itself follows a separate path, which is stated here so that the difference is not mistaken for an exemption available to anybody else.',
+      'The name, description and preview of an item are Content and are governed by the Community Guidelines in the same way as the item itself.',
+      'Kobblon may generate and store preview images, cards, thumbnails and headshots of an item in order to display it, including a rendering of a garment or body part on the mannequin. A garment is never displayed as its template sheet, because the template sheet is the thing the buyer is paying for.',
     ],
   },
   {
     id: 'selling',
-    heading: 'Selling',
+    heading: 'Listing, pricing and fees',
     body: [
-      `What you charge is up to you, inside the ceiling for that kind of item. ${currency.plural} are a number on an account and not money, so a sale here is not a sale anywhere else.`,
-      'Kobblon takes a share of each sale, and the share is shown before you list, on the listing itself. It is never taken quietly.',
-      'A listing fee is charged when you put something up. It is not returned if the item does not sell, and this is said on the form before you agree to it.',
+      `What you charge is a matter for you, subject to the ceiling applicable to that kind of item. The ceiling, the share Kobblon takes on a sale and the fee charged for listing are set on the platform and are displayed on the form before you commit to a listing. They are never applied without being shown. They may change, and a change applies to listings created after it.`,
+      'A listing fee is consideration for the listing and is not contingent on a sale. It is not returned if the item does not sell. The form states this before you agree to it.',
+      'An edit to an item you have published may attract a charge, which is displayed before the edit is committed and is recorded on your transactions page.',
+      `A sale credits your balance in ${currency.plural} at the time it occurs, less the share Kobblon takes, and both movements appear separately on your transactions page.`,
+      'Selling items to be worn requires a verified Account, as described in the Selling on Kobblon policy. Publishing building material to the Marketplace does not.',
     ],
   },
   {
     id: 'taking-down',
-    heading: 'Taking something down',
+    heading: 'Withdrawal and removal',
     body: [
-      'You can unlist your own item whenever you like. People who already own it keep it, because they paid for it.',
-      'We take an item down when it breaks the rules, when it is not yours to sell, or when it turns out to be a way of getting somebody to somewhere off the site.',
-      'An item taken down for breaking the rules is a decision against the account that uploaded it, and it appears on the standing page with a way to appeal.',
+      'You may unlist your own item at any time. A person who has already acquired it retains their entitlement to it, because they gave consideration for it. A World already built with it continues to function.',
+      'Kobblon removes an item where it breaches the Policies, where it is not yours to publish, where it is a vehicle for directing people off the platform, or where a rightsholder establishes a claim to it under the Copyright policy.',
+      'Removal of an item for breach is a Decision against the Account which published it. It appears on the standing page of that Account with the rule applied and a route of appeal.',
+      'Where an item is removed after it has been acquired by other people, Kobblon may withdraw the entitlement of those people to continue using it where continued use would itself be unlawful or would perpetuate the breach. Where it does so, it says so.',
     ],
   },
 ]
+
+/* ---------------------------------------------------------------- creators */
 
 const creators: StorySection[] = [
   {
     id: 'who',
-    heading: 'Who can sell',
+    heading: 'Who may sell',
     body: [
-      'Selling Style items needs a verified account. Everybody can buy, everybody can upload to Create, and selling wearables is the part that waits on verification.',
-      'Verification is about knowing who is behind an account that takes money from other people. It is not a quality badge and it is not for sale.',
+      'Any Account may acquire items and any Account may publish building material to the Creator Marketplace. Offering items to be worn for sale requires a verified Account.',
+      'Verification establishes who stands behind an Account which takes value from other users. It is not a mark of quality, it is not an endorsement of what the Account publishes, and it is not available for purchase.',
+      'Verification may be withdrawn where the basis on which it was granted no longer holds, or where the Account has been the subject of a Decision for conduct bearing on the trust verification represents. Withdrawal is itself appealable.',
     ],
   },
   {
     id: 'paid',
-    heading: 'Getting paid',
+    heading: 'Settlement, refunds and the prohibition on cashing out',
     body: [
-      `A sale credits your balance in ${currency.plural} as it happens, and the movement shows on your transactions page with what it was for.`,
-      'A refund reverses the movement. Refunds happen when something was sold that should not have been, and are not a way to change your mind days later.',
-      `${currency.plural} cannot be cashed out. Anybody offering to buy them from you for real money is breaking the rules and usually about to take yours.`,
+      `A sale credits your balance in ${currency.plural} at the time it occurs and the movement is recorded on your transactions page together with the reason for it and the share taken by Kobblon.`,
+      'A refund reverses a movement. Refunds are issued where an item was sold which should not have been sold, where a charge was taken in error, or where a sale was procured by misdescription. A refund is not a means of reconsidering a purchase after the fact, and there is no general right of withdrawal from a transaction in a non-redeemable internal unit of account.',
+      `${currency.plural} cannot be withdrawn, exchanged for money or transferred off the platform. Any person offering to buy them from you is in breach of the Terms of Service and is in all probability attempting to defraud you; report it.`,
+      'Where Kobblon takes an incorrect amount, it will correct the movement on request. Identify the movement on your transactions page when you ask.',
     ],
   },
   {
     id: 'behaviour',
-    heading: 'How a seller behaves',
+    heading: 'Obligations of a seller',
     body: [
-      'Describe what you are selling. A preview that is not what arrives is a reason to lose the listing.',
-      'Do not use a listing to advertise something else, to move people off the site, or to sell the same thing under six names to fill the shop.',
-      'Do not buy your own items through other accounts to move them up a list.',
+      'Describe accurately what you are offering. A preview which does not correspond to what is delivered is a ground for removal of the listing and for a Decision against the Account.',
+      'Do not use a listing to advertise anything else, to direct a person off the platform, or to publish the same item repeatedly under different names in order to occupy the shelf.',
+      'Do not acquire your own items through other Accounts, do not arrange reciprocal acquisitions in order to influence a ranking, and do not generate artificial engagement with a listing.',
+      'Do not solicit payment for an item outside the platform, and do not offer an item on condition that the buyer does something off the platform.',
+      'Respond to a rightsholder claim or a support enquiry about an item you published. Persistent non-response is treated as an aggravation where the claim is later established.',
+    ],
+  },
+  {
+    id: 'ads',
+    heading: 'Advertising',
+    body: [
+      `Advertising placements on pages of the website may be purchased with ${currency.plural}. A campaign is bought against a placement, not against an audience: no profile of a person is used to select which advertisement is shown, and no advertising identifier is created.`,
+      'An advertisement is Content and is governed by the Community Guidelines. It must not misdescribe what it links to, must not imitate the interface of the platform, and must not direct a person to a location which breaches the Guidelines.',
+      `Where a campaign earns, the earnings are credited in ${currency.plural} and recorded on your transactions page. Where a campaign is refused or withdrawn, the unspent budget is refunded as a recorded movement.`,
+      'Kobblon may refuse, suspend or remove a campaign which breaches this policy, and may do so before it has run.',
     ],
   },
 ]
+
+/* ------------------------------------------------------------------- money */
 
 const money: StorySection[] = [
   {
     id: 'what',
-    heading: `What ${currency.plural} are`,
+    heading: `The legal character of ${currency.plural}`,
     body: [
-      `${currency.plural} are a number on your account for use inside Kobblon. They are not money, they cannot be cashed out, and they have no value off the platform.`,
-      'A balance is not a deposit. It is a record of what you may spend here, and it lives and dies with the account.',
+      `${currency.plural} are an internal unit of account recorded as a number against an Account. They are not money, not electronic money, not a payment instrument, not a security, not a financial product, not a deposit, and not a claim on Kobblon for anything other than the ability to spend them on the platform.`,
+      'A balance is a record of what you may spend here. It is not a sum held on your behalf, it is not segregated, and it confers no right of redemption. It exists while the Account exists and it ends with the Account.',
+      `${currency.plural} are not presently sold for money, and no mechanism exists on the platform to purchase them with money. Where such a mechanism is introduced, this policy will be amended before it operates, and the amendment will state the consumer rights which attach to a purchase.`,
+      `The stored column which holds the balance retains an earlier name for historical reasons. That has no effect on anything described here.`,
     ],
   },
   {
     id: 'getting',
-    heading: 'Where they come from',
+    heading: 'How they are acquired',
     body: [
-      'Signing up, being around, selling what you make, running ads that earn, and codes we hand out.',
-      'A code is a row on our side with a limit and a date, so a code that has run out has genuinely run out rather than being withheld from you.',
+      'A grant on registration; a daily reward for returning; rewards for completing quests; the proceeds of a sale on the Catalog or the Marketplace; earnings from an advertising campaign; gifts received from another user; donations received; codes issued by Kobblon; and adjustments made by Kobblon where an error has been corrected.',
+      'A code is a record on the platform carrying a limit and an expiry. A code which has been exhausted or has expired has genuinely been exhausted or expired; it is not being withheld from you, and asking for it to be honoured after expiry will not succeed.',
+      'A reward is not a contractual entitlement to a future reward. Kobblon may change, add to or withdraw a source of rewards, and will not do so retrospectively in respect of amounts already credited.',
     ],
   },
   {
     id: 'spending',
-    heading: 'Spending them',
+    heading: 'How they are spent',
     body: [
-      'Buying Catalog and Style items, paying listing fees, running ads, and changing your username.',
-      'Every movement in or out is on your transactions page, with what it was for, and it is the same record we would look at if you asked us about it.',
+      'Acquiring items on the Catalog and the Creator Marketplace; listing fees; charges for editing an item you have published; charges for a quest tag; purchasing advertising; changing your username; sending a gift; and making a donation.',
+      'Every movement in or out is recorded on your transactions page with the reason for it. That record is the record Kobblon examines when a movement is queried, and it is the record you should identify when querying one.',
+      'The price of a thing is displayed before it is charged. Where a charge is irreversible, the form says so before you commit to it.',
     ],
   },
   {
     id: 'gone',
-    heading: 'When they go',
+    heading: 'Forfeiture, correction and set-off',
     body: [
-      'An account closed for breaking the rules loses whatever is on it, and what was spent before that is not returned.',
-      'If we get something wrong and take the wrong amount, we put it back. Ask, and point at the movement.',
+      `An Account terminated for breach forfeits its balance, its entitlements and its items, and ${currency.plural} already spent are not refunded. Forfeiture is a consequence of termination and is not a separate penalty.`,
+      'Where a balance has been credited in error, by a defect, or as the result of manipulation, Kobblon may reverse the credit, and will record the reversal on the transactions page with its reason.',
+      'Where Kobblon has taken an incorrect amount, it will restore it on request. Identify the movement.',
+      'Kobblon may suspend movements on an Account while a suspected manipulation of the economy is investigated, and will state that it has done so.',
     ],
   },
 ]
+
+/* ------------------------------------------------------------ Worlds */
 
 const experiences: StorySection[] = [
   {
     id: 'sandbox',
-    heading: 'A World runs shut off',
+    heading: 'Isolation of the runtime',
     body: [
-      'Everything somebody builds runs sealed away from the rest of Kobblon. A World cannot read your account, your messages, your friends or your balance.',
-      'What a World can ask for, it asks for plainly, and you answer. Nothing is handed over because a World says it needs it.',
-      'Trying to get around that seal is a reason to lose the account. It is not a puzzle we have left out for people to solve.',
+      'Every World executes in isolation from the remainder of the platform. A World cannot read your Account, your credential, your electronic mail address, your messages, your friendships, your inventory or your balance, and it cannot act on the platform in your name.',
+      'What a World may request, it requests plainly and you answer. Nothing is disclosed to a World because the World asserts that it needs it, and a World which represents otherwise is misrepresenting the platform.',
+      'Attempting to defeat that isolation, whether from inside a World, from the Workspace or from a client, is a ground for termination of the Account. It is not a puzzle left in the product to be solved, and a demonstration undertaken out of curiosity is treated the same way as one undertaken for gain.',
+      'Kobblon gives no warranty that a World authored by a user is safe, accurate, functional or suitable for you. A World is the Content of the person who built it.',
     ],
   },
   {
     id: 'rules-inside',
-    heading: 'The rules apply inside',
+    heading: 'The Policies apply inside a World',
     body: [
-      'What you may not post on a profile, you may not build into a World. The Guidelines do not stop at the door.',
-      'A World that exists to collect passwords, imitate a login, or move people somewhere that does either is removed on sight.',
-      'Chat inside a World is screened like chat anywhere else, and the person who owns the World can clear what still lands badly.',
+      'What may not be published on a profile may not be built into a World. The Community Guidelines apply to a World’s geometry, textures, audio, scripts, interface, title, description and thumbnail.',
+      'A World which exists to collect credentials, to imitate a sign-in page, to imitate a Kobblon staff communication, or to direct a person to a location which does any of those things, is removed on sight and is a ground for termination.',
+      'Chat inside a World is screened in the same way as chat elsewhere on the platform. The owner of a World may additionally remove messages within it; that power is a supplement to moderation by Kobblon and not a substitute for it.',
+      'The owner of a World is answerable for what is built into it, including the contributions of collaborators and the output of its scripts. "A collaborator added it" is a matter going to the gravity of the Decision and not to whether a breach occurred.',
     ],
   },
   {
     id: 'yours',
-    heading: 'What you build stays yours',
+    heading: 'Publication, withdrawal and persistence',
     body: [
-      'A World belongs to whoever made it. Publishing it lets us store it and show it to people.',
-      'Unpublishing takes it off the site. What other people built with your published Catalog items keeps working, because they used the number rather than a copy.',
+      'A World belongs to the person who made it. Publishing it grants Kobblon the licence described in the Terms of Service for the purpose of storing it, serving it and presenting it to visitors.',
+      'Unpublishing a World removes it from the platform. It does not recall anything lawfully obtained from it before removal.',
+      'What other people built using Catalog or Marketplace items you published continues to function after you withdraw those items, because the item is referenced by identifier rather than copied into their work.',
+      'Kobblon does not undertake to preserve a World. Retain your own copy of anything you would be unwilling to lose; the Workspace is the place from which that copy is kept.',
+      'Visit counts, likes and other figures shown against a World are records of events on the platform. Manipulating them, by automation or by coordination, is a breach of the Terms of Service.',
     ],
   },
 ]
 
+/* ------------------------------------------------------------- moderation */
+
 const moderation: StorySection[] = [
   {
     id: 'how',
-    heading: 'How a decision is made',
+    heading: 'How a Decision is reached',
     body: [
-      'Something is reported, or a check flags it. A person looks. If a rule was broken, a decision is recorded against the account and the account is told what it was and why.',
-      'A decision is a row rather than a mood. It says which rule, what was done about it, and when it ends if it ends.',
+      'A matter comes to moderation in one of three ways: a user reports it, an automated screening check flags it, or a member of staff observes it. The Content is then assessed against the rule said to have been breached.',
+      'Where a rule has been breached, a Decision is recorded against the Account. A Decision is a record and not a mood: it states which rule was applied, what was done, when it takes effect and, where it is of limited duration, when it ends.',
+      'The Account is notified of the Decision in its Kobblon inbox. The inbox is deliberately separate from notifications, because a Decision must not be capable of scrolling past behind ordinary activity.',
+      'The identity of a reporter is never disclosed to the Account reported, in the Decision or at any later stage.',
+      'The absence of a Decision in respect of Content is not an approval of it. Kobblon may act later on Content it has not previously acted on, including where the rule was always breached and the breach was not detected.',
     ],
   },
   {
     id: 'ladder',
-    heading: 'What can happen',
+    heading: 'The available outcomes',
     body: [
-      'A warning, which is on record and does nothing else. Something of yours taken down. Part of the site switched off for a while. The account suspended. The account closed.',
-      'Which one depends on what was done, whether it was on purpose, and whether it has happened before. The hard limits in the Guidelines skip the ladder.',
+      'The outcome is selected by reference to what was done, whether it was deliberate, whether it was concealed, the harm risked or caused, and whether the Account has been the subject of a previous Decision. The absolute prohibitions in the Community Guidelines are not subject to escalation and attract termination at first instance.',
+      'An automated system may record a warning, remove Content, suspend chat and suspend an Account. An automated system cannot terminate an Account. A termination is taken by a human administrator by hand, and the restriction is enforced in the database.',
     ],
     points: [
-      { label: 'Warning', note: 'On record. Nothing is switched off.' },
-      { label: 'Something taken down', note: 'The thing goes. The account carries on.' },
-      { label: 'Part of the site switched off', note: 'Posting, uploading or selling, for a set time.' },
-      { label: 'Suspended', note: 'No access while it lasts.' },
-      { label: 'Closed', note: 'The end of the account.' },
+      { label: 'Warning', note: 'Recorded against the Account. Nothing is switched off.' },
+      { label: 'Content removed', note: 'The Content goes. The Account continues.' },
+      { label: 'Feature restricted', note: 'Posting, uploading, chat or selling, for a stated period.' },
+      { label: 'Chat suspended', note: 'No messages while it lasts, for a stated period.' },
+      { label: 'Account suspended', note: 'No access to the platform while it lasts.' },
+      { label: 'Account terminated', note: 'The end of the Account. By a human administrator only.' },
     ],
   },
   {
     id: 'seeing',
     heading: 'Seeing where you stand',
     body: [
-      'Your standing page lists every decision against your account, what it stopped, and when it ends. It is the same list a moderator sees, without the notes they wrote to each other.',
-      'Kobblon writes to you in your inbox when a decision is made. That is a separate place from notifications on purpose, because a decision cannot be allowed to scroll past behind six people liking a World.',
+      'Your standing page lists every Decision recorded against your Account, the rule applied, what was restricted, when it takes effect and when it ends. It is the same list a moderator sees, without the internal notes.',
+      'Each Decision has its own address, so that support and moderation can point at one Decision rather than at a page.',
+      'Where a Decision carries points or a weighting which affects the assessment of a later matter, that weighting is shown, and it is reversed where the Decision is overturned on appeal.',
     ],
   },
   {
     id: 'appealing',
-    heading: 'Arguing with it',
+    heading: 'Appeals',
     body: [
-      'Every decision can be appealed from the standing page, in your own words. If we decline the first one you may send a second, and that is the end of it.',
-      'You have fifteen days from the decision. A closed account is a month, and six months if you are in the EU.',
-      'An appeal goes to somebody who was not the person who made the decision. You are told the outcome either way.',
-      'We look at what you were sanctioned for again, so an upheld appeal can lift the decision or soften it - and if what we find is worse than what was acted on, it can be made heavier.',
-      'An upheld appeal voids the decision and lifts whatever it switched off, straight away.',
+      'Every Decision may be appealed from your standing page, in your own words. If the first appeal is declined you may submit one further appeal, and the second determination is final within the platform.',
+      'The time limit for an appeal is fifteen days from the Decision. For a termination the limit is one month, and six months where the Account has been accessed from a member state of the European Union. The limit applicable to a given Decision is computed by the platform and shown with the Decision.',
+      'An appeal is determined by a person or process which did not take the Decision under appeal.',
+      'An appeal is a fresh examination of the conduct and not merely a review of the Decision. An appeal may therefore be allowed in whole, allowed in part with the outcome reduced, declined, or, where the fresh examination discloses conduct graver than that originally acted upon, determined with the outcome increased. That possibility is stated plainly here so that it is not a surprise.',
+      'Where an appeal is allowed, the Decision is vacated and everything it restricted is restored immediately, together with any weighting it carried.',
+      'You are told the outcome of an appeal either way, with the reason, in your inbox.',
+      'Nothing in this policy limits any right you have to complain to a competent authority or to bring proceedings, and the internal appeal is not a condition precedent to doing so.',
+    ],
+  },
+  {
+    id: 'staff',
+    heading: 'The conduct of moderation itself',
+    body: [
+      'Staff access to Accounts, reports and Content is confined to what is necessary for the matter in hand, and is itself recorded.',
+      'A member of staff does not determine an appeal against their own Decision.',
+      'Moderation records of a terminated Account are retained so that the conduct cannot simply be resumed under a new registration, as described in the Privacy policy.',
+      'A moderator is identified as such on the platform where they act as one. A claim to be staff made by an Account which is not staff is impersonation and is actionable as such.',
     ],
   },
 ]
 
+/* -------------------------------------------------------------- copyright */
+
 const copyright: StorySection[] = [
   {
     id: 'yours',
-    heading: 'If something of yours is here',
+    heading: 'Notifying an infringement',
     body: [
-      'Tell us. Use the flag on the thing itself, or open a ticket under Creator, and say what it is, where it is, and what makes it yours.',
-      'We take down what we are satisfied is somebody else’s work, and the account that uploaded it gets a decision against it with a way to appeal.',
+      'If work in which you hold rights has been published on the platform without your authorisation, notify Kobblon. Use the report control on the Content itself, or open a support ticket under the Creator category.',
+      'A notification should identify the work relied upon, identify the Content complained of with sufficient particularity for it to be located, state the basis on which you hold the rights or are authorised to act for the holder, and state that you believe in good faith that the use is not authorised by the rightsholder, its agent or the law.',
+      'Where Kobblon is satisfied that Content infringes, it removes the Content and records a Decision against the Account which published it, with a route of appeal. Where a notification is insufficiently particularised, Kobblon will say what is missing rather than simply declining it.',
+      'Kobblon does not adjudicate questions of title between competing claimants, and where a claim is genuinely contested it may decline to act and may require the claimants to resolve the question between themselves.',
     ],
   },
   {
     id: 'wrongly',
-    heading: 'If yours was taken down wrongly',
+    heading: 'Responding to a claim against you',
     body: [
-      'Appeal it from your standing page and say where the work came from. A link to where you published it first is the thing that settles it fastest.',
-      'Sending a claim about work that is not yours, to get at somebody, is itself a reason to lose an account.',
+      'Where Content of yours has been removed on a rightsholder claim, appeal from your standing page and state the provenance of the work. A link to the place where you first published it, or to the licence you rely upon, is the material which resolves the question most quickly.',
+      'Where the appeal establishes that the Content was yours to publish, the Decision is vacated and the Content is restored.',
+      'Making a claim in respect of work which is not yours, or in order to cause detriment to another user, is a breach of the Terms of Service and is itself a ground for termination.',
+    ],
+  },
+  {
+    id: 'repeat',
+    heading: 'Repeat infringement',
+    body: [
+      'An Account which is the subject of repeated established infringement claims is terminated. The assessment takes into account the number of established claims, their proximity in time, and whether the Account continued to publish infringing material after the first was established.',
+      'A claim which is withdrawn, or which is overturned on appeal, is not counted.',
     ],
   },
   {
     id: 'reuse',
-    heading: 'Using other people’s work here',
+    heading: 'Using the work of other users',
     body: [
-      'A Catalog item published by somebody else is yours to use in your Worlds by its number. That is the permission, and it is the whole permission.',
-      'It is not permission to re-upload it as your own, to sell it, or to take the file elsewhere.',
+      'An item published to the Catalog or the Creator Marketplace by another user may be used by you within your own Worlds and on your own avatar, by reference, on the terms set out in the Catalog and uploads policy. That is the extent of the permission.',
+      'It is not permission to re-upload the item as your own, to publish it elsewhere, to sell it, to extract the underlying file, or to use it off the platform.',
+      'Kobblon claims no rights in the work of its users beyond the licence described in the Terms of Service, and the templates and body parts published by Kobblon itself are made available for use on the platform and for nothing else.',
     ],
   },
 ]
@@ -417,86 +665,118 @@ export const policies: Policy[] = [
     slug: 'terms',
     title: 'Terms of Service',
     eyebrow: 'The deal',
-    blurb: 'The deal between you and Kobblon.',
-    intro: 'The short version of the deal between you and Kobblon, written so it can actually be read.',
-    updated: '2026-09-19',
+    blurb: 'The agreement between you and Kobblon, and the terms every other policy sits under.',
+    intro:
+      'These Terms govern your use of the Kobblon platform. They define the words the other eight '
+      + 'documents use, set out who may hold an Account, state what you keep and what you license to '
+      + 'us, and set the limits of what Kobblon undertakes to do.',
+    updated: '2026-10-24',
     sections: terms,
-    footnote: 'If something here and something a page on the site says disagree, this page is the one that counts.',
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'guidelines',
     title: 'Community Guidelines',
     eyebrow: 'House rules',
-    blurb: 'What is fine here, and what will get your things taken down.',
-    intro: 'What is fine here, and what will get your things taken down. Short, because the rules that matter are short.',
-    updated: '2026-09-19',
+    blurb: 'What may be said, built and published here, and what is prohibited outright.',
+    intro:
+      'These Guidelines govern every act of expression on Kobblon, from a username to a World. They '
+      + 'apply inside a World you own, inside a Community you run, and in a message sent to one '
+      + 'person. Breaching them is breaching the Terms of Service.',
+    updated: '2026-10-24',
     sections: guidelines,
-    footnote: 'Breaking these does not always mean losing the account. Doing it on purpose, repeatedly, usually does.',
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'privacy',
     title: 'Privacy',
     eyebrow: 'Your data',
-    blurb: 'What is kept about you, why, and who can see it.',
-    intro: 'What Kobblon keeps about you, why, who can see it, and what you can do about it.',
-    updated: '2026-09-19',
+    blurb: 'What is held about you, why, who it reaches, how long it is kept, and what you can demand.',
+    intro:
+      'This policy sets out the personal data the platform processes, the purposes and legal bases '
+      + 'for processing it, the processors it reaches, the automated screening it passes through, how '
+      + 'long it is retained and the rights you may exercise over it.',
+    updated: '2026-10-24',
     sections: privacy,
-    footnote: 'Questions about anything here go to the same place as everything else: report it, or write to us.',
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'moderation',
     title: 'Moderation and appeals',
     eyebrow: 'Decisions',
-    blurb: 'How decisions are made, what can happen, and how to argue with it.',
-    intro: 'How a decision gets made, what can happen to an account, and how to have one looked at again.',
-    updated: '2026-09-19',
+    blurb: 'How a Decision is reached, what can happen, and how to argue with it.',
+    intro:
+      'Every moderation outcome on Kobblon is a record with a rule, an effect and an end date. This '
+      + 'policy sets out how one is reached, what the available outcomes are, what an automated '
+      + 'system may and may not do, and the procedure and time limits for an appeal.',
+    updated: '2026-10-24',
     sections: moderation,
-    footnote: 'If a decision about you is not on your standing page, it is not a decision. Ask us about it.',
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'catalog',
     title: 'Catalog and uploads',
     eyebrow: 'What people make',
-    blurb: 'What may go into the Catalog, and what happens to it there.',
-    intro: 'What the Catalog is, what may go into it, how selling works, and how something comes back out.',
-    updated: '2026-09-19',
+    blurb: 'Publishing to the Catalog and the Marketplace: licences, screening, fees and withdrawal.',
+    intro:
+      'This policy governs what may be published to the Creator Marketplace and the Catalog, the '
+      + 'licence a publication grants to everybody else, the screening it passes through, the fees '
+      + 'and ceilings that apply to a listing, and what happens when an item is withdrawn or removed.',
+    updated: '2026-10-24',
     sections: catalog,
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'creators',
     title: 'Selling on Kobblon',
     eyebrow: 'Creators',
-    blurb: 'Who can sell, how you get paid, and how a seller behaves.',
-    intro: 'The rules for the people who sell things here, and what they can expect back.',
-    updated: '2026-09-19',
+    blurb: 'Verification, settlement, refunds, advertising and what a seller must not do.',
+    intro:
+      'This policy governs selling on the platform: who may sell items to be worn, how a sale is '
+      + 'settled, when a refund is issued, how advertising is bought and earned, and the obligations '
+      + 'a seller takes on.',
+    updated: '2026-10-24',
     sections: creators,
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'money',
     title: `${currency.plural} and spending`,
     eyebrow: 'Money',
-    blurb: `What ${currency.plural} are, where they come from, and where they go.`,
-    intro: `What ${currency.plural} are, how you get them, what you can do with them, and what happens when an account ends.`,
-    updated: '2026-09-19',
+    blurb: `What ${currency.plural} legally are, where they come from, and when they are forfeit.`,
+    intro:
+      `This policy sets out the legal character of ${currency.plural}, every way they are acquired `
+      + 'and spent on the platform, the record kept of each movement, and the circumstances in which '
+      + 'a balance is reversed or forfeit.',
+    updated: '2026-10-24',
     sections: money,
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'spaces',
     title: 'Worlds and experiences',
     eyebrow: 'What runs here',
-    blurb: 'What a World may do, and what it can never reach.',
-    intro: 'What somebody else’s World is allowed to do while you are inside it, and what it can never get to.',
-    updated: '2026-09-19',
+    blurb: 'How a World is isolated, what the rules are inside one, and who answers for it.',
+    intro:
+      'A World runs sealed off from the rest of Kobblon and cannot reach your Account. This policy '
+      + 'sets out that isolation, the rules that apply inside a World, who is answerable for what is '
+      + 'built into one, and what happens when it is withdrawn.',
+    updated: '2026-10-24',
     sections: experiences,
+    footnote: NOT_LAWYERED,
   },
   {
     slug: 'copyright',
     title: 'Copyright',
     eyebrow: 'Whose work it is',
-    blurb: 'Reporting work of yours, and appealing a takedown.',
-    intro: 'What to do when somebody else has put your work here, and what to do when yours went wrongly.',
-    updated: '2026-09-19',
+    blurb: 'Notifying an infringement, answering a claim, and the limits of reuse.',
+    intro:
+      'This policy sets out how to notify Kobblon that work of yours has been published here without '
+      + 'authorisation, how to answer a claim made against Content of yours, what repeat infringement '
+      + 'leads to, and the precise extent of the permission you have to use another user’s work.',
+    updated: '2026-10-24',
     sections: copyright,
+    footnote: NOT_LAWYERED,
   },
 ]
 

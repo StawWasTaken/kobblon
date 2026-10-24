@@ -11858,3 +11858,61 @@ The rest is this side's own appearance, Staw's list on the front page:
 Still not built, unchanged: the newsroom, the wiki, the forum.
 `world_visits` is still only written by `join_world_server`, so "Recently
 played" is empty for everybody.
+
+## Round one hundred and sixty-five
+
+**All nine policies were rewritten against the platform as it is actually
+built.** This is the round to read if the Workspace or the Launcher shows,
+links to, or paraphrases any rule, because almost every one of them now says
+something more specific than it did.
+
+What the applications have to match, because a copy of the old wording is
+now wrong rather than merely short:
+
+- **Words are defined once.** Clause 1 of the Terms defines Account,
+  Content, World, Community, Decision, Brix and Policies, and the other
+  eight documents use those words in that sense and introduce no synonyms.
+  If a panel in the Workspace says "project" or "space" where the website
+  says World, it now contradicts a definition rather than a habit.
+- **A Decision has six forms, not five**: warning, Content removed, feature
+  restricted, chat suspended, Account suspended, Account terminated. Any
+  standing or sanction display should carry all six.
+- **The automated system cannot terminate an Account**, and that is stated
+  as a limit enforced in the database, not as practice. It may warn, remove
+  Content, suspend chat and suspend an Account. Do not build an interface
+  that implies otherwise.
+- **Appeal windows are computed by the platform**: fifteen days ordinarily,
+  one month for a termination, six months where the Account has been seen
+  from an EU member state, and two attempts in total. Do not hard-code
+  fifteen days anywhere.
+- **An appeal can make an outcome heavier.** It is a fresh examination of
+  the conduct, and the policy now says so plainly, so an appeal form must
+  not describe it as a review that can only help.
+- **Privacy names its processors**: Supabase, GitHub Pages, Groq (the
+  inference service the screening worker calls) and Discord where linked. If
+  the desktop applications send anything anywhere else, that recipient has
+  to be added to that clause before the traffic starts.
+- **A garment is never displayed as its template sheet**, and that is now a
+  term of the Catalog policy rather than only a rendering decision.
+- **Brix are stated to be not money, not electronic money, not a payment
+  instrument and not redeemable**, and the policy records that no mechanism
+  exists to buy them with money. If the Launcher ever offers one, that
+  clause has to change before it ships.
+- Fees, the platform share and the price ceilings are deliberately **not**
+  quoted as numbers anywhere in the documents; they say the figure is shown
+  on the form that charges it. Keep it that way on your side too.
+
+Two smaller things on the website:
+
+- Clauses are numbered. A paragraph is 3.5 of its document, in the margin on
+  a wide screen, so support, moderation and an appeal can cite one sentence.
+- Log in and Sign up are one centred column that fits a 1440 by 900 screen
+  exactly, with nothing to scroll. The heading had to be written as an
+  `h1` rather than as `Title level={1}`, because `cn` joins and does not
+  merge: a second `text-[clamp(...)]` beside the one `Title` carries loses
+  to whichever Tailwind emitted later, so the override did nothing. Same
+  trap as `Character` and its `relative`. Worth knowing before you pass a
+  size into any of our type components.
+
+Still not built, unchanged: the newsroom, the wiki, the forum. `world_visits`
+is still only written by `join_world_server`.
