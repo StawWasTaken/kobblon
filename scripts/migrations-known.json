@@ -783,5 +783,20 @@
       "public",
       "public"
     ]
+  },
+  "0260_a_ticket_is_answered_as_somebody.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0261_a_main_community_is_the_first_one_shown.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
+  },
+  "0263_an_appearance_is_claimed_and_kept.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
   }
 }

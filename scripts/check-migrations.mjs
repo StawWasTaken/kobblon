@@ -59,10 +59,27 @@ const rules = [
   },
   {
     name: 'create-index-not-idempotent',
-    says: 'use `create index if not exists`',
+    says: 'use `create index if not exists`, or drop it first',
     find(sql) {
+      /*
+       * A bare `create index` dropped first is as idempotent as one with
+       * `if not exists`, and it is sometimes the only correct one: an index
+       * whose *definition* changed has to be rebuilt, and `if not exists`
+       * would leave the old definition in place and report success.
+       * 0247's `avatar_worn_one_per_slot` is exactly that - a partial index
+       * whose list of slots grew - and it was reported here for sixteen
+       * rounds as a thing to fix while being the right way round.
+       *
+       * The policy and trigger rules below have always worked this way.
+       * This one not doing is what the finding actually was.
+       */
+      const dropped = new Set(
+        [...sql.matchAll(/drop\s+index\s+if\s+exists\s+(?:public\.)?([a-z0-9_]+)/gi)]
+          .map((m) => m[1].toLowerCase()),
+      )
       return [...sql.matchAll(/create\s+(?:unique\s+)?index\s+(?!if\s+not\s+exists|concurrently)([a-z0-9_."]+)/gi)]
         .map((m) => m[1])
+        .filter((name) => !dropped.has(name.replace(/^public\./, '').replace(/"/g, '').toLowerCase()))
     },
   },
   {

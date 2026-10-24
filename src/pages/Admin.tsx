@@ -16,7 +16,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved,
+  faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved, faComments,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage, faUserCheck,
   faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
@@ -75,6 +75,7 @@ import {
   staffReopenCommunity, staffTransferCommunity, eraseCommunity,
   searchProfiles, type CommunityTab, reopenAccount, eraseAccount,
   economyNow, economyFlow, economyByKind, limitedMarket, addQuest,
+  forumBoards, forumBoardStaffOf, setForumBoardStaff,
 } from '@/lib/api'
 import { Glyph } from '@/components/brand/Glyph'
 import { LineGraph, BarRows } from '@/components/ui/Graph'
@@ -849,6 +850,106 @@ const HOW_LONG = [
  * confirmation and a superadmin's, because it is the one decision nothing
  * undoes by waiting.
  */
+/**
+ * Which forum boards somebody looks after.
+ *
+ * Migration 0289: a board can have its own staff, and that is all they
+ * are. On their board they pin, close, mark, take a post down and post in
+ * a staff-only one. Everywhere else on the forum they are an ordinary
+ * account, and nothing here touches warnings, suspensions or anybody's
+ * standing - those are a moderator's and stay a moderator's.
+ *
+ * Only an admin may hand these out. A moderator pressing one of these
+ * would be refused by `set_forum_board_staff`, so a moderator is not shown
+ * them: a control that implies something the runtime will not do is worse
+ * than no control.
+ *
+ * It asks the database again after every change rather than keeping its
+ * own idea of the answer. One line more code, and the version that keeps a
+ * local list is the version that disagrees with the database the first
+ * time a write is refused.
+ */
+function BoardKeys({ person, open, onClose }: {
+  person: StaffPerson
+  open: boolean
+  onClose: () => void
+}) {
+  const say = useToast()
+  const rank = useStaffRank()
+  const [busy, setBusy] = useState('')
+  const [turn, setTurn] = useState(0)
+
+  const all = useAsync(() => (open ? forumBoards() : Promise.resolve([])), [open])
+  const theirs = useAsync(
+    () => (open ? forumBoardStaffOf(person.id) : Promise.resolve([])),
+    [open, person.id, turn],
+  )
+  const minds = theirs.data ?? []
+
+  const flip = async (slug: string, on: boolean) => {
+    setBusy(slug)
+    try {
+      await setForumBoardStaff(slug, person.id, on)
+      setTurn((had) => had + 1)
+      say(on ? 'They look after that board now.' : 'Taken off that board.', 'success')
+    } catch (wrong) {
+      say(wrong instanceof Error ? wrong.message : 'That did not go through.', 'error')
+    } finally {
+      setBusy('')
+    }
+  }
+
+  const may = rank === 'admin' || rank === 'superadmin'
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={`Forum boards @${person.username} looks after`}
+      description="On a board they look after they can pin, close, mark and take posts down. Nowhere else, and never anybody's standing."
+    >
+      {!may ? (
+        <p className="text-sm text-white/55">
+          Only an admin can put somebody in charge of a board.
+        </p>
+      ) : all.loading || theirs.loading ? (
+        <p className="text-sm text-white/45">Reading the boards.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {(all.data ?? []).map((board) => {
+            const on = minds.includes(board.slug)
+            return (
+              <li key={board.slug}>
+                <button
+                  type="button"
+                  disabled={!!busy}
+                  onClick={() => void flip(board.slug, !on)}
+                  className={cn(
+                    'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors disabled:opacity-50',
+                    on
+                      ? 'border-space/50 bg-space/[0.08] text-white'
+                      : 'border-white/10 text-white/60 hover:border-white/20 hover:text-white',
+                  )}
+                >
+                  <span className="min-w-0 flex-1 truncate text-sm font-extrabold">
+                    {board.name}
+                  </span>
+                  <span className={cn(
+                    'text-xs font-extrabold',
+                    on ? 'text-space-bright' : 'text-white/30',
+                  )}>
+                    {busy === board.slug ? '…' : on ? 'Looks after it' : 'Put in charge'}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Dialog>
+  )
+}
+
 function SanctionDialog({ person, open, onClose, onDone }: {
   person: StaffPerson
   open: boolean
@@ -972,6 +1073,7 @@ export function PersonRow({ person, onChanged }: {
   const [brix, setBrix] = useState('')
   const [note, setNote] = useState('')
   const [saying, setSaying] = useState(false)
+  const [boards, setBoards] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [erasing, setErasing] = useState(false)
   const [acting, setActing] = useState(false)
@@ -1232,6 +1334,11 @@ export function PersonRow({ person, onChanged }: {
           Notify
         </Button>
 
+        <Button size="sm" variant="subtle" disabled={busy} onClick={() => setBoards(true)}>
+          <FontAwesomeIcon icon={faComments} />
+          Forum boards
+        </Button>
+
         {/* Sanctions live in their own row above, which a moderator gets
             too. What is left here is an admin's: deleting, which is not a
             sanction - it is the end of the account and everything in it. */}
@@ -1317,6 +1424,12 @@ export function PersonRow({ person, onChanged }: {
           }}
         />
       </Dialog>
+
+      <BoardKeys
+        person={person}
+        open={boards}
+        onClose={() => setBoards(false)}
+      />
 
       <SanctionDialog
         person={person}

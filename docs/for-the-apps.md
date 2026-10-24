@@ -12537,3 +12537,189 @@ silent success.
   no per-category moderators.
 - `npm run check:migrations` reports the same six findings, all in 0247, 0260,
   0261 and 0263. None in 0280 to 0286.
+
+---
+
+## Round one hundred and seventy-two: search, quoting, paging, and a board that has its own staff
+
+Everything on last round's "what is not done" list that this container could
+reach. Four migrations, 0287 to 0289 plus last round's 0288, and the client
+halves of all of them.
+
+### What to apply, in order
+
+`0287`, `0288`, `0289`. Each is wrapped in one `begin; … commit;` and each was
+applied twice against a local Postgres before being pushed.
+
+### 0287 - five functions that could not see pgcrypto
+
+`reply_ticket`, `member_communities`, `claim_appearance`, `set_appearance` and
+`my_appearances` were `security definer` pinned to `search_path = public`, with
+no `extensions`. None of them calls pgcrypto today, which is why it never
+broke; it is a trap for whoever edits one next and reaches for
+`gen_random_uuid`. Fixed with five `alter function ... set search_path`, which
+touches the setting and not the body.
+
+**For the applications: nothing changes.** No signature moved, no behaviour
+moved. It is named here only so that a Workspace copy of any of those five is
+not "fixed" a second time differently.
+
+### 0288 - the forum can be searched
+
+New: `forum_search(in_terms text, in_category text default null, in_limit
+integer default 20, in_offset integer default 0)`.
+
+It returns **exactly `forum_topics_list`'s column list, in the same order**, so
+a result draws with the topic row you already have. Granted to `anon` and
+`authenticated`.
+
+What it is built on, because this decides what it can and cannot do:
+
+- Postgres's own full-text search, no extension. `to_tsvector('english', …)`
+  with the configuration written out - left to the default it is only `stable`
+  and cannot be indexed - over title (weight A) and body (weight B).
+- **It matches words, not fragments.** "scrip" finds nothing; "scripting"
+  finds "scripts". `pg_trgm` is not installed and enabling it is Staw's to do,
+  not a migration's. The empty state on the website says so in as many words,
+  and yours should too, or the first report you get will be "search is
+  broken".
+- `websearch_to_tsquery`, so quotes, `or` and a leading minus work and an
+  apostrophe does not raise. **Words are joined with AND**: `door won't open`
+  finds nothing, `door will not open` finds the topic.
+- Replies are **not** searched. Only topic titles and first posts. A real
+  limitation, said out loud rather than buried.
+- Removed topics and hidden boards are filtered inside the function. A search
+  that returned a title out of the staff room would have leaked the title.
+
+Also new: index `forum_topics_text`, a GIN expression index over the same
+document.
+
+### 0289 - a board can have its own staff
+
+This is the one with meaning in it for you.
+
+Until now forum staff was all or nothing: `is_moderator()`, true for every
+platform admin and moderator and false for everybody else. So somebody who
+should be closing duplicates on Building and scripting had to be handed the
+whole site.
+
+New table `forum_category_staff (category, user_id, given_at, given_by)`, with
+its grants in the same file: `select` to `anon` and `authenticated`, every
+write through a function. Who looks after a board is public on purpose - a
+board whose staff are anonymous is a board where nobody is answerable.
+
+New functions:
+
+- `forum_can_moderate(in_category text default null) → boolean`. **This is the
+  question every forum function now asks instead of `is_moderator()`.** True
+  for real platform staff anywhere, and for a board's own somebody on that
+  board.
+- `forum_boards_i_mind() → (category, name)`. Which boards the caller looks
+  after.
+- `forum_board_staff(in_category) → (user_id, username, display_name,
+  avatar_url)`. Who looks after one. Public.
+- `set_forum_board_staff(in_category, in_user, in_on)`. **Admins only, not
+  moderators** - a moderator handing out board keys is a moderator growing
+  their own staff.
+
+**Six functions changed their rule and none changed its signature:**
+`forum_topic_create`, `forum_reply`, `forum_remove`, `forum_mark_answer`,
+`forum_set_status`, `forum_set_flags`. Each asks `forum_can_moderate(<that
+board>)` where it asked `is_moderator()`.
+
+**What a board's staff can do, and only on their board:** pin, close, mark
+solved/looked-at/approved/declined, take a topic or post down, mark the
+answer, post in a staff-only board, and bypass the five-topics-an-hour brake.
+
+**What this never gives, anywhere:** warnings, suspensions, anything on
+anybody's standing, or the ability to appoint more of themselves. Those stay
+with real staff and `is_moderator()` is still the question everywhere outside
+the forum. If the Workspace has a staff panel, **do not read
+`forum_category_staff` as a staff rank.** It is not one.
+
+`forum_edit` is deliberately untouched and must stay untouched: it is
+author-only, and staff of any kind do not rewrite somebody's words. They take
+a post down.
+
+**The thing a client copy gets wrong.** Whether to draw the staff controls is
+now a question about *this topic's board*, not about the account. The website
+asks `forum_boards_i_mind()` once and compares the list against
+`topic.category` at the moment of use - working it out when the page mounts
+gives the answer against a topic that has not loaded, which reads as "the
+buttons are missing" rather than as an error.
+
+### The website side of all that
+
+- `forumSearch`, `forumBoardsIMind`, `forumBoardStaff`, `forumBoardStaffOf`,
+  `setForumBoardStaff` in `@/lib/api`.
+- `ForumSearchBox` is exported from `@/components/forum/Shell` and mounts
+  bare. It **submits** rather than searching per keystroke; what is in the box
+  is seeded from `?q=` so a pasted link and the box agree.
+- `/forum/search?q=…&in=<slug>&page=N`, drawing the same `TopicTable` a board
+  does.
+- Paging on boards and on search: 25 a page, `?page=N`, **Newer / Older**
+  rather than numbered pages. Numbered pages need a count of the topics in a
+  board and nothing counts that; asking for one on every board view is a
+  second full scan to draw a number nobody clicks. It asks for one row past
+  the page and that row's existence is what "there is more" means.
+- Quoting. `PostMenu` gained a `canQuote` / `onQuote` pair and a Quote entry.
+  `Composer` gained `insert?: { text: string; at: number } | null`, which it
+  **appends** so a half-written reply survives, and which it watches on `at`
+  and not on the text - quoting the same post twice is the same string, so an
+  effect watching the string fires once and then never again. If you mount our
+  composer, that is the prop.
+- The board header lists who looks after it, when anybody does.
+- The Admin page's person row has a **Forum boards** dialog, shown to admins
+  only, that puts somebody in charge of a board or takes them off it.
+
+### A thing this round found that is yours as much as ours
+
+`tools/site/forum-preview.tsx` mounted `Composer` bare and the page went down:
+`useAuth must be used inside <AuthProvider>`. That is the first trap in
+CLAUDE.md, for the fourth time. The composer is fine; it needs a session. The
+way to give it one outside the website is `AuthContext`, which is exported
+from `@/hooks/useAuth` for exactly this, and the preview now hands it a
+profile and nothing else. **If the Workspace mounts `Composer`, `UploadDialog`
+or anything else of ours that asks who you are, it has to supply that context
+or the panel goes blank.**
+
+### Verified, and how
+
+- 0288 and 0289 applied twice to a Postgres 16 that has never seen 0180, then
+  checked under four identities - a stranger, a platform moderator, a board's
+  own somebody, and anonymous. Forty-one assertions; every refusal was proved
+  by a refusal, and every write was **read back off the row afterwards** rather
+  than trusted to have landed.
+- The AND-joining in `forum_search` is asserted as a zero, deliberately, so
+  that it is being checked rather than hoped for.
+- `npm run check:migrations`: 289 migrations, nothing to complain about. The
+  six long-standing findings are gone - five were real and are 0287, and the
+  sixth was the checker being wrong about `drop index` then `create index`,
+  which is as idempotent as `if not exists` and is the only correct form when
+  an index's definition changed.
+- `npm run build` clean, and the new pieces rendered and looked at from
+  `tools/site/forum-preview.html`: the search box, the pager in three states,
+  the board-staff strip, Quote in the three-dot menu, and the composer after
+  two quotes.
+
+### What is not done, plainly
+
+- **The forum pages have still never been rendered.** This container has no
+  route to Supabase, so every forum page is an empty shell here. Search,
+  paging, the board-staff strip and the quote button have been looked at as
+  pieces on a bare page and **not once on a real page with real rows.**
+- Search does not read replies, does not match fragments, and has no
+  highlighting of the matched words in a result.
+- Paging has no page numbers and cannot jump to the end, for the reason above.
+- Quoting quotes at most four lines and then an ellipsis, and quoting a
+  selection rather than the whole post is not built.
+- A board's own staff see their controls on the topic page and on the board
+  header. There is no page anywhere that shows a board's staff *to them* as a
+  list of what they are responsible for.
+- Nothing notifies somebody that they have been put in charge of a board.
+- Still untouched from earlier rounds: the newsroom, the wiki, Round 133's
+  five Launcher questions, Worlds belonging to a Community, `pg_net`/`pg_cron`
+  and the re-apply of 0224 and 0253, the deleted-account rename not reaching
+  friend lists or chat rows, automatic Community verification by membership
+  share, `register` not being deployed, `world_visits` only being written by
+  `join_world_server`, and Support and Standing still being on the old shell.

@@ -213,6 +213,49 @@ function Account() {
           placeholder={profile.username}
           hint="3 to 16 letters, numbers or underscores."
         />
+
+        {/*
+         * The names you have had, to take one back with.
+         *
+         * `username_history_of` has returned the whole history since 0283
+         * and nothing on the site had ever offered it to anybody - so a
+         * name you used to go by was yours, nobody else could take it, and
+         * the only way to get it back was to type it out exactly and hope
+         * you had remembered the underscores.
+         *
+         * It is still the same price. A name coming back has already been
+         * past Kobby once, which is why `rename_username` does not screen
+         * it again, but free would make a username worth nothing: claim
+         * four, keep them all, swap between them for ever.
+         */}
+        {!!history.data?.length && (
+          <div className="mt-4">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
+              Yours already
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {history.data.map((row) => (
+                <button
+                  key={row.username}
+                  type="button"
+                  onClick={() => setWanted(row.username)}
+                  className={cn(
+                    'rounded-lg border px-2.5 py-1 text-sm font-bold transition-colors',
+                    wanted === row.username
+                      ? 'border-brand-bright bg-brand/15 text-brand-bright'
+                      : 'border-ink-line text-muted hover:border-brand/50 hover:text-fg',
+                  )}
+                >
+                  @{row.username}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              Nobody else can take one of these. Claiming one back costs the same as any
+              other change.
+            </p>
+          </div>
+        )}
         <p className={cn('mt-3 text-sm', affordable ? 'text-muted' : 'text-danger')}>
           You have {currency.amount(profile.pixels)}.
           {!affordable && ` You need ${USERNAME_CHANGE_COST}.`}

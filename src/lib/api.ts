@@ -1708,8 +1708,19 @@ export async function removeMember(communityId: string, targetId: string, ban = 
   }))
 }
 
+/**
+ * The columns of a community that are just columns.
+ *
+ * **`name` is deliberately not one of them.** A community's name has been a
+ * thing the community owns since 0278, which means `guard_community_name`
+ * pins the column back to whatever `community_name_history` says it is -
+ * so a write through here returned without error and renamed nothing, and
+ * the configure page said "Saved." while doing exactly that for three
+ * rounds. `renameCommunity` is the only way, and taking `name` out of this
+ * type is what stops the next caller rediscovering that the slow way.
+ */
 export async function updateCommunity(id: string, patch: Partial<Pick<Community,
-  'name' | 'description' | 'icon_url' | 'banner_url' | 'join_policy'>>) {
+  'description' | 'icon_url' | 'banner_url' | 'join_policy'>>) {
   unwrap(await supabase.from('communities').update(patch).eq('id', id).select('id').single())
 }
 
@@ -5880,6 +5891,79 @@ export async function forumTopics(input: {
     in_offset: input.offset ?? 0,
     in_unanswered: input.unanswered ?? false,
   })) as ForumTopic[]) ?? []
+}
+
+/**
+ * Topics matching some words, best first.
+ *
+ * Comes back as the same `ForumTopic` a board does, so a result draws with
+ * the row the list already has rather than a second kind that drifts.
+ *
+ * It matches **words**, not fragments: "scrip" finds nothing, "scripting"
+ * finds "scripts". That is Postgres's own full-text search without
+ * `pg_trgm`, and the search box says so rather than looking broken.
+ */
+export async function forumSearch(input: {
+  terms: string
+  category?: string | null
+  limit?: number
+  offset?: number
+}): Promise<ForumTopic[]> {
+  const terms = input.terms.trim()
+  if (!terms) return []
+  return (unwrap(await supabase.rpc('forum_search', {
+    in_terms: terms,
+    in_category: input.category ?? null,
+    in_limit: input.limit ?? 20,
+    in_offset: input.offset ?? 0,
+  })) as ForumTopic[]) ?? []
+}
+
+/**
+ * Which boards this account looks after, if any.
+ *
+ * Asked at the moment of use rather than kept: being put in charge of a
+ * board happens while somebody is signed in, and a value read once at sign
+ * -in is the trap this project keeps falling into.
+ */
+export async function forumBoardsIMind(): Promise<{ category: string; name: string }[]> {
+  return (unwrap(await supabase.rpc('forum_boards_i_mind')) as
+    { category: string; name: string }[]) ?? []
+}
+
+/**
+ * Which boards somebody else looks after.
+ *
+ * Read off the table rather than through a function: who minds a board is
+ * public by design - the people on a board should be able to see who is
+ * answerable for it - and 0289 grants `select` to everybody for that
+ * reason. The writes are the function's.
+ */
+export async function forumBoardStaffOf(user: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('forum_category_staff')
+    .select('category')
+    .eq('user_id', user)
+  if (error) throw error
+  return (data ?? []).map((row) => row.category as string)
+}
+
+/** Who looks after a board. Public: a board's staff are answerable for it. */
+export async function forumBoardStaff(category: string): Promise<{
+  user_id: string; username: string; display_name: string; avatar_url: string | null
+}[]> {
+  return (unwrap(await supabase.rpc('forum_board_staff', { in_category: category })) as {
+    user_id: string; username: string; display_name: string; avatar_url: string | null
+  }[]) ?? []
+}
+
+/** Putting somebody in charge of a board, or taking them off it. Admins only. */
+export async function setForumBoardStaff(
+  category: string, user: string, on: boolean,
+): Promise<void> {
+  unwrap(await supabase.rpc('set_forum_board_staff', {
+    in_category: category, in_user: user, in_on: on,
+  }))
 }
 
 /** One topic. Null rather than a throw when it is not there to be read. */

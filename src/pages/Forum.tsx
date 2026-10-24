@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faComment, faEye, faLock, faPlus, faThumbsUp, faThumbtack,
-  faCheck, faClockRotateLeft, faLayerGroup,
+  faCheck, faClockRotateLeft, faLayerGroup, faChevronLeft, faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { Avatar } from '@/components/ui/Avatar'
@@ -12,7 +12,9 @@ import { Skeleton, EmptyState } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { ForumShell, BoardMark, BoardStrip, BOARD_COLOUR } from '@/components/forum/Shell'
+import {
+  ForumShell, BoardMark, BoardStrip, ForumSearchBox, BOARD_COLOUR,
+} from '@/components/forum/Shell'
 import { TopicRow } from '@/components/forum/TopicRow'
 import { Composer } from '@/components/forum/Composer'
 import { PostMenu } from '@/components/forum/PostMenu'
@@ -22,8 +24,8 @@ import {
 } from '@/components/forum/Pieces'
 import {
   forumBoards, forumCreateTopic, forumEdit, forumLike, forumMarkAnswer, forumRelated,
-  forumRemove, forumReplies, forumReply, forumSeen, forumSetFlags, forumSetStatus,
-  forumTopic as getTopic, forumTopics,
+  forumBoardStaff, forumBoardsIMind, forumRemove, forumReplies, forumReply, forumSearch, forumSeen,
+  forumSetFlags, forumSetStatus, forumTopic as getTopic, forumTopics,
 } from '@/lib/api'
 import { formatCount, forumViews, timeAgo } from '@/lib/format'
 import { useAtTitle, useExactTitle } from '@/hooks/useTitle'
@@ -418,6 +420,171 @@ function TopicTable({ topics, loading, showCategory, empty }: {
   )
 }
 
+/* --------------------------------------------------------------- paging */
+
+/** How many topics a page of a board or a search is. */
+const PER_PAGE = 25
+
+/**
+ * Older, newer.
+ *
+ * Numbered pages would be better and are not possible: nothing counts how
+ * many topics a board has, and asking for a count on every board view is a
+ * second full scan to draw a number nobody clicks. So it asks for one more
+ * row than it shows, and the presence of that row is what "there is more"
+ * means. Said out loud because "why is there no page 7" is a fair question
+ * and the answer is a count, which is a migration, not a component.
+ */
+function Pager({ page, more, onGo }: {
+  page: number
+  /** Whether a further page exists, which is one row past the end. */
+  more: boolean
+  onGo: (page: number) => void
+}) {
+  if (page === 0 && !more) return null
+
+  return (
+    <nav className="mt-5 flex items-center justify-between gap-3">
+      <Button
+        size="sm"
+        variant="subtle"
+        icon={faChevronLeft}
+        disabled={page === 0}
+        onClick={() => onGo(page - 1)}
+      >
+        Newer
+      </Button>
+      <span className="text-xs font-extrabold tabular-nums text-white/35">
+        Page {page + 1}
+      </span>
+      <Button
+        size="sm"
+        variant="subtle"
+        disabled={!more}
+        onClick={() => onGo(page + 1)}
+      >
+        Older
+        <Glyph icon={faChevronRight} className="ml-1.5 text-xs" />
+      </Button>
+    </nav>
+  )
+}
+
+/** The page number in the address, counted from one and never below it. */
+function pageOf(params: URLSearchParams): number {
+  const asked = Number(params.get('page') ?? '1')
+  return Number.isFinite(asked) && asked > 1 ? Math.floor(asked) - 1 : 0
+}
+
+/* -------------------------------------------------------------- a search */
+
+/**
+ * What a search found.
+ *
+ * The same `TopicTable` a board is, with the category shown: a result is
+ * read for where it is as much as for what it says.
+ */
+export function ForumSearch() {
+  const [params, setParams] = useSearchParams()
+  const terms = params.get('q') ?? ''
+  const inBoard = params.get('in')
+  const page = pageOf(params)
+
+  const boards = useAsync(forumBoards, [])
+  const found = useAsync(
+    () => forumSearch({
+      terms,
+      category: inBoard,
+      limit: PER_PAGE + 1,
+      offset: page * PER_PAGE,
+    }),
+    [terms, inBoard, page],
+  )
+
+  useExactTitle(terms ? `${terms} | ${FORUM}` : FORUM)
+
+  const rows = found.data ?? []
+  const shown = rows.slice(0, PER_PAGE)
+  const board = (boards.data ?? []).find((one) => one.slug === inBoard)
+
+  const where = (slug: string | null) => {
+    if (slug) params.set('in', slug)
+    else params.delete('in')
+    params.delete('page')
+    setParams(params, { replace: true })
+  }
+
+  return (
+    <ForumShell boards={boards.data ?? []} loading={boards.loading}>
+      <header className="border-b border-white/[0.07] pb-5">
+        <nav className="flex items-center gap-2 text-xs font-bold text-white/35">
+          <Link to="/forum" className="transition-colors hover:text-brand-bright">Forum</Link>
+          <span aria-hidden="true">/</span>
+          <span className="text-white/60">Search</span>
+        </nav>
+        <h1 className="mt-3 font-display text-xl font-extrabold tracking-tight sm:text-2xl">
+          {terms ? <>Topics matching “{terms}”</> : 'Search the forum'}
+        </h1>
+        <ForumSearchBox className="mt-4 max-w-xl lg:hidden" />
+        {!!terms && (
+          <p className="mt-2 text-sm text-white/45">
+            {found.loading
+              ? 'Looking.'
+              : `${shown.length}${rows.length > PER_PAGE ? '+' : ''} ${
+                shown.length === 1 ? 'topic' : 'topics'
+              }${board ? ` in ${board.name}` : ''}.`}
+          </p>
+        )}
+      </header>
+
+      {/*
+       * Narrowing to a board, rather than a second search field for it.
+       * Everywhere is first and is the one somebody arrives on.
+       */}
+      <div className="flex flex-wrap items-center gap-1 py-5">
+        <Switch on={!inBoard} onPress={() => where(null)}>Everywhere</Switch>
+        {(boards.data ?? []).map((one) => (
+          <Switch key={one.slug} on={inBoard === one.slug} onPress={() => where(one.slug)}>
+            {one.name}
+          </Switch>
+        ))}
+      </div>
+
+      {terms ? (
+        <>
+          <TopicTable
+            topics={shown}
+            loading={found.loading}
+            showCategory={!inBoard}
+            empty={{
+              title: 'Nothing matched that.',
+              body: 'Search matches whole words rather than parts of them, so a shorter word often finds more. Try one of the words you would expect in the title.',
+              action: <Button to="/forum" variant="subtle">Back to the forum</Button>,
+            }}
+          />
+          <Pager
+            page={page}
+            more={rows.length > PER_PAGE}
+            onGo={(next) => {
+              if (next === 0) params.delete('page')
+              else params.set('page', String(next + 1))
+              setParams(params)
+              window.scrollTo({ top: 0 })
+            }}
+          />
+        </>
+      ) : (
+        <div className="rounded-2xl border border-white/10 py-14">
+          <EmptyState
+            title="What are you looking for?"
+            body="Type it into the box. It reads titles and the first post of every topic, and the title counts for more."
+          />
+        </div>
+      )}
+    </ForumShell>
+  )
+}
+
 /* ------------------------------------------------------------- a board */
 
 export function ForumCategory() {
@@ -425,12 +592,26 @@ export function ForumCategory() {
   const [params, setParams] = useSearchParams()
   const sort = (params.get('sort') as ForumSort) || 'active'
   const unanswered = params.get('unanswered') === '1'
+  const page = pageOf(params)
 
   const boards = useAsync(forumBoards, [])
-  const topics = useAsync(
-    () => forumTopics({ category: slug, sort, limit: 50, unanswered }),
-    [slug, sort, unanswered],
+  /*
+   * One row past the page, which is how "Older" knows it has somewhere to
+   * go. `forum_topics_list` caps a request at fifty, so a page of
+   * twenty-five and its sentinel is comfortably inside that.
+   */
+  const rows = useAsync(
+    () => forumTopics({
+      category: slug, sort, unanswered,
+      limit: PER_PAGE + 1,
+      offset: page * PER_PAGE,
+    }),
+    [slug, sort, unanswered, page],
   )
+  const topics = { data: (rows.data ?? []).slice(0, PER_PAGE), loading: rows.loading }
+  const more = (rows.data ?? []).length > PER_PAGE
+  /* Who looks after this board, which 0289 makes a public fact. */
+  const minders = useAsync(() => forumBoardStaff(slug), [slug])
   const board = (boards.data ?? []).find((one) => one.slug === slug)
   useExactTitle(board ? `${board.name} | ${FORUM}` : FORUM)
 
@@ -479,6 +660,35 @@ export function ForumCategory() {
             Start a topic
           </Button>
         </div>
+
+        {/*
+         * Who looks after this board, when somebody does.
+         *
+         * 0289 gives a board its own staff, and the people posting here
+         * ought to know who is answerable for a topic being closed. It is
+         * not drawn when the list is empty rather than saying "nobody
+         * looks after this board", which reads as a warning about the
+         * board and is not what an empty list means.
+         */}
+        {!!(minders.data ?? []).length && (
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+              Looked after by
+            </span>
+            {(minders.data ?? []).map((one) => (
+              <Link
+                key={one.user_id}
+                to={`/forum/u/${one.username}`}
+                className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-card/60 py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
+              >
+                <Avatar src={one.avatar_url} name={one.display_name} size="sm" />
+                <span className="text-xs font-extrabold text-white/70 transition-colors group-hover:text-white">
+                  {one.display_name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </header>
 
       <div className="flex flex-wrap items-center gap-3 py-5">
@@ -489,6 +699,8 @@ export function ForumCategory() {
               on={sort === one.id}
               onPress={() => {
                 params.set('sort', one.id)
+                /* A page number from the old sort means nothing under the new one. */
+                params.delete('page')
                 setParams(params, { replace: true })
               }}
             >
@@ -502,6 +714,7 @@ export function ForumCategory() {
           onClick={() => {
             if (unanswered) params.delete('unanswered')
             else params.set('unanswered', '1')
+            params.delete('page')
             setParams(params, { replace: true })
           }}
           className={cn(
@@ -516,18 +729,33 @@ export function ForumCategory() {
       </div>
 
       <TopicTable
-        topics={topics.data ?? []}
+        topics={topics.data}
         loading={topics.loading}
         empty={{
-          title: unanswered ? 'Everything here has an answer.' : 'Nothing here yet.',
-          body: unanswered
-            ? 'Which is either very good news or a very quiet board.'
-            : 'Be the first to put something in this category.',
+          title: page > 0
+            ? 'That is the end of this board.'
+            : unanswered ? 'Everything here has an answer.' : 'Nothing here yet.',
+          body: page > 0
+            ? 'There is nothing further back than this.'
+            : unanswered
+              ? 'Which is either very good news or a very quiet board.'
+              : 'Be the first to put something in this category.',
           action: (
             <Button to={`/forum/new?category=${slug}`} variant="yes" icon={faPlus}>
               Start a topic
             </Button>
           ),
+        }}
+      />
+
+      <Pager
+        page={page}
+        more={more}
+        onGo={(next) => {
+          if (next === 0) params.delete('page')
+          else params.set('page', String(next + 1))
+          setParams(params)
+          window.scrollTo({ top: 0 })
         }}
       />
     </ForumShell>
@@ -566,8 +794,40 @@ export function ForumTopicPage() {
   const [saving, setSaving] = useState(false)
   /* What the rail measures. The posts, and not the page they are on. */
   const thread = useRef<HTMLDivElement>(null)
+  /*
+   * A quote on its way into the reply box, and a counter saying it is a
+   * new one. The counter is the whole point: quoting the same post twice
+   * is the same string, and an effect watching the string would fire once
+   * and never again.
+   */
+  const [quoted, setQuoted] = useState<{ text: string; at: number } | null>(null)
 
-  const staff = !!(profile?.is_admin || profile?.is_moderator)
+  /*
+   * Which boards this account looks after, if any. 0289: a board can have
+   * its own staff, who are staff on that board and nowhere else.
+   *
+   * Asked here and compared against *this* topic's category at the moment
+   * of use, rather than reduced to one `canModerate` boolean when the page
+   * mounts - the topic is not loaded yet when it mounts, so a boolean
+   * worked out then would be worked out against nothing, which is the trap
+   * this project keeps falling into, and it would read as "the buttons are
+   * missing" rather than as an error.
+   */
+  const minded = useAsync(
+    () => (profile ? forumBoardsIMind() : Promise.resolve([])),
+    [profile?.id],
+  )
+
+  /*
+   * What the page draws. It decides nothing: `forum_can_moderate` in the
+   * database decides what actually happens, and this only decides whether
+   * a control is offered - the two agree deliberately, so that nobody is
+   * shown a button that will be refused.
+   */
+  const platform = !!(profile?.is_admin || profile?.is_moderator)
+  const staff = platform || (
+    !!topic && (minded.data ?? []).some((one) => one.category === topic.category)
+  )
   const mine = topic?.author_id === profile?.id
   useExactTitle(topic ? `${topic.title} | ${FORUM}` : FORUM)
 
@@ -653,6 +913,34 @@ export function ForumTopicPage() {
       }
     } catch (wrong) {
       toast(wrong instanceof Error ? wrong.message : 'That did not go through.', 'error')
+    }
+  }
+
+  /*
+   * Quoting somebody.
+   *
+   * `>` is what `Markup` already renders as a blockquote and what the
+   * composer's own Quote mark already writes, so this is the same thing a
+   * person would have typed - not a second mechanism that needs its own
+   * renderer. Four lines at most and then an ellipsis: a quote of a
+   * fourteen-paragraph post is the post again, twice on one page.
+   *
+   * The attribution is a plain line rather than a link, because a link to
+   * the post inside a quote of the post is a loop a reader can follow by
+   * accident. The post itself is right there above it.
+   */
+  const quote = (who: string, body: string) => {
+    const lines = body.trim().split('\n')
+    const kept = lines.slice(0, 4)
+    if (lines.length > 4) kept.push('…')
+    const said = kept.map((line) => `> ${line}`.trimEnd()).join('\n')
+    setQuoted((had) => ({
+      text: `**${who}** said:\n${said}\n`,
+      at: (had?.at ?? 0) + 1,
+    }))
+    /* The box is at the bottom of a long thread; take them to it. */
+    if (typeof document !== 'undefined') {
+      document.getElementById('reply')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }
 
@@ -763,6 +1051,8 @@ export function ForumTopicPage() {
               canEdit={mine}
               canRemove={mine || staff}
               canReport={!!profile && !mine}
+              canQuote={!!profile && (!topic.is_locked || staff)}
+              onQuote={() => quote(topic.author_name, topic.body)}
               onEdit={() => setEditing({ what: 'topic', id: topic.id })}
               onRemove={() => void take('topic', topic.id)}
               onReport={() => setFlagging({
@@ -875,6 +1165,7 @@ export function ForumTopicPage() {
                 onAnswer={() => forumMarkAnswer(reply.id).then(load)}
                 onRemove={() => void take('post', reply.id)}
                 onReply={() => setAnswering(reply)}
+                onQuote={() => quote(reply.author_name, reply.body)}
                 onEdit={() => setEditing({ what: 'post', id: reply.id })}
                 onSave={save}
                 onStopEditing={() => setEditing(null)}
@@ -913,6 +1204,7 @@ export function ForumTopicPage() {
                 placeholder="Say something useful."
                 action="Reply"
                 busy={sending}
+                insert={quoted}
                 onSend={send}
               />
             </>
@@ -961,7 +1253,7 @@ function postLink(topic: number, post?: number) {
 
 function Reply({
   reply, canMark, canUnmark, mine, op, staff, signedIn, link, editing, saving,
-  onLike, onAnswer, onRemove, onReply, onEdit, onSave, onStopEditing, onFlag,
+  onLike, onAnswer, onRemove, onReply, onQuote, onEdit, onSave, onStopEditing, onFlag,
 }: {
   reply: ForumReply
   canMark: boolean
@@ -978,6 +1270,7 @@ function Reply({
   onAnswer: () => void
   onRemove: () => void
   onReply: () => void
+  onQuote: () => void
   onEdit: () => void
   onSave: (body: string) => Promise<void>
   onStopEditing: () => void
@@ -1015,6 +1308,8 @@ function Reply({
           canEdit={mine}
           canRemove={mine || staff}
           canReport={signedIn && !mine}
+          canQuote={signedIn}
+          onQuote={onQuote}
           onEdit={onEdit}
           onRemove={onRemove}
           onReport={onFlag}

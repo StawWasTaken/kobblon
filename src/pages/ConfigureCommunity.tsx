@@ -27,7 +27,7 @@ import { useAsync } from '@/hooks/useAsync'
 import {
   answerAllyRequest, closeCommunity, declareEnemy, getCommunity, getCommunityOverview, liftBan,
   listCommunities, listCommunityAudit, listCommunityBanned, listRelations, removeRelation,
-  requestAlly, updateCommunity, uploadCommunityImage,
+  communityNameHistory, renameCommunity, requestAlly, updateCommunity, uploadCommunityImage,
 } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -251,20 +251,45 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
   const [cover, setCover] = useState<File | null>(null)
   const [pending, setPending] = useState(false)
 
+  /* Re-asked when the name lands, so a rename adds the old one to the row
+     underneath without a reload. */
+  const wasCalled = useAsync(
+    async () => communityNameHistory(group.id),
+    [group.id, group.name],
+  )
+
   // Local previews of a picture that has not been uploaded yet.
   const emblemPreview = useObjectUrl(emblem)
   const coverPreview = useObjectUrl(cover)
 
+  /*
+   * Saving, and the one thing here that is not a column.
+   *
+   * The name used to be written straight through `updateCommunity`, and
+   * `guard_community_name` pinned it back every time: 0278 made a
+   * community's name a thing it owns, so the only way to change one is
+   * `rename_community`, which keeps the history, screens the new name and
+   * hands the old one back to whoever wants it. The page kept saying
+   * "Saved." and nothing was renamed, for three rounds.
+   *
+   * It goes first and on its own. If the name is refused - taken, badly
+   * shaped, screened out - that is the whole save refused with the reason
+   * said, rather than a cover photo quietly landing beside a name that did
+   * not. The pictures and the description are columns and go together as
+   * they always did.
+   */
   const save = async () => {
     if (!profile) return
     setPending(true)
     try {
+      const wanted = name.trim()
+      if (wanted !== group.name) await renameCommunity(group.id, wanted)
+
       const [iconUrl, bannerUrl] = await Promise.all([
         emblem ? uploadCommunityImage(profile.id, emblem, 'emblem') : Promise.resolve(group.icon_url),
         cover ? uploadCommunityImage(profile.id, cover, 'cover') : Promise.resolve(group.banner_url),
       ])
       await updateCommunity(group.id, {
-        name: name.trim(),
         description: description.trim() || null,
         icon_url: iconUrl,
         banner_url: bannerUrl,
@@ -338,6 +363,45 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
 
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} maxLength={50}
           hint={`${name.length}/50`} />
+
+        {/*
+         * Names this community has gone by, to take one back with. Same
+         * reasoning as the one on a username in Settings: `community_name_
+         * history_of` has returned them since 0283, nothing offered them,
+         * and nobody else can take one - so the only thing stopping
+         * somebody going back was remembering how it was spelled.
+         *
+         * Free, unlike a username, because 0278 made it free: a community
+         * is a thing a group runs together and charging one person for a
+         * decision the group made is the wrong shape.
+         */}
+        {!!wasCalled.data?.length && (
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
+              It has also been called
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {wasCalled.data.map((row) => (
+                <button
+                  key={row.name}
+                  type="button"
+                  onClick={() => setName(row.name)}
+                  className={cn(
+                    'rounded-lg border px-2.5 py-1 text-sm font-bold transition-colors',
+                    name === row.name
+                      ? 'border-brand-bright bg-brand/15 text-brand-bright'
+                      : 'border-ink-line text-muted hover:border-brand/50 hover:text-fg',
+                  )}
+                >
+                  {row.name}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              These stay this community's. Taking one back is free.
+            </p>
+          </div>
+        )}
 
         <Textarea
           label="Description"

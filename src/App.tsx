@@ -49,6 +49,7 @@ const Support = lazyPage(() => import('@/pages/Support'))
 const Download = lazyPage(() => import('@/pages/Download'))
 const Forum = lazyPage(() => import('@/pages/Forum'))
 const ForumCategory = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumCategory })))
+const ForumSearch = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumSearch })))
 const ForumTopicPage = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumTopicPage })))
 const ForumNew = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumNew })))
 const ForumProfile = lazyPage(() => import('@/pages/ForumProfile'))
@@ -154,6 +155,7 @@ export default function App() {
               <Route path="/forum" element={<Forum />} />
               <Route path="/forum/new" element={<ForumNew />} />
               <Route path="/forum/c/:slug" element={<ForumCategory />} />
+              <Route path="/forum/search" element={<ForumSearch />} />
               <Route path="/forum/t/:id" element={<ForumTopicPage />} />
               {/*
                * Somebody, on the forum. A page of its own rather than a

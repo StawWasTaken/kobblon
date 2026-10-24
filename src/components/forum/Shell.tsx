@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faCircleQuestion, faHammer, faComment, faLock, faPlus, faLayerGroup,
+  faMagnifyingGlass, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutNav } from '@/components/layout/AboutNav'
@@ -118,6 +119,67 @@ export function BoardMark({ slug, className }: { slug: string; className?: strin
   )
 }
 
+/**
+ * The forum's search box.
+ *
+ * It submits rather than searching as you type. Deliberate: every
+ * keystroke is a round trip to Postgres's full-text search over every
+ * topic on the platform, and a forum search that fires on the "d" of
+ * "door" is six queries nobody wanted. Enter, or the button.
+ *
+ * What is in the box comes from the address, not from a value kept here:
+ * somebody landing on `/forum/search?q=door` from a pasted link must see
+ * "door" in the box, and the two go out of step the moment one of them is
+ * the only truth. The state is re-seeded whenever the address changes.
+ */
+export function ForumSearchBox({ className }: { className?: string }) {
+  const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const asked = params.get('q') ?? ''
+  const [terms, setTerms] = useState(asked)
+
+  useEffect(() => { setTerms(asked) }, [asked])
+
+  const go = (e: React.FormEvent) => {
+    e.preventDefault()
+    const want = terms.trim()
+    if (!want) return
+    navigate(`/forum/search?q=${encodeURIComponent(want)}`)
+  }
+
+  return (
+    <form onSubmit={go} className={cn('relative', className)} role="search">
+      <Glyph
+        icon={faMagnifyingGlass}
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/30"
+      />
+      <input
+        type="search"
+        value={terms}
+        onChange={(e) => setTerms(e.target.value)}
+        placeholder="Search the forum"
+        aria-label="Search the forum"
+        /*
+         * `type="search"` brings the browser's own clear cross with it,
+         * which lands beside ours: two crosses, one of them unstyled.
+         * Ours stays, because it is the one that matches the site.
+         */
+        className="w-full rounded-xl border border-white/10 bg-ink-card/60 py-2 pl-9 pr-9 text-sm font-semibold text-white placeholder:text-white/30 transition-colors focus:border-brand-bright/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+      />
+      {terms && (
+        <button
+          type="button"
+          onClick={() => setTerms('')}
+          aria-label="Clear"
+          className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-white/35 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <Glyph icon={faXmark} className="text-xs" />
+        </button>
+      )}
+    </form>
+  )
+}
+
 export function ForumShell({
   boards, loading, children,
 }: {
@@ -151,6 +213,8 @@ export function ForumShell({
           <div className="sticky top-24">
             <Button to="/forum/new" variant="yes" icon={faPlus} block>Start a topic</Button>
 
+            <ForumSearchBox className="mt-3" />
+
             <nav className="mt-6">
               <RailLink to="/forum" here={pathname === '/forum'} icon={faLayerGroup}>
                 All topics
@@ -174,7 +238,11 @@ export function ForumShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {/* No rail at this width, so the search box comes with the page. */}
+          <ForumSearchBox className="mb-5 lg:hidden" />
+          {children}
+        </main>
       </div>
 
       <SiteFooter className="relative border-white/[0.08]" />

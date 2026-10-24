@@ -15,15 +15,19 @@ import { useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
+import { AuthContext, type AuthValue } from '@/hooks/useAuth'
 import { Byline } from '@/components/forum/Pieces'
 import { PostMenu } from '@/components/forum/PostMenu'
 import { ReadingRail, SignedOutNote, RelatedTopics, OpTag } from '@/components/forum/Reading'
-import { BoardMark } from '@/components/forum/Shell'
+import { BoardMark, ForumSearchBox } from '@/components/forum/Shell'
+import { Composer } from '@/components/forum/Composer'
+import { Avatar } from '@/components/ui/Avatar'
+import { Button } from '@/components/ui/Button'
 import { STATUS_WORDS } from '@/components/forum/Pieces'
 import { Lightbox } from '@/components/forum/Lightbox'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { Glyph } from '@/components/brand/Glyph'
-import { faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 import { useState } from 'react'
 import type { ForumAuthor, ForumRelated } from '@/types/db'
@@ -97,19 +101,42 @@ function Page() {
         </div>
       </Row>
 
-      <Row title="The three dots, open">
+      <Row title="The three dots, open, with Quote in it">
         <div className="flex gap-6">
           <PostMenu
             link="https://kobblon.com/forum/t/42"
-            canEdit canRemove canReport
-            onEdit={() => {}} onRemove={() => {}} onReport={() => {}}
+            canEdit canRemove canReport canQuote
+            onEdit={() => {}} onRemove={() => {}} onReport={() => {}} onQuote={() => {}}
           />
           <PostMenu
             link="https://kobblon.com/forum/t/42"
-            canEdit={false} canRemove={false} canReport
-            onEdit={() => {}} onRemove={() => {}} onReport={() => {}}
+            canEdit={false} canRemove={false} canReport canQuote
+            onEdit={() => {}} onRemove={() => {}} onReport={() => {}} onQuote={() => {}}
           />
         </div>
+      </Row>
+
+      <Row title="The search box, empty and typed in">
+        <div className="max-w-xs space-y-4">
+          <ForumSearchBox />
+          <ForumSearchBox className="max-w-xs" />
+        </div>
+      </Row>
+
+      <Row title="Older and newer, on the first page and in the middle">
+        <div className="space-y-5">
+          <Pager2 page={0} more />
+          <Pager2 page={3} more />
+          <Pager2 page={4} more={false} />
+        </div>
+      </Row>
+
+      <Row title="Who looks after this board">
+        <Minders />
+      </Row>
+
+      <Row title="A quote landing in the reply box">
+        <Quoting />
       </Row>
 
       <Row title="Signed out, in the middle of a thread">
@@ -159,6 +186,103 @@ function Page() {
         </div>
       </Row>
     </div>
+  )
+}
+
+/*
+ * The pager, copied from the page for the same reason StatusPairs is: it
+ * is written inline against the live board there.
+ */
+function Pager2({ page, more }: { page: number; more: boolean }) {
+  return (
+    <nav className="flex max-w-xl items-center justify-between gap-3">
+      <Button size="sm" variant="subtle" icon={faChevronLeft} disabled={page === 0}>
+        Newer
+      </Button>
+      <span className="text-xs font-extrabold tabular-nums text-white/35">Page {page + 1}</span>
+      <Button size="sm" variant="subtle" disabled={!more}>
+        Older
+        <Glyph icon={faChevronRight} className="ml-1.5 text-xs" />
+      </Button>
+    </nav>
+  )
+}
+
+/* The strip on a board header saying who minds it. */
+function Minders() {
+  const who = [
+    { user_id: '1', username: 'pixelhead', display_name: 'Pixelhead', avatar_url: null },
+    { user_id: '2', username: 'quietone', display_name: 'Quietone', avatar_url: null },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+        Looked after by
+      </span>
+      {who.map((one) => (
+        <span
+          key={one.user_id}
+          className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-card/60 py-1 pl-1 pr-2.5"
+        >
+          <Avatar src={one.avatar_url} name={one.display_name} size="sm" />
+          <span className="text-xs font-extrabold text-white/70">{one.display_name}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/*
+ * A session handed straight to the context, which is what `AuthContext` is
+ * exported for.
+ *
+ * `Composer` asks `useAuth`, and `useAuth` throws without its provider -
+ * which is the thing this folder exists to find, and it found it: mounted
+ * bare, the composer takes the page down rather than rendering. That is
+ * worth the other session knowing, because the Workspace mounts this one.
+ * It is not a bug in the composer; the fix is a provider, and here it is
+ * the smallest one that is honest about what it supplies - a profile and
+ * nothing else that is called.
+ */
+const signedIn = {
+  profile: {
+    id: 'a', username: 'pixelhead', display_name: 'Pixelhead', avatar_url: null,
+  },
+} as unknown as AuthValue
+
+/*
+ * Quoting, which is the one new piece that is a behaviour rather than a
+ * shape: pressing it twice must put two quotes in the box and must not
+ * take out what was typed between them. The composer wants an account, and
+ * there is none here, so what this shows is the signed-out card - the
+ * quote itself is proved by the counter going up, which is printed.
+ */
+function Quoting() {
+  const [quoted, setQuoted] = useState<{ text: string; at: number } | null>(null)
+  return (
+    <AuthContext.Provider value={signedIn}>
+    <div className="max-w-2xl space-y-3">
+      <Button
+        size="sm"
+        variant="subtle"
+        onClick={() => setQuoted((had) => ({
+          text: '**Pixelhead** said:\n> It does not open.\n',
+          at: (had?.at ?? 0) + 1,
+        }))}
+      >
+        Quote Pixelhead
+      </Button>
+      <p className="text-xs font-bold text-white/35">
+        Quoted {quoted?.at ?? 0} time{quoted?.at === 1 ? '' : 's'}
+      </p>
+      <Composer
+        placeholder="Say something useful."
+        action="Reply"
+        insert={quoted}
+        onSend={async () => {}}
+      />
+    </div>
+    </AuthContext.Provider>
   )
 }
 

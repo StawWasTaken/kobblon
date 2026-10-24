@@ -1,4 +1,6 @@
-import { faPen, faLink, faFlag, faTrash, faEllipsis } from '@fortawesome/free-solid-svg-icons'
+import {
+  faPen, faLink, faFlag, faTrash, faEllipsis, faQuoteRight,
+} from '@fortawesome/free-solid-svg-icons'
 import { Menu, type MenuItem } from '@/components/ui/Menu'
 import { Glyph } from '@/components/brand/Glyph'
 import { useToast } from '@/components/ui/Toast'
@@ -29,16 +31,20 @@ import { useToast } from '@/components/ui/Toast'
  * database decides what happens.
  */
 export function PostMenu({
-  link, canEdit, canRemove, canReport, onEdit, onRemove, onReport,
+  link, canEdit, canRemove, canReport, canQuote,
+  onEdit, onRemove, onReport, onQuote,
 }: {
   /** The address of this post, absolute, for the clipboard. */
   link: string
   canEdit: boolean
   canRemove: boolean
   canReport: boolean
+  /** Whether quoting is offered: signed in, and the thread open to replies. */
+  canQuote?: boolean
   onEdit: () => void
   onRemove: () => void
   onReport: () => void
+  onQuote?: () => void
 }) {
   const toast = useToast()
 
@@ -60,6 +66,9 @@ export function PostMenu({
 
   const items: MenuItem[] = [{ label: 'Copy link', icon: faLink, onSelect: copy }]
 
+  if (canQuote && onQuote) {
+    items.push({ label: 'Quote', icon: faQuoteRight, onSelect: onQuote })
+  }
   if (canEdit) items.push({ label: 'Edit', icon: faPen, onSelect: onEdit })
   if (canReport) items.push({ label: 'Report', icon: faFlag, separated: true, onSelect: onReport })
   if (canRemove) {

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import {
@@ -102,7 +102,7 @@ const MARKS: Mark[][] = [
 
 export function Composer({
   placeholder, action, withTitle, busy, onSend, onCancel, autoFocus, compact,
-  initial, keepOnSend,
+  initial, keepOnSend, insert,
 }: {
   placeholder: string
   /** What the button says. "Post it", "Reply". */
@@ -131,6 +131,20 @@ export function Composer({
    * lands - clearing it first is a flash of an empty box on the way out.
    */
   keepOnSend?: boolean
+  /**
+   * Something to drop into the box without taking what is already in it:
+   * a quoted post.
+   *
+   * It carries `at` - a counter the caller bumps on every quote - because
+   * the text alone cannot say "again": quoting the same post twice is the
+   * same string, and an effect watching the string would fire once and
+   * then never. That is the shape this project keeps getting wrong in the
+   * other direction, and the token is the fix either way.
+   *
+   * Appended rather than assigned, so a half-written reply survives
+   * somebody deciding to quote something.
+   */
+  insert?: { text: string; at: number } | null
 }) {
   const { profile } = useAuth()
   const toast = useToast()
@@ -139,6 +153,25 @@ export function Composer({
   const [body, setBody] = useState(initial ?? '')
   const [images, setImages] = useState<string[]>([])
   const [putting, setPutting] = useState(false)
+
+  /*
+   * A quote landing in the box. Watched on the counter and nothing else.
+   */
+  const at = insert?.at ?? 0
+  useEffect(() => {
+    if (!at || !insert?.text) return
+    setBody((had) => (had.trim() ? `${had.replace(/\s*$/, '')}\n\n${insert.text}` : insert.text))
+    const box2 = box.current
+    if (box2) {
+      box2.focus()
+      /* The caret after the quote, not before it: the reply goes below. */
+      requestAnimationFrame(() => {
+        box2.selectionStart = box2.selectionEnd = box2.value.length
+        box2.scrollTop = box2.scrollHeight
+      })
+    }
+    /* eslint-disable-next-line react-hooks/exhaustive-deps -- the counter is the event */
+  }, [at])
 
   /*
    * Signed out, this is not a disabled box: a textarea you cannot type in
