@@ -16,6 +16,10 @@ import { cn } from '@/lib/cn'
  * centred in its frame and the bricks fall through theirs, and both of
  * those stop working the moment the frame is somebody else's idea.
  *
+ * Nothing drifts *inside* the frame, either: a parallax under an
+ * `overflow-hidden` edge has to crop or zoom the picture to cover the
+ * travel, and both of those are a crop. The card drifts instead.
+ *
  * The slow lift on hover is deliberate and is the only thing these do.
  * Three cards that each did something different on hover would be three
  * cards competing with the thing they are showing.

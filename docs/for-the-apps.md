@@ -11537,3 +11537,67 @@ page of its own in the bar.
   happens, takes after Discourse.
 - Support and the standing page have not moved onto the new system.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and fifty-nine - At Kobblon, and the page has depth
+
+Two things from Staw.
+
+### They are the At Kobblon pages
+
+The family has a name now: **At Kobblon**. What Kobblon is, the Launcher,
+the rules, every policy, Support and standing are the At Kobblon pages,
+and their tabs say so - "What Kobblon is - At Kobblon". `AT_KOBBLON` is
+exported from `@/hooks/useTitle` and is the only place the name is
+written.
+
+It is a name for the family and a tab, not a move. The addresses stay
+exactly where they are: renaming `/about` would break every link anybody
+has sent. The components are still `AboutShell` and `AboutNav` for the
+same reason - a rename of those is churn in forty imports for no gain,
+and the comment at the top of each says what the family is called.
+
+**If either application has a window, an about box or a help link that
+names this part of the site, it is "At Kobblon".**
+
+The landing page's tab is still plain "Kobblon". A front page titled "At
+Kobblon" reads worse than one titled with the product, and the landing
+page is the next thing being rebuilt, so that is the moment to settle its
+name rather than now.
+
+### Parallax
+
+`Parallax`, new in `src/components/about/`, is the second half of the
+motion on this side: `Reveal` is how a thing arrives, this is what it
+does once it is here. The pictures drift against the words as the page
+scrolls, so the page has a back and a front.
+
+Three rules it keeps, and they are the difference between depth and a
+page that slides apart:
+
+- **Small.** `strength` is pixels travelled per screen of scrolling; the
+  hero's picture is seventy-two and the cards are in the twenties.
+  Parallax you notice is parallax that is too strong.
+- **Measured from the middle of the window,** so the drift is zero when
+  the picture is centred - what you are looking at is never the thing
+  furthest from where it belongs.
+- **Parked off screen.** An observer adds and removes the scroll
+  listener, because four of these reading `getBoundingClientRect` on
+  every scroll event of a four-thousand-pixel page is a fan starting up.
+
+Reduced motion gets no transform at all.
+
+Nothing drifts *inside* a frame. A parallax under an `overflow-hidden`
+edge has to zoom or crop the picture to cover the travel, and Staw's
+three glass renders keep the ratio he drew them at - so the card drifts
+and the picture sits still in it. Three different rates across the three
+cards, because identical parallax on a row of cards is a row moving as
+one object.
+
+### Still open
+
+- The landing page, including what its tab says.
+- The wiki, the forum and the newsroom are ideas; the forum, if it
+  happens, takes after Discourse.
+- Support and standing carry the At Kobblon tab but have not moved onto
+  the new shell yet.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.

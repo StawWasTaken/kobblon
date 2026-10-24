@@ -10,7 +10,7 @@ import { Hero } from '@/components/about/Hero'
 import { Reveal } from '@/components/about/Reveal'
 import { BandHead } from '@/components/about/Type'
 import { policies, policyBySlug } from '@/content/policies'
-import { useTitle } from '@/hooks/useTitle'
+import { useTitle, AT_KOBBLON } from '@/hooks/useTitle'
 
 /** The most recent change across all of them, for the line under the title. */
 const newest = policies
@@ -25,7 +25,7 @@ const readable = (day: string) =>
 export function PolicyPage() {
   const { slug = '' } = useParams()
   const policy = policyBySlug(slug)
-  useTitle(policy?.title ?? 'Policies')
+  useTitle(policy?.title ?? 'Policies', AT_KOBBLON)
 
   if (!policy) return <Navigate to="/policies" replace />
 
@@ -43,7 +43,7 @@ export function PolicyPage() {
 
 /** Every rule in one place, which is the thing a policy hub is for. */
 export default function PolicyHub() {
-  useTitle('Policies')
+  useTitle('Policies', AT_KOBBLON)
 
   return (
     <AboutShell

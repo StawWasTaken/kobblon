@@ -9,9 +9,10 @@ import { Reveal } from '@/components/about/Reveal'
 import { Tally } from '@/components/about/Tally'
 import { Figure } from '@/components/about/Figure'
 import { Plate } from '@/components/about/Plate'
+import { Parallax } from '@/components/about/Parallax'
 import { BandHead } from '@/components/about/Type'
 import { useAsync } from '@/hooks/useAsync'
-import { useTitle, useSocialCard } from '@/hooks/useTitle'
+import { useTitle, useSocialCard, AT_KOBBLON } from '@/hooks/useTitle'
 import { getPlatformStats } from '@/lib/api'
 import { currency } from '@/lib/currency'
 
@@ -37,12 +38,19 @@ import { currency } from '@/lib/currency'
  *     you the site. This one says what the site is.
  */
 
-/** The three pieces underneath, one line each. */
+/**
+ * The three pieces underneath, one line each.
+ *
+ * `drift` is how far each card travels as the page scrolls past it. Three
+ * different numbers on purpose: identical parallax on three cards in a row
+ * is three cards moving as one object, which is the same as not moving.
+ */
 const inside = [
   {
     to: '/create',
     art: '/about/marketplace.png',
     alt: 'Glass shapes: a cube, a sphere and a wedge',
+    drift: 22,
     name: 'Marketplace',
     body: 'Meshes, sounds, decals and fonts to build out of, all of it uploaded by somebody here.',
   },
@@ -50,6 +58,7 @@ const inside = [
     to: '/policies/money',
     art: '/about/brix.png',
     alt: 'Glass Kobblon bricks, falling',
+    drift: 40,
     name: currency.plural,
     body: `What Kobblon runs on. Earn ${currency.plural} playing and selling, spend them on what other people made.`,
   },
@@ -57,13 +66,14 @@ const inside = [
     to: '/quests',
     art: '/about/quests.png',
     alt: 'A glass laurel wreath',
+    drift: 28,
     name: 'Quests',
     body: 'Something to go and do, set by Kobblon and by the people who build the worlds.',
   },
 ]
 
 export default function About() {
-  useTitle('What Kobblon is')
+  useTitle('What Kobblon is', AT_KOBBLON)
   useSocialCard({
     title: 'What Kobblon is',
     description: 'An online sandbox platform filled with user-generated 3D worlds.',
@@ -92,11 +102,13 @@ export default function About() {
             </>
           }
           art={
-            <Figure
-              src="/brand/landing-towers.webp"
-              alt="Two towers built in Kobblon, standing on open ground under a blue sky"
-              ratio="screen"
-            />
+            <Parallax strength={72}>
+              <Figure
+                src="/brand/landing-towers.webp"
+                alt="Two towers built in Kobblon, standing on open ground under a blue sky"
+                ratio="screen"
+              />
+            </Parallax>
           }
         />
       }
@@ -123,11 +135,13 @@ export default function About() {
       <Band tone="raised" edge>
         <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr]">
           <Reveal>
-            <Figure
-              src="/brand/landing-interior.png"
-              alt="The inside of a room built in Kobblon, lit through two windows"
-              ratio="wide"
-            />
+            <Parallax strength={56}>
+              <Figure
+                src="/brand/landing-interior.png"
+                alt="The inside of a room built in Kobblon, lit through two windows"
+                ratio="wide"
+              />
+            </Parallax>
           </Reveal>
           <Reveal delay={90}>
             <BandHead
@@ -165,20 +179,22 @@ export default function About() {
         <div className="mt-12 grid gap-4 lg:grid-cols-3">
           {inside.map((one, at) => (
             <Reveal key={one.name} delay={at * 80} className="h-full">
-              <Link
-                to={one.to}
-                className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-ink-card/60 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
-              >
-                <Plate src={one.art} alt={one.alt} />
-                <span className="flex flex-1 flex-col p-7">
-                  <span className="font-display text-2xl font-extrabold">{one.name}</span>
-                  <span className="mt-3 flex-1 leading-relaxed text-white/55">{one.body}</span>
-                  <span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-link">
-                    Look
-                    <Glyph icon={faArrowRight} className="text-xs transition-transform group-hover:translate-x-1" />
+              <Parallax strength={one.drift} className="h-full">
+                <Link
+                  to={one.to}
+                  className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-ink-card/60 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
+                >
+                  <Plate src={one.art} alt={one.alt} />
+                  <span className="flex flex-1 flex-col p-7">
+                    <span className="font-display text-2xl font-extrabold">{one.name}</span>
+                    <span className="mt-3 flex-1 leading-relaxed text-white/55">{one.body}</span>
+                    <span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-link">
+                      Look
+                      <Glyph icon={faArrowRight} className="text-xs transition-transform group-hover:translate-x-1" />
+                    </span>
                   </span>
-                </span>
-              </Link>
+                </Link>
+              </Parallax>
             </Reveal>
           ))}
         </div>

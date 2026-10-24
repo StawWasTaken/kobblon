@@ -10,7 +10,7 @@ import { Hero } from '@/components/about/Hero'
 import { Reveal } from '@/components/about/Reveal'
 import { Character } from '@/components/about/Figure'
 import { BandHead, Title } from '@/components/about/Type'
-import { useTitle, useSocialCard } from '@/hooks/useTitle'
+import { useTitle, useSocialCard, AT_KOBBLON } from '@/hooks/useTitle'
 
 /*
  * Where the Launcher comes from.
@@ -50,7 +50,7 @@ const does: { icon: KobIcon; name: string; body: string }[] = [
 ]
 
 export default function Download() {
-  useTitle('Get the Launcher')
+  useTitle('Get the Launcher', AT_KOBBLON)
   useSocialCard({
     title: 'Get the Kobblon Launcher',
     description: 'The Kobblon Launcher plays Worlds. It is being built.',
