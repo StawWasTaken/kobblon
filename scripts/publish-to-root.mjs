@@ -106,9 +106,23 @@ const assetBlock = /<script type="module"[^>]*><\/script>(?:\s*<link rel="module
  */
 const bootScript = /<script>[\s\S]*?<\/script>/
 
+/*
+ * And the stripe down the side of a Kobblon link.
+ *
+ * Discord reads `theme-color` for the bar beside an embed, and a page
+ * published months ago carries whatever that meta said the day it was
+ * written - so one page pasted in a channel was brand blue and the next
+ * was the old near black. It is the one line in the head that is neither
+ * the page's own (a title, a picture) nor part of the bundle, so nothing
+ * was bringing it forward. A page's own title and card stay its own; this
+ * belongs to the site.
+ */
+const themeColour = /<meta name="theme-color" content="[^"]*" \/>/
+
 const fresh = readFileSync('dist/404.html', 'utf8')
 const current = fresh.match(assetBlock)?.[0]
 const currentBoot = fresh.match(bootScript)?.[0]
+const currentTheme = fresh.match(themeColour)?.[0]
 
 let freshened = 0
 
@@ -123,10 +137,16 @@ if (!current) {
       const page = readFileSync(path, 'utf8')
       const had = page.match(assetBlock)?.[0]
       const hadBoot = page.match(bootScript)?.[0]
-      if ((!had || had === current) && (!currentBoot || hadBoot === currentBoot)) continue
+      const hadTheme = page.match(themeColour)?.[0]
+      if ((!had || had === current)
+        && (!currentBoot || hadBoot === currentBoot)
+        && (!currentTheme || hadTheme === currentTheme)) continue
       let next = had ? page.replace(assetBlock, () => current) : page
       if (currentBoot && hadBoot && hadBoot !== currentBoot) {
         next = next.replace(bootScript, () => currentBoot)
+      }
+      if (currentTheme && hadTheme && hadTheme !== currentTheme) {
+        next = next.replace(themeColour, () => currentTheme)
       }
       writeFileSync(path, next)
       freshened += 1

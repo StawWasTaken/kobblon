@@ -5,7 +5,7 @@
  * make a link preview do not run the router: they read the HTML they are
  * given. So every address that is the same for everybody gets its own file
  * here, with its own title, description and picture written in. Addresses
- * that depend on who or what they point at (a Space, a Community, a person)
+ * that depend on who or what they point at (a World, a Community, a person)
  * cannot be known at build time and fall through to 404.html, which carries
  * the site's own card.
  */
@@ -25,13 +25,13 @@ export const pages = [
   },
   {
     path: 'discover',
-    title: 'Discover Spaces on Kobblon',
-    description: 'Spaces people are building and visiting right now. Walk into one and see what they did with it.',
+    title: 'Discover Worlds on Kobblon',
+    description: 'Worlds people are building and visiting right now. Walk into one and see what they did with it.',
   },
   {
     path: 'create',
     title: 'Kobblon Create',
-    description: 'Upload images, sounds, video and fonts, sell what you make, and build Spaces out of what other people made.',
+    description: 'Upload images, sounds, video and fonts, sell what you make, and build Worlds out of what other people made.',
   },
   {
     path: 'create/marketplace',
@@ -41,7 +41,7 @@ export const pages = [
   {
     path: 'communities',
     title: 'Communities on Kobblon',
-    description: 'Fan clubs, build teams and hobby corners, each with its own wall, its own ranks, its own events and its own Spaces.',
+    description: 'Fan clubs, build teams and hobby corners, each with its own wall, its own ranks, its own events and its own Worlds.',
   },
   {
     path: 'people',
@@ -110,8 +110,8 @@ export const pages = [
   },
   {
     path: 'policies/spaces',
-    title: 'Spaces and experiences - Kobblon',
-    description: 'What somebody else’s Space is allowed to do while you are inside it, and what it can never get to.',
+    title: 'Worlds and what runs in them - Kobblon',
+    description: 'What somebody else’s World is allowed to do while you are inside it, and what it can never get to.',
   },
   {
     path: 'policies/copyright',

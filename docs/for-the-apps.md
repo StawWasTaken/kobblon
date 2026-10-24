@@ -13357,3 +13357,55 @@ component you mount, and no migration this round. One new hook worth having:
 
 Still not built, same list: the newsroom, the wiki, a World belonging to a
 Community, requests have no screen, and Round 133's five Launcher questions.
+
+---
+
+## Round one hundred and seventy-nine
+
+Staw, with a Kobblon link pasted in Discord: "make that every embed about
+Kobblon has its sidebar's colour as kobblue (kobblon's brand colour)".
+
+### The stripe beside an embed is `theme-color`
+
+Discord paints the bar down the side of an unfurled link with the page's
+`theme-color`, and ours said `#101012` - the near black every page happens
+to sit on. So every Kobblon link anybody pasted anywhere looked like a link
+to nothing in particular. It is `#1B34E8` now, which is `brand.DEFAULT` in
+`design/preset.js` and the only blue that is allowed to mean Kobblon.
+
+It is also what a phone paints its own chrome with, and that is the same
+answer rather than a cost: the bar at the top of this site is brand blue, so
+the browser's bar above it matching is the one that does not look like a
+seam.
+
+### The 357 pages that would never have got it
+
+Writing it into the template was not enough, and this is the part worth
+copying. Every page under `u/`, `c/`, `worlds/`, `catalog/`, `create/`,
+`e/` and `forum/` is a real file written by whichever build last reached the
+database. `publish-to-root.mjs` brings those files forward on every deploy,
+but it only carried two things across: the asset block and the boot script.
+Everything else in the head stayed as it was written, so a page published
+last month would have gone on wearing the old colour for ever, and the one
+Staw actually pasted - `forum/t/8` - was one of them.
+
+So the theme colour goes over too, by the same mechanism. It is the one line
+in the head that is neither the page's own - its title, its description, its
+picture, all of which must stay its own - nor part of the bundle. All 357
+pages carry Kobblue now, with their own cards untouched.
+
+### Words, while in there
+
+The template's own fallback description still said "Build your own Space",
+and five of the addresses in `scripts/site-pages.mjs` described Kobblon with
+Spaces and experiences - including the policy titled "Spaces and
+experiences", which Round one hundred and seventy-seven had already fixed on
+the page itself and not in the thing that writes its card. Those are the
+sentences search engines and chat apps quote, which makes them the last
+place for a word we retired.
+
+### For the applications
+
+Nothing changed in `@/engine`, `@/lib/kinds`, `design/preset.js` or any
+component you mount, and no migration. If either application ever writes a
+`theme-color`, or a card for a Kobblon link, the colour is `#1B34E8`.
