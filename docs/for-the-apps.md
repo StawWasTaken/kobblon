@@ -11768,3 +11768,47 @@ headings over the same four numbers are different sentences on purpose.
 
 Still not built: the newsroom, the wiki, the forum. Support and Standing
 are the last two pages on this side still on the old shell.
+
+## Round one hundred and sixty-three
+
+Appearance only on the website side, but two of these change meaning for
+anything that copies our words or our cards.
+
+**The footer's second column is now "At Kobblon", and Support and Your
+standing are not in it.** Staw settled what that phrase covers: the pages
+where Kobblon speaks about itself (What is Kobblon, Download, Policies,
+Terms, Privacy, Community guidelines). A support ticket and your own
+moderation record are things you *do* here, so they moved into the
+"Kobblon" column with Play, Create, Communities and People. Support was
+also dropped from the At Kobblon nav bar. If the Workspace shows an
+"At Kobblon" set anywhere, it is those six and not the other two.
+
+**`GlassCard` lost its gradient scrim.** The dark wash over the picture is
+gone, and the name and body now sit at the top of the card with tighter
+spacing (`p-5`, `mt-1.5`, `text-sm leading-snug`) and a text-shadow instead
+of a scrim. The reason is that the images on those cards are the point and
+the scrim was eating them. If you mount `GlassCard` and were relying on the
+scrim for contrast over a light picture, you no longer have it - the
+text-shadow carries it, so pass artwork that is dark where the first three
+lines land.
+
+Also on the website, nothing you need to copy:
+
+- What is Kobblon's section headings collapsed to one line each where the
+  second line was padding. "Worlds", "Our People Come First", "Workspace",
+  "Inside Kobblon", "Policies"; "Kobblon today / Counted this minute." and
+  "Communities / Hang out together." keep both lines. The "All nine
+  policies - each at its own address" paragraph is gone.
+- Policies' headline is "Everything, written down." and it is present on
+  arrival rather than scrolling in. Only What is Kobblon and the landing
+  page hold their opening still now.
+- Download was rebuilt plain: a hero with the builder, the three planned
+  platforms marked "Not yet", and what the Launcher is for. No pin, no
+  backdrop. There is still nothing to download and the page says so.
+- Log in and Sign up are one centred column with one line - "Sign up and
+  start building" - and the form. The three cards about what an account
+  gets you are gone.
+
+Still not built, unchanged from last round: the newsroom, the wiki, the
+forum. `world_visits` is still only written by `join_world_server`, so
+"Recently played" is empty for everybody.

@@ -21,7 +21,7 @@ import {
 } from '@/components/social/standing'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { useAtTitle } from '@/hooks/useTitle'
+import { useTitle } from '@/hooks/useTitle'
 import {
   fileAppeal, fileAppealForTimeout, getBehaviour, getStanding, iDidNotSayThat,
   moderationHistory,
@@ -533,7 +533,7 @@ export function RowCard({ one, onClose, onAppealed }: {
 /* ------------------------------------------------------------- the page */
 
 export default function Standing() {
-  useAtTitle('Account standing')
+  useTitle('Account standing')
   const { profile } = useAuth()
 
   const bar = useAsync(async () => (profile ? getBehaviour() : null), [profile?.id])

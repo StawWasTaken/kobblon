@@ -25,7 +25,6 @@ export const ABOUT_LINKS = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/download', label: 'Download' },
   { to: '/policies', label: 'Policies' },
-  { to: '/support', label: 'Support' },
 ]
 
 export function AboutNav({ className }: { className?: string }) {

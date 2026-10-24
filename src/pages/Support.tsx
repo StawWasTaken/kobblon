@@ -21,7 +21,7 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { useAtTitle } from '@/hooks/useTitle'
+import { useTitle } from '@/hooks/useTitle'
 import { listTickets, openTicket } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -450,7 +450,7 @@ export function TicketCard({ open, username, onClose, onSend, sending }: {
 }
 
 export default function Support() {
-  useAtTitle('Support')
+  useTitle('Support')
   const { profile } = useAuth()
   const toast = useToast()
 

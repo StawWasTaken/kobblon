@@ -43,13 +43,21 @@ export function GlassCard({ to, art, alt, name, body, cue = 'Look' }: {
         className="w-full transition-transform duration-700 ease-out group-hover:scale-105"
       />
 
-      {/* Dark at the top, so the words hold whatever the render does. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-ink/85 via-ink/45 to-transparent" />
-
-      <div className="absolute inset-x-0 top-0 p-7">
+      {/*
+        * No scrim over the render. There was a dark gradient down the top
+        * two thirds of it and Staw is right that it was in the way: these
+        * are the three pictures the band exists to show, and two thirds of
+        * each of them was being dimmed to hold four lines of text. The
+        * words carry their own shadow instead, which costs the picture
+        * nothing.
+        *
+        * Tight, and high up, for the same reason - the padding and the
+        * gaps were pushing the text down over the middle of the render.
+        */}
+      <div className="absolute inset-x-0 top-0 p-5 [text-shadow:0_2px_12px_rgba(0,0,0,0.85)]">
         <p className="font-display text-2xl font-extrabold">{name}</p>
-        <p className="mt-3 max-w-xs leading-relaxed text-white/70">{body}</p>
-        <p className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-brand-bright">
+        <p className="mt-1.5 max-w-xs text-sm leading-snug text-white/80">{body}</p>
+        <p className="mt-3 inline-flex items-center gap-2 text-sm font-extrabold text-brand-bright">
           {cue}
           <Glyph icon={faArrowRight} className="text-xs transition-transform group-hover:translate-x-1" />
         </p>

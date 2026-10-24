@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faArrowLeft, faCircleCheck } from '@fortawesome/free-solid-svg-icons'
-import type { KobIcon } from '@/components/brand/Icon'
-import { Icon } from '@/components/brand/Icon'
 import { Button } from '@/components/ui/Button'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
@@ -21,11 +19,16 @@ import { cn } from '@/lib/cn'
 /*
  * The door.
  *
- * One column down the middle rather than the pitch-beside-the-form it was:
- * the words, the form, and what an account is for underneath it. The split
- * layout only ever worked on a wide screen - on a phone the whole left half
- * was `hidden`, so half of the page did not exist for most of the people
- * using it, and the headline had to be written twice.
+ * One line, one form, and nothing else. It has been three layouts in a
+ * week and Staw's note on this one is the shortest: keep it simple. So the
+ * three cards about what an account is for are gone - somebody on this
+ * page has already decided - and what is left is the sentence, in the
+ * spirit of Roblox's "sign up and start having fun", and the fields.
+ *
+ * One column down the middle rather than the pitch-beside-the-form it was.
+ * The split layout only ever worked on a wide screen - on a phone the
+ * whole left half was `hidden`, so half of the page did not exist for most
+ * of the people using it, and the headline had to be written twice.
  *
  * No photograph behind it. Staw asked for the towers off this page, and a
  * World behind a password field was arguing for the platform at the one
@@ -37,17 +40,6 @@ import { cn } from '@/lib/cn'
  * than with Font Awesome glyphs, because there are pictures of a World, of
  * the marketplace and of people in this product already.
  */
-
-/** One line about what an account is for, under the form that makes one. */
-function Promise_({ icon, title, body }: { icon: KobIcon; title: string; body: string }) {
-  return (
-    <li className="rounded-3xl border border-white/10 bg-ink-card/50 p-6">
-      <Icon name={icon} tone="currentColor" className="h-7 w-7 text-brand-bright" />
-      <span className="mt-4 block font-display text-lg font-extrabold text-white">{title}</span>
-      <span className="mt-2 block text-sm leading-relaxed text-white/55">{body}</span>
-    </li>
-  )
-}
 
 export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
   useForceDark()
@@ -120,19 +112,20 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                     </>
                   ) : (
                     <>
-                      One account,
-                      <span className="block text-brand-bright">every World</span>
+                      Sign up and
+                      <span className="block text-brand-bright">start building</span>
                     </>
                   )}
                 </Title>
               </Reveal>
-              <Reveal delay={140}>
-                <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/60">
-                  {claiming
-                    ? 'The Worlds you entered, the people you met and anything you collected stay exactly where they are. Pick a name and a password and this same account becomes yours.'
-                    : 'Kobblon is an online sandbox platform filled with user-generated 3D worlds. Build one, publish it, and walk into anybody else\u2019s.'}
-                </p>
-              </Reveal>
+              {claiming && (
+                <Reveal delay={140}>
+                  <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/60">
+                    The Worlds you entered, the people you met and anything you collected stay
+                    exactly where they are.
+                  </p>
+                </Reveal>
+              )}
             </div>
 
             {/* ----------------------------------------------- the card */}
@@ -243,30 +236,6 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               </p>
             </section>
 
-            {/* ------------------------------------ what it is an account for */}
-            <ul className="mx-auto mt-16 grid max-w-5xl gap-3 sm:grid-cols-3">
-              <Reveal as="li" delay={120} className="h-full">
-                <Promise_
-                  icon="world"
-                  title="Your own World"
-                  body="Built your way in Kobblon Workspace, published when you say so."
-                />
-              </Reveal>
-              <Reveal as="li" delay={190} className="h-full">
-                <Promise_
-                  icon="assets"
-                  title="Everything in Create"
-                  body="Meshes, decals, sounds and fonts, made by people here and sold to each other."
-                />
-              </Reveal>
-              <Reveal as="li" delay={260} className="h-full">
-                <Promise_
-                  icon="people"
-                  title="People to build with"
-                  body="Friends, Communities with their own walls and ranks, and events worth turning up to."
-                />
-              </Reveal>
-            </ul>
           </main>
         </Lane>
       </div>

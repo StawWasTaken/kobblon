@@ -7,7 +7,6 @@ import { StoryPage } from '@/components/layout/StoryPage'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
 import { Reveal } from '@/components/about/Reveal'
-import { ScrollIn } from '@/components/about/ScrollIn'
 import { Parallax } from '@/components/about/Parallax'
 import { Floaters } from '@/components/about/Floaters'
 import { BandHead } from '@/components/about/Type'
@@ -68,20 +67,23 @@ export default function PolicyHub() {
       }
       hero={
         <Lane className="flex min-h-[62vh] flex-col justify-center py-24 text-center">
-          <ScrollIn over={0.22}>
+          {/* Here on arrival, not scrolled in. Somebody opens this page
+              because they are looking for a document, and a title that is
+              not there yet is a page that looks like it failed to load. */}
+          <Reveal>
             <h1 className="font-display text-[clamp(2.3rem,6vw,4.75rem)] font-extrabold leading-[0.95] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
-              What we expect,
+              Everything,
               <br />
-              <span className="text-brand-bright">and what you can expect back</span>.
+              <span className="text-brand-bright">written down</span>.
             </h1>
-          </ScrollIn>
+          </Reveal>
           <Reveal delay={200}>
             <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/65">
               One subject at a time, in words anybody can read. Nothing here is written to be
               skipped.
             </p>
           </Reveal>
-          <Reveal delay={300}>
+          <Reveal delay={160}>
             <p className="mt-8 flex items-center justify-center gap-2.5 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/50">
               {policies.length} policies &middot; newest {readable(newest)}
               <Glyph icon={faArrowDown} className="text-xs" />

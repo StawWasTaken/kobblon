@@ -10,8 +10,8 @@ import { cn } from '@/lib/cn'
  *
  * Staw's shape, and the reason for each column: the lockup and the
  * copyright on the left; the pages of Kobblon itself that a stranger can
- * reach without an account; the About pages, which are what Kobblon says
- * about itself; and where we are elsewhere.
+ * reach without an account; the At Kobblon pages, which are what Kobblon
+ * says about itself; and where we are elsewhere.
  *
  * Only places that exist are listed. The wiki, the newsroom and the forum
  * are ideas, so they are not here - a link to a page nobody has built is
@@ -23,17 +23,23 @@ const kobblon = [
   { to: '/create', label: 'Create' },
   { to: '/communities', label: 'Communities' },
   { to: '/people', label: 'People' },
-  { to: '/download', label: 'Download' },
+  { to: '/support', label: 'Support' },
+  { to: '/standing', label: 'Your standing' },
 ]
 
-const about = [
+/*
+ * The At Kobblon pages: the ones that speak for Kobblon rather than being
+ * part of using it. Support and standing are **not** among them, which
+ * Staw settled - a ticket and your own record are things you do here, not
+ * things Kobblon says about itself - so they are in the column above.
+ */
+const atKobblon = [
   { to: '/about', label: 'What is Kobblon' },
-  { to: '/support', label: 'Support' },
+  { to: '/download', label: 'Download' },
   { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/guidelines', label: 'Community guidelines' },
-  { to: '/standing', label: 'Your standing' },
 ]
 
 /** Ours, elsewhere. Every one of these is a real address. */
@@ -103,7 +109,7 @@ export function SiteFooter({ className }: { className?: string }) {
           </div>
 
           <Column heading="Kobblon" links={kobblon} />
-          <Column heading="About" links={about} />
+          <Column heading="At Kobblon" links={atKobblon} />
 
           <div>
             <Heading>Social</Heading>

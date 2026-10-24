@@ -180,8 +180,7 @@ export default function About() {
           </Reveal>
           <Reveal delay={90}>
             <BandHead
-              eyebrow="Worlds"
-              title="Somewhere to be."
+              title="Worlds"
               lead="Every world on Kobblon was built and published by one person. Walk in and see what they did with it."
             />
             <div className="mt-8">
@@ -195,8 +194,7 @@ export default function About() {
       <Band tone="raised" edge>
         <Reveal>
           <BandHead
-            eyebrow="Safety"
-            title="You are not stuck with anybody."
+            title="Our People Come First"
             lead="Four things, all of them built and working today."
           />
         </Reveal>
@@ -225,8 +223,7 @@ export default function About() {
         <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.15fr]">
           <Reveal>
             <BandHead
-              eyebrow="Workspace"
-              title="Build it, publish it, see who turns up."
+              title="Workspace"
               lead="Worlds are built in Kobblon Workspace on the desktop. Publish one there and it is here, ready for people."
             />
             <div className="mt-8 flex flex-wrap gap-3">
@@ -260,7 +257,7 @@ export default function About() {
       {/* --------------------------------------------------- inside Kobblon */}
       <Band tone="raised" edge>
         <Reveal>
-          <BandHead eyebrow="Inside Kobblon" title="What it runs on." />
+          <BandHead title="Inside Kobblon" />
         </Reveal>
         <div className="mt-12 grid gap-4 lg:grid-cols-3">
           {inside.map((one, at) => (
@@ -312,10 +309,7 @@ export default function About() {
       {/* --------------------------------------------------------- policies */}
       <Band tone="raised" edge>
         <Reveal>
-          <BandHead
-            eyebrow="Policies"
-            title="Written down, in plain words."
-          />
+          <BandHead title="Policies" />
         </Reveal>
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
           {[
@@ -340,12 +334,6 @@ export default function About() {
             </Reveal>
           ))}
         </div>
-        <Reveal delay={220}>
-          <p className="mt-6 text-sm font-semibold text-white/40">
-            <Link to="/policies" className="text-link hover:underline">All nine policies</Link>
-            {' '}- each at its own address, so support can point at one.
-          </p>
-        </Reveal>
       </Band>
 
       {/* --------------------------------------------------------- newsroom */}
