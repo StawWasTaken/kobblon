@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" href="/brand/favicon-2c21f022.png" />
     <link rel="preload" as="image" href="/brand/logo-reveal.gif" />
     <meta name="theme-color" content="#101012" />
-    <meta name="description" content="Kobblon Staff is a community on Kobblon, run by @Kobblon, with 7 members." />
+    <meta name="description" content="Kobblon Staff is a community on Kobblon, run by @Kobblon, with 8 members." />
     <title>Kobblon Staff</title>
     <link rel="canonical" href="https://kobblon.com/c/1005/kobblon-staff/" />
 
@@ -20,13 +20,13 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kobblon.com/c/1005/kobblon-staff/" />
     <meta property="og:title" content="Kobblon Staff" />
-    <meta property="og:description" content="Kobblon Staff is a community on Kobblon, run by @Kobblon, with 7 members." />
+    <meta property="og:description" content="Kobblon Staff is a community on Kobblon, run by @Kobblon, with 8 members." />
     <meta property="og:image" content="https://sdnjdgeqrhzkyfyohcsz.supabase.co/storage/v1/object/public/avatars/9a5939a9-ab2f-4118-aafd-29d93e8cb133/community-cover-1792142353696.png" />
     
     <meta property="og:image:alt" content="Kobblon Staff" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Kobblon Staff" />
-    <meta name="twitter:description" content="Kobblon Staff is a community on Kobblon, run by @Kobblon, with 7 members." />
+    <meta name="twitter:description" content="Kobblon Staff is a community on Kobblon, run by @Kobblon, with 8 members." />
     <meta name="twitter:image" content="https://sdnjdgeqrhzkyfyohcsz.supabase.co/storage/v1/object/public/avatars/9a5939a9-ab2f-4118-aafd-29d93e8cb133/community-cover-1792142353696.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -93,6 +93,72 @@
           }
         }
       })()
+    </script>
+    <script>
+      /*
+       * What colour the wait is.
+       *
+       * The mode is this device's and the appearance is the account's, but
+       * both were on screen last time and both are remembered here, so the
+       * boot screen can be the page's own background rather than black on
+       * the way to a white one.
+       */
+      (function () {
+        var mode = 'dark'
+        var look = 'default'
+        try {
+          var saved = localStorage.getItem('kobblon.theme')
+          if (saved === 'light' || saved === 'dark') mode = saved
+          else if (saved === 'system' || saved === null) {
+            mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+          }
+          var worn = localStorage.getItem('kobblon.appearance')
+          if (worn === 'halloween' || worn === 'christmas') look = worn
+        } catch (e) {}
+        document.getElementById('boot').setAttribute('data-ink', mode + '-' + look)
+      })()
+
+      /*
+       * The rescue for a document that cannot load itself.
+       *
+       * Every page under /u/, /c/ and /worlds/ is a real file written at
+       * deploy time, and each one names the pieces of that build by their
+       * content hash. The pieces are replaced on the next deploy and the
+       * old names stop existing - so a page written by a build that could
+       * not reach the database, which is every build run without the
+       * service key, goes on pointing at pieces that were deleted weeks
+       * ago. The module 404s, nothing in the bundle ever runs, and what is
+       * left on screen is this mark, for ever. Staw: "when you reload a
+       * page that is not like... made by us directly, like when you reload
+       * a profile page or a community page or worlds, then it says this
+       * and doesn't load and it keeps doing that".
+       *
+       * Reloading cannot fix it, because the file on the site is the thing
+       * that is wrong - which is why the button under the mark never
+       * helped. The index at the root is rewritten by every deploy, so it
+       * is always current: this hands the address to it and lets it do the
+       * routing. `main.tsx` puts the address back before React looks.
+       *
+       * Three seconds after the window has loaded, because by then either
+       * the bundle has run or it is not going to. Once per tab, so a site
+       * that is genuinely down cannot turn this into a loop.
+       */
+      setTimeout(function () {
+        var boot = document.getElementById('boot')
+        if (boot) boot.className += ' slow'
+      }, 12000)
+
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          if (window.__kobUp) return
+          if (location.pathname === '/') return
+          try {
+            if (sessionStorage.getItem('kobblon.rescued')) return
+            sessionStorage.setItem('kobblon.rescued', '1')
+          } catch (e) { /* a blocked store is no reason not to try once */ }
+          location.replace('/?to=' + encodeURIComponent(location.pathname + location.search + location.hash))
+        }, 3000)
+      })
     </script>
   </body>
 </html>
