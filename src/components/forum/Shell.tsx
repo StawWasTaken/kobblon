@@ -78,11 +78,36 @@ export const BOARD_COLOUR: Record<string, string> = {
   'off-topic': 'bg-white/40',
 }
 
+/*
+ * The same six colours again, as ink rather than fill.
+ *
+ * Staw: "how about you make the svg icons of each category the same colour
+ * as its category". The stripe down the side of a row and the square in the
+ * rail already say which room you are in; the drawing in the middle of the
+ * row was saying brand blue six times, which is the one place a colour was
+ * spent on nothing.
+ *
+ * It is a second map rather than a string swap on the first, because
+ * `bg-brand-bright` and `text-brand-bright` are two classes and Tailwind
+ * only emits the ones it can read whole in a file. Off topic is the one
+ * that is not a straight copy: `white/40` is a fill a stripe can carry and
+ * a line drawing at this size cannot, so its ink is `white/60`.
+ */
+export const BOARD_INK: Record<string, string> = {
+  announcements: 'text-brand-bright',
+  'community-creations': 'text-space-bright',
+  'feedback-and-suggestions': 'text-amber-400',
+  'help-and-support': 'text-link',
+  'building-and-scripting': 'text-violet-400',
+  'off-topic': 'text-white/60',
+}
+
 export function BoardMark({ slug, className }: { slug: string; className?: string }) {
   const art = BOARD_ART[slug]
   return (
     <span className={cn(
-      'grid shrink-0 place-items-center rounded-lg border border-white/10 bg-ink-raised text-brand-bright',
+      'grid shrink-0 place-items-center rounded-lg border border-white/10 bg-ink-raised',
+      BOARD_INK[slug] ?? 'text-brand-bright',
       className ?? 'h-7 w-7 text-xs',
     )}>
       {art?.ours

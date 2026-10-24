@@ -12130,3 +12130,33 @@ yet. The community rename has no page: `rename_community` exists and
 `ConfigureCommunity` still writes `name` directly, which the guard now pins
 back, so **renaming a community through that page currently does nothing**.
 That is the next thing to fix here and it is named rather than hidden.
+
+## Round one hundred and sixty-nine - a category's mark is its own colour
+
+Small and visual only. Nothing changed meaning, nothing changed shape, and
+there is no new call for you to make.
+
+The forum's six categories each already had a colour: the stripe down the
+side of a row, and the square in the rail. The drawing in the middle of the
+row was painting brand blue six times over, so the one place in the row with
+room for the colour was the one place not using it. Each board's icon is now
+drawn in its own category colour.
+
+The map is `BOARD_INK` in `src/components/forum/Shell.tsx`, beside
+`BOARD_COLOUR`. It is a second map rather than a string swapped on the
+first, because `bg-brand-bright` and `text-brand-bright` are two classes and
+Tailwind only emits the ones it can read whole in a file; building a class
+name at runtime gets you no class at all. Off topic is the one entry that is
+not a straight copy - `white/40` is a fill a 4px stripe can carry and a line
+drawing at 18px cannot, so its ink is `white/60`.
+
+Worth knowing if you ever draw one of ours in the applications: `Icon`
+paints a `ui/` icon as a mask in `currentColor` by default, so a colour set
+on the wrapper reaches it. `workspace/` icons are as drawn unless you pass
+`tone`, because a green cylinder and a red part painted flat are the same
+picture.
+
+Still not done, and unchanged since the last round: `ConfigureCommunity`
+writes `communities.name` directly and the name guard pins it back, so
+**renaming a community through that page still does nothing**.
+`rename_community` is the call it needs.
