@@ -1,6 +1,6 @@
 import {
   faHouse, faCompass, faUserGroup, faBookmark, faShirt, faGear, faShapes, faUser, faUsers,
-  faPeopleGroup, faEnvelope,
+  faPeopleGroup, faEnvelope, faComments, faCircleInfo, faDownload, faScroll,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import type { KobIcon } from '@/components/brand/Icon'
@@ -82,4 +82,23 @@ export const mobileNav: NavItem[] = [
   { to: '/discover', label: 'Discover', icon: faCompass },
   { to: '/avatar', label: 'You', icon: faShirt, ours: 'avatar', face: true },
   { to: '/catalog', label: 'Catalog', icon: faShirt },
+]
+
+/**
+ * The way out of the signed-in pages and into the ones that speak for
+ * Kobblon - the forum first.
+ *
+ * Staw: the two halves of this site had no door between them. From a
+ * signed-in page the only route to the forum or to What is Kobblon was the
+ * footer, which on those pages did not exist, or the address bar. So it is
+ * a third group at the foot of the rail, drawn smaller than the rail's own
+ * rows, because it is where you leave rather than where you are.
+ *
+ * Only pages that exist. The wiki and the newsroom are ideas.
+ */
+export const outNav: NavItem[] = [
+  { to: '/forum', label: 'Forum', icon: faComments },
+  { to: '/about', label: 'What is Kobblon', icon: faCircleInfo },
+  { to: '/download', label: 'Download', icon: faDownload },
+  { to: '/policies', label: 'Policies', icon: faScroll },
 ]

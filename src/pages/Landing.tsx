@@ -6,6 +6,7 @@ import { Signature } from '@/components/brand/Signature'
 import { Commercial } from '@/components/landing/Commercial'
 import { WorldChart } from '@/components/landing/WorldChart'
 import { CreatorShelf } from '@/components/landing/CreatorShelf'
+import { TopTopics } from '@/components/forum/TopTopics'
 import { CommunityWall } from '@/components/landing/CommunityWall'
 import { CatalogShelf } from '@/components/landing/CatalogShelf'
 import { JoinPanel } from '@/components/landing/JoinPanel'
@@ -289,6 +290,30 @@ export default function Landing() {
             <Button className="mt-8" to="/catalog" icon={faStore}>Open the Catalog</Button>
           </Reveal>
         </div>
+      </Band>
+
+      {/* ------------------------------------------------------------ forum */}
+      {/*
+        * Staw asked for the top forum posts on the three front pages - here,
+        * on the signed-in Home and on What is Kobblon. The same block in all
+        * three, drawing nothing at all when the forum is quiet, so a
+        * stranger never meets an empty shelf on the way in.
+        */}
+      <Band tone="raised" edge>
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <BandHead
+              eyebrow="Community Forum"
+              title="What people are talking about."
+              lead="Questions, bug reports and arguments about Brix. Reading takes no account."
+            />
+            <Button to="/forum" variant="subtle" iconRight={faArrowRight}>
+              Open the forum
+            </Button>
+          </div>
+        </Reveal>
+
+        <TopTopics className="mt-10" head={false} />
       </Band>
 
       {/* ----------------------------------------------------------- safety */}

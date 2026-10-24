@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { faArrowRight, faArrowDown } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
+import { TopTopics } from '@/components/forum/TopTopics'
 import { Button } from '@/components/ui/Button'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
@@ -304,6 +305,24 @@ export default function About() {
             </div>
           </Reveal>
         </div>
+      </Band>
+
+      {/* ------------------------------------------------------------ forum */}
+      <Band tone="night" edge>
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <BandHead
+              eyebrow="Community Forum"
+              title="Where it gets decided."
+              lead="Most of what is on this page started as somebody asking for it on the forum."
+            />
+            <Button to="/forum" variant="subtle" iconRight={faArrowRight}>
+              Open the forum
+            </Button>
+          </div>
+        </Reveal>
+
+        <TopTopics className="mt-10" head={false} />
       </Band>
 
       {/* --------------------------------------------------------- policies */}

@@ -12820,3 +12820,88 @@ mount, that is the first thing to try.
   `pg_net`/`pg_cron` and the re-apply of 0224 and 0253, automatic Community
   verification by membership share, `register` not being deployed, and
   `world_visits` only being written by `join_world_server`.
+
+## Round one hundred and seventy-four: a foot on every page, a door to the forum, and replies that read as a conversation
+
+No migrations this round. Nothing to apply.
+
+### The two halves of the site had no door between them
+
+From a signed-in page the only way to the forum or to What is Kobblon was
+the address bar: the rail is yours, the top bar is the platform's, and
+neither carried an At Kobblon page. So the rail grows a third group at its
+foot - Forum, What is Kobblon, Download, Policies - drawn smaller than the
+rail's own rows, because it is where you leave rather than where you are.
+It is `outNav` in `@/components/layout/nav`, beside `sideNav`, `topNav` and
+`mobileNav`. If the Workspace draws a rail of its own from those, it now
+has a fourth list to decide about.
+
+The account menu gains **Forum profile**, pointing at
+`/forum/u/<username>`. On an At Kobblon page that menu is the only thing
+that knows who you are, and the forum's own shell only ever linked to a
+profile through a post - so somebody who had not posted had no way to
+their own.
+
+### Every signed-in page has a foot now
+
+The same `SiteFooter`, with a new `compact` prop: same links, less room.
+Staw asked whether it should be this one or a second one, and it is this
+one - a second foot is a second place for a moved page to keep pointing at
+where it used to be. It is mounted **inside** `main` in `AppShell`, so it
+sits inside the rail's offset and the phone bar's clearance without being
+told either number.
+
+### The forum, on the three front pages
+
+`@/components/forum/TopTopics` - one component, used on the landing page,
+on the signed-in Home and on What is Kobblon. It asks for
+`forum_topics_list` with `sort = 'interesting'`, which already weighs
+replies against age, rather than for the newest five; and it renders
+**nothing at all** when the forum is quiet or the request fails, so a
+stranger never meets an empty shelf on the way in. `head={false}` turns off
+its own heading where the page has already said what it is.
+
+It is mountable bare: no provider, no auth, just a router for its links.
+
+### Replies read as a conversation
+
+`@/components/forum/Thread` - three pieces, none of which asks the
+database for anything. The replies are all in hand, so who answered whom is
+already known.
+
+- **ReplyingTo** - the grey "Replying to Ryko" line becomes a chip with
+  their picture that opens into the post itself, quoted, with the way down
+  to it. An answer three screens below the thing it answers can be read in
+  one place.
+- **Answered** - the other direction. A line of pictures and a count under
+  a post that was answered, opening into who said what, each one a jump.
+  Without it, a reply that started a long back-and-forth looks like a dead
+  end.
+- **Later** - "Eleven days later" between two replies more than three days
+  apart. A topic answered in March and picked up in October read as one
+  conversation.
+
+`Forum.tsx` works out `byId` and `kids` once per load with `useMemo`
+rather than per reply: twenty replies each walking the list is four hundred
+passes on every render.
+
+One thing that was wrong and is worth saying, because it is the kind of
+thing that passes a type check: the chip first sat at the top right of the
+post beside the three dots, and the quote it opens is a paragraph wide - so
+it unfolded straight over the name it was next to. It is on a line of its
+own now. Screenshot caught it; nothing else would have.
+
+### What is not done, plainly
+
+- **`TopTopics` has never been seen with rows in it.** This container has
+  no route to Supabase, so on every page it was put on it rendered its
+  empty case, which is nothing. The markup is right by reading, and that is
+  all I can say for it.
+- Staw is reordering the rail, the top bar and the account menu and is
+  sending the list; nothing here is that reorder. What is above is
+  additive, so the order it adds to is still the old one.
+- Still open from before: the newsroom, the wiki, Round one hundred and
+  thirty-three's five Launcher questions, Worlds belonging to a Community,
+  `pg_net`/`pg_cron` and the re-apply of 0224 and 0253, automatic Community
+  verification by membership share, `register` not being deployed, and
+  `world_visits` only being written by `join_world_server`.

@@ -1,0 +1,20 @@
+import { chromium } from 'playwright'
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+const p = await b.newPage({ viewport: { width: 1200, height: 1400 } })
+const bad = []
+p.on('pageerror', (e) => bad.push('threw: ' + e.message))
+await p.goto('http://localhost:5343/tools/site/forum-preview.html', { waitUntil: 'networkidle' })
+await p.waitForTimeout(2000)
+const rows = await p.locator('section').evaluateAll((all) =>
+  all.map((s, i) => [i, s.querySelector(':scope > p')?.textContent?.slice(0, 50)]))
+console.log(JSON.stringify(rows.filter(r => r[1])))
+const n = rows.findIndex(r => (r[1]||'').startsWith('A reply in a conversation'))
+await p.locator('section').nth(n).screenshot({ path: '/tmp/thread-closed.png' })
+await p.locator('section').nth(n).getByRole('button', { name: /Pixelhead/ }).click()
+await p.locator('section').nth(n).getByRole('button', { name: /1 reply/ }).click()
+await p.waitForTimeout(300)
+await p.locator('section').nth(n).screenshot({ path: '/tmp/thread-open.png' })
+const f = rows.findIndex(r => (r[1]||'').startsWith('The foot of a signed-in'))
+await p.locator('section').nth(f).screenshot({ path: '/tmp/foot.png' })
+console.log(bad.length ? bad.join(' | ') : 'nothing threw')
+await b.close()

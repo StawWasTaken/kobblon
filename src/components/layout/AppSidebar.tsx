@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { unreadMail } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import { sideNav, topNav } from './nav'
+import { outNav, sideNav, topNav } from './nav'
 import { profileLink } from '@/lib/links'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 
@@ -148,6 +148,30 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               }
             >
               <Glyph icon={item.icon} name={item.ours} className="w-5 text-[15px]" />
+              <span className="flex-1">{item.label}</span>
+            </NavLink>
+          ))}
+        </div>
+
+        <p className="px-3.5 pb-1 pt-5 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-onbrand/40">
+          At Kobblon
+        </p>
+        <div className="space-y-0.5">
+          {outNav.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3.5 rounded-xl px-3.5 py-2 text-[13px] font-bold transition-colors',
+                  isActive
+                    ? 'bg-onbrand/15 text-onbrand'
+                    : 'text-onbrand/55 hover:bg-onbrand/10 hover:text-onbrand',
+                )
+              }
+            >
+              <Glyph icon={item.icon} className="w-5 text-[13px]" />
               <span className="flex-1">{item.label}</span>
             </NavLink>
           ))}

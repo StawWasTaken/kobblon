@@ -4,7 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faGear, faShieldHalved, faRightFromBracket, faScroll, faRightLeft, faUserPlus,
   faUserShield, faShirt,
-  faHeadset,
+  faHeadset, faComments,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { SwitchAccounts } from './SwitchAccounts'
@@ -59,7 +59,20 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
       ? [{ to: '/staff', label: 'Staff', icon: faUserShield }]
       : []),
     ...(profile && !profile.is_guest
-      ? [{ to: '/avatar', label: 'My Avatar', icon: faShirt }]
+      ? [
+          { to: '/avatar', label: 'My Avatar', icon: faShirt },
+          /*
+           * Your forum profile, from anywhere.
+           *
+           * On an At Kobblon page this menu is the only thing that knows
+           * who you are, and the forum's own shell only links to a profile
+           * through a post - so somebody who had not posted yet had no way
+           * to their own. It is the forum's address rather than the site's:
+           * `/forum/u/<username>` is the page with the forum tags, the
+           * forum bio and the button across to the Kobblon profile.
+           */
+          { to: `/forum/u/${profile.username}`, label: 'Forum profile', icon: faComments },
+        ]
       : []),
     { to: '/settings', label: 'Settings', icon: faGear },
     ...(profile

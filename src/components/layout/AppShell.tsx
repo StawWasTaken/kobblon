@@ -5,6 +5,7 @@ import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { PhoneBar } from './PhoneBar'
 import { NoticeBar } from './NoticeBar'
+import { SiteFooter } from './SiteFooter'
 import { ChatDock } from '@/components/chat/ChatDock'
 import { FriendRequestWatcher } from '@/components/social/FriendRequestToast'
 import { GuestNudge } from '@/components/auth/GuestNudge'
@@ -90,6 +91,14 @@ export function AppShell() {
               */}
             {locked ? <Locked /> : <Outlet />}
           </AdsProvider>
+
+          {/*
+            * Inside `main` rather than under it, so it sits inside the rail's
+            * offset and the phone bar's clearance without knowing either
+            * number. A foot that has to be told the sidebar is 14rem wide is
+            * a foot that goes wrong the next time the sidebar changes.
+            */}
+          <SiteFooter compact className="mt-12" />
         </main>
 
         <PhoneBar />

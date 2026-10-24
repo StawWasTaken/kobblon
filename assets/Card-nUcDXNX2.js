@@ -1,0 +1,1 @@
+import{Xr as e,Zr as t}from"./Input-kaIPwoSa.js";var n=t();function r({className:t,...r}){return(0,n.jsx)(`div`,{className:e(`rounded-2xl border border-ink-line bg-ink-card shadow-card`,t),...r})}export{r as t};

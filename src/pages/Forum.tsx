@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
@@ -18,6 +18,7 @@ import {
 import { TopicRow } from '@/components/forum/TopicRow'
 import { Composer } from '@/components/forum/Composer'
 import { PostMenu } from '@/components/forum/PostMenu'
+import { Answered, Later, ReplyingTo } from '@/components/forum/Thread'
 import { ReadingRail, RelatedTopics, SignedOutNote } from '@/components/forum/Reading'
 import {
   Attachments, Byline, Flags, Helpful, PostBody, StatusPill, STATUS_WORDS,
@@ -938,6 +939,28 @@ export function ForumTopicPage() {
 
   const [topic, setTopic] = useState<ForumTopic | null>(null)
   const [replies, setReplies] = useState<ForumReply[]>([])
+
+  /*
+   * Who answered whom, worked out once per load of the list rather than
+   * per reply: the chip on a post needs the post it answers, and the line
+   * under it needs the posts that answer it, which is the same walk twice
+   * if each box does it for itself. Twenty replies doing that is four
+   * hundred passes over the list on every render.
+   */
+  const byId = useMemo(
+    () => new Map(replies.map((one) => [one.id, one])),
+    [replies],
+  )
+  const kids = useMemo(() => {
+    const out = new Map<number, ForumReply[]>()
+    for (const one of replies) {
+      if (!one.reply_to || one.is_removed) continue
+      const had = out.get(one.reply_to)
+      if (had) had.push(one)
+      else out.set(one.reply_to, [one])
+    }
+    return out
+  }, [replies])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [answering, setAnswering] = useState<ForumReply | null>(null)
@@ -1325,10 +1348,14 @@ export function ForumTopicPage() {
         </p>
 
         <ul className="mt-5 space-y-3">
-          {replies.map((reply) => (
-            <li key={reply.id}>
+          {replies.map((reply, at) => (
+            <Fragment key={reply.id}>
+              {at > 0 && <Later from={replies[at - 1].created_at} to={reply.created_at} />}
+            <li>
               <Reply
                 reply={reply}
+                parent={reply.reply_to ? byId.get(reply.reply_to) ?? null : null}
+                kids={kids.get(reply.id) ?? []}
                 canMark={(mine || staff) && !reply.is_answer}
                 canUnmark={(mine || staff) && reply.is_answer}
                 mine={reply.author_id === profile?.id}
@@ -1351,6 +1378,7 @@ export function ForumTopicPage() {
                 })}
               />
             </li>
+            </Fragment>
           ))}
         </ul>
 
@@ -1451,10 +1479,14 @@ function postLink(topic: number, post?: number) {
 }
 
 function Reply({
-  reply, canMark, canUnmark, mine, op, staff, signedIn, link, editing, saving,
+  reply, parent, kids, canMark, canUnmark, mine, op, staff, signedIn, link, editing, saving,
   onLike, onAnswer, onRemove, onReply, onQuote, onEdit, onSave, onStopEditing, onFlag,
 }: {
   reply: ForumReply
+  /** The post this one answers, when it is still in the list. */
+  parent: ForumReply | null
+  /** The posts that answer this one. */
+  kids: ForumReply[]
   canMark: boolean
   canUnmark: boolean
   mine: boolean
@@ -1516,7 +1548,9 @@ function Reply({
       </div>
 
       {reply.reply_to_name && (
-        <p className="mt-3 text-xs font-bold text-white/30">Replying to {reply.reply_to_name}</p>
+        <div className="mt-3">
+          <ReplyingTo parent={parent} name={reply.reply_to_name} />
+        </div>
       )}
 
       <div className="mt-3">
@@ -1557,6 +1591,8 @@ function Reply({
           </Button>
         )}
       </div>
+
+      <Answered kids={kids} />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   faCompass, faChevronLeft, faChevronRight, faEye,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
+import { TopTopics } from '@/components/forum/TopTopics'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/States'
@@ -329,6 +330,11 @@ export default function Home() {
           ))}
         </Row>
       )}
+
+      {/* The forum, on the page somebody lands on. A platform this size has
+          one conversation going at a time and the front door should say
+          what it is. */}
+      <TopTopics className="mt-10" />
     </Page>
   )
 }

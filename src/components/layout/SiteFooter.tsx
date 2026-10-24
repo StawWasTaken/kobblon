@@ -112,7 +112,17 @@ function Column({ heading, links }: {
   )
 }
 
-export function SiteFooter({ className }: { className?: string }) {
+/**
+ * `compact` is the signed-in pages' version.
+ *
+ * Staw asked for a foot on those pages too, and asked whether it should be
+ * this one or a second one. This one: the links are the same links, and a
+ * second foot is a second place for a page that moved to keep pointing at
+ * where it used to be. What changes is the room it takes - an At Kobblon
+ * page ends at its footer, while a signed-in page is somewhere you are
+ * working, so the foot there is a close rather than a chapter of its own.
+ */
+export function SiteFooter({ className, compact }: { className?: string; compact?: boolean }) {
   const year = new Date().getFullYear()
 
   return (
@@ -124,8 +134,11 @@ export function SiteFooter({ className }: { className?: string }) {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-bright/50 to-transparent"
       />
 
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-8">
-        <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className={cn('mx-auto max-w-6xl px-4 sm:px-8', compact ? 'py-10' : 'py-16')}>
+        <div className={cn(
+          'grid gap-x-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]',
+          compact ? 'gap-y-8' : 'gap-y-12',
+        )}>
           <div>
             {/* The wordmark as type rather than as a picture, with the line
                 under it. It stays sharp at any size and takes the theme

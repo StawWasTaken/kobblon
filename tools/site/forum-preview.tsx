@@ -26,12 +26,13 @@ import { Button } from '@/components/ui/Button'
 import { STATUS_WORDS } from '@/components/forum/Pieces'
 import { Lightbox } from '@/components/forum/Lightbox'
 import { Marked, snippetOf } from '@/components/forum/Marked'
+import { Answered, Later, ReplyingTo } from '@/components/forum/Thread'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { Glyph } from '@/components/brand/Glyph'
 import { faCheck, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 import { useState } from 'react'
-import type { ForumAuthor, ForumRelated } from '@/types/db'
+import type { ForumAuthor, ForumRelated, ForumReply } from '@/types/db'
 import '@/index.css'
 
 const op: ForumAuthor = {
@@ -209,8 +210,60 @@ function Page() {
         <ReadingRail of={thread} started={when} last={when} count={14} />
         </div>
       </Row>
+
+      <Row title="A reply in a conversation: the chip, the quoted parent, and who answered it">
+        <ul className="max-w-2xl space-y-3">
+          <li id="post-1" className="rounded-2xl border border-white/10 bg-ink-card/40 p-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1"><Byline person={op} when={when} /></div>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-white/80">
+              Could you add Intel Mac support at some point?
+            </p>
+            <Answered kids={[kid]} />
+          </li>
+
+          <Later from={new Date(Date.now() - 11 * 86_400_000).toISOString()} to={when} />
+
+          <li id="post-2" className="rounded-2xl border border-white/10 bg-ink-card/40 p-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1"><Byline person={staff} when={when} /></div>
+            </div>
+            <div className="mt-3"><ReplyingTo parent={parent} name={parent.author_name} /></div>
+            <p className="mt-3 text-sm leading-relaxed text-white/80">
+              Working on the Linux port first, then I will have a look.
+            </p>
+          </li>
+
+          <li className="rounded-2xl border border-white/10 bg-ink-card/40 p-5">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1"><Byline person={nameless} when={when} /></div>
+            </div>
+            <div className="mt-3"><ReplyingTo parent={null} name="Somebody" /></div>
+            <p className="mt-3 text-sm leading-relaxed text-white/80">
+              The post this answers was taken down, so the chip is only a name.
+            </p>
+          </li>
+        </ul>
+      </Row>
+
+      <Row title="The foot of a signed-in page">
+        <SiteFooter compact />
+      </Row>
     </div>
   )
+}
+
+const kid: ForumReply = {
+  ...staff, id: 2, topic_id: 1, body: 'Working on the Linux port first, then I will have a look.',
+  images: [], reply_to: 1, reply_to_name: 'Pixelhead', is_removed: false,
+  like_count: 1, created_at: when, edited_at: null, is_answer: false, liked: false,
+}
+
+const parent: ForumReply = {
+  ...op, id: 1, topic_id: 1, body: 'Could you add Intel Mac support at some point? It would save a lot of people a lot of time, and the thread above suggests the build is most of the way there already.',
+  images: [], reply_to: null, reply_to_name: null, is_removed: false,
+  like_count: 3, created_at: when, edited_at: null, is_answer: false, liked: false,
 }
 
 /*
