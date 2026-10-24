@@ -36,6 +36,7 @@ await p.waitForTimeout(200)
 await shot(at('search box'), 'search')
 await shot(at('Older and newer'), 'pager')
 await shot(at('looks after this board'), 'minders')
+await shot(at('searched words picked out'), 'marked')
 await shot(at('quote landing'), 'quote')
 
 /* Quote twice, with something typed in between, and look at the box. */

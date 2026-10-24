@@ -5919,6 +5919,28 @@ export async function forumSearch(input: {
   })) as ForumTopic[]) ?? []
 }
 
+/** How many topics a search finds, for the pager's page count. */
+export async function forumSearchCount(
+  terms: string, category?: string | null,
+): Promise<number> {
+  const want = terms.trim()
+  if (!want) return 0
+  return (unwrap(await supabase.rpc('forum_search_count', {
+    in_terms: want, in_category: category ?? null,
+  })) as number) ?? 0
+}
+
+/** How many topics a board holds, under the same filter the list uses. */
+export async function forumTopicsCount(input: {
+  category?: string | null
+  unanswered?: boolean
+} = {}): Promise<number> {
+  return (unwrap(await supabase.rpc('forum_topics_count', {
+    in_category: input.category ?? null,
+    in_unanswered: input.unanswered ?? false,
+  })) as number) ?? 0
+}
+
 /**
  * Which boards this account looks after, if any.
  *

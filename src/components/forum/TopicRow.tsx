@@ -4,6 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { faComment, faEye, faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 import { NameMarks } from '@/components/brand/Verified'
 import { StatusPill, Flags } from '@/components/forum/Pieces'
+import { Marked, snippetOf } from '@/components/forum/Marked'
 import { formatCount, forumViews, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { ForumTopic } from '@/types/db'
@@ -22,12 +23,28 @@ import type { ForumTopic } from '@/types/db'
  * row people click and nothing happens.
  */
 export function TopicRow({
-  topic, showCategory,
+  topic, showCategory, found,
 }: {
   topic: ForumTopic
   /** On a mixed list - the front page - where it came from is worth saying. */
   showCategory?: boolean
+  /**
+   * What was searched for, on a page of results. The words are picked out
+   * in the title, and the line of the post they were found in is shown
+   * under it - without it a result is a title and a date, which is the
+   * thing somebody has to click to find out whether it was what they
+   * wanted.
+   */
+  found?: string
 }) {
+  /*
+   * Worked out here rather than inside the markup: it reads the body
+   * twice - once to find a match and once to cut around it - and doing
+   * that inside a branch of JSX is doing it on every render of a list of
+   * twenty-five.
+   */
+  const snippet = found ? snippetOf(topic.body ?? '', found) : null
+
   const author = {
     is_verified: topic.author_is_verified,
     is_admin: topic.author_is_admin,
@@ -54,11 +71,17 @@ export function TopicRow({
         <span className="min-w-0">
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="min-w-0 truncate font-display text-[15px] font-extrabold text-white transition-colors group-hover:text-brand-bright sm:text-base">
-              {topic.title}
+              {found ? <Marked text={topic.title} terms={found} /> : topic.title}
             </span>
             <Flags pinned={topic.is_pinned} locked={topic.is_locked} />
             <StatusPill status={topic.status} />
           </span>
+
+          {!!found && !!snippet && (
+            <span className="mt-1.5 block line-clamp-2 text-[13px] leading-relaxed text-white/45">
+              <Marked text={snippet} terms={found} />
+            </span>
+          )}
 
           <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/40">
             <span className="inline-flex items-center gap-1 font-bold text-white/55">

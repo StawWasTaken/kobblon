@@ -24,7 +24,7 @@ import {
 } from '@/components/forum/Pieces'
 import {
   forumBoards, forumCreateTopic, forumEdit, forumLike, forumMarkAnswer, forumRelated,
-  forumBoardStaff, forumBoardsIMind, forumRemove, forumReplies, forumReply, forumSearch, forumSeen,
+  forumBoardStaff, forumBoardsIMind, forumRemove, forumSearchCount, forumTopicsCount, forumReplies, forumReply, forumSearch, forumSeen,
   forumSetFlags, forumSetStatus, forumTopic as getTopic, forumTopics,
 } from '@/lib/api'
 import { formatCount, forumViews, timeAgo } from '@/lib/format'
@@ -374,11 +374,13 @@ function Shelf({ title, icon, topics, loading, note }: {
 }
 
 /** The list of topics, with the column heads a board wants over it. */
-function TopicTable({ topics, loading, showCategory, empty }: {
+function TopicTable({ topics, loading, showCategory, empty, found }: {
   topics: ForumTopic[]
   loading: boolean
   showCategory?: boolean
   empty?: { title: string; body: string; action?: React.ReactNode }
+  /** What was searched for, when this is a page of results. */
+  found?: string
 }) {
   if (loading) {
     return (
@@ -413,7 +415,7 @@ function TopicTable({ topics, loading, showCategory, empty }: {
       </div>
       <ul>
         {topics.map((topic) => (
-          <TopicRow key={topic.id} topic={topic} showCategory={showCategory} />
+          <TopicRow key={topic.id} topic={topic} showCategory={showCategory} found={found} />
         ))}
       </ul>
     </div>
@@ -426,22 +428,36 @@ function TopicTable({ topics, loading, showCategory, empty }: {
 const PER_PAGE = 25
 
 /**
- * Older, newer.
+ * Older, newer, and which page of how many.
  *
- * Numbered pages would be better and are not possible: nothing counts how
- * many topics a board has, and asking for a count on every board view is a
- * second full scan to draw a number nobody clicks. So it asks for one more
- * row than it shows, and the presence of that row is what "there is more"
- * means. Said out loud because "why is there no page 7" is a fair question
- * and the answer is a count, which is a migration, not a component.
+ * It asks for one row more than it shows, and that row's existence is what
+ * "there is more" means - the count is a separate question and a separate
+ * round trip, so the buttons are right even on a page that has not been
+ * counted yet rather than waiting for it.
+ *
+ * The count itself is 0290's `forum_topics_count` and `forum_search_count`.
+ * It is still not a row of numbered page buttons: twenty-six pages of
+ * buttons is a worse thing to put under a board than two words, and
+ * nobody has ever wanted page nineteen of a forum specifically.
  */
-function Pager({ page, more, onGo }: {
+function Pager({ page, more, howMany, onGo }: {
   page: number
   /** Whether a further page exists, which is one row past the end. */
   more: boolean
+  /**
+   * How many there are in all, when something counted them. 0290 added the
+   * two functions that do; until they are applied this is undefined and
+   * the pager says "Page 3" rather than "Page 3 of 9", which is what it
+   * said before and is still true.
+   */
+  howMany?: number
   onGo: (page: number) => void
 }) {
   if (page === 0 && !more) return null
+
+  const pages = typeof howMany === 'number' && howMany > 0
+    ? Math.ceil(howMany / PER_PAGE)
+    : null
 
   return (
     <nav className="mt-5 flex items-center justify-between gap-3">
@@ -455,7 +471,7 @@ function Pager({ page, more, onGo }: {
         Newer
       </Button>
       <span className="text-xs font-extrabold tabular-nums text-white/35">
-        Page {page + 1}
+        Page {page + 1}{pages ? ` of ${pages}` : ''}
       </span>
       <Button
         size="sm"
@@ -491,6 +507,10 @@ export function ForumSearch() {
   const page = pageOf(params)
 
   const boards = useAsync(forumBoards, [])
+  const howMany = useAsync(
+    () => forumSearchCount(terms, inBoard),
+    [terms, inBoard],
+  )
   const found = useAsync(
     () => forumSearch({
       terms,
@@ -530,8 +550,8 @@ export function ForumSearch() {
           <p className="mt-2 text-sm text-white/45">
             {found.loading
               ? 'Looking.'
-              : `${shown.length}${rows.length > PER_PAGE ? '+' : ''} ${
-                shown.length === 1 ? 'topic' : 'topics'
+              : `${formatCount(howMany.data ?? shown.length)} ${
+                (howMany.data ?? shown.length) === 1 ? 'topic' : 'topics'
               }${board ? ` in ${board.name}` : ''}.`}
           </p>
         )}
@@ -556,6 +576,7 @@ export function ForumSearch() {
             topics={shown}
             loading={found.loading}
             showCategory={!inBoard}
+            found={terms}
             empty={{
               title: 'Nothing matched that.',
               body: 'Search matches whole words rather than parts of them, so a shorter word often finds more. Try one of the words you would expect in the title.',
@@ -565,6 +586,7 @@ export function ForumSearch() {
           <Pager
             page={page}
             more={rows.length > PER_PAGE}
+            howMany={howMany.data ?? undefined}
             onGo={(next) => {
               if (next === 0) params.delete('page')
               else params.set('page', String(next + 1))
@@ -579,6 +601,143 @@ export function ForumSearch() {
             title="What are you looking for?"
             body="Type it into the box. It reads titles and the first post of every topic, and the title counts for more."
           />
+        </div>
+      )}
+    </ForumShell>
+  )
+}
+
+/* -------------------------------------------------- the boards you mind */
+
+/**
+ * What a board's own staff are responsible for.
+ *
+ * 0289 hands somebody a board and the powers on it. Until this page, the
+ * only way to see what you had been given was to open a topic there and
+ * notice the buttons - so this says it plainly, and says just as plainly
+ * what it is not, because "staff on the forum" is a thing somebody could
+ * reasonably believe it made them.
+ *
+ * Signed out, or in charge of nothing, it says so rather than showing an
+ * empty frame.
+ */
+export function ForumMine() {
+  const { profile } = useAuth()
+  const boards = useAsync(forumBoards, [])
+  const mine = useAsync(
+    () => (profile ? forumBoardsIMind() : Promise.resolve([])),
+    [profile?.id],
+  )
+
+  useAtTitle('Boards you mind')
+
+  const rows = mine.data ?? []
+  const full = (slug: string) => (boards.data ?? []).find((one) => one.slug === slug)
+
+  return (
+    <ForumShell boards={boards.data ?? []} loading={boards.loading}>
+      <header className="border-b border-white/[0.07] pb-5">
+        <nav className="flex items-center gap-2 text-xs font-bold text-white/35">
+          <Link to="/forum" className="transition-colors hover:text-brand-bright">Forum</Link>
+          <span aria-hidden="true">/</span>
+          <span className="text-white/60">Boards you mind</span>
+        </nav>
+        <h1 className="mt-3 font-display text-xl font-extrabold tracking-tight sm:text-2xl">
+          Boards you mind
+        </h1>
+        <p className="mt-1 text-sm text-white/45">
+          A board of your own to look after, handed to you by a Kobblon admin.
+        </p>
+      </header>
+
+      {mine.loading ? (
+        <div className="space-y-px pt-5">
+          {[0, 1].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+        </div>
+      ) : !rows.length ? (
+        <div className="mt-5 rounded-2xl border border-white/10 py-14">
+          <EmptyState
+            title={profile ? 'You do not look after a board.' : 'Log in to see this.'}
+            body={profile
+              ? 'A Kobblon admin puts somebody in charge of a board. There is no way to ask for one here, and nothing you can do on the forum earns it.'
+              : 'This page lists the boards you look after, if you look after any.'}
+            action={profile
+              ? <Button to="/forum" variant="subtle">Back to the forum</Button>
+              : <Button to="/login" variant="yes">Log in</Button>}
+          />
+        </div>
+      ) : (
+        <div className="pt-5">
+          <ul className="space-y-3">
+            {rows.map((one) => {
+              const board = full(one.category)
+              return (
+                <li key={one.category}>
+                  <Link
+                    to={`/forum/c/${one.category}`}
+                    className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-ink-card/40 p-4 transition-colors hover:border-white/20"
+                  >
+                    <span className={cn(
+                      'h-12 w-1.5 shrink-0 rounded-full',
+                      BOARD_COLOUR[one.category] ?? 'bg-white/30',
+                    )} />
+                    <BoardMark slug={one.category} className="h-10 w-10 text-lg" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-display text-base font-extrabold text-white transition-colors group-hover:text-brand-bright">
+                        {one.name}
+                      </span>
+                      <span className="mt-0.5 block text-sm text-white/45">
+                        {board?.blurb ?? 'A board you look after.'}
+                      </span>
+                    </span>
+                    {!!board && (
+                      <span className="hidden shrink-0 text-xs font-extrabold tabular-nums text-white/35 sm:block">
+                        {formatCount(board.topic_count)} topics
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+
+          {/*
+           * What it is, and what it is not, in the same card. The second
+           * half is the important half: somebody who thinks a board key is
+           * a staff rank will try to use it as one and be refused, and
+           * being refused by a site is how people learn to distrust it.
+           */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <section className="rounded-2xl border border-space/30 bg-space/[0.06] p-5">
+              <h2 className="flex items-center gap-2 font-display text-sm font-extrabold text-space-bright">
+                <Glyph icon={faCheck} />
+                On {rows.length === 1 ? 'that board' : 'those boards'} you can
+              </h2>
+              <ul className="mt-3 space-y-1.5 text-sm text-white/60">
+                <li>Pin a topic, and close one to replies.</li>
+                <li>Mark one solved, looked at, approved or declined.</li>
+                <li>Mark the reply that answered it.</li>
+                <li>Take down a topic or a reply that should not be there.</li>
+                <li>Reply in a topic you have closed.</li>
+              </ul>
+            </section>
+
+            <section className="rounded-2xl border border-white/10 bg-ink-card/40 p-5">
+              <h2 className="flex items-center gap-2 font-display text-sm font-extrabold text-white/70">
+                <Glyph icon={faLock} />
+                What this is not
+              </h2>
+              <ul className="mt-3 space-y-1.5 text-sm text-white/45">
+                <li>It is not Kobblon staff. It is one board, and nothing outside it.</li>
+                <li>
+                  It gives you nothing over anybody&apos;s account: no warnings, no
+                  suspensions, nothing on their standing.
+                </li>
+                <li>You cannot edit what somebody wrote. Nobody can; only they can.</li>
+                <li>You cannot put anybody else in charge of a board.</li>
+              </ul>
+            </section>
+          </div>
         </div>
       )}
     </ForumShell>
@@ -610,6 +769,10 @@ export function ForumCategory() {
   )
   const topics = { data: (rows.data ?? []).slice(0, PER_PAGE), loading: rows.loading }
   const more = (rows.data ?? []).length > PER_PAGE
+  const howMany = useAsync(
+    () => forumTopicsCount({ category: slug, unanswered }),
+    [slug, unanswered],
+  )
   /* Who looks after this board, which 0289 makes a public fact. */
   const minders = useAsync(() => forumBoardStaff(slug), [slug])
   const board = (boards.data ?? []).find((one) => one.slug === slug)
@@ -751,6 +914,7 @@ export function ForumCategory() {
       <Pager
         page={page}
         more={more}
+        howMany={howMany.data ?? undefined}
         onGo={(next) => {
           if (next === 0) params.delete('page')
           else params.set('page', String(next + 1))
@@ -929,10 +1093,23 @@ export function ForumTopicPage() {
    * the post inside a quote of the post is a loop a reader can follow by
    * accident. The post itself is right there above it.
    */
-  const quote = (who: string, body: string) => {
-    const lines = body.trim().split('\n')
-    const kept = lines.slice(0, 4)
-    if (lines.length > 4) kept.push('…')
+  const quote = (who: string, body: string, within: string) => {
+    /*
+     * What they have highlighted inside that post, if anything. Quoting
+     * one sentence out of a long answer is most of what quoting is for,
+     * and a Quote button that always takes the whole post makes somebody
+     * paste it and delete the rest by hand.
+     *
+     * Asked at the moment of pressing rather than watched: a selection is
+     * gone the instant something else is clicked, and the menu this is
+     * pressed in does not take it - the menu's own button is not a text
+     * node, so the highlight survives opening it.
+     */
+    const picked = selectionIn(within)
+    const most = picked ? 12 : 4
+    const lines = (picked ?? body).trim().split('\n')
+    const kept = lines.slice(0, most)
+    if (lines.length > most) kept.push('…')
     const said = kept.map((line) => `> ${line}`.trimEnd()).join('\n')
     setQuoted((had) => ({
       text: `**${who}** said:\n${said}\n`,
@@ -1052,7 +1229,7 @@ export function ForumTopicPage() {
               canRemove={mine || staff}
               canReport={!!profile && !mine}
               canQuote={!!profile && (!topic.is_locked || staff)}
-              onQuote={() => quote(topic.author_name, topic.body)}
+              onQuote={() => quote(topic.author_name, topic.body, 'post-topic')}
               onEdit={() => setEditing({ what: 'topic', id: topic.id })}
               onRemove={() => void take('topic', topic.id)}
               onReport={() => setFlagging({
@@ -1064,7 +1241,7 @@ export function ForumTopicPage() {
       </header>
 
       <div ref={thread}>
-      <article className="border-b border-white/[0.07] py-6">
+      <article id="post-topic" className="border-b border-white/[0.07] py-6">
         {editing?.what === 'topic' ? (
           <Composer
             key={`edit-topic-${topic.id}`}
@@ -1165,7 +1342,7 @@ export function ForumTopicPage() {
                 onAnswer={() => forumMarkAnswer(reply.id).then(load)}
                 onRemove={() => void take('post', reply.id)}
                 onReply={() => setAnswering(reply)}
-                onQuote={() => quote(reply.author_name, reply.body)}
+                onQuote={() => quote(reply.author_name, reply.body, `post-${reply.id}`)}
                 onEdit={() => setEditing({ what: 'post', id: reply.id })}
                 onSave={save}
                 onStopEditing={() => setEditing(null)}
@@ -1234,6 +1411,28 @@ export function ForumTopicPage() {
       </div>
     </ForumShell>
   )
+}
+
+/**
+ * What is highlighted inside one post, or null.
+ *
+ * Both ends of the selection have to be inside it. A selection that starts
+ * in one reply and ends in another is not a quote of either, and taking
+ * `toString()` of it would quote across a name, a date and a button.
+ */
+function selectionIn(id: string): string | null {
+  if (typeof window === 'undefined') return null
+  const picked = window.getSelection()
+  if (!picked || picked.isCollapsed) return null
+
+  const said = picked.toString().trim()
+  if (!said) return null
+
+  const post = document.getElementById(id)
+  if (!post) return null
+  if (!post.contains(picked.anchorNode) || !post.contains(picked.focusNode)) return null
+
+  return said
 }
 
 /**

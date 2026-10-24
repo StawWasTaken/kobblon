@@ -341,9 +341,16 @@ export type Notification = {
     | 'best_friend_request' | 'best_friend_accepted'
     | 'space_like' | 'space_visit' | 'message'
     | 'system' | 'event_started' | 'world_updated' | 'content_removed'
+    | 'forum_reply' | 'forum_staff'
   actor_id: string | null
   space_id: string | null
   world_id?: string | null
+  /**
+   * Where this one leads, when it leads somewhere the other columns cannot
+   * say. 0276 added it for forum replies, which are not a friend, a World
+   * or a Space, and it is null on everything older.
+   */
+  link?: string | null
   body: string | null
   is_read: boolean
   created_at: string

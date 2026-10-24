@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay, faGavel,
+  faShieldHalved,
   faCheckDouble, faBell, faUserGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -43,6 +44,26 @@ const marks: Record<Notification['kind'], { icon: IconDefinition; tint: string; 
   event_started: { icon: faCalendarDay, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
   world_updated: { icon: worldIcon, tint: 'bg-space text-white', ring: 'ring-space/40' },
   content_removed: { icon: faGavel, tint: 'bg-danger text-white', ring: 'ring-danger/40' },
+  forum_reply: { icon: faComment, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
+  forum_staff: { icon: faShieldHalved, tint: 'bg-space text-white', ring: 'ring-space/40' },
+}
+
+/*
+ * The mark for a kind, and the house one for a kind this build has never
+ * heard of.
+ *
+ * It used to be `marks[n.kind]` straight into `mark.icon`, and a kind the
+ * table has and this map does not reads as `undefined.icon` - which is not
+ * a missing icon, it is the whole panel refusing to render. `forum_reply`
+ * was exactly that from the day the forum shipped: anybody who had been
+ * replied to on the forum opened the bell and got nothing at all.
+ *
+ * So there is a fallback now, and the shape of the bug is worth keeping
+ * written down: a migration can add a kind without this file knowing, and
+ * a lookup that assumes it knows them all turns that into a blank panel.
+ */
+function markFor(kind: string) {
+  return marks[kind as Notification['kind']] ?? marks.system
 }
 
 /** Said as a sentence, with whoever did it in bold at the front of it. */
@@ -58,6 +79,13 @@ function words(n: Notification) {
     case 'message': return { who, rest: 'sent you a message' }
     // Kobblon did this, and the body already says which thing and why.
     case 'content_removed': return { who: null, rest: n.body ?? 'Something was taken down' }
+    /*
+     * Both of these are written as the end of a sentence that starts with
+     * the name - `replied to "…"`, `put you in charge of …` - so the body
+     * is the whole of the rest and nothing is added to it here.
+     */
+    case 'forum_reply': return { who, rest: n.body ?? 'replied to you on the forum' }
+    case 'forum_staff': return { who, rest: n.body ?? 'changed what you look after on the forum' }
     case 'world_updated': return {
       who,
       rest: n.body?.trim()
@@ -69,6 +97,12 @@ function words(n: Notification) {
 }
 
 function linkFor(n: Notification) {
+  /*
+   * The address on the row wins when there is one. It is how a forum
+   * notification knows which topic it is about, and asking the kind first
+   * would mean a new kind needing a line here before it leads anywhere.
+   */
+  if (n.link) return n.link
   if (n.kind === 'friend_request') return '/friends?list=requests'
   if (n.kind === 'friend_accepted') return '/friends'
   /*
@@ -98,7 +132,7 @@ function whenGroup(iso: string) {
 }
 
 function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
-  const mark = marks[n.kind]
+  const mark = markFor(n.kind)
   const said = words(n)
   /*
    * The house, for the ones nobody sent. Asked once for the whole site and

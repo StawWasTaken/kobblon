@@ -1,10 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { useAsync } from '@/hooks/useAsync'
+import { useMaybeAuth } from '@/hooks/useAuth'
+import { forumBoardsIMind } from '@/lib/api'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faCircleQuestion, faHammer, faComment, faLock, faPlus, faLayerGroup,
-  faMagnifyingGlass, faXmark,
+  faMagnifyingGlass, faXmark, faShieldHalved,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutNav } from '@/components/layout/AboutNav'
@@ -219,6 +222,7 @@ export function ForumShell({
               <RailLink to="/forum" here={pathname === '/forum'} icon={faLayerGroup}>
                 All topics
               </RailLink>
+              <MineLink here={pathname === '/forum/mine'} />
             </nav>
 
             <p className="mb-2 mt-7 px-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
@@ -279,6 +283,35 @@ function RailLink({
       <Glyph icon={icon} className={cn('text-sm', here ? 'text-brand-bright' : 'text-white/30')} />
       {children}
     </Link>
+  )
+}
+
+/**
+ * The rail's link to the boards you look after, drawn only when you look
+ * after one.
+ *
+ * It asks every time the shell mounts rather than once at sign-in: being
+ * put in charge of a board happens while somebody is signed in, and a
+ * value read at sign-in is the trap this project keeps falling into.
+ *
+ * `useMaybeAuth` rather than `useAuth`, because this shell is mounted on
+ * pages anybody can read - signed out, `useAuth` throws and the whole
+ * forum goes blank rather than the one link not appearing.
+ */
+function MineLink({ here }: { here: boolean }) {
+  const auth = useMaybeAuth()
+  const profile = auth?.profile ?? null
+  const mine = useAsync(
+    () => (profile ? forumBoardsIMind() : Promise.resolve([])),
+    [profile?.id],
+  )
+
+  if (!(mine.data ?? []).length) return null
+
+  return (
+    <RailLink to="/forum/mine" here={here} icon={faShieldHalved}>
+      Boards you mind
+    </RailLink>
   )
 }
 

@@ -25,6 +25,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { STATUS_WORDS } from '@/components/forum/Pieces'
 import { Lightbox } from '@/components/forum/Lightbox'
+import { Marked, snippetOf } from '@/components/forum/Marked'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { Glyph } from '@/components/brand/Glyph'
 import { faCheck, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
@@ -128,6 +129,29 @@ function Page() {
           <Pager2 page={0} more />
           <Pager2 page={3} more />
           <Pager2 page={4} more={false} />
+        </div>
+      </Row>
+
+      <Row title="A result with the searched words picked out">
+        <div className="max-w-3xl space-y-3">
+          <p className="font-display text-base font-extrabold text-white">
+            <Marked text="How do I open a door on touch?" terms="door open" />
+          </p>
+          <p className="text-[13px] leading-relaxed text-white/45">
+            <Marked
+              text={snippetOf(
+                'I have been trying all evening. The door opens once and then never '
+                + 'again, and the output window says nothing at all about it. Opening '
+                + 'it by hand works.',
+                'door open',
+              ) ?? ''}
+              terms="door open"
+            />
+          </p>
+          <p className="text-[13px] text-white/30">
+            Nothing to mark, which is what a title-only match looks like:{' '}
+            <Marked text="A thread about something else entirely" terms="door open" />
+          </p>
         </div>
       </Row>
 
