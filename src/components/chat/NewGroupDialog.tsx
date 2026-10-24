@@ -15,10 +15,12 @@ const MAX = 5
 
 /** The panel the pencil opens: name it, pick up to five friends, create. */
 export function NewGroupDialog({
-  onClose, onCreated,
+  onClose, onCreated, full,
 }: {
   onClose: () => void
   onCreated: (conversationId: string) => void
+  /** Filling a phone's screen rather than sitting in a corner of a desktop. */
+  full?: boolean
 }) {
   const { profile } = useAuth()
   const [title, setTitle] = useState('')
@@ -55,7 +57,16 @@ export function NewGroupDialog({
   }
 
   return (
-    <section className="pointer-events-auto flex h-96 w-72 flex-col overflow-hidden rounded-t-xl border border-b-0 border-ink-line bg-ink-card shadow-pop">
+    /* Filling a phone's screen, or sitting in the corner of a desktop -
+       the same two shapes the roster and a conversation already take. */
+    <section
+      className={cn(
+        'pointer-events-auto flex flex-col overflow-hidden bg-ink-card',
+        full
+          ? 'h-full w-full'
+          : 'h-96 w-72 rounded-t-xl border border-b-0 border-ink-line shadow-pop',
+      )}
+    >
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-3">
         <Glyph icon={faUserGroup} className="text-white/40" />
         <h2 className="flex-1 text-sm font-extrabold">New Chat Group</h2>

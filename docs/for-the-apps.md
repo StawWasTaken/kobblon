@@ -13276,3 +13276,84 @@ decided for the whole product.
 Still not built, said as plainly as last round: the newsroom, the wiki, a
 World belonging to a Community, requests have no screen, and Round 133's
 five Launcher questions are still open.
+
+---
+
+## Round one hundred and seventy-eight
+
+Staw, of the four mobile reports from the forum: "those issues werent fixed
+at all because when using them it just says 'This page would not draw' same
+thing when you try using the three lines icon in the logged in pages".
+
+Which is a different bug from the four, and worth saying plainly: Round one
+hundred and seventy-six's fixes were real and are in the build, but on a
+phone the two things that open them - the chat and the drawer - were landing
+on the error screen instead. So the fixes were correct and unreachable.
+
+### Hidden is not absent
+
+`hidden lg:block` stops a thing being painted. It does not stop it being
+mounted, its effects running, or its channels being open.
+
+Two panels in this app are drawn twice for that reason, and on a phone both
+copies were live at once:
+
+* **The rail.** `AppSidebar` is fixed and `hidden` below `lg`; the drawer
+  draws the same `SidebarContent`. Pressing the burger put a second copy on
+  the page - two friend-request counts, two unread-post counts, and a second
+  subscription to `friendships:<id>` and `sidebar-mail:<id>`, topics the
+  first copy was already joined to.
+* **The chat.** The docked windows are `hidden md:flex` and the phone sheet
+  is `md:hidden`, and `openConversation` deliberately set both pieces of
+  state. So one conversation on a phone was two mounted `Window`s on
+  `dock:<id>`, each marking the same messages read.
+
+Counted in the harness, on a phone, before and after: the drawer went from
+two rails on the page to one, and opening a conversation went from two chat
+lists to one.
+
+`@/hooks/useWidth` is the fix - `useMedia`, with `useWide` and `useNarrow`
+over it. The breakpoint is a **value** now, so the branch that is not being
+used is not mounted at all. It is a live query with a listener, not a
+`matches` read once: turning the phone sideways has to change the answer,
+and the single line in `openConversation` that read the width at the moment
+of use was already an instance of the trap this project keeps falling into.
+It is gone; the width decides which tree exists, once, and `openConversation`
+now says only what was opened.
+
+**For the applications:** if a panel of yours is hidden by a class and it
+subscribes to anything, it is still subscribed. `useMedia` is in
+`@/hooks/useWidth` and mounts outside the website like the rest of `@/hooks`.
+
+### The pencil on the phone chat did nothing
+
+Same silent shape as the Chat button okayCooki3 reported, one layer down.
+The new-group panel is 288 by 384 and positioned for the bottom-right corner
+of a desktop, and the only place it was drawn was inside that corner's
+container - which a phone never paints. Pressing the pencil set the state
+and showed nothing, with no error.
+
+`NewGroupDialog` takes `full` now, the same way the roster and a conversation
+already did, and the phone sheet gives it a screen of its own.
+
+### The error screen says what went wrong
+
+This is the part that matters for the next report. "This page would not
+draw" was the same sentence for every cause, the stack went to the console,
+and a phone has no console - so a report of this screen was a report that
+something, somewhere, had gone wrong, which is why neither of the two above
+could be chased from the outside.
+
+There is a closed "What went wrong" under the two buttons now: the error's
+name and message, the address it happened at, and the first eight frames of
+the component stack, with a button that copies the lot. Closed by default,
+so the screen is still the apology it was.
+
+### For the applications
+
+Nothing changed in `@/engine`, `@/lib/kinds`, `design/preset.js` or any
+component you mount, and no migration this round. One new hook worth having:
+`useMedia`/`useWide`/`useNarrow` in `@/hooks/useWidth`.
+
+Still not built, same list: the newsroom, the wiki, a World belonging to a
+Community, requests have no screen, and Round 133's five Launcher questions.

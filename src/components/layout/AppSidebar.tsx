@@ -9,6 +9,7 @@ import { outNav, sideNav, topNav } from './nav'
 import { profileLink } from '@/lib/links'
 import { Button } from '@/components/ui/Button'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { useWide } from '@/hooks/useWidth'
 
 /** Pending friend requests waiting on an answer from this person. */
 export function useFriendRequestCount() {
@@ -222,9 +223,21 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppSidebar() {
+  /*
+   * Not mounted below `lg`, rather than mounted and hidden.
+   *
+   * `hidden lg:block` stopped it being painted on a phone and left it
+   * running: the drawer draws this same component, so pressing the burger
+   * put a second copy on the page, counting the same friend requests and
+   * joining a channel the first copy was already in. Two of everything
+   * behind one menu.
+   */
+  const wide = useWide()
+  if (!wide) return null
+
   return (
     <aside
-      className="fixed bottom-0 left-0 top-14 z-40 hidden w-56 lg:block"
+      className="fixed bottom-0 left-0 top-14 z-40 w-56 lg:block"
       aria-label="Sidebar"
     >
       <SidebarContent />

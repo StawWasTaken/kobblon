@@ -20,6 +20,7 @@ import { usePersonActions } from '@/components/social/personActions'
 import { TimeSeparator } from './TimeSeparator'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { useAuth } from '@/hooks/useAuth'
+import { useNarrow } from '@/hooks/useWidth'
 import {
   chatRoster, conversationName, deleteMessage, editMessage, ignorePerson, listMessages,
   markConversationRead, sendMessage, startConversation, unignorePerson,
@@ -779,14 +780,13 @@ export function ChatDock({ children }: { children: ReactNode }) {
    * to find. okayCooki3 reported it twice from two different pages, which
    * is what a silent bug looks like from outside.
    *
-   * The width is asked at the moment of use rather than held in state. A
-   * `matches` read once at mount is the trap this project keeps falling
-   * into - turn the phone sideways and the value that decides where the
-   * conversation opens is the one from before you turned it.
-   *
-   * Both are set either way. The dock windows are harmless while hidden,
-   * and it means rotating mid-conversation lands on the same thread rather
-   * than on nothing.
+   * Both are set, and the width is not asked here at all any more. It used
+   * to be read at this line to decide whether to open the sheet, which
+   * worked and left the hidden desktop window mounted beside it: one
+   * conversation, two live windows, both on the channel and both marking
+   * the same messages read. The width now decides which tree is *mounted*,
+   * once, below - so this says what was opened and nothing about where,
+   * and rotating mid-conversation still lands on the same thread.
    */
   /*
    * What the phone is showing: nothing, the list, or one conversation by
@@ -797,9 +797,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
 
   const openConversation = useCallback((id: string) => {
     setOpenIds((all) => (all.includes(id) ? all : [id, ...all].slice(0, MAX_OPEN)))
-    const narrow = typeof window !== 'undefined'
-      && window.matchMedia('(max-width: 767px)').matches
-    if (narrow) setPhone(id)
+    setPhone(id)
     load()
   }, [load])
 
@@ -807,7 +805,19 @@ export function ChatDock({ children }: { children: ReactNode }) {
 
   const openChat = useCallback(() => setPhone('list'), [])
 
-  const docked = !!profile && !profile.is_guest
+  /*
+   * Which of the two chats exists, rather than which one is painted.
+   *
+   * `hidden md:flex` on the windows and `md:hidden` on the sheet drew the
+   * right one and mounted both, so a phone carried the whole desktop dock
+   * behind the page: the roster list, and a Window per open conversation,
+   * each subscribed to `dock:<id>` alongside the one on screen. Mounting
+   * one of them is also why the sheet can be the only thing that answers
+   * for the phone - there is nothing hidden behind it to disagree with.
+   */
+  const narrow = useNarrow()
+  const signedIn = !!profile && !profile.is_guest
+  const docked = signedIn && !narrow
 
   const value = useMemo(
     () => ({ openConversation, quiet, openChat, chatOpen: !!phone, chatUnread: unread }),
@@ -819,7 +829,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
       {children}
 
       {docked && (
-        <div className="pointer-events-none fixed bottom-0 right-0 z-40 hidden items-end gap-2 px-6 md:flex">
+        <div className="pointer-events-none fixed bottom-0 right-0 z-40 flex items-end gap-2 px-6">
           {making && (
             <NewGroupDialog
               onClose={() => setMaking(false)}
@@ -856,8 +866,8 @@ export function ChatDock({ children }: { children: ReactNode }) {
       )}
 
       {/* ------------------------------------------------- chat, on a phone */}
-      {profile && !profile.is_guest && (
-        <div className="md:hidden">
+      {signedIn && narrow && (
+        <div>
           {/*
             * There is no floating button any more. The bottom bar has a
             * Chat slot, which is where Staw asked for it and where Roblox
@@ -865,6 +875,29 @@ export function ChatDock({ children }: { children: ReactNode }) {
             * bottom-right corner of every page, on People right on top of
             * somebody's Profile link.
             */}
+          {/*
+            * Naming a group, as a screen rather than as a corner panel.
+            *
+            * The pencil set `making`, and the only thing that drew it was
+            * inside the docked corner - a 288 by 384 box positioned for the
+            * bottom right of a desktop, inside a container a phone never
+            * paints. So the button did nothing there, which is the same
+            * silent shape as the Chat button okayCooki3 reported: state
+            * changed, nothing on screen, no error.
+            */}
+          {making && (
+            <div className="fixed inset-0 z-[65] flex flex-col bg-ink">
+              <NewGroupDialog
+                full
+                onClose={() => setMaking(false)}
+                onCreated={(id) => {
+                  setMaking(false)
+                  load().then(() => openConversation(id))
+                }}
+              />
+            </div>
+          )}
+
           {phone && (
             <div className="fixed inset-0 z-[60] flex flex-col bg-ink">
               <div className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line px-3">
