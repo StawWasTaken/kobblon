@@ -1,16 +1,19 @@
 import { faWindows, faApple, faLinux } from '@fortawesome/free-brands-svg-icons'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRight, faArrowDown } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
 import { Button } from '@/components/ui/Button'
 import { AboutShell } from '@/components/layout/AboutShell'
-import { Band } from '@/components/about/Band'
-import { Hero } from '@/components/about/Hero'
+import { Band, Lane } from '@/components/about/Band'
 import { Reveal } from '@/components/about/Reveal'
+import { ScrollIn } from '@/components/about/ScrollIn'
+import { Parallax } from '@/components/about/Parallax'
+import { Floaters } from '@/components/about/Floaters'
 import { Character } from '@/components/about/Figure'
 import { BandHead, Title } from '@/components/about/Type'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
+import { asset } from '@/lib/asset'
 
 /*
  * Where the Launcher comes from.
@@ -59,30 +62,62 @@ export default function Download() {
 
   return (
     <AboutShell
+      backdrop={
+        <Parallax strength={80} className="absolute inset-0">
+          <img
+            src={asset('/brand/landing-interior.png')}
+            alt=""
+            aria-hidden="true"
+            className="h-[115%] w-full object-cover object-center"
+          />
+        </Parallax>
+      }
       hero={
-        <Hero
-          eyebrow="The player"
-          title={<>Kobblon Launcher<span className="text-brand-bright">.</span><br />Being built.</>}
-          lead="Worlds run in the Launcher rather than in a browser tab. There is nothing to download today; the installers land on this page the day there are."
-          actions={
-            <>
+        <Lane className="flex min-h-[70vh] flex-col justify-center py-24 text-center">
+          <ScrollIn over={0.22}>
+            <h1 className="font-display text-[clamp(2.4rem,6.4vw,5rem)] font-extrabold leading-[0.95] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
+              Worlds run here,
+              <br />
+              <span className="text-brand-bright">not in a browser tab</span>.
+            </h1>
+          </ScrollIn>
+          <Reveal delay={200}>
+            <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/65">
+              The Kobblon Launcher is the part you play in. It is being built, and there is
+              nothing to download today; the installers land on this page the day there are.
+            </p>
+          </Reveal>
+          <Reveal delay={280}>
+            <div className="mt-9 flex flex-wrap justify-center gap-3">
               <Button to="/discover" variant="yes" size="lg">See what people are making</Button>
               <Button to="/signup" variant="subtle" size="lg">Make an account</Button>
-            </>
-          }
-          note="No release date yet, and none is being guessed at here."
-          art={
-            <Character
-              src="/brand/under_construction.png"
-              alt="A Kobblon character in a branded shirt and cap, holding a hammer"
-              imgClassName="max-w-[18rem]"
-            />
-          }
-        />
+            </div>
+          </Reveal>
+          <Reveal delay={340}>
+            <p className="mt-8 flex items-center justify-center gap-2.5 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/45">
+              No release date, and none guessed at here
+              <Glyph icon={faArrowDown} className="text-xs" />
+            </p>
+          </Reveal>
+        </Lane>
       }
     >
       {/* ------------------------------------------------------- platforms */}
-      <Band tone="raised" tight edge>
+      <Band
+        tone="raised"
+        tight
+        edge
+        decor={
+          /* Wrapped rather than given the classes directly: `Character` is
+             itself `relative`, and Tailwind emits `relative` after
+             `absolute`, so the two on one element leave it in the flow -
+             which put the builder in the middle of the band at full height
+             instead of standing in the gutter. */
+          <div className="pointer-events-none absolute bottom-0 right-[2%] hidden w-28 xl:block">
+            <Character src="/brand/under_construction.png" alt="" imgClassName="w-full" />
+          </div>
+        }
+      >
         <Reveal>
           <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/40">
             Planned for
@@ -125,19 +160,29 @@ export default function Download() {
       </Band>
 
       {/* ------------------------------------------------------------- the ask */}
-      <Band tone="brand">
-        <Reveal className="text-center">
-          <Title className="mx-auto max-w-3xl">The website works today</Title>
-          <p className="mx-auto mt-5 max-w-xl leading-relaxed text-white/60">
-            Everything but playing a World is here already: building, selling, Communities, people.
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Button to="/signup" variant="yes" size="lg">Make an account</Button>
-            <Button to="/about" variant="subtle" size="lg" iconRight={faArrowRight}>
-              What Kobblon is
-            </Button>
-          </div>
-        </Reveal>
+      {/*
+        * A band and not a coloured banner across the foot. Staw: "i dont want
+        * that footer thing, only the normal footer" - so what was a brand
+        * block is a section that happens to be last.
+        */}
+      <Band tone="raised" edge decor={<Floaters />}>
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_auto]">
+          <Reveal>
+            <Title className="max-w-2xl">The website already works.</Title>
+            <p className="mt-5 max-w-xl leading-relaxed text-white/60">
+              Everything but walking into a World is here: building, selling, Communities,
+              people. The Launcher is the last piece, not the first.
+            </p>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="flex flex-wrap gap-3">
+              <Button to="/signup" variant="yes" size="lg">Make an account</Button>
+              <Button to="/about" variant="subtle" size="lg" iconRight={faArrowRight}>
+                What Kobblon is
+              </Button>
+            </div>
+          </Reveal>
+        </div>
       </Band>
     </AboutShell>
   )

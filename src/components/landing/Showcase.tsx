@@ -19,6 +19,7 @@ import { faPlay, faEnvelopeOpenText } from '@fortawesome/free-solid-svg-icons'
 import { SignupForm } from '@/components/auth/SignupForm'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
+import { Parallax } from '@/components/about/Parallax'
 import { asset } from '@/lib/asset'
 
 /** The World in the picture, and who made it. */
@@ -50,11 +51,16 @@ export function Showcase() {
 
   return (
     <section className="relative isolate overflow-hidden">
-      <img
-        src={asset(SHOWING.picture)}
-        alt={`${SHOWING.world}, built on Kobblon`}
-        className="absolute inset-0 -z-10 h-full w-full object-cover object-[50%_35%]"
-      />
+      {/* Drifting, the way every picture on the At Kobblon pages does. It is
+          fifty-six pixels over a screen of scrolling and it is the only thing
+          that makes the words sit in front of the World rather than on it. */}
+      <Parallax strength={70} className="absolute inset-0 -z-10">
+        <img
+          src={asset(SHOWING.picture)}
+          alt={`${SHOWING.world}, built on Kobblon`}
+          className="h-[115%] w-full object-cover object-[50%_35%]"
+        />
+      </Parallax>
       {/*
         * Dark on the left where the words go, left alone on the right where
         * the building is. The picture is the argument, so covering all of it
@@ -63,7 +69,7 @@ export function Showcase() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/95 via-ink/40 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-ink to-transparent" />
 
-      <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-12 lg:grid-cols-[1fr_390px] lg:py-16">
+      <div className="mx-auto grid max-w-[1400px] items-center gap-10 px-4 py-16 lg:min-h-[78vh] lg:grid-cols-[1fr_390px] lg:py-24">
         <div className="max-w-xl self-center">
           {/*
             * The lockup Staw drew: the wordmark and "The game built by
@@ -119,7 +125,7 @@ export function Showcase() {
           * /signup already uses rather than a second one that would drift
           * apart from it the first time a field moved.
           */}
-        <div className="self-center rounded-2xl border border-ink-line bg-ink-raised/95 p-5 shadow-2xl backdrop-blur lg:justify-self-end">
+        <div className="self-center rounded-3xl border border-white/10 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl lg:justify-self-end">
           {/*
             * Once the form has been sent the card says so rather than
             * offering itself again. Somebody who has just signed up and is

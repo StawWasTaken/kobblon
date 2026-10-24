@@ -528,7 +528,7 @@ export default function Support() {
           to="/standing"
         />
         <Line
-          label="The rules"
+          label="Policies"
           note="Every policy, split by subject, each with the day it last changed."
           icon={faScroll}
           to="/policies"

@@ -6,13 +6,17 @@ import {
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
 import { Signature } from '@/components/brand/Signature'
-import { Kobby } from '@/components/brand/Kobby'
 import { Showcase } from '@/components/landing/Showcase'
 import { Commercial } from '@/components/landing/Commercial'
 import { WorldStage } from '@/components/landing/WorldStage'
 import { CreatorShelf } from '@/components/landing/CreatorShelf'
 import { CommunityRow } from '@/components/landing/CommunityRow'
 import { CatalogShelf } from '@/components/landing/CatalogShelf'
+import { Band, Lane } from '@/components/about/Band'
+import { Reveal } from '@/components/about/Reveal'
+import { Parallax } from '@/components/about/Parallax'
+import { Floaters } from '@/components/about/Floaters'
+import { Title } from '@/components/about/Type'
 import { useAsync } from '@/hooks/useAsync'
 import { useForceDark } from '@/hooks/useTheme'
 import { getPlatformStats, listAssets, listCommunities, listWorlds, avatarShelf } from '@/lib/api'
@@ -21,12 +25,30 @@ import { asset } from '@/lib/asset'
 import { formatCount } from '@/lib/format'
 import type { MarketAsset } from '@/types/db'
 
+/*
+ * The front door.
+ *
+ * It is built out of the same pieces as the At Kobblon pages - `Band`,
+ * `Reveal`, `Parallax`, the type scale - and it deliberately does not say
+ * what they say. At Kobblon explains what this is; this page shows the
+ * stock. Everything down it is live: the Worlds are the trending ones, the
+ * shelf is what people actually uploaded, the Communities are the biggest
+ * ones that exist. A front page that argues is a brochure, and a front page
+ * that shows what is in the building is a shop with the lights on.
+ *
+ * Which is also why nothing here is invented. Where there is nothing to
+ * show, the section says so in one line instead of showing a mock-up of
+ * what it would look like if there were.
+ */
+
 /* ------------------------------------------------------------------ parts */
 
 /**
  * The top of a section: a number, a kicker, a heading with one word in the
- * brand colour, and the way through. It stands on its own line with the work
- * underneath it, so nothing is squeezed against anything else.
+ * brand colour, and the way through.
+ *
+ * The numbering is this page's own device and not the About side's - these
+ * are stops on a tour of a real catalogue, and a tour has an order.
  */
 function Opening({
   number, kicker, title, accent, body, to, action,
@@ -40,33 +62,35 @@ function Opening({
   action: string
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
-      <div className="max-w-xl">
-        <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/35">
-          <span className="font-display text-base tabular-nums text-brand-bright">{number}</span>
-          <span className="h-px w-8 bg-white/20" />
-          {kicker}
-        </p>
+    <Reveal>
+      <div className="flex flex-wrap items-end justify-between gap-x-12 gap-y-7">
+        <div className="max-w-xl">
+          <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/35">
+            <span className="font-display text-base tabular-nums text-brand-bright">{number}</span>
+            <span className="h-px w-8 bg-white/20" />
+            {kicker}
+          </p>
 
-        <h2 className="mt-4 font-display text-4xl font-extrabold leading-[0.92] sm:text-6xl">
-          {title}
-          <span className="block text-brand-bright">{accent}</span>
-        </h2>
+          <Title className="mt-4">
+            {title}
+            <span className="block text-brand-bright">{accent}</span>
+          </Title>
 
-        <p className="mt-5 text-base leading-relaxed text-white/55">{body}</p>
+          <p className="mt-5 text-base leading-relaxed text-white/55">{body}</p>
+        </div>
+
+        <Link
+          to={to}
+          className="group inline-flex items-center gap-3 rounded-full border border-white/12 px-6 py-3 text-sm font-extrabold uppercase tracking-wide transition-colors hover:border-brand-bright hover:bg-brand/15"
+        >
+          {action}
+          <Glyph
+            icon={faArrowRight}
+            className="text-xs transition-transform group-hover:translate-x-1"
+          />
+        </Link>
       </div>
-
-      <Link
-        to={to}
-        className="group inline-flex items-center gap-3 rounded-full border border-white/12 px-6 py-3 text-sm font-extrabold uppercase tracking-wide transition-colors hover:border-brand-bright hover:bg-brand/15"
-      >
-        {action}
-        <Glyph
-          icon={faArrowRight}
-          className="text-xs transition-transform group-hover:translate-x-1"
-        />
-      </Link>
-    </div>
+    </Reveal>
   )
 }
 
@@ -77,6 +101,23 @@ function Ticker({ icon, value, label }: { icon: IconDefinition; value: string; l
       <span className="font-display text-xl font-extrabold tabular-nums">{value}</span>
       <span className="text-xs uppercase tracking-wide text-white/40">{label}</span>
     </span>
+  )
+}
+
+/**
+ * What a section says when there is genuinely nothing in it yet.
+ *
+ * One line and a border, which is the whole point: an empty shelf dressed
+ * up with artwork reads as a feature, and this has to read as "nobody has
+ * done this yet, and you could be the first".
+ */
+function Nothing({ children }: { children: string }) {
+  return (
+    <Reveal>
+      <p className="rounded-3xl border border-dashed border-white/12 bg-white/[0.02] px-7 py-8 leading-relaxed text-white/50">
+        {children}
+      </p>
+    </Reveal>
   )
 }
 
@@ -121,49 +162,51 @@ export default function Landing() {
         */}
       <Showcase />
 
-      {/* The advert, under the fold, loaded only when asked for. */}
-      <Commercial />
-
       {/* ---------------------------------------------------------- numbers */}
+      {/*
+        * A strip and not the four counting tiles the At Kobblon page uses.
+        * Same four numbers, and they are the only thing the two pages have
+        * in common, so they are presented as a line of live readings rather
+        * than as a second set of the same cards.
+        */}
       {!stats.loading && stats.data && (
         <section className="border-b border-white/5 bg-white/[0.02]">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-12 gap-y-4 px-4 py-6 sm:px-8">
-            <Ticker
-              icon={faLayerGroup}
-              value={formatCount(stats.data.published_spaces)}
-              label={stats.data.published_spaces === 1 ? 'World' : 'Worlds'}
-            />
-            <Ticker icon={faEye} value={formatCount(stats.data.total_visits)} label="Visits" />
-            <Ticker
-              icon={faUserAstronaut}
-              value={formatCount(stats.data.total_accounts)}
-              label="People"
-            />
-            <Ticker icon={faBolt} value={formatCount(stats.data.people_online)} label="Online now" />
-          </div>
+          <Lane>
+            <div className="flex flex-wrap items-center gap-x-12 gap-y-4 py-6">
+              <Ticker
+                icon={faLayerGroup}
+                value={formatCount(stats.data.published_spaces)}
+                label={stats.data.published_spaces === 1 ? 'World' : 'Worlds'}
+              />
+              <Ticker icon={faEye} value={formatCount(stats.data.total_visits)} label="Visits" />
+              <Ticker
+                icon={faUserAstronaut}
+                value={formatCount(stats.data.total_accounts)}
+                label="People"
+              />
+              <Ticker icon={faBolt} value={formatCount(stats.data.people_online)} label="Online now" />
+            </div>
+          </Lane>
         </section>
       )}
 
-      {/* ----------------------------------------------------------- Spaces */}
-      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-8 sm:py-32">
+      {/* ----------------------------------------------------------- Worlds */}
+      <Band tone="night">
         <Opening
           number="01"
           kicker="Worlds"
           title="Somewhere"
-          accent="To Go"
-          body="Somebody's own page, built the way they wanted it. Walk in, leave a mark."
+          accent="to go tonight"
+          body="Somebody's own place, built the way they wanted it. Walk in, leave a mark, come back tomorrow."
           to="/discover"
           action="Find a World"
         />
 
         <div className="mt-14">
           {!spaces.loading && !spaces.data?.length ? (
-            <div className="flex items-center gap-5 rounded-[1.75rem] border border-white/10 bg-ink-card p-6">
-              <Kobby mood="construction" size="sm" bob={false} />
-              <p className="text-sm text-white/55">
-                Nobody has published a World yet. Yours would be the first one here.
-              </p>
-            </div>
+            <Nothing>
+              Nobody has published a World yet. Yours would be the first one on this page.
+            </Nothing>
           ) : (
             <WorldStage
               worlds={(spaces.data ?? []).slice(0, 3)}
@@ -171,166 +214,177 @@ export default function Landing() {
             />
           )}
         </div>
-      </section>
+      </Band>
+
+      {/* The advert, under the fold, loaded only when asked for. */}
+      <Commercial />
 
       {/* ----------------------------------------------------------- Create */}
-      <section className="border-y border-white/5 bg-white/[0.02] py-24 sm:py-32">
-        <div className="mx-auto max-w-6xl px-4 sm:px-8">
-          <Opening
-            number="02"
-            kicker="Kobblon Create"
-            title="Built From"
-            accent="Real Work"
-            body={`Decals, sounds, video and fonts, made by people here and checked before anybody sees them. Take what you need, and sell what you make for ${currency.plural}.`}
-            to="/create/marketplace"
-            action="Open the marketplace"
-          />
-        </div>
+      <Band tone="raised" edge>
+        <Opening
+          number="02"
+          kicker="Kobblon Create"
+          title="Built from"
+          accent="real work"
+          body={`Decals, sounds, video and fonts, made by people here and checked before anybody sees them. Take what you need, and sell what you make for ${currency.plural}.`}
+          to="/create/marketplace"
+          action="Open the marketplace"
+        />
+      </Band>
 
-        {/* Full width, because a shelf should run off the edge of the page. */}
-        <div className="mt-14">
-          {!assets.loading && !assets.data?.length ? (
-            <div className="mx-auto flex max-w-6xl items-center gap-5 rounded-[1.75rem] border border-white/10 bg-ink-card p-6">
-              <Kobby mood="emptyBox" size="sm" bob={false} />
-              <p className="text-sm text-white/55">
-                The marketplace is empty. Upload the first image, sound or font.
-              </p>
-            </div>
-          ) : (
-            <CreatorShelf items={assets.data ?? []} loading={assets.loading} />
-          )}
-        </div>
-      </section>
+      {/* Full width, because a shelf should run off the edge of the page. */}
+      <div className="-mt-10 bg-ink-raised/60 pb-24 sm:pb-32">
+        {!assets.loading && !assets.data?.length ? (
+          <Lane>
+            <Nothing>The marketplace is empty. Upload the first image, sound or font.</Nothing>
+          </Lane>
+        ) : (
+          <CreatorShelf items={assets.data ?? []} loading={assets.loading} />
+        )}
+      </div>
 
       {/* ------------------------------------------------------ Communities */}
-      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-8 sm:py-32">
+      <Band tone="night" edge decor={<Floaters />}>
         <Opening
           number="03"
           kicker="Communities"
-          title="People To"
-          accent="Build With"
+          title="People to"
+          accent="build with"
           body="Fan clubs, build teams and hobby corners, each with its own wall, ranks, events and funds."
           to="/communities"
           action="Browse Communities"
         />
 
-        <div className="mt-16">
+        <div className="mt-14">
           {!communities.loading && !biggest.length ? (
-            <div className="flex items-center gap-5 rounded-[1.75rem] border border-white/10 bg-ink-card p-6">
-              <Kobby mood="emptyBox" size="sm" bob={false} />
-              <p className="text-sm text-white/55">
-                No Communities yet. Start the first one and people can join it.
-              </p>
-            </div>
+            <Nothing>No Communities yet. Start the first one and people can join it.</Nothing>
           ) : (
             <CommunityRow communities={biggest} loading={communities.loading} />
           )}
         </div>
-      </section>
+      </Band>
 
       {/* ------------------------------------------------------------ Style */}
-      <section className="border-y border-white/5 bg-white/[0.02] py-24 sm:py-32">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
-          {/* The catalogue, coming down the page on its own. */}
+      <Band tone="raised" edge>
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
           <div className="min-w-0">
             {!style.loading && !style.data?.length ? (
-              <div className="flex items-center gap-5 rounded-[1.75rem] border border-white/10 bg-ink-card p-6">
-                <Kobby mood="style" size="sm" bob={false} />
-                <p className="text-sm text-white/55">
-                  The shop is filling up. Verified accounts are making the first things for it.
-                </p>
-              </div>
+              <Nothing>
+                The shop is filling up. Verified accounts are making the first things for it.
+              </Nothing>
             ) : (
               <CatalogShelf items={style.data ?? []} loading={style.loading} />
             )}
           </div>
 
-          <div>
-            <Kobby mood="style" size="lg" bob={false} />
-            <p className="mt-6 flex items-center gap-3 font-display text-xs font-extrabold uppercase tracking-[0.3em] text-white/40">
-              <span className="text-brand-bright">04</span>
+          <Reveal delay={90}>
+            <p className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-[0.24em] text-white/35">
+              <span className="font-display text-base tabular-nums text-brand-bright">04</span>
               <span className="h-px w-8 bg-white/20" />
               Style
             </p>
-            <h2 className="mt-4 font-display text-4xl font-extrabold leading-[0.92] sm:text-5xl">
-              Express your
-              <span className="block text-brand-bright">own style</span>
-            </h2>
+            <Title className="mt-4">
+              Wear it
+              <span className="block text-brand-bright">everywhere</span>
+            </Title>
             <p className="mt-5 text-base leading-relaxed text-white/60">
               Hats, hair and whatever else people make, worn on your own picture. Put one on and
-              you wear it everywhere you turn up on Kobblon.
+              it comes with you into every World you walk into.
             </p>
-            <Button className="mt-7" to="/style" icon={faStore}>Open the shop</Button>
-          </div>
+            <Button className="mt-7" to="/catalog" icon={faStore}>Open the shop</Button>
+          </Reveal>
         </div>
-      </section>
+      </Band>
 
       {/* ----------------------------------------------------------- safety */}
-      <section className="border-y border-white/5 bg-white/[0.02]">
-        <div className="mx-auto grid max-w-6xl gap-14 px-4 py-24 sm:px-8 lg:grid-cols-[1fr_1fr] lg:gap-20">
-          <div>
+      <Band tone="night" edge>
+        <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
+          <Reveal>
             <span className="grid h-16 w-16 place-items-center rounded-2xl border-b-4 border-brand-ink bg-brand text-2xl text-onbrand shadow-pop">
               <Glyph icon={faShieldHalved} />
             </span>
-            <h2 className="mt-7 font-display text-4xl font-extrabold leading-[0.92] sm:text-5xl">
+            <Title className="mt-7">
               Built to be
               <span className="block text-brand-bright">worth trusting</span>
-            </h2>
-            <div className="mt-6 flex flex-wrap gap-4 text-sm font-bold">
+            </Title>
+            <div className="mt-7 flex flex-wrap gap-4 text-sm font-bold">
               <Link to="/policies/guidelines" className="text-link hover:underline">Community Guidelines</Link>
               <Link to="/policies/terms" className="text-link hover:underline">Terms of Service</Link>
               <Link to="/policies/privacy" className="text-link hover:underline">Privacy</Link>
             </div>
-          </div>
+          </Reveal>
 
-          <div className="space-y-6 text-white/60">
-            <p className="leading-relaxed">
-              Kobblon is for people aged 15 and over. Uploads are screened when they arrive and
-              a person looks at anything the check is unsure about.
-            </p>
-            <p className="leading-relaxed">
-              Every Space runs shut off from the rest of the site, so what somebody builds cannot
-              reach anybody else's account.
-            </p>
-            <p className="leading-relaxed">
-              Nothing on this page is invented. The numbers are the platform's own, and when
-              there is nothing to show, it says so.
-            </p>
-
-            <div className="pt-6">
-              <p className="text-sm text-white/45">Signed,</p>
-              <Signature className="mt-1 w-fit" />
-              <p className="mt-1 text-xs font-bold uppercase tracking-wide text-white/40">
-                CEO of Kobblon
+          <Reveal delay={120}>
+            <div className="space-y-6 text-white/60">
+              <p className="leading-relaxed">
+                Kobblon is for people aged 15 and over. Uploads are screened when they arrive and
+                a person looks at anything the check is unsure about.
               </p>
+              <p className="leading-relaxed">
+                Every World runs shut off from the rest of the site, so what somebody builds cannot
+                reach anybody else's account.
+              </p>
+              <p className="leading-relaxed">
+                Nothing on this page is invented. The numbers are the platform's own, and when
+                there is nothing to show, it says so.
+              </p>
+
+              <div className="pt-6">
+                <p className="text-sm text-white/45">Signed,</p>
+                <Signature className="mt-1 w-fit" />
+                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-white/40">
+                  CEO of Kobblon
+                </p>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
-      </section>
+      </Band>
 
       {/* ------------------------------------------------------------ close */}
-      <section className="relative overflow-hidden border-t-[6px] border-brand-ink">
-        <img
-          src={asset('/brand/topbar.png')}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-brand-ink/70" />
+      {/*
+        * A World behind the last ask rather than a flat brand-coloured
+        * banner: the page opened on something somebody built and it closes
+        * on one too.
+        */}
+      <section className="relative isolate overflow-hidden border-t border-white/[0.08]">
+        <Parallax strength={70} className="absolute inset-0 -z-10">
+          <img
+            src={asset('/brand/landing-towers.webp')}
+            alt=""
+            aria-hidden="true"
+            className="h-[115%] w-full object-cover object-center"
+          />
+        </Parallax>
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-ink/85 via-ink/75 to-ink" />
 
-        <div className="relative mx-auto max-w-6xl px-4 py-24 text-center sm:px-8 sm:py-28">
-          <h2 className="font-display text-4xl font-extrabold leading-[0.9] sm:text-6xl">
-            <span className="block">Make Something</span>
-            <span className="block">Nobody Else Has</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-md text-white/70">
-            Free, takes five minutes, and nobody is going to build it for you.
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Button size="lg" to="/signup">Sign Up</Button>
-            <Button size="lg" variant="subtle" to="/login">Log In</Button>
+        <Lane>
+          <div className="py-28 text-center sm:py-36">
+            <Reveal>
+              <Title level={1}>
+                It is free, and it
+                <span className="block text-brand-bright">takes five minutes</span>
+              </Title>
+            </Reveal>
+            <Reveal delay={120}>
+              <p className="mx-auto mt-6 max-w-md leading-relaxed text-white/60">
+                Make an account and the whole website opens: building, selling, Communities,
+                people.
+              </p>
+            </Reveal>
+            <Reveal delay={200}>
+              <div className="mt-10 flex flex-wrap justify-center gap-3">
+                <Button size="lg" variant="yes" to="/signup">Make an account</Button>
+                <Button size="lg" variant="subtle" to="/login">Log in</Button>
+              </div>
+            </Reveal>
+            <Reveal delay={260}>
+              <p className="mt-6 text-sm font-semibold text-white/35">
+                For people aged 15 and over.
+              </p>
+            </Reveal>
           </div>
-        </div>
+        </Lane>
       </section>
     </div>
   )

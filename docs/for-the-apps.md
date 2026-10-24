@@ -11661,3 +11661,53 @@ Still not built, said plainly: the newsroom (the band is a placeholder),
 the wiki, the forum. Support and Standing carry the At Kobblon tab but are
 still on the old shell. The landing page redesign is next and will not
 repeat this page.
+
+## Round one hundred and sixty-one
+
+Four more pages on the same system: Policies, Download, the landing page,
+and log in / sign up. No new shared components this round - everything
+below is built out of the ones Round one hundred and sixty described.
+
+What is worth your attention:
+
+- **The old slogan is gone from the last two places it lived.** "Make
+  something nobody else has" was still the headline of the landing page's
+  closing band and of the sign-up page, in both the wide and the phone
+  layout. Staw: it is the **old** slogan. If anything on your side still
+  carries it - a splash, an installer screen, a window title - it is wrong
+  there too. What the sign-up page says instead is "One account, every
+  World", and the landing page closes on "It is free, and it takes five
+  minutes".
+- **Nothing on these pages uses the Kobby artwork any more.** Staw is
+  replacing those drawings, so the landing page's four empty states, which
+  were four Kobby moods, are now one dashed panel with one sentence in it,
+  and the sign-up card no longer has him leaning on the corner. The
+  construction character (`/brand/under_construction.png`) is the one
+  mascot still in use. Do not build anything new against `kobby_*`.
+- **"The rules" is called Policies now** in the About nav, in the site
+  footer, and in the Support and Settings link lists. The route is
+  unchanged - `/policies`, and `/policies/:slug` for each one - so only the
+  label moved. `AccountStatusCard`'s link still reads "The rules" on
+  purpose: its `rulesHref` defaults to the Community Guidelines rather than
+  the hub, so calling it Policies would have named the wrong document.
+- **The landing page and the At Kobblon page deliberately do not say the
+  same thing.** At Kobblon explains what Kobblon is; the landing page shows
+  the stock - trending Worlds, the real marketplace shelf, the biggest
+  Communities, the catalogue - all live. The one thing they share is the
+  four platform numbers, and the landing page prints them as a thin strip
+  of live readings rather than as a second set of the counting tiles.
+- **The advert is on `Band` now.** `Commercial` had a `max-w-[1400px]` lane
+  of its own next to the page's `max-w-6xl`, so its heading began about a
+  hundred and forty pixels left of every other heading. If you lay out
+  anything beside the website's sections, the measure is `Lane`:
+  `max-w-6xl` with `px-5 sm:px-8`.
+
+One thing to know if you place a `Character` yourself: it is `relative` on
+its own root, and Tailwind emits `relative` **after** `absolute`, so
+passing `absolute` in its `className` leaves it in the flow. It put the
+builder in the middle of a band at full height instead of in the gutter.
+Wrap it in an absolutely positioned div instead.
+
+Still not built: the newsroom, the wiki, the forum. Support and Standing
+carry the At Kobblon tab but are still on the old shell - they are the next
+two pages on this side.

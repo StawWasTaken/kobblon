@@ -16,34 +16,44 @@
  * arrival is paid for by everybody who never gets here.
  */
 import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { Band } from '@/components/about/Band'
+import { Reveal } from '@/components/about/Reveal'
+import { Eyebrow, Title } from '@/components/about/Type'
 import { asset } from '@/lib/asset'
 
 export function Commercial() {
   return (
-    <section className="border-y border-ink-line bg-ink">
-      <div className="mx-auto grid max-w-[1400px] items-center gap-10 px-4 py-14 lg:grid-cols-[1fr_1.15fr]">
-        <div>
-          <p className="font-display text-xs uppercase tracking-[0.24em] text-brand-bright">
-            Thirty seconds
-          </p>
-          <h2 className="mt-3 font-display text-3xl leading-tight sm:text-4xl">
+    /*
+     * On `Band` rather than on a lane of its own. It used to be
+     * `max-w-[1400px]` next to the page's `max-w-6xl`, so the advert's
+     * heading started a hundred and forty pixels left of every other
+     * heading on the page - the kind of thing nobody can name and
+     * everybody can see.
+     */
+    <Band tone="night" edge>
+      <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.15fr]">
+        <Reveal>
+          <Eyebrow>Thirty seconds</Eyebrow>
+          <Title className="mt-4">
             This is what people
-            <span className="block text-brand-bright">are building on it.</span>
-          </h2>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-white/60">
+            <span className="block text-brand-bright">are building on it</span>
+          </Title>
+          <p className="mt-5 max-w-md text-base leading-relaxed text-white/60">
             Every place in it is on Kobblon now, made by somebody with an
             account and no more tools than you get for free.
           </p>
-        </div>
+        </Reveal>
 
-        <MediaPlayer
-          kind="video"
-          ambient
-          src={asset('/brand/kobblon-its-free.mp4')}
-          poster={asset('/brand/landing-interior.png')}
-          className="shadow-2xl"
-        />
+        <Reveal delay={120}>
+          <MediaPlayer
+            kind="video"
+            ambient
+            src={asset('/brand/kobblon-its-free.mp4')}
+            poster={asset('/brand/landing-interior.png')}
+            className="shadow-2xl"
+          />
+        </Reveal>
       </div>
-    </section>
+    </Band>
   )
 }

@@ -29,7 +29,7 @@ const kobblon = [
 const about = [
   { to: '/about', label: 'What Kobblon is' },
   { to: '/support', label: 'Support' },
-  { to: '/policies', label: 'The rules' },
+  { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/guidelines', label: 'Community guidelines' },

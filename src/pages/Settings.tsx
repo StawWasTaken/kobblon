@@ -441,7 +441,7 @@ function Safety() {
           to="/support"
         />
         <Line
-          label="The rules"
+          label="Policies"
           note="Every policy, each with the day its wording last changed."
           icon={faScroll}
           to="/policies"
