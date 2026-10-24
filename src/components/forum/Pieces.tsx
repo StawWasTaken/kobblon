@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { Verified, Staff, isStaff, isVerified } from '@/components/brand/Verified'
-import { Linkify } from '@/components/ui/Linkify'
 import { Glyph } from '@/components/brand/Glyph'
 import { faCheck, faThumbsUp, faLock, faThumbtack } from '@fortawesome/free-solid-svg-icons'
 import { forumImageUrl } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
+import { Markup } from '@/components/forum/Markup'
 import { cn } from '@/lib/cn'
 import type { ForumAuthor, ForumStatus } from '@/types/db'
 
@@ -131,18 +131,17 @@ export function Flags({ pinned, locked }: { pinned?: boolean; locked?: boolean }
  * into markup: `Linkify` exists precisely so that the one thing a post is
  * allowed to do is point at an address.
  */
+/**
+ * What somebody wrote.
+ *
+ * It used to be paragraphs of plain text. It is `Markup` now, because the
+ * composer grew a toolbar and a toolbar whose marks nothing renders is the
+ * fake functionality this project does not ship. `Markup` still renders no
+ * HTML - there is no path from a post to markup at all - so this is a
+ * larger vocabulary and not a larger hole.
+ */
 export function PostBody({ body, className }: { body: string; className?: string }) {
-  const paragraphs = body.split(/\n{2,}/).filter((one) => one.trim())
-
-  return (
-    <div className={cn('space-y-4 text-[15px] leading-relaxed text-white/75', className)}>
-      {paragraphs.map((paragraph, at) => (
-        <p key={at} className="whitespace-pre-wrap break-words">
-          <Linkify>{paragraph}</Linkify>
-        </p>
-      ))}
-    </div>
-  )
+  return <Markup body={body} className={className} />
 }
 
 /** The pictures somebody attached. Up to four, which the server enforces. */

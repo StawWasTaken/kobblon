@@ -8,11 +8,26 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { SwitchAccounts } from './SwitchAccounts'
+import { Avatar } from '@/components/ui/Avatar'
 import { useAuth } from '@/hooks/useAuth'
+import { cn } from '@/lib/cn'
 
 type Item = { to?: string; label: string; icon: IconDefinition; onSelect?: () => void }
 
-export function UserMenu() {
+/**
+ * The account menu, and the two things it hangs off.
+ *
+ * On the signed-in pages it is the gear in the bar, which is where it has
+ * always been. On an At Kobblon page it is the person's own picture, in a
+ * circle, in place of the Log in and Sign up buttons.
+ *
+ * Staw: "i want that onto the at kobblon pages instead of the login/signup
+ * pages theres your profile picture (just pfp in a circle) and when u click
+ * on it theres a menu (like when u click on settings in the logged in
+ * pages)". It is the same menu rather than a second one that looks like it,
+ * because two of these is two places for "Log Out" to stop working.
+ */
+export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) {
   const { profile, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState(false)
@@ -64,9 +79,18 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="grid h-9 w-9 place-items-center rounded-lg text-white/85 transition-colors hover:bg-white/15"
+        className={cn(
+          'grid place-items-center transition-colors',
+          trigger === 'avatar'
+            ? 'h-9 w-9 rounded-full ring-2 ring-white/15 hover:ring-brand-bright'
+            : 'h-9 w-9 rounded-lg text-white/85 hover:bg-white/15',
+        )}
       >
-        <Glyph icon={faGear} />
+        {trigger === 'avatar' && profile ? (
+          <Avatar src={profile.avatar_url} name={profile.display_name || profile.username} size="sm" />
+        ) : (
+          <Glyph icon={faGear} />
+        )}
       </button>
 
       {open && (

@@ -140,6 +140,38 @@
     </div>
     <script>
       /*
+       * Who gets the wait at all.
+       *
+       * Staw: "its only on the logged in pages (forum not included)". The
+       * reveal is the front door of the thing you use; an At Kobblon page
+       * is a page about Kobblon that anybody may read, and holding a reader
+       * of the rules behind a four-second film of our logo is a toll gate,
+       * not a welcome.
+       *
+       * Decided here, from the address, before a single frame is drawn -
+       * rather than in React, which would mean showing it and then taking
+       * it away, which is the flash this is avoiding. `/` is not in the
+       * list on purpose: signed in it is Home, and which one it is cannot
+       * be known until the session has been read, so it keeps the wait.
+       */
+      (function () {
+        var open = [
+          '/about', '/download', '/policies', '/terms', '/privacy',
+          '/guidelines', '/forum', '/login', '/signup',
+          '/creator/sign-in', '/launcher/sign-in'
+        ]
+        var here = location.pathname.replace(/\/+$/, '') || '/'
+        for (var i = 0; i < open.length; i += 1) {
+          if (here === open[i] || here.indexOf(open[i] + '/') === 0) {
+            var boot = document.getElementById('boot')
+            if (boot && boot.parentNode) boot.parentNode.removeChild(boot)
+            return
+          }
+        }
+      })()
+    </script>
+    <script>
+      /*
        * What colour the wait is.
        *
        * The mode is this device's and the appearance is the account's, but

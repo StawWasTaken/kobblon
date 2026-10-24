@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faComment, faEye, faLock, faPlus, faThumbsUp, faThumbtack,
-  faCheck, faXmark, faClockRotateLeft, faLayerGroup,
+  faCheck, faXmark, faClockRotateLeft, faLayerGroup, faFlag,
 } from '@fortawesome/free-solid-svg-icons'
+import { ReportDialog } from '@/components/social/ReportDialog'
 import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton, EmptyState } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -23,6 +24,7 @@ import {
   forumTopic as getTopic, forumTopics,
 } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
+import { useAtTitle, useExactTitle } from '@/hooks/useTitle'
 import { cn } from '@/lib/cn'
 import type { ForumBoard, ForumReply, ForumSort, ForumStatus, ForumTopic } from '@/types/db'
 
@@ -50,6 +52,15 @@ import type { ForumBoard, ForumReply, ForumSort, ForumStatus, ForumTopic } from 
  * hide a button is a page with a button that says no.
  */
 
+/*
+ * Staw: "I want it to be 'Community Forum | At Kobblon' then 'Post Name |
+ * Kobblon Forum'". So the front of the forum names the family it belongs
+ * to, and everything inside it names the forum - a thread is a page of the
+ * forum, not a page about Kobblon, and "Kobblon Forum" is what somebody
+ * reading a pasted tab title needs to see.
+ */
+const FORUM = 'Kobblon Forum'
+
 const SORTS: { id: ForumSort; label: string }[] = [
   { id: 'active', label: 'Latest' },
   { id: 'new', label: 'New' },
@@ -62,6 +73,8 @@ const SORTS: { id: ForumSort; label: string }[] = [
 export default function Forum() {
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'latest' ? 'latest' : 'categories'
+
+  useAtTitle('Community Forum')
 
   const boards = useAsync(forumBoards, [])
   const latest = useAsync(() => forumTopics({ sort: 'active', limit: 30 }), [])
@@ -415,6 +428,7 @@ export function ForumCategory() {
     [slug, sort, unanswered],
   )
   const board = (boards.data ?? []).find((one) => one.slug === slug)
+  useExactTitle(board ? `${board.name} | ${FORUM}` : FORUM)
 
   return (
     <ForumShell boards={boards.data ?? []} loading={boards.loading}>
@@ -508,9 +522,18 @@ export function ForumTopicPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [answering, setAnswering] = useState<ForumReply | null>(null)
+  /*
+   * What is being reported, or null. One piece of state for the whole page
+   * rather than one dialog per reply: twenty replies is twenty mounted
+   * dialogs, nineteen of which exist to be closed.
+   */
+  const [flagging, setFlagging] = useState<
+    { type: 'forum_topic' | 'forum_post'; id: number; name: string } | null
+  >(null)
 
   const staff = !!(profile?.is_admin || profile?.is_moderator)
   const mine = topic?.author_id === profile?.id
+  useExactTitle(topic ? `${topic.title} | ${FORUM}` : FORUM)
 
   const load = useMemo(() => async () => {
     const [one, said] = await Promise.all([getTopic(number), forumReplies(number)])
@@ -649,6 +672,16 @@ export function ForumTopicPage() {
             disabled={!profile}
             onPress={() => press('topic', topic.id)}
           />
+          {profile && !mine && (
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={faFlag}
+              onClick={() => setFlagging({ type: 'forum_topic', id: topic.id, name: topic.title })}
+            >
+              Report
+            </Button>
+          )}
           {(mine || staff) && (
             <Button
               size="sm"
@@ -715,6 +748,9 @@ export function ForumTopicPage() {
                 onAnswer={() => forumMarkAnswer(reply.id).then(load)}
                 onRemove={() => forumRemove('post', reply.id).then(load)}
                 onReply={() => setAnswering(reply)}
+                onFlag={() => setFlagging({
+                  type: 'forum_post', id: reply.id, name: `${reply.author_name}'s reply`,
+                })}
               />
             </li>
           ))}
@@ -749,13 +785,22 @@ export function ForumTopicPage() {
           )}
         </div>
       </section>
+
+      <ReportDialog
+        open={!!flagging}
+        onClose={() => setFlagging(null)}
+        targetType={flagging?.type ?? 'forum_topic'}
+        targetId={String(flagging?.id ?? '')}
+        targetName={flagging?.name ?? ''}
+      />
       </div>
     </ForumShell>
   )
 }
 
 function Reply({
-  reply, canMark, canUnmark, mine, staff, signedIn, onLike, onAnswer, onRemove, onReply,
+  reply, canMark, canUnmark, mine, staff, signedIn,
+  onLike, onAnswer, onRemove, onReply, onFlag,
 }: {
   reply: ForumReply
   canMark: boolean
@@ -767,6 +812,7 @@ function Reply({
   onAnswer: () => void
   onRemove: () => void
   onReply: () => void
+  onFlag: () => void
 }) {
   if (reply.is_removed) {
     return (
@@ -814,6 +860,9 @@ function Reply({
             {canUnmark ? 'Not the answer' : 'This is the answer'}
           </Button>
         )}
+        {signedIn && !mine && (
+          <Button size="sm" variant="ghost" icon={faFlag} onClick={onFlag}>Report</Button>
+        )}
         {(mine || staff) && (
           <Button size="sm" variant="ghost" icon={faXmark} onClick={onRemove}>Take it down</Button>
         )}
@@ -830,6 +879,7 @@ export function ForumNew() {
   const toast = useToast()
   const { profile } = useAuth()
   const boards = useAsync(forumBoards, [])
+  useExactTitle(`Start a topic | ${FORUM}`)
   const [category, setCategory] = useState(params.get('category') ?? '')
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)

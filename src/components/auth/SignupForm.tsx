@@ -11,7 +11,20 @@ import { useAuth } from '@/hooks/useAuth'
 import { checkUsername } from '@/lib/api'
 import { isOldEnough, MINIMUM_AGE } from '@/lib/age'
 
-type Errors = Partial<Record<'birthday' | 'username' | 'email' | 'password' | 'confirm' | 'form', string>>
+type Errors = Partial<Record<'birthday' | 'username' | 'displayName' | 'email'
+  | 'password' | 'confirm' | 'form', string>>
+
+/*
+ * The same shape as a username, and the same shape the column now enforces.
+ *
+ * Staw: "no spaces, no '-', only normal text, numbers, '_' allowed and
+ * thats it". Here so somebody is told while they are typing rather than by
+ * a constraint violation on submit; the rule itself is the check constraint
+ * on `profiles.display_name`, because a rule that only exists in a browser
+ * is not a rule.
+ */
+const NAME_SHAPE = /^[A-Za-z0-9_]{1,32}$/
+const NAME_SAID = 'Letters, numbers and underscores. No spaces.'
 
 /**
  * The same form does both jobs. A guest keeps the account they are already
@@ -76,6 +89,9 @@ export function SignupForm({
       found.username = 'Letters, numbers and underscores. 3 to 20 characters.'
     } else if (usernameState === 'bad') {
       found.username = errors.username ?? 'Pick a different username.'
+    }
+    if (displayName.trim() && !NAME_SHAPE.test(displayName.trim())) {
+      found.displayName = NAME_SAID
     }
     if (password.length < 8) found.password = 'At least 8 characters.'
     else if (password !== confirm) found.confirm = 'Both passwords need to match.'
@@ -159,6 +175,7 @@ export function SignupForm({
             setDisplayName(e.target.value)
           }}
           maxLength={32}
+          error={errors.displayName}
         />
       </Reveal>
 

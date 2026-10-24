@@ -12028,3 +12028,105 @@ seen, and a `chat_to_read` row likewise. If either of those is a `case` with no
 fifty topics and that is all, which is fine for a week-old forum and will not
 be in a month. No editing window and no edit history beyond the `edited_at`
 stamp. No per-category moderators: it is admin-or-moderator everywhere.
+
+## Round one hundred and sixty-eight
+
+Names. Three migrations, and the one that matters to you is the first.
+
+**0277_a_name_you_had_is_still_yours.sql**
+
+A username you retire stays yours. `username_history` has existed since
+0022, but only as a record - nothing consulted it when a name was being
+claimed, so a name you left was free the moment you left it.
+
+- `username_history` now has a unique index on `lower(username)`: a retired
+  name has exactly one owner. The migration resolves what the old rule
+  allowed first - the same name in two histories, and a name in a history
+  that somebody else is using now - by letting the newest claim win and
+  deleting the rest.
+- **`who_holds_name(candidate) returns uuid`** is the one question
+  everything asks: null means free, otherwise whose it is. If you have any
+  place that offers a name, ask this and nothing else.
+- `check_username` and `change_username` both consult it. You may always
+  take your own old name back, and doing so frees nothing: the name you are
+  leaving goes into the history in its place.
+- `handle_new_user` was the actual hole and is patched: its free-name loop
+  asked `profiles` only, so an account could be opened on a retired name
+  however carefully the signup form checked. It asks `who_holds_name` now.
+- **One charset in one place.** `name_shape()` returns `^[A-Za-z0-9_]{3,20}$`
+  and `name_shape_said()` the sentence that goes with it. The three checks
+  disagreed before - `check_username` said 3 to 20, `change_username` said
+  3 to 16, the column said 3 to 20 - so a sixteen-character name could be
+  signed up with and never changed to. **If you validate a username
+  anywhere, use these two rather than a copy of the pattern.**
+- **Display names have a charset now and did not before.** The column only
+  said "1 to 32 characters". It is `^[A-Za-z0-9_]{1,32}$`: no spaces, no
+  hyphens. Existing rows are sanitised by the migration - disallowed
+  characters are taken out, and anything left empty falls back to the
+  username, which is what Kobby already does when it takes a display name
+  away. **This will change display names you have cached.** A display name
+  with a space in it is now a failed write, so anywhere you let somebody
+  type one needs the rule or it will throw a constraint violation on save.
+
+**0278_a_community_name_is_owned_too.sql**
+
+The same promise for communities, with a different charset - a community
+name is written, not typed into an address, so spaces and punctuation stay
+and only control characters are out: `community_name_shape()` is
+`^[^[:cntrl:]]{3,48}$`.
+
+- `communities.name` is unique now, and never was. Existing duplicates get
+  their content id appended; the oldest keeps the name.
+  The index is partial, `where not is_removed`.
+- `community_name_history`, with its grants, readable by anybody.
+- **`check_community_name(candidate, for_community)`**, **`rename_community(target, new_name)`**
+  (owner or admin, free), **`who_holds_community_name(candidate)`**,
+  **`community_name_history_of(target)`**.
+- `communities_update_own` let an owner update `name` directly, which went
+  around any checking. `guard_community_name` pins it back unless
+  `rename_community` raised the transaction-local flag. Its subject is the
+  flag and never identity, for the reason in the third trap.
+- `create_community` now checks the name before inserting, so a taken name
+  is a sentence rather than a unique-constraint violation.
+
+**0279_a_forum_post_can_be_reported.sql** - `reports.target_type` accepts
+`forum_topic` and `forum_post`, and `report_subject` knows what they are.
+Kobby already read every forum post (0276) and pinning already existed.
+
+**What this means for you.** If the Workspace or the Launcher shows a
+username or a display name: the display name rule is new and will reject
+writes it used to accept. If either offers a name - a rename, a signup, a
+community - call `check_username` or `check_community_name` and show the
+reason verbatim; they are the only things that know about retired names. A
+"that name is taken" from either says nothing about whose it is, on purpose.
+
+**Also in this round, website only, for your information:**
+
+- The GIF boot screen has **no minimum time** any more; it comes down the
+  moment the page is ready. It is also no longer shown on the At Kobblon
+  pages, which are decided from the address in `app.html` before a frame is
+  drawn.
+- The forum's entrance is Discourse's three dots in brand blue rather than
+  the field of flying squares.
+- Forum pages name themselves: "Community Forum | At Kobblon" at the front,
+  "<name> | Kobblon Forum" inside.
+- The forum composer has a toolbar, and `@/components/forum/Markup` is the
+  renderer that reads those marks back. **It renders no HTML and cannot be
+  made to** - there is no `dangerouslySetInnerHTML` and no sanitiser, the
+  text is cut into pieces and each becomes a React element, so a post
+  containing `<script>` is a post that says `<script>`. If you ever show a
+  forum post, use `Markup` and not a markdown library.
+- `AuthContext` is exported from `@/hooks/useAuth` so a bare page can hand a
+  component a session. `tools/site/composer-preview.html` is that page, and
+  it is the check that the composer and the renderer stand up with no
+  provider around them.
+- On the At Kobblon pages a signed-in person now sees their own picture and
+  the account menu instead of Log in and Sign up. It is the same `UserMenu`,
+  with a `trigger="avatar"` prop, rather than a second one.
+
+**What is not built.** No way to see your own retired names and pick one
+from a list - `username_history_of` returns them and nothing offers them
+yet. The community rename has no page: `rename_community` exists and
+`ConfigureCommunity` still writes `name` directly, which the guard now pins
+back, so **renaming a community through that page currently does nothing**.
+That is the next thing to fix here and it is named rather than hidden.

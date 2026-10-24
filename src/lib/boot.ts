@@ -33,37 +33,8 @@ declare global {
   }
 }
 
-/*
- * The full play is for arriving, not for every reload.
- *
- * Staw: "i want that the loading screen take time to show the loading gif
- * to be played fully at least once ONLY when you arrive onto the website,
- * like if you are already on the website and that you refresh then it only
- * takes the time to load instead of having a timer preset". A reload is a
- * fresh document and looks identical from in here - except for the one
- * thing that survives it and does not survive a new tab, which is session
- * storage. So the first load in a tab gets the film and every load after it
- * in that tab gets out of the way as soon as the page is ready.
- */
-const SEEN = 'kobblon.reveal-seen'
-
-function alreadyWatched() {
-  try {
-    return sessionStorage.getItem(SEEN) === '1'
-  } catch {
-    // A blocked store means every load looks like the first, which is the
-    // side to err on: the film is the thing he asked for.
-    return false
-  }
-}
-
-function watched() {
-  try { sessionStorage.setItem(SEEN, '1') } catch { /* nothing to do */ }
-}
-
 /* Starts at one: the document itself holds it until `App` has committed. */
 let holds = 1
-let coming = 0
 
 /** Whether the document's wait is still on screen. */
 export function bootIsUp() {
@@ -73,25 +44,25 @@ export function bootIsUp() {
 /** Keep the wait up. Every hold has to be released. */
 export function holdBoot() {
   holds += 1
-  if (coming) {
-    window.clearTimeout(coming)
-    coming = 0
-  }
 }
 
-/** Let go. The wait comes down once nothing holds it and the film has run. */
+/** Let go. The wait comes down as soon as nothing holds it. */
 export function releaseBoot() {
   holds = Math.max(0, holds - 1)
-  if (holds || coming) return
+  if (holds) return
 
-  const began = window.__kobBootAt
-  const left = began === undefined || alreadyWatched()
-    ? 0
-    : Math.max(0, REVEAL_MS - (Date.now() - began))
-  watched()
-
-  coming = window.setTimeout(() => {
-    coming = 0
-    document.getElementById('boot')?.remove()
-  }, left)
+  /*
+   * No floor under it any more.
+   *
+   * Staw: "for the kobblon gif loading i dont want a minimum time needed".
+   * It used to hold the wait until one full play of the reveal had gone by,
+   * which is what he asked for at the time and is the opposite of what he
+   * wants now. So the wait is exactly as long as the page takes: the film
+   * plays as far as it gets and the page arrives the moment it is ready.
+   *
+   * `REVEAL_MS` stays because it is still true and a thing worth knowing;
+   * the session key that remembered whether the film had been watched went
+   * with the floor, since nothing asks the question any more.
+   */
+  document.getElementById('boot')?.remove()
 }

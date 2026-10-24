@@ -288,6 +288,39 @@ export async function usernameHistory(userId: string): Promise<UsernameRecord[]>
   return (unwrap(await supabase.rpc('username_history_of', { target: userId })) as UsernameRecord[]) ?? []
 }
 
+/**
+ * Is this community name free, and would Kobby allow it.
+ *
+ * `forCommunity` is the one being renamed, so editing a word in the middle
+ * of a name and putting it back does not come back as taken.
+ */
+export async function checkCommunityName(
+  candidate: string,
+  forCommunity?: string,
+): Promise<{ ok: boolean; reason: string | null }> {
+  const rows = unwrap(await supabase.rpc('check_community_name', {
+    candidate,
+    for_community: forCommunity ?? null,
+  })) as { ok: boolean; reason: string | null }[]
+  return rows?.[0] ?? { ok: false, reason: 'That name could not be checked.' }
+}
+
+/** The owner or an admin of the community. Free, unlike a username. */
+export async function renameCommunity(community: string, name: string): Promise<string> {
+  return unwrap(await supabase.rpc('rename_community', {
+    target: community,
+    new_name: name,
+  })) as string
+}
+
+/** The names a community used to go by, newest first. */
+export async function communityNameHistory(
+  community: string,
+): Promise<{ name: string; changed_at: string }[]> {
+  const rows = unwrap(await supabase.rpc('community_name_history_of', { target: community }))
+  return (rows as { name: string; changed_at: string }[]) ?? []
+}
+
 export async function updateProfile(id: string, patch: Partial<Pick<Profile,
   'display_name' | 'bio' | 'avatar_url' | 'username' | 'accent_color'>>) {
   unwrap(await supabase.from('profiles').update(patch).eq('id', id).select('id').single())
@@ -540,7 +573,8 @@ export async function markNotificationsRead(userId: string) {
 
 export async function submitReport(input: {
   reporterId: string
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style' | 'avatar_item' | 'outfit'
+  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
+    | 'avatar_item' | 'outfit' | 'forum_topic' | 'forum_post'
   targetId: string
   reason: string
   details: string

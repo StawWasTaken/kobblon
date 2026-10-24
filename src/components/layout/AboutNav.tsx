@@ -4,6 +4,8 @@ import { faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
+import { UserMenu } from '@/components/layout/UserMenu'
+import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/cn'
 
 /**
@@ -29,6 +31,7 @@ export const ABOUT_LINKS = [
 ]
 
 export function AboutNav({ className }: { className?: string }) {
+  const { profile } = useAuth()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const [moved, setMoved] = useState(false)
@@ -90,13 +93,34 @@ export function AboutNav({ className }: { className?: string }) {
           ))}
         </nav>
 
-        <Link
-          to="/login"
-          className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-brand-bright"
-        >
-          Log in
-        </Link>
-        <Button to="/signup" size="sm" variant="yes">Sign up</Button>
+        {/*
+         * Signed in, the two buttons are the one thing on this bar that is
+         * wrong: telling somebody with an account to make one. So they
+         * become their own picture and the same account menu the signed-in
+         * pages have.
+         *
+         * `profile` is null while the session is still being read, which is
+         * the Log in / Sign up pair for a fraction of a second on a reload.
+         * Waiting instead would mean an empty space where the controls go
+         * and then them appearing, which is worse: a bar that finishes
+         * drawing twice reads as broken, and a stranger is the honest
+         * default for somebody nobody has identified yet.
+         */}
+        {profile ? (
+          <span className="ml-auto flex items-center gap-3">
+            <UserMenu trigger="avatar" />
+          </span>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-brand-bright"
+            >
+              Log in
+            </Link>
+            <Button to="/signup" size="sm" variant="yes">Sign up</Button>
+          </>
+        )}
       </div>
 
       {open && (

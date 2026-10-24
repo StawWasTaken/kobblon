@@ -1,7 +1,11 @@
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
-import { faImage, faXmark, faPaperPlane } from '@fortawesome/free-solid-svg-icons'
+import {
+  faImage, faXmark, faPaperPlane, faHeading, faBold, faItalic, faStrikethrough,
+  faQuoteRight, faCode, faListUl, faListOl, faMinus, faCircleInfo,
+} from '@fortawesome/free-solid-svg-icons'
+import { Link } from 'react-router-dom'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { forumImageUrl, uploadForumImage } from '@/lib/api'
@@ -29,6 +33,43 @@ import { cn } from '@/lib/cn'
 const MOST = 4
 const BIGGEST = 2 * 1024 * 1024
 
+/*
+ * The toolbar.
+ *
+ * Each of these writes a mark that `Markup` reads back, and that is the
+ * whole rule it had to satisfy: a button that produces something nothing
+ * renders is a control that implies the runtime does something it does not.
+ * The set is small because the renderer's is small, and they are the same
+ * list on purpose - the day one grows, the other has to in the same change.
+ *
+ * `wrap` goes either side of what is selected; `line` goes at the front of
+ * the line. A picture is not here: it is an attachment, which goes through
+ * our bucket and our size limit rather than a URL somebody pasted, so it
+ * keeps the button it already had.
+ */
+type Mark =
+  | { icon: typeof faBold; title: string; wrap: string }
+  | { icon: typeof faBold; title: string; line: string }
+  | { icon: typeof faBold; title: string; block: string }
+
+const MARKS: Mark[][] = [
+  [
+    { icon: faHeading, title: 'Heading', line: '## ' },
+    { icon: faBold, title: 'Bold', wrap: '**' },
+    { icon: faItalic, title: 'Italic', wrap: '*' },
+    { icon: faStrikethrough, title: 'Crossed out', wrap: '~~' },
+  ],
+  [
+    { icon: faQuoteRight, title: 'Quote', line: '> ' },
+    { icon: faCode, title: 'Code', wrap: '`' },
+  ],
+  [
+    { icon: faListUl, title: 'List', line: '- ' },
+    { icon: faListOl, title: 'Numbered list', line: '1. ' },
+    { icon: faMinus, title: 'A line across', block: '\n---\n' },
+  ],
+]
+
 export function Composer({
   placeholder, action, withTitle, busy, onSend, onCancel, autoFocus, compact,
 }: {
@@ -45,6 +86,7 @@ export function Composer({
   const { profile } = useAuth()
   const toast = useToast()
   const file = useRef<HTMLInputElement>(null)
+  const box = useRef<HTMLTextAreaElement>(null)
   const [body, setBody] = useState('')
   const [images, setImages] = useState<string[]>([])
   const [putting, setPutting] = useState(false)
@@ -98,6 +140,51 @@ export function Composer({
     }
   }
 
+  /*
+   * Applying a mark.
+   *
+   * It goes through the textarea's own selection rather than keeping a
+   * cursor of our own, because the cursor that matters is the one the
+   * person can see, and a second one kept in state is a value captured
+   * before the thing that decides it - they move the caret, we do not hear
+   * about it, and the next button writes in the wrong place.
+   */
+  const put = (mark: Mark) => {
+    const node = box.current
+    if (!node) return
+    const from = node.selectionStart
+    const to = node.selectionEnd
+    const chosen = body.slice(from, to)
+
+    let next: string
+    let caret: number
+
+    if ('wrap' in mark) {
+      next = body.slice(0, from) + mark.wrap + (chosen || '') + mark.wrap + body.slice(to)
+      caret = from + mark.wrap.length + chosen.length
+    } else if ('block' in mark) {
+      next = body.slice(0, from) + mark.block + body.slice(to)
+      caret = from + mark.block.length
+    } else {
+      // At the front of every line the selection touches, not just the first.
+      const lineFrom = body.lastIndexOf('\n', from - 1) + 1
+      const head = body.slice(0, lineFrom)
+      const middle = body.slice(lineFrom, to)
+      const tail = body.slice(to)
+      const marked = middle.split('\n').map((one) => mark.line + one).join('\n')
+      next = head + marked + tail
+      caret = head.length + marked.length
+    }
+
+    setBody(next)
+    /* After React has written the new value, or the caret is set on the old
+       one and jumps back the moment it re-renders. */
+    requestAnimationFrame(() => {
+      node.focus()
+      node.setSelectionRange(caret, caret)
+    })
+  }
+
   const send = async () => {
     if (!body.trim()) return
     await onSend(body.trim(), images)
@@ -123,14 +210,35 @@ export function Composer({
         />
       )}
 
+      <div className="mb-px flex flex-wrap items-center gap-1 rounded-t-xl border border-b-0 border-white/10 bg-ink-raised/60 px-2 py-1.5">
+        {MARKS.map((group, at) => (
+          <span key={at} className="flex items-center gap-0.5">
+            {at > 0 && <span className="mx-1 h-4 w-px bg-white/10" />}
+            {group.map((mark) => (
+              <button
+                key={mark.title}
+                type="button"
+                title={mark.title}
+                aria-label={mark.title}
+                onClick={() => put(mark)}
+                className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <Glyph icon={mark.icon} className="text-xs" />
+              </button>
+            ))}
+          </span>
+        ))}
+      </div>
+
       <textarea
+        ref={box}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={placeholder}
         rows={compact ? 3 : 7}
         maxLength={12000}
         autoFocus={autoFocus && !withTitle}
-        className="w-full resize-y rounded-xl border border-white/10 bg-ink px-4 py-3 text-[15px] leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
+        className="w-full resize-y rounded-b-xl border border-white/10 bg-ink px-4 py-3 text-[15px] leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
       />
 
       {images.length > 0 && (
@@ -182,6 +290,27 @@ export function Composer({
 
       {withTitle && titleTooShort && withTitle.value.trim().length > 0 && (
         <p className="mt-2 text-xs text-white/40">A title wants at least six characters.</p>
+      )}
+
+      {/*
+       * What the rules are, before it is posted rather than after.
+       *
+       * It links the Community Guidelines, which is a page that exists -
+       * there is no separate set of forum rules and saying there was would
+       * be inventing a page. Kobby reads every post either way, and saying
+       * so is fairer than letting somebody find out.
+       */}
+      {withTitle && (
+        <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-white/35">
+          <Glyph icon={faCircleInfo} className="mt-0.5 shrink-0 text-white/25" />
+          <span>
+            Kobby reads everything posted here, and the{' '}
+            <Link to="/guidelines" className="font-bold text-white/55 underline-offset-2 hover:text-brand-bright hover:underline">
+              Community Guidelines
+            </Link>{' '}
+            apply the same as everywhere else on Kobblon.
+          </span>
+        </p>
       )}
     </div>
   )

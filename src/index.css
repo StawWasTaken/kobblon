@@ -454,3 +454,14 @@
   85%  { opacity: 0.55; }
   100% { transform: translate3d(var(--drift, 0px), 105vh, 0) rotate(var(--spin, 180deg)); opacity: 0; }
 }
+
+/*
+ * The forum's three dots. Discourse's shape - each dot swells and fades a
+ * beat behind the one before it - in Kobblon blue, with the stagger set per
+ * dot in the component rather than here, so the number of dots is the
+ * component's business and not the stylesheet's.
+ */
+@keyframes forum-dot {
+  0%, 80%, 100% { transform: scale(0.55); opacity: 0.3; }
+  40%           { transform: scale(1);    opacity: 1; }
+}

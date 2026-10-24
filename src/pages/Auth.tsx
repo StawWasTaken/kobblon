@@ -25,6 +25,14 @@ import { cn } from '@/lib/cn'
  * page has already decided - and what is left is the sentence, in the
  * spirit of Roblox's "sign up and start having fun", and the fields.
  *
+ * The two modes say different things now, which they did not before - one
+ * headline for both is one of them being wrong, and it was the login one:
+ * somebody logging in is not signing up and does not need telling what
+ * signing up is for. Staw asked for "Signup and get ready to have fun!",
+ * slightly upgraded, short and memorable. "Get to the fun bit" is that
+ * sentence with the throat-clearing taken out, and it says the same thing
+ * about what the account is for.
+ *
  * One column down the middle rather than the pitch-beside-the-form it was.
  * The split layout only ever worked on a wide screen - on a phone the
  * whole left half was `hidden`, so half of the page did not exist for most
@@ -141,9 +149,13 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                     Keep what you
                     <span className="block text-brand-bright">already made</span>
                   </>
+                ) : mode === 'login' ? (
+                  <>
+                    Welcome back. <span className="text-brand-bright">Let's go.</span>
+                  </>
                 ) : (
                   <>
-                    Sign up and <span className="text-brand-bright">start building</span>
+                    Sign up and <span className="text-brand-bright">get to the fun bit</span>
                   </>
                 )}
               </h1>

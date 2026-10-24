@@ -39,7 +39,14 @@ export type SignupDetails = {
   gender: string
 }
 
-const AuthContext = createContext<AuthValue | null>(null)
+/*
+ * Exported so a bare page under `tools/site/` can hand a component a
+ * session without the whole provider, which is what those pages are for:
+ * mounting one thing with nothing around it and seeing whether it stands
+ * up. Nothing in the site reads it directly - `useAuth` and `useMaybeAuth`
+ * are the way in.
+ */
+export const AuthContext = createContext<AuthValue | null>(null)
 
 export function useAuth() {
   const value = useContext(AuthContext)

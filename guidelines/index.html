@@ -34,21 +34,21 @@
     <link rel="stylesheet" href="https://use.typekit.net/lqk3dkx.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>#boot{z-index:2147483647;background:#101012;flex-direction:column;justify-content:center;align-items:center;display:flex;position:fixed;inset:0}#boot[data-ink=dark-default]{background:#101012}#boot[data-ink=light-default]{background:#f2f3f7}#boot[data-ink=dark-halloween]{background:#140f0c}#boot[data-ink=light-halloween]{background:#faf4ee}#boot[data-ink=dark-christmas]{background:#0d130f}#boot[data-ink=light-christmas]{background:#f2f8f4}#boot img{opacity:0;width:auto;height:150px;transition:opacity .2s}#boot.drawing img{opacity:1}#boot p{text-align:center;color:#8b8b94;max-width:22rem;margin:1.5rem 0 0;font:500 14px/1.6 Inter,system-ui,sans-serif;display:none}#boot.slow p{display:block}#boot button{color:#fff;cursor:pointer;background:#1b34e8;border:0;border-radius:999px;margin-top:.75rem;padding:.5rem 1.1rem;font:700 13px Inter,system-ui,sans-serif}</style>
-    <script type="module" crossorigin src="/assets/app-BcYiMdUJ.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/Button-iUHhKabd.js">
-    <link rel="modulepreload" crossorigin href="/assets/react-dom-iJP98NLP.js">
-    <link rel="modulepreload" crossorigin href="/assets/api-B8msEezk.js">
-    <link rel="modulepreload" crossorigin href="/assets/headshots-Ds2FIHQM.js">
-    <link rel="modulepreload" crossorigin href="/assets/useAuth-BGroPpVh.js">
-    <link rel="modulepreload" crossorigin href="/assets/States-bJJDZsKy.js">
-    <link rel="modulepreload" crossorigin href="/assets/Wordmark-eOy_pJWH.js">
-    <link rel="modulepreload" crossorigin href="/assets/currency-DC0oYLvm.js">
-    <link rel="modulepreload" crossorigin href="/assets/Currency-C1AMaNA6.js">
-    <link rel="modulepreload" crossorigin href="/assets/Toast-rGG4k1nh.js">
-    <link rel="modulepreload" crossorigin href="/assets/Tooltip-BvIfCw7T.js">
-    <link rel="modulepreload" crossorigin href="/assets/Dialog-Iap47r7g.js">
-    <link rel="modulepreload" crossorigin href="/assets/Cropper-DkN7t9Ut.js">
-    <link rel="stylesheet" crossorigin href="/assets/app-D9IMYCsQ.css">
+    <script type="module" crossorigin src="/assets/app-CBqkUFn_.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/api-C4lNzVJg.js">
+    <link rel="modulepreload" crossorigin href="/assets/Input-DugKHdHa.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-dom-BjD13ibt.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-Czrub_lt.js">
+    <link rel="modulepreload" crossorigin href="/assets/States-Diu-IvsR.js">
+    <link rel="modulepreload" crossorigin href="/assets/Wordmark-CBCp0VA4.js">
+    <link rel="modulepreload" crossorigin href="/assets/currency-CwLT4-dD.js">
+    <link rel="modulepreload" crossorigin href="/assets/Currency-ClMw7IyH.js">
+    <link rel="modulepreload" crossorigin href="/assets/Toast-Dh8hkb2L.js">
+    <link rel="modulepreload" crossorigin href="/assets/Avatar-Cpuq_KGN.js">
+    <link rel="modulepreload" crossorigin href="/assets/Tooltip-_xZ_37AP.js">
+    <link rel="modulepreload" crossorigin href="/assets/Dialog-BXhy8Hbe.js">
+    <link rel="modulepreload" crossorigin href="/assets/Cropper-wKnUg27v.js">
+    <link rel="stylesheet" crossorigin href="/assets/app-0mTirxoo.css">
   </head>
   <body>
     <div id="root"></div>
@@ -62,6 +62,38 @@
         <button type="button" onclick="location.reload()">Load it again</button>
       </p>
     </div>
+    <script>
+      /*
+       * Who gets the wait at all.
+       *
+       * Staw: "its only on the logged in pages (forum not included)". The
+       * reveal is the front door of the thing you use; an At Kobblon page
+       * is a page about Kobblon that anybody may read, and holding a reader
+       * of the rules behind a four-second film of our logo is a toll gate,
+       * not a welcome.
+       *
+       * Decided here, from the address, before a single frame is drawn -
+       * rather than in React, which would mean showing it and then taking
+       * it away, which is the flash this is avoiding. `/` is not in the
+       * list on purpose: signed in it is Home, and which one it is cannot
+       * be known until the session has been read, so it keeps the wait.
+       */
+      (function () {
+        var open = [
+          '/about', '/download', '/policies', '/terms', '/privacy',
+          '/guidelines', '/forum', '/login', '/signup',
+          '/creator/sign-in', '/launcher/sign-in'
+        ]
+        var here = location.pathname.replace(/\/+$/, '') || '/'
+        for (var i = 0; i < open.length; i += 1) {
+          if (here === open[i] || here.indexOf(open[i] + '/') === 0) {
+            var boot = document.getElementById('boot')
+            if (boot && boot.parentNode) boot.parentNode.removeChild(boot)
+            return
+          }
+        }
+      })()
+    </script>
     <script>
       /*
        * What colour the wait is.

@@ -193,7 +193,8 @@ export function ReportDialog({
 }: {
   open: boolean
   onClose: () => void
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style' | 'avatar_item' | 'outfit'
+  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
+    | 'avatar_item' | 'outfit' | 'forum_topic' | 'forum_post'
   targetId: string
   targetName: string
 }) {
