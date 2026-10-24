@@ -11601,3 +11601,63 @@ one object.
 - Support and standing carry the At Kobblon tab but have not moved onto
   the new shell yet.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and sixty
+
+The At Kobblon page in Staw's own order, and two new shared pieces.
+
+What changed here, in the order somebody scrolling meets it:
+
+- **The opening** is a World somebody built, behind a single line, and the
+  line arrives on the way down rather than on load. That needed a second
+  motion component, because `Reveal` cannot do it: `Reveal` fires when a
+  thing enters the window, and the first screen is already in the window
+  when the page loads, so a headline up there has finished arriving before
+  anybody touches the wheel. `@/components/about/ScrollIn` is keyed to
+  `window.scrollY` instead - out at rest, fully in after about a third of a
+  screen. Reduced motion gets the finished state and no listener.
+- **The paragraph** is the official sentence and nothing else: "Kobblon is
+  an online sandbox platform filled with user-generated 3D worlds, where
+  players can unleash their creativity, build unique experiences, and hang
+  out together." That is the wording to use anywhere the applications
+  describe the platform. Verbatim.
+- **The numbers** are four `StatTile`s counting up on arrival, still wired
+  to `get_platform_stats`. The rule under each one is decorative and says
+  so in a comment: there is no honest maximum for "visits", so it is not a
+  bar and must not be read as one.
+- **Then** Worlds, the four safety things, Workspace, Inside Kobblon,
+  Communities, Policies, and an honest "the newsroom is being built" panel.
+  No invented posts.
+
+New shared components, both mountable with nothing around them:
+
+- **`@/components/about/GlassCard`** - a render with the words laid over
+  the **top** of it, no aspect box, so a picture keeps the ratio it was
+  drawn at. Props: `art`, `alt`, `name`, `body`, `to`, `cue`.
+- **`@/components/about/Floaters`** - reaction faces bobbing in a band's
+  gutters, `hidden lg:block`, pointer-events off, still under reduced
+  motion. It goes in `Band`'s new `decor` slot, which renders **outside**
+  `Lane`: anything positioned `inset-0` inside `Band`'s children is
+  positioned against the text column, not the band, which is how the first
+  version of these ended up sitting on top of a heading.
+
+Two things that change meaning rather than appearance, so they matter on
+your side:
+
+- **`FACE_COLOUR` and `FACE_YELLOW` are now exported** from
+  `@/components/social/Reactions`. If anything over there paints a reaction
+  face, take the colour from there rather than writing a second yellow.
+  Worth knowing why: `Icon` with no `tone` paints the file as a mask in the
+  current text colour, and the reaction PNGs are white line art, so
+  `tone={null}` on one gives you a white smudge and no `tone` at all gives
+  you a grey one. A face that is meant to look like a face needs
+  `tone={FACE_COLOUR[face]}`.
+- **The At Kobblon tabs use a pipe.** `useAtTitle` in `@/hooks/useTitle`
+  writes `Thing | At Kobblon`; the rest of the site keeps `useTitle` and
+  `Thing - Kobblon`. Two separators on purpose, one per family. The About
+  nav's third link is now called **Policies**, not "The rules".
+
+Still not built, said plainly: the newsroom (the band is a placeholder),
+the wiki, the forum. Support and Standing carry the At Kobblon tab but are
+still on the old shell. The landing page redesign is next and will not
+repeat this page.

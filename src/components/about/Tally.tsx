@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { Icon, type KobIcon } from '@/components/brand/Icon'
+import { PixelGrid } from './Motif'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -66,6 +68,70 @@ export function Tally({ value, label, className }: {
       <p className="mt-2.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">
         {label}
       </p>
+    </div>
+  )
+}
+
+/**
+ * A number, as something to look at.
+ *
+ * Four bare numbers in a row is a figure caption. This is the same number
+ * with the things that make it read as a measurement: Staw's icon for
+ * what is being counted, the pixel grid behind it, and a rule under it
+ * that draws itself in as the tile arrives.
+ *
+ * The rule is the one thing here that had to be thought about rather than
+ * drawn. It is **not** a bar: a bar is a proportion, a proportion needs a
+ * maximum, and there is no honest maximum for "visits". So it fills the
+ * tile's width every time, in the same time, and means nothing but "this
+ * tile has arrived". A rule that stopped at seventy per cent would be a
+ * chart of nothing, which is the kind of lie that is hard to unsee once
+ * somebody asks what the seventy per cent is.
+ */
+export function StatTile({ value, label, icon, delay = 0 }: {
+  value: number
+  label: string
+  icon: KobIcon
+  delay?: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const reduced = useReducedMotion()
+  const [here, setHere] = useState(false)
+
+  useEffect(() => {
+    if (reduced) return setHere(true)
+    const node = ref.current
+    if (!node) return
+    const watch = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      watch.disconnect()
+      setHere(true)
+    })
+    watch.observe(node)
+    return () => watch.disconnect()
+  }, [reduced])
+
+  return (
+    <div
+      ref={ref}
+      className="relative overflow-hidden rounded-3xl border border-white/10 bg-ink-card/50 p-6 sm:p-7"
+    >
+      <PixelGrid from="top-right" className="opacity-40" />
+
+      <Icon name={icon} tone="currentColor" className="relative h-7 w-7 text-brand-bright" />
+      <div className="relative mt-5">
+        <Tally value={value} label={label} />
+      </div>
+
+      <span
+        aria-hidden="true"
+        style={here && !reduced ? { transitionDelay: `${delay}ms` } : undefined}
+        className={cn(
+          'absolute inset-x-6 bottom-5 h-0.5 origin-left rounded-full bg-brand-bright/70',
+          'transition-transform duration-[900ms] ease-out motion-reduce:transition-none sm:inset-x-7',
+          here ? 'scale-x-100' : 'scale-x-0',
+        )}
+      />
     </div>
   )
 }

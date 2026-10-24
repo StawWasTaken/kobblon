@@ -37,13 +37,21 @@ const tones: Record<BandTone, string> = {
 }
 
 export function Band({
-  tone = 'night', edge = false, tight = false, className, children, id,
+  tone = 'night', edge = false, tight = false, decor, className, children, id,
 }: {
   tone?: BandTone
   /** A hairline across the top, where two bands of the same tone meet. */
   edge?: boolean
   /** Half the usual height, for a strip rather than a chapter. */
   tight?: boolean
+  /**
+   * Atmosphere, drawn against the band rather than against the column:
+   * `Floaters`, usually. It goes outside `Lane` on purpose - inside it,
+   * "two per cent from the left" means two per cent of the text column,
+   * which is a reaction face sitting on the first letter of the heading.
+   * That is exactly how it was wrong the first time.
+   */
+  decor?: ReactNode
   className?: string
   children: ReactNode
   id?: string
@@ -65,6 +73,7 @@ export function Band({
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-bright/60 to-transparent" />
         </>
       )}
+      {decor}
       <Lane>{children}</Lane>
     </section>
   )

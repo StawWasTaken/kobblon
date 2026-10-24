@@ -55,9 +55,14 @@ import { cn } from '@/lib/cn'
  * saying the wrong thing in it: a yellow skull is a smiley with no face
  * and a yellow angry face is not angry.
  */
-const FACE_YELLOW = '#FFCC4D'
+export const FACE_YELLOW = '#FFCC4D'
 
-const FACE_COLOUR: Record<Face, string> = {
+/*
+ * Exported because the At Kobblon pages float a few of these around a
+ * band, and a second copy of the face yellow is how two corners of one
+ * product end up with two yellows.
+ */
+export const FACE_COLOUR: Record<Face, string> = {
   smile: FACE_YELLOW,
   /* Not a face, so not the face yellow: the orange a flame is. */
   fire: '#F6861F',

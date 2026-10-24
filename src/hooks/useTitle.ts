@@ -16,6 +16,19 @@ const DEFAULT_ICON = asset('/brand/favicon.png')
  */
 export const AT_KOBBLON = 'At Kobblon'
 
+/**
+ * The tab on an At Kobblon page.
+ *
+ * A pipe rather than the dash the rest of the site uses, and that is
+ * Staw's call and a deliberate one: "the whole site is Stuff - Kobblon
+ * while these pages are Stuff | At Kobblon". The separator is the tell -
+ * a tab that reads "Privacy | At Kobblon" says you are in the part of the
+ * site that speaks *for* Kobblon rather than in the part you use.
+ */
+export function useAtTitle(title?: string | null) {
+  useExactTitle(title ? `${title} | ${AT_KOBBLON}` : AT_KOBBLON)
+}
+
 /** Create has a mark of its own, and every page of it wears it. */
 export const CREATE_ICON = asset('/brand/favicon-create.png')
 

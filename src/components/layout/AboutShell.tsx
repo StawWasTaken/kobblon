@@ -32,10 +32,16 @@ import { cn } from '@/lib/cn'
  * visitor has never had the chance to choose.
  */
 export function AboutShell({
-  hero, children, className,
+  hero, backdrop, children, className,
 }: {
   /** The washed opening of the page. A `Hero`, usually. */
   hero?: ReactNode
+  /**
+   * A picture behind the whole opening, under the wash and the gradients.
+   * For the page that opens on something somebody built rather than on a
+   * colour.
+   */
+  backdrop?: ReactNode
   /** The bands under it. */
   children?: ReactNode
   className?: string
@@ -53,9 +59,13 @@ export function AboutShell({
            * first band. The fade is what stops the pixels from ending on a
            * hard line halfway down the page.
            */}
+          {backdrop}
           <PixelField className="opacity-30" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70rem_40rem_at_50%_-20%,rgba(27,52,232,0.45),transparent_65%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink/20 via-ink/70 to-ink" />
+          <div className={cn(
+            'pointer-events-none absolute inset-0 bg-gradient-to-b to-ink',
+            backdrop ? 'from-ink/70 via-ink/80' : 'from-ink/20 via-ink/70',
+          )} />
           {hero}
         </div>
       )}
