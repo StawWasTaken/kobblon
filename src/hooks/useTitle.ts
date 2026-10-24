@@ -6,8 +6,10 @@ const DEFAULT_ICON = asset('/brand/favicon.png')
 
 /**
  * The pages that speak for Kobblon rather than being part of using it -
- * what Kobblon is, the Launcher, the rules, every policy, Support,
- * standing - are the **At Kobblon** pages. Staw's name for the family, so
+ * what Kobblon is, the Launcher, the rules, every policy, the forum and
+ * Contact & Support - are the **At Kobblon** pages. Account standing is
+ * not one of them any more: it went behind the rail, because your own
+ * record is a thing you have rather than a thing Kobblon says. Staw's name for the family, so
  * their tabs carry it: "What is Kobblon | At Kobblon".
  *
  * It is only the tab and the way we talk about them. The addresses stay

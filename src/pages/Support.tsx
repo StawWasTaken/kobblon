@@ -4,7 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
-  faCircleQuestion, faCheck, faUser, faEnvelope,
+  faCircleQuestion, faCheck, faUser, faEnvelope, faLock,
   faBolt, faArrowLeft, faPaperPlane,
   faBriefcase, faHandshake, faChartLine, faNewspaper,
 } from '@fortawesome/free-solid-svg-icons'
@@ -23,7 +23,7 @@ import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { useTitle } from '@/hooks/useTitle'
+import { useAtTitle } from '@/hooks/useTitle'
 import { listTickets, openTicket } from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -693,7 +693,9 @@ export function TicketCard({
 }
 
 export default function Support() {
-  useTitle('Contact & Support')
+  /* An At Kobblon tab, not a plain one. It sits in that bar now, so it
+     wears that family's pipe. */
+  useAtTitle('Contact & Support')
   const { profile } = useAuth()
   const toast = useToast()
 
@@ -807,6 +809,26 @@ export default function Support() {
                 </Button>
               </div>
             </div>
+
+            {/*
+              * The two lines that used to float under the card, on the
+              * card. They are footnotes to the thing above them - where a
+              * reply goes, and that we never ask for a password - and a
+              * footnote set loose in the middle of a page reads as a
+              * paragraph nobody finished.
+              */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-ink-line bg-ink/40 px-6 py-4 text-xs leading-relaxed text-muted sm:px-8">
+              <span className="flex items-center gap-2">
+                <Glyph icon={faEnvelope} className="text-[11px]" />
+                {profile
+                  ? 'Every ticket and every reply sits on this page, and in your inbox.'
+                  : 'Without an account, the reply goes to the address you give and nowhere else.'}
+              </span>
+              <span className="flex items-center gap-2">
+                <Glyph icon={faLock} className="text-[11px]" />
+                Kobblon never asks for your password, here or anywhere else.
+              </span>
+            </div>
           </Card>
 
           {/* ------------------------------------------------ the tickets */}
@@ -897,22 +919,13 @@ export default function Support() {
                 </Group>
               )}
             </Panel>
-          ) : (
-            /*
-              * Nothing to list, and one line saying why rather than a panel
-              * about it. A ticket written without an account is held for
-              * support and shown to nobody else - `user_id = auth.uid()` is
-              * null, not true - so there is no list to draw here.
-              */
-            <p className="text-sm leading-relaxed text-muted">
-              Signed in, every ticket and every reply sits on this page. Writing without
-              an account, the reply goes to the address you give and nowhere else.
-            </p>
-          )}
-
-          <p className="text-xs leading-relaxed text-muted">
-            Kobblon never asks for your password, here or anywhere else.
-          </p>
+          ) : null
+          /*
+            * Nothing is drawn for somebody with no account. A ticket
+            * written without one is held for support and shown to nobody
+            * else - `user_id = auth.uid()` is null, not true - so there is
+            * no list to draw, and the card above already says so.
+            */}
 
           {reading !== null && (
             <TicketThread number={reading} onClose={shutCard} onChanged={tickets.reload} />

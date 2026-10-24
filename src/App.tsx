@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Shutters } from '@/components/layout/Shutters'
 import { AppShell } from '@/components/layout/AppShell'
 import { Boundary } from '@/components/layout/Boundary'
@@ -101,8 +101,20 @@ function Booting() {
 /** Signed-out visitors get the landing page rather than a bounce to a form. */
 function RequireAuth() {
   const { session, loading } = useAuth()
+  const where = useLocation()
   if (loading) return <Booting />
-  return session ? <Outlet /> : <Navigate to="/" replace />
+  if (session) return <Outlet />
+  /*
+   * To the login screen, carrying where they were going.
+   *
+   * This used to throw them at the landing page: somebody who followed a
+   * real link to their standing, their inbox or a shared Home address was
+   * put on the front door with no word about why and nothing to press to
+   * get back. The address goes along as `next` and the login page sends
+   * them on once they are in.
+   */
+  const asked = `${where.pathname}${where.search}`
+  return <Navigate to={`/login?next=${encodeURIComponent(asked)}`} replace />
 }
 
 function RootRoute() {

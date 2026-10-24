@@ -111,10 +111,14 @@ export async function hasLiked(spaceId: string, userId: string) {
  * rather than at every button that could hit it.
  */
 const guestWords: Record<string, string> = {
-  space_likes: 'Guests cannot like Spaces. Make an account and you can.',
-  space_dislikes: 'Guests cannot rate Spaces. Make an account and you can.',
-  space_favorites: 'Guests cannot keep Spaces. Make an account and you can.',
-  space_watchers: 'Guests cannot follow a Space. Make an account and you can.',
+  /* The tables are still called `space_*` and that is fine - a column name
+     is nobody's problem. These are sentences a person reads, so they say
+     World, which is what the thing has been called since it stopped being
+     a Space. */
+  space_likes: 'Guests cannot like Worlds. Make an account and you can.',
+  space_dislikes: 'Guests cannot rate Worlds. Make an account and you can.',
+  space_favorites: 'Guests cannot keep Worlds. Make an account and you can.',
+  space_watchers: 'Guests cannot follow a World. Make an account and you can.',
 }
 
 function markError(table: string, message: string) {

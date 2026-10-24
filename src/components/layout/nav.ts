@@ -27,6 +27,18 @@ export type NavItem = {
    * interchangeable icons.
    */
   face?: boolean
+  /**
+   * There is nothing behind it without an account.
+   *
+   * A visitor is shown the rail on every public page - Discover, the
+   * Catalog, a World, somebody's profile, a 404 - and five of these rows
+   * bounced them to the login screen. A menu where half the rows are a
+   * door to the same door is the mess Staw was pointing at, said to
+   * somebody who has not even signed up yet.
+   */
+  needsAccount?: boolean
+  /** The other way round: drawn only for somebody with no account. */
+  visitorOnly?: boolean
 }
 
 /**
@@ -51,13 +63,15 @@ export const topNav: NavItem[] = [
  * appears in both, so the two never feel like the same menu twice.
  */
 export const sideNav: NavItem[] = [
-  { to: '/home', label: 'Home', icon: faHouse, end: true },
-  { to: '/profile', label: 'Profile', icon: faUser },
-  { to: '/avatar', label: 'My Avatar', icon: faShirt, ours: 'avatar' },
-  { to: '/friends', label: 'Friends', icon: faUserGroup, badge: 'friends' },
+  { to: '/home', label: 'Home', icon: faHouse, end: true, needsAccount: true },
+  { to: '/profile', label: 'Profile', icon: faUser, needsAccount: true },
+  { to: '/avatar', label: 'My Avatar', icon: faShirt, ours: 'avatar', needsAccount: true },
+  { to: '/friends', label: 'Friends', icon: faUserGroup, badge: 'friends', needsAccount: true },
+  /* People and the Library are readable by anybody, so they stay in a
+     visitor's rail rather than being hidden with the rest. */
   { to: '/people', label: 'People', icon: faUsers },
-  { to: '/library', label: 'Library', icon: faBookmark },
-  { to: '/inbox', label: 'Inbox', icon: faEnvelope, badge: 'mail' },
+  { to: '/library', label: 'Library', icon: faBookmark, needsAccount: true },
+  { to: '/inbox', label: 'Inbox', icon: faEnvelope, badge: 'mail', needsAccount: true },
   /*
    * Settings left the rail. It is in the account menu under the gear, and
    * it was in both - the same page reached two ways from one screen, which
@@ -88,10 +102,14 @@ export const sideNav: NavItem[] = [
  * both menus, because the sections bar is hidden there.
  */
 export const mobileNav: NavItem[] = [
-  { to: '/home', label: 'Home', icon: faHouse, end: true },
+  { to: '/home', label: 'Home', icon: faHouse, end: true, needsAccount: true },
   { to: '/discover', label: 'Discover', icon: faCompass },
-  { to: '/avatar', label: 'You', icon: faShirt, ours: 'avatar', face: true },
+  { to: '/avatar', label: 'You', icon: faShirt, ours: 'avatar', face: true, needsAccount: true },
   { to: '/catalog', label: 'Catalog', icon: faShirt },
+  /* A visitor's fourth slot, in place of Home and You. Signed in it would
+     be a fifth thing on a bar that is deliberately five with the chat, so
+     it is drawn only when the other two are not. */
+  { to: '/communities', label: 'Communities', icon: faPeopleGroup, visitorOnly: true },
 ]
 
 /**

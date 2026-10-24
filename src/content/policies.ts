@@ -765,7 +765,10 @@ export const policies: Policy[] = [
   },
   {
     slug: 'spaces',
-    title: 'Worlds and experiences',
+    /* Not "Worlds and experiences". An experience is Roblox's word for
+       the thing Kobblon calls a World, and a policy heading is the last
+       place on the site to use somebody else's name for our own thing. */
+    title: 'Worlds and what runs in them',
     eyebrow: 'What runs here',
     blurb: 'How a World is isolated, what the rules are inside one, and who answers for it.',
     intro:

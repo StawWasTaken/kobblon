@@ -1,0 +1,1 @@
+var e=`rounded-md bg-ink-card/80 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-white ring-1 ring-ink-line backdrop-blur`,t=`grid place-items-center rounded-lg bg-ink-card/80 text-white ring-1 ring-ink-line backdrop-blur transition-colors hover:bg-ink-hover`;export{e as n,t};

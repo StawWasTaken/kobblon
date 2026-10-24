@@ -764,11 +764,12 @@ export function CreateAnalytics() {
                   {formatCount(Number(row.uses))}
                 </span>
                 <span className="hidden text-right text-sm tabular-nums sm:block">
-                  {Number(row.pending_requests) > 0 ? (
-                    <Link to="/create/requests" className="font-bold text-link hover:underline">
-                      {row.pending_requests}
-                    </Link>
-                  ) : '0'}
+                  {/* A number, not a link. There is no requests page and
+                      no function behind one, and a link to a page nobody
+                      built lands on the content route below it and reads
+                      as a broken asset. When requests get a screen, this
+                      becomes a link again. */}
+                  {formatCount(Number(row.pending_requests))}
                 </span>
               </li>
             ))}

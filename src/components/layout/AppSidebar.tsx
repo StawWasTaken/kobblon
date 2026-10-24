@@ -7,6 +7,7 @@ import { unreadMail } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { outNav, sideNav, topNav } from './nav'
 import { profileLink } from '@/lib/links'
+import { Button } from '@/components/ui/Button'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 
 /** Pending friend requests waiting on an answer from this person. */
@@ -86,7 +87,13 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col border-r border-onbrand/10 bg-chrome">
       <nav className="flex-1 space-y-1.5 overflow-y-auto p-3 pt-4 kob-scroll" aria-label="Main">
-        {sideNav.map((item) => {
+        {/*
+          * Without an account, the rows that need one are not drawn. What
+          * is left is what a visitor can actually open, and the foot of
+          * the rail offers the account instead of pretending they have
+          * one.
+          */}
+        {sideNav.filter((item) => profile || !item.needsAccount).map((item) => {
           // Profile only makes sense once we know whose it is.
           const to = item.to === '/profile'
             ? (profile ? profileLink(profile) : '/login')
@@ -177,6 +184,23 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           ))}
         </div>
       </nav>
+
+      {!profile && (
+        /*
+          * The way in, at the foot of the rail where the person's own card
+          * sits once there is one. A visitor used to get a rail of five
+          * rows that each threw them at this screen; now it is offered
+          * once, as itself.
+          */
+        <div className="border-t border-onbrand/10 p-3">
+          <Button to="/signup" variant="yes" className="w-full" onClick={onNavigate}>
+            Make an account
+          </Button>
+          <Button to="/login" variant="ghost" className="mt-2 w-full" onClick={onNavigate}>
+            Log in
+          </Button>
+        </div>
+      )}
 
       {profile && (
         <NavLink

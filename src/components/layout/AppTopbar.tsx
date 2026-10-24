@@ -210,7 +210,15 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
               </Tooltip>
             </>
           ) : (
-            <Button size="sm" to="/signup">Sign Up</Button>
+            <>
+              {/* Both doors, the way the At Kobblon bar has both. One of
+                  them on its own meant somebody who already has an account
+                  had to find the login screen through the sign-up one. */}
+              <Button size="sm" variant="ghost" to="/login" className="hidden sm:inline-flex">
+                Log in
+              </Button>
+              <Button size="sm" to="/signup">Sign up</Button>
+            </>
           )}
 
           {profile?.is_guest && (

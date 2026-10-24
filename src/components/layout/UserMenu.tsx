@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faGear, faShieldHalved, faRightFromBracket, faRightLeft, faUserPlus,
-  faUserShield, faHeadset,
+  faUserShield, faHeadset, faRightToBracket,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { SwitchAccounts } from './SwitchAccounts'
@@ -24,7 +24,7 @@ type Item = { to?: string; label: string; icon: IconDefinition; onSelect?: () =>
  * pages theres your profile picture (just pfp in a circle) and when u click
  * on it theres a menu (like when u click on settings in the logged in
  * pages)". It is the same menu rather than a second one that looks like it,
- * because two of these is two places for "Log Out" to stop working.
+ * because two of these is two places for "Log out" to stop working.
  *
  * **Four rows and a sign-out, and that is the ceiling.** Staw, with a
  * screenshot of Roblox's beside ours: "the card lists are also very
@@ -71,15 +71,25 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
     ...(profile?.is_admin
       ? [{ to: '/staff', label: 'Staff', icon: faUserShield }]
       : []),
-    { to: '/settings', label: 'Settings', icon: faGear },
     ...(profile
       ? [
+          { to: '/settings', label: 'Settings', icon: faGear },
           { to: '/standing', label: 'Account standing', icon: faShieldHalved },
           { to: '/support', label: 'Contact & Support', icon: faHeadset },
           { label: 'Switch Accounts', icon: faRightLeft, onSelect: () => setSwitching(true) },
-          { label: 'Log Out', icon: faRightFromBracket, onSelect: () => signOut() },
+          { label: 'Log out', icon: faRightFromBracket, onSelect: () => signOut() },
         ]
-      : [{ to: '/support', label: 'Contact & Support', icon: faHeadset }]),
+      : [
+          /*
+           * Signed out this is not an account menu, so it does not list
+           * account pages. Settings was in it, and Settings is behind
+           * `RequireAuth` - a row that exists only to send somebody to the
+           * login screen, in the one menu that is supposed to be short.
+           */
+          { to: '/login', label: 'Log in', icon: faRightToBracket },
+          { to: '/signup', label: 'Make an account', icon: faUserPlus },
+          { to: '/support', label: 'Contact & Support', icon: faHeadset },
+        ]),
   ]
 
   return (

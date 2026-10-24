@@ -111,10 +111,10 @@ function PublicTopbar() {
             placeholder="Password"
             className="hidden h-9 w-32 rounded-xl border border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
           />
-          <Button type="submit" size="sm" variant="subtle" className="hidden md:inline-flex">Log In</Button>
-          <Button size="sm" to="/login" className="md:hidden">Log In</Button>
+          <Button type="submit" size="sm" variant="subtle" className="hidden md:inline-flex">Log in</Button>
+          <Button size="sm" to="/login" className="md:hidden">Log in</Button>
           {/* The one thing this bar is for, if you have not got an account. */}
-          <Button size="sm" to="/signup" variant="yes">Sign Up</Button>
+          <Button size="sm" to="/signup" variant="yes">Sign up</Button>
           {failed && (
             <p role="alert" className="hidden text-xs text-danger lg:block">Wrong username or password</p>
           )}

@@ -53,7 +53,7 @@ export function LoginForm() {
         required
         error={error}
       />
-      <Button type="submit" size="lg" block loading={pending}>Log In</Button>
+      <Button type="submit" size="lg" block loading={pending}>Log in</Button>
     </form>
   )
 }

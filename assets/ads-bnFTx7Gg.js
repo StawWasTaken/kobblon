@@ -1,0 +1,1 @@
+var e={banner:{w:728,h:90,label:`Banner, 728 by 90`},tall:{w:160,h:600,label:`Tall, 160 by 600`},box:{w:300,h:250,label:`Box, 300 by 250`}},t=[`banner`,`tall`];export{t as n,e as t};

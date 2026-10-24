@@ -13172,3 +13172,107 @@ What is still not built, said plainly: the newsroom, the wiki, a World
 belonging to a Community, and Round 133's five Launcher questions, which
 have now been open for long enough that it is worth saying whether they
 are dead rather than leaving them listed.
+
+## Round one hundred and seventy-seven
+
+A polishing pass over the whole site rather than a feature. Staw: "polish
+the whole app again, polish the design, the ecosystem, the content, etc,
+make everything coherent". What that turned up was mostly one thing wearing
+different clothes: **the site was built for somebody who is signed in, and
+a visitor was being shown it anyway.**
+
+### A visitor was shown a menu of doors to the login screen
+
+Every public page - Discover, the Catalog, a World, somebody's profile, a
+404 - draws the signed-in rail. Signed out it listed Home, Profile, My
+Avatar, Friends, Library and Inbox: six rows, all of them behind
+`RequireAuth`. The phone bar did the same with Home, You and Chat, three of
+its five slots.
+
+`NavItem` has `needsAccount` now, and a `visitorOnly` for the other
+direction. Signed out the rail is what a visitor can actually open - People,
+the At Kobblon pair - with Make an account and Log in at its foot where the
+person's own card sits once there is one. The phone bar drops Home and You,
+puts Communities in their place, and does not draw the chat at all, because
+the roster is read as whoever is signed in and signed out it opens an empty
+panel.
+
+The account menu did it too: signed out it offered Settings, which is behind
+`RequireAuth`. It now offers Log in, Make an account and Contact & Support.
+The top bar had Sign up and no Log in, so somebody who already had an
+account had to find the login screen through the sign-up one.
+
+### Following a link to a page that needs an account threw you at the front door
+
+`RequireAuth` redirected to `/`. No word about why, no way back, and the
+address they wanted gone. It redirects to `/login?next=<address>` now, and
+the login page honours `next` - after signing in, or signing up, or coming
+in as a guest. Only a path on this site, never `/login` or `/signup`
+themselves: a login page that follows whatever a link tells it to is an open
+redirect, and bouncing back to itself is a loop. The Log in / Sign up toggle
+carries `next` across with it.
+
+**This is the one worth copying.** If the Launcher or the Workspace ever
+sends somebody to the website to sign in, `/login?next=/whatever` now works
+and lands them where you meant.
+
+### A TypeError on the console of every public page
+
+`app.html` has two inline scripts. The first removes the boot screen on any
+page that does not get the logo reveal - every At Kobblon page, the forum,
+login, signup. The second then did
+`document.getElementById('boot').setAttribute(...)` with no check, so on all
+of those it threw. Harmless only because nothing came after it in that
+script, which is not a thing to leave resting on. Guarded.
+
+While in there: `/support` was not in the list of pages that skip the
+reveal, so a stranger writing to us sat through four seconds of our logo
+first. It is now.
+
+### Words
+
+- The guest refusal messages said "Guests cannot like Spaces". The tables
+  are still `space_*` and that is fine; the sentences say World.
+- What is Kobblon's opening line said "build unique experiences". An
+  experience is Roblox's word for what Kobblon calls a World.
+- The eighth policy was titled "Worlds and experiences". Same fix, and a
+  policy heading is the last place on the site to use somebody else's name
+  for our own thing.
+- The 404 said "Discover Spaces", and its Go home button sent a stranger to
+  `/home`, which is behind the rail - a second dead end after the first one.
+  It goes to the landing page when there is no account.
+- Log in, Sign up and Log out were Title Case in five places and sentence
+  case in four. The whole site is sentence case, so they all are now. "Play
+  as Guest" is "Play as a guest".
+
+### Dead and missing
+
+- `/create/requests` has no route and no function behind it; the link fell
+  through to the content route and read as a broken asset. It is a plain
+  number until requests get a screen.
+- Four pages had no tab title: the 404, Configure, Maintenance and
+  ConfigureCommunity, which is now named after the Community so two open
+  tabs can be told apart.
+- Contact & Support used a plain tab title while sitting in the At Kobblon
+  bar. It wears that family's pipe now: "Contact & Support | At Kobblon".
+  The comment in `useTitle` that still listed account standing in that
+  family was corrected - standing went behind the rail last round.
+
+### Contact & Support, again
+
+The two lines that floated under the card - where a reply goes, and that we
+never ask for a password - are a foot inside the card now. A footnote set
+loose in the middle of a page reads as a paragraph nobody finished.
+
+### For the applications
+
+Nothing changed in `@/engine`, `@/lib/kinds`, `design/preset.js` or any
+component you mount. Two things are worth knowing: `/login?next=<path>`
+works, and if the Workspace ever says anything about a World, the word is
+**World** - not space, not experience. The guest refusal strings and the
+policy headings now match `@/lib/naming`, which is where that word is
+decided for the whole product.
+
+Still not built, said as plainly as last round: the newsroom, the wiki, a
+World belonging to a Community, requests have no screen, and Round 133's
+five Launcher questions are still open.

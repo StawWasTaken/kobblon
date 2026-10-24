@@ -24,6 +24,7 @@ import { EventsEditor } from '@/components/community/EventsEditor'
 import { FundsPanel } from '@/components/community/FundsPanel'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
+import { useTitle } from '@/hooks/useTitle'
 import {
   answerAllyRequest, closeCommunity, declareEnemy, getCommunity, getCommunityOverview, liftBan,
   listCommunities, listCommunityAudit, listCommunityBanned, listRelations, removeRelation,
@@ -81,6 +82,14 @@ export default function ConfigureCommunity() {
     async () => (group ? getCommunityOverview(group.id) : null),
     [group?.id, profile?.id],
   )
+
+  /*
+   * Named after the Community rather than after the page: somebody
+   * configuring two of them has two tabs open and no way to tell them
+   * apart otherwise. Above the early returns, because a hook called after
+   * one is a hook that is sometimes not called.
+   */
+  useTitle(group ? `Configure ${group.name}` : 'Configure')
 
   if (community.loading) return <Page><Skeleton className="h-64 w-full" /></Page>
   if (community.error) {

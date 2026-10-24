@@ -74,7 +74,16 @@ export function PhoneBar() {
       aria-label="Primary"
     >
       <ul className="flex" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {mobileNav.map((item) => (
+        {/*
+          * Signed out, Home and You are not drawn and Communities takes
+          * their place: both of them are behind `RequireAuth`, so a
+          * visitor pressing either got the login screen - two of the four
+          * slots on the bar being the same door. The chat beside them is
+          * the dock, which asks for an account itself.
+          */}
+        {mobileNav
+          .filter((item) => (profile ? !item.visitorOnly : !item.needsAccount))
+          .map((item) => (
           <li key={item.to} className="flex-1">
             <NavLink
               to={item.to}
@@ -129,7 +138,12 @@ export function PhoneBar() {
         ))}
 
         {/* The chat is not a route - it is the dock - so it is a button, and
-            it is the one slot on the bar that carries a number. */}
+            it is the one slot on the bar that carries a number.
+
+            Not drawn without an account: the roster is read as whoever is
+            signed in, so signed out it opens an empty panel with nothing
+            to say. A button that opens nothing is worse than no button. */}
+        {profile && (
         <li className="flex-1">
           <Slot on={chatOpen} label="Chat" onClick={openChat}>
             <Glyph
@@ -144,6 +158,7 @@ export function PhoneBar() {
             )}
           </Slot>
         </li>
+        )}
       </ul>
     </nav>
   )

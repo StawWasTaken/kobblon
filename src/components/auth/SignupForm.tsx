@@ -230,7 +230,7 @@ export function SignupForm({
       )}
 
       <Button variant="yes" type="submit" size="lg" block loading={pending}>
-        {claiming ? 'Keep this account' : 'Sign Up'}
+        {claiming ? 'Keep this account' : 'Sign up'}
       </Button>
 
       <p className="text-center text-[11px] leading-relaxed text-muted">

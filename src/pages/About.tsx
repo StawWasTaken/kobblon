@@ -138,8 +138,8 @@ export default function About() {
             className="mx-auto h-12 w-auto sm:h-16"
           />
           <p className="mt-9 text-xl leading-relaxed text-white/70 sm:text-2xl">
-            Kobblon is an online sandbox platform filled with user-generated 3D worlds, where
-            players can unleash their creativity, build unique experiences, and hang out together.
+            Kobblon is an online sandbox platform filled with Worlds that players built, where
+            anybody can make something, play what everybody else made, and hang about together.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Button to="/signup" variant="yes" size="lg">Make an account</Button>

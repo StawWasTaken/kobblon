@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faArrowLeft, faCircleCheck } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
@@ -53,6 +53,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
   useForceDark()
   const { session, profile, signInAsGuest } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [guestPending, setGuestPending] = useState(false)
   const [guestError, setGuestError] = useState<string | null>(null)
@@ -62,16 +63,32 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
   // door on the one thing they came here to do: keep what they made.
   const claiming = isSignup && !!profile?.is_guest
 
-  useTitle(claiming ? 'Keep your account' : isSignup ? 'Sign Up' : 'Log In')
+  useTitle(claiming ? 'Keep your account' : isSignup ? 'Sign up' : 'Log in')
 
-  if (session && !claiming) return <Navigate to="/home" replace />
+  /*
+   * Where to go once they are in.
+   *
+   * `RequireAuth` puts the address somebody was trying to reach in `next`,
+   * so following a link to a page that needs an account ends up on that
+   * page rather than on Home. Only a path on this site is honoured, and
+   * never one of these two screens - an open redirect is a login page
+   * that will send somebody anywhere a link tells it to, and bouncing
+   * back here is a loop.
+   */
+  const asked = params.get('next') ?? ''
+  const after = asked.startsWith('/') && !asked.startsWith('//')
+    && !asked.startsWith('/login') && !asked.startsWith('/signup')
+    ? asked
+    : '/home'
+
+  if (session && !claiming) return <Navigate to={after} replace />
 
   const enterAsGuest = async () => {
     setGuestPending(true)
     setGuestError(null)
     try {
       await signInAsGuest()
-      navigate('/home')
+      navigate(after)
     } catch (err) {
       setGuestError(
         err instanceof Error && err.message.includes('limit')
@@ -205,7 +222,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                     <SignupForm
                       claiming
                       onSent={setSentTo}
-                      onClaimed={() => navigate('/home')}
+                      onClaimed={() => navigate(after)}
                     />
                   </>
                 ) : (
@@ -214,7 +231,12 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       {(['login', 'signup'] as const).map((which) => (
                         <Link
                           key={which}
-                          to={which === 'login' ? '/login' : '/signup'}
+                          /* Carrying `next` across: somebody sent here by a
+                             link, who then switches to Sign up, still lands
+                             where they were going once they are in. */
+                          to={`${which === 'login' ? '/login' : '/signup'}${
+                            asked && after !== '/home' ? `?next=${encodeURIComponent(after)}` : ''
+                          }`}
                           replace
                           className={cn(
                             'rounded-lg py-2 text-center text-sm font-bold transition-colors',
@@ -223,7 +245,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                               : 'text-white/55 hover:bg-white/5 hover:text-white',
                           )}
                         >
-                          {which === 'login' ? 'Log In' : 'Sign Up'}
+                          {which === 'login' ? 'Log in' : 'Sign up'}
                         </Link>
                       ))}
                     </div>
@@ -246,7 +268,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                     </div>
 
                     <Button variant="subtle" block loading={guestPending} onClick={enterAsGuest}>
-                      Play as Guest
+                      Play as a guest
                     </Button>
                     {guestError && (
                       <p className="mt-2 text-center text-xs text-danger">{guestError}</p>

@@ -157,7 +157,7 @@
       (function () {
         var open = [
           '/about', '/download', '/policies', '/terms', '/privacy',
-          '/guidelines', '/forum', '/login', '/signup',
+          '/guidelines', '/support', '/forum', '/login', '/signup',
           '/creator/sign-in', '/launcher/sign-in'
         ]
         var here = location.pathname.replace(/\/+$/, '') || '/'
@@ -191,7 +191,16 @@
           var worn = localStorage.getItem('kobblon.appearance')
           if (worn === 'halloween' || worn === 'christmas') look = worn
         } catch (e) {}
-        document.getElementById('boot').setAttribute('data-ink', mode + '-' + look)
+        /*
+         * The script above has already taken the boot screen away on every
+         * page that does not get the wait, so on those there is nothing
+         * here to colour. Without this check that was a TypeError on the
+         * console of every At Kobblon page, the forum, login and signup -
+         * harmless only because nothing came after it in this script,
+         * which is not a thing to leave resting on.
+         */
+        var boot = document.getElementById('boot')
+        if (boot) boot.setAttribute('data-ink', mode + '-' + look)
       })()
 
       /*

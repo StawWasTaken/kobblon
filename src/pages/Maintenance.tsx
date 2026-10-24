@@ -2,6 +2,7 @@ import { Kobby } from '@/components/brand/Kobby'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
 import { Button } from '@/components/ui/Button'
+import { useTitle } from '@/hooks/useTitle'
 import { Glyph } from '@/components/brand/Glyph'
 import { faArrowsRotate, faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons'
 
@@ -18,6 +19,8 @@ import { faArrowsRotate, faScrewdriverWrench } from '@fortawesome/free-solid-svg
  * linked from here; somebody who needs it knows it.
  */
 export default function Maintenance({ note }: { note?: string | null }) {
+  useTitle('Back shortly')
+
   return (
     <div className="relative grid min-h-dvh place-items-center overflow-hidden bg-ink px-4 py-16">
       <PixelField className="opacity-25" />
