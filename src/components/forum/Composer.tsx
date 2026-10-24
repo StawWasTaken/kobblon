@@ -2,13 +2,14 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faImage, faXmark, faPaperPlane, faHeading, faBold, faItalic, faStrikethrough,
-  faQuoteRight, faCode, faListUl, faListOl, faMinus, faCircleInfo,
+  faXmark, faPaperPlane, faHeading, faBold, faItalic, faStrikethrough,
+  faQuoteRight, faCode, faListUl, faListOl, faMinus, faCircleInfo, faPaperclip,
+  faPlay,
 } from '@fortawesome/free-solid-svg-icons'
 import { Link } from 'react-router-dom'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
-import { forumImageUrl, uploadForumImage } from '@/lib/api'
+import { forumImageUrl, uploadForumImage, isForumClip } from '@/lib/api'
 import { cn } from '@/lib/cn'
 
 /**
@@ -31,7 +32,36 @@ import { cn } from '@/lib/cn'
  * not a rule.
  */
 const MOST = 4
-const BIGGEST = 2 * 1024 * 1024
+
+/*
+ * Forty megabytes, because Staw asked for forty and because a clip is not a
+ * picture: two was a sensible ceiling for a screenshot and no ceiling at all
+ * for thirty seconds of footage.
+ *
+ * It is the same number as the `forum` bucket's own limit in 0284, said
+ * twice on purpose. This one exists so somebody is told before they wait for
+ * an upload; that one is the rule, because a rule that only exists in a
+ * browser is not a rule. If they ever disagree, the bucket wins and the
+ * composer is the one that is wrong.
+ */
+const BIGGEST = 40 * 1024 * 1024
+
+/*
+ * What a browser can be asked for.
+ *
+ * `video/quicktime` is in here and in the bucket because a Mac or an iPhone
+ * hands `.mov` over by default and refusing it at the door would be refusing
+ * most of what gets dragged in. Whether a given `.mov` plays back depends on
+ * the codec inside it, which nothing here can see - so it is allowed, it may
+ * not play, and the composer shows the frame back rather than a tick so
+ * somebody finds out before posting rather than after.
+ */
+const TAKES = [
+  'image/png', 'image/jpeg', 'image/webp', 'image/gif',
+  'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+].join(',')
+
+const megabytes = (bytes: number) => `${Math.round(bytes / (1024 * 1024))}MB`
 
 /*
  * The toolbar.
@@ -133,26 +163,26 @@ export function Composer({
     if (!chosen?.length) return
     const room = MOST - images.length
     if (room <= 0) {
-      toast('Four pictures at most.', 'info')
+      toast('Four attachments at most.', 'info')
       return
     }
 
     setPutting(true)
     try {
       for (const one of Array.from(chosen).slice(0, room)) {
-        if (!one.type.startsWith('image/')) {
-          toast('Pictures only.', 'info')
+        if (!one.type.startsWith('image/') && !one.type.startsWith('video/')) {
+          toast('Pictures and clips only.', 'info')
           continue
         }
         if (one.size > BIGGEST) {
-          toast(`${one.name} is over two megabytes.`, 'info')
+          toast(`${one.name} is ${megabytes(one.size)}; forty is the most.`, 'info')
           continue
         }
         const path = await uploadForumImage(one, profile.id)
         setImages((had) => [...had, path])
       }
     } catch (wrong) {
-      toast(wrong instanceof Error ? wrong.message : 'That picture did not go up.', 'error')
+      toast(wrong instanceof Error ? wrong.message : 'That did not go up.', 'error')
     } finally {
       setPutting(false)
       if (file.current) file.current.value = ''
@@ -287,7 +317,7 @@ export function Composer({
         <input
           ref={file}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
+          accept={TAKES}
           multiple
           hidden
           onChange={(e) => choose(e.target.files)}
@@ -295,13 +325,15 @@ export function Composer({
         <Button
           size="sm"
           variant="subtle"
-          icon={faImage}
+          icon={faPaperclip}
           onClick={() => file.current?.click()}
           disabled={putting || images.length >= MOST}
           loading={putting}
         >
-          {images.length ? `${images.length}/${MOST}` : 'Add a picture'}
+          {images.length ? `${images.length}/${MOST}` : 'Add a picture or clip'}
         </Button>
+
+        <span className="text-xs text-white/30">Up to 40MB each</span>
 
         <span className="ml-auto flex items-center gap-2">
           {onCancel && (
@@ -351,11 +383,33 @@ export function Composer({
 function Thumb({ path, onDrop }: { path: string; onDrop: () => void }) {
   return (
     <span className="group relative block h-20 w-20 overflow-hidden rounded-xl border border-white/10 bg-media">
-      <img
-        src={forumImageUrl(path)}
-        alt="Attached"
-        className="h-full w-full object-cover"
-      />
+      {/*
+        * The thumbnail is what is actually stored rather than a local
+        * preview, for a clip as much as for a picture: `preload="metadata"`
+        * asks the bucket for the first frame, so a file that went up and
+        * cannot be played back shows an empty box here instead of showing a
+        * tick and failing in the thread.
+        */}
+      {isForumClip(path) ? (
+        <>
+          <video
+            src={forumImageUrl(path)}
+            preload="metadata"
+            muted
+            playsInline
+            className="h-full w-full object-cover"
+          />
+          <span className="pointer-events-none absolute inset-0 grid place-items-center bg-ink/30">
+            <Glyph icon={faPlay} className="text-xs text-white/90" />
+          </span>
+        </>
+      ) : (
+        <img
+          src={forumImageUrl(path)}
+          alt="Attached"
+          className="h-full w-full object-cover"
+        />
+      )}
       <button
         type="button"
         onClick={onDrop}

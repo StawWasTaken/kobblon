@@ -18,6 +18,7 @@ import { useLivePresence } from '@/hooks/usePresenceStore'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useChatDock } from '@/components/chat/ChatDock'
+import { presenceNow, usePresenceVersion } from '@/hooks/usePresenceStore'
 import { usePersonActions } from '@/components/social/personActions'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -220,6 +221,9 @@ function Loading() {
 }
 
 export default function Friends() {
+  /* The split below reads presence directly, so this page re-renders when
+     anybody's moves rather than holding the answer it had at mount. */
+  usePresenceVersion()
   const { profile } = useAuth()
   const { openConversation } = useChatDock()
   const toast = useToast()
@@ -316,7 +320,15 @@ export default function Friends() {
     || person.username.toLowerCase().includes(filter)
 
   const shown = (source.data ?? []).filter(matches)
-  const online = (friends.data ?? []).filter((one) => one.is_online).length
+  /*
+   * Who is here, asked the same way the card under the name asks.
+   *
+   * It was `one.is_online` - the row's own flag, which `presenceOf` will
+   * not believe once `last_seen_at` has gone stale. So three people sat
+   * under "Around now" each saying Offline, which is the heading and the
+   * label disagreeing rather than either of them being broken.
+   */
+  const online = (friends.data ?? []).filter((one) => presenceNow(one) !== 'offline').length
   const waiting = incoming.data?.length ?? 0
 
   const respond = async (requestId: string, accept: boolean) => {
@@ -385,8 +397,12 @@ export default function Friends() {
    * start something with somebody, and somebody who is not there cannot be
    * started with, so the ones who are go first and say so.
    */
-  const here = current.name === 'Friends' ? shown.filter((one) => one.is_online) : []
-  const away = current.name === 'Friends' ? shown.filter((one) => !one.is_online) : shown
+  const here = current.name === 'Friends'
+    ? shown.filter((one) => presenceNow(one) !== 'offline')
+    : []
+  const away = current.name === 'Friends'
+    ? shown.filter((one) => presenceNow(one) === 'offline')
+    : shown
 
   const doorsFor = (person: Person) => (
     current.name === 'Blocked'

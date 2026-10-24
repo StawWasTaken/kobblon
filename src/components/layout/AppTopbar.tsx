@@ -147,7 +147,19 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
           ))}
         </nav>
 
-        <SearchBar className="ml-auto w-full max-w-xs sm:max-w-sm lg:ml-4 lg:max-w-md" />
+        {/*
+         * `w-full` was the bug Staw photographed: the field asked for the
+         * whole bar, the group of buttons to its right is `shrink-0`, and
+         * the overflow went off the right-hand side - so the placeholder
+         * read "Searc" and the clear button was past the edge of the
+         * screen.
+         *
+         * `min-w-0 flex-1` asks for the room that is left instead, which is
+         * the same thing on a laptop and the difference between a field and
+         * a stump on a phone. The floor stops it collapsing to the two
+         * glyphs it carries inside it.
+         */}
+        <SearchBar className="ml-auto min-w-0 flex-1 basis-32 max-w-xs sm:max-w-sm lg:ml-4 lg:max-w-md" />
 
         <div className="ml-auto flex shrink-0 items-center gap-1 pl-1">
           {profile ? (

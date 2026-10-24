@@ -5817,7 +5817,36 @@ export function forumImageUrl(path: string): string {
   return supabase.storage.from(forumBucket).getPublicUrl(path).data.publicUrl
 }
 
-/** Puts one picture up and hands back its path, or throws with the reason. */
+/**
+ * Whether an attachment is a clip rather than a picture.
+ *
+ * Decided from the ending of the stored path, because the path is all a
+ * reader has: the post carries `images` and nothing else, and asking the
+ * bucket for the type of every attachment on a page is a round trip per
+ * thumbnail to learn something the filename already says.
+ *
+ * It is the uploader's own extension, so it is only as true as they were -
+ * a `.mp4` that is really a picture renders as a clip that will not play.
+ * That is a wrong thumbnail and not a hole: nothing here is executed, and
+ * what the browser actually does with the bytes is decided by the type
+ * storage recorded, not by this.
+ */
+const CLIP_ENDINGS = ['mp4', 'webm', 'ogv', 'ogg', 'mov', 'm4v']
+
+export function isForumClip(path: string): boolean {
+  const dot = path.lastIndexOf('.')
+  return dot > -1 && CLIP_ENDINGS.includes(path.slice(dot + 1).toLowerCase())
+}
+
+/**
+ * Puts one attachment up and hands back its path, or throws with the
+ * reason.
+ *
+ * Still called `uploadForumImage` and still the one path for both, because
+ * the bucket, the folder rule and the size limit are the same for a clip as
+ * for a picture - only the list of types storage accepts differs, and that
+ * is 0284's business rather than this function's.
+ */
 export async function uploadForumImage(file: File, userId: string): Promise<string> {
   const dot = file.name.lastIndexOf('.')
   const ending = dot > -1 ? file.name.slice(dot + 1).toLowerCase() : 'png'
@@ -5933,7 +5962,40 @@ export async function forumLike(what: 'topic' | 'post', id: number): Promise<boo
  * why this can be called without checking first and does nothing when
  * nobody is signed in.
  */
+/**
+ * Say that this thread has been read.
+ *
+ * Signed in, the database keys the reading to the account and refuses a
+ * second one the same day, so calling this twice costs nothing and this
+ * note is only about everybody else: signed out there is nobody to key on,
+ * so the server counts whatever it is told, and the once-a-day rule has to
+ * live here. It is kept per topic per day in `localStorage`, which stops a
+ * refresh or a page that mounts twice counting twice and stops nothing
+ * else - 0286 says at length why that is accepted for this one number.
+ *
+ * A browser with storage blocked asks every time. That is the right way
+ * round: the alternative is a reader who never counts at all.
+ */
+const SEEN_KEY = 'kobblon.forum.seen'
+
+function askedToday(topic: number): boolean {
+  const today = new Date().toISOString().slice(0, 10)
+  try {
+    const had = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}') as Record<string, string>
+    if (had[topic] === today) return true
+    /* Yesterday's entries are not worth carrying, so only today's is kept. */
+    const keep: Record<string, string> = {}
+    for (const [id, day] of Object.entries(had)) if (day === today) keep[id] = day
+    keep[topic] = today
+    localStorage.setItem(SEEN_KEY, JSON.stringify(keep))
+  } catch {
+    /* No storage, no memory of having asked. Ask. */
+  }
+  return false
+}
+
 export async function forumSeen(topic: number): Promise<void> {
+  if (askedToday(topic)) return
   await supabase.rpc('forum_seen', { in_topic: topic })
 }
 

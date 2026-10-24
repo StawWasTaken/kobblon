@@ -54,19 +54,29 @@ function subscribe(tell: () => void) {
 /** Anything that reads presence re-reads it when this moves. */
 const useVersion = () => useSyncExternalStore(subscribe, () => version, () => version)
 
-/**
- * The state of one person: what they are saying about themselves if they are
- * here, and what their row last said if they are not.
- */
-export function useLivePresence(person?: {
+type Somebody = {
   id?: string
   is_online?: boolean
   in_space_id?: string | null
   activity?: string | null
   last_seen_at?: string | null
-} | null): Presence {
-  useVersion()
+} | null | undefined
 
+/**
+ * The state of one person, read rather than subscribed to.
+ *
+ * The same answer `useLivePresence` gives, for the places that need it
+ * outside a hook - sorting a list into who is here and who is not, which
+ * cannot call a hook per person.
+ *
+ * It exists because a page that split its list on `is_online` and drew each
+ * card with `useLivePresence` was asking two different questions and
+ * putting the answers next to each other: okayCooki3's photograph of three
+ * friends under "Around now", each of them saying Offline underneath. The
+ * row said online, the row was stale, and the label knew and the heading
+ * did not. Anything that groups by presence groups by this.
+ */
+export function presenceNow(person: Somebody): Presence {
   const live = person?.id ? here.get(person.id) : undefined
   if (live) {
     return live.in_space_id ? 'in-space' : live.activity === 'building' ? 'building' : 'online'
@@ -76,6 +86,24 @@ export function useLivePresence(person?: {
   if (person?.id && person.id === myId) return 'online'
 
   return presenceOf(person)
+}
+
+/**
+ * Re-render when anybody's presence moves.
+ *
+ * For a component that calls `presenceNow` itself: without this the answer
+ * is read once and never asked again, which is the photograph this whole
+ * file exists to stop being taken.
+ */
+export const usePresenceVersion = useVersion
+
+/**
+ * The state of one person: what they are saying about themselves if they are
+ * here, and what their row last said if they are not.
+ */
+export function useLivePresence(person?: Somebody): Presence {
+  useVersion()
+  return presenceNow(person)
 }
 
 /*

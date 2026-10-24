@@ -4,8 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { faComment, faEye, faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 import { NameMarks } from '@/components/brand/Verified'
 import { StatusPill, Flags } from '@/components/forum/Pieces'
-import { formatCount } from '@/lib/format'
-import { timeAgo } from '@/lib/format'
+import { formatCount, forumViews, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { ForumTopic } from '@/types/db'
 
@@ -81,7 +80,7 @@ export function TopicRow({
 
         <span className="col-span-2 flex items-center gap-4 text-xs font-bold tabular-nums text-white/45 sm:col-span-1 sm:gap-6">
           <Count icon={faComment} n={topic.reply_count} what="replies" />
-          <Count icon={faEye} n={topic.view_count} what="views" />
+          <Count icon={faEye} n={topic.view_count} what="views" shown={forumViews} />
           <Count icon={faThumbsUp} n={topic.like_count} what="found it helpful" />
         </span>
       </Link>
@@ -89,11 +88,19 @@ export function TopicRow({
   )
 }
 
-function Count({ icon, n, what }: { icon: typeof faComment; n: number; what: string }) {
+function Count({
+  icon, n, what, shown = formatCount,
+}: {
+  icon: typeof faComment
+  n: number
+  what: string
+  /* Views are printed through `forumViews`, which is not `formatCount`. */
+  shown?: (n: number) => string
+}) {
   return (
-    <span className="inline-flex w-14 items-center gap-1.5" title={`${n} ${what}`}>
+    <span className="inline-flex w-14 items-center gap-1.5" title={`${shown(n)} ${what}`}>
       <Glyph icon={icon} className="text-[11px] text-white/25" />
-      {formatCount(n)}
+      {shown(n)}
     </span>
   )
 }

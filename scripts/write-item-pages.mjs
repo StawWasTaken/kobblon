@@ -276,10 +276,16 @@ export async function writeItemPages(into = 'dist') {
      * The first attached picture, where there is one. Wide rather than
      * square, because a screenshot of somebody's World is a landscape and
      * a square card would crop the middle out of it.
+     *
+     * The first *picture*, not the first attachment: a post can carry a
+     * clip now, and an `og:image` pointing at an mp4 is a card that shows
+     * a broken image everywhere it is pasted. A post that is nothing but a
+     * clip gets no picture and falls back to the plain card, which is less
+     * than it could be and is at least not wrong.
      */
-    const shot = Array.isArray(topic.images) && topic.images.length
-      ? pictureIn('forum', topic.images[0])
-      : null
+    const stills = (Array.isArray(topic.images) ? topic.images : [])
+      .filter((path) => !/\.(mp4|webm|ogv|ogg|mov|m4v)$/i.test(String(path)))
+    const shot = stills.length ? pictureIn('forum', stills[0]) : null
     if (shot) page.image = shot
 
     add(`forum/t/${topic.id}`, page)

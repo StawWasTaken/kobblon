@@ -9,6 +9,7 @@ import {
   faGear, faArrowLeft, faUserGroup, faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
+import { LoadingMark } from '@/components/ui/Loading'
 import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Icon } from '@/components/brand/Icon'
@@ -768,17 +769,39 @@ export function ChatDock({ children }: { children: ReactNode }) {
     return () => { supabase.removeChannel(channel) }
   }, [profile, load])
 
-  const openConversation = useCallback((id: string) => {
-    setOpenIds((all) => (all.includes(id) ? all : [id, ...all].slice(0, MAX_OPEN)))
-    load()
-  }, [load])
-
+  /*
+   * Opening a conversation from anywhere on the site.
+   *
+   * It used to set `openIds` and nothing else - and `openIds` is only ever
+   * drawn by the docked windows, which are `hidden md:flex`. So on a phone,
+   * every Chat button on the site did exactly nothing: the state changed,
+   * the thing that draws it was not on the screen, and there was no error
+   * to find. okayCooki3 reported it twice from two different pages, which
+   * is what a silent bug looks like from outside.
+   *
+   * The width is asked at the moment of use rather than held in state. A
+   * `matches` read once at mount is the trap this project keeps falling
+   * into - turn the phone sideways and the value that decides where the
+   * conversation opens is the one from before you turned it.
+   *
+   * Both are set either way. The dock windows are harmless while hidden,
+   * and it means rotating mid-conversation lands on the same thread rather
+   * than on nothing.
+   */
   /*
    * What the phone is showing: nothing, the list, or one conversation by
    * id. One value rather than an "open" flag and a "which" - two pieces of
    * state that can disagree is how a sheet ends up open with nothing in it.
    */
   const [phone, setPhone] = useState<string | null>(null)
+
+  const openConversation = useCallback((id: string) => {
+    setOpenIds((all) => (all.includes(id) ? all : [id, ...all].slice(0, MAX_OPEN)))
+    const narrow = typeof window !== 'undefined'
+      && window.matchMedia('(max-width: 767px)').matches
+    if (narrow) setPhone(id)
+    load()
+  }, [load])
 
   const unread = conversations.reduce((all, one) => all + (one.unread_count ?? 0), 0)
 
@@ -884,7 +907,19 @@ export function ChatDock({ children }: { children: ReactNode }) {
                      * goes back to the list rather than showing an empty
                      * screen with no way out of it.
                      */
-                    if (!conversation) return (
+                    /*
+                     * Not yet, and gone, are two different things. A
+                     * conversation opened from a Chat button is in state
+                     * before the roster that holds it has come back, so
+                     * saying it is not here any more while it is still
+                     * loading would be telling somebody their chat is gone
+                     * every single time they pressed the button.
+                     */
+                    if (!conversation) return loading ? (
+                      <div className="grid h-full place-items-center p-6">
+                        <LoadingMark />
+                      </div>
+                    ) : (
                       <div className="grid h-full place-items-center p-6 text-center text-sm text-muted">
                         That conversation is not here any more.
                       </div>

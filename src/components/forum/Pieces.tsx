@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/ui/Avatar'
 import { NameMarks } from '@/components/brand/Verified'
 import { Glyph } from '@/components/brand/Glyph'
-import { faCheck, faThumbsUp, faLock, faThumbtack } from '@fortawesome/free-solid-svg-icons'
-import { forumImageUrl } from '@/lib/api'
+import { faCheck, faThumbsUp, faLock, faThumbtack, faPlay } from '@fortawesome/free-solid-svg-icons'
+import { forumImageUrl, isForumClip } from '@/lib/api'
+import { Lightbox } from '@/components/forum/Lightbox'
 import { timeAgo } from '@/lib/format'
 import { Markup } from '@/components/forum/Markup'
 import { OpTag } from '@/components/forum/Reading'
@@ -85,6 +87,19 @@ const MARKS: Record<Exclude<ForumStatus, 'open'>, { word: string; look: string }
   'looked-at': { word: 'Been looked at', look: 'border-white/15 bg-white/5 text-white/60' },
 }
 
+/**
+ * The same words, for the buttons that put them on.
+ *
+ * Exported from here rather than written again on the topic page, because
+ * the button and the pill it produces have to say the same thing and
+ * "Been looked at" was already spelled out twice in two ways.
+ */
+export const STATUS_WORDS: Record<Exclude<ForumStatus, 'open'>, string> =
+  Object.fromEntries(
+    (Object.entries(MARKS) as [Exclude<ForumStatus, 'open'>, { word: string }][])
+      .map(([key, mark]) => [key, mark.word]),
+  ) as Record<Exclude<ForumStatus, 'open'>, string>
+
 export function StatusPill({
   status, className, by,
 }: {
@@ -145,32 +160,75 @@ export function PostBody({ body, className }: { body: string; className?: string
   return <Markup body={body} className={className} />
 }
 
-/** The pictures somebody attached. Up to four, which the server enforces. */
+/**
+ * What somebody attached. Up to four, which the server enforces.
+ *
+ * Each one is a button into `Lightbox` rather than a link to the file.
+ * Staw asked for the bigger view and asked for the new tab to go, and those
+ * are the same change: a thumbnail that is an `<a href>` is a new tab by
+ * middle click whatever the click handler does.
+ *
+ * A clip is drawn as its own first frame with a play mark over it, rather
+ * than as a player per attachment: four players in a post are four things
+ * loading, four sets of controls, and four ways to start a noise nobody
+ * asked for. `preload="metadata"` is what makes the frame appear without
+ * fetching forty megabytes to show a still.
+ */
 export function Attachments({ images }: { images: string[] }) {
+  const [open, setOpen] = useState<number | null>(null)
   if (!images?.length) return null
 
   return (
-    <div className={cn(
-      'mt-4 grid gap-2',
-      images.length === 1 ? 'max-w-xl' : 'sm:grid-cols-2',
-    )}>
-      {images.map((path) => (
-        <a
-          key={path}
-          href={forumImageUrl(path)}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="group block overflow-hidden rounded-2xl border border-white/10 bg-media"
-        >
-          <img
-            src={forumImageUrl(path)}
-            alt="Attached to this post"
-            loading="lazy"
-            className="max-h-[28rem] w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
-          />
-        </a>
-      ))}
-    </div>
+    <>
+      <div className={cn(
+        'mt-4 grid gap-2',
+        images.length === 1 ? 'max-w-xl' : 'sm:grid-cols-2',
+      )}>
+        {images.map((path, i) => {
+          const url = forumImageUrl(path)
+          const clip = isForumClip(path)
+
+          return (
+            <button
+              key={path}
+              type="button"
+              onClick={() => setOpen(i)}
+              aria-label={clip ? 'Play this clip' : 'See this picture bigger'}
+              className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-media"
+            >
+              {clip ? (
+                <>
+                  <video
+                    src={url}
+                    preload="metadata"
+                    muted
+                    playsInline
+                    controlsList="nodownload"
+                    disablePictureInPicture
+                    className="pointer-events-none max-h-[28rem] w-full object-contain"
+                  />
+                  <span className="absolute inset-0 grid place-items-center bg-ink/25 transition-colors group-hover:bg-ink/10">
+                    <span className="grid h-14 w-14 place-items-center rounded-full bg-ink/70 text-white backdrop-blur-sm">
+                      <Glyph icon={faPlay} className="ml-0.5 text-lg" />
+                    </span>
+                  </span>
+                </>
+              ) : (
+                <img
+                  src={url}
+                  alt="Attached to this post"
+                  loading="lazy"
+                  draggable={false}
+                  className="max-h-[28rem] w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <Lightbox paths={images} at={open} onMove={setOpen} onClose={() => setOpen(null)} />
+    </>
   )
 }
 

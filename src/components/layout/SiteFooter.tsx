@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import { faDiscord, faYoutube } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
-import { Wordmark, Logomark } from '@/components/brand/Wordmark'
+import { Wordmark } from '@/components/brand/Wordmark'
+import { Kmark } from '@/components/brand/Kmark'
 import { cn } from '@/lib/cn'
 
 /*
@@ -56,6 +57,13 @@ const atKobblon = [
  * it carries our mark rather than a brand glyph, and it is a `to` rather
  * than an `href`: a router link, not a new tab out of the site into the
  * site. Every other one of these is a real address and opens away.
+ *
+ * Last in the list rather than first, and wearing `Kmark` rather than the
+ * drawn `Logomark`. Staw asked for both: the blue picture did not line up
+ * with the two glyphs under it, because it is a picture of its own
+ * proportions sitting where a 16px square belongs, and it stayed blue while
+ * the row it was in went white. `Kmark` is the same shape as a glyph, so it
+ * sits in the same box and takes the same colour as Discord and YouTube.
  */
 const social: {
   href?: string
@@ -64,13 +72,13 @@ const social: {
   icon?: IconDefinition
   mark?: boolean
 }[] = [
-  { to: '/forum', label: 'Community Forum', mark: true },
   { href: 'https://discord.gg/SsjvR6rmez', label: 'Discord', icon: faDiscord },
   {
     href: 'https://www.youtube.com/channel/UCjFPtUjIY7mDFFOv-LuB7hQ',
     label: 'YouTube',
     icon: faYoutube,
   },
+  { to: '/forum', label: 'Community Forum', mark: true },
 ]
 
 function Heading({ children }: { children: string }) {
@@ -137,24 +145,19 @@ export function SiteFooter({ className }: { className?: string }) {
             <ul className="mt-4 space-y-2.5">
               {social.map((one) => {
                 /*
-                 * The mark's height is arbitrary, not `h-4`. `Logomark`
-                 * carries `h-7` of its own and `cn` joins rather than
-                 * merges, so two scale classes would be decided by
-                 * Tailwind's own order - which puts `h-7` last and would
-                 * draw our mark half again the size of the glyphs beside
-                 * it. Arbitrary values are emitted after the scale, so
-                 * this one wins where it is meant to.
+                 * Our mark gets the same 16px box as the glyphs beside it
+                 * and the same two colours, so the three labels start on
+                 * one line. It is narrower than it is tall, so the box is
+                 * square and the shape is centred inside it rather than
+                 * stretched to fill it.
                  */
                 const inside = (
                   <>
-                    {one.mark ? (
-                      <Logomark className="h-[1rem] shrink-0" />
-                    ) : (
-                      <Glyph
-                        icon={one.icon as IconDefinition}
-                        className="h-4 w-4 text-white/35 transition-colors group-hover:text-brand-bright"
-                      />
-                    )}
+                    <span className="grid h-4 w-4 shrink-0 place-items-center text-white/35 transition-colors group-hover:text-brand-bright">
+                      {one.mark
+                        ? <Kmark className="h-4 w-auto" />
+                        : <Glyph icon={one.icon as IconDefinition} className="h-4 w-4" />}
+                    </span>
                     {one.label}
                   </>
                 )

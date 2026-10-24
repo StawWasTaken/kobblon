@@ -28,6 +28,76 @@ begin;
 
 set search_path = public, extensions;
 
+-- ------------------------------------------------ the answer itself, again
+
+/*
+ * `name_marks` and the two questions under it, repeated here verbatim from
+ * 0180.
+ *
+ * Not because they changed - they have not - but because this file and 0282
+ * both call `name_marks(uuid)` and the live database answered
+ * `function public.name_marks(uuid) does not exist`. 0180 never reached it.
+ * A migration that assumes an older one landed is a migration that works
+ * here and fails there, which is the whole reason these are written to be
+ * applied twice and to stand on their own.
+ *
+ * `create or replace` with the same body is a no-op where 0180 did land, so
+ * this costs a database that has them nothing and repairs one that has not.
+ * If they are ever genuinely changed, they change in 0180's successor and
+ * this copy goes with it - which is why the bodies are identical rather than
+ * improved in passing.
+ */
+
+create or replace function public.wears_staff_badge(who uuid)
+returns boolean
+language sql stable
+set search_path = public, extensions as $$
+  select coalesce(
+    (select has_staff_badge or is_admin or is_moderator or is_superadmin
+       from public.profiles where id = who),
+    false
+  );
+$$;
+
+grant execute on function public.wears_staff_badge(uuid) to anon, authenticated;
+
+create or replace function public.is_name_verified(who uuid)
+returns boolean
+language sql stable
+set search_path = public, extensions as $$
+  select coalesce(
+    (select is_verified or is_admin or is_superadmin
+       from public.profiles where id = who),
+    false
+  );
+$$;
+
+grant execute on function public.is_name_verified(uuid) to anon, authenticated;
+
+create or replace function public.name_marks(who uuid)
+returns text[]
+language sql stable
+set search_path = public, extensions as $$
+  select array_remove(array[
+    case when public.is_name_verified(who) then 'verified' end,
+    case when public.wears_staff_badge(who) then 'staff' end
+  ], null)
+$$;
+
+grant execute on function public.name_marks(uuid) to anon, authenticated;
+
+create or replace function public.name_marks_for(who uuid[])
+returns table (id uuid, marks text[])
+language sql stable
+set search_path = public, extensions as $$
+  select p.id, public.name_marks(p.id)
+    from public.profiles p
+   where p.id = any(who)
+     and (public.is_name_verified(p.id) or public.wears_staff_badge(p.id))
+$$;
+
+grant execute on function public.name_marks_for(uuid[]) to anon, authenticated;
+
 -- --------------------------------------------------- marks, by username
 
 /**

@@ -18,14 +18,14 @@ import { Composer } from '@/components/forum/Composer'
 import { PostMenu } from '@/components/forum/PostMenu'
 import { ReadingRail, RelatedTopics, SignedOutNote } from '@/components/forum/Reading'
 import {
-  Attachments, Byline, Flags, Helpful, PostBody, StatusPill,
+  Attachments, Byline, Flags, Helpful, PostBody, StatusPill, STATUS_WORDS,
 } from '@/components/forum/Pieces'
 import {
   forumBoards, forumCreateTopic, forumEdit, forumLike, forumMarkAnswer, forumRelated,
   forumRemove, forumReplies, forumReply, forumSeen, forumSetFlags, forumSetStatus,
   forumTopic as getTopic, forumTopics,
 } from '@/lib/api'
-import { formatCount, timeAgo } from '@/lib/format'
+import { formatCount, forumViews, timeAgo } from '@/lib/format'
 import { useAtTitle, useExactTitle } from '@/hooks/useTitle'
 import { cn } from '@/lib/cn'
 import type { ForumBoard, ForumReply, ForumSort, ForumStatus, ForumTopic } from '@/types/db'
@@ -149,7 +149,7 @@ export default function Forum() {
               icon={faEye}
               topics={read.data ?? []}
               loading={read.loading}
-              note={(t) => `${formatCount(t.view_count)} views`}
+              note={(t) => `${forumViews(t.view_count)} views`}
             />
             <Shelf
               title="Just posted"
@@ -443,16 +443,39 @@ export function ForumCategory() {
           <span className="text-white/60">{board?.name ?? '…'}</span>
         </nav>
 
+        {/*
+         * Staw, with a photograph of it: on a phone the name wrapped into
+         * three words a column wide with the green button sitting on top of
+         * them.
+         *
+         * `flex-wrap` was there and did nothing, because the text column
+         * carried `flex-1 min-w-0` - which says "give up all your width
+         * before anything else moves", so the button never had to wrap and
+         * the title was squeezed into a strip narrower than the word
+         * "suggestions" is. It then overflowed that strip sideways, under
+         * the button, which is what was covering it.
+         *
+         * So the stripe, the mark and the name are one piece that takes the
+         * whole row on a phone, and the button goes underneath until there
+         * is room beside it.
+         */}
         <div className="mt-3 flex flex-wrap items-center gap-4">
-          <span className={cn('h-10 w-1.5 shrink-0 rounded-full', BOARD_COLOUR[slug] ?? 'bg-white/30')} />
-          <BoardMark slug={slug} className="h-10 w-10 text-lg" />
-          <div className="min-w-0 flex-1">
-            <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-              {board?.name ?? 'Loading'}
-            </h1>
-            {board && <p className="mt-1 text-sm text-white/45">{board.blurb}</p>}
+          <div className="flex min-w-0 basis-full items-center gap-4 sm:flex-1 sm:basis-auto">
+            <span className={cn('h-10 w-1.5 shrink-0 rounded-full', BOARD_COLOUR[slug] ?? 'bg-white/30')} />
+            <BoardMark slug={slug} className="h-10 w-10 text-lg" />
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-xl font-extrabold tracking-tight sm:text-3xl">
+                {board?.name ?? 'Loading'}
+              </h1>
+              {board && <p className="mt-1 text-sm text-white/45">{board.blurb}</p>}
+            </div>
           </div>
-          <Button to={`/forum/new?category=${slug}`} variant="yes" icon={faPlus}>
+          <Button
+            to={`/forum/new?category=${slug}`}
+            variant="yes"
+            icon={faPlus}
+            className="w-full sm:w-auto"
+          >
             Start a topic
           </Button>
         </div>
@@ -665,14 +688,38 @@ export function ForumTopicPage() {
     )
   }
 
-  /* Which marks staff may put on this one. The server refuses the rest. */
-  const ladder: ForumStatus[] = topic.category_kind === 'bugs'
-    ? ['solved']
-    : topic.category_kind === 'suggestions'
-      ? ['approved', 'declined', 'looked-at']
-      : topic.category_kind === 'both'
-        ? ['solved', 'approved', 'declined', 'looked-at']
-        : []
+  /*
+   * Which marks staff may put on this one, in the two pairs they are.
+   *
+   * Staw: "the tags be either solved/been looked at, either
+   * declined/approved". They were four loose buttons in a row, which said
+   * nothing about the fact that there are only ever two answers here: what
+   * happened to the thing reported, and what was decided about the thing
+   * suggested. Each pair is drawn as one joined control, so the either/or
+   * is visible without a word of explanation.
+   *
+   * A pair whose other half the board does not allow is still drawn as a
+   * pair of one rather than folded back into the row - a suggestions board
+   * can acknowledge and cannot solve, and "Been looked at" sitting on its
+   * own in the first group is a truer picture of that than it would be
+   * standing beside Declined.
+   *
+   * The server refuses anything this offers wrongly, which is the part that
+   * matters: this list decides what is drawn, 0285 decides what is allowed.
+   */
+  type Mark = Exclude<ForumStatus, 'open'>
+  const kind = topic.category_kind
+  const allowed = (word: Mark) =>
+    word === 'solved'
+      ? kind === 'bugs' || kind === 'both'
+      : word === 'looked-at'
+        ? kind === 'bugs' || kind === 'suggestions' || kind === 'both'
+        : kind === 'suggestions' || kind === 'both'
+
+  const pairs: Mark[][] = [
+    (['solved', 'looked-at'] as Mark[]).filter(allowed),
+    (['approved', 'declined'] as Mark[]).filter(allowed),
+  ].filter((pair) => pair.length > 0)
 
   return (
     <ForumShell boards={boards.data ?? []} loading={boards.loading}>
@@ -707,7 +754,7 @@ export function ForumTopicPage() {
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
           <Byline person={topic} when={topic.created_at} edited={topic.edited_at} large op />
           <span className="flex items-center gap-4 text-xs font-bold tabular-nums text-white/35">
-            <span>{formatCount(topic.view_count)} views</span>
+            <span>{forumViews(topic.view_count)} views</span>
             <span>{formatCount(topic.reply_count)} replies</span>
           </span>
           <span className="ml-auto">
@@ -772,16 +819,33 @@ export function ForumTopicPage() {
               >
                 {topic.is_locked ? 'Open it' : 'Close it'}
               </Button>
-              {ladder.map((word) => (
-                <Button
-                  key={word}
-                  size="sm"
-                  variant={topic.status === word ? 'primary' : 'subtle'}
-                  icon={topic.status === word ? faCheck : undefined}
-                  onClick={() => mark(topic.status === word ? 'open' : word)}
+              {pairs.map((pair) => (
+                <span
+                  key={pair.join('-')}
+                  className="inline-flex overflow-hidden rounded-xl border border-white/10 divide-x divide-white/10"
                 >
-                  {word === 'looked-at' ? 'Been looked at' : word[0].toUpperCase() + word.slice(1)}
-                </Button>
+                  {pair.map((word) => {
+                    const on = topic.status === word
+                    return (
+                      <button
+                        key={word}
+                        type="button"
+                        aria-pressed={on}
+                        title={on ? 'Take this mark off' : undefined}
+                        onClick={() => mark(on ? 'open' : word)}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold transition-colors',
+                          on
+                            ? 'bg-brand text-white'
+                            : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.09] hover:text-white',
+                        )}
+                      >
+                        {on && <Glyph icon={faCheck} className="text-[10px]" />}
+                        {STATUS_WORDS[word]}
+                      </button>
+                    )
+                  })}
+                </span>
               ))}
             </span>
           )}

@@ -12304,3 +12304,236 @@ ordering by that column is not deterministic. Order by the `bigserial`.
   per-category moderators.
 - `npm run check:migrations` reports six findings. All six are in 0247,
   0260, 0261 and 0263 and predate this batch; none are in 0280 to 0283.
+
+---
+
+## Round one hundred and seventy-one - the migration that did not run, and a post that can carry a clip
+
+Short version of the first part: **0280 and 0282 do not apply as shipped last
+round.** If you have not run them, pull first.
+
+### The migration that did not run
+
+```
+ERROR: 42883: function public.name_marks(uuid) does not exist
+```
+
+Both files call `name_marks(uuid)`, which has existed since 0180. 0180 had
+never been applied to the live database - so a file that was correct here
+failed there, which is the exact failure mode the "applied twice, wrapped in
+one transaction" rule exists to catch and did not.
+
+Why it did not: **my harness supplied the schema I believed existed rather
+than the one that does.** `name_marks`, `is_name_verified` and
+`name_marks_for` were all in the stub, so 0280 found them every time. I cut
+them out of the stub, reproduced the failure exactly, and 0280 now defines
+all four functions itself, verbatim from 0180, with `create or replace` - a
+no-op where 0180 did land, a repair where it did not. All seventy-three forum
+checks pass against a database that has never seen 0180.
+
+Worth copying if you ever write one of these: **a migration that assumes an
+earlier one landed is a migration that works on your machine and fails on
+theirs.** Stub the oldest thing you depend on *out* and see whether your file
+still stands up.
+
+### A post can carry a clip - 0284
+
+The `forum` bucket is forty megabytes now, up from two, and takes
+`video/mp4`, `video/webm`, `video/ogg` and `video/quicktime` as well as the
+four image types.
+
+This matters to you if the Workspace or the Launcher ever posts to the forum:
+**the bucket is the limit, not the composer.** Storage refuses on
+`file_size_limit` and `allowed_mime_types` before any policy or function of
+ours is consulted, so a client that allows a 50MB file gets a refusal from
+Supabase and looks broken. The website keeps its own copy of the ceiling only
+so somebody is told before they wait for an upload.
+
+Two things to know:
+
+- **The column is still called `images`.** It holds clips now. Renaming it
+  reaches four functions, two types and every caller to say the same thing in
+  a better word, so it waits for a day when that file has to change anyway.
+  `isForumClip(path)` in `@/lib/api` decides which a path is, from its
+  ending - the path is all a reader has.
+- **`video/quicktime` is accepted and may not play.** A Mac or an iPhone
+  hands `.mov` over by default and refusing it at the door would refuse most
+  of what gets dragged in; whether it decodes depends on the codec inside,
+  which nothing can see from a mime type. Both the composer and the thread
+  draw the real first frame rather than a tick, so somebody finds out before
+  posting.
+
+### Attachments open in a viewer, not a tab
+
+Staw: "when you click on an image or video it opens it in bigger view but i
+dont want to be able to open the image in a new tab ... and its the same
+image/video player design that we have on the website".
+
+So `Attachments` draws buttons rather than links, and `Lightbox` (new, in
+`@/components/forum/Lightbox`) opens over the page with arrows, Escape, and
+`MediaPlayer` for a clip - our player, not the browser's.
+
+**It takes an optional `urlOf`.** The default is the `forum` bucket's own, and
+anything mounting it outside the website passes its own. That is the
+mountable-outside-the-website rule, and it is in this round because this is
+the fourth component to need it.
+
+**What "not in a new tab" is not.** The invitation is gone - no `<a href>`, no
+middle click, `controlsList="nodownload"` on the player. The *file* is not
+gone and cannot be: the bucket is public and every attachment is a plain
+address anybody can read out of the page. If an attachment ever must not be
+fetchable by its address, that is a private bucket and signed URLs, which is a
+different change in a different place. Do not tell anybody otherwise in the
+apps either.
+
+### Two answers, not four marks - 0285
+
+The staff bar had Solved, Approved, Declined and Been looked at in a row.
+Staw: "the tags be either solved/been looked at, either declined/approved."
+They are two joined controls now, one answer each.
+
+The pairing needed a server change, and the server change is the interesting
+half: **"been looked at" was filed with the verdicts under suggestions**, so a
+bug report could be solved or nothing at all. That was wrong on its own terms
+before the pairing - an acknowledgement is what you say *before* a verdict, and
+it is worth the same on a bug as on an idea. `forum_set_status` now allows
+`looked-at` on any board that marks anything at all; `solved`, `approved` and
+`declined` keep the boards they had, and a `plain` board still refuses
+everything.
+
+Nothing already marked was rewritten.
+
+### Views - 0286, and a number that is not true
+
+Two topics with real readers were showing "2 views". Both reasons were
+decisions from 0275 that were right about accuracy and wrong about what the
+number is for:
+
+- a signed-in account counted **once, ever** - come back tomorrow and the
+  counter has already had you;
+- a signed-out reader counted **nothing at all**, on a forum built to be read
+  without an account.
+
+So: once per account per day, and signed-out readings count. The key on
+`forum_topic_views` grew a `seen_on date`.
+
+**The honest cost, because you should not copy this without it.** A signed-out
+reading cannot be deduplicated server-side - there is no account to key on,
+and the things that would serve instead are exactly what 0275 refused to keep
+and was right to. The website asks once per topic per day per browser out of
+`localStorage`, which stops a refresh and stops nobody determined. That is a
+client-side rule, which this project's own line says is not a rule. It is
+accepted for this one number because it is a vanity counter on a public page
+that decides nothing. **If a view ever decides anything - a payout, a staff
+queue, what gets built next - the signed-out half has to come back out.**
+
+And the part to take seriously if you ever show a forum view count:
+
+> **The number printed on the site is ten times the number of readings
+> recorded.** Staw asked for it: "deliberately lie about them, like 1 view =
+> 10". It is `forumViews()` in `@/lib/format`, one function with one constant,
+> `VIEW_FACTOR = 10`.
+
+Nothing is stored multiplied, nothing is compared multiplied, `view_count` in
+the database is still the count of readings. **Only what is printed moves.**
+If an app ever draws a forum view count it must go through the same function
+or the two surfaces will disagree by a factor of ten and look like a bug.
+Setting `VIEW_FACTOR` to 1 makes every number on the site true again in one
+commit, which is the only reason it is one constant rather than a `* 10` in
+five places.
+
+My objection, stated once and then dropped: the people being told something
+untrue are the forum's own readers, and a thread that says four hundred also
+looks ignored the day it honestly gets four hundred. 0286 is the real lever.
+
+### The mobile bugs okayCooki3 reported
+
+Five, all real, all fixed, and three of them were one-word mistakes:
+
+- **The category name covered by the green button.** `flex-wrap` was there and
+  did nothing, because the text column carried `flex-1 min-w-0` - "give up all
+  your width before anything else moves" - so the title was squeezed narrower
+  than the word "suggestions" and overflowed sideways under the button.
+- **"Searc".** The top bar's search field was `w-full` beside a `shrink-0`
+  group of buttons, so the overflow went off the right of the screen. It asks
+  for what is left now.
+- **Leaderboards, Codes and Quests unreachable on a phone.** The Brix balance
+  in the top bar was `hidden sm:flex`, and that menu is the only way into all
+  four of those pages from the shell. Hiding a number hid four pages.
+- **Every Chat button on the site doing nothing on a phone.** This is the one
+  worth reading. `openConversation` set `openIds`, and `openIds` is only ever
+  drawn by the docked windows, which are `hidden md:flex`. State changed, the
+  thing that draws it was not on the screen, no error anywhere. It sets the
+  phone sheet too now, and **the width is read at the moment of use** rather
+  than held - a `matches` captured at mount is this project's oldest trap, and
+  here it would mean turning the phone deciding where your chat opens.
+- **Three friends under "Around now", each saying Offline.** The heading split
+  the list on the row's `is_online`; the label under each face asked
+  `useLivePresence`, which will not believe a stale `last_seen_at`. Two
+  questions, two answers, printed next to each other. There is one answer now:
+  **`presenceNow(person)` and `usePresenceVersion()` in
+  `@/hooks/usePresenceStore`**, exported for anything that groups by presence
+  outside a hook. If the apps sort or group people by presence, use those.
+
+Also: the home page's friends row is four smaller faces across on a phone
+instead of three large ones, two rows instead of three.
+
+### A thing I shipped last round that was not true
+
+The signed-out card at the foot of a thread said the forum "keeps your place
+in a thread so you come back to where you stopped". **It does not and never
+did.** I wrote that from `forum_seen`, which is the view counter - nothing
+reads it back, and there is no reading position on this forum at all. I
+claimed in Round 170 that every line of that card was something the forum
+actually does. That claim was wrong about one line of three.
+
+The copy is fixed. The lesson is the one this project keeps relearning: *read
+the function, do not read its name.*
+
+### The Launcher idea, passed on
+
+Staw, for you: when the Launcher clips an image or a video, a button on the
+clip that publishes it straight to the forum - either into a category you pick
+or into one made for it.
+
+From this side: everything it needs exists. `uploadForumImage(file, userId)`
+puts a file in the `forum` bucket under the uploader's own folder (forty
+megabytes, clips included, as above), and `forum_open(in_category, in_title,
+in_body, in_images)` opens the topic with up to four paths. `forum_boards()`
+lists the categories with their slugs, and `staff_only` on a board says
+whether an ordinary account may post there.
+
+Two things to decide rather than assume: whether a clip published this way
+goes into an existing board or a new "Clips" one - that is a row in
+`forum_categories` and Staw's call, not ours - and that **everything posted is
+read by Kobby**, so a clip published from the Launcher can be taken down like
+anything else and the Launcher should be ready to say so rather than report a
+silent success.
+
+### What is not done, plainly
+
+- **The forum pages themselves have still not been looked at in this
+  container.** No route to Supabase from here, so the index, a topic, a
+  category and the profile page are entirely data and render empty. What was
+  built and looked at is `tools/site/forum-preview.html`, which now also
+  carries the two status pairs, the attachment grid, the viewer open over a
+  clip, and the footer. Nothing threw, and there is no horizontal overflow at
+  390px.
+- **Three of the mobile fixes were not seen on a phone-width render of the
+  real page**, for the same reason - the top bar, the friends row and the
+  Chat button all need a signed-in session. They are read from the markup and
+  from the cause in each case, which is weaker than a screenshot and is said
+  here rather than left to be found.
+- **The forum link-preview cards have still never run against live rows.**
+  `npm run deploy` reported "7 of the tables did not answer" again and left
+  the published cards alone. One thing did change in the writer: a card now
+  takes the first *picture* rather than the first attachment, because an
+  `og:image` pointing at an mp4 is a broken image everywhere it is pasted.
+- `ConfigureCommunity` still writes `communities.name` directly, which
+  `guard_community_name` pins back, so **renaming a community through that
+  page still does nothing.** Named in Round 168 and in Round 170.
+- No page offers somebody their retired usernames to pick from.
+- The forum still has no search, no quoting, no paging past fifty topics and
+  no per-category moderators.
+- `npm run check:migrations` reports the same six findings, all in 0247, 0260,
+  0261 and 0263. None in 0280 to 0286.

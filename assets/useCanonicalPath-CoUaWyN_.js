@@ -1,0 +1,1 @@
+import{Is as e}from"./api-633p_Pvf.js";import{_i as t,li as n,ui as r}from"./Input-C_l7od8r.js";var i=e(t(),1);function a(e){let{pathname:t,search:a,hash:o}=n(),s=r();(0,i.useEffect)(()=>{e&&decodeURIComponent(t).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,t,a,o,s])}export{a as t};

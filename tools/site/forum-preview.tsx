@@ -19,6 +19,13 @@ import { Byline } from '@/components/forum/Pieces'
 import { PostMenu } from '@/components/forum/PostMenu'
 import { ReadingRail, SignedOutNote, RelatedTopics, OpTag } from '@/components/forum/Reading'
 import { BoardMark } from '@/components/forum/Shell'
+import { STATUS_WORDS } from '@/components/forum/Pieces'
+import { Lightbox } from '@/components/forum/Lightbox'
+import { SiteFooter } from '@/components/layout/SiteFooter'
+import { Glyph } from '@/components/brand/Glyph'
+import { faCheck } from '@fortawesome/free-solid-svg-icons'
+import { cn } from '@/lib/cn'
+import { useState } from 'react'
 import type { ForumAuthor, ForumRelated } from '@/types/db'
 import '@/index.css'
 
@@ -114,6 +121,23 @@ function Page() {
         <RelatedTopics topics={[]} loading />
       </Row>
 
+      <Row title="The two status pairs, as the staff bar draws them">
+        {/*
+         * Copied from the topic page's own markup rather than imported,
+         * because it is written inline there against the live topic. If
+         * the two ever drift, this is the one that is wrong.
+         */}
+        <StatusPairs />
+      </Row>
+
+      <Row title="A clip and a picture, and the viewer they open into">
+        <Attachments2 />
+      </Row>
+
+      <Row title="The foot of the page, and the Social column in it">
+        <SiteFooter />
+      </Row>
+
       <Row title="The rail, against a thread long enough to have one">
         {/*
          * The rail is a flex sibling of the thread, which is how the topic
@@ -135,6 +159,92 @@ function Page() {
         </div>
       </Row>
     </div>
+  )
+}
+
+/* The staff bar's two pairs. */
+function StatusPairs() {
+  const [status, setStatus] = useState<string>('looked-at')
+  const pairs = [['solved', 'looked-at'], ['approved', 'declined']] as const
+
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      {pairs.map((pair) => (
+        <span
+          key={pair.join('-')}
+          className="inline-flex overflow-hidden rounded-xl border border-white/10 divide-x divide-white/10"
+        >
+          {pair.map((word) => {
+            const on = status === word
+            return (
+              <button
+                key={word}
+                type="button"
+                onClick={() => setStatus(on ? 'open' : word)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold transition-colors',
+                  on
+                    ? 'bg-brand text-white'
+                    : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.09] hover:text-white',
+                )}
+              >
+                {on && <Glyph icon={faCheck} className="text-[10px]" />}
+                {STATUS_WORDS[word]}
+              </button>
+            )
+          })}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+/*
+ * The attachment grid and its viewer, with real files served from this
+ * page rather than from the bucket - `Attachments` asks `forumImageUrl`,
+ * which asks a database this container cannot reach, so the shapes would
+ * be right and every box would be empty. This is the same markup against
+ * two files that load.
+ */
+function Attachments2() {
+  const [open, setOpen] = useState<number | null>(null)
+  const files = ['/brand/landing-towers.webp', '/brand/kobblon-its-free.mp4']
+  const clip = (p: string) => p.endsWith('.mp4')
+
+  return (
+    <>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {files.map((path, i) => (
+          <button
+            key={path}
+            type="button"
+            onClick={() => setOpen(i)}
+            className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-media"
+          >
+            {clip(path) ? (
+              <>
+                <video src={path} preload="metadata" muted playsInline
+                  className="pointer-events-none max-h-[18rem] w-full object-contain" />
+                <span className="absolute inset-0 grid place-items-center bg-ink/25">
+                  <span className="grid h-14 w-14 place-items-center rounded-full bg-ink/70 text-white">
+                    <Glyph icon={faCheck} className="ml-0.5 text-lg" />
+                  </span>
+                </span>
+              </>
+            ) : (
+              <img src={path} alt="" className="max-h-[18rem] w-full object-contain" />
+            )}
+          </button>
+        ))}
+      </div>
+      <Lightbox
+        paths={files}
+        at={open}
+        onMove={setOpen}
+        onClose={() => setOpen(null)}
+        urlOf={(p) => p}
+      />
+    </>
   )
 }
 

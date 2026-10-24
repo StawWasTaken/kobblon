@@ -8,19 +8,23 @@ const bad = []
 p.on('pageerror', (e) => bad.push('threw: ' + e.message))
 
 await p.goto('http://localhost:5343/tools/site/forum-preview.html', { waitUntil: 'networkidle' })
-await p.waitForTimeout(1000)
-await p.screenshot({ path: '/tmp/forum-pieces.png', fullPage: true })
+await p.waitForTimeout(1200)
+
+const names = await p.locator('section > p').allTextContents()
+console.log(names.map((n, i) => `${i}: ${n}`).join('\n'))
 
 const shot = async (n, name) =>
   p.locator('section').nth(n).screenshot({ path: `/tmp/forum-${name}.png` })
-await shot(0, 'bylines')
-await shot(1, 'marks')
-await shot(5, 'rail')
 
-/* The three dots, open, which is the half of that component worth seeing. */
-await p.locator('section').nth(2).locator('button').first().click()
-await p.waitForTimeout(300)
-await p.screenshot({ path: '/tmp/forum-menu.png' })
+const at = (label) => names.findIndex((n) => n.includes(label))
+await shot(at('status pairs'), 'status')
+await shot(at('clip and a picture'), 'attachments')
+await shot(at('foot of the page'), 'footer')
+
+/* The viewer, open over the clip. */
+await p.locator('section').nth(at('clip and a picture')).locator('button').nth(1).click()
+await p.waitForTimeout(600)
+await p.screenshot({ path: '/tmp/forum-lightbox.png' })
 
 console.log(bad.length ? bad.join(' | ') : 'nothing threw')
 await b.close()

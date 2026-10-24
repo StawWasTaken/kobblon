@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/States'
 import { BOARD_COLOUR } from '@/components/forum/Shell'
-import { formatCount, timeAgo } from '@/lib/format'
+import { formatCount, forumViews, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { ForumRelated } from '@/types/db'
 
@@ -111,10 +111,17 @@ export function ReadingRail({
  * Staw asked for "a hello looks like youre enjoying the conversation
  * thing", and showed Discourse's, which is about reading position,
  * notifications and likes - so this one says what *Kobblon* gives you
- * rather than translating theirs. Every line of it is a thing the forum
- * actually does: `forum_seen` keeps where you got to, `forum_reply` makes
- * a notification, `forum_like` is the Helpful mark. Nothing here is
- * promised that is not built.
+ * rather than translating theirs.
+ *
+ * It said three things and one of them was not true. "Keeps your place in
+ * a thread so you come back to where you stopped" was written from
+ * `forum_seen`, which does not do that and never did: it is the view
+ * counter, nothing reads it back, and there is no reading position on this
+ * forum at all. That is the exact fake functionality this project's own
+ * rules forbid, written while claiming to have checked. It is gone, and
+ * what is left is three things that are each real and findable - a reply
+ * makes a notification (`forum_reply`), Helpful is a mark somebody can see
+ * (`forum_like`), and a forum profile is a page that exists.
  *
  * It does not block anything, and it has a way out that is not signing in.
  * A wall across a public thread would undo the one decision this forum was
@@ -132,9 +139,9 @@ export function SignedOutNote({ back }: { back: string }) {
         Enjoying this one? There is more of it with an account.
       </p>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">
-        Signed in, the forum keeps your place in a thread so you come back to where you
-        stopped, tells you when somebody answers you, and lets you mark the replies that
-        actually helped. And you can write one yourself.
+        Signed in, the forum tells you when somebody answers you, lets you mark the
+        replies that actually helped, and gives you a profile here with your own tag
+        on it. And you can write a reply yourself.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Button to={where} size="sm" variant="yes" icon={faRightToBracket}>Sign in</Button>
@@ -206,7 +213,7 @@ export function RelatedTopics({
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Glyph icon={faEye} className="text-[10px]" />
-                    {formatCount(one.view_count)}
+                    {forumViews(one.view_count)}
                   </span>
                 </span>
               </Link>

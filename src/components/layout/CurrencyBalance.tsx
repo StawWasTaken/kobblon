@@ -34,8 +34,24 @@ export function CurrencyBalance({ amount }: { amount: number }) {
       label={`Your ${currency.plural}`}
       align="right"
       trigger={
+        /*
+         * Shown on a phone too, which it was not.
+         *
+         * okayCooki3, on the forum: "technically they are accessible
+         * through the link but not on the home page for mobile, like you
+         * cant find leaderboards, codes, quests and even more." This was
+         * the whole of it - the balance was `hidden sm:flex`, and this menu
+         * is the only way into Quests, Leaderboards, transactions and
+         * redeeming a code from anywhere in the shell. Hiding the balance
+         * hid four pages with it, which is not what hiding a number is for.
+         *
+         * It keeps the count on a phone rather than shrinking to the mark
+         * alone: the number is the reason somebody looks, and the bar has
+         * the room now that the search field asks for what is left instead
+         * of for all of it.
+         */
         <span
-          className="hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-bold text-onbrand transition-colors hover:bg-onbrand/15 sm:flex"
+          className="flex items-center gap-1.5 rounded-lg px-1.5 py-1.5 text-sm font-bold text-onbrand transition-colors hover:bg-onbrand/15 sm:px-2"
           aria-label={currency.amount(amount)}
         >
           <CurrencyMark />
