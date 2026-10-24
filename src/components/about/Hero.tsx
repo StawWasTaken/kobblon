@@ -20,7 +20,7 @@ import { cn } from '@/lib/cn'
  * that loaded and a page that greeted you.
  */
 export function Hero({
-  eyebrow, title, lead, actions, art, note, className,
+  eyebrow, title, lead, actions, art, note, centre = false, className,
 }: {
   eyebrow?: ReactNode
   title: ReactNode
@@ -30,28 +30,41 @@ export function Hero({
   art?: ReactNode
   /** A line under the buttons: a date, a count, a caveat. */
   note?: ReactNode
+  /**
+   * The statement shape: the words centred, the picture under them rather
+   * than beside them. For the one page whose opening *is* the sentence.
+   */
+  centre?: boolean
   className?: string
 }) {
   return (
     <Lane className={cn('pb-20 pt-16 sm:pb-28 sm:pt-24', className)}>
-      <div className={art ? 'grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16' : undefined}>
-        <div>
+      <div className={art && !centre ? 'grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16' : undefined}>
+        <div className={centre ? 'mx-auto max-w-4xl text-center' : undefined}>
           {eyebrow && (
             <Reveal><Eyebrow className="mb-5">{eyebrow}</Eyebrow></Reveal>
           )}
           <Reveal delay={60}>
-            <Title level={1} className={cn(!art && 'max-w-4xl')}>{title}</Title>
+            <Title level={1} className={cn(!art && !centre && 'max-w-4xl')}>{title}</Title>
           </Reveal>
           {lead && (
             <Reveal delay={140}>
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/60 sm:text-xl">
+              <p className={cn(
+                'mt-6 max-w-2xl text-lg leading-relaxed text-white/60 sm:text-xl',
+                centre && 'mx-auto',
+              )}>
                 {lead}
               </p>
             </Reveal>
           )}
           {actions && (
             <Reveal delay={220}>
-              <div className="mt-9 flex flex-wrap items-center gap-3">{actions}</div>
+              <div className={cn(
+                'mt-9 flex flex-wrap items-center gap-3',
+                centre && 'justify-center',
+              )}>
+                {actions}
+              </div>
             </Reveal>
           )}
           {note && (
@@ -61,7 +74,11 @@ export function Hero({
           )}
         </div>
 
-        {art && <Reveal delay={200}>{art}</Reveal>}
+        {art && (
+          <Reveal delay={200} className={centre ? 'mx-auto mt-16 block max-w-4xl' : undefined}>
+            {art}
+          </Reveal>
+        )}
       </div>
     </Lane>
   )

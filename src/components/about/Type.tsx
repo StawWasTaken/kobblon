@@ -35,7 +35,7 @@ export function Title({ children, className, level = 2 }: {
     <Tag className={cn(
       'font-display font-extrabold leading-[0.95] tracking-tight',
       level === 1
-        ? 'text-[clamp(2.5rem,5.2vw,4.25rem)]'
+        ? 'text-[clamp(2.15rem,5.2vw,4.25rem)]'
         : 'text-[clamp(1.9rem,3.6vw,3rem)]',
       className,
     )}>

@@ -9,7 +9,7 @@ import { Reveal } from '@/components/about/Reveal'
 import { Tally } from '@/components/about/Tally'
 import { Figure } from '@/components/about/Figure'
 import { Plate } from '@/components/about/Plate'
-import { BandHead, Title } from '@/components/about/Type'
+import { BandHead } from '@/components/about/Type'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import { getPlatformStats } from '@/lib/api'
@@ -18,34 +18,55 @@ import { currency } from '@/lib/currency'
 /**
  * What Kobblon is, for somebody who has never heard of it.
  *
- * This page is a pitch, and the first two attempts at it were not. They
- * explained Kobblon the way a manual explains a feature - four tiles of
- * three sentences each, a heading that asked a question, a band that
- * apologised for what was not finished yet. Staw, and he is right: "it
- * looks like a ChatGPT answer".
+ * Written short on purpose, and that is the whole brief. Three attempts
+ * at this page explained Kobblon; Staw wanted it to *state* Kobblon. The
+ * difference is a sentence count - a band here is a heading, one line
+ * under it, and the way in. If a second sentence is needed to make the
+ * first one land, the first one is wrong.
  *
- * The shape it follows now is the one a company's own film follows. A
- * sentence at a time, each one a claim about what this is rather than a
- * description of where to click, and each one standing next to the thing
- * it is talking about. Nothing on this page is a list. Nothing on it is
- * three sentences where one will do.
+ * What Kobblon is, in Staw's own words and the words this page opens
+ * with: an online sandbox platform filled with user-generated 3D worlds,
+ * where players can unleash their creativity, build unique experiences,
+ * and hang out together.
  *
- * The one rule it keeps from before: the numbers are read from the
- * database. Confidence is a way of writing; an invented figure is a lie,
- * and it is the kind that gets found out by anybody who can count the
- * Worlds on Discover.
+ * Two standing rules for anybody editing it:
  *
- * It must also not be the landing page in different words. The landing
- * page shows you the site - what is on it, what is popular, where to go.
- * This one says what the site *is*. If a sentence here would work
- * equally well on the front page, it belongs on the front page.
+ *   * The numbers come from the database. Write with confidence; do not
+ *     invent a figure anybody can check against Discover.
+ *   * This is not the landing page in other words. The landing page shows
+ *     you the site. This one says what the site is.
  */
+
+/** The three pieces underneath, one line each. */
+const inside = [
+  {
+    to: '/create',
+    art: '/about/marketplace.png',
+    alt: 'Glass shapes: a cube, a sphere and a wedge',
+    name: 'Marketplace',
+    body: 'Meshes, sounds, decals and fonts to build out of, all of it uploaded by somebody here.',
+  },
+  {
+    to: '/policies/money',
+    art: '/about/brix.png',
+    alt: 'Glass Kobblon bricks, falling',
+    name: currency.plural,
+    body: `What Kobblon runs on. Earn ${currency.plural} playing and selling, spend them on what other people made.`,
+  },
+  {
+    to: '/quests',
+    art: '/about/quests.png',
+    alt: 'A glass laurel wreath',
+    name: 'Quests',
+    body: 'Something to go and do, set by Kobblon and by the people who build the worlds.',
+  },
+]
 
 export default function About() {
   useTitle('What Kobblon is')
   useSocialCard({
     title: 'What Kobblon is',
-    description: 'The platform where the games, the worlds and everything in them are made by the people playing them.',
+    description: 'An online sandbox platform filled with user-generated 3D worlds.',
     image: null,
   })
 
@@ -56,13 +77,18 @@ export default function About() {
     <AboutShell
       hero={
         <Hero
-          eyebrow="Kobblon"
-          title={<>Everything here was made <span className="text-brand-bright">by somebody here</span>.</>}
-          lead="Kobblon is a platform for building: the Worlds, the clothes, the meshes, the sounds, the Communities. One account makes all of it, and plays all of it."
+          centre
+          title={
+            <>
+              Kobblon is an online sandbox platform filled with{' '}
+              <span className="text-brand-bright">user-generated 3D worlds</span>.
+            </>
+          }
+          lead="Unleash your creativity, build unique experiences, and hang out together."
           actions={
             <>
               <Button to="/signup" variant="yes" size="lg">Make an account</Button>
-              <Button to="/discover" variant="subtle" size="lg">Look around first</Button>
+              <Button to="/discover" variant="subtle" size="lg">Look around</Button>
             </>
           }
           art={
@@ -93,63 +119,51 @@ export default function About() {
         </Band>
       )}
 
-      {/* ---------------------------------------------------------- Worlds */}
+      {/* ----------------------------------------------------------- worlds */}
       <Band tone="raised" edge>
         <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr]">
           <Reveal>
-            <BandHead
-              eyebrow="Worlds"
-              title="At the heart of Kobblon are Worlds."
-              lead="A World is a place one person built and published: ground, physics, sound, and whoever walks in. No two of them are alike, because no two people build the same thing."
-            />
-            <div className="mt-9">
-              <Button to="/discover" variant="subtle">Go somewhere</Button>
-            </div>
-          </Reveal>
-          <Reveal delay={90}>
             <Figure
               src="/brand/landing-interior.png"
               alt="The inside of a room built in Kobblon, lit through two windows"
               ratio="wide"
             />
           </Reveal>
+          <Reveal delay={90}>
+            <BandHead
+              eyebrow="Worlds"
+              title="Find somewhere to be."
+              lead="Every world on Kobblon was built and published by one person."
+            />
+            <div className="mt-8">
+              <Button to="/discover" variant="subtle">Discover</Button>
+            </div>
+          </Reveal>
         </div>
       </Band>
 
-      {/* ----------------------------------------------------- the three */}
+      {/* ----------------------------------------------------------- create */}
       <Band tone="night" edge>
-        <Reveal>
+        <Reveal className="max-w-xl">
           <BandHead
-            eyebrow="What runs underneath"
-            title="Three things hold it up."
-            lead="A marketplace to build out of, a currency that stays inside, and a reason to come back tomorrow."
+            eyebrow="Creator"
+            title="Build anything you can imagine."
+            lead="Open Creator, build it, publish it. People turn up the same day."
           />
+          <div className="mt-8">
+            <Button to="/create" variant="subtle">Start building</Button>
+          </div>
+        </Reveal>
+      </Band>
+
+      {/* --------------------------------------------------- inside Kobblon */}
+      <Band tone="raised" edge>
+        <Reveal>
+          <BandHead eyebrow="Inside Kobblon" title="What it runs on." />
         </Reveal>
 
         <div className="mt-12 grid gap-4 lg:grid-cols-3">
-          {[
-            {
-              to: '/create',
-              art: '/about/marketplace.png',
-              alt: 'Glass shapes: a cube, a sphere and a wedge',
-              name: 'The Marketplace',
-              body: 'Meshes, sounds, decals and fonts, uploaded by the people who made them and used by everybody else. Nothing on Kobblon was shipped with it.',
-            },
-            {
-              to: '/policies/money',
-              art: '/about/brix.png',
-              alt: 'Glass Kobblon bricks, falling',
-              name: currency.plural,
-              body: `${currency.plural} are what Kobblon runs on. Earned from playing and from selling, spent on what other people made, and they never leave the platform.`,
-            },
-            {
-              to: '/quests',
-              art: '/about/quests.png',
-              alt: 'A glass laurel wreath',
-              name: 'Quests',
-              body: 'Something to go and do, set by Kobblon and by the people who build the Worlds, paid in Brix when it is done.',
-            },
-          ].map((one, at) => (
+          {inside.map((one, at) => (
             <Reveal key={one.name} delay={at * 80} className="h-full">
               <Link
                 to={one.to}
@@ -170,51 +184,31 @@ export default function About() {
         </div>
       </Band>
 
-      {/* ------------------------------------------------------ Communities */}
-      <Band tone="raised" edge>
-        <Reveal>
+      {/* ------------------------------------------------------ communities */}
+      <Band tone="night" edge>
+        {/* Text-only bands are all left, so the eye has one edge to follow
+            down the page; only a band with a picture swaps sides. */}
+        <Reveal className="max-w-xl">
           <BandHead
-            centre
             eyebrow="Communities"
-            title="Nobody builds anything good alone."
-            lead="Fan clubs, build teams and hobby corners, each with a wall, its own ranks and funds of its own. The work that lasts on Kobblon comes out of them."
+            title="Hang out together."
+            lead="Fan clubs, build teams and hobby corners, each with a wall, ranks and funds of its own."
           />
-          <div className="mt-9 flex justify-center">
-            <Button to="/communities" variant="subtle">See the Communities</Button>
+          <div className="mt-8">
+            <Button to="/communities" variant="subtle">See them</Button>
           </div>
         </Reveal>
-      </Band>
-
-      {/* --------------------------------------------------------- the parts */}
-      <Band tone="night" edge>
-        <Reveal>
-          <BandHead eyebrow="How it runs" title="Three pieces, one account." />
-        </Reveal>
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
-          {[
-            ['The website', 'Find Worlds, people and Communities. Everything you own lives here.'],
-            ['The Launcher', 'Where a World actually runs. An application, not a browser tab.'],
-            ['Creator', 'Where a World is built, published, and changed again afterwards.'],
-          ].map(([name, body], at) => (
-            <Reveal key={name} delay={at * 70} className="h-full">
-              <div className="h-full rounded-3xl border border-white/10 bg-ink-card/50 p-7">
-                <p className="font-display text-xl font-extrabold">{name}</p>
-                <p className="mt-3 leading-relaxed text-white/55">{body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
       </Band>
 
       {/* ---------------------------------------------------------- the rules */}
       <Band tone="raised" edge>
         <div className="flex flex-col gap-8 sm:flex-row sm:items-center">
           <Reveal className="min-w-0 flex-1">
-            <Title>The rules are written down.</Title>
-            <p className="mt-4 max-w-2xl leading-relaxed text-white/55">
-              Nine policies, each at its own address, in plain words. A decision against your
-              account can be argued with, and your standing page says exactly where you are.
-            </p>
+            <BandHead
+              eyebrow="The rules"
+              title="Written down, in plain words."
+              lead="Nine policies, each at its own address, and a standing page that says where you are."
+            />
           </Reveal>
           <Reveal delay={80}>
             <Button to="/policies" variant="subtle" size="lg">Read them</Button>

@@ -11,6 +11,11 @@ import { cn } from '@/lib/cn'
  * the top, a gradient walks it down into the card's own colour, and there
  * is no line between them.
  *
+ * They are shown at the ratio Staw drew them at. A crop to make three
+ * cards the same height would be cropping a composition - the laurel is
+ * centred in its frame and the bricks fall through theirs, and both of
+ * those stop working the moment the frame is somebody else's idea.
+ *
  * The slow lift on hover is deliberate and is the only thing these do.
  * Three cards that each did something different on hover would be three
  * cards competing with the thing they are showing.
@@ -21,12 +26,12 @@ export function Plate({ src, alt, className }: {
   className?: string
 }) {
   return (
-    <div className={cn('relative aspect-[5/4] overflow-hidden', className)}>
+    <div className={cn('relative overflow-hidden', className)}>
       <img
         src={asset(src)}
         alt={alt}
         loading="lazy"
-        className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+        className="w-full transition-transform duration-700 ease-out group-hover:scale-105"
       />
       {/* Into the card, rather than onto it. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-b from-transparent to-ink-card" />

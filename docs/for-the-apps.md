@@ -11499,3 +11499,41 @@ replacement for it: a quest in an interface is still the icon.
   happens, takes after Discourse.
 - Support and the standing page have not moved onto the new system.
 - Round 133's five Launcher questions, `kobblon://edit/<id>` included.
+
+## Round one hundred and fifty-eight - the About page, said in one line
+
+Still too wordy after the last round. It is cut to the bone now: a band
+is a heading, one line under it, and the way in. If a second sentence is
+needed to make the first one land, the first one is wrong.
+
+The page opens with Staw's own sentence, which is the official line on
+what this is and the one to use anywhere either application has to
+describe Kobblon:
+
+> Kobblon is an online sandbox platform filled with user-generated 3D
+> worlds, where players can unleash their creativity, build unique
+> experiences, and hang out together.
+
+The bands after it: the numbers, Worlds ("Find somewhere to be"), Creator
+("Build anything you can imagine"), Inside Kobblon (Marketplace, Brix,
+Quests), Communities ("Hang out together"), the rules. The "three pieces,
+one account" band is gone - it was a manual entry, and the Launcher has a
+page of its own in the bar.
+
+### Two details worth carrying
+
+- **The three glass renders keep the ratio Staw drew them at.** They were
+  being cropped to make three cards the same height, which crops a
+  composition - the laurel is centred in its frame and the bricks fall
+  through theirs. A card is as tall as its picture now. Same rule applies
+  to his art in either application.
+- Text-only bands are all left-aligned, so there is one edge to follow
+  down the page. Only a band with a picture swaps sides.
+
+### Still open
+
+- The landing page is next, and it must not repeat this page.
+- The wiki, the forum and the newsroom are ideas; the forum, if it
+  happens, takes after Discourse.
+- Support and the standing page have not moved onto the new system.
+- Round 133's five Launcher questions, `kobblon://edit/<id>` included.
