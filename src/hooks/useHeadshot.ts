@@ -9,7 +9,8 @@
  */
 import { useEffect, useState } from 'react'
 import {
-  askForHeadshot, headshotFor, headshotKnown, portraitIsCurrent, watchHeadshots,
+  askForAvatarStamp, askForHeadshot, avatarStampFor, headshotFor, headshotKnown,
+  noteAvatarStamp, portraitIsCurrent, watchHeadshots,
 } from '@/lib/headshots'
 
 export function useHeadshot(
@@ -25,8 +26,37 @@ export function useHeadshot(
   changedAt?: string | null,
 ): string | null {
   const [, nudge] = useState(0)
-  const current = portraitIsCurrent({ avatar_url: stored, avatar_changed_at: changedAt })
+
+  /*
+   * When their avatar last changed, from whichever of the two knows.
+   *
+   * A row that carries the date teaches the store on the way past, and a
+   * row that does not - a forum byline, a chat message, a ticket - reads
+   * what some other row already said. That is the whole of "the same image
+   * everywhere": thirty-four places draw a face from a row with no date in
+   * it, and before this they each took whatever was stored on trust, so one
+   * person could wear last March's face on the forum and this morning's on
+   * their profile.
+   *
+   * The store wins when it is ahead, because it is also where a change made
+   * in this browser a second ago is recorded - the row saying so has not
+   * been fetched yet.
+   */
+  if (personId && changedAt) noteAvatarStamp(personId, changedAt)
+  const known = personId ? avatarStampFor(personId) ?? changedAt : changedAt
+
+  const current = portraitIsCurrent({ avatar_url: stored, avatar_changed_at: known })
   const usable = current ? stored : null
+
+  useEffect(() => {
+    /*
+     * Nobody has said when this one last changed, so ask - in a batch, once
+     * per person per tab. Asked even while a stored picture is being shown:
+     * showing it and swapping it if the answer says it is old beats drawing
+     * every face on the page from nothing on the chance that one of them is.
+     */
+    if (personId && !changedAt) askForAvatarStamp(personId)
+  }, [personId, changedAt])
 
   useEffect(() => {
     // Nothing to draw, or nothing to draw it for.

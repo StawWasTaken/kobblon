@@ -7,6 +7,9 @@ import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
 import { formatOf, socketFor, type WornFit } from '@/engine'
 import { FLOOR_FACE } from './mannequin'
 import { plainFace } from './plainFace'
+/* Static, and safe to be: `headshots` imports this module back, but only
+   inside a function, so nothing here runs at import time. */
+import { markLookChanged } from './headshots'
 import { timeAgo } from './format'
 import { nameOf } from './avatars'
 import type {
@@ -4830,7 +4833,9 @@ export async function saveOutfit(
 
 /** Puts one on. Returns how many pieces went on. */
 export async function wearOutfit(id: string): Promise<number> {
-  return unwrap(await supabase.rpc('wear_outfit', { target: id })) as number
+  const on = unwrap(await supabase.rpc('wear_outfit', { target: id })) as number
+  await lookJustChanged()
+  return on
 }
 
 /** Buys every piece of one that the buyer does not already own. */
@@ -5262,12 +5267,69 @@ export async function buyAvatarItems(ids: string[]): Promise<number> {
   return unwrap(await supabase.rpc('buy_avatar_items', { targets: ids })) as number
 }
 
+/**
+ * When a handful of people last changed their avatar.
+ *
+ * For the faces drawn from a row that does not carry the date - a forum
+ * byline, a chat message, a ticket. Without it a stored picture is taken on
+ * trust and somebody can wear one face on the forum and another on their
+ * profile, which is the thing Staw asked not to happen: "make sure its the
+ * same image used everywhere you need your pfp".
+ *
+ * A plain select, because `profiles` is already readable by anybody who is
+ * not looking at a banned account - this is the same column every list RPC
+ * hands out. Capped so a page cannot ask for the whole table by looping.
+ */
+export async function avatarStamps(ids: string[]): Promise<
+  { id: string; avatar_url: string | null; avatar_changed_at: string | null }[]
+> {
+  if (!ids.length) return []
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, avatar_url, avatar_changed_at')
+    .in('id', ids.slice(0, 200))
+  if (error) return []
+  return (data ?? []) as { id: string; avatar_url: string | null; avatar_changed_at: string | null }[]
+}
+
+/**
+ * What follows from the signed-in person changing how they look.
+ *
+ * It lives here rather than in the six pages that put something on, because
+ * six places remembering to do this is five places that will forget - and
+ * five of them already had. Wearing a hat from the Catalog, from a shelf,
+ * from an outfit or from a World's own shop left every face of them in the
+ * tab showing the avatar from before, and left the saved picture showing it
+ * to everybody else until they next opened My Avatar.
+ *
+ * Two halves, and both are needed:
+ *
+ *   * `markLookChanged` is now, in this browser: every face of them on
+ *     screen forgets what it drew and draws again from what the database
+ *     says they are wearing.
+ *   * `refreshPortrait` is for everybody else, and is what makes it stick.
+ *     Held back a moment and only the last one runs, because dressing is a
+ *     run of changes - putting on four things would otherwise be four
+ *     renders and four files in the bucket for one face.
+ */
+let portraitSoon: ReturnType<typeof setTimeout> | undefined
+
+async function lookJustChanged() {
+  const me = (await supabase.auth.getUser()).data.user?.id
+  if (!me) return
+  markLookChanged(me)
+  clearTimeout(portraitSoon)
+  portraitSoon = setTimeout(() => { void refreshPortrait(me).catch(() => null) }, 1500)
+}
+
 export async function wearAvatarItem(id: string) {
   unwrap(await supabase.rpc('wear_avatar_item', { target: id }))
+  await lookJustChanged()
 }
 
 export async function takeOffSlot(slot: AvatarSlot) {
   unwrap(await supabase.rpc('take_off_slot', { which: slot }))
+  await lookJustChanged()
 }
 
 /**
@@ -5281,11 +5343,13 @@ export async function takeOffSlot(slot: AvatarSlot) {
  */
 export async function takeOffItem(id: string) {
   unwrap(await supabase.rpc('take_off_item', { target: id }))
+  await lookJustChanged()
 }
 
 /** Null puts every part back to the colour the engine starts with. */
 export async function setBodyColours(colours: Record<string, string> | null) {
   unwrap(await supabase.rpc('set_body_colours', { colours }))
+  await lookJustChanged()
 }
 
 /**
@@ -5502,6 +5566,10 @@ async function buildLook(worn: AvatarPiece[]): Promise<PortraitLook> {
  * what went wrong. The only way to get a portrait is from the database.
  */
 export async function refreshPortrait(userId: string): Promise<string | null> {
+  /* A redraw asked for out loud cancels the one `lookJustChanged` queued:
+     My Avatar does this itself after every change, and letting both run
+     means two renders and two files in the bucket for one face. */
+  clearTimeout(portraitSoon)
   const drawn = await drawPortrait(await lookOf(userId)).catch(() => null)
   if (!drawn) return null
 

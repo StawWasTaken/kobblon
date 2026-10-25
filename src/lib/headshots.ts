@@ -227,3 +227,114 @@ export function forgetHeadshot(userId: string) {
   drawing.delete(userId)
   tell()
 }
+
+/* ------------------------------------------------------ when it last changed */
+
+/**
+ * When each person's avatar was last changed, as this tab knows it.
+ *
+ * Three facts made this necessary, and they are Staw's three sentences:
+ * "i want that it redraws everytime you change your avatar", "make sure its
+ * FROM the avatar", and "make sure its the same image used everywhere you
+ * need your pfp".
+ *
+ * The last one is where it bit. `portraitIsCurrent` decides whether a
+ * stored picture still shows who somebody is by comparing the stamp in its
+ * filename against `avatar_changed_at` - but thirty-four places that draw a
+ * face are handed a row that has no `avatar_changed_at` in it at all: a
+ * forum byline, a chat message, a ticket, a community member. With nothing
+ * to compare against, a stored picture is taken on trust, so the forum
+ * showed the face somebody had last March while their profile showed the
+ * one they are wearing. Two pictures of one person on one site, which is
+ * exactly what he is asking not to happen.
+ *
+ * So the answer is kept here, by person, for the life of the tab, and every
+ * row that *does* carry the date feeds it on the way past. A face drawn
+ * from a row that does not carry it asks once, in a batch, and the answer
+ * serves every other place that person appears.
+ *
+ * It is a number rather than a date because the only thing ever done with
+ * it is a comparison, and two formats for one value is how one of them ends
+ * up being compared as a string.
+ */
+const stamps = new Map<string, number>()
+/** Ids asked for in this batch, and the batch itself. */
+const wanted = new Set<string>()
+let asking: number | undefined
+
+/**
+ * Says when somebody's avatar last changed, from a row that knows.
+ *
+ * The newest answer wins rather than the latest caller: rows arrive in any
+ * order, and a list fetched before a change would otherwise undo what the
+ * change itself recorded.
+ */
+export function noteAvatarStamp(userId: string, changedAt?: string | null) {
+  if (!changedAt) return
+  const when = new Date(changedAt).getTime()
+  if (!Number.isFinite(when)) return
+  const had = stamps.get(userId)
+  if (had !== undefined && had >= when) return
+  stamps.set(userId, when)
+}
+
+/** What this tab knows, as the ISO date the rest of the code speaks in. */
+export function avatarStampFor(userId: string): string | undefined {
+  const had = stamps.get(userId)
+  return had === undefined ? undefined : new Date(had).toISOString()
+}
+
+/**
+ * Asks for the ones nobody has said yet.
+ *
+ * Batched on a short timer rather than one request per face: a forum page
+ * is forty bylines and would otherwise be forty round trips for a column
+ * the rows could have carried. `profiles` is readable by anybody, so this
+ * is a plain select and not a door that had to be built.
+ */
+export function askForAvatarStamp(userId: string) {
+  if (stamps.has(userId) || wanted.has(userId)) return
+  wanted.add(userId)
+  if (asking !== undefined) return
+
+  asking = window.setTimeout(() => {
+    asking = undefined
+    const ids = [...wanted]
+    wanted.clear()
+    void (async () => {
+      /* Imported here for the reason the look is: `api` decides its client
+         at call time, and a panel mounted outside the website must not pull
+         the data layer in simply by showing a face. */
+      const { avatarStamps } = await import('./api')
+      const rows = await avatarStamps(ids).catch(() => [])
+      let news = false
+      for (const row of rows) {
+        const had = stamps.get(row.id)
+        noteAvatarStamp(row.id, row.avatar_changed_at)
+        if (stamps.get(row.id) !== had) news = true
+      }
+      /*
+       * Only the ones that came back are known. An id that answered
+       * nothing - a banned account, a deleted one - is left unknown rather
+       * than marked fresh, so it is asked again on the next page rather
+       * than remembered as "never changed".
+       */
+      if (news) tell()
+    })()
+  }, 60)
+}
+
+/**
+ * Their look just changed, in this browser, this second.
+ *
+ * Called by the five doors in `api` that change what somebody is wearing,
+ * so that every face of them on screen redraws at once - the top bar, the
+ * sidebar, the comment they left further down the page. The stamp is set
+ * ahead of the database's own, which is the point: the stored picture is of
+ * the avatar from a moment ago and must not be shown again, and the row
+ * saying so has not been fetched yet.
+ */
+export function markLookChanged(userId: string) {
+  stamps.set(userId, Date.now())
+  forgetHeadshot(userId)
+}

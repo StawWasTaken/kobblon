@@ -13749,3 +13749,89 @@ shell: one row of three on the phone, the full nine-column row unchanged on
 the desktop. The profile card takes the same rule and could not be
 rendered here - a profile needs the database and this container has no
 route to it.
+
+## Round one hundred and eighty-five
+
+A profile picture is the avatar, redraws the moment the avatar changes, and
+is the same picture everywhere.
+
+Staw: "for the profile pictures i want that it redraws everytime you change
+your avatar, make sure its FROM the avatar, and lastly make sure its the
+same image used everywhere you need your pfp". Three sentences, and the
+first and third were each a real bug.
+
+**It redraws now.** `forgetHeadshot` had one caller: My Avatar. Every other
+way to change how you look - putting something on from the Catalog, from a
+shelf, from an outfit, from a World's own shop, taking one thing off,
+changing your body colours - changed the avatar and told nobody. The face
+in the top bar, in the sidebar and on the comment you left further down the
+page stayed as it was until the tab was closed, and the saved picture
+everybody else sees stayed as it was until you next opened My Avatar.
+
+So the five doors in `@/lib/api` that change what somebody is wearing -
+`wearAvatarItem`, `takeOffItem`, `takeOffSlot`, `wearOutfit`,
+`setBodyColours` - now do what follows from it themselves:
+
+- `markLookChanged(id)` in `@/lib/headshots`: every face of them on screen
+  forgets what it drew and draws again from what the database says they are
+  wearing.
+- `refreshPortrait`, held back a second and a half, last one only, so
+  dressing is one render and one file rather than four. An explicit
+  `refreshPortrait` cancels the queued one, so My Avatar is not doing it
+  twice.
+
+It is in `api` rather than in the six pages because six places remembering
+is five places that forget, and five of them already had.
+
+**It is from the avatar, and that part was already true.** `portraitIsCurrent`
+only accepts a stored picture named `portrait-<when>.webp`, which is what
+`refreshPortrait` writes; an uploaded or inherited picture is not a picture
+of an avatar, so it is ignored and the face is drawn instead. Nothing on the
+website uploads one, and signup deliberately stores nothing.
+
+**It is the same picture everywhere, and this is the one that needed
+building.** Whether a stored picture is still you is decided by comparing
+the stamp in its filename against `avatar_changed_at` - and thirty-four
+places that draw a face are handed a row with no `avatar_changed_at` in it
+at all: a forum byline, a chat message, a ticket, a community member. With
+nothing to compare against, the stored picture was taken on trust, so
+somebody could wear last March's face on the forum and this morning's on
+their profile.
+
+`@/lib/headshots` now keeps, for the life of the tab, when each person's
+avatar last changed:
+
+- `noteAvatarStamp(id, when)` - every row that *does* carry the date feeds
+  it on the way past, so most of this costs nothing.
+- `askForAvatarStamp(id)` - a face drawn from a row that does not carry it
+  asks once, batched on a 60ms timer, through `avatarStamps(ids)`: a plain
+  select on `profiles`, which is already readable, capped at 200. A forum
+  page is one request, not forty.
+- The newest answer wins, so a list fetched before a change cannot undo
+  what the change recorded, and a change made in this browser a second ago
+  beats every stored picture because the row saying so has not been fetched
+  yet.
+
+**For the applications:** if you draw a face from a row of your own, pass
+its `avatar_changed_at` to `Avatar`/`PersonAvatar` where you have it; where
+you do not, the store now answers for you, so nothing needs threading
+through. If you change what somebody is wearing through anything other than
+those five `api` functions, call `markLookChanged(id)` yourself - that is
+the one thing this cannot do for you.
+
+No migration, no table, no RPC: `profiles` already had the column and
+already allowed the read.
+
+Checked in `tools/site/headshots-check.html`, which exercises the
+comparison itself with no database and no WebGL - eight cases, all passing:
+an old portrait is refused, a new one kept, an uploaded picture never used,
+nothing stored is nothing to use, a dateless row on its own trusts what is
+stored, the store answers for a dateless row once another row has said, an
+older row does not undo a newer one, and a change made here beats the
+newest stored picture.
+
+Still not done, unchanged: the wiki; Round one hundred and thirty-three's
+five Launcher questions; Worlds cannot belong to a Community; use requests
+have no screen; `pg_net`/`pg_cron` and the re-apply of 0224 and 0253;
+automatic Community verification by membership share; `register` is not
+deployed; `world_visits` is still only written by `join_world_server`.
