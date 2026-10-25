@@ -13409,3 +13409,68 @@ place for a word we retired.
 Nothing changed in `@/engine`, `@/lib/kinds`, `design/preset.js` or any
 component you mount, and no migration. If either application ever writes a
 `theme-color`, or a card for a Kobblon link, the colour is `#1B34E8`.
+
+---
+
+## Round one hundred and eighty
+
+Staw sent five drawings: "now replace all of the remaining mascot driven UX
+thingy by these - brix, construction worker, lighthouse no result/looking
+for some, notifications, catalog sunglasses. These will replace the kobby
+ones."
+
+### The five, and what each one means
+
+They live at `public/mascot/` and they are reached through the same
+component as before, `@/components/brand/Kobby`, whose moods did not change
+names. That is the point of having had them: about forty call sites ask for
+`noResults`, and none of them had to know that it stopped being a shrug and
+became a lighthouse.
+
+| mood | drawing | the moment |
+| --- | --- | --- |
+| `emptyBox` | a brick on a stand | nothing here yet |
+| `noResults` | the lighthouse | looked and did not find it |
+| `construction` | the worker in hi-vis | not built, being worked on, broken |
+| `notification` | Kobby with the bell | something came in, or nothing did |
+| `style` | the shades | the Catalog's own |
+
+The old set - `kobby_crown`, `kobby_empty_box`, `kobby_no_results`,
+`kobby_notification`, `kobby_sunglasses` and `under_construction` - is
+deleted rather than left lying about, so there is one drawing per idea and
+nothing to pick the wrong one from. `kobby.png` itself stays: it is the
+28-pixel mark beside "Ask Kobby" in the staff panel, which names the
+auto-admin and is not an empty state.
+
+`under_construction` had two deliberate placements outside the empty states
+- the Download page's hero and the corner of the Workspace banner on What is
+Kobblon - and both are the worker now. Two drawings of "this is still being
+built" was one more than the idea needs.
+
+### The shades got a job
+
+`style` was in the table and used nowhere, and the Catalog's empty shelves
+were all using the lighthouse. Searched-and-found-nothing is the lighthouse;
+a shelf nobody has filled yet is the Catalog's own, so:
+`Nothing on this shelf yet` is now `term ? 'noResults' : 'style'`, the
+outfits shelf and a creator's empty shop are `style`, and a Catalog item
+that was never screened or has been taken away is `noResults`.
+
+### One of them arrived on paper
+
+The brick drawing had its background painted opaque white rather than left
+transparent, which does not show on a white canvas and is a white slab on
+every card this site has. Cleared by flooding in from the border, so white
+that the drawing fences in - the top of the stand - is kept exactly as
+drawn. Worth knowing for the next batch: if a drawing looks right in the
+chat and wrong on a dark card, that is this.
+
+`tools/site/mascots-preview` draws all five at the sizes pages ask for,
+beside four real empty states.
+
+### For the applications
+
+If you draw an empty state, the drawings are at `/mascot/<name>.png` on the
+website and the component that picks one is `@/components/brand/Kobby`,
+which mounts with nothing around it. No migration, and nothing changed in
+`@/engine`, `@/lib/kinds` or `design/preset.js`.

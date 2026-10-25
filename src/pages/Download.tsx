@@ -72,8 +72,8 @@ export default function Download() {
           note="No release date yet, and none is being guessed at here."
           art={
             <Character
-              src="/brand/under_construction.png"
-              alt="A Kobblon character in a branded shirt and cap, holding a hammer"
+              src="/mascot/worker.png"
+              alt="A Kobblon character in a hard hat and a high-visibility jacket"
               imgClassName="max-w-[18rem]"
             />
           }

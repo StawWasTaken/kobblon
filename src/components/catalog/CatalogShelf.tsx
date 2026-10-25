@@ -559,7 +559,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
       </div>
     ) : !outfits.data?.length ? (
       <EmptyState
-        mood="noResults"
+        mood="style"
         title="No outfits yet"
         body="Put a look together on your avatar, save it, and sell it here."
         action={profile ? <Button to="/avatar" icon={faShirt}>My Avatar</Button> : undefined}
@@ -591,7 +591,10 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
     <ErrorState message={things.error} onRetry={things.reload} />
   ) : (things.data ?? []).length === 0 ? (
     <EmptyState
-      mood="noResults"
+      /* Searched and found nothing is the lighthouse; a shelf nobody has
+         filled yet is the Catalog's own. Two different situations that had
+         been wearing one drawing. */
+      mood={term ? 'noResults' : 'style'}
       title="Nothing on this shelf yet"
       body={term ? 'Nothing by that name.' : 'Be the first to put something here.'}
       action={profile ? <Button to="/create/avatar" icon={faPlus}>Make one</Button> : undefined}

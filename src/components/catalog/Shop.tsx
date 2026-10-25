@@ -72,7 +72,9 @@ export function Shop({ owner, who, isMine }: {
     return (
       <Card>
         <EmptyState
-          mood="emptyBox"
+          /* The Catalog's own drawing rather than the empty stand: a shop
+             with nothing in it is still a shop. */
+          mood="style"
           title="Nothing for sale yet"
           body={isMine
             ? 'Make something in Create, wait for it to be looked at, and publish it. It shows up here and in the Catalog.'

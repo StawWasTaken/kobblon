@@ -247,7 +247,7 @@ export default function About() {
               {/* Standing at the corner of the banner, because the thing being
                   advertised is still being built. Staw asked for him here. */}
               <img
-                src={asset('/brand/under_construction.png')}
+                src={asset('/mascot/worker.png')}
                 alt=""
                 aria-hidden="true"
                 className="pointer-events-none absolute -bottom-10 -left-8 hidden w-24 drop-shadow-[0_18px_30px_rgba(0,0,0,0.6)] sm:block lg:-left-14 lg:w-32"

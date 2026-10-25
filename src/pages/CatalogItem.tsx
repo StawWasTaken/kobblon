@@ -216,7 +216,7 @@ export default function CatalogItem() {
       <Page className="space-y-5">
         <BackLink to="/catalog">Back to the Catalog</BackLink>
         <EmptyState
-          mood="emptyBox"
+          mood="noResults"
           title="There is nothing here"
           body="This was never screened, or it has been taken away. The Catalog has plenty else."
           action={<Button to="/catalog" icon={faStore}>The Catalog</Button>}
