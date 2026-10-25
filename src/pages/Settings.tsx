@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
+import { TEXT_SIZES, useTextSize, type TextSize } from '@/hooks/useTextSize'
 import { useAsync } from '@/hooks/useAsync'
 import {
   USERNAME_CHANGE_COST, changeUsername, getStanding, updateProfile,
@@ -367,8 +368,26 @@ function ModeSwatch({ which, icon }: { which: 'dark' | 'light' | 'system'; icon:
   )
 }
 
+/**
+ * The swatch a size is picked by: the same two letters at the size that
+ * option puts them at.
+ *
+ * Drawn in pixels rather than in `rem`, which is the whole point of it -
+ * every other size on the page is relative, so on Comfortable all three
+ * tiles would grow together and the row would say nothing. These are the
+ * three sizes themselves, side by side, whichever one is on.
+ */
+function SizeSwatch({ px }: { px: number }) {
+  return (
+    <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink-raised font-display font-extrabold leading-none text-white">
+      <span style={{ fontSize: `${px}px` }}>Aa</span>
+    </span>
+  )
+}
+
 function Looks() {
   const { theme, setTheme } = useTheme()
+  const { size, setSize } = useTextSize()
   const { appearance, owned, wear } = useAppearance()
   const say = useToast()
   const [changing, setChanging] = useState<string | null>(null)
@@ -378,6 +397,12 @@ function Looks() {
     { value: 'light' as const, label: 'Light', icon: faSun, note: 'The same interface in daylight.' },
     { value: 'system' as const, label: 'System', icon: faDesktop, note: 'Follows this machine.' },
   ]
+
+  const sizes: Record<TextSize, { label: string; note: string; px: number }> = {
+    minimalist: { label: 'Minimalist', note: 'Smaller text, less room taken.', px: 12 },
+    default: { label: 'Default', note: 'The way Kobblon is built.', px: 15 },
+    comfortable: { label: 'Comfortable', note: 'Bigger text, more room to read.', px: 18 },
+  }
 
   const put = async (which: Appearance) => {
     if (which === appearance) return
@@ -406,6 +431,28 @@ function Looks() {
               swatch={<ModeSwatch which={mode.value} icon={mode.icon} />}
               title={mode.label}
               note={mode.note}
+            />
+          ))}
+        </div>
+      </Panel>
+
+      {/*
+       * One lever, not two. Kobblon's type scale and its spacing scale are
+       * both in `rem`, so the size of the words and the room around them
+       * are the same number - a "text size" that left the padding where it
+       * was would be bigger words in a box built for smaller ones, which is
+       * crowding rather than comfort.
+       */}
+      <Panel title="Size" note="How big the interface is. Kept on this device, like the mode.">
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {TEXT_SIZES.map((one) => (
+            <Choice
+              key={one}
+              on={size === one}
+              onClick={() => setSize(one)}
+              swatch={<SizeSwatch px={sizes[one].px} />}
+              title={sizes[one].label}
+              note={sizes[one].note}
             />
           ))}
         </div>

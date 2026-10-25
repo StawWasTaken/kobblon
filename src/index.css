@@ -56,6 +56,24 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /*
+   * How big the interface is, picked in Settings and kept on the device.
+   *
+   * Every size on Kobblon is in `rem` - the type scale and the spacing
+   * scale both - so the root size is the one number they are all measured
+   * against, and moving it moves the words and the room around them in
+   * step. A percentage rather than a pixel count, so somebody who has
+   * turned their own browser text up keeps that and these are three sizes
+   * either side of theirs. See `hooks/useTextSize`.
+   */
+  html[data-text='minimalist'] {
+    font-size: 93.75%;
+  }
+
+  html[data-text='comfortable'] {
+    font-size: 109.375%;
+  }
+
   body {
     @apply bg-ink text-white font-sans antialiased;
   }

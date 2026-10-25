@@ -8,6 +8,7 @@
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { setSupabaseClient } from '@/lib/supabase'
+import { TextSizeProvider } from '@/hooks/useTextSize'
 import { ToastProvider } from '@/components/ui/Toast'
 import { me } from './pages-auth-stub'
 import Catalog from '@/pages/Catalog'
@@ -233,10 +234,12 @@ const Shown = PAGES[which] ?? Communities
 
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
+    <TextSizeProvider>
     <ToastProvider>
       <div className="min-h-screen bg-ink text-white">
         <Shown />
       </div>
     </ToastProvider>
+    </TextSizeProvider>
   </MemoryRouter>,
 )

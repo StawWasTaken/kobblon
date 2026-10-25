@@ -14428,3 +14428,76 @@ here changes it: the protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+---
+
+## Round one hundred and ninety-four - one lever for how big the interface is
+
+Staw: "can u maybe add a change font size in settings & Ui with default,
+minimalist, & comfortable".
+
+Settings, under Appearance, has a **Size** panel now: Minimalist, Default,
+Comfortable. It is kept on the device beside the mode, not on the account,
+because it is about the screen somebody is sitting at rather than about who
+they are.
+
+### It is one number, not two
+
+The obvious build is a font-size setting and a spacing setting. That is two
+levers that have to be kept in proportion by hand, and a text size that left
+the padding where it was is bigger words in a box built for smaller ones -
+crowding, not comfort.
+
+Kobblon's type scale and its spacing scale are both in `rem`, so **the root
+font size is the only number either of them is measured against.** Moving it
+moves the words and the room around them in step, and nothing drifts. So the
+whole setting is one attribute on the html element, in `src/index.css`:
+
+```css
+html[data-text='minimalist']  { font-size: 93.75%; }
+html[data-text='comfortable'] { font-size: 109.375%; }
+```
+
+Two things about that worth copying rather than re-deciding:
+
+* **Percentages, not pixels.** A pixel count overrides whatever the person
+  has set their browser's text to; a percentage is three sizes either side
+  of theirs, so somebody who has already turned their text up keeps that.
+* **The breakpoints are in pixels and stay that way.** Tailwind's screens
+  are px, so a laptop on Comfortable is still a laptop and does not fall
+  back to the phone layout. If the Workspace has `rem` breakpoints anywhere,
+  that is the thing this would break.
+
+`@/hooks/useTextSize` is the provider - `size`, `setSize`, `TEXT_SIZES`, the
+value in `localStorage` under `kobblon.text`. It is mounted in `App` inside
+`ThemeProvider`, and in `tools/site/pages-preview` as well, so the bare
+pages get it too.
+
+### What it means for the applications
+
+**If the Workspace shares this interface, it has to mount
+`TextSizeProvider` or the setting is a setting the website has and the
+application does not.** The hook has a context default, so without the
+provider nothing throws and nothing moves - which is the quiet failure, not
+a loud one. Same family as `useAuth` throwing without its provider and
+`<Link>` outside a router, except this one does not even go blank.
+
+The value is on this device, in this browser's storage, under
+`kobblon.text`. It does not travel with the account and there is no RPC for
+it. If you would rather it followed somebody from the website to the
+Workspace and back, say so and it goes on the profile with the rest -
+that is a migration and a column, not a shim, so it is worth deciding once
+rather than each side keeping its own.
+
+The swatch on each tile draws "Aa" in **pixels** on purpose. Every other
+size on that page is relative, so drawn in `rem` all three tiles would grow
+together on Comfortable and the row would say nothing about what you were
+choosing. If you build a size picker of your own, that is the detail that
+makes it readable.
+
+### Still waiting on you
+
+Unchanged from the last two rounds: the Electron protocol handler has to be
+registered with the executable and its arguments spelled out, or the
+sign-in codes the website mints cannot arrive. And Round one hundred and
+thirty-three's five Launcher questions are still unanswered.

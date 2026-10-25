@@ -9,6 +9,7 @@ import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import { TextSizeProvider } from '@/hooks/useTextSize'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { AppearanceProvider } from '@/hooks/useAppearance'
 import { ClaimAppearance } from '@/components/brand/ClaimAppearance'
@@ -140,6 +141,7 @@ export default function App() {
           document load and a router does not. */}
       <ScrollToTop />
       <ThemeProvider>
+      <TextSizeProvider>
       <AuthProvider>
         <AppearanceProvider>
         <ToastProvider>
@@ -324,6 +326,7 @@ export default function App() {
         </ToastProvider>
         </AppearanceProvider>
       </AuthProvider>
+      </TextSizeProvider>
     </ThemeProvider>
     </BrowserRouter>
   )
