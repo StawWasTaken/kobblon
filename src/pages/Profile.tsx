@@ -123,7 +123,16 @@ function Faces({ people }: { people: Face[] }) {
      * cap is in the caller, so the heading's count is the real one and this
      * only draws what it was handed.
      */
-    <div className="grid grid-cols-3 gap-6 sm:grid-cols-5 lg:grid-cols-8">
+    /*
+     * Three on a phone and the rest behind See all, for the reason the home
+     * rail now shows two: eight faces at three across is three rows of
+     * circles between somebody's About and their Communities. okayCooki3:
+     * "2 of the person's friends (on mobile) shown then when they click see
+     * all they can see all their friends". Three here rather than two
+     * because there is no Add Friends cell on somebody else's profile, so
+     * three is the full row.
+     */
+    <div className="grid grid-cols-3 gap-6 max-sm:[&>:nth-child(n+4)]:hidden sm:grid-cols-5 lg:grid-cols-8">
       {people.map((person) => (
         <Link
           key={person.id}

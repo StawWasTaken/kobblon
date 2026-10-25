@@ -13712,3 +13712,40 @@ five Launcher questions; Worlds cannot belong to a Community; use requests
 have no screen; `pg_net`/`pg_cron` and the re-apply of 0224 and 0253;
 automatic Community verification by membership share; `register` is not
 deployed; `world_visits` is still only written by `join_world_server`.
+
+## Round one hundred and eighty-four
+
+A phone shows fewer friends, not smaller ones.
+
+okayCooki3, on the forum, about the Friends row on a phone: "i think
+instead of it being more crammed together there should just be 2 of the
+person's friends (on mobile) shown then when they click see all they can
+see all their friends". He is right, and he is pointing at the wrong turn
+taken last time: the row was four across with eight faces because an
+earlier complaint of his was that it took too long to scroll past, and the
+answer to that was fewer faces rather than tighter ones. Two rows of small
+circles with the names touching is what tighter got us.
+
+So on a phone:
+
+- `FriendsRail` (the home page) is three columns - Add Friends and two
+  faces - one row, nothing under it, and the faces are bigger for it.
+  Unchanged from `sm` up: six across, nine at `lg`, eight faces.
+- The Friends card on a profile shows three rather than eight. Three, not
+  two, because there is no Add Friends cell on somebody else's profile, so
+  three is the full row.
+
+Both hold the extra cells back with `hidden` rather than slicing the list
+shorter, so one piece of markup serves both widths and turning the phone
+sideways is a repaint rather than a refetch. The count in the heading is
+still the real one, and "See all" was always right there.
+
+Nothing shared changed: no component signature, no API, no table. If you
+draw a friends row of your own, the number worth copying is "one row,
+whatever one row holds at this width", not eight.
+
+Checked at 390 and at 1280 in the phone harness, which mounts the real
+shell: one row of three on the phone, the full nine-column row unchanged on
+the desktop. The profile card takes the same rule and could not be
+rendered here - a profile needs the database and this container has no
+route to it.

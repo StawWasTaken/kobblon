@@ -72,8 +72,22 @@ export function FriendsRail() {
         * Add Friends plus eight faces, which is one clean row at the widest
         * and would have been two and a stray at the narrowest. "See all" is
         * right there, and this row was never the list.
+        *
+        * On a phone it is Add Friends and two faces, one row of three and
+        * nothing under it. okayCooki3, who filed this twice: "i think
+        * instead of it being more crammed together there should just be 2
+        * of the person's friends (on mobile) shown then when they click see
+        * all they can see all their friends". Four columns of eight faces
+        * was two rows of small circles with the names touching - the fix
+        * last time was to cram less, and he is right that the answer was
+        * fewer rather than tighter. The phone cells are wider for it, so
+        * the faces are bigger than they were at four across.
+        *
+        * Held back with `hidden` rather than a shorter slice, so the same
+        * markup serves both widths: turning the phone and back is a
+        * repaint, not a refetch.
         */}
-      <div className="grid grid-cols-4 gap-x-4 gap-y-6 max-sm:[&>:nth-child(9)]:hidden sm:grid-cols-6 sm:gap-x-8 sm:gap-y-7 lg:grid-cols-9">
+      <div className="grid grid-cols-3 gap-x-4 gap-y-6 max-sm:[&>:nth-child(n+4)]:hidden sm:grid-cols-6 sm:gap-x-8 sm:gap-y-7 lg:grid-cols-9">
         <Link
           to="/friends"
           className="group flex flex-col items-center gap-2 text-center sm:gap-2.5"
