@@ -13877,3 +13877,22 @@ line saying they exist and are shared.
 No migration this round. **0296 is still waiting** - `forum_edit` gained
 title and attachment arguments and the new signature only exists once that
 file is applied.
+
+## Round one hundred and eighty-seven
+
+Polish only, and one correction to the last round.
+
+**0296 is applied.** Staw ran it. `forum_edit` is live as
+`(in_what, in_id, in_body, in_title default null, in_images default null)` -
+the old four-argument signature is dropped, so anything calling it by name
+must pass the new shape. Nothing is outstanding on the database now.
+
+**"Where things get said." on What is Kobblon** was too wordy and the cards
+under it repeated themselves. The lead is two short lines, and `TopicCard`
+gained `showBoard` (default true): off, the board pill goes and the card
+leads on the time. It is off in that row, because three cards reading
+"Announcements" under a heading about announcements is the word four times -
+the rule being that a card does not name the thing the container already
+named. If you draw the same card in a board-specific list, turn it off there
+too; in a mixed feed leave it on, because there the board is the one piece of
+information the card alone carries.

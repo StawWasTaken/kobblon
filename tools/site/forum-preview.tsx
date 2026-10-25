@@ -204,7 +204,7 @@ function Page() {
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
             {cards.map((topic) => (
-              <TopicCard key={topic.id} topic={topic} look="glass" className="h-full" urlOf={(p) => p} />
+              <TopicCard key={topic.id} topic={topic} look="glass" showBoard={false} className="h-full" urlOf={(p) => p} />
             ))}
           </div>
         </div>

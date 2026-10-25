@@ -30,10 +30,15 @@ import type { ForumTopic } from '@/types/db'
  *   `glass`  the At Kobblon look - a tall card, lifted on hover, the way
  *            `GlassCard` behaves in the bands above it.
  */
-export function TopicCard({ topic, look = 'tile', className, urlOf = forumImageUrl }: {
+export function TopicCard({ topic, look = 'tile', className, showBoard = true, urlOf = forumImageUrl }: {
   topic: ForumTopic
   look?: 'tile' | 'glass'
   className?: string
+  /* Whether to name the board on the card. Off where the card is already
+     inside something that says which board it came from - the row under
+     "Where things get said." is three cards reading "Announcements" under
+     a heading about announcements, which is the word four times. */
+  showBoard?: boolean
   /* How an attachment's path becomes a URL. The pages never pass this;
      `Lightbox` takes the same escape hatch for the same reason, which is
      that the bare preview under `tools/site/` has no bucket to ask and
@@ -115,13 +120,17 @@ export function TopicCard({ topic, look = 'tile', className, urlOf = forumImageU
       )}
 
       <span className="flex items-center gap-2">
-        <span className={cn(
-          'rounded-md px-1.5 py-0.5 text-[11px] font-extrabold',
-          glass ? 'bg-brand/20 text-brand-bright' : 'bg-white/[0.07] text-white/60',
-        )}>
-          {topic.category_name}
+        {showBoard && (
+          <span className={cn(
+            'rounded-md px-1.5 py-0.5 text-[11px] font-extrabold',
+            glass ? 'bg-brand/20 text-brand-bright' : 'bg-white/[0.07] text-white/60',
+          )}>
+            {topic.category_name}
+          </span>
+        )}
+        <span className="text-[11px] font-bold uppercase tracking-wider text-white/35">
+          {timeAgo(topic.last_post_at)}
         </span>
-        <span className="text-[11px] font-bold text-white/35">{timeAgo(topic.last_post_at)}</span>
       </span>
 
       <span

@@ -407,9 +407,9 @@ export default function About() {
                   Keeping up
                 </p>
                 <Title className="mt-4">Where things get said.</Title>
-                <p className="mt-4 max-w-xl leading-relaxed text-white/55">
-                  Releases, decisions and the occasional apology go on the forum's Announcements
-                  board, where you can reply to them. The Discord is where they get said first.
+                <p className="mt-4 max-w-md leading-relaxed text-white/55">
+                  Releases and decisions go on the forum, where you can reply to them. The
+                  Discord hears them first.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col gap-3 sm:items-end">
@@ -430,7 +430,13 @@ export default function About() {
             {!!news.length && (
               <div className="relative mt-8 grid gap-4 border-t border-white/10 pt-8 md:grid-cols-3">
                 {news.map((topic) => (
-                  <TopicCard key={topic.id} topic={topic} look="glass" className="h-full" />
+                  <TopicCard
+                    key={topic.id}
+                    topic={topic}
+                    look="glass"
+                    showBoard={false}
+                    className="h-full"
+                  />
                 ))}
               </div>
             )}
