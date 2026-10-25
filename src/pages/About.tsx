@@ -4,6 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
 import { TopicCard, useTopTopics } from '@/components/forum/TopicCard'
 import { Button } from '@/components/ui/Button'
+import { kobbyArt } from '@/components/brand/Kobby'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
 import { Reveal } from '@/components/about/Reveal'
@@ -247,7 +248,7 @@ export default function About() {
               {/* Standing at the corner of the banner, because the thing being
                   advertised is still being built. Staw asked for him here. */}
               <img
-                src={asset('/mascot/worker.png')}
+                src={kobbyArt.building}
                 alt=""
                 aria-hidden="true"
                 className="pointer-events-none absolute -bottom-10 -left-8 hidden w-24 drop-shadow-[0_18px_30px_rgba(0,0,0,0.6)] sm:block lg:-left-14 lg:w-32"

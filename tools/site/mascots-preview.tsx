@@ -12,6 +12,7 @@ const what: Record<KobbyMood, string> = {
   construction: 'Not built yet',
   notification: 'Nothing has come in',
   style: 'The Catalog',
+  building: 'Beside what is being advertised',
   default: 'Ask Kobby (a label, 28px)',
 }
 

@@ -3,6 +3,7 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
 import { Button } from '@/components/ui/Button'
+import { kobbyArt } from '@/components/brand/Kobby'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band } from '@/components/about/Band'
 import { Hero } from '@/components/about/Hero'
@@ -72,8 +73,8 @@ export default function Download() {
           note="No release date yet, and none is being guessed at here."
           art={
             <Character
-              src="/mascot/worker.png"
-              alt="A Kobblon character in a hard hat and a high-visibility jacket"
+              src={kobbyArt.building}
+              alt="A Kobblon character in a branded shirt and cap, holding a hammer"
               imgClassName="max-w-[18rem]"
             />
           }

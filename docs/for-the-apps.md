@@ -13474,3 +13474,58 @@ If you draw an empty state, the drawings are at `/mascot/<name>.png` on the
 website and the component that picks one is `@/components/brand/Kobby`,
 which mounts with nothing around it. No migration, and nothing changed in
 `@/engine`, `@/lib/kinds` or `design/preset.js`.
+
+---
+
+## Round one hundred and eighty-one
+
+A correction to the round before it, from Staw's own old-against-new sheet.
+
+### The names are his now
+
+He put the five into the repository properly - `brix.png`,
+`construction_worker.png`, `lighthouse_no_results.png`, `notification.png`,
+`sunglasses.png` - so those are the filenames under `public/mascot/`
+rather than the shorter ones the last round invented. If a drawing is
+replaced, it is replaced by overwriting the file he named.
+
+### The worker and the hammer are two drawings, not one
+
+Last round folded `under_construction` into the construction worker on the
+grounds that two drawings of "still being built" was one too many. That was
+wrong, and his sheet says why: they are not the same idea.
+
+* **The worker** - hard hat, hi-vis - is the empty state. A thing that is
+  not finished, is being worked on, or broke.
+* **The guest with the hammer** is a Kobblonian who builds, standing beside
+  something being advertised. It is not an empty state at all, which is why
+  it has no `mood` in the old table and why Staw lists it as "none before".
+
+It is back, in `public/mascot/` with the rest, and it has its two
+placements again: the Download page's hero and the corner of the Workspace
+banner on What is Kobblon. It is `kobbyArt.building`, so the two call sites
+name a drawing rather than a path, and the next time one of these moves
+there is one line to change.
+
+### What the set is now
+
+| mood | file | the moment |
+| --- | --- | --- |
+| `emptyBox` | `brix.png` | nothing here yet |
+| `noResults` | `lighthouse_no_results.png` | looked and did not find it |
+| `construction` | `construction_worker.png` | not built, being worked on, broken |
+| `notification` | `notification.png` | something came in, or nothing did |
+| `style` | `sunglasses.png` | the Catalog's own |
+| `building` | `under_construction.png` | beside what is being advertised |
+
+The brick still arrived with its background painted opaque white, so it is
+cleared the same way as last round - flooded from the border, keeping the
+white the drawing fences in. Said again because it will come up again: a
+drawing looks right in the chat and wrong on a dark card when its
+background is white rather than transparent.
+
+### For the applications
+
+`/mascot/<name>.png` on the website, picked through
+`@/components/brand/Kobby`. No migration, and nothing changed in
+`@/engine`, `@/lib/kinds` or `design/preset.js`.

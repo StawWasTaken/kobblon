@@ -18,16 +18,26 @@ import { asset } from '@/lib/asset'
  * lighthouse.
  */
 export const kobbyArt = {
-  /** Nothing here yet: a stand with one brick on it. */
+  /** Nothing here yet: a brick floating over its stand, like a prize. */
   emptyBox: asset('/mascot/brix.png'),
   /** Looked and did not find it. Staw: "no result/looking for some". */
-  noResults: asset('/mascot/lighthouse.png'),
+  noResults: asset('/mascot/lighthouse_no_results.png'),
   /** Not built yet, being worked on, or broken. */
-  construction: asset('/mascot/worker.png'),
+  construction: asset('/mascot/construction_worker.png'),
   /** Something came in, or nothing did. */
   notification: asset('/mascot/notification.png'),
   /** The Catalog's own, for the shelves rather than for a search. */
-  style: asset('/mascot/shades.png'),
+  style: asset('/mascot/sunglasses.png'),
+  /*
+   * The guest with the hammer, which is not an empty state and is not the
+   * worker: the worker stands for a thing that is not finished, and this
+   * one is a Kobblonian who builds, standing beside what is being
+   * advertised. Staw counts it in the set and it was already drawn, so it
+   * keeps the two placements it was made for - the Download hero and the
+   * corner of the Workspace banner. Merging the two into one drawing last
+   * round was wrong.
+   */
+  building: asset('/mascot/under_construction.png'),
   /*
    * Kobby's own face, which is not one of the five and is not an empty
    * state: it is the 28-pixel mark beside "Ask Kobby" in the staff panel,
