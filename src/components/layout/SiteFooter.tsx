@@ -5,7 +5,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Kmark } from '@/components/brand/Kmark'
 import { cn } from '@/lib/cn'
-import { siteVersionLabel } from '@/lib/version'
+import { platformVersionLabel } from '@/lib/version'
 
 /*
  * One foot for the whole site.
@@ -171,9 +171,9 @@ export function SiteFooter({ className, compact }: { className?: string; compact
               <span aria-hidden="true">&middot;</span>
               <span
                 className="rounded-md border border-white/10 px-1.5 py-0.5 font-bold text-white/45"
-                title="Which version of the website this is"
+                title="Which version of Kobblon this is: the website and the Launcher move together, and the Workspace has its own."
               >
-                {siteVersionLabel()}
+                {platformVersionLabel()}
               </span>
             </p>
           </div>

@@ -14501,3 +14501,53 @@ Unchanged from the last two rounds: the Electron protocol handler has to be
 registered with the executable and its arguments spelled out, or the
 sign-in codes the website mints cannot arrive. And Round one hundred and
 thirty-three's five Launcher questions are still unanswered.
+
+---
+
+## Round one hundred and ninety-five - 3.4 is the platform's number, not the website's
+
+Staw, straight after the last round: "i want that instead of saying what
+version of the website it is, the 3.4 is actually the version of the whole
+platform (includes website & launcher, the workspace is different)".
+
+So the number in the foot of every page is **Kobblon's version**, and the
+website and the Launcher move on it together. **The Workspace is not on it
+and keeps its own.**
+
+`@/lib/version` is renamed to match, because a name that says the wrong
+thing is how this drifts back:
+
+* `siteVersion()` is now **`platformVersion()`** - `3.4`.
+* `siteVersionLabel()` is now **`platformVersionLabel()`** - `V3.4`.
+
+The list of releases and the way it is read are unchanged: a date and a
+name per version, read against the viewer's clock, so the bundle deployed
+in November starts saying V3.5 on the first of December with no deploy.
+
+### What this means for you
+
+**The Launcher should show this same number, and the Workspace should not.**
+If the Launcher shows a version anywhere - an about box, a corner of the
+sign-in window, the thing somebody quotes in a bug report - it is V3.4 now
+and V3.5 from the first of December, matching the website exactly. The
+Workspace shows whatever the Workspace is at; that is deliberate and it is
+the one place two different numbers are correct.
+
+How to get it: the list is six lines and the rule is "the first one whose
+date has begun wins", so **the Launcher can carry its own copy of
+`lib/version` and land on the same answer without asking the website
+anything** - which is why it is dates rather than a constant. Copying it
+means the two can drift if somebody adds a release on one side only.
+
+If you would rather not take that risk, say so and it moves to an RPC -
+one `security definer` function returning the current name, both sides
+reading it, nothing to keep in step. That is a migration, so it is worth
+one decision rather than two copies. Until you ask, the copy is the cheaper
+answer and the website is the source the copy is taken from.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.
