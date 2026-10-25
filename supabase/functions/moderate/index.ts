@@ -1400,6 +1400,17 @@ async function handle(request: Request): Promise<Response> {
  * ===================================================================== */
 
 /** How many questions one asker gets an hour. */
+/**
+ * The one sentence this page says when Kobby cannot answer.
+ *
+ * It names no service and no model, and it tells somebody what to do
+ * next instead: wait a moment, read the document itself, or write to a
+ * person. Every public failure on this branch ends here.
+ */
+const ASK_SORRY =
+  'Kobby could not put an answer together just then. Give it a moment and ask again - '
+  + 'the policies themselves are all on this page, and support gets you a person.'
+
 const ASK_CEILING = 12
 /** How much of a question is read. Past this it is a paste, not a question. */
 const ASK_LONGEST = 300
@@ -1558,7 +1569,10 @@ async function answerAboutTheRules(
     in_user: userId,
     in_ceiling: ASK_CEILING,
   })
-  if (noCount) return answer({ error: `That could not be asked: ${noCount.message}` }, 500)
+  if (noCount) {
+    console.error('ask: the counter refused', noCount.message)
+    return answer({ error: ASK_SORRY }, 500)
+  }
   if (mayAsk === false) {
     return answer({
       error: `That is ${ASK_CEILING} questions in an hour, which is the most Kobby answers. `
@@ -1579,10 +1593,30 @@ async function answerAboutTheRules(
   const said = await askGroqJson(
     model, askPrompt(docs, filterNote(terms, question)), question, 500,
   )
-  if ('trouble' in said) return answer({ error: said.trouble }, 502)
+  /*
+   * Whatever went wrong out there, this page says one sentence.
+   *
+   * Staw: "instead of saying to all of our users that we use groq, we
+   * wanna say instead something like Kobby couldnt generate a proper
+   * answer, please try again shortly". The real reason - a spent rate
+   * limit, a retired model name, a key that is not a key - is a fact
+   * about Kobblon's plumbing, and naming it on a public page tells a
+   * stranger which service to go and exhaust. It goes to the function
+   * log instead, where the console can read it and nobody else can.
+   *
+   * The admin console is left alone: staff pressing a button that failed
+   * need the actual sentence, and they are the ones who can act on it.
+   */
+  if ('trouble' in said) {
+    console.error('ask: the model did not answer -', said.trouble)
+    return answer({ error: ASK_SORRY }, 502)
+  }
 
   const text = typeof said.json.answer === 'string' ? said.json.answer.trim() : ''
-  if (!text) return answer({ error: 'Kobby did not manage an answer to that one.' }, 502)
+  if (!text) {
+    console.error('ask: an empty answer came back for', question.slice(0, 80))
+    return answer({ error: ASK_SORRY }, 502)
+  }
 
   /*
    * The slugs are checked against the documents rather than passed

@@ -14098,3 +14098,52 @@ Both steps are Staw's to run, and neither has been reported done:
 2. Redeploy the `moderate` function **as a whole folder**, so
    `policies.json` goes with it - and now doubly, because of the Terms
    change above.
+
+---
+
+## Round one hundred and ninety-one - the ask bar never names the service
+
+Staw: "when we cant generate stuff instead of saying to all of our users
+that we use groq, we wanna say instead something like Kobby couldnt
+generate a proper answer, please try again shortly".
+
+Every public failure of the Ask Kobby branch in `moderate` now returns
+one sentence, and it is always this one:
+
+> Kobby could not put an answer together just then. Give it a moment and
+> ask again - the policies themselves are all on this page, and support
+> gets you a person.
+
+It covers all three ways that branch can fail without an answer: the
+model did not answer, an empty answer came back, and the rate counter
+itself refused. The real reason is written to the function log with
+`console.error` instead, so the console can still be told what broke.
+Status codes are unchanged (502, 502, 500), so anything reading them
+reads the same thing as before - only the words changed.
+
+Two things that did **not** change, deliberately:
+
+- **The admin console still gets the exact sentence.** Staff pressing a
+  button that failed need "Groq said 429 for ..." or "no GROQ_API_KEY is
+  set", because they are the only people who can act on it. Nothing in
+  the moderation, appeal, report, chat or model-list paths was touched.
+- **The ceiling message is still its own sentence** ("that is twelve
+  questions in an hour"), because that one is not a failure - it tells
+  somebody something true about what they did, and swapping it for an
+  apology would have them hammering a bar that is working as intended.
+
+On the website side the client does the same thing: `askKobbyAboutTheRules`
+in `@/lib/api` shows the function's own sentence when there is one and
+that same apology for everything else, instead of the "the function is
+not deployed" diagnostics the rest of that file hands the console.
+
+**If the applications ever surface a Kobby answer**, copy the rule rather
+than the string: a public failure says what to do next and names no
+service, no model and no provider. A staff-facing failure says exactly
+what went wrong.
+
+Nothing about the request, the response shape, the ceiling or the fences
+moved. `moderate` needs redeploying as a folder for this to take effect -
+the same redeploy Round one hundred and ninety already asked for, which
+also carries the multiple-Accounts wording into Kobby's copy of the
+policies.

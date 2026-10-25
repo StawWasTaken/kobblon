@@ -4361,15 +4361,30 @@ export type KobbyAnswer = {
   covered: boolean
 }
 
+/** The same sentence the function says, for when it is not even reached. */
+const KOBBY_SORRY =
+  'Kobby could not put an answer together just then. Give it a moment and ask again - '
+  + 'the policies themselves are all on this page, and support gets you a person.'
+
 export async function askKobbyAboutTheRules(question: string): Promise<KobbyAnswer> {
   const { data, error } = await supabase.functions.invoke('moderate', {
     body: { question: question.slice(0, 300) },
   })
   if (error) {
+    /*
+     * Only the function's own sentence reaches the page.
+     *
+     * Everything on that branch is written to be read by somebody who
+     * came to look up a rule - the ceiling, the empty question, and the
+     * one apology that stands for every failure out at the model. What
+     * is deliberately not shown is the diagnostic text the rest of this
+     * file hands the console: "the function is not deployed", a stack,
+     * a provider's name. A stranger reading the policies cannot act on
+     * any of it, and some of it describes our plumbing to them.
+     */
     const context = (error as { context?: Response }).context
-    if (!context) throw new Error(await whyNoFunction('moderate', error.message))
-    const said = await context.json?.().catch(() => null)
-    throw new Error(said?.error ?? error.message)
+    const said = context ? await context.json?.().catch(() => null) : null
+    throw new Error(typeof said?.error === 'string' ? said.error : KOBBY_SORRY)
   }
   const out = data as KobbyAnswer
   return { answer: out.answer ?? '', sources: out.sources ?? [], covered: out.covered !== false }

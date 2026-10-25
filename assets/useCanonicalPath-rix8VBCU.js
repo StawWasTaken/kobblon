@@ -1,1 +1,0 @@
-import{sc as e}from"./api-utks2bqk.js";import{bi as t,mi as n,pi as r}from"./Input-Bb3wybiR.js";var i=e(t(),1);function a(e){let{pathname:t,search:a,hash:o}=r(),s=n();(0,i.useEffect)(()=>{e&&decodeURIComponent(t).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,t,a,o,s])}export{a as t};

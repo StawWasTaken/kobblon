@@ -1,0 +1,1 @@
+import{ai as e,ii as t}from"./Input-Zx5n1ogn.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`div`,{className:t(`rounded-2xl border border-ink-line bg-ink-card shadow-card`,e),...r})}export{r as t};
