@@ -246,10 +246,10 @@ export default function About() {
                   ratio="wide"
                 />
               </Parallax>
-              {/* Standing at the corner of the banner, because the thing being
-                  advertised is still being built. Staw asked for him here. */}
+              {/* Standing at the corner of the banner. Staw asked for the
+                  worker here rather than the guest with the hammer. */}
               <img
-                src={kobbyArt.building}
+                src={kobbyArt.construction}
                 alt=""
                 aria-hidden="true"
                 className="pointer-events-none absolute -bottom-10 -left-8 hidden w-24 drop-shadow-[0_18px_30px_rgba(0,0,0,0.6)] sm:block lg:-left-14 lg:w-32"

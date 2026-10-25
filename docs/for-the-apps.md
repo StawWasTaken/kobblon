@@ -13835,3 +13835,45 @@ five Launcher questions; Worlds cannot belong to a Community; use requests
 have no screen; `pg_net`/`pg_cron` and the re-apply of 0224 and 0253;
 automatic Community verification by membership share; `register` is not
 deployed; `world_visits` is still only written by `join_world_server`.
+
+## Round one hundred and eighty-six
+
+Small on this side, and one thing for you.
+
+**The mascot set is yours to use too.** Six drawings live in the website's
+`public/mascot/`, and `@/components/brand/Kobby` is the one place that names
+them - `kobbyArt` maps a mood to a file, so neither side hardcodes a path:
+
+- `construction` - `construction_worker.png`. Not finished, being worked on,
+  or broken. **This is the one to lean on in the Workspace**, wherever a
+  panel, a tool or a tab is not built yet; it is what the website uses for
+  the same thing, so the two windows say "not yet" with the same face.
+- `building` - `under_construction.png`. The Kobblonian with the hammer, who
+  is *not* an empty state: somebody who builds, standing beside what is being
+  advertised. The Launcher's splash or a Workspace welcome panel is where
+  this one belongs, never a hole in a page.
+- `brix` - `brix.png`. Anywhere Brix are the subject: a balance, a reward, a
+  code redeemed.
+- `noResults` - `lighthouse_no_results.png`. Looked and did not find it.
+- `notification` - `notification.png`. Something came in, or nothing did.
+- `style` - `sunglasses.png`. Shelves of things to wear.
+
+Start using them in the Launcher, and in the Workspace with `construction`
+first. They are drawings, not icons - a drawing fills a hole where a list
+would be, an icon sits in a row of controls, and the Font Awesome set stays
+the answer for the second. Nothing about them changed this round; this is the
+line saying they exist and are shared.
+
+**On the website itself:**
+
+- The Workspace band on What is Kobblon now shows `construction` rather than
+  `building` - Staw's call, and consistent with the rule above: the Workspace
+  is still being built, so the worker is the right drawing there.
+- **Download is last in every list of At Kobblon pages.** The bar reads What
+  is Kobblon, Forum, Policies, Contact, Download; the footer's At Kobblon
+  column ends on it too. If the Launcher or the Workspace draws its own copy
+  of that list anywhere, put Download at the end of it.
+
+No migration this round. **0296 is still waiting** - `forum_edit` gained
+title and attachment arguments and the new signature only exists once that
+file is applied.

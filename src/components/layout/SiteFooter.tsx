@@ -45,13 +45,16 @@ const kobblon = [
  */
 const atKobblon = [
   { to: '/about', label: 'What is Kobblon' },
-  { to: '/download', label: 'Download' },
   { to: '/forum', label: 'Forum' },
   { to: '/support', label: 'Contact & Support' },
   { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/guidelines', label: 'Community guidelines' },
+  // Download last wherever it is listed. Staw's rule, and the order
+  // somebody actually moves through these: the install comes after the
+  // page has answered everything else.
+  { to: '/download', label: 'Download' },
 ]
 
 /**
