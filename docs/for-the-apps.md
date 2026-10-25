@@ -13896,3 +13896,72 @@ the rule being that a card does not name the thing the container already
 named. If you draw the same card in a board-specific list, turn it off there
 too; in a mixed feed leave it on, because there the board is the one piece of
 information the card alone carries.
+
+## Round one hundred and eighty-eight
+
+Staw's drawings, all of them, in one place. **Round eighty-three said this
+once, a hundred rounds and a lot of new icons ago; this is the current
+list, and it replaces that one.** Nothing here changed this round - the
+point is that you can use all of it.
+
+Four sets, all under the website's `public/`, all plain files you can copy
+or serve:
+
+**1. `public/icons/workspace/` - drawn for you.** Fifteen PNGs, the
+explorer's icons: `cylinder`, `decal`, `group`, `light`, `meshpart`, `part`,
+`script`, `sky`, `sound`, `soundservice`, `sphere`, `texture`, `truss`,
+`wedge`, `world`. **This is the folder for the Workspace.** A MeshPart in
+your tree and a MeshPart in Create must not be two drawings of the same
+thing, so take these rather than drawing your own; the website already uses
+them on Create for exactly that reason.
+
+**2. `public/icons/ui/` - the interface set.** About fifty, and the website
+leans on them everywhere: `add-user`, `admin`, `announcement`, `assets`,
+`avatar`, `brix`, `broken-image`, `chatbubble`, `check-user`, `checkmark`,
+`circle-user`, `click`, `clock-user`, `cross-user`, `discount`,
+`favourite` / `favourite-stroke`, `gear`, `heart-user`, `klub`,
+`klub-badge`, `laurel-quest` / `laurel-quest-stroke`, `microphone`,
+`mute-microphone`, `notification`, `people`, `remove-user`, `report`,
+`search-user`, `send`, `thumbs-up` / `thumbs-up-stroke`, `thumbs-down` /
+`thumbs-down-stroke`, `user`, `users`, `voice-user`, `world`, and the
+sixteen `reaction-*` faces. Note `ui/world` and `workspace/world` are
+deliberately different pictures: one is a World as a place, the other is a
+node in a tree.
+
+**3. `public/mascot/` - the six drawings**, as Round one hundred and
+eighty-six listed them. `construction` first in the Workspace.
+
+**4. `public/brand/`** - wordmarks, logomarks (including the light, dark,
+Christmas and Halloween variants), the favicons, `kube.svg`, `og.png`, the
+studio backdrops and the logo reveal. If the Launcher draws the mark
+anywhere, draw it from here rather than from a copy.
+
+**How to read them.** `@/components/brand/Icon` is the one place their names
+are written down, and it is mountable outside the website - no provider, no
+router:
+
+```ts
+import { Icon, type KobIcon } from '@/components/brand/Icon'
+
+<Icon name="workspace/decal" className="h-4 w-4" />   // as Staw drew it
+<Icon name="chatbubble" tone="currentColor" />        // painted as a mask
+```
+
+The names are a union type (`UI_ICONS`, `WORKSPACE_ICONS`), so a name that
+does not exist is a build error rather than a picture that silently does not
+load - which is the whole reason for the registry, with sixty-odd files in
+play. `iconUrl(name)` gives you the bare URL if you would rather draw it
+yourself. Pass a size on **both** axes or on neither: the default is
+`1em` per axis and naming only one leaves the other unset, which is a mask
+with nothing to paint onto - an invisible icon, learned the hard way.
+
+`tone` paints the icon as a CSS mask, so the shape is kept and the colour is
+whatever you hand it. Left out, the drawing keeps its own colours - which is
+what the Workspace set wants. **Do not tint those.**
+
+One thing that is ours and not yours to re-solve: four files in `ui/` are not
+icons but detail masks (`reaction-heart-eyes-eyes`,
+`reaction-winky-grin-tongue`, the two `*-tears`). `Icon` paints them on top
+of a tinted face so a red eye or a pink tongue survives being masked. They
+are not in the name union; if you draw a reaction face untinted you get all
+of it from the one file and need none of this.
