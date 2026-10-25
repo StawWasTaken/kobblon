@@ -56,7 +56,7 @@ export function AskKobby({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/10 bg-ink-card/60 transition-colors focus-within:border-brand-bright/40',
+        'rounded-2xl border border-white/10 bg-ink-card/60 transition-colors focus-within:border-brand-bright/70',
         className,
       )}
     >
@@ -75,7 +75,14 @@ export function AskKobby({ className }: { className?: string }) {
           maxLength={300}
           aria-label="Ask Kobby about the rules"
           placeholder="Ask Kobby about the rules - how old do I have to be?"
-          className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-white/35 focus:outline-none focus-visible:outline-none"
+          /*
+           * The global `:focus-visible` ring is turned off on this one
+           * field, and that is not the accessibility rule being dropped:
+           * the ring exists so a keyboard can see where it is, and the
+           * bar itself already lights up round the whole row. Two rings,
+           * one inside the other, is what Staw was looking at.
+           */
+          className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-white/35 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <button
           type="button"
