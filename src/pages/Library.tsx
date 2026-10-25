@@ -168,7 +168,7 @@ export default function Library() {
         {!loading && !shown.length && !mine.error && (
           <Card>
             <EmptyState
-              mood="emptyBox"
+              mood="noResults"
               title={here.empty.title}
               body={here.empty.body}
               action={

@@ -418,7 +418,7 @@ export default function CreateAds() {
       {!campaigns.loading && !campaigns.data?.length && (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="noResults"
             title="No campaigns yet"
             body={`Some ${currency.plural} and a month at most, shown across Kobblon.`}
             action={<Button icon={faRectangleAd} onClick={() => setStarting(true)}>Start one</Button>}

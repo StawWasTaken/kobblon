@@ -473,7 +473,7 @@ export default function Leaderboards() {
           ) : all.length === 0 ? (
             <Card>
               <EmptyState
-                mood="emptyBox"
+                mood="brix"
                 title="Nobody is on this board yet"
                 body="Nothing has happened that counts towards it. Whoever does it first is first on it."
               />

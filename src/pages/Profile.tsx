@@ -811,7 +811,7 @@ export default function Profile() {
             {!spaces.loading && !spaces.data?.length && (
               <Card>
                 <EmptyState
-                  mood="emptyBox"
+                  mood="noResults"
                   title={isMe ? 'Nothing made yet' : 'No Worlds yet'}
                   body={
                     isMe

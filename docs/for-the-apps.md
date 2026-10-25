@@ -13529,3 +13529,89 @@ background is white rather than transparent.
 `/mascot/<name>.png` on the website, picked through
 `@/components/brand/Kobby`. No migration, and nothing changed in
 `@/engine`, `@/lib/kinds` or `design/preset.js`.
+
+## Round one hundred and eighty-two
+
+Kobblon's news is a forum board, not a second product; the mascot set has
+one more mood and one fewer.
+
+**No newsroom, and nothing in the website pretends there will be one.**
+Staw: "for the forums & the about page, no newsroom, use the forums'
+announcement channel and for the thumbnails it'll just be the media
+attached (if theres any) so we dont need to actually build a newsroom". So
+the newsroom that has sat in this file's backlog since Round one hundred
+and thirty-three is cancelled, not pending. Do not build a news panel
+against a news table; there is no news table and there will not be one.
+
+What there is instead, and what you can use:
+
+- `useAnnouncements(limit = 3)` in `@/components/forum/TopicCard` - newest
+  first from the `announcements` board. Newest, not "interesting": the
+  second-most interesting piece of news from March is not news.
+  `useTopTopics(limit = 5)` is unchanged beside it and still sorts by
+  interesting.
+- `TopicCard` now draws a cover when the topic has one, taken from
+  `topic.images[0]` - 16:9, `object-cover`, bled to the card's edge, with a
+  play badge over a clip (`isForumClip` decides from the extension). No
+  attachment means no picture and no gap: the card closes up and starts at
+  its category chip.
+- `TopicCard` gained one optional prop, `urlOf?: (path: string) => string`,
+  defaulting to `forumImageUrl`. The website never passes it. It is there
+  for the same reason `Lightbox` has one - a panel mounted outside the
+  website may hold its attachments somewhere else, and with no way to say
+  so every thumbnail is an empty rectangle. If the Workspace shows forum
+  cards against its own cache, this is the seam.
+
+Both the forum's front page and What is Kobblon now lead with the
+Announcements board through those two - two cards on the forum, three on
+What is Kobblon - and both sections disappear entirely when nothing has
+been announced. A News heading over an empty rectangle says the place is
+dead.
+
+What is Kobblon's old "Newsroom" panel, which said a newsroom was being
+built, is gone. In its place is **Where things get said**: the
+Announcements board and the Discord, both of which exist. That one stays
+whether or not anything has been announced, so the page never ends without
+telling a stranger where to listen. `SiteFooter`'s comment no longer
+reasons about a newsroom either; the wiki is still the only idea named
+there.
+
+**`kobbyArt.emptyBox` is gone. It is not renamed - it is removed.** Staw,
+on the first pass at his new drawing: "the mood isnt emptybox bruh". He is
+right, and this is a meaning change, which is why it is here rather than
+waiting:
+
+- `kobbyArt.brix` is the new key: a Brick floating over its stand, like a
+  prize. It is what you are playing **for**, so it belongs where Brix are
+  earned and ranked - Quests and Leaderboards - and nowhere else. It is not
+  an empty state.
+- Every other site that asked for `emptyBox` now asks for `noResults`,
+  which is the lighthouse: looked, and did not find it. Nineteen call sites
+  moved. `EmptyState`'s default mood is `noResults` too.
+
+If you hold a copy of the mood list, `emptyBox` will not resolve any more,
+and a copy that still points `emptyBox` at a box drawing is now showing a
+picture that is not in Staw's sheet. The full list, which is the whole of
+it:
+
+`brix`, `noResults`, `construction`, `notification`, `style`, `building`,
+`default`.
+
+`building` is the Kobblonian with the hammer and is **not** `construction`:
+the worker stands for a thing that is not finished, the hammer guest stands
+beside a thing being advertised. Folding them together last round was
+wrong. `default` is Kobby's own face and is a label, not an empty state -
+it names the auto-admin beside "Ask Kobby" at 28 pixels.
+
+`tools/site/pages-auth-stub.tsx` gained `AuthContext` and `AuthValue`,
+because the real module exports them and a preview that aliases the module
+must stand in for all of it. A missing export there is not a type error; it
+is the whole page failing to load. Worth knowing on your side for the same
+reason - whatever you alias `@/hooks/useAuth` to needs those two names now.
+
+Still not done, unchanged from last round: the wiki; Round one hundred and
+thirty-three's five Launcher questions; Worlds cannot belong to a
+Community; use requests have no screen; `pg_net`/`pg_cron` and the
+re-apply of 0224 and 0253; automatic Community verification by membership
+share; `register` is not deployed; `world_visits` is still only written by
+`join_world_server`.

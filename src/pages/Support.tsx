@@ -843,7 +843,7 @@ export default function Support() {
               {!tickets.loading && !tickets.data?.length && !tickets.error && (
                 <Card>
                   <EmptyState
-                    mood="emptyBox"
+                    mood="noResults"
                     title="Nothing open"
                     body="You have not written to us yet."
                     action={

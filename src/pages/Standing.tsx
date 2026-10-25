@@ -682,7 +682,7 @@ export default function Standing() {
         {!history.loading && !history.data?.length && (
           <Card>
             <EmptyState
-              mood="emptyBox"
+              mood="noResults"
               title="Nothing on record"
               body="No decision has ever been made about this account, and your chat has never been suspended."
               action={<Button variant="subtle" to="/policies/guidelines">Read the house rules</Button>}

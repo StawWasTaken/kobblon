@@ -65,7 +65,7 @@ export function ServerList({
     return (
       <Card>
         <EmptyState
-          mood="emptyBox"
+          mood="noResults"
           title="No servers running"
           body={`Where people are playing ${name} right now. Nobody is in it at the moment.`}
         />

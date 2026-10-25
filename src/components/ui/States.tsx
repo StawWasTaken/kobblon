@@ -7,7 +7,7 @@ import { Button } from './Button'
 import { cn } from '@/lib/cn'
 
 export function EmptyState({
-  mood = 'emptyBox',
+  mood = 'noResults',
   title,
   body,
   action,

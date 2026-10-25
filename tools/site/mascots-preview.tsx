@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import '@/index.css'
 
 const what: Record<KobbyMood, string> = {
-  emptyBox: 'Nothing here yet',
+  brix: 'A prize: quests and the boards',
   noResults: 'Looked and found nothing',
   construction: 'Not built yet',
   notification: 'Nothing has come in',

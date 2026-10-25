@@ -32,7 +32,8 @@ import { Glyph } from '@/components/brand/Glyph'
 import { faCheck, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 import { useState } from 'react'
-import type { ForumAuthor, ForumRelated, ForumReply } from '@/types/db'
+import { TopicCard } from '@/components/forum/TopicCard'
+import type { ForumAuthor, ForumRelated, ForumReply, ForumTopic } from '@/types/db'
 import '@/index.css'
 
 const op: ForumAuthor = {
@@ -186,6 +187,29 @@ function Page() {
         <Attachments2 />
       </Row>
 
+      <Row title="A topic as a card: with a picture, with a clip, and with neither">
+        {/*
+         * The announcement cards on the forum's front and on What is
+         * Kobblon. Staw: "for the thumbnails it'll just be the media
+         * attached (if theres any)" - so the three cases that matter are
+         * these three, and the one to actually look at is the third, where
+         * the card has to close up rather than leave a gap where a picture
+         * would have been.
+         */}
+        <div className="space-y-8">
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {cards.map((topic) => (
+              <TopicCard key={topic.id} topic={topic} urlOf={(p) => p} />
+            ))}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {cards.map((topic) => (
+              <TopicCard key={topic.id} topic={topic} look="glass" className="h-full" urlOf={(p) => p} />
+            ))}
+          </div>
+        </div>
+      </Row>
+
       <Row title="The foot of the page, and the Social column in it">
         <SiteFooter />
       </Row>
@@ -253,6 +277,36 @@ function Page() {
     </div>
   )
 }
+
+/* Three announcements: a picture, a clip, and nothing attached. */
+const cards: ForumTopic[] = [
+  {
+    ...staff, id: 101, category: 'announcements', category_name: 'Announcements',
+    title: 'The Workspace is out, and here is what it does',
+    body: 'Build a World from your own machine, with the same parts the website has. '
+      + 'It signs in with your Kobblon account and saves straight to your Library.',
+    images: ['/brand/landing-towers.webp'], status: 'open', is_pinned: true, is_locked: false,
+    is_removed: false, view_count: 8402, reply_count: 61, like_count: 214, answer_id: null,
+    last_post_at: when, created_at: when, liked: false,
+  },
+  {
+    ...staff, id: 102, category: 'announcements', category_name: 'Announcements',
+    title: 'Kobblon is free, and it is staying free',
+    body: 'A short clip about where the money comes from instead.',
+    images: ['/brand/kobblon-its-free.mp4'], status: 'open', is_pinned: false, is_locked: false,
+    is_removed: false, view_count: 3310, reply_count: 18, like_count: 97, answer_id: null,
+    last_post_at: when, created_at: when, liked: false,
+  },
+  {
+    ...staff, id: 103, category: 'announcements', category_name: 'Announcements',
+    title: 'Leaderboards are live',
+    body: 'Every World can keep its own board now, and the top of each one shows on the '
+      + 'World page. Nothing to turn on; it is there if your World writes to it.',
+    images: [], status: 'open', is_pinned: false, is_locked: false,
+    is_removed: false, view_count: 1204, reply_count: 7, like_count: 44, answer_id: null,
+    last_post_at: when, created_at: when, liked: false,
+  },
+]
 
 const kid: ForumReply = {
   ...staff, id: 2, topic_id: 1, body: 'Working on the Linux port first, then I will have a look.',

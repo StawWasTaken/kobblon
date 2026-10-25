@@ -246,7 +246,7 @@ export default function CreateUploads() {
       {!mine.loading && !all.length && (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="noResults"
             title="Nothing uploaded yet"
             body="Decals, sounds, video, fonts and models. Each one gets a number, and that is how it is used."
             action={<Button icon={faUpload} onClick={openUpload}>Upload something</Button>}

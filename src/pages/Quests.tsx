@@ -719,7 +719,7 @@ export default function Quests() {
       ) : waiting.length === 0 && done.length === 0 ? (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="brix"
             title="Nothing to do just yet"
             body="Quests come from Worlds and from Kobblon, and there are none running just now."
             action={<Button variant="subtle" to="/discover">Go and find a World</Button>}

@@ -18,8 +18,17 @@ import { asset } from '@/lib/asset'
  * lighthouse.
  */
 export const kobbyArt = {
-  /** Nothing here yet: a brick floating over its stand, like a prize. */
-  emptyBox: asset('/mascot/brix.png'),
+  /**
+   * A Brick floating over its stand, like a prize.
+   *
+   * Staw, correcting the first pass at this: "the mood isnt emptybox
+   * bruh". He is right - it is not a hole in a page, it is the thing you
+   * are playing for, so it belongs where Brix are earned and ranked and
+   * nowhere else. `emptyBox` is gone rather than renamed: the old drawing
+   * it named is not in his new sheet at all, and a page with nothing on
+   * it has looked and found nothing, which is the lighthouse.
+   */
+  brix: asset('/mascot/brix.png'),
   /** Looked and did not find it. Staw: "no result/looking for some". */
   noResults: asset('/mascot/lighthouse_no_results.png'),
   /** Not built yet, being worked on, or broken. */

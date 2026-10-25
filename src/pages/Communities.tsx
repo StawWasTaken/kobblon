@@ -196,7 +196,7 @@ export default function Communities() {
         {!all.loading && !all.error && !shown.length && (
           <Card className="p-5">
             <EmptyState
-              mood={debounced || shelf !== 'biggest' ? 'noResults' : 'emptyBox'}
+              mood="noResults"
               title={
                 debounced
                   ? 'Kobby could not find anything'

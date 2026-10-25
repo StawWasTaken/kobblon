@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faComment, faThumbsUp } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faPlay, faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { useAsync } from '@/hooks/useAsync'
-import { forumTopics } from '@/lib/api'
+import { forumImageUrl, forumTopics, isForumClip } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { ForumTopic } from '@/types/db'
@@ -30,12 +30,29 @@ import type { ForumTopic } from '@/types/db'
  *   `glass`  the At Kobblon look - a tall card, lifted on hover, the way
  *            `GlassCard` behaves in the bands above it.
  */
-export function TopicCard({ topic, look = 'tile', className }: {
+export function TopicCard({ topic, look = 'tile', className, urlOf = forumImageUrl }: {
   topic: ForumTopic
   look?: 'tile' | 'glass'
   className?: string
+  /* How an attachment's path becomes a URL. The pages never pass this;
+     `Lightbox` takes the same escape hatch for the same reason, which is
+     that the bare preview under `tools/site/` has no bucket to ask and
+     would otherwise show nothing but empty rectangles. */
+  urlOf?: (path: string) => string
 }) {
   const glass = look === 'glass'
+  /*
+   * The picture on the card is whatever was attached to the post, and
+   * nothing is drawn when nothing was.
+   *
+   * Staw, on the newsroom that was in the backlog: "for the thumbnails
+   * it'll just be the media attached (if theres any) so we dont need to
+   * actually build a newsroom". Which is the whole argument - a separate
+   * newsroom means somebody writing the piece twice and choosing a
+   * picture twice, and an announcement already has both.
+   */
+  const cover = topic.images?.[0]
+  const clip = cover ? isForumClip(cover) : false
   /* The first lines of the post. A card with a title and nothing under it
      is a link wearing a card; what makes somebody open a thread is the
      first sentence of it. */
@@ -45,13 +62,46 @@ export function TopicCard({ topic, look = 'tile', className }: {
     <Link
       to={`/forum/t/${topic.id}`}
       className={cn(
-        'group flex flex-col rounded-2xl border p-4 transition-[border-color,transform,background-color]',
+        'group flex flex-col overflow-hidden rounded-2xl border p-4 transition-[border-color,transform,background-color]',
         glass
           ? 'rounded-3xl border-white/10 bg-white/[0.04] p-6 hover:-translate-y-1 hover:border-brand-bright/50'
           : 'w-64 shrink-0 border-ink-line bg-ink-card hover:border-white/25 sm:w-72',
         className,
       )}
     >
+      {cover && (
+        <span className={cn(
+          'relative -mx-4 -mt-4 mb-4 block overflow-hidden bg-media',
+          glass ? '-mx-6 -mt-6 mb-5 rounded-t-3xl' : 'rounded-t-2xl',
+        )}>
+          {clip ? (
+            <>
+              <video
+                src={urlOf(cover)}
+                preload="metadata"
+                muted
+                playsInline
+                className="pointer-events-none aspect-[16/9] w-full object-cover"
+              />
+              <span className="absolute inset-0 grid place-items-center bg-ink/25">
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-ink/70 text-white backdrop-blur-sm">
+                  <Glyph icon={faPlay} className="ml-0.5" />
+                </span>
+              </span>
+            </>
+          ) : (
+            <img
+              src={urlOf(cover)}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              draggable={false}
+              className="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          )}
+        </span>
+      )}
+
       <span className="flex items-center gap-2">
         <span className={cn(
           'rounded-md px-1.5 py-0.5 text-[11px] font-extrabold',
@@ -117,5 +167,25 @@ export function TopicCard({ topic, look = 'tile', className }: {
  */
 export function useTopTopics(limit = 5) {
   const topics = useAsync(() => forumTopics({ sort: 'interesting', limit }), [limit])
+  return topics.data ?? []
+}
+
+/**
+ * Kobblon's news, which is a board on the forum and not a second product.
+ *
+ * Staw: "for the forums & the about page, no newsroom, use the forums'
+ * announcement channel". The Announcements board is staff-only, it is
+ * where the people doing the thing say what they are doing, and it
+ * already has a writer, a reader, moderation, likes and replies. A
+ * newsroom would have been all of that again with nobody to write in it.
+ *
+ * Newest first, not "interesting": an announcement is news, and the
+ * second-most interesting piece of news from March is not news.
+ */
+export function useAnnouncements(limit = 3) {
+  const topics = useAsync(
+    () => forumTopics({ category: 'announcements', sort: 'new', limit }),
+    [limit],
+  )
   return topics.data ?? []
 }

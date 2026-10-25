@@ -248,7 +248,7 @@ export function CreateWorlds() {
       {target ? (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="noResults"
             title="Worlds are not handed to Communities yet"
             body={`A World belongs to whoever built it. Switch back to yourself to see yours.`}
           />
@@ -267,7 +267,7 @@ export function CreateWorlds() {
           {!worlds.loading && !worlds.data?.length && (
             <Card>
               <EmptyState
-                mood="emptyBox"
+                mood="noResults"
                 title={shelf === 'archived' ? 'Nothing put away' : 'No Worlds yet'}
                 body={shelf === 'archived'
                   ? 'A World you archive waits here. It still opens for anybody holding its link.'
@@ -614,7 +614,7 @@ export function CreateMarketplace() {
       {!market.loading && !market.error && !market.data?.length && (
         <Card>
           <EmptyState
-            mood={filtering ? 'noResults' : 'emptyBox'}
+            mood={filtering ? 'noResults' : 'noResults'}
             title={filtering ? 'Kobby could not find anything' : 'Nothing here yet'}
             body={
               filtering
@@ -685,7 +685,7 @@ export function CreateInventory() {
       {!inventory.loading && !shown.length && (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="noResults"
             title="Nothing here yet"
             body="Take something from the marketplace and it lands here, free or paid."
             action={<Button to="/create/marketplace">Open the marketplace</Button>}
@@ -727,7 +727,7 @@ export function CreateAnalytics() {
       {!rows.loading && !rows.data?.length && (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="noResults"
             title="Nothing to measure yet"
             body="Upload something and its numbers appear here."
           />

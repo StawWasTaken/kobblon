@@ -14,9 +14,12 @@ import { cn } from '@/lib/cn'
  * reach without an account; the At Kobblon pages, which are what Kobblon
  * says about itself; and where we are elsewhere.
  *
- * Only places that exist are listed. The wiki and the newsroom are ideas,
- * so they are not here - a link to a page nobody has built is worse than
- * no link. The forum is built, so it is.
+ * Only places that exist are listed. The wiki is still an idea, so it is
+ * not here - a link to a page nobody has built is worse than no link. The
+ * forum is built, so it is; and there is no newsroom line to miss, because
+ * Staw cancelled the newsroom - "no newsroom, use the forums' announcement
+ * channel" - so Kobblon's news lives on a board the forum link already
+ * reaches.
  */
 
 const kobblon = [

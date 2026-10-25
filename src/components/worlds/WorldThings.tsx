@@ -92,7 +92,7 @@ export function WorldThings({
     return (
       <Card>
         <EmptyState
-          mood="emptyBox"
+          mood="noResults"
           title={badge ? 'No badges yet' : 'Nothing for sale'}
           body={badge
             ? 'Badges are things this World hands out for doing something in it. Whoever built it has not made any.'

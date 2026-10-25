@@ -7,6 +7,7 @@ import {
   faCheck, faClockRotateLeft, faLayerGroup, faChevronLeft, faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import { ReportDialog } from '@/components/social/ReportDialog'
+import { TopicCard, useAnnouncements } from '@/components/forum/TopicCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton, EmptyState } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -82,6 +83,7 @@ export default function Forum() {
   useAtTitle('Community Forum')
 
   const boards = useAsync(forumBoards, [])
+  const news = useAnnouncements(2)
   const latest = useAsync(() => forumTopics({ sort: 'active', limit: 30 }), [])
   const recent = useAsync(() => forumTopics({ sort: 'active', limit: 8 }), [])
   const helpful = useAsync(() => forumTopics({ sort: 'helpful', limit: 5 }), [])
@@ -110,6 +112,42 @@ export default function Forum() {
       </header>
 
       <div className="pt-5">
+        {/*
+          * Announcements, over the boards rather than in them.
+          *
+          * This is the newsroom, and the argument for not building one.
+          * Staw: "no newsroom, use the forums' announcement channel and
+          * for the thumbnails it'll just be the media attached". The board
+          * is staff-only and already carries the writing, the picture, the
+          * replies and the moderation - a newsroom would have been a
+          * second place to write the same post, with its own thumbnail to
+          * choose and nobody to write in it.
+          *
+          * Two, and only while there are any. A forum front page that
+          * opens with an empty News rectangle has told you the place is
+          * dead before you have read a single topic.
+          */}
+        {!!news.length && (
+          <section className="mb-8">
+            <div className="mb-3 flex items-center gap-3">
+              <h2 className="font-display text-sm font-extrabold uppercase tracking-[0.18em] text-white/45">
+                Announcements
+              </h2>
+              <Link
+                to="/forum/c/announcements"
+                className="ml-auto text-xs font-bold text-link hover:underline"
+              >
+                All of them
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {news.map((topic) => (
+                <TopicCard key={topic.id} topic={topic} look="glass" className="h-full" />
+              ))}
+            </div>
+          </section>
+        )}
+
         <BoardStrip boards={boards.data ?? []} />
 
         {/*

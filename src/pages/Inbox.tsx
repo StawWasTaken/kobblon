@@ -180,7 +180,7 @@ export default function Inbox() {
       {!mail.loading && !shown.length && (
         <Card>
           <EmptyState
-            mood="emptyBox"
+            mood="noResults"
             title={tab === 'new' ? 'Nothing unread' : 'No post yet'}
             body={
               tab === 'new'

@@ -608,7 +608,7 @@ export default function Friends() {
           {!source.loading && !shown.length && (
             <Card>
               <EmptyState
-                mood={filter ? 'noResults' : 'emptyBox'}
+                mood={filter ? 'noResults' : 'noResults'}
                 title={filter ? 'Nobody here matches' : emptyFor[current.name].title}
                 body={filter ? 'Try fewer letters.' : emptyFor[current.name].body}
                 action={

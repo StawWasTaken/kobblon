@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { faArrowRight, faArrowDown } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon, type KobIcon } from '@/components/brand/Icon'
-import { TopicCard, useTopTopics } from '@/components/forum/TopicCard'
+import { TopicCard, useAnnouncements, useTopTopics } from '@/components/forum/TopicCard'
 import { Button } from '@/components/ui/Button'
 import { kobbyArt } from '@/components/brand/Kobby'
 import { AboutShell } from '@/components/layout/AboutShell'
@@ -28,7 +28,7 @@ import { currency } from '@/lib/currency'
  * The page is a scroll, in Staw's order: a few words over something
  * somebody built, then the paragraph that says what this is, then the
  * numbers, then Worlds, then what keeps it safe, then Workspace, then
- * what it runs on, then Communities, then the rules, then the newsroom.
+ * what it runs on, then Communities, then the rules, then where news is said.
  *
  * Three rules for anybody editing it:
  *
@@ -80,6 +80,7 @@ export default function About() {
   useAtTitle('What is Kobblon')
   /* Three real posts in the forum band, and no band at all without them. */
   const talk = useTopTopics(3)
+  const news = useAnnouncements(3)
   useSocialCard({
     title: 'What is Kobblon',
     description: 'An online sandbox platform filled with user-generated 3D worlds.',
@@ -310,6 +311,47 @@ export default function About() {
         </div>
       </Band>
 
+      {/* -------------------------------------------------------------- news */}
+      {/*
+        * What Kobblon is doing, taken from the forum's Announcements board.
+        *
+        * Staw: "for the forums & the about page, no newsroom, use the
+        * forums' announcement channel and for the thumbnails it'll just be
+        * the media attached (if theres any) so we dont need to actually
+        * build a newsroom". So the newsroom that was in the backlog is not
+        * being built, and this is why it does not need to be: the board is
+        * staff-only, the people doing the thing already post there, and
+        * the picture on each card is whatever they attached.
+        *
+        * The band goes when nothing has been announced, like the forum one
+        * under it. A page with a News heading over an empty rectangle says
+        * this place is dead, which is the opposite of what it is for.
+        */}
+      {!!news.length && (
+        <Band edge>
+          <Reveal>
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <BandHead
+                eyebrow="Announcements"
+                title="What we are doing."
+                lead="Said by the people doing it, on the forum, where you can answer back."
+              />
+              <Button to="/forum/c/announcements" variant="subtle" iconRight={faArrowRight}>
+                All announcements
+              </Button>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+            {news.map((topic, at) => (
+              <Reveal key={topic.id} delay={at * 80}>
+                <TopicCard topic={topic} look="glass" className="h-full" />
+              </Reveal>
+            ))}
+          </div>
+        </Band>
+      )}
+
       {/* ------------------------------------------------------------ forum */}
       {/*
         * Post cards, not a list.
@@ -380,7 +422,20 @@ export default function About() {
         </div>
       </Band>
 
-      {/* --------------------------------------------------------- newsroom */}
+      {/* ------------------------------------------------- where it is said */}
+      {/*
+        * This stood as a Newsroom panel saying one was being built. It is
+        * not: Staw cancelled it - "no newsroom, use the forums'
+        * announcement channel" - so the promise had to go with it, because
+        * a panel advertising a page nobody will build is the fake
+        * functionality rule in prose form.
+        *
+        * What is left is true and is the pair of places things actually get
+        * said: the board, which is permanent and can be answered in public,
+        * and the Discord, which is where they get said first. This stays
+        * whether or not anything has been announced yet, so the page never
+        * ends without telling a stranger where to listen.
+        */}
       <Band tone="night" edge>
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-ink-card/40 p-9 sm:p-11">
@@ -388,27 +443,27 @@ export default function About() {
             <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
-                  Newsroom
+                  Keeping up
                 </p>
-                <Title className="mt-4">What is new at Kobblon.</Title>
-                {/*
-                 * No posts here, and no card that looks like one. The
-                 * newsroom is not built; three grey rectangles labelled
-                 * "coming soon" is a page pretending to have news.
-                 */}
+                <Title className="mt-4">Where things get said.</Title>
                 <p className="mt-4 max-w-xl leading-relaxed text-white/55">
-                  Releases, decisions and the occasional apology, in one place. It is being built;
-                  until it is here, the Discord is where things get said first.
+                  Releases, decisions and the occasional apology go on the forum's Announcements
+                  board, where you can reply to them. The Discord is where they get said first.
                 </p>
               </div>
-              <a
-                href="https://discord.gg/SsjvR6rmez"
-                target="_blank"
-                rel="noreferrer"
-                className="shrink-0 text-sm font-extrabold text-link hover:underline"
-              >
-                Join the Discord
-              </a>
+              <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+                <Button to="/forum/c/announcements" variant="subtle" iconRight={faArrowRight}>
+                  Announcements
+                </Button>
+                <a
+                  href="https://discord.gg/SsjvR6rmez"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-extrabold text-link hover:underline"
+                >
+                  Join the Discord
+                </a>
+              </div>
             </div>
           </div>
         </Reveal>

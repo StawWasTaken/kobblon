@@ -314,7 +314,7 @@ export default function CommunityPage() {
             {!events.loading && !events.data?.length && (
               <Card>
                 <EmptyState
-                  mood="emptyBox"
+                  mood="noResults"
                   title="Nothing on yet"
                   body={
                     rights.data?.can_manage_community

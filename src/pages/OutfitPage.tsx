@@ -109,7 +109,7 @@ export default function OutfitPage() {
       <Page className="space-y-5">
         <BackLink to="/catalog">Back to the Catalog</BackLink>
         <EmptyState
-          mood="emptyBox"
+          mood="noResults"
           title="No such outfit"
           body="It may have been taken down, or it was never listed."
           action={<Button to="/catalog" icon={faStore}>The Catalog</Button>}

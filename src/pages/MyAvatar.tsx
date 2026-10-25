@@ -930,7 +930,7 @@ export default function MyAvatar() {
               </p>
             ) : (
               <EmptyState
-                mood="emptyBox"
+                mood="noResults"
                 title="Nothing here yet"
                 body="Everything you take from the Catalog turns up in this drawer."
                 action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}

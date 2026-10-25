@@ -123,7 +123,7 @@ export default function CreatorPage() {
       {!items.loading && !items.data?.length && (
         <Card>
           <EmptyState
-            mood={debounced ? 'noResults' : 'emptyBox'}
+            mood="noResults"
             title={debounced ? 'Nothing matches' : 'Nothing published yet'}
             body={
               debounced

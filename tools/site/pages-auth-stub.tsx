@@ -12,7 +12,7 @@
  * for looking at pages with, and it is in tools/ rather than src/ so nothing
  * the site ships can reach it.
  */
-import type { ReactNode } from 'react'
+import { createContext, type ReactNode } from 'react'
 import type { Profile } from '@/types/db'
 
 export const me = {
@@ -66,3 +66,17 @@ export type SignupDetails = {
 export const useAuth = () => value as never
 export const useMaybeAuth = () => value as never
 export const AuthProvider = ({ children }: { children: ReactNode }) => children
+
+/*
+ * `AuthContext` and `AuthValue`, because the real module exports them and
+ * `forum-preview` supplies its own session through the context rather than
+ * taking this fixture. Aliasing a module means standing in for all of it:
+ * a missing export here is not a type error, it is the whole preview page
+ * failing to load with "does not provide an export named AuthContext",
+ * which is how this one was found.
+ *
+ * The default is this same signed-in fixture, so a component that reads
+ * the context without a provider behaves as `useAuth` does above.
+ */
+export type AuthValue = typeof value
+export const AuthContext = createContext<AuthValue>(value as AuthValue)
