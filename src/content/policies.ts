@@ -92,7 +92,8 @@ const terms: StorySection[] = [
       `The platform is made available only to natural persons aged ${MINIMUM_AGE} years or over. You warrant on each occasion that you access the platform that you meet that requirement.`,
       'Registration requires a date of birth, a username and a credential. The date of birth is used to determine eligibility and is not published. Submitting a date of birth which is not your own in order to obtain access is a material breach of these Terms and is a ground for immediate termination of the Account without notice and without appeal on the merits of the underlying conduct.',
       'An electronic mail address is optional at registration. Where no address is supplied, no credential reset is possible and the Account cannot be recovered if the credential is lost. That consequence is stated on the registration form and you accept it by registering without an address.',
-      'One Account per person. You may not operate, control or benefit from more than one Account, and you may not sell, rent, lend, gift, trade, bequeath or otherwise transfer an Account or any credential to any other person. An Account is personal to you and conveys no property right capable of assignment.',
+      'You may hold more than one Account. Each one is separate: what is held on it, earned on it and done on it belongs to that Account alone, and each is answerable for its own conduct. Holding several does not multiply anything granted once per person, and an Account may not be used to obtain a second time what another of your Accounts has already had.',
+      'What you may not do with an Account is pass it on. You may not sell, rent, lend, gift, trade, bequeath or otherwise transfer an Account or any credential to any other person. An Account is personal to you and conveys no property right capable of assignment, and a restriction placed on one of your Accounts applies to you, not only to that Account: using another of them to carry on is evasion and is dealt with under the Community Guidelines.',
       'A guest Account is a genuine Account which Kobblon treats as temporary. A guest may browse the website and enter published Worlds. A guest Account which has not been seen for a day is liable to be cleared, together with everything recorded against it, without notice. Converting a guest Account into a registered Account preserves what is on it; failing to convert it does not.',
       'You are responsible for every action taken through your Account, whether or not you authorised it, save to the extent that the action results from a failure of the platform itself. You must keep your credential confidential. Kobblon will never ask you for it, and any person who does is attempting to defraud you.',
     ],
@@ -681,7 +682,7 @@ export const policies: Policy[] = [
       'These Terms govern your use of the Kobblon platform. They define the words the other eight '
       + 'documents use, set out who may hold an Account, state what you keep and what you license to '
       + 'us, and set the limits of what Kobblon undertakes to do.',
-    updated: '2026-10-24',
+    updated: '2026-10-25',
     sections: terms,
     footnote: NOT_LAWYERED,
   },

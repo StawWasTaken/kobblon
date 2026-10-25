@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRight, faArrowUp, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { kobbyArt } from '@/components/brand/Kobby'
 import { askKobbyAboutTheRules, type KobbyAnswer } from '@/lib/api'
@@ -55,17 +55,24 @@ export function AskKobby({ className }: { className?: string }) {
 
   return (
     <div
+      /*
+       * It sits in the hero now, over a photograph, so it has to hold
+       * itself up: a blur behind it, one hairline round it, and a shadow
+       * under it. That is the whole redesign - nothing added to the row,
+       * only enough weight that a single line of UI reads as a surface
+       * instead of a rectangle somebody drew on a picture.
+       */
       className={cn(
-        'rounded-2xl border border-white/10 bg-ink-card/60 transition-colors focus-within:border-brand-bright/70',
+        'group rounded-[1.1rem] border border-white/10 bg-ink/70 shadow-[0_20px_55px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-colors focus-within:border-brand-bright/60',
         className,
       )}
     >
-      <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex items-center gap-3 pl-3.5 pr-2.5 py-2.5">
         <img
           src={kobbyArt.default}
           alt=""
           aria-hidden="true"
-          className={cn('h-7 w-auto shrink-0', asking && 'animate-bounce')}
+          className={cn('h-8 w-auto shrink-0 transition-transform', asking ? 'animate-bounce' : 'group-focus-within:-rotate-6')}
         />
         <input
           ref={field}
@@ -74,7 +81,7 @@ export function AskKobby({ className }: { className?: string }) {
           onKeyDown={(e) => { if (e.key === 'Enter') void ask() }}
           maxLength={300}
           aria-label="Ask Kobby about the rules"
-          placeholder="Ask Kobby about the rules - how old do I have to be?"
+          placeholder="Ask Kobby about the rules"
           /*
            * The global `:focus-visible` ring is turned off on this one
            * field, and that is not the accessibility rule being dropped:
@@ -82,35 +89,35 @@ export function AskKobby({ className }: { className?: string }) {
            * bar itself already lights up round the whole row. Two rings,
            * one inside the other, is what Staw was looking at.
            */
-          className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-white/35 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-w-0 flex-1 bg-transparent py-1 text-sm text-white placeholder:text-white/35 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <button
           type="button"
           onClick={() => void ask()}
           disabled={!question.trim() || asking}
           aria-label="Ask"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-bright disabled:bg-white/10 disabled:text-white/30"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white transition-all hover:bg-brand-bright hover:scale-105 disabled:scale-100 disabled:bg-white/[0.07] disabled:text-white/25"
         >
-          <Glyph icon={faArrowUp} className="text-xs" />
+          <Glyph icon={asking ? faSpinner : faArrowUp} className={cn('text-xs', asking && 'animate-spin')} />
         </button>
       </div>
 
       {/* Only ever as tall as there is something to read. */}
       {(!!said || !!trouble) && (
-        <div className="animate-pop-in border-t border-white/10 px-4 py-4">
+        <div className="animate-pop-in border-t border-white/[0.07] px-4 pb-4 pt-3.5">
           {!!trouble && <p className="text-sm leading-relaxed text-white/60">{trouble}</p>}
 
           {!!said && (
             <>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-white/75">
+              <p className="whitespace-pre-line text-sm leading-relaxed text-white/80">
                 {said.answer}
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-3.5 flex flex-wrap items-center gap-2">
                 {said.sources.map((one) => (
                   <Link
                     key={one.slug}
                     to={`/policies/${one.slug}`}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2 py-1 text-[11px] font-extrabold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 py-1 text-[11px] font-extrabold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                   >
                     {one.title}
                     <Glyph icon={faArrowRight} className="text-[10px] text-link" />

@@ -14027,3 +14027,74 @@ logged, a long one is cut rather than refused, a nameless asker is refused,
 neither `anon` nor `authenticated` can touch the table, the log refuses an
 ordinary account and answers an admin, and an ordinary account cannot call
 the counter directly to raise its own ceiling.
+
+---
+
+## Round one hundred and ninety - one person, several Accounts
+
+**The Terms changed their mind about Accounts, and that is a meaning
+change, so it gets a line before anything about the page it sits on.**
+
+The Terms of Service used to say "One Account per person. You may not
+operate, control or benefit from more than one Account". It no longer
+does. Staw's decision: **somebody may hold as many Accounts as they
+like.** The Eligibility and registration section of the Terms now reads,
+in substance:
+
+- Several Accounts are allowed, and each is separate. What is held on it,
+  earned on it and done on it belongs to that Account alone, and each is
+  answerable for its own conduct.
+- Holding several does not multiply anything granted once per person, and
+  an Account may not be used to obtain a second time what another of your
+  Accounts has already had. (Nothing in the schema enforces that today -
+  it is a rule, not a check. Say so if either side is asked.)
+- Passing an Account on is still forbidden: no selling, renting, lending,
+  gifting, trading, bequeathing or transferring an Account or a
+  credential.
+- **Evasion is unchanged.** A restriction placed on one of somebody's
+  Accounts applies to the person, not only to that Account; using another
+  of them to carry on is evasion and is dealt with under the Community
+  Guidelines, which already said exactly that and still does.
+
+What this means for the applications: **nothing in either of them should
+tell somebody they may only have one account, or treat a second account
+as suspicious on its own.** If the Launcher's sign-in, the Workspace's
+account panel, or any onboarding copy on your side says or implies one
+per person, that copy is now wrong and contradicts the published Terms.
+Multiple accounts signed in on one machine is not a thing either side
+builds today, and this round does not ask for it - this is about what the
+words say, not about a feature.
+
+The Terms' `updated` date moved to 25 Oct 2026 for it.
+
+**Consequence for Ask Kobby (Round one hundred and eighty-nine):** the
+policy text is baked into `supabase/functions/moderate/policies.json` at
+build time, so Kobby answers out of whatever was last deployed. Until the
+`moderate` function is redeployed, Kobby will keep telling people they may
+only hold one Account. That is the baking rule biting for the first time,
+exactly as that round warned: **change a policy, rebuild, redeploy the
+function folder.**
+
+### The Policies page, on Staw's instruction
+
+The ask bar moved from between the band heading and the nine cards into
+the hero, directly under "Everything, written down." - replacing the lead
+line and the "9 policies - newest ..." counter, both of which are gone.
+It is still a bar and not a panel: one row, grown only by an answer.
+
+Redesigned with it, for standing over a photograph rather than on a flat
+band: a blur behind it, one hairline border, a shadow under it, the face
+a little larger and tilting on focus, and the send button showing a
+spinner while Kobby is thinking. Appearance only; the request, the
+response shape and every fence are the ones Round one hundred and
+eighty-nine described.
+
+### Still outstanding from Round one hundred and eighty-nine
+
+Both steps are Staw's to run, and neither has been reported done:
+
+1. Apply `0297_somebody_can_ask_kobby_about_the_rules.sql` in the SQL
+   editor.
+2. Redeploy the `moderate` function **as a whole folder**, so
+   `policies.json` goes with it - and now doubly, because of the Terms
+   change above.
