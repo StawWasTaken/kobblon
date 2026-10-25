@@ -13932,7 +13932,7 @@ node in a tree.
 eighty-six listed them. `construction` first in the Workspace.
 
 **4. `public/brand/`** - wordmarks, logomarks (including the light, dark,
-Christmas and Halloween variants), the favicons, `kube.svg`, `og.png`, the
+Christmas and Halloween variants), the favicons, `og.png`, the
 studio backdrops and the logo reveal. If the Launcher draws the mark
 anywhere, draw it from here rather than from a copy.
 
