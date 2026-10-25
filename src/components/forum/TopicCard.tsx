@@ -64,15 +64,27 @@ export function TopicCard({ topic, look = 'tile', className, urlOf = forumImageU
       className={cn(
         'group flex flex-col overflow-hidden rounded-2xl border p-4 transition-[border-color,transform,background-color]',
         glass
-          ? 'rounded-3xl border-white/10 bg-white/[0.04] p-6 hover:-translate-y-1 hover:border-brand-bright/50'
+          ? 'rounded-3xl border-white/10 bg-white/[0.04] p-5 hover:-translate-y-1 hover:border-brand-bright/50'
           : 'w-64 shrink-0 border-ink-line bg-ink-card hover:border-white/25 sm:w-72',
         className,
       )}
     >
       {cover && (
+        /*
+         * The picture sits inside the card with the card's own padding
+         * round it, rather than bleeding to the edges.
+         *
+         * Staw: "i want the posts with images to be polished and look even
+         * better, like the thumbnail is like a rounded rectangle inside of
+         * it and slightly smaller to leave a path around the image". A
+         * bled cover makes the card look like a cut-out of a bigger page;
+         * an inset one reads as a thing the card is holding. The ring is
+         * what keeps it from dissolving into the card on a dark
+         * screenshot, which is most of what gets posted here.
+         */
         <span className={cn(
-          'relative -mx-4 -mt-4 mb-4 block overflow-hidden bg-media',
-          glass ? '-mx-6 -mt-6 mb-5 rounded-t-3xl' : 'rounded-t-2xl',
+          'relative mb-4 block overflow-hidden rounded-xl bg-media ring-1 ring-inset ring-white/10',
+          glass && 'mb-5 rounded-2xl',
         )}>
           {clip ? (
             <>
@@ -115,24 +127,21 @@ export function TopicCard({ topic, look = 'tile', className, urlOf = forumImageU
       <span
         className={cn(
           'mt-3 line-clamp-2 font-display font-extrabold leading-snug text-white transition-colors group-hover:text-brand-bright',
-          glass ? 'text-xl' : 'text-[15px]',
+          glass ? 'text-lg' : 'text-[15px]',
         )}
       >
         {topic.title}
       </span>
 
       {gist && (
-        <span className={cn(
-          'mt-2 text-sm leading-relaxed text-white/50',
-          glass ? 'line-clamp-4' : 'line-clamp-3',
-        )}>
+        <span className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-white/50">
           {gist}
         </span>
       )}
 
       {/* Pushed to the bottom, so a shelf of these lines up along its
           foot however long the titles are. */}
-      <span className="mt-auto flex items-center gap-2 pt-4">
+      <span className="mt-auto flex items-center gap-2 pt-3">
         <Avatar
           src={topic.author_avatar}
           name={topic.author_name}

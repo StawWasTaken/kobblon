@@ -27,6 +27,7 @@ import Friends from '@/pages/Friends'
 import Library from '@/pages/Library'
 import Quests from '@/pages/Quests'
 import Brix from '@/pages/Brix'
+import BrixCodes from '@/pages/BrixCodes'
 import Inbox from '@/pages/Inbox'
 import Standing from '@/pages/Standing'
 import Support from '@/pages/Support'
@@ -92,6 +93,7 @@ export const PAGES: Record<string, { at: string; show: () => React.JSX.Element }
   library: { at: '/library', show: Library },
   quests: { at: '/quests', show: Quests },
   brix: { at: '/brix', show: Brix },
+  codes: { at: '/brix/codes', show: BrixCodes },
   inbox: { at: '/inbox', show: Inbox },
   standing: { at: '/standing', show: Standing },
   support: { at: '/support', show: Support },

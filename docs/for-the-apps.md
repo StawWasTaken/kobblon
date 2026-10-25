@@ -13615,3 +13615,100 @@ Community; use requests have no screen; `pg_net`/`pg_cron` and the
 re-apply of 0224 and 0253; automatic Community verification by membership
 share; `register` is not deployed; `world_visits` is still only written by
 `join_world_server`.
+
+## Round one hundred and eighty-three
+
+Announcements live inside the card that explains them; a post's picture is
+inset rather than bled; and an edit can finally change what is attached.
+
+**`forum_edit` takes attachments. 0296, and it drops the old function.**
+Staw: "we cant actually edit posts (especially attached content)". He was
+right twice - the editor opened on the body alone, so a topic's title was
+fixed from the moment it was posted and a picture attached to it could
+never be taken off. The only way out was deleting the topic, which takes
+the replies with it.
+
+```
+forum_edit(in_what text, in_id bigint, in_body text,
+           in_title text default null, in_images text[] default null)
+```
+
+- `in_images` null means **leave them alone**, so a caller written before
+  today cannot wipe a post's attachments by being quiet.
+- An array replaces the whole set; `'{}'` takes them all off. There is no
+  "add one": the composer holds the whole set while it is open, and a
+  per-attachment door is a second mechanism that can disagree with the
+  first.
+- Four at most, said here as well as in `forum_topic_create` - an edit that
+  can carry six is a way round the create that refuses them.
+- Still author-only. Staff take a post down, they do not rewrite it.
+
+**The old four-argument function is dropped, not replaced.** Adding a
+parameter makes a different signature, so `create or replace` would have
+left both sitting there and every call - which is every call, since
+PostgREST passes these by name - would have failed as "function is not
+unique" rather than resolving to either. If you hold a client wrapper for
+this, it keeps working untouched; it just cannot change attachments until
+it passes the new argument.
+
+Applied twice against a local Postgres and checked under two signed-in
+identities, with `select auth.uid()` printed first so "signed in" meant it:
+body-only leaves both pictures; an array replaces them; `{}` clears them
+and sets `edited_at`; five raise "Four attachments at most."; and a
+stranger gets "That is not yours to edit." with the row's title, body and
+images unchanged afterwards.
+
+On this side: `forumEdit(what, id, body, title?, images?)` in `@/lib/api`
+grew the same two optional arguments, and `Composer` grew `initialImages`,
+seeded once for the same reason `initial` is - a field that refills itself
+from the row cannot be changed while the thread reloads under it. The topic
+editor now opens with its title and its attachments in it.
+
+**`TopicCard`'s cover is inset.** Staw: "i want the posts with images to be
+polished and look even better, like the thumbnail is like a rounded
+rectangle inside of it and slightly smaller to leave a path around the
+image". So the picture keeps the card's own padding round it and wears a
+`rounded-xl` (a `rounded-2xl` in the glass look) with a hairline ring,
+rather than bleeding to the card's edges. A bled cover reads as a cut-out
+of a bigger page; an inset one reads as something the card is holding. The
+card itself is tighter all round - `p-5`, a `text-lg` title, a three-line
+gist - because both places it appears were too big.
+
+**What is Kobblon has one card where it had two.** The "What we are doing."
+band is gone and the announcements now sit inside *Where things get said*,
+under a rule, with the Announcements and Discord links still in its header.
+Staw: "i want you to put the announcement posts into this card ... get rid
+of 'What we are doing.'" - they were one idea wearing two headings, and the
+posts are the evidence for the sentence above them. The card stays when
+nothing has been announced; only the row of posts goes.
+
+The forum's own strip is three across rather than two - Staw: "the
+announcements are too big" - and asks for three.
+
+**Three of the new drawings were barely used.** Staw: "for the new UX stuff
+you didnt use the catalog sunglasses, the construction worker & the brix
+that often, for brix you could put one instead of the gift icon in the
+redeem card".
+
+- `brix` is now the drawing on the Redeem a code card, in place of a
+  24-pixel present. The tab beside it keeps `faGift`: that is a mark in a
+  row of marks and has to stay a glyph.
+- `style` took the empty wardrobe drawer on My Avatar. An empty drawer is
+  not a search that failed; it is a wardrobe nobody has put anything in.
+- `construction` was already on seven surfaces (the error screen,
+  maintenance, Home, Discover, the activity feed) and is left as it is.
+
+`tools/site/pages-auth-stub.tsx` now also carries `AuthContext`/`AuthValue`
+(Round one hundred and eighty-two), and `phone-preview` gained `?page=codes`.
+
+Not checked here, and worth saying rather than implying otherwise: the
+populated version of What is Kobblon's card has not been rendered in this
+container, because the announcements come from the database and this
+container has no route to it. The cards in it were rendered and looked at
+on their own, in both looks, with a picture, with a clip and with neither.
+
+Still not done, unchanged: the wiki; Round one hundred and thirty-three's
+five Launcher questions; Worlds cannot belong to a Community; use requests
+have no screen; `pg_net`/`pg_cron` and the re-apply of 0224 and 0253;
+automatic Community verification by membership share; `register` is not
+deployed; `world_visits` is still only written by `join_world_server`.

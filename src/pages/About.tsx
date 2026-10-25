@@ -311,47 +311,6 @@ export default function About() {
         </div>
       </Band>
 
-      {/* -------------------------------------------------------------- news */}
-      {/*
-        * What Kobblon is doing, taken from the forum's Announcements board.
-        *
-        * Staw: "for the forums & the about page, no newsroom, use the
-        * forums' announcement channel and for the thumbnails it'll just be
-        * the media attached (if theres any) so we dont need to actually
-        * build a newsroom". So the newsroom that was in the backlog is not
-        * being built, and this is why it does not need to be: the board is
-        * staff-only, the people doing the thing already post there, and
-        * the picture on each card is whatever they attached.
-        *
-        * The band goes when nothing has been announced, like the forum one
-        * under it. A page with a News heading over an empty rectangle says
-        * this place is dead, which is the opposite of what it is for.
-        */}
-      {!!news.length && (
-        <Band edge>
-          <Reveal>
-            <div className="flex flex-wrap items-end justify-between gap-6">
-              <BandHead
-                eyebrow="Announcements"
-                title="What we are doing."
-                lead="Said by the people doing it, on the forum, where you can answer back."
-              />
-              <Button to="/forum/c/announcements" variant="subtle" iconRight={faArrowRight}>
-                All announcements
-              </Button>
-            </div>
-          </Reveal>
-
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
-            {news.map((topic, at) => (
-              <Reveal key={topic.id} delay={at * 80}>
-                <TopicCard topic={topic} look="glass" className="h-full" />
-              </Reveal>
-            ))}
-          </div>
-        </Band>
-      )}
-
       {/* ------------------------------------------------------------ forum */}
       {/*
         * Post cards, not a list.
@@ -424,21 +383,23 @@ export default function About() {
 
       {/* ------------------------------------------------- where it is said */}
       {/*
-        * This stood as a Newsroom panel saying one was being built. It is
-        * not: Staw cancelled it - "no newsroom, use the forums'
-        * announcement channel" - so the promise had to go with it, because
-        * a panel advertising a page nobody will build is the fake
-        * functionality rule in prose form.
+        * One card: where Kobblon says things, and the last few things it
+        * said.
         *
-        * What is left is true and is the pair of places things actually get
-        * said: the board, which is permanent and can be answered in public,
-        * and the Discord, which is where they get said first. This stays
-        * whether or not anything has been announced yet, so the page never
-        * ends without telling a stranger where to listen.
+        * It was two - a band of announcement cards headed "What we are
+        * doing." and then a panel pointing at the board. Staw: "i want you
+        * to put the announcement posts into this card ... get rid of 'What
+        * we are doing.'". He is right that they were one idea wearing two
+        * headings; the posts are the evidence for the sentence above them,
+        * so they belong under it rather than in a band of their own.
+        *
+        * The card stays when nothing has been announced - only the row of
+        * posts goes. A stranger still needs telling where to listen, and
+        * the Discord is still true on a quiet week.
         */}
       <Band tone="night" edge>
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-ink-card/40 p-9 sm:p-11">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-ink-card/40 p-7 sm:p-9">
             <PixelGrid from="top-left" className="opacity-30" />
             <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
@@ -465,6 +426,14 @@ export default function About() {
                 </a>
               </div>
             </div>
+
+            {!!news.length && (
+              <div className="relative mt-8 grid gap-4 border-t border-white/10 pt-8 md:grid-cols-3">
+                {news.map((topic) => (
+                  <TopicCard key={topic.id} topic={topic} look="glass" className="h-full" />
+                ))}
+              </div>
+            )}
           </div>
         </Reveal>
       </Band>

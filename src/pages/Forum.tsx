@@ -83,7 +83,7 @@ export default function Forum() {
   useAtTitle('Community Forum')
 
   const boards = useAsync(forumBoards, [])
-  const news = useAnnouncements(2)
+  const news = useAnnouncements(3)
   const latest = useAsync(() => forumTopics({ sort: 'active', limit: 30 }), [])
   const recent = useAsync(() => forumTopics({ sort: 'active', limit: 8 }), [])
   const helpful = useAsync(() => forumTopics({ sort: 'helpful', limit: 5 }), [])
@@ -123,9 +123,14 @@ export default function Forum() {
           * second place to write the same post, with its own thumbnail to
           * choose and nobody to write in it.
           *
-          * Two, and only while there are any. A forum front page that
-          * opens with an empty News rectangle has told you the place is
-          * dead before you have read a single topic.
+          * Three across, and only while there are any. A forum front page
+          * that opens with an empty News rectangle has told you the place
+          * is dead before you have read a single topic.
+          *
+          * Three rather than two because of the size: Staw, on the pair,
+          * "the announcements are too big". Two cards across this column
+          * are half a screen each, and an announcement is a thing you
+          * notice on your way to the boards, not the page itself.
           */}
         {!!news.length && (
           <section className="mb-8">
@@ -140,7 +145,7 @@ export default function Forum() {
                 All of them
               </Link>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {news.map((topic) => (
                 <TopicCard key={topic.id} topic={topic} look="glass" className="h-full" />
               ))}
@@ -1016,6 +1021,13 @@ export function ForumTopicPage() {
    * composer mounted under every reply is twenty composers.
    */
   const [editing, setEditing] = useState<{ what: 'topic' | 'post'; id: number } | null>(null)
+  /*
+   * The title while the topic is being edited. Seeded when the editor is
+   * opened rather than watched: the thread reloads under an open editor
+   * every time somebody replies, and a title field that refills itself
+   * from the row is one that cannot be changed.
+   */
+  const [retitle, setRetitle] = useState('')
   const [saving, setSaving] = useState(false)
   /* What the rail measures. The posts, and not the page they are on. */
   const thread = useRef<HTMLDivElement>(null)
@@ -1101,11 +1113,11 @@ export function ForumTopicPage() {
    * stored is not always what was typed, and showing the typed version
    * would be the page disagreeing with the database until the next load.
    */
-  const save = async (body: string) => {
+  const save = async (body: string, images: string[], title?: string) => {
     if (!editing) return
     setSaving(true)
     try {
-      await forumEdit(editing.what, editing.id, body)
+      await forumEdit(editing.what, editing.id, body, title ?? null, images)
       setEditing(null)
       await load()
     } catch (wrong) {
@@ -1291,7 +1303,10 @@ export function ForumTopicPage() {
               canReport={!!profile && !mine}
               canQuote={!!profile && (!topic.is_locked || staff)}
               onQuote={() => quote(topic.author_name, topic.body, 'post-topic')}
-              onEdit={() => setEditing({ what: 'topic', id: topic.id })}
+              onEdit={() => {
+                setRetitle(topic.title)
+                setEditing({ what: 'topic', id: topic.id })
+              }}
               onRemove={() => void take('topic', topic.id)}
               onReport={() => setFlagging({
                 type: 'forum_topic', id: topic.id, name: topic.title,
@@ -1304,15 +1319,25 @@ export function ForumTopicPage() {
       <div ref={thread}>
       <article id="post-topic" className="border-b border-white/[0.07] py-6">
         {editing?.what === 'topic' ? (
+          /*
+           * Staw: "we cant actually edit posts (especially attached
+           * content)". Both halves of that were true - the editor opened
+           * on the body alone, so the title was fixed from the moment it
+           * was posted and an attachment could not be taken off at all.
+           * It is the same composer the topic was written in, opened on
+           * what the topic actually holds.
+           */
           <Composer
             key={`edit-topic-${topic.id}`}
             placeholder="Say it again, better."
             action="Save"
             busy={saving}
             initial={topic.body}
+            initialImages={topic.images}
+            withTitle={{ value: retitle, onChange: setRetitle }}
             keepOnSend
             autoFocus
-            onSend={(body) => save(body)}
+            onSend={(body, images) => save(body, images, retitle)}
             onCancel={() => setEditing(null)}
           />
         ) : (
@@ -1541,7 +1566,7 @@ function Reply({
   onReply: () => void
   onQuote: () => void
   onEdit: () => void
-  onSave: (body: string) => Promise<void>
+  onSave: (body: string, images: string[]) => Promise<void>
   onStopEditing: () => void
   onFlag: () => void
 }) {
@@ -1599,10 +1624,11 @@ function Reply({
             action="Save"
             busy={saving}
             initial={reply.body}
+            initialImages={reply.images}
             keepOnSend
             autoFocus
             compact
-            onSend={(body) => onSave(body)}
+            onSend={(body, images) => onSave(body, images)}
             onCancel={onStopEditing}
           />
         ) : (

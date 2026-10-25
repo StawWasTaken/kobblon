@@ -929,8 +929,11 @@ export default function MyAvatar() {
                 Nothing here called that.
               </p>
             ) : (
+              /* The sunglasses rather than the lighthouse: an empty drawer
+                 is not a search that failed, it is a wardrobe nobody has
+                 put anything in yet. */
               <EmptyState
-                mood="noResults"
+                mood="style"
                 title="Nothing here yet"
                 body="Everything you take from the Catalog turns up in this drawer."
                 action={<Button to="/catalog" icon={faStore}>Open the Catalog</Button>}

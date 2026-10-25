@@ -4,6 +4,7 @@ import {
   faGift, faCircleXmark, faChevronDown,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
+import { Kobby } from '@/components/brand/Kobby'
 import { Card } from '@/components/ui/Card'
 import { PixelField } from '@/components/brand/PixelField'
 import { Button } from '@/components/ui/Button'
@@ -120,9 +121,17 @@ export default function BrixCodes() {
           />
 
           <div className="relative mx-auto flex min-h-[34rem] w-full max-w-xl flex-col items-center justify-center px-5 py-12 text-center">
-            <span className="grid h-16 w-16 place-items-center rounded-2xl border border-brand/40 bg-brand/15 text-2xl text-brand-bright shadow-[0_0_40px_rgba(27,52,232,0.35)]">
-              <Glyph icon={faGift} />
-            </span>
+            {/*
+              * The Brick on its stand, not a gift box in a square.
+              *
+              * Staw: "for brix you could put one instead of the gift icon
+              * in the redeem card". A code pays out Brix, so the drawing of
+              * the thing being paid out says what this screen does better
+              * than a 24-pixel present does - and this is the one screen
+              * with the room for it. The tab still wears `faGift`, which is
+              * a 14-pixel mark in a row of them and has to stay a glyph.
+              */}
+            <Kobby mood="brix" size="lg" />
 
             <h2 className="mt-6 font-display text-3xl font-extrabold sm:text-4xl">Enter your code</h2>
             <p className="mt-2 font-mono text-xs uppercase tracking-[0.3em] text-white/35">

@@ -102,7 +102,7 @@ const MARKS: Mark[][] = [
 
 export function Composer({
   placeholder, action, withTitle, busy, onSend, onCancel, autoFocus, compact,
-  initial, keepOnSend, insert,
+  initial, initialImages, keepOnSend, insert,
 }: {
   placeholder: string
   /** What the button says. "Post it", "Reply". */
@@ -124,6 +124,17 @@ export function Composer({
    * `key` on it is what makes a second edit open on the right words.
    */
   initial?: string
+  /**
+   * What is already attached: an edit opening on the pictures and clips
+   * that were posted with it.
+   *
+   * The initial value of the state and nothing more, for the same reason
+   * `initial` is - watching it would throw away an attachment somebody
+   * has just taken off the moment the thread reloads underneath them.
+   * These are paths already in the bucket, so they are shown and sent the
+   * same way a freshly uploaded one is; nothing is re-uploaded.
+   */
+  initialImages?: string[]
   /**
    * Leave what was typed in place after a send that worked.
    *
@@ -151,7 +162,7 @@ export function Composer({
   const file = useRef<HTMLInputElement>(null)
   const box = useRef<HTMLTextAreaElement>(null)
   const [body, setBody] = useState(initial ?? '')
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<string[]>(initialImages ?? [])
   const [putting, setPutting] = useState(false)
 
   /*

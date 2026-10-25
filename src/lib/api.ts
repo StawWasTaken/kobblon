@@ -6055,11 +6055,22 @@ export async function forumReply(input: {
   })) as number
 }
 
+/**
+ * Rewriting your own topic or post.
+ *
+ * `images` is what the post carries afterwards, not what to add: pass the
+ * whole set, pass `[]` to take them all off, and leave it out to say
+ * nothing about them. 0296 reads `null` as "leave them alone", so an older
+ * caller that does not know about attachments cannot wipe them by being
+ * quiet.
+ */
 export async function forumEdit(
-  what: 'topic' | 'post', id: number, body: string, title?: string,
+  what: 'topic' | 'post', id: number, body: string,
+  title?: string | null, images?: string[] | null,
 ): Promise<void> {
   unwrap(await supabase.rpc('forum_edit', {
-    in_what: what, in_id: id, in_body: body, in_title: title ?? null,
+    in_what: what, in_id: id, in_body: body,
+    in_title: title ?? null, in_images: images ?? null,
   }))
 }
 
