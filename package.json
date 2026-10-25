@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/bake-policies.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && node scripts/stamp-card-picture.mjs && npm run pages:items && node scripts/publish-to-root.mjs",
     "pages:items": "node --env-file-if-exists=.env scripts/write-item-pages.mjs",

@@ -13965,3 +13965,65 @@ icons but detail masks (`reaction-heart-eyes-eyes`,
 of a tinted face so a red eye or a pink tongue survives being masked. They
 are not in the name union; if you draw a reaction face untinted you get all
 of it from the one file and need none of this.
+
+## Round one hundred and eighty-nine
+
+**Kobby answers questions about the rules now**, on the Policies page, and
+there is a new migration and a redeployed edge function with it.
+
+Staw: "make that in the policy page theres a bar to ask about the policies
+or certain things about kobblon, and its kobby who answers based on whats
+written in our policies and the blocked words, etc of the staff console ...
+make that its not ugly and doesnt take too much space".
+
+**Two things to apply before it works:**
+1. `0297_somebody_can_ask_kobby_about_the_rules.sql` in the SQL editor.
+2. Redeploy the `moderate` function. It now ships a file beside it,
+   `supabase/functions/moderate/policies.json`, so deploy the folder and
+   not just `index.ts`.
+
+**The new door: `moderate` with `{ question }`.** It is the first branch of
+that function that does **not** need an admin, and the only one that needs
+no account at all - the Policies page is read before anybody signs up.
+`verify_jwt` stays on and is not to be turned off; what changed is that this
+one branch accepts the publishable key instead of throwing it out. It
+answers `{ answer, sources: [{slug, title}], covered }`, and the website
+calls it through `askKobbyAboutTheRules(question)` in `@/lib/api`. If the
+Launcher or the Workspace ever wants the same bar, use that function rather
+than writing a second caller.
+
+**What grounds the answer, and what does not.** The policy text is baked out
+of `src/content/policies.ts` by `scripts/bake-policies.mjs`, which
+`npm run build` now runs, and lands next to the function. **The browser
+never sends policy text and must never be allowed to**: a question is
+untrusted, a document is not, and a page that could send both would be a
+page that can have Kobby quote a rule somebody invented on the way in. The
+word filter is used but never shown - the patterns stay on the server and
+the model is told only whether this one question trips one, because a list
+that keeps slurs out of a children's chat is worth nothing the moment it is
+read out.
+
+**Fences,** because this hands a language model to the open internet:
+twelve questions per asker per hour, counted in the database (an isolate
+cannot count for its siblings); 300 characters per question; answers
+refused where the documents do not cover it. An asker is their account when
+signed in, otherwise a salted hash of the address - **the address itself is
+never stored.** Every question is logged in `kobby_questions`, which no
+browser can read, signed in or not.
+
+**It decides nothing about anybody's account** and is told so four ways in
+the prompt. Every answer carries a line pointing at `/support`. If either
+application grows its own helper, keep that rule: a bot on a rules page
+saying "you'll be fine" is the platform saying it.
+
+**Not built:** a screen in the staff console. `kobby_question_log(n)` exists
+and checks `is_admin`, so what people ask is readable, but nothing in the
+console calls it yet.
+
+**Checked:** eight behavioural cases against local Postgres under two real
+identities, after the whole stack applied clean and 0297 applied twice - the
+ceiling holds at twelve and holds per asker, the refused question is still
+logged, a long one is cut rather than refused, a nameless asker is refused,
+neither `anon` nor `authenticated` can touch the table, the log refuses an
+ordinary account and answers an admin, and an ordinary account cannot call
+the counter directly to raise its own ceiling.

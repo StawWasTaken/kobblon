@@ -4343,6 +4343,38 @@ export async function askKobbyForWords(instruct: string): Promise<KobbyDraft> {
   return { words: out.words ?? [], note: out.note ?? '', settings: out.settings ?? null }
 }
 
+/**
+ * Asking Kobby what the rules say, from the Policies page.
+ *
+ * Staw wanted a bar on that page that answers out of the policies
+ * themselves rather than out of a model's memory of other platforms. The
+ * grounding is all on the server - the documents are baked next to the
+ * function - so nothing here sends policy text, and nothing here could.
+ *
+ * It works signed out, which is the whole point of putting it on a page
+ * people read before they have an account.
+ */
+export type KobbyAnswer = {
+  answer: string
+  sources: { slug: string; title: string }[]
+  /** False when the documents do not cover it, so the page can say so. */
+  covered: boolean
+}
+
+export async function askKobbyAboutTheRules(question: string): Promise<KobbyAnswer> {
+  const { data, error } = await supabase.functions.invoke('moderate', {
+    body: { question: question.slice(0, 300) },
+  })
+  if (error) {
+    const context = (error as { context?: Response }).context
+    if (!context) throw new Error(await whyNoFunction('moderate', error.message))
+    const said = await context.json?.().catch(() => null)
+    throw new Error(said?.error ?? error.message)
+  }
+  const out = data as KobbyAnswer
+  return { answer: out.answer ?? '', sources: out.sources ?? [], covered: out.covered !== false }
+}
+
 export async function groqModels(): Promise<string[]> {
   const { data, error } = await supabase.functions.invoke('moderate', { body: { list: true } })
   if (error) {

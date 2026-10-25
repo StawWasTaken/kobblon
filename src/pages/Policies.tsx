@@ -10,6 +10,7 @@ import { Reveal } from '@/components/about/Reveal'
 import { Parallax } from '@/components/about/Parallax'
 import { Floaters } from '@/components/about/Floaters'
 import { BandHead } from '@/components/about/Type'
+import { AskKobby } from '@/components/about/AskKobby'
 import { policies, policyBySlug } from '@/content/policies'
 import { useAtTitle } from '@/hooks/useTitle'
 import { asset } from '@/lib/asset'
@@ -96,6 +97,18 @@ export default function PolicyHub() {
       <Band tone="raised" edge decor={<Floaters />}>
         <Reveal>
           <BandHead eyebrow="All of them" title="Read any of it." />
+        </Reveal>
+
+        {/*
+         * The bar sits here, between the heading and the nine documents,
+         * and that is the answer to "idk where to put it": the question
+         * somebody arrives with is which of these nine to open, and this
+         * is the moment they are asking it. Above the hero it would be a
+         * chatbot greeting; under the cards it would be after everybody
+         * has already given up and left.
+         */}
+        <Reveal delay={60}>
+          <AskKobby className="mt-10" />
         </Reveal>
 
         {/*
