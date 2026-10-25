@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Hop } from '@/components/ui/Hop'
+import { Pointer } from '@/components/ui/Pointer'
 import { Glyph } from '@/components/brand/Glyph'
 import type { KobIcon } from '@/components/brand/Icon'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -34,15 +35,26 @@ const WIDTH = 224
 
 /** The menu behind a "..." button. */
 export function Menu({
-  label, trigger, items, align = 'right',
+  label, trigger, items, align = 'right', arrow = false,
 }: {
   label: string
   trigger: ReactNode
   items: MenuItem[]
   align?: 'left' | 'right'
+  /**
+   * Draw the little arrow pointing back at the button.
+   *
+   * Asked for rather than always: this menu is also the "..." on a card,
+   * where the button is already the thing your finger is on and the arrow
+   * is noise. It earns its place on a menu that opens out of a row of
+   * buttons that all look alike - the top bar.
+   */
+  arrow?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [box, setBox] = useState<{ left: number; top: number } | null>(null)
+  const [box, setBox] = useState<
+    { left: number; top: number; point: number; up: boolean } | null
+  >(null)
   const root = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLDivElement>(null)
 
@@ -78,9 +90,15 @@ export function Menu({
       const left = align === 'right'
         ? Math.min(anchor.right - WIDTH, window.innerWidth - WIDTH - 8)
         : Math.min(anchor.left, window.innerWidth - WIDTH - 8)
+      const put = Math.max(8, left)
       setBox({
-        left: Math.max(8, left),
+        left: put,
         top: goUp ? anchor.top - height - 6 : anchor.bottom + 6,
+        /* Where the button's middle is, in the menu's own pixels, kept
+           inside the corners so the arrow never grows out of a rounded
+           edge. */
+        point: Math.min(Math.max(anchor.left + anchor.width / 2 - put, 14), WIDTH - 14),
+        up: goUp,
       })
     }
 
@@ -110,6 +128,23 @@ export function Menu({
       </button>
 
       {open && createPortal(
+        <>
+        {arrow && box && (
+          <Pointer
+            side={box.up ? 'bottom' : 'top'}
+            /* Over the list and half on its edge, so the square's two drawn
+               sides continue the card's border and its fill hides the line
+               they cross. Under it the border ran straight through the
+               arrow's base and the two read as separate things. */
+            className="z-[86]"
+            style={{
+              position: 'fixed',
+              left: box.left + box.point - 6,
+              top: box.up ? undefined : box.top - 6,
+              bottom: box.up ? window.innerHeight - box.top - 1 : undefined,
+            }}
+          />
+        )}
         <div
           ref={list}
           role="menu"
@@ -151,7 +186,8 @@ export function Menu({
               </button>
             )
           })}
-        </div>,
+        </div>
+        </>,
         document.body,
       )}
     </div>

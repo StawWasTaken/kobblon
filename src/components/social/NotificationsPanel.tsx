@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
@@ -13,6 +13,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Tabs } from '@/components/ui/Tabs'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { Kobby } from '@/components/brand/Kobby'
+import { Pointer } from '@/components/ui/Pointer'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { listNotifications, markNotificationsRead , houseAccount} from '@/lib/api'
@@ -205,11 +206,22 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
 }
 
 export function NotificationsPanel({
-  open, onClose, onReadAll,
+  open, onClose, onReadAll, anchor,
 }: {
   open: boolean
   onClose: () => void
   onReadAll: () => void
+  /**
+   * The bell this card came out of, so the arrow can point at it.
+   *
+   * Measured rather than written into the card's own classes: the card is
+   * pinned to the right-hand edge of the bar and the bell is three buttons
+   * in from it, so where the point belongs depends on which of those
+   * buttons are drawn - the balance and the name are both hidden on a
+   * phone. A guessed offset would be right on a laptop and point at the
+   * gear on a phone.
+   */
+  anchor?: React.RefObject<HTMLElement | null>
 }) {
   const { profile } = useAuth()
   const [tab, setTab] = useState<'all' | 'unread'>('all')
@@ -259,13 +271,64 @@ export function NotificationsPanel({
 
   const waiting = rows.filter((n) => n.kind === 'friend_request').length
 
+  const card = useRef<HTMLDivElement>(null)
+  const [point, setPoint] = useState<number | null>(null)
+
+  /*
+   * Where the arrow goes, measured from the bell and not from the card.
+   *
+   * The card is measured nowhere in here on purpose. It opens with
+   * `animate-pop-in`, so a rect read on the render that opens it is a rect
+   * read in the middle of a transform - the first version of this asked the
+   * card where its top edge was, got a number eleven pixels down from where
+   * it settles, and drew the arrow inside the card where nothing can see
+   * it. The card's own position is two constants in its class list; the
+   * only thing worth measuring is the button.
+   *
+   * It is the fifth time on this platform that a value was read before the
+   * thing that decides it had finished deciding.
+   */
+  useLayoutEffect(() => {
+    if (!open) return
+
+    const place = () => {
+      const bell = anchor?.current?.getBoundingClientRect()
+      if (!bell) return setPoint(null)
+      // The bar is pinned to the top of the window, so viewport pixels and
+      // the header's own pixels are the same pixels.
+      setPoint(bell.left + bell.width / 2)
+    }
+
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [open, anchor])
+
   if (!open) return null
 
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden="true" />
 
-      <div className="absolute right-2 top-[3.25rem] z-50 w-[min(94vw,25rem)] animate-pop-in overflow-hidden rounded-2xl border border-ink-line bg-ink-card shadow-pop sm:right-5">
+      {/* Outside the card, because the card hides its overflow to keep the
+          header's corners - an arrow drawn inside it is an arrow clipped
+          flat against the top edge. Under it, too: the card is opaque, so
+          what is left showing is a triangle with the card's own border
+          along its two edges rather than a diamond stuck to the header.
+
+          `top` is the card's own `top-[3.25rem]` less half the square. */}
+      {point !== null && (
+        <Pointer
+          bg="bg-ink-raised"
+          className="z-[51]"
+          style={{ left: point - 6, top: '2.875rem' }}
+        />
+      )}
+
+      <div
+        ref={card}
+        className="absolute right-2 top-[3.25rem] z-50 w-[min(94vw,25rem)] animate-pop-in overflow-hidden rounded-2xl border border-ink-line bg-ink-card shadow-pop sm:right-5"
+      >
         {/* ------------------------------------------------------- header */}
         <div className="relative overflow-hidden border-b border-ink-line bg-ink-raised px-4 py-3">
           <div className="relative flex items-center gap-3">

@@ -14281,3 +14281,150 @@ Not done, and said plainly: the console's rank bands are proved by those
 SQL checks and by the build, not by a screenshot - the staff console needs
 a signed-in staff session and a database, and this container can reach
 neither.
+
+---
+
+## Round one hundred and ninety-three - post is private, and three panels change hands
+
+Mostly website work, and one line in it that matters to you.
+
+### Somebody's inbox was readable by every moderator
+
+Staw, looking at his own account: "the inbox messages arent for one single
+user, everyone sees everyone else's inbox messages".
+
+`mail_read` has said `user_id = auth.uid() or public.is_moderator()` since
+0072. That policy was written in one go beside the ones for violations,
+appeals and tickets, and for those three the exception is correct, because
+the console has a queue built on each of them. **There has never been a
+staff screen for somebody's post.** So the exception bought nothing, and
+what it cost is that every moderator's own inbox listed every letter
+Kobblon has ever written to anybody - because the page asked the table for
+its rows and the table was willing.
+
+0299 closes it: `using (user_id = auth.uid())`, full stop. The page also
+asks for its own rows now, which is a courtesy rather than the wall.
+
+**What this means for you.** If either application ever reads `mail`
+directly, read it for the signed-in account only; a staff session no longer
+gets anything else and will not again. Nothing else changes: `send_mail`,
+`unread_mail`, `read_mail` and `read_all_mail` are `security definer` and
+never consulted this policy, so every letter written by a moderation or
+support function is written exactly as before.
+
+It is the fourth trap in a new coat - a thing that looks carefully
+protected and is reachable anyway - except this one is the opposite way
+round: not a table nobody could reach, but a table everybody on staff
+could. The check that would have caught it is the one CLAUDE.md already
+names: **read the table under at least two real identities**, not as the
+owner and not anonymously. Done here, before and after: under the old
+policy a moderator saw two letters with one addressed to them, and under
+the new one, one.
+
+### Three panels changed rank
+
+Staw, the same evening, on 0298's bands: "make 'words' superadmin actually,
+make 'record' mod, make 'map' admin". So:
+
+* **Words** (`admin_terms`, `admin_save_term`, `admin_delete_term`,
+  `admin_try_term`) is a superadmin's. It writes the rule every piece of
+  text on the platform is run through.
+* **Record** (`staff_record`, `staff_record_kinds`) is a moderator's. It is
+  a log, and a moderator reading it is a moderator checking their own work.
+* **Map** (`where_people_are`) is an admin's. It counts by zone and names
+  nobody, and it is nothing a moderator working a queue needs.
+
+Everything else from 0298 stands. If you draw anything staff-facing, read
+`my_staff_rank()` and treat moderator / admin / superadmin as the three
+bands; `is_admin` on a profile is storage and does not tell you what
+somebody may reach.
+
+Two of these three refuse by returning nothing rather than by raising,
+because they are `language sql` with the gate in the `where` clause - so a
+screen built on them has to say "nothing here" carefully, or ask the rank
+first and not draw the panel at all, which is what the console does.
+
+Checked under four identities with rows actually in `admin_log` and
+`account_sessions`, which matters: with both tables empty every rank gets
+zero rows and a broken gate passes. A moderator gets the record and not the
+map, an admin gets the map and not the words, a superadmin gets all three,
+and somebody who is not staff gets none of them.
+
+### An arrow on the three panels in the top bar
+
+Staw: "add an arrow pointer onto the notification card & same thing for
+when u click settings & the brix". Three panels open out of the same strip
+of buttons and all three landed near the right-hand end, so which button
+you had pressed was a thing to work out rather than to see.
+
+`@/components/ui/Pointer` is the shared piece, if the Workspace wants it
+for its own menus: a twelve-pixel square turned forty-five degrees with two
+sides drawn, laid **under** the panel so the opaque card cuts it into a
+triangle with its own border running through the point. `Menu` takes
+`arrow` and places it from the trigger's rect; the notification card is
+handed the bell as a ref and measures that.
+
+**The thing worth copying is the bug, not the component.** The first
+version measured the card to find its top edge - and the card opens with
+`animate-pop-in`, so the rect it got was a rect in the middle of a
+transform, eleven pixels down from where the card settles. The arrow was
+drawn inside the card, where nothing can see it, and everything about the
+code read as correct. That is the first trap again, the fifth time on this
+platform: **a value read before the thing that decides it has finished
+deciding.** The fix is the same as every other time - measure the thing
+that is not moving. The button's position is a fact; the card's is an
+animation.
+
+### The inbox is a list and a reading pane now
+
+It was one column of cards that each unfolded where they stood, so reading
+the fourth letter pushed the first three off the screen and going back to
+one meant finding it again. It is a list on the left and the letter on the
+right on a laptop, and on a phone the list until you pick something and the
+letter after that. Each kind keeps its own colour on its mark, down the
+edge of an unread line, and over the subject in the pane.
+
+Screenshotted at 1280 and at 390, and the console's rank bands are
+screenshotted this time too - all three rails side by side out of
+`tools/site/admin-preview.html`, which is the gap Round one hundred and
+ninety-two said it was leaving open.
+
+### The arrow joins the card rather than resting on it
+
+Staw, looking at the first version: "make sure that the pointers and the
+rectangles are connected smoothly". They were not - the arrow sat under the
+card, so the card's own border ran straight across the arrow's base and the
+two read as a triangle parked next to a rectangle.
+
+It sits on the edge now: the square is centred exactly on the card's border,
+over it rather than under, so its two drawn sides continue that border and
+its own fill hides the inch of line it crosses. One unbroken outline. If the
+Workspace draws a menu of its own, that is the rule to copy - the arrow's
+centre goes on the card's edge, the arrow goes above the card, and its fill
+has to be the same colour as whatever part of the card it lands on.
+
+### The website says which version it is
+
+Staw: "show somewhere that the Kobblon website is at its 'V3.4' right now
+and make that in december it'll be automatically in the 'V3.5'".
+
+It is in the foot of every page, beside the copyright: `© 2026 Kobblon ·
+V3.4`. `@/lib/version` holds it - a list of versions and the day each one
+begins, read against the clock. **It is not a build-time constant**, so the
+bundle deployed in November starts saying V3.5 on the first of December
+without a deploy, which is the whole of what Staw asked for.
+
+**If the applications want to show a version, show their own, not this
+one.** This number is the website's. If you would rather carry the same one
+so that a person reporting something names one number rather than three,
+say so and I will put it behind an RPC; `siteVersion()` is a text function
+over a list in the website's bundle today, which the applications cannot
+read.
+
+### Still waiting on you
+
+Round one hundred and ninety-two's Electron diagnosis stands and nothing
+here changes it: the protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.

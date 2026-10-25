@@ -2522,10 +2522,32 @@ export async function blockedFrom(what: string): Promise<boolean> {
 
 // ------------------------------------------------------------ the inbox
 
+/**
+ * Your post, and nobody else's.
+ *
+ * Staw, 25 October: "the inbox messages arent for one single user, everyone
+ * sees everyone else's inbox messages". He is staff, and that is the whole
+ * of it - `mail_read` said `user_id = auth.uid() or is_moderator()` from
+ * the day it was written, beside the policies for violations, appeals and
+ * tickets where that exception is correct because the console has a queue
+ * on each of them. There is no staff screen for somebody's post, so the
+ * exception bought nothing and handed every moderator the whole table.
+ *
+ * Both halves are fixed. 0299 closes the policy, which is the wall; this
+ * `eq` is the page saying what it wants, which is the courtesy. The order
+ * matters for reading it later: the `eq` alone would have been the August
+ * ticket fix, and the point of this one is that there was no reason to
+ * leave the door open behind it.
+ */
 export async function listMail(): Promise<Letter[]> {
+  const { data: who } = await supabase.auth.getUser()
+  const me = who?.user?.id
+  if (!me) return []
+
   const { data, error } = await supabase
     .from('mail')
     .select('id, kind, subject, body, link, is_read, created_at')
+    .eq('user_id', me)
     .order('created_at', { ascending: false })
     .limit(200)
   if (error) throw new Error(error.message)

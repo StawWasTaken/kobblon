@@ -141,18 +141,27 @@ const rankLook: Record<StaffRank, string> = {
  * admins+". So the three bands mean this, and 0298 says the same thing in
  * the database, which is the half that counts:
  *
- *   * **Moderator** - casework. Somebody reported something, somebody
- *     appealed, somebody wrote in, something is waiting to be looked at.
- *     Work that arrives rather than work that is decided.
- *   * **Admin** - the rules themselves. What the filter catches, and what
- *     happens to a Community. Both were drawn for moderators and refused
- *     for them by the database, which is the console lying in the exact
- *     way the paragraph above says it must not: a moderator can no longer
- *     flag a Community from this panel, and reports are still where that
- *     starts.
+ *   * **Moderator** - casework, and the record of it. Somebody reported
+ *     something, somebody appealed, somebody wrote in, something is waiting
+ *     to be looked at. Work that arrives rather than work that is decided.
+ *   * **Admin** - what happens to a Community, and the map.
  *   * **Superadmin** - anything that moves Brix, speaks to everybody,
- *     changes what the machine may do, or changes the state of the site
- *     itself. None of it is undone by apologising afterwards.
+ *     changes what the machine may do, changes what the filter catches, or
+ *     changes the state of the site itself. None of it is undone by
+ *     apologising afterwards.
+ *
+ * Three of them moved again the same evening, and 0299 moves the database
+ * with them:
+ *
+ *   * **Words** went up to superadmin. It is the one panel that writes a
+ *     rule every piece of text on the platform is run through, and 0099
+ *     says so in its own comments: a greedy pattern there is a platform
+ *     that refuses everybody.
+ *   * **Record** came down to moderator. It is what staff have done, and a
+ *     moderator reading it is a moderator checking their own work.
+ *   * **Map** came down to admin. It counts by zone and names nobody, so it
+ *     is not dangerous; it is also nothing a moderator working a queue
+ *     needs.
  */
 const sections: {
   name: Section
@@ -177,13 +186,13 @@ const sections: {
   { name: 'People', icon: faUserShield, art: 'people', needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
   { name: 'Communities', icon: faPeopleGroup, art: 'people', needs: 'admin', blurb: 'Flag one, verify one, close one, or hand it on' },
   { name: 'Screening', icon: faCircleCheck, art: 'checkmark', needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
-  { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'admin', blurb: 'What the moderation system catches' },
+  { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'superadmin', blurb: 'What the moderation system catches' },
   { name: 'Machine', icon: faRobot, needs: 'superadmin', blurb: 'What Kobby screens, and what it is allowed to do' },
   { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'superadmin', blurb: 'A line across the top of the site, which anybody can close' },
   { name: 'Announce', icon: faBell, art: 'notification', needs: 'superadmin', blurb: 'A word from Kobblon, to one person or everybody' },
   { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'superadmin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
-  { name: 'Map', icon: faGlobe, needs: 'superadmin', blurb: 'Roughly where people are, by the clock on their machine' },
-  { name: 'Record', icon: faScroll, needs: 'superadmin', blurb: 'What staff have done' },
+  { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
+  { name: 'Record', icon: faScroll, needs: 'moderator', blurb: 'What staff have done' },
   { name: 'Shutters', icon: faScrewdriverWrench, needs: 'superadmin', blurb: 'Put the whole website behind a maintenance notice' },
 ]
 

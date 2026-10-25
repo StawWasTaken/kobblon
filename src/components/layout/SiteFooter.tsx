@@ -5,6 +5,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Kmark } from '@/components/brand/Kmark'
 import { cn } from '@/lib/cn'
+import { siteVersionLabel } from '@/lib/version'
 
 /*
  * One foot for the whole site.
@@ -160,7 +161,21 @@ export function SiteFooter({ className, compact }: { className?: string; compact
             <p className="mt-3.5 font-display text-sm font-extrabold text-white/70">
               The game built by players
             </p>
-            <p className="mt-5 text-xs text-white/30">© {year} Kobblon</p>
+            {/* The version sits with the copyright rather than anywhere
+                louder: it is the sort of thing somebody goes looking for
+                when they are reporting something, and the foot of the page
+                is where that is always looked for. It changes itself on the
+                first of December - see `@/lib/version`. */}
+            <p className="mt-5 flex items-center gap-2 text-xs text-white/30">
+              <span>© {year} Kobblon</span>
+              <span aria-hidden="true">&middot;</span>
+              <span
+                className="rounded-md border border-white/10 px-1.5 py-0.5 font-bold text-white/45"
+                title="Which version of the website this is"
+              >
+                {siteVersionLabel()}
+              </span>
+            </p>
           </div>
 
           <Column heading="Kobblon" links={kobblon} />

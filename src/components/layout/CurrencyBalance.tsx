@@ -33,6 +33,7 @@ export function CurrencyBalance({ amount }: { amount: number }) {
     <Menu
       label={`Your ${currency.plural}`}
       align="right"
+      arrow
       trigger={
         /*
          * Shown on a phone too, which it was not.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faBars, faBell, faEnvelope } from '@fortawesome/free-solid-svg-icons'
@@ -22,6 +22,8 @@ import { Tooltip } from '@/components/ui/Tooltip'
 export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
   const { profile } = useAuth()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  // Handed to the card so its arrow can point at the bell it came out of.
+  const bell = useRef<HTMLButtonElement>(null)
   const [unread, setUnread] = useState(0)
   const [post, setPost] = useState(0)
 
@@ -195,6 +197,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
 
               <Tooltip label={unread ? `${unread} unread` : 'Notifications'} side="bottom">
                 <button
+                ref={bell}
                 onClick={() => setNotificationsOpen((v) => !v)}
                 aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
                 aria-expanded={notificationsOpen}
@@ -230,6 +233,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
       </div>
 
       <NotificationsPanel
+        anchor={bell}
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
         onReadAll={() => setUnread(0)}

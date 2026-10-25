@@ -8,6 +8,7 @@ import {
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { SwitchAccounts } from './SwitchAccounts'
 import { Avatar } from '@/components/ui/Avatar'
+import { Pointer } from '@/components/ui/Pointer'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/cn'
 
@@ -114,6 +115,12 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
       </button>
 
       {open && (
+        <>
+        {/* The menu hangs off the right edge of a button that is itself
+            `h-9 w-9`, so the middle of the gear is eighteen pixels in from
+            that edge whichever trigger is drawn. Measured, not guessed. */}
+        <Pointer className="right-[12px] top-full z-[51]" />
+
         <div
           role="menu"
           className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 animate-pop-in overflow-hidden rounded-lg border border-ink-line bg-ink-card py-1 shadow-pop"
@@ -143,6 +150,7 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
             ),
           )}
         </div>
+        </>
       )}
 
       <SwitchAccounts open={switching} onClose={() => setSwitching(false)} />

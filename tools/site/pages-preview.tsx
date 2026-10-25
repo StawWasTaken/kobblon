@@ -15,6 +15,7 @@ import Communities from '@/pages/Communities'
 import Discover from '@/pages/Discover'
 import People from '@/pages/People'
 import Settings from '@/pages/Settings'
+import Inbox from '@/pages/Inbox'
 import '@/index.css'
 
 const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString()
@@ -166,7 +167,38 @@ const table = (rows: unknown[]) => {
   return chain
 }
 
+/*
+ * Post, for looking at the inbox with. Six letters because the list is
+ * supposed to be scrolled and the kinds are supposed to be told apart at a
+ * glance, and neither of those can be judged against one row.
+ */
+const mail = [
+  { id: 6, kind: 'moderation', subject: 'A decision about something you posted',
+    body: 'We took down the topic "read this" because it was advertising another site. '
+      + 'Nothing else has happened to your account, and you can appeal this from your standing page.',
+    link: '/standing', is_read: false, created_at: ago(0.02) },
+  { id: 5, kind: 'security', subject: 'A new sign-in from a machine we have not seen',
+    body: 'Somebody signed in to your account from Windows, in France. If that was you there '
+      + 'is nothing to do. If it was not, change your password now.',
+    link: '/settings', is_read: false, created_at: ago(0.3) },
+  { id: 4, kind: 'support', subject: 'Re: my hat did not arrive',
+    body: 'It had been bought twice in the same second and one of the two was refunded. '
+      + 'The hat is on your account now and the Brix are back.',
+    link: null, is_read: true, created_at: ago(1.2) },
+  { id: 3, kind: 'money', subject: 'Your creator payout went through',
+    body: 'Twelve thousand four hundred Brix from what people spent in your Worlds last month.',
+    link: '/brix', is_read: true, created_at: ago(3) },
+  { id: 2, kind: 'announcement', subject: 'Kobblon is three weeks old',
+    body: 'Thank you for being here this early. The Workspace is out, Communities have '
+      + 'funds, and the forum is open.',
+    link: null, is_read: true, created_at: ago(8) },
+  { id: 1, kind: 'policy', subject: 'The Terms have changed',
+    body: 'Several Accounts are allowed now, and the wording about them has changed to say so.',
+    link: '/policies/terms', is_read: true, created_at: ago(21) },
+]
+
 const rowsFor: Record<string, unknown[]> = {
+  mail,
   profiles: people,
   communities,
   worlds,
@@ -180,6 +212,7 @@ setSupabaseClient({
   from: (name: string) => table(rowsFor[name] ?? []),
   storage: { from: () => ({ getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
   auth: {
+    getUser: async () => ({ data: { user: { id: me.id } }, error: null }),
     getSession: async () => ({ data: { session: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
     updateUser: async () => ({ data: null, error: null }),
@@ -192,6 +225,7 @@ const PAGES: Record<string, () => React.JSX.Element> = {
   discover: Discover,
   people: People,
   settings: Settings,
+  inbox: Inbox,
 }
 
 const which = new URLSearchParams(location.search).get('page') ?? 'communities'
