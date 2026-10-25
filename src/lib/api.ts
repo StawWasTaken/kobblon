@@ -3413,7 +3413,21 @@ export async function makeAccountReal(target: string) {
   unwrap(await supabase.rpc('admin_make_real', { target }))
 }
 
-/** Any flag left undefined is left alone, rather than sent back as it was. */
+/**
+ * Taking a suspension off, which is a moderator's.
+ *
+ * Its own call rather than `setStanding({ suspended: false })`, because
+ * that one goes through `admin_set_standing` - a superadmin's since 0298 -
+ * and the button is drawn for moderators. `lift_suspension` is the other
+ * half of `suspend_account` and carries the same ceiling: staff are a
+ * superadmin's to lift.
+ */
+export async function liftSuspension(target: string, why?: string) {
+  unwrap(await supabase.rpc('lift_suspension', { target, why: why ?? null }))
+}
+
+/** Any flag left undefined is left alone, rather than sent back as it was.
+ *  A superadmin's since 0298; `liftSuspension` is a moderator's. */
 export async function setStanding(target: string, change: {
   verified?: boolean
   moderator?: boolean

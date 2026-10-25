@@ -9,7 +9,7 @@
  * Nothing personal goes in that link beyond a single-use code. A protocol
  * URL ends up in shell history, process lists and crash logs, so nothing
  * that is worth anything a minute later may travel there - but a code from
- * `mint_app_code` is worth exactly one exchange, expires in two minutes and
+ * `mint_app_code` is worth exactly one exchange, expires in ten minutes and
  * cannot be spent twice, which is the case it was invented for. It is how
  * the Workspace already signs in.
  *
@@ -47,9 +47,11 @@ export const playLink = (experienceId: string, code?: string) => {
  * Launcher: nothing opens and the caller is told, which is why it takes the
  * same `onMissing`.
  */
-export const editLink = (worldId: string) => {
+export const editLink = (worldId: string, code?: string) => {
   if (!ID.test(worldId)) throw new Error('That is not a world id.')
-  return `kobblon://edit/${worldId}`
+  if (!code) return `kobblon://edit/${worldId}`
+  if (!CODE.test(code)) throw new Error('That is not a sign in code.')
+  return `kobblon://edit/${worldId}?code=${code}`
 }
 
 /**
@@ -73,9 +75,19 @@ export async function play(experienceId: string, onMissing: () => void) {
   return handOver(playLink(experienceId, code), onMissing)
 }
 
-/** Open a World in the Workspace, or say nothing happened. */
-export function editInWorkspace(worldId: string, onMissing: () => void) {
-  return handOver(editLink(worldId), onMissing)
+/**
+ * Open a World in the Workspace, or say nothing happened.
+ *
+ * It carries a code for the same reason playing one does: pressing Edit
+ * while signed in as somebody is the whole of what signing in to the
+ * Workspace should take. The code is minted for `creator`, so it cannot be
+ * spent on the Launcher, and a failure to mint is not a failure to open -
+ * the Workspace still has its own sign-in page.
+ */
+export async function editInWorkspace(worldId: string, onMissing: () => void) {
+  let code: string | undefined
+  try { code = await mintAppCode('creator') } catch { code = undefined }
+  return handOver(editLink(worldId, code), onMissing)
 }
 
 function handOver(link: string, onMissing: () => void) {

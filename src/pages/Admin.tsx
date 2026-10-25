@@ -16,7 +16,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faUserShield, faBell, faTrash, faCircleCheck, faBan, faShieldHalved, faComments,
+  faUserShield, faBell, faTrash, faCircleCheck, faBan, faComments,
   faMagnifyingGlass, faPlus, faScroll, faSpinner, faFilter, faUserSlash, faFileImage, faUserCheck,
   faFlag, faGlobe, faBullhorn, faRobot, faScaleBalanced, faLifeRing, faXmark,
   faStethoscope, faGavel, faCommentSlash, faDoorClosed, faDoorOpen,
@@ -63,7 +63,7 @@ import {
   deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff,
   staffRecord, staffRecordKinds,
   listFlaggedTerms, moveBrixAsStaff, notifyAsStaff, notifyEveryone,
-  saveFlaggedTerm, setStaffRank, setStanding, tryFlaggedTerm,
+  saveFlaggedTerm, setStaffRank, setStanding, liftSuspension, tryFlaggedTerm,
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice, siteState, setMaintenance,
@@ -135,6 +135,24 @@ const rankLook: Record<StaffRank, string> = {
  * `needs` is the honest version of what the database already refuses. A
  * moderator shown the Brix box would press it once and be told no, which
  * teaches them the console lies to them.
+ *
+ * Staw, 25 October: "make that everything restricted to admins right now
+ * are restricted to superadmins, and add more pages restrictions for only
+ * admins+". So the three bands mean this, and 0298 says the same thing in
+ * the database, which is the half that counts:
+ *
+ *   * **Moderator** - casework. Somebody reported something, somebody
+ *     appealed, somebody wrote in, something is waiting to be looked at.
+ *     Work that arrives rather than work that is decided.
+ *   * **Admin** - the rules themselves. What the filter catches, and what
+ *     happens to a Community. Both were drawn for moderators and refused
+ *     for them by the database, which is the console lying in the exact
+ *     way the paragraph above says it must not: a moderator can no longer
+ *     flag a Community from this panel, and reports are still where that
+ *     starts.
+ *   * **Superadmin** - anything that moves Brix, speaks to everybody,
+ *     changes what the machine may do, or changes the state of the site
+ *     itself. None of it is undone by apologising afterwards.
  */
 const sections: {
   name: Section
@@ -157,16 +175,16 @@ const sections: {
   { name: 'Support', icon: faLifeRing, art: 'chatbubble', needs: 'moderator', blurb: 'What people have written in about, urgent first' },
   { name: 'Forum', icon: faComments, needs: 'moderator', blurb: 'Every topic, the taken-down ones included - pin, lock, remove or put back' },
   { name: 'People', icon: faUserShield, art: 'people', needs: 'moderator', blurb: 'Behaviour, the record, and what each rank may change' },
-  { name: 'Communities', icon: faPeopleGroup, art: 'people', needs: 'moderator', blurb: 'Flag one, verify one, close one, or hand it on' },
+  { name: 'Communities', icon: faPeopleGroup, art: 'people', needs: 'admin', blurb: 'Flag one, verify one, close one, or hand it on' },
   { name: 'Screening', icon: faCircleCheck, art: 'checkmark', needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
-  { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'moderator', blurb: 'What the moderation system catches' },
-  { name: 'Machine', icon: faRobot, needs: 'admin', blurb: 'What Kobby screens, and what it is allowed to do' },
-  { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'admin', blurb: 'A line across the top of the site, which anybody can close' },
-  { name: 'Announce', icon: faBell, art: 'notification', needs: 'admin', blurb: 'A word from Kobblon, to one person or everybody' },
-  { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'admin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
-  { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
-  { name: 'Record', icon: faScroll, needs: 'admin', blurb: 'What staff have done' },
-  { name: 'Shutters', icon: faScrewdriverWrench, needs: 'admin', blurb: 'Put the whole website behind a maintenance notice' },
+  { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'admin', blurb: 'What the moderation system catches' },
+  { name: 'Machine', icon: faRobot, needs: 'superadmin', blurb: 'What Kobby screens, and what it is allowed to do' },
+  { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'superadmin', blurb: 'A line across the top of the site, which anybody can close' },
+  { name: 'Announce', icon: faBell, art: 'notification', needs: 'superadmin', blurb: 'A word from Kobblon, to one person or everybody' },
+  { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'superadmin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
+  { name: 'Map', icon: faGlobe, needs: 'superadmin', blurb: 'Roughly where people are, by the clock on their machine' },
+  { name: 'Record', icon: faScroll, needs: 'superadmin', blurb: 'What staff have done' },
+  { name: 'Shutters', icon: faScrewdriverWrench, needs: 'superadmin', blurb: 'Put the whole website behind a maintenance notice' },
 ]
 
 const allowed = (rank: StaffRank, needs: StaffRank) => rankOrder[rank] >= rankOrder[needs]
@@ -1199,7 +1217,7 @@ export function PersonRow({ person, onChanged }: {
               variant="subtle"
               disabled={busy}
               onClick={() => run('Suspension lifted.',
-                () => setStanding(person.id, { suspended: false }))}
+                () => liftSuspension(person.id))}
             >
               <FontAwesomeIcon icon={faBan} />
               Lift the suspension
@@ -1253,7 +1271,13 @@ export function PersonRow({ person, onChanged }: {
         </div>
       )}
 
-      {rank !== 'moderator' && (
+      {/*
+        * Who somebody is to Kobblon: the tick, the rank, the k. All three
+        * go through `admin_set_standing` or `set_staff_rank`, and 0298 made
+        * both a superadmin's - so an admin shown this row would press it
+        * and be told no.
+        */}
+      {rank === 'superadmin' && (
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
@@ -1269,45 +1293,29 @@ export function PersonRow({ person, onChanged }: {
         </Button>
 
         {/*
-          * Appointing, for a superadmin, and the mod toggle for everybody
-          * else who may be here.
+          * Appointing.
           *
-          * `set_staff_rank` is a superadmin's and refuses anybody else, so
-          * an admin shown three choices would press one and be told no.
-          * They keep the one switch they really do have, which is the
-          * moderator bit through `admin_set_standing`.
+          * One control with three choices rather than a moderator switch
+          * beside it: `set_staff_rank` is a superadmin's, this whole row is
+          * a superadmin's since 0298, and nobody else gets here to need the
+          * smaller version.
           */}
-        {rank === 'superadmin' ? (
-          <Choices
-            size="sm"
-            tone="soft"
-            label="Their rank"
-            value={person.is_admin ? 'admin' : person.is_moderator ? 'moderator' : 'none'}
-            onChange={(picked) => run(
-              picked === 'none' ? 'Staff access removed.'
-                : picked === 'admin' ? 'Now an admin.' : 'Now a moderator.',
-              async () => { await setStaffRank(person.id, picked as 'none' | 'moderator' | 'admin') },
-            )}
-            options={[
-              { value: 'none', label: 'No rank' },
-              { value: 'moderator', label: 'Moderator' },
-              { value: 'admin', label: 'Admin' },
-            ]}
-          />
-        ) : (
-          <Button
-            size="sm"
-            variant="subtle"
-            disabled={busy}
-            onClick={() => run(
-              person.is_moderator ? 'No longer a moderator.' : 'Now a moderator.',
-              () => setStanding(person.id, { moderator: !person.is_moderator }),
-            )}
-          >
-            <FontAwesomeIcon icon={faShieldHalved} />
-            {person.is_moderator ? 'Remove mod' : 'Make mod'}
-          </Button>
-        )}
+        <Choices
+          size="sm"
+          tone="soft"
+          label="Their rank"
+          value={person.is_admin ? 'admin' : person.is_moderator ? 'moderator' : 'none'}
+          onChange={(picked) => run(
+            picked === 'none' ? 'Staff access removed.'
+              : picked === 'admin' ? 'Now an admin.' : 'Now a moderator.',
+            async () => { await setStaffRank(person.id, picked as 'none' | 'moderator' | 'admin') },
+          )}
+          options={[
+            { value: 'none', label: 'No rank' },
+            { value: 'moderator', label: 'Moderator' },
+            { value: 'admin', label: 'Admin' },
+          ]}
+        />
 
         {/*
           * The badge on its own, which hands out no power at all. Kept

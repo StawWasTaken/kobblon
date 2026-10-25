@@ -477,7 +477,7 @@ export default function WorldPage() {
                         {
                           label: 'Open in Workspace',
                           icon: faCube,
-                          onSelect: () => editInWorkspace(thing.id, () => setHanding('missing')),
+                          onSelect: () => { void editInWorkspace(thing.id, () => setHanding('missing')) },
                         },
                       ] : []),
                       { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },

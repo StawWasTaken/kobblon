@@ -14147,3 +14147,137 @@ moved. `moderate` needs redeploying as a folder for this to take effect -
 the same redeploy Round one hundred and ninety already asked for, which
 also carries the multiple-Accounts wording into Kobby's copy of the
 policies.
+
+## Round one hundred and ninety-two - a code on the edit link, and three ranks that mean something
+
+Two things from Staw, and the first one is yours more than it is mine.
+
+### Signing in by pressing a button, not by signing in
+
+Staw: "cannot log in into the launcher or the workspace for some reason.
+and i want it to be easier, instead of needing to log in, all you do is
+click the playbutton of a world page and then it launches the launcher
+where you are already signed in on the same account that pressed that
+playbutton on the website".
+
+The website has done that half since the Launcher got a protocol handler:
+pressing Play on a World mints a single-use code and opens
+`kobblon://play/<id>?code=<code>`. Nothing about that changed. What did
+change:
+
+* **`kobblon://edit/<id>` now carries a code too**, minted for `creator`:
+  `kobblon://edit/<id>?code=<code>`. Pressing "Open in Workspace" on a
+  World page is now the whole of signing in to the Workspace, the same way
+  Play is for the Launcher. The code is `[A-Za-z0-9_-]{64}`, single use,
+  and spent with `claim_app_code(code, 'creator')` - a code minted for one
+  application is refused to the other. The query string is optional, so an
+  edit link with no `?code=` is still valid and still means "open this
+  World"; it just arrives signed out.
+* **A code lives ten minutes, not two.** The table said two minutes while
+  the sign-in page has said ten since it was written. Two is not enough for
+  a cold start that has to update itself and ask Windows for a protocol
+  handler, and what somebody sees when it runs out is the sign-in page this
+  was built to avoid. Still single-use, still tied to one application,
+  still worthless once claimed.
+
+**The error in Staw's screenshot is on your side, and it is not a Kobblon
+problem.** The dialog says `Unable to find Electron app at
+...\?code=0cf99...&state=...` and `Cannot find module <the same URL>`. That
+is Electron being handed the protocol URL as `process.argv[1]` and treating
+it as the path to the application to run, which is what happens when the
+handler was registered without the executable and its arguments being
+spelled out. In development that means
+`app.setAsDefaultProtocolClient('kobblon', process.execPath,
+[path.resolve(process.argv[1])])`, a `requestSingleInstanceLock()` with the
+URL read out of the `second-instance` argv, and `open-url` on macOS. Until
+that is right, no code the website mints can reach you, which is why both
+applications look like they cannot sign in.
+
+What I would ask for back: the exact shape you want for a World that is
+opened from a cold start. Right now the website sends one link that means
+both "sign in as this person" and "open this thing", and if the Launcher
+would rather have two steps, say so and I will send two.
+
+### Three ranks, and each one reaching a different part of the console
+
+Staw: "for the staff panel, theres multiple ranks; mods, admins,
+superadmins, make that everything restricted to admins right now are
+restricted to superadmins, and add more pages restrictions for only
+admins+, ofc make sure that by default and its not possible to modify it,
+the accounts stawrer and kobblon (usernames) are superadmins".
+
+Migration `0298_what_a_rank_may_reach.sql`. The three bands now mean:
+
+* **Moderator** - casework. Reports, appeals, support, screening, the
+  forum, the Overview, and a person's behaviour: warn, suspend, and lift a
+  suspension.
+* **Admin** - the rules themselves: the word filter, and what happens to a
+  Community.
+* **Superadmin** - the Machine, the Notice, Announce, the Economy, the Map,
+  the staff Record, the Shutters, somebody's rank, the tick, the k, and
+  moving Brix.
+
+**For the applications: if either of you draws anything staff-facing, read
+`my_staff_rank()` and treat these three as the bands.** `is_admin` on a
+profile is storage and no longer tells you what somebody may reach - an
+admin can no longer set the machine, move Brix, speak to everybody or shut
+the site. The functions that moved are `admin_move_brix`, `economy_now`,
+`economy_flow`, `economy_by_kind`, `limited_market`, `set_limited`,
+`admin_notify`, `admin_notify_everyone`, `put_up_notice`,
+`take_down_notice`, `set_ai_settings`, `staff_record`,
+`staff_record_kinds`, `admin_set_standing`, `reopen_account` and
+`set_maintenance`. Each of them now refuses an admin by name.
+
+**New function: `lift_suspension(target uuid, why text default null)`,
+which is a moderator's.** It had to exist. The console drew "Lift the
+suspension" for moderators and called `admin_set_standing` behind it, which
+has been an admin's since 0099 - so that button has been telling moderators
+no for as long as it has existed, and moving the function up to superadmin
+without this would have made it permanent. It is the other half of
+`suspend_account` and carries the same ceiling: staff are a superadmin's to
+lift, and the moderation worker is not given it at all.
+
+**stawrer and kobblon hold the top rank and cannot be moved off it.** By
+username rather than by id, because the ids differ between databases and a
+migration that hard-codes a uuid protects nobody on the second one.
+`guard_profile_update` forces the three rank columns true on any write to
+either row, above the service-role exit, so it holds against the panel,
+against a direct write, and against the server; and it reads the username
+being written rather than the one in the table, so a rename into one of
+those names takes the rank on that same statement. `set_staff_rank` also
+refuses both by name, because a panel that reports success and changes
+nothing is worse than one that says no.
+
+**And a hole that was open until today, which is worth your reading even
+though it is a website thing.** `guard_profile_update` returned early for
+any admin, on any row - and the one row an admin can write directly is
+their own. So **any admin could make themself a superadmin** by updating
+their own profile. 0172 said the top rank is granted in the database and
+never from a panel; that was true of the panel and never true of the table.
+Rank is now pinned on your own row whatever rank you hold, which leaves
+`set_staff_rank` - it writes to somebody else's row and never your own -
+working exactly as it did. It is the third trap again: a guard that exists,
+is checked, and exempts the one case it was there for.
+
+The re-gating itself is done by rewriting each function from
+`pg_get_functiondef` rather than from a body pasted into the migration,
+because `admin_set_standing` alone has been replaced three times and
+pasting any one of those versions would have reverted the other two. That
+has its own trap in it, which I walked into and am writing down: the first
+version skipped a function whose definition mentioned `is_superadmin`
+anywhere, and `admin_set_standing` mentions it in a ceiling check three
+lines below a `require_admin()` gate - so it was skipped silently by a test
+that was there and looked at the wrong thing. It now asks whether an
+admin-level gate is still present, which is the actual question.
+
+Applied four times against the local Postgres and checked under four
+identities, not anonymously: an admin is refused the shutters, the machine,
+standing and the economy by name; a moderator lifts a suspension and is
+refused the machine; a superadmin passes all of them; stawrer comes out of
+an insert as a superadmin and survives an explicit demotion; an admin
+writing `is_superadmin = true` to their own row reads back false.
+
+Not done, and said plainly: the console's rank bands are proved by those
+SQL checks and by the build, not by a screenshot - the staff console needs
+a signed-in staff session and a database, and this container can reach
+neither.
