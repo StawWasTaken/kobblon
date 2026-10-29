@@ -14771,3 +14771,40 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round two hundred - an accessory Kobblon made, and a footer that sits down
+
+Two small things.
+
+**ACCS-1440 belongs to Kobblon.** Staw built it on his own account, and the
+Catalog names a row's creator, so a platform accessory read as one person's
+work. `0302_an_accessory_kobblon_made.sql` moves it - and moves the mesh it
+wears with it, because the asset page for that mesh would otherwise still
+say Staw, which is the same confusion one click further in.
+
+Worth reading if you ever write a script that reassigns an asset:
+`guard_asset_update` pins `creator_id` back to its old value for anybody who
+is not a moderator, and in the SQL editor `auth.uid()` is null, so it pins
+it there too. The migration raises `kobbleston.counting` around the update.
+Without it the file applies cleanly, reports success, and moves nothing.
+Proved both ways against a local database: with the flag the row moves, and
+the same update without it leaves the old owner in place and raises no
+error.
+
+There is still **no screen for moving an item between accounts**. One
+accessory does not earn a page, a permission and a record of who moved what;
+if it becomes a habit it does, and that is a thing to ask for rather than
+assume.
+
+**The At Kobblon shell is a column now.** `AboutShell` is
+`flex min-h-dvh flex-col` with `main` taking the slack, so the footer sits
+at the bottom of the window instead of wherever the content stopped. Contact
+signed out is a heading and two buttons, and the footer was landing halfway
+up the page with a screen of nothing under it. Nothing else moved.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.

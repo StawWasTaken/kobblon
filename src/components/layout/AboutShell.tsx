@@ -74,7 +74,13 @@ export function AboutShell({
   const held = pin && !reduced ? pin : 0
 
   return (
-    <div className={cn('relative min-h-dvh bg-ink text-white', className)}>
+    /*
+     * A column, so the footer sits at the bottom of the window rather than
+     * wherever the content happened to stop. A short page - Contact signed
+     * out is a heading and two buttons - left the footer halfway up and a
+     * screen of nothing under it.
+     */
+    <div className={cn('relative flex min-h-dvh flex-col bg-ink text-white', className)}>
       <AboutNav />
 
       {hero && (
@@ -119,7 +125,7 @@ export function AboutShell({
         </div>
       )}
 
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
 
       <SiteFooter className="relative border-white/[0.08] bg-transparent" />
 
