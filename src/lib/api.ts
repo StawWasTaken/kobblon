@@ -29,6 +29,7 @@ import type {
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,
   ForumBoard, ForumTopic, ForumReply, ForumSort, ForumStatus,} from '@/types/db'
+import { kindLabels, kindMaxBytes, kindMaxLabel } from '@/lib/kinds'
 
 const SPACE_FIELDS =
   'id, owner_id, slug, name, description, category, cover_url, is_published, visit_count, ' +
@@ -1087,6 +1088,30 @@ export async function listSharedSpaces(): Promise<Space[]> {
  * sets a status, so an upload stays invisible until the review pipeline
  * approves it.
  */
+/**
+ * What storage said, turned into something the person can act on.
+ *
+ * Supabase answers an oversized upload with "The object exceeded the maximum
+ * allowed size", which names no number and no limit, so somebody with a
+ * 66 MB accessory reads it as "Kobblon will not take this" when Kobblon
+ * takes a hundred megabytes of mesh. The bucket is not the only ceiling:
+ * the project has a global upload limit and storage enforces the smaller of
+ * the two, so a bucket raised to a hundred still refuses at fifty until the
+ * project limit moves with it. That is ours to fix, not theirs, and the
+ * message should say so rather than leaving them deleting polygons.
+ */
+function storageRefusal(message: string, file: File, kind: AssetKind): string {
+  if (!/maximum allowed size|exceeded the maximum|too large|payload/i.test(message)) return message
+
+  const size = `${(file.size / 1048576).toFixed(1)} MB`
+  if (file.size <= kindMaxBytes[kind]) {
+    return `Storage refused that file at ${size}, and it should not have: `
+      + `a ${kindLabels[kind].toLowerCase()} may be ${kindMaxLabel(kind)}. `
+      + `That is a limit on our side rather than anything wrong with your file - tell us and we will raise it.`
+  }
+  return `That file is ${size}. The most a ${kindLabels[kind].toLowerCase()} may be is ${kindMaxLabel(kind)}.`
+}
+
 export async function uploadAsset(input: {
   userId: string
   file: File
@@ -1129,7 +1154,7 @@ export async function uploadAsset(input: {
   const uploaded = await supabase.storage
     .from(assetBucket)
     .upload(path, input.file, { contentType, upsert: false })
-  if (uploaded.error) throw new Error(uploaded.error.message)
+  if (uploaded.error) throw new Error(storageRefusal(uploaded.error.message, input.file, input.kind))
 
   /*
    * The Decal first, if one is coming with it.

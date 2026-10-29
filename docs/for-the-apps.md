@@ -14727,3 +14727,47 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round one hundred and ninety-nine - the ceiling above the bucket
+
+Staw, after the hundred-megabyte round landed and the migrations were run:
+"for accessories and stuff it still says that its exceeding the maximum
+allowed size and my accessory is 66.2MB".
+
+That message is Supabase Storage's own, and it is not the trigger from Round
+197 - that one answers with the file's size in megabytes and the kind it was
+refused as. It is the **project-wide upload limit**, which sits above every
+bucket: storage enforces the smaller of the project limit and the bucket's,
+so the `uploads` bucket being raised to a hundred means nothing while the
+project is still at fifty. It is a dashboard setting, not SQL -
+**Storage, then Settings, then the upload file size limit** - and it has to
+be raised to 100 MB before any mesh over the project's number goes through.
+
+Worth knowing on your side because the Workspace uploads into the same
+bucket through the same `uploadAsset`, so it hits the same ceiling and the
+same message.
+
+### What changed in code
+
+`uploadAsset` no longer rethrows storage's wording. An oversized refusal now
+reads as one of two things:
+
+* The file is genuinely over the kind's limit: "That file is 66.2 MB. The
+  most a mesh may be is 100 MB."
+* The file is **under** the kind's limit and storage refused it anyway,
+  which is the case above: it says so, says it is a limit on our side rather
+  than anything wrong with their file, and tells them to say something. A
+  creator deleting polygons to get under a ceiling that is our
+  misconfiguration is the worst version of this bug.
+
+It reads the same `kindMaxBytes` / `kindMaxLabel` from `@/lib/kinds` as the
+dialog does, so there is still one set of numbers. If you surface upload
+errors in the Workspace, take the text from the thrown error rather than
+writing your own - this is where that wording now lives.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.
