@@ -9,6 +9,7 @@ import { Lightbox } from '@/components/forum/Lightbox'
 import { timeAgo } from '@/lib/format'
 import { Markup } from '@/components/forum/Markup'
 import { OpTag } from '@/components/forum/Reading'
+import { PosterPeek } from '@/components/forum/Peek'
 import { cn } from '@/lib/cn'
 import type { ForumAuthor, ForumStatus } from '@/types/db'
 
@@ -69,6 +70,24 @@ export function Role({ person }: { person: ForumAuthor }) {
   return (
     <span className="rounded-md border border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
       {word}
+    </span>
+  )
+}
+
+/**
+ * The word somebody chose for themselves, beside their name.
+ *
+ * Staw: "i want the tag that we set in the forum profile to be visible next
+ * to your name in posts too". Quieter than `Role`, on purpose - Admin and
+ * Moderator are what Kobblon says you are, and this is what you say you
+ * are, and the two should not read as the same kind of statement.
+ */
+export function TagChip({ person }: { person: ForumAuthor }) {
+  if (!person.author_tag) return null
+
+  return (
+    <span className="rounded-md border border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
+      {person.author_tag}
     </span>
   )
 }
@@ -288,19 +307,24 @@ export function Byline({
 }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <Link to={`/forum/u/${person.author_username}`} className="shrink-0">
-        <Avatar
-          src={person.author_avatar}
-          name={person.author_name}
-          personId={person.author_id}
-          size={large ? 'md' : 'sm'}
-        />
-      </Link>
+      <PosterPeek username={person.author_username} className="shrink-0">
+        <Link to={`/forum/u/${person.author_username}`} className="shrink-0">
+          <Avatar
+            src={person.author_avatar}
+            name={person.author_name}
+            personId={person.author_id}
+            size={large ? 'md' : 'sm'}
+          />
+        </Link>
+      </PosterPeek>
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Name person={person} large={large} />
+          <PosterPeek username={person.author_username}>
+            <Name person={person} large={large} />
+          </PosterPeek>
           {op && <OpTag />}
           <Role person={person} />
+          <TagChip person={person} />
         </div>
         <p className="mt-0.5 text-xs text-white/35">
           {timeAgo(when)}

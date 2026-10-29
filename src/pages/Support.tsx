@@ -11,7 +11,6 @@ import {
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
-import { Reveal } from '@/components/about/Reveal'
 import { Panel, Group, Line } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -752,90 +751,48 @@ export default function Support() {
 
   return (
     /*
-     * One card and a list, and nothing else.
+     * The list and the popup, and nothing else.
      *
-     * Staw: "make this page much simpler, we just need a contact us card
-     * thing and prevuious tickets or awaiting tickets and thats it". What
-     * was here besides those two was a row to Policies, a row to the
-     * sign-in page, a row to account standing and a panel explaining where
-     * a reply goes - four signposts around a page whose whole job is one
-     * button. The foot already carries Policies, the bar already carries
-     * sign-in, and standing is in the account menu.
+     * Staw, twice: "we just need a contact us card thing and prevuious
+     * tickets or awaiting tickets and thats it", then "no header, just past
+     * tickets and the popup, its too wordy right now". So the hero is gone,
+     * the explaining card is gone, and what is left is a title, the two
+     * buttons that open the popup, and the tickets. What the four steps are
+     * is the popup's job to say, on the step it is asking about.
      */
-    <AboutShell
-      hero={
-        <Lane className="flex min-h-[30vh] flex-col justify-center py-14">
-          <Reveal>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
-              Contact &amp; Support
-            </p>
-            <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3.5rem)] font-extrabold leading-[0.98] tracking-tight">
-              Write to us.
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
-              Kobblon will be glad to hear from you. An account is not needed - tell us
-              where to write back and the reply goes there.
-            </p>
-          </Reveal>
-        </Lane>
-      }
-    >
-      <Band tone="raised" edge>
-        <Lane className="space-y-10">
-          {/* ------------------------------------------------- the card */}
-          <Card className="overflow-hidden p-0">
-            <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
-              <div className="min-w-0">
-                <h2 className="font-display text-2xl font-extrabold">Contact us</h2>
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/60">
-                  Four short steps: who you are, what it is about, what happened, and
-                  where to write back. A company writing about investment, a
-                  partnership, our content or the press has a form of its own on the
-                  first step.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button icon={faPlus} size="lg" variant="yes" onClick={() => startWriting()} disabled={writing}>
-                  New ticket
-                </Button>
-                <Button
-                  icon={faBriefcase}
-                  size="lg"
-                  variant="subtle"
-                  onClick={() => startWriting('business')}
-                  disabled={writing}
-                >
-                  Business
-                </Button>
-              </div>
-            </div>
-
-            {/*
-              * The two lines that used to float under the card, on the
-              * card. They are footnotes to the thing above them - where a
-              * reply goes, and that we never ask for a password - and a
-              * footnote set loose in the middle of a page reads as a
-              * paragraph nobody finished.
-              */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-ink-line bg-ink/40 px-6 py-4 text-xs leading-relaxed text-muted sm:px-8">
-              <span className="flex items-center gap-2">
-                <Glyph icon={faEnvelope} className="text-[11px]" />
-                {profile
-                  ? 'Every ticket and every reply sits on this page, and in your inbox.'
-                  : 'Without an account, the reply goes to the address you give and nowhere else.'}
-              </span>
-              <span className="flex items-center gap-2">
+    <AboutShell>
+      <Band tone="raised" tight>
+        <Lane className="space-y-8">
+          {/* ------------------------------------------------- the opening */}
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="font-display text-3xl font-extrabold leading-none">Contact us</h1>
+              <p className="mt-2.5 flex items-center gap-2 text-sm text-white/45">
                 <Glyph icon={faLock} className="text-[11px]" />
                 Kobblon never asks for your password, here or anywhere else.
-              </span>
+              </p>
             </div>
-          </Card>
+            <div className="flex flex-wrap gap-3">
+              <Button icon={faPlus} size="lg" variant="yes" onClick={() => startWriting()} disabled={writing}>
+                New ticket
+              </Button>
+              <Button
+                icon={faBriefcase}
+                size="lg"
+                variant="subtle"
+                onClick={() => startWriting('business')}
+                disabled={writing}
+              >
+                Business
+              </Button>
+            </div>
+          </div>
 
           {/* ------------------------------------------------ the tickets */}
           {profile ? (
             <Panel
               title="Your tickets"
-              note="Open ones first. A reply lands here and in your inbox."
+              note="A reply lands here and in your inbox."
             >
               {tickets.loading && <Skeleton className="h-24 rounded-2xl" />}
               {tickets.error && <ErrorState message={tickets.error} onRetry={tickets.reload} />}

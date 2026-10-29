@@ -17,6 +17,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ToastProvider } from '@/components/ui/Toast'
 import { AuthContext, type AuthValue } from '@/hooks/useAuth'
 import { Byline } from '@/components/forum/Pieces'
+import { PosterCard } from '@/components/forum/Peek'
 import { PostMenu } from '@/components/forum/PostMenu'
 import { ReadingRail, SignedOutNote, RelatedTopics, OpTag } from '@/components/forum/Reading'
 import { BoardMark, ForumSearchBox } from '@/components/forum/Shell'
@@ -33,25 +34,38 @@ import { faCheck, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-
 import { cn } from '@/lib/cn'
 import { useState } from 'react'
 import { TopicCard } from '@/components/forum/TopicCard'
-import type { ForumAuthor, ForumRelated, ForumReply, ForumTopic } from '@/types/db'
+import type { ForumAuthor, ForumPerson, ForumRelated, ForumReply, ForumTopic } from '@/types/db'
 import '@/index.css'
 
 const op: ForumAuthor = {
   author_id: 'a', author_username: 'pixelhead', author_name: 'Pixelhead',
   author_avatar: null, author_is_verified: true,
   author_is_admin: false, author_is_moderator: false,
+  author_tag: 'Scripter',
 }
 
 const staff: ForumAuthor = {
   author_id: 'b', author_username: 'staw', author_name: 'Staw',
   author_avatar: null, author_is_verified: true,
   author_is_admin: true, author_is_moderator: false,
+  author_tag: 'Designer',
 }
 
 const nameless: ForumAuthor = {
   author_id: 'c', author_username: 'quietone', author_name: '',
   author_avatar: null, author_is_verified: false,
   author_is_admin: false, author_is_moderator: false,
+  author_tag: null,
+}
+
+const peeked: ForumPerson = {
+  user_id: 'a', username: 'pixelhead', display_name: 'Pixelhead',
+  avatar_url: null, marks: ['verified'],
+  tags: ['scripter'], tag_labels: ['Scripter'],
+  bio: 'I build doors that open, and occasionally ones that do not. Ask me about hinges.',
+  bio_is_own: true, discord: null,
+  joined_at: new Date('2026-03-24').toISOString(),
+  topic_count: 18, post_count: 412, is_me: false,
 }
 
 const when = new Date(Date.now() - 3 * 3600_000).toISOString()
@@ -91,6 +105,14 @@ function Page() {
           <Byline person={op} when={when} edited={when} large op />
           <Byline person={staff} when={when} />
           <Byline person={nameless} when={when} edited={when} />
+        </div>
+      </Row>
+
+      <Row title="The card a name opens on hover: answered, waiting, and failed">
+        <div className="flex flex-wrap items-start gap-5">
+          <div className="w-[19rem]"><PosterCard person={peeked} username="pixelhead" /></div>
+          <div className="w-[19rem]"><PosterCard person={undefined} username="pixelhead" /></div>
+          <div className="w-[19rem]"><PosterCard person={null} username="pixelhead" /></div>
         </div>
       </Row>
 

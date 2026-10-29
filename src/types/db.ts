@@ -1266,6 +1266,16 @@ export type ForumAuthor = {
   author_is_verified: boolean
   author_is_admin: boolean
   author_is_moderator: boolean
+  /**
+   * The word they chose for themselves on their forum profile, or null.
+   *
+   * The label, not the code: `forum_tag_label` resolves it server-side, so
+   * a page drawing twenty names does not ask the database for seventeen
+   * words it already has. `staff` is deliberately not returned here - it is
+   * already the k beside their name, and saying it twice in one line is
+   * what it looked like the first time.
+   */
+  author_tag: string | null
 }
 
 export type ForumTopic = ForumAuthor & {

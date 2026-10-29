@@ -14551,3 +14551,83 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round one hundred and ninety-six - a forum tag travels with the name, and two pages get smaller
+
+Four things, and one of them is a migration you have to run.
+
+### `author_tag` is on every forum row now
+
+`0300_a_tag_travels_with_the_name.sql` adds **`author_tag text`** to the
+five functions that return a forum author:
+
+* `forum_topics_list`
+* `forum_topic`
+* `forum_replies`
+* `forum_search`
+* `forum_staff_topics`
+
+It sits **between `author_is_moderator` and `liked`**, which matters if you
+read these positionally anywhere. All five were dropped and recreated,
+because `create or replace function` will not change a return table - so if
+you hold a cached signature for any of them, it is stale.
+
+What it holds is the **label** somebody chose on their forum profile -
+`Scripter`, `Modeller`, `Still learning` - or null. Not the code. There is a
+new `forum_tag_label(uuid) returns text` behind it, granted to `anon` and
+`authenticated`, if you ever want it on its own.
+
+The automatic `staff` tag is deliberately **not** returned here. Staff
+already wear the k through `name_marks`, and a "Staff" chip beside the k is
+the same fact twice in one line. If you draw this chip, draw it the same
+way: quieter than Admin and Moderator, because those are what Kobblon says
+somebody is and this is what they say they are.
+
+`ForumAuthor` in `@/types/db` gained the field, so every type that spreads
+it - `ForumTopic`, `ForumReply` - has it too. If you build a `ForumAuthor`
+by hand anywhere, it now needs `author_tag`.
+
+### A hover card on the poster
+
+New: **`@/components/forum/Peek`**, exporting `PosterPeek` (the wrapper that
+opens on hover or focus) and `PosterCard` (the card itself, given its
+answer). The byline's name and avatar are both wrapped in it.
+
+It asks `forum_profile(username)` at the moment it opens, not when the post
+renders, and caches one answer per username for the life of the page - a
+long thread is forty posts by six people. No migration: the RPC already
+existed for the profile page.
+
+It shows avatar, name with marks, @username, the tags, the bio, and three
+counts: topics, replies, joined. It deliberately does **not** show a read
+time or a solved count, which the card Staw sent across has. Neither is
+measured on this platform, and a card that invents two of its five numbers
+is worse than a card with three.
+
+Mountable outside the website: `PosterCard` takes the person as a prop, so
+it needs no provider. `tools/site/forum-preview` draws all three of its
+states.
+
+### Download and Contact are both smaller
+
+Nothing shared changed here; it is said because the two sides should not
+drift on what these pages are.
+
+**Download** was briefly rebuilt as a full presentation - a World behind a
+held title, bands, a closing ask. Staw: "why are you making the download
+page like it needs headers and presentation, its just a download page." It
+is now a title, one line, three platform rows that say "not yet", and the
+note that there is no release date. When there are installers the rows
+become buttons and nothing else moves.
+
+**Contact** lost its header entirely. Staw: "no header, just past tickets
+and the popup, its too wordy right now." What is left is the title, the two
+buttons that open the popup, and the ticket list. What the four steps are is
+the popup's job to say, on the step it is asking about.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.
