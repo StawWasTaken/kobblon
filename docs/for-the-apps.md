@@ -14692,3 +14692,38 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round one hundred and ninety-eight - one word for staff
+
+Staw, reading the forum: "sometimes it says ADMIN sometimes it says STAFF on
+the tags, just pick one". He was looking at the same person twice. A post
+drew `is_admin` and `is_moderator` as two different words, Admin and
+Moderator, and the hover card drew the automatic forum tag, whose label is
+Staff.
+
+It is **Staff** now, everywhere on the forum, for anybody who is an admin or
+a moderator. That is the word the rest of Kobblon already uses for these
+people: the badge is the staff k, the section behind it is `/staff`, and
+`wears_staff_badge` is what decides who carries the mark. Admin against
+Moderator is how the keys are divided inside the house, and it stays inside
+the house - the staff console still says which is which.
+
+Nothing changed in the database, and no migration came with this. The RPCs
+still return `author_is_admin` and `author_is_moderator` separately, so if
+the Workspace ever draws a forum byline it has both and should collapse them
+to the one word rather than printing either. The chip is
+`border-brand-bright/40 bg-brand/15 text-brand-bright`, uppercase, and it
+sits before the person's chosen tag, which stays grey - Staff is what
+Kobblon says you are, the other is what you say you are.
+
+One guard went in beside it: the chosen-tag chip skips the word Staff. The
+database already refuses an automatic tag when somebody picks one, so this
+should never fire, but a row written before that rule would have printed
+Staff twice in a row.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.

@@ -58,14 +58,22 @@ export function Name({
   )
 }
 
-/** Who they are to Kobblon, said in a word, where it is worth saying. */
+/**
+ * Who they are to Kobblon, said in a word, where it is worth saying.
+ *
+ * Staw: "sometimes it says ADMIN sometimes it says STAFF on the tags, just
+ * pick one". He was reading the same person twice: a post said ADMIN,
+ * because this drew `is_admin` and `is_moderator` as two different words,
+ * and the hover card said STAFF, because that reads the automatic forum tag
+ * whose label is Staff. One word now, and it is Staff - that is the word
+ * the rest of Kobblon uses for these people: the badge is the staff k, the
+ * section behind it is /staff, and `wears_staff_badge` is what decides who
+ * carries the mark. Admin against Moderator is how the keys are divided
+ * inside the house, which is nobody's business out here.
+ */
 export function Role({ person }: { person: ForumAuthor }) {
-  const word = person.author_is_admin
-    ? 'Admin'
-    : person.author_is_moderator
-      ? 'Moderator'
-      : null
-  if (!word) return null
+  if (!person.author_is_admin && !person.author_is_moderator) return null
+  const word = 'Staff'
 
   return (
     <span className="rounded-md border border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
@@ -78,12 +86,15 @@ export function Role({ person }: { person: ForumAuthor }) {
  * The word somebody chose for themselves, beside their name.
  *
  * Staw: "i want the tag that we set in the forum profile to be visible next
- * to your name in posts too". Quieter than `Role`, on purpose - Admin and
- * Moderator are what Kobblon says you are, and this is what you say you
- * are, and the two should not read as the same kind of statement.
+ * to your name in posts too". Quieter than `Role`, on purpose - Staff is
+ * what Kobblon says you are, and this is what you say you are, and the two
+ * should not read as the same kind of statement.
  */
 export function TagChip({ person }: { person: ForumAuthor }) {
-  if (!person.author_tag) return null
+  // The database refuses an automatic tag when somebody picks one, so this
+  // should never be Staff - but a row written before that rule would draw
+  // the word twice in a row, and one chip saying it is the point.
+  if (!person.author_tag || person.author_tag === 'Staff') return null
 
   return (
     <span className="rounded-md border border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
