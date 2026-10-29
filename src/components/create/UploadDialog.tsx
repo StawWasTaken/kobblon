@@ -9,10 +9,10 @@ import { useToast } from '@/components/ui/Toast'
 import { useMaybeAuth } from '@/hooks/useAuth'
 import { useWorkingAs, WorkingAsNote } from '@/components/create/WorkingAs'
 import { uploadAsset, decalBehind } from '@/lib/api'
-import { kindLabels, kindIcons, kindAccepts, uploadableKinds } from '@/lib/kinds'
+import {
+  kindLabels, kindIcons, kindAccepts, uploadableKinds, kindMaxBytes, kindMaxLabel,
+} from '@/lib/kinds'
 import type { AssetKind, OwnAsset } from '@/types/db'
-
-const MAX_BYTES = 25 * 1024 * 1024
 
 /*
  * The words, the icons, the codes and the accepted extensions all come from
@@ -86,10 +86,19 @@ export function UploadDialog({
     setDecal(null)
   }
 
+  /*
+   * The limit is the kind's, not one number for everything: a mesh may be a
+   * hundred megabytes and a Decal may not. Changing the kind clears the file
+   * above, so there is no way to be holding one that the current limit has
+   * never been asked about.
+   */
   const pick = (chosen: File | null) => {
     if (!chosen) return
-    if (chosen.size > MAX_BYTES) {
-      setError('That file is over 25 MB.')
+    if (chosen.size > kindMaxBytes[kind]) {
+      setError(
+        `That file is ${(chosen.size / 1024 / 1024).toFixed(1)} MB. `
+        + `A ${kindLabels[kind]} may be ${kindMaxLabel(kind)} at most.`,
+      )
       return
     }
     setError(null)
@@ -155,7 +164,7 @@ export function UploadDialog({
       open={open}
       onClose={onClose}
       title="Upload to Create"
-      description="Decals, sounds, video, fonts and meshes. 25 MB per file."
+      description="Decals, sounds, video, fonts and meshes. A mesh may be 100 MB; everything else 25 MB."
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -190,9 +199,11 @@ export function UploadDialog({
         <span className="text-sm font-semibold">
           {file ? file.name : `Choose a ${kindLabels[kind].toLowerCase()} file`}
         </span>
-        {file && (
-          <span className="text-xs text-muted">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
-        )}
+        <span className="text-xs text-muted">
+          {file
+            ? `${(file.size / 1024 / 1024).toFixed(1)} MB`
+            : `Up to ${kindMaxLabel(kind)}`}
+        </span>
       </button>
       <input
         ref={fileInput}

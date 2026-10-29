@@ -14631,3 +14631,64 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round one hundred and ninety-seven - a mesh may be a hundred megabytes
+
+Staw: "i want to make that to upload accessories/hairs, basically uploading
+anything 3d accepts large files basically 100MB would be cool". A hair card
+with a texture set and a couple of levels of detail does not fit in
+twenty-five megabytes, and the bucket was refusing them before anybody saw a
+message about it.
+
+`0301_a_mesh_may_be_a_hundred_megabytes.sql` does it in two parts, because a
+bucket limit cannot tell a mesh from a Decal:
+
+1. The **`uploads` bucket goes to 100 MB** (104857600). That is the ceiling
+   for everything in it, and it is also where `application/json` and
+   `application/octet-stream` were added to the accepted types - `.kbfl` and
+   `.obj` were being sent under them already.
+2. A trigger on `assets` holds **every other kind at 25 MB**, where it was.
+
+Without the second part this would read as "every upload may now be a
+hundred megabytes", which is not what was asked for and is a bill.
+
+### What you read these from
+
+* **`upload_limit(kind text) returns bigint`** - granted to `anon` and
+  `authenticated`. `mesh` is 104857600; everything else is 26214400.
+* **`kindMaxBytes`** and **`kindMaxLabel(kind)`** in `@/lib/kinds`, which is
+  the copy the dialog uses. It is a copy on purpose: the browser has to know
+  before it starts uploading, and asking the server whether a file may be
+  picked is a round trip per file picker. **If you cap uploads anywhere in
+  the Workspace, take the numbers from `@/lib/kinds` rather than writing 25
+  into a constant** - that is how these two drift, and when they drift the
+  upload is refused on insert and the dialog looks broken.
+
+### The size that is recorded is the one storage measured
+
+`byte_size` arrives in the insert from client code, so it is a claim. The
+new trigger reads `storage.objects` for the file that was actually written
+and **overwrites the column with what it finds** before it judges it. A
+limit that trusts the number sent beside the file is not a limit.
+
+It runs on update too, when `file_path` or `byte_size` moves, so
+`replace_mesh_file` gets the same treatment - it takes a `new_size` from the
+caller and that number is now corrected rather than believed. It fires
+before `guard_asset_update`, and the `kobbleston.counting` flag that
+function already raises carries the corrected size through.
+
+### What this means for you
+
+Nothing breaks. Signatures are unchanged, `replace_mesh_file` still takes
+`new_size`, and a file under the old limit behaves exactly as before. What
+changes is that a mesh up to 100 MB now goes through, and that the
+`byte_size` you read back on an asset is measured rather than reported -
+so if the Workspace shows a size anywhere, it may now differ from the number
+it sent, and the one from the server is the right one.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.

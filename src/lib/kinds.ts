@@ -115,6 +115,33 @@ export const kindAccepts: Record<AssetKind, string> = {
 }
 
 /**
+ * The most a file of each kind may weigh, in bytes.
+ *
+ * Staw: "uploading anything 3d accepts large files basically 100MB would be
+ * cool". A hair card with a texture set and a couple of levels of detail
+ * does not fit in twenty-five megabytes, and everything else still should.
+ *
+ * This is a **copy** of `upload_limit(text)` in the database, and the
+ * database is the one that decides: the dialog has to know before it starts
+ * uploading, and asking the server whether a file may be picked is a round
+ * trip for every file picker. If these two ever disagree, the upload is
+ * refused on insert and the dialog looks broken - so they change together,
+ * in the same round.
+ */
+export const kindMaxBytes: Record<AssetKind, number> = {
+  image: 25 * 1024 * 1024,
+  audio: 25 * 1024 * 1024,
+  video: 25 * 1024 * 1024,
+  font: 25 * 1024 * 1024,
+  build: 25 * 1024 * 1024,
+  mesh: 100 * 1024 * 1024,
+}
+
+/** The same number as a round word, for the line under a file picker. */
+export const kindMaxLabel = (kind: AssetKind) =>
+  `${Math.round(kindMaxBytes[kind] / 1024 / 1024)} MB`
+
+/**
  * Kinds that are made rather than uploaded.
  *
  * A Build is an arrangement of parts, and the thing that arranges parts is
