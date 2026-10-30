@@ -5,6 +5,7 @@ import { faPen, faTrash, faCheck, faXmark } from '@fortawesome/free-solid-svg-ic
 import { Avatar } from '@/components/ui/Avatar'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/cn'
+import { RichText } from '@/components/chat/RichText'
 import type { ConversationMember, Message } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
 
@@ -132,7 +133,9 @@ export function MessageRow({
             title={hidden ? 'You are ignoring this person. Tap to read.' : undefined}
           >
             <p className={cn('whitespace-pre-wrap break-words', hidden && 'blur-[5px]')}>
-              {message.body}
+              {/* Marks and a picture, drawn from the text rather than built
+                  as markup - `RichText` says why. */}
+              <RichText text={message.body} />
             </p>
             {message.edited_at && (
               <span className={cn('text-[10px]', mine ? 'text-white/55' : 'text-white/35')}>

@@ -5,8 +5,8 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faChevronDown, faChevronUp, faXmark, faPaperPlane, faMagnifyingGlass, faPenToSquare,
-  faGear, faArrowLeft, faUserGroup, faEyeSlash,
+  faChevronDown, faChevronUp, faXmark, faMagnifyingGlass, faPenToSquare,
+  faGear, faArrowLeft, faUserGroup, faEyeSlash, faPen, faRightFromBracket, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { LoadingMark } from '@/components/ui/Loading'
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Icon } from '@/components/brand/Icon'
 import { NewGroupDialog } from './NewGroupDialog'
+import { Composer } from '@/components/chat/Composer'
 import { MessageRow } from './MessageRow'
 import { SafetyNote } from './SafetyNote'
 import { usePersonActions } from '@/components/social/personActions'
@@ -24,7 +25,8 @@ import { useNarrow } from '@/hooks/useWidth'
 import {
   chatRoster, conversationName, deleteMessage, editMessage, ignorePerson, listMessages,
   markConversationRead, sendMessage, startConversation, unignorePerson,
-  myChatStanding, chatCardSeen, type ChatStanding,
+  myChatStanding, chatCardSeen, renameConversation, leaveConversation,
+  type ChatStanding,
 } from '@/lib/api'
 import { ChatSuspended } from '@/components/chat/ChatSuspended'
 import { ChatLockedBar } from '@/components/chat/ChatLockedBar'
@@ -128,9 +130,18 @@ function Window({
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [reporting, setReporting] = useState(false)
+  /* Renaming the group, from the details panel. `null` while nobody is. */
+  const [naming, setNaming] = useState<string | null>(null)
+  /* What the server says it is called, once somebody has renamed it here.
+     The row in the list is refreshed on its own poll; this is so the
+     window's own header changes the moment the name takes. */
+  const [renamed, setRenamed] = useState<string | null | undefined>(undefined)
+  const [leaving, setLeaving] = useState(false)
   const bottom = useRef<HTMLDivElement>(null)
 
-  const name = conversationName(conversation)
+  const name = renamed === undefined
+    ? conversationName(conversation)
+    : conversationName({ ...conversation, title: renamed })
   const solo = conversation.members.length === 1 ? conversation.members[0] : null
 
   // A row for a friend nobody has messaged yet carries no real conversation
@@ -215,8 +226,8 @@ function Window({
   const { quiet } = useChatDock()
   const locked = Boolean(quiet.standing && !quiet.standing.over)
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     const body = draft.trim()
     if (!body || !profile) return
     setDraft('')
@@ -248,11 +259,28 @@ function Window({
         'pointer-events-auto flex flex-col overflow-hidden border-ink-line bg-ink-card',
         full
           ? 'h-full w-full'
-          : cn('w-72 rounded-t-xl border border-b-0 shadow-pop', collapsed ? 'h-11' : 'h-96'),
+          /*
+            * The dock's own shape, rather than a card with a chat in it.
+            * Staw: the docks should be "more unique". So: a wider window,
+            * a deeper corner at the top, and a brand line along the head
+            * of it - the same line the rail uses for where you are, which
+            * is what makes a window that is open read as a place you are
+            * rather than a panel lying on the page.
+            */
+          : cn(
+              'w-80 rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
+              'before:from-brand before:via-brand-bright before:to-space',
+              'relative',
+              collapsed ? 'h-12' : 'h-[26rem]',
+            ),
       )}
       aria-label={`Chat with ${name}`}
     >
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-2">
+      <header className={cn(
+        'flex shrink-0 items-center gap-2 border-b border-ink-line px-2',
+        full ? 'h-11' : 'h-12 bg-gradient-to-b from-brand-deep/35 to-transparent',
+      )}>
         {details ? (
           <>
             <button
@@ -281,7 +309,7 @@ function Window({
                 </span>
               )}
             </span>
-            <span className="truncate text-sm font-bold">{name}</span>
+            <span className="truncate font-display text-sm font-extrabold tracking-tight">{name}</span>
           </button>
         )}
 
@@ -307,6 +335,65 @@ function Window({
 
       {!collapsed && details && (
         <div className="flex-1 overflow-y-auto p-3 kob-scroll">
+          {/*
+            * A group can be renamed and walked out of; a chat between two
+            * people can be neither. There is nothing to name - it is
+            * called by who is in it - and leaving would mean the other
+            * person writing into a room nobody is in, which is what
+            * unfriending is for.
+            */}
+          {conversation.is_group && !pending && (
+            <div className="mb-4 space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted">Name</p>
+
+              {naming === null ? (
+                <button
+                  onClick={() => setNaming((renamed === undefined ? conversation.title : renamed) ?? '')}
+                  className="flex w-full items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-2 text-left text-sm transition-colors hover:border-brand-bright/50"
+                >
+                  <span className="min-w-0 flex-1 truncate font-bold">{name}</span>
+                  <Glyph icon={faPen} className="shrink-0 text-[11px] text-muted" />
+                </button>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    try {
+                      const held = await renameConversation(conversation.id, naming)
+                      setRenamed(held)
+                      setNaming(null)
+                      setError(null)
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'That name did not take.')
+                    }
+                  }}
+                  className="flex items-center gap-1.5"
+                >
+                  <input
+                    autoFocus
+                    value={naming}
+                    onChange={(e) => setNaming(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setNaming(null) }}
+                    maxLength={48}
+                    placeholder="Nothing, and it goes by who is in it"
+                    aria-label="What this group is called"
+                    className="h-8 min-w-0 flex-1 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-sm placeholder:text-white/25 focus:border-brand-bright focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Save the name"
+                    title="Save the name"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white transition-colors hover:bg-brand-bright"
+                  >
+                    <Glyph icon={faCheck} className="text-xs" />
+                  </button>
+                </form>
+              )}
+
+              {error && <p className="text-xs text-danger">{error}</p>}
+            </div>
+          )}
+
           <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Members</p>
           <ul className="space-y-1">
             {conversation.members.map((member) => (
@@ -324,6 +411,26 @@ function Window({
               </li>
             ))}
           </ul>
+
+          {conversation.is_group && !pending && (
+            <button
+              onClick={async () => {
+                setLeaving(true)
+                try {
+                  await leaveConversation(conversation.id)
+                  onClose()
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'That did not work.')
+                  setLeaving(false)
+                }
+              }}
+              disabled={leaving}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-danger/40 px-2.5 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+            >
+              <Glyph icon={faRightFromBracket} className="text-xs" />
+              Leave this group
+            </button>
+          )}
         </div>
       )}
 
@@ -424,37 +531,12 @@ function Window({
             {locked ? (
               <ChatLockedBar until={quiet.standing!.until} onOver={quiet.ask} />
             ) : (
-              <div className="flex items-center gap-1.5">
-                <label className="sr-only" htmlFor={`draft-${conversation.id}`}>Message</label>
-                <input
-                  id={`draft-${conversation.id}`}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  maxLength={2000}
-                  /*
-                   * A chat box is not a form field worth remembering. Left
-                   * to itself the browser keeps every line anybody has sent
-                   * and offers them back in a dropdown, which puts one
-                   * person's messages on screen in front of the next person
-                   * to use the computer.
-                   */
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="sentences"
-                  spellCheck
-                  name={`draft-${conversation.id}`}
-                  placeholder="Send a message"
-                  className="h-9 min-w-0 flex-1 rounded-full border border-ink-line bg-ink-raised px-3.5 text-sm placeholder:text-white/30 focus:border-brand-bright"
-                />
-                <button
-                  type="submit"
-                  disabled={!draft.trim()}
-                  aria-label="Send"
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-bright disabled:opacity-40"
-                >
-                  <Glyph icon={faPaperPlane} className="text-xs" />
-                </button>
-              </div>
+              <Composer
+                id={`draft-${conversation.id}`}
+                value={draft}
+                onChange={setDraft}
+                onSend={() => void submit()}
+              />
             )}
           </form>
         </>
@@ -504,7 +586,15 @@ function List({
         'pointer-events-auto flex flex-col overflow-hidden border-ink-line bg-ink-card',
         full
           ? 'h-full w-full'
-          : cn('w-72 rounded-t-xl border border-b-0 shadow-pop', open ? 'h-96' : 'h-11'),
+          /* The same shape as a conversation window: the two sit side by
+             side at the foot of the page and a pair that do not match
+             reads as one of them being a different kind of thing. */
+          : cn(
+              'relative w-80 rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
+              'before:from-brand before:via-brand-bright before:to-space',
+              open ? 'h-[26rem]' : 'h-12',
+            ),
       )}
       aria-label="Friends Chat"
     >
@@ -515,7 +605,7 @@ function List({
         * there, because `full` forces the list open.
         */}
       {!full && (
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-3">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-gradient-to-b from-brand-deep/35 to-transparent px-3">
         <button
           onClick={() => setOpen((v) => !v)}
           className="flex flex-1 items-center gap-2 text-left text-sm font-extrabold"

@@ -1688,6 +1688,34 @@ export async function createGroupConversation(title: string, memberIds: string[]
   })) as string
 }
 
+/**
+ * Give a group chat a name, or clear it back to who is in it.
+ *
+ * The server screens the name and refuses a chat that is not a group or
+ * one you are not in; it hands back what it actually holds afterwards, so
+ * what the dock shows is the stored name rather than what was typed.
+ */
+export async function renameConversation(
+  conversationId: string, name: string,
+): Promise<string | null> {
+  return (unwrap(await supabase.rpc('rename_conversation', {
+    conversation: conversationId, new_name: name,
+  })) as string | null) ?? null
+}
+
+/**
+ * Walk out of a group chat.
+ *
+ * True when somebody is still in it, false when that was the last person
+ * and the chat is gone. What was said stays either way: the messages are
+ * part of the conversation the others are still having.
+ */
+export async function leaveConversation(conversationId: string): Promise<boolean> {
+  return unwrap(await supabase.rpc('leave_conversation', {
+    conversation: conversationId,
+  })) as boolean
+}
+
 /** What a conversation is called when it has no name of its own. */
 export function conversationName(conversation: Conversation) {
   if (conversation.title) return conversation.title

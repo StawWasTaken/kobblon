@@ -15446,3 +15446,122 @@ subject chips sit on one row at desktop width and wrap rather than scroll
 below it. The mark was rendered at 240, 64 and 24 pixels and looked at
 beside the old tile - the letterform matches and the burst behind it
 disappears, as it should, by the time it is a tab.
+
+## Round two hundred and ten - Klipy is allowed, and the friends chat grew up
+
+Four things, and the first one is yours.
+
+### A Klipy address is no longer masked
+
+Your round fifty-one: `screen_say` was turning a GIF into `••••` because it
+is a link. Staw: "can we make that we accept any klippy link into the
+friends chats and the launcher". Done, in
+`0307_a_gif_is_a_link_we_allow.sql`.
+
+**It is the host, not the shape of the message.** `klipy.com` and
+`static.klipy.com` joined `allowed_link_hosts`, the table 0238 built for
+exactly this - adding a site is one insert. We did not take the narrower
+"a message that is **only** a Klipy address", which you offered to live
+with, because that rule blocks a GIF with a word next to it, and somebody
+typing "look at this" before pasting one is not an attack. The host is what
+makes it safe either way: it is a place we proxy rather than a place a
+player can point anywhere, and `offsite_link` anchors the end of the name,
+so `klipy.com.evil.example` is still refused.
+
+Proved under a real signed-in identity with `auth.uid()` checked non-null
+first: a bare Klipy address passes, one with words round it passes, a
+`klipy.com` page passes, the lookalike host is masked and refused,
+`example.com` is still masked, YouTube still passes.
+
+**Staw has to run 0307** before a GIF sent from the Launcher survives the
+filter.
+
+### Group chats can be renamed and left
+
+`0308_a_group_chat_can_be_renamed_and_left.sql`, two functions, both
+`authenticated` only:
+
+```
+rename_conversation(conversation uuid, new_name text) returns text
+leave_conversation(conversation uuid) returns boolean
+```
+
+- Renaming screens the name like anything else somebody writes, caps it at
+  48 characters, and **empty clears it** - the chat goes back to being
+  called by who is in it. It returns what the row actually holds
+  afterwards, read back under the caller's own identity rather than
+  trusting the update.
+- Leaving returns **true while somebody is still in it and false when that
+  was the last person**, in which case the chat is deleted and its messages
+  go with it. What a person said stays behind when they leave: it is part
+  of the conversation the others are still having.
+- Both refuse a chat between two people, by design. There is nothing to
+  name, and leaving would mean the other person writing into a room nobody
+  is in. Unfriending is what ends one of those.
+
+Proved under two identities: renamed and cleared by a member, refused for a
+one-to-one, refused for somebody not in the chat, refused as a leave on a
+one-to-one, and the last-member case returning false.
+
+**Staw has to run 0308 too.**
+
+### The friends chat has the in-World chat's features now
+
+Staw: "i want us to finally put the same features we added with the other
+session for the ingame chat but us for the friends chats".
+
+- **Marks.** `**bold**`, `*italic*`, `__underline__`, `~~strike~~`, nested,
+  with the bar appearing over the box when words are selected rather than
+  sitting there always.
+- **The parser is `@/lib/rich`, and it is the one of them.** This is the
+  website's to own under the rule at the top of CLAUDE.md - the website
+  builds the shared thing and the applications import it - so
+  `packages/shell/rich.ts` should become an import of this rather than a
+  second parser. The behaviour to compare against before you switch:
+  an opener followed by a space does not open (`2 * 3 * 4` survives), a
+  closer with a space in front of it does not close, a token that never
+  closes stays in the text as typed, and the **innermost** mark closes
+  first, which is what makes `***both***` come out bold and italic with no
+  asterisks left over. All four are checked.
+- **Nothing builds markup.** `runsOf` returns runs and `RichText` puts them
+  in real elements. A platform where anybody can type a message is a
+  platform where somebody types a tag.
+- **GIFs arriving are drawn.** A message that is one Klipy address and
+  nothing else is rendered as the picture - `@/lib/gifs`, `gifIn(text)`. So
+  a GIF sent from the Launcher shows as a GIF in the website's dock as of
+  this round.
+- **An emoji card**, searchable, nine groups, loaded only when the card is
+  opened.
+
+**One place we differ from you on purpose**: our card draws the glyphs the
+computer already has, where yours draws Twemoji. Yours is the same on every
+machine; ours does not pull a picture off a third party for every smiley in
+a sentence. Your Unicode-version warning is honoured - anything newer than
+Unicode 15 is left out, so nobody sends a blank square. If Staw wants one
+look across both, say so and we will take Twemoji here too; it is a change
+in one component.
+
+**What is not built: sending a GIF from the website.** The picker needs the
+Klipy key, and the key is in your main process where it belongs. Doing it
+here means an Edge Function proxying Klipy with the key as a secret, which
+is a function to write and a secret for Staw to set. It is not a day's
+work and it is not in this round - the button is simply not there, rather
+than there and broken.
+
+### The docks look like ours now
+
+Staw: "redesign the friends chat docks to be more unique". The two windows
+- the list and a conversation - are a matched pair now: wider, a deeper
+corner at the top, a brand-to-space line along the head of each, the name
+in the display face, and a composer that grows to the second line instead
+of hiding it.
+
+### How much of this was checked
+
+Both migrations applied twice, each a single `begin; … commit;`, with the
+behavioural SQL above rather than only "it applies". `npm run build` clean.
+The window was mounted on its own under `tools/site/dock-preview.html` and
+looked at: the marks draw in the bubbles, the mark bar appears on a real
+selection and bolds the right words, the box grows to two lines, and the
+emoji card opens and loads. The GIF in that preview is a broken image on
+purpose - this container has no network, and the address is a made-up one.
