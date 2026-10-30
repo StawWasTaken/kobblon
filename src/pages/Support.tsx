@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
@@ -10,7 +10,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutShell } from '@/components/layout/AboutShell'
+import { StoryPage } from '@/components/layout/StoryPage'
 import { Band, Lane } from '@/components/about/Band'
+import { BandHead } from '@/components/about/Type'
+import { Reveal } from '@/components/about/Reveal'
+import { Parallax } from '@/components/about/Parallax'
+import { Floaters } from '@/components/about/Floaters'
+import { AskKobby } from '@/components/about/AskKobby'
+import { helpArticles, helpBySlug, openers } from '@/content/help'
+import { asset } from '@/lib/asset'
 import { Panel, Group, Line } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -694,7 +702,7 @@ export function TicketCard({
 export default function Support() {
   /* An At Kobblon tab, not a plain one. It sits in that bar now, so it
      wears that family's pipe. */
-  useAtTitle('Contact & Support')
+  useAtTitle('Support')
   const { profile } = useAuth()
   const toast = useToast()
 
@@ -751,25 +759,104 @@ export default function Support() {
 
   return (
     /*
-     * The list and the popup, and nothing else.
+     * Ask first, then read, then write to a person.
      *
-     * Staw, twice: "we just need a contact us card thing and prevuious
-     * tickets or awaiting tickets and thats it", then "no header, just past
-     * tickets and the popup, its too wordy right now". So the hero is gone,
-     * the explaining card is gone, and what is left is a title, the two
-     * buttons that open the popup, and the tickets. What the four steps are
-     * is the popup's job to say, on the step it is asking about.
+     * Staw sent Roblox's support opening - a welcome line, three things
+     * people actually arrive about, and one big box - and that order is the
+     * reason it works rather than the look of it. Most of what arrives at a
+     * support page is answerable, and a page that opens with a ticket form
+     * turns every one of those into a day of somebody's time on both sides.
+     *
+     * So the hero is the question box. Under it are the articles the box
+     * answers out of, so somebody who would rather read than ask can. The
+     * tickets and the two buttons - which is all this page was - are still
+     * here, at the bottom, where somebody lands after the first two did not
+     * do it.
+     *
+     * The one thing that did not move: a ticket takes no account at all.
+     * Somebody locked out cannot sign in to say so.
      */
-    <AboutShell>
-      <Band tone="raised" tight>
+    <AboutShell
+      backdrop={
+        <Parallax strength={70} className="absolute inset-0">
+          <img
+            src={asset('/brand/background.png')}
+            alt=""
+            aria-hidden="true"
+            className="h-[115%] w-full object-cover"
+          />
+        </Parallax>
+      }
+      hero={
+        <Lane className="flex min-h-[52vh] flex-col justify-center py-20 text-center">
+          <Reveal>
+            <h1 className="font-display text-[clamp(1.9rem,4.6vw,3.4rem)] font-extrabold leading-[1.05] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
+              Welcome to Kobblon support,
+              <br className="hidden sm:block" />{' '}
+              <span className="text-brand-bright">ask us anything</span>.
+            </h1>
+          </Reveal>
+          {/* The box and its three questions, left-aligned inside a centred
+              column: the heading is a banner and wants the middle, and a
+              question somebody is about to type does not. */}
+          <Reveal delay={160}>
+            <AskKobby
+              tone="support"
+              size="open"
+              openers={openers}
+              className="mx-auto mt-9 w-full max-w-2xl text-left"
+            />
+          </Reveal>
+          <Reveal delay={260}>
+            <p className="mx-auto mt-6 flex items-center justify-center gap-2 text-sm text-white/45">
+              <Glyph icon={faLock} className="text-[11px]" />
+              Kobblon never asks for your password, here or anywhere else.
+            </p>
+          </Reveal>
+        </Lane>
+      }
+    >
+      {/* --------------------------------------------- what Kobby reads */}
+      <Band tone="raised" edge decor={<Floaters />}>
+        <Reveal>
+          <BandHead
+            eyebrow="Read it yourself"
+            title="The answers, written out."
+            lead="Kobby answers out of these. They are here in full, because an answer you can read the source of is worth more than one you cannot."
+          />
+        </Reveal>
+        <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {helpArticles.map((one, at) => (
+            <Reveal key={one.slug} delay={(at % 3) * 70} className="h-full">
+              <Link
+                to={`/support/h/${one.slug}`}
+                className="group flex h-full flex-col rounded-3xl border border-white/10 bg-ink-card/70 p-7 transition-[border-color,background-color,transform] hover:-translate-y-1 hover:border-brand-bright/50 hover:bg-ink-card"
+              >
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-brand-bright">
+                  {one.eyebrow}
+                </p>
+                <h3 className="mt-3 font-display text-xl font-extrabold leading-tight">{one.title}</h3>
+                <p className="mt-3 flex-1 leading-relaxed text-white/55">{one.blurb}</p>
+                <Glyph
+                  icon={faArrowRight}
+                  className="mt-6 text-sm text-link transition-transform group-hover:translate-x-1"
+                />
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+      </Band>
+
+      <Band tone="night" edge id="write">
         <Lane className="space-y-8">
           {/* ------------------------------------------------- the opening */}
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="font-display text-3xl font-extrabold leading-none">Contact us</h1>
-              <p className="mt-2.5 flex items-center gap-2 text-sm text-white/45">
-                <Glyph icon={faLock} className="text-[11px]" />
-                Kobblon never asks for your password, here or anywhere else.
+              <h1 className="font-display text-3xl font-extrabold leading-none">
+                Still need a person?
+              </h1>
+              <p className="mt-2.5 text-sm text-white/45">
+                A ticket goes to somebody here, and the reply lands in your Kobblon inbox.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -906,5 +993,31 @@ export default function Support() {
         </Lane>
       </Band>
     </AboutShell>
+  )
+}
+
+/**
+ * One help article, at its own address.
+ *
+ * The same body the policies use, for the same reason: support points
+ * somebody at an article and a reply quotes a heading out of it, and
+ * neither works unless the article has somewhere to be pointed at.
+ */
+export function HelpPage() {
+  const { slug = '' } = useParams()
+  const article = helpBySlug(slug)
+  useAtTitle(article?.title ?? 'Support')
+
+  if (!article) return <Navigate to="/support" replace />
+
+  return (
+    <StoryPage
+      eyebrow={article.eyebrow}
+      title={article.title}
+      intro={article.intro}
+      updated={article.updated}
+      sections={article.sections}
+      footnote="This says how Kobblon works today. Where it says something is not built, that is the current state of it and not a simplification."
+    />
   )
 }

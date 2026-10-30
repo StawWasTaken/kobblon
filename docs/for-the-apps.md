@@ -14953,3 +14953,80 @@ move.
 
 `Owned` is unchanged: it stays `subtle`, and it is still a button rather
 than a disabled one wherever there is something to do.
+
+---
+
+## Round two hundred and four - Support opens with a question, and Kobby reads the help articles
+
+### What changed
+
+Staw sent Roblox's support opening and said he wants that shape, plus "the
+same thing we added for policies but this time for support". Both are built.
+
+`/support` now opens on a hero: a welcome line, one large question box, and
+three starter questions under it. Under that are the help articles the box
+answers out of, each at its own address. The tickets and the two buttons -
+which is all the page was - are still there, at the bottom, under "Still
+need a person?".
+
+### The part that matters to you: Kobby's corpus is two corpora now
+
+`supabase/functions/moderate/policies.json` is no longer nine policies. It is
+**nine policies and nine help articles**, baked from `src/content/policies.ts`
+and the new `src/content/help.ts` by the same `scripts/bake-policies.mjs`.
+Every entry gained two fields:
+
+- `at` - the address the document is read at, `/policies/<slug>` or
+  `/support/h/<slug>`.
+- `kind` - `'policy'` or `'help'`.
+
+The bake throws if two documents share a slug, because the function filters
+the model's named sources against that list and would otherwise link an
+answer about the rules at a help article.
+
+**The signature that changed:** `KobbyAnswer['sources']` entries now carry an
+optional `at`. Anything that renders a Kobby answer must link to `one.at`
+and fall back to `/policies/${one.slug}` only when it is missing - building
+the link from the slug alone now sends every help article to a policy that
+does not exist. That is the whole breakage risk in this round, and it is
+silent: a wrong link compiles.
+
+`AskKobby` gained three props, all optional, all defaulting to what it did
+before: `tone` (`'rules' | 'support'`, which only changes the words),
+`openers` (questions offered as chips under it, which ask when pressed) and
+`size` (`'bar' | 'open'`). Mounting it with no props is exactly the bar that
+was on Policies.
+
+### Contact against Support
+
+Staw asked whether to split them. They are not split, and the reason is
+written down here so it is not re-litigated: the ticket system is one system
+either way, and splitting the front door means somebody has to decide which
+of two pages their problem belongs to before they know what their problem
+is. There is one page, with the business door on it as a second button, and
+a help article - `/support/h/business` - that says what that door is for.
+If it does split later, it splits by adding `/contact` pointing at the
+business form, not by growing a second ticket system.
+
+### What is deliberately not built
+
+- **There is still no password reset.** The help article says so in the
+  present tense rather than describing a link that does not exist. If the
+  Launcher or the Workspace shows a "forgot password" anywhere, it is
+  showing something the website cannot honour.
+- The help articles name no prices. Every figure stays on the form that
+  charges it.
+
+### What Staw has to do
+
+`moderate` needs redeploying **as a whole folder** - `policies.json` changed
+shape and the function reads the new fields. Until it is redeployed, Kobby
+answers out of the old nine policies only, which is wrong but not broken:
+help questions come back as not covered.
+
+### How much of this was checked
+
+`npm run build` is clean. `/support` and `/support/h/signing-in` were built,
+served from `dist/` and looked at, top and scrolled. `npm run engine:check`
+is untouched by this round; it passed 177 of 177 on the run recorded against
+Round two hundred and two.

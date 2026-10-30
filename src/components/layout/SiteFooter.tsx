@@ -47,7 +47,7 @@ const kobblon = [
 const atKobblon = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/forum', label: 'Forum' },
-  { to: '/support', label: 'Contact & Support' },
+  { to: '/support', label: 'Support' },
   { to: '/policies', label: 'Policies' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },

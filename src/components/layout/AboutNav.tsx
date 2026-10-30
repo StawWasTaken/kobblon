@@ -43,7 +43,7 @@ export const ABOUT_LINKS = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/forum', label: 'Forum' },
   { to: '/policies', label: 'Policies' },
-  { to: '/support', label: 'Contact' },
+  { to: '/support', label: 'Support' },
   { to: '/download', label: 'Download' },
 ]
 

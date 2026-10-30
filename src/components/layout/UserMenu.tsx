@@ -76,7 +76,7 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
       ? [
           { to: '/settings', label: 'Settings', icon: faGear },
           { to: '/standing', label: 'Account standing', icon: faShieldHalved },
-          { to: '/support', label: 'Contact & Support', icon: faHeadset },
+          { to: '/support', label: 'Support', icon: faHeadset },
           { label: 'Switch Accounts', icon: faRightLeft, onSelect: () => setSwitching(true) },
           { label: 'Log out', icon: faRightFromBracket, onSelect: () => signOut() },
         ]
@@ -89,7 +89,7 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
            */
           { to: '/login', label: 'Log in', icon: faRightToBracket },
           { to: '/signup', label: 'Make an account', icon: faUserPlus },
-          { to: '/support', label: 'Contact & Support', icon: faHeadset },
+          { to: '/support', label: 'Support', icon: faHeadset },
         ]),
   ]
 

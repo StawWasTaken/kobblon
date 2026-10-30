@@ -1418,7 +1418,16 @@ const ASK_LONGEST = 300
 const ASK_DOCS = 3
 const ASK_DOC_CHARS = 14000
 
-type Baked = { slug: string; title: string; blurb: string; updated: string; text: string }
+type Baked = {
+  slug: string
+  title: string
+  blurb: string
+  updated: string
+  text: string
+  /** Where the document is read, which is what an answer links to. */
+  at: string
+  kind: 'policy' | 'help'
+}
 
 /**
  * Who is asking, in a form that can be counted without keeping anybody's
@@ -1476,12 +1485,12 @@ function documentsFor(question: string): Baked[] {
 
 function askPrompt(docs: Baked[], filter: string): string {
   const papers = docs
-    .map((one) => `### ${one.title} (/policies/${one.slug}, last changed ${one.updated})\n${one.text.slice(0, ASK_DOC_CHARS)}`)
+    .map((one) => `### ${one.title} (${one.at}, ${one.kind === 'help' ? 'a help article' : 'a policy'}, last changed ${one.updated})\n${one.text.slice(0, ASK_DOC_CHARS)}`)
     .join('\n\n')
 
-  return `You are Kobby, the helper on Kobblon - an online sandbox platform where people build and play Worlds, used by children. Somebody on the Policies page has asked you a question about the rules.
+  return `You are Kobby, the helper on Kobblon - an online sandbox platform where people build and play Worlds, used by children. Somebody has asked you a question, from the Policies page or from Support.
 
-Answer **only** from the documents below and from the note about the word filter, if there is one. These are the real, current Kobblon policies.
+Answer **only** from the documents below and from the note about the word filter, if there is one. These are the real, current Kobblon policies and help articles. A policy says what the rules are; a help article says what to do. Answer the one they actually asked.
 
 ${papers}
 
@@ -1489,7 +1498,8 @@ ${filter}
 
 How to answer:
 - Plain words, short. Three sentences at most, and one is usually enough. The person asking may be eleven.
-- Say what the rules actually say. Quote a short phrase only where the exact wording matters.
+- Say what the documents actually say. Quote a short phrase only where the exact wording matters.
+- Where a help article says something is not built yet, say that plainly. Never describe a button, a page or a reset link that the articles do not say exists.
 - If the documents do not answer it, say so in one sentence and say that writing to us at /support gets a person. Do not guess, and never invent a rule, a number, a date, a price or a feature.
 - You are not a lawyer and this is not legal advice. Do not say what a court would do.
 - You decide nothing about anybody's account. Never say an account will be or has been warned, suspended, restored or deleted, and never promise any of it. Point at /standing and /support instead.
@@ -1626,11 +1636,11 @@ async function answerAboutTheRules(
   const named = Array.isArray(said.json.sources) ? said.json.sources.map(String) : []
   const sources = docs
     .filter((one) => named.includes(one.slug))
-    .map((one) => ({ slug: one.slug, title: one.title }))
+    .map((one) => ({ slug: one.slug, title: one.title, at: one.at }))
 
   return answer({
     answer: text,
-    sources: sources.length ? sources : docs.slice(0, 1).map((o) => ({ slug: o.slug, title: o.title })),
+    sources: sources.length ? sources : docs.slice(0, 1).map((o) => ({ slug: o.slug, title: o.title, at: o.at })),
     covered: said.json.covered !== false,
   })
 }

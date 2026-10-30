@@ -47,6 +47,7 @@ const Standing = lazyPage(() => import('@/pages/Standing'))
 const StandingItem = lazyPage(() => import('@/pages/StandingItem'))
 const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
+const HelpPage = lazyPage(() => import('@/pages/Support').then((m) => ({ default: m.HelpPage })))
 const Download = lazyPage(() => import('@/pages/Download'))
 const Forum = lazyPage(() => import('@/pages/Forum'))
 const ForumCategory = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumCategory })))
@@ -186,6 +187,10 @@ export default function App() {
                 * the other way, into `AppShell` below.
                 */}
               <Route path="/support" element={<Support />} />
+              {/* Before `:id`, which would otherwise swallow it: `h` is not
+                  a number, so the ticket route would read it as ticket NaN
+                  and open the list with nothing on top. */}
+              <Route path="/support/h/:slug" element={<HelpPage />} />
               <Route path="/support/:id" element={<Support />} />
 
               <Route path="/forum" element={<Forum />} />

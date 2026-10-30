@@ -4417,7 +4417,15 @@ export async function askKobbyForWords(instruct: string): Promise<KobbyDraft> {
  */
 export type KobbyAnswer = {
   answer: string
-  sources: { slug: string; title: string }[]
+  /*
+   * `at` is where the document is read. It was `/policies/${slug}` worked
+   * out on the page, which stopped being true the moment Kobby could also
+   * answer out of the help articles - those live at `/support/h/`, and a
+   * link built from the slug alone would have sent every one of them to a
+   * policy that does not exist. A bundle from before the function started
+   * sending it has none, so the page still falls back to the old guess.
+   */
+  sources: { slug: string; title: string; at?: string }[]
   /** False when the documents do not cover it, so the page can say so. */
   covered: boolean
 }
