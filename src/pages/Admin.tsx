@@ -68,6 +68,7 @@ import {
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice, siteState, setMaintenance,
   fetchPlatformVersion, listPlatformReleases, setPlatformRelease, dropPlatformRelease,
+  refreshEveryPortrait,
   type NoticeColour, makeAccountReal,
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
@@ -94,7 +95,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'Version' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'Version' | 'Portraits' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -195,6 +196,7 @@ const sections: {
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'moderator', blurb: 'What staff have done' },
   { name: 'Version', icon: faCodeBranch, needs: 'admin', blurb: 'What the website, the Launcher and the Workspace all call this' },
+  { name: 'Portraits', icon: faUserCheck, needs: 'admin', blurb: 'Have every profile picture drawn again from the avatar it belongs to' },
   { name: 'Shutters', icon: faScrewdriverWrench, needs: 'superadmin', blurb: 'Put the whole website behind a maintenance notice' },
 ]
 
@@ -4378,6 +4380,72 @@ export function VersionSection() {
   )
 }
 
+/**
+ * Have every face drawn again.
+ *
+ * The button to reach for after a drawing bug: a portrait saved while a
+ * piece was failing to load is stored as current and never questioned
+ * again, so the only way out is to tell every one of them it is old.
+ *
+ * What it honestly does, which is what the panel says rather than
+ * implying a progress bar: nothing is drawn here. Every stored picture is
+ * marked out of date, which means the site draws each face itself
+ * wherever it is shown - immediately, for everybody - and each person's
+ * own browser saves a fresh file the next time they open a page signed
+ * in. Somebody who never comes back keeps a stale file nothing shows.
+ */
+export function PortraitsSection() {
+  const say = useToast()
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState<number | null>(null)
+
+  const run = async () => {
+    setBusy(true)
+    try {
+      const touched = await refreshEveryPortrait()
+      setDone(touched)
+      say(`${touched} profile pictures will be drawn again.`, 'success')
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-muted">
+        For after a drawing bug. A picture saved while one of somebody's
+        pieces was still loading is stored as current and never questioned
+        again - this tells every stored picture it is old, and they are
+        drawn again from the avatar each one belongs to.
+      </p>
+
+      <Card className="space-y-4 p-5">
+        <p className="text-sm text-muted">
+          Nothing is drawn here; a portrait is a render and this is a
+          database. What happens is that every face is drawn in the browser
+          wherever it is shown, straight away and for everybody, and each
+          person's own browser saves a fresh one the next time they open a
+          page while signed in. Somebody who never signs in again keeps a
+          stale file in the bucket that nothing ever shows.
+        </p>
+
+        <Button variant="yes" loading={busy} onClick={() => void run()}>
+          Draw every profile picture again
+        </Button>
+
+        {done !== null && (
+          <p className="text-sm text-space-bright">
+            {done} marked. Uploaded pictures and accounts with none were left
+            alone - neither is a portrait.
+          </p>
+        )}
+      </Card>
+    </div>
+  )
+}
+
 export function ShuttersSection() {
   const say = useToast()
   const state = useAsync(async () => siteState(), [])
@@ -5535,6 +5603,7 @@ export default function Admin() {
             {open === 'Words' && <WordsSection />}
             {open === 'Record' && <RecordSection />}
             {open === 'Version' && <VersionSection />}
+            {open === 'Portraits' && <PortraitsSection />}
             {open === 'Shutters' && <ShuttersSection />}
           </RankContext.Provider>
         </div>

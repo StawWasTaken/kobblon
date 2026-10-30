@@ -6501,3 +6501,21 @@ export async function dropPlatformRelease(name: string) {
   const { error } = await supabase.rpc('drop_platform_release', { release: name })
   if (error) throw new Error(error.message)
 }
+
+/**
+ * Mark every stored profile picture as out of date, so each is drawn again.
+ *
+ * It does not draw anything - nothing on a server can, a portrait being a
+ * WebGL render of a dressed avatar. It moves `avatar_changed_at` past the
+ * stamp in each stored filename, which makes every page draw the face
+ * itself from then on and makes each person's own browser save a fresh one
+ * the next time they open a page signed in.
+ *
+ * Returns how many rows it touched. Admin only, and refused in the
+ * database rather than here.
+ */
+export async function refreshEveryPortrait(): Promise<number> {
+  const { data, error } = await supabase.rpc('refresh_every_portrait')
+  if (error) throw new Error(error.message)
+  return Number(data ?? 0)
+}

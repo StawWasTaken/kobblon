@@ -15155,3 +15155,49 @@ non-null first rather than assumed:
   behaviour proved rather than described.
 
 `npm run build` clean, the footer built and looked at.
+
+---
+
+## Round two hundred and six - every stored portrait is marked old
+
+Staw: "could we also have a migration or wahetever to now refresh all of the
+PFPs of all players of kobblon right now so that the old bugged PFPs are
+fixed".
+
+`0305_every_portrait_is_drawn_again.sql`. **It draws nothing**, and that is
+worth being exact about on your side too: a portrait is a WebGL render of a
+dressed avatar, so Postgres cannot make one and no server-side job here can
+either. What the migration does is move `avatar_changed_at` past the stamp
+in every stored `portrait-<when>.webp`, which makes the whole platform read
+those pictures as out of date.
+
+The consequence, in two halves:
+
+- **Immediate, for everybody looking.** Every face is drawn in the browser
+  wherever that person is shown. The bugged pictures stop being seen as
+  soon as the migration runs.
+- **Gradual, for the stored files.** A fresh one is saved only when *that
+  person* next opens a page signed in, because nothing may write to
+  somebody else's row. Somebody who never comes back keeps a stale file in
+  the bucket that nothing ever shows.
+
+If the Workspace draws or caches faces of its own, it must honour the same
+rule, and it is the rule and not the file that matters:
+`portrait-<when>.webp` with `when` older than `profiles.avatar_changed_at`
+means **do not show that file** - draw it. The website's
+`portraitIsCurrent` in `@/lib/headshots` is the one implementation; import
+it rather than writing a second one.
+
+There is also `refresh_every_portrait()`, admin only, returning how many
+rows it touched, for the next time a drawing bug needs this - and Admin →
+Portraits is the button. Rows holding an uploaded picture or nothing at all
+are left alone; neither is a portrait.
+
+### How much of this was checked
+
+Applied twice, one `begin; … commit;`. Behaviour proved on three shapes of
+row at once: a stored portrait moves and the stamp in its name ends up
+older than the row; an uploaded picture does not move; a row with no
+picture does not move. The function was refused for an ordinary signed-in
+person with `auth.uid()` checked non-null first, and ran for an admin,
+returning the count. `npm run build` clean.
