@@ -14551,15 +14551,14 @@ The drawing was: `tools/site/portrait-check.html` renders a head with
 something on the hair socket, the same look with a model that is not there,
 and prints what came back through `onMissing`. Both were looked at.
 
-`npm run engine:check` was **not** completed. It got seven checks in - the
-World loads, six parts, the fall onto the pad, the walk speed, the
-direction, one speed and no sprint, a wall stops it - and then stalled in
-this container, where the renderer is software and an outbound host the
-harness reaches for is refused. That is the environment and not the change,
-and the change itself adds an optional argument that defaults to undefined:
-every existing call behaves exactly as it did. Said out loud rather than
-quietly skipped, and worth a second run wherever the engine harness runs
-properly.
+`npm run engine:check` passes: **177 of 177**, no page errors. Two earlier
+runs in this container died partway - the first at seven checks, the second
+at eight, both with the browser closing under the software renderer rather
+than a check failing - so the stall was the environment and not the change.
+Recorded here because it was first written down as not completed, and the
+run that settled it came afterwards. The change itself adds an optional
+argument that defaults to undefined: every existing call behaves exactly as
+it did.
 
 ### Still waiting on you
 
