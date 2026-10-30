@@ -69,6 +69,7 @@ export default function CreatorPage() {
         <Avatar
           src={avatarOf({ avatar_url: person.avatar_url })}
           name={person.display_name}
+          personId={person.user_id}
           size="xl"
           className="rounded-2xl"
         />

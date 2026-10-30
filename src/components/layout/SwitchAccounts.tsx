@@ -37,7 +37,13 @@ function AccountRow({
           busy && 'opacity-60',
         )}
       >
-        <Avatar src={account.avatarUrl} name={account.displayName} size="md" className="rounded-xl" />
+        <Avatar
+          src={account.avatarUrl}
+          name={account.displayName}
+          personId={account.id}
+          size="md"
+          className="rounded-xl"
+        />
 
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-bold">{account.displayName}</span>
@@ -174,7 +180,13 @@ export function SwitchAccounts({ open, onClose }: { open: boolean; onClose: () =
       {asking ? (
         <form onSubmit={sign} className="space-y-4">
           <div className="flex items-center gap-3 rounded-2xl border border-ink-line bg-ink-raised p-3">
-            <Avatar src={asking.avatarUrl} name={asking.displayName} size="md" className="rounded-xl" />
+            <Avatar
+              src={asking.avatarUrl}
+              name={asking.displayName}
+              personId={asking.id}
+              size="md"
+              className="rounded-xl"
+            />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold">{asking.displayName}</span>
               <span className="block truncate text-xs text-muted">@{asking.username}</span>

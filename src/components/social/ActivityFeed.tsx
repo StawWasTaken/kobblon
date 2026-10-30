@@ -102,7 +102,12 @@ export function ActivityFeed({ limit = 10, className }: { limit?: number; classN
           className="flex animate-slide-up items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
         >
           <span className="relative shrink-0">
-            <Avatar src={event.actor_avatar_url} name={event.actor_display_name} size="sm" />
+            <Avatar
+              src={event.actor_avatar_url}
+              name={event.actor_display_name}
+              personId={event.actor_id}
+              size="sm"
+            />
             <span
               className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full text-[9px] ring-2 ring-ink-card ${tones[event.kind]}`}
             >

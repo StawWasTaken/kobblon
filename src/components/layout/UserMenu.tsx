@@ -108,7 +108,13 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
         )}
       >
         {trigger === 'avatar' && profile ? (
-          <Avatar src={profile.avatar_url} name={profile.display_name || profile.username} size="sm" />
+          <Avatar
+            src={profile.avatar_url}
+            name={profile.display_name || profile.username}
+            personId={profile.id}
+            changedAt={profile.avatar_changed_at}
+            size="sm"
+          />
         ) : (
           <Glyph icon={faGear} />
         )}

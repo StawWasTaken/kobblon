@@ -138,6 +138,15 @@ export type ActivityEvent = {
   id: number
   kind: 'space_published' | 'space_updated' | 'space_entered' | 'user_joined'
   created_at: string
+  /**
+   * Whose face this is.
+   *
+   * Without it the row is a picture and a name with nobody attached, and
+   * `Avatar` has to take the stored picture on trust - which is how a feed
+   * shows the head somebody had before they put the hair on. See
+   * `portraitIsCurrent`.
+   */
+  actor_id: string
   actor_username: string
   actor_display_name: string
   actor_avatar_url: string | null
@@ -651,6 +660,8 @@ export type CommunityAuditEntry = {
   action: string
   detail: string | null
   created_at: string
+  /** Whose face this is, for the same reason `ActivityEvent.actor_id` is. */
+  actor_id: string | null
   actor_username: string | null
   actor_display_name: string | null
   actor_avatar_url: string | null
@@ -1253,6 +1264,8 @@ export type ForumBoard = {
   last_topic_id: number | null
   last_author: string | null
   last_author_avatar: string | null
+  /** Whose face this is, for the same reason `ActivityEvent.actor_id` is. */
+  last_author_id: string | null
 }
 
 export type ForumStatus = 'open' | 'solved' | 'approved' | 'declined' | 'looked-at'

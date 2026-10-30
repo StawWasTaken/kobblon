@@ -300,6 +300,7 @@ function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading: boolea
                   <Avatar
                     src={board.last_author_avatar}
                     name={board.last_author ?? 'Somebody'}
+                    personId={board.last_author_id}
                     size="sm"
                     className="shrink-0"
                   />
@@ -888,7 +889,12 @@ export function ForumCategory() {
                 to={`/forum/u/${one.username}`}
                 className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-card/60 py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
               >
-                <Avatar src={one.avatar_url} name={one.display_name} size="sm" />
+                <Avatar
+                  src={one.avatar_url}
+                  name={one.display_name}
+                  personId={one.user_id}
+                  size="sm"
+                />
                 <span className="text-xs font-extrabold text-white/70 transition-colors group-hover:text-white">
                   {one.display_name}
                 </span>

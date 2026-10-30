@@ -837,6 +837,7 @@ function AuditSection({ communityId }: { communityId: string }) {
             <Avatar
               src={entry.actor_avatar_url}
               name={entry.actor_display_name ?? 'K'}
+              personId={entry.actor_id}
               size="xs"
             />
             <span className="min-w-0 flex-1 truncate text-sm text-white/75">

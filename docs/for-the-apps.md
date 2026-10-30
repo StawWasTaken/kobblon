@@ -15565,3 +15565,91 @@ looked at: the marks draw in the bubbles, the mark bar appears on a real
 selection and bolds the right words, the box grows to two lines, and the
 emoji card opens and loads. The GIF in that preview is a broken image on
 purpose - this container has no network, and the address is a made-up one.
+
+---
+
+## Round two hundred and eleven - one picture of a person, everywhere
+
+Staw: "i want the same PFP to be used everywhere you see your pfp or
+someones PFP, i dont want to have to retake the pfp everytime and
+differently, it must be taken once then used everywhere, unless the user
+changes their avatar then we gotta retake it, cuz on some other pfp areas we
+use the old versions and some ppl get bald because of that issue".
+
+**The machinery for that was already right, and it was being handed nothing
+to work with.** `portraitIsCurrent` decides whether a stored
+`portrait-<when>.webp` still shows who somebody is by comparing the stamp in
+its name against `profiles.avatar_changed_at`, and `useHeadshot` redraws when
+it does not. But it can only do that for a face it knows the owner of, and
+`Avatar` learns that from `personId`. Given only `src`, it shows the stored
+file on trust - which is the bald head: a picture taken before the hair
+existed, in a list that never said whose picture it was.
+
+So this is not a new rule, it is the old rule reaching the last few places.
+
+### The database half: `0309_every_face_carries_whose_it_is.sql`
+
+Three readers returned a face and a name and no id, so the pages drawing them
+*could not* pass one. Each is dropped and recreated, because a
+`returns table` cannot gain a column:
+
+- `recent_activity(limit_count int default 12)` gains **`actor_id uuid`**.
+- `community_audit_log(community uuid, limit_count int default 50)` gains
+  **`actor_id uuid`**.
+- `forum_boards()` gains **`last_author_id uuid`** - the author of the last
+  post in each board, taken from the same `order by t.last_post_at desc`
+  that already picks `last_author`.
+
+Grants re-issued to `anon` and `authenticated` in the same file, because a
+dropped function takes its grants with it.
+
+Applied twice against local Postgres, and checked behaviourally under a real
+`authenticated` identity with `auth.uid()` asserted non-null first: five
+activity rows, five with an id; six boards, the one with a last post carrying
+its author id.
+
+**For the applications:** if you call any of these three, the new column is
+additive and nothing you read today moves. If you draw a face from one of
+them, pass the id down to whatever your `Avatar` equivalent is - that is the
+whole point of the migration.
+
+### The client half: eight faces that were drawn on trust
+
+Every `<Avatar>` on the website that is given a `src` now also gets a
+`personId`. The eight that did not:
+
+- the activity feed (`actor_id`),
+- the account menu's own picture (`profile.id`, with `avatar_changed_at`),
+- both faces in Switch Accounts (`account.id`, `asking.id`),
+- a community's audit log (`actor_id`),
+- a creator's page header (`user_id`),
+- the last poster on a forum board row (`last_author_id`),
+- a board's moderators (`user_id`).
+
+Three row types in `src/types/db.ts` gained the field to carry it:
+`ActivityEvent.actor_id`, `CommunityAuditEntry.actor_id`,
+`ForumBoard.last_author_id`.
+
+The audit that found them is a regex over every `.tsx`: a `<Avatar …/>` with
+`src=` and no `personId`. It reads zero now, and it is the check worth
+re-running after any new list of people, because this bug has no symptom on
+the page that introduces it - the face renders, nothing throws, and it is
+simply the wrong face.
+
+**The rule, stated once so neither side has to rediscover it:** a face is
+drawn from an id, not from a URL. A component handed only a picture cannot
+know the picture is stale, and `changedAt` is the better half of the pair
+whenever the row carries it - without it the tab asks for the stamp in a
+batch, which is correct but a round trip. If the Workspace draws faces from
+its own rows, the same applies there: pass the id.
+
+### Still waiting on Staw
+
+Three migrations, in order, and none of them has been run yet:
+
+1. `0307_a_gif_is_a_link_we_allow.sql`
+2. `0308_a_group_chat_can_be_renamed_and_left.sql`
+3. `0309_every_face_carries_whose_it_is.sql`
+
+And `moderate` still needs redeploying **as a whole folder**, not as a single
+file: `policies.json` changed shape and the function reads it.
