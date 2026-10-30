@@ -16191,3 +16191,19 @@ address is still not written.
 
 Still waiting on Staw: **0310** and **0311**, the `gifs` function deployed
 with `KLIPY_KEY` set, and `moderate` redeployed as a whole folder.
+
+**Addendum, same day.** Staw has run every migration, so **0310 and 0311
+are applied** and the line above asking for them is out of date. What that
+turns on: Klipy's `.co` hosts and `media.klipy.com` are in
+`allowed_link_hosts`, so a GIF address from Klipy now renders as a GIF
+rather than being masked into a struck-out link by `offsite_link` - that was
+going to bite the Launcher as well as us the moment anybody picked one.
+`set_platform_release`, `drop_platform_release` and `refresh_every_portrait`
+exist and are granted to `authenticated`, so the version screen can write
+and the portraits can be rebuilt.
+
+Two things still waiting on Staw, and neither is a migration: the `gifs`
+Edge Function **deployed with `KLIPY_KEY` set**, and `moderate` **redeployed
+as a whole folder** because `policies.json` changed shape. Until the first
+of those, the hosts being allowed changes nothing visible - there is no GIF
+to pick, because nothing can ask Klipy for one.
