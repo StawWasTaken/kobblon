@@ -38,8 +38,8 @@ function Window() {
         card ? 'h-[33rem]' : 'h-[19rem]',
       )}
     >
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-ink-line bg-gradient-to-b from-brand-deep/35 to-transparent px-3.5">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand/20 text-[13px] text-brand-bright">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-ink-line px-3.5">
+        <span className="grid h-6 w-6 place-items-center rounded-md text-[12px] text-muted">
           <Glyph icon={faUserGroup} />
         </span>
         <span className="flex-1 truncate text-[13px] font-extrabold tracking-wide text-white">Movie night</span>

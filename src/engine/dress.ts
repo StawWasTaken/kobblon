@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { K6, fitToSocket, SOCKET_FOR, type K6Part, type K6Point, type WornFit } from './k6'
 import { loadMesh, releaseMesh, wearTexture, formatOf } from './meshes'
 import { PART_FOR_SLOT, type WornShapes } from './bodyshapes'
+import { loadFacePicture } from './facepicture'
 
 /**
  * Putting somebody's avatar on a body.
@@ -189,8 +190,14 @@ export async function dressFrom(
      */
     if (PAINTED_ON.has(piece.slot)) {
       if (!piece.imageUrl) { onMissing?.({ piece, why: 'it has no picture', passing: false }); continue }
-      const picture = await new THREE.TextureLoader()
-        .loadAsync(piece.imageUrl).catch(() => null)
+      /*
+       * A face goes through its own loader, which takes the matte off a
+       * face that was saved flat on white. A shirt does not: a shirt's
+       * white is the shirt.
+       */
+      const picture = piece.slot === 'face'
+        ? await loadFacePicture(piece.imageUrl)
+        : await new THREE.TextureLoader().loadAsync(piece.imageUrl).catch(() => null)
       if (!alive()) { if (picture) picture.dispose(); undo(); return () => {} }
       if (!picture) { onMissing?.({ piece, why: 'its picture did not load', passing: true }); continue }
       textures.push(picture)

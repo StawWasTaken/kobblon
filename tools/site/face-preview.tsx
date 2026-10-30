@@ -18,11 +18,12 @@ import { AvatarStage } from '@/components/avatar/AvatarStage'
 import { MemoryRouter } from 'react-router-dom'
 import { WearingPanel } from '@/components/avatar/WearingPanel'
 
-const face = (wide: number, high: number, margin: number) => {
+const face = (wide: number, high: number, margin: number, matte: string | null = null) => {
   const eye = (at: number) =>
     `<ellipse cx="${at}" cy="${high * 0.42}" rx="${wide * 0.07}" ry="${high * 0.1}" fill="#1b1b22"/>`
   return `data:image/svg+xml;utf8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${wide}" height="${high}">`
+    + (matte ? `<rect width="${wide}" height="${high}" fill="${matte}"/>` : '')
     + `<g transform="translate(${margin} ${margin}) scale(${(wide - margin * 2) / wide} ${(high - margin * 2) / high})">`
     + eye(wide * 0.33) + eye(wide * 0.67)
     + `<path d="M ${wide * 0.3} ${high * 0.62} Q ${wide * 0.5} ${high * 0.8} ${wide * 0.7} ${high * 0.62}"`
@@ -39,6 +40,12 @@ const body = {
 const looks = [
   { name: 'Drawn edge to edge', picture: face(256, 256, 0) },
   { name: 'Drawn small in a wide margin', picture: face(256, 256, 70) },
+  /*
+   * The one Staw photographed: a face saved flat on white, which used to
+   * land on the head as a white rectangle. The matte is keyed out at load,
+   * so this head should read the same as the two beside it.
+   */
+  { name: 'Saved flat on white', picture: face(256, 256, 40, '#ffffff') },
 ]
 
 createRoot(document.getElementById('root')!).render(

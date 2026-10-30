@@ -1,0 +1,1 @@
+import{bf as e}from"./api-CFOgv9gY.js";import{T as t,j as n,w as r}from"./Input-CCkwQqxp.js";var i=e(n(),1);function a(e){let{pathname:n,search:a,hash:o}=r(),s=t();(0,i.useEffect)(()=>{e&&decodeURIComponent(n).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,n,a,o,s])}export{a as t};

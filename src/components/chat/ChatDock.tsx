@@ -317,7 +317,13 @@ function Window({
     >
       <header className={cn(
         'flex shrink-0 items-center gap-2 border-b border-ink-line px-2',
-        full ? 'h-11' : 'h-12 bg-gradient-to-b from-brand-deep/35 to-transparent',
+        /*
+         * Flat, like the applications' chat card. Staw, with three
+         * pictures of the in-game one: adapt that design here. Its head
+         * is a title and a close and a hairline, and nothing else - a
+         * tinted head reads as a second surface stacked on the window.
+         */
+        full ? 'h-11' : 'h-12',
       )}>
         {details ? (
           <>
@@ -337,12 +343,12 @@ function Window({
             aria-expanded={!collapsed}
           >
             {/*
-              * The mark on its own tile, which is what stops the row
-              * reading as a label with a stray icon in front of it. A
-              * conversation between two people wears the other person's
-              * face in the tile; a group wears the group's icon.
+              * Who it is with, small and unpainted. It had been a tinted
+              * tile; the applications' chat head carries nothing but its
+              * title, and a dock carries this much only because there can
+              * be two of them open and they have to be told apart.
               */}
-            <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand/20 text-[13px] text-brand-bright">
+            <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-md text-[12px] text-muted">
               {solo ? <PersonAvatar person={solo} size="xs" /> : <Glyph icon={faUserGroup} />}
             </span>
             <span className="truncate text-[13px] font-extrabold tracking-wide text-white">{name}</span>

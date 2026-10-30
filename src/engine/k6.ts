@@ -539,7 +539,18 @@ export class K6 {
           // Enough segments that the curve is a curve rather than a fold.
           24, 1, true, -arc / 2, arc,
         ),
-        new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }),
+        /*
+         * `premultipliedAlpha` reads the face the way `loadFacePicture`
+         * uploads it. The two go together: a premultiplied texture blended
+         * as straight alpha comes out dark at every edge, and a straight
+         * texture blended as premultiplied keeps the pale halo this is
+         * here to remove.
+         */
+        new THREE.MeshBasicMaterial({
+          transparent: true,
+          depthWrite: false,
+          premultipliedAlpha: true,
+        }),
       )
       this.face.name = 'face'
       // Back onto the head's axis: the socket is on the front surface, and a

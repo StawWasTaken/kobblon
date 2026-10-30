@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faBold, faItalic, faUnderline, faStrikethrough, faPaperPlane, faFilm,
+  faBold, faItalic, faUnderline, faStrikethrough, faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Avatar } from '@/components/ui/Avatar'
@@ -331,11 +331,20 @@ export function Composer({
               aria-label="GIFs"
               aria-expanded={card === 'gif'}
               className={cn(
-                'grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[15px] transition-colors',
-                card === 'gif' ? 'bg-white/10 text-brand-bright' : 'text-muted hover:bg-white/10 hover:text-white',
+                'grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors',
+                card === 'gif' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white',
               )}
             >
-              <Glyph icon={faFilm} />
+              {/*
+                * The word, not a film reel. It is the chip the
+                * applications' chat card uses, which Staw asked for by
+                * name - "for the icon use the same one the other session
+                * used" - and a reel glyph beside a smiley reads as video
+                * rather than as GIFs.
+                */}
+              <span className="rounded bg-white/15 px-1 py-px text-[9px] font-black leading-none tracking-wide">
+                GIF
+              </span>
             </button>
           )}
 
@@ -371,21 +380,18 @@ export function Composer({
             aria-label="Send"
             aria-disabled={!ready}
             className={cn(
-              'relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg transition-colors',
-              ready ? 'bg-brand text-white' : 'bg-ink-hover text-white/45',
+              'grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors',
+              /*
+               * Quiet until there is something to send, and brand when
+               * there is. The sunburst behind it is gone: the
+               * applications' send is a flat square with an arrow on it,
+               * and a spinning one beside a calm row was the loudest
+               * thing in the window.
+               */
+              ready ? 'bg-brand text-white hover:bg-brand-bright' : 'bg-ink-hover text-white/40',
             )}
           >
-            {ready && (
-              <span
-                aria-hidden="true"
-                className="absolute -inset-3 animate-[spin_12s_linear_infinite] opacity-[0.18]"
-                style={{
-                  background:
-                    'repeating-conic-gradient(from 0deg, #fff 0deg 3deg, transparent 3deg 18deg)',
-                }}
-              />
-            )}
-            <Glyph icon={faPaperPlane} className="relative text-[13px]" />
+            <Glyph icon={faPaperPlane} className="text-[13px]" />
           </button>
         </div>
       </div>

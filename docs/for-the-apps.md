@@ -15844,3 +15844,95 @@ superadmin's to do.", and a superadmin runs all three without raising.
 Still waiting on Staw from last round: **0310** (the rest of Klipy's hosts),
 the `gifs` function deployed with `KLIPY_KEY` set, and `moderate` redeployed
 as a whole folder.
+
+## Round two hundred and fourteen - the white round the faces, and the dock drawn like your chat
+
+Two of Staw's, and the first one is the engine, so it is yours as much as
+ours.
+
+### A face no longer brings a white box with it
+
+Staw sent a picture of a head in a hard hat with a plain white rectangle
+sitting on the front of it: "for the faces, can we make sure we dont see
+some white stuff around them, cuz the way the images are applied it shows
+the white stuff around the faces". Two separate things were making that,
+and only fixing both takes it away:
+
+- **A face file saved flat, with no transparency at all.** Plenty of the
+  catalog's faces are drawn on white and exported without alpha, and a flat
+  white picture laid on a head *is* a white rectangle on a head. No material
+  setting can help: the pixels really are white.
+- **A face file that does have transparency, once it is filtered.** A face
+  drawn at a few hundred pixels lands on a head a couple of hundred across,
+  so every edge pixel is a blend of its neighbours - and with straight
+  alpha, the neighbours of a drawn edge are white pixels that merely happen
+  to be invisible. The blend keeps their white and averages their alpha,
+  which is the pale halo round every mouth.
+
+New file, **`src/engine/facepicture.ts`**, exporting `loadFacePicture(url)`.
+It draws the file to a canvas, and when the file is opaque everywhere *and*
+its four corners agree on a colour, it keys that colour out with a fade
+rather than a hard cut - a hard test leaves the drawing's own smoothed edge
+standing with the matte still in it, which is the same halo in a thinner
+ring. Then it uploads the texture premultiplied, and `K6.setFace`'s material
+now carries `premultipliedAlpha: true` to blend it that way. **Those two go
+together**: a premultiplied texture blended as straight alpha comes out dark
+at every edge, and a straight texture blended as premultiplied keeps the
+halo. If you copy one, copy both.
+
+Both conditions are deliberately narrow. A face its author already cut out
+is their work and is left alone, and a face drawn right to the corners
+disagrees with itself and is left alone too. If the canvas cannot be read -
+no DOM, or a picture served without the header that allows reading it back -
+it falls back to the plain loader, because a face with its old white box is
+a great deal better than no face.
+
+**What it means for the applications:** `dressBody` already routes `face`
+through the new loader, so anything that dresses somebody through
+`@/engine/dress` gets this for free - the Workspace included. If either
+application loads a face itself with `THREE.TextureLoader`, swap it for
+`loadFacePicture` and set `premultipliedAlpha` on the material it lands on.
+The t-decal is untouched and still straight alpha; a shirt's white is the
+shirt.
+
+Checked by rendering it: `tools/site/face-preview.html` now has a third
+head wearing a face saved flat on white. Before, a white rectangle; after,
+the same head as the two beside it.
+
+### The friends dock is drawn like your in-game chat now
+
+Staw, with three screenshots of yours: "for the friends chat this is not
+what i wanted, i wanted you to adapt the design & features we have on the
+launcher' chat (its an ingame chat so ofc its landscape but i wanna keep
+chat docks vertical portrait)". Fair - we had kept bubbles and a column of
+faces, and that was the thing making the dock read as a different product
+from the chat in a World. Gone:
+
+- **A message is a line, not a bubble.** Name in its own colour, the marks
+  that name carries, `- 12s`, then the words, wrapping under themselves.
+  Your own says "you". No avatars down the side.
+- **A flat head.** No tinted bar behind the title and no painted tile - just
+  who it is with, small and unpainted, the name, details and close. A dock
+  carries that much only because two can be open at once and they have to be
+  told apart; your card, with one chat, rightly carries nothing.
+- **The GIF button is the chip, not a film reel** - the word GIF in a small
+  rounded box, as yours draws it. That answers the question from round two
+  hundred and twelve; we have stopped waiting on it.
+- **The send is flat again.** The sunburst behind it is gone; it is a square
+  with an arrow, brand when there is something to send and quiet when there
+  is not.
+
+Kept from ours, because you have no equivalent and they are not design: edit
+and delete on your own message, and the blur over a message from somebody
+you are ignoring.
+
+**What it means for the applications:** nothing changes in any shared
+export. `MessageRow` is the website's own component.
+
+**Still open with you:** Klipy's exact request path, parameters and response
+shape - `supabase/functions/gifs/index.ts` is our best guess at it, and the
+GIF button only appears when that function actually answers, so until the
+key is set nobody sees a control that cannot work.
+
+Still waiting on Staw: **0310** and **0311**, the `gifs` function deployed
+with `KLIPY_KEY` set, and `moderate` redeployed as a whole folder.
