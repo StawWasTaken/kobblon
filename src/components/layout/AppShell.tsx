@@ -40,7 +40,7 @@ export function AppShell() {
 
   return (
     <ChatDock>
-      <div className="min-h-dvh bg-ink">
+      <div className="flex min-h-dvh flex-col bg-ink">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-semibold"
@@ -75,13 +75,16 @@ export function AppShell() {
            * page ended underneath that button - on People it was sitting on
            * somebody's Profile link.
            */
-          className="pb-28 lg:pb-0 lg:pl-56"
+          className="flex flex-1 flex-col pb-28 lg:pb-0 lg:pl-56"
           style={{ paddingTop: 'calc(3.5rem + var(--notice-height, 0px))' }}
         >
           {/* Pages put their own ad slots where they want them; this only
               makes sure two slots on one page do not land on one ad. */}
-          <AdsProvider>
-            {/*
+          {/* Takes the slack, so a page with little on it still ends with
+              its foot at the bottom of the window. */}
+          <div className="flex-1">
+            <AdsProvider>
+              {/*
               * A shut-out account sees the one screen that explains it,
               * wherever it was going. Decided from the row the profile
               * already carries, so nothing is asked on a load where nobody
@@ -89,8 +92,9 @@ export function AppShell() {
               * ones a suspension must not close: the record and the appeal
               * on it, support, and the rules themselves.
               */}
-            {locked ? <Locked /> : <Outlet />}
-          </AdsProvider>
+              {locked ? <Locked /> : <Outlet />}
+            </AdsProvider>
+          </div>
 
           {/*
             * Inside `main` rather than under it, so it sits inside the rail's

@@ -151,7 +151,9 @@ export function PublicLayout() {
   useForceDark()
 
   return (
-    <div className="min-h-dvh bg-ink text-white">
+    /* A column, so a short page's footer sits at the bottom of the window
+       rather than halfway up it with black underneath. */
+    <div className="flex min-h-dvh flex-col bg-ink text-white">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-semibold"
@@ -163,7 +165,7 @@ export function PublicLayout() {
 
       {/* `-mt-16`: the bar is transparent over the opening, so the page has
           to start behind it rather than below it. */}
-      <main id="main" className="-mt-16">
+      <main id="main" className="-mt-16 flex-1">
         <Outlet />
       </main>
 

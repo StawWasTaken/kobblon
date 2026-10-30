@@ -14808,3 +14808,40 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round two hundred and one - nine followers, and every shell is a column
+
+**`0303_nine_accounts_follow_kobblon.sql`** makes nine accounts follow the
+kobblon account. Staw handed over the profile links; these are the people
+who were around first, and a platform account with nobody behind it reads
+as nobody being here.
+
+Matched on the number in the link - `profiles.content_id`, the 1397 in
+/u/1397/Eggz - and **not** on the username, because a username is a thing
+somebody can change and a number is not. The name travels with it as a check:
+if the row's username disagrees with the one in the link the whole file
+stops, rather than following somebody else's account on their behalf, which
+is not a mistake anybody would notice afterwards. Applied twice against a
+local database: nine followers both times, no duplicate rows, and a missing
+number rolls the file back whole.
+
+Nothing about this is irreversible. A follow belongs to the person who has
+it, and anybody on that list can unfollow from the profile page.
+
+**Every shell is a column now.** `AboutShell`, `PublicLayout` and `AppShell`
+are each `flex min-h-dvh flex-col` with the content taking the slack, so the
+footer sits at the bottom of the window instead of wherever the page
+happened to stop. On 404 inside the signed-in shell, and on Contact signed
+out, the foot was landing mid-screen with black underneath it. In `AppShell`
+the foot stays inside `main` - it has to, for the rail's offset and the
+phone bar's clearance - and its `mt-24` spacing is untouched.
+
+If the Workspace mounts any of these shells, that is the one line that
+changed in each: a flex column, and the content wrapper taking `flex-1`.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.
