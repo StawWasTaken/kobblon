@@ -15030,3 +15030,128 @@ help questions come back as not covered.
 served from `dist/` and looked at, top and scrolled. `npm run engine:check`
 is untouched by this round; it passed 177 of 177 on the run recorded against
 Round two hundred and two.
+
+---
+
+## Round two hundred and five - one version for all three, from the database
+
+### The number
+
+Staw: "i wanna make the kobblon website, kobblon launcher, and kobblon
+workspace, all at the V3.4 (like its the whole platform that is at the
+Version 3.4) - we gotta tell the other session too", and then the part that
+matters: "i wanna make it so that we dont have to update the text for the
+versions manually but for example when the website displays that its at the
+V3.5 then every other thing, the website, the launcher & workspace all
+display it at the same time - its automatic".
+
+**So the Workspace is on the platform number now too.** It used to have its
+own; it does not any more. One number, three products.
+
+It lives in the database. Migration `0304_one_version_for_the_whole_platform.sql`:
+
+```sql
+select * from platform_version();
+-- name | begins_on  | next_name | next_on
+-- 3.4  | 2026-10-01 | 3.5       | 2026-12-01
+```
+
+- `name` - what to draw, **without** the V. Write it as `V${name}`.
+- `begins_on` - the day it took over.
+- `next_name`, `next_on` - the one scheduled next, or nulls.
+
+It is `security definer` and granted to `anon` as well as `authenticated`,
+so the Launcher can draw the number on its splash before anybody has signed
+in. No session needed.
+
+**Read it against the server, not the clock.** The function uses the
+server's `current_date`, and that is the entire reason it exists: three
+products reading three bundled lists against three machine clocks give
+three answers that are usually the same, and one platform version cannot be
+"usually". A machine set a day ahead must not show V3.5 a day early.
+
+The website calls it through `fetchPlatformVersion()` in `@/lib/api`, and
+`usePlatformVersion()` in `@/lib/version` is the hook the footer uses: it
+draws the bundled fallback immediately and swaps to the server's answer the
+moment it lands, and it never throws. Do the same - a version label is not
+worth a blank panel on a bad network. `@/lib/version` still carries the
+dated list as the offline answer.
+
+Staff set it at Admin → Version. A release dated ahead takes over on its
+day with nobody deploying anything, which is the other half of what was
+asked for.
+
+### What this is not: it is not a build number
+
+The platform version is what Kobblon is called. It is not what to compare
+to decide whether an installation is out of date - two Workspace builds
+shipped in the same week are both V3.4. Keep your own build identifier for
+updating, and draw the platform number beside it.
+
+### The auto-update question
+
+Staw: "once we release the apps (workspace & launcher) we dont want to make
+every user download again the apps just to update them ... but for that idk
+how to do that because how can we edit our apps onto peoples' computers and
+at the same time?"
+
+We never touch anybody's computer. **The application pulls; nothing is
+pushed.** That is the whole answer to the part that sounded impossible: a
+running app asks a URL "what is the newest build?", compares it to itself,
+downloads the new one in the background, checks the signature, and swaps
+its own files. The server does not know who is out there and does not need
+to.
+
+For Electron this is `electron-updater` and it is a solved problem:
+
+- A build publishes its installer plus a `latest.yml` (`latest-mac.yml`,
+  `latest-linux.yml`) to a static place - a bucket or GitHub Releases. That
+  file is the whole feed; no database and no API.
+- `autoUpdater.checkForUpdates()` reads it and downloads if it is newer.
+- **Workspace**: `update-downloaded` arrives, you show the blue button, and
+  the button calls `autoUpdater.quitAndInstall()`. That is exactly the
+  behaviour Staw described - a restart that comes back updated.
+- **Launcher**: check on startup, `autoUpdater.quitAndInstall()` if one is
+  staged, otherwise carry on into the task. Same mechanism, different
+  moment.
+
+Two things that are not optional and will waste a week if they are left
+until last:
+
+1. **Code signing.** Windows and macOS both refuse an unsigned update, and
+   macOS refuses it *silently* - the download succeeds and the install
+   never happens. Signing certificates have to exist before the first
+   public build, because an app shipped unsigned cannot update itself into
+   a signed one.
+2. **A rollback.** Keep the previous `latest.yml` so a bad release can be
+   un-shipped by putting the old one back, and never delete the installer
+   the current feed points at.
+
+The Launcher updating the Workspace instead is also possible, and worth
+considering for the Workspace specifically - an app that is mid-build
+cannot restart. If you go that way the Launcher owns the swap and the
+Workspace only asks for it.
+
+What the website can add when you want it: a table of builds per product -
+version, platform, URL, checksum, minimum supported version - so the
+Download page always offers the current one and so a build below the
+minimum can be told to update rather than left talking to an API it no
+longer matches. **That is not built.** Say the word and it is one migration.
+
+### How much of this was checked
+
+`0304` applied twice against local Postgres, each file one `begin; … commit;`.
+Behaviour proved under **two real identities**, with `auth.uid()` checked
+non-null first rather than assumed:
+
+- an ordinary signed-in person reads the version, and is refused
+  `set_platform_release`, `drop_platform_release`, and a direct insert
+  (row-level security) and update (nothing matched) on the table;
+- `anon` reads both the function and the table;
+- an admin adds a release and it appears, with today's answer unchanged;
+- `V3.7` and `3.7 beta!` are both refused by name;
+- removing the release in force is refused;
+- a release dated today takes over immediately, which is the December
+  behaviour proved rather than described.
+
+`npm run build` clean, the footer built and looked at.

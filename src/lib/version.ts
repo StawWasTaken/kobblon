@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 /*
  * Which version of Kobblon this is.
  *
@@ -21,15 +23,22 @@
  * last deployed rather than what Kobblon actually is. The deployed bundle
  * from November says 3.5 in December on its own.
  *
- * The clock is the viewer's, which means somebody whose machine is a day
- * ahead sees the new number a day early. That is the right trade for a
- * label: the only alternative is asking the server what day it is, and a
- * number in the foot of a page is not worth a request.
+ * The clock the list is read against is the viewer's, which means somebody
+ * whose machine is a day ahead reads the new number a day early.
  *
- * It also means the Launcher can carry the same list and land on the same
- * answer without asking the website anything. If the two ever have to be
- * guaranteed identical rather than merely kept the same, this moves to an
- * RPC and both sides read that instead.
+ * **That is why the list is now the fallback and not the answer.** Staw: "i wanna make it so
+ * that we dont have to update the text for the versions manually but for
+ * example when the website displays that its at the V3.5 then every other
+ * thing, the website, the launcher & workspace all display it at the same
+ * time". Three products reading three bundled lists against three machine
+ * clocks is three answers that are usually the same, and "usually" is not
+ * what one platform version means. So the number comes from the database
+ * now - `platform_version()`, read against the server's `current_date` -
+ * and the list below is what a page draws before that answer arrives, and
+ * what it keeps if the call never lands.
+ *
+ * Keep the list roughly current anyway. It is the offline answer, and a
+ * Launcher splash with no network draws it.
  *
  * Adding one: put it at the top with the day it starts. The list is read
  * downwards and the first one that has begun wins, so it stays in date
@@ -49,4 +58,63 @@ export function platformVersion(now: Date = new Date()): string {
 /** The current platform version, as `V3.4`, which is how Staw writes it. */
 export function platformVersionLabel(now: Date = new Date()): string {
   return `V${platformVersion(now)}`
+}
+
+/* ------------------------------------------------------- what the server says */
+
+/**
+ * The version the database holds, which is the one that counts.
+ *
+ * Cached for the life of the page, because this is a label in a footer and
+ * an About box: it does not change while somebody is looking at it, and a
+ * request per mount would be one per page on a site where the footer is on
+ * every page. The promise itself is the cache, so ten components mounting
+ * at once make one call between them.
+ *
+ * It never throws. A version number is not worth a broken page, and the
+ * bundled list above is a correct answer on almost every day of the year -
+ * the one it gets wrong is the day a release starts, which is exactly the
+ * day the server is there to settle.
+ */
+export type PlatformVersion = {
+  name: string
+  /** The next one and its day, when one is scheduled. */
+  next?: { name: string; on: string }
+  /** False when this came from the bundled list rather than the server. */
+  live: boolean
+}
+
+let asked: Promise<PlatformVersion> | null = null
+
+export function platformVersionFromServer(): Promise<PlatformVersion> {
+  asked ??= (async () => {
+    try {
+      const { fetchPlatformVersion } = await import('@/lib/api')
+      const said = await fetchPlatformVersion()
+      if (said?.name) return said
+    } catch {
+      /* The fallback below is the whole handling. */
+    }
+    return { name: platformVersion(), live: false }
+  })()
+  return asked
+}
+
+/**
+ * The version, for a component: the bundled answer first, the server's the
+ * moment it lands.
+ *
+ * Written as a hook rather than left to each caller because there are three
+ * places on this site that draw it and there will be more, and the thing
+ * that goes wrong otherwise is the one this project keeps hitting - a value
+ * read once at mount, before the thing that decides it has answered.
+ */
+export function usePlatformVersion(): PlatformVersion {
+  const [said, setSaid] = useState<PlatformVersion>(() => ({ name: platformVersion(), live: false }))
+  useEffect(() => {
+    let wanted = true
+    void platformVersionFromServer().then((got) => { if (wanted) setSaid(got) })
+    return () => { wanted = false }
+  }, [])
+  return said
 }

@@ -42,7 +42,7 @@ import { Confirm } from '@/components/ui/Confirm'
 import { ErrorState, Skeleton } from '@/components/ui/States'
 import { Note } from '@/components/ui/Note'
 import { Switch } from '@/components/ui/Switch'
-import { faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons'
+import { faScrewdriverWrench, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
 import { Choices } from '@/components/ui/Choices'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -67,6 +67,7 @@ import {
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice, siteState, setMaintenance,
+  fetchPlatformVersion, listPlatformReleases, setPlatformRelease, dropPlatformRelease,
   type NoticeColour, makeAccountReal,
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
@@ -93,7 +94,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'Version' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -193,6 +194,7 @@ const sections: {
   { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'superadmin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'moderator', blurb: 'What staff have done' },
+  { name: 'Version', icon: faCodeBranch, needs: 'admin', blurb: 'What the website, the Launcher and the Workspace all call this' },
   { name: 'Shutters', icon: faScrewdriverWrench, needs: 'superadmin', blurb: 'Put the whole website behind a maintenance notice' },
 ]
 
@@ -4238,6 +4240,144 @@ function NoticeLook({ colour, words, label }: {
  * database refusing to answer, because somebody will one day reach for this
  * meaning the other thing.
  */
+/**
+ * The one number all three products draw.
+ *
+ * It is a list of releases and the day each starts rather than a box with
+ * the current version in it, and that is the whole feature: Staw asked for
+ * "in december it'll be automatically in the V3.5" and for "when the
+ * website displays that its at the V3.5 then every other thing ... display
+ * it at the same time", and a dated list answers both at once. Nobody has
+ * to be awake on the first of December and nobody has to deploy anything;
+ * the website, the Launcher and the Workspace all ask the same function
+ * and it reads the server's own date.
+ */
+export function VersionSection() {
+  const say = useToast()
+  const now = useAsync(async () => fetchPlatformVersion(), [])
+  const list = useAsync(async () => listPlatformReleases(), [])
+  const [name, setName] = useState('')
+  const [starts, setStarts] = useState('')
+  const [why, setWhy] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const again = () => { now.reload(); list.reload() }
+
+  const add = async () => {
+    setBusy(true)
+    try {
+      await setPlatformRelease(name.trim(), starts, why)
+      say(`V${name.trim()} is on the list.`, 'success')
+      setName(''); setStarts(''); setWhy('')
+      again()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const remove = async (which: string) => {
+    try {
+      await dropPlatformRelease(which)
+      say(`V${which} is off the list.`, 'success')
+      again()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    }
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-muted">
+        One number for the whole platform. The website, the Launcher and the
+        Workspace all read it from here, against this server's date rather
+        than the date on the machine in front of the person - so all three
+        change on the same day without anybody deploying anything.
+      </p>
+
+      <Card className="space-y-4 p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand/15 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-brand-bright">
+            <FontAwesomeIcon icon={faCodeBranch} />
+            {now.loading ? 'Asking' : `Kobblon is on V${now.data?.name ?? '?'}`}
+          </span>
+          {!!now.data?.next && (
+            <span className="text-xs text-muted">
+              V{now.data.next.name} takes over on {now.data.next.on}.
+            </span>
+          )}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="Version">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="3.6"
+              hint="Without the V."
+            />
+          </Field>
+          <Field label="Starts on">
+            <Input type="date" value={starts} min={today} onChange={(e) => setStarts(e.target.value)} />
+          </Field>
+          <Field label="Why (staff only)">
+            <Input value={why} onChange={(e) => setWhy(e.target.value)} placeholder="What went out in it" />
+          </Field>
+        </div>
+
+        <Button
+          variant="yes"
+          loading={busy}
+          disabled={!name.trim() || !starts}
+          onClick={() => void add()}
+        >
+          Put it on the list
+        </Button>
+        <p className="text-xs text-muted">
+          A version already on the list is moved rather than added twice.
+          Dating one today changes the platform immediately.
+        </p>
+      </Card>
+
+      {list.loading && <Skeleton className="h-28 rounded-2xl" />}
+      {list.error && <ErrorState message={list.error} onRetry={list.reload} />}
+
+      {!!list.data?.length && (
+        <Card className="divide-y divide-ink-line p-0">
+          {list.data.map((one) => {
+            const inForce = one.name === now.data?.name
+            const ahead = one.begins_on > today
+            return (
+              <div key={one.name} className="flex flex-wrap items-center gap-3 p-4">
+                <span className="font-display text-lg font-extrabold">V{one.name}</span>
+                <span
+                  className={cn(
+                    'rounded-full px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                    inForce ? 'bg-space/15 text-space-bright'
+                      : ahead ? 'bg-brand/15 text-brand-bright' : 'bg-white/[0.06] text-muted',
+                  )}
+                >
+                  {inForce ? 'In force' : ahead ? 'Waiting' : 'Past'}
+                </span>
+                <span className="text-sm text-muted">from {one.begins_on}</span>
+                {!!one.note && <span className="min-w-0 flex-1 truncate text-sm text-muted">{one.note}</span>}
+                {!inForce && (
+                  <Button size="sm" variant="ghost" className="ml-auto" onClick={() => void remove(one.name)}>
+                    Remove
+                  </Button>
+                )}
+              </div>
+            )
+          })}
+        </Card>
+      )}
+    </div>
+  )
+}
+
 export function ShuttersSection() {
   const say = useToast()
   const state = useAsync(async () => siteState(), [])
@@ -5394,6 +5534,7 @@ export default function Admin() {
             {open === 'Announce' && <AnnounceSection />}
             {open === 'Words' && <WordsSection />}
             {open === 'Record' && <RecordSection />}
+            {open === 'Version' && <VersionSection />}
             {open === 'Shutters' && <ShuttersSection />}
           </RankContext.Provider>
         </div>

@@ -6439,3 +6439,65 @@ export async function forumTagList(): Promise<ForumTagOption[]> {
 export async function setForumProfile(tag: string | null, bio: string | null): Promise<void> {
   unwrap(await supabase.rpc('set_forum_profile', { in_tag: tag, in_bio: bio }))
 }
+
+/* -------------------------------------------------------- the platform version */
+
+/**
+ * Which version Kobblon is on, from the database rather than from a bundle.
+ *
+ * One number for all three products - the website, the Launcher and the
+ * Workspace - decided by `platform_version()` against the **server's**
+ * `current_date`. That is the whole reason it is an RPC: three bundled
+ * lists read against three machine clocks give three answers that are
+ * usually the same, and one platform version cannot be "usually".
+ *
+ * It is readable with no account, because the Launcher draws the number on
+ * its window before it knows who is at the keyboard.
+ */
+export async function fetchPlatformVersion(): Promise<{
+  name: string
+  next?: { name: string; on: string }
+  live: boolean
+} | null> {
+  const { data, error } = await supabase.rpc('platform_version')
+  if (error) throw new Error(error.message)
+  const row = (Array.isArray(data) ? data[0] : data) as {
+    name: string | null
+    next_name: string | null
+    next_on: string | null
+  } | null
+  if (!row?.name) return null
+  return {
+    name: row.name,
+    next: row.next_name && row.next_on ? { name: row.next_name, on: row.next_on } : undefined,
+    live: true,
+  }
+}
+
+/** Every release on the list, for the staff screen. */
+export async function listPlatformReleases(): Promise<{
+  name: string
+  begins_on: string
+  note: string | null
+}[]> {
+  const { data, error } = await supabase
+    .from('platform_releases')
+    .select('name, begins_on, note')
+    .order('begins_on', { ascending: false })
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
+
+/** Add a release, or move one that is already on the list. */
+export async function setPlatformRelease(name: string, starts: string, why?: string) {
+  const { error } = await supabase.rpc('set_platform_release', {
+    release: name, starts, why: why?.trim() || null,
+  })
+  if (error) throw new Error(error.message)
+}
+
+/** Take one back off. The one in force refuses. */
+export async function dropPlatformRelease(name: string) {
+  const { error } = await supabase.rpc('drop_platform_release', { release: name })
+  if (error) throw new Error(error.message)
+}

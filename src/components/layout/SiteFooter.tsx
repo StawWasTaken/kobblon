@@ -5,7 +5,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Kmark } from '@/components/brand/Kmark'
 import { cn } from '@/lib/cn'
-import { platformVersionLabel } from '@/lib/version'
+import { usePlatformVersion } from '@/lib/version'
 
 /*
  * One foot for the whole site.
@@ -138,6 +138,7 @@ function Column({ heading, links }: {
  */
 export function SiteFooter({ className, compact }: { className?: string; compact?: boolean }) {
   const year = new Date().getFullYear()
+  const version = usePlatformVersion()
 
   return (
     <footer className={cn('relative border-t border-white/10 bg-ink', className)}>
@@ -164,16 +165,22 @@ export function SiteFooter({ className, compact }: { className?: string; compact
             {/* The version sits with the copyright rather than anywhere
                 louder: it is the sort of thing somebody goes looking for
                 when they are reporting something, and the foot of the page
-                is where that is always looked for. It changes itself on the
-                first of December - see `@/lib/version`. */}
+                is where that is always looked for.
+                It comes from the database now, so the website, the Launcher
+                and the Workspace all say the same thing on the same day
+                with nobody deploying anything - see `@/lib/version`. */}
             <p className="mt-5 flex items-center gap-2 text-xs text-white/30">
               <span>© {year} Kobblon</span>
               <span aria-hidden="true">&middot;</span>
               <span
                 className="rounded-md border border-white/10 px-1.5 py-0.5 font-bold text-white/45"
-                title="Which version of Kobblon this is: the website and the Launcher move together, and the Workspace has its own."
+                title={
+                  version.next
+                    ? `Kobblon is on V${version.name}. V${version.next.name} starts on ${version.next.on}. One number for the website, the Launcher and the Workspace.`
+                    : `Which version of Kobblon this is - one number for the website, the Launcher and the Workspace.`
+                }
               >
-                {platformVersionLabel()}
+                V{version.name}
               </span>
             </p>
           </div>
