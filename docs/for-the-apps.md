@@ -15311,3 +15311,80 @@ shelf is narrowed. The shop header itself could not be photographed here -
 this container has no route to the database, so every shelf renders as
 "That did not load" - so what was verified is the link's address and that
 it is drawn only when a handle is given, not a screenshot of it in place.
+
+## Round two hundred and eight - every tip is ours, and Create is the Creator Hub
+
+Two of Staw's backlog, and one of them changes something you mount.
+
+### Every hover tooltip is ours - and this one needs a line in your shell
+
+Staw: "i want that every hover tooltip are our own custom ones".
+
+There were a hundred and thirty-seven plain `title` attributes across this
+website. The browser draws those in its own grey box, in its own font,
+after its own second and a half, and none of the three can be matched. The
+fix is **one layer rather than a wrapper per tip**: `TitleTips`, mounted
+once near the root, listens on the document, and anything with a `title`
+gets our bubble instead.
+
+How it keeps the browser's box out of the way: on the way in, the `title`
+is moved to `data-tip` on that element. The browser has nothing to draw
+from and we have the words. The native attribute is read first on **every**
+hover, so a label React has just rewritten is the one shown rather than one
+captured the first time.
+
+`Tooltip` is unchanged as an API. What changed inside it: the placing and
+the drawing are now `TipBubble`, exported from the same module, and both
+`Tooltip` and `TitleTips` draw that one bubble. Two bubbles would have been
+two shapes, two gaps and two ideas of which side to flip to.
+
+**For the applications, and this is the silent one.** Our components carry
+plain `title` attributes, and several of them are ones you mount -
+`UploadDialog`, `Cropper`, `MediaPlayer`, the Catalog pieces. Those tips
+now expect the layer to exist. Mount it once at the root of each window:
+
+```tsx
+import { TitleTips } from '@/components/ui/TitleTips'
+// ...
+<TitleTips />
+```
+
+Without it nothing breaks and nothing throws - you simply get the browser's
+grey box in a window where the website shows ours, which is the kind of
+difference nobody notices until the two windows are open side by side.
+`<Tooltip>` keeps working either way; it does not need the layer.
+
+It needs no provider, no router and no page: one `useEffect` on the
+document and a portal into `document.body`.
+
+### Create is the Creator Hub
+
+Staw: "rename create pages into Creator Hub". Done across the words: the
+top nav, the public nav, the footer, the rail's own heading, every tab
+title ("My Uploads - Creator Hub", and `Kobblon Create` is gone as a mark),
+`Upload to the Creator Hub`, `Take out of the Creator Hub`, and the empty
+states that pointed somebody at it.
+
+**The addresses did not change, and that is a decision rather than an
+oversight.** `/create`, `/create/uploads`, `/create/creator/<name>` all
+stay. They are in published pages at the repository root, in links people
+have sent, and in anything of yours that opens a creator page; renaming the
+path buys a nicer address and breaks every one of them. If Staw wants
+`/creator` as well, it is a redirect added on top rather than a move, and
+it will say so in the round that does it.
+
+So: **anything in the Launcher or the Workspace that says "Create" or
+"Kobblon Create" as a name should now say "Creator Hub", and any link it
+builds stays on `/create`.**
+
+The redesign of those pages - the new layout Staw asked for in the same
+breath - is not done. This round is the name only. The favicon for it is
+still waiting on his image.
+
+### How much of this was checked
+
+`npm run build` clean. Built, served from `dist` and looked at: hovering
+the version chip in the footer draws our bubble, and the element's native
+`title` is gone afterwards - checked in the page rather than by reading the
+code. The nav was photographed showing "Creator Hub", which fits the bar at
+its widest and at the mobile widths the rail uses.

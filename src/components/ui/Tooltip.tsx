@@ -17,42 +17,24 @@ const EDGE = 8
  * It renders into the body so nothing can clip it, and it is kept inside the
  * viewport rather than running off the edge.
  */
-export function Tooltip({
-  label,
-  side = 'top',
-  children,
-}: {
+/**
+ * The bubble itself, placed against something already on the screen.
+ *
+ * It is its own component because there are two ways a tip is asked for -
+ * a component wrapping its trigger, and the layer that picks up a plain
+ * `title` on anything - and two bubbles would be two shapes, two gaps and
+ * two ideas of which side to flip to. This is the one of it.
+ */
+export function TipBubble({ anchor, label, side = 'top', id }: {
+  anchor: DOMRect | null
   label: ReactNode
   side?: Side
-  children: ReactElement<{
-    onMouseEnter?: (e: React.MouseEvent) => void
-    onMouseLeave?: (e: React.MouseEvent) => void
-    onFocus?: (e: React.FocusEvent) => void
-    onBlur?: (e: React.FocusEvent) => void
-    'aria-describedby'?: string
-  }>
+  id?: string
 }) {
-  const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const [placed, setPlaced] = useState<
     { left: number; top: number; nib: number; side: Side } | null
   >(null)
   const bubble = useRef<HTMLDivElement>(null)
-  const timer = useRef<number | undefined>(undefined)
-  const id = useId()
-
-  const show = (e: React.MouseEvent | React.FocusEvent) => {
-    const target = e.currentTarget as HTMLElement
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setAnchor(target.getBoundingClientRect()), 120)
-  }
-
-  const hide = () => {
-    window.clearTimeout(timer.current)
-    setAnchor(null)
-    setPlaced(null)
-  }
-
-  useEffect(() => () => window.clearTimeout(timer.current), [])
 
   // Measured after the bubble exists, so its real size decides where it goes.
   const place = useCallback(() => {
@@ -104,23 +86,9 @@ export function Tooltip({
   }, [anchor, side])
 
   useEffect(() => {
-    if (!anchor) return
+    if (!anchor) { setPlaced(null); return }
     place()
-    window.addEventListener('scroll', hide, true)
-    window.addEventListener('resize', hide)
-    return () => {
-      window.removeEventListener('scroll', hide, true)
-      window.removeEventListener('resize', hide)
-    }
   }, [anchor, place])
-
-  const trigger = cloneElement(children, {
-    onMouseEnter: show,
-    onMouseLeave: hide,
-    onFocus: show,
-    onBlur: hide,
-    'aria-describedby': anchor ? id : undefined,
-  })
 
   /**
    * The nib sits half inside the bubble. The half that overlaps disappears
@@ -131,50 +99,111 @@ export function Tooltip({
     if (!placed) return {}
     const rotate = 'rotate(45deg)'
     // The side it ended up on, which is not always the side it asked for.
-    const side = placed.side
-    if (side === 'top') {
+    const put = placed.side
+    if (put === 'top') {
       return { left: placed.nib, bottom: 0, transform: `translate(-50%, 50%) ${rotate}` }
     }
-    if (side === 'bottom') {
+    if (put === 'bottom') {
       return { left: placed.nib, top: 0, transform: `translate(-50%, -50%) ${rotate}` }
     }
-    if (side === 'left') {
+    if (put === 'left') {
       return { top: placed.nib, right: 0, transform: `translate(50%, -50%) ${rotate}` }
     }
     return { top: placed.nib, left: 0, transform: `translate(-50%, -50%) ${rotate}` }
   }
 
+  if (!anchor) return null
+
+  return createPortal(
+    <div
+      ref={bubble}
+      role="tooltip"
+      id={id}
+      className={cn(
+        'pointer-events-none fixed z-[80] max-w-[15rem] rounded-xl bg-[rgb(var(--bubble))] px-3 py-1.5',
+        'text-center text-xs font-semibold leading-snug text-[rgb(var(--on-bubble))] shadow-pop',
+        'shadow-[0_8px_24px_-8px_rgba(0,0,0,0.9)] transition-opacity duration-100',
+        placed ? 'opacity-100' : 'opacity-0',
+      )}
+      style={{
+        left: placed?.left ?? 0,
+        top: placed?.top ?? 0,
+        // Measured off screen first, so it never flashes in the wrong spot.
+        visibility: placed ? 'visible' : 'hidden',
+      }}
+    >
+      {label}
+      <span
+        aria-hidden="true"
+        className="absolute h-3 w-3 rounded-[3px] bg-[rgb(var(--bubble))]"
+        style={nibStyle()}
+      />
+    </div>,
+    document.body,
+  )
+}
+
+/**
+ * A tip on one element, where the code owns both sides of it.
+ *
+ * Everything else - a plain `title` anywhere on the page - is picked up by
+ * `TitleTips`, which draws the same bubble. Use this one when the label is
+ * more than a line of text or the side matters.
+ */
+export function Tooltip({
+  label,
+  side = 'top',
+  children,
+}: {
+  label: ReactNode
+  side?: Side
+  children: ReactElement<{
+    onMouseEnter?: (e: React.MouseEvent) => void
+    onMouseLeave?: (e: React.MouseEvent) => void
+    onFocus?: (e: React.FocusEvent) => void
+    onBlur?: (e: React.FocusEvent) => void
+    'aria-describedby'?: string
+  }>
+}) {
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
+  const timer = useRef<number | undefined>(undefined)
+  const id = useId()
+
+  const show = (e: React.MouseEvent | React.FocusEvent) => {
+    const target = e.currentTarget as HTMLElement
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setAnchor(target.getBoundingClientRect()), 120)
+  }
+
+  const hide = useCallback(() => {
+    window.clearTimeout(timer.current)
+    setAnchor(null)
+  }, [])
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  useEffect(() => {
+    if (!anchor) return
+    window.addEventListener('scroll', hide, true)
+    window.addEventListener('resize', hide)
+    return () => {
+      window.removeEventListener('scroll', hide, true)
+      window.removeEventListener('resize', hide)
+    }
+  }, [anchor, hide])
+
+  const trigger = cloneElement(children, {
+    onMouseEnter: show,
+    onMouseLeave: hide,
+    onFocus: show,
+    onBlur: hide,
+    'aria-describedby': anchor ? id : undefined,
+  })
+
   return (
     <>
       {trigger}
-      {anchor &&
-        createPortal(
-          <div
-            ref={bubble}
-            role="tooltip"
-            id={id}
-            className={cn(
-              'pointer-events-none fixed z-[80] max-w-[15rem] rounded-xl bg-[rgb(var(--bubble))] px-3 py-1.5',
-              'text-center text-xs font-semibold leading-snug text-[rgb(var(--on-bubble))] shadow-pop',
-              'shadow-[0_8px_24px_-8px_rgba(0,0,0,0.9)] transition-opacity duration-100',
-              placed ? 'opacity-100' : 'opacity-0',
-            )}
-            style={{
-              left: placed?.left ?? 0,
-              top: placed?.top ?? 0,
-              // Measured off screen first, so it never flashes in the wrong spot.
-              visibility: placed ? 'visible' : 'hidden',
-            }}
-          >
-            {label}
-            <span
-              aria-hidden="true"
-              className="absolute h-3 w-3 rounded-[3px] bg-[rgb(var(--bubble))]"
-              style={nibStyle()}
-            />
-          </div>,
-          document.body,
-        )}
+      <TipBubble anchor={anchor} label={label} side={side} id={id} />
     </>
   )
 }

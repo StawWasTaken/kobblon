@@ -18,7 +18,7 @@ export const createSections: {
 }[] = [
   { to: '/create', label: 'Overview', icon: faGaugeHigh, end: true, note: 'Everything at a glance' },
   { to: '/create/worlds', label: 'My Worlds', icon: worldIcon, note: 'The Worlds you build' },
-  { to: '/create/uploads', label: 'My Uploads', icon: faUpload, note: 'What you have put into Create' },
+  { to: '/create/uploads', label: 'My Uploads', icon: faUpload, note: 'What you have put into the Creator Hub' },
   { to: '/create/marketplace', label: 'Marketplace', icon: faShapes, note: 'Everything anybody can build with' },
   { to: '/create/avatar', label: 'Things to Wear', icon: faShirt, note: 'Shirts, trousers and accessories for the Catalog' },
   { to: '/create/inventory', label: 'Inventory', icon: faBoxOpen, note: 'Everything you can build with' },
@@ -31,9 +31,9 @@ export function CreateRail({ ownedCount = 0 }: { ownedCount?: number }) {
   return (
     <aside
       className="sticky kob-under-bar kob-under-bar-tall hidden w-60 shrink-0 flex-col overflow-y-auto border-r border-ink-line px-3 pb-6 pt-4 lg:flex kob-scroll"
-      aria-label="Kobblon Create"
+      aria-label="Creator Hub"
     >
-      <p className="mb-2 px-2 font-display text-base font-extrabold">Create</p>
+      <p className="mb-2 px-2 font-display text-base font-extrabold">Creator Hub</p>
 
       <div className="mb-3 px-1">
         <WorkingAsMenu />

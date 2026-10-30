@@ -28,7 +28,7 @@ import { CREATE_ICON, useFavicon, useTitle } from '@/hooks/useTitle'
 import { worldIcon } from '@/lib/naming'
 
 /** Everything under Create names itself inside Create, not inside the site. */
-const CREATE = 'Kobblon Create'
+const CREATE = 'Creator Hub'
 import {
   communityAnalytics, creatorAnalytics, listAssets,
   archiveWorld, deleteWorld, listCommunityUploads, listInventory, listOwnAssets,
@@ -136,7 +136,7 @@ export function CreateOverview() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
-            {target ? target.name : 'Kobblon Create'}
+            {target ? target.name : 'Creator Hub'}
           </h1>
           <p className="mt-1.5 text-muted">
             {target

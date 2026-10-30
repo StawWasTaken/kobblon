@@ -24,7 +24,7 @@ import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { AssetKind, ModerationStatus } from '@/types/db'
 
-const CREATE = 'Kobblon Create'
+const CREATE = 'Creator Hub'
 
 const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 'mesh', 'build']
 const states: (ModerationStatus | 'all')[] = ['all', 'approved', 'pending', 'rejected']
@@ -137,7 +137,7 @@ export default function CreateUploads() {
           <p className="mt-1.5 max-w-xl text-sm text-muted">
             {target
               ? `Everything uploaded for ${target.name}, by anybody who builds for it. Open one to rename it, list it, or see who is asking to use it.`
-              : 'Everything you have put into Create, with its number and where it stands. Open one to rename it, list it, or see who is asking to use it.'}
+              : 'Everything you have put into the Creator Hub, with its number and where it stands. Open one to rename it, list it, or see who is asking to use it.'}
           </p>
         </div>
         <GuestGate action="upload">

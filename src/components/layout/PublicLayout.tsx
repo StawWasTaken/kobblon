@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 /** The four places a stranger might be going. One list, every public bar. */
 export const PUBLIC_LINKS = [
   { to: '/discover', label: 'Play' },
-  { to: '/create', label: 'Create' },
+  { to: '/create', label: 'Creator Hub' },
   { to: '/communities', label: 'Communities' },
   { to: '/download', label: 'Download' },
 ]

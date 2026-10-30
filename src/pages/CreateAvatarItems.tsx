@@ -109,7 +109,7 @@ const PLACES: { slot: AvatarSlot; label: string }[] = [
 ]
 
 export default function CreateAvatarItems() {
-  useTitle('Make something to wear', 'Kobblon Create')
+  useTitle('Make something to wear', 'Creator Hub')
   const { profile } = useAuth()
   const say = useToast()
 

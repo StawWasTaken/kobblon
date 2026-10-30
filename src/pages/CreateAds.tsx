@@ -27,7 +27,7 @@ import { AD_SIZES } from '@/lib/ads'
 import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
-const CREATE = 'Kobblon Create'
+const CREATE = 'Creator Hub'
 
 /** How much longer a campaign has, said the way a person would say it. */
 function timeLeft(ends: string | null) {

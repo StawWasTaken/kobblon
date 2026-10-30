@@ -106,7 +106,7 @@ export function GuestNudge() {
           </li>
           <li className="flex gap-2">
             <span className="text-space-bright">•</span>
-            And it unlocks what guests cannot do - uploading to Create, making a
+            And it unlocks what guests cannot do - uploading to the Creator Hub, making a
             Community, buying things, redeeming codes.
           </li>
         </ul>

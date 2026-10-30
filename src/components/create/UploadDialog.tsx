@@ -163,7 +163,7 @@ export function UploadDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Upload to Create"
+      title="Upload to the Creator Hub"
       description="Decals, sounds, video, fonts and meshes. A mesh may be 100 MB; everything else 25 MB."
       footer={
         <>

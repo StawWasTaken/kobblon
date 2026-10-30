@@ -7,6 +7,7 @@ import { lazyPage } from '@/lib/lazyPage'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
+import { TitleTips } from '@/components/ui/TitleTips'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { TextSizeProvider } from '@/hooks/useTextSize'
@@ -150,6 +151,9 @@ export default function App() {
               is mounted here rather than on a page because it is about the
               account and not about where somebody happens to be. */}
           <ClaimAppearance />
+          {/* Every plain `title` on the page draws our bubble instead of the
+              browser's grey box. One layer rather than a wrapper per tip. */}
+          <TitleTips />
           {/* A page that will not draw says so, rather than leaving a blank
               rectangle with nothing to press. */}
           <Boundary>

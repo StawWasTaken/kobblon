@@ -196,7 +196,7 @@ export function AdEditor({
 
           {!decals.loading && !decals.data?.length && (
             <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-sm text-muted">
-              You have no approved decals in Create yet. Upload one and it can go in an ad once it
+              You have no approved decals in the Creator Hub yet. Upload one and it can go in an ad once it
               has been looked at.
             </p>
           )}

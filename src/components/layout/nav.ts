@@ -49,7 +49,7 @@ export type NavItem = {
  */
 export const topNav: NavItem[] = [
   { to: '/discover', label: 'Discover', icon: faCompass },
-  { to: '/create', label: 'Create', icon: faShapes },
+  { to: '/create', label: 'Creator Hub', icon: faShapes },
   { to: '/communities', label: 'Communities', icon: faPeopleGroup },
   // The Catalog is a place to browse, which by this file's own rule puts it
   // up here. It sat in the rail as "Style" while the thing it changes - your

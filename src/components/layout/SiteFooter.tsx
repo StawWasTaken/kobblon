@@ -25,7 +25,7 @@ import { usePlatformVersion } from '@/lib/version'
 
 const kobblon = [
   { to: '/discover', label: 'Play' },
-  { to: '/create', label: 'Create' },
+  { to: '/create', label: 'Creator Hub' },
   { to: '/communities', label: 'Communities' },
   { to: '/people', label: 'People' },
 ]

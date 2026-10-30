@@ -354,7 +354,7 @@ export default function AssetPage() {
    */
   const texture = useSignedUrl(asset?.texture_path ?? null)
 
-  useTitle(asset?.name, 'Kobblon Create')
+  useTitle(asset?.name, 'Creator Hub')
 
   // A view is recorded once the page has actually opened the item.
   useEffect(() => {
@@ -399,7 +399,7 @@ export default function AssetPage() {
             mood="noResults"
             title="Nothing carries that number"
             body={`There is no item at ${tag}. It may have been taken down, or it may not be listed.`}
-          action={<Button to="/create">Kobblon Create</Button>}
+          action={<Button to="/create">Creator Hub</Button>}
         />
       </Card>
     )
@@ -460,7 +460,7 @@ export default function AssetPage() {
           profile.id,
         ).catch(() => null)
       }
-      toast(listed ? 'Back in Create.' : 'Taken out of Create.', 'success')
+      toast(listed ? 'Back in the Creator Hub.' : 'Taken out of the Creator Hub.', 'success')
       item.reload()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'That did not work.', 'error')
@@ -575,7 +575,7 @@ export default function AssetPage() {
                       onSelect: () => { setEditing(true); setPanel('Description') },
                     },
                     {
-                      label: asset.is_public ? 'Take out of Create' : 'List in Create again',
+                      label: asset.is_public ? 'Take out of the Creator Hub' : 'List in the Creator Hub again',
                       icon: asset.is_public ? faLock : faLockOpen,
                       onSelect: () => setListed(!asset.is_public),
                     },

@@ -35,8 +35,8 @@ export default function CreatorPage() {
   const creator = useAsync(() => getCreatorPage(username), [username])
   useExactTitle(
     creator.data
-      ? `${creator.data.display_name} on Kobblon Create`
-      : 'Kobblon Create',
+      ? `${creator.data.display_name} in the Creator Hub`
+      : 'Creator Hub',
   )
   const items = useAsync(
     () => listAssets({ creator: username, kind, search: debounced, limit: 60 }),

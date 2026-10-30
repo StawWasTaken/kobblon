@@ -89,9 +89,9 @@ export function Shop({ owner, who, handle, isMine, actions }: {
           mood="style"
           title="Nothing for sale yet"
           body={isMine
-            ? 'Make something in Create, wait for it to be looked at, and publish it. It shows up here and in the Catalog.'
+            ? 'Make something in the Creator Hub, wait for it to be looked at, and publish it. It shows up here and in the Catalog.'
             : `${who} has not put anything up for sale.`}
-          action={isMine ? <Button to="/create" icon={faShapes}>Go to Create</Button> : undefined}
+          action={isMine ? <Button to="/create" icon={faShapes}>Go to the Creator Hub</Button> : undefined}
         />
       </Card>
     )

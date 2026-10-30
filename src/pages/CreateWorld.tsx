@@ -72,7 +72,7 @@ export default function CreateWorld() {
   const genres = useAsync(worldGenres, [])
   const media = useAsync(async () => (world ? worldMedia(world.id) : []), [world?.id])
 
-  useTitle(world?.name ?? 'World', 'Kobblon Create')
+  useTitle(world?.name ?? 'World', 'Creator Hub')
 
   const [name, setName] = useState('')
   const [about, setAbout] = useState('')
