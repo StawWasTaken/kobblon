@@ -15388,3 +15388,58 @@ the version chip in the footer draws our bubble, and the element's native
 `title` is gone afterwards - checked in the page rather than by reading the
 code. The nav was photographed showing "Creator Hub", which fits the bar at
 its widest and at the mobile widths the rail uses.
+
+## Round two hundred and nine - Support reads as an FAQ, and the Creator Hub has its mark
+
+### The help articles are a question list now
+
+Staw, on the Support page: "i want a different design (lets keep a similar
+header tho) for the FAQs cuz the design looks too much like policies
+instead of an FAQ page". He was right, and the reason is worth writing
+down: it **was** the Policies layout - nine cards, each a title, a blurb
+and a door to a page somewhere else. That is how you lay out a set of
+documents. It is not how you lay out answers, because somebody arriving at
+Support does not want a document; they want the one sentence that ends
+their problem, and every card in between is a door they have to guess at.
+
+So the unit is the **question** rather than the article. Every section of
+every help article is a question in one list, opened in place with its
+answer under it. Nine articles turn out to be twenty-odd questions - that
+is the real size of what Support knows, and the grid was hiding it behind
+nine titles. Each opened answer ends with a link into the whole article for
+anybody who wants the rest.
+
+Across the top are the seven ticket topics, the same words and the same
+icons the ticket form uses, filtering the list. That is deliberate: the
+subject somebody picks while reading is the subject they will pick on the
+form if the list did not answer it. Subjects with no question under them
+are not drawn.
+
+The hero is untouched, as he asked - the welcome line, the three openers
+and the ask box are the same.
+
+**Nothing here changes an interface you use.** `helpArticles` and its
+`StorySection` shape are unchanged, and `/support/h/<slug>` still resolves
+to the full article.
+
+### The Creator Hub's mark
+
+Staw sent the new tile. It is `public/brand/favicon-creator.svg` - drawn
+rather than saved, because a tab mark is rendered at sixteen pixels and at
+five hundred on a pinned retina tab and only a drawing is right at both -
+with a PNG beside it at `/brand/favicon-creator.png` for the tab itself,
+since Safari still will not take an SVG there. `CREATE_ICON` in
+`@/hooks/useTitle` points at the PNG, so every Creator Hub page wears it.
+
+**If the Workspace or the Launcher shows a window icon for the Creator
+Hub**, that is the file: the SVG is the source, the PNG is the raster.
+`favicon-create.png` is the old one and should not be used any more.
+
+### How much of this was checked
+
+`npm run build` clean. Built, served from `dist` and looked at: the list
+draws, a question opens in place with its answer and its article link, the
+subject chips sit on one row at desktop width and wrap rather than scroll
+below it. The mark was rendered at 240, 64 and 24 pixels and looked at
+beside the old tile - the letterform matches and the burst behind it
+disappears, as it should, by the time it is a tab.

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Kobblon Creator Hub">
+  <!--
+    The Creator Hub's own mark, drawn rather than saved as a picture.
+
+    Staw sent the tile; this is it as an SVG, which is what the rest of the
+    platform's marks are. A tab icon is drawn at sixteen pixels and at five
+    hundred on a retina pinned tab, and a drawing is the only one of the two
+    that is right at both.
+  -->
+  <defs>
+    <linearGradient id="k" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#f2f2f3"/>
+      <stop offset="1" stop-color="#b9babd"/>
+    </linearGradient>
+    <clipPath id="tile">
+      <rect x="0" y="0" width="256" height="256" rx="56" ry="56"/>
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="256" height="256" rx="56" ry="56" fill="#0d0d0e"/>
+
+  <!-- The burst behind it: wedges a shade lighter than the tile, so it reads
+       as a glow at size and as nothing at all in a sixteen pixel tab. -->
+  <g clip-path="url(#tile)" fill="#131315">
+    <g transform="translate(128 128)">
+      <path d="M0 0 L-260 -72 L-260 -150 Z"/>
+      <path d="M0 0 L-210 -230 L-150 -260 Z"/>
+      <path d="M0 0 L-60 -260 L10 -260 Z"/>
+      <path d="M0 0 L95 -260 L160 -215 Z"/>
+      <path d="M0 0 L245 -140 L260 -70 Z"/>
+      <path d="M0 0 L260 25 L245 95 Z"/>
+      <path d="M0 0 L190 215 L130 255 Z"/>
+      <path d="M0 0 L40 260 L-30 260 Z"/>
+      <path d="M0 0 L-130 250 L-195 205 Z"/>
+      <path d="M0 0 L-250 120 L-260 55 Z"/>
+      <path d="M0 0 L-115 -260 L-70 -260 Z"/>
+      <path d="M0 0 L215 -175 L250 -120 Z"/>
+      <path d="M0 0 L255 130 L220 180 Z"/>
+      <path d="M0 0 L85 258 L35 260 Z"/>
+    </g>
+  </g>
+
+  <!-- The K: one stem, the arm, and the leg, with the thin dark edge the
+       tile Staw sent has around the letter. -->
+  <g fill="url(#k)" stroke="#000000" stroke-opacity="0.55" stroke-width="3" stroke-linejoin="round">
+    <path d="M76 44 h40 v168 h-40 Z"/>
+    <path d="M150 70 h40 v50 h-74 Z"/>
+    <path d="M116 136 h74 v76 h-32 Z"/>
+  </g>
+</svg>

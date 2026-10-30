@@ -1,1 +1,0 @@
-import{g as e,h as t}from"./Input-CI_un8HM.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`div`,{className:t(`rounded-2xl border border-ink-line bg-ink-card shadow-card`,e),...r})}export{r as t};

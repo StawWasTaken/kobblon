@@ -5,7 +5,7 @@ import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
   faCircleQuestion, faCheck, faUser, faEnvelope, faLock,
-  faBolt, faArrowLeft, faPaperPlane,
+  faBolt, faArrowLeft, faPaperPlane, faMinus,
   faBriefcase, faHandshake, faChartLine, faNewspaper,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -699,6 +699,171 @@ export function TicketCard({
   )
 }
 
+/**
+ * The questions, as a question list rather than as a shelf of documents.
+ *
+ * Staw: the help grid "looks too much like policies instead of an FAQ
+ * page". He was right, and the reason is that it was the same component
+ * doing the same job - nine cards, each a title and a blurb, each a door to
+ * a page somewhere else. That is how you lay out a set of documents. It is
+ * not how you lay out answers, because somebody arriving here does not want
+ * a document; they want the one sentence that ends their problem, and every
+ * card between them and it is a door they have to guess at.
+ *
+ * So the unit here is the **question**, not the article. Every section of
+ * every help article is a question in this list, with its answer under it,
+ * opened in place. Nine articles are twenty-odd questions, which is the
+ * real size of what Support knows - the grid was hiding that behind nine
+ * titles.
+ *
+ * The subjects across the top are the ticket topics, the same seven with
+ * the same icons, so the word somebody picks here is the word they would
+ * pick on the form if the answer is not in the list.
+ */
+function Faq() {
+  const [subject, setSubject] = useState<TicketTopic | 'all'>('all')
+  const [open, setOpen] = useState<string | null>(null)
+
+  /* One flat list: a question, its answer, and the article it came out of. */
+  const questions = helpArticles.flatMap((article) =>
+    article.sections.map((section) => ({
+      key: `${article.slug}-${section.id}`,
+      section,
+      article,
+    })),
+  )
+
+  const shown = subject === 'all'
+    ? questions
+    : questions.filter((one) => one.article.topic === subject)
+
+  /* Only the subjects that have a question under them. A chip that filters
+     to nothing is a chip that teaches people the filter is broken. */
+  const have = new Set<string>(helpArticles.map((one) => one.topic))
+
+  return (
+    <Lane className="mt-12">
+      <div className="flex flex-wrap justify-center gap-2">
+        <FaqChip
+          icon={faCircleQuestion}
+          label="Everything"
+          on={subject === 'all'}
+          onClick={() => { setSubject('all'); setOpen(null) }}
+        />
+        {topics.filter((one) => have.has(one.value)).map((one) => (
+          <FaqChip
+            key={one.value}
+            icon={one.icon}
+            label={one.short}
+            on={subject === one.value}
+            onClick={() => { setSubject(one.value); setOpen(null) }}
+          />
+        ))}
+      </div>
+
+      {/*
+        * One column, hairlines between the questions and nothing around
+        * them. A question in a card of its own is a card somebody has to
+        * read the edges of; a list reads as a list and can be run down with
+        * the eye, which is the whole behaviour an FAQ is for.
+        */}
+      <div className="mt-10 divide-y divide-white/10 border-y border-white/10">
+        {shown.map((one) => {
+          const showing = open === one.key
+          return (
+            <div key={one.key}>
+              <button
+                type="button"
+                onClick={() => setOpen(showing ? null : one.key)}
+                aria-expanded={showing}
+                className="group flex w-full items-center gap-4 py-5 text-left"
+              >
+                <span className={cn(
+                  'grid size-8 shrink-0 place-items-center rounded-full border text-[11px] transition-colors',
+                  showing
+                    ? 'border-brand-bright bg-brand text-white'
+                    : 'border-white/15 bg-white/[0.04] text-white/45 group-hover:border-brand-bright/60 group-hover:text-white',
+                )}>
+                  <Glyph icon={showing ? faMinus : faPlus} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-lg font-extrabold leading-snug">
+                    {one.section.heading}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+                    {one.article.eyebrow}
+                  </span>
+                </span>
+              </button>
+
+              {showing && (
+                <div className="pb-7 pl-12 pr-2">
+                  <div className="space-y-3 leading-relaxed text-white/60">
+                    {one.section.body.map((line, at) => <p key={at}>{line}</p>)}
+                  </div>
+
+                  {!!one.section.points?.length && (
+                    <ul className="mt-4 space-y-2">
+                      {one.section.points.map((point) => (
+                        <li key={point.label} className="flex gap-2.5 text-sm">
+                          <Glyph icon={faCheck} className="mt-1 text-[11px] text-space-bright" />
+                          <span>
+                            <span className="font-bold">{point.label}</span>
+                            {point.note && <span className="text-white/50"> - {point.note}</span>}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <Link
+                    to={`/support/h/${one.article.slug}`}
+                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
+                  >
+                    More in “{one.article.title}”
+                    <Glyph icon={faArrowRight} className="text-[11px]" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mt-8 text-center text-sm text-white/40">
+        Nothing here? Ask the box at the top, or
+        {' '}
+        <a href="#write" className="font-bold text-link hover:underline">write to a person</a>.
+      </p>
+    </Lane>
+  )
+}
+
+/** One subject across the top of the questions. */
+function FaqChip({ icon, label, on, onClick }: {
+  icon: IconDefinition
+  label: string
+  on: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition-colors',
+        on
+          ? 'border-brand-bright bg-brand text-white'
+          : 'border-white/12 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white',
+      )}
+    >
+      <Glyph icon={icon} className="text-[11px]" />
+      {label}
+    </button>
+  )
+}
+
 export default function Support() {
   /* An At Kobblon tab, not a plain one. It sits in that bar now, so it
      wears that family's pipe. */
@@ -816,35 +981,16 @@ export default function Support() {
         </Lane>
       }
     >
-      {/* --------------------------------------------- what Kobby reads */}
+      {/* ------------------------------------------------ the questions */}
       <Band tone="raised" edge decor={<Floaters />}>
         <Reveal>
           <BandHead
-            eyebrow="Read it yourself"
-            title="The answers, written out."
-            lead="Kobby answers out of these. They are here in full, because an answer you can read the source of is worth more than one you cannot."
+            eyebrow="Answers"
+            title="Questions people actually ask."
+            lead="Every one of these is answered here in full, and Kobby answers out of the same words. Pick a subject, or open the one that sounds like yours."
           />
         </Reveal>
-        <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {helpArticles.map((one, at) => (
-            <Reveal key={one.slug} delay={(at % 3) * 70} className="h-full">
-              <Link
-                to={`/support/h/${one.slug}`}
-                className="group flex h-full flex-col rounded-3xl border border-white/10 bg-ink-card/70 p-7 transition-[border-color,background-color,transform] hover:-translate-y-1 hover:border-brand-bright/50 hover:bg-ink-card"
-              >
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-brand-bright">
-                  {one.eyebrow}
-                </p>
-                <h3 className="mt-3 font-display text-xl font-extrabold leading-tight">{one.title}</h3>
-                <p className="mt-3 flex-1 leading-relaxed text-white/55">{one.blurb}</p>
-                <Glyph
-                  icon={faArrowRight}
-                  className="mt-6 text-sm text-link transition-transform group-hover:translate-x-1"
-                />
-              </Link>
-            </Reveal>
-          ))}
-        </div>
+        <Faq />
       </Band>
 
       <Band tone="night" edge id="write">

@@ -31,8 +31,15 @@ export function useAtTitle(title?: string | null) {
   useExactTitle(title ? `${title} | ${AT_KOBBLON}` : AT_KOBBLON)
 }
 
-/** Create has a mark of its own, and every page of it wears it. */
-export const CREATE_ICON = asset('/brand/favicon-create.png')
+/**
+ * The Creator Hub has a mark of its own, and every page of it wears it.
+ *
+ * Staw sent the new tile and it is drawn in `/brand/favicon-creator.svg`,
+ * which is the source of it. The tab points at the PNG beside it: a tab
+ * icon is the one place a drawing is not enough, because Safari still will
+ * not take an SVG there and a tab with no mark reads as a broken page.
+ */
+export const CREATE_ICON = asset('/brand/favicon-creator.png')
 
 /**
  * What the browser tab says. Every page names itself, and the name goes back
