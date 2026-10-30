@@ -288,10 +288,47 @@ export async function claimGuestAccount(details: {
 }
 
 /** What a name change costs. The database charges it; this is for the copy. */
-export const USERNAME_CHANGE_COST = 250
+/*
+ * What a rename costs, for the dialog to draw before it has asked.
+ *
+ * The server charges `username_change_cost()` and this is a copy of it, so
+ * the two have to be moved together. `usernameChangeState()` below is the
+ * real answer and the dialog uses it the moment it lands; this is what the
+ * button says in the meantime.
+ */
+export const USERNAME_CHANGE_COST = 500
 
 export async function changeUsername(name: string): Promise<string> {
   return unwrap(await supabase.rpc('change_username', { new_name: name })) as string
+}
+
+/**
+ * What a rename costs and when you may make one.
+ *
+ * Both in one call because the dialog needs both to draw one button, and
+ * because a page that works out the wait itself works it out against the
+ * viewer's clock - which is how somebody whose machine is an hour fast
+ * gets told they may rename, and then refused by the server.
+ *
+ * `nextAt` is null when there is nothing to wait for. Read that as "now",
+ * not as "unknown": an account that has never changed its name has no
+ * stamp, and hiding the button on a null would hide it from everybody who
+ * has never used the feature.
+ */
+export async function usernameChangeState(): Promise<{
+  cost: number
+  nextAt: string | null
+  waiting: boolean
+}> {
+  const rows = unwrap(await supabase.rpc('username_change_state')) as {
+    cost: number; next_at: string | null; waiting: boolean
+  }[]
+  const row = rows?.[0]
+  return {
+    cost: row?.cost ?? USERNAME_CHANGE_COST,
+    nextAt: row?.next_at ?? null,
+    waiting: !!row?.waiting,
+  }
 }
 
 export async function usernameHistory(userId: string): Promise<UsernameRecord[]> {

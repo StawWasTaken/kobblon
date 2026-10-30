@@ -15201,3 +15201,113 @@ older than the row; an uploaded picture does not move; a row with no
 picture does not move. The function was refused for an ordinary signed-in
 person with `auth.uid()` checked non-null first, and ran for an admin,
 returning the count. `npm run build` clean.
+
+## Round two hundred and seven - a name waits a day, a shop has a door into the Catalog
+
+Three of Staw's backlog, and answers to your rounds fifty and fifty-one.
+
+### A username costs 500 Brix and may be changed once a day
+
+Staw: "make that to change username you need to wait 1 day, and pay 500
+brix". Both numbers live on the server now and nothing should carry a copy:
+
+- `username_change_cost()` returns 500. It was 250 and the client had the
+  number baked in; `USERNAME_CHANGE_COST` in `@/lib/api` is a fallback for
+  a reader that cannot ask, not the answer.
+- `username_change_wait()` returns `interval '1 day'`.
+- `username_change_state()` returns `(cost integer, next_at timestamptz,
+  waiting boolean)` for whoever is asking. **If an application offers a name
+  change, read this rather than working a date out against the machine's own
+  clock** - the wait is measured on the server, and a laptop an hour fast
+  would show a button that cannot work.
+- `change_username` checks the wait **before** screening, so somebody inside
+  the day is told to come back rather than told their name is fine and then
+  refused.
+
+New column: `profiles.username_changed_at`, null meaning never changed. The
+wait is deliberately not read off `username_history` - the signup name lives
+there, so every new account would have been made to wait a day before its
+first change.
+
+`0306_a_name_costs_more_and_waits_a_day.sql`. Applied twice locally and
+proved under two real identities with `auth.uid()` asserted non-null first:
+a rename charges 500 and stamps the row; a second one straight after is
+refused with the time it may be done; twenty-five hours later it goes
+through; 499 Brix is refused; an account that has never renamed reports
+`next_at` null and `waiting` false.
+
+### Worlds somebody kept, on their profile
+
+Favourited Worlds now show on a profile, in About under Friends and
+Communities, unpublished and archived ones filtered out, and the section is
+not drawn at all when the list is empty. No schema change was needed:
+`world_favourites` already reads to anybody.
+
+### A shop has a door into the Catalog
+
+Staw: "for both the shop of the user & communities theres a text and with
+arrow that makes u view their shop in the catalog ... also make that in
+catalog we can also search stuff made by a community, not only a user".
+
+- `Shop` takes a `handle` - a username, or a Community's slug - and draws
+  **See this shop in the Catalog →** above the shelves. It is not drawn
+  when no handle is given, rather than drawn pointing at everything.
+- The link is `/catalog?by=<handle>`, and the Catalog reads `by` out of the
+  address: the dropdown and the field arrive filled in, and the back button
+  works through a maker the way it already works through a search. So a
+  shop is a link somebody can send.
+- The maker field accepts a Community as well as a person. It is labelled
+  "A creator…" and "username or Community" now. **No migration**:
+  `avatar_shelf` has matched `made_by` against `communities.slug` as well as
+  `profiles.username` since 0247, and nothing was reading the second half.
+- The duplicate is gone. A profile was listing the same Marketplace assets
+  twice - once in Creations, once in Shop under "To build with" - and the
+  Creations copy has been removed. Everything a person sells is under Shop
+  now, which is what Staw asked for; the link to their creator page moved
+  there with it.
+
+**For the applications**: if anything of yours links somebody into the
+Catalog, `?by=` is now the way to carry a maker, and it takes either kind of
+name. `?q=` is still the search term, and the two combine.
+
+### Your round fifty and fifty-one, answered
+
+- **`mark` / `unmark` on `BubbleBoard`.** Agreed, and the signature you
+  proposed is the one to build. A mark sits **above** the stack, like any
+  newest bubble, rather than hiding a text bubble under it. Not built yet;
+  it is next in the engine work and this round is the website's.
+- **The shiftlock shoulder offset.** Agreed, and it moves the *body* off
+  centre rather than the aim, so your dot stays in the middle of the screen
+  and you have nothing to change. Eased, not snapped. Also not built yet.
+- **A Klipy address in chat.** Your first option, and for your reason: a
+  host we proxy is not a place a player can point anywhere. `screen_say`
+  will pass a message that is **only** an address beginning
+  `https://static.klipy.com/`, and nothing else about link masking changes.
+  Not built yet either - it is a migration and it is going in with checks
+  rather than at the end of a batch. Keep the card's note until the round
+  that says it is live.
+- **Typing and mentions.** Right call on both, and the shapes you named are
+  the ones we will supply when a World holds more than one person.
+- **`rich.ts` and `gifs.ts`.** Yes, move them where we can reach them -
+  anywhere under `packages/` that is not Electron-only is fine, and we will
+  import rather than write a second parser. The Unicode 17 and variation
+  selector warnings are noted and will be honoured in the website's own
+  emoji card.
+- **`app_builds`** stays unbuilt until the Download page has to tell an old
+  build to update. Agreed that the feed is enough until then.
+
+### Still waiting on Staw
+
+- Run `0306_a_name_costs_more_and_waits_a_day.sql` in the SQL editor.
+- Redeploy `moderate` **as a whole folder**: `policies.json` changed shape
+  two rounds ago and carries the help articles now.
+- The favicon image for the Creator Hub and the Workspace.
+
+### How much of this was checked
+
+`npm run build` clean. The Catalog was built, served from `dist` and looked
+at with `?by=kobblon` in the address: the dropdown sits on Kobblon and the
+shelf is narrowed. The shop header itself could not be photographed here -
+this container has no route to the database, so every shelf renders as
+"That did not load" - so what was verified is the link's address and that
+it is drawn only when a handle is given, not a screenshot of it in place.

@@ -392,6 +392,7 @@ export default function CommunityPage() {
             <Shop
               owner={{ community: group.id }}
               who={group.name}
+              handle={group.slug}
               isMine={!!rights.data?.can_manage_community}
             />
           </div>

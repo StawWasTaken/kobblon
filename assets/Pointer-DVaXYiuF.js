@@ -1,0 +1,1 @@
+import{g as e,h as t}from"./Input-CI_un8HM.js";var n=e();function r({side:e=`top`,bg:r=`bg-ink-card`,style:i,className:a}){return(0,n.jsx)(`span`,{"aria-hidden":`true`,style:i,className:t(`pointer-events-none absolute h-3 w-3 rotate-45 border-ink-line`,e===`top`?`border-l border-t`:`border-b border-r`,r,a)})}export{r as t};

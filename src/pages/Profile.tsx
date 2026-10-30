@@ -4,7 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import type { KobIcon } from '@/components/brand/Icon'
 import {
   faComment, faUserPlus, faClock, faCoins, faStar,
-  faEllipsis, faLink, faCubes, faEye, faAward, faShapes, faUsers, faBan,
+  faEllipsis, faLink, faCubes, faEye, faAward, faUsers, faBan,
   faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
@@ -20,7 +20,6 @@ import { ReportDialog } from '@/components/social/ReportDialog'
 import { SendBrixDialog } from '@/components/social/SendBrixDialog'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { BadgeTile } from '@/components/social/BadgeGrid'
-import { AssetTile } from '@/components/create/AssetTile'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { worldIcon } from '@/lib/naming'
@@ -43,9 +42,10 @@ import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   addressNow, discordHandleOf, getProfileByUsername, getProfileOverview, isFollowing, listEarnedBadges, peopleList,
+  listFavouriteWorlds,
   listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
-  usernameHistory, usernameById, listAssetsByCreator, updateProfile, lookOf,
+  usernameHistory, usernameById, updateProfile, lookOf,
   askBestFriend, answerBestFriend, unbestFriend, cancelFriendRequest,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
@@ -201,7 +201,6 @@ export default function Profile() {
     async () => (user ? listWorldsByOwner(user.id, Boolean(isMe)) : []),
     [user?.id, isMe],
   )
-  const made = useAsync(async () => (user ? listAssetsByCreator(user.id) : []), [user?.id])
   const badges = useAsync(async () => (user ? listEarnedBadges(user.id) : []), [user?.id])
   // Their handle, if they have said you may have it. The database decides.
   const handle = useAsync(
@@ -209,6 +208,24 @@ export default function Profile() {
     [user?.id, user?.discord_display],
   )
   const communities = useAsync(async () => (user ? listMemberCommunities(user.id) : []), [user?.id])
+  /*
+   * The Worlds they kept.
+   *
+   * Filtered here rather than in the query: a favourite is a row pointing
+   * at a World, and the World it points at can be unpublished, archived or
+   * taken down afterwards. None of those should appear on somebody's page -
+   * a dead card that goes nowhere reads as the profile being broken - and
+   * the row is left alone, because un-favouriting somebody's World on their
+   * behalf is not this page's business.
+   */
+  const kept = useAsync(
+    async () => {
+      if (!user) return []
+      const all = await listFavouriteWorlds(user.id)
+      return all.filter((world) => world.is_published !== false && !world.archived_at)
+    },
+    [user?.id],
+  )
 
   /*
    * What they actually look like, which is the thing Staw asked for: "the
@@ -793,7 +810,13 @@ export default function Profile() {
         <Shop
           owner={{ user: user.id }}
           who={user.display_name}
+          handle={user.username}
           isMine={isMe}
+          actions={
+            <Button size="sm" variant="subtle" to={`/create/creator/${user.username}`}>
+              Their creator page
+            </Button>
+          }
         />
       )}
 
@@ -839,30 +862,6 @@ export default function Profile() {
             )}
           </section>
 
-          <section>
-            <Heading
-              icon={faShapes}
-              aside={
-                <Button size="sm" variant="subtle" to={`/create/creator/${user.username}`}>
-                  Their creator page
-                </Button>
-              }
-            >
-              In the Marketplace
-            </Heading>
-
-            {!made.data?.length ? (
-              <p className="text-sm text-muted">
-                {isMe
-                  ? 'Upload a decal, a sound or a font in Create and it turns up here.'
-                  : `${user.display_name} has not put anything in the Marketplace yet.`}
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-                {made.data.slice(0, 18).map((item) => <AssetTile key={item.id} item={item} />)}
-              </div>
-            )}
-          </section>
         </div>
       ) : (
         <div className="space-y-10">
@@ -959,6 +958,38 @@ export default function Profile() {
                         : `${formatCount(community.member_count)} members`}
                     </p>
                   </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ------------------------------------------- the ones they kept */}
+          {/*
+            * Staw: "make that we see favourited worlds onto profiles".
+            *
+            * Under Friends and Communities rather than in Creations,
+            * because this is not something they made - it is something
+            * they like, which is what the About side of a profile is for.
+            *
+            * Drawn only when there is something to draw. An empty
+            * "Favourites" heading on every profile on the platform is a
+            * row of nothing that teaches people the feature is broken; the
+            * one person who should be told the list is empty is the owner,
+            * and they already know.
+            */}
+          {!!kept.data?.length && (
+            <section>
+              <Heading icon={faHeart} aside={
+                <span className="text-xs text-muted">
+                  {formatCount(kept.data.length)}{' '}
+                  {kept.data.length === 1 ? 'World' : 'Worlds'}
+                </span>
+              }>
+                {isMe ? 'Worlds you kept' : 'Worlds they kept'}
+              </Heading>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {kept.data.slice(0, 10).map((world) => (
+                  <WorldCard key={world.id} world={world} />
                 ))}
               </div>
             </section>

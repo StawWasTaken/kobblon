@@ -165,8 +165,15 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
   const [params, setParams] = useSearchParams()
   const [shelf, setShelf] = useState<string>('all')
   const [term, setTerm] = useState(params.get('q') ?? '')
-  const [maker, setMaker] = useState('')
-  const [makerDraft, setMakerDraft] = useState('')
+  /*
+   * The maker comes from the address as well, for the same reason the term
+   * does: a shop is a link somebody sends. `/catalog?by=kobblon` is what
+   * the arrow on a profile's or a Community's shop hands over, and it is
+   * matched against both a username and a Community slug by the server,
+   * so one parameter carries either kind of maker.
+   */
+  const [maker, setMaker] = useState(params.get('by') ?? '')
+  const [makerDraft, setMakerDraft] = useState(params.get('by') ?? '')
   const [order, setOrder] = useState<ShelfOrder>('newest')
   /*
    * The narrowing beyond a name, folded away until somebody asks for it.
@@ -195,11 +202,32 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
 
   useEffect(() => { setTerm(params.get('q') ?? '') }, [params])
 
+  useEffect(() => {
+    const asked = params.get('by') ?? ''
+    setMaker(asked)
+    setMakerDraft(asked)
+    // Kobblon is the dropdown's own option, so the field stays shut for it.
+    if (asked) setPickingMaker(asked.toLowerCase() !== 'kobblon')
+  }, [params])
+
   const settle = (next: string) => {
     setTerm(next)
     const now = new URLSearchParams(params)
     if (next.trim()) now.set('q', next.trim())
     else now.delete('q')
+    setParams(now, { replace: true })
+  }
+
+  /**
+   * Write the maker into the address, so the back button works through one
+   * and the shelf somebody is looking at can be sent.
+   */
+  const settleMaker = (next: string) => {
+    const want = next.trim()
+    setMaker(want)
+    const now = new URLSearchParams(params)
+    if (want) now.set('by', want)
+    else now.delete('by')
     setParams(now, { replace: true })
   }
 
@@ -352,32 +380,32 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
         label="Made by"
         value={madeByChoice}
         onChange={(next) => {
-          if (next === 'anybody') { setMaker(''); setMakerDraft('') }
-          else if (next === 'kobblon') { setMaker('kobblon'); setMakerDraft('kobblon') }
-          else { setMaker(''); setMakerDraft('') }
+          if (next === 'anybody') { settleMaker(''); setMakerDraft('') }
+          else if (next === 'kobblon') { settleMaker('kobblon'); setMakerDraft('kobblon') }
+          else { settleMaker(''); setMakerDraft('') }
           setPickingMaker(next === 'somebody')
         }}
         className="w-36"
         options={[
           { value: 'anybody', label: 'All creators' },
           { value: 'kobblon', label: 'Kobblon' },
-          { value: 'somebody', label: 'Somebody…' },
+          { value: 'somebody', label: 'A creator…' },
         ]}
       />
 
       {(pickingMaker || madeByChoice === 'somebody') && (
         <form
-          onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
+          onSubmit={(e) => { e.preventDefault(); settleMaker(makerDraft.trim()) }}
           className="flex items-center gap-1.5"
         >
           <span className="text-xs text-muted">@</span>
           <input
             value={makerDraft}
             onChange={(e) => setMakerDraft(e.target.value)}
-            onBlur={() => setMaker(makerDraft.trim())}
-            placeholder="username"
-            aria-label="Made by which person"
-            className="h-9 w-32 rounded-xl border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+            onBlur={() => settleMaker(makerDraft.trim())}
+            placeholder="username or Community"
+            aria-label="Made by which person or Community"
+            className="h-9 w-44 rounded-xl border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
           />
         </form>
       )}

@@ -82,7 +82,7 @@ const names: StorySection[] = [
     id: 'change',
     heading: 'Changing your username',
     body: [
-      'Settings, Account, Change your username. It costs Brix, and the price is shown on the dialog that charges it rather than written out here, because a figure repeated in two places is a figure that will disagree with itself.',
+      'Settings, Account, Change your username. It costs Brix and may be done once a day. The price is shown on the dialog that charges it rather than written out here, because a figure repeated in two places is a figure that will disagree with itself.',
       'Three to sixteen characters, letters, numbers and underscores. Kobby reads the name before it is taken, and a name it refuses is refused with a reason.',
       'The old name stays on the profile, under the names you have used. Nobody else can claim it.',
     ],
@@ -91,7 +91,7 @@ const names: StorySection[] = [
     id: 'back',
     heading: 'Taking an old name back',
     body: [
-      'The same dialog lists every name the account has held, and picking one fills the field. It still costs the same, which is deliberate: free would make a username worth nothing, because anybody could claim four and swap between them for ever.',
+      'The same dialog lists every name the account has held, and picking one fills the field. It still costs the same and still waits the same day, which is deliberate: free would make a username worth nothing, because anybody could claim four and swap between them for ever.',
     ],
   },
   {
@@ -100,6 +100,7 @@ const names: StorySection[] = [
     body: [
       'The display name is the one drawn large on a profile and in chat; the username is the one in the address and the one people search. Changing the display name is free and immediate, and it goes past the same filter.',
       'Two people may share a display name. No two accounts may share a username.',
+      'The day you have to wait is on the username only. A display name can be changed as often as you like.',
     ],
   },
 ]

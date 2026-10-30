@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { faClock, faShapes } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRight, faClock, faShapes } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { FreeCorner } from '@/components/brand/FreeBadge'
 import { Byline } from '@/components/catalog/Byline'
@@ -44,11 +45,22 @@ import type { AvatarItem } from '@/types/db'
  * What they are still making is in Create, where it can say what it is
  * waiting for.
  */
-export function Shop({ owner, who, isMine }: {
+export function Shop({ owner, who, handle, isMine, actions }: {
   owner: { user: string } | { community: string }
   /** Whose shop it is, for the empty state to say it in their own name. */
   who: string
+  /**
+   * The name the Catalog knows them by - a username, or a Community's slug.
+   *
+   * It is not the id: `avatar_shelf` matches `made_by` against the username
+   * and against the Community slug, so this is what makes a link to the
+   * Catalog carry the shop with it. Left out, the link is not drawn rather
+   * than drawn pointing at everything.
+   */
+  handle?: string | null
   isMine?: boolean
+  /** Anything else for the heading row, like a link to their creator page. */
+  actions?: ReactNode
 }) {
   const key = 'user' in owner ? owner.user : owner.community
   const items = useAsync(() => shopShelf(owner), [key])
@@ -85,8 +97,34 @@ export function Shop({ owner, who, isMine }: {
     )
   }
 
+  /*
+   * Staw: "theres a text and with arrow that makes u view their shop in the
+   * catalog".
+   *
+   * The shop here is the shelf; the Catalog is where it can be sorted,
+   * priced and searched. The arrow hands the same shop over to that page
+   * with the maker already filled in, which is the one thing a stranger
+   * cannot do from here.
+   */
+  const inCatalog = handle ? `/catalog?by=${encodeURIComponent(handle)}` : null
+
   return (
     <div className="space-y-10">
+      {(inCatalog || actions) && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {inCatalog ? (
+            <Link
+              to={inCatalog}
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
+            >
+              See this shop in the Catalog
+              <Glyph icon={faArrowRight} className="text-[11px]" />
+            </Link>
+          ) : <span />}
+          {actions}
+        </div>
+      )}
+
       {!!items.data?.length && (
         <section className="space-y-4">
           <header className="flex items-baseline justify-between gap-3">

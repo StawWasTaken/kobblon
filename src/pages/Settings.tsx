@@ -4,7 +4,7 @@ import { Logomark } from '@/components/brand/Wordmark'
 import {
   faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck,
-  faTriangleExclamation, faKey, faArrowUpRightFromSquare,
+  faTriangleExclamation, faKey, faArrowUpRightFromSquare, faClock,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -21,7 +21,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { TEXT_SIZES, useTextSize, type TextSize } from '@/hooks/useTextSize'
 import { useAsync } from '@/hooks/useAsync'
 import {
-  USERNAME_CHANGE_COST, changeUsername, getStanding, updateProfile,
+  USERNAME_CHANGE_COST, changeUsername, getStanding, updateProfile, usernameChangeState,
   usernameHistory,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
@@ -91,6 +91,12 @@ function Account() {
     [profile?.id, profile?.username],
   )
 
+  /* What it costs and whether today is allowed, both from the server. */
+  const renameState = useAsync(
+    async () => (profile ? usernameChangeState() : null),
+    [profile?.id, profile?.username],
+  )
+
   useEffect(() => {
     if (profile) setName(profile.display_name)
   }, [profile])
@@ -100,7 +106,20 @@ function Account() {
   /* The button appears when there is something to save, which is the only
      honest moment for it: a Save that is always there is always asking. */
   const changed = name.trim() !== profile.display_name && !!name.trim()
-  const affordable = profile.pixels >= USERNAME_CHANGE_COST
+  const cost = renameState.data?.cost ?? USERNAME_CHANGE_COST
+  const affordable = profile.pixels >= cost
+  /*
+   * The wait comes from the server, not from a date worked out here.
+   * Somebody whose machine is an hour fast would otherwise be shown an
+   * enabled button and then refused by the database, which reads as the
+   * site being broken rather than as a rule.
+   */
+  const waiting = !!renameState.data?.waiting
+  const freeAt = renameState.data?.nextAt
+    ? new Date(renameState.data.nextAt).toLocaleString(undefined, {
+      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+    })
+    : null
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,6 +141,9 @@ function Account() {
       const got = await changeUsername(wanted.trim())
       await refreshProfile()
       history.reload()
+      /* The wait starts now, and the dialog is closed with the day still
+         on it - so the next time it opens it has to already know. */
+      renameState.reload()
       setRenaming(false)
       setWanted('')
       toast(`You are @${got} now.`, 'success')
@@ -192,16 +214,16 @@ function Account() {
         open={renaming}
         onClose={() => setRenaming(false)}
         title="Change your username"
-        description={`It costs ${currency.amount(USERNAME_CHANGE_COST)}, and your old names stay on your profile.`}
+        description={`It costs ${currency.amount(cost)} and may be done once a day. Your old names stay on your profile.`}
         footer={
           <>
             <Button variant="ghost" onClick={() => setRenaming(false)}>Cancel</Button>
             <Button
               loading={paying}
-              disabled={!affordable || wanted.trim().length < 3}
+              disabled={!affordable || waiting || wanted.trim().length < 3}
               onClick={rename}
             >
-              Pay {currency.amount(USERNAME_CHANGE_COST)}
+              Pay {currency.amount(cost)}
             </Button>
           </>
         }
@@ -257,9 +279,20 @@ function Account() {
             </p>
           </div>
         )}
+        {/* The wait first, because it is the one that cannot be solved by
+            going and earning something. */}
+        {waiting && (
+          <p className="mt-3 flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-200">
+            <Glyph icon={faClock} className="mt-0.5 shrink-0" />
+            <span>
+              You changed your name less than a day ago.
+              {freeAt ? ` You can change it again on ${freeAt}.` : ' Try again tomorrow.'}
+            </span>
+          </p>
+        )}
         <p className={cn('mt-3 text-sm', affordable ? 'text-muted' : 'text-danger')}>
           You have {currency.amount(profile.pixels)}.
-          {!affordable && ` You need ${USERNAME_CHANGE_COST}.`}
+          {!affordable && ` You need ${cost}.`}
         </p>
       </Dialog>
     </Panel>
