@@ -6,6 +6,9 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/cn'
 import { RichText } from '@/components/chat/RichText'
+import { Ago } from '@/components/chat/Ago'
+import { NameMarks } from '@/components/brand/Verified'
+import { colourOf } from '@/lib/mentions'
 import type { ConversationMember, Message } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
 
@@ -14,10 +17,13 @@ import { avatarOf } from '@/lib/avatars'
  * or taken back from the buttons that appear on hover.
  */
 export function MessageRow({
-  message, sender, mine, grouped, covered, onEdit, onDelete,
+  message, sender, mine, grouped, covered, people, me, onEdit, onDelete,
 }: {
   message: Message
   sender?: ConversationMember
+  /** Usernames who may be mentioned here, lowercased. */
+  people?: Set<string>
+  me?: string | null
   mine: boolean
   /** Follows another message from the same person, so it needs no picture. */
   grouped?: boolean
@@ -85,6 +91,32 @@ export function MessageRow({
       )}
 
       <div className={cn('flex min-w-0 max-w-[75%] flex-col', mine && 'items-end')}>
+        {/*
+          * Who said it and when, over the first bubble of a run.
+          *
+          * The order is the applications' order, because a line of chat
+          * should read the same in a World as it does here: the name,
+          * then the marks their name carries, then the time written with
+          * a dash. The name is coloured from the account id rather than
+          * from the display name, so the colour survives a rename and two
+          * people called "Kobby" do not share one.
+          */}
+        {!grouped && !editing && (
+          <span className={cn(
+            'mb-0.5 flex max-w-full items-center gap-1 px-1 text-[11px] leading-none',
+            mine && 'flex-row-reverse',
+          )}>
+            <span
+              className="truncate font-extrabold"
+              style={{ color: colourOf(message.sender_id, sender?.display_name) }}
+            >
+              {sender?.display_name ?? 'Somebody'}
+            </span>
+            <NameMarks id={message.sender_id} className="text-[0.9em]" />
+            <Ago at={message.created_at} className="shrink-0 font-bold text-muted/70" />
+          </span>
+        )}
+
         {editing ? (
           <div className="flex w-full items-center gap-1">
             <input
@@ -132,10 +164,13 @@ export function MessageRow({
             aria-label={hidden ? 'Message from somebody you are ignoring. Show it?' : undefined}
             title={hidden ? 'You are ignoring this person. Tap to read.' : undefined}
           >
-            <p className={cn('whitespace-pre-wrap break-words', hidden && 'blur-[5px]')}>
+            <p className={cn(
+              'whitespace-pre-wrap [overflow-wrap:anywhere]',
+              hidden && 'blur-[5px]',
+            )}>
               {/* Marks and a picture, drawn from the text rather than built
                   as markup - `RichText` says why. */}
-              <RichText text={message.body} />
+              <RichText text={message.body} people={people} me={me} />
             </p>
             {message.edited_at && (
               <span className={cn('text-[10px]', mine ? 'text-white/55' : 'text-white/35')}>

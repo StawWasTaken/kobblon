@@ -138,159 +138,16 @@
    * black name, and `wordmark2` is the one that was drawn for a pale
    * background.
    */
-  .kob-mark { display: none; }
-
   /*
-   * With no appearance anywhere above it - the Workspace, a bare page, the
-   * way in before anybody has signed in - the ordinary mark, by mode.
+   * `.kob-mark`'s own rules live in `design/tokens.css` now.
+   *
+   * The other session asked for the move and they are right: the rules are
+   * `Wordmark`'s contract, not this page's styling, and a window does not
+   * load this file. Without them all six drawings draw at once, which is
+   * what the Launcher's title bar was doing with a two-line stand-in to
+   * keep it from happening. `.kob-backdrop` stays here - nothing outside
+   * the website draws one.
    */
-  .kob-mark[data-look='default'][data-mode='dark'] { display: block; }
-  :root[data-theme='light'] .kob-mark[data-look='default'][data-mode='dark'] { display: none; }
-  :root[data-theme='light'] .kob-mark[data-look='default'][data-mode='light'] { display: block; }
-
-  /*
-   * Which one of them is showing.
-   *
-   * CSS has no "nearest wrapper wins", and a card showing an appearance it
-   * is not wearing is not a rare case - it is every row of the chooser in
-   * Settings. So the matrix is written out, every wrapper against every
-   * drawing, three times over, in the order that makes the nearest answer
-   * the strongest one:
-   *
-   *   a wrapper, with nothing above it   a bare page, the Workspace
-   *   the document itself                the bar, which has no wrapper
-   *   a wrapper inside a document        the chooser; beats the document
-   *
-   * The document needs its own copy and that is the part that bit twice.
-   * `:root[data-theme='light'] [data-appearance='halloween']` cannot match
-   * the html element at all - it asks for an appearance *inside* the root -
-   * so in daylight with a season on, nothing hid the ordinary mark and it
-   * drew on top of the season's. Staw: "when on light mode with other
-   * theme appearances theres two wordmarks".
-   */
-  [data-appearance='default'] .kob-mark[data-look='default'][data-mode='light'],
-  [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='light'],
-  [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  [data-appearance='default'] .kob-mark[data-look='default'][data-mode='dark'] { display: block; }
-
-  [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='dark'],
-  [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='light'],
-  [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'],
-  [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'] { display: block; }
-
-  [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='dark'],
-  [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='light'],
-  [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='light'],
-  [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: block; }
-
-  :root[data-theme='light'] [data-appearance='default'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-theme='light'] [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-theme='light'] [data-appearance='default'] .kob-mark[data-look='default'][data-mode='light'] { display: block; }
-
-  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-theme='light'] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'] { display: block; }
-
-  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: none; }
-  :root[data-theme='light'] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: block; }
-  :root[data-appearance='default'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-appearance='default'] .kob-mark[data-look='default'][data-mode='dark'] { display: block; }
-
-  :root[data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'] { display: block; }
-
-  :root[data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: block; }
-
-  :root[data-theme='light'][data-appearance='default'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-theme='light'][data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-theme='light'][data-appearance='default'] .kob-mark[data-look='default'][data-mode='light'] { display: block; }
-
-  :root[data-theme='light'][data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-theme='light'][data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-theme='light'][data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'] { display: block; }
-
-  :root[data-theme='light'][data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-theme='light'][data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-theme='light'][data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: none; }
-  :root[data-theme='light'][data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: block; }
-  [data-appearance] [data-appearance='default'] .kob-mark[data-look='default'][data-mode='light'],
-  [data-appearance] [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  [data-appearance] [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='light'],
-  [data-appearance] [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  [data-appearance] [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  [data-appearance] [data-appearance='default'] .kob-mark[data-look='default'][data-mode='dark'] { display: block; }
-
-  [data-appearance] [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='dark'],
-  [data-appearance] [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='light'],
-  [data-appearance] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'],
-  [data-appearance] [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  [data-appearance] [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  [data-appearance] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'] { display: block; }
-
-  [data-appearance] [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='dark'],
-  [data-appearance] [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='light'],
-  [data-appearance] [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  [data-appearance] [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='light'],
-  [data-appearance] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  [data-appearance] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: block; }
-
-  :root[data-theme='light'][data-appearance] [data-appearance='default'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='default'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-theme='light'][data-appearance] [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='default'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-theme='light'][data-appearance] [data-appearance='default'] .kob-mark[data-look='default'][data-mode='light'] { display: block; }
-
-  :root[data-theme='light'][data-appearance] [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='halloween'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-theme='light'][data-appearance] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='halloween'] .kob-mark[data-look='christmas'][data-mode='light'] { display: none; }
-  :root[data-theme='light'][data-appearance] [data-appearance='halloween'] .kob-mark[data-look='halloween'][data-mode='light'] { display: block; }
-
-  :root[data-theme='light'][data-appearance] [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='christmas'] .kob-mark[data-look='default'][data-mode='light'],
-  :root[data-theme='light'][data-appearance] [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='dark'],
-  :root[data-theme='light'][data-appearance] [data-appearance='christmas'] .kob-mark[data-look='halloween'][data-mode='light'],
-  :root[data-theme='light'][data-appearance] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='dark'] { display: none; }
-  :root[data-theme='light'][data-appearance] [data-appearance='christmas'] .kob-mark[data-look='christmas'][data-mode='light'] { display: block; }
 
   .kob-backdrop { display: none; }
   .kob-backdrop[data-look='default'][data-mode='dark'] { display: block; }

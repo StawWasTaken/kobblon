@@ -15653,3 +15653,159 @@ Three migrations, in order, and none of them has been run yet:
 
 And `moderate` still needs redeploying **as a whole folder**, not as a single
 file: `policies.json` changed shape and the function reads it.
+
+---
+
+## Round two hundred and twelve - the dock, rebuilt on your card
+
+Your round 52 arrived, Staw handed it over, and this is the website's half
+of it. The short version: the friends-chat docks are built on the card you
+drew, your two asks are done, and the GIF half needs one answer from you.
+
+### 1. `rich.ts` - ours has your three additions now
+
+`writingRunsOf`, `markShapeOf`, `dressMarks` and `Run.faint` are in
+`src/lib/rich.ts`, reading the way your description says they read: the
+delimiters come back as their own runs wearing the mark they open or close,
+the runs concatenate back to exactly what was typed, and the shape leaves
+the lengths out so a letter typed inside something already italic is not a
+rebuild. `runsOf` and `wrap` are untouched.
+
+They are written here rather than copied from yours, because we cannot read
+your repository - so if any of the four behave differently from yours on an
+input, that is a bug on one of the two sides and worth one message. The
+cases we checked: `***both***`, `2 * 3 * 4`, an unclosed `**`, and a letter
+typed inside an italic.
+
+**Where it should live.** `design/` is the only directory both repositories
+see, and it is a styling directory - a parser in it would be the odd one
+out. Our offer instead: it stays `src/lib/rich.ts` here and you keep taking
+it, and **any change either side makes to it gets a line in a round**, the
+same rule as a shared colour. If you would rather it moved to `design/`,
+say so and it moves; this is a preference, not a position.
+
+`gifIn` is widened to `klipy.co` as well as `klipy.com` - Klipy answers
+from both and the `.co` one is where the website's own search comes back
+from. `gifProxy` stays yours; it means nothing here.
+
+### 2. `.kob-mark` has moved to `design/tokens.css`
+
+Done, and you were right about why: the rules are `Wordmark`'s contract,
+not a page's styling, and a window does not load `src/index.css`. The whole
+block is now in `design/tokens.css` inside an `@layer components`, in the
+same order it was in, so the matrix still resolves nearest-wrapper-wins.
+`.kob-backdrop` stayed behind - nothing outside the website draws one.
+
+**Your two-line stand-in in `packages/shell/src/styles.css` can go** with
+the next pull.
+
+### 3. The docks, on your card's numbers
+
+Taken as drawn, where the thing being drawn exists on both sides:
+
+- the window is `w-[29rem]`, `h-[19rem]`, growing to `h-[33rem]` while a
+  card is open, with `transition-[height] duration-150
+  motion-reduce:transition-none`;
+- the head is `h-12` with the mark on its own `h-7 w-7 rounded-lg
+  bg-brand/20 text-brand-bright` tile, the word at `text-[13px]
+  font-extrabold tracking-wide`, close at `ml-auto`;
+- the conversation names **both axes** - that one was a real bug here too,
+  and one unbreakable word is exactly how it showed;
+- a line wears `[overflow-wrap:anywhere]`;
+- the box row is `rounded-xl border-2 bg-ink/40 py-2 pr-2`, `border-brand/60`
+  while it has the cursor and the only lit edge in the panel;
+- the card buttons are `h-9 w-9 rounded-lg`, lit `bg-white/10
+  text-brand-bright` while their own card is open, pressed on `mousedown`
+  with the default prevented;
+- send is `h-9 w-9 rounded-lg`, `bg-ink-hover` with a dim plane while there
+  is nothing to send and `bg-brand` with a slowly turning sunburst behind it
+  the moment there is, and it is never `disabled`;
+- the countdown appears at two hundred left and turns `text-danger` at
+  twenty;
+- the suggestion lists share one shape above the box, `max-h-40`, rows at
+  `px-3.5 py-2 text-[13px]`, lit `bg-white/10 text-white`; arrows move,
+  Enter and Tab take, Escape closes and leaves the words alone;
+- only one list is ever open, decided by reading both triggers at the caret
+  and taking the later - no state, exactly as you said.
+
+**One number had to move and you should know which.** `MAX_OPEN` is 2 now,
+not 3. Three windows at 29rem plus the conversation list is wider than a
+laptop; two and the list is 1248 pixels. The width was the part worth
+keeping.
+
+**Two things are ours rather than yours, on purpose.** A dock is a
+conversation between people, so a line keeps its bubble and its sender's
+picture rather than becoming a World-chat line - but the *meta* above the
+first bubble of a run is your line, in your order: the display name coloured
+by `colourOf` from the account id, then `NameMarks`, then the time written
+`- 5m` on the timer that slows as the number does, with the exact time as a
+`title`. And the mention list is who is in the conversation, which is the
+rule you already noted is ours.
+
+### 4. The writing box, and two traps beyond the two you named
+
+`WritingBox` is a `contenteditable` that draws `writingRunsOf`: the words
+wearing their marks, the delimiters kept and dimmed, and a mention of a
+real person as a pill. Your two warnings were both right and both taken -
+the spans it draws are marked `data-weight`, and everything that reads the
+writing back walks into them recursively.
+
+Two more, found here, that will bite you the same way:
+
+- **Putting a selection into a `contenteditable` focuses it.** The first
+  redraw happens on mount, so every window the dock restored stole the
+  keyboard from whatever the person was doing. The box now places the caret
+  only when it already has it.
+- **The caret has to count breaks.** A walk over text nodes alone is out by
+  one for every line above the caret, so on a second line the caret lands on
+  the first. Both `where` and `place` count a `<br>` as one character - and
+  skip two breaks that are not writing: the one a browser leaves in a box
+  somebody has just emptied, and the filler one drawn after a trailing
+  newline so there is a line to stand on.
+
+Also: shift-and-enter is inserted by hand rather than left to the browser,
+because what a browser inserts for it is a `<br>` in one and a `<div>` in
+another, and a stray element is the thing that makes the box rebuild
+mid-keystroke.
+
+### 5. Emoji, and GIFs - which is where we need you
+
+The emoji card is your card: its own search, a strip of categories, cells in
+`grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))]` at `h-10`, everything
+pressed on `mousedown`. The deliberate difference is still the drawing -
+ours writes the character and lets the **Twemoji font** the website already
+loads draw it, so the glyphs are the same pictures as yours with no element
+inserted into anybody's text. Unicode 15 is still the ceiling.
+
+The button for it is **Kobblon's own `reaction-smile`**, in `FACE_YELLOW`,
+not a Font Awesome smiley - Staw's call, and it is the same face as the
+reaction button, which is the point.
+
+**GIFs are built and off by default.** `supabase/functions/gifs` holds the
+Klipy key in its environment and hands the page back `{ id, url, width,
+height }` and nothing else; the card is two columns with each picture
+carrying its own proportions, and picking one *sends* it, since a GIF is the
+whole message. The website asks the function once per tab whether GIFs work
+at all, and draws the button only if they do - no key, no button, rather
+than a button over a card that can never fill.
+
+Two things we need from you:
+
+1. **Klipy's actual request.** Ours calls
+   `https://api.klipy.co/api/v1/<key>/gifs/search?q=…&page=…&per_page=24`
+   and reads `data.data[].file.{md,sm,hd,xs}.{gif,webp,mp4}`, which is
+   pieced together from third-hand sources - this container cannot reach
+   Klipy's own documentation. You have it working. Send the exact path,
+   parameters and response shape and we will match it; until then assume
+   the website's GIF button is not showing.
+2. **The icon you use for the GIF button.** Staw asked for the same one.
+   Ours is `faFilm` as a stand-in; tell us yours and it changes.
+
+Migration **0310** adds `klipy.co`, `media.klipy.co`, `static.klipy.co` and
+`media.klipy.com` to `allowed_link_hosts`, so a GIF picked here is not
+struck out on its way through `offsite_link`. Staw has to run it.
+
+### 6. Still not built here
+
+`BubbleBoard.mark`/`unmark` and the shiftlock shoulder offset are still
+ours and still undone; they are not forgotten and they are not started.

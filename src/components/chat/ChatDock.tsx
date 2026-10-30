@@ -80,7 +80,16 @@ const ChatContext = createContext<ChatValue>({
 /** Lets any page pop a conversation open in the dock. */
 export const useChatDock = () => useContext(ChatContext)
 
-const MAX_OPEN = 3
+/*
+ * Two windows, not three.
+ *
+ * The windows are the width the applications' chat card is now - a line of
+ * chat wants to sit on one line - and three of those plus the list is
+ * wider than most screens. Two and the list is 1248 pixels, which is a
+ * laptop. Staw asked for the dock to carry the card's design; this is the
+ * one number that had to move to let it.
+ */
+const MAX_OPEN = 2
 const LIST_STATE = 'kobblon.chat.listOpen'
 
 /** The dock remembers whether it was left open, per device. */
@@ -137,7 +146,21 @@ function Window({
      window's own header changes the moment the name takes. */
   const [renamed, setRenamed] = useState<string | null | undefined>(undefined)
   const [leaving, setLeaving] = useState(false)
+  /* A card open under the box, so the window can make room for it. */
+  const [card, setCard] = useState(false)
   const bottom = useRef<HTMLDivElement>(null)
+
+  /*
+   * Who can be mentioned here, and whose `@name` lights up in what has
+   * already been said. The members of this conversation and nobody else:
+   * on a dock that list is whoever you can talk to, which is the website's
+   * rule rather than the World's "whoever is in the room".
+   */
+  const talking = useMemo(
+    () => new Set(conversation.members.map((one) => one.username.toLowerCase())
+      .concat(profile?.username ? [profile.username.toLowerCase()] : [])),
+    [conversation.members, profile?.username],
+  )
 
   const name = renamed === undefined
     ? conversationName(conversation)
@@ -226,11 +249,20 @@ function Window({
   const { quiet } = useChatDock()
   const locked = Boolean(quiet.standing && !quiet.standing.over)
 
-  const submit = async (e?: React.FormEvent) => {
+  /**
+   * Send something, which is usually what is in the box.
+   *
+   * A GIF is the one thing that is not: the card sends the address as the
+   * whole message the moment one is picked, because a GIF *is* the
+   * message - `gifIn` is the rule both sides already carry - and putting
+   * an address in the box would be asking somebody to press send on a
+   * line of text they cannot read.
+   */
+  const submit = async (e?: React.FormEvent, instead?: string) => {
     e?.preventDefault()
-    const body = draft.trim()
+    const body = (instead ?? draft).trim()
     if (!body || !profile) return
-    setDraft('')
+    if (!instead) setDraft('')
     setError(null)
     try {
       const target = pending
@@ -239,7 +271,7 @@ function Window({
       await sendMessage(target, profile.id, body)
       if (pending) onOpened(target)
     } catch (err) {
-      setDraft(body)
+      if (!instead) setDraft(body)
       setError(err instanceof Error ? err.message : 'That did not send.')
       /*
        * A suspension given while somebody is sitting here was only ever
@@ -268,11 +300,17 @@ function Window({
             * rather than a panel lying on the page.
             */
           : cn(
-              'w-80 rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              'w-[29rem] rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
               'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
               'before:from-brand before:via-brand-bright before:to-space',
-              'relative',
-              collapsed ? 'h-12' : 'h-[26rem]',
+              'relative transition-[height] duration-150 motion-reduce:transition-none',
+              /*
+               * Landscape, and plainly so, at the applications' own
+               * proportions. The window grows for a card rather than the
+               * card taking the conversation's room: a card that pushes
+               * the box off the bottom is a card you cannot type beside.
+               */
+              collapsed ? 'h-12' : card ? 'h-[33rem]' : 'h-[19rem]',
             ),
       )}
       aria-label={`Chat with ${name}`}
@@ -298,18 +336,16 @@ function Window({
             className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1 py-1 text-left transition-colors hover:bg-ink-hover"
             aria-expanded={!collapsed}
           >
-            <span className="shrink-0">
-              {solo ? (
-                <>
-                  <PersonAvatar person={solo} size="xs" />
-                </>
-              ) : (
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-deep text-[10px] text-white">
-                  <Glyph icon={faUserGroup} />
-                </span>
-              )}
+            {/*
+              * The mark on its own tile, which is what stops the row
+              * reading as a label with a stray icon in front of it. A
+              * conversation between two people wears the other person's
+              * face in the tile; a group wears the group's icon.
+              */}
+            <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand/20 text-[13px] text-brand-bright">
+              {solo ? <PersonAvatar person={solo} size="xs" /> : <Glyph icon={faUserGroup} />}
             </span>
-            <span className="truncate font-display text-sm font-extrabold tracking-tight">{name}</span>
+            <span className="truncate text-[13px] font-extrabold tracking-wide text-white">{name}</span>
           </button>
         )}
 
@@ -436,7 +472,15 @@ function Window({
 
       {!collapsed && !details && (
         <>
-          <div className="flex-1 overflow-y-auto px-3 py-3 kob-scroll">
+          {/*
+            * Both axes are named. `overflow-y-auto` on its own is not one
+            * axis - CSS turns the other from `visible` into `auto` the
+            * moment either is anything else - so one unbreakable word puts
+            * a scrollbar along the bottom and lets the whole window slide
+            * sideways. The applications hit it first; Staw: "just make it
+            * so we cant scroll to the right".
+            */}
+          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-2.5 kob-scroll">
             {loading && (
               <div className="space-y-2">
                 {[0, 1].map((i) => <Skeleton key={i} className="h-8 w-2/3" />)}
@@ -479,6 +523,8 @@ function Window({
                     mine={m.sender_id === profile?.id}
                     grouped={grouped}
                     covered={covered}
+                    people={talking}
+                    me={profile?.username}
                     sender={
                       m.sender_id === profile?.id
                         ? {
@@ -511,13 +557,9 @@ function Window({
             <div ref={bottom} />
           </div>
 
-          <form
-            onSubmit={submit}
-            autoComplete="off"
-            className="shrink-0 border-t border-ink-line p-2"
-          >
+          <form onSubmit={submit} autoComplete="off" className="flex shrink-0 flex-col">
             {error && !locked && (
-              <p className="px-1 pb-1.5 text-xs text-danger">{error}</p>
+              <p className="border-t border-ink-line px-3 py-1.5 text-xs text-danger">{error}</p>
             )}
 
             {/*
@@ -529,13 +571,19 @@ function Window({
               * rather than only that something happened.
               */}
             {locked ? (
-              <ChatLockedBar until={quiet.standing!.until} onOver={quiet.ask} />
+              <div className="border-t border-ink-line p-2">
+                <ChatLockedBar until={quiet.standing!.until} onOver={quiet.ask} />
+              </div>
             ) : (
               <Composer
                 id={`draft-${conversation.id}`}
                 value={draft}
                 onChange={setDraft}
                 onSend={() => void submit()}
+                onSendText={(body) => void submit(undefined, body)}
+                members={conversation.members}
+                me={profile?.username}
+                onCard={setCard}
               />
             )}
           </form>

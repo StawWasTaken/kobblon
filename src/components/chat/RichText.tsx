@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { runsOf } from '@/lib/rich'
 import { gifIn } from '@/lib/gifs'
+import { mentionBits } from '@/lib/mentions'
 import { cn } from '@/lib/cn'
 import type { Mark } from '@/lib/rich'
 
@@ -20,10 +21,22 @@ const look: Record<Mark, string> = {
  * a string of HTML. A platform where anybody can type a message is a
  * platform where somebody types a tag.
  *
+ * A mention is drawn as a pill, in blue, and only when it names somebody
+ * who is actually in this conversation: an `@word` that is nobody stays
+ * the characters somebody typed, because a pill on a name that does not
+ * exist is a link to nowhere wearing Kobblon's colour. Your own name is
+ * drawn stronger - it is the one worth finding in a wall of text.
+ *
  * A message that is one Klipy address is drawn as the picture it is, which
  * is how a GIF sent from the Launcher arrives here.
  */
-export function RichText({ text, className }: { text: string; className?: string }) {
+export function RichText({ text, people, me, className }: {
+  text: string
+  /** Usernames, lowercased, who may be mentioned here. */
+  people?: Set<string>
+  me?: string | null
+  className?: string
+}) {
   const gif = gifIn(text)
 
   if (gif) {
@@ -39,13 +52,37 @@ export function RichText({ text, className }: { text: string; className?: string
 
   return (
     <span className={className}>
-      {runsOf(text).map((run, at) => (
-        <Fragment key={at}>
-          {run.marks.length
-            ? <span className={cn(...run.marks.map((mark) => look[mark]))}>{run.text}</span>
-            : run.text}
-        </Fragment>
-      ))}
+      {runsOf(text).map((run, at) => {
+        const dressed = run.marks.length
+          ? cn(...run.marks.map((mark) => look[mark]))
+          : undefined
+
+        const bits = people?.size
+          ? mentionBits(run.text, (name) => people.has(name), me)
+          : [{ text: run.text }]
+
+        return (
+          <Fragment key={at}>
+            {bits.map((bit, which) => (
+              'at' in bit ? (
+                <span
+                  key={which}
+                  className={cn(
+                    dressed, 'rounded px-[0.2em] font-extrabold',
+                    bit.me ? 'bg-brand/35 text-white' : 'bg-brand/20 text-brand-bright',
+                  )}
+                >
+                  {bit.text}
+                </span>
+              ) : dressed ? (
+                <span key={which} className={dressed}>{bit.text}</span>
+              ) : (
+                <Fragment key={which}>{bit.text}</Fragment>
+              )
+            ))}
+          </Fragment>
+        )
+      })}
     </span>
   )
 }

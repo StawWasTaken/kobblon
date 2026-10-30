@@ -28,6 +28,15 @@ export type Mark = 'bold' | 'italic' | 'underline' | 'strike'
 export type Run = {
   text: string
   marks: Mark[]
+  /**
+   * This run is a delimiter rather than words.
+   *
+   * Only `writingRunsOf` ever sets it. A sent message does not carry its
+   * asterisks, but the box somebody is typing in does - Staw: "'*text*'
+   * will show the 'text' in italic, while keeping the '*' on each side" -
+   * and they are drawn dimmer than the words they are marking.
+   */
+  faint?: boolean
 }
 
 /** The openers, longest first: `**` must be tried before `*`. */
@@ -162,4 +171,94 @@ export function wrap(
 
   const put = token + middle + token
   return { text: before + put + after, from, to: from + put.length }
+}
+
+/* ------------------------------------------------- the box somebody types in */
+
+/**
+ * The same reading as `runsOf`, with the delimiters left in.
+ *
+ * The runs concatenate back to exactly what was typed, and that is the
+ * whole point: the box is the message with weight on rather than a preview
+ * of it, so every offset the caret counts is still counted over the
+ * writing. Each delimiter is its own run, wearing the mark it opens or
+ * closes and flagged `faint`.
+ *
+ * The other session asked for this one and wrote theirs first; ours reads
+ * the same way so that a message typed in a World and a message typed in a
+ * dock are the same message. `runsOf` and `wrap` are untouched.
+ */
+export function writingRunsOf(input: string): Run[] {
+  const runs: Run[] = []
+  const open: { token: string; mark: Mark; at: number }[] = []
+  let held = ''
+  let at = 0
+
+  const flush = () => {
+    if (!held) return
+    runs.push({ text: held, marks: open.map((one) => one.mark) })
+    held = ''
+  }
+
+  while (at < input.length) {
+    const top = open[open.length - 1]
+    if (top && input.startsWith(top.token, at) && closes(input, at)) {
+      flush()
+      /* Written before the pop, so the closing token wears the mark it is
+         closing - a dim asterisk inside the italic, not after it. */
+      runs.push({ text: top.token, marks: open.map((one) => one.mark), faint: true })
+      open.pop()
+      at += top.token.length
+      continue
+    }
+
+    const found = MARKS.find((one) => input.startsWith(one.token, at))
+
+    if (found) {
+      const shut = open.some((one) => one.token === found.token)
+      if (!shut && opens(input, at, found.token)
+          && hasCloser(input, at + found.token.length, found.token)) {
+        flush()
+        open.push({ token: found.token, mark: found.mark, at })
+        runs.push({ text: found.token, marks: open.map((one) => one.mark), faint: true })
+        at += found.token.length
+        continue
+      }
+    }
+
+    held += input[at]
+    at += 1
+  }
+
+  flush()
+  return runs.filter((run) => run.text.length > 0)
+}
+
+/**
+ * The run sequence without the lengths.
+ *
+ * The box rebuilds its own insides only when it has to, and "the weight
+ * changed" is one of the two reasons it has to. The lengths are left out
+ * deliberately: a letter typed inside something already italic changes a
+ * length and nothing else, and rebuilding for that drops the keystroke.
+ */
+export function markShapeOf(input: string): string {
+  return writingRunsOf(input)
+    .map((run) => `${run.faint ? '|' : ''}${run.marks.join('.')}`)
+    .join(',')
+}
+
+/**
+ * Write a set of marks onto a real element.
+ *
+ * For the two places that draw into nodes rather than into React - the box
+ * itself, and a bubble over somebody's head - where no class name reaches.
+ */
+export function dressMarks(el: HTMLElement, marks: Mark[]) {
+  el.style.fontWeight = marks.includes('bold') ? '800' : ''
+  el.style.fontStyle = marks.includes('italic') ? 'italic' : ''
+  const lines: string[] = []
+  if (marks.includes('underline')) lines.push('underline')
+  if (marks.includes('strike')) lines.push('line-through')
+  el.style.textDecoration = lines.join(' ')
 }
