@@ -173,9 +173,20 @@ export function askForHeadshot(userId: string): Promise<string | null> {
     const { lookOf } = await import('./api')
     const look = await lookOf(userId).catch(() => null)
     if (!look) return null
-    const picture = await drawPortrait(look).catch(() => null)
+    /*
+     * A face drawn while something was still failing to load is shown -
+     * initials would be worse - but it is not kept, so the next page draws
+     * it again rather than carrying the gap around for ten minutes. The
+     * stored portrait the owner's own browser writes is held to a stricter
+     * rule: it is not saved at all. See `refreshPortrait`.
+     */
+    let whole = true
+    const picture = await drawPortrait(
+      look, undefined, 'head',
+      (miss) => { if (miss.passing) whole = false },
+    ).catch(() => null)
     if (!picture) return null
-    void keepFace(userId, picture)
+    if (whole) void keepFace(userId, picture)
     return URL.createObjectURL(picture)
   }
 

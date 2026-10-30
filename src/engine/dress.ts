@@ -80,6 +80,23 @@ export type WornLook = {
 const PAINTED_ON = new Set(['shirt', 'trousers', 'face', 'tdecal'])
 
 /**
+ * Something in the look that did not make it onto the body.
+ *
+ * `passing` is the part that matters to a caller deciding whether to keep
+ * the picture. A file that did not arrive, or an address that was never
+ * signed, is a failure that a later attempt may not have - so a portrait
+ * drawn through one is not the person and must not be saved. A piece with
+ * no picture at all, or a slot nothing hangs from, is the shape of the
+ * data: drawing it again changes nothing, and refusing to save would mean
+ * never saving that person's face again.
+ */
+export type Missing = {
+  piece: WornLook['pieces'][number]
+  why: string
+  passing: boolean
+}
+
+/**
  * Dress a body from a look, and hand back how to undo it.
  *
  * The disposer is the point of the return value: a World closed halfway
@@ -97,6 +114,22 @@ export async function dressFrom(
   body: K6,
   look: WornLook,
   alive: () => boolean = () => true,
+  /*
+   * Told about anything it could not put on.
+   *
+   * Every failure in here is a `continue`, and that is right for a stage -
+   * a hat whose file did not arrive should not take the rest of the person
+   * down with it. It is wrong for anything that **keeps** the result: a
+   * profile picture saved while the hair was still failing to load is a
+   * hairless face stored as current, and nothing ever asks again. Staw saw
+   * exactly that: "I SAW PEOPLE WEARING HAIR AND ON THEIR AVATAR WE SEE
+   * EVERYTHING BUT ON THEIR PFP WE DONT SEE THEIR HAIR".
+   *
+   * So the skipping stays and it is no longer silent. A caller that is
+   * drawing to look at it ignores this; a caller that is drawing to save
+   * it refuses to save when anything comes through here.
+   */
+  onMissing?: (miss: Missing) => void,
 ): Promise<() => void> {
   const borrowed: THREE.Object3D[] = []
   const textures: THREE.Texture[] = []
@@ -155,11 +188,11 @@ export async function dressFrom(
      * The slot says which kind of thing it is. The thumbnail never did.
      */
     if (PAINTED_ON.has(piece.slot)) {
-      if (!piece.imageUrl) continue
+      if (!piece.imageUrl) { onMissing?.({ piece, why: 'it has no picture', passing: false }); continue }
       const picture = await new THREE.TextureLoader()
         .loadAsync(piece.imageUrl).catch(() => null)
       if (!alive()) { if (picture) picture.dispose(); undo(); return () => {} }
-      if (!picture) continue
+      if (!picture) { onMissing?.({ piece, why: 'its picture did not load', passing: true }); continue }
       textures.push(picture)
       if (piece.slot === 'shirt' || piece.slot === 'trousers') body.dress(piece.slot, picture)
       else if (piece.slot === 'face') body.setFace(picture)
@@ -168,14 +201,15 @@ export async function dressFrom(
     }
 
     const socket = SOCKET_FOR[piece.slot]
-    if (!piece.meshUrl || !socket) continue
+    if (!socket) { onMissing?.({ piece, why: `nothing hangs from ${piece.slot}`, passing: false }); continue }
+    if (!piece.meshUrl) { onMissing?.({ piece, why: 'its model has no address', passing: true }); continue }
 
     const model = await loadMesh(
       piece.meshUrl,
       (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
     ).catch(() => null)
     if (!alive()) { if (model) releaseMesh(model); undo(); return () => {} }
-    if (!model) continue
+    if (!model) { onMissing?.({ piece, why: 'its model did not load', passing: true }); continue }
     borrowed.push(model)
 
     if (piece.textureUrl) {

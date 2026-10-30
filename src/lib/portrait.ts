@@ -18,7 +18,7 @@ import { MANNEQUIN_BODY } from './mannequin'
 import {
   K6, loadK6Source, headshot, loadMesh, releaseMesh, wearTexture, formatOf,
   frameMesh, lightForLooking, lookFrom, dressFrom,
-  COVERS, PLACES, BODY, type Clothing, type WornLook,
+  COVERS, PLACES, BODY, type Clothing, type WornLook, type Missing,
 } from '@/engine'
 
 /** What a portrait is drawn at. Square, because every frame it goes in is. */
@@ -71,6 +71,14 @@ export async function drawPortrait(
    * cards with the same legs in them.
    */
   frame: 'head' | 'body' | Clothing = 'head',
+  /*
+   * Told about anything the look asked for that is not in the picture.
+   *
+   * A caller that is going to keep the picture uses this to decide not to:
+   * a face saved while the hair was still failing to load is stored as
+   * current and never asked about again.
+   */
+  onMissing?: (miss: Missing) => void,
 ): Promise<Blob | null> {
   let renderer: THREE.WebGLRenderer | null = null
   let body: K6 | null = null
@@ -86,7 +94,7 @@ export async function drawPortrait(
      * or in the wrong spot and a portrait stopped being a picture of the
      * avatar. `dressFrom` is the one copy now.
      */
-    undress = await dressFrom(body, look)
+    undress = await dressFrom(body, look, () => true, onMissing)
 
     const scene = new THREE.Scene()
     scene.add(body.object)

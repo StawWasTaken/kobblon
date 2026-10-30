@@ -14545,6 +14545,22 @@ reading it, nothing to keep in step. That is a migration, so it is worth
 one decision rather than two copies. Until you ask, the copy is the cheaper
 answer and the website is the source the copy is taken from.
 
+### How much of this was checked
+
+The drawing was: `tools/site/portrait-check.html` renders a head with
+something on the hair socket, the same look with a model that is not there,
+and prints what came back through `onMissing`. Both were looked at.
+
+`npm run engine:check` was **not** completed. It got seven checks in - the
+World loads, six parts, the fall onto the pad, the walk speed, the
+direction, one speed and no sprint, a wall stops it - and then stalled in
+this container, where the renderer is software and an outbound host the
+harness reaches for is refused. That is the environment and not the change,
+and the change itself adds an optional argument that defaults to undefined:
+every existing call behaves exactly as it did. Said out loud rather than
+quietly skipped, and worth a second run wherever the engine harness runs
+properly.
+
 ### Still waiting on you
 
 Unchanged: the Electron protocol handler has to be registered with the
@@ -14845,3 +14861,96 @@ Unchanged: the Electron protocol handler has to be registered with the
 executable and its arguments spelled out, or the sign-in codes the website
 mints cannot arrive. And Round one hundred and thirty-three's five Launcher
 questions are still unanswered.
+
+## Round two hundred and two - a face is not saved half-drawn
+
+**This one changes the meaning of a shared function. Read it before your
+next build against `@/engine`.**
+
+Staw: "I SAW PEOPLE WEARING HAIR AND ON THEIR AVATAR WE SEE EVERYTHING BUT
+ON THEIR PFP WE DONT SEE THEIR HAIR, IDK IF ITS AN ISSUE WITH THE HAIR OR
+WITH THE PFPs".
+
+It was the profile pictures, and the cause is one line that is correct in
+one place and wrong in another. `dressFrom` skips a piece whose file did
+not arrive - `if (!model) continue` - which is right on a stage: one hat
+that will not load should not take the rest of somebody down with it. It is
+wrong for a drawing that gets **kept**. The portrait is saved to the bucket
+and the row, `portraitIsCurrent` then says it is current, and nothing asks
+again until that person next changes something. One slow or unsigned mesh
+at the wrong moment and their face is hairless for as long as they leave
+their avatar alone.
+
+Drawn and looked at, both ways, in `tools/site/portrait-check.html`: a thing
+on the hair socket **is** in the headshot frame, so the camera was never the
+problem - and the same look with a model that is not there draws a bare head
+and now says so.
+
+### What changed in `dressFrom`
+
+It takes a fourth argument, optional:
+
+```ts
+dressFrom(body, look, alive, onMissing?: (miss: Missing) => void)
+
+type Missing = {
+  piece: WornLook['pieces'][number]
+  why: string
+  /** True when a later attempt might do better: a file, an address. */
+  passing: boolean
+}
+```
+
+Nothing is thrown and nothing stops; the skipping behaves exactly as it
+did. The only change is that it is no longer silent. **A caller that draws
+to look at it should pass nothing.** A caller that draws to *save* should
+pass one and refuse to keep a picture where any `passing` miss came
+through - that is the whole fix.
+
+`passing` is the distinction that matters. A model that did not load, or a
+piece whose address was never signed, may well work on the next try, so the
+picture drawn through it is not the person. A piece with no picture at all,
+or a slot nothing hangs from, is the shape of the data: drawing it again
+changes nothing, and refusing to save on that would mean never saving that
+person's face again.
+
+`drawPortrait` takes the same callback as its fourth argument and passes it
+through.
+
+### What the website does with it now
+
+* `refreshPortrait` draws, and **does not save at all** if anything passing
+  was missing. The row keeps the picture it had, `avatar_changed_at` stays
+  newer than it, and every page showing that person draws the face in the
+  browser until a later refresh gets the whole of it. It writes one line to
+  the console saying what was missing.
+* The browser-side draw in `headshots.ts` still *shows* an incomplete face -
+  initials would be worse - but does not **cache** it, so the next page
+  tries again instead of carrying the gap around for ten minutes.
+
+If the Workspace saves a portrait anywhere, it needs the same guard, and
+that is the reason this is a round rather than a line in the next one.
+
+### Still waiting on you
+
+Unchanged: the Electron protocol handler has to be registered with the
+executable and its arguments spelled out, or the sign-in codes the website
+mints cannot arrive. And Round one hundred and thirty-three's five Launcher
+questions are still unanswered.
+
+## Round two hundred and three - buy buttons are green
+
+Staw: "make the buy buttons green". `BuyButton` defaults to `variant="yes"`
+now, so every Catalog row, Marketplace card, item page, outfit page, shop
+shelf and favourites row goes green in one change, and a caller may still
+pass its own variant where a page has a reason to.
+
+This reverses what Round-era reasoning had settled on - blue, on the
+argument that twenty of these on a screen is twenty greens and the ratio
+goes the wrong way. He has looked at the shop with both, and buying is what
+a Catalog row is for. **If the Workspace has a buy control of its own, it is
+green now**; the basket and the buy dialog were already `yes` and did not
+move.
+
+`Owned` is unchanged: it stays `subtle`, and it is still a button rather
+than a disabled one wherever there is something to do.

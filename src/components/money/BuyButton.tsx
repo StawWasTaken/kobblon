@@ -25,11 +25,12 @@ import type { ComponentProps } from 'react'
  * identical rows of cards then came out two different colours for no reason
  * a person could name.
  *
- * Blue, because taking something off the Marketplace or the Catalog is the
- * ordinary action of that page rather than its one deliberate yes - there
- * are twenty of these on a screen, and twenty greens is the ratio going the
- * wrong way round again. Green stays for save, publish, upload, accept,
- * play, and for going into a World.
+ * **Green**, by Staw's later call: "make the buy buttons green". It was
+ * blue, on the argument that twenty of these on a screen is twenty greens
+ * and the ratio goes the wrong way. He has looked at the shop with both and
+ * wants the yes - buying is the one thing a Catalog row is for, and it now
+ * reads as the same yes as save, publish and play. A caller may still pass
+ * its own `variant` where a page has a reason.
  *
  * Written as a component rather than written down as a rule, because a rule
  * about buttons is kept by whoever remembers it and the shop, the item page,
@@ -38,7 +39,7 @@ import type { ComponentProps } from 'react'
  */
 export function BuyButton({
   price, owned, ownedLabel = 'Owned', freeLabel = 'Take it',
-  verb = 'Buy for', ...rest
+  verb = 'Buy for', variant = 'yes', ...rest
 }: {
   /** In Brix. Zero is free, and free is a different sentence. */
   price: number
@@ -75,11 +76,11 @@ export function BuyButton({
   }
 
   if (price <= 0) {
-    return <Button {...rest}>{freeLabel}</Button>
+    return <Button variant={variant} {...rest}>{freeLabel}</Button>
   }
 
   return (
-    <Button {...rest}>
+    <Button variant={variant} {...rest}>
       {/*
         * The mark and the number are one thing, so they are one element:
         * the button's own gap was landing between them and reading as

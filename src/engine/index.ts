@@ -14,7 +14,7 @@ export {
   type K6Part, type K6Look, type K6Motion, type K6Point,
 } from './k6'
 export { blockify, headshot, PLACES } from './body'
-export { dressFrom, type WornLook } from './dress'
+export { dressFrom, type WornLook, type Missing } from './dress'
 export {
   BODY, COVERS, SIDES, PIXELS_PER_STON, templateFor, wrapToTemplate,
   drawTemplate, type BodyPart, type Clothing, type Side, type Template,

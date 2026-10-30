@@ -5678,8 +5678,33 @@ export async function refreshPortrait(userId: string): Promise<string | null> {
      My Avatar does this itself after every change, and letting both run
      means two renders and two files in the bucket for one face. */
   clearTimeout(portraitSoon)
-  const drawn = await drawPortrait(await lookOf(userId)).catch(() => null)
+
+  /*
+   * Anything the look asked for and the drawing did not get.
+   *
+   * `dressFrom` skips a piece whose file did not arrive, which is right on
+   * a stage - one hat that would not load should not take the rest of
+   * somebody down with it - and wrong here, because this one is kept. A
+   * portrait saved while the hair was still failing to load is a hairless
+   * face stored as current, and `portraitIsCurrent` then says it is them
+   * until the next time they change something. That is what Staw was
+   * looking at: hair on the avatar, no hair on the picture.
+   *
+   * So a draw that lost a piece to a file or an address is not saved at
+   * all. The row keeps the picture it had, `avatar_changed_at` is still
+   * newer than it, and every page that shows this person draws the face
+   * itself until a later refresh gets the whole of it.
+   */
+  const lost: string[] = []
+  const drawn = await drawPortrait(
+    await lookOf(userId), undefined, 'head',
+    (miss) => { if (miss.passing) lost.push(`${miss.piece.name ?? miss.piece.slot}: ${miss.why}`) },
+  ).catch(() => null)
   if (!drawn) return null
+  if (lost.length) {
+    console.warn('The portrait was not saved; it was missing', lost.join(', '))
+    return null
+  }
 
   /*
    * A new name each time rather than writing over the old one. A picture
