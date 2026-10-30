@@ -34,10 +34,9 @@ export function useAtTitle(title?: string | null) {
 /**
  * The Creator Hub has a mark of its own, and every page of it wears it.
  *
- * Staw sent the new tile and it is drawn in `/brand/favicon-creator.svg`,
- * which is the source of it. The tab points at the PNG beside it: a tab
- * icon is the one place a drawing is not enough, because Safari still will
- * not take an SVG there and a tab with no mark reads as a broken page.
+ * `/brand/favicon-creator.png` is Staw's own file, put in the repository by
+ * him. It is not drawn here and should not be redrawn: a mark is his to
+ * hand over, and a copy of it traced by somebody else is a second mark.
  */
 export const CREATE_ICON = asset('/brand/favicon-creator.png')
 

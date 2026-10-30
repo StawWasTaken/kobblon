@@ -15424,16 +15424,19 @@ to the full article.
 
 ### The Creator Hub's mark
 
-Staw sent the new tile. It is `public/brand/favicon-creator.svg` - drawn
-rather than saved, because a tab mark is rendered at sixteen pixels and at
-five hundred on a pinned retina tab and only a drawing is right at both -
-with a PNG beside it at `/brand/favicon-creator.png` for the tab itself,
-since Safari still will not take an SVG there. `CREATE_ICON` in
-`@/hooks/useTitle` points at the PNG, so every Creator Hub page wears it.
+Staw's own tile, uploaded by him, is `public/brand/favicon-creator.png`.
+`CREATE_ICON` in `@/hooks/useTitle` points at it, so every Creator Hub page
+wears it.
+
+I had drawn a copy of it from the picture he sent before he said he would
+upload the file; that drawing is deleted, and the file in the repository is
+his. Worth saying out loud because it is the rule rather than the incident:
+**a mark is handed over, not traced.** A traced one is a second mark that
+drifts.
 
 **If the Workspace or the Launcher shows a window icon for the Creator
-Hub**, that is the file: the SVG is the source, the PNG is the raster.
-`favicon-create.png` is the old one and should not be used any more.
+Hub**, that is the file. `favicon-create.png` is the old one and should not
+be used any more.
 
 ### How much of this was checked
 
