@@ -291,6 +291,21 @@ const HOLD_ANGLE = 1.2
 
 export type K6Motion = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land' | 'wave'
 
+/**
+ * The clips the state machine drives on its own, from how the body is
+ * moving. Anything else in the file is an emote: something a person asked
+ * for rather than something walking produced.
+ *
+ * Written as the list of body clips rather than as a list of emotes on
+ * purpose. The Launcher asked for `emotes` alongside `emote` so `/emote`
+ * can list what exists and refuse what does not, and reasoned that a
+ * hard-coded list of five names here would be wrong the first time the list
+ * changed. It would. So the answer is read off the file instead: the day a
+ * `kobdance` clip lands in the avatar, `emotes` says `kobdance` and nothing
+ * ships on either side.
+ */
+const BODY_CLIPS: K6Motion[] = ['idle', 'walk', 'run', 'jump', 'fall', 'land']
+
 let source: Promise<THREE.Group & { animations: THREE.AnimationClip[] }> | null = null
 
 /** Loads the avatar once per page, whoever asks. */
@@ -327,6 +342,8 @@ export class K6 {
   private heldBy = 0
   private holding = false
   private landingFor = 0
+  /** The emote somebody asked for, until it finishes or they move. */
+  private emoting: K6Motion | null = null
 
   /** The bone for each slot, found once, and what is hanging on each. */
   private sockets = new Map<K6Point, THREE.Object3D>()
@@ -865,17 +882,15 @@ export class K6 {
     }
   }
 
-  play(motion: K6Motion, fade = 0.18) {
+  play(motion: K6Motion, fade = 0.18, loop?: 'once' | 'repeat') {
     if (motion === this.motion) return
     const next = this.actions.get(motion)
     if (!next) return
 
     const current = this.actions.get(this.motion)
     next.reset()
-    next.setLoop(
-      motion === 'jump' || motion === 'land' ? THREE.LoopOnce : THREE.LoopRepeat,
-      Infinity,
-    )
+    const once = loop ? loop === 'once' : motion === 'jump' || motion === 'land'
+    next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity)
     next.enabled = true
     next.setEffectiveWeight(1)
     next.play()
@@ -893,6 +908,22 @@ export class K6 {
     if (this.landingFor > 0) {
       this.landingFor -= dt
       if (this.landingFor > 0) return
+    }
+
+    /*
+     * An emote somebody asked for outranks the motion machine, until they
+     * move or the clip runs out. Asked every frame rather than timed: the
+     * clip's own action knows whether it is still going, and a duration
+     * copied out at the moment of asking is a value captured before the
+     * thing that decides it - the clip could be swapped for a longer one
+     * tomorrow.
+     */
+    if (this.emoting) {
+      const action = this.actions.get(this.emoting)
+      const moved = !state.grounded || state.speed > 0.6
+      const over = !action || action.paused || !action.isRunning()
+      if (moved || over) this.emoting = null
+      else return
     }
 
     if (!state.grounded) {
@@ -929,6 +960,66 @@ export class K6 {
   /** Whether the arm is up. */
   get held() { return this.holding }
 
+  /**
+   * The emotes this build can actually play.
+   *
+   * Whatever is in the avatar file and is not a body clip, which today is
+   * `wave` alone. `kobdance`, `dance1`, `dance2` and `dance3` are drawings
+   * nobody has made yet, so they are honestly not in this list - a command
+   * that offered them would be offering nothing.
+   */
+  get emotes(): string[] {
+    return [...this.actions.keys()].filter((name) => !BODY_CLIPS.includes(name))
+  }
+
+  /**
+   * Play a named emote. False when there is no such clip, so a chat window
+   * can say so rather than swallowing the command.
+   *
+   * It ends on its own when the clip runs out, and it ends early the moment
+   * the person walks or jumps, which is what every game does with an emote
+   * and what a player expects without being told. `loop` is for a dance
+   * meant to carry on until they move; it is off by default because a wave
+   * that never stops is not a wave.
+   */
+  emote(name: string, options: { loop?: boolean } = {}): boolean {
+    const motion = name as K6Motion
+    if (BODY_CLIPS.includes(motion) || !this.actions.has(motion)) return false
+    this.emoting = motion
+
+    // Asking for the emote already playing restarts it, rather than being
+    // swallowed by `play`'s own "already the current motion" test - which
+    // would read as the command doing nothing.
+    const again = this.actions.get(motion)
+    if (this.motion === motion && again) {
+      again.reset()
+      again.setLoop(options.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity)
+      again.play()
+      return true
+    }
+
+    this.play(motion, 0.12, options.loop ? 'repeat' : 'once')
+    return true
+  }
+
+  /** Stop whatever emote is playing, back to standing. */
+  stopEmote() {
+    if (!this.emoting) return
+    this.emoting = null
+    this.play('idle', 0.12)
+  }
+
+  /** The emote playing right now, if somebody asked for one. */
+  get emoted(): string | null { return this.emoting }
+
+  /**
+   * Whether the clip playing is an emote rather than a way of moving.
+   *
+   * This is what the hold pose has to know about, and it covers the E key's
+   * wave as well as a named emote - the key does not go through `emote`.
+   */
+  private get posing() { return !BODY_CLIPS.includes(this.motion) }
+
   update(dt: number) {
     this.mixer.update(dt)
 
@@ -939,7 +1030,26 @@ export class K6 {
      * undo when the arm goes down: stop adding and it is simply gone.
      */
     if (this.shoulderR) {
-      const want = this.holding ? 1 : 0
+      /*
+       * Not while an emote is playing.
+       *
+       * The Launcher, with the symptom: "why when using the E key it does a
+       * weird thing with the right arm of the user and the head". It was
+       * this line against the wave clip. Holding is written over the motion
+       * each frame, which is right - it has to survive walking, jumping and
+       * falling, so it cannot be an eighth clip - but the one clip that is
+       * itself about the right arm was waving underneath a shoulder being
+       * overwritten, and the head came along because the clip moves it while
+       * the arm never arrived.
+       *
+       * So the hold stands down for the length of the clip. `heldBy` eases
+       * either way already, so the arm lowers into the wave and comes back
+       * up after it rather than snapping, and nothing about carrying a tool
+       * through a walk changes. The Launcher is still free to call `hold`
+       * whenever it likes: it does not have to know what is playing, which
+       * is the half of this that was wrong to ask of it.
+       */
+      const want = this.holding && !this.posing ? 1 : 0
       this.heldBy += (want - this.heldBy) * Math.min(1, dt * 9)
       if (this.heldBy > 0.001) this.shoulderR.rotation.x -= HOLD_ANGLE * this.heldBy
     }

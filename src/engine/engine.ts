@@ -11,7 +11,7 @@ import { K6_HEIGHT } from './units'
 import { SoundService } from './sound'
 import { ChatService, LocalEcho, muted, type ChatTransport, type ScreenSay, type ChatMark } from './chat'
 import { ChatWindow } from './chatui'
-import { BubbleBoard, type BubbleLook, type BubbleContents } from './bubbles'
+import { BubbleBoard, type BubbleLook, type BubbleContents, type MarkLook } from './bubbles'
 
 /**
  * The Kobblon Engine, the first useful slice of it.
@@ -44,7 +44,12 @@ export type EngineOptions = {
    * the same frame. An exported option nothing can reach is not an
    * option.
    */
-  bubbles?: { look?: Partial<BubbleLook>; contents?: BubbleContents }
+  bubbles?: {
+    look?: Partial<BubbleLook>
+    contents?: BubbleContents
+    /** How a mark over a head looks; see `BubbleBoard.mark`. */
+    mark?: Partial<MarkLook>
+  }
   /**
    * Turns a Catalog id into something the runtime can load.
    *
@@ -414,6 +419,39 @@ export class Engine {
   }
 
   /** The sky in the scene, for anybody who needs to look at it. */
+  /**
+   * The board that draws over people's heads, for `mark` and `unmark`.
+   *
+   * A getter rather than a field handed out at construction: the board is
+   * built when a World opens and disposed when one closes, so anything that
+   * held a reference would be holding a disposed board - this project's
+   * oldest trap. Ask at the moment of use, every time.
+   */
+  /**
+   * Play a named emote on this engine's avatar.
+   *
+   * The Launcher asked for this because `Intent.emote` is a boolean the
+   * engine reads off its own keyboard inside `start()`, so a chat window had
+   * no way to ask for an emote at all and no way to ask for a *named* one.
+   * This is that way. False when there is no such clip, so `/emote` can say
+   * which names exist instead of pretending it did something.
+   */
+  emote(name: string, options: { loop?: boolean } = {}): boolean {
+    return this.avatar?.emote(name, options) ?? false
+  }
+
+  /** The emotes this build can play, for a command's own list. */
+  get emotes(): string[] {
+    return this.avatar?.emotes ?? []
+  }
+
+  /** Stop the emote playing, if one is. */
+  stopEmote() { this.avatar?.stopEmote() }
+
+  get board(): BubbleBoard | null {
+    return this.bubbles
+  }
+
   get skybox() {
     return this.sky
   }

@@ -305,23 +305,45 @@ function Window({
               'before:from-brand before:via-brand-bright before:to-space',
               'relative transition-[height] duration-150 motion-reduce:transition-none',
               /*
-               * Landscape, and plainly so, at the applications' own
-               * proportions. The window grows for a card rather than the
-               * card taking the conversation's room: a card that pushes
-               * the box off the bottom is a card you cannot type beside.
+               * Measured off the screen rather than in rem, which is
+               * round 53's correction - at half the screen rather than its
+               * quarter, which is Staw's: "for the friends chat i want to
+               * keep the ratio portrait rather than landscape". A dock is
+               * 29rem across, so a quarter of the screen was wider than it
+               * was tall on every machine anybody uses. `50vh` is taller
+               * than the width on anything from a laptop up, and the
+               * bounds hold the shape on the two ends where it would not
+               * be: `32rem` is still portrait beside a `29rem` width, and
+               * `42rem` stops a tall screen making a column.
+               *
+               * The width stays in rem on purpose. The applications' 30vw
+               * is for a window floating over a World; a dock lives in the
+               * rail and takes the width the rail gives it.
+               *
+               * A card adds a fixed 14rem, because a grid of emoji is a
+               * grid whatever the screen is. The window grows for it
+               * rather than the card taking the conversation's room: a
+               * card that pushes the box off the bottom is a card you
+               * cannot type beside.
                */
-              collapsed ? 'h-12' : card ? 'h-[33rem]' : 'h-[19rem]',
+              collapsed
+                ? 'h-12'
+                : card
+                  ? 'h-[calc(50vh+14rem)] min-h-[40rem] max-h-[85vh]'
+                  : 'h-[50vh] min-h-[32rem] max-h-[42rem]',
             ),
       )}
       aria-label={`Chat with ${name}`}
     >
       <header className={cn(
-        'flex shrink-0 items-center gap-2 border-b border-ink-line px-2',
+        'flex shrink-0 items-center gap-2 border-b border-ink-line bg-black/30 px-2',
         /*
          * Flat, like the applications' chat card. Staw, with three
          * pictures of the in-game one: adapt that design here. Its head
-         * is a title and a close and a hairline, and nothing else - a
-         * tinted head reads as a second surface stacked on the window.
+         * is a title and a way out and a hairline, and nothing else - a
+         * *tinted* head reads as a second surface stacked on the window,
+         * which is why this is `bg-black/30` and not a gradient: darker
+         * than the card under it, the same colour as it.
          */
         full ? 'h-11' : 'h-12',
       )}>
@@ -330,7 +352,7 @@ function Window({
             <button
               onClick={() => setDetails(false)}
               aria-label="Back to the conversation"
-              className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+              className="grid h-6 w-6 place-items-center rounded-lg text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white"
             >
               <Glyph icon={faArrowLeft} />
             </button>
@@ -360,16 +382,22 @@ function Window({
             <button
               onClick={() => { setDetails(true); setCollapsed(false) }}
               aria-label="Chat details"
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white"
             >
               <Glyph icon={faGear} />
             </button>
           </Tooltip>
         )}
+        {/*
+          * The way out is the player list's cross, to the pixel: round 53
+          * named the size, the corner and the colour, and two crosses in
+          * one product that are nearly the same is the kind of difference
+          * nobody can defend.
+          */}
         <button
           onClick={onClose}
           aria-label="Close"
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white"
         >
           <Glyph icon={faXmark} />
         </button>

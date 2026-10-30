@@ -2005,6 +2005,180 @@ check('there is no face until one is put on, and none after it comes off',
   faces.before === false && faces.after === false,
   `before ${faces.before}, after ${faces.after}`)
 
+// -- the marks over a head: a live microphone, which is round 53's ask
+const marked = await p.evaluate(() => {
+  const board = window.engine.board
+  const who = window.engine.body.object
+  // Standing still first. A body still settling onto the floor moves its
+  // own bubbles, and this check is about whether the mark moves them.
+  board.clear()
+  window.drive({})
+  window.engine.controller.placeAt(0, 1, 18)
+  window.stepFrames(90)
+  const read = (el) => {
+    const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(el.style.transform)
+    return m ? { x: +m[1], y: +m[2] } : null
+  }
+  const out = {}
+
+  // a bubble first, so there is a stack for a mark to sit over
+  board.add(who, { from: 'Staw', text: 'hello', kind: 'say', at: Date.now() })
+  window.stepFrames(20)
+  const bubble = document.querySelector('.kob-bubble')
+  const bubbleWas = read(bubble)
+
+  // The ones already on the page are mid-fade from an earlier check: the
+  // frames are stepped synchronously, so no real time passes and the
+  // removal timers have not run. Take the one this check just made.
+  const before = new Set(document.querySelectorAll('.kob-mark'))
+  board.mark(who, 'voice')
+  window.stepFrames(20)
+  const fresh = () => [...document.querySelectorAll('.kob-mark')].filter((el) => !before.has(el))
+  const mark = fresh()[0]
+  out.drew = Boolean(mark)
+  out.glyph = Boolean(mark && mark.querySelector('path'))
+  out.kinds = board.marksOn(who)
+  out.bubbleY = read(bubble).y
+  out.bubbleWasY = bubbleWas.y
+  out.markY = mark ? read(mark).y : null
+
+  // an unknown kind draws nothing rather than an empty chip
+  board.mark(who, 'nonsense')
+  out.chips = fresh().length
+  // and saying the same one again does not stack a second chip
+  board.mark(who, 'voice')
+  out.chipsAgain = fresh().length
+
+  board.unmark(who, 'voice')
+  out.afterUnmark = board.marksOn(who)
+  return out
+})
+check('a mark is drawn over somebody, with a glyph in it',
+  marked.drew && marked.glyph, `drew ${marked.drew} glyph ${marked.glyph}`)
+check('and it is the kind that was asked for',
+  marked.kinds.length === 1 && marked.kinds[0] === 'voice', marked.kinds.join(','))
+check('it sits above the bubble rather than in the stack',
+  marked.markY !== null && marked.markY < marked.bubbleY,
+  `mark y=${marked.markY} bubble y=${marked.bubbleY}`)
+check('and marking somebody never pushes their words down',
+  Math.abs(marked.bubbleY - marked.bubbleWasY) < 0.6,
+  `${marked.bubbleWasY} -> ${marked.bubbleY}`)
+check('an unknown kind draws nothing, and the same kind twice draws one',
+  marked.chips === 1 && marked.chipsAgain === 1,
+  `${marked.chips} then ${marked.chipsAgain}`)
+check('unmark is what takes it off',
+  marked.afterUnmark.length === 0, `${marked.afterUnmark.length} left`)
+
+/*
+ * A mark needs no bubble, and does not time out with one.
+ *
+ * Marked on a bystander rather than on the player: the camera follows the
+ * player, so a mark over their own head is in the same place on the screen
+ * however far they walk, and "it moved" would prove nothing.
+ */
+const alone = await p.evaluate(() => {
+  const board = window.engine.board
+  const bystander = new window.THREE.Object3D()
+  bystander.position.set(0, 1, 10)
+  window.engine.scene.add(bystander)
+  board.clear()
+  const before = new Set(document.querySelectorAll('.kob-mark'))
+  board.mark(bystander, 'voice')
+  window.engine.controller.placeAt(0, 1, 30)
+  window.drive({ z: 1 })
+  window.stepFrames(30)
+  const mark = [...document.querySelectorAll('.kob-mark')].find((el) => !before.has(el))
+  const first = mark && mark.style.transform
+  window.stepFrames(60)
+  const second = mark && mark.style.transform
+  window.drive({})
+  const out = { there: Boolean(mark), moved: first !== second, kinds: board.marksOn(bystander) }
+  board.unmark(bystander, 'voice')
+  window.engine.scene.remove(bystander)
+  return out
+})
+check('a mark needs no bubble and does not expire with one',
+  alone.there && alone.kinds.length === 1, `there ${alone.there} kinds ${alone.kinds.join(',')}`)
+check('and it follows the head it is over',
+  alone.moved === true, `moved ${alone.moved}`)
+
+// -- emotes: a named one, and the arm the hold pose was breaking
+const emotes = await p.evaluate(() => {
+  const body = window.engine.body
+  const out = { list: window.engine.emotes }
+  out.madeUp = window.engine.emote('kobdance')
+  out.bodyClip = window.engine.emote('walk')
+  out.real = window.engine.emote('wave')
+  window.stepFrames(10)
+  out.playing = window.engine.body.emoted
+  return out
+})
+check('the emote list is what the file can actually play',
+  emotes.list.includes('wave') && !emotes.list.includes('idle') && !emotes.list.includes('walk'),
+  emotes.list.join(','))
+check('a clip nobody has drawn yet is refused rather than pretended',
+  emotes.madeUp === false && emotes.bodyClip === false,
+  `kobdance ${emotes.madeUp}, walk ${emotes.bodyClip}`)
+check('and a real one plays', emotes.real === true, `wave ${emotes.real}`)
+
+/*
+ * The E key bug: the hold pose was written over the wave clip every frame,
+ * so the right arm never arrived and the head came along with it.
+ *
+ * Checked by the shoulder's own angle after the mixer, which is the pose
+ * itself rather than a flag saying what the pose should be, and inside one
+ * continuous wave rather than by comparing two runs: the arm is read with
+ * the hold on and then with it off while the same clip keeps playing. If
+ * the hold is standing down for the clip the two readings are the same
+ * number. With the bug put back they are 1.20 radians apart, which is the
+ * hold angle exactly - it was being subtracted from every frame of the
+ * wave.
+ */
+const arm = await p.evaluate(() => {
+  const body = window.engine.body
+  const shoulder = body.object.getObjectByName('J_ShoulderR')
+  body.stopEmote()
+  body.hold(false)
+  // Standing on the floor first: an earlier check may have left the body in
+  // the air or on a truss, and neither is an arm at rest.
+  window.drive({})
+  window.engine.controller.placeAt(0, 1, 18)
+  window.stepFrames(90)
+  const rest = shoulder.rotation.x
+
+  body.hold(true)
+  window.stepFrames(90)
+  const lifted = shoulder.rotation.x
+
+  window.engine.emote('wave', { loop: true })
+  window.stepFrames(120)
+  const withHold = shoulder.rotation.x
+  const stillHeld = body.held
+
+  body.hold(false)
+  window.stepFrames(90)
+  const without = shoulder.rotation.x
+  const stillEmoting = body.emoted
+
+  body.stopEmote()
+  window.stepFrames(60)
+  return {
+    lift: Math.abs(lifted - rest),
+    apart: Math.abs(withHold - without),
+    stillHeld,
+    stillEmoting,
+  }
+})
+check('the hold pose stands down for an emote instead of pinning the arm',
+  arm.apart < 0.05 && arm.stillEmoting === 'wave',
+  `${arm.apart.toFixed(4)} radians apart, emoting ${arm.stillEmoting}`)
+check('and the hold was never taken off behind the caller\u2019s back',
+  arm.stillHeld === true, `held ${arm.stillHeld}`)
+check('and it does lift the arm when nothing is being emoted',
+  arm.lift > 0.5, `${arm.lift.toFixed(3)} radians of lift`)
+
+
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())

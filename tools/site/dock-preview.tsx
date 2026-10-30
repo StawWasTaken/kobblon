@@ -35,16 +35,22 @@ function Window() {
         'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
         'before:from-brand before:via-brand-bright before:to-space',
         'transition-[height] duration-150',
-        card ? 'h-[33rem]' : 'h-[19rem]',
+        card
+          ? 'h-[calc(50vh+14rem)] min-h-[40rem] max-h-[85vh]'
+          : 'h-[50vh] min-h-[32rem] max-h-[42rem]',
       )}
     >
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-ink-line px-3.5">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-ink-line bg-black/30 px-3.5">
         <span className="grid h-6 w-6 place-items-center rounded-md text-[12px] text-muted">
           <Glyph icon={faUserGroup} />
         </span>
         <span className="flex-1 truncate text-[13px] font-extrabold tracking-wide text-white">Movie night</span>
-        <Glyph icon={faGear} className="text-muted" />
-        <Glyph icon={faXmark} className="text-muted" />
+        <span className="grid h-6 w-6 place-items-center rounded-lg text-[11px] text-white/45">
+          <Glyph icon={faGear} />
+        </span>
+        <span className="grid h-6 w-6 place-items-center rounded-lg text-[11px] text-white/45">
+          <Glyph icon={faXmark} />
+        </span>
       </header>
 
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-2.5 kob-scroll">

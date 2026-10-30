@@ -34,6 +34,9 @@ const engine = new Engine({
 })
 
 Object.assign(window, {
+  // So a check can make a real Object3D and put it in the scene, rather
+  // than borrowing one that is already being followed by the camera.
+  THREE,
   previewOf,
   canPreview,
   supabase,

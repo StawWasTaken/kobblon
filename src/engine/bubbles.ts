@@ -194,6 +194,70 @@ export const BUBBLE_LOOK: BubbleLook = {
  */
 export type BubbleContents = (line: ChatLine) => Node[]
 
+/**
+ * A mark over somebody's head: not something they said, something they are
+ * doing.
+ *
+ * Staw, twice: "we still dont see the voicechat bubblechat ontop of your
+ * head when making noise." The Launcher asked for this in rounds 51 and 53
+ * and was right to ask here rather than build it: this board already owns
+ * the projection. It holds the object, it walks it to screen space inside
+ * `update`, it measures how high somebody reaches rather than assuming a
+ * bare head, and it knows to draw nothing when the camera is inside the
+ * head it is drawing over. A second projector beside this one would read
+ * the same camera a frame late and disagree with it about hats.
+ *
+ * Three rules, which are the ones the Launcher set out:
+ *
+ * - **A mark sits above the stack, not inside it.** It is placed over
+ *   whatever bubbles are there, and it does not expire with them.
+ * - **It never pushes a bubble down.** Marks are positioned off the stack's
+ *   height and add nothing to it, so switching a microphone on cannot move
+ *   somebody's words.
+ * - **It stays until it is taken off.** `unmark` is the only thing that
+ *   ends one, because the thing it stands for - a live microphone - ends
+ *   when the device does and not on a timer.
+ *
+ * The glyph is drawn here rather than handed in, for the same reason the
+ * bubble is: a microphone over a head is part of how a person looks in a
+ * World, so it is one drawing in one place. A window that needs a kind this
+ * build cannot draw asks `MARK_KINDS` first - the same shape as the
+ * Launcher's own `emotes` ask, and for the same reason. An unknown kind is
+ * ignored rather than drawn blank.
+ */
+export type MarkLook = {
+  /** The chip's side, in pixels. */
+  size: number
+  background: string
+  color: string
+  radius: string
+  edge: string
+  shadow: string
+}
+
+export const MARK_LOOK: MarkLook = {
+  size: 26,
+  background: '#ffffff',
+  color: '#101012',
+  radius: '0.32em',
+  edge: '1px solid rgba(16, 16, 18, 0.12)',
+  shadow: '0 10px 24px -14px rgba(0, 0, 0, 0.55)',
+}
+
+/** The gap over the top bubble, which is the gap between two bubbles. */
+const MARK_GAP = 6
+
+/** Filled glyphs, by kind. Font Awesome's solid microphone, as its path. */
+const GLYPHS: Record<string, { box: string; path: string }> = {
+  voice: {
+    box: '0 0 384 512',
+    path: 'M192 0C139 0 96 43 96 96l0 128c0 53 43 96 96 96s96-43 96-96l0-128c0-53-43-96-96-96zM48 184c0-13.3-10.7-24-24-24S0 170.7 0 184l0 40c0 97.9 73.3 178.7 168 190.5l0 49.5-48 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l144 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0 0-49.5c94.7-11.8 168-92.6 168-190.5l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 79.5-64.5 144-144 144S48 303.5 48 224l0-40z',
+  },
+}
+
+/** The kinds this build can draw, so a caller can refuse rather than guess. */
+export const MARK_KINDS = Object.keys(GLYPHS)
+
 type Bubble = {
   line: ChatLine
   element: HTMLElement
@@ -220,6 +284,10 @@ export class BubbleBoard {
   private tops = new Map<THREE.Object3D, { y: number; at: number }>()
   private box = new THREE.Box3()
 
+  /** What is marked over each person, by kind. Nothing here expires. */
+  private marked = new Map<THREE.Object3D, Map<string, HTMLElement>>()
+  private markLook: MarkLook
+
   /**
    * The layer sits over the canvas and never takes a click: a bubble is
    * something you read, not something you press, and one landing over a
@@ -228,8 +296,10 @@ export class BubbleBoard {
   constructor(private canvas: HTMLCanvasElement, options: {
     look?: Partial<BubbleLook>
     contents?: BubbleContents
+    mark?: Partial<MarkLook>
   } = {}) {
     this.look = { ...BUBBLE_LOOK, ...options.look }
+    this.markLook = { ...MARK_LOOK, ...options.mark }
     this.contents = options.contents ?? null
 
     this.layer = document.createElement('div')
@@ -363,6 +433,79 @@ export class BubbleBoard {
   }
 
   /**
+   * Put a mark over somebody, and leave it there.
+   *
+   * `who` is the same object a bubble goes over. `kind` is one of
+   * `MARK_KINDS`; anything else is ignored, because a chip with nothing in
+   * it is worse than no chip. Marking the same kind twice does nothing, so
+   * a caller may say it every frame if that is easier than tracking it.
+   */
+  mark(who: THREE.Object3D, kind: string) {
+    const glyph = GLYPHS[kind]
+    if (!glyph) return
+
+    const already = this.marked.get(who)
+    if (already?.has(kind)) return
+
+    const look = this.markLook
+    const element = document.createElement('div')
+    element.className = `kob-mark kob-mark-${kind}`
+    Object.assign(element.style, {
+      position: 'absolute',
+      left: '0',
+      top: '0',
+      width: `${look.size}px`,
+      height: `${look.size}px`,
+      display: 'grid',
+      placeItems: 'center',
+      borderRadius: look.radius,
+      background: look.background,
+      border: look.edge,
+      boxShadow: look.shadow,
+      font: BUBBLE_LOOK.font,
+      transform: 'translate(-50%, -100%)',
+      transition: 'opacity 180ms ease',
+      opacity: '0',
+    })
+
+    const drawing = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    drawing.setAttribute('viewBox', glyph.box)
+    drawing.setAttribute('fill', look.color)
+    drawing.setAttribute('aria-hidden', 'true')
+    Object.assign(drawing.style, {
+      width: `${Math.round(look.size * 0.52)}px`,
+      height: `${Math.round(look.size * 0.52)}px`,
+      display: 'block',
+    })
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    line.setAttribute('d', glyph.path)
+    drawing.appendChild(line)
+    element.appendChild(drawing)
+
+    this.layer.appendChild(element)
+    requestAnimationFrame(() => { element.style.opacity = '1' })
+
+    const marks = already ?? new Map<string, HTMLElement>()
+    marks.set(kind, element)
+    this.marked.set(who, marks)
+  }
+
+  /** Take one off. The only thing that ends a mark. */
+  unmark(who: THREE.Object3D, kind: string) {
+    const marks = this.marked.get(who)
+    const element = marks?.get(kind)
+    if (!marks || !element) return
+    this.fadeOut(element)
+    marks.delete(kind)
+    if (!marks.size) this.marked.delete(who)
+  }
+
+  /** Which marks are on somebody right now. */
+  marksOn(who: THREE.Object3D): string[] {
+    return [...(this.marked.get(who)?.keys() ?? [])]
+  }
+
+  /**
    * Position every bubble, once a frame.
    *
    * `hide` is how first person works: your own bubbles are not drawn over
@@ -374,7 +517,16 @@ export class BubbleBoard {
     const height = this.canvas.clientHeight
     camera.getWorldPosition(this.toward)
 
-    for (const [who, stack] of this.over) {
+    /*
+     * Both maps, because a mark does not come with a bubble. Somebody with
+     * a live microphone and nothing said is not in `over` at all, and a
+     * loop over bubbles alone is how a mark would be placed once and then
+     * left behind by the head it belongs to.
+     */
+    const subjects = new Set<THREE.Object3D>([...this.over.keys(), ...this.marked.keys()])
+
+    for (const who of subjects) {
+      const stack = this.over.get(who) ?? []
       for (const bubble of [...stack]) {
         if (now > bubble.until) {
           this.drop(bubble)
@@ -383,8 +535,12 @@ export class BubbleBoard {
       }
       if (!stack.length) {
         this.over.delete(who)
-        this.tops.delete(who)
-        continue
+        // A mark holds the measurement open: it is still being drawn over
+        // this head whether or not anything was said.
+        if (!this.marked.has(who)) {
+          this.tops.delete(who)
+          continue
+        }
       }
 
       who.getWorldPosition(this.middle)
@@ -444,6 +600,34 @@ export class BubbleBoard {
 
         lift += bubble.element.offsetHeight * size + 6
       }
+
+      /*
+       * The marks, over the top of all of it.
+       *
+       * `lift` is read rather than added to, which is the rule: a mark is
+       * placed above whatever height the stack reached and contributes
+       * nothing to it, so switching a microphone on never moves anybody's
+       * words. Several sit in a row rather than a column, because a column
+       * of chips over a head is a tower and there are only ever a couple.
+       */
+      const marks = this.marked.get(who)
+      if (marks?.size) {
+        const x = (at.x * 0.5 + 0.5) * width
+        const y = (-at.y * 0.5 + 0.5) * height - lift - (lift > 0 ? MARK_GAP : 0)
+        const side = this.markLook.size + 4
+        const spread = (marks.size - 1) * side * 0.5
+        let i = 0
+        for (const element of marks.values()) {
+          const style = element.style
+          if (!shown) { style.opacity = '0'; i += 1; continue }
+          const across = (i * side - spread) * near
+          style.transform =
+            `translate3d(${(x + across).toFixed(1)}px, ${y.toFixed(1)}px, 0)`
+            + ` translate(-50%, -100%) scale(${near.toFixed(3)})`
+          style.opacity = heard.toFixed(3)
+          i += 1
+        }
+      }
     }
   }
 
@@ -452,19 +636,29 @@ export class BubbleBoard {
     for (const bubble of this.over.get(who) ?? []) this.drop(bubble)
     this.over.delete(who)
     this.tops.delete(who)
+    // Marks too. A mark never expires, so leaving somebody out of this is
+    // a microphone drawn for ever over a head that has gone.
+    for (const element of this.marked.get(who)?.values() ?? []) this.fadeOut(element)
+    this.marked.delete(who)
   }
 
   clear() {
     for (const stack of this.over.values()) for (const bubble of stack) this.drop(bubble)
     this.over.clear()
     this.tops.clear()
+    for (const marks of this.marked.values()) for (const element of marks.values()) this.fadeOut(element)
+    this.marked.clear()
   }
 
   private drop(bubble: Bubble) {
-    bubble.element.style.opacity = '0'
+    this.fadeOut(bubble.element)
+  }
+
+  private fadeOut(element: HTMLElement) {
+    element.style.opacity = '0'
     // Let it fade rather than blink out. Removing the node is what matters;
     // when that happens is not.
-    setTimeout(() => bubble.element.remove(), 200)
+    setTimeout(() => element.remove(), 200)
   }
 
   dispose() {

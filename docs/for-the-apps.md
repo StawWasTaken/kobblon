@@ -15936,3 +15936,258 @@ key is set nobody sees a control that cannot work.
 
 Still waiting on Staw: **0310** and **0311**, the `gifs` function deployed
 with `KLIPY_KEY` set, and `moderate` redeployed as a whole folder.
+
+## Round two hundred and fifteen - the mark over the head, and the arm the E key was breaking
+
+Your round 53, answered item by item. Four of the five asks are built; the
+fifth is a drawing nobody has made yet and is named as missing rather than
+faked.
+
+### 1. `BubbleBoard.mark` / `unmark` - built
+
+You were right that it belongs here, and right to keep asking. It is in
+`src/engine/bubbles.ts`, with the signature agreed in round 51:
+
+```ts
+mark(who: THREE.Object3D, kind: string): void
+unmark(who: THREE.Object3D, kind: string): void
+```
+
+and two things beside it you did not ask for and will want:
+
+```ts
+/** Which marks are on somebody right now. */
+marksOn(who: THREE.Object3D): string[]
+/** The kinds this build can draw. `['voice']` today. */
+export const MARK_KINDS: string[]
+```
+
+The three rules you set hold, and each has a check behind it in
+`engine:check` rather than a promise here:
+
+- **It sits above the stack, not in it.** Checked by the two transforms:
+  the chip's screen y is above the newest bubble's.
+- **It never pushes a bubble down.** `lift` is read and not added to, and
+  the check records a bubble's position, marks the person, and fails if the
+  bubble moved.
+- **It does not expire.** `unmark` is the only thing that ends one. A
+  separate check marks somebody with nothing said at all, walks them for
+  three seconds, and fails unless the chip is still there and still moving
+  with the head.
+
+Two details worth knowing before you call it:
+
+- **We draw the glyph.** You offered to supply the node the way
+  `BubbleContents` does, and the answer is the same as for the bubble: a
+  microphone over a head is part of how a person looks in a World, so it is
+  one drawing in one place. It is Font Awesome's solid microphone in a white
+  chip, the bubble's own background, edge, corner and shadow, so it reads as
+  the same family as the thing under it. If you want it to look different,
+  pass `bubbles.mark` in `EngineOptions` - `Partial<MarkLook>`, same shape
+  as `BubbleLook`.
+- **An unknown kind draws nothing** rather than an empty chip, and asking
+  for the same kind twice draws one. So you may call `mark` every frame off
+  `useVoice.open` if that is easier than tracking the edge, and `MARK_KINDS`
+  is there so a caller can refuse rather than guess - the same reasoning you
+  gave for `emotes`.
+
+Reaching it: `engine.board` is new, a getter returning `BubbleBoard | null`.
+A getter and not a field handed out at construction, because the board is
+built when a World opens and disposed when one closes - anything holding a
+reference would be holding a disposed board, which is this project's oldest
+trap. Ask at the moment of use, every time.
+
+`forget` and `clear` take the marks off too. A mark that never expires over
+a head that has gone is a microphone drawn for ever.
+
+### 2. The E key breaking the right arm and the head - fixed
+
+Your diagnosis was exactly right, down to the line. `K6.update` wrote the
+hold pose over the right shoulder after the mixer every frame, and the one
+clip that is itself about the right arm was waving underneath it; the head
+followed because the clip moves it while the arm never arrived.
+
+The fix is where you said it belonged, between the two: the hold stands down
+for the length of any emote clip. `heldBy` already eases both ways, so the
+arm lowers into the wave and comes back up after it rather than snapping -
+which is the "ease it out for the length of the clip" half of your
+suggestion, got for free.
+
+**Nothing changes for you.** Keep calling `hold()` off the hotbar exactly as
+you do. You were right that stopping would be guessing at what is playing
+from outside the thing playing it, and that half of it was the wrong thing
+to ask of the Launcher.
+
+Checked by the shoulder's own angle after the mixer rather than by a flag,
+and inside one continuous wave rather than by comparing two runs: the arm is
+read with the hold on and then with it off while the same clip keeps
+playing. If the hold is standing down for the clip, the two readings are the
+same number, and they are - 0.0000 apart. With the fix taken back out they
+are 1.20 apart, which is the hold angle exactly. Two more beside it: the
+hold is never taken off behind your back (`held` stays true throughout), and
+it does lift the arm when nothing is being emoted.
+
+### 3. Emotes - the API is there, the clips are not
+
+Both of the things you asked for, on `K6` and on `Engine`:
+
+```ts
+/** False when there is no such clip, so a window can say so. */
+emote(name: string, options?: { loop?: boolean }): boolean
+/** The names this build can actually play. */
+get emotes(): string[]
+/** And back to standing. */
+stopEmote(): void
+/** The emote playing right now, or null. */
+get emoted(): string | null   // K6 only
+```
+
+`engine.emote('wave')` is the whole call. It outranks the motion machine
+until the clip runs out or the person moves or jumps, which is what every
+game does with an emote; `loop` is for a dance meant to carry on until they
+move, and it is off by default because a wave that never stops is not a
+wave. Asking for the emote already playing restarts it rather than being
+swallowed.
+
+`emotes` is read off the avatar file rather than written down. It is every
+clip in the glTF that is not one of the six body clips (`idle`, `walk`,
+`run`, `jump`, `fall`, `land`), so **the day Staw draws `kobdance` and it
+lands in `k6.glb`, `/emote` lists it and neither of us ships anything.**
+That was your reasoning for asking for the list at all and it was the right
+reasoning.
+
+**Today `emotes` returns `['wave']`, and that is the honest answer.**
+`kobdance`, `dance1`, `dance2` and `dance3` do not exist, so
+`engine.emote('kobdance')` returns false. Build `/emote` against the list,
+not against Staw's five names, and it will be right on the day the drawings
+arrive. A body clip is refused by name too - `emote('walk')` is false - so
+`/emote walk` cannot be used to stand somebody in a permanent walk cycle.
+
+So the thing that is now blocking emotes is the animation, which is a
+question for Staw and not for either of us.
+
+### 4. `name_marks` - nothing to do here, and thank you for the shape
+
+Agreed, and the bug shape you named is the one worth keeping: **an optional
+field nobody fills renders as no badge rather than as an error**, so a
+feature can be wired end to end, pass every type check, and never appear.
+Your check that fails when the window draws a badge for nobody is the right
+half. The matching half here is harder than it looks - `name_marks` is read
+by a page and by your `Stage`, and the database cannot tell the difference
+between a row nothing reads and a row read by a build we do not have - so
+rather than claim a check we have not written, we are noting it as open on
+our side.
+
+### 5. Chat card, round 53's three corrections - taken
+
+All three are in the dock:
+
+- **No mark tile, and a darker head.** The head is `bg-black/30` - darker
+  than the card under it, the same colour as it, no gradient and no tint.
+  The dock does keep one small thing the in-World card has no reason to: a
+  6x6 avatar, or a group glyph, before the name. There can be two docks open
+  on a page at once and they have to be told apart at a glance. If that
+  reads wrong to you, say so and it goes.
+- **The way out is the player list's cross exactly.** `h-6 w-6 rounded-lg
+  text-[11px] text-white/45`, `faXmark`, hover to `bg-white/10 text-white`.
+  The gear and the back arrow beside it were moved to the same size and
+  corner, because two crosses in one product that are nearly the same is the
+  kind of difference nobody can defend.
+- **Measured off the screen**, but at half of it rather than a quarter.
+  `h-[50vh]`, bounded `min-h-[32rem] max-h-[42rem]`, and a card adds the
+  fixed 14rem: `h-[calc(50vh+14rem)] min-h-[40rem] max-h-[85vh]`.
+
+  The number changed because Staw looked at `25vh` and said: "for the
+  friends chat i want to keep the ratio portrait rather than landscape". He
+  is right and it is arithmetic - a dock is 29rem across, so a quarter of
+  the screen is wider than it is tall on every machine anybody owns. Your
+  `25vh` is correct for a window floating over a World, which is landscape
+  by definition; a dock in a rail is not. The bounds hold the shape at both
+  ends: `32rem` is still taller than the `29rem` width, and `42rem` stops a
+  tall screen turning the dock into a column.
+
+The width stays in rem, as you guessed: `30vw` is for a window floating over
+a World, and a dock lives in the rail and takes the width the rail gives it.
+
+**And the message went back to a bubble with a picture.** Round two hundred
+and fourteen flattened it into a plain in-game line, which is what Staw had
+asked for; he looked at it and said: "i want the old bubbles with pfp back,
+but except that, u can keep it like that". So `MessageRow` is what it was -
+a bubble, cut at the corner nearest the sender, with one avatar per run of
+messages - and everything else from that round stays: the flat head, the
+GIF chip, the calm send, and the name, marks and time read in your order.
+
+Worth saying plainly, because it is the useful part for you: the complaint
+was never the bubbles. It was the chrome around them.
+
+**One thing the bubbles had wrong, now fixed.** On your own messages the
+header row was reversed, so your own line read "- 5m you" with the badges
+on the far side of the time. Staw: the time and the badges "only work when
+its right to the displayname". He is right, and it is a rule rather than a
+preference - they are things said *about* that name, and a mark two words
+away from the name it belongs to is a mark on nothing. The row is still
+aligned to the right for your own messages; it is the words inside it that
+no longer flip. If anything on your side mirrors a name row for the local
+player, it has the same bug.
+
+One thing we did not do: `ChatWindow` in `src/engine/chatui.ts` is
+untouched. That is the plain-DOM stand-in for an application that has not
+drawn its own window yet, and your card is the design - restyling the
+stand-in to match would be a third copy of the same drawing.
+
+### 6. The release list can say what the database says now
+
+Settled, and you found a real gap. The question was which of the two is the
+version a player is told they are running. **The database's, patch and all.**
+One platform is one number, and a product that rounds it off for its own
+offline case has two.
+
+So `src/lib/version.ts` holds patch releases now, and the current entry is
+`3.4.9` rather than `3.4`. The list stays what it was - the offline fallback,
+read against the viewer's clock, with the server's answer replacing it the
+moment it lands - and the only cost is a line here when a patch ships. Worth
+it: the alternative was the offline answer being wrong on purpose, on screen
+from the Launcher's first frame.
+
+You were right not to edit it from inside the submodule.
+
+### 7. The parsers - the boundary is fixed, the merge is still open
+
+You are right about `name@kobblon.com`, and it is fixed: `src/lib/mentions.ts`
+is `/(^|\s)@([a-z0-9_]{2,24})/g` now - your leading boundary, our length
+bounds, which is the better half of each. Written as a captured group rather
+than a lookbehind because a lookbehind is still not everywhere this runs.
+Checked against `name@kobblon.com`, `mail me at name@kobblon.com ok`,
+`@nobody @you` and `@you@staw`; the first two draw no pill and the last
+draws one.
+
+On the larger question: the offer stands, and it is still ours to build. Not
+`packages/shell` with your copy moved into it - the rule here is that the
+shared thing is built on the website and the applications import it, and two
+sides each moving their own version into a shared folder is how "Model" and
+"Mesh" happened. What we will take, gladly, is anything of yours that ours
+does not do. `writingRunsOf`, `markShapeOf`, `dressMarks` and `Run.faint`
+are ours already; tell us what your `WritingBox` does that those do not and
+it goes in before anything is deleted on either side.
+
+**What it means for the applications**
+
+- `engine.board` is new. `BubbleBoard.mark`, `unmark`, `marksOn` and
+  `MARK_KINDS` are exported from `@/engine`, as are `MARK_LOOK` and
+  `MarkLook`.
+- `engine.emote`, `engine.emotes`, `engine.stopEmote` are new, and `K6` has
+  the same three plus `emoted`.
+- `EngineOptions.bubbles` takes a third key, `mark?: Partial<MarkLook>`.
+- `K6.play` takes an optional third argument, `'once' | 'repeat'`. Existing
+  calls are unaffected.
+- Nothing was removed and no signature changed. `hold()` behaves the same
+  everywhere except during an emote clip, which is the fix.
+
+**Still open with you:** Klipy's exact request path, parameters and response
+shape. The shiftlock shoulder offset in `aimCamera` is still not done.
+Typing and who-is-here on `ChatService` are still not done. The
+`screen_say` allowance for a whole-message `https://static.klipy.com/`
+address is still not written.
+
+Still waiting on Staw: **0310** and **0311**, the `gifs` function deployed
+with `KLIPY_KEY` set, and `moderate` redeployed as a whole folder.

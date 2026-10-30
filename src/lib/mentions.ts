@@ -12,8 +12,20 @@
  * link to nowhere wearing Kobblon blue.
  */
 
-/** A mention is an `@` and a username, which is what usernames are made of. */
-const WORD = /@([a-z0-9_]{2,24})/gi
+/**
+ * A mention is an `@` and a username, which is what usernames are made of.
+ *
+ * The leading boundary is not decoration, and the other session is right
+ * that it was missing: without it `name@kobblon.com` draws `@kobblon` as a
+ * pill, and somebody will type an address into a dock. So an `@` counts
+ * only at the start of the text or after a space - a mention is a word
+ * somebody began, not a character found inside one.
+ *
+ * Written as a captured group rather than a lookbehind because a lookbehind
+ * is still not everywhere this runs; `hit[1]` is the boundary and `hit[2]`
+ * is the name.
+ */
+const WORD = /(^|\s)@([a-z0-9_]{2,24})/g
 
 export type Bit =
   | { text: string }
@@ -37,11 +49,13 @@ export function mentionBits(
   WORD.lastIndex = 0
 
   for (let hit = WORD.exec(text); hit; hit = WORD.exec(text)) {
-    const name = hit[1].toLowerCase()
+    const name = hit[2].toLowerCase()
     if (!known(name)) continue
-    if (hit.index > last) bits.push({ text: text.slice(last, hit.index) })
-    bits.push({ text: hit[0], at: hit[1], me: Boolean(mine) && name === mine?.toLowerCase() })
-    last = hit.index + hit[0].length
+    // The boundary belongs to the text before the pill, not to the pill.
+    const at = hit.index + hit[1].length
+    if (at > last) bits.push({ text: text.slice(last, at) })
+    bits.push({ text: `@${hit[2]}`, at: hit[2], me: Boolean(mine) && name === mine?.toLowerCase() })
+    last = at + hit[2].length + 1
   }
 
   if (last < text.length) bits.push({ text: text.slice(last) })

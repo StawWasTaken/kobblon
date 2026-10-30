@@ -1,5 +1,6 @@
 /*
- * The chat bubble, over a bright World and a dark one.
+ * The chat bubble and the mark over a head, over a bright World and a dark
+ * one.
  *
  * BubbleBoard draws into the canvas's parent and positions by projecting a
  * point, so the only honest way to look at it is with a real camera and a
@@ -41,12 +42,23 @@ function board(holder: HTMLElement, light: boolean) {
     bubbles.add(who, line)
   })
 
+  /*
+   * And the voice mark, which is the thing to look at here: above the
+   * stack, not in it, and still drawn on the head with nothing said.
+   */
+  bubbles.mark(who, 'voice')
+
+  const quiet = new THREE.Object3D()
+  quiet.position.set(3.2, -12, 0)
+  bubbles.mark(quiet, 'voice')
+
   const tick = () => {
     camera.aspect = (canvas.clientWidth || 2) / (canvas.clientHeight || 1)
     camera.updateProjectionMatrix()
     // Nothing is in a scene here, so nobody else updates these.
     camera.updateMatrixWorld(true)
     who.updateMatrixWorld(true)
+    quiet.updateMatrixWorld(true)
     bubbles.update(camera)
     requestAnimationFrame(tick)
   }

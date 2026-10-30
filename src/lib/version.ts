@@ -43,19 +43,34 @@ import { useEffect, useState } from 'react'
  * Adding one: put it at the top with the day it starts. The list is read
  * downwards and the first one that has begun wins, so it stays in date
  * order, newest first.
+ *
+ * **Patch releases belong in it.** The Launcher found the gap in round 53:
+ * this list topped out at `3.4` while `platform_version()` answered
+ * `3.4.9`, so nobody online ever saw anything wrong and the one person who
+ * opened the Launcher with no connection was quietly told a different
+ * number - and the version is in the Launcher's title bar now, so it is on
+ * screen from the first frame rather than buried in Help.
+ *
+ * The question they asked with it - which of the two is the version a
+ * player is told they are running - is settled here: **the database's,
+ * patch and all.** One platform is one number, and a product that rounds it
+ * off for its own offline case has two. So an entry holds whatever the
+ * database would answer on that day, `3.4.9` included, and the only cost is
+ * a line here when a patch ships. That line is worth it: the alternative is
+ * the offline answer being wrong on purpose.
  */
 const releases: { from: string; name: string }[] = [
   { from: '2026-12-01', name: '3.5' },
-  { from: '2026-10-01', name: '3.4' },
+  { from: '2026-10-01', name: '3.4.9' },
 ]
 
-/** The current platform version, as `3.4`. */
+/** The current platform version, as `3.4.9`. */
 export function platformVersion(now: Date = new Date()): string {
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   return (releases.find((one) => one.from <= today) ?? releases[releases.length - 1]).name
 }
 
-/** The current platform version, as `V3.4`, which is how Staw writes it. */
+/** The current platform version, as `V3.4.9`, which is how Staw writes it. */
 export function platformVersionLabel(now: Date = new Date()): string {
   return `V${platformVersion(now)}`
 }
