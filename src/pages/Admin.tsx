@@ -164,6 +164,18 @@ const rankLook: Record<StaffRank, string> = {
  *   * **Map** came down to admin. It counts by zone and names nobody, so it
  *     is not dangerous; it is also nothing a moderator working a queue
  *     needs.
+ *
+ * And two more went up, with 0311 saying it in the database:
+ *
+ *   * **Version** - it decides the number the website, the Launcher and
+ *     the Workspace all call themselves, and the Launcher updates against
+ *     it. A wrong date here is every machine on the platform being told it
+ *     is out of date.
+ *   * **Portraits** - one press tells every browser on Kobblon that every
+ *     stored face is stale. It is one statement and a day of redrawing.
+ *
+ * Staw asked for both, and both fit the superadmin band as it is written
+ * above: nothing here is undone by apologising afterwards.
  */
 const sections: {
   name: Section
@@ -195,8 +207,8 @@ const sections: {
   { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'superadmin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'moderator', blurb: 'What staff have done' },
-  { name: 'Version', icon: faCodeBranch, needs: 'admin', blurb: 'What the website, the Launcher and the Workspace all call this' },
-  { name: 'Portraits', icon: faUserCheck, needs: 'admin', blurb: 'Have every profile picture drawn again from the avatar it belongs to' },
+  { name: 'Version', icon: faCodeBranch, needs: 'superadmin', blurb: 'What the website, the Launcher and the Workspace all call this' },
+  { name: 'Portraits', icon: faUserCheck, needs: 'superadmin', blurb: 'Have every profile picture drawn again from the avatar it belongs to' },
   { name: 'Shutters', icon: faScrewdriverWrench, needs: 'superadmin', blurb: 'Put the whole website behind a maintenance notice' },
 ]
 
@@ -5602,8 +5614,12 @@ export default function Admin() {
             {open === 'Announce' && <AnnounceSection />}
             {open === 'Words' && <WordsSection />}
             {open === 'Record' && <RecordSection />}
-            {open === 'Version' && <VersionSection />}
-            {open === 'Portraits' && <PortraitsSection />}
+            {/* Gated here as well as in the rail: `open` is normally set
+                from the filtered list, but a shortcut on the Overview sets
+                it directly, and one added later should not be the thing
+                that reopens a superadmin panel for an admin. */}
+            {open === 'Version' && allowed(rank, 'superadmin') && <VersionSection />}
+            {open === 'Portraits' && allowed(rank, 'superadmin') && <PortraitsSection />}
             {open === 'Shutters' && <ShuttersSection />}
           </RankContext.Provider>
         </div>

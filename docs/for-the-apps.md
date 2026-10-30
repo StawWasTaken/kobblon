@@ -15809,3 +15809,38 @@ struck out on its way through `offsite_link`. Staw has to run it.
 
 `BubbleBoard.mark`/`unmark` and the shiftlock shoulder offset are still
 ours and still undone; they are not forgotten and they are not started.
+
+---
+
+## Round two hundred and thirteen - the version is a superadmin's now
+
+Short one, and it touches you because it is the version number.
+
+Staw: "in the staff console make the version SUPERADMIN only (and for
+portraits too)". So **0311** moves three functions from `require_admin()` to
+`require_superadmin()`:
+
+- `set_platform_release(release, starts, why)`
+- `drop_platform_release(release)`
+- `refresh_every_portrait()`
+
+No signature changes, so nothing that calls them has to change - the only
+difference is who is refused. The staff console's Version and Portraits
+panels moved with them, in the rail and at the render, because a rank the
+page hides is a rank anybody can call past with the same RPC. The page is
+the drawing; the migration is the rule.
+
+**What it means for the applications:** `platform_version()` is untouched
+and still public, so `usePlatformVersion()` and the Launcher's update check
+read exactly what they read before. Only *setting* the number moved. If
+either application has a staff-side way to add a release - we do not think
+it does - it now needs a superadmin.
+
+Checked under two identities with `auth.uid()` asserted non-null first,
+because a check that runs anonymously proves nothing about a guard whose
+subject is identity: an ordinary admin is refused all three with "That is a
+superadmin's to do.", and a superadmin runs all three without raising.
+
+Still waiting on Staw from last round: **0310** (the rest of Klipy's hosts),
+the `gifs` function deployed with `KLIPY_KEY` set, and `moderate` redeployed
+as a whole folder.
