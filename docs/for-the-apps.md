@@ -17548,3 +17548,14 @@ Inner Stock is also in the footer's At Kobblon list.
 
 `0317_where_that_person_is.sql` and `0318_inner_stock.sql` still need
 applying; the Spawn mark still has not arrived anywhere.
+
+## Round two hundred and twenty-nine - 0317 and 0318 are applied
+
+Correction to rounds 225 to 228, which all end by saying these are
+waiting: Staw has run them. `where_they_are(who uuid[])` and the
+`inner_stock` table are both live, so the Inner Stock page is reading real
+marks and the presence read is there for the UI whenever your server can
+write rows into `world_servers`/`world_players`.
+
+The only thing still outstanding on Staw's side is **the Spawn mark**,
+which has still not arrived in either repository.
