@@ -47,6 +47,32 @@ window.fetch = (input, init) => {
       headers: { 'content-type': 'application/json' },
     }))
   }
+  /*
+   * The sticker list, answered here for the same reason as the GIFs: the
+   * card and the composer's button are both drawn off
+   * `public.pictures_by_name`, and a bare page has no session to read it
+   * with. The rows are the nine real ones and the pictures are the real
+   * files out of `public/`, so what is on screen is the actual card
+   * drawing Staw's actual drawings.
+   */
+  if (where.includes('/rest/v1/pictures_by_name')) {
+    const rows = [
+      'excited', 'embarrassed', 'worried', 'smug', 'dizzy',
+      'relieved', 'pleading', 'unimpressed', 'determined',
+    ].map((word, at) => ({
+      name: `plunk-${word}`,
+      pack: 'plunk',
+      label: `Plunk, ${word}`,
+      picture: `/stickers/plunk/${word}.png`,
+      small: `/stickers/plunk/${word}.webp`,
+      draws: 'alone',
+      sort: at + 1,
+    }))
+    return Promise.resolve(new Response(JSON.stringify(rows), {
+      headers: { 'content-type': 'application/json' },
+    }))
+  }
+
   return realFetch(input as RequestInfo, init)
 }
 
@@ -172,6 +198,14 @@ function Window() {
         <MessageRow
           message={say(4, 'https://static.klipy.com/preview/one.gif', 60_000)}
           sender={mine} mine people={people} me="you"
+          onEdit={nothing} onDelete={nothing}
+        />
+        {/* A sticker, which is a message that is one token and nothing
+            else. Beside the GIF on purpose: the two sit in the same
+            conversation and the sticker should not be the louder of them. */}
+        <MessageRow
+          message={say(5, ':plunk-smug:', 20_000)}
+          sender={them} people={people} me="you"
           onEdit={nothing} onDelete={nothing}
         />
       </div>

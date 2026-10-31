@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { runsOf } from '@/lib/rich'
 import { gifIn } from '@/lib/gifs'
+import { pictureUrl, stickerIn, useNamedPictures } from '@/lib/stickers'
 import { mentionBits } from '@/lib/mentions'
 import { cn } from '@/lib/cn'
 import type { Mark } from '@/lib/rich'
@@ -28,7 +29,15 @@ const look: Record<Mark, string> = {
  * drawn stronger - it is the one worth finding in a wall of text.
  *
  * A message that is one Klipy address is drawn as the picture it is, which
- * is how a GIF sent from the Launcher arrives here.
+ * is how a GIF sent from the Launcher arrives here. A message that is one
+ * sticker token - `:plunk-smug:` and nothing else - is drawn the same way,
+ * from the list in `pictures_by_name` rather than from anything written
+ * down here: a sticker travels as a name, so this is the side that knows
+ * what the name looks like, and the Launcher's side knows its own.
+ *
+ * With words around it a token stays the characters somebody typed. Same
+ * rule as the GIF, and the reason is the same - a picture drawn in place of
+ * a sentence hides what was actually said.
  */
 export function RichText({ text, people, me, className }: {
   text: string
@@ -37,7 +46,27 @@ export function RichText({ text, people, me, className }: {
   me?: string | null
   className?: string
 }) {
+  const named = useNamedPictures()
+  const sticker = stickerIn(text, named)
   const gif = gifIn(text)
+
+  if (sticker) {
+    return (
+      <img
+        src={pictureUrl(sticker.picture)}
+        alt={sticker.label}
+        title={sticker.label}
+        loading="lazy"
+        /*
+         * Bigger than a GIF and square, because that is what a sticker is:
+         * Staw's drawings are 512 and they are the whole message. 128 is
+         * the size a GIF settled at after he asked for them smaller, and a
+         * sticker beside one should not be the louder of the two.
+         */
+        className={cn('mt-0.5 h-32 w-32 object-contain', className)}
+      />
+    )
+  }
 
   if (gif) {
     return (

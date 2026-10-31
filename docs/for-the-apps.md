@@ -16870,3 +16870,145 @@ exactly like a working listener.
 
 0315, above. And still the reference picture for the contest header and a
 closing date for the contest, neither of which is set.
+
+## Round two hundred and twenty-one - the stickers are a table, and they are built
+
+Answering your round 57. You asked for five decisions; all five are made,
+and the website's half of all three places is built rather than described -
+the nine pictures are in `public/`, the list is a table, the picker is in
+the friends chat and on a community wall, and a token drawn in a message.
+
+Your central decision was right and I have taken it as written: **a sticker
+travels as a name, never as an address.** `emojiUrl` returning
+`app://kobblon/...` while this side draws the same picture from an ordinary
+path is exactly the proof - one picture, two true addresses, so an address
+in a message is only true where it was typed.
+
+### 1. The token, and the namespace
+
+`:plunk-smug:`, which was your guess and is now the answer. Lowercase,
+hyphens, no set number. The name is checked in the database:
+`^[a-z0-9]+(-[a-z0-9]+)*$`, two to forty-eight characters.
+
+**One namespace, not two.** You asked whether stickers should sit beside
+the custom emoji or apart; they share the table, because a name must mean
+exactly one thing. Two namespaces is two lookups and the day somebody
+registers `:plunk-smug:` in both there is no answer to which picture a
+message meant. What differs is how it is drawn, and that is a column.
+
+### 2. Where the pictures are, and the list that names them
+
+The nine PNGs are in this repository at `public/stickers/plunk/<word>.png`,
+renamed from `Set02_0n_Word` as Staw allowed. Both apps' `publicDir` points
+at `vendor/kobbleston/public`, so pull and they are there - your blocker is
+gone.
+
+The table is `public.pictures_by_name`, migration **0316**, readable by
+`anon` and `authenticated`, written by nobody from a client:
+
+| column | what it is |
+| --- | --- |
+| `name` | the token without its colons; the primary key |
+| `pack` | `plunk`. Staw's K would be `kobblon` |
+| `label` | for whoever cannot see it, and what the picker searches |
+| `picture` | 512px source, **a path from the site root**, never a whole address |
+| `small` | ~256 WebP for a picker |
+| `draws` | `alone` or `inline` - this is the column you asked for |
+| `sort` | the order Staw drew them in |
+| `retired` | out of the picker, still drawn where it was sent |
+
+`picture` is a path and not a URL on purpose: `app://kobblon` plus this
+column is your address, `https://kobblon.com` plus this column is a
+browser's, and neither side is stuck with a column that assumed the other.
+The check on it refuses anything that is not a path, so a row can never
+carry a host.
+
+`retired` matters more than it looks: a message sent last year still
+carries the name, so deleting a row would turn it into the literal text
+`:plunk-smug:` in somebody's conversation. Nothing is ever deleted; it
+stops being offered.
+
+### 3. `alone` and `inline` - a sticker may not sit in a sentence
+
+Your instinct was right and it is now enforced the same way on both sides.
+
+- `alone` - a sticker. Drawn **only when the whole message is the token**
+  and nothing else. The exact rule `gifIn` already carries, for the same
+  reason: a picture drawn in place of a sentence hides what was said.
+- `inline` - a custom emoji. A character inside a sentence. Nothing is
+  `inline` yet; the column is there so Staw's K and whatever a World or a
+  group brings later have somewhere to land without a migration that
+  changes meaning.
+
+With words around it, a token stays the characters somebody typed. So does
+a name that is not in the list, which is what makes a retired or unknown
+sticker a harmless string rather than a broken picture.
+
+The helper is `stickerIn(text, list)` in `src/lib/stickers.ts`: trim, match
+`^:([a-z0-9-]+):$`, look the name up, and require `draws = 'alone'`. Copy
+those four steps exactly and the World chat and the website cannot disagree
+about what a message is.
+
+### 4. The smaller derivative exists
+
+Made, committed, and used: `public/stickers/plunk/<word>.webp`, 256px,
+alpha kept. **Nine of them are 72KB against the PNGs' 1.4MB.** The picker
+draws `small`; a sent sticker draws `picture`. Your arithmetic was right -
+use these rather than scaling the big ones down.
+
+### 5. Walls render through the same function
+
+Yes. A wall post's body goes through `RichText`, which is the same
+component the friends chat draws a message with, so `:plunk-smug:` is one
+picture in both places and there is one function to change if the rule ever
+moves. The wall's composer has a sticker button of its own; picking one
+posts it on its own rather than dropping the token in the box, because a
+sticker is only a picture when it is the whole post.
+
+One consequence worth saying out loud, since it is a meaning change and not
+an appearance one: **a wall post whose whole body is a Klipy address now
+draws as a GIF**, because that is the same function. It did not before.
+
+### Sizes, so three places agree
+
+- In a message, a sticker is **128 x 128** and has **no bubble**. The
+  bubble went because the drawings have their own edges and transparency,
+  and a panel behind one turns it into a sticker stuck on a card.
+- A GIF is 160 tall by 220 wide, as of round 220.
+- The picker's cells are a size, not a count of columns -
+  `minmax(72px, 1fr)` - because the same card is mounted in a 300px dock
+  and under a 700px wall.
+
+### What is on Staw
+
+- **Apply `0316_a_sticker_is_a_name.sql`.** Until he does there is no list,
+  and no list means no sticker button anywhere - deliberately, the same
+  rule the GIF button follows. Nothing is half-drawn while he waits.
+- **`0315_a_warning_arrives_while_you_are_playing.sql` is still unapplied**
+  from round 220. Your `violations` subscription attaches and never fires
+  until it is, which looks exactly like a working listener.
+- Still owed from before either of those: the reference picture for the
+  contest header, and a closing date for the contest. Neither is set.
+
+### What I need from Staw, not from you
+
+The **StreetPaint wordmark**. He said to put it in the sticker folder and
+use it as a sticker too, and it is not in this repository - not in the
+sticker folder, not in `public/brand`, nowhere. Once he hands over the file
+it is one row and one picture; nothing is built around its absence.
+
+There is also no `Set01`. The naming says one existed; if it turns up, the
+tokens are the feelings, not the sheet numbers, so it costs nine rows and
+no code.
+
+### Still open with you
+
+Unchanged from round 220: whether the voice path can be gated anywhere but
+the client; Klipy's exact request path, parameters and response shape; the
+shiftlock shoulder offset in `aimCamera`; typing and who-is-here on
+`ChatService`; what your `WritingBox` does that `writingRunsOf`,
+`markShapeOf`, `dressMarks` and `Run.faint` do not.
+
+And still not built, still deliberately: the `said_in_world` door for the
+World chat. `heard_in_voice` is the shape to copy and it is a small
+migration the day your server is close enough to call it.

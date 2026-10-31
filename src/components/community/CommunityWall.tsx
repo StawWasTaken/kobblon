@@ -12,6 +12,9 @@ import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { Reactions } from '@/components/social/Reactions'
+import { RichText } from '@/components/chat/RichText'
+import { StickerCard } from '@/components/chat/StickerCard'
+import { stickersToOffer, tokenFor, useNamedPictures, pictureUrl } from '@/lib/stickers'
 import { reactionsOnMany, type ReactionCount } from '@/lib/api'
 import {
   listCommunityPosts, postToCommunity, removeCommunityPost, setPostPinned,
@@ -46,6 +49,11 @@ export function CommunityWall({
   const toast = useToast()
   const [body, setBody] = useState('')
   const [pending, setPending] = useState(false)
+  /** Whether the sticker card is open under the box. */
+  const [picking, setPicking] = useState(false)
+
+  const named = useNamedPictures()
+  const stickers = stickersToOffer(named)
 
   const posts = useAsync(() => listCommunityPosts(communityId), [communityId])
 
@@ -80,6 +88,24 @@ export function CommunityWall({
     try {
       await postToCommunity({ communityId, authorId: profile.id, body, isAnnouncement: false })
       setBody('')
+      posts.reload()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'That did not post.', 'error')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  /*
+   * A sticker as its own post. Not `send`, because that one reads the box
+   * and refuses an empty one - which is right for words and wrong here,
+   * where the token *is* the post and the box may well be empty.
+   */
+  const sendSticker = async (token: string) => {
+    if (!profile) return
+    setPending(true)
+    try {
+      await postToCommunity({ communityId, authorId: profile.id, body: token, isAnnouncement: false })
       posts.reload()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'That did not post.', 'error')
@@ -123,8 +149,43 @@ export function CommunityWall({
               >
                 Post
               </Button>
+
+              {/*
+                * Stickers on the wall, which is the third of the three
+                * places Staw named. No list, no button - the same rule the
+                * chat composer carries.
+                *
+                * Picking one posts it on its own rather than dropping the
+                * token into the box, because a sticker is only a picture
+                * when it is the whole post. Anything half-written in the
+                * box is left exactly where it was.
+                */}
+              {!!stickers.length && (
+                <button
+                  type="button"
+                  onClick={() => setPicking((on) => !on)}
+                  aria-expanded={picking}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-ink-line px-3 py-2 text-xs font-extrabold text-muted transition-colors hover:border-brand-bright hover:text-white"
+                >
+                  <img
+                    src={pictureUrl(stickers[0].small ?? stickers[0].picture)}
+                    alt=""
+                    className="h-5 w-5 object-contain"
+                  />
+                  Sticker
+                </button>
+              )}
             </div>
           </form>
+
+          {picking && (
+            <div className="mt-3 overflow-hidden rounded-xl border border-ink-line bg-ink/40">
+              <StickerCard
+                onPick={(one) => { setPicking(false); void sendSticker(tokenFor(one)) }}
+                onClose={() => setPicking(false)}
+              />
+            </div>
+          )}
         </Card>
       )}
 
@@ -173,8 +234,20 @@ export function CommunityWall({
                   )}
                 </div>
 
+                {/*
+                  * Drawn rather than printed, so a sticker means the same
+                  * thing on a wall as it does in the friends chat. Their
+                  * round 57 asked for exactly this: one function renders
+                  * the token in both places, or the same post reads two
+                  * ways depending on where somebody opened it.
+                  *
+                  * `RichText` builds elements out of runs and never markup
+                  * out of what somebody typed, which is the reason it is
+                  * safe to point at a wall - a wall is the most public
+                  * text on this site.
+                  */}
                 <p className="mt-1 whitespace-pre-wrap break-words leading-relaxed text-white/85">
-                  {post.body}
+                  <RichText text={post.body} />
                 </p>
 
                 {/*

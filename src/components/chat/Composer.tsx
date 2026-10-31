@@ -9,7 +9,9 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Icon } from '@/components/brand/Icon'
 import { EmojiCard, emojiHeld, loadEmoji } from '@/components/chat/EmojiCard'
 import { GifCard } from '@/components/chat/GifCard'
+import { StickerCard } from '@/components/chat/StickerCard'
 import { gifsReady } from '@/lib/gifs'
+import { pictureUrl, stickersToOffer, tokenFor, useNamedPictures } from '@/lib/stickers'
 import { WritingBox } from '@/components/chat/WritingBox'
 import { wrap } from '@/lib/rich'
 import type { Mark } from '@/lib/rich'
@@ -59,8 +61,19 @@ export function Composer({
   /** Told when a card opens or shuts, so the window can make room for it. */
   onCard?: (open: boolean) => void
 }) {
-  /** Which card is open under the box, if either. */
-  const [card, setCard] = useState<'emoji' | 'gif' | null>(null)
+  /** Which card is open under the box, if any of the three. */
+  const [card, setCard] = useState<'emoji' | 'gif' | 'sticker' | null>(null)
+
+  /*
+   * The stickers, which decide whether there is a sticker button at all.
+   *
+   * Same rule as the GIF button above it: no list, no button. An empty
+   * card behind a control is the thing `docs/neoclassic.md` forbids, and
+   * since the list is a table rather than nine paths in the bundle, "no
+   * stickers yet" is a real state here and not a hypothetical one.
+   */
+  const named = useNamedPictures()
+  const stickers = useMemo(() => stickersToOffer(named), [named])
   /*
    * Whether GIFs work at all on this website, asked once per tab.
    *
@@ -260,6 +273,15 @@ export function Composer({
         <EmojiCard onPick={addEmoji} onClose={() => setCard(null)} />
       )}
 
+      {card === 'sticker' && (
+        <StickerCard
+          /* Picking one sends it, the way picking a GIF does: a sticker is
+             the whole message, so there is nothing to type beside it. */
+          onPick={(one) => { setCard(null); onSendText?.(tokenFor(one)) }}
+          onClose={() => setCard(null)}
+        />
+      )}
+
       {card === 'gif' && (
         <GifCard
           onPick={(url) => { setCard(null); onSendText?.(url) }}
@@ -322,6 +344,41 @@ export function Composer({
             * next emoji lands. A button is lit while its own card is open,
             * so a button and its card read as the same thing.
             */}
+          {!!stickers.length && (
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); setCard((on) => (on === 'sticker' ? null : 'sticker')) }}
+              title="Stickers"
+              aria-label="Stickers"
+              aria-expanded={card === 'sticker'}
+              className={cn(
+                'grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors',
+                card === 'sticker' ? 'bg-white/10' : 'hover:bg-white/10',
+              )}
+            >
+              {/*
+                * Plunk himself, and the first sticker in the list rather
+                * than a path written down here - so the button is drawn by
+                * the same table the card is filled from and cannot end up
+                * showing a sticker that no longer exists.
+                *
+                * He carries his own colours, which is why this one is not
+                * painted like the two beside it. The pair rule still
+                * holds: he sits at seventy percent with them and comes up
+                * to full when his card is open, so the row dims and lights
+                * together.
+                */}
+              <img
+                src={pictureUrl(stickers[0].small ?? stickers[0].picture)}
+                alt=""
+                className={cn(
+                  'h-5 w-5 object-contain transition-opacity',
+                  card === 'sticker' ? 'opacity-100' : 'opacity-70 hover:opacity-100',
+                )}
+              />
+            </button>
+          )}
+
           {gifs && (
             <button
               type="button"

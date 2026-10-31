@@ -8,6 +8,7 @@ import { Confirm } from '@/components/ui/Confirm'
 import { useToast } from '@/components/ui/Toast'
 import { cn } from '@/lib/cn'
 import { RichText } from '@/components/chat/RichText'
+import { stickerIn, useNamedPictures } from '@/lib/stickers'
 import { Ago } from '@/components/chat/Ago'
 import { NameMarks } from '@/components/brand/Verified'
 import { colourOf } from '@/lib/mentions'
@@ -90,6 +91,10 @@ export function MessageRow({
    * goes back under when the chat is next opened.
    */
   const [shown, setShown] = useState(false)
+  /* Whether this message is a sticker, which decides whether it gets a
+     bubble. Read from the same list `RichText` draws it from, so the two
+     cannot disagree about what this message is. */
+  const sticker = stickerIn(message.body, useNamedPictures())
   const hidden = Boolean(covered) && !mine && !shown
 
   /*
@@ -255,11 +260,22 @@ export function MessageRow({
         ) : (
           <div
             className={cn(
-              'relative rounded-2xl px-3 py-1.5 text-sm leading-snug',
+              'relative text-sm leading-snug',
+              /*
+               * A sticker has no bubble. It is a drawing with its own
+               * edges and its own transparency, and a panel behind it
+               * turns it into a sticker stuck on a card - which is what
+               * it looked like the first time this was drawn.
+               *
+               * Only when it is actually being shown: a message from
+               * somebody being ignored is blurred and has to be pressed,
+               * and that needs a shape to press.
+               */
+              !(sticker && !hidden) && 'rounded-2xl px-3 py-1.5',
               // The top corner nearest the avatar is cut short, so the bubble
               // points at whoever said it rather than floating beside them.
-              mine ? 'rounded-tr-[5px]' : 'rounded-tl-[5px]',
-              mine ? 'bg-brand text-white' : 'bg-ink-hover text-white/90',
+              !(sticker && !hidden) && (mine ? 'rounded-tr-[5px]' : 'rounded-tl-[5px]'),
+              !(sticker && !hidden) && (mine ? 'bg-brand text-white' : 'bg-ink-hover text-white/90'),
               hidden && 'cursor-pointer select-none',
             )}
             onClick={hidden ? () => setShown(true) : undefined}
