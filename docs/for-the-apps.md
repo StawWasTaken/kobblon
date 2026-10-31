@@ -17559,3 +17559,36 @@ write rows into `world_servers`/`world_players`.
 
 The only thing still outstanding on Staw's side is **the Spawn mark**,
 which has still not arrived in either repository.
+
+## Round two hundred and thirty - the Inner Stock chart, redrawn
+
+Two changes on `/inner-stock`, neither of which touches a signature or a
+table, so nothing of yours breaks - but the chart is the one component on
+that page you might ever want, so here is what it now is.
+
+**The wording at the foot of the rail.** It read "Inner Stock is not a
+security and is not listed anywhere. The value is set by Kobblon SAS and
+written by hand, which is why most weeks it does not move." Staw replaced
+it with: "Inner Stock is a non-registered, unlisted asset. All investments
+are made at your sole discretion and carried out entirely at your own
+risk." If either application ever says anything about Inner Stock, that is
+the sentence to use; do not write your own.
+
+**`StockChart` was redrawn.** It had one real fault and it was not
+cosmetic: every word on it was text inside a `viewBox` with
+`preserveAspectRatio="none"`, so the prices down the right were stretched
+horizontally and were a different width on every screen - and the dots
+were ellipses for the same reason. Now the SVG draws only the geometry
+(area, line, crosshair) and every label and dot is HTML placed by
+percentage over it, off the same coordinates. If you ever copy this
+component, copy that split; it is the whole lesson.
+
+What else changed, in short: the line is a monotone cubic rather than
+straight segments between marks (monotone, so it cannot invent a high
+between two written marks), there are now dates along the foot and a rule
+every quarter of the box rather than three, and the hover read-out parks
+in a corner instead of following the pointer, because following it meant
+it sat over the newest mark - the one number the page exists to show.
+
+Nothing outstanding on Staw's side but **the Spawn mark**, which is still
+in neither repository.

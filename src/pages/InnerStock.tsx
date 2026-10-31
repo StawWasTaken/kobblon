@@ -266,9 +266,8 @@ export default function InnerStock() {
               )}
 
               <p className="px-1 text-xs leading-relaxed text-white/35">
-                Inner Stock is not a security and is not listed anywhere. The value is
-                set by Kobblon SAS and written by hand, which is why most weeks it does
-                not move.
+                Inner Stock is a non-registered, unlisted asset. All investments are
+                made at your sole discretion and carried out entirely at your own risk.
               </p>
             </aside>
           </div>

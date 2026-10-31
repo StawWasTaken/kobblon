@@ -18,6 +18,14 @@ import { cn } from '@/lib/cn'
  * first paint with no width and a re-render, and all of that is to arrive
  * at the thing a `viewBox` does for nothing.
  *
+ * **Every word on the chart is HTML over the SVG, not text inside it.**
+ * The box is stretched horizontally, and text inside a stretched `viewBox`
+ * is stretched with it: the prices down the right were wider on a desktop
+ * than on a phone and set in a face nothing else on the page uses. They
+ * are placed by percentage off the same coordinates the line is drawn in,
+ * so they sit exactly on their rule and stay the page's own type at the
+ * page's own size.
+ *
  * Green up, red down. It is a reading rather than a control, which is the
  * line `docs/neoclassic.md` draws - red belongs to deleting and warning
  * everywhere it is something to press, and here nothing is pressable and
@@ -26,8 +34,61 @@ import { cn } from '@/lib/cn'
 
 const W = 1000
 const H = 320
-/** Room for the prices down the right, and a little air top and bottom. */
-const PAD = { top: 18, right: 86, bottom: 26, left: 12 }
+/** The drawing area. The gutters outside it belong to the labels. */
+const PAD = { top: 16, right: 12, bottom: 14, left: 12 }
+/** Four rules, so the middle of the box is a line rather than a guess. */
+const RULES = 4
+
+const dayOf = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+
+/**
+ * A monotone cubic through the points.
+ *
+ * Straight segments between hand-written marks read as a saw, and the
+ * stretch makes each corner a different angle on every screen width. A
+ * monotone curve is the one smoothing that cannot invent a high or a low
+ * between two marks - it never overshoots a point - so the shape stays
+ * true to what was written while the corners stop shouting.
+ */
+function curve(points: { x: number; y: number }[]) {
+  if (points.length < 2) return ''
+  const n = points.length
+  const slope: number[] = []
+  const delta: number[] = []
+
+  for (let i = 0; i < n - 1; i += 1) {
+    const dx = points[i + 1].x - points[i].x
+    delta[i] = dx === 0 ? 0 : (points[i + 1].y - points[i].y) / dx
+  }
+  slope[0] = delta[0]
+  slope[n - 1] = delta[n - 2]
+  for (let i = 1; i < n - 1; i += 1) {
+    if (delta[i - 1] * delta[i] <= 0) slope[i] = 0
+    else slope[i] = (delta[i - 1] + delta[i]) / 2
+  }
+  // Fritsch-Carlson: pull a tangent back where it would overshoot its segment.
+  for (let i = 0; i < n - 1; i += 1) {
+    if (delta[i] === 0) { slope[i] = 0; slope[i + 1] = 0; continue }
+    const a = slope[i] / delta[i]
+    const b = slope[i + 1] / delta[i]
+    const s = a * a + b * b
+    if (s > 9) {
+      const t = 3 / Math.sqrt(s)
+      slope[i] = t * a * delta[i]
+      slope[i + 1] = t * b * delta[i]
+    }
+  }
+
+  let d = `M${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`
+  for (let i = 0; i < n - 1; i += 1) {
+    const dx = (points[i + 1].x - points[i].x) / 3
+    d += ` C${(points[i].x + dx).toFixed(2)} ${(points[i].y + dx * slope[i]).toFixed(2)}`
+      + ` ${(points[i + 1].x - dx).toFixed(2)} ${(points[i + 1].y - dx * slope[i + 1]).toFixed(2)}`
+      + ` ${points[i + 1].x.toFixed(2)} ${points[i + 1].y.toFixed(2)}`
+  }
+  return d
+}
 
 export function StockChart({ marks, className }: { marks: Mark[]; className?: string }) {
   const box = useRef<SVGSVGElement>(null)
@@ -55,12 +116,34 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
       PAD.top + inner.h - ((cents - floor) / span) * inner.h
 
     const points = marks.map((one, i) => ({ x: x(i), y: y(one.cents), mark: one }))
-    const line = points.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ')
+    const line = curve(points)
     const under = points.length
-      ? `${line} L${points[points.length - 1].x.toFixed(2)} ${H - PAD.bottom} L${points[0].x.toFixed(2)} ${H - PAD.bottom} Z`
+      ? `${line} L${points[points.length - 1].x.toFixed(2)} ${H - PAD.bottom}`
+        + ` L${points[0].x.toFixed(2)} ${H - PAD.bottom} Z`
       : ''
 
-    return { points, line, under, low, high, flat, y }
+    /* The rules, evenly down the box, each with the price it stands at. */
+    const rules = Array.from({ length: RULES + 1 }, (_, i) => {
+      const part = i / RULES
+      return {
+        top: (PAD.top + part * inner.h) / H,
+        cents: Math.round(floor + span * (1 - part)),
+      }
+    })
+
+    /*
+     * Three dates along the foot - the first mark, the middle one and the
+     * newest. More than three on a phone is a row of overlapping months,
+     * and the middle one is what says whether the left half or the right
+     * half is the long one.
+     */
+    const dates = marks.length < 2
+      ? []
+      : [0, Math.floor((marks.length - 1) / 2), marks.length - 1]
+        .filter((one, i, all) => all.indexOf(one) === i)
+        .map((i) => ({ left: points[i].x / W, at: marks[i].at, i }))
+
+    return { points, line, under, low, high, flat, rules, dates }
   }, [marks])
 
   const first = marks[0]?.cents ?? 0
@@ -91,110 +174,149 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
   const held = at === null ? null : plot.points[at]
 
   return (
-    <div className={cn('relative', className)}>
-      <svg
-        ref={box}
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
-        className="h-64 w-full touch-none sm:h-80"
-        onPointerMove={follow}
-        onPointerLeave={() => setAt(null)}
-        role="img"
-        aria-label={`Inner Stock, ${marks.length} marks, now ${euros(last)}`}
-      >
-        <defs>
-          <linearGradient id="inner-stock-under" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={stroke} stopOpacity="0.22" />
-            <stop offset="100%" stopColor={stroke} stopOpacity="0" />
-          </linearGradient>
-        </defs>
+    /*
+     * The gutters are the frame's padding rather than the SVG's: the
+     * prices and the dates live in them as ordinary text, and the line
+     * gets the whole of the box it is drawn in.
+     */
+    <div className={cn('relative pb-6 pr-[4.5rem]', className)}>
+      <div className="relative">
+        {/* The rules and their prices, under the line and behind nothing. */}
+        {plot.rules.map((rule, i) => (
+          <div
+            key={i}
+            className="pointer-events-none absolute inset-x-0"
+            style={{ top: `${rule.top * 100}%` }}
+          >
+            <span
+              className={cn(
+                'block h-px w-full',
+                i === plot.rules.length - 1 ? 'bg-white/[0.12]' : 'bg-white/[0.055]',
+              )}
+            />
+            {(!plot.flat || i === RULES / 2) && (
+              <span className="absolute left-full top-0 -translate-y-1/2 pl-2.5 text-[11px] font-semibold tabular-nums leading-none text-white/35">
+                {euros(rule.cents)}
+              </span>
+            )}
+          </div>
+        ))}
 
-        {/* Three rules, at the low, the middle and the high, with the price said. */}
-        {[plot.high, (plot.high + plot.low) / 2, plot.low].map((cents, i) => {
-          const y = plot.flat && i !== 1 ? null : plot.y(cents)
-          if (y === null) return null
-          return (
-            <g key={i}>
-              <line
-                x1={PAD.left} x2={W - PAD.right} y1={y} y2={y}
-                stroke="rgba(255,255,255,0.08)" strokeWidth="1"
-              />
-              <text
-                x={W - PAD.right + 10} y={y + 4}
-                /*
-                 * `vector-effect` is no use on text, and the SVG is
-                 * stretched horizontally, so a label would be stretched
-                 * with it. Drawn at a compensating scale: the box is 1000
-                 * wide and lands on roughly a third of that, which is why
-                 * the glyphs are set small and narrow rather than at a
-                 * size that looks right in these coordinates.
-                 */
-                fill="rgba(255,255,255,0.45)"
-                fontSize="15"
-                style={{ fontVariantNumeric: 'tabular-nums' }}
-              >
-                {euros(cents)}
-              </text>
-            </g>
-          )
-        })}
+        <svg
+          ref={box}
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="relative h-64 w-full touch-none sm:h-80"
+          onPointerMove={follow}
+          onPointerLeave={() => setAt(null)}
+          role="img"
+          aria-label={`Inner Stock, ${marks.length} marks, now ${euros(last)}`}
+        >
+          <defs>
+            <linearGradient id="inner-stock-under" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={stroke} stopOpacity="0.2" />
+              <stop offset="70%" stopColor={stroke} stopOpacity="0.03" />
+              <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-        {plot.under && <path d={plot.under} fill="url(#inner-stock-under)" />}
-        <path
-          d={plot.line}
-          fill="none"
-          stroke={stroke}
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-
-        {/* The newest mark, always marked, because it is the number on the page. */}
-        {!!plot.points.length && (
-          <circle
-            cx={plot.points[plot.points.length - 1].x}
-            cy={plot.points[plot.points.length - 1].y}
-            r="4"
-            fill={stroke}
+          {plot.under && <path d={plot.under} fill="url(#inner-stock-under)" />}
+          <path
+            d={plot.line}
+            fill="none"
+            stroke={stroke}
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
           />
-        )}
 
-        {held && (
-          <g>
+          {held && (
             <line
               x1={held.x} x2={held.x} y1={PAD.top} y2={H - PAD.bottom}
-              stroke="rgba(255,255,255,0.25)" strokeWidth="1" strokeDasharray="4 4"
+              stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="4 4"
               vectorEffect="non-scaling-stroke"
             />
-            <circle cx={held.x} cy={held.y} r="5" fill={stroke} stroke="#0c0c10" strokeWidth="2" />
-          </g>
-        )}
-      </svg>
+          )}
+        </svg>
 
-      {/*
-        * The read-out sits in HTML over the SVG rather than inside it, so
-        * it is set in the page's own face at the page's own size - text
-        * inside a stretched `viewBox` is text that is wider on a desktop
-        * than on a phone.
-        */}
-      {held && (
-        <div
-          className="pointer-events-none absolute top-1 rounded-lg border border-ink-line bg-ink/95 px-2.5 py-1.5 text-xs shadow-pop"
-          style={{
-            left: `${(held.x / W) * 100}%`,
-            transform: `translateX(${held.x > W * 0.7 ? '-105%' : '5%'})`,
-          }}
-        >
-          <p className="font-extrabold tabular-nums text-white">{euros(held.mark.cents)}</p>
-          <p className="text-[11px] text-muted">
-            {new Date(held.mark.at).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'short', year: 'numeric',
-            })}
-          </p>
-          {held.mark.note && <p className="mt-0.5 max-w-44 text-[11px] text-white/60">{held.mark.note}</p>}
-        </div>
-      )}
+        {/*
+          * The two dots are HTML as well. A circle inside a stretched
+          * viewBox is an ellipse, and it was a different ellipse at every
+          * width; placed by percentage it is a round dot everywhere.
+          */}
+        {!!plot.points.length && (
+          <Dot point={plot.points[plot.points.length - 1]} colour={stroke} pulse />
+        )}
+        {held && at !== plot.points.length - 1 && <Dot point={held} colour={stroke} />}
+
+        {/*
+          * The read-out is parked in a corner rather than carried along by
+          * the pointer. Following the pointer meant it sat over the line
+          * it was describing; and the far corner is no good either,
+          * because the newest mark is always at the top right and the
+          * read-out landed on it. So it lives at the top left and drops
+          * to the bottom left when the pointer is over that corner.
+          */}
+        {held && (
+          <div
+            className={cn(
+              'pointer-events-none absolute left-1 rounded-xl border border-ink-line bg-ink/95 px-3 py-2 shadow-pop',
+              held.x < W * 0.35 && held.y < H / 2 ? 'bottom-1' : 'top-1',
+            )}
+          >
+            <p className="font-display text-sm font-extrabold tabular-nums leading-none text-white">
+              {euros(held.mark.cents)}
+            </p>
+            <p className="mt-1 text-[11px] leading-none text-muted">
+              {new Date(held.mark.at).toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              })}
+            </p>
+            {held.mark.note && (
+              <p className="mt-1.5 max-w-44 text-[11px] leading-snug text-white/60">
+                {held.mark.note}
+              </p>
+            )}
+          </div>
+        )}
+        {/* The dates, in the foot gutter, each under its own mark. */}
+        {plot.dates.map((one) => (
+          <span
+            key={one.i}
+            className="pointer-events-none absolute top-full mt-2 whitespace-nowrap text-[11px] font-semibold leading-none text-white/30"
+            style={{
+              left: `${one.left * 100}%`,
+              transform: one.i === 0
+                ? 'translateX(0)'
+                : one.i === marks.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)',
+            }}
+          >
+            {dayOf(one.at)}
+          </span>
+        ))}
+      </div>
+
     </div>
+  )
+}
+
+/** A mark on the line, round at any width because it is not in the SVG. */
+function Dot({ point, colour, pulse }: {
+  point: { x: number; y: number }
+  colour: string
+  pulse?: boolean
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-ink"
+      style={{
+        left: `${(point.x / W) * 100}%`,
+        top: `${(point.y / H) * 100}%`,
+        background: colour,
+        boxShadow: pulse ? `0 0 0 5px ${colour}22` : undefined,
+      }}
+    />
   )
 }
