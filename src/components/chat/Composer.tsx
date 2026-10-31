@@ -356,7 +356,18 @@ export function Composer({
             aria-expanded={card === 'emoji'}
             className={cn(
               'grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors',
-              card === 'emoji' ? 'bg-white/10' : 'hover:bg-white/10',
+              /*
+               * The same colours as the GIF button beside it. Staw: "in
+               * friends chat the gif & emoji icons arent the same
+               * colour". They were not: this one set no colour at all and
+               * took the composer's own text, so the face sat at full
+               * white next to a mark at seventy percent. Two buttons that
+               * do the same kind of thing in the same row are one pair or
+               * they are a mistake.
+               */
+              card === 'emoji'
+                ? 'bg-white/10 text-white'
+                : 'text-white/70 hover:bg-white/10 hover:text-white',
             )}
           >
             {/* Kobblon's own face rather than a Font Awesome smiley: it is

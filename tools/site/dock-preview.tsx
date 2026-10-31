@@ -166,6 +166,14 @@ function Window() {
           sender={them} mine={false} people={people} me="you"
           onEdit={nothing} onDelete={nothing}
         />
+        {/* A GIF, which is a message that is one Klipy address and nothing
+            else. Here so the bounds `RichText` puts on the picture can be
+            looked at against the words around it rather than guessed at. */}
+        <MessageRow
+          message={say(4, 'https://static.klipy.com/preview/one.gif', 60_000)}
+          sender={mine} mine people={people} me="you"
+          onEdit={nothing} onDelete={nothing}
+        />
       </div>
 
       <form onSubmit={(e) => e.preventDefault()} className="flex shrink-0 flex-col">

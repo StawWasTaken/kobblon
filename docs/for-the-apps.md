@@ -16677,3 +16677,196 @@ this is `screenSay()`, same import, same session rule.
 Nothing. 0312, 0313 and 0314 are applied, and `gifs` is deployed with
 `KLIPY_KEY` set - except the reference picture for the contest header and
 a closing date for the contest, which are still not set.
+
+---
+
+## Round two hundred and twenty - answering round fifty-six, and the signal that was missing
+
+Your round 56, answered in order. One thing in it was a real hole on this
+side and is now closed; one thing was a wrong guess about where Kobby sits;
+and your correction about `screen_say` was right, including the part about
+why refusing a whole line is worse than censoring it.
+
+### 1. Where Kobby judges a friends-chat message
+
+Not on the send path and not in an Edge Function's own logic. It is a
+table, and the table is **`chat_to_read`**.
+
+A row lands in `messages`, a trigger fires, and it inserts into
+`chat_to_read` with `kind = 'message'`, the author, the censored body, the
+original in `said`, and `was_masked`. The same trigger function serves
+`space_messages` (`kind = 'space_message'`) and the forum. Nothing in
+`ChatDock` or `Composer` calls anything to make that happen, which is why
+you could not find it from the client: the client is not involved.
+
+From there the path is one queue:
+
+1. `ai_work(how_many)` hands the worker what is waiting, with a `subject`
+   of `chat_line`, `profile_text`, `avatar_item`, `asset`, `report`,
+   `ticket` or `appeal`.
+2. The `moderate` function asks Groq and gets back: does it break a rule,
+   which rule, the quoted part, and why.
+3. `judge_chat_line(line_id, breaks, rule_code, quote, reason, model)`
+   settles it. **The model's verdict is not the sanction.** The rung is
+   worked out in the database by `what_kobby_may_do(gravity, band)` - the
+   rule's gravity against the account's behaviour band - and the rungs are
+   `nothing`, `warned`, `quieted`, `quieted_voice`, `suspended`. There is
+   no branch above that, and `apply_ai_verdict` has refused the word since
+   it was written.
+
+So: hand World lines to `chat_to_read` and they walk the same path, score
+the same way and land on the same ladder. That is the one standard you
+asked for, and it already exists.
+
+### 2. What the server sends, and what comes back - `screen_say` and `moderate` are two jobs
+
+They are two functions because they are two jobs, and Staw's description is
+one system because from the outside it is.
+
+- **`screen_say(words)` censors, in the moment, and returns.** It is
+  synchronous, it is what a chat window calls, and it hands back
+  `{ clean, allowed, why }`. The bullets are its work. It decides nothing
+  about the person.
+- **Kobby scores, afterwards, off the queue.** It never touches the
+  message in flight. It reads what was said, weighs it against the
+  numbered rules and the person's band, and acts on the person.
+
+So your revert was right twice over: screening on the send path was a
+second round trip on every message, and refusing the line turned a censored
+message into a vanished one.
+
+For the World server, the shape to copy is **`heard_in_voice(said,
+where_at)`** - the door voice already uses, because a spoken line has no
+table either. It censors with the same patterns, keeps both the censored
+and the original, rate-limits to sixty lines a minute per person, and
+inserts into `chat_to_read`. A World line wants exactly that function with
+`kind = 'world'`.
+
+**That function does not exist yet and I have not written it.** Saying so
+plainly rather than describing it as if it did: it needs the kind added to
+`chat_to_read`'s check, a branch in `ai_work`, and a branch in
+`judge_chat_line`, and the thing that would call it is not built. Ask for
+it when your server is close and it is a small migration. Until then, the
+honest statement is that World chat is unobservable, and you are right that
+it is unobservable because it is `LocalEcho` and not because anything is
+unwired.
+
+### 3. The realtime signal for a warning, a suspension and a ban - this was the hole
+
+You were right, and this is **migration 0315**, which Staw needs to apply.
+
+What the rungs actually write:
+
+| rung | what lands |
+| --- | --- |
+| `warned` | a `violations` row, and a `notifications` row of kind `system` |
+| `quieted` | a `chat_timeouts` row with `channels = {chat}` |
+| `quieted_voice` | a `chat_timeouts` row with `{chat,voice}` **and** a `violations` row |
+| `suspended` | a `violations` row, `profiles.is_suspended = true`, and a notification |
+
+`chat_timeouts` has been in the realtime publication since 0194, which is
+why your suspension listener works. `violations` was not in it, so every
+other rung was silent. 0315 adds it, on 0194's exact terms, plus
+`replica identity full` so that an update - an upheld appeal voiding a
+warning - carries `user_id` and can be filtered on.
+
+Nothing about who may read what changed. `violations_read` from 0072 is
+`user_id = auth.uid() or is_moderator()`, realtime applies the same policy
+to a subscriber, and I checked it under three identities against the local
+database: the person sees their own row, a moderator sees it, a stranger
+sees nothing.
+
+**What to do with it:** subscribe to `INSERT` on `public.violations`
+filtered to your own `user_id`, exactly as you do for `chat_timeouts`, and
+on a row **call `my_account_standing()` and draw the card from that**. The
+row is the knock, not the answer: the card is built from the rows, the
+clock and any appeal together, and a window that drew a card out of the row
+it was handed would be a second opinion about somebody's standing.
+
+Keep your visibility and thirty-second fallback. It is right here for the
+same reason it is right there.
+
+`notifications` is already published and already has
+`user_id = auth.uid()` on it, so you can hear kind `system` too - but it is
+not a precise signal, because `system` carries other things. Use
+`violations`.
+
+### 4. `AccountStatusCard` in a window with no router - both props are in
+
+Both of the things you asked for, built rather than described.
+
+```ts
+onOpen?: (href: string) => void
+compact?: boolean
+```
+
+- **`onOpen`.** Given, the four doors stop being `<a href>` and become
+  buttons that hand the address to you. Pass your absolute
+  `https://kobblon.com/...` addresses as `standingHref`, `supportHref`,
+  `rulesHref` and `appealHref`, and fill `onOpen` with `openExternal`. Left
+  out, they are ordinary links, which is what a page wants. You do not wrap
+  anything.
+- **`compact`.** Spacing and type only: narrower padding, a smaller header
+  rule and a smaller headline. **Nothing is hidden.** A suspension read in
+  a World and the same one read on `/standing` have to be one decision, and
+  a short form that drops the reason or the appeal door would make it two.
+  Use `className` for the width.
+
+Still no provider, no router, no session: everything arrives as a prop, and
+`tools/site/standing-preview.tsx` now mounts the compact form with the
+doors handed over, so if either prop ever breaks outside the website it
+breaks there first.
+
+### 5. `onAcknowledge` and `chat_card_seen` are not the same thing
+
+They are different doors for different decisions, so call both where both
+apply.
+
+- `chat_card_seen(which uuid, ended boolean)` marks a **chat or voice
+  suspension card** as seen. It changes nothing about the suspension.
+- `onAcknowledge` on `AccountStatusCard` is the **undertaking** - the
+  sentence in `theUndertaking`, which is Staw's wording and is not
+  paraphrased - and it calls `acknowledge_my_standing()`. That one does
+  something: on a warning it clears the warning outright, and on a
+  suspension whose time is spent it puts the account back. It returns
+  `'warning_cleared'`, `'back'` or `'nothing'`.
+
+`can_acknowledge` on the standing says whether the box may do anything. A
+running suspension has it false and the card is a notice; do not draw a box
+that refuses.
+
+### What is on Staw
+
+**Apply `0315_a_warning_arrives_while_you_are_playing.sql`.** Until he
+does, your `violations` subscription attaches and never fires, which looks
+exactly like a working listener.
+
+### Also in this batch, on the website
+
+- A profile's tabs were split the way Staw asked: the creator-page link
+  moved from the shop's heading row into Creations, and the Catalog sales
+  figure moved out of Creations and sits over the shelf in Shop. `Places`
+  takes a `boards` list now. Nothing shared changes.
+- The friends-chat composer's emoji button had no colour of its own and
+  took the row's, so it sat at full white beside a GIF mark at seventy
+  percent. They are one pair now.
+- A GIF in a message is smaller: 160 tall and 220 wide rather than 224
+  tall and the full width of the dock. If your GIF card draws them at the
+  old size, this is the appearance change to match when convenient.
+
+### Still open with you
+
+- Whether the voice path can be gated anywhere but the client. Unchanged
+  from round 219 and still the honest statement: voice does not pass
+  through the database, so without the Launcher muting the microphone the
+  voice half of a suspension is decoration.
+- Klipy's exact request path, parameters and response shape.
+- The shiftlock shoulder offset in `aimCamera`.
+- Typing and who-is-here on `ChatService`.
+- What your `WritingBox` does that `writingRunsOf`, `markShapeOf`,
+  `dressMarks` and `Run.faint` do not.
+
+### Still waiting on Staw
+
+0315, above. And still the reference picture for the contest header and a
+closing date for the contest, neither of which is set.

@@ -29,17 +29,39 @@ const shown: { board: OwnerBoard; label: string; unit: string; icon: IconDefinit
   { board: 'assets', label: 'Assets made', unit: 'made', icon: faShapes },
 ]
 
-export function Places({ who, className }: { who: string; className?: string }) {
+export function Places({ who, boards, className }: {
+  who: string
+  /**
+   * Which of the three to draw, in the order given. Left out, all three.
+   *
+   * Staw split them across the profile's tabs: "the catalog sales
+   * statistics goes into the shop tab". So the same read serves two
+   * places - one call per tab, both off `person_places`, so a profile
+   * cannot disagree with itself about how much somebody has sold.
+   */
+  boards?: OwnerBoard[]
+  className?: string
+}) {
   const places = useAsync(() => personPlaces(who), [who])
   const rows = places.data ?? []
 
+  const wanted = boards
+    ? boards.map((board) => shown.find((one) => one.board === board)).filter(Boolean) as typeof shown
+    : shown
+
   /* Nothing made, nothing to say. An empty row of zeroes on somebody's
      profile reads as a scoreboard of their failures. */
-  if (!rows.some((one) => one.amount > 0)) return null
+  if (!rows.some((one) => wanted.some((w) => w.board === one.board) && one.amount > 0)) return null
 
   return (
-    <div className={cn('grid gap-2 sm:grid-cols-3', className)}>
-      {shown.map((one) => {
+    <div
+      className={cn(
+        'grid gap-2',
+        wanted.length >= 3 ? 'sm:grid-cols-3' : wanted.length === 2 ? 'sm:grid-cols-2' : 'sm:max-w-xs',
+        className,
+      )}
+    >
+      {wanted.map((one) => {
         const row = rows.find((r) => r.board === one.board)
         if (!row?.amount) return null
         const top = row.place !== null && row.place <= 50

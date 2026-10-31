@@ -45,7 +45,18 @@ export function RichText({ text, people, me, className }: {
         src={gif}
         alt="A GIF"
         loading="lazy"
-        className={cn('mt-0.5 max-h-56 w-auto max-w-full rounded-xl border border-ink-line', className)}
+        /*
+         * Smaller than it was. Staw: "in friends chat we shall make the
+         * gifs less big". A GIF at 224 pixels tall filled the dock and
+         * pushed the conversation around it off the screen, so it read as
+         * the message rather than as a thing inside one. Both bounds are
+         * set and the aspect ratio is left to the picture: a wide GIF is
+         * held by the width and a tall one by the height.
+         */
+        className={cn(
+          'mt-0.5 max-h-40 w-auto max-w-[220px] rounded-xl border border-ink-line',
+          className,
+        )}
       />
     )
   }

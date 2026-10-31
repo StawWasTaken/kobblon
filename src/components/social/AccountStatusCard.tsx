@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faBan, faClock, faTriangleExclamation, faGavel, faScroll,
@@ -61,7 +62,7 @@ export const theUndertaking =
 
 export function AccountStatusCard({
   standing, onAcknowledge, busy, appealHref, standingHref = '/standing',
-  supportHref = '/support', rulesHref = '/guidelines', className,
+  supportHref = '/support', rulesHref = '/guidelines', onOpen, compact, className,
 }: {
   standing: AccountLock
   /** Ticked and sent. Absent means the card is a notice and nothing else. */
@@ -71,9 +72,48 @@ export function AccountStatusCard({
   standingHref?: string
   supportHref?: string
   rulesHref?: string
+  /**
+   * Where a door goes, when it may not go through the window itself.
+   *
+   * The Launcher's round 56: this is Electron, so an `<a href>` navigates
+   * the only window there is out of the application and there is no way
+   * back. Given, the four doors stop being links and become buttons that
+   * hand the address over - `shell.openExternal`, or whatever the bridge
+   * calls it - and the application passes absolute `https://kobblon.com`
+   * addresses as the four hrefs.
+   *
+   * Left out, they are ordinary links, which is what a page wants.
+   */
+  onOpen?: (href: string) => void
+  /**
+   * Narrow: the card inside a canvas rather than on a page.
+   *
+   * Asked for by the Launcher, which has to sit this inside the Escape
+   * menu's own bounds. It is spacing and type only - nothing is hidden,
+   * because a suspension read in a World and the same one read on
+   * `/standing` have to be one decision and not two summaries of it.
+   */
+  compact?: boolean
   className?: string
 }) {
   const [ticked, setTicked] = useState(false)
+
+  /*
+   * One door, drawn once. A link when nothing is listening and a button
+   * when something is, rather than four copies of that choice.
+   */
+  const Door = ({ href, children, className: look }: {
+    href: string
+    children: ReactNode
+    className?: string
+  }) => (onOpen
+    ? (
+      <button type="button" onClick={() => onOpen(href)} className={look}>
+        {children}
+      </button>
+    )
+    : <a href={href} className={look}>{children}</a>
+  )
 
   const which = standing.level === 'banned'
     ? 'banned'
@@ -95,10 +135,19 @@ export function AccountStatusCard({
         className,
       )}
     >
-      <header className={cn('flex items-start gap-3 border-b px-5 py-4', tone.edge, tone.wash, tone.text)}>
-        <Glyph icon={tone.icon} className="mt-0.5 text-xl" />
+      <header className={cn(
+        'flex items-start gap-3 border-b',
+        compact ? 'px-4 py-3' : 'px-5 py-4',
+        tone.edge, tone.wash, tone.text,
+      )}>
+        <Glyph icon={tone.icon} className={cn('mt-0.5', compact ? 'text-base' : 'text-xl')} />
         <div className="min-w-0">
-          <h2 className="text-base font-black leading-tight sm:text-lg">{standing.headline}</h2>
+          <h2 className={cn(
+            'font-black leading-tight',
+            compact ? 'text-sm' : 'text-base sm:text-lg',
+          )}>
+            {standing.headline}
+          </h2>
           <p className="mt-0.5 text-xs font-semibold opacity-80">
             {which === 'banned'
               ? 'This one is permanent. It stays until an admin lifts it.'
@@ -116,7 +165,7 @@ export function AccountStatusCard({
         </div>
       </header>
 
-      <div className="space-y-5 p-5">
+      <div className={cn(compact ? 'space-y-4 p-4' : 'space-y-5 p-5')}>
         {/* The reason as it was written. Nobody is told "a violation
             occurred" and left to work out which thing they did. */}
         <div className="space-y-2">
@@ -144,7 +193,10 @@ export function AccountStatusCard({
             is still running shows the notice above and no control, because
             a checkbox that refuses is a door painted on a wall. */}
         {answerable && (
-          <div className="space-y-3 rounded-xl border border-ink-line bg-ink-raised p-4">
+          <div className={cn(
+            'space-y-3 rounded-xl border border-ink-line bg-ink-raised',
+            compact ? 'p-3' : 'p-4',
+          )}>
             <label className="flex cursor-pointer items-start gap-3">
               <span
                 className={cn(
@@ -192,7 +244,7 @@ export function AccountStatusCard({
               Your appeal is {standing.appeal_status}. You will get a letter when it is decided.
             </span>
           ) : standing.can_appeal && (
-            <a
+            <Door
               href={appealHref ?? (standing.violation_id
                 ? `${standingHref}/${standing.violation_id}`
                 : standingHref)}
@@ -200,27 +252,27 @@ export function AccountStatusCard({
             >
               <Glyph icon={faScroll} />
               Appeal it
-            </a>
+            </Door>
           )}
-          <a
+          <Door
             href={supportHref}
             className="inline-flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-1.5 text-xs font-bold text-white hover:border-white/25"
           >
             <Glyph icon={faLifeRing} />
             Talk to support
-          </a>
-          <a
+          </Door>
+          <Door
             href={standingHref}
             className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold text-muted hover:text-white"
           >
             Your record
-          </a>
-          <a
+          </Door>
+          <Door
             href={rulesHref}
             className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold text-muted hover:text-white"
           >
             The rules
-          </a>
+          </Door>
         </div>
 
         <p className="text-xs leading-relaxed text-muted">

@@ -51,5 +51,28 @@ createRoot(document.getElementById('root')!).render(
         />
       </div>
     ))}
+
+    {/*
+      * The shape the Launcher asked for in round 56: narrow enough to sit
+      * inside a World's canvas the way the Escape menu does, and with the
+      * four doors handed over instead of followed, because an `<a href>`
+      * in Electron takes the only window there is somewhere it cannot
+      * come back from.
+      *
+      * Nothing is left out of it. Same reason the card is shared at all.
+      */}
+    <div className="mx-auto max-w-sm space-y-2">
+      <p className="text-xs font-bold uppercase tracking-wide text-muted">
+        Compact, with the doors handed over
+      </p>
+      <AccountStatusCard
+        standing={states[1][1]}
+        compact
+        standingHref="https://kobblon.com/standing"
+        supportHref="https://kobblon.com/support"
+        rulesHref="https://kobblon.com/guidelines"
+        onOpen={(href) => console.log('open externally', href)}
+      />
+    </div>
   </div>,
 )

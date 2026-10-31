@@ -5,7 +5,7 @@ import type { KobIcon } from '@/components/brand/Icon'
 import {
   faComment, faUserPlus, faClock, faCoins, faStar,
   faEllipsis, faLink, faCubes, faEye, faAward, faUsers, faBan,
-  faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart,
+  faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart, faShapes,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -807,24 +807,44 @@ export default function Profile() {
         * Create, where it can say what it is waiting for.
         */}
       {tab === 'Shop' && (
-        <Shop
-          owner={{ user: user.id }}
-          who={user.display_name}
-          handle={user.username}
-          isMine={isMe}
-          actions={
-            <Button size="sm" variant="subtle" to={`/create/creator/${user.username}`}>
-              Their creator page
-            </Button>
-          }
-        />
+        <div className="space-y-6">
+          {/*
+            * How much they have sold, over the shelf it was sold from.
+            * Staw: "the catalog sales statistics goes into the shop tab".
+            * It sat with World visits and assets made under Creations,
+            * which put a sales figure under a portfolio and left the shop
+            * with no number on it at all.
+            */}
+          <Places who={user.id} boards={['sales']} />
+          <Shop
+            owner={{ user: user.id }}
+            who={user.display_name}
+            handle={user.username}
+            isMine={isMe}
+          />
+        </div>
       )}
 
       {tab === 'Shop' ? null : tab === 'Creations' ? (
         <div className="space-y-10">
-          {/* What they have made, counted, with their place on the board
-              where they are on one. Same read as the Leaderboards page. */}
-          <Places who={user.id} />
+          {/*
+            * Staw: "the 'their creator page' goes in the 'creations' tab".
+            * It was on the shop's heading row, and a creator page is the
+            * other half of this tab rather than of that one - everything
+            * they have made, theirs to arrange.
+            */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-end">
+              <Button size="sm" variant="subtle" icon={faShapes} to={`/create/creator/${user.username}`}>
+                Their creator page
+              </Button>
+            </div>
+
+            {/* What they have made, counted, with their place on the board
+                where they are on one. Same read as the Leaderboards page.
+                Catalog sales is not here; it is over their shelf, in Shop. */}
+            <Places who={user.id} boards={['visits', 'assets']} />
+          </div>
 
           <section>
             <Heading
