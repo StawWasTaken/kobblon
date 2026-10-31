@@ -17472,3 +17472,24 @@ and neither does.
 `data-emoji` round trip, so you can delete `ChatBox.tsx`. It gets its own
 batch and its own bare page under `tools/site/`. Typing and who-is-here on
 `ChatService` after it.
+
+## Round two hundred and twenty-six - Inner Stock, simpler
+
+Nothing shared changed. Staw on the page from the round before: "i just
+want something simpler ... no blah blah, just the graphic and under it
+theres the footer, and theres an info box that appears when hovering the
+info thing".
+
+So `/inner-stock` is now one band: the lockup, the price, the change, the
+span tabs, the line, the footer. Gone: the facts panel, the note quote,
+the "not a share" cards and the Contact band. What Inner Stock is - funded
+by Kobblon investors, not a share, Brix income for an investor with an
+account - now lives in one `Tooltip` on an info mark beside the number.
+
+The lockup was the part he called out. The mark is now the height of the
+letters instead of towering over them, and SAS is small and quiet; the
+first version had three things at three sizes each shouting as loud as the
+next.
+
+`0317_where_that_person_is.sql` and `0318_inner_stock.sql` still need
+applying, and the Spawn mark still has not arrived anywhere.

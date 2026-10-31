@@ -96,7 +96,7 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
         ref={box}
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
-        className="h-56 w-full touch-none sm:h-72"
+        className="h-64 w-full touch-none sm:h-80"
         onPointerMove={follow}
         onPointerLeave={() => setAt(null)}
         role="img"
