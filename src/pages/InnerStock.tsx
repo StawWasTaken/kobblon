@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons'
+import { Icon } from '@/components/brand/Icon'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
 import { StockChart } from '@/components/about/StockChart'
@@ -61,32 +62,23 @@ export default function InnerStock() {
       <Band tone="night">
         <Lane>
           {/*
-            * The lockup. The wordmark is the name - it is already the word
-            * "Kobblon" drawn properly, so nothing here re-letters it. The
-            * mark sits beside it at the same height as the letters rather
-            * than towering over them, and SAS is small and quiet, because
-            * it is the legal half of the name and not the half anybody
-            * reads. That was the fault in the first version: three things
-            * at three sizes, each shouting as loud as the next.
+            * The wordmark alone. Staw: do not put the logomark and the
+            * wordmark next to each other - and he is right, they are two
+            * drawings of the same name and setting them side by side makes
+            * the page say it twice. SAS is small and quiet after it,
+            * because it is the legal half of the name and not the half
+            * anybody reads.
             */}
-          <div className="flex items-center gap-3">
+          <h1 className="flex items-center gap-2.5">
             <img
-              src={asset('/brand/logomark-darkmode.png')}
-              alt=""
-              aria-hidden="true"
-              className="h-7 w-auto shrink-0 sm:h-8"
+              src={asset('/brand/wordmark2.png')}
+              alt="Kobblon"
+              className="h-6 w-auto sm:h-7"
             />
-            <h1 className="flex items-center gap-2.5">
-              <img
-                src={asset('/brand/wordmark2.png')}
-                alt="Kobblon"
-                className="h-5 w-auto sm:h-6"
-              />
-              <span className="text-sm font-bold uppercase tracking-[0.22em] text-white/40">
-                SAS
-              </span>
-            </h1>
-          </div>
+            <span className="text-sm font-bold uppercase tracking-[0.22em] text-white/40">
+              SAS
+            </span>
+          </h1>
 
           <div className="mt-8 flex flex-wrap items-end gap-x-4 gap-y-3">
             <p
@@ -112,8 +104,24 @@ export default function InnerStock() {
             )}
           </div>
 
+          {/*
+            * The same worth, in Brix. 100 Brix is a euro, so the Brix
+            * figure is the cents figure - which is why there is no rate
+            * constant here to drift out of step with the one the rest of
+            * the platform uses. Said rather than converted by the reader,
+            * because for most of the people on this page Brix is the unit
+            * they actually have a feel for.
+            */}
+          {now && (
+            <p className="mt-3 flex items-center gap-2 text-lg font-extrabold tabular-nums text-white/70">
+              <Icon name="brix" className="h-5 w-5 text-amber-300" />
+              {now.cents.toLocaleString('fr-FR')}
+              <span className="text-sm font-bold text-muted">Brix</span>
+            </p>
+          )}
+
           <div className="mt-3 flex items-center gap-2 text-sm text-muted">
-            <span>One Inner Stock</span>
+            <span>One Inner Stock · 100 Brix = 1 €</span>
             {/*
               * Everything the page used to say in three cards and a band,
               * in one bubble: where the money comes from, and what an

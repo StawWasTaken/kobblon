@@ -17493,3 +17493,20 @@ next.
 
 `0317_where_that_person_is.sql` and `0318_inner_stock.sql` still need
 applying, and the Spawn mark still has not arrived anywhere.
+
+## Round two hundred and twenty-seven - Inner Stock in Brix, wordmark alone
+
+Still nothing shared. Two notes from Staw on `/inner-stock`:
+
+**The worth in Brix, under the euro figure.** 100 Brix is 1 €, which is
+the rate the rest of the platform already uses - so the Brix figure is the
+cents figure and there is no second rate constant on the page to drift out
+of step with it. If either of you ever shows this number, do the same
+thing rather than storing a rate.
+
+**The wordmark alone.** The logomark and the wordmark are two drawings of
+the same name, and side by side they make a page say it twice. The lockup
+is the wordmark plus a small quiet SAS.
+
+`0317_where_that_person_is.sql` and `0318_inner_stock.sql` still need
+applying; the Spawn mark still has not arrived anywhere.
