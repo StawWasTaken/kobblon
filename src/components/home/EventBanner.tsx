@@ -111,12 +111,24 @@ export function EventBanner({ className }: { className?: string }) {
           * thing to press on this site is, which is the half of the
           * reference worth keeping - its one button is not in the
           * picture's colour either.
+          *
+          * Built like every other button on the site rather than like a
+          * rectangle: the 3px of `brand-ink` under it that goes away on
+          * the press while the face drops the same 3px, which is the
+          * thing that makes ours look like something to push. It cannot
+          * be `<Button>` - that renders a button or a link and this is
+          * already inside the anchor that is the whole band - so it is
+          * `primary` at `lg`, by hand, and the press comes off the
+          * band's own `group` because the band is what is being pressed.
           */}
         <span
           className={cn(
-            'mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-brand px-10 py-2.5',
-            'text-sm font-extrabold text-white shadow-lg shadow-black/30 transition-colors',
+            'mt-6 inline-flex h-12 w-fit select-none items-center justify-center rounded-xl px-10',
+            'bg-brand text-base font-semibold text-white',
+            'border-b-[3px] border-brand-ink shadow-lg shadow-black/30',
+            'transition-[background-color,transform,box-shadow] duration-150',
             'group-hover:bg-brand-bright',
+            'group-active:mt-[1.6875rem] group-active:translate-y-px group-active:border-b-0',
           )}
         >
           {event.action}

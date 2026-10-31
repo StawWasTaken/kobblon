@@ -17177,6 +17177,20 @@ band is already wearing it, blue is Kobblon and is what everything else on
 this site that can be pressed is - and the reference's own button is not in
 its picture's colour either.
 
+The button is also **built like every other button on the site**, which it
+was not at first: the 3px of `brand-ink` under the face that goes away on
+the press while the face drops the same 3px. That lip is the thing that
+makes a Kobblon button look like something to push, and a flat rectangle in
+the right blue is not the same object. It cannot be `<Button>` - that
+renders a button or a link and this one is already inside the anchor that
+is the whole band - so it is `primary` at `lg` written by hand, and the
+press comes off the band's own `group`, because the band is what is being
+pressed.
+
+If either application ever draws a button inside something that is itself a
+link, that is the pattern: the variant's classes by hand, and `group-active`
+rather than `active`.
+
 Still no stock photograph standing in for a render nobody has made. When
 there is one it replaces a single `img` and nothing else moves.
 
