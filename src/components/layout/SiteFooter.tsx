@@ -49,6 +49,7 @@ const atKobblon = [
   { to: '/forum', label: 'Forum' },
   { to: '/support', label: 'Support' },
   { to: '/policies', label: 'Policies' },
+  { to: '/inner-stock', label: 'Inner Stock' },
   { to: '/terms', label: 'Terms of Use' },
   { to: '/privacy', label: 'Privacy' },
   { to: '/guidelines', label: 'Community guidelines' },

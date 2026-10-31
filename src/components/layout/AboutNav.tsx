@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faXmark, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
@@ -24,36 +24,43 @@ import { cn } from '@/lib/cn'
  * World is passing behind them.
  */
 /*
- * Staw: "rearrange the navbar of the at kobblon pages so its What is
- * Kobblon, Forum, Policies, Download". Download last rather than second,
- * which is the order somebody actually moves through these: what this is,
- * where everybody is, what the rules are, and then the thing you install.
+ * Staw: "for the At Kobblon pages, can we reorder these, and theres a lil
+ * too much maybe we should put categories".
  *
- * Contact belongs on this side too - it takes anybody, with or without an
- * account - and this bar is the only thing on this side that lists this
- * side's pages. It sits before Download, because Staw wants Download to be
- * the last choice everywhere: the install is what you do once the page has
- * answered the rest, so nothing follows it.
+ * Six words across a bar is a list, and a list is read left to right until
+ * something matches rather than looked at. So the four that somebody
+ * actually arrives wanting stay in the bar - what this is, where everybody
+ * is, where help is, and the install - and the two that are consulted
+ * rather than visited go behind one word.
+ *
+ * Download stays last, because the install is what you do once the page
+ * has answered the rest, so nothing follows it.
  *
  * **These are At Kobblon pages and nothing else.** Where a bar belongs to
  * one half of the site it carries that half's pages; the way across is a
- * door of its own, not a fifth entry pretending to be a sibling of these.
+ * door of its own, not another entry pretending to be a sibling of these.
  */
-export const ABOUT_LINKS = [
+export type AboutLink = { to: string; label: string }
+export type AboutEntry = AboutLink & { under?: AboutLink[] }
+
+/** The pages behind "Company": true about Kobblon, read once, not visited. */
+const COMPANY: AboutLink[] = [
+  { to: '/inner-stock', label: 'Inner Stock' },
+  { to: '/policies', label: 'Policies' },
+]
+
+export const ABOUT_NAV: AboutEntry[] = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/forum', label: 'Forum' },
-  { to: '/policies', label: 'Policies' },
   { to: '/support', label: 'Support' },
-  /*
-   * Inner Stock sits with these because it is the same kind of page: a
-   * thing Kobblon is, said to somebody who has not signed in. It goes
-   * before Download for the same reason everything does - the install is
-   * what you do once the page has answered the rest, so nothing follows
-   * it.
-   */
-  { to: '/inner-stock', label: 'Inner Stock' },
+  { to: '/inner-stock', label: 'Company', under: COMPANY },
   { to: '/download', label: 'Download' },
 ]
+
+/** Flat, for anything that wants every page on this side in order. */
+export const ABOUT_LINKS: AboutLink[] = ABOUT_NAV.flatMap(
+  (one) => (one.under ? one.under : [one]),
+)
 
 export function AboutNav({ className }: { className?: string }) {
   const { profile } = useAuth()
@@ -97,24 +104,28 @@ export function AboutNav({ className }: { className?: string }) {
         <Wordmark to="/" className="h-6" always />
 
         <nav className="ml-7 hidden items-center gap-1 sm:flex">
-          {ABOUT_LINKS.map((one) => (
-            <Link
-              key={one.to}
-              to={one.to}
-              className={cn(
-                'relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                here(one.to) ? 'text-white' : 'text-white/50 hover:text-white',
-              )}
-            >
-              {one.label}
-              {/* The page you are on, marked under the word rather than behind it. */}
-              <span
-                className={cn(
-                  'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-bright transition-opacity',
-                  here(one.to) ? 'opacity-100' : 'opacity-0',
-                )}
-              />
-            </Link>
+          {ABOUT_NAV.map((one) => (
+            one.under
+              ? <NavGroup key={one.label} entry={one} here={here} />
+              : (
+                <Link
+                  key={one.to}
+                  to={one.to}
+                  className={cn(
+                    'relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+                    here(one.to) ? 'text-white' : 'text-white/50 hover:text-white',
+                  )}
+                >
+                  {one.label}
+                  {/* The page you are on, marked under the word rather than behind it. */}
+                  <span
+                    className={cn(
+                      'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-bright transition-opacity',
+                      here(one.to) ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                </Link>
+              )
           ))}
         </nav>
 
@@ -150,20 +161,108 @@ export function AboutNav({ className }: { className?: string }) {
 
       {open && (
         <nav className="border-t border-white/10 px-3 pb-3 pt-2 sm:hidden">
-          {ABOUT_LINKS.map((one) => (
-            <Link
-              key={one.to}
-              to={one.to}
-              className={cn(
-                'block rounded-xl px-4 py-3 text-sm font-bold transition-colors',
-                here(one.to) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
-              )}
-            >
-              {one.label}
-            </Link>
+          {ABOUT_NAV.map((one) => (
+            one.under
+              ? (
+                /* The group is a heading and its pages, not a menu inside a menu. */
+                <div key={one.label} className="mt-2 border-t border-white/[0.06] pt-2">
+                  <p className="px-4 pb-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/30">
+                    {one.label}
+                  </p>
+                  {one.under.map((page) => (
+                    <Link
+                      key={page.to}
+                      to={page.to}
+                      className={cn(
+                        'block rounded-xl px-4 py-3 text-sm font-bold transition-colors',
+                        here(page.to) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+                      )}
+                    >
+                      {page.label}
+                    </Link>
+                  ))}
+                </div>
+              )
+              : (
+                <Link
+                  key={one.to}
+                  to={one.to}
+                  className={cn(
+                    'block rounded-xl px-4 py-3 text-sm font-bold transition-colors',
+                    here(one.to) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+                  )}
+                >
+                  {one.label}
+                </Link>
+              )
           ))}
         </nav>
       )}
     </header>
+  )
+}
+
+/**
+ * One word in the bar that opens onto two pages.
+ *
+ * Hover opens it and so does a click, because a menu that only answers to
+ * a pointer is a menu a phone and a keyboard cannot reach. It closes on
+ * leaving, on Escape, and on following a link - and the links are real
+ * links, so middle-click and open-in-new-tab still do what they do
+ * everywhere else on the site.
+ */
+function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => boolean }) {
+  const [open, setOpen] = useState(false)
+  const inside = (entry.under ?? []).some((one) => here(one.to))
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((was) => !was)}
+        aria-expanded={open}
+        className={cn(
+          'relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+          inside || open ? 'text-white' : 'text-white/50 hover:text-white',
+        )}
+      >
+        {entry.label}
+        <Glyph
+          icon={faChevronDown}
+          className={cn('text-[0.6rem] transition-transform', open && 'rotate-180')}
+        />
+        <span
+          className={cn(
+            'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-bright transition-opacity',
+            inside ? 'opacity-100' : 'opacity-0',
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-50 w-48 pt-2">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-ink/95 p-1 shadow-pop backdrop-blur-xl">
+            {(entry.under ?? []).map((one) => (
+              <Link
+                key={one.to}
+                to={one.to}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  'block rounded-lg px-3 py-2 text-sm font-bold transition-colors',
+                  here(one.to) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+                )}
+              >
+                {one.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

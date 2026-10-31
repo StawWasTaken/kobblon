@@ -17510,3 +17510,41 @@ is the wordmark plus a small quiet SAS.
 
 `0317_where_that_person_is.sql` and `0318_inner_stock.sql` still need
 applying; the Spawn mark still has not arrived anywhere.
+
+## Round two hundred and twenty-eight - the At Kobblon bar groups, and the Inner Stock rail
+
+Nothing shared changed. Two things, both on the website's About side.
+
+### The bar
+
+Staw: "can we reorder these, and theres a lil too much maybe we should put
+categories". Six words across a bar is a list, and a list gets read left
+to right until something matches rather than looked at. So the four
+somebody arrives wanting stay in the bar and the two that are consulted
+rather than visited go behind one word:
+
+**What is Kobblon · Forum · Support · Company ▾ (Inner Stock, Policies) ·
+Download**
+
+`AboutNav` now exports `ABOUT_NAV` (the shape, with `under`) as well as
+`ABOUT_LINKS` (flat, every page in order) - if either application ever
+lists this side's pages, take the flat one. The menu opens on hover **and**
+on click, closes on Escape and on following a link, and its entries are
+real `<Link>`s so middle-click still works. Download stays last.
+
+### Inner Stock, polished
+
+Staw asked for stats down the side, "nerd stats". Two panels: **Kobblon
+SAS** (legal form, headquarters - Île-de-France, France - traded: not
+publicly, currency) and **The marks** (one Inner Stock in euro and in Brix,
+marks written, the first mark, the highest, the lowest, since the first,
+last updated). Every figure is derived from the marks themselves, so there
+is no second source to go stale, and a stat that cannot be computed is not
+drawn. The highest and lowest are over every mark rather than the span on
+screen, because a record that changes when somebody presses 1W is not a
+record. The chart is in a frame now with the spans on its own header.
+
+Inner Stock is also in the footer's At Kobblon list.
+
+`0317_where_that_person_is.sql` and `0318_inner_stock.sql` still need
+applying; the Spawn mark still has not arrived anywhere.
