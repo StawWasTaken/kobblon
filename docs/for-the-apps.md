@@ -17637,3 +17637,20 @@ a green nought.
 `change(cents)` is exported from `@/lib/innerstock` beside `euros` and
 `percent`: a signed money figure, `+0,11 €` / `−0,06 €`, for the number
 that sits next to a percentage.
+
+## Round two hundred and thirty-three - the span says what it did
+
+Following the last round: pressing 1W and then 1M changed the line and
+no number anywhere, which reads as broken even though the figure beside
+the price was never about the chart.
+
+So the chart's own header now carries the span's move, end to end,
+right-aligned beside the buttons that change it: `1W +0,81 %`,
+`Max +15,33 %`. The pair beside the price stays today's, because that is
+the price's figure and does not belong to whatever span is on screen.
+
+The rule, if either application ever draws a span picker over a figure:
+**a control that changes the picture changes a number that sits on the
+picture.** Putting the span's figure up by the headline instead is what
+made this wrong twice - once by making the headline move when nobody
+asked it to, and once by making nothing move at all.

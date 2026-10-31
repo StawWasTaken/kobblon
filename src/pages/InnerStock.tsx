@@ -72,6 +72,15 @@ export default function InnerStock() {
    * is zero - which is the truth, and is said as "No change today"
    * rather than drawn as a flat arrow.
    */
+  /*
+   * What the span on screen did, end to end. It belongs to the chart and
+   * is drawn on the chart's own header, beside the buttons that change
+   * it: Staw pressed 1W and then 1M and the only number on the page
+   * stayed put, which reads as broken even though that number was never
+   * about the chart. Now pressing a span moves a figure that sits on it.
+   */
+  const over = shown.length > 1 ? movement(shown[shown.length - 1].cents, shown[0].cents) : null
+
   const today = useMemo(() => {
     if (!marks?.length) return null
     const latest = marks[marks.length - 1]
@@ -226,7 +235,7 @@ export default function InnerStock() {
                 */}
               <div className="mt-7 overflow-hidden rounded-2xl border border-ink-line bg-ink-raised/40">
                 {spans.length > 1 && (
-                  <div className="flex flex-wrap gap-1 border-b border-ink-line px-3 py-2.5">
+                  <div className="flex flex-wrap items-center gap-1 border-b border-ink-line px-3 py-2.5">
                     {spans.map((one) => (
                       <button
                         key={one.key}
@@ -242,6 +251,23 @@ export default function InnerStock() {
                         {one.label}
                       </button>
                     ))}
+
+                    {/* What that span did, end to end, in the span's own words. */}
+                    {over !== null && (
+                      <span className="ml-auto flex items-baseline gap-2 pl-2 pr-1 text-sm">
+                        <span className="text-muted">{range.label}</span>
+                        <span
+                          className={cn(
+                            'font-extrabold tabular-nums',
+                            over > 0 && 'text-space-bright',
+                            over < 0 && 'text-danger-bright',
+                            over === 0 && 'text-white/50',
+                          )}
+                        >
+                          {percent(over)}
+                        </span>
+                      </span>
+                    )}
                   </div>
                 )}
 
