@@ -164,8 +164,18 @@ export default function Forum() {
          */}
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="min-w-0">
+            {/*
+              * Top of the tree only. Staw wants one row for avatar
+              * contests rather than the year and the contest under it
+              * repeated in the list; the counts roll up (0313), so the one
+              * row still speaks for everything inside it, and the category
+              * page lists what that is.
+              */}
             {view === 'categories' ? (
-              <BoardTable boards={boards.data ?? []} loading={boards.loading} />
+              <BoardTable
+                boards={(boards.data ?? []).filter((one) => one.depth === 0)}
+                loading={boards.loading}
+              />
             ) : (
               <TopicTable topics={latest.data ?? []} loading={latest.loading} showCategory />
             )}

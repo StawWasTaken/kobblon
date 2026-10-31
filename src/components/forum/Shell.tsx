@@ -255,14 +255,27 @@ export function ForumShell({
             <p className="mb-2 mt-7 px-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
               Categories
             </p>
+            {/*
+             * The top of the tree and nothing else. Staw: "why did i make
+             * multiple categories? cuz i wanted to only view one main
+             * category for avatar events in the categories list, i want to
+             * keep things clean" - the years and the contests are a way of
+             * filing them, not nine more rooms to scroll past. A category
+             * inside a category is reached from the category page, which
+             * lists what is inside it.
+             *
+             * It stays lit while you are anywhere under it, so walking
+             * into Halloween 2026 does not read as having left the forum's
+             * categories entirely.
+             */}
             <nav className="space-y-0.5">
               {loading
                 ? [0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-9 rounded-lg" />)
-                : boards.map((board) => (
+                : boards.filter((one) => one.depth === 0).map((board) => (
                   <RailBoard
                     key={board.slug}
                     board={board}
-                    here={pathname === `/forum/c/${board.slug}`}
+                    here={topOf(boards, pathname) === board.slug}
                   />
                 ))}
             </nav>
@@ -386,11 +399,32 @@ function RailBoard({ board, here }: { board: ForumBoard; here: boolean }) {
   )
 }
 
+/**
+ * Which top-level category a forum path is inside, walking up the tree.
+ *
+ * The rail lights the root of the branch you are in rather than the exact
+ * row, because the rows under the root are not drawn - without this, every
+ * category in the rail goes dark the moment you open a contest.
+ */
+function topOf(boards: ForumBoard[], pathname: string): string | null {
+  const at = pathname.startsWith('/forum/c/') ? pathname.slice('/forum/c/'.length) : null
+  if (!at) return null
+  const seen = new Set<string>()
+  let here = boards.find((one) => one.slug === at)
+  while (here?.parent && !seen.has(here.parent)) {
+    seen.add(here.parent)
+    const up = boards.find((one) => one.slug === here!.parent)
+    if (!up) break
+    here = up
+  }
+  return here?.slug ?? at
+}
+
 /** The rail's categories again, for the widths where there is no rail. */
 export function BoardStrip({ boards }: { boards: ForumBoard[] }) {
   return (
     <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden">
-      {boards.map((board) => (
+      {boards.filter((one) => one.depth === 0).map((board) => (
         <Link
           key={board.slug}
           to={`/forum/c/${board.slug}`}

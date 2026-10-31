@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { EventBanner } from '@/components/home/EventBanner'
 import { BoardTable } from '@/pages/Forum'
+import { ForumShell } from '@/components/forum/Shell'
 import { TitleTips } from '@/components/ui/TitleTips'
 import type { ForumBoard } from '@/types/db'
 import '@/index.css'
@@ -38,7 +39,13 @@ createRoot(document.getElementById('root')!).render(
     <div className="min-h-dvh bg-ink p-8">
       <div className="mx-auto max-w-5xl space-y-10">
         <EventBanner />
-        <BoardTable boards={boards} loading={false} />
+        <BoardTable boards={boards.filter((one) => one.depth === 0)} loading={false} />
+      </div>
+      {/* The rail as the forum draws it: the top of the tree only. */}
+      <div className="mx-auto mt-10 max-w-5xl">
+        <ForumShell boards={boards} loading={false}>
+          <BoardTable boards={boards.filter((one) => one.depth === 0)} loading={false} />
+        </ForumShell>
       </div>
     </div>
   </MemoryRouter>,

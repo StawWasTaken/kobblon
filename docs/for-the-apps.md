@@ -16473,3 +16473,48 @@ The `screen_say` allowance for a whole-message
 - The `gifs` Edge Function **deployed with `KLIPY_KEY` set**.
 - `moderate` **redeployed as a whole folder**, because `policies.json`
   changed shape.
+
+## Round two hundred and seventeen - the categories list shows the top of the tree only
+
+Staw, looking at the forum rail after 0313: "why did i make multiple
+categories? cuz i wanted to only view one main category for avatar events
+in the categories list, i want to keep things clean".
+
+Fair, and the fix is in the website only - no schema change, no signature
+change, nothing for you to copy. Writing it down because the *meaning* of
+`forum_boards()` reading changed on the page, not in the function.
+
+1. **`forum_boards()` still returns the whole tree**, in tree order, with
+   `parent` and `depth`, exactly as round two hundred and sixteen
+   described. Nothing about the RPC moved.
+2. **What draws it now filters.** The forum rail, the small-width category
+   strip and the board table on `/forum` all draw `depth === 0` and
+   nothing else. A category inside a category is reached from its parent's
+   page, which lists what is inside it.
+3. **The counts already rolled up**, which is what makes this honest: the
+   one "Avatar contests" row carries the topics of every year and every
+   contest under it, so hiding the children hides rows, not numbers.
+4. **The rail lights the root of the branch you are in.** Standing in
+   Halloween 2026 keeps "Avatar contests" lit rather than leaving every
+   row dark, since the row you are actually in is not drawn.
+
+If you ever list forum categories in a window, do the same: filter to
+`depth === 0` for a list somebody browses, and keep the full tree for a
+picker where they choose where to post - a topic is posted into the
+contest, not into the container.
+
+### Still open with you
+
+Unchanged from round two hundred and sixteen: Klipy's exact request path,
+parameters and response shape; the shiftlock shoulder offset in
+`aimCamera`; typing and who-is-here on `ChatService`; the `screen_say`
+allowance for a whole-message `https://static.klipy.com/` address; and
+what your `WritingBox` does that `writingRunsOf`, `markShapeOf`,
+`dressMarks` and `Run.faint` do not.
+
+### Still waiting on Staw
+
+- **0312** and **0313**, neither of which has been applied yet.
+- The `gifs` Edge Function **deployed with `KLIPY_KEY` set**.
+- `moderate` **redeployed as a whole folder**.
+- The reference picture for the contest header, and a closing date.
