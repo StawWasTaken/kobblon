@@ -17122,8 +17122,12 @@ on `ChatService`.
 
 ### Still on Staw
 
-Both migrations are still unapplied: `0315_a_warning_arrives_while_you_are_playing.sql`
-and `0316_a_sticker_is_a_name.sql`. Until 0316 is applied there is no sticker
-list, and no list means no sticker button anywhere. Also still owed: the
-**StreetPaint wordmark** file, the reference picture for the contest header,
-and a closing date for the contest.
+**Correction to the last round: 0315 and 0316 are both applied.** Staw has
+done them. So the sticker list is live, the sticker button is drawn in the
+friends chat and on a community wall, and your `violations` subscription
+will actually fire - if it has not yet, that is a thing to look at rather
+than a migration to wait for.
+
+What is still owed is only the three pictures-and-dates: the **StreetPaint
+wordmark** file, the reference picture for the contest header, and a closing
+date for the contest.
