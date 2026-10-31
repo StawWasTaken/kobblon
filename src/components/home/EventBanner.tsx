@@ -1,19 +1,24 @@
 import { Link } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { eventNow } from '@/lib/event'
+import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
 /**
  * The thing Kobblon is running, across the top of Home.
  *
  * Staw asked for "an header on the homepage (like roblox did ...) that
- * leads either to the kobblon event either to the forum category for it".
- * Roblox's is a wide picture with the name of the event on it and one way
- * in, and the part worth copying is the shape rather than the picture:
- * the whole band is the link, there is exactly one thing to do, and it
- * takes the top of the page without taking the fold.
+ * leads either to the kobblon event either to the forum category for it",
+ * and then handed over the reference for the shape he means: a wide band
+ * that is all picture, a small pill in the top corner, a large name and
+ * one line under it, a single solid button at the foot, the thing's own
+ * mark in the opposite corner, and a quiet line of small print diagonally
+ * across from the pill. Five places, each with one job, and the art
+ * running out past the edge so the band reads as a window rather than a
+ * card with a photograph in it.
+ *
+ * That is what this is. The reference is a layout, not a picture to copy:
+ * the colour here is Halloween's and the mark is ours.
  *
  * It is the whole band and also a button. The band being clickable is
  * what makes it read as one object; the button is what says so to
@@ -21,10 +26,11 @@ import { cn } from '@/lib/cn'
  * usually not a link. Nested links are illegal in HTML, so the button is
  * a span inside the one anchor rather than a second one.
  *
- * No picture yet. Staw said a reference is coming, and a stock
- * photograph standing in for art he has not drawn is the fake thing the
- * ethos is about - so the band is the laurel, the colour and the words,
- * and the art drops in behind when it arrives.
+ * The art is the Halloween logomark Staw drew, at the size art is drawn
+ * at and bleeding past the top edge - not a stock photograph standing in
+ * for a render nobody has made, which is the fake thing the ethos is
+ * about. When there is a render, it replaces the one `img` below and
+ * nothing else moves.
  */
 export function EventBanner({ className }: { className?: string }) {
   const event = eventNow()
@@ -34,72 +40,139 @@ export function EventBanner({ className }: { className?: string }) {
     <Link
       to={event.to}
       className={cn(
-        'group relative block overflow-hidden rounded-2xl border border-orange-400/25',
-        'bg-ink-card transition-colors hover:border-orange-400/50',
+        'group relative block overflow-hidden rounded-2xl border border-orange-400/20',
+        'bg-[#150b05] transition-colors hover:border-orange-400/45',
         className,
       )}
     >
-      {/* The light behind it, and the one place on the site orange is spent. */}
+      {/*
+        * The light. Two of them: a wide one behind the mark on the right,
+        * which is where the reference puts its glow, and a flat darkening
+        * from the left so the words sit on something rather than on the
+        * brightest part of the picture.
+        */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(251,146,60,0.22),transparent_62%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(85%_150%_at_66%_40%,rgba(249,115,22,0.6),rgba(130,40,6,0.45)_42%,rgba(20,8,3,0.9)_78%)]"
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-orange-400"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/35"
       />
 
-      <div className="relative flex flex-wrap items-center gap-x-6 gap-y-4 py-5 pl-6 pr-5 sm:py-6 sm:pl-8">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-orange-400/30 bg-orange-400/10 text-orange-300 sm:h-14 sm:w-14">
-          <Icon name="laurel-quest" className="h-6 w-6 sm:h-7 sm:w-7" />
+      {/*
+        * The art, bleeding out of the top the way the reference's does.
+        * `select-none` and no alt text: it is the picture the band is
+        * made of, and a screen reader reading "Kobblon" twice between the
+        * tag and the heading is noise.
+        */}
+      <img
+        src={asset('/brand/logomark-halloween.png')}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className={cn(
+          'pointer-events-none absolute -top-6 right-[22%] hidden h-[17rem] w-auto select-none',
+          'opacity-90 drop-shadow-[0_0_60px_rgba(249,115,22,0.45)]',
+          'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
+        )}
+      />
+
+      {/* The event's own mark, where the reference puts the thing's name. */}
+      <img
+        src={asset('/brand/wordmark-halloween.png')}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="pointer-events-none absolute right-5 top-5 h-7 w-auto select-none opacity-90 sm:right-7 sm:top-6 sm:h-9"
+      />
+
+      <div className="relative flex min-h-[13rem] flex-col justify-center px-5 py-6 sm:min-h-[15.5rem] sm:px-9 sm:py-8">
+        {/*
+          * The pill. White on the picture rather than a tinted chip,
+          * because it has to hold against whatever the art is doing
+          * behind it - which is the one thing the reference's own pill is
+          * doing that a coloured one would not survive.
+          */}
+        <span className="inline-flex w-fit items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-black">
+          {event.tag}
         </span>
 
-        <div className="min-w-0 flex-1 basis-56">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-orange-300/80">
-            {event.tag}
-          </p>
-          <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight sm:text-2xl">
-            {event.name}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-snug text-white/55">{event.blurb}</p>
+        <h2 className="mt-5 max-w-[22ch] font-display text-3xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] sm:text-[2.75rem]">
+          {event.name}
+        </h2>
+        <p className="mt-2 max-w-[46ch] text-sm font-semibold leading-snug text-white/80 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
+          {event.blurb}
+        </p>
 
-          {/*
-            * The prizes, as the Brix they are. Our own mark beside each
-            * number rather than the word, because that is how every other
-            * amount on this site is written and a contest is not the
-            * place to invent a second way of saying Brix.
-            */}
-          {!!event.prizes.length && (
-            <ul className="mt-3 flex flex-wrap items-center gap-2">
-              {event.prizes.map((prize) => (
-                <li
-                  key={prize.place}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/30 py-1 pl-2.5 pr-3 text-xs font-bold"
-                >
-                  <span className="text-white/40">{prize.place}</span>
-                  <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
-                  {/*
-                    * Written out, not shortened. `formatCount` turns
-                    * 10,000 into "10K" and leaves 5,000 and 2,500 alone,
-                    * which put three numbers side by side in two
-                    * different notations - and the largest prize, the one
-                    * the row exists for, was the one that stopped looking
-                    * like money.
-                    */}
-                  <span className="tabular-nums text-white">
-                    {prize.brix.toLocaleString('en-GB')}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {/*
+          * Blue, not orange. Orange is the event and the whole band is
+          * already wearing it; blue is Kobblon and is what every other
+          * thing to press on this site is, which is the half of the
+          * reference worth keeping - its one button is not in the
+          * picture's colour either.
+          */}
+        <span
+          className={cn(
+            'mt-6 inline-flex w-fit items-center justify-center rounded-xl bg-brand px-10 py-2.5',
+            'text-sm font-extrabold text-white shadow-lg shadow-black/30 transition-colors',
+            'group-hover:bg-brand-bright',
           )}
-        </div>
-
-        <span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-extrabold text-black transition-colors group-hover:bg-orange-400">
+        >
           {event.action}
-          <Glyph icon={faArrowRight} className="text-xs transition-transform group-hover:translate-x-0.5" />
         </span>
       </div>
+
+      {/*
+        * The small print, across from the pill. The reference has its
+        * maturity rating there; ours is what there is to win, because
+        * that is the fact somebody deciding whether to enter wants and
+        * there is nowhere else on the band to put it.
+        *
+        * Not drawn at all where nothing is being given away - three empty
+        * chips under a contest with no prize is furniture.
+        */}
+      {!!event.prizes.length && (
+        <div className="pointer-events-none absolute bottom-4 right-5 hidden items-center gap-3 sm:right-7 sm:flex">
+          {event.prizes.map((prize) => (
+            <span
+              key={prize.place}
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-white/70"
+            >
+              <span className="text-white/40">{prize.place}</span>
+              <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
+              {/*
+                * Written out, not shortened. `formatCount` turns 10,000
+                * into "10K" and leaves 5,000 and 2,500 alone, which puts
+                * three numbers side by side in two different notations -
+                * and the largest prize, the one the row exists for, was
+                * the one that stopped looking like money.
+                */}
+              <span className="tabular-nums text-white">
+                {prize.brix.toLocaleString('en-GB')}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* On a phone there is no room beside the art, so the prizes sit under the words. */}
+      {!!event.prizes.length && (
+        <div className="relative flex flex-wrap items-center gap-x-3 gap-y-1 px-5 pb-5 sm:hidden">
+          {event.prizes.map((prize) => (
+            <span
+              key={prize.place}
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-white/70"
+            >
+              <span className="text-white/40">{prize.place}</span>
+              <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
+              <span className="tabular-nums text-white">
+                {prize.brix.toLocaleString('en-GB')}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
     </Link>
   )
 }

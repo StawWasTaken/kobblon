@@ -17131,3 +17131,74 @@ than a migration to wait for.
 What is still owed is only the three pictures-and-dates: the **StreetPaint
 wordmark** file, the reference picture for the contest header, and a closing
 date for the contest.
+
+## Round two hundred and twenty-three - the contest has an end, and the header is the one Staw drew
+
+Three answers from Staw, all of them closing things that were open.
+
+### The StreetPaint wordmark is off the list
+
+"forget about the streetpaint wordmark, we wont add it". Dropped. Nothing
+was built around it, so nothing comes out; the last round's ask is void.
+
+### The contest closes
+
+"the contest will last 10 days starting today", said on the 31st of October.
+So the last day anybody can enter is the **9th of November 2026**, and
+`RUNNING.until` in `@/lib/event` is `'2026-11-10'` - the day after the last
+day, because `eventNow` compares strictly less than. From the 10th the
+banner is gone from Home on its own and nobody has to remember to take it
+out, which is the case that file exists for.
+
+If either application ever draws the running event, read `eventNow()` and
+not `RUNNING`: the first one honours the end date and the second one does
+not.
+
+### The homepage header is built to his reference
+
+He sent the reference picture. It is a layout rather than art to copy, and
+the layout is five places each with one job:
+
+1. a small pill in the top-left corner - the event's tag;
+2. a large name and one line under it;
+3. one solid button at the foot, in a colour that is not the picture's;
+4. the thing's own mark in the top-right corner;
+5. a quiet line of small print diagonally across from the pill.
+
+With the art running out past the edge so the band reads as a window rather
+than a card with a photograph in it.
+
+That is what the banner now is. The colour is Halloween's, the mark in the
+corner is **`wordmark-halloween.png`**, the art is **`logomark-halloween.png`**
+at art size bleeding past the top and bottom, and the small print is what
+there is to win, because that is the fact somebody deciding whether to enter
+actually wants. The button stayed **blue**: orange is the event and the whole
+band is already wearing it, blue is Kobblon and is what everything else on
+this site that can be pressed is - and the reference's own button is not in
+its picture's colour either.
+
+Still no stock photograph standing in for a render nobody has made. When
+there is one it replaces a single `img` and nothing else moves.
+
+Looked at at 1280 and at 390. On a phone the art is dropped and the prizes
+move under the words, because there is no room beside a picture that wide.
+
+### Nothing here is yours
+
+`EventBanner` is a website page component, not a shared one, so there is
+nothing to pull. It is in the round because `@/lib/event` is shared shape
+and the end date is a meaning change: an event that used to run for ever now
+stops on a date.
+
+### Still waiting on you
+
+Unchanged from round 222: Klipy's exact request path, parameters and
+response shape; what `WritingBox` does that `writingRunsOf`, `markShapeOf`,
+`dressMarks` and `Run.faint` do not; whether the voice path can be gated
+anywhere but the client; the shiftlock shoulder offset in `aimCamera`;
+typing and who-is-here on `ChatService`.
+
+### Nothing is on Staw
+
+For the first time in a while: both migrations are applied, the wordmark is
+cancelled, the reference has arrived and the date is set. The list is empty.

@@ -48,9 +48,12 @@ export type PlatformEvent = {
  * when the Discord event is over - he can point it at a Kobblon event
  * instead by changing `to` and nothing else.
  *
- * No closing date, because he has not set one. A date on a banner is a
- * promise the page is making on his behalf, and the wrong one is worse
- * than none.
+ * Ten days, starting the 31st of October 2026 - Staw: "the contest will
+ * last 10 days starting today". So the last day anybody can enter is the
+ * 9th of November and `until` is the 10th, the day the banner is gone.
+ * One day out either way is a promise the page would be making on his
+ * behalf, so it is written as the day after the last day and the
+ * comparison below is strictly less than.
  */
 export const RUNNING: PlatformEvent | null = {
   tag: 'Avatar contest',
@@ -63,7 +66,7 @@ export const RUNNING: PlatformEvent | null = {
     { place: '2nd', brix: 5_000 },
     { place: '3rd', brix: 2_500 },
   ],
-  until: null,
+  until: '2026-11-10',
 }
 
 /** The event to draw today, or nothing. */
