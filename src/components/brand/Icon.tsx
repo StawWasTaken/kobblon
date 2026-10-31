@@ -28,7 +28,7 @@ export const UI_ICONS = [
   'chatbubble',
   'check-user', 'checkmark', 'circle-user', 'click', 'clock-user',
   'cross-user', 'discount',
-  'favourite-stroke', 'favourite', 'gear', 'heart-user', 'laurel-quest-stroke',
+  'favourite-stroke', 'favourite', 'gear', 'gif', 'heart-user', 'laurel-quest-stroke',
   'laurel-quest', 'microphone', 'mute-microphone', 'notification', 'people',
   'reaction-angry', 'reaction-fire', 'reaction-happy-grin', 'reaction-heart-eyes',
   'reaction-laugh', 'reaction-sad', 'reaction-shocked', 'reaction-skull',

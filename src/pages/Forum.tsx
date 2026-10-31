@@ -238,7 +238,7 @@ function Switch({ on, onPress, children }: {
  * down the left is the one thing worth copying outright from every forum
  * that has one - the eye finds the room before it reads a word.
  */
-function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading: boolean }) {
+export function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading: boolean }) {
   if (loading) {
     return (
       <div className="space-y-px">
@@ -259,26 +259,57 @@ function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading: boolea
       <ul>
         {boards.map((board) => (
           <li key={board.slug} className="border-b border-white/[0.07] last:border-b-0">
-            <div className="relative grid items-center gap-4 py-4 pl-5 pr-5 transition-colors hover:bg-white/[0.02] lg:grid-cols-[1fr_4.5rem_4.5rem_13rem]">
+            {/*
+              * A category inside a category is drawn in its parent's row
+              * rather than beside it: stepped in, on a quieter ground, at
+              * a smaller size. 0313 hands the list already in tree order,
+              * so a child always follows its own parent and this only has
+              * to indent what it is given.
+              *
+              * The step is a padding and a stripe rather than a nested
+              * list, because the row is a four-column grid that has to
+              * keep its columns lined up down the whole table - a list
+              * inside a cell would put the Topics count of a contest in a
+              * different place from the Topics count of the category over
+              * it, which is the one thing a table of numbers must not do.
+              */}
+            <div className={cn(
+              'relative grid items-center gap-4 py-4 pr-5 transition-colors hover:bg-white/[0.02] lg:grid-cols-[1fr_4.5rem_4.5rem_13rem]',
+              board.depth === 0 && 'pl-5',
+              board.depth === 1 && 'bg-black/20 py-3 pl-10',
+              board.depth >= 2 && 'bg-black/30 py-3 pl-[3.75rem]',
+            )}>
               {/* The stripe, full height and hard against the edge. */}
               <span className={cn(
                 'absolute inset-y-0 left-0 w-1',
                 BOARD_COLOUR[board.slug] ?? 'bg-white/30',
+                board.depth > 0 && 'opacity-50',
               )} />
 
               <div className="flex min-w-0 items-start gap-3">
-                <BoardMark slug={board.slug} className="mt-0.5 h-9 w-9 text-base" />
+                <BoardMark
+                  slug={board.slug}
+                  className={cn('mt-0.5', board.depth ? 'h-7 w-7 text-sm' : 'h-9 w-9 text-base')}
+                />
                 <div className="min-w-0 flex-1">
                   <Link
                     to={`/forum/c/${board.slug}`}
-                    className="inline-flex items-center gap-2 font-display text-base font-extrabold text-white transition-colors hover:text-brand-bright"
+                    className={cn(
+                      'inline-flex items-center gap-2 font-display font-extrabold text-white transition-colors hover:text-brand-bright',
+                      board.depth ? 'text-sm' : 'text-base',
+                    )}
                   >
                     {board.name}
                     {board.staff_only && (
                       <Glyph icon={faLock} className="text-[11px] text-white/30" title="Staff post here" />
                     )}
                   </Link>
-                  <p className="mt-1 line-clamp-2 text-sm leading-snug text-white/45">{board.blurb}</p>
+                  <p className={cn(
+                    'mt-1 line-clamp-2 leading-snug text-white/45',
+                    board.depth ? 'text-xs' : 'text-sm',
+                  )}>
+                    {board.blurb}
+                  </p>
                 </div>
               </div>
 
@@ -820,14 +851,62 @@ export function ForumCategory() {
   )
   /* Who looks after this board, which 0289 makes a public fact. */
   const minders = useAsync(() => forumBoardStaff(slug), [slug])
-  const board = (boards.data ?? []).find((one) => one.slug === slug)
+  const all = boards.data ?? []
+  const board = all.find((one) => one.slug === slug)
+  const { profile } = useAuth()
+  const staff = !!(profile?.is_admin || profile?.is_moderator)
+
+  /*
+   * The way down to here, since 0313 a category can be inside one.
+   *
+   * Walked up from this board rather than down from the root, and
+   * stopped by a seen set: the database refuses a loop and a depth over
+   * three, but this page is handed a list it did not build, and a crumb
+   * trail that can spin for ever on a bad row is a blank screen rather
+   * than a wrong one.
+   */
+  const trail: ForumBoard[] = []
+  if (board) {
+    const seen = new Set<string>()
+    let up = board.parent
+    while (up && !seen.has(up)) {
+      seen.add(up)
+      const one = all.find((x) => x.slug === up)
+      if (!one) break
+      trail.unshift(one)
+      up = one.parent
+    }
+  }
+
+  /** The categories inside this one, in the order the board list draws them. */
+  const inside = all.filter((one) => one.parent === slug)
+
+  /*
+   * A container is read, not written in. Offering "Start a topic" on a
+   * board that will refuse the topic is the control `docs/neoclassic.md`
+   * is about, and there are two of those now - the contest category and
+   * each year inside it - where before there was only Announcements.
+   */
+  const canPost = !board || !board.staff_only || staff
+
   useExactTitle(board ? `${board.name} | ${FORUM}` : FORUM)
 
   return (
     <ForumShell boards={boards.data ?? []} loading={boards.loading}>
       <header className="border-b border-white/[0.07] pb-5">
-        <nav className="flex items-center gap-2 text-xs font-bold text-white/35">
+        <nav className="flex flex-wrap items-center gap-2 text-xs font-bold text-white/35">
           <Link to="/forum" className="transition-colors hover:text-brand-bright">Forum</Link>
+          {trail.map((one) => (
+            <span key={one.slug} className="flex items-center gap-2">
+              <span aria-hidden="true">/</span>
+              <Link
+                to={`/forum/c/${one.slug}`}
+                className="transition-colors hover:text-brand-bright"
+              >
+                {one.name}
+              </Link>
+            </span>
+          ))}
           <span aria-hidden="true">/</span>
           <span className="text-white/60">{board?.name ?? '…'}</span>
         </nav>
@@ -859,15 +938,62 @@ export function ForumCategory() {
               {board && <p className="mt-1 text-sm text-white/45">{board.blurb}</p>}
             </div>
           </div>
-          <Button
-            to={`/forum/new?category=${slug}`}
-            variant="yes"
-            icon={faPlus}
-            className="w-full sm:w-auto"
-          >
-            Start a topic
-          </Button>
+          {canPost && (
+            <Button
+              to={`/forum/new?category=${slug}`}
+              variant="yes"
+              icon={faPlus}
+              className="w-full sm:w-auto"
+            >
+              Start a topic
+            </Button>
+          )}
         </div>
+
+        {/*
+          * What is inside this one.
+          *
+          * Over the topics rather than under them, because on a category
+          * that is only a container the topic table is empty and a reader
+          * who has to scroll past "Nothing here yet" to find the contest
+          * has been told the wrong thing about the room they are in.
+          */}
+        {!!inside.length && (
+          <div className="mt-5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+              Inside this category
+            </p>
+            <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+              {inside.map((one) => (
+                <li key={one.slug}>
+                  <Link
+                    to={`/forum/c/${one.slug}`}
+                    className="group flex items-center gap-3 rounded-xl border border-white/10 bg-ink-card/60 p-3 transition-colors hover:border-white/20 hover:bg-white/[0.03]"
+                  >
+                    <span className={cn(
+                      'h-8 w-1 shrink-0 rounded-full',
+                      BOARD_COLOUR[one.slug] ?? 'bg-white/30',
+                    )} />
+                    <BoardMark slug={one.slug} className="h-8 w-8 text-sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate font-display text-sm font-extrabold text-white transition-colors group-hover:text-brand-bright">
+                          {one.name}
+                        </span>
+                        {one.staff_only && (
+                          <Glyph icon={faLock} className="text-[10px] text-white/30" title="Staff post here" />
+                        )}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-white/40">
+                        {one.topic_count === 1 ? '1 topic' : `${formatCount(one.topic_count)} topics`}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/*
          * Who looks after this board, when somebody does.

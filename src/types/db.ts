@@ -1257,6 +1257,17 @@ export type ForumBoard = {
   blurb: string
   kind: 'plain' | 'bugs' | 'suggestions' | 'both'
   staff_only: boolean
+  /** The category this one sits inside, or null at the top of the list. */
+  parent: string | null
+  /** How far in it is drawn: 0 at the top, 2 at the deepest 0313 allows. */
+  depth: number
+  /**
+   * The topics in this category **and in everything under it**.
+   *
+   * A container's own count is zero by construction, and a row saying
+   * "Avatar contests - 0 topics" over forty entries is the page telling
+   * the reader something untrue about itself.
+   */
   topic_count: number
   post_count: number
   last_post_at: string | null

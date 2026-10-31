@@ -19,6 +19,7 @@ import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import { useToast } from '@/components/ui/Toast'
 import { worldIcon } from '@/lib/naming'
 import { AdBanner } from '@/components/ads/AdBanner'
+import { EventBanner } from '@/components/home/EventBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
@@ -235,6 +236,14 @@ export default function Home() {
           className="relative z-10 mb-8"
         />
       )}
+
+      {/*
+        * What Kobblon is running, over everything the page is made of and
+        * under the two things that are about you: the greeting, and a
+        * notice about your own account. A contest banner sitting over a
+        * suspension would be the page talking past somebody.
+        */}
+      <EventBanner className="relative z-10 mb-8" />
 
       <FriendsRail />
 

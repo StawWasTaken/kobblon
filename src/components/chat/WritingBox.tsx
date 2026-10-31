@@ -323,6 +323,23 @@ export function WritingBox({
         className={cn(
           'min-h-[1.65rem] whitespace-pre-wrap break-words px-3.5 text-[14px] leading-[1.65rem]',
           'focus:outline-none [overflow-wrap:anywhere]',
+          /*
+           * No ring of its own. `index.css` gives every `:focus-visible`
+           * a brand ring, which is right across the site and wrong here:
+           * the row this box sits in already lights its whole border
+           * when anything inside it has focus, so typing drew two blue
+           * strokes a few pixels apart around the same field. Staw:
+           * "theres 2 blue strokes its ugly get rid of the first one
+           * that shouldnt be here."
+           *
+           * The ring goes and the row's border stays, rather than the
+           * other way round, because the row is the thing that is lit -
+           * the box, the counter, the two cards and the send are one
+           * control and the border is what says so. Nothing is lost for
+           * a keyboard: the state is still drawn, just once and around
+           * the whole of it.
+           */
+          'focus-visible:ring-0 focus-visible:ring-offset-0',
           className,
         )}
       />

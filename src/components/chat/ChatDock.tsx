@@ -15,7 +15,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { Icon } from '@/components/brand/Icon'
 import { NewGroupDialog } from './NewGroupDialog'
 import { Composer } from '@/components/chat/Composer'
-import { MessageRow } from './MessageRow'
+import { MessageRow, DeletedRun } from './MessageRow'
 import { SafetyNote } from './SafetyNote'
 import { usePersonActions } from '@/components/social/personActions'
 import { TimeSeparator } from './TimeSeparator'
@@ -91,6 +91,22 @@ export const useChatDock = () => useContext(ChatContext)
  */
 const MAX_OPEN = 2
 const LIST_STATE = 'kobblon.chat.listOpen'
+
+/**
+ * How wide every window in the corner is, and how tall when it is open.
+ *
+ * Written once because there are two kinds of window down there - the
+ * friends list and however many conversations - and they stand on the same
+ * line. Staw asked for them to be the same size, and the way a pair like
+ * that comes apart is not somebody disagreeing about the number: it is one
+ * of them being changed for a good reason and the other not being found.
+ * Here there is nothing to find.
+ *
+ * `20rem` across and `26rem` tall, which is portrait by a comfortable
+ * margin and is the shape the list already was.
+ */
+const DOCK_SHAPE = 'w-80'
+const DOCK_TALL = 'h-[26rem]'
 
 /** The dock remembers whether it was left open, per device. */
 function useRemembered(key: string, fallback: boolean) {
@@ -300,37 +316,41 @@ function Window({
             * rather than a panel lying on the page.
             */
           : cn(
-              'w-[29rem] rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              DOCK_SHAPE,
+              'rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
               'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
               'before:from-brand before:via-brand-bright before:to-space',
               'relative transition-[height] duration-150 motion-reduce:transition-none',
               /*
-               * Measured off the screen rather than in rem, which is
-               * round 53's correction - at half the screen rather than its
-               * quarter, which is Staw's: "for the friends chat i want to
-               * keep the ratio portrait rather than landscape". A dock is
-               * 29rem across, so a quarter of the screen was wider than it
-               * was tall on every machine anybody uses. `50vh` is taller
-               * than the width on anything from a laptop up, and the
-               * bounds hold the shape on the two ends where it would not
-               * be: `32rem` is still portrait beside a `29rem` width, and
-               * `42rem` stops a tall screen making a column.
+               * One size for every window in the corner, and it is the
+               * friends list's. Staw, with the two of them side by side:
+               * "for the friends chat docks i want it to be the same
+               * ratio and size as the 'Friends Chat' dock". They sit on
+               * the same line at the foot of the page, and two windows
+               * that are nearly but not quite the same shape read as one
+               * of them being a different kind of thing - which is the
+               * reason the list was given the conversation's chrome in
+               * the first place. Measuring the window off the screen
+               * while the list beside it was measured in rem is exactly
+               * how they came apart: at `50vh` the conversation was
+               * taller than the list on every screen and the same height
+               * as it on none.
                *
-               * The width stays in rem on purpose. The applications' 30vw
-               * is for a window floating over a World; a dock lives in the
-               * rail and takes the width the rail gives it.
+               * So `DOCK_SHAPE` is written once, above, and both of them
+               * take it.
                *
-               * A card adds a fixed 14rem, because a grid of emoji is a
-               * grid whatever the screen is. The window grows for it
-               * rather than the card taking the conversation's room: a
+               * A card is the one thing that moves it. The grid is a
+               * fixed 19rem whatever the screen is, and the window grows
+               * by it rather than giving it the conversation's room - a
                * card that pushes the box off the bottom is a card you
-               * cannot type beside.
+               * cannot type beside. `85vh` catches the short screens,
+               * where the conversation gives up the difference instead.
                */
               collapsed
                 ? 'h-12'
                 : card
-                  ? 'h-[calc(50vh+14rem)] min-h-[40rem] max-h-[85vh]'
-                  : 'h-[50vh] min-h-[32rem] max-h-[42rem]',
+                  ? 'h-[45rem] max-h-[85vh]'
+                  : DOCK_TALL,
             ),
       )}
       aria-label={`Chat with ${name}`}
@@ -545,8 +565,45 @@ function Window({
                 : Infinity
               // A quarter of an hour of silence is worth marking.
               const gap = apart > 15 * 60_000
+
+              /*
+               * A run of deleted messages is one line.
+               *
+               * Staw, looking at six of them stacked up one side: "if
+               * theres a lot then regroup the text". The run is counted
+               * here rather than inside the row because this is the only
+               * place that can see the messages either side of one - a
+               * row drawing itself knows nothing about its neighbours,
+               * which is why six of them each drew the same sentence.
+               *
+               * The first of a run draws the line and every other one
+               * draws nothing. A time separator still breaks a run, so a
+               * gap of an hour between two deletions is still an hour.
+               */
+              if (m.is_removed) {
+                if (before?.is_removed && !gap) return null
+                let count = 0
+                for (let at = i; at < messages.length; at += 1) {
+                  const one = messages[at]
+                  if (!one.is_removed) break
+                  if (at > i) {
+                    const since = new Date(one.created_at).getTime()
+                      - new Date(messages[at - 1].created_at).getTime()
+                    if (since > 15 * 60_000) break
+                  }
+                  count += 1
+                }
+                return (
+                  <div key={m.id}>
+                    {gap && <TimeSeparator at={m.created_at} />}
+                    <DeletedRun count={count} />
+                  </div>
+                )
+              }
+
               const grouped = Boolean(
-                before && before.sender_id === m.sender_id && !gap && apart < 5 * 60_000,
+                before && before.sender_id === m.sender_id && !before.is_removed
+                && !gap && apart < 5 * 60_000,
               )
 
               return (
@@ -672,10 +729,11 @@ function List({
              side at the foot of the page and a pair that do not match
              reads as one of them being a different kind of thing. */
           : cn(
-              'relative w-80 rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              'relative rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              DOCK_SHAPE,
               'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
               'before:from-brand before:via-brand-bright before:to-space',
-              open ? 'h-[26rem]' : 'h-12',
+              open ? DOCK_TALL : 'h-12',
             ),
       )}
       aria-label="Friends Chat"
@@ -686,8 +744,18 @@ function List({
         * down the top of the screen - and its collapse chevron did nothing
         * there, because `full` forces the list open.
         */}
+      {/*
+        * The head is the conversation window's, to the colour. Staw: "i
+        * want the friends chat dock get its topbar the same colour as the
+        * topbar we have for each chat". It had been a blue wash fading
+        * out, which is a second surface stacked on the window - and
+        * beside a flat black head on the conversation next to it, the
+        * pair read as two different pieces of furniture. `bg-black/30` is
+        * darker than the card under it and the same colour as it, which
+        * is the whole idea.
+        */}
       {!full && (
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-gradient-to-b from-brand-deep/35 to-transparent px-3">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-black/30 px-3">
         <button
           onClick={() => setOpen((v) => !v)}
           className="flex flex-1 items-center gap-2 text-left text-sm font-extrabold"

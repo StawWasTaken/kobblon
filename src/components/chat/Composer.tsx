@@ -7,7 +7,6 @@ import {
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Avatar } from '@/components/ui/Avatar'
 import { Icon } from '@/components/brand/Icon'
-import { FACE_YELLOW } from '@/components/social/Reactions'
 import { EmojiCard, emojiHeld, loadEmoji } from '@/components/chat/EmojiCard'
 import { GifCard } from '@/components/chat/GifCard'
 import { gifsReady } from '@/lib/gifs'
@@ -336,15 +335,16 @@ export function Composer({
               )}
             >
               {/*
-                * The word, not a film reel. It is the chip the
-                * applications' chat card uses, which Staw asked for by
-                * name - "for the icon use the same one the other session
-                * used" - and a reel glyph beside a smiley reads as video
-                * rather than as GIFs.
+                * Staw's own drawing of it, uploaded as `gif.png` and
+                * living in the icon registry with the rest. It had been a
+                * chip typed out in CSS, which is the website drawing its
+                * own version of a mark that already exists - the thing
+                * `CLAUDE.md` says not to do. It is one silhouette with
+                * the letters knocked out of it, so the mask paints it the
+                * colour of the row and it dims and lights with the
+                * button beside it.
                 */}
-              <span className="rounded bg-white/15 px-1 py-px text-[9px] font-black leading-none tracking-wide">
-                GIF
-              </span>
+              <Icon name="gif" className="h-5 w-5" />
             </button>
           )}
 
@@ -361,13 +361,18 @@ export function Composer({
           >
             {/* Kobblon's own face rather than a Font Awesome smiley: it is
                 the one already used for reacting, and the two mean the
-                same thing to the same person. Drawn as Staw drew it, with
-                no tone over it - the lit background is what says the card
-                is open. Yellow rather than the colour of the row around
-                it, which is how the reaction button already draws this
-                same face - the drawing itself is a silhouette and takes
-                whichever colour it is given. */}
-            <Icon name="reaction-smile" tone={FACE_YELLOW} className="h-5 w-5" />
+                same thing to the same person.
+
+                White, not yellow. Staw, looking at the row: "for the
+                emoji icon i want u to use the white version of that
+                emoji". He is right about the row as a whole - the GIF
+                mark and the send arrow take the colour of the text they
+                sit in and the face was the one thing in the composer
+                painted its own colour, so the quietest control in the
+                row was also the loudest thing in it. Painting it with
+                the row leaves the lit background as the only thing that
+                says the card is open, which is what it is for. */}
+            <Icon name="reaction-smile" className="h-5 w-5" />
           </button>
 
           {/*

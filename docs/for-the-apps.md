@@ -16207,3 +16207,269 @@ Edge Function **deployed with `KLIPY_KEY` set**, and `moderate` **redeployed
 as a whole folder** because `policies.json` changed shape. Until the first
 of those, the hosts being allowed changes nothing visible - there is no GIF
 to pick, because nothing can ask Klipy for one.
+
+---
+
+## Round two hundred and sixteen - the docks are one size, and the chat suspension is yours to use
+
+Staw put the two chat windows side by side, said what was wrong with them,
+and asked for the Halloween contest to exist. Most of this round is the
+website's own furniture, but three parts of it reach you: a migration that
+puts `edited_at` back, a migration that lets a forum category hold
+categories, and the thing he asked me to put to you directly, which is at
+the bottom and is the part to read first if you only read one.
+
+### 1. Both chat windows are now one size, and it is the friends list's
+
+The conversation window was `29rem` wide and measured its height off the
+screen; the friends list beside it was `20rem` by `26rem` in fixed units.
+They sit on the same line at the foot of the page, so they were two windows
+that were nearly but not quite the same shape - which reads as one of them
+being a different kind of thing. Staw: "for the friends chat docks i want
+it to be the same ratio and size as the 'Friends Chat' dock".
+
+Both now take one pair of constants written once in `ChatDock.tsx`:
+`w-80` and `h-[26rem]`. A card (emoji or GIF) is the only thing that moves
+it, to `45rem` capped at `85vh`, because the grid is a fixed `19rem`
+whatever the screen is and the window grows for it rather than taking the
+conversation's room.
+
+**Nothing here is shared with you** - this is the website's dock in the
+website's rail. It is in the round because the reason is one you have hit
+too: measuring one of a pair off the screen and the other in rem is how a
+pair comes apart.
+
+### 2. The friends list's head is the conversation's head
+
+It had been a blue gradient fading out. It is `bg-black/30` now, which is
+what the conversation window's head has been since round 53 took the
+applications' flat chat card. Same colour, same hairline, same height.
+
+### 3. One lit edge on the composer, not two
+
+`index.css` gives every `:focus-visible` a brand ring. The composer's row
+*also* lights its whole border when anything inside it has focus, so typing
+drew two blue strokes a few pixels apart around the same field. Staw:
+"theres 2 blue strokes its ugly get rid of the first one that shouldnt be
+here." The `WritingBox` now carries `focus-visible:ring-0
+focus-visible:ring-offset-0` and the row's border is the only state drawn.
+
+**This one does reach you** if you have copied `WritingBox` or anything
+like it: a `contenteditable` inside a lit container is a double ring on any
+stylesheet with a global focus ring in it.
+
+### 4. The two marks in the composer
+
+The emoji face is white rather than yellow - Staw: "for the emoji icon i
+want u to use the white version of that emoji". It takes the colour of the
+row now, like everything else in it, and the lit background is the only
+thing that says the card is open.
+
+The GIF button was a chip typed out in CSS. Staw uploaded his own drawing
+of it, so it is `public/icons/ui/gif.png` and `'gif'` is in `UI_ICONS`. If
+you draw a GIF button, it is `Icon name="gif"` - one drawing in one place,
+the way `CLAUDE.md` says.
+
+### 5. GIFs in the friends chat: already built, still not deployed
+
+Staw asked for "the gif feature to the friends chat" and gave the Klipy
+key. The card, the function and the whole-message rule have been built
+since round 53 - what was missing was never website code. The key is a
+private API key and it goes in the `gifs` function's environment, never in
+a bundle, so this is still a step only Staw can take:
+
+```
+supabase secrets set KLIPY_KEY=<the key he gave>
+supabase functions deploy gifs
+```
+
+Until that, `gifsReady()` answers no and the button is not drawn at all,
+which is deliberate: a GIF button over a card that can never fill is the
+control `docs/neoclassic.md` forbids.
+
+**Still open with you, and now blocking on your side rather than ours:**
+Klipy's exact request path, parameters and response shape. Our
+`pictureOf` takes `file.md ?? file.sm ?? file.hd ?? file.xs` and then
+`gif ?? webp ?? mp4`, and drops anything with no width and height. If
+yours reads it differently, one of us is wrong and it will show up as an
+empty card rather than an error. `api.klipy.co` is blocked from this
+container's network, so I cannot check it from here.
+
+### 6. **0312** - a changed message says it was edited again
+
+Staw: "we dont see the '(edited)' thing anymore". He is right, and it is
+worse than a missing word.
+
+`edited_at` has existed since 0018, and so did the trigger that set it:
+`screen_message_edit`. 0170 moved the three talking tables from refusing to
+censoring and dropped `messages_screen_edit` along with the other old
+blocking triggers - correctly, because it was one of two triggers deciding
+the same question. The one line in it that was not about screening went
+with it. **So since 0170, every edit to a private message on this platform
+has left `edited_at` null.** Nothing failed, the update returned, the new
+words appeared, and the only symptom was a note that never showed.
+
+0312 is the stamp on its own: `an_edit_is_stamped`, a `before update of
+body` trigger named `messages_are_stamped` so it runs *after*
+`messages_are_censored` - censoring rewrites the body and the question is
+whether the message anybody will read has actually changed.
+
+Proved against local Postgres, applied twice, five checks: a new message is
+not stamped; changing the words stamps it; the new words are what reads
+back; saving the same words again does not move the stamp; deleting is not
+editing. Negative-tested by dropping the trigger, which turns the second
+one red.
+
+**What it means for you:** if your chat reads `messages.edited_at` to draw
+an edited marker, it has been dead on your side too and will start working
+the moment Staw applies 0312. If you have a copy of the stamp in your own
+code because this looked broken, take it out - one trigger, in the
+database, for both of us.
+
+### 7. "Message deleted", six times, is now one line
+
+Six ghost bubbles up one side of a conversation, each with an empty avatar
+column. A deleted message says nothing about who sent it or what it was, so
+six of them say exactly what one says. Staw: make it "look better and if
+theres a lot then regroup the text".
+
+`DeletedRun` is exported from `@/components/chat/MessageRow`: a centred
+chip reading "Message deleted" or "6 messages deleted". Centred rather than
+on a side, because the side a bubble sits on means who is talking and this
+has nobody talking in it. The run is counted in the dock, not in the row -
+a row drawing itself knows nothing about its neighbours, which is exactly
+why six of them each drew the same sentence. A fifteen-minute gap breaks a
+run, and the merge crosses senders on purpose: nothing in the line is
+attributed, so "two people each deleted three" has no honest way to be
+drawn.
+
+### 8. Editing and deleting a message is the forum's menu now
+
+Two faint sixteen-pixel glyphs floating beside the bubble, with delete
+firing immediately and nothing behind it. Staw: it "should be redesigned
+and fixed". It is one `...` opening `Menu` with Copy text, Edit, and Delete
+in red behind a line - the same menu the forum's posts have - and deleting
+asks first with `Confirm`. The editor is the composer's own field rather
+than a bare input: same border, same lit edge, same rounding, with "Enter
+to save · Esc to cancel" under it.
+
+### 9. **0313** - a forum category can hold categories, three deep
+
+Staw, setting up the contest: "we need a forum category for avatar contests
+and a subcategory for each year and inside every sub-subcategory for each
+avatar contest". The board list has been flat since 0275.
+
+`forum_categories` gains `parent text references forum_categories(slug)`,
+and a trigger `forum_categories_are_three_deep` that enforces the limit in
+*both* directions - a row may not be given a parent that already has a
+grandparent, **and** a row that already has grandchildren may not be given
+a parent itself. The second is the one that is easy to miss: without it a
+legal three-deep tree can be pushed to four by moving its root under
+something.
+
+`forum_boards()` gains `parent` and `depth`, orders the rows by the path
+down the tree so a child always follows its own parent, and **rolls its
+counts up**: a container's own topic count is zero by construction, and a
+row reading "Avatar contests - 0 topics" over forty entries is the page
+saying something untrue about itself.
+
+The three rooms it creates: `avatar-contests` (staff only, a container),
+`avatar-contests-2026` (staff only, a container),
+`avatar-contest-halloween-2026` (open to everybody).
+
+Applied twice, and proved: the tree comes back in draw order at the right
+depths; a fourth level is refused; moving a root under something is
+refused; a category inside itself is refused; a second contest in the same
+year is allowed; the roll-up counts what is under a category and nothing
+that is not.
+
+**What it means for you:** `ForumBoard` has two new fields, `parent:
+string | null` and `depth: number`, and `topic_count` has changed meaning -
+it is now the category *and everything under it*. If you render the board
+list anywhere, that is a number that will move without the data changing.
+
+### 10. The contest banner on Home
+
+A wide band across the top of Home, under the greeting and under anything
+about your own account - a contest banner over a suspension notice would be
+the page talking past somebody. The whole band is the link; the button
+inside it is a span, because nested anchors are illegal.
+
+It is driven by `src/lib/event.ts`, which holds one event at a time as a
+file rather than a table, with the reason written in it: one of these at a
+time, Staw sets it, and a table would need a staff screen, a policy and a
+read on every page load for a sentence and a link. `until` hides it on its
+own, because a Halloween banner still on the homepage in December is worse
+than no banner.
+
+**No art yet.** Staw said a reference is coming. A stock photograph
+standing in for art he has not drawn is the fake thing the ethos is about,
+so the band is the laurel, the colour and the words until the reference
+arrives. **No dates either**, because he has not set one - a date on a
+banner is a promise the page makes on his behalf, and the wrong one is
+worse than none.
+
+### 11. Staw's message to you: start using the chat suspension, and the voice one
+
+This is his, almost word for word: "we should really tell the other session
+to start using the Chat suspension (and the voicechat suspension too) and
+it works like how it works on the website, its the same design too and it
+appears onto the user's account standing too".
+
+Everything you need is already built and already shared, and both pieces
+were written from the start to mount with no provider, no router and no
+session:
+
+- **`ChatSuspended`** from `@/components/chat/ChatSuspended` - the card.
+  Every word on it is a prop: `minutes`, `until`, `over`, `reason`,
+  `evidence`, `ruleOrd`, `ruleTitle`, `channels`, `source`, `spoken`,
+  `onUnderstand`, `onAppeal`. `tools/site/suspended-preview.html` mounts it
+  bare, which is how we find out it still does.
+- **`ChatLockedBar`** from `@/components/chat/ChatLockedBar` - the bar that
+  *replaces* the composer rather than disabling it. It takes `until`,
+  `onOver` and `kind: 'chat' | 'voice'`. **The voice half is already
+  there** - that argument has been waiting for you.
+- **`myChatStanding()`** from `@/lib/api` - one call, returning
+  `ChatStanding` or null. **Read `channels`, do not assume chat.** A row
+  saying `['chat','voice']` and a client that only greys out the text box
+  is a voice suspension that does not exist.
+- **`chatCardSeen(which, ended)`** - says the card has been read, so it is
+  not shown again.
+
+Two things about how it behaves here, because he asked for it to be the
+same:
+
+1. **One standing, shared.** It used to be a hook called in two places -
+   the dock and every open conversation - which is two answers to one
+   question, and a suspension handed out mid-sentence locked the bar and
+   never raised the card, because the copy that learned it was not the copy
+   that draws it. If you hold it per-panel you will hit the same thing.
+2. **The refusal is what wakes it.** A failed send asks the standing again
+   rather than reading the error text to guess which refusal it was - a
+   window parsing English the server is free to reword.
+
+And yes, it lands on the account standing: `/standing` lists a
+`chat_timeout` as "Chat suspended", or "Chat and voice suspended" when
+`channels` includes voice, with the evidence and the rule beside it. That
+page is the website's, but the row it reads is the same row - so a
+suspension you draw in a World and the one somebody reads on the site are
+one decision, which is the whole reason this is shared rather than built
+twice.
+
+### Still open with you
+
+Klipy's exact request path, parameters and response shape. The shiftlock
+shoulder offset in `aimCamera`. Typing and who-is-here on `ChatService`.
+The `screen_say` allowance for a whole-message
+`https://static.klipy.com/` address. And what your `WritingBox` does that
+`writingRunsOf`, `markShapeOf`, `dressMarks` and `Run.faint` do not.
+
+### Still waiting on Staw
+
+- **0312** and **0313**, neither of which has been applied yet. Until 0312,
+  no edit anywhere marks itself as edited. Until 0313, the contest
+  categories do not exist and the banner on Home points at a page that is
+  not there.
+- The `gifs` Edge Function **deployed with `KLIPY_KEY` set**.
+- `moderate` **redeployed as a whole folder**, because `policies.json`
+  changed shape.

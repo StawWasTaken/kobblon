@@ -62,6 +62,16 @@ export const BOARD_ART: Record<string, { ours?: KobIcon; fa?: IconDefinition }> 
   'help-and-support': { fa: faCircleQuestion },
   'building-and-scripting': { fa: faHammer },
   'off-topic': { ours: 'people' },
+  /*
+   * The laurel is ours and it is already what a contest looks like on
+   * this site - it is the quest mark, worn by the thing you win. The year
+   * and the contest inside it wear the same one: they are the same room
+   * at three sizes, and giving each of them its own drawing would say
+   * they are three different kinds of place.
+   */
+  'avatar-contests': { ours: 'laurel-quest' },
+  'avatar-contests-2026': { ours: 'laurel-quest' },
+  'avatar-contest-halloween-2026': { ours: 'laurel-quest' },
 }
 
 /*
@@ -81,6 +91,19 @@ export const BOARD_COLOUR: Record<string, string> = {
   'help-and-support': 'bg-link',
   'building-and-scripting': 'bg-violet-400',
   'off-topic': 'bg-white/40',
+  /*
+   * Orange, which is one colour the forum did not already carry.
+   *
+   * The note above says the boards take the site's own colours rather
+   * than new ones, and that still holds for the six rooms the forum is
+   * made of. A contest is not one of those - it is a thing that arrives,
+   * runs and ends - and the family needs to read as one block down a list
+   * the eye is scanning by colour. Amber is two rows up on Feedback, so
+   * the three share orange and nothing else on the page uses it.
+   */
+  'avatar-contests': 'bg-orange-400',
+  'avatar-contests-2026': 'bg-orange-400',
+  'avatar-contest-halloween-2026': 'bg-orange-400',
 }
 
 /*
@@ -105,6 +128,9 @@ export const BOARD_INK: Record<string, string> = {
   'help-and-support': 'text-link',
   'building-and-scripting': 'text-violet-400',
   'off-topic': 'text-white/60',
+  'avatar-contests': 'text-orange-400',
+  'avatar-contests-2026': 'text-orange-400',
+  'avatar-contest-halloween-2026': 'text-orange-400',
 }
 
 export function BoardMark({ slug, className }: { slug: string; className?: string }) {
