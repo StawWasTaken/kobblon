@@ -7,22 +7,38 @@
  * here is a line of chat whose whole content is a Klipy address, and both
  * sides turn it back into a picture.
  *
- * `klipy.com` is on `allowed_link_hosts` as of 0307, so one of these is no
- * longer masked on its way through `screen_say`.
+ * `klipy.com` and `static.klipy.com` are on `allowed_link_hosts` as of 0307,
+ * so one of these is no longer masked on its way through `screen_say`.
  *
  * Only the whole message counts. An address with words around it is a
  * message with a link in it, and drawing that as a picture would hide what
  * somebody actually wrote.
+ *
+ * And one host, not the family of them.
+ *
+ * The Launcher draws a GIF through `app://kobblon/gif/media?url=...`, and
+ * its main process refuses anything that does not *start with*
+ * `https://static.klipy.com/`. This side used to accept any Klipy host at
+ * all, which meant a message could be a picture here and a bare link
+ * there - one rule on two sides is one rule more than this can have, and
+ * the stricter of the two is the one that is right, because it is the one
+ * standing in front of a file being fetched.
+ *
+ * `startsWith` on a literal prefix rather than a pattern over the host, on
+ * purpose: `https://static.klipy.com.evil.example/x` passes a sloppy
+ * host test and fails this one.
  */
 
 import { supabase } from './supabase'
 
-const KLIPY = /^https:\/\/(?:[a-z0-9-]+\.)*klipy\.(?:com|co)\/[^\s]+$/i
+const KLIPY = 'https://static.klipy.com/'
 
 /** The address, if this message is one Klipy picture and nothing else. */
 export function gifIn(text: string): string | null {
   const one = text.trim()
-  return KLIPY.test(one) ? one : null
+  if (!one.startsWith(KLIPY) || one.length <= KLIPY.length) return null
+  // No whitespace: "…/a.gif and look" is a message with a link in it.
+  return /\s/.test(one) ? null : one
 }
 
 /* ------------------------------------------------------------ finding one */

@@ -42,16 +42,50 @@ type Gif = { id: string; url: string; width: number; height: number }
  * pictures out by their own proportions, and one with no size in it is the
  * one that makes the column jump when it loads.
  */
+/*
+ * The one host the Launcher will draw.
+ *
+ * Its main process fetches a GIF through `app://kobblon/gif/media?url=...`
+ * and refuses anything not starting with this, so a picture offered here
+ * that is served from anywhere else is a picture that works on the website
+ * and is a dead frame in the application. Dropped at the door rather than
+ * sent and hoped for: the card is the same card in both places.
+ */
+const ONLY = 'https://static.klipy.com/'
+
 function pictureOf(item: Record<string, unknown>): Gif | null {
   const id = String(item.id ?? item.slug ?? '')
   const file = (item.file ?? {}) as Record<string, Record<string, Record<string, unknown>>>
-  const sizes = file.md ?? file.sm ?? file.hd ?? file.xs ?? {}
-  const one = (sizes.gif ?? sizes.webp ?? sizes.mp4 ?? {}) as Record<string, unknown>
-  const url = String(one.url ?? '')
-  const width = Number(one.width ?? 0)
-  const height = Number(one.height ?? 0)
-  if (!id || !url || !width || !height) return null
-  return { id, url, width, height }
+
+  /*
+   * Middling first, then smaller, then bigger. Not every item carries
+   * every size, so this walks them rather than naming one and hoping -
+   * and it walks them looking for a whole answer, because an item whose
+   * `md` has no GIF in it may still have one under `sm`. Picking the size
+   * first and the encoding second drops that item for no reason, which is
+   * the bug this shape replaces.
+   *
+   * The GIF encoding and no other: Klipy also offers webp and mp4 of the
+   * same picture, and the Launcher's route is a GIF route. Taking
+   * whichever encoding happened to be present is how one side ends up
+   * drawing a file the other cannot.
+   */
+  for (const size of ['md', 'sm', 'hd', 'xs']) {
+    const one = (file[size]?.gif ?? {}) as Record<string, unknown>
+    const url = String(one.url ?? '')
+    const width = Number(one.width ?? 0)
+    const height = Number(one.height ?? 0)
+    if (!id || !url || !width || !height) continue
+    /*
+     * Anything not on Klipy's own file host is dropped rather than sent:
+     * the website would draw it and the Launcher would not, and a picture
+     * that works in one window and not the other is worse than one
+     * fewer GIF in the card.
+     */
+    if (!url.startsWith(ONLY)) continue
+    return { id, url, width, height }
+  }
+  return null
 }
 
 Deno.serve(async (request) => {

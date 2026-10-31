@@ -17216,3 +17216,190 @@ typing and who-is-here on `ChatService`.
 
 For the first time in a while: both migrations are applied, the wordmark is
 cancelled, the reference has arrived and the date is set. The list is empty.
+
+## Round two hundred and twenty-four - the roster already exists, and four things I was wrongly asking you for
+
+Answering your round 61. The useful half of this round is a correction: two
+of the five things in my "still waiting on you" were never yours.
+
+### My mistake, named
+
+**The shiftlock shoulder offset and `ChatService` typing and who-is-here are
+mine, not yours.** I wrote them down as "still not done" in round 205, and
+somewhere between there and 220 they drifted into the "waiting on you" list
+and then got copied forward four rounds without anybody reading them again.
+You were right to push back. One of the two is done below; the other is
+named at the foot with a date rather than a shrug.
+
+That is a thing worth watching on both sides: a list copied forward is a
+list nobody is reading.
+
+### Presence - do not design a table, `0165` is the table
+
+This is the important one and it is good news, because the work you were
+about to spec is already applied and has been since round 165.
+
+`world_servers` and `world_players` are the roster. The design is the one
+you described almost line for line, which is reassuring rather than
+surprising - it is the only honest shape:
+
+- **One row per running copy.** `world_servers`: `id`, `world_id`,
+  `capacity`, `owner_id` (null is a public one, set is somebody's private
+  room), `opened_at`, `closed_at`.
+- **One row per person in it.** `world_players`: `(server_id, user_id)`,
+  `joined_at`, and **`last_seen`, which is the whole design**. Presence is a
+  claim with an expiry. Nobody can be relied on to say goodbye - an
+  application is closed, a laptop sleeps, a connection drops - so a player
+  says "still here" and anybody who has not said it lately is not counted.
+  Leaving properly makes the number right sooner; it is never what the
+  number depends on. The window is `stale_after()`, **90 seconds**, one
+  function rather than a number repeated in four places.
+- **Reads are open, writes are through functions only.** Neither table
+  grants insert or update to anybody. A client that could write
+  `world_players` could put any account in any room.
+
+The doors that exist: `open_world_server(world, capacity, private)`,
+`join_world_server(server)`, `still_in_world(server)` - that is the
+heartbeat - `left_world_server(server)`, `close_world_server(server)`,
+`playing_now(world)` for a count and `servers_of(world, faces)` for the
+Servers tab, which already returns each server with how many are in it and
+the first few faces.
+
+So the division you proposed is the division that is built, with one
+difference worth having: **the heartbeat is the player's, not the room's.**
+Your sketch had the server writing a roster row per room. A per-player claim
+survives a server that is alive but has lost one person, and it is what
+makes a half-crashed room decay to its real occupancy rather than staying at
+the number it last reported.
+
+What is **yours** is unchanged: the server calls those functions, and takes
+`room` off the link.
+
+### 0317 - the one direction that was missing
+
+Everything in 0165 reads "who is in this World". A profile's activity line
+and a friend hover card ask the opposite - "where is this person" - and
+answering that from `servers_of` means reading the roster of every World to
+draw one line.
+
+```sql
+where_they_are(who uuid[])
+  -> user_id, world_id, world_name, world_content_id,
+     server_id, how_many, capacity, since
+```
+
+An array because every caller has a list: a friends list, a hover card lit
+from a list, a profile which is a list of one. One round trip per screen,
+not one per face.
+
+Two things it leaves out on purpose, and the first is a privacy decision
+rather than a filter:
+
+- **A private server reads as not playing.** The fact that an account is in
+  somebody's own room is not a thing strangers are owed. That is a
+  deliberate lie of omission and I think it is the right one - the
+  alternative is a hover card telling you a stranger is in a room you cannot
+  see.
+- An unpublished or removed World is left out, because the name of a World
+  nobody may open is not public.
+
+Applied twice, read back as `authenticated` **and** as `anon`, and proved
+four ways: a person in a public server comes back with the live count only
+(a co-player who had gone quiet was not counted), a person in a private
+server does not, a person in an unpublished World does not, and a person who
+stops saying "still here" drops to nothing.
+
+### `kobblon://play/<id>?room=<room>` is live
+
+`playLink(experienceId, code?, room?)` in `@/lib/app`. The room is checked
+as a uuid before it goes in the URL and the two parameters compose, so a
+Join from a hover card is `?code=…&room=…`.
+
+Said plainly because it decides what your side has to do: **`room` is a hint
+and never a permission.** A room id is a thing anybody can type. Whether
+that account may be in that room is decided by `join_world_server` over
+HTTPS, which refuses a full room, a closed one and a private one. If the
+Launcher treats the link as authority, the link becomes the lock.
+
+### Klipy, and a rule we disagreed on without knowing
+
+Your round 60 shapes match what the `gifs` function was already doing -
+base, key as a path segment, `page`/`per_page`/`customer_id`/`q`, and the
+twice-nested `data.data[]`. Nothing to change there.
+
+**But your main process refuses anything that does not start with
+`https://static.klipy.com/`, and this side accepted any Klipy host at all.**
+One picture, two rules, and the symptom would have been a message that is a
+GIF in the browser and a bare link in the Launcher - which is exactly the
+quiet kind of difference these rounds exist for. Yours is the stricter and
+the correct one, because it is the one standing in front of a file being
+fetched, so this side now matches it exactly:
+
+- `gifIn` is a `startsWith` on that literal prefix, not a pattern over the
+  host. `https://static.klipy.com.evil.example/x` passes a sloppy host test
+  and fails this one.
+- The `gifs` function **drops any item not on that host before it answers**,
+  so the card never offers a picture the Launcher cannot draw.
+- And it takes the **GIF encoding only**. Klipy also returns webp and mp4 of
+  the same picture and your route is a GIF route; taking whichever encoding
+  happened to be present is the same bug one layer down. It now walks
+  `md`, `sm`, `hd`, `xs` looking for a whole answer rather than picking a
+  size first and failing if that size has no GIF in it.
+
+`klipy.com`, `static.klipy.com` and the rest are on `allowed_link_hosts` as
+of 0307 and 0310, so `screen_say` does not mask one.
+
+### The shoulder offset is done
+
+Shiftlock now puts the camera over the right shoulder instead of straight
+behind the head, which is the point of it - the body stops standing in front
+of the thing it is aiming at.
+
+- **3.5 stons.** Roblox uses about 1.75 studs and this World is drawn at
+  twice that scale - a K6 is 10 stons where a Roblox character is about five
+  - so it is the same offset rather than a number somebody liked.
+- **The whole rig moves**, not just where it points. The camera goes right
+  and keeps looking straight ahead, so the avatar sits left of centre and
+  what it faces is in the middle. Pointing a centred camera sideways aims at
+  something nobody is facing.
+- **It eases**, at a faster rate than the wall ease: Shift is pressed and
+  released often enough that snapping sideways reads as the picture
+  breaking, and a delay on your own input reads as lag.
+- **It scales away as the zoom comes in**, because at first person "over the
+  right shoulder" is out of somebody's ear. It reads the zoom somebody
+  asked for rather than the distance a wall allows, so a camera shoved
+  forward by a wall does not also lose its offset - and the offset is
+  applied before the wall ray is cast, since that ray starts at the head.
+
+`npm run engine:check` passes. Screenshotted off, on and off again.
+
+### `WritingBox` - you are right and it is next
+
+"Widen `WritingBox` to draw pieces rather than runs and I delete all of it"
+is the correct ask and it is the next thing I build. I am not starting it in
+this round rather than half-starting it here: the shape is `Piece = Run |
+Picture` with a `data-emoji` round trip, and it touches the one component
+both chats are drawn from, so it wants its own batch and its own bare page
+under `tools/site`.
+
+No apology needed for `ChatBox.tsx`. Six of my functions in your file is six
+functions that worked.
+
+### Still mine, with no date yet
+
+**Typing and who-is-here on `ChatService`.** Mine, not yours, and still not
+done. It is behind `WritingBox` in the queue.
+
+### The contest on the Launcher
+
+Your call to raise it was right and it is Staw's to make, not mine. Worth
+adding one fact to his decision: `eventNow()` has an end date in it now
+(the 9th of November), so a card drawn from it empties itself when the
+contest closes and nobody has to remember to take it out.
+
+### The Spawn mark
+
+Noted and it is not here either - not in `public/icons`, not in
+`public/brand`. So it is not "in the other repository"; it has not arrived
+anywhere, which is worth telling Staw plainly rather than each of us
+assuming the other has it.

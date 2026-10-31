@@ -107,6 +107,23 @@ export type EngineEvents = {
 const ZOOM_EASE = 14
 const WALL_EASE = 7
 
+/*
+ * Shiftlock puts the camera over the right shoulder rather than straight
+ * behind the head, which is the whole point of it: the body stops standing
+ * in front of the thing it is aiming at. Roblox uses about 1.75 studs and
+ * this World is drawn at twice that scale - a K6 is 10 stons where a Roblox
+ * character is about five - so 3.5 is the same offset, not a guess.
+ */
+const SHOULDER = 3.5
+
+/*
+ * And it slides, it does not jump. Shift is pressed and released often
+ * enough that snapping the camera sideways reads as the picture breaking;
+ * eased, it reads as leaning. Faster than the wall ease because this one is
+ * the player's own doing and a delay on your own input feels like lag.
+ */
+const SHOULDER_EASE = 11
+
 export class Engine {
   readonly scene = new THREE.Scene()
   readonly camera: THREE.PerspectiveCamera
@@ -156,6 +173,8 @@ export class Engine {
    * reads as the camera moving rather than as the World jumping.
    */
   private orbit = { yaw: 0, pitch: 0.22, distance: ZOOM_FAR }
+  /** How far over the shoulder the camera has slid, eased towards SHOULDER. */
+  private shoulder = 0
   private shown = ZOOM_FAR
   private held = ZOOM_FAR
   /** How far back this World lets the camera go. */
@@ -645,6 +664,32 @@ export class Engine {
     const head = at.clone()
     head.y += K6_HEIGHT * 0.88
 
+    const { yaw, pitch } = this.orbit
+
+    const leaning = this.shiftlockOn ? SHOULDER : 0
+    this.shoulder += (leaning - this.shoulder) * (1 - Math.exp(-SHOULDER_EASE * step))
+    if (Math.abs(this.shoulder - leaning) < 0.01) this.shoulder = leaning
+
+    /*
+     * Over the shoulder, while shiftlock is on.
+     *
+     * The whole rig moves, not just where it points: the camera goes right
+     * and keeps looking straight ahead, so the avatar sits on the left of
+     * the picture and what it is facing is in the middle. Pointing a
+     * centred camera sideways would aim at something nobody is facing.
+     *
+     * Scaled away as the zoom comes in, because at first person "over the
+     * right shoulder" is out of somebody's ear. It reads `shown` rather
+     * than the distance the wall allows: the wall check is cast from this
+     * head, so the head has to be where it is going before that runs, and
+     * a camera shoved sideways by a wall should not also lose its offset.
+     */
+    const over = this.shoulder * THREE.MathUtils.clamp((this.shown - ZOOM_NEAR) / 3.5, 0, 1)
+    if (over) {
+      head.x -= Math.cos(yaw) * over
+      head.z += Math.sin(yaw) * over
+    }
+
     /*
      * Behind the head by the yaw, and above it by the pitch.
      *
@@ -653,7 +698,6 @@ export class Engine {
      * the distance put the camera below the head, which is why every view
      * was taken from knee height.
      */
-    const { yaw, pitch } = this.orbit
 
     /*
      * Where the camera would sit if nothing were in the way, and then where

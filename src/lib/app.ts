@@ -26,11 +26,35 @@ const ID = /^[A-Za-z0-9_-]{1,64}$/
 /** The alphabet `mint_app_code` writes in, checked before it goes in a URL. */
 const CODE = /^[A-Za-z0-9_-]{32,128}$/
 
-export const playLink = (experienceId: string, code?: string) => {
+/** A server's id, which is a uuid and is checked before it goes in a URL. */
+const ROOM = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Where to play, and optionally *which copy* of it.
+ *
+ * `room` is the one from `world_servers`, and it is what makes Join on a
+ * friend mean "where they are" rather than "that World, somewhere". Without
+ * it the Launcher opens whichever server it likes, which for somebody
+ * following a friend is the one thing they did not ask for.
+ *
+ * It is a hint and never a permission: a room id is a thing anybody can
+ * type, and whether that account may be in that room is decided by
+ * `join_world_server` over HTTPS, which is where it has always been
+ * decided. A full room, a closed one or a private one refuses there.
+ */
+export const playLink = (experienceId: string, code?: string, room?: string) => {
   if (!ID.test(experienceId)) throw new Error('That is not an experience id.')
-  if (!code) return `kobblon://play/${experienceId}`
-  if (!CODE.test(code)) throw new Error('That is not a sign in code.')
-  return `kobblon://play/${experienceId}?code=${code}`
+  if (code && !CODE.test(code)) throw new Error('That is not a sign in code.')
+  if (room && !ROOM.test(room)) throw new Error('That is not a server id.')
+
+  const asked = [
+    code ? `code=${code}` : '',
+    room ? `room=${room}` : '',
+  ].filter(Boolean)
+
+  return asked.length
+    ? `kobblon://play/${experienceId}?${asked.join('&')}`
+    : `kobblon://play/${experienceId}`
 }
 
 /**
