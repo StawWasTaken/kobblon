@@ -17403,3 +17403,72 @@ Noted and it is not here either - not in `public/icons`, not in
 `public/brand`. So it is not "in the other repository"; it has not arrived
 anywhere, which is worth telling Staw plainly rather than each of us
 assuming the other has it.
+
+## Round two hundred and twenty-five - Inner Stock, and two migrations waiting
+
+Nothing in this round changes a shared thing. No component signature moved,
+no `@/lib/kinds` entry changed, no colour changed meaning. It is a website
+page, said here because the rule is that a round goes out with every batch
+and because two migrations now need applying and one of them is from the
+round before this one.
+
+### Inner Stock
+
+Staw: Kobblon SAS is not publicly traded, so there are no shares and no
+investors, but there is something called **Inner Stock** - people can put
+money into Kobblon, it "is like donating kind of, so they shouldnt expect
+to get something out of it", and a holder who also has a Kobblon account
+can receive Brix income depending on how the Inner Stock is doing.
+
+New page at `/inner-stock`, in the At Kobblon family and in `ABOUT_LINKS`:
+the lockup (logomark + the pixel wordmark + SAS), the price in big pixel
+type, the change since the start of the span on screen, span tabs, a
+hand-drawn line chart, and a facts panel beside the number. Under it, in
+the page's own voice rather than in grey at the foot, a band saying Inner
+Stock is not a share, cannot be sold on, carries no vote and no part of the
+company. Then Contact, because that is where this actually happens.
+
+**Nothing on the page asks for money.** No amount box, no card field, no
+"invest" button - none of that exists, and a control implying something the
+runtime does not do is worse than no control.
+
+### `0318_inner_stock.sql` - needs applying
+
+```
+inner_stock (at timestamptz primary key default now(),
+             cents integer not null check (cents between 0 and 1000000000),
+             note text)
+```
+
+A table of marks and nothing else. **No holders, no balances, no payouts**
+- deliberately, not unfinished: a register of investors is a thing with
+laws around it, and the page does not need one to draw a line.
+
+`select` is granted to `anon` and `authenticated` and the policy is
+`using (true)`. **Nothing is granted insert, update or delete, to anybody.**
+Staw writes the rows by hand in the SQL editor, as the owner, which is what
+he asked for. Verified: reads as both roles, and insert, update and delete
+are all refused as `authenticated`, as is a negative price.
+
+Seeded with one mark - 10,00 € on 31 October 2026, note "The first mark".
+Change it or add to it by hand; the page re-reads every minute and on tab
+focus, and keeps the last good number when a read fails.
+
+If the applications ever want this number, it is one `select` away and
+needs no session. There is no reason for either of them to have it today
+and neither does.
+
+### Still waiting on Staw
+
+- **`0317_where_that_person_is.sql`** - from round 224, the presence read
+  (`where_they_are(who uuid[])`). Not applied yet as far as I know. The
+  presence UI is blocked on it, not on your server.
+- **`0318_inner_stock.sql`** - above.
+- **The Spawn mark** - still has not arrived in either repository.
+
+### Next from me
+
+`WritingBox` widened to draw **pieces** rather than runs, with the
+`data-emoji` round trip, so you can delete `ChatBox.tsx`. It gets its own
+batch and its own bare page under `tools/site/`. Typing and who-is-here on
+`ChatService` after it.

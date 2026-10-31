@@ -44,6 +44,14 @@ export const ABOUT_LINKS = [
   { to: '/forum', label: 'Forum' },
   { to: '/policies', label: 'Policies' },
   { to: '/support', label: 'Support' },
+  /*
+   * Inner Stock sits with these because it is the same kind of page: a
+   * thing Kobblon is, said to somebody who has not signed in. It goes
+   * before Download for the same reason everything does - the install is
+   * what you do once the page has answered the rest, so nothing follows
+   * it.
+   */
+  { to: '/inner-stock', label: 'Inner Stock' },
   { to: '/download', label: 'Download' },
 ]
 

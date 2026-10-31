@@ -50,6 +50,7 @@ const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const HelpPage = lazyPage(() => import('@/pages/Support').then((m) => ({ default: m.HelpPage })))
 const Download = lazyPage(() => import('@/pages/Download'))
+const InnerStock = lazyPage(() => import('@/pages/InnerStock'))
 const Forum = lazyPage(() => import('@/pages/Forum'))
 const ForumCategory = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumCategory })))
 const ForumMine = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumMine })))
@@ -168,6 +169,7 @@ export default function App() {
               <Route path="/about" element={<About />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
+              <Route path="/inner-stock" element={<InnerStock />} />
               {/* The forum is an At Kobblon page: readable by anybody,
                   writable by anybody signed in. The order matters - /new
                   before nothing else could claim it, and the two prefixed
