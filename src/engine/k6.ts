@@ -1015,8 +1015,9 @@ export class K6 {
   /**
    * Whether the clip playing is an emote rather than a way of moving.
    *
-   * This is what the hold pose has to know about, and it covers the E key's
-   * wave as well as a named emote - the key does not go through `emote`.
+   * This is what the hold pose has to know about, and it covers a wave
+   * asked for through `Intent.emote` as well as a named emote - an intent
+   * does not go through `emote`.
    */
   private get posing() { return !BODY_CLIPS.includes(this.motion) }
 

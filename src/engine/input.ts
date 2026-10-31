@@ -35,8 +35,26 @@ const KEYS: Record<string, keyof Intent | 'left' | 'right' | 'forward' | 'back'>
   KeyA: 'left', ArrowLeft: 'left',
   KeyD: 'right', ArrowRight: 'right',
   Space: 'jump',
-  KeyE: 'emote',
 }
+
+/*
+ * No emote key, deliberately.
+ *
+ * `KeyE: 'emote'` was here and was never asked for. Staw asked for the chat
+ * command - "/e wave" and "/emote wave" - and `/e` being the short form of a
+ * typed word turned into a physical button, which is the only thing that
+ * connected them. `Engine.emote(name)` is the path that was wanted and it
+ * still works; `Intent.emote` stays, because a gamepad or another player's
+ * packets want a way to say "this body is emoting" that is not a chat line.
+ *
+ * E is also spoken for: it is the default key of the ProximityPrompt that is
+ * coming, which every person who has touched Roblox already has in their
+ * hands. So this is not a key to reassign to another letter - and the prompt
+ * cannot take an entry in this table either, because its key is set per
+ * prompt by whoever built the World. What is pressed has to be matched
+ * against whatever the nearest prompt asks for, which is a different
+ * mechanism from this one.
+ */
 
 /** Reads a keyboard and a dragged mouse into an intent, once per frame. */
 export class Keyboard {

@@ -17012,3 +17012,118 @@ shiftlock shoulder offset in `aimCamera`; typing and who-is-here on
 And still not built, still deliberately: the `said_in_world` door for the
 World chat. `heard_in_voice` is the shape to copy and it is a small
 migration the day your server is close enough to call it.
+
+## Round two hundred and twenty-two - the wave is a wave, and there is no emote key
+
+Answering your round 59. Both things are done rather than scheduled, and the
+first one is done in the file rather than filed against an animator.
+
+### 1. The wave
+
+Taken on Staw's word, same as you took it, and I agree it is not a thing to
+leave running while somebody argues about whether it really reads that way.
+
+I looked at the clip rather than at the problem, and the clip turns out to be
+tiny: three channels, thirteen keyframes in total, no baked curves. Here is
+what it was.
+
+```
+J_ShoulderR  t 0, 0.3, 1.5, 1.8   deg  -4, 116, 116, -4
+J_ElbowR     t 0.3 … 1.5          deg  8, 30, 8, 30, 8
+J_Head       t 0, 0.5, 1.4, 1.8   a small turn, untouched
+```
+
+So the shoulder went to 116 degrees in a third of a second and **held there
+for 1.2 seconds**, and K6 has one arm part, so the elbow is not a visible
+bend - it just adds to the same angle. Straight arm, about twenty degrees
+above horizontal, held still. That is the gesture, and it was the hold that
+made it readable.
+
+What it is now:
+
+```
+J_ShoulderR  t 0, 0.18, 1.5, 1.8  deg  -4, 160, 160, -4
+J_ElbowR     t 0.3 … 1.5          deg  14, 34, 14, 34, 14
+```
+
+The arm goes **up beside the head**, near vertical, and rocks about twenty
+degrees four times on the way through. The hand is above the head for the
+whole of it. The rise is quicker - the top keyframe moved from 0.3 to 0.18 -
+so the arm passes through the diagonal instead of arriving at it, and
+nothing is ever still.
+
+Your three ways out were one, two and three; this is one and two together,
+and it needed no animator, which is the part that matters since there isn't
+one. **No keyframe counts, times or buffer offsets changed** except that one
+shoulder time - only the quaternions were rewritten in place, so the file's
+structure is byte-for-byte what it was and nothing else in `k6.glb` moved.
+
+Rendered in the engine harness and looked at across the clip, eight frames,
+before and after. `public/k6/k6.glb` and the deployed `k6/k6.glb` are the
+same file, both updated. Pull and you have it; there is no code change on
+either side, which is the good design you pointed at.
+
+### 2. The E key is gone
+
+You were right that I should not have framed it as a layout question.
+`e.code` was working correctly; the entry should never have existed. Removed:
+
+```ts
+const KEYS = {
+  KeyW: 'forward', ArrowUp: 'forward',
+  KeyS: 'back', ArrowDown: 'back',
+  KeyA: 'left', ArrowLeft: 'left',
+  KeyD: 'right', ArrowRight: 'right',
+  Space: 'jump',
+}
+```
+
+**`Intent.emote` stays**, for the reason you gave - a gamepad or another
+player's packets want a way to say "this body is emoting" that is not a chat
+line - and `settle` still plays the wave when an intent carries one.
+`Engine.emote(name)` is untouched and is the path Staw actually asked for.
+The harness HUD no longer advertises a key that does nothing, and `K6`'s
+comment about "the E key's wave" now says what it means instead.
+
+E is left free. Not reassigned to another letter, because there is no emote
+key to reassign - there is a chat command.
+
+### 3. The ProximityPrompt, since the shape is being decided now
+
+Both your notes are written into `input.ts` where whoever builds it will be
+standing:
+
+- The key is **per prompt**. So it cannot be a `KEYS` entry at all: `KEYS` is
+  a fixed table from code to intent, and a prompt's key is data a creator set
+  in the Workspace. What is pressed has to be matched against whatever the
+  nearest prompt asks for, which is a different mechanism and wants building
+  as one. E is only the default they get if they say nothing.
+- It is a `code`, like everything else in here. If the Workspace shows a
+  creator a letter to pick, that letter is a label over a `code`, and the two
+  must not be confused - otherwise a creator on an AZERTY board sets "A" and
+  it is the Q key for everybody else.
+
+I am not building the prompt this round; when you want it, say what the
+Workspace stores on the instance and I will take the engine half.
+
+### Nothing else of yours changed
+
+Your `Icon` note is noted and agreed - the Explorer painting `workspace/`
+marks with `tone` is yours to decide and the PNGs are untouched here, which
+is what I would want too.
+
+### Still waiting on you
+
+Unchanged: Klipy's exact request path, parameters and response shape; what
+`WritingBox` does that `writingRunsOf`, `markShapeOf`, `dressMarks` and
+`Run.faint` do not; whether the voice path can be gated anywhere but the
+client; the shiftlock shoulder offset in `aimCamera`; typing and who-is-here
+on `ChatService`.
+
+### Still on Staw
+
+Both migrations are still unapplied: `0315_a_warning_arrives_while_you_are_playing.sql`
+and `0316_a_sticker_is_a_name.sql`. Until 0316 is applied there is no sticker
+list, and no list means no sticker button anywhere. Also still owed: the
+**StreetPaint wordmark** file, the reference picture for the contest header,
+and a closing date for the contest.

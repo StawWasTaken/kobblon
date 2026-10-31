@@ -833,7 +833,7 @@ const loop = (now: number) => {
     `position    ${s.position.map((n) => n.toFixed(1)).join(', ')}`,
     `grounded    ${s.grounded}   speed ${s.speed}`,
     '',
-    'WASD move · Shift run · Space jump · E wave · drag to look',
+    'WASD move · Shift run · Space jump · drag to look',
   ].join('\n')
   requestAnimationFrame(loop)
 }
