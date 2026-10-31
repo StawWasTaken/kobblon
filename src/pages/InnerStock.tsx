@@ -6,7 +6,6 @@ import {
 import { Icon } from '@/components/brand/Icon'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
-import { BandHead } from '@/components/about/Type'
 import { StockChart } from '@/components/about/StockChart'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Confirm } from '@/components/ui/Confirm'
@@ -17,7 +16,7 @@ import { asset } from '@/lib/asset'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   euros, change, movement, percent, marksIn, rangesFor, useMarks, RANGES,
-  brix, leaveInnerStock, monthName, myInnerStock, standingWords, stockMonths,
+  brix, leaveInnerStock, monthName, myInnerStock, standingWords,
 } from '@/lib/innerstock'
 import { cn } from '@/lib/cn'
 
@@ -74,7 +73,6 @@ export default function InnerStock() {
    */
   const session = useMaybeAuth()?.session ?? null
   const mine = useAsync(async () => (session ? myInnerStock() : null), [session?.user?.id])
-  const paid = useAsync(async () => stockMonths(12), [])
 
   const spans = useMemo(() => (marks ? rangesFor(marks) : []), [marks])
   const range = spans.find((one) => one.key === span) ?? RANGES[RANGES.length - 1]
@@ -386,138 +384,9 @@ export default function InnerStock() {
           </div>
         </Lane>
       </Band>
-
-      {/*
-        * Who the Inner Stock pays, and on what. Said in public rather than
-        * kept in the staff console: a share that is a salary is a rule, and
-        * a rule nobody outside can read is the kind of thing a platform gets
-        * asked about once and cannot answer twice the same way.
-        */}
-      <Band tone="raised" edge>
-        <Lane>
-          <BandHead
-            eyebrow="Every month"
-            title="What the Inner Stock pays"
-            lead={
-              <>
-                Kobblon staff are paid from the Inner Stock - it is their
-                salary - and so is anybody with an investor's deal. Once a
-                month, each account receives its share of what one Inner
-                Stock is worth. Nothing stacks: one account is paid at its
-                highest standing and that one only.
-              </>
-            }
-          />
-
-          <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {LADDER.map((rung) => (
-              <div
-                key={rung.who}
-                className={cn(
-                  'rounded-2xl border p-4',
-                  rung.full
-                    ? 'border-brand/30 bg-brand/[0.07]'
-                    : 'border-ink-line bg-ink-raised/40',
-                )}
-              >
-                <p className="font-display text-3xl font-extrabold leading-none tabular-nums text-white">
-                  {rung.share}
-                  <span className="text-lg text-white/40">%</span>
-                </p>
-                <p className="mt-2 text-sm font-bold text-white">{rung.who}</p>
-                <p className="mt-1 text-xs leading-snug text-muted">{rung.note}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-ink-line bg-ink-raised/40 p-5">
-              <h3 className="font-display text-lg font-extrabold text-white">
-                A month that rises, or holds
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                Each account receives its share of the closing price, in Brix.
-                100 Brix is a euro, so at{' '}
-                <span className="font-bold text-white">{now ? euros(now.cents) : '10,00 €'}</span>{' '}
-                a full share is{' '}
-                <span className="font-bold text-white">
-                  {(now?.cents ?? 1000).toLocaleString('fr-FR')} Brix
-                </span>
-                , and a 50% share is half of that.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-danger/25 bg-danger/[0.06] p-5">
-              <h3 className="font-display text-lg font-extrabold text-white">
-                A month that falls
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                Nobody is paid: if the Inner Stock was not profitable, neither
-                is the month. Investors carry it further - Kobblon repays the
-                deficit, so an investor's share of the fall is taken off their
-                Brix and goes to the Kobblon account. A staff salary is never
-                taken back; it simply is not paid.
-              </p>
-            </div>
-          </div>
-
-          {!!paid.data?.length && (
-            <div className="mt-6 overflow-hidden rounded-2xl border border-ink-line bg-ink-raised/40">
-              <h3 className="border-b border-ink-line px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/40">
-                The months paid so far
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[34rem] text-sm">
-                  <thead>
-                    <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
-                      <th className="px-4 pb-2 pt-3 font-bold">Month</th>
-                      <th className="px-4 pb-2 pt-3 font-bold">Opened</th>
-                      <th className="px-4 pb-2 pt-3 font-bold">Closed</th>
-                      <th className="px-4 pb-2 pt-3 text-right font-bold">Accounts</th>
-                      <th className="px-4 pb-2 pt-3 text-right font-bold">Paid out</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paid.data.map((one) => (
-                      <tr key={one.month} className="border-t border-ink-line">
-                        <td className="px-4 py-2.5 font-bold text-white">{monthName(one.month)}</td>
-                        <td className="px-4 py-2.5 tabular-nums text-muted">{euros(one.opened)}</td>
-                        <td className={cn(
-                          'px-4 py-2.5 font-bold tabular-nums',
-                          one.closed > one.opened && 'text-space-bright',
-                          one.closed < one.opened && 'text-danger-bright',
-                          one.closed === one.opened && 'text-white/70',
-                        )}>
-                          {euros(one.closed)}
-                        </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-white/80">
-                          {one.paid_accounts}
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-bold tabular-nums">
-                          {one.taken_brix > 0
-                            ? <span className="text-danger-bright">−{one.taken_brix.toLocaleString('fr-FR')} Brix</span>
-                            : <span className="text-space-bright">+{one.paid_brix.toLocaleString('fr-FR')} Brix</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </Lane>
-      </Band>
     </AboutShell>
   )
 }
-
-/** The ladder, said once, in the order anybody reads it. */
-const LADDER: { who: string; share: number; note: string; full?: boolean }[] = [
-  { who: 'Kobblon', share: 100, note: 'The house account, and Staw', full: true },
-  { who: 'Investors', share: 100, note: 'A deal made with Kobblon SAS', full: true },
-  { who: 'Superadmins', share: 90, note: 'The top staff rank' },
-  { who: 'Admins', share: 70, note: 'Staff who set the rules' },
-  { who: 'Moderators', share: 50, note: 'Staff who work the queues' },
-]
 
 /**
  * Your own share, in the rail.

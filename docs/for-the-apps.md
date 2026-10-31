@@ -17741,3 +17741,19 @@ and capping a second at the 120 Brix she had left, with both arriving in
 the Kobblon account; the same month refused the second time; an investor
 leaving and then having no standing at all; and a moderator told no when
 she tried to leave.
+
+## Round two hundred and thirty-five - the ladder comes off the page
+
+Correction to the last round: the "What the Inner Stock pays" band is
+gone. Staw did not ask for it and did not want it - the page is the
+price and the rail, and a second chapter explaining the payroll is
+somebody else's page.
+
+Nothing about the rules changed. The ladder, the falling month and every
+function in `0319` are exactly as the last round described them. What is
+left on the Inner Stock page is the **Your share** panel in the rail for
+anybody the Inner Stock pays, with the investor's way out on it; the
+ladder and the months paid are read in the staff console.
+
+Worth carrying across: this page is the price, and the price only. Do
+not hang an explainer off it in either application.
