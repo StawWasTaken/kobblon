@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons'
+import { faArrowDown, faArrowUp, faCircleInfo } from '@fortawesome/free-solid-svg-icons'
 import { Icon } from '@/components/brand/Icon'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
@@ -9,7 +9,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { asset } from '@/lib/asset'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  euros, movement, percent, marksIn, rangesFor, useMarks, RANGES,
+  euros, change, movement, percent, marksIn, rangesFor, useMarks, RANGES,
 } from '@/lib/innerstock'
 import { cn } from '@/lib/cn'
 
@@ -55,13 +55,36 @@ export default function InnerStock() {
   const shown = useMemo(() => (marks ? marksIn(marks, range) : []), [marks, range])
 
   const now = marks?.length ? marks[marks.length - 1] : null
+
   /*
-   * Against the first mark of the span on screen, not against yesterday.
-   * A percentage with no span attached is the one number here that can be
-   * read four different ways.
+   * Today's move, which is what the big percentage beside the price is.
+   *
+   * It used to be the move across whatever span was on screen, and that
+   * is a percentage that changes when somebody presses 1W - fine in the
+   * chart, wrong next to the price, where it reads as "the number" and
+   * has no span written on it. Staw asked for the figure every price
+   * anywhere else gives: today.
+   *
+   * Today is measured from the last mark written *before* midnight, not
+   * from the mark before this one: two marks written this afternoon are
+   * one day's move between them, not two. And when nothing has been
+   * written today that baseline is the newest mark itself, so the move
+   * is zero - which is the truth, and is said as "No change today"
+   * rather than drawn as a flat arrow.
    */
-  const since = shown.length > 1 ? shown[0] : null
-  const change = now && since ? movement(now.cents, since.cents) : null
+  const today = useMemo(() => {
+    if (!marks?.length) return null
+    const latest = marks[marks.length - 1]
+    const midnight = new Date()
+    midnight.setHours(0, 0, 0, 0)
+    let before: typeof latest | null = null
+    for (let i = marks.length - 1; i >= 0; i -= 1) {
+      if (new Date(marks[i].at).getTime() < midnight.getTime()) { before = marks[i]; break }
+    }
+    // Every mark there is was written today: nothing to measure against.
+    if (!before) return null
+    return { cents: latest.cents - before.cents, pc: movement(latest.cents, before.cents) }
+  }, [marks])
 
   /*
    * The rail. Computed over every mark rather than the span on screen,
@@ -115,16 +138,40 @@ export default function InnerStock() {
                   {now ? euros(now.cents) : '—'}
                 </p>
 
-                {change !== null && (
-                  <span
-                    className={cn(
-                      'mb-1 text-xl font-extrabold tabular-nums',
-                      change > 0 && 'text-space-bright',
-                      change < 0 && 'text-danger-bright',
-                      change === 0 && 'text-white/50',
-                    )}
-                  >
-                    {percent(change)}
+                {today && today.pc !== null && (
+                  /*
+                    * The pill and the money beside it, which is the pair
+                    * every price anywhere else shows: how far it moved as
+                    * a share, and how far it moved in euros. Both are
+                    * today's, and both say so.
+                    */
+                  <span className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-extrabold tabular-nums',
+                        today.cents > 0 && 'bg-space-bright/15 text-space-bright',
+                        today.cents < 0 && 'bg-danger-bright/15 text-danger-bright',
+                        today.cents === 0 && 'bg-white/[0.06] text-white/50',
+                      )}
+                    >
+                      {today.cents !== 0 && (
+                        <FontAwesomeIcon
+                          icon={today.cents > 0 ? faArrowUp : faArrowDown}
+                          className="h-3 w-3"
+                        />
+                      )}
+                      {percent(today.pc)}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-sm font-bold tabular-nums',
+                        today.cents > 0 && 'text-space-bright',
+                        today.cents < 0 && 'text-danger-bright',
+                        today.cents === 0 && 'text-muted',
+                      )}
+                    >
+                      {today.cents === 0 ? 'No change today' : `${change(today.cents)} today`}
+                    </span>
                   </span>
                 )}
               </div>
@@ -259,6 +306,12 @@ export default function InnerStock() {
                     [
                       'Since the first',
                       stats.sinceStart === null ? '—' : percent(stats.sinceStart),
+                    ],
+                    [
+                      'Today',
+                      today && today.pc !== null
+                        ? `${change(today.cents)} · ${percent(today.pc)}`
+                        : '—',
                     ],
                     ['Last updated', day(now.at)],
                   ]}

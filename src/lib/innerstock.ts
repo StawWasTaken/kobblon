@@ -120,6 +120,10 @@ export function movement(now: number, before: number | undefined): number | null
   return ((now - before) / before) * 100
 }
 
+/** A change in money, signed, for the figure beside a percentage. */
+export const change = (cents: number) =>
+  `${cents > 0 ? '+' : cents < 0 ? '−' : ''}${money.format(Math.abs(cents) / 100)}`
+
 export const percent = (n: number) =>
   `${n > 0 ? '+' : n < 0 ? '−' : ''}${new Intl.NumberFormat('fr-FR', {
     minimumFractionDigits: 2, maximumFractionDigits: 2,

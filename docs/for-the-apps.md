@@ -17612,3 +17612,28 @@ only offered the room between it and that edge, so it shrink-wraps and
 breaks its text over two lines exactly when the pointer is over the
 newest mark - the one case you are most likely to screenshot and least
 likely to test.
+
+## Round two hundred and thirty-two - Inner Stock says what it did today
+
+Beside the price there is now the pair every other price in the world
+shows: a pill with an arrow and the percentage, and the move in euros
+next to it, both of them today's. The rail gained a `Today` row saying
+the same thing in one line.
+
+The percentage that was there before was the move across whatever span
+was on screen, which changes when somebody presses 1W. That is fine on a
+chart and wrong beside a price, where it reads as *the* number and has no
+span written on it. It is gone; `Since the first` in the rail is where
+the long view lives.
+
+Two rules in how today is measured, in case either application ever shows
+this figure: it is measured from **the last mark written before midnight**,
+not from the previous mark, so two marks written the same afternoon are
+one day's move between them rather than two. And when nothing has been
+written today the baseline is the newest mark itself, so the move is zero
+- said as "No change today" with no arrow, never drawn as a flat arrow or
+a green nought.
+
+`change(cents)` is exported from `@/lib/innerstock` beside `euros` and
+`percent`: a signed money figure, `+0,11 €` / `−0,06 €`, for the number
+that sits next to a percentage.
