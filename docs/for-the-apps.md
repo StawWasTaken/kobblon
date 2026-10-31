@@ -17592,3 +17592,23 @@ it sat over the newest mark - the one number the page exists to show.
 
 Nothing outstanding on Staw's side but **the Spawn mark**, which is still
 in neither repository.
+
+## Round two hundred and thirty-one - the read-out rides the dot again
+
+Correction to the last round, on Staw's note: parking the hover read-out
+in a corner of the chart was wrong. A number in a corner is a number about
+nothing - you look at the dot, then away to the corner, then back to check
+you read the right one.
+
+So it sits beside the mark it is reading again, and the *side* does the
+avoiding: a little to the right of the dot normally, swapping to the left
+once the pointer passes the middle of the box, which is the only place the
+newest mark ever is. It also rides up or down near the top and bottom
+edges so it never hangs out of the frame.
+
+One thing worth stealing if you ever float a box like this: it needs
+`white-space: nowrap`. An absolutely positioned box near the right edge is
+only offered the room between it and that edge, so it shrink-wraps and
+breaks its text over two lines exactly when the pointer is over the
+newest mark - the one case you are most likely to screenshot and least
+likely to test.

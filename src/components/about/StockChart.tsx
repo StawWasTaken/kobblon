@@ -251,19 +251,34 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
         {held && at !== plot.points.length - 1 && <Dot point={held} colour={stroke} />}
 
         {/*
-          * The read-out is parked in a corner rather than carried along by
-          * the pointer. Following the pointer meant it sat over the line
-          * it was describing; and the far corner is no good either,
-          * because the newest mark is always at the top right and the
-          * read-out landed on it. So it lives at the top left and drops
-          * to the bottom left when the pointer is over that corner.
+          * The read-out sits beside the mark it is reading.
+          *
+          * It was parked in a corner for a while, to keep it off the line
+          * and off the newest mark. Staw's note on that is the right one:
+          * a number in the corner is a number about nothing - you have to
+          * look at the dot, then away, then back. So it rides the dot
+          * again, held a little to one side of it, and it is the *side*
+          * that does the avoiding: it swaps to the left half once the
+          * pointer passes the middle, which is the only place the newest
+          * mark ever is, and it rides up or down so it is never hanging
+          * off the top or the bottom of the box.
           */}
         {held && (
           <div
-            className={cn(
-              'pointer-events-none absolute left-1 rounded-xl border border-ink-line bg-ink/95 px-3 py-2 shadow-pop',
-              held.x < W * 0.35 && held.y < H / 2 ? 'bottom-1' : 'top-1',
-            )}
+            /*
+              * `whitespace-nowrap`, because an absolute box near the right
+              * edge is only offered the room left between it and that
+              * edge: without it the date broke over two lines exactly
+              * when the pointer was over the newest mark.
+              */
+            className="pointer-events-none absolute z-10 whitespace-nowrap rounded-xl border border-ink-line bg-ink/95 px-3 py-2 shadow-pop"
+            style={{
+              left: `${(held.x / W) * 100}%`,
+              top: `${(held.y / H) * 100}%`,
+              transform: `translate(${held.x > W * 0.55 ? 'calc(-100% - 14px)' : '14px'}, ${
+                held.y < H * 0.3 ? '-10%' : held.y > H * 0.7 ? '-90%' : '-50%'
+              })`,
+            }}
           >
             <p className="font-display text-sm font-extrabold tabular-nums leading-none text-white">
               {euros(held.mark.cents)}
@@ -274,12 +289,13 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
               })}
             </p>
             {held.mark.note && (
-              <p className="mt-1.5 max-w-44 text-[11px] leading-snug text-white/60">
+              <p className="mt-1.5 max-w-44 whitespace-normal text-[11px] leading-snug text-white/60">
                 {held.mark.note}
               </p>
             )}
           </div>
         )}
+
         {/* The dates, in the foot gutter, each under its own mark. */}
         {plot.dates.map((one) => (
           <span
