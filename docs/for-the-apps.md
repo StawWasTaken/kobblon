@@ -16560,3 +16560,120 @@ by dropping the trigger and watching the insert go through.
 - The `gifs` Edge Function **deployed with `KLIPY_KEY` set**.
 - `moderate` **redeployed as a whole folder**.
 - The reference picture for the contest header, and a closing date.
+
+## Round two hundred and nineteen - wiring the Launcher and the Workspace to the moderation system
+
+Staw wants the chat suspension and the voice suspension honoured in the
+applications, same behaviour and same design as the website. Everything
+below already exists and is live in the database; none of it is new work
+on this side. What is missing is you reading it.
+
+**1. One call, and it is the authority.**
+
+`my_chat_standing()` - grant is `authenticated`, so your own session reads
+it. It returns at most one row, or nothing, which is the ordinary answer:
+
+```
+id uuid, until timestamptz, minutes integer, reason text,
+source text ('machine' | 'staff'), seen boolean, over boolean,
+evidence text, rule text, rule_ord integer, rule_title text,
+gravity integer, channels text[]
+```
+
+From the website it is `myChatStanding()` in `@/lib/api`, which works in
+your window too - `setSupabaseClient` hands it your session. `over` is
+true for a suspension whose clock has run out but which the person has not
+acknowledged yet; that is the "Chat is back" state, not nothing.
+
+**2. `channels` is the part to honour, and it is the thing that will be
+got wrong.**
+
+The row carries `channels text[]`. `{chat}` is text only. `{chat,voice}`
+means both. A row saying `{chat,voice}` and a client that only greys out
+the text box is a voice suspension that does not exist - somebody
+suspended for what they said out loud keeps saying it. Read the array;
+never assume chat.
+
+There is no server-side voice gate. Voice does not pass through the
+database, so the suspension cannot be enforced where the text one is:
+**the Launcher is the enforcement point for voice.** Mute the microphone
+and refuse to open the voice channel while `'voice' = any(channels)` and
+the clock is running. If voice is carried by a service you can gate
+server-side, gate it there too and tell me, and I will add the check.
+
+**3. Hear it, do not poll for it.**
+
+A suspension handed out while somebody is sitting in a World must not
+first be learned from a message failing. The website does three things,
+and all three are worth copying:
+
+- Realtime on `INSERT` into `public.chat_timeouts`. The row policy is what
+  keeps it private - realtime applies it, so somebody hears about their
+  own suspension and nobody else's.
+- **The row is the signal, not the answer.** On an insert, call
+  `my_chat_standing()` again rather than assembling a card out of the
+  payload, so there is one place that decides what a suspension means.
+- A fallback that does not depend on the socket: ask again when the window
+  comes back to the front, and every thirty seconds while it is in front.
+  Realtime only delivers once `chat_timeouts` is in the publication, and a
+  dropped socket is silent - without this the card simply never appears,
+  which is exactly how it read when it was broken here.
+
+One channel per listener instance. Two channels on one topic is not two
+listeners: the second subscribe is refused, and whichever panel unmounts
+first takes the other's down with it.
+
+**4. The design is built and it is mountable.**
+
+`ChatLockedBar` (`@/components/chat/ChatLockedBar`) takes `until: string`,
+`onOver?: () => void`, `kind?: 'chat' | 'voice'`, `className?`. No
+provider, no router, no session - it takes a time and counts to it, which
+is exactly so you can mount it under your own chat with nothing around it.
+`kind="voice"` already says "Voice suspended" and "Voice is back."
+
+It **replaces** the composer rather than disabling it. A greyed-out input
+with red above it reads as something that went wrong; a solid bar with a
+lock reads as a decision, which is what it is.
+
+**5. Saying it has been read.**
+
+`chat_card_seen(which uuid, ended boolean)` - `which` is `standing.id`,
+`ended` is `standing.over`. Call it when the person dismisses the card, and
+drop the card locally at once rather than after the round trip; the row is
+what stops it coming back.
+
+**6. It lands on the account standing, and that is the whole point.**
+
+`/standing` on the website lists a `chat_timeout` as "Chat suspended", or
+**"Chat and voice suspended"** when `channels` includes voice, with the
+censored evidence, the rule and its title beside it, and the appeal. That
+page reads the same row you will be reading. So a suspension you draw in a
+World and the one somebody reads on the site are one decision - which is
+why this is shared rather than built twice. If you want a way in from your
+window, link to `kobblon.com/standing`; do not rebuild that page.
+
+**7. While you are in here: screening what is said.**
+
+`screen_say(words text)` returns `{ allowed, clean, reason }`. Send
+`clean`, never what was typed. **No answer is not permission** - the filter
+being unreachable must not become the way round it, and `clean` is empty in
+that case so there is nothing unsafe to send by accident. From the website
+this is `screenSay()`, same import, same session rule.
+
+### Still open with you
+
+- Whether your voice path can be gated anywhere other than the client, and
+  where. Today nothing on the server can enforce a voice suspension, so if
+  the Launcher does not mute the microphone the voice half is decoration.
+- What you want `ChatLockedBar` to do that it does not - before you write a
+  second one.
+- Klipy's exact request path, parameters and response shape; the shiftlock
+  shoulder offset in `aimCamera`; typing and who-is-here on `ChatService`;
+  and what your `WritingBox` does that `writingRunsOf`, `markShapeOf`,
+  `dressMarks` and `Run.faint` do not.
+
+### Still waiting on Staw
+
+Nothing. 0312, 0313 and 0314 are applied, and `gifs` is deployed with
+`KLIPY_KEY` set - except the reference picture for the contest header and
+a closing date for the contest, which are still not set.
