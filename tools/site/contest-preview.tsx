@@ -11,8 +11,10 @@ import '@/index.css'
 const board = (
   slug: string, name: string, blurb: string,
   depth: number, parent: string | null, topics: number, staff = false,
+  holds = false,
 ): ForumBoard => ({
   slug, name, blurb, kind: 'plain', staff_only: staff, parent, depth,
+  holds_only_categories: holds,
   topic_count: topics, post_count: topics * 4,
   last_post_at: topics ? new Date(Date.now() - 900_000).toISOString() : null,
   last_title: topics ? 'My pumpkin head' : null,
@@ -26,8 +28,8 @@ const board = (
 const boards: ForumBoard[] = [
   board('announcements', 'Announcements', 'What Kobblon is doing, said by the people doing it.', 0, null, 4, true),
   board('community-creations', 'Community creations', 'Worlds, items, art and whatever else you made.', 0, null, 31),
-  board('avatar-contests', 'Avatar contests', 'Dress up, enter, win Brix. Every contest Kobblon has run, by year.', 0, null, 7, true),
-  board('avatar-contests-2026', '2026', 'The contests we ran in 2026.', 1, 'avatar-contests', 7, true),
+  board('avatar-contests', 'Avatar contests', 'Dress up, enter, win Brix. Every contest Kobblon has run, by year.', 0, null, 7, false, true),
+  board('avatar-contests-2026', '2026', 'The contests we ran in 2026.', 1, 'avatar-contests', 7, false, true),
   board('avatar-contest-halloween-2026', 'Halloween 2026', 'Build the best Halloween avatar. 10,000 Brix for first, 5,000 for second, 2,500 for third.', 2, 'avatar-contests-2026', 7),
   board('feedback-and-suggestions', 'Feedback and suggestions', 'Ideas for Kobblon, and the things that are wrong with it.', 0, null, 58),
   board('off-topic', 'Off topic', 'Everything else, within the Guidelines.', 0, null, 112),

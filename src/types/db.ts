@@ -1262,6 +1262,14 @@ export type ForumBoard = {
   /** How far in it is drawn: 0 at the top, 2 at the deepest 0313 allows. */
   depth: number
   /**
+   * This category holds other categories and no topics (0314).
+   *
+   * Not the same thing as `staff_only`, which says only staff open topics
+   * here. This one says nobody does, staff included, and the database
+   * refuses the insert and the move rather than trusting the page.
+   */
+  holds_only_categories: boolean
+  /**
    * The topics in this category **and in everything under it**.
    *
    * A container's own count is zero by construction, and a row saying

@@ -16518,3 +16518,45 @@ what your `WritingBox` does that `writingRunsOf`, `markShapeOf`,
 - The `gifs` Edge Function **deployed with `KLIPY_KEY` set**.
 - `moderate` **redeployed as a whole folder**.
 - The reference picture for the contest header, and a closing date.
+
+## Round two hundred and eighteen - a container holds no topics
+
+Staw: "the two other categories can only contain categories, not posts".
+
+**0314**, and it is a meaning change rather than a new feature, so read
+the first point even if you never list categories.
+
+1. **`staff_only` was the wrong column and 0313 used it.** It says "only
+   staff open topics here". What is true of Avatar contests and 2026 is
+   that *nobody* does. They are filing, not rooms, and leaning on
+   `staff_only` left the case that actually happens wide open: a moderator
+   tidying up puts a topic in the year by hand and nothing stops them.
+2. **`forum_categories.holds_only_categories boolean not null default
+   false`** now says it, and the two containers are set to it and are
+   **no longer `staff_only`**. If you cached either row, a container will
+   now read `staff_only: false` - that is correct, not a regression.
+3. **It is enforced on `forum_topics`, not in the RPC.** A trigger refuses
+   `insert` *and* `update of category`, because moving a topic is the
+   second event and a guard that only watches the insert watches one of
+   the two. `forum_topic_create` also raises the readable sentence first
+   ("Avatar contests only holds other categories. Pick one of them."), but
+   the trigger is the authority.
+4. **`forum_boards()` returns `holds_only_categories`**, after `depth`.
+   Column order moved; if you read that result positionally rather than by
+   name, fix it now.
+5. **What a window should do with it:** never offer "Start a topic" on a
+   container, and leave it out of any picker where somebody chooses where
+   to post. The database refuses it either way, so a control offering it
+   is a control that lies.
+
+Checked against local Postgres under a real signed-in identity: the
+insert refused, the move refused, the RPC refused, the contest itself took
+the topic, and the counts still roll up to the containers. Negative-tested
+by dropping the trigger and watching the insert go through.
+
+### Still waiting on Staw
+
+- **0312**, **0313** and now **0314**, in that order. None applied yet.
+- The `gifs` Edge Function **deployed with `KLIPY_KEY` set**.
+- `moderate` **redeployed as a whole folder**.
+- The reference picture for the contest header, and a closing date.

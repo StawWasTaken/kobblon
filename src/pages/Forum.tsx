@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faComment, faEye, faLock, faPlus, faThumbsUp, faThumbtack,
+  faComment, faEye, faFolderTree, faLock, faPlus, faThumbsUp, faThumbtack,
   faCheck, faClockRotateLeft, faLayerGroup, faChevronLeft, faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import { ReportDialog } from '@/components/social/ReportDialog'
@@ -312,6 +312,14 @@ export function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading:
                     {board.name}
                     {board.staff_only && (
                       <Glyph icon={faLock} className="text-[11px] text-white/30" title="Staff post here" />
+                    )}
+                    {/* 0314: this one is filing, not a room. */}
+                    {board.holds_only_categories && (
+                      <Glyph
+                        icon={faFolderTree}
+                        className="text-[11px] text-white/30"
+                        title="Holds other categories"
+                      />
                     )}
                   </Link>
                   <p className={cn(
@@ -897,7 +905,8 @@ export function ForumCategory() {
    * is about, and there are two of those now - the contest category and
    * each year inside it - where before there was only Announcements.
    */
-  const canPost = !board || !board.staff_only || staff
+  const canPost = !board
+    || (!board.holds_only_categories && (!board.staff_only || staff))
 
   useExactTitle(board ? `${board.name} | ${FORUM}` : FORUM)
 
@@ -992,6 +1001,13 @@ export function ForumCategory() {
                         </span>
                         {one.staff_only && (
                           <Glyph icon={faLock} className="text-[10px] text-white/30" title="Staff post here" />
+                        )}
+                        {one.holds_only_categories && (
+                          <Glyph
+                            icon={faFolderTree}
+                            className="text-[10px] text-white/30"
+                            title="Holds other categories"
+                          />
                         )}
                       </span>
                       <span className="mt-0.5 block truncate text-xs text-white/40">
@@ -1817,7 +1833,14 @@ export function ForumNew() {
   const [busy, setBusy] = useState(false)
 
   const staff = !!(profile?.is_admin || profile?.is_moderator)
-  const open = (boards.data ?? []).filter((one) => !one.staff_only || staff)
+  /*
+   * Where a topic can actually go. A container (0314) is never offered,
+   * staff or not, because the database refuses it either way and a choice
+   * that cannot be made is not a choice.
+   */
+  const open = (boards.data ?? []).filter(
+    (one) => !one.holds_only_categories && (!one.staff_only || staff),
+  )
 
   useEffect(() => {
     if (!category && open.length) setCategory(open[0].slug)
