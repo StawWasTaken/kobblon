@@ -169,3 +169,144 @@ export function marksIn(marks: Mark[], range: Range): Mark[] {
   if (inside.length >= 2) return inside
   return marks.slice(Math.max(0, marks.length - 2))
 }
+
+/* ------------------------------------------------------- what it pays out */
+
+/*
+ * The Inner Stock is a salary, and a deal.
+ *
+ * Staw, 31 October: every staff member profits from the Inner Stock, "its
+ * basically their salary", monthly, at a share that depends on their
+ * standing - and investors who have a deal with him are paid the same way,
+ * at the full share. The rules live in `0319` and are stated there rather
+ * than here, because the database is the half that decides. What is below
+ * only asks.
+ *
+ * The one thing worth repeating on this side: **a month that fell pays
+ * nobody, and charges investors.** A panel that draws a payout as though
+ * it could only ever be positive would be lying about the half of this
+ * Staw was clearest about.
+ */
+
+export type Standing = 'house' | 'investor' | 'superadmin' | 'admin' | 'moderator'
+
+/** What each standing is called where somebody reads it. */
+export const standingWords: Record<Standing, string> = {
+  house: 'Kobblon',
+  investor: 'Investor',
+  superadmin: 'Superadmin',
+  admin: 'Admin',
+  moderator: 'Moderator',
+}
+
+export type MyStock = {
+  standing: Standing
+  share: number
+  can_leave: boolean
+  months: number
+  earned: number
+  repaid: number
+  last_month: string | null
+  last_brix: number | null
+  since: string | null
+}
+
+/** Your own share, or null if the Inner Stock pays you nothing. */
+export async function myInnerStock(): Promise<MyStock | null> {
+  const { data, error } = await supabase.rpc('my_inner_stock')
+  if (error) throw error
+  const rows = (data as MyStock[] | null) ?? []
+  return rows[0] ?? null
+}
+
+/** Stop being an investor. Yours alone; a staff share ends with the rank. */
+export async function leaveInnerStock(): Promise<void> {
+  const { error } = await supabase.rpc('leave_inner_stock')
+  if (error) throw error
+}
+
+export type PayrollRow = {
+  user_id: string
+  username: string
+  display_name: string
+  standing: Standing
+  share: number
+  brix: number
+  held: number
+}
+
+export type StockMonth = {
+  month: string
+  opened: number
+  closed: number
+  paid_accounts: number
+  paid_brix: number
+  taken_brix: number
+  run_at?: string
+  run_by_name?: string | null
+}
+
+export type InvestorRow = {
+  user_id: string
+  username: string
+  display_name: string
+  is_staff: boolean
+  note: string | null
+  added_at: string
+  added_by_name: string | null
+  left_at: string | null
+  left_reason: 'themself' | 'staff' | null
+  earned: number
+  months: number
+}
+
+/** What a month would pay, per account. Superadmin; the database says so. */
+export async function stockPayroll(month: string): Promise<PayrollRow[]> {
+  const { data, error } = await supabase.rpc('stock_payroll', { month_start: month })
+  if (error) throw error
+  return (data as PayrollRow[] | null) ?? []
+}
+
+/** Pay a month. Once, and never twice. */
+export async function payStockMonth(month: string): Promise<StockMonth> {
+  const { data, error } = await supabase.rpc('pay_stock_month', { month_start: month })
+  if (error) throw error
+  return data as StockMonth
+}
+
+/** Every month that has been paid, newest first. Readable by anybody. */
+export async function stockMonths(most = 24): Promise<StockMonth[]> {
+  const { data, error } = await supabase.rpc('stock_months_list', { most })
+  if (error) throw error
+  return (data as StockMonth[] | null) ?? []
+}
+
+export async function stockInvestors(includePast = true): Promise<InvestorRow[]> {
+  const { data, error } = await supabase.rpc('stock_investors_list', {
+    include_past: includePast,
+  })
+  if (error) throw error
+  return (data as InvestorRow[] | null) ?? []
+}
+
+/** Make somebody an investor, or stop them being one. Superadmin. */
+export async function setStockInvestor(target: string, becomes: boolean, why?: string) {
+  const { error } = await supabase.rpc('set_stock_investor', {
+    target, becomes, why: why?.trim() || null,
+  })
+  if (error) throw error
+}
+
+/** The first day of a month, as the database wants it. */
+export const monthKey = (when: Date) =>
+  `${when.getFullYear()}-${String(when.getMonth() + 1).padStart(2, '0')}-01`
+
+/** "September 2026", for a heading. */
+export const monthName = (key: string) =>
+  new Date(`${key.slice(0, 7)}-01T00:00:00`).toLocaleDateString('en-GB', {
+    month: 'long', year: 'numeric',
+  })
+
+/** Brix, signed, the way the rest of the platform writes a count. */
+export const brix = (n: number) =>
+  `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toLocaleString('fr-FR')}`

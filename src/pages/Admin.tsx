@@ -23,6 +23,7 @@ import {
   faUnlock, faCoins, faEnvelope, faEraser, faEye, faClipboardList,
   faGaugeHigh, faArrowRight, faBolt, faHeartPulse, faPeopleGroup,
   faChartLine, faArrowTrendUp, faArrowTrendDown, faWandMagicSparkles,
+  faHandHoldingDollar,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -80,6 +81,11 @@ import {
   economyNow, economyFlow, economyByKind, limitedMarket, addQuest,
   forumBoards, forumBoardStaffOf, setForumBoardStaff,
 } from '@/lib/api'
+import {
+  euros, monthKey, monthName, payStockMonth, setStockInvestor, standingWords,
+  stockInvestors, stockMonths, stockPayroll, useMarks,
+  type InvestorRow, type PayrollRow,
+} from '@/lib/innerstock'
 import { Glyph } from '@/components/brand/Glyph'
 import { LineGraph, BarRows } from '@/components/ui/Graph'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
@@ -95,7 +101,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'Version' | 'Portraits' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'Version' | 'Portraits' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Inner Stock' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -205,6 +211,7 @@ const sections: {
   { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'superadmin', blurb: 'A line across the top of the site, which anybody can close' },
   { name: 'Announce', icon: faBell, art: 'notification', needs: 'superadmin', blurb: 'A word from Kobblon, to one person or everybody' },
   { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'superadmin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
+  { name: 'Inner Stock', icon: faHandHoldingDollar, needs: 'superadmin', blurb: 'What the Inner Stock pays staff and investors, and the month that pays it' },
   { name: 'Map', icon: faGlobe, needs: 'admin', blurb: 'Roughly where people are, by the clock on their machine' },
   { name: 'Record', icon: faScroll, needs: 'moderator', blurb: 'What staff have done' },
   { name: 'Version', icon: faCodeBranch, needs: 'superadmin', blurb: 'What the website, the Launcher and the Workspace all call this' },
@@ -3960,6 +3967,475 @@ export function EconomySection() {
   )
 }
 
+/* ------------------------------------------------------------ inner stock */
+
+/**
+ * What the Inner Stock pays, and the button that pays it.
+ *
+ * Staw, 31 October: the Inner Stock is staff's salary. Every month each
+ * staff member and each investor receives a share of what one Inner Stock
+ * is worth - 100% for Kobblon and Staw and for investors, 90% superadmin,
+ * 70% admin, 50% moderator, highest standing only. A month the price fell
+ * pays nobody and charges investors the fall, because Kobblon is repaying
+ * a deficit. All of that is decided in `0319` and none of it is decided
+ * here; this panel asks what a month would do, shows it, and presses it.
+ *
+ * It is a button rather than a schedule on purpose, and the panel says so
+ * out loud. There is no `pg_cron` on this database yet, so a page claiming
+ * "paid automatically on the 1st" would be a page lying about money.
+ */
+export function InnerStockSection() {
+  const toast = useToast()
+  const { marks } = useMarks()
+  const now = marks?.length ? marks[marks.length - 1] : null
+
+  /* This month and the eleven before it, newest first. */
+  const months = useMemo(() => {
+    const out: string[] = []
+    const when = new Date()
+    when.setDate(1)
+    for (let i = 0; i < 12; i += 1) {
+      out.push(monthKey(when))
+      when.setMonth(when.getMonth() - 1)
+    }
+    return out
+  }, [])
+
+  const [month, setMonth] = useState(months[0])
+  const [asking, setAsking] = useState(false)
+
+  const payroll = useAsync(async () => stockPayroll(month), [month])
+  const paid = useAsync(async () => stockMonths(24), [])
+
+  const already = (paid.data ?? []).find((one) => one.month.slice(0, 7) === month.slice(0, 7))
+  const rows = payroll.data ?? []
+  const income = rows.reduce((sum, one) => sum + Math.max(one.brix, 0), 0)
+  const deficit = rows.reduce((sum, one) => sum + Math.min(one.brix, 0), 0)
+  const moving = rows.filter((one) => one.brix !== 0).length
+  const running = month === monthKey(new Date())
+
+  const pay = async () => {
+    try {
+      const done = await payStockMonth(month)
+      toast(
+        done.paid_brix > 0
+          ? `${monthName(month)}: ${formatCount(done.paid_brix)} Brix to ${done.paid_accounts} accounts.`
+          : done.taken_brix > 0
+            ? `${monthName(month)}: the price fell, ${formatCount(done.taken_brix)} Brix back to Kobblon.`
+            : `${monthName(month)}: nothing moved.`,
+        'success',
+      )
+      paid.reload()
+      payroll.reload()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'That did not go through.', 'error')
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="max-w-xl text-sm text-muted">
+          Staff are paid from the Inner Stock - it is the salary - and so is
+          anybody with an investor's deal. One month is paid once, by
+          somebody pressing it: nothing on this platform pays itself yet, and
+          a panel that said otherwise would be lying about money.
+        </p>
+        <div className="text-right">
+          <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            One Inner Stock
+          </p>
+          <p className="font-display text-2xl font-extrabold tabular-nums text-white">
+            {now ? euros(now.cents) : '—'}
+          </p>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------ the month */}
+      <Card className="space-y-5 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h3 className="font-display text-lg font-extrabold">Pay a month</h3>
+            <p className="mt-1 max-w-xl text-sm text-muted">
+              The share is taken from the price at the month's close against
+              the price at its open. A month that rose or held pays everybody;
+              a month that fell pays nobody and takes an investor's share of
+              the fall back to Kobblon.
+            </p>
+          </div>
+          <Select
+            label="Month"
+            value={month}
+            onChange={setMonth}
+            className="w-52"
+            options={months.map((one) => ({ value: one, label: monthName(one) }))}
+          />
+        </div>
+
+        {already ? (
+          <Note tone="yes">
+            {monthName(month)} was paid on{' '}
+            {new Date(already.run_at ?? already.month).toLocaleDateString('en-GB')}
+            {already.run_by_name ? ` by @${already.run_by_name}` : ''}:{' '}
+            {formatCount(already.paid_accounts)} accounts,{' '}
+            {formatCount(already.paid_brix)} Brix out and{' '}
+            {formatCount(already.taken_brix)} Brix back. A month is paid once.
+          </Note>
+        ) : running ? (
+          <Note tone="brand">
+            {monthName(month)} is not over. Paying it now uses today's price as
+            the close, and it cannot be paid again afterwards.
+          </Note>
+        ) : null}
+
+        {payroll.loading ? <Skeleton className="h-40" /> : !rows.length ? (
+          <EmptyState
+            mood="brix"
+            title="Nobody is paid by the Inner Stock"
+            body="No staff and no investors, so a month would move nothing."
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <Figure label="Accounts moving" value={moving} />
+              <Figure label="Paid out" value={income} mark tone="text-space-bright" />
+              <Figure label="Taken back" value={Math.abs(deficit)} mark tone="text-danger" />
+              <Figure
+                label="Full share"
+                value={now ? now.cents : 0}
+                mark
+                note={income > 0 ? 'what 100% is worth' : 'the close, and a fallen month pays none of it'}
+              />
+            </div>
+
+            <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
+              <table className="w-full min-w-[34rem] text-sm">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                    <th className="pb-2.5 font-bold">Account</th>
+                    <th className="pb-2.5 font-bold">Paid as</th>
+                    <th className="pb-2.5 text-right font-bold">Share</th>
+                    <th className="pb-2.5 text-right font-bold">Holds</th>
+                    <th className="pb-2.5 text-right font-bold">This month</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((one) => <PayRow key={one.user_id} row={one} />)}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-ink-line pt-4">
+              <Button
+                variant={deficit < 0 && income === 0 ? 'danger' : 'yes'}
+                icon={faHandHoldingDollar}
+                disabled={!!already || !moving}
+                onClick={() => setAsking(true)}
+              >
+                {already ? 'Already paid' : `Pay ${monthName(month)}`}
+              </Button>
+            </div>
+          </>
+        )}
+      </Card>
+
+      <Confirm
+        open={asking}
+        onClose={() => setAsking(false)}
+        title={`Pay ${monthName(month)}?`}
+        lead={
+          income > 0
+            ? `${formatCount(income)} Brix onto ${moving} accounts.`
+            : `The price fell. ${formatCount(-deficit)} Brix comes off ${moving} investor accounts and goes to Kobblon.`
+        }
+        points={[
+          'A month can only be paid once, and this cannot be undone from the console.',
+          'Everybody paid is told, in their notifications.',
+          running ? "This month is not over: today's price is used as the close." : '',
+        ].filter(Boolean)}
+        confirmText={`Pay ${monthName(month)}`}
+        tone={income > 0 ? 'primary' : 'danger'}
+        onConfirm={pay}
+      />
+
+      {/* --------------------------------------------------- the investors */}
+      <Investors onChanged={() => payroll.reload()} />
+
+      {/* ------------------------------------------------------ the record */}
+      <Card className="space-y-5 p-5 sm:p-6">
+        <div>
+          <h3 className="font-display text-lg font-extrabold">Months paid</h3>
+          <p className="mt-1 text-sm text-muted">
+            Everybody can read this one: it is on the Inner Stock page too.
+            What is not public is who was paid what.
+          </p>
+        </div>
+        {paid.loading ? <Skeleton className="h-28" /> : !paid.data?.length ? (
+          <p className="text-sm text-muted">No month has been paid yet.</p>
+        ) : (
+          <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
+            <table className="w-full min-w-[36rem] text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                  <th className="pb-2.5 font-bold">Month</th>
+                  <th className="pb-2.5 font-bold">Open</th>
+                  <th className="pb-2.5 font-bold">Close</th>
+                  <th className="pb-2.5 text-right font-bold">Accounts</th>
+                  <th className="pb-2.5 text-right font-bold">Out</th>
+                  <th className="pb-2.5 text-right font-bold">Back</th>
+                  <th className="pb-2.5 text-right font-bold">Pressed by</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paid.data.map((one) => (
+                  <tr key={one.month} className="border-t border-ink-line">
+                    <td className="py-2.5 pr-3 font-bold">{monthName(one.month)}</td>
+                    <td className="py-2.5 pr-3 tabular-nums text-muted">{euros(one.opened)}</td>
+                    <td className={cn(
+                      'py-2.5 pr-3 font-bold tabular-nums',
+                      one.closed > one.opened && 'text-space-bright',
+                      one.closed < one.opened && 'text-danger',
+                    )}>
+                      {euros(one.closed)}
+                    </td>
+                    <td className="py-2.5 pr-3 text-right tabular-nums">{one.paid_accounts}</td>
+                    <td className="py-2.5 pr-3 text-right tabular-nums text-space-bright">
+                      {one.paid_brix ? formatCount(one.paid_brix) : '-'}
+                    </td>
+                    <td className="py-2.5 pr-3 text-right tabular-nums text-danger">
+                      {one.taken_brix ? formatCount(one.taken_brix) : '-'}
+                    </td>
+                    <td className="py-2.5 text-right text-xs text-muted">
+                      {one.run_by_name ? `@${one.run_by_name}` : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+
+/** One account on the payroll preview. */
+function PayRow({ row }: { row: PayrollRow }) {
+  return (
+    <tr className="border-t border-ink-line">
+      <td className="py-2.5 pr-3">
+        <Link to={`/u/${row.username}`} className="font-bold hover:underline">
+          {row.display_name}
+        </Link>
+        <span className="ml-2 text-xs text-muted">@{row.username}</span>
+      </td>
+      <td className="py-2.5 pr-3">
+        <Badge tone={row.standing === 'investor' ? 'brand' : 'neutral'}>
+          {standingWords[row.standing]}
+        </Badge>
+      </td>
+      <td className="py-2.5 pr-3 text-right font-bold tabular-nums">{row.share}%</td>
+      <td className="py-2.5 pr-3 text-right tabular-nums text-muted">{formatCount(row.held)}</td>
+      <td className={cn(
+        'py-2.5 text-right font-extrabold tabular-nums',
+        row.brix > 0 && 'text-space-bright',
+        row.brix < 0 && 'text-danger',
+        row.brix === 0 && 'text-muted',
+      )}>
+        {row.brix === 0 ? 'nothing' : `${row.brix > 0 ? '+' : '−'}${formatCount(Math.abs(row.brix))}`}
+      </td>
+    </tr>
+  )
+}
+
+/**
+ * Who has a deal with Kobblon.
+ *
+ * Set here and given up by the person themself on the Inner Stock page,
+ * which is the asymmetry Staw asked for: staff cannot step out of their
+ * salary, an investor can step out of their deal, and only Kobblon can
+ * put somebody back in.
+ */
+function Investors({ onChanged }: { onChanged: () => void }) {
+  const toast = useToast()
+  const list = useAsync(async () => stockInvestors(true), [])
+  const [term, setTerm] = useState('')
+  const [found, setFound] = useState<Profile[]>([])
+  const [picked, setPicked] = useState<Profile | null>(null)
+  const [why, setWhy] = useState('')
+  const [dropping, setDropping] = useState<InvestorRow | null>(null)
+
+  const search = async (words: string) => {
+    setTerm(words)
+    setPicked(null)
+    if (words.trim().length < 2) { setFound([]); return }
+    try { setFound(await searchProfiles(words, undefined, 6)) } catch { setFound([]) }
+  }
+
+  const add = async () => {
+    if (!picked) return
+    try {
+      await setStockInvestor(picked.id, true, why)
+      toast(`@${picked.username} is an investor.`, 'success')
+      setPicked(null); setTerm(''); setWhy(''); setFound([])
+      list.reload(); onChanged()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'That did not go through.', 'error')
+    }
+  }
+
+  const live = (list.data ?? []).filter((one) => !one.left_at)
+  const past = (list.data ?? []).filter((one) => one.left_at)
+
+  return (
+    <Card className="space-y-5 p-5 sm:p-6">
+      <div>
+        <h3 className="font-display text-lg font-extrabold">Investors</h3>
+        <p className="mt-1 max-w-xl text-sm text-muted">
+          Anybody who made a deal with Kobblon SAS. An investor is paid the
+          full share, and carries the full fall: a month the price drops takes
+          their share of it back to the Kobblon account. They can stop being
+          one themselves, from the Inner Stock page.
+        </p>
+      </div>
+
+      {/* ------------------------------------------------------ adding one */}
+      <div className="space-y-3 rounded-xl border border-ink-line bg-ink-hover/40 p-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            label="Who"
+            placeholder="A username"
+            value={picked ? `@${picked.username}` : term}
+            onChange={(event) => search(event.target.value)}
+          />
+          <Input
+            label="The deal, for the record"
+            placeholder="Optional, and never shown publicly"
+            value={why}
+            onChange={(event) => setWhy(event.target.value)}
+          />
+        </div>
+
+        {!picked && !!found.length && (
+          <div className="flex flex-wrap gap-2">
+            {found.map((one) => (
+              <button
+                key={one.id}
+                type="button"
+                onClick={() => { setPicked(one); setFound([]) }}
+                className="flex items-center gap-2 rounded-lg border border-ink-line bg-ink px-2.5 py-1.5 text-sm hover:border-brand"
+              >
+                <PersonAvatar person={one} size="xs" />
+                <span className="font-bold">{one.display_name}</span>
+                <span className="text-xs text-muted">@{one.username}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <Button size="sm" icon={faPlus} disabled={!picked} onClick={add}>
+            Make them an investor
+          </Button>
+        </div>
+      </div>
+
+      {/* -------------------------------------------------------- the list */}
+      {list.loading ? <Skeleton className="h-24" /> : !live.length && !past.length ? (
+        <p className="text-sm text-muted">Nobody has a deal yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {live.map((one) => (
+            <InvestorLine key={one.user_id} row={one} onDrop={() => setDropping(one)} />
+          ))}
+          {!!past.length && (
+            <>
+              <p className="pt-3 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                No longer investors
+              </p>
+              {past.map((one) => <InvestorLine key={one.user_id} row={one} />)}
+            </>
+          )}
+        </div>
+      )}
+
+      <Confirm
+        open={!!dropping}
+        onClose={() => setDropping(null)}
+        title={dropping ? `Stop @${dropping.username} being an investor?` : ''}
+        lead="They stop receiving a share from the next month paid, and a falling month can no longer take Brix off them."
+        points={[
+          'Every Brix already paid to them stays theirs.',
+          dropping?.is_staff
+            ? 'They are staff, so they keep the share their rank carries.'
+            : 'The Inner Stock will pay them nothing at all.',
+        ]}
+        confirmText="Stop the deal"
+        onConfirm={async () => {
+          if (!dropping) return
+          try {
+            await setStockInvestor(dropping.user_id, false)
+            toast(`@${dropping.username} is no longer an investor.`, 'success')
+            list.reload(); onChanged()
+          } catch (err) {
+            toast(err instanceof Error ? err.message : 'That did not go through.', 'error')
+          }
+        }}
+      />
+    </Card>
+  )
+}
+
+function InvestorLine({ row, onDrop }: { row: InvestorRow; onDrop?: () => void }) {
+  return (
+    <div className={cn(
+      'flex flex-wrap items-center gap-3 rounded-xl border border-ink-line px-3 py-2.5',
+      row.left_at ? 'bg-ink/40 opacity-60' : 'bg-ink-hover/40',
+    )}>
+      <div className="min-w-0 flex-1">
+        <p className="flex flex-wrap items-center gap-2">
+          <Link to={`/u/${row.username}`} className="font-bold hover:underline">
+            {row.display_name}
+          </Link>
+          <span className="text-xs text-muted">@{row.username}</span>
+          {row.is_staff && <Badge tone="neutral">Staff</Badge>}
+          {row.left_at && (
+            <Badge tone="neutral">
+              {row.left_reason === 'themself' ? 'Stopped themself' : 'Stopped by staff'}
+            </Badge>
+          )}
+        </p>
+        <p className="mt-0.5 text-xs text-muted">
+          {row.note ? `${row.note} · ` : ''}
+          since {new Date(row.added_at).toLocaleDateString('en-GB')}
+          {row.added_by_name ? `, by @${row.added_by_name}` : ''}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 text-right">
+        <div>
+          <p className={cn(
+            'font-bold tabular-nums',
+            row.earned > 0 && 'text-space-bright',
+            row.earned < 0 && 'text-danger',
+          )}>
+            {row.earned > 0 ? '+' : row.earned < 0 ? '−' : ''}
+            {formatCount(Math.abs(row.earned))}
+          </p>
+          <p className="text-[11px] text-muted">
+            over {row.months} month{row.months === 1 ? '' : 's'}
+          </p>
+        </div>
+        {onDrop && (
+          <Button variant="ghost" size="sm" icon={faXmark} onClick={onDrop}>
+            Stop
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* -------------------------------------------------------------------- sale */
 
 /**
@@ -5610,6 +6086,7 @@ export default function Admin() {
             {open === 'Machine' && <MachineSection />}
             {open === 'Map' && <MapSection />}
             {open === 'Economy' && <EconomySection />}
+            {open === 'Inner Stock' && <InnerStockSection />}
             {open === 'Notice' && <NoticeSection />}
             {open === 'Announce' && <AnnounceSection />}
             {open === 'Words' && <WordsSection />}

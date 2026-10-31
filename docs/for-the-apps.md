@@ -17654,3 +17654,90 @@ The rule, if either application ever draws a span picker over a figure:
 picture.** Putting the span's figure up by the headline instead is what
 made this wrong twice - once by making the headline move when nobody
 asked it to, and once by making nothing move at all.
+
+## Round two hundred and thirty-four - the Inner Stock is a salary
+
+Staw: every staff member profits from the Inner Stock, "its basically
+their salary". So `0319` turns the price into a monthly payment, and
+both applications should know the rules before either of them draws a
+number about somebody's Brix.
+
+**Who is paid, and how much.** One share per account, the highest, never
+added together:
+
+| Standing | Share |
+| --- | --- |
+| Kobblon and stawrer | 100% |
+| Investors (a deal made with Kobblon SAS) | 100% |
+| Superadmin | 90% |
+| Admin | 70% |
+| Moderator | 50% |
+
+**What a share is worth.** The price of one Inner Stock at the month's
+close, in Brix. 100 Brix is a euro and the price is stored in euro
+cents, so the Brix figure *is* the cents figure: at 10,00 € a full share
+is 1000 Brix. There is no second rate constant anywhere in this, and
+there should not be one on your side either.
+
+**A month that fell pays nobody, and charges the investors.** This is
+the half worth copying carefully. Staff simply are not paid - the salary
+was not profitable, and nothing is taken off them. An investor's share
+of the fall comes **off** their Brix and goes to the Kobblon account,
+because Kobblon is repaying a deficit, and it is capped at what they
+hold: a balance never goes below nothing and the database does not carry
+a debt. So a payout is signed, and a panel that draws one as though it
+could only be positive is wrong about the case Staw was clearest on.
+
+**Nothing pays itself.** There is still no `pg_cron` on this database
+(0224 and 0253 are waiting on it), so a superadmin presses the month in
+the console. `pay_stock_month(month_start date)` is idempotent on the
+month - the row in `stock_months` is the lock - so the day there is a
+scheduler it calls that and nothing else changes. Do not write "paid
+automatically on the 1st" anywhere.
+
+What is new in the database, all in `0319`:
+
+- `stock_investors` - who has a deal. One bit, a note for the record and
+  a `left_at`; **no amount and no stake**, for the same reason `0318`
+  has no holders column.
+- `stock_months` - one row per month paid: `opened`, `closed`,
+  `paid_accounts`, `paid_brix`, `taken_brix`. Readable by anybody,
+  signed out included.
+- `stock_payouts` - one row per account per month, `brix` signed.
+  Readable by its owner and by a superadmin, and by nobody else.
+- `stock_standing(who)` → `(standing, share)`. The highest standing,
+  once. `standing` is one of `house`, `investor`, `superadmin`, `admin`,
+  `moderator`, and no row at all for somebody the Inner Stock does not
+  pay.
+- `my_inner_stock()` → your own standing, share, `can_leave`, months,
+  earned, repaid, last month. Ask this rather than working a share out
+  from a profile you already hold: a share is what the database says it
+  is.
+- `leave_inner_stock()` - an investor giving up the deal. **Staff cannot
+  call it** and are told why: a salary ends with the rank, not from a
+  button.
+- `set_stock_investor(target, becomes, why)`, `stock_investors_list()`,
+  `stock_payroll(month)`, `pay_stock_month(month)`,
+  `stock_months_list(most)` - superadmin, except the last, which is
+  public.
+- Three new `pixel_transactions` kinds: `stock_income`, `stock_deficit`,
+  `stock_repaid`. If either application lists a ledger by kind, those
+  three need words.
+
+On the website: the Inner Stock page carries the ladder in public - a
+rule that is somebody's salary is not a secret - plus the months paid so
+far, and, for anybody the Inner Stock pays, a "Your share" panel in the
+rail with the button an investor uses to stop. The staff console gains
+an **Inner Stock** panel, superadmin only: the month, the payroll it
+would pay account by account before anything is pressed, the investor
+list, and what has been paid.
+
+The checks, run against a local Postgres under real identities rather
+than anonymously, because a guard whose subject is identity proves
+nothing when `auth.uid()` is null: a moderator refused the button and
+refused the investor list; a rising month paying 1200 / 1080 / 840 / 600
+by standing; a falling month paying nobody, taking 200 off one investor
+and capping a second at the 120 Brix she had left, with both arriving in
+the Kobblon account; the same month refused the second time; an investor
+leaving and then having no standing at all; and a moderator told no when
+she tried to leave.

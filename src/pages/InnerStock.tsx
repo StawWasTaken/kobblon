@@ -1,15 +1,23 @@
 import { useMemo, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowDown, faArrowUp, faCircleInfo } from '@fortawesome/free-solid-svg-icons'
+import {
+  faArrowDown, faArrowUp, faCircleInfo, faHandHoldingDollar, faRightFromBracket,
+} from '@fortawesome/free-solid-svg-icons'
 import { Icon } from '@/components/brand/Icon'
 import { AboutShell } from '@/components/layout/AboutShell'
 import { Band, Lane } from '@/components/about/Band'
+import { BandHead } from '@/components/about/Type'
 import { StockChart } from '@/components/about/StockChart'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Confirm } from '@/components/ui/Confirm'
+import { useToast } from '@/components/ui/Toast'
+import { useAsync } from '@/hooks/useAsync'
+import { useMaybeAuth } from '@/hooks/useAuth'
 import { asset } from '@/lib/asset'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   euros, change, movement, percent, marksIn, rangesFor, useMarks, RANGES,
+  brix, leaveInnerStock, monthName, myInnerStock, standingWords, stockMonths,
 } from '@/lib/innerstock'
 import { cn } from '@/lib/cn'
 
@@ -49,6 +57,24 @@ export default function InnerStock() {
 
   const { marks, failed, read } = useMarks()
   const [span, setSpan] = useState('all')
+
+  /*
+   * Your own share, where you have one. Asked of the database rather than
+   * worked out from the profile in hand: a share is what `0319` says it is,
+   * and a page that decides "you look like a moderator, so 50%" would be a
+   * second answer to a question the database already answers - which this
+   * project has been bitten by twice.
+   */
+  /*
+   * `useMaybeAuth`, not `useAuth`: the bare page under `tools/site/` mounts
+   * this with nothing around it, and a page that throws there cannot be
+   * looked at - which is the third time that exact throw has cost this
+   * project an afternoon. No provider means nobody told us, so the panel
+   * is simply not drawn.
+   */
+  const session = useMaybeAuth()?.session ?? null
+  const mine = useAsync(async () => (session ? myInnerStock() : null), [session?.user?.id])
+  const paid = useAsync(async () => stockMonths(12), [])
 
   const spans = useMemo(() => (marks ? rangesFor(marks) : []), [marks])
   const range = spans.find((one) => one.key === span) ?? RANGES[RANGES.length - 1]
@@ -309,6 +335,14 @@ export default function InnerStock() {
               * a list of prices reads as a price.
               */}
             <aside className="space-y-4 lg:pt-1">
+              {mine.data && now && (
+                <YourShare
+                  mine={mine.data}
+                  price={now.cents}
+                  onLeft={() => mine.reload()}
+                />
+              )}
+
               <Facts
                 head="Kobblon SAS"
                 rows={[
@@ -352,7 +386,252 @@ export default function InnerStock() {
           </div>
         </Lane>
       </Band>
+
+      {/*
+        * Who the Inner Stock pays, and on what. Said in public rather than
+        * kept in the staff console: a share that is a salary is a rule, and
+        * a rule nobody outside can read is the kind of thing a platform gets
+        * asked about once and cannot answer twice the same way.
+        */}
+      <Band tone="raised" edge>
+        <Lane>
+          <BandHead
+            eyebrow="Every month"
+            title="What the Inner Stock pays"
+            lead={
+              <>
+                Kobblon staff are paid from the Inner Stock - it is their
+                salary - and so is anybody with an investor's deal. Once a
+                month, each account receives its share of what one Inner
+                Stock is worth. Nothing stacks: one account is paid at its
+                highest standing and that one only.
+              </>
+            }
+          />
+
+          <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {LADDER.map((rung) => (
+              <div
+                key={rung.who}
+                className={cn(
+                  'rounded-2xl border p-4',
+                  rung.full
+                    ? 'border-brand/30 bg-brand/[0.07]'
+                    : 'border-ink-line bg-ink-raised/40',
+                )}
+              >
+                <p className="font-display text-3xl font-extrabold leading-none tabular-nums text-white">
+                  {rung.share}
+                  <span className="text-lg text-white/40">%</span>
+                </p>
+                <p className="mt-2 text-sm font-bold text-white">{rung.who}</p>
+                <p className="mt-1 text-xs leading-snug text-muted">{rung.note}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-ink-line bg-ink-raised/40 p-5">
+              <h3 className="font-display text-lg font-extrabold text-white">
+                A month that rises, or holds
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Each account receives its share of the closing price, in Brix.
+                100 Brix is a euro, so at{' '}
+                <span className="font-bold text-white">{now ? euros(now.cents) : '10,00 €'}</span>{' '}
+                a full share is{' '}
+                <span className="font-bold text-white">
+                  {(now?.cents ?? 1000).toLocaleString('fr-FR')} Brix
+                </span>
+                , and a 50% share is half of that.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-danger/25 bg-danger/[0.06] p-5">
+              <h3 className="font-display text-lg font-extrabold text-white">
+                A month that falls
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Nobody is paid: if the Inner Stock was not profitable, neither
+                is the month. Investors carry it further - Kobblon repays the
+                deficit, so an investor's share of the fall is taken off their
+                Brix and goes to the Kobblon account. A staff salary is never
+                taken back; it simply is not paid.
+              </p>
+            </div>
+          </div>
+
+          {!!paid.data?.length && (
+            <div className="mt-6 overflow-hidden rounded-2xl border border-ink-line bg-ink-raised/40">
+              <h3 className="border-b border-ink-line px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/40">
+                The months paid so far
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[34rem] text-sm">
+                  <thead>
+                    <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                      <th className="px-4 pb-2 pt-3 font-bold">Month</th>
+                      <th className="px-4 pb-2 pt-3 font-bold">Opened</th>
+                      <th className="px-4 pb-2 pt-3 font-bold">Closed</th>
+                      <th className="px-4 pb-2 pt-3 text-right font-bold">Accounts</th>
+                      <th className="px-4 pb-2 pt-3 text-right font-bold">Paid out</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paid.data.map((one) => (
+                      <tr key={one.month} className="border-t border-ink-line">
+                        <td className="px-4 py-2.5 font-bold text-white">{monthName(one.month)}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-muted">{euros(one.opened)}</td>
+                        <td className={cn(
+                          'px-4 py-2.5 font-bold tabular-nums',
+                          one.closed > one.opened && 'text-space-bright',
+                          one.closed < one.opened && 'text-danger-bright',
+                          one.closed === one.opened && 'text-white/70',
+                        )}>
+                          {euros(one.closed)}
+                        </td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-white/80">
+                          {one.paid_accounts}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-bold tabular-nums">
+                          {one.taken_brix > 0
+                            ? <span className="text-danger-bright">−{one.taken_brix.toLocaleString('fr-FR')} Brix</span>
+                            : <span className="text-space-bright">+{one.paid_brix.toLocaleString('fr-FR')} Brix</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </Lane>
+      </Band>
     </AboutShell>
+  )
+}
+
+/** The ladder, said once, in the order anybody reads it. */
+const LADDER: { who: string; share: number; note: string; full?: boolean }[] = [
+  { who: 'Kobblon', share: 100, note: 'The house account, and Staw', full: true },
+  { who: 'Investors', share: 100, note: 'A deal made with Kobblon SAS', full: true },
+  { who: 'Superadmins', share: 90, note: 'The top staff rank' },
+  { who: 'Admins', share: 70, note: 'Staff who set the rules' },
+  { who: 'Moderators', share: 50, note: 'Staff who work the queues' },
+]
+
+/**
+ * Your own share, in the rail.
+ *
+ * It is the first panel rather than the last because somebody who is paid
+ * by this page opens it to see one thing. The button underneath is only
+ * ever drawn for an investor: a staff share ends when the rank does, and
+ * the database refuses it from here, so drawing it for a moderator would
+ * be a control that does nothing.
+ */
+function YourShare({ mine, price, onLeft }: {
+  mine: NonNullable<Awaited<ReturnType<typeof myInnerStock>>>
+  price: number
+  onLeft: () => void
+}) {
+  const toast = useToast()
+  const [asking, setAsking] = useState(false)
+
+  const next = Math.round((price * mine.share) / 100)
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-brand/30 bg-brand/[0.07]">
+      <h2 className="flex items-center gap-2 border-b border-brand/20 px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-brand-bright">
+        <FontAwesomeIcon icon={faHandHoldingDollar} className="h-3.5 w-3.5" />
+        Your share
+      </h2>
+
+      <div className="px-4 py-3.5">
+        <p className="flex items-baseline gap-2">
+          <span className="font-display text-4xl font-extrabold leading-none tabular-nums text-white">
+            {mine.share}<span className="text-xl text-white/40">%</span>
+          </span>
+          <span className="text-sm font-bold text-white/70">
+            as {standingWords[mine.standing]}
+          </span>
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-muted">
+          At today's price a full month pays you{' '}
+          <span className="font-bold text-white">{next.toLocaleString('fr-FR')} Brix</span>,
+          and a month the price falls pays nothing.
+        </p>
+      </div>
+
+      <dl className="divide-y divide-white/[0.06] border-t border-brand/20">
+        <Row label="Months paid" value={`${mine.months}`} />
+        <Row label="Received" value={`${mine.earned.toLocaleString('fr-FR')} Brix`} />
+        {mine.repaid > 0 && (
+          <Row label="Repaid" value={`−${mine.repaid.toLocaleString('fr-FR')} Brix`} tone="bad" />
+        )}
+        {mine.last_month && mine.last_brix !== null && (
+          <Row
+            label={monthName(mine.last_month)}
+            value={`${brix(mine.last_brix)} Brix`}
+            tone={mine.last_brix < 0 ? 'bad' : 'good'}
+          />
+        )}
+      </dl>
+
+      {mine.can_leave && (
+        <div className="border-t border-brand/20 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setAsking(true)}
+            className="inline-flex items-center gap-2 text-xs font-bold text-white/45 transition-colors hover:text-danger-bright"
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} className="h-3 w-3" />
+            Stop being an investor
+          </button>
+        </div>
+      )}
+
+      <Confirm
+        open={asking}
+        onClose={() => setAsking(false)}
+        title="Stop being an investor?"
+        lead="Your Inner Stock share ends. You keep every Brix you have already been paid."
+        points={[
+          'You stop receiving a monthly share from the next month on.',
+          'A month that falls can no longer take Brix off you.',
+          'Only Kobblon can make you an investor again - this is not a switch you can turn back on.',
+        ]}
+        confirmText="Stop being an investor"
+        onConfirm={async () => {
+          try {
+            await leaveInnerStock()
+            toast('You are no longer an investor.')
+            onLeft()
+          } catch (err) {
+            toast(err instanceof Error ? err.message : 'That did not go through.')
+          }
+        }}
+      />
+    </section>
+  )
+}
+
+/** One line of the share panel. */
+function Row({ label, value, tone }: {
+  label: string
+  value: string
+  tone?: 'good' | 'bad'
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 px-4 py-2">
+      <dt className="shrink-0 text-[13px] text-muted">{label}</dt>
+      <dd className={cn(
+        'text-right text-[13px] font-bold tabular-nums',
+        tone === 'good' && 'text-space-bright',
+        tone === 'bad' && 'text-danger-bright',
+        !tone && 'text-white/90',
+      )}>
+        {value}
+      </dd>
+    </div>
   )
 }
 
