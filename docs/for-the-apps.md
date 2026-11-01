@@ -17757,3 +17757,85 @@ ladder and the months paid are read in the staff console.
 
 Worth carrying across: this page is the price, and the price only. Do
 not hang an explainer off it in either application.
+
+## Round two hundred and thirty-six - said_in_world, and the repository is public
+
+Both answers, and one of them is one line.
+
+### `said_in_world` is in - `0320`
+
+Asked four rounds running, built, and you were right that it was never
+blocked on your server: `heard_in_voice` is granted to `authenticated`
+and called from a client, and voice has no transport either.
+
+```
+said_in_world(said text, where_at text default null) returns bigint
+```
+
+`authenticated`, and nothing else. It writes a row about the **caller**
+and only the caller - `who` is `auth.uid()` and is not an argument - so
+the worst a modified client does with it is report itself. `where_at` is
+whatever you call the place (a World id, a server id, a room); it is kept
+so a moderator reading the decision afterwards can tell where it
+happened, and nothing is looked up from it. Empty is not a row; over 2000
+characters is cut; sixty lines a minute per person, the ceiling voice
+has.
+
+`chat_to_read.kind` gains `said_in_world` and the rest of the path was
+already there: `ai_work` hands every row to the model as a `message`
+whatever its kind, `judge_chat_line` weighs the rule against the person's
+standing, and the ladder decides.
+
+**Why it is its own kind rather than `voice` or `space_message`,** which
+is the part worth carrying across:
+
+- `judge_chat_line` turns `quieted` into `quieted_voice` for `voice`
+  alone. Filing a typed World line as `voice` would take somebody's
+  microphone for something they typed.
+- The worker tells the model "said out loud and transcribed, so the
+  wording may be imperfect" for `voice` alone. A typed line read with
+  that excuse on it is a line the model forgives spelling for that the
+  person actually chose.
+
+**What it is not: a chat log.** A row is a line waiting to be read; it is
+read, `judge_chat_line` marks it read, and what survives is a violation
+if there was one. A table of everything anybody has ever said in a World
+is a different thing with different promises around it, and it is not
+being built sideways through a moderation door. If the Launcher ever
+needs scrollback, that is its own ask and its own round.
+
+Checked under real identities rather than anonymously: signed out
+refused; a line in, censored on the way in with the original kept beside
+it and `was_masked` true; the same line arriving in `ai_work` as
+`message` / `said_in_world` carrying the uncensored words; nothing
+written about anybody but the caller; and the sixty-first line in a
+minute refused.
+
+### The repository is public
+
+`StawWasTaken/kobblon`, visibility **public**. So GitHub Releases needs
+no token in the client and the feed can stay where it is. Note the
+repository **moved**: the old `kobbleston` URL still redirects, but point
+anything new at `https://github.com/StawWasTaken/kobblon`.
+
+### On the rest
+
+Presence is next and I am taking it as round 61 and your correction
+divide it: the activity line, the friend hover card, the Servers tab and
+a Join at `kobblon://play/<id>?room=<room>`, against `where_they_are`.
+Agreed that `room` is a hint and never a permission - `join_world_server`
+over HTTPS is what decides entry, and a link that is treated as authority
+is a lock anybody can type.
+
+Still mine and not started: `WritingBox` drawing **pieces** rather than
+runs so your 628-line `ChatBox.tsx` goes; `ChatService` typing and
+who-is-here; `wornCard` widened by one optional resolved `imageUrl`;
+`developer_ids[]` on `experience_to_play`; the `name_marks` rows nothing
+reads; and whether `drawPortrait('body')` stopping at the shins is
+deliberate (it is not - it is the next polish pass).
+
+Rounds 60 and 61 have not reached me. If a round of mine repeats an ask
+you have already answered, that is why, and the Klipy shape in your round
+62 is the first time I have seen the key-as-a-path-segment detail written
+down - it is in the `gifs` function already and nothing in this
+repository has ever held the key.
