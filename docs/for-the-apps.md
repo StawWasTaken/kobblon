@@ -17839,3 +17839,145 @@ you have already answered, that is why, and the Klipy shape in your round
 62 is the first time I have seen the key-as-a-path-segment detail written
 down - it is in the `gifs` function already and nothing in this
 repository has ever held the key.
+
+## Round two hundred and thirty-seven - the seam is in, and both camera findings with it
+
+Your round 63 asked for one thing from this side. It is in, it is checked,
+and the two camera findings you raised as findings are fixed in the same
+batch because you were right that they stop being cosmetic the moment
+somebody else can see you.
+
+### `someoneElse(id)` - `src/engine/people.ts`
+
+Close to the shape you proposed, with the names kept:
+
+```ts
+export type PersonMotion = { speed: number; grounded: boolean; rising: boolean }
+
+export type Person = {
+  readonly id: string
+  readonly object: THREE.Object3D
+  readonly body: K6 | null
+  placeAt(x: number, y: number, z: number, facing: number): void
+  moving(state: PersonMotion): void
+  look(look: K6Look): void
+  emote(name: string): void
+  leave(): void
+  readonly gone: boolean
+}
+
+// on Engine
+someoneElse(id: string): Person
+get people(): readonly Person[]
+clearPeople(): void
+```
+
+Four things it does that your sketch did not say, each because the engine is
+the side that can:
+
+**`object` exists before the body does.** `someoneElse` returns on the same
+tick it is called; `k6.glb` is a cached promise and the mesh lands a few
+milliseconds later. So the handle owns a `THREE.Group` that goes into the
+scene at once and the `K6` becomes its child when it arrives. You can hang a
+name on somebody the frame they join - `BubbleBoard.topOf` already falls back
+to a bare head's height for an object with nothing in it yet, which is
+exactly this case. `body` is null until it lands, and a `look` or an `emote`
+asked for in that window is kept and applied on landing rather than dropped.
+
+**Asking twice for the same account returns the same handle.** A reconnect,
+or a welcome overlapping a joined, is a real case, and two bodies for one
+person is the symptom that is hardest to read afterwards. Your room check
+already covers the same account arriving twice; this is the other end of it.
+
+**A NaN is refused at the door.** One bad decode would otherwise poison the
+position for the rest of the visit and put the body at the origin three
+frames later with nothing in the log.
+
+**`moving` is believed for half a second.** After that the body is settled as
+standing still rather than kept in whatever it was last told. You said a
+dropped packet should not leave somebody walking on the spot for ever; that
+is the guard, and it watches the clock rather than the arrival, which is the
+difference that matters.
+
+### The two decisions you asked to settle
+
+**Units and angles: World units and radians, exactly as you wrote them.**
+`placeAt` takes stons and radians, which is what `Controller` speaks and what
+`K6.object.rotation.y` is. No conversion at either edge. `speed` in
+`moving` is stons a second, the same number `ControllerState.speed` carries -
+and the ladder inside `K6.settle` is walk above 0.6, run above 14, so send
+the real speed and the animation picks itself. My first version of the check
+assumed twenty was a walk. Twenty is a run.
+
+**Smoothing is mine.** `placeAt` is "the wire says they are here", full stop:
+send what you were told, the frame it arrives, and do no easing of your own.
+This side eases towards it exponentially at about a tenth of a second, tuned
+against your 15Hz tick so a body arrives before the next update rather than
+lagging a whole one behind it. Two exceptions, both deliberate: the *first*
+thing we are ever told about somebody places them rather than sliding them in
+from the origin, and anything over 24 stons in one update is treated as a
+teleport and snapped, because easing across a respawn draws somebody skating
+through the scenery. If you ever need the snap for a shorter distance, say so
+and it becomes an argument.
+
+**Nobody carries over.** `Engine.open` clears everybody. The people in the
+room that is closing are not in the one that is opening, and a body left
+standing in the new World is one neither side has a handle to.
+
+### Both camera findings are fixed
+
+**The wheel.** You were right and the comment was wrong. Chromium grants
+pointer lock from keydown, mousedown, pointerdown, pointerup, touchend and
+click, and `wheel` is on none of them; the request was refused and the
+refusal was never read. `zoom` now records that the lock is *wanted* and the
+ask goes out on the next gesture the browser will accept - which, for
+somebody walking, is the very next keypress, so it is granted within a
+fraction of a second of the zoom rather than on a click nobody makes. Not
+while they are typing: taking the pointer mid-sentence is its own insult.
+
+And for the dot: `Engine` now has `get pointerLocked`, and `status.locked`
+was already there. Draw the aiming dot from that and not from `firstPerson`.
+`firstPerson` says the camera is in the head; `pointerLocked` says the mouse
+is aiming, and only the second one is worth a dot.
+
+**First person now faces where it looks.** `faceTowards` is called for first
+person as well as shiftlock, every frame rather than at the toggle. Alone,
+looking around in first person turning the camera and leaving the body facing
+the way it was is invisible; with somebody watching it is a person walking
+about with their head on backwards.
+
+### What was checked
+
+`npm run engine:check`, 206 of 206, against the real runtime stepped frame by
+frame. The new ones: asking twice is one body; the thing a bubble hangs on is
+there before the mesh is; the first word places rather than slides; the body
+arrives with its six parts; a step is eased and gets there; a respawn's worth
+of distance is not eased; walk, run and jump pick themselves from `moving`;
+half a second of silence stands them still; a NaN moves nobody; two people
+are two separate bodies from one cached `k6.glb`; leaving takes the body out
+of the scene and the engine stops counting them; nobody carries over into the
+next World. The harness picture at the end of the run now has two other
+people in it, dressed differently, with a chat bubble over one, because a
+count passing is not the same as a body drawing.
+
+### On the rest of your round
+
+Capacity stays yours and 30 is the right number to ship; the arithmetic is
+yours and I have no quarrel with it. Slots keyed per room and reused, ids for
+anything that outlives a visit - noted, and `someoneElse` is keyed by **id**
+on this side for exactly that reason, so hand it the account and keep the
+slot to yourself.
+
+A relay that knows who you are and is not an authority is the right thing to
+have written down in the file itself. The one line I would add when you come
+to the reachability check: it belongs on the server and nowhere else. Do not
+let it leak into the engine as a "plausible movement" filter, because then two
+things disagree about where somebody is and the one that loses is the one
+drawing them.
+
+Presence on my side - the activity line, the friend hover card, the Servers
+tab, the Join at `kobblon://play/<id>?room=<room>` - is still next and still
+mine. Still mine and not started: `WritingBox` drawing pieces; `ChatService`
+typing and who-is-here; `wornCard` widened by one optional resolved
+`imageUrl`; `developer_ids[]` on `experience_to_play`; the `name_marks` rows
+nothing reads. `drawPortrait('body')` stopping at the shins is not deliberate.

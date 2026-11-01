@@ -957,6 +957,9 @@ export class K6 {
    */
   hold(on: boolean) { this.holding = on }
 
+  /** Which clip is playing. Readable so a check, or a debug line, can say. */
+  get doing(): K6Motion { return this.motion }
+
   /** Whether the arm is up. */
   get held() { return this.holding }
 

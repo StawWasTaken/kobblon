@@ -2179,19 +2179,162 @@ check('and it does lift the arm when nothing is being emoted',
 
 
 
+
+// -- other people in the World: the seam the Launcher asked for
+const seam = await p.evaluate(async () => {
+  const them = window.engine.someoneElse('aaaa-1111')
+  const again = window.engine.someoneElse('aaaa-1111')
+  const sameHandle = them === again
+  const inSceneAtOnce = them.object.parent === window.engine.scene
+  const bodyAtOnce = them.body
+
+  // the first word about somebody puts them there rather than sliding
+  // them in from the origin
+  them.placeAt(20, 1, 20, 0)
+  const snapped = them.object.position.toArray()
+
+  // and a name can go over them before the mesh has landed
+  window.engine.board?.add(them.object, {
+    id: 'b1', kind: 'say', from: 'Someone', text: 'hello', at: Date.now(),
+  })
+
+  /*
+   * A turn of the event loop, and not only frames. `stepFrames` is
+   * synchronous, so no amount of stepping lets the promise behind
+   * `loadK6Source` settle - the body arrives on a microtask, which is the
+   * honest shape of it: `k6.glb` is cached by now but a cache hit is still
+   * a promise.
+   */
+  await new Promise((done) => setTimeout(done, 60))
+  window.stepFrames(60)
+  const bodyAfter = !!them.body
+  const parts = them.body ? [...them.body.parts.keys()].length : 0
+
+  // a step of a few stons is eased, not jumped
+  them.placeAt(24, 1, 20, 0)
+  window.stepFrames(1)
+  const afterOneFrame = them.object.position.x
+  window.stepFrames(30)
+  const afterHalfASecond = them.object.position.x
+
+  // a respawn's worth of distance is not a walk
+  them.placeAt(200, 1, 200, 0)
+  window.stepFrames(1)
+  const teleported = them.object.position.toArray()
+
+  // told it is moving, it walks; told nothing for a while, it stops
+  // Five stons a second is a walk and thirty is a run, which is `settle`'s
+  // own ladder rather than a number invented here: my first guess at this
+  // check said twenty was a walk, and twenty is a run.
+  them.moving({ speed: 5, grounded: true, rising: false })
+  window.stepFrames(20)
+  const whileWalking = them.body?.doing ?? null
+  them.moving({ speed: 30, grounded: true, rising: false })
+  window.stepFrames(20)
+  const whileRunning = them.body?.doing ?? null
+  them.moving({ speed: 0, grounded: false, rising: true })
+  window.stepFrames(10)
+  const whileRising = them.body?.doing ?? null
+  window.stepFrames(60)
+  const whenNothingArrives = them.body?.doing ?? null
+
+  // rubbish from a decoder does not move anybody
+  const before = them.object.position.toArray()
+  them.placeAt(NaN, 1, 0, 0)
+  window.stepFrames(2)
+  const afterRubbish = them.object.position.toArray()
+
+  // and a second person is a second body, from the same cached glb
+  const other = window.engine.someoneElse('bbbb-2222')
+  other.placeAt(30, 1, 30, 1)
+  await new Promise((done) => setTimeout(done, 60))
+  window.stepFrames(40)
+  const two = window.engine.status.people
+  const twoBodies = !!other.body && other.body !== them.body
+
+  them.leave()
+  const sceneAfterLeave = them.object.parent
+  window.stepFrames(2)
+  const counted = window.engine.status.people
+  const gone = them.gone
+
+  return {
+    sameHandle, inSceneAtOnce, bodyAtOnce, snapped, bodyAfter, parts,
+    afterOneFrame, afterHalfASecond, teleported, whileWalking,
+    whenNothingArrives, before, afterRubbish, two, twoBodies,
+    whileRunning, whileRising,
+    sceneAfterLeave, counted, gone,
+  }
+})
+check('asking twice for the same account is one body', seam.sameHandle, String(seam.sameHandle))
+check('the thing a bubble hangs on is there before the mesh is',
+  seam.inSceneAtOnce && !seam.bodyAtOnce, `in scene ${seam.inSceneAtOnce}, body ${!!seam.bodyAtOnce}`)
+check('the first word about somebody places them rather than sliding them in',
+  Math.abs(seam.snapped[0] - 20) < 0.001, seam.snapped.map((n) => n.toFixed(1)).join(', '))
+check('their body arrives, with the six parts', seam.bodyAfter && seam.parts === 6,
+  `${seam.parts} parts`)
+check('a step is eased and not jumped',
+  seam.afterOneFrame > 20.1 && seam.afterOneFrame < 23.5,
+  `x 20.0 -> ${seam.afterOneFrame.toFixed(2)} in one frame`)
+check('and it gets there', Math.abs(seam.afterHalfASecond - 24) < 0.05,
+  `x ${seam.afterHalfASecond.toFixed(3)} of 24`)
+check('a respawn’s worth of distance is not eased',
+  Math.abs(seam.teleported[0] - 200) < 0.001, seam.teleported.map((n) => n.toFixed(0)).join(', '))
+check('told they are moving, the body walks', seam.whileWalking === 'walk', String(seam.whileWalking))
+check('and faster, it runs', seam.whileRunning === 'run', String(seam.whileRunning))
+check('and off the ground and rising, it jumps', seam.whileRising === 'jump',
+  String(seam.whileRising))
+check('told nothing for half a second, it stands still rather than walking on the spot',
+  seam.whenNothingArrives === 'idle', String(seam.whenNothingArrives))
+check('a NaN from a decoder moves nobody',
+  seam.afterRubbish.every((n, i) => Math.abs(n - seam.before[i]) < 0.001),
+  seam.afterRubbish.map((n) => n.toFixed(1)).join(', '))
+check('two people are two bodies', seam.two === 2 && seam.twoBodies,
+  `${seam.two} drawn, separate ${seam.twoBodies}`)
+check('leaving takes the body out of the scene and the engine stops counting them',
+  !seam.sceneAfterLeave && seam.counted === 1 && seam.gone,
+  `parent ${seam.sceneAfterLeave}, ${seam.counted} left`)
+
+// and nobody carries over into the next World
+const carriedOver = await p.evaluate(async () => {
+  const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
+  await window.engine.open(manifest)
+  window.stepFrames(5)
+  return window.engine.status.people
+})
+check('nobody carries over into the next World', carriedOver === 0, `${carriedOver} drawn`)
+
+
 // -- back to the first World for the picture
 await p.evaluate(async () => {
   const manifest = await fetch('/experiences/first-ground.json').then((r) => r.json())
   await window.engine.open(manifest)
 })
 
-// -- a picture, for a human to look at
+// -- a picture, for a human to look at, with other people in it
 await p.evaluate(() => {
   // the zoom check left the camera at the near end, where K6 is not drawn
   window.engine.zoom(1000)
   window.engine.controller.placeAt(6, 1, 10, 3.1)
   window.drive({ z: 1, run: true })
   window.stepFrames(40)
+})
+await p.evaluate(async () => {
+  // Two of them, dressed differently, so the picture says whether bodies
+  // that belong to somebody else actually draw rather than only count.
+  const one = window.engine.someoneElse('shot-1')
+  const two = window.engine.someoneElse('shot-2')
+  one.look({ Torso: '#2f6df6', Head: '#f2c48a', LeftArm: '#2f6df6', RightArm: '#2f6df6' })
+  two.look({ Torso: '#23b26d', Head: '#f2c48a', LeftLeg: '#1b1c22', RightLeg: '#1b1c22' })
+  one.placeAt(3, 1, 2, 0.3)
+  two.placeAt(10, 1, 0, -0.6)
+  one.moving({ speed: 5, grounded: true, rising: false })
+  await new Promise((done) => setTimeout(done, 80))
+  window.stepFrames(30)
+  window.engine.board?.add(one.object, {
+    id: 's1', kind: 'say', from: 'Someone', text: 'hello', at: Date.now(),
+  })
+  window.stepFrames(10)
 })
 await p.screenshot({ path: '/tmp/claude-0/engine.png' })
 

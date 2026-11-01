@@ -12,6 +12,7 @@ import { SoundService } from './sound'
 import { ChatService, LocalEcho, muted, type ChatTransport, type ScreenSay, type ChatMark } from './chat'
 import { ChatWindow } from './chatui'
 import { BubbleBoard, type BubbleLook, type BubbleContents, type MarkLook } from './bubbles'
+import { Someone, type Person } from './people'
 
 /**
  * The Kobblon Engine, the first useful slice of it.
@@ -147,6 +148,66 @@ export class Engine {
     return this.avatar
   }
 
+  /**
+   * A body in this World that belongs to somebody else.
+   *
+   * The engine's whole part in multiplayer. It draws, dresses and animates
+   * other people; it does not know how they got here. The Launcher calls
+   * this when the wire says somebody joined, calls `placeAt` and `moving`
+   * on what comes back, and calls `leave()` when they go.
+   *
+   * Asking twice for the same account returns the same handle rather than a
+   * second body, because the same account arriving twice is a real case -
+   * a reconnect, or a welcome overlapping a joined - and two bodies for one
+   * person is the symptom that is hardest to read afterwards.
+   *
+   * Their body is built from the same cached `k6.glb` the player's own is,
+   * so the thirtieth person in a room is no download at all. It takes a few
+   * frames to arrive; `object` is there at once so a name can go over them
+   * before it does.
+   */
+  someoneElse(id: string): Person {
+    const already = this.others.get(id)
+    if (already && !already.gone) return already
+
+    /*
+     * The same `stillWanted` shape every other asynchronous thing in this
+     * engine carries, and for the same reason: a body whose mesh lands
+     * after another World has opened belongs to nowhere, and adding it to
+     * the scene anyway is the sound bug with a mesh instead of a noise.
+     */
+    const opening = this.opening
+    const made = new Someone(
+      id, this.scene, this.options.avatarUrl ?? '/k6/k6.glb',
+      () => this.opening === opening && this.others.get(id) === made,
+    )
+    this.others.set(id, made)
+    return made
+  }
+
+  /** Whoever else the engine is drawing right now. */
+  get people(): readonly Person[] {
+    return [...this.others.values()]
+  }
+
+  /** Everybody else goes. The player stays, and so does the World. */
+  clearPeople() {
+    for (const one of this.others.values()) {
+      this.bubbles?.forget(one.object)
+      one.leave()
+    }
+    this.others.clear()
+  }
+
+  /**
+   * Everybody else in this World, by account.
+   *
+   * Keyed by account id and not by the wire's slot, because a slot means
+   * something only inside one room and only until that person leaves, and
+   * slots are reused. Anything that outlives a visit uses the id.
+   */
+  private others = new Map<string, Someone>()
+
   private world: BuiltWorld | null = null
   private sky: Skybox | null = null
   /** Everything this World makes a noise with. */
@@ -185,6 +246,14 @@ export class Engine {
   private shiftlockWanted = true
   /** Whether it is engaged right now, which Shift toggles. */
   private shiftlockOn = false
+  /**
+   * Whether the pointer is wanted but has not been granted yet.
+   *
+   * It is the gap between asking and being allowed, and it has to be held
+   * somewhere: the browser refuses the ask from a wheel, and the thing that
+   * can grant it happens later and somewhere else.
+   */
+  private wantLock = false
   private onWheel: ((event: WheelEvent) => void) | null = null
   private onKey: ((event: KeyboardEvent) => void) | null = null
   /** How many Worlds have been opened, so a late arrival knows it is late. */
@@ -260,6 +329,13 @@ export class Engine {
        * choose where the camera sits.
        */
       this.onKey = (event: KeyboardEvent) => {
+        // A keypress is a gesture the browser will grant the pointer on,
+        // and somebody in first person is pressing one every few hundred
+        // milliseconds. Before the typing guard, because the lock is wanted
+        // whether or not this particular key is a camera key - but not
+        // while they are typing, because taking the pointer mid-sentence is
+        // its own insult.
+        if (!this.chat?.typing) this.takeThePointer()
         // Not while somebody is typing: "io" in a sentence is two letters,
         // not a camera.
         if (this.chat?.typing) return
@@ -274,11 +350,37 @@ export class Engine {
        * the moment the camera gets close enough.
        */
       this.onClick = () => {
-        if (this.firstPerson) this.keyboard?.setPointerLock(true)
+        if (this.firstPerson) this.wantLock = true
+        this.takeThePointer()
       }
       options.canvas.addEventListener('click', this.onClick)
     }
     this.resize()
+  }
+
+  /**
+   * Ask for the pointer, if it is wanted and not already held.
+   *
+   * Called from the gestures a browser accepts, which is why it exists
+   * rather than the ask being written at each of them.
+   */
+  private takeThePointer() {
+    if (!this.wantLock) return
+    if (this.keyboard?.pointerLocked) { this.wantLock = false; return }
+    this.keyboard?.setPointerLock(true)
+  }
+
+  /**
+   * Whether the pointer is actually held.
+   *
+   * For an application drawing an aiming dot. Drawn from `firstPerson` it
+   * says "the camera is in the head"; drawn from this it says "and the
+   * mouse is aiming", which is the only one of the two worth a dot. In a
+   * World with other people in it the difference is whether you are
+   * looking at somebody or have lost them.
+   */
+  get pointerLocked() {
+    return this.keyboard?.pointerLocked ?? false
   }
 
   resize() {
@@ -323,6 +425,13 @@ export class Engine {
      */
     const opening = (this.opening += 1)
     const stillWanted = () => this.opening === opening
+
+    /*
+     * Nobody else carries over. The people in the room that is closing are
+     * not in the one that is opening, and a body left standing in the new
+     * World is one nothing on either side has a handle to any more.
+     */
+    this.clearPeople()
 
     if (this.world) {
       this.scene.remove(this.world.group)
@@ -382,14 +491,24 @@ export class Engine {
      * rather than needing its own control.
      */
     /*
-     * And the way in, which was missing.
+     * And the way in, which was missing - and then wrong.
      *
      * The lock was only ever asked for on a click, and nobody clicks after
-     * zooming into their own head - so first person was entered with the
-     * pointer still loose, which is the "cursor + dot" Staw described. A
-     * wheel event is a user gesture, so the browser will grant it here.
+     * zooming into their own head, so first person was entered with the
+     * pointer still loose. That is the "cursor plus dot" Staw described.
+     * Asking from here looked like the fix and is not: Chromium grants
+     * pointer lock from keydown, mousedown, pointerdown, pointerup,
+     * touchend and click, and `wheel` is on none of those lists. The
+     * request was refused and the refusal was never read, because
+     * `requestPointerLock?.()` is called for its effect.
+     *
+     * So this records that the lock is wanted, and `takeThePointer` asks on
+     * the next gesture the browser will actually accept - which while
+     * somebody is walking is the very next keypress. The guard is the
+     * event that decides it and not the one that noticed.
      */
-    if (this.firstPerson) this.keyboard?.setPointerLock(true)
+    this.wantLock = this.firstPerson
+    if (this.firstPerson) this.takeThePointer()
     else this.keyboard?.setPointerLock(false)
     return this.orbit.distance
   }
@@ -410,8 +529,8 @@ export class Engine {
   setShiftlock(on: boolean) {
     this.shiftlockOn = on && this.shiftlockAllowed && this.shiftlockWanted
     this.controller.faceTowards(this.shiftlockOn ? this.orbit.yaw : null)
-    if (this.shiftlockOn) this.keyboard?.setPointerLock(true)
-    else if (!this.firstPerson) this.keyboard?.setPointerLock(false)
+    if (this.shiftlockOn) { this.wantLock = true; this.takeThePointer() }
+    else if (!this.firstPerson) { this.wantLock = false; this.keyboard?.setPointerLock(false) }
     return this.shiftlockOn
   }
 
@@ -593,7 +712,16 @@ export class Engine {
      * decides it changes, which is this project's oldest trap wearing a
      * fourth hat.
      */
-    if (this.shiftlockOn) this.controller.faceTowards(this.orbit.yaw)
+    /*
+     * First person as well as shiftlock, which was missing.
+     *
+     * Looking around in first person turned the camera and left the body
+     * facing the way it was. Alone in a World that is invisible; with
+     * somebody else watching, it is a person walking about with their head
+     * on backwards, and nobody can tell what anybody is pointing at.
+     */
+    this.controller.faceTowards(
+      this.shiftlockOn || this.firstPerson ? this.orbit.yaw : null)
     /*
      * Almost all the way up and almost all the way down, about seventy five
      * degrees each way. The old range let somebody look a little above the
@@ -622,6 +750,20 @@ export class Engine {
         emote: intent.emote,
       }, step)
       this.avatar.update(step)
+    }
+
+    /*
+     * Everybody else, after the player and before the camera. They are
+     * eased towards where the wire last put them, which is the engine's job
+     * and not the Launcher's: only this side knows how long this frame was.
+     */
+    for (const [id, one] of this.others) {
+      if (one.gone) {
+        this.bubbles?.forget(one.object)
+        this.others.delete(id)
+        continue
+      }
+      one.step(step)
     }
 
     this.easeCamera(step)
@@ -798,6 +940,7 @@ export class Engine {
       speed: Number(this.controller.state.speed.toFixed(2)),
       parts: this.avatar ? [...this.avatar.parts.keys()] : [],
       world: this.world?.manifest.name ?? null,
+      people: this.others.size,
       distance: Number(this.orbit.distance.toFixed(2)),
       drawn: this.avatar?.object.visible ?? false,
       firstPerson: this.firstPerson,
@@ -815,6 +958,7 @@ export class Engine {
     this.chatWindow?.dispose()
     this.bubbles?.dispose()
     this.chat?.dispose()
+    this.clearPeople()
     this.avatar?.dispose()
     this.renderer.dispose()
   }

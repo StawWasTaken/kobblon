@@ -46,6 +46,7 @@ export {
   BubbleBoard, BUBBLE_LOOK, MARK_LOOK, MARK_KINDS,
   type BubbleLook, type BubbleContents, type MarkLook,
 } from './bubbles'
+export { Someone, type Person, type PersonMotion } from './people'
 export { MATERIALS, isMaterial, materialFor, type Material, type PartLook } from './materials'
 export { SHAPES, isShape, geometryFor, tiledGeometry, TRUSS_BAY, type Shape } from './shapes'
 export { textureFor, bumpFor, reliefFor, setTextureBase, TILES_PER_STON, PICTURED } from './textures'
