@@ -88,6 +88,25 @@ function Page() {
         />
       </section>
 
+      {/* The case that caught us out: an uploaded picture that is wide
+          rather than a tall mark with air round it. Drawn in the mark's
+          slot it covered the whole band and sat on its own heading. */}
+      <section className="space-y-2">
+        <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
+          A wide picture of its own
+        </h2>
+        <EventBand
+          event={{
+            tag: 'V3.5', name: '3.5 is live',
+            blurb: 'Grab a drink and read what landed.',
+            action: 'Have a look', theme: 'kobblon', prizes: [],
+            art_url: '/brand/landing-towers.webp',
+            note: 'A wide one, kept to its own half',
+          }}
+          flat
+        />
+      </section>
+
       <section className="space-y-2">
         <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
           A colour of its own, and the theme's mark

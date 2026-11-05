@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '@/components/brand/Icon'
 import { themeOf, type PlatformEvent } from '@/lib/event'
@@ -44,6 +45,9 @@ import { cn } from '@/lib/cn'
  * usually not a link. Nested links are illegal in HTML, so the button is
  * a span inside the one anchor rather than a second one.
  */
+/* The left edge of an uploaded picture, dissolved rather than cut. */
+const FADE_IN = 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 30%, rgba(0,0,0,0.55) 62%, #000 92%)'
+
 export function EventBanner({ className }: { className?: string }) {
   const { data: event } = useAsync(() => eventShowing(), [])
   if (!event) return null
@@ -70,6 +74,7 @@ export function EventBand({ event, className, flat }: {
   /* Its own picture where one has been uploaded, and the theme's where one
    * has not. Staw: "for the art i want it to be an image i can upload. same
    * thing for the background (keep normal+customize it or upload one)". */
+  const own = !!event.art_url
   const art = event.art_url || asset(look.mark)
   const back = event.back_url || null
 
@@ -105,45 +110,81 @@ export function EventBand({ event, className, flat }: {
             that was chosen is the theme overruling the choice. */}
         {!back && <span className={cn('absolute inset-0', look.glow)} />}
 
+        {own && <OwnArt src={art} />}
+
         {/* The flat darkening from the left, so the words sit on something
             rather than on the brightest part of the picture. */}
-        <span className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/35" />
+        <span className={cn(
+          'absolute inset-0 bg-gradient-to-r from-black/90 via-black/40',
+          /* Lighter at the far end over somebody's own picture: the
+             darkening is there to hold the words up, and past them it is
+             only dimming the thing they uploaded. */
+          own ? 'to-black/10' : 'to-black/35',
+        )} />
       </span>
 
       {/*
         * The art, and the one layer on this band with a rule of its own.
         *
-        * Staw: "i meant for the image to not be cut at the top by the header
-        * but to still be cut at the bottom". So this layer's bottom edge is
-        * the band's bottom edge and it clips there, while its top sits well
-        * above the band and clips nothing - the picture rises out of the top
-        * of the band like something standing behind it, and is cut off level
-        * with the floor.
+        * Two shapes, because there are two kinds of picture here and
+        * drawing the second one like the first is what Staw caught: a
+        * theme's mark is a tall drawing with air round it, and somebody's
+        * uploaded art is a wide picture of whatever they like. Hung in the
+        * mark's slot at `17rem` tall, an uploaded banner covered the whole
+        * band and sat on top of its own heading.
         *
-        * The two numbers go together: the layer starts `6rem` above the
-        * band, so `top-[4.5rem]` inside it is `1.5rem` above the band's own
-        * top - which is exactly where the art used to be drawn before it was
-        * clipped off there.
+        * A theme's mark: Staw: "i meant for the image to not be cut at the
+        * top by the header but to still be cut at the bottom". So this
+        * layer's bottom edge is the band's bottom edge and it clips there,
+        * while its top sits well above the band and clips nothing - the
+        * mark rises out of the top like something standing behind the
+        * band, and is cut off level with the floor. The two numbers go
+        * together: the layer starts `6rem` above the band, so `top-[4.5rem]`
+        * inside it is `1.5rem` above the band's own top.
         *
-        * `select-none` and no alt text: it is the picture the band is made
-        * of, and a screen reader reading "Kobblon" twice between the tag and
-        * the heading is noise.
+        * An uploaded picture is drawn in the clipped layer above instead,
+        * under the darkening: the right-hand half of the band and no more
+        * of it, sized by its height and pinned to the right edge with no
+        * limit on how wide that makes it.
+        *
+        * That one rule is doing the work of two, and both of the obvious
+        * ones are wrong. `object-contain` fits a wide photograph inside the
+        * half and leaves its own left edge standing in the middle of the
+        * fade, which is a vertical line down the middle of the band
+        * whatever the mask does. `object-cover` fixes the photograph and
+        * ruins the other kind - a mark on a transparent background is a
+        * tall drawing, and covering blows it up until a face is an
+        * unrecognisable blob. Filling the height instead does both: a wide
+        * picture overflows to the left, into the fade, with no edge to see;
+        * a tall one fits and leaves transparent air beside it, which has no
+        * edge either. It
+        * does not leave the band at all - a photograph hanging over the top
+        * edge reads as a mistake where a mark reads as a flourish - and it
+        * is masked towards the words and then darkened by the same gradient
+        * everything else on the band sits under, so it ends in a fade
+        * rather than in a vertical line down the middle.
+        *
+        * `select-none` and no alt text either way: it is the picture the
+        * band is made of, and a screen reader reading "Kobblon" twice
+        * between the tag and the heading is noise.
         */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 top-[-6rem] overflow-hidden"
-      >
-        <img
-          src={art}
-          alt=""
-          draggable={false}
-          className={cn(
-            'absolute right-[22%] top-[4.5rem] hidden h-[17rem] w-auto select-none',
-            'opacity-90', look.halo,
-            'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
-          )}
-        />
-      </span>
+      {!own && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 top-[-6rem] overflow-hidden"
+        >
+          <img
+            src={art}
+            alt=""
+            draggable={false}
+            className={cn(
+              'absolute right-[22%] top-[4.5rem] hidden h-[17rem] w-auto select-none',
+              'opacity-90', look.halo,
+              'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
+            )}
+          />
+        </span>
+      )}
 
       {/* The event's own mark, where the reference puts the thing's name. */}
       {!!look.wordmark && (
@@ -291,4 +332,128 @@ export function EventBand({ event, className, flat }: {
   if (flat) return <div className={shell} style={paint}>{inside}</div>
 
   return <Link to={event.link ?? '/'} className={shell} style={paint}>{inside}</Link>
+}
+
+/**
+ * Does this picture have transparent edges?
+ *
+ * The one question that tells a mark from a photograph, and the reason it
+ * is asked rather than guessed at: a mark is a drawing with nothing round
+ * it and a photograph is a rectangle of pixels, and no amount of width and
+ * height tells you which you were handed. Kobby is wider than he is tall
+ * and he is still a drawing.
+ *
+ * Asked on a copy with `crossOrigin` set, never on the picture the band is
+ * showing: a host that does not allow it fails the copy and the band is
+ * untouched. It samples the edges rather than the whole picture because
+ * that is the only part the answer depends on, and resolves `null` where it
+ * could not look, which is not the same as "no" and is handled as its own
+ * case by the caller.
+ */
+function edgesAreClear(src: string): Promise<boolean | null> {
+  return new Promise((done) => {
+    const probe = new Image()
+    probe.crossOrigin = 'anonymous'
+    probe.onerror = () => done(null)
+    probe.onload = () => {
+      try {
+        const size = 24
+        const board = document.createElement('canvas')
+        board.width = size
+        board.height = size
+        const ctx = board.getContext('2d', { willReadFrequently: true })
+        if (!ctx) return done(null)
+        ctx.drawImage(probe, 0, 0, size, size)
+        const { data } = ctx.getImageData(0, 0, size, size)
+        const alphaAt = (x: number, y: number) => data[((y * size) + x) * 4 + 3]
+        const last = size - 1
+        const edge = [
+          alphaAt(0, 0), alphaAt(last, 0), alphaAt(0, last), alphaAt(last, last),
+          alphaAt(size >> 1, 0), alphaAt(size >> 1, last),
+          alphaAt(0, size >> 1), alphaAt(last, size >> 1),
+        ]
+        /* Two of the eight, so that a drawing whose corner happens to be
+         * painted is still a drawing, and a photograph with one soft
+         * corner is still a photograph. */
+        done(edge.filter((a) => a < 24).length >= 2)
+      } catch {
+        /* The canvas was tainted after all. */
+        done(null)
+      }
+    }
+    probe.src = src
+  })
+}
+
+/**
+ * The picture somebody uploaded, in the right-hand half of the band.
+ *
+ * Which is two different pictures wearing one field, and the whole of this
+ * component is telling them apart. Staw uploaded a wide screenshot and it
+ * was drawn in the slot built for a theme's mark: `17rem` tall, hung over
+ * the middle of the band, sitting on top of its own heading.
+ *
+ * Neither of the two obvious rules does both kinds:
+ *
+ * - `object-contain` fits a photograph inside the half and leaves its own
+ *   left edge standing in the middle of the fade. A hard vertical line down
+ *   the middle of the band, and no mask softens it, because the mask is
+ *   over the box and the edge is inside it.
+ * - `object-cover` fixes that and ruins the other kind: a drawing gets
+ *   blown up until a face is an unrecognisable blob. Kobby went that way.
+ *
+ * So it asks the picture whether its edges are transparent, which is what
+ * actually separates the two. A drawing fits the height, keeps its
+ * proportions, and the air beside it has no edge to see. A photograph
+ * covers the half, and what is cropped off the top and bottom is what a
+ * band-shaped hole was always going to crop.
+ */
+function OwnArt({ src }: { src: string }) {
+  /* null until the picture has been looked at: it fills the height until
+     then, which is the shape that cannot blow a face up. */
+  const [fill, setFill] = useState(false)
+
+  useEffect(() => {
+    let wanted = true
+    void edgesAreClear(src).then((clear) => {
+      if (!wanted) return
+      /* A mark fits, a photograph fills, and a picture that could not be
+         looked at falls back to its proportions - wider than three to two
+         is a photograph far more often than it is a drawing. */
+      if (clear === null) {
+        const sizer = new Image()
+        sizer.onload = () => {
+          if (wanted) setFill(!!sizer.naturalHeight && sizer.naturalWidth / sizer.naturalHeight >= 1.5)
+        }
+        sizer.src = src
+        return
+      }
+      setFill(!clear)
+    })
+    /* Asked again whenever the picture changes, and the answer to the old
+       one is dropped: a remembered fit is the previous picture's. */
+    return () => { wanted = false }
+  }, [src])
+
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-y-0 right-0 hidden w-[56%] justify-end overflow-hidden rounded-r-2xl sm:flex"
+      /* Inline rather than a class, and spelled twice: the fade is what
+         keeps an uploaded picture from ending in a hard line down the
+         middle of the band, so it is not something to leave to whether a
+         browser takes the unprefixed property. */
+      style={{ maskImage: FADE_IN, WebkitMaskImage: FADE_IN }}
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className={cn(
+          'select-none transition-transform duration-500 group-hover:scale-[1.03]',
+          fill ? 'h-full w-full object-cover object-center' : 'h-full w-auto max-w-none',
+        )}
+      />
+    </span>
+  )
 }

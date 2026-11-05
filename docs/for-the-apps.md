@@ -18502,3 +18502,68 @@ comes from the theme even when the art and the background are uploaded; the
 `note` field is stored and ignored where there are prizes; and an uploaded
 art is drawn in the mark's slot, so a wide photograph is cropped the way a
 mark would be.
+
+---
+
+## Round two hundred and forty-four - an uploaded picture is not a mark
+
+One thing, and it is the item the last two rounds both listed as not done.
+
+Staw uploaded a wide screenshot as an event's art and the band drew it in
+the slot built for a theme's mark - `17rem` tall, hung over the middle of
+the band, sitting on top of its own heading. The heading was unreadable and
+the picture was cropped like a logo.
+
+So `EventBand` now has two shapes for the picture rather than one.
+
+**A theme's mark** is unchanged in every respect: the layer that clips only
+at the bottom, the mark rising out of the top of the band, `17rem`, the
+theme's halo. Nothing about that moved.
+
+**An uploaded picture** is drawn in the clipped layer instead, in the
+right-hand `56%` of the band, under the same darkening the words sit on,
+with a mask fading its left edge into the band. It does not leave the band
+at the top: a photograph hanging over the edge reads as a mistake where a
+mark reads as a flourish.
+
+**How it decides how to fit, which is the part worth copying.** Neither of
+the two obvious rules does both kinds of picture:
+
+- `object-contain` fits a photograph inside the half and leaves the
+  picture's own left edge standing in the middle of the fade. That is a hard
+  vertical line down the middle of the band and no mask softens it, because
+  the mask is over the box and the edge is inside it.
+- `object-cover` fixes the photograph and ruins the other kind: a drawing
+  gets blown up until a face is an unrecognisable blob. Kobby went that way
+  and it was obvious on sight.
+
+Width and height do not tell them apart either - Kobby is 2351 by 2544 and
+one of our own screenshots is 1182 by 680, but plenty of marks are wide. So
+the component asks the picture whether its **edges are transparent**, which
+is the thing that actually separates a drawing from a rectangle of pixels.
+Clear edges means a mark: it fills the height, keeps its proportions, and
+the air beside it has no edge to see. Opaque edges means a photograph: it
+covers the half, and what is cropped off the top and bottom is what a
+band-shaped hole was always going to crop.
+
+The test runs on a **copy** of the picture with `crossOrigin` set, never on
+the one the band is showing, so a host that refuses it fails the copy and
+leaves the band alone; it samples eight points round the edge of a 24px
+draw, and it answers `null` where it could not look, which is its own case
+and falls back to the picture's proportions. It is asked again whenever
+`src` changes and the previous answer is dropped, for the reason this
+project has written down four times: a remembered fit is the previous
+picture's.
+
+Also in this batch, same component: over an uploaded picture the darkening
+ends at `black/10` instead of `black/35`, because past the words it is only
+dimming the thing somebody chose.
+
+**If you draw the band yourself rather than importing it, this is yours to
+copy.** Nothing in the data changed - no signature, no field, no function.
+`tools/site/event-preview.html` has a band for each case now, including the
+wide one that caught this.
+
+**Still not done:** the band's wordmark still comes from the theme even when
+the art and the background are uploaded, and `note` is still stored and
+ignored where there are prizes.
