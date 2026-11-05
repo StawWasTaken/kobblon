@@ -12,7 +12,7 @@
  * not do either: it stays blue when the line goes white, and it is drawn at
  * whatever size the file is rather than at the size of the line.
  *
- * So this is the same shape, traced off `public/brand/logomark.png` at its
+ * So this is the same shape, traced off `public/brand/logomark-darkmode.png` at its
  * own 109x175, as paths rather than pixels. It fills with `currentColor`,
  * which is what makes "completely white" true without a second white file to
  * keep in step with the blue one: it is white because the line is white.

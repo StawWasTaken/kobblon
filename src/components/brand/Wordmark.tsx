@@ -5,11 +5,19 @@ import { asset } from '@/lib/asset'
 /**
  * The name and the mark, in whichever appearance is being worn.
  *
- * A drawing for each mode rather than a filter. `wordmark2` and the
- * light-filled logomark are for the dark interface; the dark-filled pair
- * is for daylight. The flat white silhouette is not used by either any
- * more - inverting it gave a black name, which is not the mark and never
- * was.
+ * A drawing for each mode rather than a filter. `wordmark.png` and
+ * `logomark.png` - the official pair, the ones with the stroke - are for
+ * the dark interface; the `-lightmode` pair is for daylight. The flat
+ * silhouettes are not used by either any more: they live at `wordmark2`
+ * and `logomark-darkmode` and inverting one gave a black name, which is
+ * not the mark and never was.
+ *
+ * Staw swapped those names round: "the 'logomark' and 'wordmark' are both
+ * without the strokes, while the 'wordmark2' and the 'logomark-darkmode'
+ * are with the strokes (the one we use officially)". So the plain name is
+ * the official drawing now, which is what a plain name should be. Nothing
+ * on the site changed appearance - every reference moved with its own
+ * picture.
  *
  * **Chosen by CSS, not by a hook.** All of them are in the markup and all
  * but one are hidden, the same way the avatar backdrop does it. Two reasons
@@ -23,7 +31,7 @@ import { asset } from '@/lib/asset'
  * and any page mounted alone - the ordinary one is drawn, which is right.
  */
 const LOOKS = [
-  { look: 'default', mode: 'dark', wordmark: '/brand/wordmark2.png', logomark: '/brand/logomark-darkmode.png' },
+  { look: 'default', mode: 'dark', wordmark: '/brand/wordmark.png', logomark: '/brand/logomark.png' },
   { look: 'halloween', mode: 'dark', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png' },
   { look: 'christmas', mode: 'dark', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png' },
   /*

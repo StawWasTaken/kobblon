@@ -152,7 +152,7 @@ export default function InnerStock() {
                 */}
               <h1 className="flex items-center gap-2.5">
                 <img
-                  src={asset('/brand/wordmark2.png')}
+                  src={asset('/brand/wordmark.png')}
                   alt="Kobblon"
                   className="h-6 w-auto sm:h-7"
                 />

@@ -119,7 +119,18 @@ export function EventBand({ event, className, flat }: {
         aria-hidden="true"
         draggable={false}
         className={cn(
-          'pointer-events-none absolute -top-6 right-[22%] hidden h-[17rem] w-auto select-none',
+          /*
+            * Stood on the bottom edge rather than hung from the top.
+            *
+            * Staw: "make the top of the image gets out of the header area
+            * (its cool) but not the bottom part". The art is taller than
+            * the band, so whichever edge it is anchored to is the one that
+            * stays put and the other one bleeds - it was anchored to the
+            * top, so the mark's feet were being cut off along the bottom
+            * edge. Anchored to the bottom it stands on the band and grows
+            * out of the top, which is the half that reads as deliberate.
+            */
+          'pointer-events-none absolute bottom-0 right-[22%] hidden h-[17rem] w-auto select-none',
           'opacity-90', look.halo,
           'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
         )}

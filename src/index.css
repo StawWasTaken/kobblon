@@ -135,8 +135,7 @@
    *
    * The ordinary mark has a drawing per mode like the seasons do, rather
    * than a filter: the white silhouette inverted in daylight was a flat
-   * black name, and `wordmark2` is the one that was drawn for a pale
-   * background.
+   * black name, and the daylight pair is drawn rather than filtered.
    */
   /*
    * `.kob-mark`'s own rules live in `design/tokens.css` now.

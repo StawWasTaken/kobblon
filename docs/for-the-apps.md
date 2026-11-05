@@ -18388,3 +18388,46 @@ touch the table.
 - The art slot bleeds out of the top of the band by design. An uploaded
   picture is drawn in exactly that slot, so a wide photograph put there is
   cropped the way the mark is.
+
+---
+
+## Round two hundred and forty-two - the official marks take the plain names
+
+Staw: "so you should make the 'wordmark2' the main wordmark and the actual
+'wordmark' the 'wordmark2', same thing for logomarks 'logomark' and
+'logomark-darkmode', the 'logomark' and 'wordmark' are both without the
+strokes, while the 'wordmark2' and the 'logomark-darkmode' are with the
+strokes (the one we use officially)".
+
+**This is a rename of shared art, so read it before your next build.** In
+`public/brand`:
+
+| file | was | is now |
+| --- | --- | --- |
+| `wordmark.png` | flat white name, no stroke | **the official name, with the stroke** |
+| `wordmark2.png` | the official name | the flat white name |
+| `logomark.png` | flat blue K, no stroke | **the official K, with the stroke** |
+| `logomark-darkmode.png` | the official K | the flat blue K |
+
+The bytes swapped; nothing was redrawn. The `-lightmode` pair and the
+seasonal drawings are untouched.
+
+**Nothing on the website changed appearance.** Every reference moved with its
+own picture: `Wordmark`'s dark row and `appearances.ts` said `wordmark2` /
+`logomark-darkmode` and now say `wordmark` / `logomark`, which is the same
+file by its new name.
+
+The one place that did change, deliberately: the **Kobblon theme of the
+homepage band** drew the flat pair, which made it the odd one out beside its
+own Halloween and Christmas siblings - both of those are stroked drawings. It
+wears the official pair now, so all three bands are the same kind of mark.
+
+If you are holding `/brand/wordmark2.png` or `/brand/logomark-darkmode.png`
+anywhere in the Workspace or the Launcher and you meant the official mark,
+that path now hands you the flat silhouette. The fix is to drop the suffix.
+
+Also in the band, from the same batch: the art is anchored to the **bottom**
+edge rather than hung from the top. Staw: "make the top of the image gets out
+of the header area (its cool) but not the bottom part". It is taller than the
+band, so whichever edge it is pinned to is the one that stays put - pinned to
+the top, the mark's feet were being cut off along the bottom.
