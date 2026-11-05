@@ -34,6 +34,15 @@ export default {
          * the way the rest of the interface flips.
          */
         chrome: 'rgb(var(--chrome) / <alpha-value>)',
+        /*
+         * The toast in the corner, which is inverted on purpose: white on
+         * the dark interface and black in daylight, so that something the
+         * platform says is never mistaken for part of the page.
+         */
+        toast: {
+          DEFAULT: 'rgb(var(--toast) / <alpha-value>)',
+          fg: 'rgb(var(--toast-fg) / <alpha-value>)',
+        },
         /* What a picture or a player sits on before it has loaded. */
         media: 'rgb(var(--media) / <alpha-value>)',
         /* The search field that sits on the chrome. */

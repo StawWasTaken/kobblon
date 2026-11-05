@@ -81,7 +81,20 @@ export function AboutShell({
      * screen of nothing under it.
      */
     <div className={cn('relative flex min-h-dvh flex-col bg-ink text-white', className)}>
-      <AboutNav />
+      {/*
+        * The bar floats over the opening rather than sitting on a strip of
+        * its own above it. It is a pill now, inset on all three sides, and
+        * a pill with a solid black band behind it is a band with a pill
+        * drawn on it - the art has to run underneath, which is the whole
+        * point of the shape.
+        *
+        * So the opening is pulled up by exactly the bar's height, and only
+        * where there is an opening: a page with no hero starts with its
+        * own content, and sliding that under the bar would hide its first
+        * line. The two numbers are the bar measured at both widths, where
+        * the top padding differs.
+        */}
+      <AboutNav className={hero ? '-mb-[78px] sm:-mb-[74px]' : undefined} />
 
       {hero && (
         <div

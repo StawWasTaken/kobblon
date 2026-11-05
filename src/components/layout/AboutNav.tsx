@@ -18,10 +18,35 @@ import { cn } from '@/lib/cn'
  * It sticks, and that is the part worth explaining. The About pages are
  * long now, several bands deep, and a sign-up button that scrolls away at
  * the top of a page whose whole job is to get somebody to sign up is the
- * button not being there. It rides along instead - transparent over the
- * hero so the pixel wash is not cut in half, and frosted the moment the
- * page moves, which is what keeps the links readable once a render of a
- * World is passing behind them.
+ * button not being there. It rides along instead, and the frosting behind
+ * it is what keeps the links readable once a render of a World is passing
+ * behind them.
+ *
+ * Staw handed over a reference for the shape: a bar that does not touch
+ * any edge - a wide black pill floating a little way down the page, the
+ * wordmark at one end, the words in the middle, one button at the other
+ * end. So it is a pill and not a band now, and the three changes that
+ * come with that are the whole of this redesign:
+ *
+ *  - it is inset on all three sides rather than running edge to edge, so
+ *    the page's own art carries on past it instead of being cut off by it;
+ *  - the words sit in the middle rather than next to the wordmark, which
+ *    is what the reference does and what stops five words reading as a
+ *    list hung off the logo;
+ *  - the pill is always drawn, black and see-through, rather than
+ *    appearing on the first scroll. A bar that is invisible until the page
+ *    moves is a bar somebody on a hero has to find.
+ *
+ * What is ours and not the reference's: the blur, which the About pages
+ * already use everywhere (`GlassCard`, the hero wash); the blue underline
+ * marking the page you are on; our own Sign up button, filled, because a
+ * hollow outlined button is not a thing this site has anywhere else and
+ * one here would read as the second-choice button rather than the point
+ * of the page.
+ *
+ * It still thickens on the first scroll - from see-through to nearly
+ * solid - because over a bright band of a long page the lighter version
+ * is not enough to read five words against.
  */
 /*
  * Staw: "for the At Kobblon pages, can we reorder these, and theres a lil
@@ -83,14 +108,24 @@ export function AboutNav({ className }: { className?: string }) {
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 transition-colors duration-300',
-        moved || open
-          ? 'border-b border-white/[0.08] bg-ink/85 backdrop-blur-xl'
-          : 'border-b border-transparent',
+        'sticky top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-4',
         className,
       )}
     >
-      <div className="mx-auto flex max-w-6xl items-center gap-5 px-5 py-4 sm:px-8">
+      <div
+        className={cn(
+          'relative mx-auto flex max-w-6xl items-center gap-5 rounded-2xl border px-4 py-3 sm:px-6',
+          'backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300',
+          /* Nearly solid once the page has moved, see-through over the
+             hero. Both are black rather than `ink`, because the pill is
+             meant to read as a thing lying on the page and not as the
+             page's own surface sliding up. */
+          moved || open
+            ? 'border-white/10 bg-black/80 shadow-[0_10px_40px_rgba(0,0,0,0.45)]'
+            : 'border-white/[0.07] bg-black/45 shadow-[0_8px_30px_rgba(0,0,0,0.25)]',
+          open && 'rounded-b-none',
+        )}
+      >
         <button
           type="button"
           onClick={() => setOpen((was) => !was)}
@@ -103,7 +138,10 @@ export function AboutNav({ className }: { className?: string }) {
 
         <Wordmark to="/" className="h-6" always />
 
-        <nav className="ml-7 hidden items-center gap-1 sm:flex">
+        {/* The middle, the way the reference has it: the words are the
+            bar's centre of gravity, not a tail on the wordmark. `absolute`
+            so that a long button on one side cannot push them off centre. */}
+        <nav className="pointer-events-none absolute inset-x-0 hidden items-center justify-center gap-1 sm:flex">
           {ABOUT_NAV.map((one) => (
             one.under
               ? <NavGroup key={one.label} entry={one} here={here} />
@@ -112,8 +150,8 @@ export function AboutNav({ className }: { className?: string }) {
                   key={one.to}
                   to={one.to}
                   className={cn(
-                    'relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                    here(one.to) ? 'text-white' : 'text-white/50 hover:text-white',
+                    'pointer-events-auto relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+                    here(one.to) ? 'text-white' : 'text-white/60 hover:text-white',
                   )}
                 >
                   {one.label}
@@ -160,7 +198,10 @@ export function AboutNav({ className }: { className?: string }) {
       </div>
 
       {open && (
-        <nav className="border-t border-white/10 px-3 pb-3 pt-2 sm:hidden">
+        <nav className={cn(
+          'mx-auto max-w-6xl rounded-b-2xl border border-t-0 border-white/10 bg-black/80 px-3 pb-3 pt-2',
+          'backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.45)] sm:hidden',
+        )}>
           {ABOUT_NAV.map((one) => (
             one.under
               ? (
@@ -217,7 +258,7 @@ function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => bo
 
   return (
     <div
-      className="relative"
+      className="pointer-events-auto relative"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
       onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}
@@ -227,8 +268,8 @@ function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => bo
         onClick={() => setOpen((was) => !was)}
         aria-expanded={open}
         className={cn(
-          'relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-          inside || open ? 'text-white' : 'text-white/50 hover:text-white',
+          'pointer-events-auto relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+          inside || open ? 'text-white' : 'text-white/60 hover:text-white',
         )}
       >
         {entry.label}

@@ -18124,3 +18124,101 @@ the **Spawn mark** is still in neither repository.
 Presence on my side - the activity line, the friend hover card, the Servers
 tab, the Join at `kobblon://play/<id>?room=<room>` - is still next and still
 mine.
+
+## Round two hundred and thirty-nine - the toast is inverted, the At Kobblon bar is a pill, Christmas opens on the 7th
+
+Four small things from Staw, two of which are shared and one of which is a
+date you want in your calendar.
+
+### The toast is inverted - this one is shared
+
+Staw: "i want the notification popup thing that appears on the bottom right
+to be white too btw, and black when on lightmode". So the toast is now the
+one surface on the site that is deliberately the wrong way round: white with
+black text on the dark interface, black with white text in daylight.
+
+Two new tokens in `design/tokens.css`, and therefore two new colours in
+`design/preset.js`:
+
+```
+--toast      the card    (white in the dark, near-black in daylight)
+--toast-fg   its text    (the other way round)
+→ bg-toast, text-toast-fg
+```
+
+The seasonal appearances do not touch them, on purpose: a toast is the
+platform answering, and it says so in the same voice in every season. If the
+Workspace draws its own toast, this is the pair to use.
+
+Two things went with the inversion, both because they had to: the border is
+gone, since a line on an inverted card is either invisible against the page
+or a second edge around the first, and the lift is a heavier shadow instead;
+and the tone colours moved off the text onto the icon alone, because
+`text-space-bright` and `text-link` were both picked to glow on a dark card
+and are the two that stop being readable the moment the card turns white.
+The info glyph is `brand-bright` and not `brand` - deep Kobbleston blue on a
+black card in daylight is a dot nobody can see.
+
+`tools/site/toast-preview.html` draws it over a page, in whichever theme the
+document root is set to.
+
+### The At Kobblon bar is a floating pill
+
+Staw handed over a reference - a wide black bar that touches no edge, the
+wordmark at one end, the words in the middle, one button at the other - and
+asked for that shape blended with what the At Kobblon pages already are. So
+`AboutNav` is a pill now:
+
+- inset on all three sides rather than running edge to edge, and
+  `AboutShell` pulls the opening up by exactly the bar's height so the art
+  runs underneath it. Staw, on the first attempt: "the navbar could be
+  directly ontop of the image instead of a background topbar" - he was
+  right, a pill with a solid band behind it is a band with a pill drawn on
+  it;
+- the words sit in the middle rather than next to the wordmark;
+- it is always drawn, black and see-through, rather than appearing on the
+  first scroll, and it thickens to nearly solid once the page moves.
+
+Ours and not the reference's: the blur, which these pages already use
+everywhere; the blue underline marking the page you are on; and our own
+filled Sign up button, because a hollow outlined button is not a thing this
+site has anywhere else and one here would read as the second-choice button
+rather than the point of the page.
+
+The pull-up only happens where there is a hero. A page that opens on its own
+content - Download - keeps the bar above it, because sliding that under the
+bar hides its first line.
+
+### Christmas opens on the 7th of November - 0322
+
+Staw uploaded `kobblon-christmas-reveal.gif`: the blue mark becoming the
+glittered red one. It is `public/brand/logo-reveal-christmas.gif` now and the
+Christmas look carries it, so the claim card plays it the way the Halloween
+card has played its own since October.
+
+And the window moves. It was the middle of November; it is **the 7th** now,
+which is this Friday. One number in `appearance_on_offer`, and everything
+downstream follows it, because 0263 put the window in one function that both
+the card and the claim read - nothing is handed out by a script and nothing
+is written into anybody's row. The card appears while it is on offer, they
+press Claim, `claim_appearance` checks the date itself, and the row is theirs
+for good. Same as Halloween, exactly as asked.
+
+Checked: 0322 applied twice, and the window read day by day - the 5th and the
+6th offer nothing, the 7th through to the 31st of December offer christmas,
+October is still halloween, the 1st of January is nothing.
+
+**If the Launcher or the Workspace shows the claim card or names the window,
+the 15th is now the 7th.**
+
+### The friends rail is above the band on Home
+
+Staw: "the friends list should be above the event thing header". It is the
+one row on that page about people rather than things, and it is the reason
+somebody opens Home twice in an evening - a contest is read once.
+
+### For Staw
+
+To run in Supabase, in order: **0319**, **0320**, **0321** (the event band's
+table, from the last round) and **0322** (Christmas on the 7th). The
+**Spawn mark** is still in neither repository.

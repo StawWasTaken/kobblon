@@ -46,9 +46,10 @@ export type AppearanceLook = {
   /**
    * The mark turning into this appearance's, for the card that offers it.
    *
-   * Staw drew one for halloween: the blue Kobblon becoming the orange one.
-   * A still wordmark is what a season without a film gets, and that is the
-   * honest version rather than a card that pretends to animate.
+   * Staw drew one for halloween and now one for christmas: the blue
+   * Kobblon becoming the season's. A still wordmark is what a season
+   * without a film gets, and that is the honest version rather than a card
+   * that pretends to animate.
    */
   reveal?: string
 }
@@ -78,8 +79,9 @@ export const LOOKS: Record<Appearance, AppearanceLook> = {
     note: 'Deep green chrome, and snow on some pages.',
     wordmark: '/brand/wordmark-christmas.png',
     logomark: '/brand/logomark-christmas.png',
-    when: 'Given away from the middle of November to the end of the year.',
+    when: 'Given away from the 7th of November to the end of the year.',
     weather: 'snow',
+    reveal: '/brand/logo-reveal-christmas.gif',
   },
 }
 

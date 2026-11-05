@@ -238,14 +238,20 @@ export default function Home() {
       )}
 
       {/*
+        * Who is about, first. Staw: "the friends list should be above the
+        * event thing header". It is the one row on this page that is about
+        * people rather than about things, and it is the reason somebody
+        * opens Home twice in an evening - a contest is read once.
+        */}
+      <FriendsRail />
+
+      {/*
         * What Kobblon is running, over everything the page is made of and
-        * under the two things that are about you: the greeting, and a
-        * notice about your own account. A contest banner sitting over a
-        * suspension would be the page talking past somebody.
+        * under the things that are about you: the greeting, a notice about
+        * your own account, and who is about. A contest banner sitting over
+        * a suspension would be the page talking past somebody.
         */}
       <EventBanner className="relative z-10 mb-8" />
-
-      <FriendsRail />
 
       {/*
         * Where you were last, before anything anybody else is doing. The

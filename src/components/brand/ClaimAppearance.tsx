@@ -155,17 +155,17 @@ export function ClaimAppearance({ offer }: {
         * the season's own chrome colour, at the size it is worth seeing
         * rather than as an icon beside a sentence.
         *
-        * Staw drew the mark turning into the halloween one, so that plays
-        * here where there is one; a season without a film gets its
-        * wordmark standing still, which is the honest version of the same
-        * card. The wordmark alone either way - "for the logomark its only
-        * when the wordmark is too small", and a card has all the room in
-        * the world.
+        * Staw drew the mark turning into the halloween one and then the
+        * christmas one, so that plays here where there is one; a season
+        * without a film gets its wordmark standing still, which is the
+        * honest version of the same card. The wordmark alone either way -
+        * "for the logomark its only when the wordmark is too small", and a
+        * card has all the room in the world.
         *
         * The film is only ever fetched by a card that is on screen, which
-        * is why it is an `img` here and not a preload in the document: it
-        * is a megabyte and a half, and nobody who is not being offered
-        * halloween should pay for it.
+        * is why it is an `img` here and not a preload in the document:
+        * they are a megabyte and a half and five megabytes, and nobody who
+        * is not being offered that season should pay for it.
         */}
       <div
         data-appearance={offered}

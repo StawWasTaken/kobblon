@@ -22,6 +22,21 @@
   --muted: 139 139 153;
   --link: 159 173 255;
   --bubble: 38 38 47;
+  /*
+   * The toast in the corner, which is the one thing on the site that is
+   * deliberately the wrong way round. Staw: "i want the notification popup
+   * thing that appears on the bottom right to be white too btw, and black
+   * when on lightmode". It is the only surface that is not part of the
+   * page - it arrives over whatever is there and leaves on its own - and
+   * inverting it is what makes it read as something said rather than
+   * something drawn.
+   *
+   * The seasonal appearances below do not touch these two, on purpose: a
+   * toast is the platform answering, and it says so in the same voice in
+   * every season.
+   */
+  --toast: 255 255 255;
+  --toast-fg: 14 14 17;
   --on-bubble: 255 255 255;
   --chrome: 22 35 130;
   --media: 13 19 73;
@@ -60,6 +75,9 @@
   --fg: 16 16 18;
   --muted: 92 97 112;
   --link: 27 52 232;
+  /* The other way round in daylight, for the same reason. */
+  --toast: 18 18 22;
+  --toast-fg: 255 255 255;
   --bubble: 24 25 32;
   --on-bubble: 255 255 255;
   --chrome: 214 230 255;
