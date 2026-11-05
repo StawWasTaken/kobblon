@@ -15,7 +15,7 @@ import { LOOKS, APPEARANCES } from '@/lib/appearances'
 import { Button } from '@/components/ui/Button'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ClaimAppearance } from '@/components/brand/ClaimAppearance'
-import { Appearances } from '@/pages/Settings'
+import { Looks } from '@/pages/Settings'
 import { Weather } from '@/components/brand/Weather'
 import { AppearanceProvider } from '@/hooks/useAppearance'
 import '@/index.css'
@@ -84,7 +84,7 @@ function Page() {
           what somebody who has claimed nothing is told. */}
       <ToastProvider>
         <AppearanceProvider>
-          <div className="max-w-2xl"><Appearances /></div>
+          <div className="max-w-2xl"><Looks /></div>
           {/* What falls, in both seasons, side by side. */}
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div data-appearance="christmas" className="relative h-64 overflow-hidden rounded-2xl bg-chrome">

@@ -418,7 +418,10 @@ function SizeSwatch({ px }: { px: number }) {
   )
 }
 
-function Looks() {
+/* Exported for `tools/site/appearance-preview.html`, which mounts it with
+ * nothing round it: the one place a mark or a tile that needs a provider
+ * shows up as a blank panel before the Workspace finds it. */
+export function Looks() {
   const { theme, setTheme } = useTheme()
   const { size, setSize } = useTextSize()
   const { appearance, owned, wear } = useAppearance()

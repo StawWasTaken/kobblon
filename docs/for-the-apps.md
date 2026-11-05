@@ -18567,3 +18567,52 @@ wide one that caught this.
 **Still not done:** the band's wordmark still comes from the theme even when
 the art and the background are uploaded, and `note` is still stored and
 ignored where there are prizes.
+
+---
+
+## Round two hundred and forty-five - one drawing, dark and light
+
+Staw: "for the appearance & for the navbar you should now use logomark &
+wordmark images (the official ones)".
+
+He was right and the reason took some finding, because every path in the
+code already said `/brand/wordmark.png` and `/brand/logomark.png`, which
+have been the official stroked drawings since round two hundred and
+forty-two. Nothing was pointing at a flat silhouette.
+
+**It was the daylight pair.** `Wordmark` picks its drawing off
+`data-mode` as well as `data-appearance`, and the light rows named
+`wordmark-lightmode.png` and `logomark-lightmode.png` - a recolour with a
+dark fill, made back when the plain names held the flat marks. In light
+mode the bar wore a mark nothing else on the site wears, and the name came
+out as a dark smear on the pale blue bar. The appearance tile in Settings
+draws `Logomark` on `bg-chrome`, which is the pale blue in light mode, so
+it wore the same wrong drawing - which is the tile Staw screenshotted.
+
+So the default look is **one drawing in both modes** now: the official
+stroked pair, dark and light alike. That is what the stroke is for - a
+white fill inside a brand-blue outline reads on the deep bar and on the
+pale one, and a mark that needs a second drawing per mode is a mark with a
+weak outline. The seasonal pairs are unchanged; they were always one
+drawing each. The `-lightmode` files stay on disk and are referenced by
+nothing.
+
+**For the applications:** if you draw the Kobblon mark yourself off
+`data-mode`, drop the light variant and use `wordmark.png` / `logomark.png`
+in both. If you import `Wordmark` you have this already and need do
+nothing.
+
+**And the check that found it, which is the part that matters.**
+`tools/site/appearance-preview.html` - the bare page that mounts the bars
+and the Settings appearance panel with no provider round them - had been
+throwing since the panel was renamed: `does not provide an export named
+'Appearances'`. A blank page, silently, for however long. That page exists
+precisely so a mark that grows a hook is found here rather than as a blank
+panel in the Workspace, and it cannot do that job while it is broken. It is
+fixed (`Looks` is exported from `Settings` and the page imports that), and
+it is where both screenshots in this round came from.
+
+Worth saying plainly: a bare page that throws is worse than no bare page,
+because it reads as "checked" on the list. If one of yours imports a
+website page by name, it is worth running it now and then rather than only
+when something looks wrong.

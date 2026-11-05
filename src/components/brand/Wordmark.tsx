@@ -5,12 +5,13 @@ import { asset } from '@/lib/asset'
 /**
  * The name and the mark, in whichever appearance is being worn.
  *
- * A drawing for each mode rather than a filter. `wordmark.png` and
- * `logomark.png` - the official pair, the ones with the stroke - are for
- * the dark interface; the `-lightmode` pair is for daylight. The flat
- * silhouettes are not used by either any more: they live at `wordmark2`
- * and `logomark-darkmode` and inverting one gave a black name, which is
- * not the mark and never was.
+ * One drawing, in every mode. `wordmark.png` and `logomark.png` - the
+ * official pair, the ones with the stroke - are what the site wears dark
+ * and light alike, because a stroked mark holds on both and that is what
+ * the stroke is for. The flat silhouettes are not used anywhere any more:
+ * they live at `wordmark2` and `logomark-darkmode`, and inverting one gave
+ * a black name, which is not the mark and never was. The `-lightmode`
+ * recolours are not used either, for the same reason.
  *
  * Staw swapped those names round: "the 'logomark' and 'wordmark' are both
  * without the strokes, while the 'wordmark2' and the 'logomark-darkmode'
@@ -35,17 +36,25 @@ const LOOKS = [
   { look: 'halloween', mode: 'dark', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png' },
   { look: 'christmas', mode: 'dark', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png' },
   /*
-   * Daylight. Staw drew the mark twice, a light fill for the dark
-   * interface and a dark one for here, and the wordmark only once -
-   * `wordmark-lightmode.png` is his own recolour learned off that pair of
-   * logomarks, pixel for pixel, rather than a filter or a guess.
+   * Daylight, and the same drawing. Staw: "for the appearance & for the
+   * navbar you should now use logomark & wordmark images (the official
+   * ones)".
+   *
+   * There used to be a recoloured pair here - a dark fill for the pale bar,
+   * learned off the old flat marks. It was built before the official
+   * stroked drawing took the plain names, and it was never the official
+   * mark: on the daylight bar the name came out as a dark smear and the
+   * appearance tile in Settings wore a mark nothing else on the site wears.
+   * A stroked mark does not need a second drawing, which is the whole
+   * reason for the stroke: a white fill inside a brand-blue outline reads
+   * on the deep bar and on the pale one.
    *
    * The seasonal drawings are one each, Staw's, and they are not flipped
    * or tinted: halloween is a dark fill in an orange outline and christmas
-   * is red glitter in a silver one, and both read on the deep bar and the
-   * pale one. Only the blue pair is drawn twice, because he drew it twice.
+   * is red glitter in a silver one, and both read on either bar.
+   *
    */
-  { look: 'default', mode: 'light', wordmark: '/brand/wordmark-lightmode.png', logomark: '/brand/logomark-lightmode.png' },
+  { look: 'default', mode: 'light', wordmark: '/brand/wordmark.png', logomark: '/brand/logomark.png' },
   { look: 'halloween', mode: 'light', wordmark: '/brand/wordmark-halloween.png', logomark: '/brand/logomark-halloween.png' },
   { look: 'christmas', mode: 'light', wordmark: '/brand/wordmark-christmas.png', logomark: '/brand/logomark-christmas.png' },
 ] as const
