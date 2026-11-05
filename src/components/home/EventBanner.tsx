@@ -76,6 +76,10 @@ export function EventBand({ event, className, flat }: {
    * thing for the background (keep normal+customize it or upload one)". */
   const own = !!event.art_url
   const art = event.art_url || asset(look.mark)
+  /* A theme's mark is a cut-out and is known to be one; an uploaded
+     picture has to be looked at. Nothing is drawn until the answer is in,
+     which is a few milliseconds and never a flash of the wrong shape. */
+  const shape = useArtShape(own ? art : null, 'cutout')
   const back = event.back_url || null
 
   const inside = (
@@ -110,7 +114,7 @@ export function EventBand({ event, className, flat }: {
             that was chosen is the theme overruling the choice. */}
         {!back && <span className={cn('absolute inset-0', look.glow)} />}
 
-        {own && <OwnArt src={art} />}
+        {shape === 'picture' && <OwnPicture src={art} />}
 
         {/* The flat darkening from the left, so the words sit on something
             rather than on the brightest part of the picture. */}
@@ -119,56 +123,33 @@ export function EventBand({ event, className, flat }: {
           /* Lighter at the far end over somebody's own picture: the
              darkening is there to hold the words up, and past them it is
              only dimming the thing they uploaded. */
-          own ? 'to-black/10' : 'to-black/35',
+          shape === 'picture' ? 'to-black/10' : 'to-black/35',
         )} />
       </span>
 
       {/*
-        * The art, and the one layer on this band with a rule of its own.
+        * The art standing on the band, which is the shape the reference
+        * Staw handed over has: a subject with nothing round it, big, rising
+        * out of the top of the band and cut off level with the floor.
         *
-        * Two shapes, because there are two kinds of picture here and
-        * drawing the second one like the first is what Staw caught: a
-        * theme's mark is a tall drawing with air round it, and somebody's
-        * uploaded art is a wide picture of whatever they like. Hung in the
-        * mark's slot at `17rem` tall, an uploaded banner covered the whole
-        * band and sat on top of its own heading.
-        *
-        * A theme's mark: Staw: "i meant for the image to not be cut at the
-        * top by the header but to still be cut at the bottom". So this
-        * layer's bottom edge is the band's bottom edge and it clips there,
-        * while its top sits well above the band and clips nothing - the
-        * mark rises out of the top like something standing behind the
-        * band, and is cut off level with the floor. The two numbers go
+        * Staw: "i meant for the image to not be cut at the top by the
+        * header but to still be cut at the bottom". So this layer's bottom
+        * edge is the band's bottom edge and it clips there, while its top
+        * sits well above the band and clips nothing. The two numbers go
         * together: the layer starts `6rem` above the band, so `top-[4.5rem]`
         * inside it is `1.5rem` above the band's own top.
         *
-        * An uploaded picture is drawn in the clipped layer above instead,
-        * under the darkening: the right-hand half of the band and no more
-        * of it, sized by its height and pinned to the right edge with no
-        * limit on how wide that makes it.
+        * A theme's mark is always drawn this way. An uploaded art is drawn
+        * this way too when it is a cut-out - which is what the reference is,
+        * and what Staw's own Christmas art is - and in the clipped layer
+        * above when it is a rectangle of pixels. `useArtShape` is what tells
+        * them apart and says why.
         *
-        * That one rule is doing the work of two, and both of the obvious
-        * ones are wrong. `object-contain` fits a wide photograph inside the
-        * half and leaves its own left edge standing in the middle of the
-        * fade, which is a vertical line down the middle of the band
-        * whatever the mask does. `object-cover` fixes the photograph and
-        * ruins the other kind - a mark on a transparent background is a
-        * tall drawing, and covering blows it up until a face is an
-        * unrecognisable blob. Filling the height instead does both: a wide
-        * picture overflows to the left, into the fade, with no edge to see;
-        * a tall one fits and leaves transparent air beside it, which has no
-        * edge either. It
-        * does not leave the band at all - a photograph hanging over the top
-        * edge reads as a mistake where a mark reads as a flourish - and it
-        * is masked towards the words and then darkened by the same gradient
-        * everything else on the band sits under, so it ends in a fade
-        * rather than in a vertical line down the middle.
-        *
-        * `select-none` and no alt text either way: it is the picture the
-        * band is made of, and a screen reader reading "Kobblon" twice
-        * between the tag and the heading is noise.
+        * `select-none` and no alt text: it is the picture the band is made
+        * of, and a screen reader reading "Kobblon" twice between the tag and
+        * the heading is noise.
         */}
-      {!own && (
+      {shape === 'cutout' && (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 top-[-6rem] overflow-hidden"
@@ -179,7 +160,10 @@ export function EventBand({ event, className, flat }: {
             draggable={false}
             className={cn(
               'absolute right-[22%] top-[4.5rem] hidden h-[17rem] w-auto select-none',
-              'opacity-90', look.halo,
+              'opacity-90',
+              /* The theme's halo belongs to the theme's mark. Somebody's own
+                 art is lit however they drew it. */
+              !own && look.halo,
               'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
             )}
           />
@@ -335,26 +319,68 @@ export function EventBand({ event, className, flat }: {
 }
 
 /**
- * Does this picture have transparent edges?
+ * Which of the two shapes a picture is: a cut-out, or a rectangle.
  *
- * The one question that tells a mark from a photograph, and the reason it
- * is asked rather than guessed at: a mark is a drawing with nothing round
- * it and a photograph is a rectangle of pixels, and no amount of width and
- * height tells you which you were handed. Kobby is wider than he is tall
- * and he is still a drawing.
+ * The band draws them in completely different places, so this is not a
+ * detail of styling. A cut-out - a subject with nothing round it, which is
+ * what the reference Staw handed over has and what his own Christmas art is
+ * - stands on the band: big, out of the top, cut off at the floor. A
+ * rectangle of pixels is a picture of a scene, and standing it on the band
+ * would hang a photograph over the heading, which is what went wrong the
+ * first time.
  *
- * Asked on a copy with `crossOrigin` set, never on the picture the band is
- * showing: a host that does not allow it fails the copy and the band is
- * untouched. It samples the edges rather than the whole picture because
- * that is the only part the answer depends on, and resolves `null` where it
- * could not look, which is not the same as "no" and is handled as its own
- * case by the caller.
+ * Width and height do not tell them apart - Kobby is taller than he is
+ * wide and so is a portrait photograph. Transparent edges do, because that
+ * is what being cut out means.
+ *
+ * `known` is the answer for a picture the build ships, which is always a
+ * cut-out and never needs looking at. For anything else the test runs on a
+ * copy with `crossOrigin` set, never on the picture the band is showing, so
+ * a host that refuses it fails the copy and leaves the band alone. It
+ * samples the edges of a 24px draw, falls back to the picture's
+ * proportions where the canvas could not be read, and answers `null` until
+ * it has an answer - which the band draws as nothing rather than as a
+ * guess it may have to take back.
+ *
+ * Asked again whenever `src` changes, and the previous answer dropped: a
+ * remembered shape is the previous picture's.
  */
-function edgesAreClear(src: string): Promise<boolean | null> {
+type ArtShape = 'cutout' | 'picture'
+
+function useArtShape(src: string | null, known: ArtShape): ArtShape | null {
+  const [shape, setShape] = useState<ArtShape | null>(src ? null : known)
+
+  useEffect(() => {
+    if (!src) {
+      setShape(known)
+      return
+    }
+    let wanted = true
+    setShape(null)
+    void readShape(src).then((answer) => {
+      if (wanted) setShape(answer)
+    })
+    return () => { wanted = false }
+  }, [src, known])
+
+  return shape
+}
+
+function readShape(src: string): Promise<ArtShape> {
   return new Promise((done) => {
     const probe = new Image()
     probe.crossOrigin = 'anonymous'
-    probe.onerror = () => done(null)
+    /* Could not be fetched under the rules a canvas needs: fall back to the
+       proportions. Wider than three to two is a photograph far more often
+       than it is a cut-out. */
+    probe.onerror = () => {
+      const sizer = new Image()
+      sizer.onload = () => done(
+        sizer.naturalHeight && sizer.naturalWidth / sizer.naturalHeight >= 1.5 ? 'picture' : 'cutout',
+      )
+      sizer.onerror = () => done('picture')
+      sizer.src = src
+    }
     probe.onload = () => {
       try {
         const size = 24
@@ -362,7 +388,7 @@ function edgesAreClear(src: string): Promise<boolean | null> {
         board.width = size
         board.height = size
         const ctx = board.getContext('2d', { willReadFrequently: true })
-        if (!ctx) return done(null)
+        if (!ctx) return done('picture')
         ctx.drawImage(probe, 0, 0, size, size)
         const { data } = ctx.getImageData(0, 0, size, size)
         const alphaAt = (x: number, y: number) => data[((y * size) + x) * 4 + 3]
@@ -372,13 +398,13 @@ function edgesAreClear(src: string): Promise<boolean | null> {
           alphaAt(size >> 1, 0), alphaAt(size >> 1, last),
           alphaAt(0, size >> 1), alphaAt(last, size >> 1),
         ]
-        /* Two of the eight, so that a drawing whose corner happens to be
-         * painted is still a drawing, and a photograph with one soft
-         * corner is still a photograph. */
-        done(edge.filter((a) => a < 24).length >= 2)
+        /* Two of the eight, so that a cut-out whose corner happens to be
+         * painted is still a cut-out, and a photograph with one soft corner
+         * is still a photograph. */
+        done(edge.filter((a) => a < 24).length >= 2 ? 'cutout' : 'picture')
       } catch {
         /* The canvas was tainted after all. */
-        done(null)
+        done('picture')
       }
     }
     probe.src = src
@@ -386,73 +412,41 @@ function edgesAreClear(src: string): Promise<boolean | null> {
 }
 
 /**
- * The picture somebody uploaded, in the right-hand half of the band.
+ * A picture of a scene, in the right-hand half of the band.
  *
- * Which is two different pictures wearing one field, and the whole of this
- * component is telling them apart. Staw uploaded a wide screenshot and it
- * was drawn in the slot built for a theme's mark: `17rem` tall, hung over
- * the middle of the band, sitting on top of its own heading.
+ * Not a cut-out - those stand on the band instead, see `useArtShape`. This
+ * is the treatment for a rectangle of pixels: the right-hand `56%`, covered
+ * rather than fitted, so the picture reaches the left edge of its half and
+ * the fade has the whole ramp to work with.
  *
- * Neither of the two obvious rules does both kinds:
+ * Fitting it leaves the picture's own left edge somewhere inside the fade,
+ * where the mask is still nearly transparent - and a bright picture at a
+ * tenth of its opacity is faint but perfectly sharp, which is a line down
+ * the middle of the band. Covering a half that is wider than it is tall
+ * crops a little off the top and bottom of a landscape photograph, which is
+ * what a band-shaped hole was always going to do. Nothing that is better
+ * off fitted reaches this component: a cut-out is drawn standing on the
+ * band instead.
  *
- * - `object-contain` fits a photograph inside the half and leaves its own
- *   left edge standing in the middle of the fade. A hard vertical line down
- *   the middle of the band, and no mask softens it, because the mask is
- *   over the box and the edge is inside it.
- * - `object-cover` fixes that and ruins the other kind: a drawing gets
- *   blown up until a face is an unrecognisable blob. Kobby went that way.
- *
- * So it asks the picture whether its edges are transparent, which is what
- * actually separates the two. A drawing fits the height, keeps its
- * proportions, and the air beside it has no edge to see. A photograph
- * covers the half, and what is cropped off the top and bottom is what a
- * band-shaped hole was always going to crop.
+ * It stays inside the band. A photograph hanging over the top edge reads as
+ * a mistake where a cut-out reads as a flourish.
  */
-function OwnArt({ src }: { src: string }) {
-  /* null until the picture has been looked at: it fills the height until
-     then, which is the shape that cannot blow a face up. */
-  const [fill, setFill] = useState(false)
-
-  useEffect(() => {
-    let wanted = true
-    void edgesAreClear(src).then((clear) => {
-      if (!wanted) return
-      /* A mark fits, a photograph fills, and a picture that could not be
-         looked at falls back to its proportions - wider than three to two
-         is a photograph far more often than it is a drawing. */
-      if (clear === null) {
-        const sizer = new Image()
-        sizer.onload = () => {
-          if (wanted) setFill(!!sizer.naturalHeight && sizer.naturalWidth / sizer.naturalHeight >= 1.5)
-        }
-        sizer.src = src
-        return
-      }
-      setFill(!clear)
-    })
-    /* Asked again whenever the picture changes, and the answer to the old
-       one is dropped: a remembered fit is the previous picture's. */
-    return () => { wanted = false }
-  }, [src])
-
+function OwnPicture({ src }: { src: string }) {
   return (
     <span
       aria-hidden="true"
       className="pointer-events-none absolute inset-y-0 right-0 hidden w-[56%] justify-end overflow-hidden rounded-r-2xl sm:flex"
       /* Inline rather than a class, and spelled twice: the fade is what
-         keeps an uploaded picture from ending in a hard line down the
-         middle of the band, so it is not something to leave to whether a
-         browser takes the unprefixed property. */
+         keeps a picture from ending in a hard line down the middle of the
+         band, so it is not something to leave to whether a browser takes
+         the unprefixed property. */
       style={{ maskImage: FADE_IN, WebkitMaskImage: FADE_IN }}
     >
       <img
         src={src}
         alt=""
         draggable={false}
-        className={cn(
-          'select-none transition-transform duration-500 group-hover:scale-[1.03]',
-          fill ? 'h-full w-full object-cover object-center' : 'h-full w-auto max-w-none',
-        )}
+        className="h-full w-full select-none object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
       />
     </span>
   )

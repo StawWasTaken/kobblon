@@ -18616,3 +18616,80 @@ Worth saying plainly: a bare page that throws is worse than no bare page,
 because it reads as "checked" on the list. If one of yours imports a
 website page by name, it is worth running it now and then rather than only
 when something looks wrong.
+
+---
+
+## Round two hundred and forty-six - the art stands on the band, and the wall's filter
+
+Two things.
+
+### The uploaded art, again, and this time against the reference
+
+Round two hundred and forty-four put an uploaded picture in the right-hand
+half of the band, under the darkening, with its left edge masked in. That
+fixed the heading being covered and broke the thing the band is for. Staw,
+with the reference beside it: "but now it doesnt look like the reference
+image i gave u (the art)".
+
+He is right. The reference is a subject with nothing round it, standing on
+the band: big, rising out of the top, cut off level with the floor. Putting
+it in a panel on the right turns it into wallpaper.
+
+So the band now asks a different question. Not "how should this pictured be
+fitted" but **"is this a cut-out or a rectangle"**, and the two get
+completely different treatments:
+
+- **A cut-out** - a subject with transparent edges, which is what the
+  reference is and what Staw's own Christmas art is - stands on the band.
+  Exactly where a theme's mark stands: `h-[17rem]`, `right-[22%]`, in the
+  layer that clips at the bottom and not at the top. The theme's halo is
+  not applied to somebody's own art; it is lit however they drew it.
+- **A rectangle of pixels** - a screenshot, a photograph - takes the
+  right-hand `56%`, covering it, with the left edge masked into the band.
+  It does not leave the band at the top: a photograph hanging over the edge
+  reads as a mistake where a cut-out reads as a flourish.
+
+`useArtShape` is the test, and it is the transparency test from the last
+round moved up to where the decision actually is. Nothing is drawn until it
+answers, which is milliseconds and is better than a flash of the wrong
+shape. A theme's mark skips the test: the build ships it and it is always a
+cut-out.
+
+One correction to the last round while I am here: the rectangle is
+**covered** now, not sized by its height. Fitting it leaves the picture's
+own left edge inside the fade where the mask is nearly transparent, and a
+bright picture at a tenth of its opacity is faint but perfectly sharp -
+which is still a line down the middle of the band. I said that treatment
+handled both kinds. It handled one.
+
+### The filter over a Community wall
+
+Staw: "apparently community posts dont have the kobblon filter on".
+
+By the files it has been on since 0170 - `community_posts_are_censored`,
+`before insert or update of body`, running `words_are_censored`, which
+masks `new.body` whatever table it is on - and nothing since drops it.
+Every later migration replaces that function with `create or replace`,
+which leaves triggers alone. So there is no bug in this repository that I
+can find.
+
+**0324** settles it against the database that is actually running, which is
+the only one that counts: it re-creates the trigger (free if it is already
+there, a fix if it was dropped by hand or lost with a table) and then
+raises unless `censor_text` really masks a word on that database. If
+somebody emptied `moderation_terms`, or the scope on those rows is wrong,
+it fails at apply time with a sentence saying so rather than on the wall.
+
+Checked locally against the real `censor_text`, `screen_text`,
+`spelled_out_spans`, `mask_spans` and the 0170 term list, applied twice:
+
+- `fuck this wall` lands as `•••• this wall`
+- `a post about sheet music` lands untouched - the filter has eaten
+  "sheet" before, which is why that case is in the check
+- an **edit** to `edited to say shit` lands as `edited to say ••••`
+
+So the wiring works wherever the trigger exists. **Staw: apply 0324.**
+
+For the applications: nothing changed in any signature or any table, and
+if you write to `community_posts` you were always being censored by the
+database rather than by the website - that is unchanged and is the point.
