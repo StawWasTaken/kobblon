@@ -1,77 +1,117 @@
 /**
- * The one thing Kobblon is running right now, for the banner on Home.
+ * The one thing Kobblon is running right now, for the band on Home.
  *
- * A file rather than a table, and that is a decision rather than a
- * shortcut. There is one of these at a time, Staw sets it, and a table
- * would need a staff screen to edit it, a policy to guard it and a read on
- * every page load - which is a lot of platform for a sentence and a link.
- * When there are several at once, or somebody other than Staw sets them,
- * it becomes a table and this file becomes the fallback.
+ * This used to be a constant in this file, with a comment saying: "When
+ * there are several at once, or somebody other than Staw sets them, it
+ * becomes a table and this file becomes the fallback." Somebody other than
+ * Staw sets them now - Staw: "make it so superadmins can make their own in
+ * the staff command and make it if it appears or not" - so 0321 made the
+ * table and the constant is gone.
  *
- * What it must never do is outlive the thing it is about. A Halloween
- * banner still sitting on the homepage in December is worse than no banner
- * at all, so `until` hides it on its own. When a run has no end date yet,
- * `until` is null and the banner stays until it is taken out by hand -
- * said out loud here because that is the case that rots.
+ * It is gone rather than kept as a fallback, which is the part worth
+ * saying out loud: a hardcoded event that comes back the moment somebody
+ * switches theirs off is the switch not working, and the switch is the
+ * thing that was asked for. The homepage draws what the table says and
+ * nothing when it says nothing.
+ *
+ * What is left here is the half that is the website's rather than the
+ * database's: the shape of a row, and what each art theme is made of.
  */
+
+/** What is being given away, biggest first. Drawn as Brix chips. */
+export type EventPrize = { place: string; brix: number }
+
 export type PlatformEvent = {
-  /** What it is called, as the banner's heading. */
+  id: string
+  /** The small word over the name: "Avatar contest", "Event". */
+  tag: string
+  /** What it is called, as the band's heading. */
   name: string
   /** One line about it. */
   blurb: string
-  /** Where the banner goes. The forum category for it, or a World. */
-  to: string
+  /** Where the band goes. A path on this site or an https address. */
+  link: string
   /** What the button says. */
   action: string
-  /** The small word over the name: "Contest", "Event". */
-  tag: string
+  /** Which marks and which colour the band wears. */
+  theme: EventTheme
   /**
-   * What is being given away, biggest first. Drawn as Brix chips.
-   *
-   * Empty where there is nothing to win, and the row is then not drawn -
-   * three empty chips under an event with no prize is furniture.
+   * Empty where there is nothing to win, and the row of chips is then not
+   * drawn at all - three empty chips under an event with no prize is
+   * furniture.
    */
-  prizes: { place: string; brix: number }[]
+  prizes: EventPrize[]
   /**
-   * The day after the last day, as `YYYY-MM-DD`. The banner is gone from
-   * then on. Null means nobody has set an end yet.
+   * The day after the last day, as `YYYY-MM-DD`. The band is gone from
+   * then on, and `event_showing()` is what decides that rather than the
+   * page - a band that outlives the thing it is about is worse than no
+   * band, and the page is the one place that cannot be trusted to know
+   * what day it is. Null means nobody has set an end.
    */
   until: string | null
 }
 
-/*
- * Halloween 2026.
+export type EventTheme = 'kobblon' | 'halloween' | 'christmas'
+
+/**
+ * The three sets of marks this build ships, and the light each one wears.
  *
- * Staw: "halloween avatar contest (prize: 10k brix for first place, 5k for
- * second, 2.5k for third)". The link is the forum category 0313 makes,
- * because that is the one place that exists today and will still exist
- * when the Discord event is over - he can point it at a Kobblon event
- * instead by changing `to` and nothing else.
+ * A named theme rather than a field somebody types a picture's address
+ * into, because a text field for a path is a field that can name a picture
+ * which is not there, and the band would then draw a broken image across
+ * the top of the homepage. Three real sets, each with art that exists in
+ * `public/brand`.
  *
- * Ten days, starting the 31st of October 2026 - Staw: "the contest will
- * last 10 days starting today". So the last day anybody can enter is the
- * 9th of November and `until` is the 10th, the day the banner is gone.
- * One day out either way is a promise the page would be making on his
- * behalf, so it is written as the day after the last day and the
- * comparison below is strictly less than.
+ * `glow` is the wide light behind the mark, `edge` and `hover` the band's
+ * own border, `back` the colour under everything. The button stays blue in
+ * all three: blue is Kobblon and is what every other thing to press on
+ * this site is.
  */
-export const RUNNING: PlatformEvent | null = {
-  tag: 'Avatar contest',
-  name: 'Halloween 2026',
-  blurb: 'Put together the best Halloween avatar you can and post it. The three best take Brix.',
-  to: '/forum/c/avatar-contest-halloween-2026',
-  action: 'Enter the contest',
-  prizes: [
-    { place: '1st', brix: 10_000 },
-    { place: '2nd', brix: 5_000 },
-    { place: '3rd', brix: 2_500 },
-  ],
-  until: '2026-11-10',
+export const EVENT_THEMES: Record<EventTheme, {
+  label: string
+  /** The big mark, bleeding out of the top of the band. */
+  mark: string
+  /** The event's own wordmark, in the opposite corner. Null for Kobblon's
+   * own band, where the mark is already the wordmark's family. */
+  wordmark: string | null
+  back: string
+  edge: string
+  glow: string
+  /** The light the mark itself throws. Halloween's is orange, and losing
+   * it is the difference between a mark on a background and a mark lit
+   * from behind - which is the whole trick the band is doing. */
+  halo: string
+}> = {
+  kobblon: {
+    label: 'Kobblon',
+    mark: '/brand/logomark.png',
+    wordmark: '/brand/wordmark.png',
+    back: 'bg-[#05101f]',
+    edge: 'border-brand/25 hover:border-brand/50',
+    glow: 'bg-[radial-gradient(85%_150%_at_66%_40%,rgba(37,99,235,0.6),rgba(12,46,110,0.45)_42%,rgba(3,10,22,0.9)_78%)]',
+    halo: 'drop-shadow-[0_0_60px_rgba(59,130,246,0.45)]',
+  },
+  halloween: {
+    label: 'Halloween',
+    mark: '/brand/logomark-halloween.png',
+    wordmark: '/brand/wordmark-halloween.png',
+    back: 'bg-[#150b05]',
+    edge: 'border-orange-400/20 hover:border-orange-400/45',
+    glow: 'bg-[radial-gradient(85%_150%_at_66%_40%,rgba(249,115,22,0.6),rgba(130,40,6,0.45)_42%,rgba(20,8,3,0.9)_78%)]',
+    halo: 'drop-shadow-[0_0_60px_rgba(249,115,22,0.45)]',
+  },
+  christmas: {
+    label: 'Christmas',
+    mark: '/brand/logomark-christmas.png',
+    wordmark: '/brand/wordmark-christmas.png',
+    back: 'bg-[#07130d]',
+    edge: 'border-emerald-400/20 hover:border-emerald-400/45',
+    glow: 'bg-[radial-gradient(85%_150%_at_66%_40%,rgba(16,185,129,0.55),rgba(6,78,59,0.45)_42%,rgba(3,18,12,0.9)_78%)]',
+    halo: 'drop-shadow-[0_0_60px_rgba(16,185,129,0.45)]',
+  },
 }
 
-/** The event to draw today, or nothing. */
-export function eventNow(today = new Date()): PlatformEvent | null {
-  if (!RUNNING) return null
-  if (!RUNNING.until) return RUNNING
-  return today.toISOString().slice(0, 10) < RUNNING.until ? RUNNING : null
+/** The theme a row names, or Kobblon's if it names one we do not have. */
+export function themeOf(name: string | null | undefined) {
+  return EVENT_THEMES[(name ?? 'kobblon') as EventTheme] ?? EVENT_THEMES.kobblon
 }

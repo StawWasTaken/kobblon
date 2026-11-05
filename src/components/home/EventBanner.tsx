@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Icon } from '@/components/brand/Icon'
-import { eventNow } from '@/lib/event'
+import { themeOf, type PlatformEvent } from '@/lib/event'
+import { eventShowing } from '@/lib/api'
+import { useAsync } from '@/hooks/useAsync'
 import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
@@ -17,44 +19,63 @@ import { cn } from '@/lib/cn'
  * running out past the edge so the band reads as a window rather than a
  * card with a photograph in it.
  *
- * That is what this is. The reference is a layout, not a picture to copy:
- * the colour here is Halloween's and the mark is ours.
+ * That is what this is, unchanged. What changed is where the words come
+ * from: Staw: "keep the design avatar contest header in the homepage but
+ * make it so superadmins can make their own in the staff command and make
+ * it if it appears or not". So the design is the same design and the
+ * contents are a row that `platform_event_showing()` hands over - at most
+ * one, switched on, and not past its end date.
+ *
+ * It draws nothing at all while that read is in the air, and nothing if it
+ * comes back empty or fails. A band is the first thing on the page and the
+ * widest, so a skeleton for it is a grey slab that pushes the whole
+ * homepage down and then moves it back up again; and a band that renders
+ * with no event in it is furniture.
+ *
+ * The colour and the marks come from the row's theme rather than from
+ * here, because somebody writing a Christmas contest in the staff console
+ * cannot come back and edit this file. The three themes are the three sets
+ * of marks the build ships - a named theme and not a path somebody types,
+ * which would be a field that can name a picture that is not there.
  *
  * It is the whole band and also a button. The band being clickable is
  * what makes it read as one object; the button is what says so to
  * somebody tabbing, and to anybody who has learned that a picture is
  * usually not a link. Nested links are illegal in HTML, so the button is
  * a span inside the one anchor rather than a second one.
- *
- * The art is the Halloween logomark Staw drew, at the size art is drawn
- * at and bleeding past the top edge - not a stock photograph standing in
- * for a render nobody has made, which is the fake thing the ethos is
- * about. When there is a render, it replaces the one `img` below and
- * nothing else moves.
  */
 export function EventBanner({ className }: { className?: string }) {
-  const event = eventNow()
+  const { data: event } = useAsync(() => eventShowing(), [])
   if (!event) return null
+  return <EventBand event={event} className={className} />
+}
 
-  return (
-    <Link
-      to={event.to}
-      className={cn(
-        'group relative block overflow-hidden rounded-2xl border border-orange-400/20',
-        'bg-[#150b05] transition-colors hover:border-orange-400/45',
-        className,
-      )}
-    >
+/**
+ * The band itself, given an event rather than reading for one.
+ *
+ * Split out because the staff panel draws it too, over a form, while the
+ * words are still being typed - which is the only honest way to let
+ * somebody write one of these: a textarea and a colour name tell you
+ * nothing about whether the heading fits on two lines.
+ */
+export function EventBand({ event, className, flat }: {
+  event: Pick<PlatformEvent, 'tag' | 'name' | 'blurb' | 'action' | 'theme' | 'prizes'>
+    & { link?: string }
+  className?: string
+  /** Draws it without the link, for the preview in the staff console. */
+  flat?: boolean
+}) {
+  const look = themeOf(event.theme)
+
+  const inside = (
+    <>
       {/*
         * The light. Two of them: a wide one behind the mark on the right,
         * which is where the reference puts its glow, and a flat darkening
         * from the left so the words sit on something rather than on the
         * brightest part of the picture.
         */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(85%_150%_at_66%_40%,rgba(249,115,22,0.6),rgba(130,40,6,0.45)_42%,rgba(20,8,3,0.9)_78%)]"
-      />
+      <span aria-hidden="true" className={cn('pointer-events-none absolute inset-0', look.glow)} />
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/35"
@@ -67,25 +88,27 @@ export function EventBanner({ className }: { className?: string }) {
         * tag and the heading is noise.
         */}
       <img
-        src={asset('/brand/logomark-halloween.png')}
+        src={asset(look.mark)}
         alt=""
         aria-hidden="true"
         draggable={false}
         className={cn(
           'pointer-events-none absolute -top-6 right-[22%] hidden h-[17rem] w-auto select-none',
-          'opacity-90 drop-shadow-[0_0_60px_rgba(249,115,22,0.45)]',
+          'opacity-90', look.halo,
           'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
         )}
       />
 
       {/* The event's own mark, where the reference puts the thing's name. */}
-      <img
-        src={asset('/brand/wordmark-halloween.png')}
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-        className="pointer-events-none absolute right-5 top-5 h-7 w-auto select-none opacity-90 sm:right-7 sm:top-6 sm:h-9"
-      />
+      {!!look.wordmark && (
+        <img
+          src={asset(look.wordmark)}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="pointer-events-none absolute right-5 top-5 h-7 w-auto select-none opacity-90 sm:right-7 sm:top-6 sm:h-9"
+        />
+      )}
 
       <div className="relative flex min-h-[13rem] flex-col justify-center px-5 py-6 sm:min-h-[15.5rem] sm:px-9 sm:py-8">
         {/*
@@ -101,16 +124,17 @@ export function EventBanner({ className }: { className?: string }) {
         <h2 className="mt-5 max-w-[22ch] font-display text-3xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] sm:text-[2.75rem]">
           {event.name}
         </h2>
-        <p className="mt-2 max-w-[46ch] text-sm font-semibold leading-snug text-white/80 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
-          {event.blurb}
-        </p>
+        {!!event.blurb && (
+          <p className="mt-2 max-w-[46ch] text-sm font-semibold leading-snug text-white/80 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
+            {event.blurb}
+          </p>
+        )}
 
         {/*
-          * Blue, not orange. Orange is the event and the whole band is
-          * already wearing it; blue is Kobblon and is what every other
-          * thing to press on this site is, which is the half of the
-          * reference worth keeping - its one button is not in the
-          * picture's colour either.
+          * Blue, not the theme's colour. The whole band is already wearing
+          * that; blue is Kobblon and is what every other thing to press on
+          * this site is, which is the half of the reference worth keeping -
+          * its one button is not in the picture's colour either.
           *
           * Built like every other button on the site rather than like a
           * rectangle: the 3px of `brand-ink` under it that goes away on
@@ -185,6 +209,17 @@ export function EventBanner({ className }: { className?: string }) {
           ))}
         </div>
       )}
-    </Link>
+    </>
   )
+
+  const shell = cn(
+    'group relative block overflow-hidden rounded-2xl border transition-colors',
+    look.back, look.edge, className,
+  )
+
+  /* The preview is not a link: a band being written is not somewhere to go
+   * yet, and a staff console that navigates away mid-sentence is rude. */
+  if (flat) return <div className={shell}>{inside}</div>
+
+  return <Link to={event.link ?? '/'} className={shell}>{inside}</Link>
 }

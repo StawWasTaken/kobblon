@@ -23,7 +23,7 @@ import {
   faUnlock, faCoins, faEnvelope, faEraser, faEye, faClipboardList,
   faGaugeHigh, faArrowRight, faBolt, faHeartPulse, faPeopleGroup,
   faChartLine, faArrowTrendUp, faArrowTrendDown, faWandMagicSparkles,
-  faHandHoldingDollar,
+  faHandHoldingDollar, faTrophy,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -60,6 +60,9 @@ import { avatarKindLabels, kindLabels } from '@/lib/kinds'
 import { useAsync } from '@/hooks/useAsync'
 import { cn } from '@/lib/cn'
 import { noticeColours, noticeStripes } from '@/components/layout/NoticeBar'
+import { EventBand } from '@/components/home/EventBanner'
+import { EVENT_THEMES, themeOf, type EventPrize, type EventTheme } from '@/lib/event'
+import { asset } from '@/lib/asset'
 import {
   deleteAccountAsStaff, deleteFlaggedTerm, findPeopleAsStaff,
   staffRecord, staffRecordKinds,
@@ -68,6 +71,7 @@ import {
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice, siteState, setMaintenance,
+  platformEvents, savePlatformEvent, showPlatformEvent, deletePlatformEvent, type StaffEvent,
   fetchPlatformVersion, listPlatformReleases, setPlatformRelease, dropPlatformRelease,
   refreshEveryPortrait,
   type NoticeColour, makeAccountReal,
@@ -101,7 +105,7 @@ import { PersonSheet } from '@/components/staff/PersonSheet'
 import { CountryMap, sharesByCountry } from '@/components/staff/CountryMap'
 import { placeOfZone } from '@/lib/places'
 
-type Section = 'Overview' | 'Version' | 'Portraits' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Inner Stock' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
+type Section = 'Overview' | 'Event' | 'Version' | 'Portraits' | 'Shutters' | 'People' | 'Communities' | 'Reports' | 'Appeals' | 'Support' | 'Forum' | 'Screening' | 'Machine' | 'Economy' | 'Inner Stock' | 'Map' | 'Notice' | 'Announce' | 'Words' | 'Record'
 
 /*
  * The rank, held once for the whole console.
@@ -208,6 +212,7 @@ const sections: {
   { name: 'Screening', icon: faCircleCheck, art: 'checkmark', needs: 'moderator', blurb: 'What people have made, waiting on a decision' },
   { name: 'Words', icon: faFilter, art: 'mute-microphone', needs: 'superadmin', blurb: 'What the moderation system catches' },
   { name: 'Machine', icon: faRobot, needs: 'superadmin', blurb: 'What Kobby screens, and what it is allowed to do' },
+  { name: 'Event', icon: faTrophy, art: 'announcement', needs: 'superadmin', blurb: 'The band across the top of Home, and whether it is up' },
   { name: 'Notice', icon: faBullhorn, art: 'announcement', needs: 'superadmin', blurb: 'A line across the top of the site, which anybody can close' },
   { name: 'Announce', icon: faBell, art: 'notification', needs: 'superadmin', blurb: 'A word from Kobblon, to one person or everybody' },
   { name: 'Economy', icon: faChartLine, art: 'discount', needs: 'superadmin', blurb: 'The Brix in circulation, the limiteds, promotions and handouts' },
@@ -5232,6 +5237,399 @@ export function NoticeSection() {
 }
 
 
+/* --------------------------------------------------------------- the event */
+
+/**
+ * The band across the top of Home: what is up, what is written, and the
+ * switch.
+ *
+ * Staw: "keep the design avatar contest header in the homepage but make it
+ * so superadmins can make their own in the staff command and make it if it
+ * appears or not". So three things, in that order: the one that is up, with
+ * a switch on it; everything else that has been written, as drafts to put
+ * up or throw away; and the form, with the real band drawn above it from
+ * what has been typed so far.
+ *
+ * The preview is the actual `EventBand` the homepage renders and not a
+ * drawing of one, because the questions somebody writing this has are
+ * whether the heading fits on two lines and whether the words survive the
+ * art behind them, and a form cannot answer either.
+ *
+ * One is up at a time, and the database is what enforces that: putting one
+ * up takes whatever was up down, in the same statement, so the list here
+ * cannot show two.
+ */
+const BLANK: EventDraft = {
+  id: null,
+  tag: 'Avatar contest',
+  name: '',
+  blurb: '',
+  link: '',
+  action: 'Enter the contest',
+  theme: 'kobblon',
+  prizes: [{ place: '1st', brix: 10000 }, { place: '2nd', brix: 5000 }, { place: '3rd', brix: 2500 }],
+  until: '',
+}
+
+type EventDraft = {
+  id: string | null
+  tag: string
+  name: string
+  blurb: string
+  link: string
+  action: string
+  theme: EventTheme
+  prizes: EventPrize[]
+  /** `YYYY-MM-DD`, or empty for no end. */
+  until: string
+}
+
+export function EventSection() {
+  const say = useToast()
+  const written = useAsync(async () => platformEvents(), [])
+  const [draft, setDraft] = useState<EventDraft>(BLANK)
+  const [busy, setBusy] = useState(false)
+  const [dropping, setDropping] = useState<StaffEvent | null>(null)
+
+  const rows = written.data ?? []
+  const up = rows.find((one) => one.showing) ?? null
+  const drafts = rows.filter((one) => !one.showing)
+
+  const change = (patch: Partial<EventDraft>) => setDraft((was) => ({ ...was, ...patch }))
+
+  /* Three places, each a word and a number, and a place left empty is a
+   * place the database drops - which is how a contest with one prize is
+   * written without a button for taking rows away. */
+  const prizeAt = (i: number) => draft.prizes[i] ?? { place: '', brix: 0 }
+  const setPrize = (i: number, patch: Partial<EventPrize>) => {
+    const next = [0, 1, 2].map((n) => ({ ...prizeAt(n), ...(n === i ? patch : {}) }))
+    change({ prizes: next })
+  }
+
+  const edit = (one: StaffEvent) => {
+    setDraft({
+      id: one.id,
+      tag: one.tag,
+      name: one.name,
+      blurb: one.blurb,
+      link: one.link,
+      action: one.action,
+      theme: one.theme,
+      prizes: one.prizes ?? [],
+      until: one.until ?? '',
+    })
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+  }
+
+  const save = async (andShow: boolean) => {
+    setBusy(true)
+    try {
+      await savePlatformEvent({
+        id: draft.id,
+        tag: draft.tag.trim(),
+        name: draft.name.trim(),
+        blurb: draft.blurb.trim(),
+        link: draft.link.trim(),
+        action: draft.action.trim(),
+        theme: draft.theme,
+        /* The empty ones go nowhere: the database drops a place with no
+         * word in it, and sending them is only noise on the wire. */
+        prizes: draft.prizes.filter((one) => one.place.trim()),
+        until: draft.until || null,
+        showing: andShow,
+      })
+      say(andShow ? 'It is up on Home.' : 'Saved as a draft.', 'success')
+      setDraft(BLANK)
+      written.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const flip = async (one: StaffEvent, shown: boolean) => {
+    setBusy(true)
+    try {
+      await showPlatformEvent(one.id, shown)
+      say(shown ? 'It is up on Home.' : 'Taken down.', 'success')
+      written.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const drop = async (one: StaffEvent) => {
+    setBusy(true)
+    try {
+      await deletePlatformEvent(one.id)
+      say('Gone.', 'success')
+      if (draft.id === one.id) setDraft(BLANK)
+      written.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(false)
+      setDropping(null)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-muted">
+        The band across the top of Home. One is up at a time: putting one up
+        takes down whatever was up. It also goes on its own on the day it
+        ends, so a contest that is over cannot be left advertised.
+      </p>
+
+      <section className="space-y-3.5">
+        <header className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">Up now</h3>
+          {!!up && (
+            <Button variant="danger" size="sm" loading={busy} onClick={() => void flip(up, false)}>
+              Take it down
+            </Button>
+          )}
+        </header>
+
+        {written.error ? (
+          /* Said rather than swallowed: an empty list and a read that
+           * failed look identical, and one of them means the band on Home
+           * is not what this panel is showing. */
+          <ErrorState message={written.error} onRetry={written.reload} />
+        ) : written.loading ? <Skeleton className="h-40" /> : !up ? (
+          <Card className="p-4 text-sm text-muted">
+            Nothing is up, so Home has no band on it at all.
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            <EventBand event={up} flat />
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
+              <span>Goes to <span className="text-white">{up.link}</span></span>
+              <span>·</span>
+              <span>{up.until ? `Gone on ${up.until}` : 'No end set'}</span>
+              <Button variant="ghost" size="sm" onClick={() => edit(up)}>Change it</Button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {!!drafts.length && (
+        <section className="space-y-3.5">
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">
+            Written, not up
+          </h3>
+          <div className="space-y-2">
+            {drafts.map((one) => (
+              <Card key={one.id} className="flex flex-wrap items-center gap-3 p-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-sm font-bold">{one.name}</p>
+                  <p className="truncate text-xs text-muted">
+                    {one.tag} · {themeOf(one.theme).label} · {one.until ? `until ${one.until}` : 'no end'}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => edit(one)}>Change</Button>
+                <Button variant="yes" size="sm" loading={busy} onClick={() => void flip(one, true)}>
+                  Put it up
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => setDropping(one)}>
+                  <FontAwesomeIcon icon={faTrash} />
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="space-y-3.5">
+        <header className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">
+            {draft.id ? 'Changing one' : 'Write one'}
+          </h3>
+          {!!draft.id && (
+            <Button variant="ghost" size="sm" onClick={() => setDraft(BLANK)}>
+              Start a new one instead
+            </Button>
+          )}
+        </header>
+
+        <Card className="space-y-5 p-5">
+          {/* The real band, from what has been typed. */}
+          <EventBand
+            event={{
+              tag: draft.tag.trim() || 'Event',
+              name: draft.name.trim() || 'What it is called',
+              blurb: draft.blurb.trim(),
+              action: draft.action.trim() || 'Have a look',
+              theme: draft.theme,
+              prizes: draft.prizes.filter((one) => one.place.trim()),
+            }}
+            flat
+          />
+
+          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-[1fr_2fr]">
+            <Input
+              label="The small word over it"
+              value={draft.tag}
+              maxLength={40}
+              onChange={(e) => change({ tag: e.target.value })}
+              placeholder="Avatar contest"
+            />
+            <Input
+              label="What it is called"
+              value={draft.name}
+              maxLength={80}
+              onChange={(e) => change({ name: e.target.value })}
+              placeholder="Halloween 2026"
+            />
+          </div>
+
+          <Textarea
+            label="One line about it"
+            value={draft.blurb}
+            maxLength={240}
+            rows={2}
+            onChange={(e) => change({ blurb: e.target.value })}
+            placeholder="Put together the best Halloween avatar you can and post it. The three best take Brix."
+          />
+
+          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_10rem]">
+            <Input
+              label="Where it goes"
+              value={draft.link}
+              onChange={(e) => change({ link: e.target.value })}
+              placeholder="/forum/c/avatar-contest-halloween-2026"
+              hint="A path on this site, or an https address."
+            />
+            <Input
+              label="What the button says"
+              value={draft.action}
+              maxLength={40}
+              onChange={(e) => change({ action: e.target.value })}
+              placeholder="Enter the contest"
+            />
+            <Input
+              label="Gone on"
+              type="date"
+              value={draft.until}
+              onChange={(e) => change({ until: e.target.value })}
+              hint="Leave it empty for no end."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <span className="font-display text-xs font-bold uppercase tracking-wide text-muted">
+              The art
+            </span>
+            {/*
+              * Three sets of marks rather than a field for a picture's
+              * address: a path somebody types is a path that can be wrong,
+              * and the band is the first and widest thing on the homepage.
+              */}
+            <div className="flex flex-wrap gap-2.5">
+              {(Object.keys(EVENT_THEMES) as EventTheme[]).map((one) => (
+                <button
+                  key={one}
+                  type="button"
+                  onClick={() => change({ theme: one })}
+                  aria-pressed={draft.theme === one}
+                  className={cn(
+                    'flex items-center gap-2.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+                    draft.theme === one
+                      ? 'border-white/60 bg-white/10 text-white'
+                      : 'border-ink-line text-muted hover:text-white',
+                  )}
+                >
+                  <img
+                    src={asset(EVENT_THEMES[one].mark)}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-4 w-4 object-contain"
+                  />
+                  {EVENT_THEMES[one].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="font-display text-xs font-bold uppercase tracking-wide text-muted">
+              What there is to win
+            </span>
+            <p className="text-xs text-muted">
+              Three at most, biggest first. A place left empty is not drawn, so
+              one prize is written by filling the first row and leaving the
+              other two alone.
+            </p>
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="grid gap-x-3 gap-y-3 sm:grid-cols-[8rem_1fr]">
+                  <Input
+                    label={i === 0 ? 'Place' : undefined}
+                    aria-label={`Place ${i + 1}`}
+                    value={prizeAt(i).place}
+                    maxLength={12}
+                    onChange={(e) => setPrize(i, { place: e.target.value })}
+                    placeholder={['1st', '2nd', '3rd'][i]}
+                  />
+                  <Input
+                    label={i === 0 ? 'Brix' : undefined}
+                    aria-label={`Brix for place ${i + 1}`}
+                    type="number"
+                    min={0}
+                    value={prizeAt(i).brix ? String(prizeAt(i).brix) : ''}
+                    onChange={(e) => setPrize(i, { brix: Math.max(0, Number(e.target.value) || 0) })}
+                    placeholder="0"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/*
+            * Two buttons and not one with a switch beside it: "save this"
+            * and "save this and put it on the homepage" are different
+            * decisions, and a toggle that quietly means the second one is
+            * how a half-written contest ends up live.
+            */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="yes"
+              loading={busy}
+              disabled={!draft.name.trim() || !draft.link.trim()}
+              onClick={() => void save(true)}
+            >
+              {draft.id ? 'Save it and put it up' : 'Put it up on Home'}
+            </Button>
+            <Button
+              variant="ghost"
+              loading={busy}
+              disabled={!draft.name.trim() || !draft.link.trim()}
+              onClick={() => void save(false)}
+            >
+              Save without putting it up
+            </Button>
+          </div>
+        </Card>
+      </section>
+
+      <Confirm
+        open={!!dropping}
+        title="Throw this one away?"
+        lead={`“${dropping?.name ?? ''}” goes for good. It is not up, so nothing on the site changes.`}
+        confirmText="Throw it away"
+        tone="danger"
+        icon={faTrash}
+        onClose={() => setDropping(null)}
+        onConfirm={() => { if (dropping) void drop(dropping) }}
+      />
+    </div>
+  )
+}
+
+
 /* -------------------------------------------------------------- the machine */
 
 /**
@@ -6088,6 +6486,7 @@ export default function Admin() {
             {open === 'Economy' && <EconomySection />}
             {open === 'Inner Stock' && <InnerStockSection />}
             {open === 'Notice' && <NoticeSection />}
+            {open === 'Event' && allowed(rank, 'superadmin') && <EventSection />}
             {open === 'Announce' && <AnnounceSection />}
             {open === 'Words' && <WordsSection />}
             {open === 'Record' && <RecordSection />}

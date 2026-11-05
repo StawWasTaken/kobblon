@@ -12,6 +12,7 @@ import { plainFace } from './plainFace'
 import { markLookChanged } from './headshots'
 import { timeAgo } from './format'
 import { nameOf } from './avatars'
+import type { PlatformEvent, EventPrize, EventTheme } from './event'
 import type {
   ActivityEvent, AssetKind, BoardRow, BoardSide, Community, EarnedBadge,
   ForumPerson, ForumRelated, ForumTagOption, ForumWritten, MarketAsset,
@@ -4839,6 +4840,69 @@ export async function aiWorkWaiting(): Promise<WorkWaiting | null> {
  * and a line of text that is rendered as HTML is a line of text that can do
  * anything tomorrow.
  */
+// ------------------------------------------------- the band across Home
+
+/**
+ * The event the homepage draws, and the panel that writes one.
+ *
+ * `event_showing()` is the only read a visitor makes, and it answers with
+ * at most one row: the one that is switched on and has not ended. The
+ * drafts are a superadmin's and come back through `events_all()`, which
+ * refuses anybody else - the table itself has no grants at all, so there
+ * is no second door into the ones nobody has put up yet.
+ */
+export async function eventShowing(): Promise<PlatformEvent | null> {
+  const rows = (unwrap(await supabase.rpc('platform_event_showing')) as PlatformEvent[]) ?? []
+  return rows[0] ?? null
+}
+
+export type StaffEvent = PlatformEvent & {
+  showing: boolean
+  written_by: string | null
+  created_at: string
+}
+
+/** Everything written, drafts included. A superadmin's. */
+export async function platformEvents(): Promise<StaffEvent[]> {
+  return (unwrap(await supabase.rpc('platform_events_all')) as StaffEvent[]) ?? []
+}
+
+/** Write a new one, or change one by id. Returns the id either way. */
+export async function savePlatformEvent(input: {
+  id?: string | null
+  tag: string
+  name: string
+  blurb: string
+  link: string
+  action: string
+  theme: EventTheme
+  prizes: EventPrize[]
+  until?: string | null
+  showing?: boolean
+}): Promise<string> {
+  return unwrap(await supabase.rpc('save_platform_event', {
+    which: input.id ?? null,
+    tag: input.tag,
+    name: input.name,
+    blurb: input.blurb,
+    link: input.link,
+    action: input.action,
+    theme: input.theme,
+    prizes: input.prizes,
+    until: input.until ?? null,
+    showing: input.showing ?? false,
+  })) as string
+}
+
+/** The switch, on its own. Putting one up takes whatever was up down. */
+export async function showPlatformEvent(which: string, shown: boolean) {
+  unwrap(await supabase.rpc('show_platform_event', { which, shown }))
+}
+
+export async function deletePlatformEvent(which: string) {
+  unwrap(await supabase.rpc('delete_platform_event', { which }))
+}
+
 export type SiteNotice = {
   id: string
   body: string

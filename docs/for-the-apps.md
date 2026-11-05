@@ -17981,3 +17981,146 @@ mine. Still mine and not started: `WritingBox` drawing pieces; `ChatService`
 typing and who-is-here; `wornCard` widened by one optional resolved
 `imageUrl`; `developer_ids[]` on `experience_to_play`; the `name_marks` rows
 nothing reads. `drawPortrait('body')` stopping at the shins is not deliberate.
+
+## Round two hundred and thirty-eight - the homepage band is a row somebody writes
+
+Staw: "keep the design avatar contest header in the homepage but make it so
+superadmins can make their own in the staff command and make it if it appears
+or not". The band is the same band, pixel for pixel. What changed is where it
+gets its words, and that is the part that matters to you.
+
+### `platform_events`, and five functions - 0321
+
+`src/lib/event.ts` held the Halloween contest as a constant, with a comment
+saying it would become a table when somebody other than Staw set them.
+Somebody other than Staw sets them now, so 0321 is the table:
+
+```
+platform_event_showing()           anon + authenticated, at most one row
+platform_events_all()              superadmin, the drafts included
+save_platform_event(which, …)      superadmin, writes or changes one
+show_platform_event(which, shown)  superadmin, the switch on its own
+delete_platform_event(which)       superadmin
+```
+
+`platform_` in the name and not just `event_`, because a Community's event is
+already `event_by_id` and `event_attendees` on this schema, and two different
+things called the same thing is how a caller ends up writing a contest banner
+when it meant to write a meet-up.
+
+The table has no grants at all - not to `anon`, not to `authenticated`. Every
+read goes through a `security definer` function, which is what keeps a draft
+nobody has put up from being readable by anybody who asks the table nicely.
+That is also the fourth trap read the other way round: the grants are in the
+same file as the `create table`, and the behavioural check reads the table as
+a real signed-in stranger rather than as the owner, which is how the refusal
+was actually seen rather than assumed.
+
+### Two things are deliberately separate
+
+`showing` is somebody deciding. `until` is the day the thing ends. A band
+that outlives the thing it is about is worse than no band, so `until` hides
+it on its own without anybody touching the switch - and the date is compared
+in the database rather than on the page, because the page is the one place
+that cannot be trusted to know what day it is.
+
+One shows at a time, and the database enforces that in the same statement
+that puts one up: `show_platform_event(x, true)` takes down whatever was up.
+So the panel cannot show two, and neither can the homepage.
+
+### The art is a named theme, not a path
+
+`theme` is `kobblon`, `halloween` or `christmas`, and each one names a mark,
+a wordmark, a background, a border and the colour of the light behind the
+mark - all of them assets this build already ships. A text field asking for a
+picture's address is a field that can name a picture which is not there, and
+the band is the first and widest thing on the homepage. If you ever draw this
+band in an application, `EVENT_THEMES` in `@/lib/event` is the whole mapping
+and `themeOf(name)` falls back to Kobblon's for a theme it does not know.
+
+### What the website exports now
+
+```ts
+// @/lib/event
+type PlatformEvent = { id, tag, name, blurb, link, action, theme, prizes, until }
+type EventPrize = { place: string; brix: number }
+type EventTheme = 'kobblon' | 'halloween' | 'christmas'
+const EVENT_THEMES; function themeOf(name)
+
+// @/lib/api
+eventShowing(): Promise<PlatformEvent | null>
+platformEvents(): Promise<StaffEvent[]>          // superadmin
+savePlatformEvent(input): Promise<string>        // superadmin
+showPlatformEvent(which, shown)                  // superadmin
+deletePlatformEvent(which)                       // superadmin
+
+// @/components/home/EventBanner
+<EventBanner />            // reads for itself, draws nothing when there is nothing
+<EventBand event flat />   // draws a given one, with no link on it
+```
+
+**`eventNow()` and `RUNNING` are gone.** If anything on your side imported
+either, it is `eventShowing()` now. The constant is gone rather than kept as
+a fallback, and that is the decision rather than an oversight: a hardcoded
+event that comes back the moment somebody switches theirs off is the switch
+not working, and the switch is the thing that was asked for. Home draws what
+the table says and nothing when it says nothing.
+
+`EventBand` is split out of `EventBanner` because the staff panel draws the
+real band over the form while the words are still being typed. A form cannot
+tell you whether the heading fits on two lines or whether the words survive
+the art behind them, and those are the only two questions somebody writing
+one of these actually has.
+
+### The panel
+
+A new **Event** panel in the staff console, superadmin, between Inner Stock
+and Notice: what is up with a Take it down beside it, what has been written
+but not put up, and the form. Two buttons at the foot and not one with a
+toggle beside it - "save this" and "save this and put it on the homepage" are
+different decisions, and a switch that quietly means the second one is how a
+half-written contest ends up live.
+
+A read that fails says so rather than drawing "nothing is up", because those
+two look identical and one of them means the panel is not showing what the
+homepage is showing.
+
+### What was checked
+
+0321 applied twice against a local Postgres, wrapped in one `begin; … commit;`,
+and then the behaviour under two identities - a superadmin and an ordinary
+signed-in stranger - because a check that runs anonymously proves nothing
+about a guard whose subject is identity. `select auth.uid()` was printed and
+looked at both times before anything was trusted.
+
+What passed: the seeded Halloween row is what the homepage reads; a draft is
+not on the homepage; putting one up takes the other down; an event past its
+end date is not drawn whatever the switch says; a `javascript:` link, an art
+theme that is not ours, and a nameless event are each refused; a stranger is
+refused all four superadmin calls and gets `permission denied` reading the
+table directly; and somebody with no account at all still sees the one that
+is up. Two bugs the check found and I fixed: every parameter in the update
+path had to be qualified with the function's own name (`tag = left(btrim(tag)
+…)` is ambiguous between the parameter and the column and Postgres refuses
+the whole statement - the insert path has no such ambiguity, so only half of
+it was broken), and the three-prize cap was counted before the empty rows
+were dropped, so a blank row in the middle of the form spent one of them.
+
+Visually: the band in all three themes, one with no prize row and no line
+under the name, and the panel itself, at
+`tools/site/event-preview.html` - a bare page, no provider, no database, so
+the "nothing is up" and "that did not load" states are both on it.
+
+### For Staw
+
+The migration to run is **0321**, and it carries the Halloween contest in as
+a row so the homepage keeps the band it has today. It only writes that row
+if the table is empty, so running it twice does not put a second one in, and
+taking the contest down does not bring it back.
+
+**Still waiting on you: 0319 and 0320 still need running in Supabase**, and
+the **Spawn mark** is still in neither repository.
+
+Presence on my side - the activity line, the friend hover card, the Servers
+tab, the Join at `kobblon://play/<id>?room=<room>` - is still next and still
+mine.
