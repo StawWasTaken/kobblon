@@ -107,7 +107,7 @@ after scrolling in from the rail.
 
 ---
 
-## 3. The ten panels
+## 3. The eleven panels
 
 Listed in rail order, which is queue-first.
 
@@ -424,6 +424,43 @@ done to, every non-empty detail as `key: value`, and how long ago.
 Kept where the person who did it cannot edit it. **A deleted account keeps its
 name here and nowhere else**, which is the whole reason the log stores the
 handle as text as well as a reference.
+
+---
+
+### 3.11 Event - *superadmin*
+
+**The band across the top of Home, and whether it is up.**
+
+One is up at a time: putting one up takes down whatever was up, in the same
+statement, so the panel cannot show two. It also goes on its own on the day
+it ends, which the database decides rather than the page.
+
+*Up now*: the real band, where it goes, when it ends, **Change it** and
+**Take it down**. *Written, not up*: the drafts, each with **Change**,
+**Put it up** and a bin.
+
+Writing one: the small word over it, what it is called, one line about it,
+where it goes (a path on this site or an https address), what the button
+says, and the day it is gone on - picked from our own calendar, like every
+other date in the console.
+
+*How it looks* is three parts:
+
+- the **theme** - Kobblon, Halloween or Christmas - which is the marks, the
+  colour and the light the build ships;
+- **the art** and **behind it**, two pictures that can be uploaded over the
+  theme's own. They go into the `events` bucket, which only a superadmin may
+  write to, and the row holds the address storage hands back rather than one
+  somebody typed;
+- **the colour under it**, for a band that wants neither the theme's colour
+  nor a picture. It is switched off while a background picture is up, because
+  the picture covers it.
+
+*The corner* is either the prizes - three at most, biggest first, a place
+left empty is dropped - or, with the prizes switched off, one line of small
+print. A band is not always a contest.
+
+The band above the form is the real band, drawn from what has been typed.
 
 ---
 

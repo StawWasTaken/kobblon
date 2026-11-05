@@ -21,10 +21,21 @@ begin;
  * written, looked at in the panel, and put up later - which is the whole
  * point of a draft.
  *
- * The art is a named theme and not an address, because a text field asking
- * for a path to a picture is a field that can name a picture that is not
- * there, and the band would then draw a broken image over the homepage.
- * The three themes are the three mark sets this build actually ships.
+ * The art started as a named theme and nothing else, because a text field
+ * asking for a path to a picture is a field that can name a picture that is
+ * not there. Staw: "for the art i want it to be an image i can upload. same
+ * thing for the background (keep normal+customize it or upload one)" - so
+ * the theme stays and is still what a band wears by default, and a
+ * superadmin may put their own picture over the mark, their own picture
+ * behind the whole band, or their own colour under it.
+ *
+ * Uploaded and not typed, which is the same guard by another route: the
+ * address in the row is one storage handed back for a file that is now in
+ * the bucket, rather than a path somebody wrote from memory.
+ *
+ * And the band is not always a contest. Staw: "the event header isnt always
+ * for prize winnings yk" - so the corner that holds what there is to win
+ * holds a line of small print instead when there is nothing to win.
  */
 
 create table if not exists public.platform_events (
@@ -36,6 +47,14 @@ create table if not exists public.platform_events (
   action      text not null,
   theme       text not null default 'kobblon',
   prizes      jsonb not null default '[]'::jsonb,
+  /* The picture over the mark, the picture behind the band, and the colour
+     under it. All three null is the theme drawn exactly as it ships. */
+  art_url     text,
+  back_url    text,
+  back_colour text,
+  /* The small print in the corner where the prizes go, for a band that is
+     not giving anything away. */
+  note        text not null default '',
   until       date,
   showing     boolean not null default false,
   written_by  uuid references public.profiles (id) on delete set null,
@@ -48,6 +67,12 @@ alter table public.platform_events
 alter table public.platform_events
   add constraint platform_events_theme_check
   check (theme in ('kobblon', 'halloween', 'christmas'));
+
+/* The three that came later, for a table that already exists. */
+alter table public.platform_events add column if not exists art_url text;
+alter table public.platform_events add column if not exists back_url text;
+alter table public.platform_events add column if not exists back_colour text;
+alter table public.platform_events add column if not exists note text not null default '';
 
 create index if not exists platform_events_showing_idx
   on public.platform_events (showing, created_at desc);
@@ -81,14 +106,19 @@ drop policy if exists "events are read through functions" on public.platform_eve
  * outlives the thing it is about is worse than no band, and the page is
  * the one place that cannot be trusted to know what day it is.
  */
-create or replace function public.platform_event_showing()
+/* Dropped first, both of them: the returned shape gained four columns, and
+   `create or replace` cannot change a function's result type. */
+drop function if exists public.platform_event_showing();
+create function public.platform_event_showing()
 returns table (
   id uuid, tag text, name text, blurb text, link text,
-  action text, theme text, prizes jsonb, until date
+  action text, theme text, prizes jsonb, until date,
+  art_url text, back_url text, back_colour text, note text
 )
 language sql stable security definer
 set search_path = public, extensions as $$
-  select e.id, e.tag, e.name, e.blurb, e.link, e.action, e.theme, e.prizes, e.until
+  select e.id, e.tag, e.name, e.blurb, e.link, e.action, e.theme, e.prizes, e.until,
+         e.art_url, e.back_url, e.back_colour, e.note
     from public.platform_events e
    where e.showing
      and (e.until is null or e.until > (now() at time zone 'utc')::date)
@@ -99,10 +129,12 @@ $$;
 grant execute on function public.platform_event_showing to anon, authenticated;
 
 /* Everything written, for the panel. A superadmin's, including the drafts. */
-create or replace function public.platform_events_all()
+drop function if exists public.platform_events_all();
+create function public.platform_events_all()
 returns table (
   id uuid, tag text, name text, blurb text, link text, action text,
   theme text, prizes jsonb, until date, showing boolean,
+  art_url text, back_url text, back_colour text, note text,
   written_by uuid, created_at timestamptz
 )
 language plpgsql stable security definer
@@ -111,7 +143,9 @@ begin
   perform public.require_superadmin();
   return query
     select e.id, e.tag, e.name, e.blurb, e.link, e.action, e.theme,
-           e.prizes, e.until, e.showing, e.written_by, e.created_at
+           e.prizes, e.until, e.showing,
+           e.art_url, e.back_url, e.back_colour, e.note,
+           e.written_by, e.created_at
       from public.platform_events e
      order by e.showing desc, e.created_at desc
      limit 50;
@@ -139,6 +173,11 @@ grant execute on function public.platform_events_all to authenticated;
  * place is 12 characters of text and a prize is a non-negative number of
  * Brix. Three at most, which is what the band has room for.
  */
+/* Dropped by its old shape before it is written: adding a parameter to a
+   function with defaults does not replace it, it writes a second one beside
+   it, and a four-argument call then matches both and resolves to neither. */
+drop function if exists public.save_platform_event(uuid, text, text, text, text, text, text, jsonb, date, boolean);
+
 create or replace function public.save_platform_event(
   which uuid default null,
   tag text default 'Event',
@@ -149,7 +188,11 @@ create or replace function public.save_platform_event(
   theme text default 'kobblon',
   prizes jsonb default '[]'::jsonb,
   until date default null,
-  showing boolean default false
+  showing boolean default false,
+  art_url text default null,
+  back_url text default null,
+  back_colour text default null,
+  note text default ''
 )
 returns uuid
 language plpgsql security definer
@@ -160,6 +203,9 @@ declare
   look text := lower(nullif(btrim(coalesce(theme, '')), ''));
   tidy jsonb := '[]'::jsonb;
   one jsonb;
+  art text := nullif(btrim(coalesce(save_platform_event.art_url, '')), '');
+  back text := nullif(btrim(coalesce(save_platform_event.back_url, '')), '');
+  paint text := nullif(btrim(lower(coalesce(save_platform_event.back_colour, ''))), '');
 begin
   perform public.require_superadmin();
 
@@ -181,6 +227,24 @@ begin
     raise exception 'The art is Kobblon, Halloween or Christmas.';
   end if;
 
+  /*
+   * The two pictures are addresses the bucket handed back, so https and
+   * nothing else - and checked here rather than trusted, because this
+   * function is what stands between a superadmin's panel and the first
+   * thing on the homepage. A `javascript:` in an `img` does nothing, but
+   * the same field will be read by the Workspace one day and the rule is
+   * cheaper to keep than to remember.
+   */
+  if art is not null and art !~ '^https://' then
+    raise exception 'The art is a picture that has been uploaded.';
+  end if;
+  if back is not null and back !~ '^https://' then
+    raise exception 'The background is a picture that has been uploaded.';
+  end if;
+  if paint is not null and paint !~ '^#[0-9a-f]{6}$' then
+    raise exception 'A background colour is six hex digits after a hash.';
+  end if;
+
   if jsonb_typeof(coalesce(save_platform_event.prizes, '[]'::jsonb)) <> 'array' then
     raise exception 'The prizes are a list.';
   end if;
@@ -199,12 +263,14 @@ begin
 
   if which is null then
     insert into public.platform_events
-      (tag, name, blurb, link, action, theme, prizes, until, showing, written_by)
+      (tag, name, blurb, link, action, theme, prizes, until, showing,
+       art_url, back_url, back_colour, note, written_by)
     values (
       left(btrim(save_platform_event.tag), 40), left(btrim(save_platform_event.name), 80),
       left(btrim(coalesce(save_platform_event.blurb, '')), 240),
       btrim(save_platform_event.link), left(btrim(save_platform_event.action), 40), look, tidy,
-      save_platform_event.until, coalesce(save_platform_event.showing, false), me
+      save_platform_event.until, coalesce(save_platform_event.showing, false),
+      art, back, paint, left(btrim(coalesce(save_platform_event.note, '')), 80), me
     )
     returning id into made;
   else
@@ -225,6 +291,10 @@ begin
       prizes = tidy,
       until = save_platform_event.until,
       showing = coalesce(save_platform_event.showing, false),
+      art_url = art,
+      back_url = back,
+      back_colour = paint,
+      note = left(btrim(coalesce(save_platform_event.note, '')), 80),
       updated_at = now()
     where id = which
     returning id into made;
@@ -295,29 +365,41 @@ $$;
 
 grant execute on function public.delete_platform_event to authenticated;
 
--- ------------------------------------------------------ the one that is up
+-- ------------------------------------------------------------- the bucket
 
 /*
- * Halloween 2026, as the row it used to be as a constant, so that the
- * homepage keeps the header it has today rather than losing it the moment
- * this applies. The same words, the same link, the same three prizes and
- * the same end date.
+ * Where the uploaded art and backgrounds live.
  *
- * Written only if the table is empty, so applying this twice does not put
- * a second one in - and so that a superadmin who has taken it down does
- * not find it back up after the next migration runs.
+ * Public to read, because the band is the first thing on the homepage and a
+ * signed link that expires is a band that goes blank on its own. Written by
+ * superadmins and nobody else: this is the one bucket whose contents are
+ * drawn across the top of the site to everybody who arrives, so the write
+ * rule is the same rule the panel has rather than the usual own-folder one.
+ *
+ * Four megabytes and pictures only, which is more than the two a forum post
+ * gets because this is a band two thousand pixels wide rather than a
+ * thumbnail in a thread.
  */
-insert into public.platform_events (tag, name, blurb, link, action, theme, prizes, until, showing)
-select
-  'Avatar contest',
-  'Halloween 2026',
-  'Put together the best Halloween avatar you can and post it. The three best take Brix.',
-  '/forum/c/avatar-contest-halloween-2026',
-  'Enter the contest',
-  'halloween',
-  '[{"place":"1st","brix":10000},{"place":"2nd","brix":5000},{"place":"3rd","brix":2500}]'::jsonb,
-  '2026-11-10'::date,
-  true
-where not exists (select 1 from public.platform_events);
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'events', 'events', true, 4194304,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update
+   set public = true,
+       file_size_limit = 4194304,
+       allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+drop policy if exists event_files_read on storage.objects;
+create policy event_files_read on storage.objects for select
+  using (bucket_id = 'events');
+
+drop policy if exists event_files_write on storage.objects;
+create policy event_files_write on storage.objects for insert to authenticated
+  with check (bucket_id = 'events' and public.is_superadmin());
+
+drop policy if exists event_files_remove on storage.objects;
+create policy event_files_remove on storage.objects for delete to authenticated
+  using (bucket_id = 'events' and public.is_superadmin());
 
 commit;

@@ -61,21 +61,47 @@ export function EventBanner({ className }: { className?: string }) {
 export function EventBand({ event, className, flat }: {
   event: Pick<PlatformEvent, 'tag' | 'name' | 'blurb' | 'action' | 'theme' | 'prizes'>
     & { link?: string }
+    & Partial<Pick<PlatformEvent, 'art_url' | 'back_url' | 'back_colour' | 'note'>>
   className?: string
   /** Draws it without the link, for the preview in the staff console. */
   flat?: boolean
 }) {
   const look = themeOf(event.theme)
+  /* Its own picture where one has been uploaded, and the theme's where one
+   * has not. Staw: "for the art i want it to be an image i can upload. same
+   * thing for the background (keep normal+customize it or upload one)". */
+  const art = event.art_url || asset(look.mark)
+  const back = event.back_url || null
 
   const inside = (
     <>
+      {/*
+        * A background of its own, under everything else. Covering rather
+        * than tiled or contained, because the band is one shape at every
+        * width and a picture that letterboxes inside it leaves two bars of
+        * flat colour that nothing else on the homepage has.
+        */}
+      {!!back && (
+        <img
+          src={back}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
+        />
+      )}
       {/*
         * The light. Two of them: a wide one behind the mark on the right,
         * which is where the reference puts its glow, and a flat darkening
         * from the left so the words sit on something rather than on the
         * brightest part of the picture.
         */}
-      <span aria-hidden="true" className={cn('pointer-events-none absolute inset-0', look.glow)} />
+      {/* The theme's light is drawn over the theme's colour and not over
+          somebody's photograph: a radial orange wash on top of a picture
+          that was chosen is the theme overruling the choice. */}
+      {!back && (
+        <span aria-hidden="true" className={cn('pointer-events-none absolute inset-0', look.glow)} />
+      )}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/35"
@@ -88,7 +114,7 @@ export function EventBand({ event, className, flat }: {
         * tag and the heading is noise.
         */}
       <img
-        src={asset(look.mark)}
+        src={art}
         alt=""
         aria-hidden="true"
         draggable={false}
@@ -148,7 +174,11 @@ export function EventBand({ event, className, flat }: {
         <span
           className={cn(
             'mt-6 inline-flex h-12 w-fit select-none items-center justify-center rounded-xl px-10',
-            'bg-brand text-base font-semibold text-white',
+            /* Staw: "for the button on the event header the font of the
+               text should be the pixel one we use often" - the display
+               face, which is what every heading on the site is set in and
+               what the band's own name above it is already wearing. */
+            'bg-brand font-display text-lg font-extrabold tracking-wide text-white',
             'border-b-[3px] border-brand-ink shadow-lg shadow-black/30',
             'transition-[background-color,transform,box-shadow] duration-150',
             'group-hover:bg-brand-bright',
@@ -168,6 +198,12 @@ export function EventBand({ event, className, flat }: {
         * Not drawn at all where nothing is being given away - three empty
         * chips under a contest with no prize is furniture.
         */}
+      {!event.prizes.length && !!event.note && (
+        <p className="pointer-events-none absolute bottom-4 right-5 hidden max-w-[26ch] text-right text-[11px] font-bold text-white/60 sm:right-7 sm:block">
+          {event.note}
+        </p>
+      )}
+
       {!!event.prizes.length && (
         <div className="pointer-events-none absolute bottom-4 right-5 hidden items-center gap-3 sm:right-7 sm:flex">
           {event.prizes.map((prize) => (
@@ -192,7 +228,14 @@ export function EventBand({ event, className, flat }: {
         </div>
       )}
 
-      {/* On a phone there is no room beside the art, so the prizes sit under the words. */}
+      {/* On a phone there is no room beside the art, so the small print
+          sits under the words instead of in the corner. */}
+      {!event.prizes.length && !!event.note && (
+        <p className="relative px-5 pb-5 text-[11px] font-bold text-white/60 sm:hidden">
+          {event.note}
+        </p>
+      )}
+
       {!!event.prizes.length && (
         <div className="relative flex flex-wrap items-center gap-x-3 gap-y-1 px-5 pb-5 sm:hidden">
           {event.prizes.map((prize) => (
@@ -214,12 +257,15 @@ export function EventBand({ event, className, flat }: {
 
   const shell = cn(
     'group relative block overflow-hidden rounded-2xl border transition-colors',
-    look.back, look.edge, className,
+    /* A colour of its own beats the theme's, and a picture of its own
+       covers both - so the class is only in the way when one is set. */
+    !event.back_colour && look.back, look.edge, className,
   )
+  const paint = event.back_colour ? { backgroundColor: event.back_colour } : undefined
 
   /* The preview is not a link: a band being written is not somewhere to go
    * yet, and a staff console that navigates away mid-sentence is rude. */
-  if (flat) return <div className={shell}>{inside}</div>
+  if (flat) return <div className={shell} style={paint}>{inside}</div>
 
-  return <Link to={event.link ?? '/'} className={shell}>{inside}</Link>
+  return <Link to={event.link ?? '/'} className={shell} style={paint}>{inside}</Link>
 }

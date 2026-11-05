@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
+import { DateTimeField } from '@/components/ui/DateTimeField'
 import { Note } from '@/components/ui/Note'
 import { Select } from '@/components/ui/Select'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -582,12 +583,15 @@ function WriteOne({ open, onClose, onDone }: {
           hint="Left empty, the card shows the mark. Nothing stock is ever put there."
         />
 
-        <Input
+        {/* Ours, like every other date on the site: the browser's own
+            picker is the one control nothing here can style. */}
+        <DateTimeField
           label="Ends"
-          type="datetime-local"
+          labelNote="left empty, it runs until you end it"
           value={until}
-          onChange={(e) => setUntil(e.target.value)}
-          hint="Left empty, it runs until you end it."
+          clearable
+          min={new Date()}
+          onChange={setUntil}
         />
       </div>
     </Dialog>

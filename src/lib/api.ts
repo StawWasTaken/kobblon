@@ -4879,6 +4879,13 @@ export async function savePlatformEvent(input: {
   prizes: EventPrize[]
   until?: string | null
   showing?: boolean
+  /** The full address of a picture in the `events` bucket, or null for the
+   * theme's own art. */
+  artUrl?: string | null
+  backUrl?: string | null
+  /** `#rrggbb`, or null for the theme's own colour. */
+  backColour?: string | null
+  note?: string
 }): Promise<string> {
   return unwrap(await supabase.rpc('save_platform_event', {
     which: input.id ?? null,
@@ -4891,6 +4898,10 @@ export async function savePlatformEvent(input: {
     prizes: input.prizes,
     until: input.until ?? null,
     showing: input.showing ?? false,
+    art_url: input.artUrl ?? null,
+    back_url: input.backUrl ?? null,
+    back_colour: input.backColour ?? null,
+    note: input.note ?? '',
   })) as string
 }
 
@@ -4901,6 +4912,27 @@ export async function showPlatformEvent(which: string, shown: boolean) {
 
 export async function deletePlatformEvent(which: string) {
   unwrap(await supabase.rpc('delete_platform_event', { which }))
+}
+
+/**
+ * The art and the backgrounds for the band on Home.
+ *
+ * Its own bucket, written by superadmins and nobody else, because what is
+ * in it is drawn across the top of the site to everybody who arrives. The
+ * full address and not the path, like an avatar: the band is a picture tag
+ * and nothing else, and a component that has to know which bucket a row
+ * means is a component the Workspace has to be told about.
+ */
+export const eventBucket = 'events'
+
+export async function uploadEventImage(file: File, as: 'art' | 'back'): Promise<string> {
+  const dot = file.name.lastIndexOf('.')
+  const ending = dot > -1 ? file.name.slice(dot + 1).toLowerCase() : 'png'
+  const path = `${as}/${crypto.randomUUID()}.${ending}`
+  const put = await supabase.storage.from(eventBucket)
+    .upload(path, file, { contentType: file.type || 'image/png', upsert: false })
+  if (put.error) throw new Error(put.error.message)
+  return supabase.storage.from(eventBucket).getPublicUrl(path).data.publicUrl
 }
 
 export type SiteNotice = {

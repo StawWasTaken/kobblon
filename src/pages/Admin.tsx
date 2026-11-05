@@ -30,6 +30,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
+import { DateField } from '@/components/ui/DateTimeField'
 import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import { Avatar } from '@/components/ui/Avatar'
@@ -43,6 +44,7 @@ import { Confirm } from '@/components/ui/Confirm'
 import { ErrorState, Skeleton } from '@/components/ui/States'
 import { Note } from '@/components/ui/Note'
 import { Switch } from '@/components/ui/Switch'
+import { ColourPicker } from '@/components/ui/ColourPicker'
 import { faScrewdriverWrench, faCodeBranch } from '@fortawesome/free-solid-svg-icons'
 import { Choices } from '@/components/ui/Choices'
 import { useToast } from '@/components/ui/Toast'
@@ -71,7 +73,8 @@ import {
   avatarReviewQueue, reviewAvatarItem, screeningQueue, reviewAsset,
   cardFor, previewUrl, saleNow, startCatalogSale, endCatalogSale,
   reportQueue, settleReport, wherePeopleAre, noticesNow, putUpNotice, takeDownNotice, siteState, setMaintenance,
-  platformEvents, savePlatformEvent, showPlatformEvent, deletePlatformEvent, type StaffEvent,
+  platformEvents, savePlatformEvent, showPlatformEvent, deletePlatformEvent, uploadEventImage,
+  type StaffEvent,
   fetchPlatformVersion, listPlatformReleases, setPlatformRelease, dropPlatformRelease,
   refreshEveryPortrait,
   type NoticeColour, makeAccountReal,
@@ -4816,7 +4819,7 @@ export function VersionSection() {
             />
           </Field>
           <Field label="Starts on">
-            <Input type="date" value={starts} min={today} onChange={(e) => setStarts(e.target.value)} />
+            <DateField value={starts} min={new Date()} onChange={setStarts} />
           </Field>
           <Field label="Why (staff only)">
             <Input value={why} onChange={(e) => setWhy(e.target.value)} placeholder="What went out in it" />
@@ -5259,16 +5262,29 @@ export function NoticeSection() {
  * up takes whatever was up down, in the same statement, so the list here
  * cannot show two.
  */
+/*
+ * A blank one is not a contest.
+ *
+ * It used to open with "Avatar contest", "Enter the contest" and three
+ * prizes already filled in, which was the first band this was built for
+ * wearing the form as a costume. Staw: "the event header isnt always for
+ * prize winnings yk" - so a new one starts as an event with nothing to win,
+ * and a contest is written by turning the prizes on.
+ */
 const BLANK: EventDraft = {
   id: null,
-  tag: 'Avatar contest',
+  tag: 'Event',
   name: '',
   blurb: '',
   link: '',
-  action: 'Enter the contest',
+  action: 'Have a look',
   theme: 'kobblon',
-  prizes: [{ place: '1st', brix: 10000 }, { place: '2nd', brix: 5000 }, { place: '3rd', brix: 2500 }],
+  prizes: [],
   until: '',
+  artUrl: '',
+  backUrl: '',
+  backColour: '',
+  note: '',
 }
 
 type EventDraft = {
@@ -5282,7 +5298,107 @@ type EventDraft = {
   prizes: EventPrize[]
   /** `YYYY-MM-DD`, or empty for no end. */
   until: string
+  /** Pictures of its own, empty for the theme's. */
+  artUrl: string
+  backUrl: string
+  /** `#rrggbb`, empty for the theme's colour. */
+  backColour: string
+  /** The small print in the corner, where there are no prizes. */
+  note: string
 }
+
+/**
+ * One uploadable picture for the band: the art, or the background.
+ *
+ * Uploaded rather than typed, which is the whole of why it is a component
+ * and not another `Input`. A field for a picture's address is a field that
+ * can name a picture which is not there, and this band is the first and
+ * widest thing on the homepage; what goes in the row here is an address
+ * storage handed back for a file that is now in the bucket.
+ *
+ * It goes up as soon as a file is chosen rather than on the form's save,
+ * so the preview above the form is the real band with the real picture in
+ * it before anybody commits to anything. The cost of that is a file in the
+ * bucket for a draft that is thrown away, which is a few hundred kilobytes
+ * nobody will ever see; the alternative is a preview that cannot show the
+ * one thing the picture was uploaded to be looked at.
+ */
+function EventPicture({ label, hint, value, fallback, as, onChange }: {
+  label: string
+  hint: string
+  value: string
+  /** What the band draws in its place while there is none of its own. */
+  fallback?: string
+  as: 'art' | 'back'
+  onChange: (next: string) => void
+}) {
+  const say = useToast()
+  const file = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+
+  const take = async (chosen: File | undefined) => {
+    if (!chosen) return
+    setBusy(true)
+    try {
+      onChange(await uploadEventImage(chosen, as))
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That picture did not go up.', 'error')
+    } finally {
+      setBusy(false)
+      if (file.current) file.current.value = ''
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p>
+
+      <div className="flex items-center gap-3">
+        <span className="grid h-16 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+          {value || fallback
+            ? (
+              <img
+                src={value || fallback}
+                alt=""
+                aria-hidden="true"
+                className={cn('h-full w-full', value && as === 'back' ? 'object-cover' : 'object-contain p-1.5')}
+              />
+            )
+            : <span className="text-[11px] font-bold text-muted">The theme's</span>}
+        </span>
+
+        <div className="flex min-w-0 flex-col items-start gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            loading={busy}
+            onClick={() => file.current?.click()}
+          >
+            {value ? 'Change it' : 'Upload one'}
+          </Button>
+          {!!value && (
+            <Button variant="ghost" size="sm" onClick={() => onChange('')}>
+              Back to the theme's
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <p className="text-xs text-muted">{hint}</p>
+
+      <input
+        ref={file}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => void take(e.target.files?.[0])}
+      />
+    </div>
+  )
+}
+
+/** The colour a theme carries, for the picker to start somewhere. */
+const themeColour = (theme: EventTheme) => EVENT_THEMES[theme].colour
 
 export function EventSection() {
   const say = useToast()
@@ -5317,6 +5433,10 @@ export function EventSection() {
       theme: one.theme,
       prizes: one.prizes ?? [],
       until: one.until ?? '',
+      artUrl: one.art_url ?? '',
+      backUrl: one.back_url ?? '',
+      backColour: one.back_colour ?? '',
+      note: one.note ?? '',
     })
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
   }
@@ -5337,6 +5457,10 @@ export function EventSection() {
         prizes: draft.prizes.filter((one) => one.place.trim()),
         until: draft.until || null,
         showing: andShow,
+        artUrl: draft.artUrl || null,
+        backUrl: draft.backUrl || null,
+        backColour: draft.backColour || null,
+        note: draft.note.trim(),
       })
       say(andShow ? 'It is up on Home.' : 'Saved as a draft.', 'success')
       setDraft(BLANK)
@@ -5465,6 +5589,10 @@ export function EventSection() {
               action: draft.action.trim() || 'Have a look',
               theme: draft.theme,
               prizes: draft.prizes.filter((one) => one.place.trim()),
+              art_url: draft.artUrl || null,
+              back_url: draft.backUrl || null,
+              back_colour: draft.backColour || null,
+              note: draft.note.trim(),
             }}
             flat
           />
@@ -5500,7 +5628,7 @@ export function EventSection() {
               label="Where it goes"
               value={draft.link}
               onChange={(e) => change({ link: e.target.value })}
-              placeholder="/forum/c/avatar-contest-halloween-2026"
+              placeholder="/forum/c/announcements"
               hint="A path on this site, or an https address."
             />
             <Input
@@ -5510,23 +5638,24 @@ export function EventSection() {
               onChange={(e) => change({ action: e.target.value })}
               placeholder="Enter the contest"
             />
-            <Input
+            <DateField
               label="Gone on"
-              type="date"
+              labelNote="optional"
               value={draft.until}
-              onChange={(e) => change({ until: e.target.value })}
-              hint="Leave it empty for no end."
+              clearable
+              onChange={(next) => change({ until: next })}
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <span className="font-display text-xs font-bold uppercase tracking-wide text-muted">
-              The art
+              How it looks
             </span>
             {/*
-              * Three sets of marks rather than a field for a picture's
-              * address: a path somebody types is a path that can be wrong,
-              * and the band is the first and widest thing on the homepage.
+              * The theme is what a band wears when nothing of its own has
+              * been put on it: three sets of marks the build ships, each
+              * with its own colour and its own light. A picture uploaded
+              * underneath takes the place of whichever half it is.
               */}
             <div className="flex flex-wrap gap-2.5">
               {(Object.keys(EVENT_THEMES) as EventTheme[]).map((one) => (
@@ -5552,40 +5681,118 @@ export function EventSection() {
                 </button>
               ))}
             </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <EventPicture
+                label="The art"
+                hint="The big picture, bleeding out of the top. Left alone it is the theme's mark."
+                value={draft.artUrl}
+                fallback={asset(EVENT_THEMES[draft.theme].mark)}
+                as="art"
+                onChange={(next) => change({ artUrl: next })}
+              />
+              <EventPicture
+                label="Behind it"
+                hint="A picture under the whole band. Left alone it is the theme's colour."
+                value={draft.backUrl}
+                as="back"
+                onChange={(next) => change({ backUrl: next })}
+              />
+            </div>
+
+            {/*
+              * The colour is only the third choice and says so by being
+              * switched off while a picture is up - two backgrounds set at
+              * once is a control that implies something the band does not
+              * do, because the picture covers the colour.
+              */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs font-bold text-muted">The colour under it</span>
+              <ColourPicker
+                value={draft.backColour || themeColour(draft.theme)}
+                /* Six digits and no more: the band's colour is a colour,
+                   and a see-through one would show the page under it. */
+                onChange={(next) => change({ backColour: next.slice(0, 7) })}
+                disabled={!!draft.backUrl}
+              />
+              {!!draft.backColour && !draft.backUrl && (
+                <Button variant="ghost" size="sm" onClick={() => change({ backColour: '' })}>
+                  Back to the theme's
+                </Button>
+              )}
+              {!!draft.backUrl && (
+                <span className="text-xs text-muted">There is a picture over it.</span>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <span className="font-display text-xs font-bold uppercase tracking-wide text-muted">
-              What there is to win
-            </span>
-            <p className="text-xs text-muted">
-              Three at most, biggest first. A place left empty is not drawn, so
-              one prize is written by filling the first row and leaving the
-              other two alone.
-            </p>
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="grid gap-x-3 gap-y-3 sm:grid-cols-[8rem_1fr]">
-                  <Input
-                    label={i === 0 ? 'Place' : undefined}
-                    aria-label={`Place ${i + 1}`}
-                    value={prizeAt(i).place}
-                    maxLength={12}
-                    onChange={(e) => setPrize(i, { place: e.target.value })}
-                    placeholder={['1st', '2nd', '3rd'][i]}
-                  />
-                  <Input
-                    label={i === 0 ? 'Brix' : undefined}
-                    aria-label={`Brix for place ${i + 1}`}
-                    type="number"
-                    min={0}
-                    value={prizeAt(i).brix ? String(prizeAt(i).brix) : ''}
-                    onChange={(e) => setPrize(i, { brix: Math.max(0, Number(e.target.value) || 0) })}
-                    placeholder="0"
-                  />
-                </div>
-              ))}
+          {/*
+            * A band is not always a contest.
+            *
+            * Staw: "the event header isnt always for prize winnings yk". So
+            * what there is to win is a thing to switch on, and the corner it
+            * draws in holds a plain line instead when it is off - the corner
+            * is the one bit of the band with nowhere else to go, and leaving
+            * it empty on anything that is not a contest was most of them.
+            */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="font-display text-xs font-bold uppercase tracking-wide text-muted">
+                The corner
+              </span>
+              <Switch
+                on={!!draft.prizes.length}
+                onChange={(on) => change({
+                  prizes: on
+                    ? [{ place: '1st', brix: 10000 }, { place: '2nd', brix: 5000 }, { place: '3rd', brix: 2500 }]
+                    : [],
+                })}
+                label="There is something to win"
+              />
             </div>
+
+            {draft.prizes.length ? (
+              <>
+                <p className="text-xs text-muted">
+                  Three at most, biggest first. A place left empty is not drawn, so
+                  one prize is written by filling the first row and leaving the
+                  other two alone.
+                </p>
+                <div className="space-y-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="grid gap-x-3 gap-y-3 sm:grid-cols-[8rem_1fr]">
+                      <Input
+                        label={i === 0 ? 'Place' : undefined}
+                        aria-label={`Place ${i + 1}`}
+                        value={prizeAt(i).place}
+                        maxLength={12}
+                        onChange={(e) => setPrize(i, { place: e.target.value })}
+                        placeholder={['1st', '2nd', '3rd'][i]}
+                      />
+                      <Input
+                        label={i === 0 ? 'Brix' : undefined}
+                        aria-label={`Brix for place ${i + 1}`}
+                        type="number"
+                        min={0}
+                        value={prizeAt(i).brix ? String(prizeAt(i).brix) : ''}
+                        onChange={(e) => setPrize(i, { brix: Math.max(0, Number(e.target.value) || 0) })}
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <Input
+                label="The small print"
+                labelNote="optional"
+                value={draft.note}
+                maxLength={80}
+                onChange={(e) => change({ note: e.target.value })}
+                placeholder="Until the 24th of December"
+                hint="Sits in the corner the prizes would be in. Left empty, nothing is drawn there."
+              />
+            )}
           </div>
 
           {/*

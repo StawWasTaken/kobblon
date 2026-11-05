@@ -18258,3 +18258,133 @@ ever lists this repository's migrations, it needs both folders now.**
 
 Still waiting on Staw, unchanged from the last round: **0319**, **0320**,
 **0321** and **0322** to run in Supabase, and the **Spawn mark**.
+
+---
+
+## Round two hundred and forty-one - one calendar, a band with its own pictures, and the contest is off
+
+Four things from Staw, and three of them touch something shared.
+
+### Every date on the site is ours now
+
+Staw: "i want all of our designs btw to be uniformized so for the date stuff
+it has to be our own design". The browser's own date control is the one thing
+on a page that cannot be styled - Chrome draws a grey card with its own type,
+its own blue and its own greyed Sunday column, in the middle of a panel built
+out of our surfaces - and three places were still opening it.
+
+`@/components/ui/DateTimeField` now exports two:
+
+```ts
+DateTimeField  // value "2026-09-18T19:21", unchanged
+DateField      // value "2026-09-18", what a `date` column holds
+```
+
+Same calendar, same props (`value`, `onChange`, `label`, `labelNote`, `min`,
+`clearable`); `DateField` has no hour row, closes itself on the day you press,
+and its buttons read **Today** / **Clear it** / **Done**. `label` is optional
+on both now, for a field already inside a labelled row.
+
+`toDayValue(date)` is exported beside `toLocalValue`. One thing worth knowing
+if you reuse this: the value is parsed by hand rather than with `new Date()`,
+because `new Date('2026-11-05')` is midnight **UTC**, which west of Greenwich
+is the 4th - a day-only field built the obvious way shows the day before the
+one somebody pressed, for half the world.
+
+The website's three native pickers are gone: the version's start date and the
+band's end date in the staff console, and a quest's end in Quests.
+
+`ColourPicker` gained `disabled`, for a colour something else is currently
+covering.
+
+### The homepage band: its own pictures, and not always a contest
+
+Staw: "for the 'art' i want it to be an image i can upload. same thing for the
+background (keep normal+customize it or upload one)", and "the event header
+isnt always for prize winnings yk".
+
+**`PlatformEvent` in `@/lib/event` has four new fields.** This is a meaning
+change as well as a shape one, so it is the line to read twice:
+
+```ts
+art_url:     string | null   // over the theme's mark
+back_url:    string | null   // behind the whole band
+back_colour: string | null   // "#rrggbb", under it; ignored where back_url is set
+note:        string          // the small print in the corner, where there are no prizes
+```
+
+The theme is still what a band wears when none of these is set, and
+`EVENT_THEMES[theme]` gained `colour` - the same colour as its `back` class,
+as a value rather than a Tailwind class, for anything that cannot use
+Tailwind.
+
+`EventBand` takes all four as optional, so a caller that passes none draws
+exactly what it drew before.
+
+**The corner is now one of two things and not always prizes.** With prizes it
+is the Brix chips; with none it is `note`, one line, right-aligned. A new one
+in the console starts as an event with nothing to win - it used to open
+pre-filled as an avatar contest with three prizes, which was the first band
+this was ever built for wearing the form as a costume.
+
+In `@/lib/api`:
+
+```ts
+savePlatformEvent({ …, artUrl, backUrl, backColour, note })
+uploadEventImage(file, 'art' | 'back'): Promise<string>  // the full address
+export const eventBucket = 'events'
+```
+
+The pictures are uploaded and never typed, which is the same guard the named
+theme was: what lands in the row is an address storage handed back for a file
+that is now in the bucket, and `save_platform_event` refuses anything that is
+not `https://`. The `events` bucket is public to read and **superadmin to
+write** - not the usual own-folder rule, because what is in it is drawn across
+the top of the site to everybody who arrives.
+
+### Migrations
+
+**0321 has changed and has not been applied anywhere.** If you are holding a
+copy, take the new one: the table gained the four columns, both reading
+functions return four more columns (so they are dropped and recreated, since
+`create or replace` cannot change a result type), `save_platform_event` gained
+four parameters and its old ten-argument signature is dropped first - adding a
+defaulted parameter writes a *second* function beside the old one, and a call
+then matches both and resolves to neither. The Halloween seed is gone from it.
+
+**0323 takes the Halloween avatar contest off.** Staw: "in the forums delete
+everything about the halloween avatar contests - we cancel it this year". The
+three rooms 0313 made - `avatar-contests`, `avatar-contests-2026`,
+`avatar-contest-halloween-2026` - are deleted, deepest first, with the topics
+in them (`forum_topics.category` is `on delete restrict`, so they cannot be
+left behind; posts and views cascade). The count is printed as a notice rather
+than done quietly. It also deletes any band whose link is
+`/forum/c/avatar-contest-halloween-2026`, for a database where 0321's old seed
+already ran - a band whose button leads to a category that no longer exists is
+the worst thing the homepage can be carrying.
+
+The forum is its six rooms again. The three-deep tree 0313 built stays, and so
+does the rail's walk up it: the next contest puts its own rooms back and
+works the day it is made.
+
+Checked on a local Postgres, twice each, under two identities: a stranger is
+refused (and the first version of that check passed for the *wrong* reason -
+`permission denied for table profiles` is also `42501`, because the harness's
+`is_superadmin` was not `security definer` like the real one); http art and a
+colour that is not six hex digits are both refused; a blank prize row is
+dropped without spending one of the three; putting one up takes the other
+down; and `anon` can read the showing one through the function and cannot
+touch the table.
+
+### Said plainly, the parts that are not done
+
+- The band's **wordmark** in the top corner still comes from the theme even
+  when the art and the background have been uploaded over it. Uploading a
+  Christmas-coloured background and keeping the Kobblon wordmark is possible
+  and looks like what it is.
+- `note` is stored even where there are prizes, and the band ignores it there.
+  The console hides the field in that case, so the only way to have both is to
+  write one through the RPC directly.
+- The art slot bleeds out of the top of the band by design. An uploaded
+  picture is drawn in exactly that slot, so a wide photograph put there is
+  cropped the way the mark is.

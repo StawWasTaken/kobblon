@@ -52,6 +52,56 @@ function Page() {
         />
       </section>
 
+      {/* The corner holding a line instead of three prize chips, which is
+          what a band that is not a contest does with it. */}
+      <section className="space-y-2">
+        <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
+          A line of small print instead of prizes
+        </h2>
+        <EventBand
+          event={{
+            tag: 'Event', name: 'The Kobblon Winter Show',
+            blurb: 'A week of what everybody built this year.',
+            action: 'Come along', theme: 'christmas', prizes: [],
+            note: 'Until the 24th of December',
+          }}
+          flat
+        />
+      </section>
+
+      {/* Its own art, its own background and its own colour - the three
+          things a superadmin can upload over the theme. */}
+      <section className="space-y-2">
+        <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
+          Pictures of its own
+        </h2>
+        <EventBand
+          event={{
+            tag: 'Event', name: 'Kobblon is free',
+            blurb: 'It always was, and this is the band saying so with its own art.',
+            action: 'Have a look', theme: 'kobblon', prizes: [],
+            art_url: '/brand/kobby.png',
+            back_url: '/brand/landing-towers.webp',
+            note: 'Its own picture, behind and in front',
+          }}
+          flat
+        />
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
+          A colour of its own, and the theme's mark
+        </h2>
+        <EventBand
+          event={{
+            tag: 'Event', name: 'A colour under it',
+            blurb: '', action: 'Have a look', theme: 'kobblon', prizes: [],
+            back_colour: '#2a0f3d',
+          }}
+          flat
+        />
+      </section>
+
       <section className="space-y-2">
         <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
           The staff panel, with no database behind it

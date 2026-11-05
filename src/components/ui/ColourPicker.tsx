@@ -291,11 +291,14 @@ function Panel({
  * can be read at a glance without opening anything.
  */
 export function ColourPicker({
-  value, onChange, className,
+  value, onChange, className, disabled,
 }: {
   value: string
   onChange: (next: string) => void
   className?: string
+  /** Shown, greyed and unopenable - for a colour something else is
+   * currently covering, which is a thing to say rather than to hide. */
+  disabled?: boolean
 }) {
   const button = useRef<HTMLButtonElement>(null)
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
@@ -306,8 +309,12 @@ export function ColourPicker({
         ref={button}
         type="button"
         aria-label="Pick a colour"
+        disabled={disabled}
         onClick={() => setAnchor(anchor ? null : (button.current?.getBoundingClientRect() ?? null))}
-        className="relative h-9 w-10 shrink-0 overflow-hidden rounded-lg border border-ink-line"
+        className={cn(
+          'relative h-9 w-10 shrink-0 overflow-hidden rounded-lg border border-ink-line',
+          disabled && 'opacity-40',
+        )}
         style={{
           backgroundImage:
             'linear-gradient(45deg, #5a5a62 25%, transparent 25%, transparent 75%, #5a5a62 75%),'

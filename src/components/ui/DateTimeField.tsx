@@ -36,28 +36,62 @@ const pad = (n: number) => String(n).padStart(2, '0')
 export const toLocalValue = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 
-/**
- * A date and a time, in our own hand rather than whatever the browser draws.
- * The calendar is Monday-first, the time is two plain fields, and there is
- * nothing to type in the wrong order.
+/** The day on its own: "2026-09-18", which is what a `date` column holds. */
+export const toDayValue = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+
+/*
+ * Read back by hand rather than with `new Date(value)`.
+ *
+ * `new Date('2026-11-05')` is midnight UTC, which west of Greenwich is the
+ * 4th - so a field that only ever shows a day would show the day before the
+ * one somebody pressed, in half the world. The time version has no such
+ * problem (a value with no zone on it is already read as local), but both
+ * go through here so there is one answer rather than two.
  */
-export function DateTimeField({
-  value, onChange, label, labelNote, min, clearable, className,
+function readValue(value: string): Date | null {
+  if (!value) return null
+  const [day, clock] = value.split('T')
+  const [y, m, d] = day.split('-').map(Number)
+  if (!y || !m || !d) return null
+  const [hours, minutes] = (clock ?? '').split(':').map(Number)
+  return new Date(y, m - 1, d, hours || 0, minutes || 0, 0, 0)
+}
+
+/**
+ * A date, and a time when the field is asking for one, in our own hand
+ * rather than whatever the browser draws.
+ *
+ * Staw: "i want all of our designs btw to be uniformized so for the date
+ * stuff it has to be our own design". The browser's own picker is the one
+ * control on the site nothing can style: Chrome draws a grey card with its
+ * own type, its own blue and a greyed Sunday column, in the middle of a
+ * panel built out of our surfaces. So there is one calendar here and the
+ * three places that wanted a day - a version's start, an event's last day,
+ * a quest's end - all open this.
+ *
+ * The calendar is Monday-first, the time is two of our own lists, and
+ * there is nothing to type in the wrong order.
+ */
+function Field({
+  value, onChange, label, labelNote, min, clearable, className, withTime, placeholder,
 }: {
   value: string
   onChange: (next: string) => void
-  label: string
+  label?: string
   labelNote?: string
   min?: Date
   clearable?: boolean
   className?: string
+  withTime: boolean
+  placeholder?: string
 }) {
   const [open, setOpen] = useState(false)
   const [box, setBox] = useState<{ left: number; top: number } | null>(null)
   const root = useRef<HTMLDivElement>(null)
   const pop = useRef<HTMLDivElement>(null)
 
-  const chosen = value ? new Date(value) : null
+  const chosen = readValue(value)
   const [view, setView] = useState(() => chosen ?? new Date())
 
   useEffect(() => { if (chosen) setView(chosen) }, [value])
@@ -102,33 +136,43 @@ export function DateTimeField({
     }
   }, [open, view])
 
+  const give = (date: Date) => onChange(withTime ? toLocalValue(date) : toDayValue(date))
+
   const pick = (day: Date) => {
     const next = new Date(day)
     next.setHours(chosen?.getHours() ?? 19, chosen?.getMinutes() ?? 0, 0, 0)
-    onChange(toLocalValue(next))
+    give(next)
+    /* A field asking only for a day has nothing left to decide once one is
+     * pressed, so it closes itself; one asking for a time does not, because
+     * the hour is underneath and closing on the day would hide it. */
+    if (!withTime) setOpen(false)
   }
 
   const setTime = (hours: number, minutes: number) => {
     const next = chosen ? new Date(chosen) : new Date()
     next.setHours(hours, minutes, 0, 0)
-    onChange(toLocalValue(next))
+    give(next)
   }
 
   const shown = chosen
-    ? chosen.toLocaleString('en-GB', {
-        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-      })
-    : 'Pick a date and time'
+    ? chosen.toLocaleString('en-GB', withTime
+      ? {
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        }
+      : { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+    : placeholder ?? (withTime ? 'Pick a date and time' : 'Pick a date')
 
   const today = new Date()
 
   return (
     <div ref={root} className={className}>
-      <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
-        {label}
-        {labelNote && <span className="ml-1.5 font-semibold normal-case text-white/35">{labelNote}</span>}
-      </p>
+      {!!label && (
+        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
+          {label}
+          {labelNote && <span className="ml-1.5 font-semibold normal-case text-white/35">{labelNote}</span>}
+        </p>
+      )}
 
       <div className="flex gap-1.5">
         <button
@@ -136,6 +180,7 @@ export function DateTimeField({
           onClick={() => setOpen((v) => !v)}
           aria-haspopup="dialog"
           aria-expanded={open}
+          aria-label={label}
           className={cn(
             'flex h-11 flex-1 items-center gap-2.5 rounded-xl border px-3 text-left text-sm font-semibold transition-colors',
             open ? 'border-brand-bright bg-ink-hover' : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
@@ -150,7 +195,7 @@ export function DateTimeField({
           <button
             type="button"
             onClick={() => onChange('')}
-            aria-label={`Clear ${label}`}
+            aria-label={`Clear ${label ?? 'the date'}`}
             className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-ink-line text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
           >
             <Glyph icon={faXmark} />
@@ -162,7 +207,7 @@ export function DateTimeField({
         <div
           ref={pop}
           role="dialog"
-          aria-label={label}
+          aria-label={label ?? 'Pick a date'}
           style={box ? { left: box.left, top: box.top } : { opacity: 0 }}
           className="fixed z-[80] w-[20rem] animate-pop-in rounded-2xl border border-ink-line bg-ink-card p-3 shadow-pop"
         >
@@ -225,36 +270,38 @@ export function DateTimeField({
             })}
           </div>
 
-          <div className="mt-3 flex items-center gap-2 border-t border-ink-line pt-3">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">Time</span>
+          {withTime && (
+            <div className="mt-3 flex items-center gap-2 border-t border-ink-line pt-3">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted">Time</span>
 
-            {/* Our own lists here too, rather than two native selects
-                sitting in the middle of a card we drew. */}
-            <div className="ml-auto flex items-center gap-1.5">
-              <Select
-                label="Hour"
-                value={String(chosen?.getHours() ?? 19)}
-                onChange={(next) => setTime(Number(next), chosen?.getMinutes() ?? 0)}
-                className="w-20"
-                options={Array.from({ length: 24 }, (_, h) => ({
-                  value: String(h), label: pad(h),
-                }))}
-              />
+              {/* Our own lists here too, rather than two native selects
+                  sitting in the middle of a card we drew. */}
+              <div className="ml-auto flex items-center gap-1.5">
+                <Select
+                  label="Hour"
+                  value={String(chosen?.getHours() ?? 19)}
+                  onChange={(next) => setTime(Number(next), chosen?.getMinutes() ?? 0)}
+                  className="w-20"
+                  options={Array.from({ length: 24 }, (_, h) => ({
+                    value: String(h), label: pad(h),
+                  }))}
+                />
 
-              <span className="font-bold text-white/40">:</span>
+                <span className="font-bold text-white/40">:</span>
 
-              <Select
-                label="Minute"
-                value={String(chosen ? Math.floor(chosen.getMinutes() / 5) * 5 : 0)}
-                onChange={(next) => setTime(chosen?.getHours() ?? 19, Number(next))}
-                className="w-20"
-                align="right"
-                options={Array.from({ length: 12 }, (_, i) => i * 5).map((m) => ({
-                  value: String(m), label: pad(m),
-                }))}
-              />
+                <Select
+                  label="Minute"
+                  value={String(chosen ? Math.floor(chosen.getMinutes() / 5) * 5 : 0)}
+                  onChange={(next) => setTime(chosen?.getHours() ?? 19, Number(next))}
+                  className="w-20"
+                  align="right"
+                  options={Array.from({ length: 12 }, (_, i) => i * 5).map((m) => ({
+                    value: String(m), label: pad(m),
+                  }))}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-3 flex gap-2">
             <button
@@ -262,8 +309,17 @@ export function DateTimeField({
               onClick={() => { pick(new Date()); setOpen(false) }}
               className="h-9 flex-1 rounded-lg bg-ink-hover text-xs font-bold text-white/70 transition-colors hover:text-white"
             >
-              Now
+              {withTime ? 'Now' : 'Today'}
             </button>
+            {clearable && !!chosen && (
+              <button
+                type="button"
+                onClick={() => { onChange(''); setOpen(false) }}
+                className="h-9 flex-1 rounded-lg bg-ink-hover text-xs font-bold text-white/70 transition-colors hover:text-white"
+              >
+                Clear it
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -277,4 +333,14 @@ export function DateTimeField({
       )}
     </div>
   )
+}
+
+/** A date and a time: "2026-09-18T19:21". */
+export function DateTimeField(props: Omit<Parameters<typeof Field>[0], 'withTime'>) {
+  return <Field {...props} withTime />
+}
+
+/** A day on its own: "2026-09-18", the shape a `date` column holds. */
+export function DateField(props: Omit<Parameters<typeof Field>[0], 'withTime'>) {
+  return <Field {...props} withTime={false} />
 }
