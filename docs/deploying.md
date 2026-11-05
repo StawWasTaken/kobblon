@@ -74,6 +74,11 @@ Everything in `supabase/migrations`, in order, applied in the SQL editor on
 the Supabase dashboard or with the CLI. Every one of them is written to be
 safe to run twice.
 
+The ones up to `0299` are in `supabase/migrations/applied/`, so that the
+recent ones are not at the bottom of three hundred files. It is a filing
+decision and nothing more: both folders are one sequence by number, and a
+file down there is as much history as one up here.
+
 ## Edge functions
 
 There are three: `login` (username and password, looked up behind the service

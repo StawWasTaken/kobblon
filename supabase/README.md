@@ -2,9 +2,18 @@
 
 Supabase project: `https://sdnjdgeqrhzkyfyohcsz.supabase.co`
 
-Apply the migrations in order from the SQL editor (or `supabase db push`).
-They are re-runnable: every step checks for itself first, so a run that fails
-part way can simply be run again once the cause is fixed.
+Apply the migrations in order from the SQL editor. They are re-runnable:
+every step checks for itself first, so a run that fails part way can simply
+be run again once the cause is fixed.
+
+**Not `supabase db push` as things stand.** The ones up to `0299` are filed
+under `migrations/applied/` so that the recent ones are not at the bottom of
+three hundred files, and the CLI reads only the top folder - it would push
+`0300` onwards and believe the rest had never happened, which against an
+empty database builds a schema with nothing underneath it. The live database
+has had all of them, applied by hand in the SQL editor, which is how this
+project has always done it. Anybody who wants the CLI back moves the folder
+back up first; `npm run check:migrations` reads both either way.
 
 1. `0001_init.sql` - tables and indexes
 2. `0002_policies.sql` - row level security

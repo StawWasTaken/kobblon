@@ -1,7 +1,35 @@
 # Migrations
 
-Seventy-odd files, applied in order, and the record of what the live database
-has actually had done to it.
+Three hundred-odd files, applied in order, and the record of what the live
+database has actually had done to it.
+
+## Where they live
+
+Two folders, one list:
+
+- **here** - the recent ones, the ones still worth having in front of you;
+- **`applied/`** - everything from `0001` up to `0299`.
+
+Staw: "can we also make a folder in migrations for older migrations so i
+dont have to scroll all the way down for the new ones". That is the whole
+reason, and it is a filing decision and nothing else. **The folder a
+migration sits in means nothing to the database.** Both folders are history,
+both are applied in one sequence by number, and a file in `applied/` is no
+more squashed, retired or safe to change than one up here.
+
+Two things follow:
+
+- **A new migration is written here**, never in `applied/`, with the next
+  number after the highest one in either folder.
+- **`npm run check:migrations` reads both** and treats them as one list.
+  That is not a convenience: the rule it exists to enforce - that two
+  migrations never share a number - would be worthless if half the numbers
+  were in a folder it did not look in. There is a check for exactly that.
+
+Moving a file between the two is the one kind of move that is allowed,
+because the name does not change and nothing reads the path: `known.json`
+is keyed by the bare filename, and Staw applies these by hand in the SQL
+editor. Do not move anything while doing something else to it.
 
 ## The one rule
 
@@ -15,7 +43,8 @@ by writing the next one, never by going back.
 
 ## Writing a new one
 
-Name it `NNNN_what_it_does.sql`, next number, no gaps.
+Name it `NNNN_what_it_does.sql`, next number, no gaps, in this folder and
+not in `applied/`.
 
 Then, before pushing:
 

@@ -22,7 +22,29 @@ import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const FOLDER = 'supabase/migrations'
+/*
+ * The applied ones, moved down a folder so that the new ones are not at the
+ * bottom of three hundred files. Staw: "can we also make a folder in
+ * migrations for older migrations so i dont have to scroll all the way down
+ * for the new ones".
+ *
+ * This script reads both and treats them as one list, which is the part
+ * that matters: a migration that is out of sight is still history, and the
+ * one rule this file exists to enforce - that two migrations never share a
+ * number - is worthless if half of the numbers are in a folder it does not
+ * look in. A file is identified by its bare name in `known.json` either
+ * way, so moving one changes nothing it has already forgiven.
+ */
+const ARCHIVE = 'supabase/migrations/applied'
 const KNOWN = 'scripts/migrations-known.json'
+
+/** Every migration, both folders, in order, each with where it lives. */
+function everyMigration() {
+  const pick = (dir) => (existsSync(dir) ? readdirSync(dir) : [])
+    .filter((f) => f.endsWith('.sql'))
+    .map((file) => ({ file, at: join(dir, file) }))
+  return [...pick(ARCHIVE), ...pick(FOLDER)].sort((a, b) => a.file.localeCompare(b.file))
+}
 
 /** Strips comments and strings so a rule cannot match its own explanation. */
 function bare(sql) {
@@ -115,15 +137,15 @@ const rules = [
   },
 ]
 
-const files = readdirSync(FOLDER).filter((f) => f.endsWith('.sql')).sort()
+const files = everyMigration()
 const known = existsSync(KNOWN) ? JSON.parse(readFileSync(KNOWN, 'utf8')) : {}
 const writing = process.argv.includes('--write-known')
 
 const found = {}
 let fresh = 0
 
-for (const file of files) {
-  const sql = bare(readFileSync(join(FOLDER, file), 'utf8'))
+for (const { file, at } of files) {
+  const sql = bare(readFileSync(at, 'utf8'))
   for (const rule of rules) {
     const hits = rule.find(sql, file)
     if (!hits.length) continue
@@ -148,7 +170,7 @@ if (writing) {
 }
 
 const duplicates = files
-  .map((f) => f.slice(0, 4))
+  .map((one) => one.file.slice(0, 4))
   .filter((n, at, all) => all.indexOf(n) !== at)
 
 if (duplicates.length) {

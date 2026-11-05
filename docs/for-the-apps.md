@@ -18222,3 +18222,39 @@ somebody opens Home twice in an evening - a contest is read once.
 To run in Supabase, in order: **0319**, **0320**, **0321** (the event band's
 table, from the last round) and **0322** (Christmas on the 7th). The
 **Spawn mark** is still in neither repository.
+
+## Round two hundred and forty - the applied migrations move down a folder
+
+Staw: "can we also make a folder in migrations for older migrations so i dont
+have to scroll all the way down for the new ones". So `0001` to `0299` are in
+`supabase/migrations/applied/` and the twenty-three recent ones are where
+they were.
+
+Nothing was edited, renamed or renumbered - every one of those 299 is a pure
+move, which is the only kind of change the folder's one rule allows. The
+folder a migration sits in means nothing to the database: both folders are
+one sequence by number, and a file in `applied/` is no more squashed or
+retired than one above it.
+
+Two things went with it, because a tidy-up that quietly turns a guard off is
+not a tidy-up:
+
+- **`npm run check:migrations` reads both folders** and treats them as one
+  list. The rule it exists to enforce is that two migrations never share a
+  number, and that would have been worthless with half the numbers in a
+  folder it did not look in. Checked by putting a second `0001` in the top
+  folder and watching it complain, then taking it away again.
+- **`supabase db push` is off the table as things stand**, and `supabase/README.md`
+  now says so where it used to recommend it. The CLI reads only the top
+  folder, so it would push `0300` onwards and believe the rest had never
+  happened - against an empty database that builds a schema with nothing
+  underneath it. The live database has had all of them, applied by hand in
+  the SQL editor, which is how this project has always done it. Moving the
+  folder back up is all it takes to have the CLI back.
+
+Nothing in the website or the engine changed, so there is nothing to rebuild
+on your side. The only thing worth carrying across: **if anything of yours
+ever lists this repository's migrations, it needs both folders now.**
+
+Still waiting on Staw, unchanged from the last round: **0319**, **0320**,
+**0321** and **0322** to run in Supabase, and the **Spawn mark**.

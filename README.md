@@ -41,9 +41,10 @@ leading slash. Deploying to a domain root instead is one change: build with
 
 ## The database
 
-Supabase backs everything. Apply the four migrations in `supabase/migrations`
-in order from the Supabase SQL editor before running the app, see
-[`supabase/README.md`](supabase/README.md).
+Supabase backs everything. Apply every migration in `supabase/migrations`
+in order from the Supabase SQL editor before running the app - the ones up
+to `0299` are filed under `applied/`, and they are the same one sequence,
+see [`supabase/migrations/README.md`](supabase/migrations/README.md).
 
 Only the publishable key ever reaches the browser. Every counter the platform
 shows (visits, updates, accounts) is computed server-side by a `security
