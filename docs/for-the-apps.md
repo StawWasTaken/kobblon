@@ -18431,3 +18431,74 @@ edge rather than hung from the top. Staw: "make the top of the image gets out
 of the header area (its cool) but not the bottom part". It is taller than the
 band, so whichever edge it is pinned to is the one that stays put - pinned to
 the top, the mark's feet were being cut off along the bottom.
+
+---
+
+## Round two hundred and forty-three
+
+Three things, all website chrome, and one correction to the round before
+this one.
+
+**The correction first, because the last round said the wrong thing.** Round
+two hundred and forty-two said the event band's art is anchored to the
+bottom edge so it is cut at the top. That is not what Staw wanted: "for the
+event header i meant for the image to not be cut at the top by the header
+but to still be cut at the bottom". So it is the other way round now - the
+picture rises out of the top of the band uncut, like something standing
+behind it, and is cut off level with the band's floor.
+
+How it is built, because it is not obvious and a copy of the old structure
+would clip the wrong half: `EventBand`'s shell has **no** `overflow-hidden`
+any more. Everything that must stop at the band's edge - the background
+picture, the theme's glow, the darkening the words sit on - lives in its own
+`absolute inset-0 overflow-hidden rounded-2xl` layer. The art has a second
+layer of its own, `inset-x-0 bottom-0 top-[-6rem] overflow-hidden`: its
+bottom edge is the band's, so it clips there, and its top is well clear of
+the band, so it clips nothing. The two numbers go together - the layer
+starts `6rem` above the band and the picture sits at `top-[4.5rem]` inside
+it, which is `1.5rem` above the band's own top.
+
+Nothing in the data changed. No signature moved, no field was added or
+removed, no function changed shape. If you draw the band yourself rather
+than importing it, this is the only paragraph in the round that is yours.
+
+**The At Kobblon bar.** Three fixes, all `AboutNav`/`AboutShell`:
+
+- The pill is the page's own background colour again (`bg-ink`), not a
+  darker slab: `bg-ink/55` at rest, `bg-ink/90` once scrolled, the phone
+  sheet `bg-ink/90` and the dropdown `bg-ink/95`.
+- The black strip across the top of every At Kobblon page is gone. It was a
+  **guessed** pull-up (`-mb-[78px] sm:-mb-[74px]`) that was short by the
+  header's own top padding. `AboutShell` now measures the header with a
+  `ResizeObserver` and applies `marginBottom: -barHigh`. The lesson is the
+  one this project keeps relearning: a measurement written into a class is a
+  measurement that goes stale the next time the thing above it changes.
+- The Company dropdown is a real menu now rather than a list of words: an
+  icon tile, a bold label and a line of description per row, in a
+  `rounded-2xl` panel. Only the two At Kobblon pages are in it, so the
+  descriptions are written out rather than generated.
+
+**`PixelField` gained a `tone` prop, and this one is worth a line even
+though nothing of yours breaks.** Staw wanted the animated blue pixels in a
+corner of the bar. Drawn with the hero's settings they were invisible, and
+measurably so - the canvas was lighting two thousand subpixels and nobody
+could see one. Three reasons, all of them "a wash behind a whole hero has
+room to be quiet and a strip the height of a bar does not": brand blue over
+near-black at a fifth of the alpha; a `1 - y/rows` falloff that empties
+three of a four-row strip; and a 14px cell, which in 56px is three and a
+half rows.
+
+So: `<PixelField tone="pale" />` is the small version - a pale blue
+(`150 176 255`) lit towards white, a 10px cell, no vertical falloff, and
+half again the alpha. `tone="brand"` is the default and is the hero's
+version, unchanged in every respect. If you have copied `PixelField` into
+the Workspace, you do not have to take the new tone, but do not pass
+`on="chrome"` - that prop is gone, and it was the wrong idea anyway: it
+named the surface it was drawn on when the thing that actually mattered was
+the size of the hole it was drawn in.
+
+**Still not done, and still true from the last round:** the band's wordmark
+comes from the theme even when the art and the background are uploaded; the
+`note` field is stored and ignored where there are prizes; and an uploaded
+art is drawn in the mark's slot, so a wide photograph is cropped the way a
+mark would be.

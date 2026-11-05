@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { PixelField } from '@/components/brand/PixelField'
 import { SiteFooter } from './SiteFooter'
 import { AboutNav } from './AboutNav'
@@ -66,6 +66,33 @@ export function AboutShell({
 }) {
   useForceDark()
   const reduced = useReducedMotion()
+
+  /*
+   * How tall the bar actually is, measured, because the opening is pulled up
+   * by exactly that much.
+   *
+   * It was two numbers written down - 78 and 74, the bar measured once at
+   * each width - and they were both short by the bar's own top padding, so
+   * every page with a hero had a strip of flat `ink` across the top of its
+   * art. Staw: "also in every page theres a lil black bar ontop.. fix that
+   * too". A measurement in a comment is a measurement that goes stale the
+   * first time somebody changes a padding, which is what happened.
+   *
+   * Measured in a layout effect and watched for resizes, so the pull is
+   * right before the first paint and stays right when the window changes
+   * width or the bar wraps.
+   */
+  const bar = useRef<HTMLElement>(null)
+  const [barHigh, setBarHigh] = useState(0)
+
+  useLayoutEffect(() => {
+    const node = bar.current
+    if (!node) return
+    const watch = new ResizeObserver(() => setBarHigh(node.offsetHeight))
+    watch.observe(node)
+    setBarHigh(node.offsetHeight)
+    return () => watch.disconnect()
+  }, [])
   /*
    * Nothing is held still for somebody who asked for less motion: a screen
    * of scrolling that moves nothing is the most annoying version of this
@@ -94,7 +121,7 @@ export function AboutShell({
         * line. The two numbers are the bar measured at both widths, where
         * the top padding differs.
         */}
-      <AboutNav className={hero ? '-mb-[78px] sm:-mb-[74px]' : undefined} />
+      <AboutNav measure={bar} style={hero ? { marginBottom: -barHigh } : undefined} />
 
       {hero && (
         <div

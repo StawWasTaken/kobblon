@@ -2,8 +2,18 @@ import { useEffect, useRef } from 'react'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { cn } from '@/lib/cn'
 
-const CELL = 14
 const BRAND = [27, 52, 232]
+/*
+ * A second set of cells, for a small field rather than a whole page.
+ *
+ * Brand blue over a near-black bar, at a quarter of the alpha, through a
+ * mask, in a strip two centimetres tall: the canvas draws, the pixels are
+ * measurably there, and nobody can see them. A wash behind a whole hero has
+ * the room to be that quiet; a corner of a bar does not. So the small
+ * version is a pale blue lit towards white - the same grid with the contrast
+ * its surface actually leaves it.
+ */
+const PALE = [150, 176, 255]
 
 /**
  * The pixel wash behind the homepage welcome. It is a coarse grid of brand
@@ -11,9 +21,21 @@ const BRAND = [27, 52, 232]
  * out of pixels rather than a particle cloud. It draws on a downscaled
  * canvas at ~20fps and pauses whenever it is off screen.
  */
-export function PixelField({ className }: { className?: string }) {
+export function PixelField({ className, tone = 'brand' }: {
+  className?: string
+  /** 'brand' is the wash behind a hero; 'pale' is the one that has to read
+   * in a strip the size of a bar. */
+  tone?: 'brand' | 'pale'
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const reduced = useReducedMotion()
+
+  const small = tone === 'pale'
+  const cell = small ? PALE : BRAND
+  const lit = small ? [226, 234, 255] : [90, 116, 255]
+  /* A smaller square in a strip, so there are rows of them rather than
+   * three and a half. */
+  const CELL = small ? 10 : 14
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -44,15 +66,21 @@ export function PixelField({ className }: { className?: string }) {
           const wave =
             Math.sin((x * 0.32) + (y * 0.18) - t * 1.1) * 0.5 +
             Math.sin((x * 0.11) - (y * 0.26) + t * 0.7) * 0.5
-          // fade out towards the bottom so headline text stays readable
-          const falloff = 1 - y / rows
+          /*
+           * Fade out towards the bottom so the headline under the wash
+           * stays readable. A bar has no headline under it and only four
+           * rows to spend, so a falloff there empties three of them: the
+           * small version keeps its full height and is faded sideways by
+           * the mask on the element instead.
+           */
+          const falloff = small ? 1 : 1 - y / rows
           const level = (wave * 0.5 + 0.5) * falloff
 
           if (level < 0.32) continue
-          const alpha = (level - 0.32) * 0.85
-          ctx.fillStyle = `rgba(${BRAND[0]}, ${BRAND[1]}, ${BRAND[2]}, ${alpha.toFixed(3)})`
+          const alpha = (level - 0.32) * (small ? 1.5 : 0.85)
+          ctx.fillStyle = `rgba(${cell[0]}, ${cell[1]}, ${cell[2]}, ${alpha.toFixed(3)})`
           // the occasional brighter cell keeps the grid from looking uniform
-          if (level > 0.88) ctx.fillStyle = `rgba(90, 116, 255, ${(alpha * 0.9).toFixed(3)})`
+          if (level > 0.88) ctx.fillStyle = `rgba(${lit[0]}, ${lit[1]}, ${lit[2]}, ${(alpha * 0.9).toFixed(3)})`
           ctx.fillRect(x * CELL, y * CELL, CELL - 2, CELL - 2)
         }
       }
@@ -93,7 +121,7 @@ export function PixelField({ className }: { className?: string }) {
       observer.disconnect()
       window.removeEventListener('resize', onResize)
     }
-  }, [reduced])
+  }, [reduced, tone, small, CELL])
 
   return (
     <canvas

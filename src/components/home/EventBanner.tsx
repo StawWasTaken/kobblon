@@ -76,65 +76,74 @@ export function EventBand({ event, className, flat }: {
   const inside = (
     <>
       {/*
-        * A background of its own, under everything else. Covering rather
-        * than tiled or contained, because the band is one shape at every
-        * width and a picture that letterboxes inside it leaves two bars of
-        * flat colour that nothing else on the homepage has.
+        * Everything that has to stop at the band's edge, in one clipped
+        * layer: the background picture, the theme's light and the darkening
+        * the words sit on. The band itself is not clipped any more, because
+        * the art has to be able to leave it at the top - see below.
         */}
-      {!!back && (
-        <img
-          src={back}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
-        />
-      )}
-      {/*
-        * The light. Two of them: a wide one behind the mark on the right,
-        * which is where the reference puts its glow, and a flat darkening
-        * from the left so the words sit on something rather than on the
-        * brightest part of the picture.
-        */}
-      {/* The theme's light is drawn over the theme's colour and not over
-          somebody's photograph: a radial orange wash on top of a picture
-          that was chosen is the theme overruling the choice. */}
-      {!back && (
-        <span aria-hidden="true" className={cn('pointer-events-none absolute inset-0', look.glow)} />
-      )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/35"
-      />
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+      >
+        {/*
+          * A background of its own, under everything else. Covering rather
+          * than tiled or contained, because the band is one shape at every
+          * width and a picture that letterboxes inside it leaves two bars of
+          * flat colour that nothing else on the homepage has.
+          */}
+        {!!back && (
+          <img
+            src={back}
+            alt=""
+            draggable={false}
+            className="absolute inset-0 h-full w-full select-none object-cover"
+          />
+        )}
+
+        {/* The theme's light is drawn over the theme's colour and not over
+            somebody's photograph: a radial orange wash on top of a picture
+            that was chosen is the theme overruling the choice. */}
+        {!back && <span className={cn('absolute inset-0', look.glow)} />}
+
+        {/* The flat darkening from the left, so the words sit on something
+            rather than on the brightest part of the picture. */}
+        <span className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/35" />
+      </span>
 
       {/*
-        * The art, bleeding out of the top the way the reference's does.
-        * `select-none` and no alt text: it is the picture the band is
-        * made of, and a screen reader reading "Kobblon" twice between the
-        * tag and the heading is noise.
+        * The art, and the one layer on this band with a rule of its own.
+        *
+        * Staw: "i meant for the image to not be cut at the top by the header
+        * but to still be cut at the bottom". So this layer's bottom edge is
+        * the band's bottom edge and it clips there, while its top sits well
+        * above the band and clips nothing - the picture rises out of the top
+        * of the band like something standing behind it, and is cut off level
+        * with the floor.
+        *
+        * The two numbers go together: the layer starts `6rem` above the
+        * band, so `top-[4.5rem]` inside it is `1.5rem` above the band's own
+        * top - which is exactly where the art used to be drawn before it was
+        * clipped off there.
+        *
+        * `select-none` and no alt text: it is the picture the band is made
+        * of, and a screen reader reading "Kobblon" twice between the tag and
+        * the heading is noise.
         */}
-      <img
-        src={art}
-        alt=""
+      <span
         aria-hidden="true"
-        draggable={false}
-        className={cn(
-          /*
-            * Stood on the bottom edge rather than hung from the top.
-            *
-            * Staw: "make the top of the image gets out of the header area
-            * (its cool) but not the bottom part". The art is taller than
-            * the band, so whichever edge it is anchored to is the one that
-            * stays put and the other one bleeds - it was anchored to the
-            * top, so the mark's feet were being cut off along the bottom
-            * edge. Anchored to the bottom it stands on the band and grows
-            * out of the top, which is the half that reads as deliberate.
-            */
-          'pointer-events-none absolute bottom-0 right-[22%] hidden h-[17rem] w-auto select-none',
-          'opacity-90', look.halo,
-          'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
-        )}
-      />
+        className="pointer-events-none absolute inset-x-0 bottom-0 top-[-6rem] overflow-hidden"
+      >
+        <img
+          src={art}
+          alt=""
+          draggable={false}
+          className={cn(
+            'absolute right-[22%] top-[4.5rem] hidden h-[17rem] w-auto select-none',
+            'opacity-90', look.halo,
+            'transition-transform duration-500 group-hover:scale-[1.03] sm:block',
+          )}
+        />
+      </span>
 
       {/* The event's own mark, where the reference puts the thing's name. */}
       {!!look.wordmark && (
@@ -267,7 +276,10 @@ export function EventBand({ event, className, flat }: {
   )
 
   const shell = cn(
-    'group relative block overflow-hidden rounded-2xl border transition-colors',
+    /* No `overflow-hidden` here: the art has to be able to rise out of the
+       top edge. Everything that must stop at the edge is inside its own
+       clipped layer above. */
+    'group relative block rounded-2xl border transition-colors',
     /* A colour of its own beats the theme's, and a picture of its own
        covers both - so the class is only in the way when one is set. */
     !event.back_colour && look.back, look.edge, className,

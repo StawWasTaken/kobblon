@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { faBars, faXmark, faChevronDown } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import {
+  faBars, faXmark, faChevronDown, faChartLine, faScaleBalanced, faCircleInfo,
+} from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
+import { PixelField } from '@/components/brand/PixelField'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { Button } from '@/components/ui/Button'
 import { UserMenu } from '@/components/layout/UserMenu'
@@ -74,6 +78,24 @@ const COMPANY: AboutLink[] = [
   { to: '/policies', label: 'Policies' },
 ]
 
+/*
+ * What each page behind a group actually is, for the menu rows.
+ *
+ * Here rather than on `AboutLink`, because the bar itself has no room for a
+ * line of description and nothing else reads these - a field on the shared
+ * type would be a field every caller has to fill in for a bar that ignores
+ * it.
+ */
+const UNDER_WORDS: Record<string, string> = {
+  '/inner-stock': 'What Kobblon is worth, and who owns it.',
+  '/policies': 'The Terms, the Privacy notice and the Guidelines.',
+}
+
+const UNDER_ART: Record<string, IconDefinition> = {
+  '/inner-stock': faChartLine,
+  '/policies': faScaleBalanced,
+}
+
 export const ABOUT_NAV: AboutEntry[] = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/forum', label: 'Forum' },
@@ -87,7 +109,15 @@ export const ABOUT_LINKS: AboutLink[] = ABOUT_NAV.flatMap(
   (one) => (one.under ? one.under : [one]),
 )
 
-export function AboutNav({ className }: { className?: string }) {
+export function AboutNav({ className, measure, style }: {
+  className?: string
+  /** The shell pulls the opening up with this. */
+  style?: React.CSSProperties
+  /** The shell holds this so it can pull its opening up by exactly the bar's
+   * height. Guessed numbers left a black strip across the top of every page
+   * with a hero, which is what this is instead of. */
+  measure?: React.Ref<HTMLElement>
+}) {
   const { profile } = useAuth()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
@@ -107,6 +137,8 @@ export function AboutNav({ className }: { className?: string }) {
 
   return (
     <header
+      ref={measure}
+      style={style}
       className={cn(
         'sticky top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-4',
         className,
@@ -116,16 +148,43 @@ export function AboutNav({ className }: { className?: string }) {
         className={cn(
           'relative mx-auto flex max-w-6xl items-center gap-5 rounded-2xl border px-4 py-3 sm:px-6',
           'backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300',
-          /* Nearly solid once the page has moved, see-through over the
-             hero. Both are black rather than `ink`, because the pill is
-             meant to read as a thing lying on the page and not as the
-             page's own surface sliding up. */
+          /*
+           * The page's own background colour. Staw: "i want the navbar to
+           * be the normal colour, not full black", and then: "i meant the
+           * normal colour to be the background colour". `ink` is 16,16,18 -
+           * near black but not black, and the same surface every other page
+           * on this site is built on, which is the difference between a bar
+           * that belongs to the site and one borrowed from a reference.
+           *
+           * Nearly solid once the page has moved, see-through over the
+           * hero, so the art still shows through it at the top of a page.
+           */
           moved || open
-            ? 'border-white/10 bg-black/80 shadow-[0_10px_40px_rgba(0,0,0,0.45)]'
-            : 'border-white/[0.07] bg-black/45 shadow-[0_8px_30px_rgba(0,0,0,0.25)]',
+            ? 'border-white/10 bg-ink/90 shadow-[0_10px_40px_rgba(0,0,0,0.45)]'
+            : 'border-white/[0.08] bg-ink/55 shadow-[0_8px_30px_rgba(0,0,0,0.25)]',
           open && 'rounded-b-none',
         )}
       >
+        {/*
+          * The pixels, in the corner. Staw: "idk in a corner i want the
+          * animated blue pixels stuff".
+          *
+          * The same canvas the top of every At Kobblon page opens with, so
+          * the bar is made of the same thing the page under it is rather
+          * than carrying a decoration of its own. It is on the right, where
+          * the bar has no words, and faded out towards the middle so it
+          * never ends up behind one - a grid of lit cells under "Download"
+          * is the one place this could cost legibility.
+          */}
+        <span
+          aria-hidden="true"
+          /* Clipped on itself rather than by the pill: the pill holds the
+             Company menu, and `overflow-hidden` there cuts that off. */
+          className="pointer-events-none absolute inset-y-0 right-0 w-44 overflow-hidden rounded-r-2xl opacity-60 [mask-image:linear-gradient(to_right,transparent,black_75%,black)]"
+        >
+          <PixelField tone="pale" className="h-full w-full" />
+        </span>
+
         <button
           type="button"
           onClick={() => setOpen((was) => !was)}
@@ -199,7 +258,7 @@ export function AboutNav({ className }: { className?: string }) {
 
       {open && (
         <nav className={cn(
-          'mx-auto max-w-6xl rounded-b-2xl border border-t-0 border-white/10 bg-black/80 px-3 pb-3 pt-2',
+          'mx-auto max-w-6xl rounded-b-2xl border border-t-0 border-white/10 bg-ink/90 px-3 pb-3 pt-2',
           'backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.45)] sm:hidden',
         )}>
           {ABOUT_NAV.map((one) => (
@@ -286,19 +345,49 @@ function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => bo
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 w-48 pt-2">
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-ink/95 p-1 shadow-pop backdrop-blur-xl">
+        /*
+          * Staw asked for "a better dropdown menu". It was a 12rem box with
+          * two words in it, which is a list and not a menu: nothing said
+          * what either page was, and the box did not look like anything
+          * else this site drops open.
+          *
+          * So each entry is its own row - a drawing, the name, and the one
+          * line that says what it is - on the bar's own colour, with the
+          * page you are on marked the way the bar marks it. It comes in
+          * with the site's `pop-in`, which is what every other menu here
+          * does, and it is wider than the word it hangs off because a menu
+          * the width of its trigger reads as a tooltip.
+          */
+        <div className="absolute left-1/2 top-full z-50 w-[19rem] -translate-x-1/2 pt-3">
+          <div className="animate-pop-in overflow-hidden rounded-2xl border border-white/10 bg-ink/95 p-1.5 shadow-pop backdrop-blur-xl">
             {(entry.under ?? []).map((one) => (
               <Link
                 key={one.to}
                 to={one.to}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  'block rounded-lg px-3 py-2 text-sm font-bold transition-colors',
-                  here(one.to) ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white',
+                  'group/row flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors',
+                  here(one.to) ? 'bg-white/10' : 'hover:bg-white/[0.07]',
                 )}
               >
-                {one.label}
+                <span className={cn(
+                  'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/10 transition-colors',
+                  here(one.to) ? 'bg-brand text-white' : 'bg-white/5 text-white/70 group-hover/row:text-white',
+                )}>
+                  <Glyph icon={UNDER_ART[one.to] ?? faCircleInfo} className="text-xs" />
+                </span>
+
+                <span className="min-w-0">
+                  <span className={cn(
+                    'block text-sm font-bold',
+                    here(one.to) ? 'text-white' : 'text-white/85 group-hover/row:text-white',
+                  )}>
+                    {one.label}
+                  </span>
+                  <span className="block text-xs font-medium leading-snug text-white/45">
+                    {UNDER_WORDS[one.to] ?? 'A page about Kobblon.'}
+                  </span>
+                </span>
               </Link>
             ))}
           </div>
