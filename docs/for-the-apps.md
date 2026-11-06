@@ -19593,3 +19593,27 @@ and every one of these three panels draw empty until the Launcher calls
 `join_world_server` / `still_in_world` / `left_world_server` on a heartbeat.
 
 Waiting to be applied: `0327`, `0328`, `0329`.
+
+## Round two hundred and sixty-seven - the home page row is the same face as everywhere else
+
+Staw: "still doesnt show the name of the world under the displayname into
+the friendlist into the homepage (theres no badges either, no best friend
+badges either, fix that!!)".
+
+He is right, and the reason is the one this project keeps relearning: that
+row drew its own person. `FriendsRail` had its own picture and its own
+name, so `PersonFace` gaining the World under the display name last round
+reached the profile grid and the friends page and not the home page - and
+the same row had never had the verification and staff marks or the best
+friend heart either, so an account read as unverified there and verified
+one press later, and the row sorted best friends to the front with nothing
+saying why.
+
+`FriendsRail` now draws `PersonFace`, which owns the person: the face, the
+marks, the heart, and the World under the name. `PersonFace` gains `big`
+for the home page's larger faces, and the rail sorts best friends first and
+then whoever is here.
+
+Nothing shared changed shape; no API change, no migration. Still waiting to
+be applied: `0327`, `0328`, `0329`. Still true: nothing writes
+`world_players`, so the World line is blank until the Launcher heartbeats.

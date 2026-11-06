@@ -5,10 +5,7 @@ import { Skeleton } from '@/components/ui/States'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { peopleList } from '@/lib/api'
-import { profileLink } from '@/lib/links'
-import { nameOf } from '@/lib/avatars'
-import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { FriendPeek } from '@/components/social/FriendPeek'
+import { PersonFace } from '@/components/social/PersonCard'
 import { presenceNow, usePresenceVersion, useWhereabouts } from '@/hooks/usePresenceStore'
 
 /**
@@ -34,11 +31,17 @@ export function FriendsRail() {
      to the front of it and the dot on their face says so. */
   useWhereabouts(data ?? [])
 
-  /* Here first, asked the same way the dot on each face is asked. */
+  /*
+   * Best friends first, then whoever is here, asked the same way the dot on
+   * each face is asked. The heart on a face is the reason a list reorders
+   * itself, and a list that reorders itself without saying why is a list
+   * somebody thinks is broken.
+   */
   const friends = (data ?? [])
     .slice()
     .sort((a, b) =>
-      Number(presenceNow(b) !== 'offline') - Number(presenceNow(a) !== 'offline'))
+      Number(Boolean(b.best)) - Number(Boolean(a.best))
+      || Number(presenceNow(b) !== 'offline') - Number(presenceNow(a) !== 'offline'))
 
   return (
     <section className="mb-8">
@@ -113,18 +116,18 @@ export function FriendsRail() {
             </div>
           ))}
 
+        {/*
+          * The same face as everywhere else, at the home page's size.
+          *
+          * This row drew its own: a picture and a name and nothing else, so
+          * a verified account read as unverified here and verified one
+          * press later, a best friend sorted to the front with nothing
+          * saying why, and the World somebody was in - which this row asks
+          * the roster for already - was never printed. One owner for the
+          * person, which is what `PersonFace` is for.
+          */}
         {friends.slice(0, SHOWN).map((friend) => (
-          <FriendPeek key={friend.id} friend={friend}>
-            <Link
-              to={profileLink(friend)}
-              className="flex flex-col items-center gap-2 text-center sm:gap-2.5"
-            >
-              <PersonAvatar person={friend} size="2xl" className="mx-auto h-16 w-16 sm:h-20 sm:w-20" />
-              <span className="w-full truncate text-xs font-semibold text-white/80 sm:text-sm">
-                {nameOf(friend)}
-              </span>
-            </Link>
-          </FriendPeek>
+          <PersonFace key={friend.id} person={friend} big />
         ))}
       </div>
     </section>

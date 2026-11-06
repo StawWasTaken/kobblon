@@ -17,7 +17,10 @@ const person = (n: number) => ({
   avatar_url: null, avatar_changed_at: null, is_online: true,
 })
 
-const staw = { id: 'p1', username: 'stawrer', display_name: 'staw', avatar_url: null, avatar_changed_at: null, is_online: true }
+const staw = {
+  id: 'p1', username: 'stawrer', display_name: 'staw', avatar_url: null,
+  avatar_changed_at: null, is_online: true, is_verified: true, is_admin: true, best: true,
+}
 
 learnWhereabouts(['p1', 'p2', 'p3'], [
   {
@@ -53,6 +56,12 @@ createRoot(document.getElementById('root')!).render(
             <div className="grid grid-cols-4 gap-2">
               {[staw, person(2), person(3), person(4)].map((who) => (
                 <PersonFace key={who.id} person={who} />
+              ))}
+            </div>
+            <h2 className="font-display text-sm font-extrabold uppercase tracking-wider text-muted">The home page row</h2>
+            <div className="grid grid-cols-6 gap-x-8 gap-y-7">
+              {[staw, { ...person(2), is_verified: true }, person(3), person(4)].map((who) => (
+                <PersonFace key={who.id} person={who} big />
               ))}
             </div>
           </section>

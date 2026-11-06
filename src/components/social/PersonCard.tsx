@@ -221,7 +221,11 @@ export function PersonCard({
  * nothing else, so a verified account looked unverified on a profile and
  * verified one press later.
  */
-export function PersonFace({ person }: { person: Somebody }) {
+export function PersonFace({ person, big }: {
+  person: Somebody
+  /** The home page's row, where the faces are the first thing on the page. */
+  big?: boolean
+}) {
   const where = useWhereabout(person.id)
 
   return (
@@ -232,7 +236,12 @@ export function PersonFace({ person }: { person: Somebody }) {
         // the dot on one picture is nowhere near the next one.
         className="block rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
       >
-        <PersonAvatar person={person} size="xl" className="mx-auto" ring="ring-ink" />
+        <PersonAvatar
+          person={person}
+          size={big ? '2xl' : 'xl'}
+          className={cn('mx-auto', big && 'h-16 w-16 sm:h-20 sm:w-20')}
+          ring="ring-ink"
+        />
         <p className="mt-2 flex items-center justify-center gap-1 text-sm font-bold">
           {person.best && (
             <Glyph
