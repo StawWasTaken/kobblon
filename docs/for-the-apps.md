@@ -19554,3 +19554,42 @@ is the whole answer on the screen; inside a section that has a heading, a
 count and a refresh above it, it was shouting.
 
 No other change, no API change.
+
+## Round two hundred and sixty-six - where somebody is, said properly
+
+Staw, three things off three screenshots: the "Playing [World]" line on a
+profile moves out from under the handle and goes under the buttons on the
+right, as a proper panel; the friend hover card gets a better "is playing"
+block while staying the same card as the one somebody not playing gets; and
+a friends list says the World under the display name.
+
+**Migration `0329` - `where_they_are` gains `world_cover`.** This is the
+line that matters to you. The function now returns
+
+```
+user_id, world_id, world_name, world_content_id, world_cover,
+server_id, how_many, capacity, since
+```
+
+`world_cover` is `worlds.cover_url` and it is new in the middle of the row,
+so anything reading that result positionally rather than by name moves.
+`create or replace` cannot add a column to a function's return type, so the
+migration drops and recreates it; grants are the same (`anon`,
+`authenticated`), and the same rows are still left out for the same reasons
+0317 gives - private servers, closed ones, unpublished and removed Worlds.
+A person in a private room reads as not playing, deliberately.
+
+On the website: `ActivityLine` is now a panel with the World's picture, its
+name, "1 of 50 in there", a capacity bar and Join them, with a "Playing
+now" eyebrow; `FriendPeek` draws the same picture-name-counts tile inside
+the card it already had, so playing and not playing are one design with a
+block that appears rather than two cards; and `PersonFace` puts the World
+under the display name, taking the handle's line rather than adding one so
+a row of faces stays one height.
+
+Still true and still blocking all of it: **nothing writes `world_players`**.
+Presence, live counts, the server lists, friends' servers, the rating gate
+and every one of these three panels draw empty until the Launcher calls
+`join_world_server` / `still_in_world` / `left_world_server` on a heartbeat.
+
+Waiting to be applied: `0327`, `0328`, `0329`.

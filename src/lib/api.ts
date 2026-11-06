@@ -3220,6 +3220,8 @@ export type Whereabouts = {
   world_id: string
   world_name: string
   world_content_id: number | null
+  /** The World's cover, so a card can show what it is rather than name it. */
+  world_cover: string | null
   server_id: string
   how_many: number
   capacity: number

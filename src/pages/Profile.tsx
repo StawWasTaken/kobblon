@@ -478,10 +478,6 @@ export default function Profile() {
 
             <p className="mt-1.5 text-sm text-muted">@{user.username}</p>
 
-            {/* Where they are, when they are somewhere. Nothing is drawn
-                when they are not in a World. */}
-            <ActivityLine person={user} isMe={isMe} className="mt-3 max-w-md" />
-
             {/* The three lists are links, because they are a page of their
                 own rather than something to unfold here. */}
             <div className="mt-4 flex flex-wrap gap-2">
@@ -551,7 +547,7 @@ export default function Profile() {
 
           </div>
 
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
             <div className="flex flex-wrap items-start justify-end gap-2">
             {isMe ? (
               <>
@@ -725,6 +721,11 @@ export default function Profile() {
               ]}
             />
             </div>
+
+            {/* Where they are, when they are somewhere, under the buttons
+                rather than wedged between the name and the counts. Nothing
+                is drawn when they are not in a World. */}
+            <ActivityLine person={user} isMe={isMe} className="w-full sm:w-80" />
           </div>
         </div>
       </section>

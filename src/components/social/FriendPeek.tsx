@@ -50,29 +50,67 @@ function watch(tell: () => void) {
   return () => { watching.delete(tell) }
 }
 
-/** Where they are, named, with how full that copy is. */
+/**
+ * Where they are: the World's own picture, its name, and how full that copy
+ * is, as one tile.
+ *
+ * Staw: "i want a better design for 'friend is playing' thing, but keep the
+ * same uniformized design as the ones we have for those not playing". So
+ * the card is the same card - same width, same head, same two doors along
+ * the bottom - and this is a block that appears in the middle of it when
+ * there is something to show. A separate layout for somebody who happens to
+ * be in a World would be two hover cards, which is the thing that was
+ * wrong with three different person cards.
+ */
 function WorldHere({ where }: { where: Whereabouts }) {
+  const full = where.how_many >= where.capacity
+  const share = where.capacity > 0
+    ? Math.min(100, Math.round((where.how_many / where.capacity) * 100))
+    : 0
+
   const inside = (
     <>
-      {where.world_name}
-      <span className="ml-1 font-semibold text-white/40">
-        {where.how_many}/{where.capacity}
+      {/* No cover is drawn as the mark rather than as a hole: an empty box
+          the size of a thumbnail reads as a picture that failed. */}
+      <span className="relative block h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-white/15 bg-ink-raised">
+        {where.world_cover ? (
+          <img src={where.world_cover} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-white/30">
+            <Glyph icon={faPlay} className="text-[9px]" />
+          </span>
+        )}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[11px] font-extrabold leading-tight text-white">
+          {where.world_name}
+        </span>
+        <span className="mt-0.5 block text-[10px] font-semibold tabular-nums text-white/50">
+          {where.how_many} of {where.capacity} in there
+        </span>
+        <span className="mt-1 block h-0.5 overflow-hidden rounded-full bg-black/50">
+          <span
+            className={cn('block h-full rounded-full', full ? 'bg-danger' : 'bg-space-bright')}
+            style={{ width: `${Math.max(share, 6)}%` }}
+          />
+        </span>
       </span>
     </>
   )
 
-  const look = 'mt-1.5 block truncate text-[11px] font-bold text-space-bright'
+  const look = 'mt-2 flex items-center gap-2 rounded-lg border border-space/40 bg-space/10 p-1.5'
 
   return where.world_content_id
     ? (
       <Link
         to={worldLink({ content_id: where.world_content_id, name: where.world_name })}
-        className={cn(look, 'hover:underline')}
+        className={cn(look, 'transition-colors hover:border-space/70 hover:bg-space/20')}
       >
         {inside}
       </Link>
     )
-    : <p className={look}>{inside}</p>
+    : <span className={look}>{inside}</span>
 }
 
 /**
@@ -174,7 +212,7 @@ export function FriendPeek({ friend, children, className }: {
       {children}
 
       {open && (
-        <div className="absolute left-1/2 top-full z-30 w-44 -translate-x-1/2 pt-2">
+        <div className="absolute left-1/2 top-full z-30 w-52 -translate-x-1/2 pt-2">
           <div className="relative origin-top animate-pop-in">
             {/*
               * The pointer, drawn after the card rather than before it.
@@ -195,7 +233,7 @@ export function FriendPeek({ friend, children, className }: {
                   <StatusDot presence={presence} size="sm" />
                   {/* "In a World" over the World's own name says the same thing
                       twice; the name below is the half worth reading. */}
-                  {where ? 'Playing' : presenceWords[presence]}
+                  {where ? 'is playing' : presenceWords[presence]}
                 </p>
 
                 {/* The World by name, because "In a World" is not

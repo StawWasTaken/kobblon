@@ -21,6 +21,14 @@ import { cn } from '@/lib/cn'
  * Nothing is drawn when they are not in a World. An activity line that says
  * "not doing anything" is a line that is wrong the moment it is true of
  * nobody, and it is on every profile on the site.
+ *
+ * It is a panel rather than a line now, and it sits under the buttons on
+ * the right rather than under the handle. Staw: "for the 'Playing [world]'
+ * to be instead of under the handle, under the buttons on the right and to
+ * have a big update/upgrade polished one". Under the handle it was a strip
+ * wedged between a name and three count pills, competing with both; beside
+ * the buttons it is the other thing you can *do* on somebody's page, which
+ * is where Join belongs.
  */
 export function ActivityLine({ person, isMe, className }: {
   person: { id: string; display_name: string } | null | undefined
@@ -35,6 +43,9 @@ export function ActivityLine({ person, isMe, className }: {
   if (!where) return null
 
   const full = where.how_many >= where.capacity
+  const share = where.capacity > 0
+    ? Math.min(100, Math.round((where.how_many / where.capacity) * 100))
+    : 0
 
   /*
    * The server id travels as `room`. It is a hint and never a permission:
@@ -49,52 +60,95 @@ export function ActivityLine({ person, isMe, className }: {
     }, where.server_id)
   }
 
-  const name = where.world_content_id
-    ? (
-      <Link
-        to={worldLink({ content_id: where.world_content_id, name: where.world_name })}
-        className="font-bold text-space-bright hover:underline"
-      >
-        {where.world_name}
-      </Link>
-    )
-    : <span className="font-bold text-space-bright">{where.world_name}</span>
+  const address = where.world_content_id
+    ? worldLink({ content_id: where.world_content_id, name: where.world_name })
+    : null
+
+  /*
+   * The picture, which is what makes this worth the room it takes.
+   *
+   * A World with no cover is drawn as the house mark rather than as a hole:
+   * an empty box the size of a thumbnail reads as a picture that failed to
+   * load, which is a bug report nobody can act on.
+   */
+  const picture = (
+    <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-ink-raised">
+      {where.world_cover ? (
+        <img src={where.world_cover} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <span className="grid h-full w-full place-items-center text-white/30">
+          <Glyph icon={faPlay} className="text-sm" />
+        </span>
+      )}
+    </span>
+  )
 
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-space/40 bg-space/10 px-3 py-2',
+        'overflow-hidden rounded-2xl border border-space/45 bg-gradient-to-br from-space/20 to-space/5 shadow-lg shadow-space/10',
         className,
       )}
     >
-      <p className="flex min-w-0 items-center gap-2 text-sm">
-        <span className="relative grid h-2.5 w-2.5 shrink-0 place-items-center">
-          {/* The ring says it is happening now rather than that it happened. */}
-          <span className="absolute inset-0 animate-ping rounded-full bg-space/60" />
-          <span className="relative h-2.5 w-2.5 rounded-full bg-space" />
+      {/* The eyebrow, so the panel says what kind of thing it is before it
+          says which World. The ring says it is happening now rather than
+          that it happened. */}
+      <p className="flex items-center gap-2 border-b border-space/30 bg-space/15 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-space-bright">
+        <span className="relative grid h-2 w-2 place-items-center">
+          <span className="absolute inset-0 animate-ping rounded-full bg-space-bright/60" />
+          <span className="relative h-2 w-2 rounded-full bg-space-bright" />
         </span>
-        <span className="truncate">
-          Playing {name}
-        </span>
+        Playing now
       </p>
 
-      <p className="flex items-center gap-1.5 text-xs text-white/55">
-        <Glyph icon={faUserGroup} className="text-[10px]" />
-        {formatCount(where.how_many)} of {formatCount(where.capacity)} in there
-      </p>
+      <div className="flex items-center gap-3 p-3">
+        {address ? <Link to={address} className="shrink-0">{picture}</Link> : picture}
 
-      {!isMe && (
-        <Button
-          size="sm"
-          variant={full ? 'subtle' : 'yes'}
-          icon={faPlay}
-          disabled={full}
-          onClick={join}
-          className="ml-auto"
-        >
-          {full ? 'Full' : 'Join them'}
-        </Button>
-      )}
+        <div className="min-w-0 flex-1">
+          {address ? (
+            <Link
+              to={address}
+              className="block truncate font-display text-base font-extrabold leading-tight text-white hover:underline"
+            >
+              {where.world_name}
+            </Link>
+          ) : (
+            <p className="truncate font-display text-base font-extrabold leading-tight text-white">
+              {where.world_name}
+            </p>
+          )}
+
+          <p className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-white/60">
+            <Glyph icon={faUserGroup} className="shrink-0 text-[10px]" />
+            <span className="tabular-nums">
+              {formatCount(where.how_many)} of {formatCount(where.capacity)}
+            </span>
+            in there
+          </p>
+
+          {/* How full that copy is, drawn rather than only counted, so a
+              room about to refuse you looks like one before you press. */}
+          <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-black/40">
+            <span
+              className={cn('block h-full rounded-full', full ? 'bg-danger' : 'bg-space-bright')}
+              style={{ width: `${Math.max(share, 4)}%` }}
+            />
+          </span>
+        </div>
+
+        {!isMe && (
+          <Button
+            size="sm"
+            variant={full ? 'subtle' : 'yes'}
+            icon={full ? undefined : faPlay}
+            disabled={full}
+            onClick={join}
+            className="shrink-0"
+          >
+            {full ? 'Full' : 'Join them'}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

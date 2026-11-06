@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { faHeart } from '@fortawesome/free-solid-svg-icons'
+import { faHeart, faPlay } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { NameMarks } from '@/components/brand/Verified'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
@@ -120,7 +120,7 @@ export function PersonLine({ person, note, className }: {
       >
         {note
           ?? (where
-            ? `In ${where.world_name}`
+            ? `Playing ${where.world_name}`
             : here
               ? presenceWords[presence]
               : person.last_seen_at
@@ -222,6 +222,8 @@ export function PersonCard({
  * verified one press later.
  */
 export function PersonFace({ person }: { person: Somebody }) {
+  const where = useWhereabout(person.id)
+
   return (
     <FriendPeek friend={person}>
       <Link
@@ -242,7 +244,25 @@ export function PersonFace({ person }: { person: Somebody }) {
           <span className="truncate">{person.display_name}</span>
           <NameMarks person={person} className="text-[10px]" />
         </p>
-        <p className="truncate text-[11px] text-muted">@{person.username}</p>
+        {/*
+          * The World under the name, when they are in one.
+          *
+          * Staw: "under the display name of the user (in the friendslists)
+          * you should put the world theyre playing". It takes the handle's
+          * line rather than adding one, so a row of faces stays a row -
+          * a line that only some of them have makes a grid of six sit at
+          * four different heights. The handle is one press away on the
+          * card behind the face, and a World somebody is in right now is
+          * the half worth reading on a friends list.
+          */}
+        {where ? (
+          <p className="flex items-center justify-center gap-1 truncate text-[11px] font-bold text-space-bright">
+            <Glyph icon={faPlay} className="shrink-0 text-[8px]" />
+            <span className="truncate">{where.world_name}</span>
+          </p>
+        ) : (
+          <p className="truncate text-[11px] text-muted">@{person.username}</p>
+        )}
       </Link>
     </FriendPeek>
   )
