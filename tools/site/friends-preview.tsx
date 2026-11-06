@@ -1,9 +1,14 @@
-/* The redesigned friends list: the tabs and the cards, with nothing around them. */
+/*
+ * The one person, at both sizes: the card the friends page and People draw,
+ * and the face grid a profile draws, side by side so the two can be checked
+ * against each other rather than one at a time in two windows.
+ */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { faUserGroup, faInbox, faHeart, faEyeSlash, faBan, faComment, faEllipsis } from '@fortawesome/free-solid-svg-icons'
-import { PersonCard, ListTab } from '@/pages/Friends'
+import { ListTab } from '@/pages/Friends'
+import { PersonCard, FaceGrid } from '@/components/social/PersonCard'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import '@/index.css'
@@ -11,7 +16,10 @@ import '@/index.css'
 const people = [
   { id: '1', username: 'marri', display_name: 'marri', content_id: 1, is_online: true, best: true, is_verified: true },
   { id: '2', username: 'stawrer', display_name: 'Staw', content_id: 2, is_online: true, in_space_id: 'x' },
-  { id: '3', username: 'quietone', display_name: 'A rather long display name', content_id: 3, is_online: false },
+  { id: '3', username: 'quietone', display_name: 'A rather long display name', content_id: 3, is_online: false, last_seen_at: new Date(Date.now() - 36e5).toISOString() },
+  { id: '4', username: 'builder', display_name: 'builder', content_id: 4, is_online: true, activity: 'building', bio: 'Makes obstacle courses and nothing else. Been here since the first week.' },
+  { id: '5', username: 'hushed', display_name: 'hushed', content_id: 5, is_online: true, i_ignore: true },
+  { id: '6', username: 'staffer', display_name: 'staffer', content_id: 6, is_online: false, is_admin: true },
 ]
 
 const dots = (
@@ -53,6 +61,8 @@ function Demo() {
           <PersonCard
             key={person.id}
             person={person as never}
+            friend
+            quiet={person.i_ignore}
             menu={dots}
             actions={(
               <>
@@ -63,6 +73,27 @@ function Demo() {
           />
         ))}
       </ul>
+
+      {/* The same people as People draws them: a square picture, their own
+          words, and Add rather than Chat. */}
+      <h2 className="mb-3 mt-8 font-display text-xl font-extrabold">On People</h2>
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {people.slice(0, 3).map((person) => (
+          <PersonCard
+            key={person.id}
+            person={person as never}
+            square
+            bio
+            menu={dots}
+            actions={<Button size="sm">Add</Button>}
+          />
+        ))}
+      </ul>
+
+      {/* And the small end of the same design, which is what a profile shows
+          before See all. */}
+      <h2 className="mb-3 mt-8 font-display text-xl font-extrabold">On a profile</h2>
+      <FaceGrid people={people as never} />
     </div>
   )
 }

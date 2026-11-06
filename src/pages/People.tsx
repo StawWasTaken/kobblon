@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { NameMarks } from '@/components/brand/Verified'
-import { StatusDot, presenceOf, presenceWords } from '@/components/ui/StatusDot'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -24,11 +23,11 @@ import { Menu } from '@/components/ui/Menu'
 import { usePersonActions } from '@/components/social/personActions'
 import type { PeopleSort } from '@/lib/api'
 import { profileLink } from '@/lib/links'
-import { formatCount, timeAgo } from '@/lib/format'
+import { formatCount } from '@/lib/format'
 import type { Profile } from '@/types/db'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { cn } from '@/lib/cn'
+import { PersonCard } from '@/components/social/PersonCard'
 
 /*
  * People, put in order.
@@ -286,19 +285,50 @@ export default function People() {
         )}
 
         {!people.loading && !!others.length && (
-          <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-            {others.map((person) => (
-              <PersonCard
-                key={person.id}
-                person={person}
-                friend={friendIds.has(person.id)}
-                sent={sent.includes(person.id)}
-                onAdd={() => add(person)}
-                onMessage={() => chat(person)}
-                menu={menuFor(person)}
-              />
-            ))}
-          </div>
+          <ul className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+            {others.map((person) => {
+              const friend = friendIds.has(person.id)
+              const asked = sent.includes(person.id)
+              return (
+                <PersonCard
+                  key={person.id}
+                  person={person}
+                  square
+                  bio
+                  friend={friend}
+                  menu={menuFor(person)}
+                  tag={friend ? (
+                    <span className="text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+                      Friend
+                    </span>
+                  ) : undefined}
+                  actions={
+                    <>
+                      {friend ? (
+                        <Button size="sm" variant="subtle" icon={faComment} onClick={() => chat(person)}>
+                          Message
+                        </Button>
+                      ) : (
+                        /* Offering to befriend somebody who is already your
+                           friend is the kind of control that teaches people
+                           not to read the buttons. */
+                        <Button
+                          size="sm"
+                          variant={asked ? 'subtle' : 'primary'}
+                          icon={asked ? faCheck : faUserPlus}
+                          disabled={asked}
+                          onClick={() => add(person)}
+                        >
+                          {asked ? 'Sent' : 'Add'}
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" to={profileLink(person)}>Profile</Button>
+                    </>
+                  }
+                />
+              )
+            })}
+          </ul>
         )}
 
         {/* The rail's foot is hidden on a phone, so the slot goes under the
@@ -311,91 +341,3 @@ export default function People() {
   )
 }
 
-/**
- * One person, and the card knows which one.
- *
- * A stranger gets "Add". A friend gets a green edge, the word, and the door
- * you actually use on a friend, which is a message. Offering to befriend
- * somebody who is already your friend is the kind of control that teaches
- * people not to read the buttons.
- */
-function PersonCard({ person, friend, sent, onAdd, onMessage, menu }: {
-  person: Profile
-  friend: boolean
-  sent: boolean
-  onAdd: () => void
-  onMessage: () => void
-  menu?: React.ReactNode
-}) {
-  const presence = presenceOf(person)
-  const here = presence !== 'offline'
-
-  return (
-    <article
-      className={cn(
-        'group flex flex-col gap-3 rounded-2xl border bg-ink-card p-4 transition-colors',
-        friend ? 'border-space/40 hover:border-space/70' : 'border-ink-line hover:border-brand/60',
-      )}
-    >
-      <div className="flex items-start gap-3.5">
-        <Link to={profileLink(person)} className="relative shrink-0">
-          <PersonAvatar person={person} size="lg" square ring="ring-ink-card" />
-        </Link>
-
-        <div className="min-w-0 flex-1">
-          <Link
-            to={profileLink(person)}
-            className="flex items-center gap-1.5 hover:text-link"
-          >
-            <span className="truncate font-bold">{person.display_name}</span>
-            <NameMarks person={person} className="text-[11px]" />
-          </Link>
-          <p className="truncate text-xs text-muted">@{person.username}</p>
-
-          {/* The second line: where they are, or when they last were. It is
-              the one thing about a stranger worth knowing from a grid. */}
-          <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold">
-            <StatusDot presence={presence} size="xs" />
-            <span className={here ? 'text-white/70' : 'text-white/40'}>
-              {here
-                ? presenceWords[presence]
-                : person.last_seen_at
-                  ? `Last seen ${timeAgo(person.last_seen_at)}`
-                  : 'Offline'}
-            </span>
-            {friend && (
-              <span className="ml-1 font-extrabold uppercase tracking-wide text-space-bright">
-                Friend
-              </span>
-            )}
-          </p>
-        </div>
-
-        {menu}
-      </div>
-
-      <p className="line-clamp-2 min-h-[2.25rem] text-xs leading-relaxed text-white/55">
-        {person.bio || <span className="text-white/25">Nothing written yet.</span>}
-      </p>
-
-      <div className="flex items-center gap-1.5">
-        {friend ? (
-          <Button size="sm" variant="subtle" icon={faComment} onClick={onMessage}>
-            Message
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant={sent ? 'subtle' : 'primary'}
-            icon={sent ? faCheck : faUserPlus}
-            disabled={sent}
-            onClick={onAdd}
-          >
-            {sent ? 'Sent' : 'Add'}
-          </Button>
-        )}
-        <Button size="sm" variant="ghost" to={profileLink(person)}>Profile</Button>
-      </div>
-    </article>
-  )
-}

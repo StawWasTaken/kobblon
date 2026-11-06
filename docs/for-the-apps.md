@@ -18789,3 +18789,69 @@ than reading them from the site, take this file again.** Nothing breaks if
 you do not; you would just be drawing the old face beside our new one,
 which is the quiet kind of difference that only shows when the two windows
 are open together.
+
+## Round two hundred and forty-nine - one person everywhere, and a Community that is not a tab strip
+
+Two redesigns, and the first of them is a shared component you can mount.
+
+**`@/components/social/PersonCard` owns a person now.** There were three
+drawings of one person: a card on the friends page, a near-identical card
+on People with a square picture and a bio, and a grid of faces on a profile
+with no marks and no presence dot at all. So somebody's friends read as
+three different kinds of thing depending on which door you came through,
+and a verified account looked unverified on a profile and verified one
+press later. The file exports:
+
+- `PersonCard({ person, note, bio, tag, actions, menu, quiet, friend, square })`
+  - the full card. It draws the face, the name, the `@handle` and the
+  presence line; the page supplies the buttons and the reason the person is
+  in its list. `friend` gives it the green edge, `quiet` draws it back
+  (blocked, or being ignored).
+- `PersonFace` and `FaceGrid({ people })` - the small end of the same
+  design, which is what a profile shows before "See all". The cap is the
+  caller's, so the heading's count stays the real one.
+- `PersonName`, `PersonLine` - the two halves on their own, if you are
+  laying a person out yourself.
+- `PersonGrid` - the grid the cards sit in, so every list of people is the
+  same width.
+
+`Somebody`, its input type, is a loose shape: id, username, display_name
+and whatever presence and marks fields you have. A `PersonRow` from
+`peopleList`, a `Profile`, and a `CommunityMember` all satisfy it.
+
+**The presence line asks at the moment of drawing**, through
+`useLivePresence`, rather than reading the `is_online` the row arrived
+with. That flag goes stale the moment the page stops fetching, which is how
+a heading saying "Around now" ended up over three people each labelled
+Offline. If you copy this card, copy that: the row's flag is the fallback
+for somebody who is not here to speak for themselves, not the answer.
+
+**The Community page has no tabs.** It was About, Shop, Events, Members,
+Affiliates across the top, with everything alive in the Community hidden
+inside the first of them - the Roblox group page nearly tab for tab. Now
+the page is the place: announcements, what is on, and the wall straight
+down the middle, with the standing facts down the side. Nothing was
+removed; all four full lists are still there, at `?view=members`,
+`?view=events`, `?view=shop` and `?view=allies`, which means a link to the
+member list is a real address again rather than a state nobody could link
+to.
+
+**`@/components/community/CommunitySide` is the side, and you can mount
+it.** It takes `group`, `roster`, `coming`, `store`, `allies`, `enemies`
+and an optional `foot`, reads no page state and asks for no provider. The
+advert is a prop rather than an import for a reason worth repeating: the
+bare page under `tools/site/` caught it throwing `useAuth must be used
+inside <AuthProvider>` the first time it was mounted alone, which in the
+Workspace is a panel going blank and no bug report anybody can act on.
+That is the third time that exact trap has been caught by a bare page.
+
+"In here" sorts the roster by who is actually online, not by who joined
+first. A member list ordered by join date tells you about the past; ordered
+by presence it answers the question somebody looking at a Community is
+asking, which is whether there is anybody to talk to.
+
+**Still not done, same as last round:** the Community wall composer posts
+first and lets you discover the masking afterwards, unlike chat, which
+screens with `screenSay` before anything is sent. The event band's wordmark
+still comes from the theme even when the art and the background are
+uploaded. `note` is stored and ignored where there are prizes.

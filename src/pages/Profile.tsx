@@ -53,6 +53,7 @@ import { communityLink, profileLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 import { avatarOf, isGone } from '@/lib/avatars'
 import { NameMarks, Verified } from '@/components/brand/Verified'
+import { FaceGrid } from '@/components/social/PersonCard'
 import { PenIcon } from '@/components/brand/PenIcon'
 
 /** The colour somebody chose for their page, or the house one. */
@@ -97,72 +98,6 @@ function Fact({ icon, children }: { icon: IconDefinition; children: React.ReactN
       <Glyph icon={icon} className="text-xs" style={{ color: 'var(--me)' }} />
       {children}
     </span>
-  )
-}
-
-type Face = {
-  id: string
-  /** A best friend, who is first in the list and says so. */
-  best?: boolean
-  username: string
-  display_name: string
-  avatar_url: string | null
-  content_id?: number | null
-  is_online?: boolean
-  in_space_id?: string | null
-  activity?: string | null
-  last_seen_at?: string | null
-}
-
-function Faces({ people }: { people: Face[] }) {
-  return (
-    /*
-     * A grid that stops, not a track that slides sideways. Staw: "you
-     * shouldnt have to scroll left or right to see all of your friends ...
-     * but just have a limit max that we can display with a view all". The
-     * cap is in the caller, so the heading's count is the real one and this
-     * only draws what it was handed.
-     */
-    /*
-     * Three on a phone and the rest behind See all, for the reason the home
-     * rail now shows two: eight faces at three across is three rows of
-     * circles between somebody's About and their Communities. okayCooki3:
-     * "2 of the person's friends (on mobile) shown then when they click see
-     * all they can see all their friends". Three here rather than two
-     * because there is no Add Friends cell on somebody else's profile, so
-     * three is the full row.
-     */
-    <div className="grid grid-cols-3 gap-6 max-sm:[&>:nth-child(n+4)]:hidden sm:grid-cols-5 lg:grid-cols-8">
-      {people.map((person) => (
-        <Link
-          key={person.id}
-          to={profileLink(person)}
-          // Wider than the face it holds, so a name has somewhere to sit and
-          // the dot on one picture is nowhere near the next one.
-          className="rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
-        >
-          {/* `xl` is h-16/w-16, which is the size asked for - and the size
-              the dot beside it is drawn for. Overriding the width with a
-              class while leaving the size at `3xl` left a dot sized for a
-              picture twice as big sitting over the name. */}
-          <PersonAvatar person={person} size="xl" className="mx-auto" />
-          <p className="mt-2 flex items-center justify-center gap-1 truncate text-sm font-bold">
-            {/* The heart says why they are first. A list that silently
-                reorders itself is a list somebody thinks is broken. */}
-            {person.best && (
-              <Glyph
-                icon={faHeart}
-                className="shrink-0 text-[10px]"
-                style={{ color: 'var(--me)' }}
-                title="Best friends"
-              />
-            )}
-            <span className="truncate">{person.display_name}</span>
-          </p>
-          <p className="truncate text-[11px] text-muted">@{person.username}</p>
-        </Link>
-      ))}
-    </div>
   )
 }
 
@@ -929,7 +864,7 @@ export default function Profile() {
             )}
 
             {/* Eight, like the row Staw sent, and the rest behind See all. */}
-            {!!friends.data?.length && <Faces people={friends.data.slice(0, 8)} />}
+            {!!friends.data?.length && <FaceGrid people={friends.data.slice(0, 8)} />}
           </section>
 
           {!!communities.data?.length && (

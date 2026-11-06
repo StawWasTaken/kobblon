@@ -11,10 +11,7 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Menu } from '@/components/ui/Menu'
 import { Avatar } from '@/components/ui/Avatar'
-import type { Presence } from '@/components/ui/StatusDot'
-import { StatusDot } from '@/components/ui/StatusDot'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { useLivePresence } from '@/hooks/usePresenceStore'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useChatDock } from '@/components/chat/ChatDock'
@@ -32,10 +29,7 @@ import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
-import { NameMarks } from '@/components/brand/Verified'
-import { Tooltip } from '@/components/ui/Tooltip'
-import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { FriendPeek } from '@/components/social/FriendPeek'
+import { PersonCard, PersonGrid } from '@/components/social/PersonCard'
 
 /*
  * One page for everybody you are tied to, and everybody you are not.
@@ -62,98 +56,6 @@ type Tab = (typeof tabs)[number]['name']
 const fromQuery: Record<string, Tab> = {
   friends: 'Friends', requests: 'Requests', followers: 'Followers',
   following: 'Following', ignored: 'Ignored', blocked: 'Blocked',
-}
-
-const presenceWord: Record<Presence, string> = {
-  'in-space': 'In a World',
-  building: 'Building something',
-  online: 'Online',
-  offline: 'Offline',
-}
-
-/**
- * One person, on a card.
- *
- * It was a line before, three across, and the line had everything on it at
- * the same weight: a small square picture, the name, the presence and the
- * buttons all on one row, so nothing in it read first. Staw, about the
- * page: "it sucks". He is right, and this is the part that made it so.
- *
- * So: the face at a size worth looking at, the name under nothing else, the
- * presence as its own line with the dot that means it, and the doors along
- * the bottom where the eye lands last. The "..." only shows on hover or
- * when something in it has focus, because six of them in a grid is a row
- * of dots and nothing else.
- */
-export function PersonCard({
-  person, note, actions, menu, quiet,
-}: {
-  person: Person
-  note?: string
-  actions?: React.ReactNode
-  menu?: React.ReactNode
-  quiet?: boolean
-}) {
-  const presence = useLivePresence(person)
-
-  return (
-    <li
-      className={cn(
-        'group relative flex flex-col gap-3 rounded-2xl border border-ink-line bg-ink-card p-4',
-        'transition-colors hover:border-brand/60',
-        quiet && 'opacity-70',
-      )}
-    >
-      {menu && (
-        <div className="absolute right-2 top-2 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-          {menu}
-        </div>
-      )}
-
-      <div className="flex items-center gap-3">
-        <FriendPeek friend={person} className="shrink-0">
-          <Link to={profileLink(person)} className="block">
-            <PersonAvatar person={person} size="lg" className="h-14 w-14" ring="ring-ink-card" />
-          </Link>
-        </FriendPeek>
-
-        <div className="min-w-0 flex-1 pr-6">
-          <Link to={profileLink(person)} className="flex items-center gap-1.5 hover:text-link">
-            {/* A best friend, who is also at the top of the list: the mark is
-                what stops that ordering reading as random. */}
-            {person.best && (
-              <Tooltip label="Best friends" side="top">
-                <Glyph icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
-              </Tooltip>
-            )}
-            <span className="truncate font-display text-base font-extrabold leading-tight">
-              {nameOf(person)}
-            </span>
-            <NameMarks person={person} className="text-[11px]" />
-          </Link>
-
-          <p className="truncate text-xs text-muted">@{person.username}</p>
-
-          <p className="mt-1 flex items-center gap-1.5 text-xs">
-            <StatusDot presence={presence} size="md" />
-            <span className={cn('truncate', presence === 'in-space' ? 'text-space-bright' : 'text-muted')}>
-              {note ?? presenceWord[presence]}
-            </span>
-            {person.i_ignore && (
-              <span
-                title="You are ignoring this person"
-                className="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted"
-              >
-                Ignored
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
-    </li>
-  )
 }
 
 /**
@@ -212,12 +114,12 @@ function Band({ icon, children, count }: {
   )
 }
 
-function List({ children }: { children: React.ReactNode }) {
-  return <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{children}</ul>
-}
-
 function Loading() {
-  return <List>{[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-[8.5rem] rounded-2xl" />)}</List>
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-[8.5rem] rounded-2xl" />)}
+    </div>
+  )
 }
 
 export default function Friends() {
@@ -439,6 +341,7 @@ export default function Friends() {
       key={person.id}
       person={person}
       quiet={current.name === 'Blocked' || person.i_ignore}
+      friend={current.name === 'Friends'}
       note={
         current.name === 'Blocked' ? `Blocked ${timeAgo(person.since)}`
           : current.name === 'Ignored' ? `Ignored ${timeAgo(person.since)}`
@@ -550,7 +453,7 @@ export default function Friends() {
               <p className="text-sm text-muted">Nobody has asked.</p>
             )}
             {!!incoming.data?.length && (
-              <List>
+              <PersonGrid>
                 {incoming.data.map((person) => (
                   <PersonCard
                     key={person.id}
@@ -574,7 +477,7 @@ export default function Friends() {
                     menu={menuFor(person, { i_ignore: person.i_ignore })}
                   />
                 ))}
-              </List>
+              </PersonGrid>
             )}
           </section>
 
@@ -583,7 +486,7 @@ export default function Friends() {
             {!outgoing.data?.length ? (
               <p className="text-sm text-muted">You have not asked anybody.</p>
             ) : (
-              <List>
+              <PersonGrid>
                 {outgoing.data.map((person) => (
                   <PersonCard
                     key={person.id}
@@ -599,7 +502,7 @@ export default function Friends() {
                     }
                   />
                 ))}
-              </List>
+              </PersonGrid>
             )}
           </section>
         </div>
@@ -625,7 +528,7 @@ export default function Friends() {
           {!!here.length && (
             <section>
               <Band icon={faUserGroup} count={here.length}>Around now</Band>
-              <List>{here.map(cardFor)}</List>
+              <PersonGrid>{here.map(cardFor)}</PersonGrid>
             </section>
           )}
 
@@ -634,7 +537,7 @@ export default function Friends() {
               {current.name === 'Friends' && !!here.length && (
                 <Band icon={faUserGroup} count={away.length}>Everybody else</Band>
               )}
-              <List>{away.map(cardFor)}</List>
+              <PersonGrid>{away.map(cardFor)}</PersonGrid>
             </section>
           )}
         </>
