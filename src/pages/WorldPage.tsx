@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faPlay, faStar, faBell, faFlag, faSliders,
@@ -122,6 +122,14 @@ function Handover({
 
 export default function WorldPage() {
   const { id = '' } = useParams()
+  /*
+   * `?server=` is somebody arriving from a shared room link. It opens the
+   * Servers tab on that room and lights it; it is not a permission and
+   * never was - `join_world_server` over HTTPS decides whether this
+   * account may be in there, as it always has.
+   */
+  const [query] = useSearchParams()
+  const sentTo = query.get('server')
   const number = Number(id)
   const { profile } = useAuth()
   const toast = useToast()
@@ -169,7 +177,7 @@ export default function WorldPage() {
   )
   const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
-  const [tab, setTab] = useState<WorldTab>('About')
+  const [tab, setTab] = useState<WorldTab>(sentTo ? 'Servers' : 'About')
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
   const [reporting, setReporting] = useState(false)
 
@@ -365,16 +373,13 @@ export default function WorldPage() {
   const passCount = passes.data?.length ?? 0
 
   /*
-   * The lists arrive after the first draw, so a tab can be chosen and then
-   * stop existing - open Badges on your own World, hand the World over, and
-   * the tab goes with it. Read the answer at the moment of drawing rather
-   * than keeping what was chosen: asking "is this still a tab" is the only
-   * version that survives the lists changing underneath it.
+   * Staw: "put the badges & store stuff even if there no badges &
+   * gamepasses yet." Both tabs are always there now, whoever is looking.
+   * A World that hands out nothing and sells nothing says so inside the
+   * tab, which is a different sentence from a World where that part of the
+   * page does not exist - and the switcher stopped being the same shape
+   * from one World to the next, which is what made it feel broken.
    */
-  const shown: WorldTab = (tab === 'Badges' && !mine && !badgeCount)
-    || (tab === 'Store' && !mine && !passCount)
-    ? 'About'
-    : tab
 
   return (
     <>
@@ -430,7 +435,14 @@ export default function WorldPage() {
                 Staw wants the rating over the three of them: it is an
                 opinion about the World, not another way in. */}
             <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-              <div className="flex justify-end rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+              {/*
+                * Wide enough for the ratio between the two thumbs to exist.
+                * It was `justify-end` around a `flex-1` bar, so the bar was
+                * handed no width at all and collapsed - Staw: "i want that
+                * theres the line between the like-dislike to have a ratio
+                * thingy". It was there, drawn one pixel wide.
+                */}
+              <div className="w-full rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm sm:w-72">
                 <RatingBar
                   likes={counts.likes}
                   dislikes={counts.dislikes}
@@ -532,9 +544,14 @@ export default function WorldPage() {
             something real; nothing here is a placeholder for a number we do
             not have yet. */}
         <Ribbon className="mt-4">
-          {playing_now > 0 && (
-            <Stat label="Playing" value={formatCount(playing_now)} tone="live" />
-          )}
+          {/* Printed even at zero: "how many are in there" with no number
+              beside it is a question the page refused to answer. Green only
+              when somebody actually is. */}
+          <Stat
+            label="Playing"
+            value={formatCount(playing_now)}
+            tone={playing_now > 0 ? 'live' : undefined}
+          />
           <Stat label="Visits" value={formatCount(thing.visit_count)} />
           <Stat label="Saved" value={formatCount(counts.favourites)} />
           <Stat label="Genre" value={genre?.label ?? 'Not set'} />
@@ -565,22 +582,18 @@ export default function WorldPage() {
           look="line"
           className="mt-8"
           label="About this World, who is in it, and what it has"
-          value={shown}
+          value={tab}
           onChange={setTab}
           options={[
             { value: 'About', label: 'About' },
             { value: 'Servers', label: 'Servers', count: servers.data?.length ?? null },
-            ...(mine || badgeCount
-              ? [{ value: 'Badges' as const, label: 'Badges', count: badgeCount }]
-              : []),
-            ...(mine || passCount
-              ? [{ value: 'Store' as const, label: 'Store', count: passCount }]
-              : []),
+            { value: 'Badges', label: 'Badges', count: badgeCount },
+            { value: 'Store', label: 'Store', count: passCount },
           ]}
         />
 
         <div className="mt-6 space-y-8">
-          {shown === 'About' && (
+          {tab === 'About' && (
             <>
               <p className="max-w-3xl whitespace-pre-wrap leading-relaxed text-white/75">
                 {thing.description || 'Whoever built this has not described it yet.'}
@@ -621,19 +634,25 @@ export default function WorldPage() {
             </>
           )}
 
-          {shown === 'Servers' && (
+          {tab === 'Servers' && (
             <ServerList
               servers={servers.data ?? []}
               name={thing.name}
               onJoin={(server) => start(server.id)}
+              highlight={sentTo}
+              onShare={(server) => {
+                const link = `${window.location.origin}${window.location.pathname}?server=${server.id}`
+                void navigator.clipboard?.writeText(link)
+                toast('Link to this server copied.', 'success')
+              }}
             />
           )}
 
-          {shown === 'Badges' && (
+          {tab === 'Badges' && (
             <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
           )}
 
-          {shown === 'Store' && (
+          {tab === 'Store' && (
             <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
           )}
 

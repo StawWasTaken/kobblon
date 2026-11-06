@@ -3246,12 +3246,38 @@ export async function playingNow(worldId: string): Promise<number> {
  */
 export async function playingIn(worldIds: string[]): Promise<Record<string, number>> {
   if (!worldIds.length) return {}
-  const rows = (unwrap(await supabase.rpc('playing_in', { wanted: worldIds }))
-    ?? []) as { world_id: string; how_many: number }[]
   const answer: Record<string, number> = {}
   for (const id of worldIds) answer[id] = 0
-  for (const row of rows) answer[row.world_id] = row.how_many
-  return answer
+
+  try {
+    const rows = (unwrap(await supabase.rpc('playing_in', { wanted: worldIds }))
+      ?? []) as { world_id: string; how_many: number }[]
+    for (const row of rows) answer[row.world_id] = row.how_many
+    return answer
+  } catch {
+    /*
+     * `playing_in` is migration 0326 and the database may not have it yet.
+     * Rather than every card on the site reading blank until somebody
+     * applies a file, fall back to the count that has always been there,
+     * one per World.
+     *
+     * This is the N+1 the batch exists to avoid, and it is deliberately
+     * kept: a dozen small reads on a shelf is worse than one and much
+     * better than a number Staw can see is wrong. It stops happening by
+     * itself the moment 0326 is applied.
+     */
+    const counts = await Promise.all(
+      worldIds.map(async (id) => {
+        try {
+          return [id, await playingNow(id)] as const
+        } catch {
+          return [id, 0] as const
+        }
+      }),
+    )
+    for (const [id, how_many] of counts) answer[id] = how_many
+    return answer
+  }
 }
 
 /** A World the people who played this one also played. */

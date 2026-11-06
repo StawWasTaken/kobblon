@@ -37,7 +37,10 @@ export function RatingBar({
         {formatCount(likes)}
       </button>
 
-      <div className="min-w-0 flex-1 pt-2.5">
+      <div className="min-w-0 flex-1 pt-1">
+        <p className="mb-1 text-center text-[11px] font-bold tabular-nums text-white/70">
+          {total ? `${Math.round(share)}%` : 'No ratings yet'}
+        </p>
         <div
           className={cn(
             'h-1.5 overflow-hidden rounded-full',

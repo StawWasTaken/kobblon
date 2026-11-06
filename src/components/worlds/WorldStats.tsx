@@ -19,9 +19,12 @@ import { cn } from '@/lib/cn'
  * is asked for by `usePlaying`, which collects every card on the page into
  * one question.
  *
- * **Nobody in it draws nothing at all.** A row of zeroes down a shelf says
- * the platform is empty, which is both true of a week-old platform and not
- * worth printing on every card.
+ * **Zero is printed.** Staw: "even when theres zero ppl then put 0" - a
+ * card with no number beside the mark reads as "we do not know", and the
+ * whole point of the number is that somebody deciding what to open can
+ * tell a busy World from a quiet one. Zero is grey; green is kept for a
+ * World that actually has somebody in it. Only a count nobody has been
+ * told yet draws nothing.
  */
 export function WorldStats({ world, size = 'sm', className }: {
   world: {
@@ -38,7 +41,7 @@ export function WorldStats({ world, size = 'sm', className }: {
   const score = up + down ? Math.round((up / (up + down)) * 100) : null
   const playing = usePlaying(world.id)
 
-  if (score === null && !playing) return null
+  if (score === null && playing === null) return null
 
   return (
     <span
@@ -55,10 +58,10 @@ export function WorldStats({ world, size = 'sm', className }: {
         </span>
       )}
 
-      {!!playing && (
+      {playing !== null && (
         /* Green, because it is the one number on the card that is true only
-           while somebody is looking at it. */
-        <span className="inline-flex items-center gap-1 text-space-bright">
+           while somebody is looking at it - and only while somebody is. */
+        <span className={cn('inline-flex items-center gap-1', playing > 0 && 'text-space-bright')}>
           <Icon name="playing" className={size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
           {formatCount(playing)}
         </span>

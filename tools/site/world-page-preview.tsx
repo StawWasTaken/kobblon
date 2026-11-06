@@ -24,10 +24,10 @@ const faces = (n: number, from = 0) => Array.from({ length: n }, (_, i) => ({
 }))
 
 const servers = [
-  { id: 's1', capacity: 12, how_many: 9, people: faces(7) },
-  { id: 's2', capacity: 12, how_many: 12, people: faces(5, 20) },
-  { id: 's3', capacity: 12, how_many: 2, people: faces(2, 40) },
-  { id: 's4', capacity: 12, how_many: 0, people: [] },
+  { id: 'a11d4f3a9c', capacity: 35, how_many: 24, people: faces(7) },
+  { id: 'b72c01ee45', capacity: 12, how_many: 12, people: faces(5, 20) },
+  { id: 'c9930a1b77', capacity: 12, how_many: 2, people: faces(2, 40) },
+  { id: 'd4410bc802', capacity: 12, how_many: 0, people: [] },
 ] as never[]
 
 function Demo() {
@@ -54,7 +54,7 @@ function Demo() {
             </div>
 
             <div className="flex shrink-0 flex-col items-end gap-2">
-              <div className="flex rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+              <div className="w-72 rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
                 <RatingBar likes={1900} dislikes={120} iLike iDislike={false} />
               </div>
 
@@ -99,7 +99,7 @@ function Demo() {
         />
 
         <div className="mt-6 space-y-8">
-          <ServerList servers={servers} name="First Ground" onJoin={() => {}} />
+          <ServerList servers={servers} name="First Ground" onJoin={() => {}} onShare={() => {}} highlight="c9930a1b77" />
 
           <Band
             id="more"

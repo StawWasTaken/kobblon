@@ -19306,3 +19306,75 @@ that arrives without its faces draws the count rather than throwing.
 Still the same caveat as last round: **nothing writes `world_players`**,
 so every World has no servers to list until the Launcher heartbeats.
 Migration `0326` from last round is **still waiting to be applied**.
+
+## Round two hundred and fifty-nine - five fixes from Staw, and a server card in its second shape
+
+Five things, in his order.
+
+**1. Badges and Store are always there.** Staw: "put the badges & store
+stuff even if there no badges & gamepasses yet." Both tabs are drawn on
+every World now, whoever is looking, with a count that may be `0`. A World
+that hands out nothing says so inside the tab. The switcher is the same
+shape from one World to the next, which it was not before - tabs appearing
+and disappearing is what made it read as broken. The code that rewrote a
+chosen tab back to About when its list emptied is gone with it.
+
+**2. The live player count is printed even at zero.** Staw: "even when
+theres zero ppl then put 0". `WorldStats` - the numbers under every World
+card, on Discover, the homepage, the shelves and the chart - drew nothing
+when nobody was in a World, so a quiet World and a World nobody had asked
+about looked identical. Zero is printed now, in grey; green is kept for a
+World that actually has somebody in it. A count nobody has been told yet
+is still the only case that draws nothing. The World page's own ribbon
+does the same: **Playing 0** rather than no Playing stat at all.
+
+And the reason he could only see the number on his own Worlds: `playing_in`
+is migration **0326 and it is still not applied**, so every batched ask was
+failing and every card read blank. `playingIn` now falls back to
+`playing_now` once per World when the batch function is missing. That is
+the N+1 the batch exists to avoid and it is deliberate - a dozen small
+reads beats a number that is visibly wrong - and it stops happening by
+itself the moment 0326 is applied. **If the Workspace or the Launcher reads
+player counts for a list, do the same thing: try `playing_in`, fall back to
+`playing_now` per World.**
+
+**3. The server card, second shape.** Staw sent a different reference, so
+`@/components/worlds/ServerList` is built to that one:
+
+- Round heads in a block at the top, five then `+N`.
+- `24 of 35 people max` under them, with the `playing` mark. Green while
+  there is room, amber from four fifths full, flat grey when full or empty.
+- A capacity bar - it is back; in this shape it is the thing the eye reads
+  first and the words are the detail.
+- **Join** and **Share** side by side, then `ID: a11d-4f3a` under them.
+- Three across on a wide screen, two on a medium one.
+
+**New on the component:** `onShare?: (server) => void` and
+`highlight?: string | null`. Share is only drawn when a caller passes
+`onShare`, because a button that copies nothing is worse than no button.
+The website's copies `…/worlds/<id>?server=<server id>`; the World page
+reads `?server=` on arrival, opens the Servers tab, lights that card and
+sorts it to the front. `onJoin` and `RunningServer` are unchanged.
+
+Saying it plainly because it is the kind of thing that gets assumed:
+**`?server=` is a hint and not a permission**, exactly like `room` in
+`kobblon://play/<id>?room=<server>`. `join_world_server` over HTTPS decides
+whether an account may be in a room, and refuses a full, closed or private
+one. Nothing about a shared link changes that.
+
+**4. The ratio between the thumbs is visible again.** Staw: "in the world
+page i want that theres the line between the like-dislike to have a ratio
+thingy". It was built and it was invisible: `RatingBar` is a bar with
+`flex-1` between two thumbs, and the box holding it on the stage was
+`justify-end` round its own content, so the bar was handed no width and
+collapsed to nothing. The box is a fixed width now, and the bar carries its
+percentage above it (`94%`, or "No ratings yet" with no votes). **If either
+application mounts `RatingBar`, give it room** - it cannot size itself.
+
+**5. The Community page.** Checked against `53f0b93b`: no difference, it is
+still the design from before round 254. Nothing to undo.
+
+Still true and still waiting: **nothing writes `world_players`**, so a World
+has no servers to list and no live count until the Launcher calls
+`join_world_server` / `still_in_world` / `left_world_server` on a heartbeat.
+And **migration 0326 has not been applied.**
