@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faThumbtack, faTrash, faEllipsis } from '@fortawesome/free-solid-svg-icons'
+import { faThumbtack, faTrash, faEllipsis, faComments } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { Band } from '@/components/ui/Band'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Menu } from '@/components/ui/Menu'
@@ -124,8 +125,7 @@ export function CommunityWall({
   }
 
   return (
-    <section>
-      <h2 className="mb-3 font-display text-xl font-extrabold">Wall</h2>
+    <Band id="wall" icon={faComments} title="The wall">
 
       {rights?.can_post_wall && (
         <Card className="p-4">
@@ -300,6 +300,6 @@ export function CommunityWall({
           </Card>
         ))}
       </div>
-    </section>
+    </Band>
   )
 }

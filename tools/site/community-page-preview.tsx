@@ -1,11 +1,12 @@
 /*
- * The Community page's new shape, with nothing around it: the spine down the
- * middle and the standing facts down the side, so the two can be weighed
- * against each other without a database.
+ * The Community page's new shape, with nothing around it: the ribbon of
+ * numbers and the bands that follow it, so they can be looked at without a
+ * database.
  */
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
-import { CommunitySide } from '@/components/community/CommunitySide'
+import { CommunityBands } from '@/components/community/CommunityBands'
+import { Ribbon, Stat } from '@/components/ui/Band'
 import { Card } from '@/components/ui/Card'
 import '@/index.css'
 
@@ -15,6 +16,7 @@ const group = {
   id: 'c1', slug: 'kobblon', name: 'Kobblon', member_count: 1240,
   owner_id: 'o1', icon_url: null, banner_url: null, description: null,
   join_policy: 'open', is_verified: true, is_removed: false, content_id: 1,
+  created_at: new Date(Date.now() - 400 * 24 * hour).toISOString(), funds: 0,
 } as never
 
 const roster = [
@@ -49,20 +51,26 @@ const allies = [
 function Demo() {
   return (
     <div className="min-h-screen bg-ink p-8 text-white">
-      <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
-        <div className="min-w-0 space-y-8">
-          <Card className="py-10 text-center text-sm text-muted">Announcements</Card>
-          <Card className="py-24 text-center text-sm text-muted">The wall</Card>
-        </div>
+      <div className="mx-auto max-w-5xl space-y-8">
+        <Ribbon>
+          <Stat label="Members" value="1,240" />
+          <Stat label="Here now" value="4" tone="live" />
+          <Stat label="Events" value="2" />
+          <Stat label="In the shop" value="0" />
+          <Stat label="Started" value="a year ago" />
+          <Stat label="Joining" value="Open" />
+        </Ribbon>
 
-        <CommunitySide
+        <Card className="py-10 text-center text-sm text-muted">Announcement</Card>
+        <Card className="py-24 text-center text-sm text-muted">The wall</Card>
+
+        <CommunityBands
           group={group}
           roster={roster}
           coming={coming}
           store={null}
           allies={allies}
           enemies={null}
-          className="lg:sticky lg:top-6"
         />
       </div>
     </div>

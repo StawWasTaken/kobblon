@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faArrowLeft, faCalendarDay, faLock } from '@fortawesome/free-solid-svg-icons'
+import {
+  faArrowLeft, faLock, faCalendarDay,
+} from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -30,7 +32,10 @@ import type { CommunityEvent } from '@/types/db'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { LiveEventBar } from '@/components/community/LiveEventBar'
 import { Shop } from '@/components/catalog/Shop'
-import { CommunitySide } from '@/components/community/CommunitySide'
+import { CommunityBands } from '@/components/community/CommunityBands'
+import { Band, Ribbon, Stat } from '@/components/ui/Band'
+import { presenceNow, usePresenceVersion } from '@/hooks/usePresenceStore'
+import { formatCount, timeAgo } from '@/lib/format'
 
 /*
  * A Community, shaped like a place rather than a filing cabinet.
@@ -67,6 +72,8 @@ export default function CommunityPage() {
   const slug = id ? byId.data ?? '' : slugParam
   const { profile } = useAuth()
   const toast = useToast()
+  /* Redraw when somebody comes or goes, so "here now" is here now. */
+  usePresenceVersion()
   const [pending, setPending] = useState(false)
   const [reporting, setReporting] = useState(false)
 
@@ -266,6 +273,10 @@ export default function CommunityPage() {
 
   const canManage = !!rights.data?.can_manage_community
 
+  /* How many of the members are actually about. Counted at the moment of
+     drawing rather than kept, because presence is a claim that expires. */
+  const here = (roster.data ?? []).filter((one) => presenceNow(one) !== 'offline').length
+
   /** The whole of one thing, at its own address, with the way back to the place. */
   const full = (title: string, body: React.ReactNode) => (
     <div className="mt-6 space-y-5">
@@ -302,60 +313,67 @@ export default function CommunityPage() {
 
       <Page width="narrow" className="pt-6">
         {!view && (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
-            <div className="min-w-0 space-y-8">
-              <Announcements communityId={group.id} rights={rights.data} />
+          <div className="space-y-8">
+            {/* What is true of the Community, in a row across the top, so
+                the first thing on the page is the place and not a widget. */}
+            <Ribbon>
+              <Stat label="Members" value={formatCount(group.member_count)} />
+              {here > 0 && <Stat label="Here now" value={formatCount(here)} tone="live" />}
+              <Stat label="Events" value={formatCount(coming.length)} />
+              <Stat label="In the shop" value={formatCount(store.data?.length ?? 0)} />
+              <Stat label="Started" value={timeAgo(group.created_at)} />
+              <Stat
+                label="Joining"
+                value={group.join_policy === 'open' ? 'Open' : 'By approval'}
+              />
+            </Ribbon>
 
-              {/*
-                * What is on, at the top of the page because it is the thing
-                * with a time on it.
-                *
-                * Staw: "when events are finished they still display in the
-                * about part of the community but then disappears after a
-                * day and gets stored into the past events in the events
-                * tab". So this is the upcoming ones plus whatever ended
-                * within the day - an event people turned up to yesterday
-                * evening is still the thing the Community is talking about
-                * this morning, and a page that drops it the second it ends
-                * reads as though nothing ever happened there.
-                *
-                * `is_over` and `just_over` are the database's answers, not
-                * this page's. A clock comparison written here is a clock
-                * comparison against the reader's machine, which is a
-                * different clock from the one the event was set by.
-                */}
-              {!!onNow.length && (
-                <section>
-                  <div className="mb-3 flex items-center gap-3">
-                    <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-                      <Glyph icon={faCalendarDay} className="text-base" />
-                      On now
-                    </h2>
-                    <button
-                      onClick={() => show('events')}
-                      className="ml-auto text-xs font-bold text-link hover:underline"
-                    >
-                      All events
-                    </button>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {onNow.slice(0, 2).map((event) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onJoin={(yes) => void going(event, yes)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
+            <Announcements communityId={group.id} rights={rights.data} />
 
-              {/* The living part of the Community, and the spine of the
-                  page rather than the last thing under four other things. */}
-              <CommunityWall communityId={group.id} rights={rights.data} />
-            </div>
+            {/*
+              * What is on, near the top of the page because it is the thing
+              * with a time on it.
+              *
+              * Staw: "when events are finished they still display in the
+              * about part of the community but then disappears after a day
+              * and gets stored into the past events in the events tab". So
+              * this is the upcoming ones plus whatever ended within the day
+              * - an event people turned up to yesterday evening is still
+              * the thing the Community is talking about this morning, and a
+              * page that drops it the second it ends reads as though
+              * nothing ever happened there.
+              *
+              * `is_over` and `just_over` are the database's answers, not
+              * this page's. A clock comparison written here is a comparison
+              * against the reader's machine, which is a different clock
+              * from the one the event was set by.
+              */}
+            <Band
+              id="on-now"
+              icon={faCalendarDay}
+              title="On now"
+              to="?view=events"
+              all="All events"
+              hide={!onNow.length}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                {onNow.slice(0, 2).map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onJoin={(yes) => void going(event, yes)}
+                  />
+                ))}
+              </div>
+            </Band>
 
-            <CommunitySide
+            {/* The living part of the Community, and the spine of the page
+                rather than the last thing under four other things. */}
+            <CommunityWall communityId={group.id} rights={rights.data} />
+
+            {/* And then everything the Community is, each under its own
+                heading, wide enough to be worth looking at. */}
+            <CommunityBands
               group={group}
               roster={roster.data}
               rosterLoading={roster.loading}
@@ -363,11 +381,9 @@ export default function CommunityPage() {
               store={store.data}
               allies={allies.data}
               enemies={enemies.data}
-              foot={<AdBanner size="tall" quiet className="hidden lg:block" />}
-              /* On a phone it goes above the wall, not under it: the wall
-                 has no bottom, so anything after it is never reached. */
-              className="max-lg:order-first lg:sticky lg:top-[4.5rem]"
             />
+
+            <AdBanner size="banner" quiet />
           </div>
         )}
 

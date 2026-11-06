@@ -19068,3 +19068,70 @@ there.
 The rule I should have followed, written down: a shared component is a
 shared *component*. Two pages using the same box is one design system; two
 pages using the same layout is two pages pretending to be the same thing.
+
+## Round two hundred and fifty-four - the stage, the ribbon and the bands
+
+Staw wanted a brand new design rather than a better version of the last one,
+so this is a new shape for a page and three new pieces to build one out of.
+The World page and the Community page are both on it now, and they do not
+look like each other: they are built out of the same pieces, laid out as
+what each of them actually is.
+
+**The pieces, all in `@/components/ui/Band`:**
+
+- `Band` - one part of a page: an icon, a heading, how much of it there is
+  in a pill, a hairline rule carrying the heading out to the edge, and
+  optionally a door on the end (`to` + `all`) or anything you like
+  (`right`). `hide` leaves out the heading and the contents together,
+  because a heading over nothing is worse than no heading. This replaces
+  every hand-written `<h2>` above a section: a page built out of these
+  reads as one page rather than as a stack of cards.
+- `Ribbon` + `Stat` - the numbers about a thing in a row across the page
+  rather than a table down the side of it. A specification sheet goes down
+  the side; a scoreboard goes across. The number first and big, what it is
+  underneath and small. `tone="live"` for a number that is only true this
+  minute.
+- `@/components/worlds/WorldStage` - **new, and it replaces
+  `WorldGallery`, which is deleted.** Same shots array (`Shot` is exported
+  from the new file now), but it runs the full width at 21/8, darkens at the
+  foot, and takes `children` that are drawn **on** the art. When the shot
+  being shown is a clip, the overlay moves below the art instead, because
+  controls on top of controls is neither.
+
+All three are props only. Nothing asks who is signed in. `Band`'s door and
+`WorldStage`'s overlay want a router only if what you put in them does.
+
+**The World page.** The art is the page: the stage runs the full width, and
+the emblem, the name, the maker, the live "playing now" pill, Play, save,
+notify and the ••• all sit on it. Under it the ribbon - playing, visits,
+saved, genre, updated, published - with the like/dislike bar as its last
+cell, because the rating is both a number about the World and the way you
+add to it. Then bands straight down: About this World (with the Klub
+reactions and Report abuse under it), Servers, Badges, Store, and people who
+play this also play. No side rail, no tabs, no `?view=`. The anchors from
+last round still hold: `#servers`, `#badges`, `#shop`, and now `#about` and
+`#also`.
+
+**The Community page.** Same pieces, different page. Its header is
+unchanged. Under it a ribbon - members, here now, events, in the shop,
+started, joining - and then everything down the page as bands: the
+announcement, what is on now, the wall, **In here** (sixteen faces with
+their names, busiest first, eight across), Coming up, the shop and Stands
+with. `@/components/community/CommunitySide` is **deleted**; what it drew is
+`@/components/community/CommunityBands` now, which draws the same four
+things as full-width bands rather than as a rail of summaries nobody reads.
+Its `?view=members|events|shop|allies` addresses are unchanged, and every
+band still has its door to the full list.
+
+`CommunityWall` and `Announcements` draw their own heading with `Band` now,
+so a page that mounts them gets the heading for free and should not write
+one above them.
+
+`@/components/ui/SidePanel` still exists and still looks the way round 253
+left it; the Creator Hub uses it. It is for a genuine side panel, not for a
+section of a page - use `Band` for that.
+
+Still not done, and still worth saying: nothing on the website writes the
+`world_players` roster, so "here now" and the server list are empty until the
+Launcher calls `join_world_server`, `still_in_world` and `left_world_server`
+on a heartbeat. A Community still cannot own a World.

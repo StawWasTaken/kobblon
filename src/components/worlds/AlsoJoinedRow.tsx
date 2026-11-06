@@ -4,6 +4,7 @@ import { faThumbsUp, faUser } from '@fortawesome/free-solid-svg-icons'
 import { worldLink } from '@/lib/links'
 import { formatCount } from '@/lib/format'
 import type { AlsoJoined } from '@/lib/api'
+import { cn } from '@/lib/cn'
 
 /**
  * Worlds the people who played this one also played.
@@ -18,14 +19,18 @@ import type { AlsoJoined } from '@/lib/api'
  * built from what people actually did, so a quiet World has no answer, and
  * an empty shelf of placeholders would be a worse answer than none.
  */
-export function AlsoJoinedRow({ worlds }: { worlds: AlsoJoined[] }) {
+export function AlsoJoinedRow({ worlds, bare }: {
+  worlds: AlsoJoined[]
+  /** The page already wrote the heading, so draw the shelf and nothing else. */
+  bare?: boolean
+}) {
   if (!worlds.length) return null
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-white">People also join</h2>
+    <section className={bare ? '' : 'mt-10'}>
+      {!bare && <h2 className="text-lg font-semibold text-white">People also join</h2>}
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6', !bare && 'mt-4')}>
         {worlds.map((world) => {
           const up = world.like_count ?? 0
           const down = world.dislike_count ?? 0
