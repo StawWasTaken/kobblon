@@ -64,19 +64,50 @@ export function RatingBar({
         {thumb('down', iDislike, onDislike)}
       </div>
 
+      {/*
+        * The line itself.
+        *
+        * Staw: "i want lil lines in it, i want a better bar design cuz
+        * this is too basic". So it is notched - a mark every tenth, taller
+        * at the quarters - which gives the eye something to measure the
+        * green against. A bar with no marks on it only says "mostly good";
+        * a notched one says "about four fifths", which is the thing
+        * somebody is actually reading it for.
+        *
+        * The notches sit over both colours at the same strength, so the
+        * join between green and red is the only edge that moves.
+        */}
       <div
         className={cn(
-          'mt-1 flex h-1 overflow-hidden rounded-full',
-          total ? 'bg-danger' : 'bg-white/15',
+          'relative mt-1.5 h-2.5 overflow-hidden rounded-full ring-1 ring-inset ring-white/10',
+          total ? 'bg-danger' : 'bg-white/10',
         )}
         role="img"
         aria-label={total ? `${Math.round(share)} percent of ${formatCount(total)} liked it` : 'No ratings yet'}
         title={total ? `${Math.round(share)}% liked this` : 'No ratings yet'}
       >
         <div
-          className="h-full rounded-full bg-space transition-[width] duration-300"
+          className="h-full rounded-full bg-gradient-to-r from-space to-space-bright transition-[width] duration-300"
           style={{ width: `${share}%` }}
         />
+
+        {/* The marks, drawn on top of whichever colour is under them. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {Array.from({ length: 9 }, (_, i) => {
+            const at = (i + 1) * 10
+            const quarter = at === 25 || at === 50 || at === 75
+            return (
+              <span
+                key={at}
+                className={cn(
+                  'absolute w-px bg-black/45',
+                  quarter ? 'inset-y-0' : 'inset-y-[3px]',
+                )}
+                style={{ left: `${at}%` }}
+              />
+            )
+          })}
+        </div>
       </div>
 
       <div className="mt-1 flex items-center justify-between text-[11px] font-bold tabular-nums text-white/70">

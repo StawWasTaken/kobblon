@@ -19397,3 +19397,25 @@ percent is the page saying a World nobody has rated yet is a bad one.
 Same props, no API change. The one thing worth repeating from last round:
 **it cannot size itself.** The line is the width it is given, so a box
 sized to its own content gets a rating with no ratio in it.
+
+## Round two hundred and sixty-one - the rating line is notched, and 0326 is applied
+
+**`playing_in` exists now.** Staw applied migration 0326, so the live
+player count is a single read per screen again rather than one per World.
+The fallback added last round is still in `playingIn` and is now dead code
+on a healthy database - it only fires if the function is missing, which it
+no longer is. Nothing to change on the application side; counts for a list
+of Worlds just got cheap.
+
+**The rating line.** Staw: "i want lil lines in it, i want a better bar
+design cuz this is too basic". `@/components/worlds/RatingBar` draws a
+notched bar now - taller (10px), a hairline inset ring round it, a mark
+every tenth and a full-height mark at each quarter, and the liked side is
+a gradient between the two greens rather than one flat fill. The marks sit
+over both colours at the same strength, so the join between green and red
+stays the only edge that moves.
+
+Why marks at all: a plain bar only says "mostly good". A notched one says
+"about four fifths", which is what somebody is reading it for.
+
+Still no votes, still a flat grey line and no red. Same props.
