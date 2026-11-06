@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/States'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/lib/cn'
-import type { RunningServer } from '@/lib/api'
+import type { PlayerThere, RunningServer } from '@/lib/api'
 
 /**
  * The people in one server, as faces.
@@ -16,9 +16,13 @@ import type { RunningServer } from '@/lib/api'
  * count in a circle of its own rather than a row of cropped faces. A
  * crowd reads as a crowd, two people read as two people.
  */
-function Faces({ server }: { server: RunningServer }) {
+function Faces({ server, mates }: { server: RunningServer; mates: PlayerThere[] }) {
   const people = server.people ?? []
-  const shown = people.slice(0, 5)
+  /* Friends first, because they are the reason somebody picks this room
+     over the one next to it. */
+  const mateIds = new Set(mates.map((one) => one.id))
+  const ordered = [...mates, ...people.filter((one) => !mateIds.has(one.id))]
+  const shown = ordered.slice(0, 5)
   const rest = server.how_many - shown.length
 
   if (!shown.length) {
@@ -32,7 +36,18 @@ function Faces({ server }: { server: RunningServer }) {
   return (
     <div className="flex flex-wrap gap-2">
       {shown.map((person) => (
-        <span key={person.id} title={person.display_name ?? person.username}>
+        <span
+          key={person.id}
+          title={mateIds.has(person.id)
+            ? `${person.display_name ?? person.username} - your friend`
+            : (person.display_name ?? person.username)}
+          className={cn(
+            'rounded-full',
+            /* A friend is ringed rather than moved somewhere else: the
+               room is still one room. */
+            mateIds.has(person.id) && 'ring-2 ring-space-bright',
+          )}
+        >
           <Avatar
             size="md"
             personId={person.id}
@@ -63,11 +78,13 @@ function Faces({ server }: { server: RunningServer }) {
  * the top, flat when there is none. "Nearly full" is worth seeing before
  * pressing Join rather than after.
  */
-function ServerCard({ server, onJoin, onShare, lit }: {
+function ServerCard({ server, onJoin, onShare, lit, mates = [] }: {
   server: RunningServer
   onJoin?: (server: RunningServer) => void
   onShare?: (server: RunningServer) => void
   lit?: boolean
+  /** Which of this person's friends are in this room. */
+  mates?: PlayerThere[]
 }) {
   const full = server.how_many >= server.capacity
   const nearly = !full && server.capacity > 0 && server.how_many / server.capacity >= 0.8
@@ -86,7 +103,15 @@ function ServerCard({ server, onJoin, onShare, lit }: {
         !full && !lit && 'hover:border-brand/60',
       )}
     >
-      <Faces server={server} />
+      <Faces server={server} mates={mates} />
+
+      {mates.length > 0 && (
+        <p className="-mt-1 text-xs font-bold text-space-bright">
+          {mates.length === 1
+            ? `${mates[0].display_name ?? mates[0].username} is in here`
+            : `${mates.length} friends are in here`}
+        </p>
+      )}
 
       <div>
         <p
@@ -150,7 +175,7 @@ function ServerCard({ server, onJoin, onShare, lit }: {
  * not a failure and is not drawn as one.
  */
 export function ServerList({
-  servers, name, onJoin, onShare, highlight,
+  servers, name, onJoin, onShare, highlight, friends, empty,
 }: {
   servers: RunningServer[]
   name: string
@@ -158,14 +183,19 @@ export function ServerList({
   onShare?: (server: RunningServer) => void
   /** A room somebody arrived here to find, from a shared link. */
   highlight?: string | null
+  /** Which friends are in which room, by server id. */
+  friends?: Record<string, PlayerThere[]>
+  /** What to say when there is nothing, where the ordinary line is wrong. */
+  empty?: { title: string; body: string }
 }) {
   if (!servers.length) {
     return (
       <Card>
         <EmptyState
           mood="noResults"
-          title="No servers running"
-          body={`Where people are playing ${name} right now. Nobody is in it at the moment.`}
+          title={empty?.title ?? 'No servers running'}
+          body={empty?.body
+            ?? `Where people are playing ${name} right now. Nobody is in it at the moment.`}
         />
       </Card>
     )
@@ -189,6 +219,7 @@ export function ServerList({
           onJoin={onJoin}
           onShare={onShare}
           lit={server.id === highlight}
+          mates={friends?.[server.id] ?? []}
         />
       ))}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
@@ -20,7 +20,7 @@ import { Reactions } from '@/components/social/Reactions'
 import { reactionsOn, inTheKlub } from '@/lib/api'
 import { WorldStage, type Shot } from '@/components/worlds/WorldStage'
 import { ReportDialog } from '@/components/social/ReportDialog'
-import { ServerList } from '@/components/worlds/ServerList'
+import { ServersTab } from '@/components/worlds/ServersTab'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
 import { WorldThings } from '@/components/worlds/WorldThings'
 import { AdBanner } from '@/components/ads/AdBanner'
@@ -31,7 +31,7 @@ import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  alsoJoined, badgesOf, doIWatchWorld, favouriteWorld, getWorld, myWorldStanding,
+  alsoJoined, badgesOf, doIWatchWorld, favouriteWorld, friendsInServers, getWorld, myWorldStanding,
   passesOf, playingNow, recommendedWorlds, serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
@@ -168,6 +168,12 @@ export default function WorldPage() {
    */
   const servers = useAsync(async () => (thing ? serversOf(thing.id) : []), [thing?.id])
   const playing = useAsync(async () => (thing ? playingNow(thing.id) : 0), [thing?.id])
+  /* Which rooms somebody they know is in. Signed out there is nobody to
+     look for, and the function is not granted to anon, so it is not asked. */
+  const mates = useAsync(
+    async () => (thing && profile ? friendsInServers(thing.id) : {}),
+    [thing?.id, profile?.id],
+  )
   const alsoPlayed = useAsync(async () => (thing ? alsoJoined(thing.id) : []), [thing?.id])
   const badges = useAsync(async () => (thing ? badgesOf(thing.id) : []), [thing?.id])
   /* What to play next. Its own genre first, then the busiest of the rest. */
@@ -209,6 +215,32 @@ export default function WorldPage() {
   useEffect(() => {
     setNotify(Boolean(watching.data))
   }, [watching.data])
+
+  /*
+   * A shared server link hands straight over.
+   *
+   * Staw: "the link to a server when u open it it leads to the game but
+   * instantly makes you join this server". So arriving with `?server=`
+   * opens the Launcher on that room rather than waiting for a second
+   * press - the person already pressed something, it was the link.
+   *
+   * It waits for the server list rather than firing on the address alone,
+   * and does nothing if that room is not in it: a link to a room that has
+   * since closed should leave somebody on the page, not open an
+   * application to be refused by it. Once per visit, hence the flag -
+   * without it every reload of the list would hand over again.
+   *
+   * And as everywhere else: the room in the link is a hint.
+   * `join_world_server` decides whether this account may be in it.
+   */
+  const handedOver = useRef(false)
+  useEffect(() => {
+    if (!sentTo || handedOver.current || !thing || !servers.data) return
+    if (!servers.data.some((one) => one.id === sentTo)) return
+    handedOver.current = true
+    setHanding('opening')
+    void play(thing.id, () => setHanding('missing'), sentTo)
+  }, [sentTo, thing?.id, servers.data])
 
   useCanonicalPath(thing?.content_id === number ? worldLink(thing) : null)
   useTitle(thing?.name ?? 'World')
@@ -652,9 +684,13 @@ export default function WorldPage() {
           )}
 
           {tab === 'Servers' && (
-            <ServerList
+            <ServersTab
               servers={servers.data ?? []}
+              friends={mates.data ?? {}}
               name={thing.name}
+              signedIn={!!profile}
+              busy={servers.loading || mates.loading}
+              onRefresh={() => { servers.reload(); mates.reload() }}
               onJoin={(server) => start(server.id)}
               highlight={sentTo}
               onShare={(server) => {

@@ -3232,6 +3232,25 @@ export async function whereTheyAre(who: string[]): Promise<Whereabouts[]> {
 }
 
 /** How many people are in a World right now, across every server. */
+/**
+ * Which of a World's servers your friends are in, and which friends.
+ *
+ * `servers_of` draws the first few faces in a room, so a friend who turned
+ * up seventh is in there and invisible. This asks the question directly
+ * (0328), and the Servers tab puts those rooms in their own section above
+ * the rest - which is what Staw asked for.
+ *
+ * Signed out there is nobody to look for: the function is not granted to
+ * `anon`, so a caller with no session should not ask.
+ */
+export async function friendsInServers(worldId: string): Promise<Record<string, PlayerThere[]>> {
+  const rows = (unwrap(await supabase.rpc('friends_in_servers', { wanted: worldId }))
+    ?? []) as { server_id: string; who: PlayerThere[] }[]
+  const answer: Record<string, PlayerThere[]> = {}
+  for (const row of rows) answer[row.server_id] = row.who ?? []
+  return answer
+}
+
 export async function playingNow(worldId: string): Promise<number> {
   return (unwrap(await supabase.rpc('playing_now', { wanted: worldId })) as number) ?? 0
 }

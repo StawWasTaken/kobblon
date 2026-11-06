@@ -19459,3 +19459,57 @@ somebody in a server. Until that heartbeat exists, **nobody can rate
 anything** - every World's thumbs are greyed with "Play this World before
 rating it". That is the rule working, not a bug, but it means ratings and
 presence now ship together.
+
+## Round two hundred and sixty-three - the Servers tab has sections, a sort and a refresh
+
+Four things Staw asked for, all on the Servers tab.
+
+**A shared server link joins that server.** Arriving at
+`…/worlds/<id>?server=<server id>` now hands straight over to the Launcher
+on that room instead of only lighting the card - "when u open it it leads
+to the game but instantly makes you join this server". It waits for the
+server list first and does nothing if that room is not in it: a link to a
+room that has since closed leaves somebody on the page rather than opening
+an application to be refused by it. Once per visit.
+
+Saying it again because it is the thing that will be assumed otherwise:
+**the room in the link is a hint, not a permission.**
+`join_world_server` decides, over HTTPS, as it always has.
+
+**Servers your friends are in**, as its own section above the rest, with
+the friends' faces ringed green in the card and a line saying who. That
+needed a new question - **migration 0328, `friends_in_servers(wanted)`**,
+which needs applying. `servers_of` draws the first six faces in a room, so
+a friend who turned up seventh was in there and invisible; this asks
+directly. `security definer`, because neither `world_players` nor
+`friendships` is readable from outside, with the subject pinned to
+`auth.uid()` by hand - every friendship in the query has the caller on one
+end of it, and there is no argument for asking whose friends are where.
+Not granted to `anon`.
+
+Verified on a local Postgres, applied twice, under three identities: a
+friend in an open room is found; a pending friend request is not a friend;
+a private server and a closed one are left out; a friend who has gone
+stale drops out and comes back; somebody with no friends in there gets
+nothing; `anon` is refused the function outright.
+
+**A sort and a full-server tickbox.** Most people / Fewest people / Most
+room left, and "Hide full servers", on by default. Both are done on the
+list already in hand rather than by asking again - it is a photograph of
+ninety seconds ago either way, and re-reading to reorder the same rooms
+would make the page flicker for nothing. A room somebody was sent to by a
+link stays at the front whatever the sort says.
+
+**A refresh on each section**, which re-reads the servers and the friends
+together and spins while it does.
+
+New on this side: `@/components/worlds/ServersTab` holds all of the above;
+`@/components/worlds/ServerList` is still the plain grid and gained
+`friends?: Record<serverId, PlayerThere[]>` and `empty?: { title, body }`.
+If the Workspace or the Launcher wants a server list, take `ServerList` -
+the deciding is in the tab, not the grid. `@/lib/api` gained
+`friendsInServers(worldId)`.
+
+Still true: **nothing writes `world_players`**, so all of this draws empty
+until the Launcher heartbeats. **0328 needs applying**, as does **0327**
+from last round if it has not been.
