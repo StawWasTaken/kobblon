@@ -238,6 +238,23 @@ const sleep = (ms: number) => new Promise((go) => setTimeout(go, ms))
 let limitSpent = false
 
 /** How long Groq said to wait, out of its own sentence. Capped at 20s. */
+/**
+ * What a drafted word's decision actually is, in the column's own words.
+ *
+ * `moderation_terms.decision` is a `screen_decision`: ('ok', 'review',
+ * 'block'). A model asked to let something through answers "allow", which
+ * is the English for it and is not a value the enum has, so the draft came
+ * back offering a tickbox whose only possible outcome was
+ * `invalid input value for enum screen_decision: "allow"` on save.
+ * Anything else falls back to `block`, which is the safe way to be wrong.
+ */
+function decisionOf(said: unknown): 'ok' | 'review' | 'block' {
+  const word = String(said ?? '').trim().toLowerCase()
+  if (word === 'allow' || word === 'ok' || word === 'exempt') return 'ok'
+  if (word === 'review' || word === 'flag') return 'review'
+  return 'block'
+}
+
 function waitFromGroq(said: string): number {
   const found = said.match(/try again in ([\d.]+)s/i)
   const seconds = found ? Number(found[1]) : NaN
@@ -959,7 +976,7 @@ async function handle(request: Request): Promise<Response> {
 
     const system = [
       'You draft changes to the word filter of Kobblon, a game platform used by teenagers.',
-      'You answer only in JSON: {"words":[{"pattern":"","decision":"block|review|allow","reason":"","scope":"all|say|identity"}],"note":"","settings":{"may_warn":true,"may_suspend":true,"mode":"always|slow|busy"}}',
+      'You answer only in JSON: {"words":[{"pattern":"","decision":"block|review|ok","reason":"","scope":"all|say|identity"}],"note":"","settings":{"may_warn":true,"may_suspend":true,"mode":"always|slow|busy"}}',
       '',
       'Rules for a pattern:',
       '- It is a POSIX regular expression, matched without regard to case.',
@@ -968,6 +985,7 @@ async function handle(request: Request): Promise<Response> {
       '- Prefer one pattern holding several related words to several patterns.',
       '- scope "say" is chat only, "identity" is names and descriptions, "all" is everywhere.',
       '- reason is the short sentence a moderator reads, not an explanation of the regex.',
+      '- decision "ok" is an exception: text matching it passes even when another pattern would block it. It is the one to use when the instruction asks for something to be allowed. The word is "ok", not "allow".',
       '',
       'Return "words" empty if nothing new is needed. Only include "settings" if the',
       'instruction actually asks for the machine to be stricter or softer; leave it out otherwise.',
@@ -1003,7 +1021,15 @@ async function handle(request: Request): Promise<Response> {
       .slice(0, 12)
       .map((one) => ({
         pattern: one.pattern!.trim(),
-        decision: ['block', 'review', 'allow'].includes(String(one.decision)) ? one.decision : 'block',
+        /*
+         * `allow` is not a decision. The column is a `screen_decision`,
+         * which is ('ok', 'review', 'block'), and a model told to allow
+         * something answers with the English word - so the draft came
+         * back offering a tickbox that could only ever fail on save with
+         * `invalid input value for enum screen_decision: "allow"`. Taken
+         * as the alias it plainly is rather than thrown away.
+         */
+        decision: decisionOf(one.decision),
         reason: typeof one.reason === 'string' ? one.reason.slice(0, 120) : '',
         scope: ['all', 'say', 'identity'].includes(String(one.scope)) ? one.scope : 'all',
       }))

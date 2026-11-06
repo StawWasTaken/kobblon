@@ -19617,3 +19617,42 @@ then whoever is here.
 Nothing shared changed shape; no API change, no migration. Still waiting to
 be applied: `0327`, `0328`, `0329`. Still true: nothing writes
 `world_players`, so the World line is blank until the Launcher heartbeats.
+
+## Round two hundred and sixty-eight - "allow" was not a decision, and allowing did nothing
+
+Staw, with two red toasts off the Machine panel:
+`invalid input value for enum screen_decision: "allow"`, raised once per
+word he ticked on a Kobby draft.
+
+Two faults, one on top of the other.
+
+**The word.** `moderation_terms.decision` is a `screen_decision`, which is
+`('ok', 'review', 'block')`. The `moderate` function's prompt asked the
+model for `block|review|allow` and its own check let `allow` through, so
+every draft that wanted to permit something handed the console a tickbox
+whose only possible outcome was that error on save. The prompt now says
+`ok`, and both the function and `askKobbyForWords` read the answer through
+one small map: allow/ok/exempt to `ok`, review/flag to `review`, anything
+else to `block`, which is the safe way to be wrong. The website carries its
+own copy of that map deliberately - **the `moderate` function has to be
+redeployed for the server half, and Staw deploys those.** Until then the
+page fixes the draft on the way in.
+
+**Migration `0330` - and this is the one that matters.** Allowing did
+nothing. `screen_text` picked one matching row with
+`order by (t.decision = 'block') desc limit 1`, so a `block` row always
+beat an `ok` row, and an `ok` row matching on its own returned `ok`, which
+is what the text would have got with no row at all. The panel has offered
+"Allow - an exception to another pattern" since 0011 and it never excepted
+anything. An `ok` match is now checked first and wins outright; the rest of
+0254 is unchanged. What it deliberately cannot do is reach the link rule
+above it, so a blocked address stays blocked whatever words sit beside it.
+
+Checked under `authenticated` on a local Postgres: "get free pixels here"
+passes in `say` with a say-scoped allow and is still blocked in `identity`
+where that allow does not apply; an unrelated block, a blocked link and a
+spelled-out word are all still caught; review still reviews.
+
+If anything in the applications screens text through `screen_text`, the
+answer for a given string can now be `ok` where it used to be `block` -
+only when staff have written an allow for it, which is the point.

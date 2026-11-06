@@ -2323,6 +2323,14 @@ export function AnnounceSection() {
 
 /* ------------------------------------------------------------------ words */
 
+/*
+ * The word on the chip. The column's value is `ok`, which on a row in a
+ * word filter reads as "this pattern is fine" rather than as "this pattern
+ * is an exception to the others" - which is what it means. Said as
+ * "allow", which is the word the dropdown already uses for it.
+ */
+const decisionWord = (decision: string) => (decision === 'ok' ? 'allow' : decision)
+
 const decisions = [
   { value: 'block', label: 'Block - refuse it outright' },
   { value: 'review', label: 'Review - let it through and flag it' },
@@ -2608,7 +2616,7 @@ export function WordsSection() {
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
-                    <Badge tone={tone(one.decision)}>{one.decision}</Badge>
+                    <Badge tone={tone(one.decision)}>{decisionWord(one.decision)}</Badge>
                     <code className="min-w-0 break-all font-mono text-[11px]">{one.pattern}</code>
                   </span>
                   <span className="mt-0.5 block text-xs text-muted">
@@ -2687,7 +2695,7 @@ export function WordsSection() {
             style={{ animationDelay: `${Math.min(i, 14) * 20}ms` }}
             className="group flex animate-row-in flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 hover:bg-ink-hover"
           >
-            <Badge tone={tone(term.decision)}>{term.decision}</Badge>
+            <Badge tone={tone(term.decision)}>{decisionWord(term.decision)}</Badge>
             <code className="min-w-0 flex-1 truncate font-mono text-xs text-white/80">
               {term.pattern}
             </code>

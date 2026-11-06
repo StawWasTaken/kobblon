@@ -4611,7 +4611,28 @@ export async function askKobbyForWords(instruct: string): Promise<KobbyDraft> {
     throw new Error(said?.error ?? error.message)
   }
   const out = data as KobbyDraft
-  return { words: out.words ?? [], note: out.note ?? '', settings: out.settings ?? null }
+  /*
+   * "allow" is not a decision, and a draft carrying one could only fail.
+   *
+   * The column is a `screen_decision` - ('ok', 'review', 'block') - and a
+   * model told to let something through answers with the English word, so
+   * applying the draft raised `invalid input value for enum
+   * screen_decision: "allow"` once per ticked word. The function has been
+   * taught the right word too, but a draft is read here as well, and a
+   * deployed function is a thing with its own clock; anything that is not
+   * one of the three reads as `block`, which is the safe way to be wrong.
+   */
+  const decisionOf = (said: unknown): FlaggedTerm['decision'] => {
+    const word = String(said ?? '').trim().toLowerCase()
+    if (word === 'allow' || word === 'ok' || word === 'exempt') return 'ok'
+    if (word === 'review' || word === 'flag') return 'review'
+    return 'block'
+  }
+  return {
+    words: (out.words ?? []).map((one) => ({ ...one, decision: decisionOf(one.decision) })),
+    note: out.note ?? '',
+    settings: out.settings ?? null,
+  }
 }
 
 /**
