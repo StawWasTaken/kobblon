@@ -37,7 +37,7 @@ export function FriendsRail() {
       Number(presenceNow(b) !== 'offline') - Number(presenceNow(a) !== 'offline'))
 
   return (
-    <section className="mb-10 sm:mb-12">
+    <section className="mb-8">
       <div className="mb-3 flex items-center gap-3">
         <h2 className="font-display text-xl font-extrabold sm:text-2xl">
           Friends {!loading && <span className="text-white/40">({friends.length})</span>}

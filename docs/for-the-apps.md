@@ -18693,3 +18693,81 @@ So the wiring works wherever the trigger exists. **Staw: apply 0324.**
 For the applications: nothing changed in any signature or any table, and
 if you write to `community_posts` you were always being censored by the
 database rather than by the website - that is unchanged and is the point.
+
+---
+
+## Round two hundred and forty-seven - the top of Home, and a tick that was being dropped
+
+### Home is not eight of the same shelf any more
+
+Home asked `listWorlds({ sort: 'trending', limit: 24 })` once and then cut
+the answer into eights, which is where the headings "Being played right
+now", "More to look at" and "Still more" came from. The last two are not
+categories; they are what is left when you slice a list and have to name
+the pieces, and a page that does it three times reads as one shelf
+repeated.
+
+Now the top of the page is a **board** - `@/components/home/TopNow` - and
+the shelves under it ask different questions:
+
+- the busiest World gets a cover big enough to look at, with the next four
+  beside it as a numbered list (`sort: 'trending'`, five rows);
+- **New on Kobblon** is `sort: 'new'`, with covers, because those are
+  Worlds you have not played;
+- **What people liked** is `sort: 'popular'`;
+- both shelves drop anything the board is already showing, which on a
+  platform with six published Worlds is most of them - exactly when a page
+  repeating itself is most obvious.
+
+`TopNow` takes its Worlds as a prop and reaches for no provider, no
+router-only helper and no page, so the Workspace can mount it. Its bare
+page is `tools/site/home-board-preview.html` and it holds the five shapes
+it has to survive: five Worlds, two, one (the lead is capped rather than
+filling the screen, or one World reads as a billboard), none at all, and a
+World with no cover and no mark, which is every World on its first day.
+
+Two shared things changed with it, so this part matters to you:
+
+- **`Shelf` now takes `empty`** - what to draw instead of a heading over a
+  hole. Home carried its own copy of this rule for months while Discover
+  had none. Existing calls are unaffected.
+- **Home's private `Row` and `Suggestion` are gone.** They were a second
+  implementation of `Shelf` and `WorldFeature`. If you copied `Row` from
+  this page, take `Shelf` instead.
+
+### `member_communities` was dropping the tick - 0325
+
+The function returns the eight fields a "your Communities" row needs and
+not `is_verified`, so every list built on it drew an unverified card for a
+verified Community: the shelf on Home, the Communities page's own "Yours",
+and the grid on a profile. The directory one page over reads `communities`
+directly and shows the tick, so the same Community was verified in one
+list and not in the next. Nothing threw; it just quietly meant two
+different things, which is the kind of thing a round exists for.
+
+**0325 adds `is_verified boolean` to `member_communities`.** The return
+type changes, so the function is dropped and written again - and dropping
+a function drops its grants, which is the trap this project has fallen
+into twice, so the `grant execute ... to authenticated, anon` is in the
+same file under it. Checked locally, applied twice, and read back **as
+`authenticated` rather than as the owner**: the verified Community comes
+back `t`, the other `f`, and the primary one is still first.
+
+**If you call `member_communities`, its row has one more column from the
+moment Staw applies this.** `MemberCommunity` in `@/types/db` gained
+`is_verified: boolean`, and `CommunityCard` now takes either that shape or
+a directory row, so one card draws both.
+
+**Staw: apply 0325.** Until it is applied the website asks for a column
+that is not there yet - the RPC returns its old eight columns and
+`is_verified` reads as undefined, so no tick, which is where we already
+were.
+
+### What is still not done on these pages
+
+The sweep over profile, people, create, communities, catalog and discover
+found less than the list implied: all six already have a loading, an empty
+and an error state, every link on them resolves to a real route, and the
+four browse pages already share `BrowseHero`. What it did find was the
+duplication above, which is now one component each. Creator Hub is its own
+job and has not been touched.

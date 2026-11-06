@@ -1,3 +1,4 @@
+import { Children } from 'react'
 import { useRail } from '@/hooks/useRail'
 import { Link } from 'react-router-dom'
 import { faChevronLeft, faChevronRight, faThumbsUp, faEye } from '@fortawesome/free-solid-svg-icons'
@@ -19,14 +20,25 @@ import type { World } from '@/types/db'
  * is more of this through here" without a second control saying so, and a
  * row that has no more to show simply does not get one.
  */
-export function Shelf({ title, note, more, children, className }: {
+export function Shelf({ title, note, more, children, empty, className }: {
   title: string
   note?: string
   more?: { to: string; label?: string } | { onClick: () => void; label?: string }
   children: React.ReactNode
+  /*
+   * What stands in for the shelf when it has nothing on it.
+   *
+   * Without this a quiet shelf drew its heading, then eighty pixels of
+   * nothing, and then whatever the page put underneath saying the same
+   * thing - a title over a hole. Home carried its own copy of this for
+   * months while Discover had none; it belongs on the shelf both pages
+   * use.
+   */
+  empty?: React.ReactNode
   className?: string
 }) {
   const { track, can, nudge, measure, scrollable } = useRail(children)
+  const bare = !Children.toArray(children).length
 
   const head = (
     <span className="inline-flex items-baseline gap-1.5">
@@ -51,7 +63,7 @@ export function Shelf({ title, note, more, children, className }: {
           )}
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1">
+        <div className={cn('ml-auto flex shrink-0 items-center gap-1', bare && 'hidden')}>
           {more && 'to' in more && (
             <Link to={more.to} className="mr-2 hidden text-xs font-bold text-link hover:underline sm:inline">
               {more.label ?? 'Show all'}
@@ -84,13 +96,15 @@ export function Shelf({ title, note, more, children, className }: {
         </div>
       </div>
 
-      <div
-        ref={track}
-        onScroll={measure}
-        className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-4 sm:px-0 kob-scroll"
-      >
-        {children}
-      </div>
+      {bare && empty ? empty : (
+        <div
+          ref={track}
+          onScroll={measure}
+          className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-4 sm:px-0 kob-scroll"
+        >
+          {children}
+        </div>
+      )}
     </section>
   )
 }

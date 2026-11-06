@@ -52,7 +52,7 @@ import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 import { avatarOf, isGone } from '@/lib/avatars'
-import { NameMarks } from '@/components/brand/Verified'
+import { NameMarks, Verified } from '@/components/brand/Verified'
 import { PenIcon } from '@/components/brand/PenIcon'
 
 /** The colour somebody chose for their page, or the house one. */
@@ -969,8 +969,9 @@ export default function Profile() {
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 truncate text-sm font-bold group-hover:text-link">
-                      {community.name}
+                    <p className="mt-2 flex items-center gap-1.5 text-sm font-bold group-hover:text-link">
+                      <span className="truncate">{community.name}</span>
+                      {community.is_verified && <Verified className="shrink-0 text-xs" />}
                     </p>
                     <p className="text-xs text-muted">
                       {community.is_primary

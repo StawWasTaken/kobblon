@@ -1,23 +1,14 @@
-import React, { useState } from 'react'
-import { useRail } from '@/hooks/useRail'
+import { useState } from 'react'
 import { Weather } from '@/components/brand/Weather'
-import { Link } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
-import {
-  faCompass, faChevronLeft, faChevronRight, faEye,
-} from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { TopicCard, useTopTopics } from '@/components/forum/TopicCard'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { EmptyState, Skeleton } from '@/components/ui/States'
 import { FriendsRail } from '@/components/social/FriendsRail'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { WorldTile } from '@/components/worlds/Shelf'
+import { Shelf, WorldTile, WorldFeature } from '@/components/worlds/Shelf'
+import { TopNow } from '@/components/home/TopNow'
 import { greeting } from '@/lib/greeting'
 import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import { useToast } from '@/components/ui/Toast'
-import { worldIcon } from '@/lib/naming'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { EventBanner } from '@/components/home/EventBanner'
 import { useAuth } from '@/hooks/useAuth'
@@ -27,111 +18,7 @@ import {
   accountStanding, acknowledgeStanding,
   listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds, listWorlds, myWorlds,
 } from '@/lib/api'
-import { formatCount } from '@/lib/format'
-import { communityLink, worldLink } from '@/lib/links'
-import { cn } from '@/lib/cn'
-import { Emblem } from '@/components/community/Emblem'
-import type { World } from '@/types/db'
-
-/** A row that slides, with the arrows only where there is a mouse to use them. */
-function Row({ title, children, more, empty }: {
-  title: string
-  children: React.ReactNode
-  more?: { to: string; label: string }
-  /**
-   * What stands in for the shelf when it has nothing on it.
-   *
-   * Without this the page drew the heading, then an empty scroller, then a
-   * card underneath repeating the same thing - a title, eighty pixels of
-   * nothing, and the answer. The comment on "Recently played" above already
-   * says an empty row headed with a title "says nothing except that the page
-   * has a hole in it"; this is that rule finally applied to the shelf it was
-   * written about.
-   */
-  empty?: React.ReactNode
-}) {
-  const { track, can, nudge, measure, scrollable } = useRail(children)
-
-  const bare = !React.Children.toArray(children).length
-
-  return (
-    <section className="mb-10 sm:mb-12">
-      <div className="mb-3 flex items-center gap-3">
-        <h2 className="font-display text-xl font-extrabold sm:text-2xl">{title}</h2>
-        {more && (
-          <Link to={more.to} className="text-xs font-bold text-link hover:underline">
-            {more.label}
-          </Link>
-        )}
-        {scrollable && !bare && (
-          <div className="ml-auto hidden gap-1 sm:flex">
-            {([-1, 1] as const).map((way) => (
-              <button
-                key={way}
-                onClick={() => nudge(way)}
-                disabled={way === -1 ? !can.left : !can.right}
-                aria-label={way === -1 ? `Scroll ${title} left` : `Scroll ${title} right`}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/60 transition-colors hover:bg-ink-hover hover:text-white disabled:pointer-events-none disabled:opacity-35"
-              >
-                <Glyph icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {bare && empty ? empty : (
-        <div
-          ref={track}
-          onScroll={measure}
-          className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll"
-        >
-          {children}
-        </div>
-      )}
-    </section>
-  )
-}
-
-/**
- * A World being suggested: its emblem, its name, and how many have been.
- *
- * The emblem is what a World chose to be known by, so it is what a rail of
- * them shows. Nothing here is a judgement about the World; it is a shelf.
- */
-function Suggestion({ world }: { world: World }) {
-  return (
-    /* `w-44` on a phone and not `w-64`: at two hundred and fifty-six pixels
-       one card filled the screen and the shelf read as a single World with
-       an edge beside it, which is the opposite of what a shelf is for. At
-       this width two fit with a third showing, and it matches the two-up
-       grid the rest of the phone now uses. */
-    <article className="w-44 shrink-0 sm:w-72">
-      <Link
-        to={worldLink(world)}
-        className="block aspect-[16/9] overflow-hidden rounded-xl border border-ink-line bg-media"
-      >
-        {world.cover_url ? (
-          <img
-            src={world.cover_url}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
-          />
-        ) : (
-          <span className="grid h-full w-full place-items-center">
-            <Glyph icon={worldIcon} className="text-2xl text-white/20" />
-          </span>
-        )}
-      </Link>
-      <p className="mt-1.5 truncate text-sm font-bold">{world.name}</p>
-      <p className="flex items-center gap-1.5 text-xs text-muted">
-        <Glyph icon={faEye} />
-        {formatCount(world.visit_count ?? 0)}
-      </p>
-    </article>
-  )
-}
+import { CommunityCard } from '@/components/community/CommunityCard'
 
 export default function Home() {
   useTitle('Home')
@@ -141,11 +28,19 @@ export default function Home() {
 
   const mine = useAsync(async () => (profile ? myWorlds() : []), [profile?.id])
   /*
-   * What is being played, until there is something worth calling a
-   * recommendation. A shelf that says "trending" and means it beats a
-   * personalised one that has nothing to personalise from.
+   * Three different questions, not one list cut into three.
+   *
+   * "Being played right now" is the busiest, and it is a board at the top
+   * of the page rather than a rail. Under it, what is new and what people
+   * liked - which are shelves because they are for scanning, and which are
+   * honest headings because the database really sorts by those two things.
+   * The old page asked `trending` once for twenty-four and then had to
+   * invent the names "More to look at" and "Still more" for slices nine to
+   * sixteen and seventeen to twenty-four.
    */
-  const suggested = useAsync(() => listWorlds({ sort: 'trending', limit: 24 }), [profile?.id])
+  const busiest = useAsync(() => listWorlds({ sort: 'trending', limit: 5 }), [])
+  const fresh = useAsync(() => listWorlds({ sort: 'new', limit: 12 }), [])
+  const liked = useAsync(() => listWorlds({ sort: 'popular', limit: 12 }), [])
   /*
    * Where you have already been, which is the first thing anybody opening
    * Home is actually after. It needs an account, so signed out it asks for
@@ -199,9 +94,16 @@ export default function Home() {
    */
   const hello = greeting(profile?.display_name || profile?.username || 'there')
 
-  const shown = suggested.data ?? []
-  const first = shown.slice(0, 8)
-  const rest = shown.slice(8, 24)
+  /*
+   * The board takes the top five, so a shelf under it has nothing to say
+   * about a World the board is already showing. On a platform with six
+   * published Worlds that is most of them, which is exactly when a page
+   * repeating itself is most obvious.
+   */
+  const top = busiest.data ?? []
+  const already = new Set(top.map((world) => world.id))
+  const newer = (fresh.data ?? []).filter((world) => !already.has(world.id))
+  const best = (liked.data ?? []).filter((world) => !already.has(world.id))
 
   return (
     <Page width="wide">
@@ -264,88 +166,72 @@ export default function Home() {
         * page instead - an empty row headed "Recently played" says nothing
         * except that the page has a hole in it.
         */}
+      {/*
+        * Where you were last, before anything anybody else is doing. The
+        * marks rather than the covers: a World's emblem is what it chose to
+        * be known by, and a shelf of squares is for recognising something
+        * you have already played rather than being sold it.
+        *
+        * It only appears once there is a history to show. Signed out, and
+        * on a first visit, the board below takes the top of the page
+        * instead - an empty row headed "Recently played" says nothing
+        * except that the page has a hole in it.
+        */}
       {!!played.data?.length && (
-        <Row title="Recently played" more={{ to: '/library', label: 'Your library' }}>
+        <Shelf title="Recently played" more={{ to: '/library', label: 'Your library' }}>
           {played.data.map((world) => <WorldTile key={world.id} world={world} />)}
-        </Row>
+        </Shelf>
       )}
 
-      <Row
-        title="Being played right now"
-        more={{ to: '/discover', label: 'Discover more' }}
-        empty={
-          <Card>
-            <EmptyState
-              mood="construction"
-              title="Nothing to suggest yet"
-              body="When people publish Worlds, the ones worth a look land here."
-              action={<Button to="/discover" icon={faCompass}>See what there is</Button>}
-            />
-          </Card>
-        }
-      >
-        {suggested.loading
-          ? [0, 1, 2, 3].map((i) => (
-            <div key={i} className="w-64 shrink-0 sm:w-72">
-              <Skeleton className="aspect-[16/9] rounded-xl" />
-            </div>
-          ))
-          : first.map((world) => <Suggestion key={world.id} world={world} />)}
-      </Row>
+      <TopNow worlds={top} loading={busiest.loading} className="relative z-10" />
+
+      {/* Covers here and not marks: these are Worlds somebody has not
+          played, so the shelf is for being shown one rather than for
+          finding one again. */}
+      {newer.length > 0 && (
+        <Shelf title="New on Kobblon" more={{ to: '/discover', label: 'Discover' }}>
+          {newer.map((world) => <WorldFeature key={world.id} world={world} />)}
+        </Shelf>
+      )}
 
       {/* The marks again, for the same reason Recently played has them:
           these are Worlds you already know, so the shelf is for finding one
-          rather than for being sold one. The covers stay on the shelves of
-          Worlds you have not seen before. */}
+          rather than for being sold one. */}
       {!!mine.data?.length && (
-        <Row title="Your Worlds" more={{ to: '/create/worlds', label: 'All of them' }}>
+        <Shelf title="Your Worlds" more={{ to: '/create/worlds', label: 'All of them' }}>
           {mine.data.map((world) => <WorldTile key={world.id} world={world} />)}
-        </Row>
+        </Shelf>
       )}
 
-      <AdBanner className="mb-10 sm:mb-12" quiet />
+      <AdBanner className="mb-8" quiet />
 
-      {rest.length > 0 && (
-        <>
-          <Row title="More to look at">
-            {rest.slice(0, 8).map((world) => <Suggestion key={world.id} world={world} />)}
-          </Row>
-
-          {rest.length > 8 && (
-            <Row title="Still more">
-              {rest.slice(8).map((world) => <Suggestion key={world.id} world={world} />)}
-            </Row>
-          )}
-        </>
+      {best.length > 0 && (
+        <Shelf title="What people liked" more={{ to: '/discover', label: 'Discover' }}>
+          {best.map((world) => <WorldFeature key={world.id} world={world} />)}
+        </Shelf>
       )}
 
       {!!saved.data?.length && (
-        <Row title="Saved" more={{ to: '/library', label: 'Your library' }}>
+        <Shelf title="Saved" more={{ to: '/library', label: 'Your library' }}>
           {saved.data.map((world) => <WorldTile key={world.id} world={world} />)}
-        </Row>
+        </Shelf>
       )}
 
       {!!communities.data?.length && (
-        <Row title="Your Communities" more={{ to: '/communities', label: 'See all' }}>
+        <Shelf title="Your Communities" more={{ to: '/communities', label: 'See all' }}>
+          {/*
+            * The same card the Communities page draws, in a fixed width so
+            * it sits on a shelf. Home had its own copy of it, three lines
+            * shorter and missing the tick - so a verified Community looked
+            * unverified here and verified one page over, which is the kind
+            * of thing a second implementation of a card is always for.
+            */}
           {communities.data.map((community) => (
-            <Link
-              key={community.id}
-              to={communityLink(community)}
-              className={cn(
-                'flex w-44 shrink-0 items-center gap-3 rounded-xl border border-ink-line bg-ink-card p-3',
-                'transition-colors hover:border-brand/60',
-              )}
-            >
-              <Emblem src={community.icon_url} name={community.name} className="h-10 w-10 text-xs" />
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">{community.name}</span>
-                <span className="block text-xs text-muted">
-                  {formatCount(community.member_count)} members
-                </span>
-              </span>
-            </Link>
+            <div key={community.id} className="w-56 shrink-0">
+              <CommunityCard community={community} />
+            </div>
           ))}
-        </Row>
+        </Shelf>
       )}
 
       {/*
@@ -360,11 +246,11 @@ export default function Home() {
         * is one.
         */}
       {!!talk.length && (
-        <Row title="From the forum" more={{ to: '/forum', label: 'All topics' }}>
+        <Shelf title="From the forum" more={{ to: '/forum', label: 'All topics' }}>
           {talk.map((topic) => (
             <TopicCard key={topic.id} topic={topic} />
           ))}
-        </Row>
+        </Shelf>
       )}
     </Page>
   )

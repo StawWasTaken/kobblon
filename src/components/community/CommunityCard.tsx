@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom'
 import { formatCount } from '@/lib/format'
-import type { Community } from '@/types/db'
+import type { Community, MemberCommunity } from '@/types/db'
 import { communityLink } from '@/lib/links'
 import { Verified } from '@/components/brand/Verified'
 import { Emblem } from '@/components/community/Emblem'
 
-/** One Community in a grid: emblem, name, how many are in it. */
-export function CommunityCard({ community }: { community: Community }) {
+/*
+ * One Community in a grid: emblem, name, how many are in it.
+ *
+ * It takes either shape the site has - a row from the directory, or a row
+ * from `member_communities` - because the card is the same card and Home
+ * had quietly grown its own copy of it without the tick.
+ */
+export function CommunityCard({ community }: { community: Community | MemberCommunity }) {
   const { name, icon_url: icon } = community
   return (
     <Link

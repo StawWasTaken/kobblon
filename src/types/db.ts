@@ -526,6 +526,12 @@ export type MemberCommunity = {
   role: CommunityRole
   /** The one this person leads with. At most one of them, and it is first. */
   is_primary: boolean
+  /*
+   * Whether it carries the tick. 0325 added it: without it every list of
+   * "your Communities" drew an unverified card for a verified Community,
+   * while the directory one page over drew the tick.
+   */
+  is_verified: boolean
 }
 
 export type CommunityEvent = {
