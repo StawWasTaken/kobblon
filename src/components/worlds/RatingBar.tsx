@@ -21,13 +21,15 @@ import { cn } from '@/lib/cn'
  * it, which is exactly what happened on the World page's stage.
  */
 export function RatingBar({
-  likes, dislikes, iLike, iDislike, disabled, onLike, onDislike,
+  likes, dislikes, iLike, iDislike, disabled, why, onLike, onDislike,
 }: {
   likes: number
   dislikes: number
   iLike: boolean
   iDislike: boolean
   disabled?: boolean
+  /** Why the thumbs cannot be pressed, where somebody may not press them. */
+  why?: string
   onLike: () => void
   onDislike: () => void
 }) {
@@ -46,6 +48,7 @@ export function RatingBar({
       disabled={disabled}
       aria-pressed={on}
       aria-label={which === 'up' ? 'Like this World' : 'Dislike this World'}
+      title={disabled ? why : undefined}
       className={cn(
         'grid h-8 w-8 place-items-center rounded-lg text-lg transition-colors disabled:opacity-40',
         on
@@ -114,6 +117,12 @@ export function RatingBar({
         <span>{formatCount(likes)}</span>
         <span>{formatCount(dislikes)}</span>
       </div>
+
+      {/* Said out loud rather than left as two grey thumbs: a control that
+          does nothing and does not say why is the page sulking. */}
+      {disabled && why && (
+        <p className="mt-1 text-center text-[11px] text-white/55">{why}</p>
+      )}
     </div>
   )
 }

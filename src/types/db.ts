@@ -910,6 +910,12 @@ export type WorldStanding = {
   /** True for a like, false for a dislike, nothing for no opinion. */
   opinion: boolean | null
   favourited: boolean
+  /**
+   * Whether this person has ever been in it, which is what the right to
+   * rate it hangs on. The page reads this to say why the thumbs cannot be
+   * pressed; the refusal itself is in `set_world_opinion`.
+   */
+  visited: boolean
 }
 
 /** How grown up a World is, in the same four words the rest of the site uses. */

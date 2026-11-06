@@ -249,6 +249,20 @@ export default function WorldPage() {
   }
 
   const mine = Boolean(profile && thing.owner_id && profile.id === thing.owner_id)
+
+  /*
+   * Staw: "make that you can only rate worlds after youve visited them."
+   *
+   * `visited` comes from `world_visits`, which only `join_world_server`
+   * writes - so this is a real record of having turned up, not something a
+   * page can award itself. Greying the thumbs out here is a courtesy;
+   * `set_world_opinion` refuses the vote either way (0327).
+   *
+   * Somebody who already rated a World keeps the ability to take it back,
+   * for the same reason the function allows it: a vote you cannot remove
+   * is worse than one you should not have been able to cast.
+   */
+  const canRate = Boolean(profile) && (standing.data?.visited || opinion !== null)
   const owner = thing.owner
 
   /* The emblem leads, because it is what a World chose to be known by. */
@@ -448,7 +462,10 @@ export default function WorldPage() {
                   dislikes={counts.dislikes}
                   iLike={opinion === true}
                   iDislike={opinion === false}
-                  disabled={!profile}
+                  disabled={!canRate}
+                  why={!profile
+                    ? 'Sign in to rate this World.'
+                    : 'Play this World before rating it.'}
                   onLike={like}
                   onDislike={dislike}
                 />

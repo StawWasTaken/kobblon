@@ -19419,3 +19419,43 @@ Why marks at all: a plain bar only says "mostly good". A notched one says
 "about four fifths", which is what somebody is reading it for.
 
 Still no votes, still a flat grey line and no red. Same props.
+
+## Round two hundred and sixty-two - you rate a World you have played
+
+Staw: "make that you can only rate worlds after youve visited them."
+
+**Migration 0327, and it needs applying.** `set_world_opinion` now refuses
+a vote from anybody with no row in `world_visits` for that World:
+`Play this World before rating it.` The check is in the function, where the
+vote is written, because a page that greys the thumbs out is a suggestion
+and this is a rule.
+
+Taking a rating back is still allowed with no visit at all. Somebody whose
+visit rows have gone should not be left holding a vote they cannot remove.
+
+`my_world_standing` gains a third column, **`visited boolean`**. It had to
+be dropped and recreated rather than replaced - `create or replace` cannot
+change a function's return type, and the SQL editor would have said
+"cannot change return type of existing function". **Anything on your side
+reading `my_world_standing` gets an extra column; a row destructured by
+position needs looking at.** `WorldStanding` in `@/types/db` carries
+`visited` too.
+
+`RatingBar` gains **`why?: string`** - the sentence shown under the bar and
+on the thumbs when they are not pressable ("Play this World before rating
+it", or "Sign in to rate this World"). A control that does nothing and does
+not say why is the page sulking.
+
+Verified against a local Postgres, applied twice, under two signed-in
+identities and anonymously - and `select auth.uid()` printed first each
+time, because a harness that is quietly anonymous passes this exact check
+for the wrong reason. Somebody who played it can rate, change and remove;
+somebody who has not is refused and writes no row; the stranger can still
+delete; anonymous still gets "Sign in first".
+
+**The consequence to plan for:** `world_visits` is only written by
+`join_world_server`, which only happens when the Launcher actually puts
+somebody in a server. Until that heartbeat exists, **nobody can rate
+anything** - every World's thumbs are greyed with "Play this World before
+rating it". That is the rule working, not a bug, but it means ratings and
+presence now ship together.

@@ -3318,7 +3318,7 @@ export async function worldMedia(worldId: string): Promise<WorldMedium[]> {
 /** What the person reading the page has already said about this World. */
 export async function myWorldStanding(worldId: string): Promise<WorldStanding> {
   const rows = unwrap(await supabase.rpc('my_world_standing', { which: worldId })) as WorldStanding[]
-  return rows?.[0] ?? { opinion: null, favourited: false }
+  return rows?.[0] ?? { opinion: null, favourited: false, visited: false }
 }
 
 /** Liking a World, not liking it, or taking either back with `null`. */
