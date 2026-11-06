@@ -19513,3 +19513,24 @@ the deciding is in the tab, not the grid. `@/lib/api` gained
 Still true: **nothing writes `world_players`**, so all of this draws empty
 until the Launcher heartbeats. **0328 needs applying**, as does **0327**
 from last round if it has not been.
+
+## Round two hundred and sixty-four - the Community page goes back one further
+
+Staw: "for the community i want the old design back (the one from before
+the one we're actually using right now)."
+
+So not the one restored in round 255 - the one before that. `CommunityPage`
+is back to its state at `1c618357`: the header, then the line tabs
+**About / Shop / Events / Members / Affiliates**, with the wall and the
+announcements under About. Restored from git rather than retyped, so it is
+the design that was there and not my memory of it.
+
+`@/components/community/CommunitySide` is deleted - the side rail belonged
+to the design in between and nothing else used it. Its bare page under
+`tools/site/` goes with it. **If anything on your side imported
+`CommunitySide`, it is gone**; the shape it drew does not exist on the
+page any more.
+
+Nothing else moved: `CommunityHeader`, `CommunityWall`, `Announcements`,
+`CommunityMembers`, `AffiliateGrid`, `EventCard`, `LiveEventBar` and
+`Shop` are all untouched and still exported. No API change.

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faArrowLeft, faCalendarDay, faLock } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarDay, faLock } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -14,6 +14,7 @@ import { CommunityMembers } from '@/components/community/CommunityMembers'
 import { AffiliateGrid } from '@/components/community/AffiliateGrid'
 import { EventCard } from '@/components/community/EventCard'
 import { Announcements } from '@/components/community/Announcements'
+import { AssetTile } from '@/components/create/AssetTile'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
@@ -21,43 +22,18 @@ import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   addressNow, cancelJoinRequest, communitySlugById, getCommunity, getCommunityOverview,
   joinCommunity, leaveCommunity,
-  listCommunityAssets, listCommunityEvents, listCommunityRoster, listRelations,
+  listCommunityAssets, listCommunityEvents, listRelations,
   setEventAttendance,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { communityLink } from '@/lib/links'
-import type { CommunityEvent } from '@/types/db'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { LiveEventBar } from '@/components/community/LiveEventBar'
 import { Shop } from '@/components/catalog/Shop'
-import { CommunitySide } from '@/components/community/CommunitySide'
+import { Tabs } from '@/components/ui/Tabs'
 
-/*
- * A Community, shaped like a place rather than a filing cabinet.
- *
- * It was five tabs across the top - About, Shop, Events, Members,
- * Affiliates - with everything that is actually alive in the Community
- * hidden inside the first of them. That is the Roblox group page, nearly
- * tab for tab, and it has the same two problems it has there: the page
- * opens on a tab rather than on the Community, and four fifths of what the
- * Community is are behind a press nobody makes.
- *
- * So there are no tabs. The page is the place: what was said, what is on,
- * and what people are posting, straight down the middle. Everything that is
- * a standing fact about the Community rather than news - who is in it, what
- * is next, what it sells, who it stands with - is a panel down the side,
- * each one showing enough to be worth reading and each one a door to all of
- * it. The four full lists are still there, every one of them, at their own
- * address, so a link to the member list is still a link to the member list.
- */
-const views = {
-  members: 'Members',
-  events: 'Events',
-  shop: 'Shop',
-  allies: 'Affiliates',
-} as const
-
-type View = keyof typeof views
+const tabs = ['About', 'Shop', 'Events', 'Members', 'Affiliates'] as const
+type Tab = (typeof tabs)[number]
 
 export default function CommunityPage() {
   const { slug: slugParam = '', id } = useParams()
@@ -67,25 +43,9 @@ export default function CommunityPage() {
   const slug = id ? byId.data ?? '' : slugParam
   const { profile } = useAuth()
   const toast = useToast()
+  const [tab, setTab] = useState<Tab>('About')
   const [pending, setPending] = useState(false)
   const [reporting, setReporting] = useState(false)
-
-  /*
-   * Which full list is open, in the address rather than in a state nobody
-   * can link to. The Community itself is what no parameter means, so the
-   * page opens on the Community and a pressed door is a real address: a
-   * link to the member list is a link to the member list, and Back goes
-   * back to the Community rather than out of it.
-   */
-  const [search, setSearch] = useSearchParams()
-  const asked = (search.get('view') ?? '').toLowerCase()
-  const view = (asked in views ? asked : null) as View | null
-  const show = (next: View | null) => {
-    const params = new URLSearchParams(search)
-    if (next) params.set('view', next)
-    else params.delete('view')
-    setSearch(params)
-  }
 
   const community = useAsync(async () => (slug ? getCommunity(slug) : null), [slug])
   const group = community.data
@@ -131,7 +91,7 @@ export default function CommunityPage() {
   const live = (events.data ?? []).filter((one) => !one.is_cancelled)
   /** Still to happen. */
   const coming = live.filter((one) => !one.is_over)
-  /** Still on the front of the page: coming up, or finished within the day. */
+  /** Still on the About page: coming up, or finished within the day. */
   const onNow = live.filter((one) => !one.is_over || one.just_over)
   /** Been and gone, newest first. */
   const gone = live
@@ -142,14 +102,10 @@ export default function CommunityPage() {
     async () => (group ? listCommunityAssets(group.id) : []),
     [group?.id],
   )
-  const roster = useAsync(
-    async () => (group ? listCommunityRoster(group.id) : []),
-    [group?.id],
-  )
   const allies = useAsync(async () => (group ? listRelations(group.id, 'ally') : []), [group?.id])
   const enemies = useAsync(async () => (group ? listRelations(group.id, 'enemy') : []), [group?.id])
 
-  useTitle(group ? (view ? `${views[view]} - ${group.name}` : group.name) : 'Community')
+  useTitle(group?.name ?? 'Community')
   useSocialCard({
     title: group ? `${group.name} - Kobblon` : null,
     description: group?.description
@@ -170,7 +126,6 @@ export default function CommunityPage() {
       toast(result === 'joined' ? 'You are in.' : 'Asked to join. They will let you know.', 'success')
       community.reload()
       rights.reload()
-      roster.reload()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'That did not work.', 'error')
     } finally {
@@ -200,16 +155,6 @@ export default function CommunityPage() {
       toast('You left the Community.', 'info')
       community.reload()
       rights.reload()
-      roster.reload()
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'That did not work.', 'error')
-    }
-  }
-
-  const going = async (event: CommunityEvent, yes: boolean) => {
-    try {
-      await setEventAttendance(event.id, yes)
-      events.reload()
     } catch (err) {
       toast(err instanceof Error ? err.message : 'That did not work.', 'error')
     }
@@ -264,26 +209,6 @@ export default function CommunityPage() {
     )
   }
 
-  const canManage = !!rights.data?.can_manage_community
-
-  /** The whole of one thing, at its own address, with the way back to the place. */
-  const full = (title: string, body: React.ReactNode) => (
-    <div className="mt-6 space-y-5">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => show(null)}
-          className="flex items-center gap-2 text-sm font-bold text-muted transition-colors hover:text-white"
-        >
-          <Glyph icon={faArrowLeft} className="text-xs" />
-          {group.name}
-        </button>
-      </div>
-      <h1 className="font-display text-2xl font-extrabold">{title}</h1>
-      {body}
-    </div>
-  )
-
   return (
     <>
       {/* Under the bar, on this page only, while something is on. */}
@@ -301,78 +226,89 @@ export default function CommunityPage() {
       />
 
       <Page width="narrow" className="pt-6">
-        {!view && (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
+        <Tabs
+          look="line"
+          label="Which part of this Community"
+          value={tab}
+          onChange={setTab}
+          options={tabs.map((name) => ({ value: name, label: name }))}
+        />
+
+        {tab === 'About' && (
+          <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_160px] xl:items-start">
             <div className="min-w-0 space-y-8">
-              <Announcements communityId={group.id} rights={rights.data} />
+            <Announcements communityId={group.id} rights={rights.data} />
 
-              {/*
-                * What is on, at the top of the page because it is the thing
-                * with a time on it.
-                *
-                * Staw: "when events are finished they still display in the
-                * about part of the community but then disappears after a
-                * day and gets stored into the past events in the events
-                * tab". So this is the upcoming ones plus whatever ended
-                * within the day - an event people turned up to yesterday
-                * evening is still the thing the Community is talking about
-                * this morning, and a page that drops it the second it ends
-                * reads as though nothing ever happened there.
-                *
-                * `is_over` and `just_over` are the database's answers, not
-                * this page's. A clock comparison written here is a clock
-                * comparison against the reader's machine, which is a
-                * different clock from the one the event was set by.
-                */}
-              {!!onNow.length && (
-                <section>
-                  <div className="mb-3 flex items-center gap-3">
-                    <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-                      <Glyph icon={faCalendarDay} className="text-base" />
-                      On now
-                    </h2>
-                    <button
-                      onClick={() => show('events')}
-                      className="ml-auto text-xs font-bold text-link hover:underline"
-                    >
-                      All events
-                    </button>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {onNow.slice(0, 2).map((event) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onJoin={(yes) => void going(event, yes)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
+            {/*
+              * What is on, kept short here with the rest under its own tab.
+              *
+              * Staw: "when events are finished they still display in the
+              * about part of the community but then disappears after a day
+              * and gets stored into the past events in the events tab". So
+              * this is the upcoming ones plus whatever ended within the
+              * day - an event people turned up to yesterday evening is
+              * still the thing the Community is talking about this
+              * morning, and a page that drops it the second it ends reads
+              * as though nothing ever happened there.
+              *
+              * `is_over` and `just_over` are the database's answers, not
+              * this page's. A clock comparison written here is a clock
+              * comparison against the reader's machine, which is a
+              * different clock from the one the event was set by.
+              */}
+            {!!onNow.length && (
+              <section>
+                <div className="mb-3 flex items-center gap-3">
+                  <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+                    <Glyph icon={faCalendarDay} className="text-base" />
+                    Events
+                  </h2>
+                  <button
+                    onClick={() => setTab('Events')}
+                    className="ml-auto text-xs font-bold text-link hover:underline"
+                  >
+                    See all
+                  </button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {onNow.slice(0, 3).map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onJoin={async (going) => {
+                        try {
+                          await setEventAttendance(event.id, going)
+                          events.reload()
+                        } catch (err) {
+                          toast(err instanceof Error ? err.message : 'That did not work.', 'error')
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
-              {/* The living part of the Community, and the spine of the
-                  page rather than the last thing under four other things. */}
-              <CommunityWall communityId={group.id} rights={rights.data} />
+            {!!store.data?.length && (
+              <section>
+                <h2 className="mb-3 font-display text-xl font-extrabold">
+                  Made by {group.name}
+                </h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  {store.data.map((item) => <AssetTile key={item.id} item={item} />)}
+                </div>
+              </section>
+            )}
+
+            <CommunityWall communityId={group.id} rights={rights.data} />
             </div>
 
-            <CommunitySide
-              group={group}
-              roster={roster.data}
-              rosterLoading={roster.loading}
-              coming={coming}
-              store={store.data}
-              allies={allies.data}
-              enemies={enemies.data}
-              foot={<AdBanner size="tall" quiet className="hidden lg:block" />}
-              /* On a phone it goes above the wall, not under it: the wall
-                 has no bottom, so anything after it is never reached. */
-              className="max-lg:order-first lg:sticky lg:top-[4.5rem]"
-            />
+            <AdBanner size="tall" quiet className="hidden xl:sticky xl:top-[4.5rem] xl:block" />
           </div>
         )}
 
-        {view === 'events' && full('Events', (
-          <div className="space-y-6">
+        {tab === 'Events' && (
+          <div className="mt-6 space-y-6">
             {events.loading && <Skeleton className="h-40" />}
 
             {!events.loading && !events.data?.length && (
@@ -381,12 +317,12 @@ export default function CommunityPage() {
                   mood="noResults"
                   title="Nothing on yet"
                   body={
-                    canManage
+                    rights.data?.can_manage_community
                       ? 'Put something in the calendar and members will see it here.'
                       : `${group.name} has not announced anything.`
                   }
                   action={
-                    canManage
+                    rights.data?.can_manage_community
                       ? <Button to={`/c/${group.slug}/configure?section=Events`}>Make an event</Button>
                       : undefined
                   }
@@ -399,7 +335,18 @@ export default function CommunityPage() {
                 <h2 className="font-display text-xl font-extrabold">Coming up</h2>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {coming.map((event) => (
-                    <EventCard key={event.id} event={event} onJoin={(yes) => void going(event, yes)} />
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onJoin={async (going) => {
+                        try {
+                          await setEventAttendance(event.id, going)
+                          events.reload()
+                        } catch (err) {
+                          toast(err instanceof Error ? err.message : 'That did not work.', 'error')
+                        }
+                      }}
+                    />
                   ))}
                 </div>
               </section>
@@ -413,33 +360,46 @@ export default function CommunityPage() {
               <section className="space-y-3">
                 <h2 className="font-display text-xl font-extrabold">Past events</h2>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {gone.map((event) => <EventCard key={event.id} event={event} past />)}
+                  {gone.map((event) => (
+                    <EventCard key={event.id} event={event} past />
+                  ))}
                 </div>
               </section>
             )}
           </div>
-        ))}
+        )}
 
-        {view === 'members' && full('Members', (
-          <CommunityMembers
-            communityId={group.id}
-            ownerId={group.owner_id}
-            rights={rights.data}
-            onChanged={() => { community.reload(); rights.reload(); roster.reload() }}
-          />
-        ))}
+        {tab === 'Members' && (
+          <div className="mt-6">
+            <CommunityMembers
+              communityId={group.id}
+              ownerId={group.owner_id}
+              rights={rights.data}
+              onChanged={() => { community.reload(); rights.reload() }}
+            />
+          </div>
+        )}
 
-        {view === 'shop' && full(`Made by ${group.name}`, (
-          <Shop
-            owner={{ community: group.id }}
-            who={group.name}
-            handle={group.slug}
-            isMine={canManage}
-          />
-        ))}
+        {/*
+          * What the Community sells, under its own name.
+          *
+          * Second after About because it is the thing a stranger is most
+          * likely to have come for: a Community with a shop is a shop, and
+          * burying it behind the member list is hiding the front door.
+          */}
+        {tab === 'Shop' && (
+          <div className="mt-6">
+            <Shop
+              owner={{ community: group.id }}
+              who={group.name}
+              handle={group.slug}
+              isMine={!!rights.data?.can_manage_community}
+            />
+          </div>
+        )}
 
-        {view === 'allies' && full('Affiliates', (
-          <div className="space-y-8">
+        {tab === 'Affiliates' && (
+          <div className="mt-6 space-y-8">
             <AffiliateGrid
               title="Allies"
               relations={allies.data}
@@ -453,7 +413,7 @@ export default function CommunityPage() {
               empty="Nobody has been declared an enemy."
             />
           </div>
-        ))}
+        )}
       </Page>
 
       <ReportDialog
