@@ -47,13 +47,23 @@ function WhoIsIn({ roster }: { roster: CommunityMember[] }) {
   })
 
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {sorted.slice(0, 8).map((person) => (
-        <Tooltip key={person.id} label={person.display_name} side="top">
-          <Link to={profileLink(person)} className="block">
-            <PersonAvatar person={person} size="lg" square ring="ring-ink-card" className="w-full" />
-          </Link>
-        </Tooltip>
+    /*
+     * Faces with names under them, the way a member list looked when it was
+     * a list of people rather than a row of thumbnails. Three across, so a
+     * name has room to be a name.
+     */
+    <div className="grid grid-cols-3 gap-2">
+      {sorted.slice(0, 6).map((person) => (
+        <Link
+          key={person.id}
+          to={profileLink(person)}
+          className="group flex flex-col items-center gap-1.5 rounded-lg p-1 transition-colors hover:bg-ink-hover"
+        >
+          <PersonAvatar person={person} size="lg" square ring="ring-ink-card" className="w-full" />
+          <span className="w-full truncate text-center text-[11px] font-semibold text-white/70 transition-colors group-hover:text-white">
+            {person.display_name ?? person.username}
+          </span>
+        </Link>
       ))}
     </div>
   )

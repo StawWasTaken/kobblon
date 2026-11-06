@@ -19018,3 +19018,53 @@ to fix one day; My Worlds says so in as many words.
 The rename to Creator Hub was already through everywhere - navigation,
 footer, page titles, the rail - so nothing moved there. The address is still
 `/create`, and `/create/spaces` still redirects to `/create/worlds`.
+
+## Round two hundred and fifty-three - 2018 bones, Kobblon paint
+
+Correcting myself. Last round I gave the World page the Community page's
+layout and called the match a feature. Staw never asked for the two to look
+alike, did not want it, and did not like either result: "I want the layout
+inspired by old 2018 Roblox but with our modern Kobblon design - not too
+corporate, like it felt with old Roblox."
+
+So the shared *layout* is gone. What the two pages share now is the one
+thing worth sharing - the way a box looks - and each page is laid out as
+its own kind of thing.
+
+**`@/components/ui/SidePanel` changed shape and is the thing to copy.** It
+was a rounded card with a tiny uppercase label floating inside it, which is
+a dashboard widget. It is now the titled box those old pages were built out
+of: a strip across the top with an icon, the name of the box in the display
+face, and the door to the rest of it on the right of that same strip.
+`bare` turns the padding off for a box holding a list. `Fact` is one row of
+a facts table, with a hairline under it. Mount it in the Workspace -
+nothing in it asks who is signed in.
+
+**The World page is a game page again.** The emblem, the name and who made
+it across the top; the picture big on the left; everything you can do in
+one column on the right - a full-width green Play, then favourite, notify
+and the rating in one strip, then a **Details** table (playing now, visits,
+favourites, likes, genre, published, updated), then reactions. Then every
+part of the World straight down the page under its own heading with a count
+beside it: **Badges 4**, **Store 2**, **Servers 3**, and what people who
+play it also play. No tabs, no rail of summaries, nothing folded away.
+
+**`?view=` is gone from the World page** - everything is on the page, so
+there is nothing to link to a view of. Last round told you to link to
+`/worlds/<id>?view=servers`; **that is wrong now**, and the parameter does
+nothing. The sections have anchors instead: `#badges`, `#shop`, `#servers`.
+`@/components/worlds/WorldSide` is deleted.
+
+**The Community page keeps its own shape** - announcements, what is on, and
+the wall down the middle, its standing facts down the side - and its boxes
+are the new ones. **In here** shows six faces with their names under them,
+busiest first, because a member list is a list of people and a row of
+nameless thumbnails is a row of thumbnails. Its `?view=members|events|shop|
+allies` addresses are unchanged.
+
+The Creator Hub's rail picked up the same boxes, which is all that changed
+there.
+
+The rule I should have followed, written down: a shared component is a
+shared *component*. Two pages using the same box is one design system; two
+pages using the same layout is two pages pretending to be the same thing.

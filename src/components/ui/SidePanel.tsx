@@ -1,55 +1,52 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
 /*
- * One panel of a side rail, and the one drawing of it for the whole site.
+ * A titled box.
  *
- * A World, a Community and the Creator Hub all have the same shape now -
- * the thing itself down the middle, the standing facts down the side - and
- * all three had written their own copy of this box. Three copies of a
- * border radius is how two pages end up looking like two products.
+ * The shape old Roblox used everywhere and the reason those pages felt like
+ * a place rather than a product: a strip across the top saying what the box
+ * is, the thing itself under it, and the way to the rest of it on the same
+ * strip. Everything is on the page and nothing is hidden behind a tab or a
+ * bare uppercase label that could be anything.
  *
- * Nothing here asks who is signed in, so a rail built out of it mounts
- * outside the website.
+ * Modern Kobblon paint - our card, our line, our display face - on those
+ * bones. Nothing here asks who is signed in, so a box built out of it
+ * mounts outside the website.
  */
-
-/** A standing fact: enough of it shown to be worth reading, and the door to the rest. */
-export function SidePanel({ icon, title, to, all, children, className }: {
-  icon: IconDefinition
+export function SidePanel({ icon, title, to, all, children, bare, className }: {
+  icon?: IconDefinition
   title: string
-  /** Where all of it is. Left out for a panel that is already all of itself. */
+  /** Where all of it is. Left out for a box that is already all of itself. */
   to?: string
   all?: string
   children: React.ReactNode
+  /** No padding inside, for a box whose content is a list that owns its own. */
+  bare?: boolean
   className?: string
 }) {
   return (
-    <section className={cn('rounded-2xl border border-ink-line bg-ink-card p-4', className)}>
-      <h2 className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
-        <Glyph icon={icon} className="text-[11px]" />
-        {title}
-      </h2>
-      {children}
-      {to && all && (
-        <Link
-          to={to}
-          className="mt-3 flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
-        >
-          {all}
-          <Glyph icon={faArrowRight} className="text-[10px]" />
-        </Link>
-      )}
+    <section className={cn('overflow-hidden rounded-xl border border-ink-line bg-ink-card', className)}>
+      <header className="flex items-center gap-2 border-b border-ink-line bg-ink-raised/70 px-4 py-2.5">
+        {icon && <Glyph icon={icon} className="text-xs text-muted" />}
+        <h2 className="font-display text-sm font-extrabold">{title}</h2>
+        {to && all && (
+          <Link to={to} className="ml-auto shrink-0 text-xs font-bold text-link hover:underline">
+            {all}
+          </Link>
+        )}
+      </header>
+      <div className={bare ? '' : 'p-4'}>{children}</div>
     </section>
   )
 }
 
-/** One number and what it is of, for a panel that is a list of them. */
+/** One row of a facts table: what it is on the left, the number on the right. */
 export function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-1">
+    <div className="flex items-baseline justify-between gap-3 border-b border-ink-line/60 py-1.5 last:border-0">
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="text-xs font-bold tabular-nums text-white/90">{value}</dd>
     </div>

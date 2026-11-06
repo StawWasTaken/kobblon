@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faPlay, faStar, faBell, faFlag, faSliders,
-  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faArrowLeft,
+  faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
+  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
+import { SidePanel, Fact } from '@/components/ui/SidePanel'
 import { Button } from '@/components/ui/Button'
 import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -20,7 +22,6 @@ import { reactionsOn, inTheKlub } from '@/lib/api'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { ServerList } from '@/components/worlds/ServerList'
-import { WorldSide } from '@/components/worlds/WorldSide'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
 import { WorldThings } from '@/components/worlds/WorldThings'
 import { AdBanner } from '@/components/ads/AdBanner'
@@ -35,7 +36,7 @@ import {
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
-import { formatCount } from '@/lib/format'
+import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { asset } from '@/lib/asset'
 
@@ -51,28 +52,20 @@ import { asset } from '@/lib/asset'
  */
 
 /*
- * A World is a place, so the page is shaped like one rather than like a
- * filing cabinet.
+ * A World, on the website.
  *
- * It was four tabs across the top - About, Badges, Shop, Servers - which is
- * the Community page's old shape and has the same two faults: the page
- * opens on a tab rather than on the World, and what a World hands out,
- * sells and is full of all sit behind a press nobody makes. So there are no
- * tabs. The middle of the page is the World itself - what it looks like and
- * what it says it is - and everything that is a standing fact about it is a
- * panel down the side, each one a door to all of it.
+ * Staw wants what old Roblox felt like, in our paint: the name and whoever
+ * made it at the top, the picture big on the left, everything you can do in
+ * a column on the right, and then every part of the World straight down the
+ * page - what it is, what it hands out, what it sells, who is in it. No
+ * tabs, no side rail of summaries, nothing folded away. The page is long
+ * because the World has that much in it, and reading down it is how you
+ * find out what is there.
  *
- * The three full lists are still there, every one of them, at their own
- * address, so a link to the servers is a link to the servers and Back goes
- * back to the World rather than out of it.
+ * Pressing Play hands its number to the Launcher, which is what actually
+ * runs it, and nothing here pretends a browser tab can. Everything on this
+ * page is a real number somebody can change.
  */
-const views = {
-  badges: 'Badges',
-  shop: 'Shop',
-  servers: 'Servers',
-} as const
-
-type View = keyof typeof views
 
 /**
  * The small window that says what is happening when Play is pressed.
@@ -133,6 +126,35 @@ function Handover({
   )
 }
 
+/**
+ * One part of a World, with its name and how much of it there is.
+ *
+ * A heading that says "Badges 4" is the whole reason old pages like this
+ * worked: you can see what a World has from the page rather than by pressing
+ * things to find out. Left out entirely when there is nothing in it and you
+ * are not the one who could put something there.
+ */
+function Section({ id, icon, title, count, hide, children }: {
+  id: string
+  icon: IconDefinition
+  title: string
+  count: number
+  hide?: boolean
+  children: React.ReactNode
+}) {
+  if (hide) return null
+  return (
+    <section id={id} className="scroll-mt-24">
+      <h2 className="mb-2.5 flex items-center gap-2 font-display text-lg font-extrabold">
+        <Glyph icon={icon} className="text-sm text-muted" />
+        {title}
+        {count > 0 && <span className="text-sm font-bold text-muted">{formatCount(count)}</span>}
+      </h2>
+      {children}
+    </section>
+  )
+}
+
 export default function WorldPage() {
   const { id = '' } = useParams()
   const number = Number(id)
@@ -177,20 +199,6 @@ export default function WorldPage() {
   const badges = useAsync(async () => (thing ? badgesOf(thing.id) : []), [thing?.id])
   const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
-  /*
-   * Which full list is open, in the address rather than in a state nobody
-   * can link to. The World itself is what no parameter means.
-   */
-  const [search, setSearch] = useSearchParams()
-  const asked = (search.get('view') ?? '').toLowerCase()
-  const view = (asked in views ? asked : null) as View | null
-  const show = (next: View | null) => {
-    const params = new URLSearchParams(search)
-    if (next) params.set('view', next)
-    else params.delete('view')
-    setSearch(params)
-  }
-
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
   const [reporting, setReporting] = useState(false)
 
@@ -224,7 +232,7 @@ export default function WorldPage() {
   }, [watching.data])
 
   useCanonicalPath(thing?.content_id === number ? worldLink(thing) : null)
-  useTitle(thing ? (view ? `${views[view]} - ${thing.name}` : thing.name) : 'World')
+  useTitle(thing?.name ?? 'World')
   useSocialCard({
     title: thing ? `${thing.name} - Kobblon` : null,
     description: thing?.description
@@ -366,22 +374,6 @@ export default function WorldPage() {
     )
   }
 
-  /** The whole of one thing, at its own address, with the way back to the World. */
-  const full = (title: string, body: React.ReactNode) => (
-    <div className="mt-6 space-y-5">
-      <button
-        type="button"
-        onClick={() => show(null)}
-        className="flex items-center gap-2 text-sm font-bold text-muted transition-colors hover:text-white"
-      >
-        <Glyph icon={faArrowLeft} className="text-xs" />
-        {thing.name}
-      </button>
-      <h1 className="font-display text-2xl font-extrabold">{title}</h1>
-      {body}
-    </div>
-  )
-
   const start = (room?: string) => {
     setHanding('opening')
     /*
@@ -394,276 +386,265 @@ export default function WorldPage() {
     void play(thing.id, () => setHanding('missing'), room)
   }
 
+  const playing_now = playing.data ?? 0
+
   return (
     <>
-      {/*
-        * A banner with the emblem sitting across its edge, rather than a
-        * picture on the left and a column of facts on the right.
-        *
-        * Staw said the page looked too much like Roblox, and the two-column
-        * card was the reason: it is their shape, and it makes every World
-        * read as a product listing. This is the shape a profile has - a
-        * thing with a face and a name - which is nearer what a World is,
-        * and it gives the emblem somewhere to matter.
-        *
-        * The screenshots move down into About, where somebody who wants
-        * them goes looking. The picture up here is the cover, behind the
-        * words rather than beside them.
-        */}
       <Page>
-        <section className="overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
-          <div className="relative h-32 w-full sm:h-44">
-            {thing.cover_url ? (
-              <img src={thing.cover_url} alt="" className="h-full w-full object-cover" />
+        {/* Who built it and what it is called, above everything, the way a
+            thing with a maker is introduced. */}
+        <div className="flex items-start gap-3 border-b border-ink-line pb-4">
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-ink-line bg-gradient-to-br from-brand to-brand-deep sm:h-16 sm:w-16">
+            {(thing.emblem_url ?? thing.cover_url) ? (
+              <img
+                src={thing.emblem_url ?? thing.cover_url ?? ''}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-brand-deep to-ink" />
+              <div className="flex h-full w-full items-center justify-center font-display text-2xl font-black text-white/90">
+                {thing.name.slice(0, 1).toUpperCase()}
+              </div>
             )}
-            {/* So the words stay readable over whatever somebody uploaded. */}
-            <div className="absolute inset-0 bg-gradient-to-t from-ink-card via-ink-card/60 to-ink-card/10" />
           </div>
 
-          <div className="relative px-5 pb-5 sm:px-7 sm:pb-7">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="flex min-w-0 items-end gap-4">
-                {/*
-                  * The emblem, half over the banner. Square, because that is
-                  * what an emblem is; the cover is the wide one.
-                  */}
-                <div className="-mt-10 h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-ink-card bg-gradient-to-br from-brand to-brand-deep sm:-mt-12 sm:h-24 sm:w-24">
-                  {(thing.emblem_url ?? thing.cover_url) ? (
-                    <img
-                      src={thing.emblem_url ?? thing.cover_url ?? ''}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center font-display text-3xl font-black text-white/90">
-                      {thing.name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h1 className="truncate font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+              {thing.name}
+            </h1>
 
-                <div className="min-w-0 pb-1">
-                  <h1 className="truncate font-display text-2xl font-extrabold leading-tight sm:text-3xl">
-                    {thing.name}
-                  </h1>
-
-                  {owner ? (
-                    <Link
-                      to={profileLink(owner)}
-                      className="mt-1.5 inline-flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
-                    >
-                      <PersonAvatar person={owner} size="xs" />
-                      By <span className="font-bold text-white">{owner.display_name}</span>
-                      <NameMarks person={owner} />
-                    </Link>
-                  ) : (
-                    <p className="mt-1.5 text-sm text-white/70">
-                      By <span className="font-bold text-white">{thing.creator_name ?? 'Kobblon'}</span>
-                    </p>
-                  )}
-
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    {/*
-                      * Only when somebody is in it. A row of zeroes on every
-                      * quiet World says the platform is empty, which is both
-                      * true and not worth printing.
-                      */}
-                    {(playing.data ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-space/15 px-2.5 py-1 font-bold text-space">
-                        <span className="h-1.5 w-1.5 rounded-full bg-space" />
-                        {formatCount(playing.data ?? 0)} playing
-                      </span>
-                    )}
-                    {genre && (
-                      <span className="rounded-full bg-white/5 px-2.5 py-1 font-semibold text-muted">
-                        {genre.label}
-                      </span>
-                    )}
-                    <span className="rounded-full bg-white/5 px-2.5 py-1 font-semibold text-muted">
-                      {formatCount(thing.visit_count)} visits
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Play, with the small things beside it rather than under it. */}
-              <div className="flex shrink-0 flex-col gap-3 sm:min-w-[18rem]">
-                <div className="flex items-center gap-2">
-                  <Button size="lg" variant="enter" className="flex-1" onClick={() => start()}>
-                    <Glyph icon={faPlay} />
-                    <span className="font-display text-lg font-extrabold">Play</span>
-                  </Button>
-
-                  <Menu
-                    label="More"
-                    align="right"
-                    trigger={
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-ink-line text-white/70 transition-colors hover:bg-white/10 hover:text-white">
-                        <Glyph icon={faEllipsis} />
-                      </span>
-                    }
-                    items={[
-                      {
-                        label: 'Copy link',
-                        icon: faLink,
-                        onSelect: () => {
-                          void navigator.clipboard?.writeText(window.location.href)
-                          toast('Link copied.', 'success')
-                        },
-                      },
-                      ...(mine ? [
-                        { label: 'Edit the page', icon: faSliders, to: `/create/worlds/${thing.id}` },
-                        {
-                          label: 'Open in Workspace',
-                          icon: faCube,
-                          onSelect: () => { void editInWorkspace(thing.id, () => setHanding('missing')) },
-                        },
-                      ] : []),
-                      { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
-                    ]}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <Tooltip
-                    label={profile ? (favourited ? 'Saved' : 'Save this World') : 'Sign in to save it'}
-                    side="top"
-                  >
-                    <button
-                      onClick={keep}
-                      disabled={!profile}
-                      aria-pressed={favourited}
-                      className={cn(
-                        'flex shrink-0 items-center gap-1.5 text-xs font-bold transition-colors disabled:opacity-40',
-                        favourited ? 'text-amber-300' : 'text-white/60 hover:text-white',
-                      )}
-                    >
-                      <Glyph icon={faStar} />
-                      {formatCount(counts.favourites)}
-                    </button>
-                  </Tooltip>
-
-                  <Tooltip
-                    label={profile
-                      ? (notify
-                        ? 'You will be told when this World changes'
-                        : 'Get told when this World changes')
-                      : 'Sign in to be told'}
-                    side="top"
-                  >
-                    <button
-                      onClick={tell}
-                      disabled={!profile}
-                      aria-pressed={notify}
-                      className={cn(
-                        'flex shrink-0 items-center gap-1.5 text-xs font-bold transition-colors disabled:opacity-40',
-                        notify ? 'text-link' : 'text-white/60 hover:text-white',
-                      )}
-                    >
-                      <Glyph icon={faBell} />
-                      Notify
-                    </button>
-                  </Tooltip>
-
-                  <RatingBar
-                    likes={counts.likes}
-                    dislikes={counts.dislikes}
-                    iLike={opinion === true}
-                    iDislike={opinion === false}
-                    disabled={!profile}
-                    onLike={like}
-                    onDislike={dislike}
-                  />
-                </div>
-
-                {/*
-                  * Faces, beside the rating rather than instead of it.
-                  *
-                  * Staw: "worlds keep the dislikes & likes only, but klub
-                  * users can also click a third button to add reactions to
-                  * worlds". The bar is a rating and a rating has to be one
-                  * number; a face says something the number cannot, and it
-                  * does not move the number. The server refuses a
-                  * non-member, so this only saves somebody a round trip.
-                  */}
-                <Reactions
-                  className="mt-3"
-                  what="world"
-                  which={thing.id}
-                  counts={faces.data ?? []}
-                  canReact={!!profile && !profile.is_guest && inKlub}
-                  whyNot={!profile
-                    ? 'Sign in to react.'
-                    : 'Reacting to a World is a Kobblon Klub thing.'}
-                  onChanged={faces.reload}
-                />
-              </div>
-            </div>
+            {owner ? (
+              <Link
+                to={profileLink(owner)}
+                className="mt-1 inline-flex items-center gap-1.5 text-sm text-white/70 transition-colors hover:text-white"
+              >
+                <PersonAvatar person={owner} size="xs" />
+                By <span className="font-bold text-white">{owner.display_name}</span>
+                <NameMarks person={owner} />
+              </Link>
+            ) : (
+              <p className="mt-1 text-sm text-white/70">
+                By <span className="font-bold text-white">{thing.creator_name ?? 'Kobblon'}</span>
+              </p>
+            )}
           </div>
-        </section>
 
-        {!view && (
-          <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
-            <div className="min-w-0 space-y-8">
-              {/* The World as it looks, which is what somebody came to see. */}
-              <WorldGallery shots={shots} name={thing.name} />
+          <Menu
+            label="More"
+            align="right"
+            trigger={
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-line text-white/70 transition-colors hover:bg-white/10 hover:text-white">
+                <Glyph icon={faEllipsis} />
+              </span>
+            }
+            items={[
+              {
+                label: 'Copy link',
+                icon: faLink,
+                onSelect: () => {
+                  void navigator.clipboard?.writeText(window.location.href)
+                  toast('Link copied.', 'success')
+                },
+              },
+              ...(mine ? [
+                { label: 'Edit the page', icon: faSliders, to: `/create/worlds/${thing.id}` },
+                {
+                  label: 'Open in Workspace',
+                  icon: faCube,
+                  onSelect: () => { void editInWorkspace(thing.id, () => setHanding('missing')) },
+                },
+              ] : []),
+              { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
+            ]}
+          />
+        </div>
 
-              <section>
-                <h2 className="font-display text-lg font-extrabold">About</h2>
-                <p className="mt-2 whitespace-pre-wrap leading-relaxed text-white/70">
-                  {thing.description || 'Whoever built this has not described it yet.'}
-                </p>
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
+          {/* The picture, and then the World itself, all the way down. */}
+          <div className="min-w-0 space-y-6">
+            <WorldGallery shots={shots} name={thing.name} />
+
+            <SidePanel title="About this World">
+              <p className="whitespace-pre-wrap leading-relaxed text-white/75">
+                {thing.description || 'Whoever built this has not described it yet.'}
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                {/* Only when somebody is in it. A row of zeroes on every quiet
+                    World says the platform is empty, which is both true and
+                    not worth printing. */}
+                {playing_now > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-space/15 px-2.5 py-1 font-bold text-space">
+                    <span className="h-1.5 w-1.5 rounded-full bg-space" />
+                    {formatCount(playing_now)} playing
+                  </span>
+                )}
+                {genre && (
+                  <span className="rounded-full bg-white/5 px-2.5 py-1 font-semibold text-muted">
+                    {genre.label}
+                  </span>
+                )}
+                <span className="rounded-full bg-white/5 px-2.5 py-1 font-semibold text-muted">
+                  {formatCount(thing.visit_count)} visits
+                </span>
 
                 {profile && !mine && (
                   <button
                     onClick={() => setReporting(true)}
-                    className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
+                    className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
                   >
                     <Glyph icon={faFlag} className="text-[10px]" />
                     Report Abuse
                   </button>
                 )}
-              </section>
+              </div>
+            </SidePanel>
 
-              <AlsoJoinedRow worlds={alsoPlayed.data ?? []} />
+            {/* Every section down the page, each one saying how much of it
+                there is, so nothing is behind a press. */}
+            <Section
+              id="badges"
+              icon={faAward}
+              title="Badges"
+              count={badges.data?.length ?? 0}
+              hide={!mine && !badges.data?.length}
+            >
+              <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
+            </Section>
+
+            <Section
+              id="shop"
+              icon={faBagShopping}
+              title="Store"
+              count={passes.data?.length ?? 0}
+              hide={!mine && !passes.data?.length}
+            >
+              <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
+            </Section>
+
+            <Section
+              id="servers"
+              icon={faServer}
+              title="Servers"
+              count={servers.data?.length ?? 0}
+            >
+              <ServerList
+                servers={servers.data ?? []}
+                name={thing.name}
+                onJoin={(server) => start(server.id)}
+              />
+            </Section>
+
+            <AlsoJoinedRow worlds={alsoPlayed.data ?? []} />
+          </div>
+
+          {/* Everything you can do about this World, in one column beside it. */}
+          <aside className="space-y-4 max-lg:order-first">
+            <Button size="lg" variant="enter" block onClick={() => start()}>
+              <Glyph icon={faPlay} />
+              <span className="font-display text-lg font-extrabold">Play</span>
+            </Button>
+
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-ink-line bg-ink-card px-3 py-2.5">
+              <Tooltip
+                label={profile ? (favourited ? 'Saved' : 'Save this World') : 'Sign in to save it'}
+                side="top"
+              >
+                <button
+                  onClick={keep}
+                  disabled={!profile}
+                  aria-pressed={favourited}
+                  className={cn(
+                    'flex shrink-0 items-center gap-1.5 text-xs font-bold transition-colors disabled:opacity-40',
+                    favourited ? 'text-amber-300' : 'text-white/60 hover:text-white',
+                  )}
+                >
+                  <Glyph icon={faStar} />
+                  {formatCount(counts.favourites)}
+                </button>
+              </Tooltip>
+
+              <Tooltip
+                label={profile
+                  ? (notify
+                    ? 'You will be told when this World changes'
+                    : 'Get told when this World changes')
+                  : 'Sign in to be told'}
+                side="top"
+              >
+                <button
+                  onClick={tell}
+                  disabled={!profile}
+                  aria-pressed={notify}
+                  className={cn(
+                    'flex shrink-0 items-center gap-1.5 text-xs font-bold transition-colors disabled:opacity-40',
+                    notify ? 'text-link' : 'text-white/60 hover:text-white',
+                  )}
+                >
+                  <Glyph icon={faBell} />
+                  Notify
+                </button>
+              </Tooltip>
+
+              <RatingBar
+                likes={counts.likes}
+                dislikes={counts.dislikes}
+                iLike={opinion === true}
+                iDislike={opinion === false}
+                disabled={!profile}
+                onLike={like}
+                onDislike={dislike}
+              />
             </div>
 
-            <WorldSide
-              servers={servers.data}
-              serversLoading={servers.loading}
-              badges={badges.data}
-              passes={passes.data}
-              counts={counts}
-              visits={thing.visit_count}
-              genre={genre?.label}
-              publishedAt={thing.published_at}
-              updatedAt={thing.updated_at}
-              onJoin={(server) => start(server.id)}
-              foot={<AdBanner size="tall" quiet className="hidden lg:block" />}
-              /* On a phone it goes above the description rather than under
-                 everything, because the servers are the live part. */
-              className="max-lg:order-first lg:sticky lg:top-[4.5rem]"
+            {/*
+              * The facts table old Roblox had down the right of every game,
+              * and the thing people actually read before pressing Play.
+              */}
+            <SidePanel icon={faCircleInfo} title="Details">
+              <dl>
+                {playing_now > 0 && (
+                  <Fact
+                    label="Playing now"
+                    value={<span className="text-space-bright">{formatCount(playing_now)}</span>}
+                  />
+                )}
+                <Fact label="Visits" value={formatCount(thing.visit_count)} />
+                <Fact label="Favourites" value={formatCount(counts.favourites)} />
+                <Fact label="Likes" value={formatCount(counts.likes)} />
+                <Fact label="Genre" value={genre?.label ?? 'Not set'} />
+                <Fact
+                  label="Published"
+                  value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
+                />
+                <Fact label="Updated" value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'} />
+              </dl>
+            </SidePanel>
+
+            {/*
+              * Faces, beside the rating rather than instead of it.
+              *
+              * Staw: "worlds keep the dislikes & likes only, but klub users
+              * can also click a third button to add reactions to worlds".
+              * The bar is a rating and a rating has to be one number; a face
+              * says something the number cannot, and it does not move the
+              * number. The server refuses a non-member, so this only saves
+              * somebody a round trip.
+              */}
+            <Reactions
+              what="world"
+              which={thing.id}
+              counts={faces.data ?? []}
+              canReact={!!profile && !profile.is_guest && inKlub}
+              whyNot={!profile
+                ? 'Sign in to react.'
+                : 'Reacting to a World is a Kobblon Klub thing.'}
+              onChanged={faces.reload}
             />
-          </div>
-        )}
 
-        {view === 'badges' && full('Badges', (
-          <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
-        ))}
-
-        {view === 'shop' && full('Shop', (
-          <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
-        ))}
-
-        {view === 'servers' && full('Servers', (
-          <ServerList
-            servers={servers.data ?? []}
-            name={thing.name}
-            onJoin={(server) => start(server.id)}
-          />
-        ))}
-
+            <AdBanner size="tall" quiet className="hidden lg:block" />
+          </aside>
+        </div>
       </Page>
 
       <Handover state={handing} onClose={() => setHanding('off')} />
