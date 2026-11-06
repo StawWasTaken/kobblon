@@ -96,9 +96,11 @@ export function Stat({ label, value, tone }: {
 }) {
   return (
     <div className="min-w-0 flex-1 px-3 py-3 text-center sm:px-4">
+      {/* Two lines at most, because a genre is words and a word that is
+          cut in half tells you less than the second line costs. */}
       <p
         className={cn(
-          'truncate font-display text-xl font-extrabold leading-none tabular-nums',
+          'line-clamp-2 font-display text-xl font-extrabold leading-tight tabular-nums',
           tone === 'live' ? 'text-space-bright' : 'text-white',
         )}
       >

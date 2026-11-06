@@ -5,7 +5,6 @@ import {
   faBullhorn, faPen, faTrash, faEllipsis, faPlus, faImage, faVideo, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
-import { Band } from '@/components/ui/Band'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
@@ -121,16 +120,21 @@ export function Announcements({
   if (!canManage && !posts.loading && !posts.data?.length) return null
 
   return (
-    <Band
-      id="announcement"
-      icon={faBullhorn}
-      title="Announcement"
-      right={canManage && (
-        <Button size="sm" variant="subtle" icon={faPlus} onClick={() => begin(null)}>
-          {current ? 'Replace it' : 'Announce'}
-        </Button>
-      )}
-    >
+    <section>
+      <div className="mb-3 flex items-center gap-3">
+        <h2 className="flex items-center gap-2 font-display text-lg font-extrabold">
+          <Glyph icon={faBullhorn} className="text-sm" />
+          Announcement
+        </h2>
+
+        <div className="ml-auto flex items-center gap-2">
+          {canManage && (
+            <Button size="sm" variant="subtle" icon={faPlus} onClick={() => begin(null)}>
+              {current ? 'Replace it' : 'Announce'}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {posts.loading && <Skeleton className="h-24" />}
 
@@ -321,6 +325,6 @@ export function Announcements({
           </div>
         </div>
       </Dialog>
-    </Band>
+    </section>
   )
 }

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
-  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCircleInfo,
+  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCircleInfo, faCompass,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
@@ -23,6 +23,7 @@ import { ServerList } from '@/components/worlds/ServerList'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
 import { WorldThings } from '@/components/worlds/WorldThings'
 import { AdBanner } from '@/components/ads/AdBanner'
+import { WorldCard } from '@/components/worlds/WorldCard'
 import { Band, Ribbon, Stat } from '@/components/ui/Band'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -30,7 +31,7 @@ import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   alsoJoined, badgesOf, doIWatchWorld, favouriteWorld, getWorld, myWorldStanding,
-  passesOf, playingNow, serversOf, setWorldOpinion, watchWorld,
+  passesOf, playingNow, recommendedWorlds, serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
@@ -157,6 +158,11 @@ export default function WorldPage() {
   const playing = useAsync(async () => (thing ? playingNow(thing.id) : 0), [thing?.id])
   const alsoPlayed = useAsync(async () => (thing ? alsoJoined(thing.id) : []), [thing?.id])
   const badges = useAsync(async () => (thing ? badgesOf(thing.id) : []), [thing?.id])
+  /* What to play next. Its own genre first, then the busiest of the rest. */
+  const suggested = useAsync(
+    async () => (thing ? recommendedWorlds(thing.id, thing.genre, 8) : []),
+    [thing?.id, thing?.genre],
+  )
   const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
@@ -402,9 +408,24 @@ export default function WorldPage() {
               )}
             </div>
 
-            {/* Play, and the two things you do to a World you are not playing
-                right now, kept beside it rather than in a rail of their own. */}
-            <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+            {/* Play, and the things you do to a World you are not playing
+                right now, kept beside it rather than in a rail of their own.
+                Staw wants the rating over the three of them: it is an
+                opinion about the World, not another way in. */}
+            <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+              <div className="flex justify-end rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+                <RatingBar
+                  likes={counts.likes}
+                  dislikes={counts.dislikes}
+                  iLike={opinion === true}
+                  iDislike={opinion === false}
+                  disabled={!profile}
+                  onLike={like}
+                  onDislike={dislike}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
               <Button
                 size="lg"
                 variant="enter"
@@ -430,7 +451,7 @@ export default function WorldPage() {
                     favourited ? 'text-amber-300' : 'text-white/80 hover:bg-black/70 hover:text-white',
                   )}
                 >
-                  <Glyph icon={faStar} />
+                  <Glyph icon={faStar} on={favourited} />
                 </button>
               </Tooltip>
 
@@ -485,6 +506,7 @@ export default function WorldPage() {
                   { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
                 ]}
               />
+              </div>
             </div>
           </div>
         </WorldStage>
@@ -508,19 +530,6 @@ export default function WorldPage() {
             value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
           />
 
-          {/* The rating sits in the ribbon rather than beside it: it is both
-              a number about the World and the way you add to that number. */}
-          <div className="flex w-full items-center justify-center border-t border-ink-line px-4 py-3 sm:w-auto sm:border-t-0">
-            <RatingBar
-              likes={counts.likes}
-              dislikes={counts.dislikes}
-              iLike={opinion === true}
-              iDislike={opinion === false}
-              disabled={!profile}
-              onLike={like}
-              onDislike={dislike}
-            />
-          </div>
         </Ribbon>
 
         <div className="mt-8 space-y-8">
@@ -608,6 +617,28 @@ export default function WorldPage() {
           </Band>
 
           <AdBanner size="banner" quiet />
+
+          {/* What to play next, at the end of the page where somebody who
+              has read all of it is deciding. Nothing at all is not an empty
+              state, so a quiet platform simply has no row here. */}
+          <Band
+            id="more"
+            icon={faCompass}
+            title="You might like"
+            to="/discover"
+            all="Discover"
+            hide={!suggested.loading && !suggested.data?.length}
+          >
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {suggested.loading
+                ? Array.from({ length: 4 }, (_, i) => (
+                  <Skeleton key={i} className="h-56 rounded-2xl" />
+                ))
+                : (suggested.data ?? []).slice(0, 8).map((one) => (
+                  <WorldCard key={one.id} world={one} genres={genres.data ?? []} />
+                ))}
+            </div>
+          </Band>
         </div>
       </Page>
 

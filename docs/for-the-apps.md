@@ -19135,3 +19135,52 @@ Still not done, and still worth saying: nothing on the website writes the
 `world_players` roster, so "here now" and the server list are empty until the
 Launcher calls `join_world_server`, `still_in_world` and `left_world_server`
 on a heartbeat. A Community still cannot own a World.
+
+## Round two hundred and fifty-five - the Community page is back, and the World page is finished
+
+Two things, and one of them is an undo.
+
+**The Community page is back to what it was before round 251.** Staw: "for
+communities i want the original community design back (the one before all
+this)". So `@/components/community/CommunitySide` exists again, exactly as
+it was - the rail of four panels beside the wall - and
+`CommunityBands`, which replaced it last round, is deleted.
+`CommunityWall` and `Announcements` draw their own heading again rather
+than through `Band`, so **if you copied last round's advice that they
+bring their own `Band`, undo that**: a page mounting them should write
+nothing above them and will get "Wall" and "Announcement" from inside.
+`CommunityPage` is byte for byte what it was; its `?view=` addresses never
+moved.
+
+`Band`, `Ribbon`, `Stat` and `WorldStage` are all still there and still the
+way round 254 describes them. They are the World page's now, not both
+pages'.
+
+**The World page, finished:**
+
+- The save button uses our own star through `Glyph`'s `on` - the filled
+  drawing when it is saved, the outline when it is not, the same pair the
+  Catalog uses on an item. If you draw a save anywhere, that is the way:
+  `<Glyph icon={faStar} on={saved} />`, never two different icons chosen by
+  hand.
+- The like and dislike bar moved off the ribbon and sits **above** the
+  save/notify/more row on the art, in its own glass box. It is an opinion
+  about the World, not another way into it, so it does not sit in a row of
+  facts and it does not sit beside Play. The ribbon is six plain numbers
+  now: playing, visits, saved, genre, updated, published.
+- A `Stat` wraps to two lines instead of cutting a word in half, because a
+  genre is words.
+- **New at the foot of the page, under the advert: "You might like".** Eight
+  Worlds, as `WorldCard`s, from `recommendedWorlds(besides, genre, limit)`
+  in `@/lib/api`.
+
+  Worth knowing what that is, because the name promises more than it does:
+  it is **two ordered reads from `worlds`, not a recommender**. Its own
+  genre first, ranked by visits, then the busiest of everything else to
+  fill the row, with this World and anything unpublished left out. The
+  Catalog has a real one - `recommended_avatar_items` in the database -
+  and Worlds do not; `recommended_spaces` ranks the old `spaces` table and
+  is not this. When somebody writes `recommended_worlds` as a migration,
+  this function becomes one `rpc` call and nothing on the page changes.
+  Until then, do not describe it to anybody as personalised, because it is
+  not: two people on the same World see the same eight.

@@ -13,6 +13,7 @@ import {
 import { WorldStage } from '@/components/worlds/WorldStage'
 import { Band, Ribbon, Stat } from '@/components/ui/Band'
 import { Button } from '@/components/ui/Button'
+import { RatingBar } from '@/components/worlds/RatingBar'
 import { ServerList } from '@/components/worlds/ServerList'
 import '@/index.css'
 
@@ -45,19 +46,25 @@ function Demo() {
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <Button size="lg" variant="enter" className="sm:px-10">
-                <Glyph icon={faPlay} />
-                <span className="font-display text-lg font-extrabold">Play</span>
-              </Button>
-              {[faStar, faBell, faEllipsis].map((icon, i) => (
-                <span
-                  key={i}
-                  className="grid h-12 w-12 place-items-center rounded-xl border border-white/20 bg-black/40 text-white/80 backdrop-blur-sm"
-                >
-                  <Glyph icon={icon} />
-                </span>
-              ))}
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+                <RatingBar likes={1900} dislikes={120} iLike iDislike={false} />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button size="lg" variant="enter" className="sm:px-10">
+                  <Glyph icon={faPlay} />
+                  <span className="font-display text-lg font-extrabold">Play</span>
+                </Button>
+                {[faStar, faBell, faEllipsis].map((icon, i) => (
+                  <span
+                    key={i}
+                    className="grid h-12 w-12 place-items-center rounded-xl border border-white/20 bg-black/40 text-white/80 backdrop-blur-sm"
+                  >
+                    <Glyph icon={icon} on={i === 0} />
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </WorldStage>

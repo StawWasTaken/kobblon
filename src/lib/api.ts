@@ -2895,6 +2895,48 @@ export async function listWorlds(options: {
 }
 
 /**
+ * Worlds to put in front of somebody who is looking at this one.
+ *
+ * Its own genre first, because the strongest thing known about a reader on
+ * a World's page is the World they are reading about, and then the busiest
+ * of everything else to fill the row. This World is never in it, and
+ * neither is anything unpublished.
+ *
+ * The ranking is done here rather than by a function in the database, and
+ * that is worth knowing: it is two ordered reads, not a recommender that
+ * learns. When there is a `recommended_worlds` to call - the Catalog has
+ * `recommended_avatar_items` and this is the same job - this becomes one
+ * call and the page does not change.
+ */
+export async function recommendedWorlds(
+  besides: string,
+  genre?: string | null,
+  limit = 12,
+): Promise<World[]> {
+  const read = async (sameGenre: boolean) => {
+    let query = supabase.from('worlds').select(WORLD_FIELDS)
+      .eq('is_published', true).eq('is_removed', false)
+      .neq('id', besides)
+      .order('visit_count', { ascending: false })
+      .limit(limit)
+    if (sameGenre) query = query.eq('genre', genre as string)
+    const { data, error } = await query
+    if (error) throw new Error(error.message)
+    return (data ?? []) as World[]
+  }
+
+  const near = genre ? await read(true) : []
+  if (near.length >= limit) return near.slice(0, limit)
+
+  /* Filled from the busiest, with whatever the first read already has
+     taken out - the same World twice in one row is worse than a short row. */
+  const rest = (await read(false)).filter(
+    (one) => !near.some((already) => already.id === one.id),
+  )
+  return [...near, ...rest].slice(0, limit)
+}
+
+/**
  * The Worlds this person has been in, most recent first.
  *
  * `world_visits` keeps one row per person per World per day, so the same
