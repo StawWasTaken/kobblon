@@ -18970,3 +18970,51 @@ where a person expects to find things, so if the Launcher or the Workspace
 links somebody to a World's servers or its passes, link to
 `/worlds/<content_id>?view=servers` or `?view=shop` rather than to the World
 and a tab name - the tab names no longer exist.
+
+## Round two hundred and fifty-two - the Creator Hub, and one side rail for the whole site
+
+No migration and no API change. Two things: the Hub's front page, and a
+component both of us should be using.
+
+**`@/components/ui/SidePanel` is new, and it is the one drawing of a side
+panel for the whole site.** `SidePanel({ icon, title, to, all, children })`
+is a panel with a heading and a door at the bottom; leave `to` and `all` off
+and it is a panel that is already all of itself. `Fact({ label, value })` is
+one row of a numbers list inside one. The World page's rail, the Community
+page's rail and now the Creator Hub's were three private copies of the same
+box, which is how two pages start looking like two products. Nothing in it
+asks who is signed in, so a rail built out of it mounts in the Workspace.
+
+**The Creator Hub's front page was a dashboard, so it opened on how you are
+doing rather than on what you are doing.** Five small number tiles across
+the top, then two half-width cards. The Worlds you are actually building
+were a figure in a box: the number 3, with no way to open any of them.
+
+It is the same shape as a World and a Community now - the work down the
+middle, the standing numbers down the side:
+
+- **What you are building** - your three most recent Worlds as real cards
+  (cover, a Live mark when it is out, visits, when it was last saved) with
+  **Open** and **Set up** on each. Open is `editInWorkspace`, so it hands
+  the World to the desktop rather than pretending a browser tab can build
+  it; if Workspace is not on the machine it says so rather than doing
+  nothing. Door to My Worlds.
+- **Latest uploads** - the same list, full width, with a real empty state
+  instead of one grey line.
+- The rail: **The numbers** (Worlds, visits, uploads, views, uses, and a
+  door to Analytics), **Yours to build with** (the inventory count), and
+  **Need something** (the Marketplace).
+
+`@/components/create/WorldWork` is the World card out of that first section,
+in its own file and props-only, because the Workspace shows the same shelf
+and should show the same card. It is checked on
+`tools/site/creator-hub-preview.html`.
+
+**Working as a Community, the "What you are building" section is left out
+rather than drawn empty**, because a World still belongs to whoever built it
+and a Community cannot own one. That has not changed and is still the thing
+to fix one day; My Worlds says so in as many words.
+
+The rename to Creator Hub was already through everywhere - navigation,
+footer, page titles, the rail - so nothing moved there. The address is still
+`/create`, and `/create/spaces` still redirects to `/create/worlds`.

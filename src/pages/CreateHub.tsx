@@ -3,9 +3,8 @@ import { Link, Outlet, useOutletContext, useSearchParams } from 'react-router-do
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faUpload, faMagnifyingGlass, faCircleCheck, faBoxArchive, faTrash, faEllipsis,
-  faEye, faHandPointUp, faBoxOpen, faXmark,
+  faBoxOpen, faXmark, faChartSimple, faShapes,
 } from '@fortawesome/free-solid-svg-icons'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
@@ -14,12 +13,14 @@ import { Menu } from '@/components/ui/Menu'
 import { Confirm } from '@/components/ui/Confirm'
 import { useToast } from '@/components/ui/Toast'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { SidePanel, Fact } from '@/components/ui/SidePanel'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { GuestGate } from '@/components/ui/GuestGate'
 import { AssetTile, contentTag, kindIcons, kindLabels } from '@/components/create/AssetTile'
 import { UploadLine } from '@/components/create/UploadFace'
 import { CreateRail } from '@/components/create/CreateRail'
+import { WorldWork } from '@/components/create/WorldWork'
 import { WorkingAsProvider, useWorkingAs } from '@/components/create/WorkingAs'
 import { UploadDialog } from '@/components/create/UploadDialog'
 import { useAuth } from '@/hooks/useAuth'
@@ -81,28 +82,24 @@ export default function CreateHub() {
 
 /* --------------------------------------------------------------- overview */
 
-function Tile({ icon, label, value, to }: {
-  icon: IconDefinition
-  label: string
-  value: string
-  to?: string
-}) {
-  const body = (
-    <>
-      <Glyph icon={icon} className="text-base text-link" />
-      <p className="mt-2 font-display text-2xl font-extrabold tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{label}</p>
-    </>
-  )
-  return to
-    ? <Link to={to} className="rounded-2xl border border-ink-line bg-ink-card p-4 transition-colors hover:border-brand/60">{body}</Link>
-    : <div className="rounded-2xl border border-ink-line bg-ink-card p-4">{body}</div>
-}
+/*
+ * The front of the Creator Hub.
+ *
+ * It was five small number tiles across the top and two half-width cards
+ * under them, which is a dashboard: it opens on how you are doing rather
+ * than on what you are doing, and the Worlds you are actually building were
+ * a figure in a box rather than a thing you could open.
+ *
+ * So it is the same shape as a World page and a Community page now - the
+ * work down the middle, the standing numbers down the side. The numbers
+ * have not gone; they have stopped being the first thing and the biggest.
+ */
 
 export function CreateOverview() {
   useTitle(null, CREATE)
   const { profile } = useAuth()
   const { openUpload, inventory } = useHub()
+  const toast = useToast()
 
   const { target } = useWorkingAs()
 
@@ -131,6 +128,11 @@ export function CreateOverview() {
   const uses = (rows.data ?? []).reduce((sum, row) => sum + Number(row.uses ?? 0), 0)
   const views = (rows.data ?? []).reduce((sum, row) => sum + Number(row.views ?? 0), 0)
 
+  const noWorkspace = () => toast(
+    'Kobblon Workspace is not installed on this machine. The download page has it.',
+    'info',
+  )
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -144,58 +146,128 @@ export function CreateOverview() {
               : 'Everything you have made, and everything you are allowed to build with.'}
           </p>
         </div>
-        <div className="flex gap-2">
-          <GuestGate action="upload">
-            <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
-          </GuestGate>
-        </div>
+        <GuestGate action="upload">
+          <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
+        </GuestGate>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Tile icon={worldIcon} label="Worlds" value={formatCount(worlds.data?.length ?? 0)} to="/create/worlds" />
-        <Tile icon={faUpload} label="Uploads" value={formatCount(mine.data?.length ?? 0)} to="/create/uploads" />
-        <Tile icon={faEye} label="Visits to your Worlds" value={formatCount(visits)} />
-        <Tile icon={faHandPointUp} label="Uses of your content" value={formatCount(uses)} to="/create/analytics" />
-        <Tile icon={faBoxOpen} label="In your inventory" value={formatCount(inventory.data?.length ?? 0)} to="/create/inventory" />
-      </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
+        <div className="min-w-0 space-y-8">
+          {/*
+            * A Community cannot own a World yet, so working as one this
+            * section would be an empty shelf that looks broken. It is left
+            * out rather than drawn empty, and My Worlds says why.
+            */}
+          {!target && (
+            <section>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="font-display text-xl font-extrabold">What you are building</h2>
+                <Link to="/create/worlds" className="ml-auto text-xs font-bold text-link hover:underline">
+                  All my Worlds
+                </Link>
+              </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between border-b border-ink-line px-4 py-3.5">
-            <h2 className="text-sm font-extrabold">Latest uploads</h2>
-            <Link to="/create/uploads" className="text-xs font-bold text-link hover:underline">See all</Link>
-          </div>
-          {mine.loading && <div className="space-y-2 p-4">{[0, 1].map((i) => <Skeleton key={i} className="h-12" />)}</div>}
-          {!mine.loading && !mine.data?.length && (
-            <p className="px-4 py-8 text-center text-sm text-muted">Nothing uploaded yet.</p>
+              {worlds.loading && (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 rounded-2xl" />)}
+                </div>
+              )}
+
+              {!worlds.loading && !worlds.data?.length && (
+                <Card>
+                  <EmptyState
+                    mood="noResults"
+                    title="No Worlds yet"
+                    body="Worlds are built in Kobblon Workspace on the desktop. Publish one there and it turns up here, ready to be set up and put in front of people."
+                    action={<Button variant="subtle" to="/download">Get Workspace</Button>}
+                  />
+                </Card>
+              )}
+
+              {!!worlds.data?.length && (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {worlds.data.slice(0, 3).map((world) => (
+                    <WorldWork key={world.id} world={world} onMissing={noWorkspace} />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
-          <ul>
-            {(mine.data ?? []).slice(0, 5).map((item) => <UploadLine key={item.id} item={item} />)}
-          </ul>
-        </Card>
 
-        <Card className="overflow-hidden">
-          <div className="flex items-center justify-between border-b border-ink-line px-4 py-3.5">
-            <h2 className="text-sm font-extrabold">How your content is doing</h2>
-            <Link to="/create/analytics" className="text-xs font-bold text-link hover:underline">See all</Link>
-          </div>
-          {!rows.data?.length ? (
-            <p className="px-4 py-8 text-center text-sm text-muted">
-              Numbers show up once people find your work.
-            </p>
-          ) : (
-            <div className="flex divide-x divide-ink-line">
-              <div className="flex-1 p-4 text-center">
-                <p className="font-display text-2xl font-extrabold tabular-nums">{formatCount(views)}</p>
-                <p className="text-xs text-muted">Views</p>
-              </div>
-              <div className="flex-1 p-4 text-center">
-                <p className="font-display text-2xl font-extrabold tabular-nums">{formatCount(uses)}</p>
-                <p className="text-xs text-muted">Uses</p>
-              </div>
+          <section>
+            <div className="mb-3 flex items-center gap-3">
+              <h2 className="font-display text-xl font-extrabold">Latest uploads</h2>
+              <Link to="/create/uploads" className="ml-auto text-xs font-bold text-link hover:underline">
+                All uploads
+              </Link>
             </div>
-          )}
-        </Card>
+
+            <Card className="overflow-hidden">
+              {mine.loading && (
+                <div className="space-y-2 p-4">{[0, 1].map((i) => <Skeleton key={i} className="h-12" />)}</div>
+              )}
+              {!mine.loading && !mine.data?.length && (
+                <EmptyState
+                  mood="noResults"
+                  title="Nothing uploaded yet"
+                  body="Pictures, sounds, meshes and fonts you put in here are what you build with, and what you can sell."
+                  action={
+                    <GuestGate action="upload">
+                      <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload something</Button>
+                    </GuestGate>
+                  }
+                />
+              )}
+              {!!mine.data?.length && (
+                <ul>
+                  {mine.data.slice(0, 6).map((item) => <UploadLine key={item.id} item={item} />)}
+                </ul>
+              )}
+            </Card>
+          </section>
+        </div>
+
+        <aside className="space-y-4 max-lg:order-first lg:sticky lg:top-[4.5rem]">
+          <SidePanel
+            icon={faChartSimple}
+            title="The numbers"
+            to="/create/analytics"
+            all="All of your numbers"
+          >
+            <dl className="divide-y divide-ink-line">
+              {!target && <Fact label="Worlds" value={formatCount(worlds.data?.length ?? 0)} />}
+              {!target && <Fact label="Visits to your Worlds" value={formatCount(visits)} />}
+              <Fact label="Uploads" value={formatCount(mine.data?.length ?? 0)} />
+              <Fact label="Views of your content" value={formatCount(views)} />
+              <Fact label="Uses of your content" value={formatCount(uses)} />
+            </dl>
+            {!rows.data?.length && (
+              <p className="mt-2 text-[11px] leading-snug text-muted">
+                Views and uses start counting once people find your work.
+              </p>
+            )}
+          </SidePanel>
+
+          <SidePanel
+            icon={faBoxOpen}
+            title="Yours to build with"
+            to="/create/inventory"
+            all="Open your inventory"
+          >
+            <p className="font-display text-2xl font-extrabold tabular-nums">
+              {formatCount(inventory.data?.length ?? 0)}
+            </p>
+            <p className="text-xs text-muted">
+              Things you own, from the Marketplace and your own uploads.
+            </p>
+          </SidePanel>
+
+          <SidePanel icon={faShapes} title="Need something" to="/create/marketplace" all="Open the Marketplace">
+            <p className="text-xs leading-relaxed text-muted">
+              Everything anybody on Kobblon has put up to be built with, free and paid.
+            </p>
+          </SidePanel>
+        </aside>
       </div>
     </div>
   )

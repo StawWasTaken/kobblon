@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faArrowRight, faAward, faBagShopping, faCircleInfo, faPlay, faServer, faUserGroup,
+  faAward, faBagShopping, faCircleInfo, faPlay, faServer, faUserGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
+import { SidePanel as Panel, Fact } from '@/components/ui/SidePanel'
 import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Avatar } from '@/components/ui/Avatar'
@@ -30,35 +30,6 @@ import { cn } from '@/lib/cn'
  * that asks who is signed in - that is what took the Community's bare page
  * down once.
  */
-
-/** A standing fact about the World: enough of it to read, and the door to the rest. */
-function Panel({ icon, title, to, all, children }: {
-  icon: IconDefinition
-  title: string
-  /** Where all of it is. Left out for a panel that is already all of itself. */
-  to?: string
-  all?: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="rounded-2xl border border-ink-line bg-ink-card p-4">
-      <h2 className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
-        <Glyph icon={icon} className="text-[11px]" />
-        {title}
-      </h2>
-      {children}
-      {to && all && (
-        <Link
-          to={to}
-          className="mt-3 flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
-        >
-          {all}
-          <Glyph icon={faArrowRight} className="text-[10px]" />
-        </Link>
-      )}
-    </section>
-  )
-}
 
 /**
  * One running server, small: the faces in it, how full it is, and the way in.
@@ -135,16 +106,6 @@ function Pictures({ things, fallback }: {
           </span>
         </Tooltip>
       ))}
-    </div>
-  )
-}
-
-/** One number and what it is of. */
-function Fact({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 py-1">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="text-xs font-bold tabular-nums text-white/90">{value}</dd>
     </div>
   )
 }

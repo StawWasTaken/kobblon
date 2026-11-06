@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faArrowRight, faCalendarDay, faHandshake, faStore, faUserGroup,
+  faCalendarDay, faHandshake, faStore, faUserGroup,
 } from '@fortawesome/free-solid-svg-icons'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Skeleton } from '@/components/ui/States'
+import { SidePanel as Panel } from '@/components/ui/SidePanel'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Emblem } from '@/components/community/Emblem'
 import { eventWhen } from '@/components/community/EventCard'
@@ -30,33 +30,6 @@ import { cn } from '@/lib/cn'
  * It takes its lists as props and reads no page state, so the Workspace can
  * mount it beside a Community it already has.
  */
-
-/** A standing fact about the Community: enough of it to read, and the door to the rest. */
-function Panel({ icon, title, to, all, children }: {
-  icon: IconDefinition
-  title: string
-  to: string
-  /** What the door says, when "See all" is not specific enough to be useful. */
-  all: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="rounded-2xl border border-ink-line bg-ink-card p-4">
-      <h2 className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
-        <Glyph icon={icon} className="text-[11px]" />
-        {title}
-      </h2>
-      {children}
-      <Link
-        to={to}
-        className="mt-3 flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
-      >
-        {all}
-        <Glyph icon={faArrowRight} className="text-[10px]" />
-      </Link>
-    </section>
-  )
-}
 
 /**
  * Who is in here, the ones who are actually here first.
