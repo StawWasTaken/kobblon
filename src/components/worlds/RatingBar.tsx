@@ -4,8 +4,21 @@ import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 /**
- * Likes and dislikes either side of the ratio they add up to. With no votes
- * the bar sits empty rather than reading as all bad.
+ * Likes and dislikes, and the line that is the ratio between them.
+ *
+ * Staw sent the shape: the two thumbs apart at the top, one line running
+ * the whole width underneath both of them, and the counts at the outer
+ * ends under that. The line is the rating - green from the left as far as
+ * people liked it, red the rest of the way - so the thing the eye reads
+ * first is the ratio rather than two numbers it has to divide.
+ *
+ * With no votes the line sits flat and grey rather than reading as all
+ * bad, which is what a red line at nought percent would say about a World
+ * nobody has rated yet.
+ *
+ * It cannot size itself: the line is the width it is given. A caller that
+ * puts it in a box sized to its own content gets a rating with no ratio in
+ * it, which is exactly what happened on the World page's stage.
  */
 export function RatingBar({
   likes, dislikes, iLike, iDislike, disabled, onLike, onDislike,
@@ -21,54 +34,55 @@ export function RatingBar({
   const total = likes + dislikes
   const share = total ? (likes / total) * 100 : 0
 
-  return (
-    <div className="flex min-w-0 flex-1 items-start gap-2">
-      <button
-        onClick={onLike}
-        disabled={disabled}
-        aria-pressed={iLike}
-        aria-label="Like this World"
-        className={cn(
-          'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold transition-colors disabled:opacity-40',
-          iLike ? 'text-space-bright' : 'text-white/60 hover:text-white',
-        )}
-      >
-        <Glyph icon={faThumbsUp} on={iLike} className="text-base" />
-        {formatCount(likes)}
-      </button>
+  /* One button, twice, because the two differ only in which way the thumb
+     points and which colour it takes when it is yours. */
+  const thumb = (
+    which: 'up' | 'down',
+    on: boolean,
+    press: () => void,
+  ) => (
+    <button
+      onClick={press}
+      disabled={disabled}
+      aria-pressed={on}
+      aria-label={which === 'up' ? 'Like this World' : 'Dislike this World'}
+      className={cn(
+        'grid h-8 w-8 place-items-center rounded-lg text-lg transition-colors disabled:opacity-40',
+        on
+          ? (which === 'up' ? 'text-space-bright' : 'text-danger')
+          : 'text-white/70 hover:bg-white/10 hover:text-white',
+      )}
+    >
+      <Glyph icon={which === 'up' ? faThumbsUp : faThumbsDown} on={on} />
+    </button>
+  )
 
-      <div className="min-w-0 flex-1 pt-1">
-        <p className="mb-1 text-center text-[11px] font-bold tabular-nums text-white/70">
-          {total ? `${Math.round(share)}%` : 'No ratings yet'}
-        </p>
-        <div
-          className={cn(
-            'h-1.5 overflow-hidden rounded-full',
-            total ? 'bg-danger/70' : 'bg-white/10',
-          )}
-          role="img"
-          aria-label={total ? `${Math.round(share)} percent liked` : 'No ratings yet'}
-        >
-          <div
-            className="h-full rounded-full bg-space transition-[width] duration-300"
-            style={{ width: `${share}%` }}
-          />
-        </div>
+  return (
+    <div className="min-w-0 flex-1">
+      <div className="flex items-center justify-between">
+        {thumb('up', iLike, onLike)}
+        {thumb('down', iDislike, onDislike)}
       </div>
 
-      <button
-        onClick={onDislike}
-        disabled={disabled}
-        aria-pressed={iDislike}
-        aria-label="Dislike this World"
+      <div
         className={cn(
-          'flex shrink-0 flex-col items-center gap-1 text-[11px] font-bold transition-colors disabled:opacity-40',
-          iDislike ? 'text-danger' : 'text-white/60 hover:text-white',
+          'mt-1 flex h-1 overflow-hidden rounded-full',
+          total ? 'bg-danger' : 'bg-white/15',
         )}
+        role="img"
+        aria-label={total ? `${Math.round(share)} percent of ${formatCount(total)} liked it` : 'No ratings yet'}
+        title={total ? `${Math.round(share)}% liked this` : 'No ratings yet'}
       >
-        <Glyph icon={faThumbsDown} on={iDislike} className="text-base" />
-        {formatCount(dislikes)}
-      </button>
+        <div
+          className="h-full rounded-full bg-space transition-[width] duration-300"
+          style={{ width: `${share}%` }}
+        />
+      </div>
+
+      <div className="mt-1 flex items-center justify-between text-[11px] font-bold tabular-nums text-white/70">
+        <span>{formatCount(likes)}</span>
+        <span>{formatCount(dislikes)}</span>
+      </div>
     </div>
   )
 }

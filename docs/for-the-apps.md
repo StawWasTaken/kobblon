@@ -19378,3 +19378,22 @@ Still true and still waiting: **nothing writes `world_players`**, so a World
 has no servers to list and no live count until the Launcher calls
 `join_world_server` / `still_in_world` / `left_world_server` on a heartbeat.
 And **migration 0326 has not been applied.**
+
+## Round two hundred and sixty - the rating line, in the shape Staw sent
+
+`@/components/worlds/RatingBar` again, one round later: Staw sent a
+reference for it rather than the stacked thumb-number-bar-number-thumb it
+was.
+
+The shape now: **the two thumbs apart at the top**, one line running the
+whole width **underneath both of them**, and the counts at the outer ends
+under that - likes on the left, dislikes on the right. Green from the left
+as far as people liked it, red the rest of the way. The ratio is what the
+eye reads first; the numbers are the detail under it.
+
+No votes draws a flat grey line, not a red one. A red line at nought
+percent is the page saying a World nobody has rated yet is a bad one.
+
+Same props, no API change. The one thing worth repeating from last round:
+**it cannot size itself.** The line is the width it is given, so a box
+sized to its own content gets a rating with no ratio in it.
