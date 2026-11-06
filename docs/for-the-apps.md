@@ -19184,3 +19184,39 @@ pages'.
   this function becomes one `rpc` call and nothing on the page changes.
   Until then, do not describe it to anybody as personalised, because it is
   not: two people on the same World see the same eight.
+
+## Round two hundred and fifty-six - a World has tabs, the way a profile does
+
+Staw: "for the world shop & badges, we still need to put them somewhere,
+like a switcher (like we have for the players profiles)". Right - stacked
+down the page, everything under the first heading read as an appendix.
+
+So the World page has a line of tabs under the ribbon, the same
+`@/components/ui/Tabs` with `look="line"` that a profile uses for About /
+Creations / Shop: **About, Servers, Badges, Store**, each with its count
+beside the name. About is what it was - the description, the Klub
+reactions and Report abuse. The three others are the lists, one at a time.
+
+**Badges and Store are not drawn when they are empty and you are not the
+one who could fill them.** An owner always sees both, because that is where
+a badge gets made.
+
+**What is outside the switcher**, because it is true of the page and not of
+the tab: the stage, the ribbon, the advert, "People who play this also
+play" and "You might like".
+
+**The anchors from round 254 are gone.** `#about`, `#servers`, `#badges`
+and `#shop` no longer scroll to anything, and there is no `?view=` either:
+which tab is open is state, exactly as it is on a profile. A link to a
+World is a link to the World.
+
+One thing in there worth copying rather than the tabs themselves. The tab
+that is drawn is worked out at the moment of drawing, not kept in the
+state: the lists arrive after the first paint, so a tab can be chosen and
+then stop existing - open Badges on your own World, hand the World over,
+and the tab goes with it, leaving a page showing a tab that is not there.
+Asking "is this still a tab" every draw is the only version that survives
+the lists changing underneath it.
+
+Nothing else changed. The Community page is still the one round 255 put
+back.

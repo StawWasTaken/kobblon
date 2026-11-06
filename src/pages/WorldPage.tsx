@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
-  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCircleInfo, faCompass,
+  faPlay, faStar, faBell, faFlag, faSliders,
+  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCompass,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Menu } from '@/components/ui/Menu'
+import { Tabs } from '@/components/ui/Tabs'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -56,6 +57,9 @@ import { asset } from '@/lib/asset'
  * page is a real number somebody can change; a page that draws a likes bar
  * nothing writes to is a drawing of a page.
  */
+
+/** The four ways of looking at a World, the way a profile has three. */
+type WorldTab = 'About' | 'Servers' | 'Badges' | 'Store'
 
 /**
  * The small window that says what is happening when Play is pressed.
@@ -165,6 +169,7 @@ export default function WorldPage() {
   )
   const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
+  const [tab, setTab] = useState<WorldTab>('About')
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
   const [reporting, setReporting] = useState(false)
 
@@ -359,6 +364,18 @@ export default function WorldPage() {
   const badgeCount = badges.data?.length ?? 0
   const passCount = passes.data?.length ?? 0
 
+  /*
+   * The lists arrive after the first draw, so a tab can be chosen and then
+   * stop existing - open Badges on your own World, hand the World over, and
+   * the tab goes with it. Read the answer at the moment of drawing rather
+   * than keeping what was chosen: asking "is this still a tab" is the only
+   * version that survives the lists changing underneath it.
+   */
+  const shown: WorldTab = (tab === 'Badges' && !mine && !badgeCount)
+    || (tab === 'Store' && !mine && !passCount)
+    ? 'About'
+    : tab
+
   return (
     <>
       <Page>
@@ -532,81 +549,96 @@ export default function WorldPage() {
 
         </Ribbon>
 
-        <div className="mt-8 space-y-8">
-          {/* What it is, in its maker's words, and then what people thought
-              of it - the two halves of the same question. */}
-          <Band id="about" icon={faCircleInfo} title="About this World">
-            <p className="max-w-3xl whitespace-pre-wrap leading-relaxed text-white/75">
-              {thing.description || 'Whoever built this has not described it yet.'}
-            </p>
+        {/*
+          * About, Servers, Badges and Store, the way a profile holds About,
+          * Creations and Shop.
+          *
+          * Staw: "for the world shop & badges, we still need to put them
+          * somewhere, like a switcher (like we have for the players
+          * profiles)". A World has four kinds of thing in it and only one of
+          * them is what somebody came for; stacked down the page they made
+          * everything under the first one feel like an appendix. A tab that
+          * has nothing in it and that you could not fill is not drawn at all
+          * rather than drawn empty.
+          */}
+        <Tabs
+          look="line"
+          className="mt-8"
+          label="About this World, who is in it, and what it has"
+          value={shown}
+          onChange={setTab}
+          options={[
+            { value: 'About', label: 'About' },
+            { value: 'Servers', label: 'Servers', count: servers.data?.length ?? null },
+            ...(mine || badgeCount
+              ? [{ value: 'Badges' as const, label: 'Badges', count: badgeCount }]
+              : []),
+            ...(mine || passCount
+              ? [{ value: 'Store' as const, label: 'Store', count: passCount }]
+              : []),
+          ]}
+        />
 
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-              {/*
-                * Faces, beside the rating rather than instead of it.
-                *
-                * Staw: "worlds keep the dislikes & likes only, but klub users
-                * can also click a third button to add reactions to worlds".
-                * The bar is a rating and a rating has to be one number; a
-                * face says something the number cannot, and it does not move
-                * the number. The server refuses a non-member, so this only
-                * saves somebody a round trip.
-                */}
-              <Reactions
-                what="world"
-                which={thing.id}
-                counts={faces.data ?? []}
-                canReact={!!profile && !profile.is_guest && inKlub}
-                whyNot={!profile
-                  ? 'Sign in to react.'
-                  : 'Reacting to a World is a Kobblon Klub thing.'}
-                onChanged={faces.reload}
-              />
+        <div className="mt-6 space-y-8">
+          {shown === 'About' && (
+            <>
+              <p className="max-w-3xl whitespace-pre-wrap leading-relaxed text-white/75">
+                {thing.description || 'Whoever built this has not described it yet.'}
+              </p>
 
-              {profile && !mine && (
-                <button
-                  onClick={() => setReporting(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
-                >
-                  <Glyph icon={faFlag} className="text-[10px]" />
-                  Report Abuse
-                </button>
-              )}
-            </div>
-          </Band>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                {/*
+                  * Faces, beside the rating rather than instead of it.
+                  *
+                  * Staw: "worlds keep the dislikes & likes only, but klub
+                  * users can also click a third button to add reactions to
+                  * worlds". The bar is a rating and a rating has to be one
+                  * number; a face says something the number cannot, and it
+                  * does not move the number. The server refuses a
+                  * non-member, so this only saves somebody a round trip.
+                  */}
+                <Reactions
+                  what="world"
+                  which={thing.id}
+                  counts={faces.data ?? []}
+                  canReact={!!profile && !profile.is_guest && inKlub}
+                  whyNot={!profile
+                    ? 'Sign in to react.'
+                    : 'Reacting to a World is a Kobblon Klub thing.'}
+                  onChanged={faces.reload}
+                />
 
-          <Band
-            id="servers"
-            icon={faServer}
-            title="Servers"
-            count={servers.data?.length ?? 0}
-          >
+                {profile && !mine && (
+                  <button
+                    onClick={() => setReporting(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
+                  >
+                    <Glyph icon={faFlag} className="text-[10px]" />
+                    Report Abuse
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {shown === 'Servers' && (
             <ServerList
               servers={servers.data ?? []}
               name={thing.name}
               onJoin={(server) => start(server.id)}
             />
-          </Band>
+          )}
 
-          <Band
-            id="badges"
-            icon={faAward}
-            title="Badges"
-            count={badgeCount}
-            hide={!mine && !badgeCount}
-          >
+          {shown === 'Badges' && (
             <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
-          </Band>
+          )}
 
-          <Band
-            id="shop"
-            icon={faBagShopping}
-            title="Store"
-            count={passCount}
-            hide={!mine && !passCount}
-          >
+          {shown === 'Store' && (
             <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
-          </Band>
+          )}
 
+          {/* Under the switcher rather than inside it: what else to play is
+              true of the page, not of the tab somebody happens to be on. */}
           <Band
             id="also"
             icon={faUsers}

@@ -8,10 +8,11 @@ import { MemoryRouter } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faPlay, faStar, faBell, faEllipsis, faServer, faAward, faBagShopping,
-  faCircleInfo,
+  faCompass,
 } from '@fortawesome/free-solid-svg-icons'
 import { WorldStage } from '@/components/worlds/WorldStage'
 import { Band, Ribbon, Stat } from '@/components/ui/Band'
+import { Tabs } from '@/components/ui/Tabs'
 import { Button } from '@/components/ui/Button'
 import { RatingBar } from '@/components/worlds/RatingBar'
 import { ServerList } from '@/components/worlds/ServerList'
@@ -78,23 +79,30 @@ function Demo() {
           <Stat label="Published" value="7 months ago" />
         </Ribbon>
 
-        <div className="mt-8 space-y-8">
-          <Band id="about" icon={faCircleInfo} title="About this World">
-            <p className="max-w-3xl leading-relaxed text-white/75">
-              The ground everything else was built on. Bring a hard hat.
-            </p>
-          </Band>
+        <Tabs
+          look="line"
+          className="mt-8"
+          value="Servers"
+          onChange={() => {}}
+          options={[
+            { value: 'About', label: 'About' },
+            { value: 'Servers', label: 'Servers', count: 3 },
+            { value: 'Badges', label: 'Badges', count: 4 },
+            { value: 'Store', label: 'Store', count: 2 },
+          ]}
+        />
 
-          <Band id="servers" icon={faServer} title="Servers" count={3}>
-            <ServerList servers={servers} name="First Ground" onJoin={() => {}} />
-          </Band>
+        <div className="mt-6 space-y-8">
+          <ServerList servers={servers} name="First Ground" onJoin={() => {}} />
 
-          <Band id="badges" icon={faAward} title="Badges" count={4}>
-            <p className="text-sm text-muted">Four badges would sit here.</p>
-          </Band>
-
-          <Band id="shop" icon={faBagShopping} title="Store" count={2}>
-            <p className="text-sm text-muted">Two passes would sit here.</p>
+          <Band
+            id="more"
+            icon={faCompass}
+            title="You might like"
+            to="/discover"
+            all="Discover"
+          >
+            <p className="text-sm text-muted">Eight Worlds would sit here.</p>
           </Band>
         </div>
       </div>
