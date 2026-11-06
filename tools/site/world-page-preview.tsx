@@ -18,10 +18,16 @@ import { RatingBar } from '@/components/worlds/RatingBar'
 import { ServerList } from '@/components/worlds/ServerList'
 import '@/index.css'
 
+const faces = (n: number, from = 0) => Array.from({ length: n }, (_, i) => ({
+  id: `p${from + i}`, username: `player${from + i}`,
+  display_name: `Player ${from + i}`, avatar_url: null, avatar_changed_at: null,
+}))
+
 const servers = [
-  { id: 's1', players: 9, max_players: 12, is_full: false, people: [] },
-  { id: 's2', players: 12, max_players: 12, is_full: true, people: [] },
-  { id: 's3', players: 2, max_players: 12, is_full: false, people: [] },
+  { id: 's1', capacity: 12, how_many: 9, people: faces(7) },
+  { id: 's2', capacity: 12, how_many: 12, people: faces(5, 20) },
+  { id: 's3', capacity: 12, how_many: 2, people: faces(2, 40) },
+  { id: 's4', capacity: 12, how_many: 0, people: [] },
 ] as never[]
 
 function Demo() {
@@ -86,7 +92,7 @@ function Demo() {
           onChange={() => {}}
           options={[
             { value: 'About', label: 'About' },
-            { value: 'Servers', label: 'Servers', count: 3 },
+            { value: 'Servers', label: 'Servers', count: 4 },
             { value: 'Badges', label: 'Badges', count: 4 },
             { value: 'Store', label: 'Store', count: 2 },
           ]}

@@ -19271,3 +19271,38 @@ writes `world_players` yet.** Until the Launcher calls
 `join_world_server`, `still_in_world` and `left_world_server` on a
 heartbeat, `playing_in` correctly answers "nobody, anywhere", and every
 card will show the rating alone.
+
+## Round two hundred and fifty-eight - a server card you can read at a glance
+
+Staw: "i want u to polish the each server design", with a reference - a
+count, a Join under it, and the faces of whoever is in there filling the
+rest of the card.
+
+`@/components/worlds/ServerList` is that shape now, in our paint:
+
+- **Left, fixed:** `9 / 12` with the `playing` mark, then Join under it.
+  The count carries the state in its colour - green while there is room,
+  **amber from four fifths full**, flat grey when it is full or when
+  nobody is in there at all. Green means somebody is in there, so an empty
+  room is not painted as news.
+- **Right:** the faces, square and side by side in a block that wraps,
+  rather than the cuff of overlapping circles it was. Six, then `+N`. An
+  empty server says "Empty, and waiting for somebody" where the faces
+  would be, instead of drawing a row of nothing.
+- Full says **Full** behind a padlock and cannot be pressed; the card
+  does not light up on hover either.
+- The old capacity bar is gone. `9 / 12` and the faces are the same fact
+  twice; a third drawing of it was furniture.
+- Two across rather than three, because a card is now wide and short.
+- **The list is sorted here**: the ones with room first, busiest of those
+  at the front, full ones last. A server nobody can get into is not a
+  choice, and an empty room is the least interesting one in the building.
+
+No API change - same `RunningServer` (`id`, `capacity`, `how_many`,
+`people`), same `onJoin`. If the Launcher draws its own server list, this
+is the shape to match. And `people` is read defensively now, so a row
+that arrives without its faces draws the count rather than throwing.
+
+Still the same caveat as last round: **nothing writes `world_players`**,
+so every World has no servers to list until the Launcher heartbeats.
+Migration `0326` from last round is **still waiting to be applied**.
