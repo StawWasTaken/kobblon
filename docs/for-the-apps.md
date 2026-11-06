@@ -18771,3 +18771,21 @@ and an error state, every link on them resolves to a real route, and the
 four browse pages already share `BrowseHero`. What it did find was the
 duplication above, which is now one component each. Creator Hub is its own
 job and has not been touched.
+
+---
+
+## Round two hundred and forty-eight - the notification Kobby is a new drawing
+
+Staw handed over a new `notification` mascot and it replaces
+`public/mascot/notification.png` in place: same pose, same 431x301, the
+open grin swapped for the closed smile the rest of the family wears.
+
+Nothing in code changed - `Kobby.tsx` already points at that path, and the
+two places that ask for it (`NotificationsPanel`, `Inbox`) say
+`mood="notification"` and get whatever the file holds.
+
+**For the applications: if you ship your own copy of the mascots rather
+than reading them from the site, take this file again.** Nothing breaks if
+you do not; you would just be drawing the old face beside our new one,
+which is the quiet kind of difference that only shows when the two windows
+are open together.
