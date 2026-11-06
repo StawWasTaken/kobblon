@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faPlay, faStar, faBell, faFlag, faSliders, faAward, faBagShopping, faServer,
-  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube,
+  faPlay, faStar, faBell, faFlag, faSliders,
+  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons'
-import { worldIcon } from '@/lib/naming'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Tabs } from '@/components/ui/Tabs'
 import { Menu } from '@/components/ui/Menu'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
@@ -22,6 +20,7 @@ import { reactionsOn, inTheKlub } from '@/lib/api'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldGallery'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { ServerList } from '@/components/worlds/ServerList'
+import { WorldSide } from '@/components/worlds/WorldSide'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
 import { WorldThings } from '@/components/worlds/WorldThings'
 import { AdBanner } from '@/components/ads/AdBanner'
@@ -36,7 +35,7 @@ import {
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
-import { formatCount, timeAgo } from '@/lib/format'
+import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { asset } from '@/lib/asset'
 
@@ -51,24 +50,29 @@ import { asset } from '@/lib/asset'
  * draws a likes bar nothing writes to is a drawing of a page.
  */
 
-const tabs = ['About', 'Badges', 'Shop', 'Servers'] as const
-type Tab = (typeof tabs)[number]
+/*
+ * A World is a place, so the page is shaped like one rather than like a
+ * filing cabinet.
+ *
+ * It was four tabs across the top - About, Badges, Shop, Servers - which is
+ * the Community page's old shape and has the same two faults: the page
+ * opens on a tab rather than on the World, and what a World hands out,
+ * sells and is full of all sit behind a press nobody makes. So there are no
+ * tabs. The middle of the page is the World itself - what it looks like and
+ * what it says it is - and everything that is a standing fact about it is a
+ * panel down the side, each one a door to all of it.
+ *
+ * The three full lists are still there, every one of them, at their own
+ * address, so a link to the servers is a link to the servers and Back goes
+ * back to the World rather than out of it.
+ */
+const views = {
+  badges: 'Badges',
+  shop: 'Shop',
+  servers: 'Servers',
+} as const
 
-const tabIcons: Record<Tab, typeof faAward> = {
-  About: worldIcon,
-  Badges: faAward,
-  Shop: faBagShopping,
-  Servers: faServer,
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-24 flex-1 px-3 py-3 text-center">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="mt-1 text-sm font-semibold tabular-nums text-white/90">{value}</p>
-    </div>
-  )
-}
+type View = keyof typeof views
 
 /**
  * The small window that says what is happening when Play is pressed.
@@ -173,7 +177,20 @@ export default function WorldPage() {
   const badges = useAsync(async () => (thing ? badgesOf(thing.id) : []), [thing?.id])
   const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
-  const [tab, setTab] = useState<Tab>('About')
+  /*
+   * Which full list is open, in the address rather than in a state nobody
+   * can link to. The World itself is what no parameter means.
+   */
+  const [search, setSearch] = useSearchParams()
+  const asked = (search.get('view') ?? '').toLowerCase()
+  const view = (asked in views ? asked : null) as View | null
+  const show = (next: View | null) => {
+    const params = new URLSearchParams(search)
+    if (next) params.set('view', next)
+    else params.delete('view')
+    setSearch(params)
+  }
+
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
   const [reporting, setReporting] = useState(false)
 
@@ -207,7 +224,7 @@ export default function WorldPage() {
   }, [watching.data])
 
   useCanonicalPath(thing?.content_id === number ? worldLink(thing) : null)
-  useTitle(thing?.name ?? 'World')
+  useTitle(thing ? (view ? `${views[view]} - ${thing.name}` : thing.name) : 'World')
   useSocialCard({
     title: thing ? `${thing.name} - Kobblon` : null,
     description: thing?.description
@@ -348,6 +365,22 @@ export default function WorldPage() {
       () => watchWorld(thing.id, profile!.id, want),
     )
   }
+
+  /** The whole of one thing, at its own address, with the way back to the World. */
+  const full = (title: string, body: React.ReactNode) => (
+    <div className="mt-6 space-y-5">
+      <button
+        type="button"
+        onClick={() => show(null)}
+        className="flex items-center gap-2 text-sm font-bold text-muted transition-colors hover:text-white"
+      >
+        <Glyph icon={faArrowLeft} className="text-xs" />
+        {thing.name}
+      </button>
+      <h1 className="font-display text-2xl font-extrabold">{title}</h1>
+      {body}
+    </div>
+  )
 
   const start = (room?: string) => {
     setHanding('opening')
@@ -570,93 +603,67 @@ export default function WorldPage() {
           </div>
         </section>
 
-        <Tabs
-          look="line"
-          className="mt-8"
-          label="Which part of this World"
-          value={tab}
-          onChange={setTab}
-          options={tabs.map((name) => ({ value: name, label: name, icon: tabIcons[name] }))}
-        />
+        {!view && (
+          <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
+            <div className="min-w-0 space-y-8">
+              {/* The World as it looks, which is what somebody came to see. */}
+              <WorldGallery shots={shots} name={thing.name} />
 
-        {/*
-          * One box for every tab.
-          *
-          * They were four different things before - About ran its own
-          * left-aligned column while the other three were cards - so moving
-          * between tabs moved the page under you and nothing lined up.
-          * Each one is the same card in the same place now, which is what
-          * "uniform" has to mean before anything inside it is worth
-          * arguing about.
-          */}
-        <div className="mt-6">
-          {tab === 'About' && (
-            <Card className="p-5 sm:p-6">
-              {/*
-                * Centred and capped. Across the whole column one screenshot
-                * is a 1088-pixel wall; left-aligned in a wide card it looks
-                * like a mistake.
-                */}
-              <div className="mx-auto max-w-3xl">
-                <WorldGallery shots={shots} name={thing.name} />
-              </div>
-
-              <div className="mx-auto mt-8 max-w-3xl">
-                <h2 className="font-display text-lg font-extrabold">Description</h2>
+              <section>
+                <h2 className="font-display text-lg font-extrabold">About</h2>
                 <p className="mt-2 whitespace-pre-wrap leading-relaxed text-white/70">
                   {thing.description || 'Whoever built this has not described it yet.'}
                 </p>
 
-                <div className="mt-6 flex flex-wrap border-y border-ink-line">
-                  <Stat label="Visits" value={formatCount(thing.visit_count)} />
-                  <Stat label="Favourites" value={formatCount(counts.favourites)} />
-                  <Stat label="Likes" value={formatCount(counts.likes)} />
-                  <Stat
-                    label="Published"
-                    value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
-                  />
-                  <Stat
-                    label="Updated"
-                    value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
-                  />
-                  <Stat label="Genre" value={genre?.label ?? 'Not set'} />
-                </div>
-
                 {profile && !mine && (
-                  <div className="mt-2 text-right">
-                    <button
-                      onClick={() => setReporting(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
-                    >
-                      <Glyph icon={faFlag} className="text-[10px]" />
-                      Report Abuse
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setReporting(true)}
+                    className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
+                  >
+                    <Glyph icon={faFlag} className="text-[10px]" />
+                    Report Abuse
+                  </button>
                 )}
-              </div>
-            </Card>
-          )}
+              </section>
 
-          {tab === 'Badges' && (
-            <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
-          )}
+              <AlsoJoinedRow worlds={alsoPlayed.data ?? []} />
+            </div>
 
-          {tab === 'Shop' && (
-            <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
-          )}
-
-          {tab === 'Servers' && (
-            <ServerList
-              servers={servers.data ?? []}
-              name={thing.name}
+            <WorldSide
+              servers={servers.data}
+              serversLoading={servers.loading}
+              badges={badges.data}
+              passes={passes.data}
+              counts={counts}
+              visits={thing.visit_count}
+              genre={genre?.label}
+              publishedAt={thing.published_at}
+              updatedAt={thing.updated_at}
               onJoin={(server) => start(server.id)}
+              foot={<AdBanner size="tall" quiet className="hidden lg:block" />}
+              /* On a phone it goes above the description rather than under
+                 everything, because the servers are the live part. */
+              className="max-lg:order-first lg:sticky lg:top-[4.5rem]"
             />
-          )}
-        </div>
+          </div>
+        )}
 
-        <AlsoJoinedRow worlds={alsoPlayed.data ?? []} />
+        {view === 'badges' && full('Badges', (
+          <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
+        ))}
 
-        <AdBanner className="mt-10" quiet />
+        {view === 'shop' && full('Shop', (
+          <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
+        ))}
+
+        {view === 'servers' && full('Servers', (
+          <ServerList
+            servers={servers.data ?? []}
+            name={thing.name}
+            onJoin={(server) => start(server.id)}
+          />
+        ))}
+
       </Page>
 
       <Handover state={handing} onClose={() => setHanding('off')} />

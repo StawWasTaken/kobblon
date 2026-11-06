@@ -18927,3 +18927,46 @@ them. The heartbeat is the whole design: presence is a claim that expires,
 and `still_in_world` on a timer is what keeps somebody in the list. A
 Launcher that joins and never says "still here" drops its players out of
 every one of these screens after about ninety seconds.
+
+## Round two hundred and fifty-one - the World page is a place, not four tabs
+
+No migration, no API change, no changed signature. This is the World page
+taking the shape the Community page took last week, and it is here because
+the same thing was wrong with both.
+
+**The World page was About, Badges, Shop, Servers across the top.** That is
+the Roblox game page nearly tab for tab, and it has the two faults the
+Community page had: the page opens on a *tab* rather than on the World, and
+what a World hands out, what it sells and who is in it right now all sit
+behind a press almost nobody makes. Servers was the worst of them - the one
+genuinely live thing on the page, three presses deep.
+
+So there are no tabs on either page now. Both are one shape:
+
+- the middle is the thing itself (the World's gallery and what it says it
+  is; the Community's announcements, what is on, and the wall);
+- the side is a rail of panels, each a standing fact with enough of it shown
+  to be worth reading and a door to all of it;
+- every full list keeps its own address - `?view=servers`, `?view=badges`,
+  `?view=shop` on a World, and `?view=members|events|shop|allies` on a
+  Community - so a link to the server list is still a link to the server
+  list, and Back goes back to the World rather than out of it.
+
+**`@/components/worlds/WorldSide` is new and is the World's half of that
+rail**: who is in it now (the two busiest servers, with the faces in them,
+how full each is, and Join), what it hands out, what it sells, and the
+numbers. Like `CommunitySide` it takes every list as a prop, reads no page
+state and imports nothing that asks who is signed in, so the Workspace can
+mount it beside a World it already has. Both are checked on bare pages -
+`tools/site/world-page-preview.html` and `community-page-preview.html`.
+
+**The numbers moved out of About and into the rail** (visits, favourites,
+likes, genre, published, updated). They were a six-cell band across the
+bottom of the description, which put the dullest row on the page in the
+middle of it.
+
+For the applications: nothing you call has changed. What has changed is
+where a person expects to find things, so if the Launcher or the Workspace
+links somebody to a World's servers or its passes, link to
+`/worlds/<content_id>?view=servers` or `?view=shop` rather than to the World
+and a tab name - the tab names no longer exist.
