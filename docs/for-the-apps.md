@@ -19534,3 +19534,23 @@ page any more.
 Nothing else moved: `CommunityHeader`, `CommunityWall`, `Announcements`,
 `CommunityMembers`, `AffiliateGrid`, `EventCard`, `LiveEventBar` and
 `Shop` are all untouched and still exported. No API change.
+
+## Round two hundred and sixty-five - both server sections read as one thing
+
+Staw: "make that the 'Servers your friends are in' and the 'Other servers'
+are the same design cuz rn its not."
+
+He is right and it was the empty state doing it. With no friends in any
+room, the friends section drew the full mascot empty state - three times
+the height of the rooms under it, a picture, and a heading in the display
+face - so two sections of the same kind read as two different parts of
+the page.
+
+`ServerList` gains **`look?: 'full' | 'quiet'`**, default `full` so
+nothing else changes. `quiet` is a dashed panel the size of a card with
+one line and a sentence in it, and the Servers tab uses it for both
+sections. The mascot is kept for the places where "there is nothing here"
+is the whole answer on the screen; inside a section that has a heading, a
+count and a refresh above it, it was shouting.
+
+No other change, no API change.

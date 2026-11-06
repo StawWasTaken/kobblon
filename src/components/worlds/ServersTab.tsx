@@ -131,6 +131,7 @@ export function ServersTab({
             onJoin={onJoin}
             onShare={onShare}
             highlight={highlight}
+            look="quiet"
             empty={{
               title: 'None of your friends are in here',
               body: `When somebody you know is playing ${name}, their server shows up here first.`,
@@ -178,6 +179,7 @@ export function ServersTab({
           onJoin={onJoin}
           onShare={onShare}
           highlight={highlight}
+          look="quiet"
           empty={hideFull && hidden > 0
             ? {
               title: 'Every server is full',

@@ -175,7 +175,7 @@ function ServerCard({ server, onJoin, onShare, lit, mates = [] }: {
  * not a failure and is not drawn as one.
  */
 export function ServerList({
-  servers, name, onJoin, onShare, highlight, friends, empty,
+  servers, name, onJoin, onShare, highlight, friends, empty, look = 'full',
 }: {
   servers: RunningServer[]
   name: string
@@ -187,8 +187,33 @@ export function ServerList({
   friends?: Record<string, PlayerThere[]>
   /** What to say when there is nothing, where the ordinary line is wrong. */
   empty?: { title: string; body: string }
+  /**
+   * How loudly to say it.
+   *
+   * `quiet` is a panel the size of a card with one line in it. Staw:
+   * "make that the 'Servers your friends are in' and the 'Other servers'
+   * are the same design cuz rn its not" - a full empty state with the
+   * mascot in it made the friends section three times the height of the
+   * rooms underneath, so two sections of the same kind read as two
+   * different things. The mascot stays where it is the whole answer.
+   */
+  look?: 'full' | 'quiet'
 }) {
   if (!servers.length) {
+    if (look === 'quiet') {
+      return (
+        <div className="rounded-2xl border border-dashed border-ink-line bg-ink-card/40 px-4 py-7 text-center">
+          <p className="font-display text-sm font-extrabold text-white/80">
+            {empty?.title ?? 'No servers running'}
+          </p>
+          <p className="mx-auto mt-1 max-w-md text-xs text-muted">
+            {empty?.body
+              ?? `Where people are playing ${name} right now. Nobody is in it at the moment.`}
+          </p>
+        </div>
+      )
+    }
+
     return (
       <Card>
         <EmptyState

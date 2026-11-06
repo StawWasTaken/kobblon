@@ -1,6 +1,8 @@
 /*
  * The Servers tab with nothing around it: friends in their own section,
- * the sort, the full-server tickbox and the two refresh buttons.
+ * the sort, the full-server tickbox and the two refresh buttons. Drawn
+ * twice - with a friend in a room and with none - because the two
+ * sections have to read as the same kind of thing either way.
  */
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
@@ -20,15 +22,23 @@ const servers = [
   { id: 'e8820ff311', capacity: 35, how_many: 18, people: faces(6, 60) },
 ] as never[]
 
-const friends = { a11d4f3a9c: faces(2, 100) } as never
-
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
     <div className="min-h-screen bg-ink p-8 text-white">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-5xl space-y-16">
         <ServersTab
           servers={servers}
-          friends={friends}
+          friends={{ a11d4f3a9c: faces(2, 100) } as never}
+          name="First Ground"
+          signedIn
+          onRefresh={() => {}}
+          onJoin={() => {}}
+          onShare={() => {}}
+        />
+
+        <ServersTab
+          servers={[servers[2]] as never[]}
+          friends={{}}
           name="First Ground"
           signedIn
           onRefresh={() => {}}
