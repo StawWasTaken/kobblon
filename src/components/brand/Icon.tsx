@@ -34,7 +34,10 @@ export const UI_ICONS = [
   'reaction-laugh', 'reaction-sad', 'reaction-shocked', 'reaction-skull',
   'klub', 'klub-badge',
   'reaction-smile', 'reaction-sunglasses', 'reaction-winky-grin',
-  'remove-user', 'report', 'search-user', 'send', 'thumbs-down-stroke',
+  'remove-user', 'report',
+  /* Somebody with a play mark beside them: people in a World right now, as
+     opposed to people who have been in it, which is the eye. */
+  'playing', 'search-user', 'send', 'thumbs-down-stroke',
   'thumbs-down', 'thumbs-up-stroke', 'thumbs-up', 'user', 'users', 'voice-user',
   /*
    * Staw's own drawings of a World and of an asset, added for the boards.

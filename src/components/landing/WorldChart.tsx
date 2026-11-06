@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faEye, faThumbsUp, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { WorldStats } from '@/components/worlds/WorldStats'
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
-import { formatCount } from '@/lib/format'
 import { Skeleton } from '@/components/ui/States'
 import type { World } from '@/types/db'
 
@@ -57,16 +57,7 @@ function Row({ world, rank }: { world: World; rank: number }) {
         </span>
 
         <span className="col-span-3 flex items-center gap-5 text-xs font-bold text-white/50 sm:col-span-1 sm:justify-end sm:text-sm">
-          <span className="inline-flex items-center gap-2">
-            <Glyph icon={faEye} className="text-white/30" />
-            {formatCount(world.visit_count)}
-          </span>
-          {world.like_count > 0 && (
-            <span className="inline-flex items-center gap-2">
-              <Glyph icon={faThumbsUp} className="text-white/30" />
-              {formatCount(world.like_count)}
-            </span>
-          )}
+          <WorldStats world={world} size="md" className="text-white/60" />
           <Glyph
             icon={faArrowRight}
             className="text-link transition-transform group-hover:translate-x-1"

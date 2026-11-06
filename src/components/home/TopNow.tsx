@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faEye, faThumbsUp, faCompass } from '@fortawesome/free-solid-svg-icons'
+import { faCompass } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/States'
 import { worldIcon } from '@/lib/naming'
-import { formatCount } from '@/lib/format'
 import { worldLink } from '@/lib/links'
+import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
 import type { World } from '@/types/db'
 
@@ -26,13 +26,6 @@ import type { World } from '@/types/db'
  * Discover, where looking through Worlds is the whole job.
  */
 
-/** How well a World has gone down, or nothing where nobody has said. */
-function approval(world: World) {
-  const up = world.like_count ?? 0
-  const down = world.dislike_count ?? 0
-  if (up + down < 1) return null
-  return Math.round((up / (up + down)) * 100)
-}
 
 function Cover({ world, className }: { world: World; className?: string }) {
   const art = world.cover_url ?? world.emblem_url
@@ -50,23 +43,9 @@ function Cover({ world, className }: { world: World; className?: string }) {
   )
 }
 
-/** Visits, and approval where anybody has given one. */
+/** How it was rated, and how many are in it now. */
 function Stats({ world, light }: { world: World; light?: boolean }) {
-  const liked = approval(world)
-  return (
-    <span className={cn('flex items-center gap-2.5 text-xs', light ? 'text-[#fff]/75' : 'text-muted')}>
-      <span className="inline-flex items-center gap-1">
-        <Glyph icon={faEye} className="text-[10px]" />
-        <span className="font-bold">{formatCount(world.visit_count ?? 0)}</span>
-      </span>
-      {liked !== null && (
-        <span className="inline-flex items-center gap-1">
-          <Glyph icon={faThumbsUp} className="text-[10px]" />
-          <span className="font-bold">{liked}%</span>
-        </span>
-      )}
-    </span>
-  )
+  return <WorldStats world={world} size="md" className={light ? 'text-[#fff]/75' : undefined} />
 }
 
 /*

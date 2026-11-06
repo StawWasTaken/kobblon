@@ -19220,3 +19220,54 @@ the lists changing underneath it.
 
 Nothing else changed. The Community page is still the one round 255 put
 back.
+
+## Round two hundred and fifty-seven - how many are in there, not how many have been
+
+Staw, of the Worlds drawn on Discover, the homepage and everywhere else:
+"instead of showing the ratio like-dislike and visits, it must be ratio
+like-dislike And actual players (actual number of people playing actually
+in all servers)". Right: visits only ever goes up and says nothing about
+tonight.
+
+**One new migration, `0326_how_many_are_playing_each_of_these.sql`, and it
+is NOT applied yet** - Staw runs it in the SQL editor. It adds
+`playing_in(wanted uuid[])`, which returns `(world_id, how_many)` for the
+Worlds in the list that have somebody in them, and **leaves the rest out**:
+a World missing from the answer has nobody in it. Same rules as
+`playing_now` to the letter - a player counts when their row is fresher
+than `stale_after()` and their server is not closed - because two numbers
+for the same thing that disagree is worse than one slow number. `security
+definer`, granted to `anon` and `authenticated`; a count of heads is not a
+list of who, and `world_players` stays unreadable row by row. Checked on a
+local Postgres: applied twice, agrees with `playing_now` World by World,
+stale players and closed servers excluded, an empty array and an unknown id
+answer nothing rather than erroring, a stranger may call it and still may
+not read the table.
+
+**`@/components/worlds/WorldStats`** is the new one-and-only drawing of the
+numbers under a World: the approval percentage, then the live count in
+green. Nobody in it draws nothing at all, because a row of zeroes down a
+shelf says the platform is empty. `WorldCard`, both shelf tiles, the
+homepage's Top Now and the landing page's chart all use it; none of them
+mentions visits any more.
+
+**`@/hooks/usePlaying`** is how it gets the number, and it is the part to
+copy rather than re-invent. A card says which World it is; the asks made in
+the same tick are collected into **one** `playing_in` call and every card
+waiting on it is told when it lands. An answer is kept for 45 seconds and
+then asked again, because a count from four minutes ago is not "how many
+are playing". A request that fails writes nothing down, so the next render
+asks again - drawing a confident 0 on a failed request is the page telling
+a lie it cannot see.
+
+**A new icon: `playing`**, in `public/icons/ui` and registered in
+`@/components/brand/Icon`. Staw drew it - a person with a play mark beside
+them. Use it for people in a World now; the eye still means visits
+wherever visits genuinely is the number (the World page's own ribbon keeps
+Visits, because there "ever" is the question being asked).
+
+Still true and still the thing that makes all of this read zero: **nothing
+writes `world_players` yet.** Until the Launcher calls
+`join_world_server`, `still_in_world` and `left_world_server` on a
+heartbeat, `playing_in` correctly answers "nobody, anywhere", and every
+card will show the rating alone.

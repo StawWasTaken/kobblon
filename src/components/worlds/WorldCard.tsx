@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faEye, faThumbsUp, faTag } from '@fortawesome/free-solid-svg-icons'
+import { faTag } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
-import { formatCount } from '@/lib/format'
+import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
 import type { World, WorldGenre } from '@/types/db'
 
@@ -18,9 +18,6 @@ import type { World, WorldGenre } from '@/types/db'
 export function WorldCard({
   world, genres, className,
 }: { world: World; genres?: WorldGenre[]; className?: string }) {
-  const up = world.like_count ?? 0
-  const down = world.dislike_count ?? 0
-  const score = up + down ? Math.round((up / (up + down)) * 100) : null
   const genre = genres?.find((one) => one.id === world.genre)
 
   return (
@@ -70,16 +67,7 @@ export function WorldCard({
         )}
 
         <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] font-bold text-muted">
-          <span className="inline-flex items-center gap-1">
-            <Glyph icon={faEye} />
-            {formatCount(world.visit_count ?? 0)}
-          </span>
-          {score !== null && (
-            <span className="inline-flex items-center gap-1">
-              <Glyph icon={faThumbsUp} />
-              {score}%
-            </span>
-          )}
+          <WorldStats world={world} />
           {/* Not on a phone: two cards across leaves room for one line of
               numbers, and with the genre on it the line wrapped on one card
               and not the other, so a tidy grid came out ragged. */}

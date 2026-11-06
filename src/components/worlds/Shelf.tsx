@@ -1,11 +1,11 @@
 import { Children } from 'react'
 import { useRail } from '@/hooks/useRail'
 import { Link } from 'react-router-dom'
-import { faChevronLeft, faChevronRight, faThumbsUp, faEye } from '@fortawesome/free-solid-svg-icons'
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { worldIcon } from '@/lib/naming'
-import { formatCount } from '@/lib/format'
 import { worldLink } from '@/lib/links'
+import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
 import type { World } from '@/types/db'
 
@@ -109,30 +109,9 @@ export function Shelf({ title, note, more, children, empty, className }: {
   )
 }
 
-/** How well a World has gone down, or nothing where nobody has said. */
-function approval(world: World) {
-  const up = world.like_count ?? 0
-  const down = world.dislike_count ?? 0
-  if (up + down < 1) return null
-  return Math.round((up / (up + down)) * 100)
-}
 
 function Stats({ world }: { world: World }) {
-  const liked = approval(world)
-  return (
-    <p className="mt-0.5 flex items-center gap-2.5 text-xs text-muted">
-      {liked !== null && (
-        <span className="inline-flex items-center gap-1">
-          <Glyph icon={faThumbsUp} className="text-[10px]" />
-          <span className="font-bold">{liked}%</span>
-        </span>
-      )}
-      <span className="inline-flex items-center gap-1">
-        <Glyph icon={faEye} className="text-[10px]" />
-        <span className="font-bold">{formatCount(world.visit_count ?? 0)}</span>
-      </span>
-    </p>
-  )
+  return <WorldStats world={world} className="mt-0.5" />
 }
 
 /**
@@ -178,7 +157,6 @@ export function WorldTile({ world }: { world: World }) {
  * across a desktop, one and a bit on a phone so it is plainly a row.
  */
 export function WorldFeature({ world }: { world: World }) {
-  const liked = approval(world)
   return (
     <Link
       to={worldLink(world)}
@@ -208,18 +186,7 @@ export function WorldFeature({ world }: { world: World }) {
         )}
         <span className="min-w-0">
           <span className="block truncate text-sm font-extrabold text-[#fff]">{world.name}</span>
-          <span className="flex items-center gap-2.5 text-xs text-[#fff]/70">
-            {liked !== null && (
-              <span className="inline-flex items-center gap-1">
-                <Glyph icon={faThumbsUp} className="text-[10px]" />
-                {liked}%
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1">
-              <Glyph icon={faEye} className="text-[10px]" />
-              {formatCount(world.visit_count ?? 0)}
-            </span>
-          </span>
+          <WorldStats world={world} className="text-[#fff]/75" />
         </span>
       </span>
     </Link>

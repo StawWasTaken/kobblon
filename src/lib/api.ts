@@ -3236,6 +3236,24 @@ export async function playingNow(worldId: string): Promise<number> {
   return (unwrap(await supabase.rpc('playing_now', { wanted: worldId })) as number) ?? 0
 }
 
+/**
+ * How many are in each of several Worlds, in one question.
+ *
+ * The same count as `playingNow`, for a list: a shelf of cards asking one
+ * at a time is one round trip per card. Worlds with nobody in them are not
+ * in the answer at all, so this fills them in as zero - a caller should be
+ * able to read the result without knowing that.
+ */
+export async function playingIn(worldIds: string[]): Promise<Record<string, number>> {
+  if (!worldIds.length) return {}
+  const rows = (unwrap(await supabase.rpc('playing_in', { wanted: worldIds }))
+    ?? []) as { world_id: string; how_many: number }[]
+  const answer: Record<string, number> = {}
+  for (const id of worldIds) answer[id] = 0
+  for (const row of rows) answer[row.world_id] = row.how_many
+  return answer
+}
+
 /** A World the people who played this one also played. */
 export type AlsoJoined = {
   id: string
