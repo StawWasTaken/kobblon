@@ -7,8 +7,10 @@ database has actually had done to it.
 
 Two folders, one list:
 
-- **here** - the recent ones, the ones still worth having in front of you;
-- **`applied/`** - everything from `0001` up to `0299`.
+- **here** - the ones written since the last time Staw applied a batch, and
+  nothing else. It is empty whenever the live database is caught up, which
+  is the normal state;
+- **`applied/`** - everything Staw has run, `0001` up to `0325`.
 
 Staw: "can we also make a folder in migrations for older migrations so i
 dont have to scroll all the way down for the new ones". That is the whole
