@@ -15,7 +15,7 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useChatDock } from '@/components/chat/ChatDock'
-import { presenceNow, usePresenceVersion } from '@/hooks/usePresenceStore'
+import { presenceNow, usePresenceVersion, useWhereabouts } from '@/hooks/usePresenceStore'
 import { usePersonActions } from '@/components/social/personActions'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -215,6 +215,16 @@ export default function Friends() {
     Friends: friends, Requests: incoming, Followers: followers,
     Following: following, Ignored: ignored, Blocked: blocked,
   }[current.name]
+
+  /*
+   * Where everybody in the open list actually is, asked once for the list.
+   *
+   * This is what makes the split below honest. "Around now" used to mean
+   * "has a browser tab open", so a friend standing in a World - who is as
+   * present as anybody gets - sat under "Everybody else" saying Offline,
+   * because the Launcher is not a browser and is not on the channel.
+   */
+  useWhereabouts(source.data ?? [])
 
   const matches = (person: Person) =>
     !filter

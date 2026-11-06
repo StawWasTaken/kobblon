@@ -86,7 +86,7 @@ export const editLink = (worldId: string, code?: string) => {
  * happens when another application takes the screen. If it did not, the
  * caller offers the download. Silently doing nothing is the one wrong answer.
  */
-export async function play(experienceId: string, onMissing: () => void) {
+export async function play(experienceId: string, onMissing: () => void, room?: string) {
   /*
    * A code if there is a session to mint one from, and no code otherwise.
    *
@@ -96,7 +96,7 @@ export async function play(experienceId: string, onMissing: () => void) {
    */
   let code: string | undefined
   try { code = await mintAppCode('launcher') } catch { code = undefined }
-  return handOver(playLink(experienceId, code), onMissing)
+  return handOver(playLink(experienceId, code, room), onMissing)
 }
 
 /**

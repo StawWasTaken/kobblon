@@ -1,5 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { supabase } from '@/lib/supabase'
+import { whereTheyAre, type Whereabouts } from '@/lib/api'
 import type { Presence } from '@/components/ui/StatusDot'
 import { presenceOf } from '@/components/ui/StatusDot'
 
@@ -24,6 +25,57 @@ export type Here = {
 }
 
 const here = new Map<string, Here>()
+
+/*
+ * Where people actually are, which is a different question from whether
+ * they have a tab open.
+ *
+ * The channel above knows about browsers. Somebody playing is in the
+ * Launcher, which is not a browser and is not on that channel, so the
+ * channel's honest answer about them is "not here" - and that is how a
+ * friend in a World read as Offline on the site while five other people
+ * were standing next to them in it. The roster behind `where_they_are` is
+ * the other half, and it is the authoritative one: it is written by the
+ * thing the person is actually in.
+ *
+ * So this map is consulted first and the channel second. One answer, out of
+ * one function, for the dot, the word, the hover card, the profile line and
+ * anything that sorts a list by who is around.
+ */
+const inWorld = new Map<string, { at: number; where: Whereabouts }>()
+
+/**
+ * How long a fetched whereabouts row is worth believing.
+ *
+ * The roster's own window is about a minute and a half, so holding one for
+ * longer than that is keeping a photograph of exactly the kind this file
+ * exists to stop keeping.
+ */
+const WHEREABOUTS_GOOD_FOR = 90 * 1000
+
+/** What a screen learned about where some people are. */
+export function learnWhereabouts(who: string[], rows: Whereabouts[]) {
+  const at = Date.now()
+  const found = new Set(rows.map((row) => row.user_id))
+  for (const row of rows) inWorld.set(row.user_id, { at, where: row })
+  /* Asked about and not in the answer means out, not unknown. Leaving this
+     out is how somebody stays "in a World" for the rest of the session. */
+  for (const id of who) if (!found.has(id)) inWorld.delete(id)
+  changed()
+}
+
+/** Where one person is, or nothing if nobody has asked lately. */
+export function whereIs(id?: string | null): Whereabouts | null {
+  if (!id) return null
+  const held = inWorld.get(id)
+  if (!held) return null
+  /* Read-only: a stale row is not believed, and is not deleted either.
+     This is called during render, and a render that changes the store is a
+     render that can tell React something different on its second go. The
+     next answer overwrites it; nothing else needs to. */
+  if (Date.now() - held.at > WHEREABOUTS_GOOD_FOR) return null
+  return held.where
+}
 
 /*
  * Whose tab this is.
@@ -77,6 +129,13 @@ type Somebody = {
  * did not. Anything that groups by presence groups by this.
  */
 export function presenceNow(person: Somebody): Presence {
+  /*
+   * The roster first, because it is the only one of the three that knows
+   * about the Launcher. Somebody standing in a World is in a World whatever
+   * a browser channel or a row fetched ten minutes ago has to say.
+   */
+  if (whereIs(person?.id)) return 'in-space'
+
   const live = person?.id ? here.get(person.id) : undefined
   if (live) {
     return live.in_space_id ? 'in-space' : live.activity === 'building' ? 'building' : 'online'
@@ -200,4 +259,67 @@ export function usePresenceChannel(
     const timer = window.setInterval(changed, 30_000)
     return () => window.clearInterval(timer)
   }, [])
+}
+
+/**
+ * Ask where these people are, and keep asking while the screen is up.
+ *
+ * It takes the list a screen is already drawing: a friends list, a profile
+ * which is a list of one, the faces on a shelf. One round trip for the lot.
+ *
+ * The guard here is the one this project keeps getting wrong. The effect
+ * does not close over the ids it was given at mount - it keys on the
+ * sorted ids, so a list that changes is a list that is asked about again -
+ * and the answer is thrown away if the list moved on while it was in
+ * flight, because the alternative is a slow answer about yesterday's list
+ * overwriting a fast answer about today's.
+ */
+export function useWhereabouts(people: Array<{ id?: string | null } | null | undefined>) {
+  const key = people
+    .map((one) => one?.id)
+    .filter((id): id is string => !!id)
+    .sort()
+    .join(',')
+
+  useEffect(() => {
+    const ids = key ? key.split(',') : []
+    if (!ids.length) return
+
+    let wanted = true
+
+    const ask = async () => {
+      try {
+        const rows = await whereTheyAre(ids)
+        /* The list this answer is about is the list that was asked, not
+           whatever the screen is drawing now. */
+        if (wanted) learnWhereabouts(ids, rows)
+      } catch {
+        /* A roster that cannot be read is not an error anybody can act on:
+           the dot falls back to the channel, which is what it did before
+           this existed. */
+      }
+    }
+
+    void ask()
+    /* Inside the window the rows are good for, so an answer is replaced
+       before it goes stale rather than after. */
+    const again = window.setInterval(() => void ask(), 60 * 1000)
+
+    return () => {
+      wanted = false
+      window.clearInterval(again)
+    }
+  }, [key])
+}
+
+/**
+ * Where one person is, kept live.
+ *
+ * Reading only - somebody has to have asked. A list calls `useWhereabouts`
+ * and every face in it can read the answer, which is one round trip rather
+ * than one per face.
+ */
+export function useWhereabout(id?: string | null): Whereabouts | null {
+  useVersion()
+  return whereIs(id)
 }

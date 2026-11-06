@@ -3152,6 +3152,43 @@ export async function serversOf(worldId: string, faces = 6): Promise<RunningServ
   return (unwrap(await supabase.rpc('servers_of', { wanted: worldId, faces })) as RunningServer[]) ?? []
 }
 
+/**
+ * Where somebody is, right now - the other direction from `serversOf`.
+ *
+ * Everything in the roster reads "who is in this World". A profile and a
+ * hover card ask "where is this person", and answering that by listing
+ * every server of every World and looking for a face is a screen that
+ * reads the whole roster to draw one line. `where_they_are` (0317) takes
+ * the people a screen is already drawing and gives back the one row each.
+ *
+ * It takes an array because every caller has a list: a friends list, a
+ * hover card lit from one, a profile which is a list of one. One round trip
+ * for the screen, not one per face.
+ *
+ * Private servers, unpublished Worlds and removed ones are not in the
+ * answer - the function drops them. Somebody in a private server reads here
+ * as not playing, which is a deliberate omission and the right one: a card
+ * that tells a stranger you are in a room they cannot see is worse than
+ * silence.
+ *
+ * True for about a minute and a half. Read it again rather than keeping it.
+ */
+export type Whereabouts = {
+  user_id: string
+  world_id: string
+  world_name: string
+  world_content_id: number | null
+  server_id: string
+  how_many: number
+  capacity: number
+  since: string
+}
+
+export async function whereTheyAre(who: string[]): Promise<Whereabouts[]> {
+  if (!who.length) return []
+  return (unwrap(await supabase.rpc('where_they_are', { who })) as Whereabouts[]) ?? []
+}
+
 /** How many people are in a World right now, across every server. */
 export async function playingNow(worldId: string): Promise<number> {
   return (unwrap(await supabase.rpc('playing_now', { wanted: worldId })) as number) ?? 0

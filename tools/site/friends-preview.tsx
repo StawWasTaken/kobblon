@@ -9,6 +9,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { faUserGroup, faInbox, faHeart, faEyeSlash, faBan, faComment, faEllipsis } from '@fortawesome/free-solid-svg-icons'
 import { ListTab } from '@/pages/Friends'
 import { PersonCard, FaceGrid } from '@/components/social/PersonCard'
+import { ActivityLine } from '@/components/social/Whereabouts'
+import { learnWhereabouts } from '@/hooks/usePresenceStore'
 import { Button } from '@/components/ui/Button'
 import { Glyph } from '@/components/brand/Glyph'
 import '@/index.css'
@@ -27,6 +29,18 @@ const dots = (
     <Glyph icon={faEllipsis} />
   </span>
 )
+
+/*
+ * The roster's answer, put in by hand. `useWhereabouts` would fetch it; this
+ * page has no database, and what is being looked at is what the answer looks
+ * like once it is in.
+ */
+learnWhereabouts(['2'], [{
+  user_id: '2', world_id: '00000000-0000-4000-8000-000000000001',
+  world_name: 'Tower of Doom', world_content_id: 42,
+  server_id: '00000000-0000-4000-8000-000000000002',
+  how_many: 7, capacity: 20, since: new Date().toISOString(),
+}])
 
 function Demo() {
   const [tab, setTab] = useState('Friends')
@@ -92,7 +106,10 @@ function Demo() {
 
       {/* And the small end of the same design, which is what a profile shows
           before See all. */}
-      <h2 className="mb-3 mt-8 font-display text-xl font-extrabold">On a profile</h2>
+      <h2 className="mb-3 mt-8 font-display text-xl font-extrabold">On their profile</h2>
+      <ActivityLine person={people[1] as never} className="mb-8 max-w-md" />
+
+      <h2 className="mb-3 mt-8 font-display text-xl font-extrabold">Their faces</h2>
       <FaceGrid people={people as never} />
     </div>
   )

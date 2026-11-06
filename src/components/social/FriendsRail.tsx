@@ -9,7 +9,7 @@ import { profileLink } from '@/lib/links'
 import { nameOf } from '@/lib/avatars'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { FriendPeek } from '@/components/social/FriendPeek'
-import { presenceNow, usePresenceVersion } from '@/hooks/usePresenceStore'
+import { presenceNow, usePresenceVersion, useWhereabouts } from '@/hooks/usePresenceStore'
 
 /**
  * How many faces a row shows before it says "See all".
@@ -29,6 +29,10 @@ export function FriendsRail() {
     async () => (profile ? peopleList(profile.id, 'friends') : []),
     [profile?.id],
   )
+
+  /* Where they are, asked once for the rail, so a friend in a World sorts
+     to the front of it and the dot on their face says so. */
+  useWhereabouts(data ?? [])
 
   /* Here first, asked the same way the dot on each face is asked. */
   const friends = (data ?? [])

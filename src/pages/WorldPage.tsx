@@ -349,9 +349,16 @@ export default function WorldPage() {
     )
   }
 
-  const start = () => {
+  const start = (room?: string) => {
     setHanding('opening')
-    void play(thing.id, () => setHanding('missing'))
+    /*
+     * `room` is which copy of the World, from the Servers tab - and it is
+     * a hint, never a permission. Whether this account may be in that room
+     * is decided by `join_world_server` over HTTPS, which is where it has
+     * always been decided; a full room, a closed one or a private one
+     * refuses there.
+     */
+    void play(thing.id, () => setHanding('missing'), room)
   }
 
   return (
@@ -450,7 +457,7 @@ export default function WorldPage() {
               {/* Play, with the small things beside it rather than under it. */}
               <div className="flex shrink-0 flex-col gap-3 sm:min-w-[18rem]">
                 <div className="flex items-center gap-2">
-                  <Button size="lg" variant="enter" className="flex-1" onClick={start}>
+                  <Button size="lg" variant="enter" className="flex-1" onClick={() => start()}>
                     <Glyph icon={faPlay} />
                     <span className="font-display text-lg font-extrabold">Play</span>
                   </Button>
@@ -639,7 +646,11 @@ export default function WorldPage() {
           )}
 
           {tab === 'Servers' && (
-            <ServerList servers={servers.data ?? []} name={thing.name} />
+            <ServerList
+              servers={servers.data ?? []}
+              name={thing.name}
+              onJoin={(server) => start(server.id)}
+            />
           )}
         </div>
 

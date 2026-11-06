@@ -5,7 +5,7 @@ import { NameMarks } from '@/components/brand/Verified'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { StatusDot, presenceWords } from '@/components/ui/StatusDot'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { useLivePresence } from '@/hooks/usePresenceStore'
+import { useLivePresence, useWhereabout } from '@/hooks/usePresenceStore'
 import { FriendPeek } from '@/components/social/FriendPeek'
 import { nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
@@ -102,6 +102,12 @@ export function PersonLine({ person, note, className }: {
 }) {
   const presence = useLivePresence(person)
   const here = presence !== 'offline'
+  /*
+   * The World by name, when somebody on the screen has asked the roster
+   * where these people are. "In a World" tells you nothing you can act on
+   * and the name does, so the name wins whenever there is one.
+   */
+  const where = useWhereabout(person.id)
 
   return (
     <p className={cn('flex items-center gap-1.5 text-xs', className)}>
@@ -113,11 +119,13 @@ export function PersonLine({ person, note, className }: {
         )}
       >
         {note
-          ?? (here
-            ? presenceWords[presence]
-            : person.last_seen_at
-              ? `Last seen ${timeAgo(person.last_seen_at)}`
-              : 'Offline')}
+          ?? (where
+            ? `In ${where.world_name}`
+            : here
+              ? presenceWords[presence]
+              : person.last_seen_at
+                ? `Last seen ${timeAgo(person.last_seen_at)}`
+                : 'Offline')}
       </span>
       {person.i_ignore && (
         <Tooltip label="You are ignoring this person" side="top">

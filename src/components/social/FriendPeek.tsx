@@ -1,8 +1,12 @@
 import { useId, useRef, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
-import { faUser, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faComment, faSpinner, faPlay } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
-import { StatusDot, presenceOf, presenceWords } from '@/components/ui/StatusDot'
+import { StatusDot, presenceWords } from '@/components/ui/StatusDot'
+import { useLivePresence, useWhereabout, useWhereabouts } from '@/hooks/usePresenceStore'
+import { play } from '@/lib/app'
+import type { Whereabouts } from '@/lib/api'
+import { worldLink } from '@/lib/links'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { useToast } from '@/components/ui/Toast'
 import { startConversation } from '@/lib/api'
@@ -46,6 +50,31 @@ function watch(tell: () => void) {
   return () => { watching.delete(tell) }
 }
 
+/** Where they are, named, with how full that copy is. */
+function WorldHere({ where }: { where: Whereabouts }) {
+  const inside = (
+    <>
+      {where.world_name}
+      <span className="ml-1 font-semibold text-white/40">
+        {where.how_many}/{where.capacity}
+      </span>
+    </>
+  )
+
+  const look = 'mt-1.5 block truncate text-[11px] font-bold text-space-bright'
+
+  return where.world_content_id
+    ? (
+      <Link
+        to={worldLink({ content_id: where.world_content_id, name: where.world_name })}
+        className={cn(look, 'hover:underline')}
+      >
+        {inside}
+      </Link>
+    )
+    : <p className={look}>{inside}</p>
+}
+
 /**
  * The little card behind a friend's face.
  *
@@ -74,9 +103,22 @@ export function FriendPeek({ friend, children, className }: {
   const open = useSyncExternalStore(watch, () => up === key, () => false)
   const [opening, setOpening] = useState(false)
   const away = useRef<number | null>(null)
-  const presence = presenceOf(friend)
+  const presence = useLivePresence(friend)
   const { openConversation } = useChatDock()
   const say = useToast()
+
+  /*
+   * Asked only while the card is up, and about this one person.
+   *
+   * Staw asked for a hover card that names the World somebody is in and
+   * offers to follow them into it. Which World that is cannot come from the
+   * row behind the face - a row says `in_space_id` at best, and the face
+   * may have been fetched ten minutes ago. So the card asks the roster
+   * when it opens, which is one round trip on a deliberate action rather
+   * than one per face on a list of sixty.
+   */
+  useWhereabouts(open ? [friend] : [])
+  const where = useWhereabout(friend.id)
 
   const show = () => {
     if (away.current) window.clearTimeout(away.current)
@@ -91,6 +133,22 @@ export function FriendPeek({ friend, children, className }: {
   const hide = () => {
     if (away.current) window.clearTimeout(away.current)
     away.current = window.setTimeout(() => { if (up === key) raise(null) }, 140)
+  }
+
+  /*
+   * Following somebody into the copy of the World they are actually in.
+   *
+   * The server id travels as `room`, and it is a hint: whether this account
+   * may be in that room is decided by `join_world_server` over HTTPS, which
+   * is where it has always been decided. A full room, a closed one or a
+   * private one refuses there, not here.
+   */
+  const join = () => {
+    if (!where) return
+    raise(null)
+    void play(where.world_id, () => {
+      say('Kobblon is not installed on this machine. The download page has it.', 'info')
+    }, where.server_id)
   }
 
   const chat = async () => {
@@ -135,11 +193,34 @@ export function FriendPeek({ friend, children, className }: {
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
                   <StatusDot presence={presence} size="sm" />
-                  {presenceWords[presence]}
+                  {/* "In a World" over the World's own name says the same thing
+                      twice; the name below is the half worth reading. */}
+                  {where ? 'Playing' : presenceWords[presence]}
                 </p>
+
+                {/* The World by name, because "In a World" is not
+                    something anybody can decide to follow somebody into. A
+                    World with no content id has no address, so it is named
+                    rather than linked: a link that goes nowhere is worse
+                    than a name. */}
+                {where && (
+                  <WorldHere where={where} />
+                )}
               </div>
 
               <div className="p-1">
+                {where && (
+                  <button
+                    type="button"
+                    onClick={join}
+                    disabled={where.how_many >= where.capacity}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] font-bold text-space-bright transition-colors hover:bg-ink-hover disabled:text-white/35 disabled:hover:bg-transparent"
+                  >
+                    <Glyph icon={faPlay} className="w-3.5 text-[11px]" />
+                    {where.how_many >= where.capacity ? 'That copy is full' : 'Join them'}
+                  </button>
+                )}
+
                 <Link
                   to={profileLink(friend)}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white"

@@ -28,6 +28,7 @@ import type { Profile } from '@/types/db'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { PersonCard } from '@/components/social/PersonCard'
+import { useWhereabouts } from '@/hooks/usePresenceStore'
 
 /*
  * People, put in order.
@@ -160,6 +161,10 @@ export default function People() {
     const rows = found.filter((one) => one.id !== profile?.id)
     return shelf === 'friends' ? rows.filter((one) => friendIds.has(one.id)) : rows
   }, [found, profile?.id, shelf, friendIds])
+
+  /* Where the people on this grid are, asked once for the grid. Without
+     it the card can only say whether somebody had a tab open. */
+  useWhereabouts(others)
 
   const items: RailItem<Shelf>[] = [
     /* No count on the three sorts: it would be the length of whatever is

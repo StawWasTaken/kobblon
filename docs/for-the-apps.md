@@ -18855,3 +18855,75 @@ first and lets you discover the masking afterwards, unlike chat, which
 screens with `screenSay` before anything is sent. The event band's wordmark
 still comes from the theme even when the art and the background are
 uploaded. `note` is stored and ignored where there are prizes.
+
+## Round two hundred and fifty - one presence, and a Join that joins
+
+No migration: `0165` built the roster and `0317` built `where_they_are`,
+and both have been applied for a while. This is the half that was missing,
+which is everything above the database.
+
+**There were two presence systems and only one of them knew about you.**
+The website has a Supabase channel that everybody with a tab open joins and
+talks on. That is what the dot, the word and every "who is around" sort have
+read since it was written. But somebody playing is in the Launcher, which
+is not a browser and is not on that channel, so the channel's honest answer
+about them was "not here" - and a friend standing in a World read as
+Offline on the site while five people stood next to them in it.
+
+`where_they_are` is the other half and the authoritative one: it is written
+by the thing the person is actually in. `@/hooks/usePresenceStore` now
+holds both, and `presenceNow` asks the roster first:
+
+- `useWhereabouts(people)` - takes the list a screen is already drawing and
+  keeps it fresh. One round trip for the screen, re-asked every minute,
+  dropped if the list moved on while it was in flight.
+- `useWhereabout(id)` - reads one, live. A list asks; every face in it
+  reads.
+- `whereIs(id)` / `learnWhereabouts(who, rows)` - the same outside a hook.
+
+`presenceNow` and `useLivePresence` are unchanged to call and now answer
+`in-space` for anybody in the roster, whatever a channel or a row says. So
+the dot, the hover card, the `Around now` split on the friends page, the
+sort on the home rail and the line on every person card all moved at once,
+because they were already asking one function. **A row's `is_online` is the
+last fallback and nothing else. Do not read it directly.**
+
+A whereabouts row is believed for ninety seconds, which is the roster's own
+window. Anything older is not believed rather than refreshed in place, and
+somebody who was asked about and is not in the answer is out, not unknown -
+leaving that out is how somebody stays "in a World" for the rest of a
+session.
+
+**`play(experienceId, onMissing, room?)` carries the room now**, and
+`playLink` already did. Three places hand one over:
+
+- the hover card on a friend's face - "Join them", with the World named and
+  how full that copy is;
+- the activity line on a profile (`@/components/social/Whereabouts`,
+  `ActivityLine`) - "Playing <World>, 7 of 20 in there", and nothing at all
+  when they are not in one;
+- **the Servers tab, where the Join button has never done anything.** It
+  took an optional `onJoin` and `WorldPage` never passed one, so every
+  server card has had a green button on it that returns nothing. It is
+  wired now.
+
+**`room` is a hint and never a permission**, and this is the part to carry
+into the Launcher. A room id is a thing anybody can type. Whether the
+account may be in that room is decided by `join_world_server` over HTTPS,
+which is where it has always been decided: a full room, a closed one, a
+private one, a banned account - all refuse there. If the Launcher ever
+treats the presence of `?room=` as the answer rather than the request, that
+is a private server anybody can walk into with a copied link.
+
+Private servers are not in `where_they_are` at all, which means somebody in
+one reads everywhere on the site as not playing. That is deliberate: a card
+telling a stranger you are in a room they cannot see is worse than silence.
+Unpublished and removed Worlds are out for the same reason.
+
+**Still missing:** nothing on the website writes the roster. `world_players`
+is only ever written by `join_world_server`, `still_in_world` and
+`left_world_server`, so every line above is empty until the Launcher calls
+them. The heartbeat is the whole design: presence is a claim that expires,
+and `still_in_world` on a timer is what keeps somebody in the list. A
+Launcher that joins and never says "still here" drops its players out of
+every one of these screens after about ninety seconds.

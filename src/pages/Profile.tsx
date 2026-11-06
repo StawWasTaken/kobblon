@@ -54,6 +54,8 @@ import { cn } from '@/lib/cn'
 import { avatarOf, isGone } from '@/lib/avatars'
 import { NameMarks, Verified } from '@/components/brand/Verified'
 import { FaceGrid } from '@/components/social/PersonCard'
+import { ActivityLine } from '@/components/social/Whereabouts'
+import { useWhereabouts } from '@/hooks/usePresenceStore'
 import { PenIcon } from '@/components/brand/PenIcon'
 
 /** The colour somebody chose for their page, or the house one. */
@@ -180,6 +182,10 @@ export default function Profile() {
     async () => (user ? peopleList(user.id, 'friends') : []),
     [user?.id],
   )
+
+  /* The faces under Friends, so the dot on each is the roster's answer
+     rather than the flag the row arrived with. */
+  useWhereabouts(friends.data ?? [])
 
   /*
    * Where the two of you stand, in one answer: friends, a request either
@@ -471,6 +477,10 @@ export default function Profile() {
             </h1>
 
             <p className="mt-1.5 text-sm text-muted">@{user.username}</p>
+
+            {/* Where they are, when they are somewhere. Nothing is drawn
+                when they are not in a World. */}
+            <ActivityLine person={user} isMe={isMe} className="mt-3 max-w-md" />
 
             {/* The three lists are links, because they are a page of their
                 own rather than something to unfold here. */}
