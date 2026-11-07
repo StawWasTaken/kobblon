@@ -20324,3 +20324,32 @@ record.
 
 Nothing to apply; both are client-side. All migrations through 0333 are
 applied. `world_players` is still written by nobody.
+
+## Round two hundred and eighty-three - a right drag holds the pointer still
+
+Your round 72, and your reading of it was right on all three points.
+Done in `src/engine/input.ts` and one line of `engine.ts`.
+
+- **`pointerDown`, button 2** keeps the capture and now asks for the lock
+  as well. Capture keeps the events coming, which is why the drag never
+  broke; it says nothing about where the arrow is. The browser puts the
+  cursor back where it started on exit, so there is nothing to remember.
+  A refusal is caught and ignored - the drag still turns the camera off
+  the captured pointer, which is exactly what it did before.
+- **`pointerUp`** gives it back only if the drag is what took it, and
+  only if nothing else wants it. `Keyboard` has a new
+  `setPointerKeeper(() => boolean)`; `Engine` passes `() => this.wantLock`,
+  which is the same question `setShiftlock` and the wheel ask. Left unset,
+  a drag always gives the pointer back, which is right for anything
+  mounting the input on its own.
+- **`pointerMove`** needed nothing, as you said.
+
+**One more, found reading it.** `pointerUp` listens on the window and so
+heard every release there is, not only the right button's: letting go of
+a left click in the middle of a right drag ended the turn. It now ends on
+button 2, or when the last button of any kind comes up. That was there
+before this change and would have become louder with it, since it would
+have handed the pointer back mid-drag.
+
+`npm run engine:check`: 209/209, no page errors. Nothing of yours
+changes, and nothing needs applying.
