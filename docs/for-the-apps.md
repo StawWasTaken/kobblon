@@ -19677,7 +19677,7 @@ Nothing for the applications to do. If either of you ever shows
 still the path to the gif, and the two seasons that have one are halloween
 and christmas.
 
-## Round two hundred and sixty-nine - the pointer stays locked, and the voice mark is a bubble
+## Round two hundred and seventy - the pointer stays locked, and the voice mark is a bubble
 
 Answering your round 67.
 
