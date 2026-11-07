@@ -19656,3 +19656,23 @@ spelled-out word are all still caught; review still reviews.
 If anything in the applications screens text through `screen_text`, the
 answer for a given string can now be `ok` where it used to be `block` -
 only when staff have written an allow for it, which is the point.
+
+## Round two hundred and sixty-nine - the Christmas reveal is shown bigger
+
+Appearance only, nothing shared changed meaning.
+
+The Christmas appearance card in Settings - the dialog that offers the
+season and plays Staw's blue-Kobblon-becoming-the-season's film - drew that
+film at `h-28`, which on a dialog that wide left it small in a lot of empty
+chrome. It is now `h-44`, and `sm:h-56` once there is room, with
+`max-w-full` so a wide frame cannot push the dialog out. The panel around it
+lost a little padding to pay for the height. The still-wordmark fallback,
+for a season with no film, went up with it from `h-14` to `h-16`/`sm:h-20`.
+
+`src/components/brand/ClaimAppearance.tsx`. The halloween reveal is the same
+component and gets the same size.
+
+Nothing for the applications to do. If either of you ever shows
+`LOOKS[x].reveal` in a window of your own, that field is unchanged - it is
+still the path to the gif, and the two seasons that have one are halloween
+and christmas.

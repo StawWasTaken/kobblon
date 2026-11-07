@@ -169,12 +169,14 @@ export function ClaimAppearance({ offer }: {
         */}
       <div
         data-appearance={offered}
-        className="grid place-items-center gap-4 rounded-2xl bg-chrome px-6 py-8"
+        className="grid place-items-center gap-4 rounded-2xl bg-chrome px-4 py-6"
       >
         <img
           src={asset(look.reveal ?? look.wordmark)}
           alt={`The ${look.name} wordmark`}
-          className={look.reveal ? 'h-28 w-auto select-none' : 'h-14 w-auto select-none'}
+          className={look.reveal
+            ? 'h-44 w-auto max-w-full select-none sm:h-56'
+            : 'h-16 w-auto max-w-full select-none sm:h-20'}
         />
       </div>
     </Dialog>
