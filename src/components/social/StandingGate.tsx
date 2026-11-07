@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
+import { faCheck, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -28,9 +28,13 @@ import { accountStanding, acknowledgeStanding } from '@/lib/api'
  *   banned     the same blank, no box, and the way out is the one thing a
  *              closed account can still do: sign out.
  *
- * A feature block ('limited') gets no card here on purpose. It leaves the
- * account working and it has no answer to it, so a popup over everything
- * would be a door painted on a wall; the standing page holds it.
+ * A feature block ('limited') is the fourth, and it is here too now -
+ * Staw was still seeing the old card on Home and asked for every one of
+ * them to come through this. It leaves the account working and there is
+ * nothing to press on it, so it is the one that can be closed: a notice,
+ * not a gate. Closing it puts it away for the rest of the session and it
+ * comes back on the next one, which is right for a thing that is still
+ * true.
  */
 
 /**
@@ -66,6 +70,7 @@ export function StandingGate() {
   const say = useToast()
   const [sending, setSending] = useState(false)
   const [answered, setAnswered] = useState(false)
+  const [put_away, setPutAway] = useState(false)
 
   /*
    * Asked once per account, and asked again when the row changes under it:
@@ -79,9 +84,11 @@ export function StandingGate() {
   )
 
   const one = standing.data
-  const shows = !!one && (one.level === 'warned' || one.level === 'suspended' || one.level === 'banned')
+  const shows = !!one && one.level !== 'clear'
+  /* The only one that can be closed: it shuts nothing and asks nothing. */
+  const closeable = one?.level === 'limited'
 
-  if (!shows || answered || sparedFromStanding(location.pathname)) return null
+  if (!shows || answered || put_away || sparedFromStanding(location.pathname)) return null
 
   const answer = async () => {
     setSending(true)
@@ -131,11 +138,22 @@ export function StandingGate() {
           * it could do was close the tab.
           */}
         <div className="flex items-center justify-between gap-3 px-1">
+          {closeable ? (
+            <button
+              type="button"
+              onClick={() => setPutAway(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-space px-4 py-2 text-sm font-bold text-white hover:brightness-110"
+            >
+              <Glyph icon={faCheck} />
+              Got it
+            </button>
+          ) : (
           <span className="text-xs text-muted">
             {one.level === 'banned'
               ? 'Signing out is safe. Your record and the appeal on it stay where they are.'
               : 'You are still signed in, so support and your record stay open to you.'}
           </span>
+          )}
           <button
             type="button"
             onClick={() => void signOut()}

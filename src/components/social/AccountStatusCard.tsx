@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faBan, faClock, faLock, faTriangleExclamation, faGavel, faScroll,
+  faBan, faClock, faLock, faCircleMinus, faTriangleExclamation, faGavel, faScroll,
   faLifeRing, faCheck, faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
@@ -55,6 +55,13 @@ const tones = {
     edge: 'border-yellow-400/40',
     wash: 'bg-yellow-400/10',
     text: 'text-yellow-300',
+  },
+  limited: {
+    word: 'Restriction',
+    icon: faCircleMinus,
+    edge: 'border-orange-400/40',
+    wash: 'bg-orange-400/10',
+    text: 'text-orange-300',
   },
   suspended: {
     word: 'Suspension',
@@ -132,9 +139,17 @@ export function AccountStatusCard({
     : <a href={href} className={look}>{children}</a>
   )
 
+  /*
+   * Four levels, four cards. A feature block used to come out of here as
+   * a warning, which is how the card ended up saying WARNING and "nothing
+   * is switched off" over a headline that said some things are switched
+   * off. They are different decisions and they say different things.
+   */
   const which = standing.level === 'banned'
     ? 'banned'
-    : standing.level === 'suspended' ? 'suspended' : 'warned'
+    : standing.level === 'suspended'
+      ? 'suspended'
+      : standing.level === 'limited' ? 'limited' : 'warned'
   const tone = tones[which]
 
   const until = standing.until ? new Date(standing.until) : null
@@ -183,7 +198,14 @@ export function AccountStatusCard({
                       hour: '2-digit', minute: '2-digit',
                     })}`)
                   : 'No end date was set, which is itself worth appealing.')
-                : 'Nothing is switched off. Read it, say so, and it is done.'}
+                : which === 'limited'
+                  ? (until
+                    ? `Some things are off until ${until.toLocaleString(undefined, {
+                      day: 'numeric', month: 'long', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}. The rest of the account is normal.`
+                    : 'Some things are off. The rest of the account is normal.')
+                  : 'Nothing is switched off. Read it, say so, and it is done.'}
           </p>
         </div>
       </header>

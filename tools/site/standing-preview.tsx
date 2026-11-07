@@ -34,6 +34,13 @@ const states: AccountLock[] = [
   base,
   {
     ...base,
+    level: 'limited',
+    headline: 'Some things are switched off on this account.',
+    until: new Date(Date.now() + 2 * 864e5).toISOString(),
+    can_acknowledge: false,
+  },
+  {
+    ...base,
     level: 'suspended',
     headline: 'This account is suspended.',
     until: new Date(Date.now() + 3 * 864e5).toISOString(),
@@ -58,11 +65,20 @@ function Over({ standing }: { standing: AccountLock }) {
           onOpen={() => {}}
         />
         <div className="flex items-center justify-between gap-3 px-1">
+          {standing.level === 'limited' ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl bg-space px-4 py-2 text-sm font-bold text-white"
+            >
+              Got it
+            </button>
+          ) : (
           <span className="text-xs text-muted">
             {standing.level === 'banned'
               ? 'Signing out is safe. Your record and the appeal on it stay where they are.'
               : 'You are still signed in, so support and your record stay open to you.'}
           </span>
+          )}
           <button
             type="button"
             className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-1.5 text-xs font-bold text-white hover:border-white/25"

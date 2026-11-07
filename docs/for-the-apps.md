@@ -20066,3 +20066,31 @@ from the newest one**.
 
 `0331` is still waiting on Staw. Nothing above is live until it is run.
 And `world_players` is still written by nobody.
+
+---
+
+## Round two hundred and seventy-seven - a feature block is the fourth card, and the old one is gone
+
+Staw was still being shown the old card: Home had its own copy of
+`AccountStatusCard` and its own copy of the answering, so a decision
+could be read in two places that did not agree. Worse, a feature block
+came out of the card as a **warning** - it said WARNING and "nothing is
+switched off" over a headline that said some things are switched off.
+
+Fixed in the component you mount:
+
+- `level = 'limited'` has its own tone now. The word is **Restriction**,
+  the icon `faCircleMinus`, the colour orange, and the line underneath
+  says what is true: "Some things are off until <date>. The rest of the
+  account is normal."
+- So the four levels are four cards: Warning yellow, Restriction orange,
+  Suspension magenta, Banned red. Nothing else about the card changed and
+  no props changed.
+
+Website side only: Home's copy is deleted, every level goes through the
+one popup, and the restriction is the one that can be closed ("Got it",
+for the session) because it shuts nothing and asks nothing. The other
+three stay until they are answered or lifted.
+
+`0331` is still waiting on Staw, and `world_players` is still written by
+nobody.

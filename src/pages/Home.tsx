@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Weather } from '@/components/brand/Weather'
 import { Page } from '@/components/layout/AppShell'
 import { TopicCard, useTopTopics } from '@/components/forum/TopicCard'
@@ -7,15 +6,12 @@ import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { Shelf, WorldTile, WorldFeature } from '@/components/worlds/Shelf'
 import { TopNow } from '@/components/home/TopNow'
 import { greeting } from '@/lib/greeting'
-import { AccountStatusCard } from '@/components/social/AccountStatusCard'
-import { useToast } from '@/components/ui/Toast'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { EventBanner } from '@/components/home/EventBanner'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  accountStanding, acknowledgeStanding,
   listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds, listWorlds, myWorlds,
 } from '@/lib/api'
 import { CommunityCard } from '@/components/community/CommunityCard'
@@ -60,35 +56,14 @@ export default function Home() {
   )
 
   /*
-   * The one decision the card over the page does not carry.
+   * No standing card here any more.
    *
-   * A warning, a suspension and a closure are `StandingGate`'s now - in
-   * front of whatever page somebody is on, everywhere on the site. A
-   * feature block is not: it leaves the account working and there is
-   * nothing to press on it, so a popup over everything would be a wall
-   * with a door painted on it. It belongs at the top of Home, which is
-   * where it already was.
+   * Every decision - a warning, a feature block, a suspension, a closure -
+   * is `StandingGate`'s, in front of whatever page somebody is on. This
+   * page had its own copy of the card and its own copy of the answering,
+   * so a warning could be read in two places that did not agree with each
+   * other, and Staw was still being shown the old one.
    */
-  const say = useToast()
-  const standing = useAsync(async () => (profile ? accountStanding() : null), [profile?.id])
-  const [answering, setAnswering] = useState(false)
-
-  const answer = async () => {
-    setAnswering(true)
-    try {
-      const what = await acknowledgeStanding()
-      say(
-        what === 'back' ? 'Welcome back. Keep it clean.' : 'Noted. Your account is clear.',
-        'success',
-      )
-      standing.reload()
-    } catch (error) {
-      say(error instanceof Error ? error.message : 'That did not go through.', 'error')
-    }
-    setAnswering(false)
-  }
-
-  const decided = standing.data?.level === 'limited' ? standing.data : null
 
   /*
    * Worked out once a render from the clock. Not state and not an effect:
@@ -133,14 +108,6 @@ export default function Home() {
         </div>
       </header>
 
-      {decided && (
-        <AccountStatusCard
-          standing={decided}
-          busy={answering}
-          onAcknowledge={decided.can_acknowledge ? () => void answer() : undefined}
-          className="relative z-10 mb-8"
-        />
-      )}
 
       {/*
         * Who is about, first. Staw: "the friends list should be above the
