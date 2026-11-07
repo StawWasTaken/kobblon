@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
+import { Button } from '@/components/ui/Button'
 import {
   faBan, faLock, faCircleMinus, faTriangleExclamation, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
@@ -238,36 +239,22 @@ export function AccountStatusCard({
           </div>
 
           {answerable ? (
-            <button
-              type="button"
-              disabled={!ticked || busy}
+            <Button
+              variant="primary"
+              disabled={!ticked}
+              loading={busy}
               onClick={onAcknowledge}
-              className={cn(
-                'rounded-xl px-4 py-2 text-sm font-bold transition-colors',
-                ticked && !busy
-                  ? 'bg-space text-white hover:brightness-110'
-                  : 'cursor-not-allowed bg-ink text-muted',
-              )}
             >
               {busy ? 'Sending' : which === 'suspended' ? 'Come back' : 'I understand'}
-            </button>
+            </Button>
           ) : onClose ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={onClose}
-              className="rounded-xl bg-space px-4 py-2 text-sm font-bold text-white hover:brightness-110"
-            >
+            <Button variant="primary" loading={busy} onClick={onClose}>
               {busy ? 'Sending' : 'Got it'}
-            </button>
+            </Button>
           ) : onSignOut ? (
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="rounded-xl bg-ink-hover px-4 py-2 text-sm font-bold text-white hover:brightness-110"
-            >
+            <Button variant="subtle" onClick={onSignOut}>
               Log out
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>

@@ -20214,3 +20214,29 @@ for breaking the Terms of Service and the Community Guidelines.
 
 0332 and 0331 are applied. **0333 is not.** `world_players` is still
 written by nobody.
+
+## Round two hundred and eighty - the card's button is a real button
+
+Small and shared. The three buttons in the foot of `AccountStatusCard` were
+hand-rolled `<button>` elements with their own rounded-full-ish classes, so
+they were flat while every other button on the platform is raised - the
+3px bottom border that drops away on press. Staw: "the i understand button
+isnt in 3d like the others, and make it brand blue instead".
+
+They are now `@/components/ui/Button`:
+
+- **I understand / Come back** - `variant="primary"`, so brand blue and
+  raised. It was `bg-space` (green), which is wrong twice: green is the
+  one deliberate yes on a screen, and agreeing to a sanction is not it.
+- **Got it** on a restriction - the same `primary`.
+- **Log out** on a closed account - `variant="subtle"`.
+
+`busy` now goes to the Button's `loading`, so it spins rather than only
+changing its word.
+
+Nothing else moved: same props, same four states, same layout. If either
+application mounts this card, it picks the change up with the component
+and has nothing to do. If either has its **own** copy of these buttons
+beside a mounted card, that copy is now the odd one out.
+
+0333 is still not applied. `world_players` is still written by nobody.
