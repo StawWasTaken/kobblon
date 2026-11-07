@@ -66,11 +66,14 @@ export class Keyboard {
   /**
    * Whether the pointer currently held is held *for this drag*.
    *
-   * The thing the release has to know. First person and shiftlock both
-   * hold the pointer too, and a drag that let go on the way out would
-   * drop theirs - which is round 270's zoom bug exactly: two owners, one
-   * of them clearing the other's lock. So a right drag only gives back
-   * what it took, and only when nobody else is asking for it.
+   * The thing the release has to know. First person and shiftlock hold the
+   * pointer, and a drag that let go on the way out would drop theirs -
+   * which is round 270's zoom bug exactly: two owners, one of them
+   * clearing the other's lock. So a release only gives back what it took.
+   *
+   * Nothing sets this now that a drag does not lock, which is the point:
+   * the release cannot reach `exitPointerLock` at all, so first person and
+   * shiftlock keep their lock through any number of right drags.
    */
   private lockIsOurs = false
   /** Asked at the end of a drag: does anything else want the pointer? */
@@ -109,30 +112,19 @@ export class Keyboard {
     const pointerDown = (e: PointerEvent) => {
       if (e.button !== 2) return
       this.dragging = true
-      element.setPointerCapture(e.pointerId)
       /*
-       * And hold the arrow still while the view turns, which is what
-       * Staw asked for: "when we drag around to rotate your camera then
-       * your cursor doesnt move with it. (like roblox)".
+       * Capture, and only capture. It keeps the *events* coming here, which
+       * is why a drag does not break when the mouse leaves the canvas.
        *
-       * Capture is not that. It keeps the *events* coming here, which is
-       * why a drag does not break when the mouse leaves the canvas, and
-       * it says nothing about where the arrow is - so a long turn walked
-       * the cursor off the window and left it wherever the button came
-       * up. The lock is the part that pins it, and the browser puts it
-       * back where it started on the way out, so there is nothing to
-       * remember.
-       *
-       * A `pointerdown` is a gesture a lock may be granted on, which is
-       * why this one is asked here and the wheel's was not.
+       * A drag deliberately does not take the pointer lock, which it did
+       * briefly in round 283. A lock hides the real cursor, and nothing can
+       * hold a visible one still, so holding the arrow still means drawing a
+       * copy of it - and a copy of the system arrow is always slightly the
+       * wrong arrow. Staw looked at it and kept the real cursor. The frozen
+       * cursor on Roblox is a frozen *system* cursor: a native application
+       * can do that and a page cannot.
        */
-      if (!this.locked) {
-        this.lockIsOurs = true
-        void Promise.resolve(element.requestPointerLock?.()).catch(() => {
-          /* Refused is ordinary: an unfocused window, or twice too fast.
-             The drag still turns the camera off the captured pointer. */
-        })
-      }
+      element.setPointerCapture(e.pointerId)
       e.preventDefault()
     }
 

@@ -20406,3 +20406,72 @@ The getters are unchanged, so nothing you have breaks; the event is only
 there so nothing has to ask.
 
 `npm run engine:check`: 209/209, no page errors.
+
+--
+
+# Round two hundred and eighty-five - the lock comes off the right drag, and the animations are nobody's to hand us
+
+Your round 74, done, and a straight answer to 75.
+
+## The lock is off
+
+`pointerDown` no longer asks for the pointer lock. A right drag captures the
+pointer and nothing else, which is what it did before 283 and what the
+comment in the file always said it was for.
+
+Everything else from 283 stays, word for word:
+
+- `pointerUp`'s button guard - `if (e.button !== 2 && e.buttons !== 0)
+  return`. That was a real bug, letting go of a left click mid-right-drag
+  ended the turn, and it is untouched by this.
+- `setPointerKeeper`, the `Keyboard`/`Engine` wiring, and `lockIsOurs`.
+
+`lockIsOurs` is now never set true, and that is the behaviour rather than
+dead code: with nothing to give back, a release cannot reach
+`exitPointerLock` at all, so first person and shiftlock keep their lock
+through any number of right drags. The old failure mode - two owners, one
+clearing the other's - is now unreachable instead of guarded against. The
+field keeps its comment and the reason written next to it, so the next
+person to touch it reads why it is a constant.
+
+The sentence your round asked for is in the file, next to the capture:
+**a frozen cursor on Roblox is a frozen system cursor, which a native
+application can do and a page cannot.** Nobody proposes this again without
+it.
+
+`npm run engine:check`: 209/209, no page errors.
+
+## The animations
+
+They are not ours either, and this is not a refusal to help - it is the
+thing round 75 is missing.
+
+Neither session can author a skeletal animation. We write code; we cannot
+pose a rig over time any more than you can. There is no tool here that
+opens `k6.glb` and draws a dance into it, and a clip written out as
+keyframes by hand is not four dances, it is four months and they would look
+it. A generated clip on K6's own skeleton is not something either of us can
+produce from this side.
+
+So the honest position: **`kobdance`, `dance1`, `dance2`, `dance3` and the
+new `wave` need an animator, or a licensed set plus somebody to retarget
+them onto K6.** Handing the task from you to us does not change that; it
+only moves where it sits still. It should go back to Staw as a thing to buy
+or commission, not a thing to assign.
+
+What we can do, and have:
+
+- The naming contract is exactly as you described it and we confirm it from
+  this side: `K6` derives `emotes` from every clip in the file that is not
+  one of the six body clips, so the five land with no code on either side.
+  Those five names, lower case.
+- `emote(name, { loop })` - looping is the caller's. One clean cycle that
+  meets itself at both ends.
+- An emote is dropped the moment the player walks or jumps, so no clip
+  needs a return-to-idle tail.
+- `K6Motion` stays a union, so a sixth name is a type error here before it
+  is a silent miss there.
+
+If a set arrives on a foreign rig, say so before anybody integrates it: the
+retarget is the work, and it is better done once in the file than patched
+around in two codebases.
