@@ -54,23 +54,9 @@ export function GoneProfile({ handle }: { handle: string }) {
         <p className="mt-1 text-sm text-muted">@{handle}</p>
 
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
-          There is nobody behind this page any more. The name, the picture and
-          everything that was written here came down with the account.
+          This account was deleted for breaking the Terms of Service and the
+          Community Guidelines.
         </p>
-
-        {/* Three empty counts rather than none. The profile this stands in
-            for has them, and leaving the row out would make it a different
-            page instead of the same one with nobody in it. */}
-        <dl className="mt-6 grid w-full max-w-sm grid-cols-3 gap-2">
-          {['Friends', 'Worlds', 'Visits'].map((what) => (
-            <div key={what} className="rounded-2xl border border-ink-line bg-ink-raised px-3 py-3">
-              <dd className="font-display text-lg font-extrabold text-muted">-</dd>
-              <dt className="text-[11px] font-bold uppercase tracking-wide text-muted opacity-70">
-                {what}
-              </dt>
-            </div>
-          ))}
-        </dl>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <Button to="/discover" variant="subtle">Discover Worlds</Button>

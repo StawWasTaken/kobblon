@@ -9,8 +9,6 @@
  */
 import { createRoot } from 'react-dom/client'
 import '@/index.css'
-import { Glyph } from '@/components/brand/Glyph'
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import type { AccountLock } from '@/types/db'
 
@@ -58,37 +56,14 @@ const states: AccountLock[] = [
 function Over({ standing }: { standing: AccountLock }) {
   return (
     <div className="flex items-center justify-center bg-black/80 p-4 py-10">
-      <div className="flex w-full max-w-[27rem] flex-col gap-3">
-        <AccountStatusCard
-          className="flex min-h-[30rem] flex-col sm:min-h-[32rem]"
-          standing={standing}
-          onAcknowledge={standing.can_acknowledge ? () => {} : undefined}
-          onOpen={() => {}}
-        />
-        <div className="flex items-center justify-between gap-3 px-1">
-          {standing.level === 'limited' ? (
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-xl bg-space px-4 py-2 text-sm font-bold text-white"
-            >
-              Got it
-            </button>
-          ) : (
-          <span className="text-xs text-muted">
-            {standing.level === 'banned'
-              ? 'Signing out is safe. Your record and the appeal on it stay where they are.'
-              : 'You are still signed in, so support and your record stay open to you.'}
-          </span>
-          )}
-          <button
-            type="button"
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-1.5 text-xs font-bold text-white hover:border-white/25"
-          >
-            <Glyph icon={faRightFromBracket} />
-            Log out
-          </button>
-        </div>
-      </div>
+      <AccountStatusCard
+        className="flex w-full max-w-[27rem] flex-col sm:min-h-[26rem]"
+        standing={standing}
+        onAcknowledge={standing.can_acknowledge ? () => {} : undefined}
+        onClose={standing.level === 'limited' ? () => {} : undefined}
+        onSignOut={standing.level === 'banned' ? () => {} : undefined}
+        onOpen={() => {}}
+      />
     </div>
   )
 }

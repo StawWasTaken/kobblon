@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
-import { faCheck, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -131,57 +129,29 @@ export function StandingGate() {
          short card in the corner of a big screen reading as a banner that
          had slipped. A decision about somebody's account is the only thing
          on the screen while it is up, so it sits in the middle of it and it
-         is the shape of a card: narrow, tall, and the doors at the foot.
+         is the shape of a card: narrow, tall, one button.
        */
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/80 p-4 py-10 backdrop-blur-sm kob-scroll"
       role="dialog"
       aria-modal="true"
       aria-label={one.headline}
     >
-      <div className="my-auto flex w-full max-w-[27rem] animate-pop-in flex-col gap-3">
-        <AccountStatusCard
-          className="flex min-h-[30rem] flex-col sm:min-h-[32rem]"
-          standing={one}
-          busy={sending}
-          onAcknowledge={one.can_acknowledge ? () => void answer() : undefined}
-          /* The doors stay inside the site: an href here would be a whole
-             page load, and on a static host that is a round trip through
-             the 404 fallback for a link two components away. */
-          onOpen={(href) => navigate(href)}
-        />
-        {/*
-          * The way out, on the card Staw asked for it on. A closed account
-          * has nothing left to acknowledge, so without this the only thing
-          * it could do was close the tab.
-          */}
-        <div className="flex items-center justify-between gap-3 px-1">
-          {closeable ? (
-            <button
-              type="button"
-              disabled={sending}
-              onClick={() => void answer()}
-              className="inline-flex items-center gap-2 rounded-xl bg-space px-4 py-2 text-sm font-bold text-white hover:brightness-110"
-            >
-              <Glyph icon={faCheck} />
-              Got it
-            </button>
-          ) : (
-          <span className="text-xs text-muted">
-            {one.level === 'banned'
-              ? 'Signing out is safe. Your record and the appeal on it stay where they are.'
-              : 'You are still signed in, so support and your record stay open to you.'}
-          </span>
-          )}
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-1.5 text-xs font-bold text-white hover:border-white/25"
-          >
-            <Glyph icon={faRightFromBracket} />
-            Log out
-          </button>
-        </div>
-      </div>
+      <AccountStatusCard
+        className="my-auto flex w-full max-w-[27rem] animate-pop-in flex-col sm:min-h-[26rem]"
+        standing={one}
+        busy={sending}
+        onAcknowledge={one.can_acknowledge ? () => void answer() : undefined}
+        /* Read once and it stays read, on the row rather than in this
+           browser. The restriction itself stays on; the card stops. */
+        onClose={closeable ? () => void answer() : undefined}
+        /* The only thing a closed account can still do, and without it the
+           card was a room with no door. */
+        onSignOut={one.level === 'banned' ? () => void signOut() : undefined}
+        /* The doors stay inside the site: an href here would be a whole
+           page load, and on a static host that is a round trip through the
+           404 fallback for a link two components away. */
+        onOpen={(href) => navigate(href)}
+      />
     </div>
   )
 }

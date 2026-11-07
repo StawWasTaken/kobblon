@@ -2,8 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faBan, faClock, faLock, faCircleMinus, faTriangleExclamation, faGavel, faScroll,
-  faLifeRing, faCheck, faCircleCheck,
+  faBan, faLock, faCircleMinus, faTriangleExclamation, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
 import type { AccountLock } from '@/types/db'
@@ -14,69 +13,49 @@ import type { AccountLock } from '@/types/db'
  *
  * Staw asked for one thing above all the rest and it is the thing the old
  * arrangement got backwards: **nobody is signed out for this.** A warning,
- * a suspension and a closure all leave the session alone, because the three
- * places somebody needs after a decision - their record, the appeal on it,
- * and support - are all behind a sign-in. Signing them out was punishing
- * them by taking away the only doors they had.
+ * a suspension and a closure all leave the session alone, because the
+ * three places somebody needs after a decision - their record, the appeal
+ * on it, and support - are all behind a sign-in. Signing them out was
+ * punishing them by taking away the only doors they had.
  *
- * So there are three states and they differ in exactly one thing, which is
- * what the person is allowed to do about it:
+ * Four states, and they differ in exactly one thing, which is what the
+ * person is allowed to do about it:
  *
- *   warned     answerable now. Ticking the box and sending it puts the
- *              account straight back to normal standing; that is the whole
- *              sanction, and a warning nobody ever has to read is a note.
- *   suspended  the same box, but it does nothing until the time is spent.
- *              Before then the card is a notice and says the date.
+ *   warned     answerable now. Saying you have read it puts the account
+ *              straight back to normal standing; that is the whole
+ *              sanction, and a warning nobody has to read is a note.
+ *   limited    some things are off and the rest of the account is normal.
+ *              Nothing to serve and nothing to lift, so the only button
+ *              is the one that puts the card away for good.
+ *   suspended  the same box as a warning, but it does nothing until the
+ *              time is spent. Before then it is a notice with a date.
  *   banned     no box at all. An account does not let itself back in, and
  *              a control that looks like it might is worse than none.
  *
- * No router, no provider, no session of its own: the Workspace mounts this
- * beside its own sign-in, and everything it needs arrives as a prop.
+ * **The redesign.** Staw: "i dont like their design, second off its not
+ * uniformized, third off its too wordy". It was a big tinted band with
+ * the server's headline, a subtitle restating it, a prose paragraph, four
+ * doors in a row and a closing reassurance - and the band changed shape
+ * between the four, so they did not read as one thing. Now every one of
+ * them is the same card: a mark and a word, one sentence, the facts in a
+ * panel, one button. Only the colour, the word, the sentence and the
+ * button change.
+ *
+ * No router, no provider, no session of its own: the Workspace mounts
+ * this beside its own sign-in, and everything it needs arrives as a prop.
  */
 
 /*
- * Three decisions, three colours, three words.
- *
- * Staw: a warning is yellow and says "Warning", a suspension is magenta
- * and says "Suspension", a closure is red and says "Banned". They used to
- * be two colours between three states - a warning and a suspension both
- * came out amber - which made the middle one read as a louder warning
- * rather than as a different thing that has happened to you.
- *
- * The word is its own line above the headline, because the headline is
- * the server's sentence and this is the name of the sanction. A person
- * reading it wants to know which of the three this is before they read
- * anything else.
+ * Four decisions, four colours, four words. Staw: a warning is yellow and
+ * says "Warning", a suspension is magenta and says "Suspension", a
+ * closure is red and says "Banned"; a feature block is a Restriction and
+ * not a louder warning, which is what it used to come out as.
  */
 const tones = {
-  warned: {
-    word: 'Warning',
-    icon: faTriangleExclamation,
-    edge: 'border-yellow-400/40',
-    wash: 'bg-yellow-400/10',
-    text: 'text-yellow-300',
-  },
-  limited: {
-    word: 'Restriction',
-    icon: faCircleMinus,
-    edge: 'border-orange-400/40',
-    wash: 'bg-orange-400/10',
-    text: 'text-orange-300',
-  },
-  suspended: {
-    word: 'Suspension',
-    icon: faLock,
-    edge: 'border-fuchsia-400/40',
-    wash: 'bg-fuchsia-400/10',
-    text: 'text-fuchsia-300',
-  },
-  banned: {
-    word: 'Banned',
-    icon: faBan,
-    edge: 'border-danger/40',
-    wash: 'bg-danger/10',
-    text: 'text-danger',
-  },
+  warned: { word: 'Warning', icon: faTriangleExclamation, text: 'text-yellow-300' },
+  limited: { word: 'Restriction', icon: faCircleMinus, text: 'text-orange-300' },
+  suspended: { word: 'Suspension', icon: faLock, text: 'text-fuchsia-300' },
+  banned: { word: 'Banned', icon: faBan, text: 'text-danger' },
 }
 
 /** The sentence, as Staw wrote it. It is a promise, so it is not paraphrased. */
@@ -84,67 +63,56 @@ export const theUndertaking =
   'I acknowledge that my actions violated the ToS/Community Guidelines and '
   + 'I agree to respect them moving forward.'
 
+const day = (value: string) => new Date(value).toLocaleDateString(undefined, {
+  day: 'numeric', month: 'long', year: 'numeric',
+})
+
+const dayAndTime = (value: Date) => value.toLocaleString(undefined, {
+  day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+})
+
 export function AccountStatusCard({
-  standing, onAcknowledge, busy, appealHref, standingHref = '/standing',
-  supportHref = '/support', rulesHref = '/guidelines', onOpen, compact, className,
+  standing, onAcknowledge, busy, onClose, onSignOut,
+  appealHref, standingHref = '/standing', supportHref = '/support',
+  onOpen, compact, className,
 }: {
   standing: AccountLock
   /** Ticked and sent. Absent means the card is a notice and nothing else. */
   onAcknowledge?: () => void
   busy?: boolean
+  /** Putting a restriction away once it has been read. */
+  onClose?: () => void
+  /** The only thing a closed account can still do. */
+  onSignOut?: () => void
   appealHref?: string
   standingHref?: string
   supportHref?: string
-  rulesHref?: string
   /**
    * Where a door goes, when it may not go through the window itself.
    *
    * The Launcher's round 56: this is Electron, so an `<a href>` navigates
    * the only window there is out of the application and there is no way
-   * back. Given, the four doors stop being links and become buttons that
-   * hand the address over - `shell.openExternal`, or whatever the bridge
-   * calls it - and the application passes absolute `https://kobblon.com`
-   * addresses as the four hrefs.
-   *
-   * Left out, they are ordinary links, which is what a page wants.
+   * back. Given, the doors stop being links and become buttons that hand
+   * the address over - `shell.openExternal`, or whatever the bridge calls
+   * it - and the application passes absolute `https://kobblon.com`
+   * addresses as the hrefs.
    */
   onOpen?: (href: string) => void
-  /**
-   * Narrow: the card inside a canvas rather than on a page.
-   *
-   * Asked for by the Launcher, which has to sit this inside the Escape
-   * menu's own bounds. It is spacing and type only - nothing is hidden,
-   * because a suspension read in a World and the same one read on
-   * `/standing` have to be one decision and not two summaries of it.
-   */
+  /** Narrow: the card inside a canvas rather than on a page. */
   compact?: boolean
   className?: string
 }) {
   const [ticked, setTicked] = useState(false)
 
-  /*
-   * One door, drawn once. A link when nothing is listening and a button
-   * when something is, rather than four copies of that choice.
-   */
-  const Door = ({ href, children, className: look }: {
-    href: string
-    children: ReactNode
-    className?: string
-  }) => (onOpen
-    ? (
-      <button type="button" onClick={() => onOpen(href)} className={look}>
-        {children}
-      </button>
-    )
-    : <a href={href} className={look}>{children}</a>
-  )
+  /* One door, drawn once: a link when nothing is listening and a button
+     when something is, rather than three copies of that choice. */
+  const Door = ({ href, children }: { href: string; children: ReactNode }) => {
+    const look = 'text-xs font-bold text-link hover:underline'
+    return onOpen
+      ? <button type="button" onClick={() => onOpen(href)} className={look}>{children}</button>
+      : <a href={href} className={look}>{children}</a>
+  }
 
-  /*
-   * Four levels, four cards. A feature block used to come out of here as
-   * a warning, which is how the card ended up saying WARNING and "nothing
-   * is switched off" over a headline that said some things are switched
-   * off. They are different decisions and they say different things.
-   */
   const which = standing.level === 'banned'
     ? 'banned'
     : standing.level === 'suspended'
@@ -156,9 +124,23 @@ export function AccountStatusCard({
   const over = !!until && until.getTime() <= Date.now()
   const answerable = standing.can_acknowledge && !!onAcknowledge
 
-  const when = (value: string) => new Date(value).toLocaleDateString(undefined, {
-    day: 'numeric', month: 'long', year: 'numeric',
-  })
+  /*
+   * One sentence, and it is ours rather than the server's.
+   *
+   * `headline` says the same thing in the same place and the card used to
+   * print both, one under the other. The one case where the server knows
+   * something this does not is a suspension whose time is spent, so that
+   * one is said here too.
+   */
+  const line = which === 'banned'
+    ? 'We closed this account for repeated or serious rule-breaking.'
+    : which === 'suspended'
+      ? (over
+        ? 'Your suspension has run out. Say you have read this and you are back.'
+        : 'We suspended this account. It comes back by itself when the time is up.')
+      : which === 'limited'
+        ? 'Some things are switched off. The rest of the account is normal.'
+        : 'We gave this account a warning. Nothing is switched off.'
 
   return (
     <section
@@ -167,178 +149,127 @@ export function AccountStatusCard({
         className,
       )}
     >
-      <header className={cn(
-        'flex items-start gap-3 border-b',
-        compact ? 'px-4 py-3' : 'px-5 py-4',
-        tone.edge, tone.wash, tone.text,
-      )}>
-        <Glyph icon={tone.icon} className={cn('mt-0.5', compact ? 'text-base' : 'text-xl')} />
-        <div className="min-w-0">
-          <p className={cn(
-            'font-black uppercase tracking-[0.14em] opacity-90',
-            compact ? 'text-[10px]' : 'text-[11px]',
+      <div className={cn('flex flex-1 flex-col', compact ? 'gap-3 p-4' : 'gap-4 p-5')}>
+        {/* The mark and the word, on one line. No tinted band: the band was
+            a different shape and a different height in each of the four,
+            which is most of why they did not read as one thing. */}
+        <div className="flex items-center gap-2.5">
+          <Glyph icon={tone.icon} className={cn(tone.text, compact ? 'text-lg' : 'text-xl')} />
+          <h2 className={cn(
+            'font-display font-extrabold leading-none',
+            tone.text,
+            compact ? 'text-base' : 'text-lg',
           )}>
             {tone.word}
-          </p>
-          <h2 className={cn(
-            'mt-0.5 font-black leading-tight',
-            compact ? 'text-sm' : 'text-base sm:text-lg',
-          )}>
-            {standing.headline}
           </h2>
-          <p className="mt-0.5 text-xs font-semibold opacity-80">
-            {which === 'banned'
-              ? 'This one is permanent. It stays until an admin lifts it.'
-              : which === 'suspended'
-                ? (until
-                  ? (over
-                    ? 'The time on it is spent. Say you have read it and you are back.'
-                    : `Until ${until.toLocaleString(undefined, {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}`)
-                  : 'No end date was set, which is itself worth appealing.')
-                : which === 'limited'
-                  ? (until
-                    ? `Some things are off until ${until.toLocaleString(undefined, {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}. The rest of the account is normal.`
-                    : 'Some things are off. The rest of the account is normal.')
-                  : 'Nothing is switched off. Read it, say so, and it is done.'}
-          </p>
         </div>
-      </header>
 
-      {/* `flex-1` so that a caller who makes the card a fixed height - the
-          popup does, to stand it up rather than lay it down - gets the
-          body filling it and the doors at the foot, rather than the whole
-          thing huddled at the top of an empty box. */}
-      <div className={cn('flex flex-1 flex-col', compact ? 'gap-4 p-4' : 'gap-5 p-5')}>
-        {/* The reason as it was written. Nobody is told "a violation
-            occurred" and left to work out which thing they did. */}
-        <div className="space-y-2">
-          <h3 className="text-[11px] font-bold uppercase tracking-wide text-muted">Why</h3>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/85">
-            {standing.why?.trim() || 'No reason was recorded, which is itself worth appealing.'}
-          </p>
-          <div className="flex flex-wrap gap-2 pt-1 text-xs text-muted">
-            {standing.rule && (
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-ink-line bg-ink-raised px-2 py-1">
-                <Glyph icon={faGavel} className="text-[10px]" />
-                {standing.rule}
-              </span>
-            )}
-            {standing.decided_at && (
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-ink-line bg-ink-raised px-2 py-1">
-                <Glyph icon={faClock} className="text-[10px]" />
-                {when(standing.decided_at)}
-              </span>
-            )}
+        <p className="text-sm leading-relaxed text-white/85">{line}</p>
+
+        {/* The facts, in the order somebody asks for them. */}
+        <dl className="space-y-3 rounded-xl border border-ink-line bg-ink-raised p-3 text-sm">
+          <div>
+            <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Reason</dt>
+            <dd className="mt-0.5 capitalize text-white/85">{standing.rule || 'Other'}</dd>
           </div>
-        </div>
+          <div>
+            <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Note</dt>
+            <dd className="mt-0.5 whitespace-pre-wrap leading-relaxed text-white/85">
+              {standing.why?.trim() || 'No reason was recorded, which is itself worth appealing.'}
+            </dd>
+          </div>
+          {standing.decided_at && (
+            <div>
+              <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Decided</dt>
+              <dd className="mt-0.5 text-white/85">{day(standing.decided_at)}</dd>
+            </div>
+          )}
+          {until && !over && (
+            <div>
+              <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Until</dt>
+              <dd className="mt-0.5 text-white/85">{dayAndTime(until)}</dd>
+            </div>
+          )}
+        </dl>
 
-        {/* The box. Only where ticking it does something: a suspension that
-            is still running shows the notice above and no control, because
-            a checkbox that refuses is a door painted on a wall. */}
+        {/* The box, only where ticking it does something: a suspension still
+            running shows the date above and no control, because a checkbox
+            that refuses is a door painted on a wall. */}
         {answerable && (
-          <div className={cn(
-            'space-y-3 rounded-xl border border-ink-line bg-ink-raised',
-            compact ? 'p-3' : 'p-4',
-          )}>
-            <label className="flex cursor-pointer items-start gap-3">
-              <span
-                className={cn(
-                  'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border transition-colors',
-                  ticked
-                    ? 'border-brand-bright bg-brand-bright text-white'
-                    : 'border-ink-line bg-ink',
-                )}
-              >
-                {ticked && <Glyph icon={faCheck} className="text-[11px]" />}
-              </span>
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={ticked}
-                onChange={(event) => setTicked(event.target.checked)}
-              />
-              <span className="text-sm leading-relaxed text-white/85">{theUndertaking}</span>
-            </label>
+          <label className="flex cursor-pointer items-start gap-3">
+            <span
+              className={cn(
+                'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border transition-colors',
+                ticked ? 'border-brand-bright bg-brand-bright text-white' : 'border-ink-line bg-ink',
+              )}
+            >
+              {ticked && <Glyph icon={faCheck} className="text-[11px]" />}
+            </span>
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={ticked}
+              onChange={(event) => setTicked(event.target.checked)}
+            />
+            <span className="text-xs leading-relaxed text-white/85">{theUndertaking}</span>
+          </label>
+        )}
 
+        {/* The foot: the two doors that matter on the left, the one thing
+            to press on the right. `mt-auto` so a card given a height ends
+            here rather than huddling at the top of an empty box. */}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-ink-line pt-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {standing.appeal_status ? (
+              <span className="text-xs font-semibold text-muted">
+                Appeal {standing.appeal_status}
+              </span>
+            ) : standing.can_appeal && (
+              <Door
+                href={appealHref ?? (standing.violation_id
+                  ? `${standingHref}/${standing.violation_id}`
+                  : standingHref)}
+              >
+                Appeal it
+              </Door>
+            )}
+            <Door href={supportHref}>Support</Door>
+            <Door href={standingHref}>Your record</Door>
+          </div>
+
+          {answerable ? (
             <button
               type="button"
               disabled={!ticked || busy}
               onClick={onAcknowledge}
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors',
+                'rounded-xl px-4 py-2 text-sm font-bold transition-colors',
                 ticked && !busy
                   ? 'bg-space text-white hover:brightness-110'
                   : 'cursor-not-allowed bg-ink text-muted',
               )}
             >
-              <Glyph icon={faCircleCheck} />
-              {busy
-                ? 'Sending'
-                : which === 'suspended' ? 'Unfreeze my account' : 'I understand'}
+              {busy ? 'Sending' : which === 'suspended' ? 'Come back' : 'I understand'}
             </button>
-          </div>
-        )}
-
-        {/* The doors. Always here, in every one of the four states, which
-            is the entire reason the session is left alone. `mt-auto` puts
-            them at the foot when the card has been given a height. */}
-        <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-ink-line pt-4">
-          {standing.appeal_status ? (
-            <span className="text-xs font-semibold text-muted">
-              Your appeal is {standing.appeal_status}. You will get a letter when it is decided.
-            </span>
-          ) : standing.can_appeal && (
-            <Door
-              href={appealHref ?? (standing.violation_id
-                ? `${standingHref}/${standing.violation_id}`
-                : standingHref)}
-              className="inline-flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-1.5 text-xs font-bold text-white hover:border-white/25"
+          ) : onClose ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onClose}
+              className="rounded-xl bg-space px-4 py-2 text-sm font-bold text-white hover:brightness-110"
             >
-              <Glyph icon={faScroll} />
-              Appeal it
-            </Door>
-          )}
-          <Door
-            href={supportHref}
-            className="inline-flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-1.5 text-xs font-bold text-white hover:border-white/25"
-          >
-            <Glyph icon={faLifeRing} />
-            Talk to support
-          </Door>
-          <Door
-            href={standingHref}
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold text-muted hover:text-white"
-          >
-            Your record
-          </Door>
-          <Door
-            href={rulesHref}
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold text-muted hover:text-white"
-          >
-            The rules
-          </Door>
+              {busy ? 'Sending' : 'Got it'}
+            </button>
+          ) : onSignOut ? (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="rounded-xl bg-ink-hover px-4 py-2 text-sm font-bold text-white hover:brightness-110"
+            >
+              Log out
+            </button>
+          ) : null}
         </div>
-
-        {/* What is actually true of the account, which is not the same
-            sentence in all three. A closed one is renamed and its picture
-            taken down the moment it closes, and saying nothing has changed
-            while somebody's profile reads AccountDeleted is a lie they can
-            check in one click. */}
-        <p className="text-xs leading-relaxed text-muted">
-          {which === 'banned'
-            ? 'Your name and your picture have come down, and your profile now'
-              + ' reads as a deleted account. Nothing else has been deleted:'
-              + ' your things, your Worlds and your Brix are where you left them,'
-              + ' and they come back with the account if this is lifted.'
-            : 'Nothing of yours has been deleted. Your things, your Worlds and'
-              + ' your Brix are where you left them.'}
-        </p>
       </div>
     </section>
   )

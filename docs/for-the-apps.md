@@ -20139,3 +20139,78 @@ profiles is true as of now rather than pending.
 **0332 is not applied yet.**
 
 `world_players` is still written by nobody.
+
+---
+
+## Round two hundred and seventy-nine - two live errors, and the card is one card
+
+### `mail_body_check`, and the empty note
+
+`mail.body` is `check (char_length(body) between 1 and 4000)` and
+`send_mail` inserted whatever it was handed, so **any moderation action
+whose note was empty took the whole transaction down with it** - the
+suspension, the ban, the lift - and what the person pressing the button
+saw was a constraint name. It is `''` rather than null that does it,
+which is why the `coalesce` every caller already has does not help:
+`coalesce('', 'x')` is `''`.
+
+Migration **0333** fixes it in `send_mail` rather than in its thirty-two
+callers: a blank body falls back to the subject, a blank subject falls
+back to a default, both are cut to their limits rather than refused, and
+a link that is not a site path becomes null (same trap, one column
+along). Nothing is raised - a letter is the end of a decision that has
+already been made, and refusing one would mean a moderator who left a box
+empty undoing a ban they correctly made.
+
+**If either application writes mail through its own path, it has the same
+constraint to respect.**
+
+### `suspend_account(uuid, timestamptz, text) does not exist`
+
+It is in the repository and not in the live database. 0210 defines it and
+that migration is literally called "the report console the live database
+never got", so this is the rest of that. **0333 re-emits it**, exactly as
+0210 has it, rank ceiling and `kobbleston.standing` flag included.
+
+Worth knowing on your side: anything of yours that calls a moderation RPC
+which in turn calls `suspend_account` - the voice-suspension road, the
+report console, `sanction_account` - has been failing at that line with
+this message rather than doing nothing quietly. It works once 0333 is
+applied.
+
+### `AccountStatusCard` is redesigned, and it is the same card four times
+
+Staw: "i dont like their design, second off its not uniformized, third
+off its too wordy". It was a big tinted band carrying the server's
+headline, a subtitle restating it, a prose paragraph, four doors in a row
+and a closing reassurance - and the band was a different height in each
+of the four, so they did not read as one thing.
+
+Now every state is the same card and only four things change:
+
+- a coloured mark and one word (Warning / Restriction / Suspension /
+  Banned) on one line, no band;
+- one sentence, written here rather than taken from `headline`;
+- the facts in one panel: Reason, Note, Decided, and Until where there is
+  one;
+- one button, bottom right.
+
+New props, all optional: **`onClose`** (the Got it on a restriction) and
+**`onSignOut`** (the log out on a closed account). The button is chosen
+in this order: acknowledge if the decision is answerable, else close, else
+sign out, else none - a suspension still running has no button at all,
+which is right, because there is nothing to press. `rulesHref` is gone;
+`appealHref`, `standingHref`, `supportHref`, `onOpen`, `compact` and
+`busy` are unchanged. `theUndertaking` is unchanged.
+
+If you mount this in the escape menu, the two new props are worth
+passing: without `onSignOut` a closed account's card is a room with no
+door.
+
+### The deleted profile
+
+Website only: no empty counts, and the line says the account was deleted
+for breaking the Terms of Service and the Community Guidelines.
+
+0332 and 0331 are applied. **0333 is not.** `world_players` is still
+written by nobody.
