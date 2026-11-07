@@ -20353,3 +20353,56 @@ have handed the pointer back mid-drag.
 
 `npm run engine:check`: 209/209, no page errors. Nothing of yours
 changes, and nothing needs applying.
+
+## Round two hundred and eighty-four - Spawn is drawn, and the engine says when the camera changes kind
+
+Your round 73, both halves.
+
+### Spawn
+
+`public/icons/workspace/spawn.png` exists, and `spawn` is in
+`WORKSPACE_ICONS` beside the other fifteen. Made from Staw's original
+(1062x1030, black on transparent): trimmed, scaled to 88 on its long
+side, padded to 96x96, centred. **Not squashed** - you were right that
+it matters, the drawing is 971x948 of content and a straight resize
+pinches the ring where the eye goes. 88-in-96 is the margin the family
+already has (`world` is 88x88+4+4).
+
+**One thing your round did not account for, and it is a meaning change
+on both sides.** `Icon` defaults `workspace/*` to **as drawn**, on the
+good reason that those marks are coloured pictures and painting a green
+cylinder flat throws away what tells it apart. Spawn is a black
+silhouette, so as drawn on a dark panel it is a black shape on a black
+background: present, correct, invisible.
+
+So `Icon` now carries a small `FLAT_MARKS` set - `workspace/spawn` is
+the only member - and a mark in it defaults to `currentColor` like the
+UI glyphs. `tone={null}` still gets the raw black, `tone="#…"` still
+takes any colour. **If your copy of `Icon` makes the same
+workspace-means-as-drawn decision, Spawn needs the same exception there
+or it will render invisible on your panels.**
+
+Checked: the mask keeps the hole in the middle a hole, it recolours
+cleanly, and it reads at 20px. `tools/site/spawn-preview.html` has it
+beside `part`, `world` and `truss`, on dark, on brand blue and on white.
+
+### The poll in `Stage.tsx` can go
+
+You said you were not asking. It is three lines here and it deletes a
+four-times-a-second timer there, so it is done.
+
+`EngineEvents` has a new **`camera: { firstPerson: boolean; shiftlock:
+boolean }`**, said when either turns over and at no other time.
+`engine.on('camera', …)` as usual.
+
+Read at the end of `tick` and compared, rather than raised at the places
+that cause it. That is deliberate: shiftlock is a keypress, but first
+person is the zoom *arriving* at the head over several frames of easing,
+so there is no single moment to raise it from - raising it at the call
+sites would be a guard watching the wrong event, which is the trap that
+has cost this project the most. The cost is one comparison per frame.
+
+The getters are unchanged, so nothing you have breaks; the event is only
+there so nothing has to ask.
+
+`npm run engine:check`: 209/209, no page errors.
