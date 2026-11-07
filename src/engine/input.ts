@@ -63,6 +63,18 @@ export class Keyboard {
   private dragY = 0
   private dragging = false
   private locked = false
+  /**
+   * Whether the pointer currently held is held *for this drag*.
+   *
+   * The thing the release has to know. First person and shiftlock both
+   * hold the pointer too, and a drag that let go on the way out would
+   * drop theirs - which is round 270's zoom bug exactly: two owners, one
+   * of them clearing the other's lock. So a right drag only gives back
+   * what it took, and only when nobody else is asking for it.
+   */
+  private lockIsOurs = false
+  /** Asked at the end of a drag: does anything else want the pointer? */
+  private keeper: (() => boolean) | null = null
   private typingNow = false
   /** Set when Shift goes down, taken by the next `read`. */
   private lockAsked = false
@@ -98,13 +110,50 @@ export class Keyboard {
       if (e.button !== 2) return
       this.dragging = true
       element.setPointerCapture(e.pointerId)
+      /*
+       * And hold the arrow still while the view turns, which is what
+       * Staw asked for: "when we drag around to rotate your camera then
+       * your cursor doesnt move with it. (like roblox)".
+       *
+       * Capture is not that. It keeps the *events* coming here, which is
+       * why a drag does not break when the mouse leaves the canvas, and
+       * it says nothing about where the arrow is - so a long turn walked
+       * the cursor off the window and left it wherever the button came
+       * up. The lock is the part that pins it, and the browser puts it
+       * back where it started on the way out, so there is nothing to
+       * remember.
+       *
+       * A `pointerdown` is a gesture a lock may be granted on, which is
+       * why this one is asked here and the wheel's was not.
+       */
+      if (!this.locked) {
+        this.lockIsOurs = true
+        void Promise.resolve(element.requestPointerLock?.()).catch(() => {
+          /* Refused is ordinary: an unfocused window, or twice too fast.
+             The drag still turns the camera off the captured pointer. */
+        })
+      }
       e.preventDefault()
     }
 
     // Otherwise the menu opens on top of the World every time somebody looks
     // to the right.
     const contextMenu = (e: Event) => e.preventDefault()
-    const pointerUp = () => { this.dragging = false }
+    const pointerUp = (e: PointerEvent) => {
+      /*
+       * The right button coming up, or the last button of any kind.
+       * This listens on the window and so hears every release there is -
+       * and letting go of a left click in the middle of a right drag
+       * would otherwise end the turn and hand back a pointer the drag is
+       * still using.
+       */
+      if (e.button !== 2 && e.buttons !== 0) return
+      this.dragging = false
+      if (!this.lockIsOurs) return
+      this.lockIsOurs = false
+      // Unless first person or shiftlock wants it kept.
+      if (!this.keeper?.()) document.exitPointerLock?.()
+    }
     const pointerMove = (e: PointerEvent) => {
       /*
        * Locked, the mouse has no position: it only reports how far it
@@ -199,6 +248,17 @@ export class Keyboard {
   /** Whether the mouse is being held in the middle of the window. */
   get pointerLocked() {
     return this.locked
+  }
+
+  /**
+   * Who to ask, at the end of a right drag, whether the pointer stays.
+   *
+   * The engine knows and this does not: `firstPerson || shiftlockOn`.
+   * Left unset, a drag gives the pointer back every time, which is the
+   * right answer for anything mounting the input on its own.
+   */
+  setPointerKeeper(asking: (() => boolean) | null) {
+    this.keeper = asking
   }
 
   /**

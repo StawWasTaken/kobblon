@@ -294,6 +294,14 @@ export class Engine {
 
     if (options.listen !== false) {
       this.keyboard = new Keyboard(options.canvas)
+      /*
+       * A right drag holds the pointer for as long as it lasts and gives
+       * it back on release - unless first person or shiftlock is holding
+       * one of its own, which is the same question the wheel and
+       * `setShiftlock` ask. Two owners and one of them clearing the
+       * other's lock is round 270 again.
+       */
+      this.keyboard.setPointerKeeper(() => this.wantLock)
 
       /*
        * The keyboard is told about typing by the service, so a window only
