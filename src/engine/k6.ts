@@ -289,7 +289,9 @@ export function fitToSocket(model: THREE.Object3D, point: K6Point, placed?: Worn
  */
 const HOLD_ANGLE = 1.2
 
-export type K6Motion = 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land' | 'wave'
+export type K6Motion =
+  | 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land'
+  | 'wave' | 'kobdance' | 'dance1' | 'dance2' | 'dance3'
 
 /**
  * The clips the state machine drives on its own, from how the body is

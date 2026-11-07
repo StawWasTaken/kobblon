@@ -17,8 +17,19 @@ const camera = new THREE.PerspectiveCamera(32, 1000 / 620, 0.1, 200)
 const gltf = await new GLTFLoader().loadAsync('/k6.glb')
 const clips = Object.fromEntries(gltf.animations.map((a) => [a.name, a]))
 
-// one row, one pose, so every clip can be looked at side by side
-const poses = (new URLSearchParams(location.search).get('poses') || 'idle').split(',')
+/*
+ * One row of bodies. `poses` is the clips and `t` the moments, and the row
+ * is the longer of the two with the shorter one repeated - so
+ * `?poses=idle,walk,run` compares three clips at one moment, and
+ * `?poses=kobdance&t=0,0.2,0.4,0.6` is one clip as a filmstrip, which is
+ * the only way to see whether a dance reads as a cycle rather than a pose.
+ */
+const query = new URLSearchParams(location.search)
+const clipNames = (query.get('poses') || 'idle').split(',')
+const moments = (query.get('t') || '0.4').split(',').map(Number)
+const columns = Math.max(clipNames.length, moments.length)
+const poses = Array.from({ length: columns }, (_, i) => clipNames[i % clipNames.length])
+
 const mixers = []
 poses.forEach((name, i) => {
   const who = gltf.scene.clone(true)
@@ -37,13 +48,18 @@ poses.forEach((name, i) => {
   scene.add(who)
   const mixer = new THREE.AnimationMixer(who)
   if (clips[name]) mixer.clipAction(clips[name]).play()
-  mixer.setTime(Number(new URLSearchParams(location.search).get('t') || 0.4))
+  mixer.setTime(moments[i % moments.length])
   mixers.push(mixer)
 })
 
-const span = Math.max(12, poses.length * 7)
-camera.position.set(0, 6, span * 1.5)
-camera.lookAt(0, 5, 0)
+/*
+ * Far enough back that the whole body is in frame including the feet. It
+ * used to frame to the row's width alone, which cut the head off a clip
+ * with its arms up and the feet off every clip there is.
+ */
+const span = Math.max(16, poses.length * 9)
+camera.position.set(0, 5.6, span * 1.6)
+camera.lookAt(0, 4.6, 0)
 
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(200, 200),

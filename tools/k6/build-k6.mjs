@@ -298,13 +298,24 @@ export function buildK6() {
     const channels = []
 
     for (const track of clip.tracks) {
+      const node = boneNodes[track.joint]
+      const path = track.path ?? 'rotation'
+      /*
+       * A translation channel replaces the node's translation outright
+       * rather than adding to it, so a bone that is offset from its parent -
+       * which is every bone here - would snap to the parent the moment one
+       * played. The clips write an offset from rest and the rest is added
+       * back in here, so a dance says "a third of a ston down" and does not
+       * have to know where the hips sit.
+       */
+      const rest = gltf.json.nodes[node].translation ?? [0, 0, 0]
+      const values = path === 'translation'
+        ? track.values.map(([x, y, z]) => [rest[0] + x, rest[1] + y, rest[2] + z])
+        : track.values
       const input = gltf.floats(track.times, 'SCALAR', undefined)
-      const output = gltf.floats(track.values.flat(), 'VEC4', undefined)
+      const output = gltf.floats(values.flat(), path === 'translation' ? 'VEC3' : 'VEC4', undefined)
       samplers.push({ input, output, interpolation: 'LINEAR' })
-      channels.push({
-        sampler: samplers.length - 1,
-        target: { node: boneNodes[track.joint], path: 'rotation' },
-      })
+      channels.push({ sampler: samplers.length - 1, target: { node, path } })
     }
 
     gltf.json.animations.push({ name: clip.name, samplers, channels })

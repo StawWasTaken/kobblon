@@ -2138,7 +2138,14 @@ check('and it follows the head it is over',
 const emotes = await p.evaluate(() => {
   const body = window.engine.body
   const out = { list: window.engine.emotes }
-  out.madeUp = window.engine.emote('kobdance')
+  /*
+   * `kobdance` used to be the name here, on the reasoning that nobody would
+   * ever draw it. Round 286 drew it, so this check started failing by being
+   * right - the clip exists now and the engine plays it. Renamed rather than
+   * deleted, because what it guards is still worth guarding: an emote the
+   * file does not have must come back false so a chat window can say so.
+   */
+  out.madeUp = window.engine.emote('moonwalk')
   out.bodyClip = window.engine.emote('walk')
   out.real = window.engine.emote('wave')
   window.stepFrames(10)
@@ -2148,9 +2155,18 @@ const emotes = await p.evaluate(() => {
 check('the emote list is what the file can actually play',
   emotes.list.includes('wave') && !emotes.list.includes('idle') && !emotes.list.includes('walk'),
   emotes.list.join(','))
+/*
+ * The five names are the contract with the Launcher's /emote, and nothing
+ * in code declares them: they come off the avatar file. A clip renamed or
+ * dropped at build time would show up as a chat command that stopped
+ * working, which is not a bug report anybody can act on.
+ */
+check('every emote the avatar ships with is offered',
+  ['wave', 'kobdance', 'dance1', 'dance2', 'dance3'].every((n) => emotes.list.includes(n)),
+  emotes.list.join(','))
 check('a clip nobody has drawn yet is refused rather than pretended',
   emotes.madeUp === false && emotes.bodyClip === false,
-  `kobdance ${emotes.madeUp}, walk ${emotes.bodyClip}`)
+  `moonwalk ${emotes.madeUp}, walk ${emotes.bodyClip}`)
 check('and a real one plays', emotes.real === true, `wave ${emotes.real}`)
 
 /*

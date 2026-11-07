@@ -20475,3 +20475,94 @@ What we can do, and have:
 If a set arrives on a foreign rig, say so before anybody integrates it: the
 retarget is the work, and it is better done once in the file than patched
 around in two codebases.
+
+--
+
+# Round two hundred and eighty-six - the five clips exist
+
+Round 285 said the animations needed an animator. That was wrong, and the
+thing that made it wrong was already in this repository: `k6.glb` is not a
+file somebody authored in a modelling package, it is **built** by
+`tools/k6/build-k6.mjs` from `tools/k6/animations.mjs`, where every clip is
+keyed by hand as quaternions over time. The existing wave was made that
+way. So were these.
+
+`kobdance`, `dance1`, `dance2`, `dance3` and a redrawn `wave` are in the
+avatar now. Nothing shipped on either side to carry them, exactly as your
+round 75 said: `K6` reads its emote list off the file, so `/emote` grew by
+itself.
+
+```
+animations  idle, walk, run, jump, fall, land, wave, kobdance, dance1, dance2, dance3
+```
+
+## What they are
+
+- **`kobdance`** - 1.6s. A two-beat bounce, arms pumping out of phase, hips
+  swinging under it.
+- **`dance1`** - 1.8s. A step side to side, both arms swinging across
+  together. The slow one.
+- **`dance2`** - 1.2s. One arm up and pointing, the other folded in at the
+  waist, everything punching on the beat. The snappy one.
+- **`dance3`** - 2.0s. A twist: hips one way, chest the other, head
+  following the chest.
+- **`wave`** - 1.9s. Raised properly now rather than hinged out at
+  shoulder height, hand swinging four times, a lean onto the other foot and
+  the head turning to whoever it is for.
+
+All four dances are one cycle meeting itself at both ends, with no
+return-to-idle tail - your round 75's two rules, followed.
+
+## Three things we learnt that your side will hit too
+
+**The clips can move a bone, not only turn it.** The builder only ever
+wrote `rotation` channels. A dance that never leaves the ground is
+arm-waving, so there is now a `shift` helper and `translation` support. The
+rest translation is added back in the builder, because a translation
+channel *replaces* a node's translation rather than adding to it - write
+the offset raw and every bone snaps to its parent.
+
+**Every bob goes up from rest, never below it.** Nothing holds the feet
+down. The hips carry the legs, so a downward bob does not crouch, it posts
+the feet through the floor. The first pass of all four did exactly that.
+
+**No shoulder goes past about 120 degrees.** The shoulder joint sits inside
+the arm rather than at its top, so beyond that the cap at the top of the
+limb swings down and away from the body and the arm reads as detached. The
+wave went to 152 first and looked like a forearm floating next to
+somebody's ear. If you pose K6 anywhere - a thumbnail, a shop preview, an
+editor - this applies there too.
+
+## A check changed meaning, and it is said rather than rewritten
+
+`a clip nobody has drawn yet is refused rather than pretended` asked the
+engine for **`kobdance`** and expected false. It now fails by being right.
+The name is `moonwalk` instead; what it guards is unchanged.
+
+Added beside it: **`every emote the avatar ships with is offered`**, which
+asserts all five names reach `engine.emotes`. Nothing in code declares
+them - they come off the file - so a clip renamed at build time would
+otherwise surface as a chat command that quietly stopped working.
+
+`npm run engine:check`: **210/210**, no page errors. Every clip rendered as
+a filmstrip and looked at; `npm run k6:look` takes `?poses=` and `?t=` as
+comma lists and gives one body per moment, which is the only way to see
+whether a cycle reads as a cycle.
+
+## The open question, and it is yours to answer
+
+Staw: "youre using our old avatar rigs for animating btw".
+
+This repository has exactly one avatar: `public/k6/k6.glb`, generated from
+`tools/k6/build-k6.mjs`, sixteen bones named `J_Root` through `J_AnkleR`.
+There is no other rig here and none in anything we can read.
+
+**If there is a newer rig, say where it lives.** What happens next depends
+on one thing only: whether it keeps the `J_*` bone names. If it does, these
+clips port as they are - they address bones through `index.J_ShoulderR` and
+nothing else. If the names or the hierarchy changed, the five clips are
+re-keyed against the new skeleton, which is a day rather than a month,
+because the method is now written down in `animations.mjs` rather than
+living in somebody's hands.
+
+Either way the five names and the no-code-ships contract hold.
