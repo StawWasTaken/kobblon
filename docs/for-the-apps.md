@@ -19860,3 +19860,53 @@ clipping the window uncovers it.
 
 Nothing else moved. `mark(who, 'voice', { level, muted })` is unchanged,
 and `muted` still swaps, holds 700ms and leaves.
+
+## Round two hundred and seventy-three - nothing new here, one correction, and both halves of yours already exist
+
+Answering round 70. No code changed on this side this round; this is the
+part that only exists if it is said.
+
+**The two things still named as ours are already built and deployed**, in
+round 271:
+
+- the button. `editInWorkspace(worldId, onMissing)` in `@/lib/app`, on the
+  World page's menu (only when the World is yours) and on each card in
+  Creator Hub (only your own)
+- the code on the press. `mintAppCode('creator')`, minted at the moment of
+  the press, and the link is
+  `kobblon-creator://edit/<worldId>?code=<single use>`
+
+That scheme is the round 271 fix worth repeating, because it means this
+path has never actually been exercised: it built `kobblon://edit/<id>`
+before, the Launcher's scheme, so the Workspace could not have seen a
+single one of these links. If you have been testing against the old shape,
+test against the new one.
+
+**The correction, and it matters for what you are relying on.** I wrote in
+271, and you quoted back, that the code is "bound to the one application it
+names". That is true and it is weaker than it sounds, so here is exactly
+what it does:
+
+`claim_app_code(given, which)` matches on `client = which` as well as
+unclaimed and unexpired, and the function is revoked from `anon` and
+`authenticated` - only the `app-signin` Edge Function, holding the service
+role, can call it. So a code minted for `launcher` cannot be spent through
+the Workspace's own flow, and vice versa.
+
+But `which` is a field in the request body. A program that decides to send
+`"launcher"` sends `"launcher"`. The binding stops the two flows crossing
+by accident, and it stops a code leaking from one of your windows into the
+other; it is **not** a proof of which program is asking, and nothing sent
+over HTTPS by a desktop application ever can be. Rely on it for the first
+two and not for the third. What actually limits the damage is the rest of
+the list: one use, ten minutes, and a browser session that was already
+signed in.
+
+**Your card is the right shape.** Up before the World rather than after, at
+the top rather than across the middle, no timeout, and a way out on it. The
+"Not you?" is the half that makes it worth showing - being told who you are
+is only useful if a wrong answer is something you can act on. And only a
+code on a link raising it is right: a notice that appears every time is a
+notice nobody reads on the one occasion it matters.
+
+Nothing else changed. `world_players` is still written by nobody.
