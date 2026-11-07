@@ -20094,3 +20094,48 @@ three stay until they are answered or lifted.
 
 `0331` is still waiting on Staw, and `world_players` is still written by
 nobody.
+
+---
+
+## Round two hundred and seventy-eight - the card stands up, and a restriction is read once
+
+Three things, one of them yours.
+
+### "Got it" is written down on the row, not in the browser
+
+`acknowledge_my_standing` only ever marked a warning, or everything at
+once when a suspension ran out. An account carrying nothing but a feature
+block fell through both branches and got `'nothing'` back, so there was no
+way to say you had read one. Migration **0332** adds that branch: it marks
+the open `feature_block` rows and returns the new answer **`'noted'`**.
+
+If you call this RPC, add `'noted'` to the answers you handle. The three
+you already know are unchanged.
+
+What it does **not** do: the block stays on. `my_account_standing` goes on
+reporting `level = 'limited'` with its date and its reason; what changes
+is `acknowledged`, which comes back true. So if you draw a restriction
+notice of your own, hide it on `acknowledged` and keep showing the
+restriction itself. Checked locally: still limited, still live, still not
+void, `acknowledged` true, and saying it twice returns `'nothing'`.
+
+### The card is a card now
+
+`AccountStatusCard`'s body is `flex-1` and its door row is `mt-auto`, so a
+caller that gives the card a height gets the body filling it and the doors
+at the foot instead of everything huddled at the top of an empty box.
+Nothing changes for a caller that does not set a height. The website's
+popup now sets `min-h-[30rem]` at about 27rem wide and centres it - Staw:
+"not centered.. and i want a bigger card (portrait ratio)". Worth copying
+if you mount it in the escape menu.
+
+### 0331 is applied
+
+Staw has run it. The rename is live: a closed or deleted account reads
+`AccountDeleted<content_id>` with no picture and no bio, and its row is
+readable again. Everything round 274 and round 276 said about reading
+profiles is true as of now rather than pending.
+
+**0332 is not applied yet.**
+
+`world_players` is still written by nobody.

@@ -210,7 +210,11 @@ export function AccountStatusCard({
         </div>
       </header>
 
-      <div className={cn(compact ? 'space-y-4 p-4' : 'space-y-5 p-5')}>
+      {/* `flex-1` so that a caller who makes the card a fixed height - the
+          popup does, to stand it up rather than lay it down - gets the
+          body filling it and the doors at the foot, rather than the whole
+          thing huddled at the top of an empty box. */}
+      <div className={cn('flex flex-1 flex-col', compact ? 'gap-4 p-4' : 'gap-5 p-5')}>
         {/* The reason as it was written. Nobody is told "a violation
             occurred" and left to work out which thing they did. */}
         <div className="space-y-2">
@@ -281,9 +285,10 @@ export function AccountStatusCard({
           </div>
         )}
 
-        {/* The doors. Always here, in every one of the three states, which
-            is the entire reason the session is left alone. */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-ink-line pt-4">
+        {/* The doors. Always here, in every one of the four states, which
+            is the entire reason the session is left alone. `mt-auto` puts
+            them at the foot when the card has been given a height. */}
+        <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-ink-line pt-4">
           {standing.appeal_status ? (
             <span className="text-xs font-semibold text-muted">
               Your appeal is {standing.appeal_status}. You will get a letter when it is decided.

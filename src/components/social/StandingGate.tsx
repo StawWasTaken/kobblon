@@ -32,9 +32,11 @@ import { accountStanding, acknowledgeStanding } from '@/lib/api'
  * Staw was still seeing the old card on Home and asked for every one of
  * them to come through this. It leaves the account working and there is
  * nothing to press on it, so it is the one that can be closed: a notice,
- * not a gate. Closing it puts it away for the rest of the session and it
- * comes back on the next one, which is right for a thing that is still
- * true.
+ * not a gate. "Got it" is written down where the other three are, on
+ * `violations.acknowledged_at` (0332), and not in this browser - a
+ * decision about an account is not a per-browser fact, and remembering
+ * it here would show the card again on their phone as though they had
+ * never read it. The block itself stays on; it is the card that stops.
  */
 
 /**
@@ -70,7 +72,6 @@ export function StandingGate() {
   const say = useToast()
   const [sending, setSending] = useState(false)
   const [answered, setAnswered] = useState(false)
-  const [put_away, setPutAway] = useState(false)
 
   /*
    * Asked once per account, and asked again when the row changes under it:
@@ -84,22 +85,29 @@ export function StandingGate() {
   )
 
   const one = standing.data
-  const shows = !!one && one.level !== 'clear'
   /* The only one that can be closed: it shuts nothing and asks nothing. */
   const closeable = one?.level === 'limited'
+  /* And once it has been read it is read, on every device, for good. */
+  const shows = !!one && one.level !== 'clear' && !(closeable && one.acknowledged)
 
-  if (!shows || answered || put_away || sparedFromStanding(location.pathname)) return null
+  if (!shows || answered || sparedFromStanding(location.pathname)) return null
 
   const answer = async () => {
     setSending(true)
     try {
       const what = await acknowledgeStanding()
-      if (what === 'back' || what === 'warning_cleared') {
+      /*
+       * 'nothing' counts as done for a restriction. It is what the server
+       * says when there was no open row to mark, which on this card means
+       * somebody else already marked it or 0332 is not applied yet -
+       * neither is a reason to keep showing a notice to somebody who has
+       * just pressed Got it.
+       */
+      if (what === 'back' || what === 'warning_cleared' || what === 'noted'
+        || (closeable && what === 'nothing')) {
         setAnswered(true)
-        say(
-          what === 'back' ? 'Welcome back. Keep it clean.' : 'Noted. Keep it clean.',
-          'success',
-        )
+        if (what === 'back') say('Welcome back. Keep it clean.', 'success')
+        else if (what === 'warning_cleared') say('Noted. Keep it clean.', 'success')
         /*
          * The row the rest of the page reads has changed, and a suspension
          * coming off changes what every other page may do. Reloaded rather
@@ -117,13 +125,22 @@ export function StandingGate() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 p-4 py-10 backdrop-blur-sm kob-scroll sm:py-14"
+      /*
+         Centred, and standing up rather than lying down. It was pinned to
+         the top of the window at the width of a page column, which put a
+         short card in the corner of a big screen reading as a banner that
+         had slipped. A decision about somebody's account is the only thing
+         on the screen while it is up, so it sits in the middle of it and it
+         is the shape of a card: narrow, tall, and the doors at the foot.
+       */
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/80 p-4 py-10 backdrop-blur-sm kob-scroll"
       role="dialog"
       aria-modal="true"
       aria-label={one.headline}
     >
-      <div className="w-full max-w-xl animate-pop-in space-y-3">
+      <div className="my-auto flex w-full max-w-[27rem] animate-pop-in flex-col gap-3">
         <AccountStatusCard
+          className="flex min-h-[30rem] flex-col sm:min-h-[32rem]"
           standing={one}
           busy={sending}
           onAcknowledge={one.can_acknowledge ? () => void answer() : undefined}
@@ -141,7 +158,8 @@ export function StandingGate() {
           {closeable ? (
             <button
               type="button"
-              onClick={() => setPutAway(true)}
+              disabled={sending}
+              onClick={() => void answer()}
               className="inline-flex items-center gap-2 rounded-xl bg-space px-4 py-2 text-sm font-bold text-white hover:brightness-110"
             >
               <Glyph icon={faCheck} />

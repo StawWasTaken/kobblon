@@ -2393,9 +2393,11 @@ export async function reactivateAccount(): Promise<boolean> {
  * which of the two happened, so the page can say the right thing instead
  * of reloading and guessing.
  */
-export async function acknowledgeStanding(): Promise<'warning_cleared' | 'back' | 'nothing'> {
+export async function acknowledgeStanding(): Promise<
+  'warning_cleared' | 'back' | 'noted' | 'nothing'
+> {
   const what = unwrap(await supabase.rpc('acknowledge_my_standing'))
-  return (what as 'warning_cleared' | 'back' | 'nothing') ?? 'nothing'
+  return (what as 'warning_cleared' | 'back' | 'noted' | 'nothing') ?? 'nothing'
 }
 
 /** Calling off a deletion while there is still something to call off. */

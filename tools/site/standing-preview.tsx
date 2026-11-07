@@ -57,9 +57,10 @@ const states: AccountLock[] = [
 
 function Over({ standing }: { standing: AccountLock }) {
   return (
-    <div className="flex items-start justify-center bg-black/80 p-4 py-10">
-      <div className="w-full max-w-xl space-y-3">
+    <div className="flex items-center justify-center bg-black/80 p-4 py-10">
+      <div className="flex w-full max-w-[27rem] flex-col gap-3">
         <AccountStatusCard
+          className="flex min-h-[30rem] flex-col sm:min-h-[32rem]"
           standing={standing}
           onAcknowledge={standing.can_acknowledge ? () => {} : undefined}
           onOpen={() => {}}
