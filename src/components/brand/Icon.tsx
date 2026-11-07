@@ -56,8 +56,8 @@ export const UI_ICONS = [
  */
 export const WORKSPACE_ICONS = [
   'cylinder', 'decal', 'group', 'light', 'meshpart', 'part', 'script',
-  'sky', 'sound', 'soundservice', 'sphere', 'texture', 'truss', 'wedge',
-  'world',
+  'sky', 'sound', 'soundservice', 'spawn', 'sphere', 'texture', 'truss',
+  'wedge', 'world',
 ] as const
 
 export type UiIcon = (typeof UI_ICONS)[number]
@@ -131,6 +131,19 @@ const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
   'reaction-laugh': [{ part: 'reaction-laugh-tears', colour: TEAR_BLUE }],
 }
 
+/**
+ * The Workspace marks that are a silhouette rather than a picture.
+ *
+ * Staw drew Spawn as black on transparent - "default black, you can use
+ * colour overlays to change it" - where the other fifteen are coloured
+ * drawings. Drawn as it is, on a dark panel, it is a black shape on a
+ * black background: there, correct, and invisible. So it takes the
+ * colour of the text around it unless a caller says otherwise, which is
+ * what every other flat drawing on the platform does, and the mask keeps
+ * the hole in the middle a hole.
+ */
+const FLAT_MARKS = new Set<string>(['workspace/spawn'])
+
 export function Icon({
   name, label, title, tone, style, className,
 }: {
@@ -174,7 +187,7 @@ export function Icon({
      * painting one flat would throw away the thing that tells them apart
      * at a glance. They are as drawn unless a caller asks otherwise.
      */
-    ? (name.startsWith('workspace/') ? null : 'currentColor')
+    ? (name.startsWith('workspace/') && !FLAT_MARKS.has(name) ? null : 'currentColor')
     : tone
 
   /*
