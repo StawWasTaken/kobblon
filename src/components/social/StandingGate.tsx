@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AccountStatusCard } from '@/components/social/AccountStatusCard'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { accountStanding, acknowledgeStanding } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 
 /**
  * The card a decision puts in front of the account it was made about,
@@ -64,7 +65,7 @@ export const standingShuts = (
 ) => (!!profile?.is_suspended || !!profile?.is_banned) && !sparedFromStanding(path)
 
 export function StandingGate() {
-  const { session, profile, signOut } = useAuth()
+  const { session, profile, signOut, refreshProfile } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const say = useToast()
@@ -81,6 +82,53 @@ export function StandingGate() {
     async () => (session ? accountStanding() : null),
     [session?.user?.id, profile?.is_suspended, profile?.is_banned],
   )
+
+  /*
+   * And asked again the moment a decision is made, rather than the next
+   * time the page is loaded.
+   *
+   * Staw: "i want that restrictions, warnings, account suspension, bans,
+   * etc to be instant, like when it happens it appears instantly on your
+   * page". Both tables this reads are already in the realtime publication
+   * - `violations` since 0315, `profiles` long before - so there is
+   * nothing to add on the database side, only somebody listening.
+   *
+   * Two subscriptions and not one, because the two halves of a decision
+   * land in different places: the row explaining it goes into
+   * `violations`, and the flags that blank the page behind the card go
+   * onto the profile. A ban writes both; a warning writes only the first;
+   * a moderator lifting a suspension writes only the second. Listening to
+   * either alone leaves one of those three silent until a reload.
+   *
+   * `refreshProfile` first and the standing after it, because
+   * `standingShuts` reads the profile and the card reads the standing,
+   * and the order stops a frame where the card is up over a page that is
+   * still showing.
+   */
+  const again = useRef<() => void>(() => {})
+  again.current = () => {
+    setAnswered(false)
+    void refreshProfile().finally(() => standing.reload())
+  }
+
+  useEffect(() => {
+    const me = session?.user?.id
+    if (!me) return
+    const channel = supabase
+      .channel(`standing:${me}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'violations', filter: `user_id=eq.${me}` },
+        () => again.current(),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${me}` },
+        () => again.current(),
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [session?.user?.id])
 
   const one = standing.data
   /* The only one that can be closed: it shuts nothing and asks nothing. */
@@ -103,7 +151,15 @@ export function StandingGate() {
        */
       if (what === 'back' || what === 'warning_cleared' || what === 'noted'
         || (closeable && what === 'nothing')) {
+        /*
+         * Hidden now, and then asked again rather than taken on trust.
+         * The hide is this browser's word for it and the reload is the
+         * row's; if the row disagrees - nothing was written down, so the
+         * card is owed again on the next page - the next answer comes
+         * from the server and not from this flag.
+         */
         setAnswered(true)
+        standing.reload()
         if (what === 'back') say('Welcome back. Keep it clean.', 'success')
         else if (what === 'warning_cleared') say('Noted. Keep it clean.', 'success')
         /*

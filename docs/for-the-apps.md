@@ -20240,3 +20240,47 @@ and has nothing to do. If either has its **own** copy of these buttons
 beside a mounted card, that copy is now the odd one out.
 
 0333 is still not applied. `world_players` is still written by nobody.
+
+## Round two hundred and eighty-one - a decision lands while you are looking at the page
+
+Staw: "i want that restrictions, warnings, account suspension, bans, etc
+to be instant, like when it happens it appears instantly on your page".
+
+They were not. `StandingGate` asked `my_account_standing()` once per page
+load and when the profile row it already had changed under it, so a
+moderator acting on somebody standing on their Home did nothing visible
+until that person moved or reloaded. Nothing was wrong with the decision;
+it just arrived whenever they next happened to ask.
+
+**Both tables were already in the realtime publication** - `violations`
+since 0315 (`replica identity full` and all), `profiles` long before - so
+there is nothing to apply for this. What was missing was somebody
+listening. The gate now opens one channel per signed-in account:
+
+- `violations`, every event, filtered `user_id=eq.<me>`;
+- `profiles`, updates only, filtered `id=eq.<me>`.
+
+Either one re-reads the profile and then re-asks `my_account_standing()`,
+in that order, because the profile decides whether the page behind the
+card is blank and the standing decides what the card says - the other
+order shows one frame of a card over a page that is still there.
+
+**Two subscriptions and not one, on purpose.** The two halves of a
+decision land in different places: the row explaining it goes into
+`violations`, the flags that shut the page go onto the profile. A ban
+writes both, a warning writes only the first, and a moderator lifting a
+suspension writes only the second. Listening to either alone leaves one
+of those three silent until a reload - and the one it leaves silent is
+the lift, which is the half that matters most to the person waiting.
+
+**Worth copying.** If either application keeps a window open on an
+account - the Launcher's sign-in, the Workspace at rest - the same two
+subscriptions give it the same behaviour, and the card it already mounts
+needs no changes. Filter on the signed-in id; do not subscribe to the
+tables unfiltered.
+
+Also: acknowledging now re-asks the server instead of only setting a flag
+in the page, so what the card does next comes from the row rather than
+from this browser's memory of having pressed a button.
+
+0333 is still not applied.
