@@ -93,6 +93,20 @@ export type EngineEvents = {
   died: { reason: 'void' }
   /** A World finished loading and is being run. */
   opened: { world: WorldManifest }
+  /**
+   * The camera changed what kind of camera it is.
+   *
+   * Said when `firstPerson` or `shiftlocked` turns over and at no other
+   * time, so a window drawing something that depends on them - the dot
+   * in the middle, a Settings row - can stop asking four times a second
+   * and be right in the frame it happens instead of up to a quarter of a
+   * second late each way. Neither is a thing the engine is told: first
+   * person is the zoom arriving at the head, shiftlock is Shift. So this
+   * is read at the end of a frame and said when it differs, rather than
+   * raised at the handful of places that can cause it - one of which is
+   * a wheel notch easing in over several frames.
+   */
+  camera: { firstPerson: boolean; shiftlock: boolean }
 }
 
 /*
@@ -223,6 +237,8 @@ export class Engine {
   private chatWindow: ChatWindow | null = null
   private bubbles: BubbleBoard | null = null
   private listeners = new Map<keyof EngineEvents, Set<(data: never) => void>>()
+  /** What the last frame's camera was, for deciding whether to say so. */
+  private cameraWas = { firstPerson: false, shiftlock: false }
 
   /**
    * Where the camera sits behind the avatar, dragged by the player.
@@ -796,6 +812,18 @@ export class Engine {
     this.sky?.follow(this.camera)
     this.renderer.render(this.scene, this.camera)
     this.frame += 1
+
+    /*
+     * And last, whether the camera became a different kind of camera.
+     * After the render rather than before it, so anything listening is
+     * told about a frame that has already been drawn.
+     */
+    const kind = { firstPerson: this.firstPerson, shiftlock: this.shiftlockOn }
+    if (kind.firstPerson !== this.cameraWas.firstPerson
+      || kind.shiftlock !== this.cameraWas.shiftlock) {
+      this.cameraWas = kind
+      this.say('camera', kind)
+    }
   }
 
   /**
