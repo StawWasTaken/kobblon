@@ -15,6 +15,11 @@ export type Shot = { id: string; kind: 'image' | 'video'; url: string }
  * the page wants said about it sits on the art itself, over a gradient dark
  * enough to read white off.
  *
+ * White here is `on-art`, not `white`: `white` is the theme's foreground
+ * and turns near-black in daylight, while the photograph under it does
+ * not change at all. The World's own name went unreadable on its own
+ * banner the moment somebody turned the lights on.
+ *
  * A clip is never autoplayed - a page that starts making a noise on its own
  * is a page people close - and while one is on screen the overlay steps out
  * of the way, because controls on top of controls is neither.
@@ -40,7 +45,7 @@ export function WorldStage({
         {!here ? (
           <div className="grid h-full w-full place-items-center">
             <div className="text-center">
-              <Glyph icon={worldIcon} className="text-4xl text-white/20" />
+              <Glyph icon={worldIcon} className="text-4xl text-on-art/20" />
               <p className="mt-3 text-sm text-muted">Nothing to show of this World yet.</p>
             </div>
           </div>
@@ -68,7 +73,7 @@ export function WorldStage({
             aria-label={by === -1 ? 'Previous picture' : 'Next picture'}
             className={cn(
               'absolute top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full',
-              'bg-black/50 text-white backdrop-blur-sm transition-all duration-200',
+              'bg-black/50 text-on-art backdrop-blur-sm transition-all duration-200',
               'opacity-0 hover:bg-black/80 focus-visible:opacity-100 group-hover:opacity-100',
               by === -1 ? 'left-3' : 'right-3',
             )}
@@ -90,12 +95,12 @@ export function WorldStage({
                 className={cn(
                   'h-10 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-all',
                   i === at
-                    ? 'border-white shadow-pop'
-                    : 'border-white/25 opacity-70 hover:opacity-100',
+                    ? 'border-on-art shadow-pop'
+                    : 'border-on-art/25 opacity-70 hover:opacity-100',
                 )}
               >
                 {shot.kind === 'video' ? (
-                  <span className="grid h-full w-full place-items-center bg-black/60 text-white/80">
+                  <span className="grid h-full w-full place-items-center bg-black/60 text-on-art/80">
                     <Glyph icon={faPlay} className="text-[10px]" />
                   </span>
                 ) : (

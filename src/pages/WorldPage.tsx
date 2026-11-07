@@ -102,7 +102,7 @@ function Handover({
               Kobblon is opening. Get ready!
             </p>
             {/* Blue: the green is Play's and nothing else's. */}
-            <div className="mt-5 grid h-11 place-items-center rounded-xl bg-brand text-white">
+            <div className="mt-5 grid h-11 place-items-center rounded-xl bg-brand text-on-art">
               <Glyph icon={faSpinner} spin />
             </div>
           </>
@@ -435,7 +435,7 @@ export default function WorldPage() {
             in all sit on the art, because they belong to it. */}
         <WorldStage shots={shots} name={thing.name}>
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-white/25 bg-gradient-to-br from-brand to-brand-deep shadow-pop sm:h-20 sm:w-20">
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-on-art/25 bg-gradient-to-br from-brand to-brand-deep shadow-pop sm:h-20 sm:w-20">
               <Picture
                 src={thing.emblem_url ?? thing.cover_url}
                 alt={thing.name}
@@ -451,22 +451,22 @@ export default function WorldPage() {
                 </span>
               )}
 
-              <h1 className="font-display text-2xl font-black leading-tight text-white drop-shadow-lg sm:text-4xl">
+              <h1 className="font-display text-2xl font-black leading-tight text-on-art drop-shadow-lg sm:text-4xl">
                 {thing.name}
               </h1>
 
               {owner ? (
                 <Link
                   to={profileLink(owner)}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-white/75 transition-colors hover:text-white"
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-on-art/75 transition-colors hover:text-on-art"
                 >
                   <PersonAvatar person={owner} size="xs" />
-                  By <span className="font-bold text-white">{owner.display_name}</span>
+                  By <span className="font-bold text-on-art">{owner.display_name}</span>
                   <NameMarks person={owner} />
                 </Link>
               ) : (
-                <p className="mt-1.5 text-sm text-white/75">
-                  By <span className="font-bold text-white">{thing.creator_name ?? 'Kobblon'}</span>
+                <p className="mt-1.5 text-sm text-on-art/75">
+                  By <span className="font-bold text-on-art">{thing.creator_name ?? 'Kobblon'}</span>
                 </p>
               )}
             </div>
@@ -483,7 +483,7 @@ export default function WorldPage() {
                 * theres the line between the like-dislike to have a ratio
                 * thingy". It was there, drawn one pixel wide.
                 */}
-              <div className="w-full rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm sm:w-72">
+              <div className="w-full rounded-xl border border-on-art/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm sm:w-72">
                 <RatingBar
                   likes={counts.likes}
                   dislikes={counts.dislikes}
@@ -519,9 +519,9 @@ export default function WorldPage() {
                   aria-pressed={favourited}
                   aria-label="Save this World"
                   className={cn(
-                    'grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-white/20',
+                    'grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-on-art/20',
                     'bg-black/40 backdrop-blur-sm transition-colors disabled:opacity-40',
-                    favourited ? 'text-amber-300' : 'text-white/80 hover:bg-black/70 hover:text-white',
+                    favourited ? 'text-amber-300' : 'text-on-art/80 hover:bg-black/70 hover:text-on-art',
                   )}
                 >
                   <Glyph icon={faStar} on={favourited} />
@@ -542,9 +542,9 @@ export default function WorldPage() {
                   aria-pressed={notify}
                   aria-label="Get told when this World changes"
                   className={cn(
-                    'grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-white/20',
+                    'grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-on-art/20',
                     'bg-black/40 backdrop-blur-sm transition-colors disabled:opacity-40',
-                    notify ? 'text-link' : 'text-white/80 hover:bg-black/70 hover:text-white',
+                    notify ? 'text-link' : 'text-on-art/80 hover:bg-black/70 hover:text-on-art',
                   )}
                 >
                   <Glyph icon={faBell} />
@@ -555,7 +555,7 @@ export default function WorldPage() {
                 label="More"
                 align="right"
                 trigger={
-                  <span className="grid h-12 w-12 place-items-center rounded-xl border border-white/20 bg-black/40 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/70 hover:text-white">
+                  <span className="grid h-12 w-12 place-items-center rounded-xl border border-on-art/20 bg-black/40 text-on-art/80 backdrop-blur-sm transition-colors hover:bg-black/70 hover:text-on-art">
                     <Glyph icon={faEllipsis} />
                   </span>
                 }

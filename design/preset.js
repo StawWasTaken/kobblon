@@ -27,6 +27,16 @@ export default {
           line: 'rgb(var(--ink-line) / <alpha-value>)',
         },
         white: 'rgb(var(--fg) / <alpha-value>)',
+        /*
+         * `white` is the theme's foreground: it is white in the dark and
+         * near-black in daylight, which is what a page wants. Anything
+         * standing on a picture or on a solid brand colour wants the other
+         * thing - those surfaces do not flip, so `text-on-art` does not
+         * either.
+         */
+        'on-art': 'rgb(var(--on-art) / <alpha-value>)',
+        /* The dark that goes on a fixed white chip standing on art. */
+        'art-ink': 'rgb(var(--art-ink) / <alpha-value>)',
         link: 'rgb(var(--link) / <alpha-value>)',
         /*
          * The bar and the rail. In the dark they are deep Kobbleston blue

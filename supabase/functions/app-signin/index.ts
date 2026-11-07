@@ -95,16 +95,46 @@ Deno.serve(async (request) => {
   }
 
   /*
-   * A guest has no address on it, so there is nothing to sign in with. That
-   * is a different thing from a spent code and is said differently: telling
-   * somebody their link expired when the truth is that their account is not
-   * finished sends them round the same loop for ever.
+   * A guest has no address at all, and the exchange below needs one.
+   *
+   * That used to be a refusal - "finish your Kobblon account first" - which
+   * meant a guest could look at every World on the site and open none of
+   * them. Staw: guests can play. So the account is given the same stand-in
+   * address an account made without an email already gets, at
+   * `no-email.kobblon.com`, which exists for this and receives nothing.
+   *
+   * `profiles.has_email` is not touched, because it records whether there
+   * is a person behind the address and there still is not. Nothing else on
+   * the site reads the address, so a guest is a guest exactly as before -
+   * they can simply get into a World now.
+   *
+   * It is done here rather than when the guest is made because only the
+   * service role may set an address confirmed, and because a guest who
+   * never opens an app never needs one.
    */
-  if (!row.email) {
+  let address = row.email as string | null
+
+  if (!address && row.is_guest) {
+    address = `nobody-${crypto.randomUUID()}@no-email.kobblon.com`
+    const { error: named } = await admin.auth.admin.updateUserById(row.user_id, {
+      email: address,
+      // Nobody is going to click a link at an address that does not exist.
+      email_confirm: true,
+    })
+    if (named) {
+      return answer({ error: 'Kobblon could not finish signing you in.' }, 500)
+    }
+  }
+
+  /*
+   * Still nothing: an account that is not a guest and has no address. That
+   * is a different thing from a spent code and is said differently, because
+   * telling somebody their link expired when the truth is that their
+   * account is not finished sends them round the same loop for ever.
+   */
+  if (!address) {
     return answer({
-      error: row.is_guest
-        ? 'Finish your Kobblon account on the website first, then sign in here.'
-        : 'That account has no email address on it, so it cannot sign in to an app yet.',
+      error: 'That account has no email address on it, so it cannot sign in to an app yet.',
     }, 400)
   }
 
@@ -115,7 +145,7 @@ Deno.serve(async (request) => {
    */
   const { data: link, error: linkError } = await admin.auth.admin.generateLink({
     type: 'magiclink',
-    email: row.email,
+    email: address,
   })
 
   if (linkError || !link?.properties?.hashed_token) {

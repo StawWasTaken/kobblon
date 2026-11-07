@@ -20605,3 +20605,83 @@ pointer lock granted from a real gesture, and the engine suite's headless
 browser will not grant one, so anything written here would pass without
 exercising the path. Yours is the check that covers it; it should be green
 now. If it is still red, say so and we will take it from the top.
+
+## Round two hundred and eighty-eight - a label on art is not a label on a surface
+
+Two things from Staw: the World page's title rendered dark on its own banner
+art in daylight, and guest accounts could not play a World.
+
+### The one that changes meaning: `on-art` and `art-ink`
+
+This is the line that matters to you, because your copy of `Button` and
+anything of yours that sits on a picture has the same bug and it will not
+show up in a build.
+
+`design/preset.js` maps Tailwind's `white` to the theme foreground:
+
+    white: 'rgb(var(--fg) / <alpha-value>)'
+
+So `text-white` is **not** white. In the dark theme `--fg` is near-white and
+everything looked right for months; in daylight `--fg` is `16 16 18` and
+every `text-white` turned dark at once. That is correct for a label on a
+theme surface - a caption on a card *should* flip. It is wrong for a label
+standing on a fixed colour or on a picture, because the picture does not
+flip with the theme. A white title on banner art is white in both themes
+or it is unreadable in one.
+
+Two tokens now say which is which, defined identically in both blocks of
+`design/tokens.css`:
+
+    --on-art:  255 255 255;   /* a label on art or on a fixed colour */
+    --art-ink:  16 16 18;     /* the dark that goes on a fixed white chip */
+
+and exposed as `text-on-art` / `bg-on-art` and `text-art-ink` /
+`bg-art-ink`.
+
+The rule, in one line: **a label on a theme surface keeps `text-white`; a
+label on a picture or on a fixed colour takes `text-on-art`.**
+
+Changed here: `Button`'s `primary`, `yes`, `enter`, `brand` and `danger`
+variants (all five stand on a fixed fill) now carry `text-on-art`; `ghost`
+and `subtle` deliberately keep `text-white`, because they stand on the
+theme. `EventBanner`, `WorldStage` and the World page hero moved over
+wholesale. The World page's description, which is on the page body rather
+than the art, stayed on `text-white` on purpose.
+
+If you have copied `Button` rather than imported it, this is the change to
+take. If you import it, you have it already, but anything of your own drawn
+over art needs the same pass. Checked by screenshot in both themes.
+
+One trap worth repeating: **a Tailwind config change needs the dev server
+restarted.** HMR will not generate a colour class that did not exist when
+Vite started. The first pass of this looked fixed in light and blank in dark
+for exactly that reason, and in light it only looked fixed because the
+inherited `--fg` happened to equal `--art-ink`.
+
+### Guests can play
+
+A guest is an anonymous Supabase user: authenticated, with no email address.
+`join_world_server` never had a guest check and `mint_app_code` is granted
+to `authenticated`, so the database was never the thing stopping them. The
+single gate was `app-signin`, which mints the Launcher's magic link and
+refused outright when the account had no address.
+
+It now does what `register` already does for accounts made without one: a
+guest gets a stand-in at `nobody-<uuid>@no-email.kobblon.com`, confirmed
+server-side because nobody will ever click a link there. `profiles.has_email`
+stays false, so the account still reads as "no real address behind it".
+
+The second-order break that came with it: a guest who has played now carries
+an address, so the website's old "claim your account" path - a plain
+`supabase.auth.updateUser({ email })` - would have become an email *change*
+needing confirmation from a mailbox that does not exist. `register` gained a
+`link-email` action, service-role, guarded on `has_email === false`, which
+sets the real address and password in one go. `claimAccount` tries it and
+falls back to the old client-side path on a 404, because **`register` is
+still not deployed**.
+
+So: **`register` must be deployed for the claim half to work**, and neither
+half could be exercised against the live project from here. If a guest plays
+and then claims the account before that deploy lands, they take the fallback
+path and the stand-in address is in the way. Worth knowing before you point
+anybody at it.

@@ -27,18 +27,29 @@ import { cn } from '@/lib/cn'
 type Variant = 'primary' | 'yes' | 'enter' | 'brand' | 'ghost' | 'subtle' | 'danger'
 type Size = 'sm' | 'md' | 'lg'
 
+/*
+ * The solid variants carry `text-on-art`, not `text-white`.
+ *
+ * `white` is the theme's foreground, so in daylight it is near-black - and
+ * a label is only white here because brand blue, Space green and the red
+ * are fixed colours that do not flip with the theme. They were all reading
+ * as dark text on a bright button the moment somebody turned the lights on.
+ *
+ * `ghost` and `subtle` keep `text-white` on purpose: they sit on a theme
+ * surface, so their label is supposed to flip with it.
+ */
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand text-white hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
+    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
   /** The one thing this screen is for. Said on purpose, not by default. */
   yes:
-    'bg-space text-white hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** Going into a World, which is the loudest yes Kobblon has. */
   enter:
-    'bg-space text-white hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** The same blue as primary, kept for callers that name the platform. */
   brand:
-    'bg-brand text-white hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
+    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
   ghost:
     'bg-transparent text-white/80 hover:bg-white/10 hover:text-white border border-transparent',
   subtle:
@@ -53,7 +64,7 @@ const variants: Record<Variant, string> = {
    * says it is different, which is the whole job of having one red.
    */
   danger:
-    'bg-danger text-white hover:bg-danger-bright active:bg-danger border-b-[3px] border-danger-ink active:border-b-0 active:mt-[3px]',
+    'bg-danger text-on-art hover:bg-danger-bright active:bg-danger border-b-[3px] border-danger-ink active:border-b-0 active:mt-[3px]',
 }
 
 const sizes: Record<Size, string> = {

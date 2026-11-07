@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import {
-  claimGuestAccount, endSession, refreshPortrait, setSessionCountry,
+  claimGuestAccount, endSession, linkGuestEmail, refreshPortrait, setSessionCountry,
   registerWithoutEmail, signInWithUsername, touchSession, uploadAvatar,
 } from '@/lib/api'
 import { myZone, placeOfZone } from '@/lib/places'
@@ -377,9 +377,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatarUrl,
         })
 
+        /*
+         * The address goes on behind the service role when it can.
+         *
+         * A guest who has opened the Launcher already carries the stand-in
+         * address `app-signin` gave them, and setting a real one over that
+         * is an email *change* - confirmed from the old address, which is a
+         * mailbox that does not exist. Linking only ever worked because a
+         * guest had no address at all.
+         *
+         * `linkGuestEmail` says false when the function is not deployed,
+         * and then the old path runs, which is still right for a guest who
+         * has never opened an app.
+         */
+        const linked = await linkGuestEmail(details.email, details.password)
+
         const { error } = await supabase.auth.updateUser({
-          email: details.email,
-          password: details.password,
+          ...(linked ? {} : { email: details.email, password: details.password }),
           data: {
             username: details.username,
             display_name: details.displayName || details.username,

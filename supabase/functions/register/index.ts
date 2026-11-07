@@ -153,5 +153,63 @@ Deno.serve(async (request) => {
     return json({ ok: true })
   }
 
-  return json({ error: 'Say which of the two this is.' }, 400)
+  // ------------------------------- a guest keeping what they made, for good
+
+  /*
+   * The email and password a guest picks when they decide to stay.
+   *
+   * This used to be `supabase.auth.updateUser` in the browser, which worked
+   * only because a guest had no address: linking one is not a change and
+   * needs no confirmation. A guest who has opened the Launcher does have
+   * one now - the stand-in `app-signin` gives them - so the same call would
+   * be an email *change*, and a change is confirmed from the old address,
+   * which is a mailbox that does not exist. The account would be stuck.
+   *
+   * The service role sets it outright instead, the same way `set-password`
+   * above does for a guest a superadmin made real.
+   */
+  if (body.action === 'link-email') {
+    const bearer = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? ''
+    const { data: asked } = await admin.auth.getUser(bearer)
+    const who = asked.user
+    if (!who) return json({ error: 'You are not signed in.' }, 401)
+
+    const email = String(body.email ?? '').trim().toLowerCase()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return json({ error: 'That is not an email address.' }, 400)
+    }
+    if (email.endsWith('@no-email.kobblon.com')) {
+      return json({ error: 'That is not an email address.' }, 400)
+    }
+
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('id, has_email')
+      .eq('id', who.id)
+      .maybeSingle()
+
+    if (!profile) return json({ error: 'No such account.' }, 400)
+    /*
+     * Only an account with nobody behind its address. `has_email` is the
+     * record of that, and it is the whole guard: an account that already
+     * has a real address changes it the ordinary way, with a confirmation,
+     * which is the part that must not be skippable by calling this.
+     */
+    if (profile.has_email) {
+      return json({ error: 'This account already has an email address.' }, 400)
+    }
+
+    const { error: failed } = await admin.auth.admin.updateUserById(who.id, {
+      email,
+      password,
+      email_confirm: true,
+    })
+    if (failed) return json({ error: failed.message }, 400)
+
+    await admin.from('profiles').update({ has_email: true }).eq('id', who.id)
+
+    return json({ ok: true })
+  }
+
+  return json({ error: 'Say which of the three this is.' }, 400)
 })

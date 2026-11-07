@@ -19,6 +19,22 @@
   --ink-hover: 33 33 40;
   --ink-line: 42 42 51;
   --fg: 255 255 255;
+  /*
+   * White that stays white, whatever the theme is doing.
+   *
+   * `--fg` is the page's foreground and flips to near-black in daylight,
+   * which is right on a page and wrong on anything standing on a picture
+   * or on a solid brand colour: those do not flip, so their label cannot
+   * either. Before this existed, every label on art and every button on
+   * brand blue went dark the moment somebody turned the lights on.
+   */
+  --on-art: 255 255 255;
+  /*
+   * And its opposite: the dark that goes on a fixed white chip standing on
+   * art. `--ink` is a surface, not a text colour, and it is near-white in
+   * daylight - so a white pill with `text-ink` on it had white words.
+   */
+  --art-ink: 16 16 18;
   --muted: 139 139 153;
   --link: 159 173 255;
   --bubble: 38 38 47;
@@ -73,6 +89,9 @@
   --ink-hover: 234 236 243;
   --ink-line: 214 218 228;
   --fg: 16 16 18;
+  /* Both unchanged in daylight on purpose: see the note in the dark block. */
+  --on-art: 255 255 255;
+  --art-ink: 16 16 18;
   --muted: 92 97 112;
   --link: 27 52 232;
   /* The other way round in daylight, for the same reason. */

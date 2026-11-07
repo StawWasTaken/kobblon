@@ -7,6 +7,15 @@ import { useAsync } from '@/hooks/useAsync'
 import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
+/*
+ * Everything in this file is drawn on a picture, so every white in it is
+ * `on-art` rather than `white`. `white` is the theme's foreground and goes
+ * near-black in daylight while the art behind it does not change at all, so
+ * the whole band - name, blurb, pill, prizes, note - went unreadable the
+ * moment somebody turned the lights on. The pill is the same story the
+ * other way round: a fixed white chip with ink-coloured words on it.
+ */
+
 /**
  * The thing Kobblon is running, across the top of Home.
  *
@@ -188,15 +197,15 @@ export function EventBand({ event, className, flat }: {
           * behind it - which is the one thing the reference's own pill is
           * doing that a coloured one would not survive.
           */}
-        <span className="inline-flex w-fit items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-black">
+        <span className="inline-flex w-fit items-center rounded-full bg-on-art px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-art-ink">
           {event.tag}
         </span>
 
-        <h2 className="mt-5 max-w-[22ch] font-display text-3xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] sm:text-[2.75rem]">
+        <h2 className="mt-5 max-w-[22ch] font-display text-3xl font-extrabold leading-[1.05] tracking-tight text-on-art drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] sm:text-[2.75rem]">
           {event.name}
         </h2>
         {!!event.blurb && (
-          <p className="mt-2 max-w-[46ch] text-sm font-semibold leading-snug text-white/80 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
+          <p className="mt-2 max-w-[46ch] text-sm font-semibold leading-snug text-on-art/80 drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
             {event.blurb}
           </p>
         )}
@@ -223,7 +232,7 @@ export function EventBand({ event, className, flat }: {
                text should be the pixel one we use often" - the display
                face, which is what every heading on the site is set in and
                what the band's own name above it is already wearing. */
-            'bg-brand font-display text-lg font-extrabold tracking-wide text-white',
+            'bg-brand font-display text-lg font-extrabold tracking-wide text-on-art',
             'border-b-[3px] border-brand-ink shadow-lg shadow-black/30',
             'transition-[background-color,transform,box-shadow] duration-150',
             'group-hover:bg-brand-bright',
@@ -244,7 +253,7 @@ export function EventBand({ event, className, flat }: {
         * chips under a contest with no prize is furniture.
         */}
       {!event.prizes.length && !!event.note && (
-        <p className="pointer-events-none absolute bottom-4 right-5 hidden max-w-[26ch] text-right text-[11px] font-bold text-white/60 sm:right-7 sm:block">
+        <p className="pointer-events-none absolute bottom-4 right-5 hidden max-w-[26ch] text-right text-[11px] font-bold text-on-art/60 sm:right-7 sm:block">
           {event.note}
         </p>
       )}
@@ -254,9 +263,9 @@ export function EventBand({ event, className, flat }: {
           {event.prizes.map((prize) => (
             <span
               key={prize.place}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-white/70"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-on-art/70"
             >
-              <span className="text-white/40">{prize.place}</span>
+              <span className="text-on-art/40">{prize.place}</span>
               <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
               {/*
                 * Written out, not shortened. `formatCount` turns 10,000
@@ -265,7 +274,7 @@ export function EventBand({ event, className, flat }: {
                 * and the largest prize, the one the row exists for, was
                 * the one that stopped looking like money.
                 */}
-              <span className="tabular-nums text-white">
+              <span className="tabular-nums text-on-art">
                 {prize.brix.toLocaleString('en-GB')}
               </span>
             </span>
@@ -276,7 +285,7 @@ export function EventBand({ event, className, flat }: {
       {/* On a phone there is no room beside the art, so the small print
           sits under the words instead of in the corner. */}
       {!event.prizes.length && !!event.note && (
-        <p className="relative px-5 pb-5 text-[11px] font-bold text-white/60 sm:hidden">
+        <p className="relative px-5 pb-5 text-[11px] font-bold text-on-art/60 sm:hidden">
           {event.note}
         </p>
       )}
@@ -286,11 +295,11 @@ export function EventBand({ event, className, flat }: {
           {event.prizes.map((prize) => (
             <span
               key={prize.place}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-white/70"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-on-art/70"
             >
-              <span className="text-white/40">{prize.place}</span>
+              <span className="text-on-art/40">{prize.place}</span>
               <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
-              <span className="tabular-nums text-white">
+              <span className="tabular-nums text-on-art">
                 {prize.brix.toLocaleString('en-GB')}
               </span>
             </span>

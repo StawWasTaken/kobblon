@@ -3668,6 +3668,34 @@ export async function setMyFirstPassword(password: string) {
   }
 }
 
+/**
+ * The email and password a guest picks when they decide to stay.
+ *
+ * Behind the service role rather than `supabase.auth.updateUser`, because a
+ * guest who has opened an app already carries a stand-in address: setting a
+ * real one over it is an email *change*, and a change is confirmed from the
+ * old address, which is a mailbox nobody can read. Linking worked only
+ * while a guest had no address at all.
+ *
+ * Returns false when the function is not deployed, so the caller can fall
+ * back to the old path - which is still correct for a guest who never
+ * opened an app, and is the only thing keeping this working until
+ * `register` is deployed.
+ */
+export async function linkGuestEmail(email: string, password: string): Promise<boolean> {
+  const { error } = await supabase.functions.invoke('register', {
+    body: { action: 'link-email', email, password },
+  })
+  if (!error) return true
+
+  const response = (error as { context?: Response }).context
+  if (response?.status === 404) return false
+
+  const detail = await response?.json?.().catch(() => null)
+  if (detail?.error) throw new Error(detail.error)
+  return false
+}
+
 export async function makeAccountReal(target: string) {
   unwrap(await supabase.rpc('admin_make_real', { target }))
 }

@@ -36,7 +36,7 @@ function Demo() {
       <div className="mx-auto max-w-5xl">
         <WorldStage shots={[]} name="First Ground">
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-            <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border-2 border-white/25 bg-gradient-to-br from-brand to-brand-deep font-display text-3xl font-black shadow-pop">
+            <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border-2 border-on-art/25 bg-gradient-to-br from-brand to-brand-deep font-display text-3xl font-black shadow-pop">
               F
             </div>
 
@@ -45,16 +45,16 @@ function Demo() {
                 <span className="h-1.5 w-1.5 rounded-full bg-space-bright" />
                 143 playing now
               </span>
-              <h1 className="font-display text-4xl font-black leading-tight drop-shadow-lg">
+              <h1 className="font-display text-4xl font-black leading-tight text-on-art drop-shadow-lg">
                 First Ground
               </h1>
-              <p className="mt-1.5 text-sm text-white/75">
-                By <span className="font-bold text-white">Kobblon</span>
+              <p className="mt-1.5 text-sm text-on-art/75">
+                By <span className="font-bold text-on-art">Kobblon</span>
               </p>
             </div>
 
             <div className="flex shrink-0 flex-col items-end gap-2">
-              <div className="w-72 rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+              <div className="w-72 rounded-xl border border-on-art/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
                 <RatingBar likes={1900} dislikes={120} iLike iDislike={false} />
               </div>
 
@@ -66,7 +66,7 @@ function Demo() {
                 {[faStar, faBell, faEllipsis].map((icon, i) => (
                   <span
                     key={i}
-                    className="grid h-12 w-12 place-items-center rounded-xl border border-white/20 bg-black/40 text-white/80 backdrop-blur-sm"
+                    className="grid h-12 w-12 place-items-center rounded-xl border border-on-art/20 bg-black/40 text-on-art/80 backdrop-blur-sm"
                   >
                     <Glyph icon={icon} on={i === 0} />
                   </span>
