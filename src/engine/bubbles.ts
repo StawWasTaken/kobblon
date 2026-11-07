@@ -645,7 +645,7 @@ export class BubbleBoard {
     }
 
     const quiet = masked(look.color)
-    quiet.style.opacity = '0.28'
+    quiet.style.opacity = '0.35'
     glyph.appendChild(quiet)
     const loud = masked(look.level)
 
@@ -662,7 +662,7 @@ export class BubbleBoard {
       width: `${side}px`,
       height: `${side}px`,
       overflow: 'hidden',
-      transition: 'clip-path 90ms linear',
+      transition: 'clip-path 100ms linear',
     })
     level.appendChild(loud)
     glyph.appendChild(level)
@@ -704,13 +704,13 @@ export class BubbleBoard {
 
     /*
      * Drawn solid while it is muted, not at the quarter the live
-     * microphone sits at. That quarter is a backdrop for the blue rising
+     * microphone sits at. That third is a backdrop for the blue rising
      * through it; with nothing rising there is no backdrop, only the
-     * statement, and a statement at 28% reads as a thing fading rather
+     * statement, and a statement at a third reads as a thing fading rather
      * than a thing being said.
      */
     const [quiet] = mark.layers
-    if (quiet) quiet.style.opacity = muted ? '0.85' : '0.28'
+    if (quiet) quiet.style.opacity = muted ? '0.85' : '0.35'
 
     if (!muted) {
       if (mark.going) { clearTimeout(mark.going); mark.going = null }
@@ -727,21 +727,29 @@ export class BubbleBoard {
   /**
    * How full the glyph is, from a level between 0 and 1.
    *
-   * Staw asked for this to be "more powerful than what its in the HUD right
-   * now", so the curve is deliberately steeper than the meter's own: a
-   * fifth of the way up in volume is already more than half the glyph, and
-   * ordinary speech fills it. A meter that reads correctly and barely moves
-   * is the thing being complained about, and this is a drawing over
-   * somebody's head rather than an instrument.
+   * `sqrt(level)`, with a floor, and no multiplier. Round 67 asked for
+   * stronger than the HUD's and this was `level ** 0.45 * 1.7`; with it
+   * running, Staw's verdict was the other direction and the applications
+   * did the arithmetic: a tenth of full was already past half the glyph
+   * and a fifth was at the ceiling, so an ordinary speaking voice spent
+   * all of its time pinned. A thing that does not move does not read as a
+   * voice, which is the same fault a flat fill has at the other end.
    *
-   * It never reaches zero while the mark is up. A microphone that is on and
-   * drawn completely empty looks broken, and the mark only exists at all
-   * while somebody is making sound.
+   * So it is the curve they use, which is the point - one drawing of this
+   * and not two that disagree. The square root opens out the bottom of the
+   * range because `voice.level` is RMS, an average, and speech sits around
+   * a third of the way up. The gain is the part that had to go either way:
+   * an exponent with a multiplier on top compresses the top of the range
+   * into nothing, and the top of the range is what says somebody is
+   * shouting.
+   *
+   * The floor stays. A microphone that is on and drawn completely empty
+   * looks broken, and the mark is only up while somebody is making sound.
    */
   private setLevel(mark: Mark, level: number) {
     if (!mark.level) return
     const loud = Math.max(0, Math.min(1, level))
-    const share = Math.max(0.12, Math.min(1, loud ** 0.45 * 1.7))
+    const share = Math.max(0.12, Math.min(1, Math.sqrt(loud)))
     mark.level.style.clipPath = `inset(${((1 - share) * 100).toFixed(1)}% 0% 0% 0%)`
   }
 

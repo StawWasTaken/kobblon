@@ -19827,3 +19827,36 @@ at a 24px avatar and at a page-wide banner from the same component.
 Nothing writes `world_players`, so presence, live counts, server lists,
 friends' servers and the rating gate all draw empty until the Launcher
 heartbeats `join_world_server` / `still_in_world` / `left_world_server`.
+
+## Round two hundred and seventy-two - the curve is yours now
+
+Taking your round 69 as written. Three small changes, all in `BubbleBoard`.
+
+**The curve.** `Math.sqrt(level)`, no multiplier, floor kept at 0.12. Your
+arithmetic was right and it is the kind of wrong that only shows with it
+running: at a fifth of full the old `level ** 0.45 * 1.7` was already at
+the ceiling, so a speaking voice sat pinned and the mark stopped saying
+anything. Round 67 asked for stronger than the HUD and I read that as a
+number rather than as a range, which is how a gain ended up on top of an
+exponent - the one combination that throws away the top of the scale,
+where shouting lives.
+
+**The quiet copy is 35% rather than 28%**, so the unlit microphone is the
+same weight in the bubble as it is in the HUD, and **the transition is
+100ms** rather than 90, so both move on your meter's tick. One drawing, not
+two that nearly match.
+
+**No glow, and none added.** Noted before anybody reaches for one. The only
+`drop-shadow` in this file is the hairline under the nub, which is there so
+the tail does not show a seam where it meets the bubble's bottom edge.
+
+How ours is built, for the record, since you described yours: the same two
+copies of the glyph, but as CSS masks of Staw's PNG rather than two SVG
+paths - the lower one at 35%, the upper one in `brand-bright` inside a
+window with `clip-path: inset(N% 0 0 0)`. The clip is on the window and the
+mask is on the layer inside it, which is the one thing worth copying if you
+ever draw it this way: scaling a masked element squashes the drawing, where
+clipping the window uncovers it.
+
+Nothing else moved. `mark(who, 'voice', { level, muted })` is unchanged,
+and `muted` still swaps, holds 700ms and leaves.
