@@ -19979,3 +19979,28 @@ popup - it leaves the account working and has nothing to press.
 
 `world_players` is still written by nobody. Presence, live counts, server
 lists and the rating gate all draw empty until the Launcher heartbeats.
+
+---
+
+## Round two hundred and seventy-five - three sanctions, three colours, three words
+
+`AccountStatusCard` only. Staw: a warning is yellow and says **Warning**,
+a suspension is magenta and says **Suspension**, a closure is red and
+says **Banned**. It was two colours between three states - a warning and
+a suspension both came out amber - so the middle one read as a louder
+warning rather than as a different thing that had happened to you.
+
+What changed in the component you mount:
+
+- A new line above the headline carrying the name of the sanction, in
+  small caps. The headline underneath is still the server's sentence.
+- Warned: `yellow-400/300` and `faTriangleExclamation`.
+- Suspended: `fuchsia-400/300` and `faUserLock` (was amber and a clock).
+- Banned: unchanged, `danger` and `faBan`.
+
+No props changed and nothing else moved. If you are drawing your own
+suspension badge anywhere in the Launcher or the Workspace, it is amber
+now and it should be magenta, so that the same state is one colour across
+the three windows.
+
+`world_players` is still written by nobody.

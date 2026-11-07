@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faBan, faClock, faTriangleExclamation, faGavel, faScroll,
+  faBan, faClock, faTriangleExclamation, faUserLock, faGavel, faScroll,
   faLifeRing, faCheck, faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
@@ -34,20 +34,37 @@ import type { AccountLock } from '@/types/db'
  * beside its own sign-in, and everything it needs arrives as a prop.
  */
 
+/*
+ * Three decisions, three colours, three words.
+ *
+ * Staw: a warning is yellow and says "Warning", a suspension is magenta
+ * and says "Suspension", a closure is red and says "Banned". They used to
+ * be two colours between three states - a warning and a suspension both
+ * came out amber - which made the middle one read as a louder warning
+ * rather than as a different thing that has happened to you.
+ *
+ * The word is its own line above the headline, because the headline is
+ * the server's sentence and this is the name of the sanction. A person
+ * reading it wants to know which of the three this is before they read
+ * anything else.
+ */
 const tones = {
   warned: {
+    word: 'Warning',
     icon: faTriangleExclamation,
-    edge: 'border-amber-400/40',
-    wash: 'bg-amber-400/10',
-    text: 'text-amber-300',
+    edge: 'border-yellow-400/40',
+    wash: 'bg-yellow-400/10',
+    text: 'text-yellow-300',
   },
   suspended: {
-    icon: faClock,
-    edge: 'border-amber-400/40',
-    wash: 'bg-amber-400/10',
-    text: 'text-amber-300',
+    word: 'Suspension',
+    icon: faUserLock,
+    edge: 'border-fuchsia-400/40',
+    wash: 'bg-fuchsia-400/10',
+    text: 'text-fuchsia-300',
   },
   banned: {
+    word: 'Banned',
     icon: faBan,
     edge: 'border-danger/40',
     wash: 'bg-danger/10',
@@ -142,8 +159,14 @@ export function AccountStatusCard({
       )}>
         <Glyph icon={tone.icon} className={cn('mt-0.5', compact ? 'text-base' : 'text-xl')} />
         <div className="min-w-0">
+          <p className={cn(
+            'font-black uppercase tracking-[0.14em] opacity-90',
+            compact ? 'text-[10px]' : 'text-[11px]',
+          )}>
+            {tone.word}
+          </p>
           <h2 className={cn(
-            'font-black leading-tight',
+            'mt-0.5 font-black leading-tight',
             compact ? 'text-sm' : 'text-base sm:text-lg',
           )}>
             {standing.headline}
