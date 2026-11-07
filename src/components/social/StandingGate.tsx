@@ -64,6 +64,45 @@ export const standingShuts = (
   path: string,
 ) => (!!profile?.is_suspended || !!profile?.is_banned) && !sparedFromStanding(path)
 
+/*
+ * The second place a dismissed notice is written down.
+ *
+ * The first is the row: `violations.acknowledged_at`, set by
+ * `acknowledge_my_standing` (0332), which is where it belongs and is why
+ * reading a notice on the laptop counts on the phone. This is the net
+ * under that, and it exists because the failure it covers is the one
+ * Staw actually saw - press Got it, refresh, the card is back - which is
+ * what happens if the write did not land for any reason at all: the RPC
+ * erroring, the tab closing mid-call, a copy of the function that does
+ * not know about feature blocks yet.
+ *
+ * What it is allowed to do is deliberately one-sided. It can only ever
+ * hide a card the server has already said is a notice and nothing else -
+ * a restriction, which shuts nothing and asks nothing. It can never hide
+ * a warning, a suspension or a closure, and it can never show anything.
+ * So the worst it can do is let somebody off reading a notice twice on
+ * one machine, and the server stays the record.
+ */
+const READ = 'kob.notices-read'
+
+const noticesRead = (): string[] => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(READ) ?? '[]')
+    return Array.isArray(raw) ? raw.map(String) : []
+  } catch {
+    return []
+  }
+}
+
+const rememberNoticeRead = (id: string | number | null | undefined) => {
+  if (id === null || id === undefined) return
+  try {
+    localStorage.setItem(READ, JSON.stringify([...new Set([...noticesRead(), String(id)])].slice(-40)))
+  } catch {
+    /* A browser with storage switched off keeps the row and nothing else. */
+  }
+}
+
 export function StandingGate() {
   const { session, profile, signOut, refreshProfile } = useAuth()
   const location = useLocation()
@@ -105,6 +144,7 @@ export function StandingGate() {
    * and the order stops a frame where the card is up over a page that is
    * still showing.
    */
+  const token = session?.access_token
   const again = useRef<() => void>(() => {})
   again.current = () => {
     setAnswered(false)
@@ -114,6 +154,17 @@ export function StandingGate() {
   useEffect(() => {
     const me = session?.user?.id
     if (!me) return
+    /*
+     * The socket is told who it is before it asks for anything.
+     *
+     * `postgres_changes` is filtered by the same row-level policies as a
+     * read, so a socket that connected before the session was restored
+     * subscribes successfully and is then sent nothing at all - the one
+     * failure that looks exactly like "no decision has been made". The
+     * token is pushed in here rather than waited for, and the effect
+     * runs again when it changes.
+     */
+    if (token) void supabase.realtime.setAuth(token)
     const channel = supabase
       .channel(`standing:${me}`)
       .on(
@@ -127,14 +178,33 @@ export function StandingGate() {
         () => again.current(),
       )
       .subscribe()
-    return () => { void supabase.removeChannel(channel) }
-  }, [session?.user?.id])
+
+    /*
+     * And the net under it. A socket can be asleep, dropped or behind a
+     * network that ate the frame, and the symptom of each is the same:
+     * somebody looking at a page that is out of date about their own
+     * account. Coming back to the tab asks once. Not a poll - nothing
+     * happens while the tab is in front of them, because the socket is
+     * the thing that is meant to work and this only covers it being
+     * away.
+     */
+    const woke = () => { if (document.visibilityState === 'visible') again.current() }
+    document.addEventListener('visibilitychange', woke)
+    window.addEventListener('online', woke)
+
+    return () => {
+      document.removeEventListener('visibilitychange', woke)
+      window.removeEventListener('online', woke)
+      void supabase.removeChannel(channel)
+    }
+  }, [session?.user?.id, token])
 
   const one = standing.data
   /* The only one that can be closed: it shuts nothing and asks nothing. */
   const closeable = one?.level === 'limited'
   /* And once it has been read it is read, on every device, for good. */
-  const shows = !!one && one.level !== 'clear' && !(closeable && one.acknowledged)
+  const shows = !!one && one.level !== 'clear'
+    && !(closeable && (one.acknowledged || noticesRead().includes(String(one.violation_id))))
 
   if (!shows || answered || sparedFromStanding(location.pathname)) return null
 
@@ -159,6 +229,7 @@ export function StandingGate() {
          * from the server and not from this flag.
          */
         setAnswered(true)
+        if (closeable) rememberNoticeRead(one.violation_id)
         standing.reload()
         if (what === 'back') say('Welcome back. Keep it clean.', 'success')
         else if (what === 'warning_cleared') say('Noted. Keep it clean.', 'success')

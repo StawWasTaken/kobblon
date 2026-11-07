@@ -20284,3 +20284,43 @@ in the page, so what the card does next comes from the row rather than
 from this browser's memory of having pressed a button.
 
 0333 is still not applied.
+
+## Round two hundred and eighty-two - the socket knows who it is, and a read notice stays read
+
+Two repairs on round 281, both of them the same shape: a thing that
+works when everything is in order and is silent when it is not.
+
+### The socket is told who it is before it subscribes
+
+`postgres_changes` is filtered by the same row-level policies as a read.
+A socket that connected before the session was restored subscribes
+**successfully** and is then sent nothing - and nothing is exactly what a
+quiet account looks like, so there is no error anywhere and the feature
+simply does not happen for the people it happens to. The gate now calls
+`realtime.setAuth(token)` before subscribing and re-subscribes when the
+token changes.
+
+**If either application subscribes to these tables, it has the same
+trap**, and more sharply than the website: the Workspace's session is
+restored out of the keychain, so the socket is reliably up before anyone
+knows who is on it.
+
+Under it: coming back to the tab, and coming back online, re-ask once.
+Not a poll; nothing happens while somebody is sitting there.
+
+### A dismissed notice stays dismissed
+
+0332 writes it to `violations.acknowledged_at`, which is right and is why
+reading a notice on the laptop counts on the phone. The gate now also
+remembers the `violation_id` of a dismissed **restriction** in the
+browser, as a net under that write.
+
+It is deliberately one-sided and worth copying as such: it can only ever
+hide a card the server has already called a notice - a restriction, which
+shuts nothing and asks nothing - and it can never hide a warning, a
+suspension or a closure, and it can never show anything. The worst it can
+do is let one machine off reading a notice twice. The row stays the
+record.
+
+Nothing to apply; both are client-side. All migrations through 0333 are
+applied. `world_players` is still written by nobody.
