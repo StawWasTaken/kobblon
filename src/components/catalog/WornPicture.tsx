@@ -60,8 +60,11 @@ export function WornPicture({
     )
   }
 
-  // Still drawing is a quiet square; drawn and come back with nothing is the
-  // torn mark, because that one is worth telling somebody about.
-  if (!tried) return <span className={cn('block h-full w-full bg-media', className)} />
-  return <Missing className={className} />
+  /*
+   * Drawing and failing are the same mark now. Staw: "for when an image is
+   * loading or doesnt load, use the image we use for image not loading".
+   * A quiet square while it drew and the torn mark after were two drawings
+   * for one absence, and the swap between them read as something breaking.
+   */
+  return <Missing why={tried ? undefined : undefined} className={className} />
 }

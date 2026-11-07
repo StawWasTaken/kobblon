@@ -10,7 +10,7 @@ import * as THREE from 'three'
 import { BubbleBoard, type ChatLine } from '@/engine'
 
 const SAID = [
-  'hey',
+  'E',
   'only the newest one keeps its tail',
   'families stay whole now 👨‍👩‍👧 and so do flags 🏳️‍🌈',
 ]
@@ -62,6 +62,33 @@ function board(holder: HTMLElement, light: boolean) {
   floor.position.set(-3.2, -12, 0)
   bubbles.mark(floor, 'voice', { level: 0 })
 
+  /*
+   * And the muted one, on a loop: the slashed drawing, held, gone, and put
+   * back a moment later so there is always one to look at. Round 68 asked
+   * for the swap to be readable before the bubble leaves, and the only way
+   * to know whether it is is to watch it happen.
+   */
+  /*
+   * The comparison Staw drew: one letter in a bubble, and the mark over
+   * it. They have to be the same box, because that is what he asked for -
+   * "as big as if there was one character in it".
+   */
+  const same = new THREE.Object3D()
+  same.position.set(-6.4, -12, 0)
+  bubbles.add(same, {
+    id: 'one', from: 'Staw', who: 'staw-id', text: 'E', kind: 'said', at: Date.now(),
+  })
+  bubbles.mark(same, 'voice', { level: 0.7 })
+
+  const muting = new THREE.Object3D()
+  muting.position.set(6.4, -12, 0)
+  const loop = () => {
+    bubbles.mark(muting, 'voice', { level: 0.6 })
+    setTimeout(() => bubbles.mark(muting, 'voice', { muted: true }), 1400)
+    setTimeout(loop, 3000)
+  }
+  loop()
+
   const tick = () => {
     camera.aspect = (canvas.clientWidth || 2) / (canvas.clientHeight || 1)
     camera.updateProjectionMatrix()
@@ -70,6 +97,8 @@ function board(holder: HTMLElement, light: boolean) {
     who.updateMatrixWorld(true)
     quiet.updateMatrixWorld(true)
     floor.updateMatrixWorld(true)
+    muting.updateMatrixWorld(true)
+    same.updateMatrixWorld(true)
     bubbles.update(camera)
     requestAnimationFrame(tick)
   }

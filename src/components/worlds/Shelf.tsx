@@ -1,9 +1,9 @@
+import { Picture } from '@/components/brand/Picture'
 import { Children } from 'react'
 import { useRail } from '@/hooks/useRail'
 import { Link } from 'react-router-dom'
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
-import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
@@ -130,18 +130,12 @@ export function WorldTile({ world }: { world: World }) {
         to={worldLink(world)}
         className="block aspect-square overflow-hidden rounded-xl border border-ink-line bg-media"
       >
-        {art ? (
-          <img
-            src={art}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.04]"
-          />
-        ) : (
-          <span className="grid h-full w-full place-items-center">
-            <Glyph icon={worldIcon} className="text-2xl text-white/20" />
-          </span>
-        )}
+        <Picture
+          src={art}
+          alt={world.name}
+          className="h-full w-full"
+          pictureClassName="transition-transform duration-300 hover:scale-[1.04]"
+        />
       </Link>
       <p className="mt-1.5 line-clamp-2 text-sm font-bold leading-tight">{world.name}</p>
       <Stats world={world} />
@@ -162,26 +156,19 @@ export function WorldFeature({ world }: { world: World }) {
       to={worldLink(world)}
       className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border border-ink-line bg-media sm:w-[22rem]"
     >
-      {world.cover_url ? (
-        <img
-          src={world.cover_url}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-        />
-      ) : (
-        <span className="grid h-full w-full place-items-center">
-          <Glyph icon={worldIcon} className="text-3xl text-white/20" />
-        </span>
-      )}
+      <Picture
+        src={world.cover_url}
+        alt={world.name}
+        className="h-full w-full"
+        pictureClassName="transition-transform duration-500 group-hover:scale-[1.04]"
+      />
 
       <span className="absolute inset-x-0 bottom-0 flex items-end gap-2.5 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3 pt-10">
         {world.emblem_url && (
-          <img
+          <Picture
             src={world.emblem_url}
-            alt=""
-            loading="lazy"
-            className="h-9 w-9 shrink-0 rounded-lg border border-white/20 object-cover"
+            alt={world.name}
+            className="h-9 w-9 shrink-0 rounded-lg border border-white/20"
           />
         )}
         <span className="min-w-0">

@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
@@ -40,18 +41,7 @@ export function CommunityWall({
             className="group flex h-full flex-col rounded-3xl border border-white/10 bg-ink-card/60 p-6 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
           >
             <span className="block h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-media">
-              {group.icon_url ? (
-                <img
-                  src={group.icon_url}
-                  alt=""
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="grid h-full w-full place-items-center font-display text-xl font-extrabold text-white/60">
-                  {group.name.slice(0, 2).toUpperCase()}
-                </span>
-              )}
+              <Picture src={group.icon_url} alt={group.name} className="h-full w-full" />
             </span>
 
             <span className="mt-5 flex items-center gap-1.5">

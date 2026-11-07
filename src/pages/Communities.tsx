@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
@@ -305,8 +306,8 @@ function CommunityTile({ community, joined }: {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
           <span className="-mt-7 grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-brand-deep font-display text-base font-extrabold ring-4 ring-ink-card">
             {community.icon_url
-              ? <img src={community.icon_url} alt="" className="h-full w-full object-cover" />
-              : community.name.slice(0, 2).toUpperCase()}
+              ? <Picture src={community.icon_url} alt={community.name} className="h-full w-full" />
+              : <Picture src={null} alt={community.name} className="h-full w-full" />}
           </span>
 
           <span className="min-w-0 flex-1 sm:pt-0.5">

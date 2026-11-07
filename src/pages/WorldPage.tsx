@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -435,17 +436,11 @@ export default function WorldPage() {
         <WorldStage shots={shots} name={thing.name}>
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-white/25 bg-gradient-to-br from-brand to-brand-deep shadow-pop sm:h-20 sm:w-20">
-              {(thing.emblem_url ?? thing.cover_url) ? (
-                <img
-                  src={thing.emblem_url ?? thing.cover_url ?? ''}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center font-display text-3xl font-black text-white/90">
-                  {thing.name.slice(0, 1).toUpperCase()}
-                </div>
-              )}
+              <Picture
+                src={thing.emblem_url ?? thing.cover_url}
+                alt={thing.name}
+                className="h-full w-full"
+              />
             </div>
 
             <div className="min-w-0 flex-1">

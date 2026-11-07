@@ -1,7 +1,7 @@
+import { Picture } from '@/components/brand/Picture'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faTag } from '@fortawesome/free-solid-svg-icons'
-import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
@@ -28,19 +28,12 @@ export function WorldCard({
       )}
     >
       <Link to={worldLink(world)} className="relative block aspect-[16/10] overflow-hidden bg-media">
-        {world.cover_url ? (
-          <img
-            src={world.cover_url}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <span className="grid h-full w-full place-items-center">
-            <Glyph icon={worldIcon} className="text-3xl text-white/20" />
-          </span>
-        )}
+        <Picture
+          src={world.cover_url}
+          alt={world.name}
+          className="h-full w-full"
+          pictureClassName="transition-transform duration-300 group-hover:scale-[1.03]"
+        />
       </Link>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3">

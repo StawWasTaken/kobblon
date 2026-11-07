@@ -66,16 +66,20 @@ export const playLink = (experienceId: string, code?: string, room?: string) => 
  * thing anybody can type, so it can never be the thing that grants
  * permission.
  *
- * **New contract.** The Workspace has to answer `kobblon://edit/<id>`. Until
- * it does, this behaves exactly as `play` does against a machine with no
- * Launcher: nothing opens and the caller is told, which is why it takes the
- * same `onMissing`.
+ * **The scheme is the Workspace's own.** This said `kobblon://edit/<id>`,
+ * which is the Launcher's scheme, so the Workspace would never have seen
+ * it: the applications register `kobblon://` and `kobblon-creator://`
+ * separately, and two schemes rather than one flag is what makes "open the
+ * player" and "open the editor" two different buttons. Their round 68.
+ *
+ * Nothing opens and the caller is told when the Workspace is not installed,
+ * which is why it takes the same `onMissing` as `play`.
  */
 export const editLink = (worldId: string, code?: string) => {
   if (!ID.test(worldId)) throw new Error('That is not a world id.')
-  if (!code) return `kobblon://edit/${worldId}`
+  if (!code) return `kobblon-creator://edit/${worldId}`
   if (!CODE.test(code)) throw new Error('That is not a sign in code.')
-  return `kobblon://edit/${worldId}?code=${code}`
+  return `kobblon-creator://edit/${worldId}?code=${code}`
 }
 
 /**
@@ -107,6 +111,15 @@ export async function play(experienceId: string, onMissing: () => void, room?: s
  * Workspace should take. The code is minted for `creator`, so it cannot be
  * spent on the Launcher, and a failure to mint is not a failure to open -
  * the Workspace still has its own sign-in page.
+ *
+ * **The link never grants the edit.** Staw asked that this "only opens the
+ * worlds you have permission to edit", and the important half of that is
+ * where it is decided: not here. A protocol link is a thing anybody can
+ * type, so the button only appears where editing is allowed, and the
+ * Workspace opens the World by asking the database for it as that account.
+ * Somebody who hand types the link for a World that is not theirs gets a
+ * code that signs them in as themselves and then a refusal, which is row
+ * level security answering rather than a client deciding its own rights.
  */
 export async function editInWorkspace(worldId: string, onMissing: () => void) {
   let code: string | undefined

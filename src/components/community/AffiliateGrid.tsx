@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -102,23 +103,15 @@ export function AffiliateGrid({
                   <span
                     className={cn(
                       'block aspect-square overflow-hidden rounded-xl ring-1 ring-ink-line',
-                      other.icon_url ? '' : 'bg-media',
                       'transition-[transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:ring-brand/70',
                     )}
                   >
-                    {other.icon_url ? (
-                      <img
-                        src={other.icon_url}
-                        alt=""
-                        loading="lazy"
-                        draggable={false}
-                        className="h-full w-full select-none object-cover"
-                      />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center font-display text-2xl font-extrabold text-white/70">
-                        {other.name.slice(0, 2).toUpperCase()}
-                      </span>
-                    )}
+                    <Picture
+                      src={other.icon_url}
+                      alt={other.name}
+                      draggable={false}
+                      className="h-full w-full select-none"
+                    />
                   </span>
 
                   <span className="mt-1.5 block truncate text-[13px] font-bold group-hover:text-link">

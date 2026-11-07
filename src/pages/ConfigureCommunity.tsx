@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -340,8 +341,8 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
         <div className="relative z-10 flex items-start gap-3 px-4 pb-4">
           <span className="-mt-8 grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-brand-deep font-display text-lg font-extrabold ring-4 ring-ink-card">
             {(emblemPreview ?? group.icon_url)
-              ? <img src={emblemPreview ?? group.icon_url ?? ''} alt="" className="h-full w-full object-cover" />
-              : (name || group.name).slice(0, 2).toUpperCase()}
+              ? <Picture src={emblemPreview ?? group.icon_url} alt={name || group.name} className="h-full w-full" />
+              : <Picture src={null} alt={name || group.name} className="h-full w-full" />}
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-lg font-extrabold">{name || group.name}</p>
@@ -745,8 +746,8 @@ function AffiliatesSection({ communityId }: { communityId: string }) {
                   <li key={c.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-ink-hover">
                     <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-deep text-xs font-extrabold">
                       {c.icon_url
-                        ? <img src={c.icon_url} alt="" className="h-full w-full object-cover" />
-                        : c.name.slice(0, 2).toUpperCase()}
+                        ? <Picture src={c.icon_url} alt={c.name} className="h-full w-full" />
+                        : <Picture src={null} alt={c.name} className="h-full w-full" />}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm font-bold">{c.name}</span>
                     <Button

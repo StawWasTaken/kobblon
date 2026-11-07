@@ -1,10 +1,9 @@
+import { Picture } from '@/components/brand/Picture'
 import { Link } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
 import { faCompass } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/States'
-import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
@@ -29,17 +28,13 @@ import type { World } from '@/types/db'
 
 function Cover({ world, className }: { world: World; className?: string }) {
   const art = world.cover_url ?? world.emblem_url
-  return art ? (
-    <img
+  return (
+    <Picture
       src={art}
-      alt=""
-      loading="lazy"
-      className={cn('h-full w-full object-cover transition-transform duration-500', className)}
+      alt={world.name}
+      className="h-full w-full"
+      pictureClassName={cn('transition-transform duration-500', className)}
     />
-  ) : (
-    <span className="grid h-full w-full place-items-center">
-      <Glyph icon={worldIcon} className="text-3xl text-white/20" />
-    </span>
   )
 }
 
@@ -66,11 +61,10 @@ function Lead({ world }: { world: World }) {
 
       <span className="absolute inset-x-0 bottom-0 flex items-end gap-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-16">
         {world.emblem_url && (
-          <img
+          <Picture
             src={world.emblem_url}
-            alt=""
-            loading="lazy"
-            className="h-12 w-12 shrink-0 rounded-xl border border-white/20 object-cover"
+            alt={world.name}
+            className="h-12 w-12 shrink-0 rounded-xl border border-white/20"
           />
         )}
         <span className="min-w-0">

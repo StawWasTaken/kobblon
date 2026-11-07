@@ -23,8 +23,9 @@ export function Missing({ why, className }: { why?: string; className?: string }
     <span
       role="img"
       aria-label={why ?? 'No picture'}
+      style={{ containerType: 'size' }}
       className={cn(
-        'flex h-full w-full flex-col items-center justify-center gap-2 bg-media p-3 text-center',
+        'flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden bg-media p-[6%] text-center',
         className,
       )}
     >
@@ -34,16 +35,22 @@ export function Missing({ why, className }: { why?: string; className?: string }
         * depending on which rule Tailwind happens to write last. Set the em
         * and it is the size it is asked for, everywhere.
         *
-        * Fixed rather than a share of the box, so the mark sits in the same
-        * place whether or not there is a line under it.
+        * A share of the box rather than one fixed size, because this now
+        * stands in for every picture on the site and those run from a 24px
+        * avatar to a page-wide banner. `cqmin` is the box's own shorter
+        * side, so the mark is the same fraction of whatever it is filling,
+        * and the cap keeps it from becoming the furniture on a big one.
         */}
       <Icon
         name="broken-image"
         className="shrink-0 opacity-40"
-        style={{ fontSize: '3.25rem' }}
+        style={{ fontSize: 'min(3.25rem, 46cqmin)' }}
       />
       {why && (
-        <span className="line-clamp-2 text-[11px] font-semibold leading-tight text-muted">
+        <span
+          className="line-clamp-2 font-semibold leading-tight text-muted"
+          style={{ fontSize: 'min(11px, 9cqmin)' }}
+        >
           {why}
         </span>
       )}

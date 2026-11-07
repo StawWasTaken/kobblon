@@ -1,5 +1,4 @@
-import { Glyph } from '@/components/brand/Glyph'
-import { faUserLarge } from '@fortawesome/free-solid-svg-icons'
+import { Picture } from '@/components/brand/Picture'
 import { useHeadshot } from '@/hooks/useHeadshot'
 import { cn } from '@/lib/cn'
 
@@ -30,8 +29,8 @@ export function Avatar({
    *
    * With it and nothing stored, their avatar is drawn and appears here -
    * which is every new account and every guest, who have a dressed avatar
-   * and no picture of it. Without it, initials, which is still right for
-   * the places that have a name and no person behind it.
+   * and no picture of it. Without it there is nothing to draw, and what
+   * shows is the same mark every other picture on the site shows.
    */
   personId?: string | null
   /**
@@ -46,29 +45,37 @@ export function Avatar({
    * Nobody is behind this one any more, so nothing is drawn for it.
    *
    * Not an error state dressed up: the account is gone or going, and the
-   * picture is a shot of an avatar that no longer exists. Initials would be
-   * worse - they are the initials of somebody who is not there.
+   * picture is a shot of an avatar that no longer exists. It gets the mark
+   * with a reason on it rather than a different drawing of its own.
    */
   unavailable?: boolean
 }) {
-  const initials = name.slice(0, 2).toUpperCase()
   const picture = useHeadshot(unavailable ? null : personId, unavailable ? null : src, changedAt)
+  /*
+   * One answer for a picture that is not there, and it is Staw's mark.
+   *
+   * It was three answers: initials where there was a name, a Font Awesome
+   * person where the account had gone, and whatever each caller drew for
+   * itself. "use it for everything that doesnt load, instead of a random
+   * svg icon like for user icon etc" - so the name is kept for the label
+   * and the drawing is the one the rest of the site uses.
+   */
   return (
     <span
       className={cn(
-        'inline-grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 font-bold uppercase',
-        unavailable ? 'bg-ink-raised text-muted' : 'bg-brand-deep text-white/90',
+        'inline-grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10',
         sizes[size],
         className,
       )}
       style={style}
       aria-hidden="true"
     >
-      {unavailable
-        ? <Glyph icon={faUserLarge} title="This picture could not load" />
-        : picture
-          ? <img src={picture} alt="" className="h-full w-full object-cover" loading="lazy" />
-          : initials}
+      <Picture
+        src={picture}
+        why={unavailable ? 'Nobody is here any more' : undefined}
+        className="h-full w-full"
+        alt={name}
+      />
     </span>
   )
 }

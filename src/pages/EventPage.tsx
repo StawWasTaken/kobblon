@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -112,8 +113,8 @@ export default function EventPage() {
           >
             <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-deep text-xs font-extrabold">
               {it.community_icon
-                ? <img src={it.community_icon} alt="" className="h-full w-full object-cover" />
-                : it.community_name.slice(0, 2).toUpperCase()}
+                ? <Picture src={it.community_icon} alt={it.community_name} className="h-full w-full" />
+                : <Picture src={null} alt={it.community_name} className="h-full w-full" />}
             </span>
             <span className="min-w-0">
               <span className="block text-xs text-muted">Hosted by</span>

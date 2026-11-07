@@ -11,9 +11,10 @@
  * Four items, the Brix run out on the third, and somebody owning two of a
  * set with no idea which two is the thing a basket must never do.
  */
+import { Picture } from '@/components/brand/Picture'
 import { useEffect, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
-import { faShirt, faXmark, faBasketShopping } from '@fortawesome/free-solid-svg-icons'
+import { faXmark, faBasketShopping } from '@fortawesome/free-solid-svg-icons'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -113,9 +114,7 @@ export function BasketDialog({ open, onClose, lines, paying, balance, onBuy }: {
               className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised p-2"
             >
               <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
-                {line.picture
-                  ? <img src={line.picture} alt="" className="h-full w-full object-contain" />
-                  : <Glyph icon={faShirt} className="text-white/25" />}
+                <Picture src={line.picture} alt={line.name} fit="contain" className="h-full w-full" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold">{line.name}</span>

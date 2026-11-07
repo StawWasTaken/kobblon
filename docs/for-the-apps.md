@@ -19731,3 +19731,99 @@ exactly right.
 
 `tools/site/bubbles-preview.html` draws three marks at three levels over a
 bright World and a dark one, if you want to see it without a World.
+
+## Round two hundred and seventy-one - one mark for every picture, the voice bubble at one character, and the Workspace's own scheme
+
+Answering your round 68, and one of Staw's that touches a shared component.
+
+### The voice bubble, the four items
+
+- **the size.** It is a one-character bubble, which is what Staw asked for
+  after seeing round 70's version over a head: "i want it to be as big as if
+  there was one character in it". `MARK_LOOK.size` is 22 - the chat
+  bubble's own line box, 1rem of Inter at 1.35 - and the padding is that
+  bubble's vertical padding on all four sides. So a bubble with a letter in
+  it and a voice mark are the same height by construction rather than by a
+  number somebody matched once
+- **the arrow.** There, from the same builder `say()` uses
+- **the icons are Staw's.** `/icons/ui/microphone.png` and, new this round,
+  `/icons/ui/mute-microphone.png`, both as CSS masks. `MARK_PICTURES` and
+  `MARK_MUTED_PICTURES` are exported; the constructor takes `pictures` and
+  `mutedPictures` if your window keeps them elsewhere
+- **the level.** `mark(who, 'voice', { level })`, 0 to 1, on a curve of
+  `level ** 0.45 * 1.7` with a floor of 0.12
+
+**And muting, which is the new one.** The signature is exactly what you
+asked for:
+
+    mark(who, 'voice', { level?: number; muted?: boolean })
+
+`muted: true` swaps both masked layers to the slashed drawing, draws it
+solid rather than at the quarter a live microphone sits at, empties the
+level because nothing is coming out of a muted microphone, holds it for
+700ms and then takes the bubble off itself. The hold is ours, as you said
+it should be - your `setTimeout` racing our `fadeOut` is two clocks
+deciding one thing. Saying `muted: false` before the timer puts the
+microphone back and cancels the leaving. A level sent while it is going is
+ignored rather than fighting the state.
+
+`forget` and `clear` cancel that timer too: a timer outliving a World is
+the sound service's bug in another coat.
+
+### The Workspace scheme was wrong, and it is yours that was right
+
+`editLink` built `kobblon://edit/<id>` - the **Launcher's** scheme - so the
+Workspace would never have seen it. It is `kobblon-creator://edit/<id>?code=`
+now. `editInWorkspace(worldId, onMissing)` mints the code for `creator`,
+and the button is already gated: on a World page it only appears when the
+World is yours, and in Creator Hub it only appears on your own.
+
+On "only opens the worlds you have permission to edit": agreed completely,
+and nothing on our side treats the link as a grant. The Workspace reads the
+World as that account and row level security answers.
+
+**And the policy question from 66, answered.** Yes, a code on a link may
+sign somebody in with no `state` check, and here is why that is not a hole
+being waved through: `state` exists so an application can recognise *its
+own* request coming back. When the press happens in a browser that has
+never spoken to the app there is no earlier request to recognise, so a
+`state` we invented and sent would be a value the app can only compare
+against something we also told it - which proves nothing. What carries the
+weight instead is that the code is single use, ten minutes long, minted
+only for a signed-in browser session and only for the one application it
+names. What we ask of you in exchange is the thing `state` would have
+bought: **a code arriving with no state opens a window that says whose
+account it just signed in as**, rather than signing in silently. That is
+the honest version of the CSRF mitigation, because the person is the only
+one who can tell that it is the wrong account.
+
+`?state=` is still accepted and still handed back untouched on
+`/creator/sign-in`, for the flow the Workspace starts itself.
+
+### One mark for every picture - this one changes a shared component
+
+Staw: "for when an image is loading or doesnt load, use the image we use
+for image not loading ... use it for everything that doesnt load, instead
+of a random svg icon like for user icon etc".
+
+There is a new `Picture` component (`@/components/brand/Picture`) and it is
+now what every picture on the site goes through. The mark is behind the
+picture from the first frame and the picture fades in over it, so loading
+and failing are the same drawing with no timer deciding which is being
+looked at.
+
+**What this means for you, if you import any of these:** `Avatar` no longer
+draws initials and no longer draws a Font Awesome person for a closed
+account. `Emblem` no longer draws initials. Neither takes a colour from the
+name any more, so a grid of people who have no picture is now a grid of
+marks rather than a grid of coloured circles - that is the intended look,
+not a regression. The `name` is still required and is still the label.
+
+`Missing` sizes itself off its own box now (`cqmin`, capped), so it works
+at a 24px avatar and at a page-wide banner from the same component.
+
+### Still true, still nothing writing it
+
+Nothing writes `world_players`, so presence, live counts, server lists,
+friends' servers and the rating gate all draw empty until the Launcher
+heartbeats `join_world_server` / `still_in_world` / `left_world_server`.

@@ -261,12 +261,25 @@ export type MarkLook = {
  * rather than a wide one's.
  */
 export const MARK_LOOK: MarkLook = {
-  size: 34,
+  /*
+   * A one-character bubble, which is what Staw asked for after seeing it
+   * over a head: "the mic icon in the bubble is too big, and the bubble
+   * itself it too big too, i want it to be as big as if there was one
+   * character in it".
+   *
+   * So it is not a number picked to look right. The glyph is the chat
+   * bubble's own line box - 1rem of Inter at 1.35 is 21.6px - and the
+   * padding is that bubble's vertical padding on all four sides, which is
+   * what makes the box square where a letter's would be a little wider. A
+   * bubble with a letter in it and this one are the same height by
+   * construction, so they stay the same height if the font ever changes.
+   */
+  size: 22,
   background: BUBBLE_LOOK.background,
   color: BUBBLE_LOOK.color,
   level: '#3A50FF',
   radius: BUBBLE_LOOK.radius,
-  padding: '0.3rem 0.4rem',
+  padding: '0.45rem',
   edge: BUBBLE_LOOK.edge,
   shadow: BUBBLE_LOOK.shadow,
   tail: { wide: 14, deep: 6, round: 1.9 },
@@ -296,6 +309,25 @@ export const MARK_PICTURES: Record<string, string> = {
   voice: '/icons/ui/microphone.png',
 }
 
+/**
+ * The same kinds, switched off.
+ *
+ * Round 68, Staw: "when you mute yourself then the mic in your vc bubble
+ * gets into a muted mic and less than one sec later disappears." A bubble
+ * that simply vanishes says "they stopped talking", and muting is not that
+ * - it is the one state a voice control must never be ambiguous about. So
+ * the drawing swaps, it is held long enough to be read, and then it goes.
+ *
+ * A kind with no muted drawing keeps its own and still leaves, rather than
+ * staying up because half the pair is missing.
+ */
+export const MARK_MUTED_PICTURES: Record<string, string> = {
+  voice: '/icons/ui/mute-microphone.png',
+}
+
+/** How long the slashed microphone is held before the bubble goes. */
+const MUTED_HELD = 700
+
 /** The kinds this build can draw, so a caller can refuse rather than guess. */
 export const MARK_KINDS = Object.keys(MARK_PICTURES)
 
@@ -314,6 +346,10 @@ type Mark = {
   level: HTMLElement | null
   /** The glyph's side in pixels, which is what a level is a share of. */
   tall: number
+  /** Both masked layers, so muting can swap the drawing in one place. */
+  layers: HTMLElement[]
+  /** The timer that takes a muted mark away, so it is only started once. */
+  going: ReturnType<typeof setTimeout> | null
 }
 
 type Bubble = {
@@ -347,6 +383,7 @@ export class BubbleBoard {
   private markLook: MarkLook
   /** Where each kind's drawing lives, resolved. */
   private pictures: Record<string, string>
+  private mutedPictures: Record<string, string>
 
   /**
    * The layer sits over the canvas and never takes a click: a bubble is
@@ -359,6 +396,8 @@ export class BubbleBoard {
     mark?: Partial<MarkLook>
     /** Where this window keeps the mark drawings, if not beside the site. */
     pictures?: Record<string, string>
+    /** And the switched-off ones. */
+    mutedPictures?: Record<string, string>
   } = {}) {
     this.look = { ...BUBBLE_LOOK, ...options.look }
     this.markLook = { ...MARK_LOOK, ...options.mark }
@@ -368,9 +407,10 @@ export class BubbleBoard {
      * over whole urls and nothing is prefixed onto them.
      */
     const base = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '')
-    const given = options.pictures ?? MARK_PICTURES
-    this.pictures = Object.fromEntries(Object.entries(given)
+    const whole = (given: Record<string, string>) => Object.fromEntries(Object.entries(given)
       .map(([kind, where]) => [kind, /^\w+:|^\/\//.test(where) ? where : base + where]))
+    this.pictures = whole(options.pictures ?? MARK_PICTURES)
+    this.mutedPictures = whole(options.mutedPictures ?? MARK_MUTED_PICTURES)
     this.contents = options.contents ?? null
 
     this.layer = document.createElement('div')
@@ -526,7 +566,7 @@ export class BubbleBoard {
    * it is worse than no chip. Marking the same kind twice does nothing, so
    * a caller may say it every frame if that is easier than tracking it.
    */
-  mark(who: THREE.Object3D, kind: string, how?: { level?: number }) {
+  mark(who: THREE.Object3D, kind: string, how?: { level?: number; muted?: boolean }) {
     const picture = this.pictures[kind]
     if (!picture) return
 
@@ -535,7 +575,8 @@ export class BubbleBoard {
     if (standing) {
       // Said again rather than put on again. A caller may say it every
       // frame, and with a level it is expected to: this is the cheap path.
-      if (how?.level !== undefined) this.setLevel(standing, how.level)
+      if (how?.muted !== undefined) this.setMuted(who, kind, standing, how.muted)
+      if (how?.level !== undefined && !standing.going) this.setLevel(standing, how.level)
       return
     }
 
@@ -606,6 +647,7 @@ export class BubbleBoard {
     const quiet = masked(look.color)
     quiet.style.opacity = '0.28'
     glyph.appendChild(quiet)
+    const loud = masked(look.level)
 
     /*
      * A window on the drawing rather than a drawing that stretches. The
@@ -622,7 +664,7 @@ export class BubbleBoard {
       overflow: 'hidden',
       transition: 'clip-path 90ms linear',
     })
-    level.appendChild(masked(look.level))
+    level.appendChild(loud)
     glyph.appendChild(level)
     element.appendChild(glyph)
 
@@ -632,12 +674,54 @@ export class BubbleBoard {
     this.layer.appendChild(element)
     requestAnimationFrame(() => { element.style.opacity = '1' })
 
-    const made: Mark = { element, level, tall: side }
+    const made: Mark = { element, level, tall: side, layers: [quiet, loud], going: null }
     this.setLevel(made, how?.level ?? 0)
+    if (how?.muted) this.setMuted(who, kind, made, true)
 
     const marks = already ?? new Map<string, Mark>()
     marks.set(kind, made)
     this.marked.set(who, marks)
+  }
+
+  /**
+   * Switched off: the slashed drawing, held, and then gone.
+   *
+   * Round 68. The hold lives here rather than in the caller because the
+   * fade does: a `setTimeout` on their side racing `fadeOut` on ours is
+   * two clocks deciding one thing, and the bubble would blink or linger
+   * depending on which won. They say `muted: true` once and this owns the
+   * rest of it.
+   *
+   * Unmuting before the timer is up puts the microphone back and cancels
+   * the leaving, which is somebody who tapped the wrong key.
+   */
+  private setMuted(who: THREE.Object3D, kind: string, mark: Mark, muted: boolean) {
+    const picture = muted ? (this.mutedPictures[kind] ?? this.pictures[kind]) : this.pictures[kind]
+    for (const layer of mark.layers) {
+      layer.style.maskImage = `url(${picture})`
+      layer.style.webkitMaskImage = `url(${picture})`
+    }
+
+    /*
+     * Drawn solid while it is muted, not at the quarter the live
+     * microphone sits at. That quarter is a backdrop for the blue rising
+     * through it; with nothing rising there is no backdrop, only the
+     * statement, and a statement at 28% reads as a thing fading rather
+     * than a thing being said.
+     */
+    const [quiet] = mark.layers
+    if (quiet) quiet.style.opacity = muted ? '0.85' : '0.28'
+
+    if (!muted) {
+      if (mark.going) { clearTimeout(mark.going); mark.going = null }
+      mark.element.style.opacity = '1'
+      return
+    }
+    if (mark.going) return
+
+    // Nothing is coming out of a muted microphone, so nothing rises in it.
+    if (mark.level) mark.level.style.clipPath = 'inset(100% 0% 0% 0%)'
+    mark.going = setTimeout(() => { this.unmark(who, kind) }, MUTED_HELD)
   }
 
   /**
@@ -666,6 +750,7 @@ export class BubbleBoard {
     const marks = this.marked.get(who)
     const mark = marks?.get(kind)
     if (!marks || !mark) return
+    if (mark.going) { clearTimeout(mark.going); mark.going = null }
     this.fadeOut(mark.element)
     marks.delete(kind)
     if (!marks.size) this.marked.delete(who)
@@ -817,7 +902,10 @@ export class BubbleBoard {
     this.tops.delete(who)
     // Marks too. A mark never expires, so leaving somebody out of this is
     // a microphone drawn for ever over a head that has gone.
-    for (const mark of this.marked.get(who)?.values() ?? []) this.fadeOut(mark.element)
+    for (const mark of this.marked.get(who)?.values() ?? []) {
+      if (mark.going) clearTimeout(mark.going)
+      this.fadeOut(mark.element)
+    }
     this.marked.delete(who)
   }
 
@@ -825,7 +913,15 @@ export class BubbleBoard {
     for (const stack of this.over.values()) for (const bubble of stack) this.drop(bubble)
     this.over.clear()
     this.tops.clear()
-    for (const marks of this.marked.values()) for (const mark of marks.values()) this.fadeOut(mark.element)
+    for (const marks of this.marked.values()) {
+      for (const mark of marks.values()) {
+        // A timer that outlives the World would take a mark off somebody
+        // who is not there, which is the sound service's bug in another
+        // coat: a thing started before the clear, landing after it.
+        if (mark.going) clearTimeout(mark.going)
+        this.fadeOut(mark.element)
+      }
+    }
     this.marked.clear()
   }
 

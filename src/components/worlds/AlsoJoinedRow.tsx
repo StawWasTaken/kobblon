@@ -1,3 +1,4 @@
+import { Picture } from '@/components/brand/Picture'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faThumbsUp, faUser } from '@fortawesome/free-solid-svg-icons'
@@ -44,18 +45,7 @@ export function AlsoJoinedRow({ worlds, bare }: {
               className="group min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <div className="aspect-square overflow-hidden rounded-2xl border border-ink-line bg-ink transition-colors group-hover:border-brand/70">
-                {picture ? (
-                  <img
-                    src={picture}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl font-black text-muted">
-                    {world.name.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
+                <Picture src={picture} alt={world.name} className="h-full w-full" />
               </div>
 
               <p className="mt-2 truncate text-sm font-semibold text-white">{world.name}</p>
