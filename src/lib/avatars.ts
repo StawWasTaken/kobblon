@@ -46,15 +46,33 @@ export function isGone(
   return !!person && (!!person.closed_at || !!person.is_banned)
 }
 
+/**
+ * The name a closed account actually carries.
+ *
+ * Since 0331 `ban_account` and `admin_delete_account` rename the row to
+ * `AccountDeleted<content_id>` - a real rename, the handle and the display
+ * name both, kept in `former_*` so that lifting it gives them back. So the
+ * name to print is the row's own name, and the words "Account Deleted" are
+ * only a fallback for a row closed before that migration, which still
+ * carries the real handle and must not have it printed.
+ */
+export function goneHandle(
+  person?: { username?: string | null; display_name?: string | null } | null,
+): string {
+  const stored = person?.display_name || person?.username || ''
+  return /^AccountDeleted/i.test(stored) ? stored : 'Account Deleted'
+}
+
 /** What to call them once there is nobody behind the name. */
 export function nameOf(
   person?: {
+    username?: string | null
     display_name?: string | null
     closed_at?: string | null
     is_banned?: boolean | null
   } | null,
   fallback = '?',
 ): string {
-  if (isGone(person)) return 'Account Deleted'
+  if (isGone(person)) return goneHandle(person)
   return person?.display_name || fallback
 }

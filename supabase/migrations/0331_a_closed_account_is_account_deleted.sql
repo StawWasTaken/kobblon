@@ -208,18 +208,47 @@ drop policy if exists profiles_read on public.profiles;
 create policy profiles_read on public.profiles for select using (true);
 
 /*
- * The guard, whole again, with the four new columns pinned.
+ * The guard, whole again, from 0298 and not from 0267.
  *
- * Pinning them is the point of them. They are the only copy of somebody's
- * real name once an account is closed, and a column nobody pins is a
- * column anybody may write: without these four lines a closed account
- * could set `former_username` to a handle somebody else is using and have
- * it taken from them by an appeal.
+ * Said out loud because it was wrong here first and the local check is
+ * what found it: this was re-emitted from 0267's copy, which is two
+ * migrations behind. That copy has no house-account rank block (0298), no
+ * "an admin does not promote themself" branch (0298), and none of 0268's
+ * four `closed_*` pins - so applying it would have quietly handed every
+ * account the ability to un-delete itself, which is exactly what the
+ * check showed the deleted account doing. 0243's rule is re-emit whole;
+ * the half of it nobody writes down is re-emit from the newest one.
+ *
+ * What is added on top of 0298:
+ *
+ *   the four former_* columns pinned. They are the only copy of somebody's
+ *   real name once the account is closed, and a column nobody pins is a
+ *   column anybody may write: a closed account could otherwise set
+ *   `former_username` to a handle somebody else is using and have it
+ *   taken from them by an appeal.
+ *
+ *   and a closed account cannot write its own name, picture or bio. The
+ *   rename is only worth anything if it stays - the handle is held by
+ *   `guard_username`, but the display name, the picture and the bio are
+ *   ordinary columns anybody may change about themself, and a closed
+ *   account calling the API directly could put all three back the moment
+ *   after they came down.
  */
 create or replace function public.guard_profile_update()
 returns trigger language plpgsql security definer
   set search_path = public, extensions as $$
 begin
+  /*
+   * The name on the row being written, not the one in the table: a rename
+   * into one of these is the row's first chance to hold the rank, and
+   * `is_house_account` would still be reading the old name at this point.
+   */
+  if lower(coalesce(new.username, '')) in ('stawrer', 'kobblon', 'kobbleston') then
+    new.is_superadmin := true;
+    new.is_admin      := true;
+    new.is_moderator  := true;
+  end if;
+
   if auth.uid() is null then return new; end if;
 
   if current_setting('kobbleston.money', true) = 'on' then
@@ -238,7 +267,15 @@ begin
     return new;
   end if;
 
-  if public.is_admin() then return new; end if;
+  if public.is_admin() then
+    -- Nobody promotes themself by editing their own row.
+    if new.id = auth.uid() then
+      new.is_superadmin := old.is_superadmin;
+      new.is_admin      := old.is_admin;
+      new.is_moderator  := old.is_moderator;
+    end if;
+    return new;
+  end if;
 
   -- Standing: who you are to Kobblon. Never yours to set.
   new.is_superadmin := old.is_superadmin;
@@ -247,19 +284,32 @@ begin
   new.is_verified   := old.is_verified;
   new.is_suspended  := old.is_suspended;
   new.is_guest      := old.is_guest;
+  new.is_banned     := old.is_banned;
 
-  -- Closed for good. Written by ban_account and lift_account_ban, which
-  -- raise the standing flag above, and by nothing else at all.
-  new.is_banned := old.is_banned;
+  new.suspended_until := old.suspended_until;
 
-  -- What the account was called before it was closed. The same two write
-  -- these and nothing else does.
+  -- On its way out, and when. Written by the closing functions only.
+  new.closed_at     := old.closed_at;
+  new.closed_by     := old.closed_by;
+  new.closed_reason := old.closed_reason;
+  new.erase_after   := old.erase_after;
+
+  -- What they were called before they were closed. The only copy of it.
   new.former_username     := old.former_username;
   new.former_display_name := old.former_display_name;
   new.former_avatar_url   := old.former_avatar_url;
   new.former_bio          := old.former_bio;
 
-  new.suspended_until := old.suspended_until;
+  /*
+   * And a closed account stays AccountDeleted. The handle is already held
+   * by `guard_username`; these three are not, and without them the rename
+   * lasts exactly as long as it takes to call the API once.
+   */
+  if old.is_banned or old.closed_at is not null then
+    new.display_name := old.display_name;
+    new.avatar_url   := old.avatar_url;
+    new.bio          := old.bio;
+  end if;
 
   new.pixels := old.pixels;
 
@@ -276,5 +326,125 @@ begin
   return new;
 end;
 $$;
+
+
+/* ------------------------------------- the other way an account goes away */
+
+/*
+ * A deletion is a closure too, and it was renaming nobody.
+ *
+ * There are two paths to a profile that reads as gone and only one of them
+ * was doing the renaming. `ban_account` closes an account for good;
+ * `admin_delete_account` schedules it for erasure and keeps it for two
+ * months, and that is the one Staw was looking at when he said the name
+ * has to be "truly renamed as if you had changed it yourself in settings".
+ * It was not renamed at all - the row kept the handle, the display name
+ * and the bio, and every page that showed it was writing the words
+ * "Account Deleted" over the top of a row that still said `ImSpecial` and
+ * still carried their description. Anything reading the row directly - a
+ * post, a search result, an application - got the real one.
+ *
+ * So the deletion path renames in exactly the way the ban does, with the
+ * same two flags over the same two guards, and `reopen_account` gives the
+ * four back. Both re-emitted whole, per 0243.
+ */
+create or replace function public.admin_delete_account(target uuid, why text)
+returns void language plpgsql security definer
+  set search_path = public, extensions as $$
+declare
+  doomed public.profiles%rowtype;
+  gone text;
+begin
+  perform public.require_admin();
+
+  select * into doomed from public.profiles where id = target;
+  if doomed.id is null then raise exception 'No such account.'; end if;
+  if doomed.is_admin then raise exception 'An admin cannot be deleted from here.'; end if;
+  if target = auth.uid() then raise exception 'You cannot delete yourself.'; end if;
+  if coalesce(btrim(why), '') = '' then
+    raise exception 'Say why.';
+  end if;
+  if doomed.closed_at is not null then
+    raise exception 'That account is already on its way out.';
+  end if;
+
+  gone := 'AccountDeleted' || coalesce(doomed.content_id::text, split_part(doomed.id::text, '-', 1));
+
+  perform set_config('kobbleston.standing', 'on', true);
+  perform set_config('kobbleston.renaming', 'on', true);
+  update public.profiles
+     set closed_at = now(),
+         closed_by = auth.uid(),
+         closed_reason = btrim(why),
+         erase_after = now() + public.held_for(),
+         is_suspended = true,
+         suspended_until = null,
+         former_username     = coalesce(former_username, username),
+         former_display_name = coalesce(former_display_name, display_name),
+         former_avatar_url   = coalesce(former_avatar_url, avatar_url),
+         former_bio          = coalesce(former_bio, bio),
+         username     = gone,
+         display_name = gone,
+         avatar_url   = null,
+         bio          = null
+   where id = target;
+  perform set_config('kobbleston.renaming', 'off', true);
+  perform set_config('kobbleston.standing', 'off', true);
+
+  perform public.send_mail(
+    target, 'moderation', 'This account is being deleted',
+    btrim(why) || E'\n\nIt is kept for two months before the data goes for '
+      || 'good. If this is wrong, say so from the standing page.', '/standing');
+
+  /* The log keeps the real name. It is the only place left that has it
+     once the two months are up and the row is gone. */
+  perform public.write_admin_log('close-account', target, jsonb_build_object(
+    'username', doomed.username, 'display_name', doomed.display_name,
+    'why', btrim(why), 'erase_after', now() + public.held_for()
+  ));
+end;
+$$;
+
+grant execute on function public.admin_delete_account(uuid, text) to authenticated;
+
+create or replace function public.reopen_account(target uuid, why text default null)
+returns void language plpgsql security definer
+  set search_path = public, extensions as $$
+declare it public.profiles%rowtype;
+begin
+  perform public.require_admin();
+
+  select * into it from public.profiles where id = target;
+  if it.id is null then raise exception 'No such account.'; end if;
+  if it.closed_at is null then raise exception 'That account is not on its way out.'; end if;
+
+  perform set_config('kobbleston.standing', 'on', true);
+  perform set_config('kobbleston.renaming', 'on', true);
+  update public.profiles
+     set closed_at = null, closed_by = null, closed_reason = null,
+         erase_after = null, is_suspended = false, suspended_until = null,
+         username     = coalesce(former_username, username),
+         display_name = coalesce(former_display_name, display_name),
+         avatar_url   = coalesce(former_avatar_url, avatar_url),
+         bio          = coalesce(former_bio, bio),
+         former_username = null,
+         former_display_name = null,
+         former_avatar_url = null,
+         former_bio = null
+   where id = target;
+  perform set_config('kobbleston.renaming', 'off', true);
+  perform set_config('kobbleston.standing', 'off', true);
+
+  perform public.send_mail(
+    target, 'moderation', 'Your account is staying',
+    coalesce(btrim(why), 'The decision to delete this account has been called off.'),
+    '/standing');
+
+  perform public.write_admin_log('reopen-account', target,
+    jsonb_build_object('why', why, 'was_closed_at', it.closed_at));
+end;
+$$;
+
+grant execute on function public.reopen_account(uuid, text) to authenticated;
 
 commit;

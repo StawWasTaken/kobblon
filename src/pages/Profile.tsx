@@ -51,7 +51,8 @@ import {
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
-import { avatarOf, isGone } from '@/lib/avatars'
+import { GoneProfile } from '@/components/social/GoneProfile'
+import { avatarOf, goneHandle, isGone } from '@/lib/avatars'
 import { NameMarks, Verified } from '@/components/brand/Verified'
 import { FaceGrid } from '@/components/social/PersonCard'
 import { ActivityLine } from '@/components/social/Whereabouts'
@@ -380,37 +381,27 @@ export default function Profile() {
   }
 
   /*
-   * An account that is gone, or on its way. The row is readable so that
-   * this can be said - Staw sent the picture of it: the name and the handle
-   * both read "Account Deleted", the picture will not load, and there is
-   * nothing else on the page because there is nothing else left.
+   * An account that is gone, or on its way.
+   *
+   * Staw asked for this page to be redesigned, and the thing that was
+   * wrong with it is that it was a card in the middle of nothing: the
+   * profile it replaced is a banner, a face over the edge of it and a
+   * column of panels, and this was a small box floating where all of that
+   * had been. It is the same shape as a profile now and empty inside it,
+   * which is what being gone looks like - the page is still somebody's
+   * page, and there is nobody in it.
+   *
+   * Nothing of theirs is drawn. No accent colour, because the accent was
+   * theirs; the banner is the empty hatch and the face is the mark every
+   * other missing picture on the site gets. Since 0331 the row itself is
+   * renamed to AccountDeleted<id>, so the name printed here is the row's
+   * own name and not a word painted over the top of a row that still says
+   * who they were.
    */
   if (isGone(user)) {
-    const stored = user.display_name || user.username || ''
-    const gonename = /^AccountDeleted/i.test(stored) ? stored : null
     return (
-      <Page width="narrow" className="py-10">
-        <Card className="flex flex-col items-center gap-4 py-10 text-center">
-          <PersonAvatar
-            person={user}
-            size="3xl"
-            className="h-24 w-24"
-          />
-          <div>
-            {/* The row's own name, where the row has one. Closing an
-                account renames it to AccountDeleted<id> since 0331, so the
-                page says the thing every post and every friend list says
-                rather than a second wording of it. */}
-            <h1 className="font-display text-2xl font-extrabold">
-              {gonename ?? 'Account Deleted'}
-            </h1>
-            <p className="mt-1 text-sm text-muted">@{gonename ?? 'AccountDeleted'}</p>
-          </div>
-          <p className="max-w-sm text-sm leading-relaxed text-muted">
-            This account was deleted. What was here has gone with it.
-          </p>
-          <Button to="/discover" variant="subtle">Discover Worlds</Button>
-        </Card>
+      <Page width="narrow" className="py-8 sm:py-10">
+        <GoneProfile handle={goneHandle(user)} />
       </Page>
     )
   }

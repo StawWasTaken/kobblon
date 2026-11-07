@@ -20007,3 +20007,62 @@ the three windows.
 
 **Correction to the line above, same batch:** the suspension icon is a
 plain `faLock`, not `faUserLock`. Staw asked for a simple lock.
+
+---
+
+## Round two hundred and seventy-six - a deletion renames too, and one rule for the name
+
+Two corrections to round 274, both found by the local checks, and one of
+them would have been bad.
+
+### A deletion is a closure too, and it was renaming nobody
+
+There are two paths to a profile that reads as gone and 274 only did one
+of them. `ban_account` closes an account for good; `admin_delete_account`
+schedules it for erasure and keeps it two months, and that is the path
+Staw was looking at. It was not renaming anything - the row kept the
+handle, the display name and the bio, and the website was writing the
+words "Account Deleted" over the top of a row that still said `ImSpecial`
+and still carried their description. **Anything reading the row directly,
+an application included, got the real one.**
+
+So `admin_delete_account` now renames exactly as `ban_account` does -
+`username` and `display_name` both become `AccountDeleted<content_id>`,
+`avatar_url` and `bio` go to null, the four are kept in `former_*` - and
+`reopen_account` gives all four back. Same two transaction flags over the
+same two guards.
+
+For you: **`closed_at is not null` now means the same thing as
+`is_banned` as far as the name goes.** A row with either is already
+anonymous. Do not write "Account Deleted" over a name yourself; print
+what the row says. A row that still carries a real name and a `closed_at`
+is one closed before this migration - there is a fallback for that on the
+website side and you may want the same: if the stored name does not begin
+`AccountDeleted`, say "Account Deleted" instead of printing it.
+
+### The guard was re-emitted from the wrong copy
+
+Said out loud because it is this project's own trap and I walked into it:
+274's `guard_profile_update` was re-emitted whole from **0267**, which is
+two migrations behind. That copy has no house-account rank block and no
+"an admin does not promote themself" branch (both 0298), and none of
+0268's four `closed_*` pins. Applying it would have handed every account
+the ability to un-delete itself. The local check caught it - the deleted
+account set `closed_at = null` on its own row and came back.
+
+0331 now re-emits from 0298 and adds, on top:
+
+- the four `former_*` columns pinned, so nobody can write their own
+  "former" handle and have somebody else's taken from them by an appeal;
+- and, when `old.is_banned or old.closed_at is not null`, `display_name`,
+  `avatar_url` and `bio` pinned as well. The handle was already held by
+  `guard_username`; these three were not, so the rename lasted exactly as
+  long as it took to call the API once.
+
+0243's rule is re-emit whole. The half nobody writes down is **re-emit
+from the newest one**.
+
+### Still not applied
+
+`0331` is still waiting on Staw. Nothing above is live until it is run.
+And `world_players` is still written by nobody.

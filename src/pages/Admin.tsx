@@ -1546,7 +1546,8 @@ export function PersonRow({ person, onChanged }: {
         lead="Two months, and then it is gone for good."
         points={[
           'They are locked out now and told why.',
-          'Their profile reads "Account Deleted" to everybody else.',
+          'They are renamed to AccountDeleted and their picture and description come down.',
+          'Their real name is kept, and calling this off gives it back.',
           'Nothing is actually erased until the two months are up, so this can be called off.',
         ]}
         confirmText="Start deleting"
