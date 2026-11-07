@@ -19910,3 +19910,72 @@ code on a link raising it is right: a notice that appears every time is a
 notice nobody reads on the one occasion it matters.
 
 Nothing else changed. `world_players` is still written by nobody.
+
+---
+
+## Round two hundred and seventy-four - a closed account is renamed, and the card follows the person
+
+Staw rewrote the warning/suspension/closure system from the top. Two
+halves: one changes what the database says about a closed account, which
+you read, and one is the website's own screen, which you do not. The first
+one changes meaning, so it is here.
+
+### A closed account is renamed, and its row is readable again
+
+Migration `0331` (**not applied yet** - Staw has to run it) changes
+`ban_account`:
+
+- `username` and `display_name` both become `AccountDeleted<content_id>`,
+  using the account's numeric id, e.g. `AccountDeleted4242`.
+- `avatar_url` becomes null and `bio` becomes null.
+- The real four are kept in new columns `former_username`,
+  `former_display_name`, `former_avatar_url`, `former_bio`, and
+  `lift_account_ban` puts them all back and clears them. Closing an
+  already-closed account does not overwrite them.
+- `profiles_read` goes from `not is_banned or is_moderator()` to
+  `using (true)`. **This is the line that matters to you.** A closed
+  account's profile row used to be invisible to everybody including
+  itself; now it reads, and what it holds is nothing of theirs.
+
+What that means for the applications:
+
+1. A profile you read may now come back with the name `AccountDeleted4242`
+   and no picture. That is not an error state and it is not a placeholder
+   you should fill in - it is the account's name now. Do not draw initials
+   for it and do not fall back to a cached older name.
+2. A closed account can read its own row, so anything of yours that
+   branched on "the profile call came back empty, they must be banned" is
+   now wrong. Read `is_banned` instead; it has been on the row since 0267.
+3. If you cache a display name anywhere, a closure will not invalidate it.
+   Nothing pushes. The rename is visible on the next read.
+
+`move_pixels`-shaped warning, since this writes a guarded table: the
+rename happens inside both `kobbleston.standing` and `kobbleston.renaming`
+transaction-local flags, because `guard_profile_update` pins the standing
+columns and `guard_username` pins the handle, and `security definer` does
+not exempt either. Checked locally under two identities with
+`select auth.uid()` printed first: the moderator's close renames and keeps
+the former values, a stranger reads the row and sees `AccountDeleted4242`,
+the closed account cannot write its own name back or un-suspend itself,
+and lifting restores all four.
+
+### The card, on the website side
+
+For completeness, because `AccountStatusCard` is a component you mount
+too and its wording changed in one place: on a **closed** account the
+closing paragraph now says the name and picture have come down and the
+rest has not, instead of "nothing of yours has been deleted". If you mount
+it in the Launcher's escape menu, you get the new sentence; nothing about
+its props changed.
+
+What else happened here and does not reach you: the card is now a popup
+over whatever page somebody is on rather than a page that replaced theirs,
+a suspended or closed account sees a blank page behind it with the bar and
+the rail still there, there is a log out button on it, and the website's
+`Locked` page is gone. A feature block ('limited') deliberately gets no
+popup - it leaves the account working and has nothing to press.
+
+### Still missing
+
+`world_players` is still written by nobody. Presence, live counts, server
+lists and the rating gate all draw empty until the Launcher heartbeats.

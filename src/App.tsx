@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Boundary } from '@/components/layout/Boundary'
 import { lazyPage } from '@/lib/lazyPage'
 import { PublicLayout } from '@/components/layout/PublicLayout'
+import { StandingGate } from '@/components/social/StandingGate'
 import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
 import { TitleTips } from '@/components/ui/TitleTips'
@@ -152,6 +153,14 @@ export default function App() {
               is mounted here rather than on a page because it is about the
               account and not about where somebody happens to be. */}
           <ClaimAppearance />
+          {/*
+            * A warning, a suspension or a closure, in front of whatever
+            * page somebody is on. Beside the router rather than inside one
+            * side's shell, because Staw asked for it "everywhere on the
+            * logged in pages (+forum)" and the forum wears its own chrome:
+            * mounted in `AppShell` it would have missed half the site.
+            */}
+          <StandingGate />
           {/* Every plain `title` on the page draws our bubble instead of the
               browser's grey box. One layer rather than a wrapper per tip. */}
           <TitleTips />

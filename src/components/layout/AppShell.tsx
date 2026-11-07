@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { Locked } from '@/components/social/Locked'
+import { standingShuts } from '@/components/social/StandingGate'
 import { AppSidebar, SidebarContent } from './AppSidebar'
 import { AppTopbar } from './AppTopbar'
 import { PhoneBar } from './PhoneBar'
@@ -33,9 +33,12 @@ export function AppShell() {
 
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 
-  const letThrough = ['/standing', '/support', '/guidelines', '/policies', '/terms', '/privacy']
-  const locked = !!profile?.is_suspended
-    && !letThrough.some((one) => location.pathname.startsWith(one))
+  /*
+   * Whether this page is blank behind the card. The card itself is mounted
+   * once beside the router, so every page of the site has it; this is only
+   * the part that cannot live there, which is the page it is standing over.
+   */
+  const shut = standingShuts(profile, location.pathname)
 
 
   return (
@@ -85,14 +88,16 @@ export function AppShell() {
           <div className="flex-1">
             <AdsProvider>
               {/*
-              * A shut-out account sees the one screen that explains it,
-              * wherever it was going. Decided from the row the profile
-              * already carries, so nothing is asked on a load where nobody
-              * is suspended - and the pages it does let through are the
-              * ones a suspension must not close: the record and the appeal
-              * on it, support, and the rules themselves.
+              * A suspended or closed account gets a blank page under the
+              * card, which is what Staw drew: "it just shows a blank
+              * background (still with the sidebar & topbar) with this
+              * popup card". Decided from the row the profile already
+              * carries, so nothing is asked on a load where nobody is
+              * suspended - and the pages it lets through are the ones a
+              * decision must not close: the record and the appeal on it,
+              * support, and the rules themselves.
               */}
-              {locked ? <Locked /> : <Outlet />}
+              {shut ? <div className="min-h-[60vh]" /> : <Outlet />}
             </AdsProvider>
           </div>
 
@@ -109,7 +114,7 @@ export function AppShell() {
             * in cards, and a card followed by a column of links twelve units
             * down is one more card.
             */}
-          <SiteFooter compact className="mt-24 sm:mt-28" />
+          {!shut && <SiteFooter compact className="mt-24 sm:mt-28" />}
         </main>
 
         <PhoneBar />

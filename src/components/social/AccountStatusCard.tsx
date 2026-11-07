@@ -275,9 +275,19 @@ export function AccountStatusCard({
           </Door>
         </div>
 
+        {/* What is actually true of the account, which is not the same
+            sentence in all three. A closed one is renamed and its picture
+            taken down the moment it closes, and saying nothing has changed
+            while somebody's profile reads AccountDeleted is a lie they can
+            check in one click. */}
         <p className="text-xs leading-relaxed text-muted">
-          Nothing of yours has been deleted. Your things, your Worlds and your Brix
-          are where you left them.
+          {which === 'banned'
+            ? 'Your name and your picture have come down, and your profile now'
+              + ' reads as a deleted account. Nothing else has been deleted:'
+              + ' your things, your Worlds and your Brix are where you left them,'
+              + ' and they come back with the account if this is lifted.'
+            : 'Nothing of yours has been deleted. Your things, your Worlds and'
+              + ' your Brix are where you left them.'}
         </p>
       </div>
     </section>

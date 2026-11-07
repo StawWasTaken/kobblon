@@ -60,11 +60,14 @@ export default function Home() {
   )
 
   /*
-   * Whatever has been decided about this account, at the top of the page
-   * somebody lands on. A warning does not shut anything, so without this it
-   * had nowhere at all to appear and sat unread on the standing page; a
-   * suspension and a closure get the whole screen instead, so here this is
-   * the one that is doing the work.
+   * The one decision the card over the page does not carry.
+   *
+   * A warning, a suspension and a closure are `StandingGate`'s now - in
+   * front of whatever page somebody is on, everywhere on the site. A
+   * feature block is not: it leaves the account working and there is
+   * nothing to press on it, so a popup over everything would be a wall
+   * with a door painted on it. It belongs at the top of Home, which is
+   * where it already was.
    */
   const say = useToast()
   const standing = useAsync(async () => (profile ? accountStanding() : null), [profile?.id])
@@ -85,7 +88,7 @@ export default function Home() {
     setAnswering(false)
   }
 
-  const decided = standing.data && standing.data.level !== 'clear' ? standing.data : null
+  const decided = standing.data?.level === 'limited' ? standing.data : null
 
   /*
    * Worked out once a render from the clock. Not state and not an effect:

@@ -45,8 +45,9 @@ export function Avatar({
    * Nobody is behind this one any more, so nothing is drawn for it.
    *
    * Not an error state dressed up: the account is gone or going, and the
-   * picture is a shot of an avatar that no longer exists. It gets the mark
-   * with a reason on it rather than a different drawing of its own.
+   * picture is a shot of an avatar that no longer exists. It gets the same
+   * mark as any other picture that is not there, and no words on it -
+   * Staw: "WITHOUT THE TEXT, i dont wanna see Nobody is here any more".
    */
   unavailable?: boolean
 }) {
@@ -70,12 +71,7 @@ export function Avatar({
       style={style}
       aria-hidden="true"
     >
-      <Picture
-        src={picture}
-        why={unavailable ? 'Nobody is here any more' : undefined}
-        className="h-full w-full"
-        alt={name}
-      />
+      <Picture src={picture} className="h-full w-full" alt={name} />
     </span>
   )
 }

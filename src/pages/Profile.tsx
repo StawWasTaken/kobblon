@@ -386,6 +386,8 @@ export default function Profile() {
    * nothing else on the page because there is nothing else left.
    */
   if (isGone(user)) {
+    const stored = user.display_name || user.username || ''
+    const gonename = /^AccountDeleted/i.test(stored) ? stored : null
     return (
       <Page width="narrow" className="py-10">
         <Card className="flex flex-col items-center gap-4 py-10 text-center">
@@ -395,8 +397,14 @@ export default function Profile() {
             className="h-24 w-24"
           />
           <div>
-            <h1 className="font-display text-2xl font-extrabold">Account Deleted</h1>
-            <p className="mt-1 text-sm text-muted">@Account Deleted</p>
+            {/* The row's own name, where the row has one. Closing an
+                account renames it to AccountDeleted<id> since 0331, so the
+                page says the thing every post and every friend list says
+                rather than a second wording of it. */}
+            <h1 className="font-display text-2xl font-extrabold">
+              {gonename ?? 'Account Deleted'}
+            </h1>
+            <p className="mt-1 text-sm text-muted">@{gonename ?? 'AccountDeleted'}</p>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
             This account was deleted. What was here has gone with it.
