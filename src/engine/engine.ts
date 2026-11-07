@@ -506,9 +506,16 @@ export class Engine {
      * the next gesture the browser will actually accept - which while
      * somebody is walking is the very next keypress. The guard is the
      * event that decides it and not the one that noticed.
+     *
+     * And the lock has two owners, not one. The line here read
+     * `this.wantLock = this.firstPerson`, so every wheel notch let go of a
+     * pointer that shiftlock was holding - the other session found it:
+     * "when you zoom in or out the cursor isnt locked anymore (with
+     * shiftlock)". `setShiftlock` had the rule right and this did not, which
+     * is the whole of the bug. Both places now ask the same question.
      */
-    this.wantLock = this.firstPerson
-    if (this.firstPerson) this.takeThePointer()
+    this.wantLock = this.firstPerson || this.shiftlockOn
+    if (this.wantLock) this.takeThePointer()
     else this.keyboard?.setPointerLock(false)
     return this.orbit.distance
   }

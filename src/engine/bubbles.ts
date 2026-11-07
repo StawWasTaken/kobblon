@@ -226,37 +226,95 @@ export type BubbleContents = (line: ChatLine) => Node[]
  * ignored rather than drawn blank.
  */
 export type MarkLook = {
-  /** The chip's side, in pixels. */
+  /** The glyph's side, in pixels. The bubble around it is drawn off this. */
   size: number
   background: string
   color: string
+  /**
+   * The level rising inside the glyph. Brand blue.
+   *
+   * Staw: "theres blue stuff going up and down inside of the icon as the
+   * user does sound". So it is a fill clipped to the microphone itself
+   * rather than a bar beside it - the drawing is the meter.
+   */
+  level: string
   radius: string
+  /** Round the glyph, so the mark is a bubble and not a chip. */
+  padding: string
   edge: string
   shadow: string
+  /** The nub, same shape as a bubble's and smaller. `wide: 0` turns it off. */
+  tail: { wide: number; deep: number; round: number }
 }
 
+/*
+ * A mark is the chat bubble with a microphone in it, not a chip.
+ *
+ * Round 67 from the applications, quoting Staw: "it must also have the same
+ * design as other bubbles (with an arrow, and a lil bigger) and it must be
+ * the same voice icon used on there". It was a 26px rounded square with a
+ * static glyph and no nub, which read as a status dot rather than as the
+ * same piece of furniture a bubble is. Everything shared with `BUBBLE_LOOK`
+ * is taken from it rather than restated, so the two cannot drift: the only
+ * numbers here are the ones that are genuinely the mark's own - how big the
+ * glyph is, what sits around it, and the nub at a narrow bubble's scale
+ * rather than a wide one's.
+ */
 export const MARK_LOOK: MarkLook = {
-  size: 26,
-  background: '#ffffff',
-  color: '#101012',
-  radius: '0.32em',
-  edge: '1px solid rgba(16, 16, 18, 0.12)',
-  shadow: '0 10px 24px -14px rgba(0, 0, 0, 0.55)',
+  size: 34,
+  background: BUBBLE_LOOK.background,
+  color: BUBBLE_LOOK.color,
+  level: '#3A50FF',
+  radius: BUBBLE_LOOK.radius,
+  padding: '0.3rem 0.4rem',
+  edge: BUBBLE_LOOK.edge,
+  shadow: BUBBLE_LOOK.shadow,
+  tail: { wide: 14, deep: 6, round: 1.9 },
 }
 
 /** The gap over the top bubble, which is the gap between two bubbles. */
 const MARK_GAP = 6
 
-/** Filled glyphs, by kind. Font Awesome's solid microphone, as its path. */
-const GLYPHS: Record<string, { box: string; path: string }> = {
-  voice: {
-    box: '0 0 384 512',
-    path: 'M192 0C139 0 96 43 96 96l0 128c0 53 43 96 96 96s96-43 96-96l0-128c0-53-43-96-96-96zM48 184c0-13.3-10.7-24-24-24S0 170.7 0 184l0 40c0 97.9 73.3 178.7 168 190.5l0 49.5-48 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l144 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0 0-49.5c94.7-11.8 168-92.6 168-190.5l0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40c0 79.5-64.5 144-144 144S48 303.5 48 224l0-40z',
-  },
+/**
+ * The drawing for each kind, as one of Staw's own icons.
+ *
+ * It was Font Awesome's solid microphone as a path, and it should never
+ * have been: Staw draws the interface icons and this is one of them - "use
+ * OUR MIC ICON". The same file the rest of the product uses, so the mark
+ * over a head and the button in the HUD are one drawing.
+ *
+ * Drawn as a mask rather than as an `<img>`, which is how `Icon` does it on
+ * the website too. A mask takes its colour from the element, so the same
+ * file gives both the quiet microphone and the blue filling up inside it,
+ * and nothing has to be redrawn in a second colour.
+ *
+ * Paths are resolved against the bundle's base, so a window serving the
+ * site from a subpath finds them; a window that keeps its icons somewhere
+ * else passes `pictures` to the constructor.
+ */
+export const MARK_PICTURES: Record<string, string> = {
+  voice: '/icons/ui/microphone.png',
 }
 
 /** The kinds this build can draw, so a caller can refuse rather than guess. */
-export const MARK_KINDS = Object.keys(GLYPHS)
+export const MARK_KINDS = Object.keys(MARK_PICTURES)
+
+
+/**
+ * One mark, and the piece of it a level moves.
+ *
+ * The element alone was enough while a mark was a static glyph. A level
+ * needs the rect inside it and the glyph's own box to scale against, and
+ * finding both again by query every twentieth of a second is work for
+ * nothing when they never change.
+ */
+type Mark = {
+  element: HTMLElement
+  /** The window over the blue drawing, or null for a kind without one. */
+  level: HTMLElement | null
+  /** The glyph's side in pixels, which is what a level is a share of. */
+  tall: number
+}
 
 type Bubble = {
   line: ChatLine
@@ -285,8 +343,10 @@ export class BubbleBoard {
   private box = new THREE.Box3()
 
   /** What is marked over each person, by kind. Nothing here expires. */
-  private marked = new Map<THREE.Object3D, Map<string, HTMLElement>>()
+  private marked = new Map<THREE.Object3D, Map<string, Mark>>()
   private markLook: MarkLook
+  /** Where each kind's drawing lives, resolved. */
+  private pictures: Record<string, string>
 
   /**
    * The layer sits over the canvas and never takes a click: a bubble is
@@ -297,9 +357,20 @@ export class BubbleBoard {
     look?: Partial<BubbleLook>
     contents?: BubbleContents
     mark?: Partial<MarkLook>
+    /** Where this window keeps the mark drawings, if not beside the site. */
+    pictures?: Record<string, string>
   } = {}) {
     this.look = { ...BUBBLE_LOOK, ...options.look }
     this.markLook = { ...MARK_LOOK, ...options.mark }
+    /*
+     * Resolved once, against the bundle's base, so a site served from a
+     * subpath finds the file. A window that keeps its icons elsewhere hands
+     * over whole urls and nothing is prefixed onto them.
+     */
+    const base = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '')
+    const given = options.pictures ?? MARK_PICTURES
+    this.pictures = Object.fromEntries(Object.entries(given)
+      .map(([kind, where]) => [kind, /^\w+:|^\/\//.test(where) ? where : base + where]))
     this.contents = options.contents ?? null
 
     this.layer = document.createElement('div')
@@ -383,37 +454,7 @@ export class BubbleBoard {
      * and it is its own element rather than a pseudo-element because
      * there is no stylesheet here to put one in.
      */
-    if (look.tail.wide > 0) {
-      const { wide, deep, round } = look.tail
-      const tail = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-      tail.setAttribute('width', String(wide))
-      tail.setAttribute('height', String(deep))
-      tail.setAttribute('viewBox', `0 0 ${wide} ${deep}`)
-      tail.dataset.tail = 'yes'
-      Object.assign(tail.style, {
-        position: 'absolute',
-        left: look.tailAt,
-        top: '100%',
-        // Up by a pixel, so the hairline along the bubble's bottom edge
-        // does not show through where the two meet.
-        marginTop: '-1px',
-        transform: 'translateX(-50%)',
-        display: 'block',
-        filter: 'drop-shadow(0 1px 0 rgba(16, 16, 18, 0.10))',
-      })
-
-      const nub = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      nub.setAttribute('fill', look.background)
-      nub.setAttribute('d', [
-        `M 0 0`,
-        `L ${wide} 0`,
-        `L ${wide / 2 + round} ${deep - round * 0.75}`,
-        `Q ${wide / 2} ${deep} ${wide / 2 - round} ${deep - round * 0.75}`,
-        'Z',
-      ].join(' '))
-      tail.appendChild(nub)
-      element.appendChild(tail)
-    }
+    if (look.tail.wide > 0) element.appendChild(this.nub(look.tail, look.background, look.tailAt))
 
     this.layer.appendChild(element)
     // Next frame, so the transition has something to move from.
@@ -433,6 +474,51 @@ export class BubbleBoard {
   }
 
   /**
+   * The nub under a bubble, as a drawn path rather than a border triangle.
+   *
+   * A border triangle's half-base and depth are the same number, so it
+   * cannot be wide and shallow, and it cannot round its point. The mark's
+   * nub is both. An `<svg>` under the bubble can be all three, and it is
+   * its own element rather than a pseudo-element because there is no
+   * stylesheet here to put one in.
+   *
+   * One builder for both, because round 67 asked for the mark to carry the
+   * same arrow a bubble does and two drawings of one shape is how the two
+   * stop matching.
+   */
+  private nub(tail: { wide: number; deep: number; round: number }, background: string, at: string) {
+    const { wide, deep, round } = tail
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('width', String(wide))
+    svg.setAttribute('height', String(deep))
+    svg.setAttribute('viewBox', `0 0 ${wide} ${deep}`)
+    svg.dataset.tail = 'yes'
+    Object.assign(svg.style, {
+      position: 'absolute',
+      left: at,
+      top: '100%',
+      // Up by a pixel, so the hairline along the bubble's bottom edge does
+      // not show through where the two meet.
+      marginTop: '-1px',
+      transform: 'translateX(-50%)',
+      display: 'block',
+      filter: 'drop-shadow(0 1px 0 rgba(16, 16, 18, 0.10))',
+    })
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    path.setAttribute('fill', background)
+    path.setAttribute('d', [
+      `M 0 0`,
+      `L ${wide} 0`,
+      `L ${wide / 2 + round} ${deep - round * 0.75}`,
+      `Q ${wide / 2} ${deep} ${wide / 2 - round} ${deep - round * 0.75}`,
+      'Z',
+    ].join(' '))
+    svg.appendChild(path)
+    return svg
+  }
+
+  /**
    * Put a mark over somebody, and leave it there.
    *
    * `who` is the same object a bubble goes over. `kind` is one of
@@ -440,12 +526,18 @@ export class BubbleBoard {
    * it is worse than no chip. Marking the same kind twice does nothing, so
    * a caller may say it every frame if that is easier than tracking it.
    */
-  mark(who: THREE.Object3D, kind: string) {
-    const glyph = GLYPHS[kind]
-    if (!glyph) return
+  mark(who: THREE.Object3D, kind: string, how?: { level?: number }) {
+    const picture = this.pictures[kind]
+    if (!picture) return
 
     const already = this.marked.get(who)
-    if (already?.has(kind)) return
+    const standing = already?.get(kind)
+    if (standing) {
+      // Said again rather than put on again. A caller may say it every
+      // frame, and with a level it is expected to: this is the cheap path.
+      if (how?.level !== undefined) this.setLevel(standing, how.level)
+      return
+    }
 
     const look = this.markLook
     const element = document.createElement('div')
@@ -454,10 +546,9 @@ export class BubbleBoard {
       position: 'absolute',
       left: '0',
       top: '0',
-      width: `${look.size}px`,
-      height: `${look.size}px`,
       display: 'grid',
       placeItems: 'center',
+      padding: look.padding,
       borderRadius: look.radius,
       background: look.background,
       border: look.edge,
@@ -468,34 +559,114 @@ export class BubbleBoard {
       opacity: '0',
     })
 
-    const drawing = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    drawing.setAttribute('viewBox', glyph.box)
-    drawing.setAttribute('fill', look.color)
-    drawing.setAttribute('aria-hidden', 'true')
-    Object.assign(drawing.style, {
-      width: `${Math.round(look.size * 0.52)}px`,
-      height: `${Math.round(look.size * 0.52)}px`,
-      display: 'block',
+    /*
+     * The icon, and the level inside it.
+     *
+     * Two layers of the same file, each masked by it: the microphone drawn
+     * quiet, and over it the same shape in brand blue with only the bottom
+     * share of it showing. So a level is Staw's own drawing filling up
+     * rather than a bar standing next to it, which is what he described -
+     * "blue stuff going up and down inside of the icon".
+     *
+     * The blue layer's mask is pinned to the glyph's own box while the
+     * layer itself is scaled, which is the whole trick: scaling a masked
+     * element would squash the drawing instead of uncovering it. So the
+     * mask sits on the child and the scale on the parent.
+     */
+    const side = Math.round(look.size)
+    const glyph = document.createElement('div')
+    Object.assign(glyph.style, {
+      position: 'relative',
+      width: `${side}px`,
+      height: `${side}px`,
+      overflow: 'hidden',
     })
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    line.setAttribute('d', glyph.path)
-    drawing.appendChild(line)
-    element.appendChild(drawing)
+
+    const masked = (colour: string) => {
+      const layer = document.createElement('div')
+      Object.assign(layer.style, {
+        position: 'absolute',
+        left: '0',
+        top: '0',
+        width: `${side}px`,
+        height: `${side}px`,
+        backgroundColor: colour,
+        maskImage: `url(${picture})`,
+        WebkitMaskImage: `url(${picture})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+      })
+      return layer
+    }
+
+    const quiet = masked(look.color)
+    quiet.style.opacity = '0.28'
+    glyph.appendChild(quiet)
+
+    /*
+     * A window on the drawing rather than a drawing that stretches. The
+     * window is what moves and the icon inside it stays the size it is, so
+     * a half-full microphone is the bottom half of the microphone.
+     */
+    const level = document.createElement('div')
+    Object.assign(level.style, {
+      position: 'absolute',
+      left: '0',
+      top: '0',
+      width: `${side}px`,
+      height: `${side}px`,
+      overflow: 'hidden',
+      transition: 'clip-path 90ms linear',
+    })
+    level.appendChild(masked(look.level))
+    glyph.appendChild(level)
+    element.appendChild(glyph)
+
+    // The same arrow a bubble has. Round 67: "with an arrow".
+    if (look.tail.wide > 0) element.appendChild(this.nub(look.tail, look.background, '50%'))
 
     this.layer.appendChild(element)
     requestAnimationFrame(() => { element.style.opacity = '1' })
 
-    const marks = already ?? new Map<string, HTMLElement>()
-    marks.set(kind, element)
+    const made: Mark = { element, level, tall: side }
+    this.setLevel(made, how?.level ?? 0)
+
+    const marks = already ?? new Map<string, Mark>()
+    marks.set(kind, made)
     this.marked.set(who, marks)
+  }
+
+  /**
+   * How full the glyph is, from a level between 0 and 1.
+   *
+   * Staw asked for this to be "more powerful than what its in the HUD right
+   * now", so the curve is deliberately steeper than the meter's own: a
+   * fifth of the way up in volume is already more than half the glyph, and
+   * ordinary speech fills it. A meter that reads correctly and barely moves
+   * is the thing being complained about, and this is a drawing over
+   * somebody's head rather than an instrument.
+   *
+   * It never reaches zero while the mark is up. A microphone that is on and
+   * drawn completely empty looks broken, and the mark only exists at all
+   * while somebody is making sound.
+   */
+  private setLevel(mark: Mark, level: number) {
+    if (!mark.level) return
+    const loud = Math.max(0, Math.min(1, level))
+    const share = Math.max(0.12, Math.min(1, loud ** 0.45 * 1.7))
+    mark.level.style.clipPath = `inset(${((1 - share) * 100).toFixed(1)}% 0% 0% 0%)`
   }
 
   /** Take one off. The only thing that ends a mark. */
   unmark(who: THREE.Object3D, kind: string) {
     const marks = this.marked.get(who)
-    const element = marks?.get(kind)
-    if (!marks || !element) return
-    this.fadeOut(element)
+    const mark = marks?.get(kind)
+    if (!marks || !mark) return
+    this.fadeOut(mark.element)
     marks.delete(kind)
     if (!marks.size) this.marked.delete(who)
   }
@@ -614,19 +785,27 @@ export class BubbleBoard {
       if (marks?.size) {
         const x = (at.x * 0.5 + 0.5) * width
         const y = (-at.y * 0.5 + 0.5) * height - lift - (lift > 0 ? MARK_GAP : 0)
-        const side = this.markLook.size + 4
-        const spread = (marks.size - 1) * side * 0.5
-        let i = 0
-        for (const element of marks.values()) {
-          const style = element.style
-          if (!shown) { style.opacity = '0'; i += 1; continue }
-          const across = (i * side - spread) * near
+        /*
+         * Measured rather than assumed, now that a mark is a bubble with
+         * padding and a nub: `markLook.size` is the glyph inside it and not
+         * the width of the thing being placed. Two marks laid out off that
+         * number would overlap by their padding.
+         */
+        const gap = 4
+        const row = [...marks.values()]
+        const widths = row.map((mark) => mark.element.offsetWidth || this.markLook.size)
+        const total = widths.reduce((sum, one) => sum + one, 0) + gap * (row.length - 1)
+        let across = -total / 2
+        row.forEach((mark, i) => {
+          const style = mark.element.style
+          const centre = (across + widths[i] / 2) * near
+          across += widths[i] + gap
+          if (!shown) { style.opacity = '0'; return }
           style.transform =
-            `translate3d(${(x + across).toFixed(1)}px, ${y.toFixed(1)}px, 0)`
+            `translate3d(${(x + centre).toFixed(1)}px, ${y.toFixed(1)}px, 0)`
             + ` translate(-50%, -100%) scale(${near.toFixed(3)})`
           style.opacity = heard.toFixed(3)
-          i += 1
-        }
+        })
       }
     }
   }
@@ -638,7 +817,7 @@ export class BubbleBoard {
     this.tops.delete(who)
     // Marks too. A mark never expires, so leaving somebody out of this is
     // a microphone drawn for ever over a head that has gone.
-    for (const element of this.marked.get(who)?.values() ?? []) this.fadeOut(element)
+    for (const mark of this.marked.get(who)?.values() ?? []) this.fadeOut(mark.element)
     this.marked.delete(who)
   }
 
@@ -646,7 +825,7 @@ export class BubbleBoard {
     for (const stack of this.over.values()) for (const bubble of stack) this.drop(bubble)
     this.over.clear()
     this.tops.clear()
-    for (const marks of this.marked.values()) for (const element of marks.values()) this.fadeOut(element)
+    for (const marks of this.marked.values()) for (const mark of marks.values()) this.fadeOut(mark.element)
     this.marked.clear()
   }
 

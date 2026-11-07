@@ -46,11 +46,21 @@ function board(holder: HTMLElement, light: boolean) {
    * And the voice mark, which is the thing to look at here: above the
    * stack, not in it, and still drawn on the head with nothing said.
    */
-  bubbles.mark(who, 'voice')
+  bubbles.mark(who, 'voice', { level: 0.8 })
 
+  /*
+   * Three levels side by side, which is the only way to see whether the
+   * fill inside the glyph actually reads: one loud, one speaking, one on
+   * the floor. The last is what a mark looks like at the quietest it is
+   * ever drawn - it is never put up at all while somebody is silent.
+   */
   const quiet = new THREE.Object3D()
   quiet.position.set(3.2, -12, 0)
-  bubbles.mark(quiet, 'voice')
+  bubbles.mark(quiet, 'voice', { level: 0.18 })
+
+  const floor = new THREE.Object3D()
+  floor.position.set(-3.2, -12, 0)
+  bubbles.mark(floor, 'voice', { level: 0 })
 
   const tick = () => {
     camera.aspect = (canvas.clientWidth || 2) / (canvas.clientHeight || 1)
@@ -59,6 +69,7 @@ function board(holder: HTMLElement, light: boolean) {
     camera.updateMatrixWorld(true)
     who.updateMatrixWorld(true)
     quiet.updateMatrixWorld(true)
+    floor.updateMatrixWorld(true)
     bubbles.update(camera)
     requestAnimationFrame(tick)
   }

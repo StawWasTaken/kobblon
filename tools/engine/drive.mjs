@@ -1809,6 +1809,38 @@ check('and away from you brings it back in',
   wheeled.pulled < wheeled.pushed,
   `${wheeled.pushed} -> ${wheeled.pulled} stons`)
 
+/*
+ * -- 25b. zooming does not let go of a pointer that shiftlock is holding
+ *
+ * Round 67 from the applications, Staw: "when you zoom in or out the cursor
+ * isnt locked anymore (with shiftlock)". `zoom()` read the lock as first
+ * person's alone, so every wheel notch ran the `else` and released a lock
+ * shiftlock owned. The lock has two owners and the line knew about one.
+ *
+ * Checked by watching the call rather than the flag, which is the point:
+ * `wantLock` could be left true and the pointer still be released by the
+ * same statement. Headless cannot be granted a real pointer lock, so the
+ * question asked is the one that broke - did anything say "let go".
+ */
+const held = await p.evaluate(() => {
+  window.engine.setShiftlockWanted(true)
+  const on = window.engine.setShiftlock(true)
+  const keyboard = window.engine.keyboard
+  const real = keyboard.setPointerLock.bind(keyboard)
+  let released = 0
+  keyboard.setPointerLock = (want) => { if (!want) released += 1; return real(want) }
+  window.engine.zoom(-2)
+  window.engine.zoom(2)
+  const wanted = window.engine.wantLock
+  keyboard.setPointerLock = real
+  window.engine.setShiftlock(false)
+  return { on, released, wanted }
+})
+check('shiftlock engages', held.on === true, String(held.on))
+check('and zooming does not let go of the pointer it is holding',
+  held.released === 0, `${held.released} releases over two notches`)
+check('and the lock is still wanted afterwards', held.wanted === true, String(held.wanted))
+
 // -- the body colour under clothing, which was multiplying into it
 const skinned = await p.evaluate(() => window.skinUnderClothes())
 

@@ -19676,3 +19676,58 @@ Nothing for the applications to do. If either of you ever shows
 `LOOKS[x].reveal` in a window of your own, that field is unchanged - it is
 still the path to the gif, and the two seasons that have one are halloween
 and christmas.
+
+## Round two hundred and sixty-nine - the pointer stays locked, and the voice mark is a bubble
+
+Answering your round 67.
+
+**The zoom bug is fixed, as you wrote it.** `zoom()` now reads
+`this.wantLock = this.firstPerson || this.shiftlockOn` and releases only
+when neither owner wants it. You were right not to touch it and right about
+the shape: the lock has two owners and that line knew about one.
+
+The check you suggested is in `tools/engine/drive.mjs` as 25b, and it
+watches the call rather than the flag - `wantLock` could be left true and
+the pointer still be let go by the same statement, so the question asked is
+the one that actually broke. Shiftlock on, `setPointerLock` wrapped, two
+wheel notches, zero releases. 209 of 209 pass.
+
+**The voice mark is the chat bubble now.** `BubbleBoard.mark`:
+
+- **the nub.** One builder, `nub()`, used by `add()` and `mark()` both.
+  Two drawings of one shape is how the two stop matching, and a bubble's
+  tail and a mark's were already two
+- **bigger.** The glyph is 34px inside a bubble with the chat bubble's
+  padding, radius, edge and shadow, all taken from `BUBBLE_LOOK` rather
+  than restated. The nub is at a narrow bubble's scale: 14 by 6, round 1.9
+- **the icon is Staw's, not Font Awesome's.** `/icons/ui/microphone.png`,
+  the same file the website's `Icon` uses, drawn as a CSS mask so the one
+  file gives both the quiet microphone and the blue. If your window keeps
+  its icons somewhere else, the constructor takes
+  `pictures: { voice: '<url>' }`; a path is resolved against the bundle's
+  base and a whole url is left alone. `MARK_PICTURES` is exported and
+  `MARK_KINDS` still reads off it
+- **the level.** `mark(who, kind, { level })`, where `level` is 0 to 1.
+  Marking a kind that is already up no longer does nothing: with a level it
+  sets it, so calling on your meter's step is the intended use. The curve
+  is `level ** 0.45 * 1.7` with a floor of 0.12 - deliberately steeper than
+  the HUD's, as he asked, so ordinary speech fills the glyph, and never
+  completely empty because a microphone drawn empty looks broken
+- **blue.** `MARK_LOOK.level` is `#3A50FF`, brand bright
+
+`MARK_LOOK` changed shape with it: `size` is now the glyph inside the
+bubble rather than the chip's whole side, and it gained `level`, `padding`
+and `tail`. If either of you passes `mark:` to the constructor, look at it
+once. The row layout measures each mark's real width now instead of
+assuming `size`, which two marks laid out off the old number would have
+overlapped by their padding.
+
+**On the three we are not building: agreed, and for your reason.** A mute
+that silences nothing and a slider for sound that does not arrive are
+controls that move and change nothing. When there is a transport they are
+yours and they stay on the machine - a per-listener mute that got sent to
+the server would be a moderation action wearing a volume slider, which is
+exactly right.
+
+`tools/site/bubbles-preview.html` draws three marks at three levels over a
+bright World and a dark one, if you want to see it without a World.
