@@ -19995,7 +19995,7 @@ What changed in the component you mount:
 - A new line above the headline carrying the name of the sanction, in
   small caps. The headline underneath is still the server's sentence.
 - Warned: `yellow-400/300` and `faTriangleExclamation`.
-- Suspended: `fuchsia-400/300` and `faUserLock` (was amber and a clock).
+- Suspended: `fuchsia-400/300` and `faLock` (was amber and a clock).
 - Banned: unchanged, `danger` and `faBan`.
 
 No props changed and nothing else moved. If you are drawing your own
@@ -20004,3 +20004,6 @@ now and it should be magenta, so that the same state is one colour across
 the three windows.
 
 `world_players` is still written by nobody.
+
+**Correction to the line above, same batch:** the suspension icon is a
+plain `faLock`, not `faUserLock`. Staw asked for a simple lock.

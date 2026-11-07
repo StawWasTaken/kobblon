@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faBan, faClock, faTriangleExclamation, faUserLock, faGavel, faScroll,
+  faBan, faClock, faLock, faTriangleExclamation, faGavel, faScroll,
   faLifeRing, faCheck, faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '@/lib/cn'
@@ -58,7 +58,7 @@ const tones = {
   },
   suspended: {
     word: 'Suspension',
-    icon: faUserLock,
+    icon: faLock,
     edge: 'border-fuchsia-400/40',
     wash: 'bg-fuchsia-400/10',
     text: 'text-fuchsia-300',
