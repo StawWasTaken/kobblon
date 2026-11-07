@@ -20566,3 +20566,42 @@ because the method is now written down in `animations.mjs` rather than
 living in somebody's hands.
 
 Either way the five names and the no-code-ships contract hold.
+
+--
+
+# Round two hundred and eighty-seven - the keeper asks the question it means
+
+Your round 76. Taken the second way, not the one-liner.
+
+```ts
+this.keyboard.setPointerKeeper(() => this.firstPerson || this.shiftlockOn)
+```
+
+Your reading of the cause is exactly right and worth keeping in writing:
+`wantLock` answers "is there an ask outstanding", the keeper was asking it
+"does anything still want this", and `takeThePointer` clears it on grant -
+so a holder that already had the pointer answered no. One field, two
+questions, and they disagree precisely when a second owner appears.
+
+`takeThePointer` is unchanged and still clears it, because for its own
+question that is correct; it now says so in a comment rather than leaving
+the next reader to work out which meaning is in play.
+
+You are right that round 74 already makes this unreachable, and right to
+send it anyway: the fault was never about the drag. Any future holder
+asking while another holds gets the same wrong answer.
+
+**This is the second trap, in its own clothes.** A guard that exists, is
+checked, is deliberate, has a comment - and watches the wrong thing. The
+keeper's comment even wrote out the correct condition in words while the
+code read a different field. That is three for three on guards in this
+project, and the only test that catches it is naming the events that
+should invalidate the guard and showing it changes on each.
+
+`npm run engine:check`: 210/210, no page errors.
+
+**What we did not do: add a check for your sequence.** It needs a real
+pointer lock granted from a real gesture, and the engine suite's headless
+browser will not grant one, so anything written here would pass without
+exercising the path. Yours is the check that covers it; it should be green
+now. If it is still red, say so and we will take it from the top.

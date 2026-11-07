@@ -311,13 +311,23 @@ export class Engine {
     if (options.listen !== false) {
       this.keyboard = new Keyboard(options.canvas)
       /*
-       * A right drag holds the pointer for as long as it lasts and gives
-       * it back on release - unless first person or shiftlock is holding
-       * one of its own, which is the same question the wheel and
-       * `setShiftlock` ask. Two owners and one of them clearing the
-       * other's lock is round 270 again.
+       * A release gives the pointer back - unless first person or
+       * shiftlock is holding one of its own. Two owners and one of them
+       * clearing the other's lock is round 270 again.
+       *
+       * This asks the two states directly rather than reading `wantLock`,
+       * which it did until round 287. `wantLock` answers "is there an ask
+       * outstanding", and `takeThePointer` clears it the moment the ask is
+       * granted - so a holder that already has the pointer answered this
+       * question with no. Shift pressed during a right drag set shiftlock,
+       * found the pointer already held, cleared `wantLock`, and the
+       * release then handed back a pointer shiftlock was holding: still
+       * shiftlocked, no lock, mouse turning nothing.
+       *
+       * One field cannot answer two questions. The keeper asks the one it
+       * actually means.
        */
-      this.keyboard.setPointerKeeper(() => this.wantLock)
+      this.keyboard.setPointerKeeper(() => this.firstPerson || this.shiftlockOn)
 
       /*
        * The keyboard is told about typing by the service, so a window only
@@ -390,6 +400,7 @@ export class Engine {
    */
   private takeThePointer() {
     if (!this.wantLock) return
+    // Already held: the ask is answered, so there is nothing outstanding.
     if (this.keyboard?.pointerLocked) { this.wantLock = false; return }
     this.keyboard?.setPointerLock(true)
   }
