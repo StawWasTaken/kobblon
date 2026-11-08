@@ -21249,3 +21249,38 @@ worth exactly that.
 
 `npx tsc --noEmit` clean, `npm run build` clean, 0334 applied twice with the
 behavioural checks above.
+
+## Round two hundred and ninety-five - the World rating is a pill with a number in it
+
+Staw sent a screenshot of a rating bar he wants instead of ours, with one
+change: the two buttons on its right are a thumb up and a thumb down, up on
+the left, rather than the pair of chevrons the screenshot had.
+
+`RatingBar` is rebuilt to it. One dark pill: a thumb as a label on the left,
+the share as a big number, the vote count under it in small capitals, and the
+two pressable thumbs at the right end.
+
+What went: the notched green-and-red line, and the two counts under its ends.
+The line asked the eye to measure a bar and then divide two numbers; the
+number says it. Likes and dislikes are no longer shown apart - only the share
+and the weight behind it.
+
+**It sizes itself now.** The old one was a line that took whatever width it
+was handed, so a caller that boxed it to its own content got a rating with no
+ratio in it. The new one has nothing in it that needs the room, and it draws
+its own border, fill and blur - so a caller that wrapped it in a pill before
+should stop, or there are two.
+
+Same props, nothing to change in a call: `likes`, `dislikes`, `iLike`,
+`iDislike`, `disabled`, `why`, `onLike`, `onDislike`.
+
+With no votes it shows `-`, not `0%`. A red nought is a verdict and there has
+not been one.
+
+### Still open
+
+- The `danger` lip - red buttons still wear `danger-ink` where blue and green
+  wear `deep`. With Staw.
+- `register` is still not deployed; Staw has the dashboard steps now.
+- 0334 is applied. A suspended or banned account can no longer walk into a
+  World, at the join or mid-session.

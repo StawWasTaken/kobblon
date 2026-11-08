@@ -54,7 +54,7 @@ function Demo() {
             </div>
 
             <div className="flex shrink-0 flex-col items-end gap-2">
-              <div className="w-72 rounded-xl border border-on-art/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+              <div className="w-72">
                 <RatingBar likes={1900} dislikes={120} iLike iDislike={false} />
               </div>
 

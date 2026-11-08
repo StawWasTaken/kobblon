@@ -477,13 +477,11 @@ export default function WorldPage() {
                 opinion about the World, not another way in. */}
             <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:items-end">
               {/*
-                * Wide enough for the ratio between the two thumbs to exist.
-                * It was `justify-end` around a `flex-1` bar, so the bar was
-                * handed no width at all and collapsed - Staw: "i want that
-                * theres the line between the like-dislike to have a ratio
-                * thingy". It was there, drawn one pixel wide.
+                * The rating draws its own pill now, so this is only the
+                * width it gets to be. It used to carry the border and the
+                * blur for a bar that had none of its own.
                 */}
-              <div className="w-full rounded-xl border border-on-art/20 bg-black/40 px-3 py-1.5 backdrop-blur-sm sm:w-72">
+              <div className="w-full sm:w-72">
                 <RatingBar
                   likes={counts.likes}
                   dislikes={counts.dislikes}
