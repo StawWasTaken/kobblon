@@ -2162,7 +2162,7 @@ check('the emote list is what the file can actually play',
  * working, which is not a bug report anybody can act on.
  */
 check('every emote the avatar ships with is offered',
-  ['wave', 'kobdance', 'dance1', 'dance2', 'dance3'].every((n) => emotes.list.includes(n)),
+  ['wave', 'shrug', 'kobdance', 'dance1', 'dance2', 'dance3'].every((n) => emotes.list.includes(n)),
   emotes.list.join(','))
 check('a clip nobody has drawn yet is refused rather than pretended',
   emotes.madeUp === false && emotes.bodyClip === false,

@@ -24,6 +24,30 @@ const Y = [0, 1, 0]
 const Z = [0, 0, 1]
 const still = [0, 0, 0, 1]
 
+/**
+ * Two turns at once, as one quaternion.
+ *
+ * `turn` only does a single axis, which is enough for a limb that swings in
+ * a plane and not enough for a wave: an arm raised straight out to the side
+ * is edge-on to a camera standing in front of the avatar, so the whole
+ * gesture happens in the one direction nobody is looking from. Bringing it a
+ * little forward as well needs the two composed.
+ *
+ * Hamilton product, `a` applied after `b`. The order matters and the way to
+ * know you have it the right way round is to look at it, which is what
+ * `npm run k6:look` is for.
+ */
+function spin(a, b) {
+  const [ax, ay, az, aw] = a
+  const [bx, by, bz, bw] = b
+  return [
+    aw * bx + ax * bw + ay * bz - az * by,
+    aw * by - ax * bz + ay * bw + az * bx,
+    aw * bz + ax * by - ay * bx + az * bw,
+    aw * bw - ax * bx - ay * by - az * bz,
+  ]
+}
+
 /** Builds one bone's track from a list of [time, quaternion] pairs. */
 const track = (joint, keys) => ({
   joint,
@@ -51,6 +75,19 @@ const shift = (joint, keys) => ({
   times: keys.map(([time]) => time),
   values: keys.map(([, value]) => value),
 })
+
+/**
+ * The same clip, played in less time.
+ *
+ * Every key's moment is divided, so the shape of the dance is untouched and
+ * only its tempo moves. Written as a wrapper rather than by editing a
+ * hundred numbers in place, because a hand-scaled clip is a clip where one
+ * key got missed and the loop no longer meets itself.
+ */
+const quicker = (by, tracks) => tracks.map((one) => ({
+  ...one,
+  times: one.times.map((at) => Number((at / by).toFixed(4))),
+}))
 
 export function animations({ index }) {
   const arms = { L: index.J_ShoulderL, R: index.J_ShoulderR }
@@ -158,47 +195,139 @@ export function animations({ index }) {
     },
     {
       /*
-       * Redrawn, round 286. The first one hinged the arm out to about
-       * shoulder height and flapped the forearm there, which reads as
-       * somebody checking their watch rather than waving: a wave is a
-       * raised hand, and the raising is the part that carries across a
-       * World.
+       * Redrawn twice. Round 286 raised the arm out to the side and flapped
+       * the forearm a few degrees there; Staw looked at it in a World and
+       * said it sucks, and he is right - the screenshot is an arm held out
+       * stiff at shoulder height with a small wobble on the end of it.
        *
-       * Outward, away from the head: the arm hinges on Z, and on the right
-       * side that is the negative direction. 150 puts the upper arm past
-       * vertical, so the forearm stands up over the shoulder.
+       * What was missing is the bend. A wave is an upper arm held roughly
+       * level and a forearm standing straight up off it, and the waving is
+       * the forearm rocking around that - the hand goes somewhere, which is
+       * the whole read of the gesture. The old one kept the arm nearly
+       * straight, so the hand travelled about a hand's width and the arm
+       * read as raised rather than waving.
+       *
+       * **The swing is in the shoulder, and the elbow only decorates it.**
+       * That is the important part and it is not a style choice. Staw: the
+       * rigs this actually plays on are not this one, they "dont have lots
+       * of limbs" - and a rig with no elbow bone simply drops the elbow
+       * channel. Every version of this clip before now put the entire wave
+       * in the elbow, so on those rigs it came out as a straight arm held
+       * out stiff, which is precisely what his screenshot from a World
+       * shows. The clip was not wrong there; it was wrong here, and the
+       * preview rig's extra joints hid it.
+       *
+       * So the hand has to get somewhere using the shoulder alone. It rocks
+       * through twenty-odd degrees, which is a real sweep on a limb that
+       * long, and the elbow bends the same way on top of it. On a rig with
+       * elbows that reads as a hand waving off a steady arm; on a rig
+       * without, the whole arm waves from the shoulder, which is how a
+       * blocky avatar with six parts waves and is still unmistakably a
+       * wave. Neither one is the stiff arm.
+       *
+       * It stays on one axis. An earlier pass brought the arm forward as
+       * well, on the reasoning that an arm straight out to the side is
+       * edge-on to a camera in front - which is wrong, and looking at it is
+       * what showed it: an arm raised sideways is edge-on from the *side*,
+       * and square to the front, where the camera is. The forward turn only
+       * dragged the elbow down and tilted the plane the forearm waves in.
        */
       name: 'wave',
       tracks: [
+        /*
+         * Up, overshooting, and then the wave itself in the shoulder:
+         * between -98 and -120, three passes, each a little smaller than
+         * the one before so it winds down rather than ticking like a
+         * metronome. -120 is the limit where the top cap of the arm starts
+         * to leave the body, and it is touched in passing rather than held.
+         */
         track(arms.R, [
-          [0, turn(Z, 4)], [0.28, turn(Z, -116)],
-          [1.55, turn(Z, -114)], [1.9, turn(Z, 4)],
+          [0, turn(Z, 4)],
+          [0.22, turn(Z, -120)],
+          [0.36, turn(Z, -108)],
+          [0.58, turn(Z, -120)], [0.8, turn(Z, -98)],
+          [1.02, turn(Z, -119)], [1.24, turn(Z, -100)],
+          [1.46, turn(Z, -116)], [1.62, turn(Z, -108)],
+          [1.95, turn(Z, 4)],
         ]),
         /*
-         * The hand swinging, not the whole arm shaking: four passes, and it
-         * starts and ends straight so the arm comes down in one piece.
+         * The forearm standing up off it, bending with the swing rather
+         * than against it, so the two add up instead of cancelling. -74 is
+         * a few degrees off vertical and puts the hand above the head.
          *
-         * Both numbers here are smaller than they want to be, and the
-         * shoulder is the reason every raise in this file stops around 116.
-         * The shoulder joint sits inside the arm rather than at its top, so
-         * past about 120 degrees the cap at the top of the limb swings down
-         * and away from the body and the arm reads as detached - 152 looked
-         * like a forearm floating next to somebody's ear. The flap was also
-         * 56 degrees wide and put the hand through the head coming back.
+         * Every key here is timed to a shoulder key. That is what makes the
+         * clip read the same on both rigs: drop this track and the motion
+         * underneath is already the gesture.
          */
         track(elbows.R, [
-          [0.28, turn(Z, 0)],
-          [0.5, turn(Z, -28)], [0.72, turn(Z, 8)],
-          [0.94, turn(Z, -28)], [1.16, turn(Z, 8)],
-          [1.38, turn(Z, -24)], [1.55, turn(Z, 0)],
+          [0.1, turn(Z, 0)],
+          [0.36, turn(Z, -74)],
+          [0.58, turn(Z, -92)], [0.8, turn(Z, -46)],
+          [1.02, turn(Z, -90)], [1.24, turn(Z, -48)],
+          [1.46, turn(Z, -84)], [1.62, turn(Z, -74)],
+          [1.95, turn(Z, 0)],
         ]),
         // Leaning very slightly onto the other foot, which is what a person
         // does when one arm goes up, and the head turning to whoever it is for.
-        track(index.J_Spine, [[0, still], [0.3, turn(Z, 5)], [1.55, turn(Z, 5)], [1.9, still]]),
-        track(index.J_Head, [[0, still], [0.45, turn(Y, -12)], [1.45, turn(Y, -12)], [1.9, still]]),
+        track(index.J_Spine, [[0, still], [0.3, turn(Z, 6)], [1.62, turn(Z, 6)], [1.95, still]]),
+        track(index.J_Head, [[0, still], [0.45, turn(Y, -14)], [1.5, turn(Y, -14)], [1.95, still]]),
         // The idle arm stops breathing for the duration rather than drifting
         // against the wave.
-        track(arms.L, [[0, turn(X, -3)], [0.3, turn(X, -8)], [1.6, turn(X, -8)], [1.9, turn(X, -3)]]),
+        track(arms.L, [[0, turn(X, -3)], [0.3, turn(X, -8)], [1.62, turn(X, -8)], [1.95, turn(X, -3)]]),
+      ],
+    },
+    {
+      /*
+       * A shrug: I do not know, and I am not going to pretend otherwise.
+       *
+       * **This rig has no collarbone.** The sixteen bones go shoulder
+       * straight to chest, so the shoulders cannot be lifted, which is the
+       * one movement a shrug is named after. Rotating the arms up instead
+       * gives a surrender, not a shrug.
+       *
+       * So the lift comes from the chest, as a small translation - the whole
+       * upper body rising a little carries the arms and the head with it,
+       * which is close enough to the real thing to read at a distance and
+       * is honest about what the rig can do. The rest is in the arms turning
+       * out with the forearms levelling off, palms up, and the head tipping.
+       *
+       * It holds at the top. A shrug that goes straight back down is a
+       * twitch; the hold is the part that means the question was heard.
+       */
+      name: 'shrug',
+      tracks: [
+        shift(index.J_Chest, [
+          [0, [0, 0, 0]], [0.3, [0, 0.16, 0]],
+          [1.15, [0, 0.16, 0]], [1.5, [0, 0, 0]],
+        ]),
+        // Elbows coming away from the ribs, not arms going up.
+        track(arms.L, [[0, turn(Z, 2)], [0.3, turn(Z, 36)], [1.15, turn(Z, 36)], [1.5, turn(Z, 2)]]),
+        track(arms.R, [[0, turn(Z, -2)], [0.3, turn(Z, -36)], [1.15, turn(Z, -36)], [1.5, turn(Z, -2)]]),
+        /*
+         * Forearms out and a touch forward, which is where hands turned
+         * palm-up end up. The fold is on Z with a little X on it for the
+         * same reason the wave has: straight out to the sides is the one
+         * place a camera in front cannot see.
+         */
+        track(elbows.L, [
+          [0, turn(Z, 0)],
+          [0.3, spin(turn(Z, 96), turn(X, -32))],
+          [1.15, spin(turn(Z, 96), turn(X, -32))],
+          [1.5, turn(Z, 0)],
+        ]),
+        track(elbows.R, [
+          [0, turn(Z, 0)],
+          [0.3, spin(turn(Z, -96), turn(X, -32))],
+          [1.15, spin(turn(Z, -96), turn(X, -32))],
+          [1.5, turn(Z, 0)],
+        ]),
+        // The head tipping over and pulling back, which is the half of a
+        // shrug that happens above the neck.
+        track(index.J_Head, [
+          [0, still], [0.3, spin(turn(Z, 13), turn(X, -9))],
+          [1.15, spin(turn(Z, 13), turn(X, -9))], [1.5, still],
+        ]),
+        track(index.J_Spine, [[0, still], [0.3, turn(X, -4)], [1.15, turn(X, -4)], [1.5, still]]),
       ],
     },
     /*
@@ -249,12 +378,16 @@ export function animations({ index }) {
     },
     {
       /*
-       * A step side to side, arms swinging together across the body. The
-       * slowest of the four and the one that reads as somebody enjoying
-       * themselves rather than performing.
+       * A step side to side, arms swinging together across the body.
+       *
+       * Written as a 1.8 second cycle and played in 1.2. Staw asked for it
+       * faster: at 1.8 the sway was slow enough to read as somebody swaying
+       * on the spot rather than dancing to anything. The keys are left at
+       * the tempo they were drawn at and `quicker` moves them, so the shape
+       * is untouched and only the speed changed.
        */
       name: 'dance1',
-      tracks: [
+      tracks: quicker(1.5, [
         shift(hipsBone, [
           [0, [-0.2, 0, 0]], [0.45, [0, 0.24, 0]], [0.9, [0.2, 0, 0]],
           [1.35, [0, 0.24, 0]], [1.8, [-0.2, 0, 0]],
@@ -273,7 +406,7 @@ export function animations({ index }) {
         track(knees.L, [[0, turn(X, -24)], [0.45, turn(X, -6)], [0.9, turn(X, -24)], [1.35, turn(X, -6)], [1.8, turn(X, -24)]]),
         track(knees.R, [[0, turn(X, -24)], [0.45, turn(X, -6)], [0.9, turn(X, -24)], [1.35, turn(X, -6)], [1.8, turn(X, -24)]]),
         track(index.J_Head, [[0, turn(Y, -10)], [0.9, turn(Y, 10)], [1.8, turn(Y, -10)]]),
-      ],
+      ]),
     },
     {
       /*
@@ -322,7 +455,9 @@ export function animations({ index }) {
        * across and plays the same every time.
        */
       name: 'dance3',
-      tracks: [
+      // Drawn as a 2.0 second cycle and played in 1.25. It was the slowest
+      // clip in the file and a twist that slow reads as stretching.
+      tracks: quicker(1.6, [
         shift(hipsBone, [
           [0, [0, 0, 0]], [0.5, [0, 0.18, 0]], [1.0, [0, 0, 0]],
           [1.5, [0, 0.18, 0]], [2.0, [0, 0, 0]],
@@ -351,7 +486,7 @@ export function animations({ index }) {
         track(knees.L, [[0, turn(X, -30)], [0.5, turn(X, -18)], [1.0, turn(X, -30)], [1.5, turn(X, -18)], [2.0, turn(X, -30)]]),
         track(knees.R, [[0, turn(X, -30)], [0.5, turn(X, -18)], [1.0, turn(X, -30)], [1.5, turn(X, -18)], [2.0, turn(X, -30)]]),
         track(index.J_Head, [[0, turn(Y, -18)], [1.0, turn(Y, 18)], [2.0, turn(Y, -18)]]),
-      ],
+      ]),
     },
   ]
 }

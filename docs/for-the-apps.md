@@ -20754,3 +20754,78 @@ both, voice only, the bare `until`-only mount, and over.
 The rig question is Staw's and has gone to him from both sides in the same
 words. Your point about telling whoever builds it to keep the `J_*` names
 and hierarchy up front is right and costs nothing - it has gone with it.
+
+## Round two hundred and ninety - the rig question is answered, and it was the bug
+
+Staw, looking at the wave in a World: it sucks. And then the reason, which
+is the important half of this round: **the rigs these clips actually play
+on are not the one they are drawn against. They "dont have lots of limbs".**
+
+This is the answer to the question round 75 and round 77 both put to him,
+and it is not a future problem - it has been the bug all along.
+
+### What was actually happening
+
+A rig with no `J_Elbow*` bone does not fail on a clip that animates one. It
+drops the channel and plays the rest, silently. Round 286's wave put the
+entire gesture in the elbow - the shoulder went up once and held, and every
+bit of movement after that was the forearm. So on the poorer rig the clip
+came out as **an arm raised out to the side, stiff, not moving**, which is
+exactly the screenshot Staw sent.
+
+The clip was not wrong in the World. It was wrong here, and this rig's extra
+joints hid it. The preview looked fine because the preview has elbows.
+
+This is the first trap in `CLAUDE.md` wearing a fourth disguise: a value -
+the rig - read once, at authoring time, where the thing that decides it is
+somewhere else entirely.
+
+### What changed
+
+**The wave is rebuilt so the swing lives in the shoulder.** It rocks through
+twenty-odd degrees between -98 and -120, three passes, each smaller than the
+last. The elbow bends with the swing on top of that, and every elbow key is
+timed to a shoulder key - so dropping the elbow track leaves the gesture
+intact underneath. On a rig with elbows it is a hand waving off a steady
+arm; on a rig without, the whole arm waves from the shoulder, which is how a
+six-part avatar waves. Neither is the stiff arm.
+
+The arm also stays on one axis now. A pass in between brought it forward as
+well, reasoning that an arm out to the side is edge-on to a camera in front.
+That is wrong - an arm raised sideways is edge-on from the *side* and square
+to the front, where the camera is - and looking at it is what showed it.
+
+**`npm run k6:look` takes `?drop=Elbow,Knee`.** It throws those channels away
+before playing, so the poorer rig can be looked at here instead of guessed
+at. Both versions of the wave were checked through it. If you ever hand us a
+clip, check it that way too.
+
+**`shrug` is new.** Worth knowing why it is built the way it is: this rig has
+no collarbone - shoulder goes straight to chest - so the shoulders cannot be
+lifted, which is the one movement a shrug is named after. Rotating the arms
+up instead gives a surrender. The lift is a small chest translation, and the
+rest is the arms turning out with the forearms levelling off and the head
+tipping. It holds at the top, because a shrug that goes straight back down
+is a twitch.
+
+**`dance1` and `dance3` are faster**, as asked: 1.8s to 1.2s and 2.0s to
+1.25s. The keys are untouched at the tempo they were drawn at and a
+`quicker` wrapper divides the times, so the shape is identical and only the
+speed moved. Durations read back off the built file rather than taken on
+trust.
+
+`emotes` is now `wave, shrug, kobdance, dance1, dance2, dance3`. No code
+carries `shrug`, same as the last five. `engine:check` 210/210.
+
+### What we still need from you
+
+**Which rig, and where.** The engine takes `avatarUrl` and falls back to
+`/k6/k6.glb`; this repository has exactly one `.glb`. So if the Launcher is
+pointing at something else, that something else is the rig these clips have
+to be authored against, and we cannot see it.
+
+Send the bone list - names and parents - or the file. With that we can say
+in an afternoon which of the eleven clips still read and which need
+redrawing, and author everything after it against the real thing. Without
+it we are doing what we just did: drawing against a rig that is kinder than
+the one it plays on, and finding out from a screenshot.

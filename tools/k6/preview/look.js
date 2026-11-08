@@ -27,6 +27,27 @@ const clips = Object.fromEntries(gltf.animations.map((a) => [a.name, a]))
 const query = new URLSearchParams(location.search)
 const clipNames = (query.get('poses') || 'idle').split(',')
 const moments = (query.get('t') || '0.4').split(',').map(Number)
+/*
+ * Joints to pretend the rig does not have, as a comma list of substrings:
+ * `?drop=Elbow,Knee` plays every clip with those channels thrown away.
+ *
+ * This is here because the rigs the clips actually play on are not this
+ * one. A rig with fewer joints drops the channels it has no bone for,
+ * silently, and the clip still plays - so a wave whose whole motion lives
+ * in the elbow comes out as a straight arm held out stiff, which is how
+ * round 286's wave looked in a real World while looking fine here. The
+ * preview rig's extra joints were hiding it. Now the poorer rig can be
+ * looked at instead of assumed.
+ */
+const dropped = (query.get('drop') || '').split(',').filter(Boolean)
+const thin = (clip) => {
+  if (!dropped.length) return clip
+  const cut = clip.clone()
+  cut.tracks = cut.tracks.filter(
+    (one) => !dropped.some((part) => one.name.includes(part)),
+  )
+  return cut
+}
 const columns = Math.max(clipNames.length, moments.length)
 const poses = Array.from({ length: columns }, (_, i) => clipNames[i % clipNames.length])
 
@@ -47,7 +68,7 @@ poses.forEach((name, i) => {
   who.position.x = (i - (poses.length - 1) / 2) * 7
   scene.add(who)
   const mixer = new THREE.AnimationMixer(who)
-  if (clips[name]) mixer.clipAction(clips[name]).play()
+  if (clips[name]) mixer.clipAction(thin(clips[name])).play()
   mixer.setTime(moments[i % moments.length])
   mixers.push(mixer)
 })
