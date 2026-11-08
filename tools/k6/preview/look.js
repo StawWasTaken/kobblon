@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { blockify } from '../../../src/engine/body'
 
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(1000, 620)
@@ -74,6 +75,18 @@ poses.forEach((name, i) => {
       o.bind(skeleton, o.bindMatrix)
     }
   })
+  /*
+   * The same call every avatar in every World goes through. Not an
+   * imitation of it - the function itself, imported from the engine.
+   *
+   * Dropping the dead channels above was only half of what blockify does:
+   * it also replaces the file's skinned tubes with one rigid box per bone.
+   * A preview that kept the tubes still showed an arm that bends and
+   * stretches where a player sees a plank swinging from the shoulder, so a
+   * pose could read here and look like nothing in a World. Staw found that
+   * one in a screenshot too.
+   */
+  blockify(who)
   who.position.x = (i - (poses.length - 1) / 2) * 7
   scene.add(who)
   const mixer = new THREE.AnimationMixer(who)

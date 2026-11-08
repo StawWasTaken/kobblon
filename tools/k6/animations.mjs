@@ -235,41 +235,53 @@ export function animations({ index }) {
       name: 'wave',
       tracks: [
         /*
-         * Up, overshooting, and then the wave itself in the shoulder:
-         * between -98 and -120, three passes, each a little smaller than
-         * the one before so it winds down rather than ticking like a
-         * metronome. -120 is the limit where the top cap of the arm starts
-         * to leave the body, and it is touched in passing rather than held.
+         * The arm goes **up**, beside the head, and waves from there.
+         *
+         * Round 291 put the swing in the shoulder, which was right, and
+         * left it swinging between -98 and -120 - which on a rigid arm is a
+         * plank held out sideways at shoulder height, rocking. Staw, with a
+         * screenshot of it: "it doesnt look like a wave". It does not. An
+         * arm out to the side is pointing; a wave is a hand held high and
+         * rocked, and on this body the hand is the top of the box, so the
+         * box has to be near vertical before any rocking reads as one.
+         *
+         * So: up to about -158, then three passes between -139 and -161,
+         * each smaller than the one before so it winds down instead of
+         * ticking. The old -120 ceiling was a note about the soft rig's top
+         * cap leaving the body; `blockify` binds the whole box to this one
+         * bone, so there is no cap to leave. Past about -165 it stops being
+         * useful for a different reason: the box's middle sits outboard of
+         * the joint, so swinging it that far carries the arm across the
+         * front of the head and the wave is hidden behind itself. -158 is
+         * the far end of where the hand is high and the face still visible,
+         * and it was found by rendering the four angles side by side.
          */
         track(arms.R, [
           [0, turn(Z, 4)],
-          [0.22, turn(Z, -120)],
-          [0.36, turn(Z, -108)],
-          [0.58, turn(Z, -120)], [0.8, turn(Z, -98)],
-          [1.02, turn(Z, -119)], [1.24, turn(Z, -100)],
-          [1.46, turn(Z, -116)], [1.62, turn(Z, -108)],
+          [0.26, spin(turn(Z, -156), turn(X, -18))],
+          [0.42, spin(turn(Z, -138), turn(X, -22))],
+          [0.6, spin(turn(Z, -158), turn(X, -17))], [0.78, spin(turn(Z, -139), turn(X, -22))],
+          [0.96, spin(turn(Z, -156), turn(X, -18))], [1.14, spin(turn(Z, -141), turn(X, -21))],
+          [1.32, spin(turn(Z, -153), turn(X, -19))], [1.5, spin(turn(Z, -145), turn(X, -20))],
+          [1.62, spin(turn(Z, -150), turn(X, -19))],
           [1.95, turn(Z, 4)],
         ]),
         /*
-         * The forearm standing up off it, bending with the swing rather
-         * than against it, so the two add up instead of cancelling. -74 is
-         * a few degrees off vertical and puts the hand above the head.
-         *
-         * Every key here is timed to a shoulder key. That is what makes the
-         * clip read the same on both rigs: drop this track and the motion
-         * underneath is already the gesture.
+         * A little forearm on top of it, for a rig that has one. Timed key
+         * for key to the shoulder above, so dropping the whole track - which
+         * is what every World does - leaves the gesture already there.
          */
         track(elbows.R, [
           [0.1, turn(Z, 0)],
-          [0.36, turn(Z, -74)],
-          [0.58, turn(Z, -92)], [0.8, turn(Z, -46)],
-          [1.02, turn(Z, -90)], [1.24, turn(Z, -48)],
-          [1.46, turn(Z, -84)], [1.62, turn(Z, -74)],
+          [0.42, turn(Z, -26)],
+          [0.6, turn(Z, -8)], [0.78, turn(Z, -28)],
+          [0.96, turn(Z, -10)], [1.14, turn(Z, -26)],
+          [1.32, turn(Z, -12)], [1.5, turn(Z, -22)],
           [1.95, turn(Z, 0)],
         ]),
         // Leaning very slightly onto the other foot, which is what a person
         // does when one arm goes up, and the head turning to whoever it is for.
-        track(index.J_Spine, [[0, still], [0.3, turn(Z, 6)], [1.62, turn(Z, 6)], [1.95, still]]),
+        track(index.J_Spine, [[0, still], [0.3, turn(Z, 7)], [1.62, turn(Z, 7)], [1.95, still]]),
         track(index.J_Head, [[0, still], [0.45, turn(Y, -14)], [1.5, turn(Y, -14)], [1.95, still]]),
         // The idle arm stops breathing for the duration rather than drifting
         // against the wave.
@@ -296,50 +308,75 @@ export function animations({ index }) {
        */
       name: 'shrug',
       tracks: [
+        /*
+         * The shoulders go up and the head goes down to meet them.
+         *
+         * Round 291 did the lift as a chest translation and put the gesture
+         * in the arms, flaring them out to 56 degrees. Staw, with it in
+         * front of him: it does not read as a shrug. It does not, and the
+         * reason is that 56 degrees of arm is the whole of "I surrender"
+         * and none of "I don't know" - a shrug is barely an arm movement at
+         * all. What makes one legible is the head disappearing into the
+         * shoulders, and on a body with no collarbone that has to be built
+         * out of the two translations that are left.
+         *
+         * So the chest rises a little, carrying the arms and the neck with
+         * it, and the head is pushed down by far more than it was carried
+         * up, until it is sitting into the top of the torso. Shoulders to
+         * the ears, which is the shape everybody recognises. The lift is
+         * kept small on purpose: the legs hang off the hips and do not come
+         * with the chest, so a big one opens a gap at the waist - most of
+         * the read has to come from the head going down, which costs
+         * nothing. The arms only turn out far enough to say the hands went
+         * with it.
+         */
         shift(index.J_Chest, [
-          [0, [0, 0, 0]], [0.3, [0, 0.16, 0]],
-          [1.15, [0, 0.16, 0]], [1.5, [0, 0, 0]],
+          [0, [0, 0, 0]], [0.28, [0, 0.14, 0]],
+          [1.2, [0, 0.14, 0]], [1.55, [0, 0, 0]],
+        ]),
+        shift(index.J_Head, [
+          [0, [0, 0, 0]], [0.28, [0, -0.38, 0]],
+          [1.2, [0, -0.38, 0]], [1.55, [0, 0, 0]],
         ]),
         /*
-         * The whole gesture, in the shoulders. It was in the elbows first -
-         * forearms levelling off, palms up - which is the shape a shrug
-         * really has and which a World throws away, because nothing is
-         * bound to an elbow. Out to 56 and a little forward is what is left
-         * when only the shoulder can speak, and it reads.
+         * Out a little, and forward a little more than out: hands turning
+         * up in front of the hips rather than wings. Anything past about 30
+         * on a rigid arm stops being a shrug and starts being a shrug
+         * emoji.
          */
         track(arms.L, [
-          [0, turn(Z, 2)], [0.3, spin(turn(Z, 56), turn(X, -20))],
-          [1.15, spin(turn(Z, 56), turn(X, -20))], [1.5, turn(Z, 2)],
+          [0, turn(Z, 2)], [0.28, spin(turn(Z, 24), turn(X, -26))],
+          [1.2, spin(turn(Z, 24), turn(X, -26))], [1.55, turn(Z, 2)],
         ]),
         track(arms.R, [
-          [0, turn(Z, -2)], [0.3, spin(turn(Z, -56), turn(X, -20))],
-          [1.15, spin(turn(Z, -56), turn(X, -20))], [1.5, turn(Z, -2)],
+          [0, turn(Z, -2)], [0.28, spin(turn(Z, -24), turn(X, -26))],
+          [1.2, spin(turn(Z, -24), turn(X, -26))], [1.55, turn(Z, -2)],
         ]),
         /*
          * Forearms out and palms up, for a rig that has elbows. On the
          * avatars in a World this does nothing at all; it is kept because
-         * it is correct, not because it is load-bearing. The shoulders
-         * above carry the shrug on their own.
+         * it is correct, not because it is load-bearing. The two
+         * translations above carry the shrug on their own.
          */
         track(elbows.L, [
           [0, turn(Z, 0)],
-          [0.3, spin(turn(Z, 96), turn(X, -32))],
-          [1.15, spin(turn(Z, 96), turn(X, -32))],
-          [1.5, turn(Z, 0)],
+          [0.28, spin(turn(Z, 72), turn(X, -38))],
+          [1.2, spin(turn(Z, 72), turn(X, -38))],
+          [1.55, turn(Z, 0)],
         ]),
         track(elbows.R, [
           [0, turn(Z, 0)],
-          [0.3, spin(turn(Z, -96), turn(X, -32))],
-          [1.15, spin(turn(Z, -96), turn(X, -32))],
-          [1.5, turn(Z, 0)],
+          [0.28, spin(turn(Z, -72), turn(X, -38))],
+          [1.2, spin(turn(Z, -72), turn(X, -38))],
+          [1.55, turn(Z, 0)],
         ]),
-        // The head tipping over and pulling back, which is the half of a
-        // shrug that happens above the neck.
+        // The head tipping over as it sinks, which is the half of a shrug
+        // that happens above the neck.
         track(index.J_Head, [
-          [0, still], [0.3, spin(turn(Z, 13), turn(X, -9))],
-          [1.15, spin(turn(Z, 13), turn(X, -9))], [1.5, still],
+          [0, still], [0.28, spin(turn(Z, 12), turn(X, 7))],
+          [1.2, spin(turn(Z, 12), turn(X, 7))], [1.55, still],
         ]),
-        track(index.J_Spine, [[0, still], [0.3, turn(X, -4)], [1.15, turn(X, -4)], [1.5, still]]),
+        track(index.J_Spine, [[0, still], [0.28, turn(X, 3)], [1.2, turn(X, 3)], [1.55, still]]),
       ],
     },
     /*

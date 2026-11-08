@@ -20920,3 +20920,62 @@ elbows and knees for detail on top, never for the motion itself. The check
 is not "does it look right in the preview" - it is **"play it with those six
 bones switched off and is it still the gesture"**, which is now what the
 preview does unless you ask it not to.
+
+## Round two hundred and ninety-two - the preview was still lying, and the wave is a wave now
+
+Round 291 said the preview had been fixed. It had been half fixed, and Staw
+found the other half in one line: **"the rig isnt the same"**.
+
+### What was still wrong
+
+`blockify` does two things. It throws away the elbow, knee and ankle
+channels, and it **replaces the file's skinned geometry with one rigid box
+per bone**. Round 291 reproduced the first and not the second, so the
+preview was still drawing soft tubes that stretch and bend around a joint
+where a World draws a plank that swings. A pose could read in the preview
+and read as nothing in a World, which is the exact bug round 291 claimed to
+have closed.
+
+**`tools/k6/preview/look.js` now imports `blockify` from
+`src/engine/body.ts` and calls it** on each clone - the engine's own
+function, not an imitation of it. There is nothing left for the preview to
+get wrong about the rig, because it no longer has its own idea of what the
+rig is. If you ever author a clip, this is the only way to look at one.
+
+### The two clips, redone against what a player actually sees
+
+- **`wave`** - it was a plank held out sideways at shoulder height, rocking
+  between -98 and -120. That is pointing, not waving. The arm now goes
+  **up**, to about -156 on Z with 18 to 22 degrees of forward lean, and
+  rocks between -138 and -158 over three decaying passes. The forward lean
+  is not decoration: the arm box's middle sits outboard of the joint, so a
+  pure Z swing past about -140 carries the arm across the front of the face
+  and hides the gesture behind itself. The angles were found by rendering
+  them side by side, not guessed.
+- **`shrug`** - it was arms flared to 56 degrees, which is "I surrender".
+  What makes a shrug legible is the head disappearing into the shoulders, so
+  it is now built from two translations: the chest rises a little and **the
+  head is pushed down further than it was carried up**, until it is sitting
+  into the top of the torso. The arms only turn out 24 degrees. The chest
+  lift is deliberately small - the legs hang off the hips and do not rise
+  with it, so a large one opens a gap at the waist.
+
+### A check that was corrected, said out loud
+
+`the hold pose stands down for an emote instead of pinning the arm` read the
+shoulder's `rotation.x` 90 frames apart, which compares two different
+moments of a looping clip. It passed only because the old wave was a pure Z
+swing, so x was zero at every phase. The new wave tilts forward and x moves,
+so it failed on a clip change rather than on the thing it tests. It now
+steps **117 frames, one whole wave at a sixtieth each**, landing on the same
+moment of the loop. The assertion is unchanged.
+
+### For you
+
+Nothing in the contract moved. `emotes` is still
+`wave, shrug, kobdance, dance1, dance2, dance3`, `emote(name, { loop })` is
+unchanged, and no code on either side names a clip. If you have your own
+preview of the avatar anywhere, it has to blockify or it will tell you the
+same lies ours did for five rounds.
+
+`npx tsc --noEmit` clean, `npm run build` clean, `engine:check` 210/210.

@@ -2203,8 +2203,19 @@ const arm = await p.evaluate(() => {
   const withHold = shoulder.rotation.x
   const stillHeld = body.held
 
+  /*
+   * One whole wave, exactly: 1.95s at a sixtieth each.
+   *
+   * This read 90 frames, which compared two different moments of a looping
+   * clip and got away with it only because the wave used to be a pure Z
+   * swing, so `rotation.x` sat at zero whatever the phase. Round 292 tilts
+   * the raised arm forward, and x now moves - so the check started failing
+   * on a clip change rather than on the thing it is about, which is whether
+   * `hold` pins the arm. Landing back on the same moment of the loop
+   * compares the two poses and nothing else.
+   */
   body.hold(false)
-  window.stepFrames(90)
+  window.stepFrames(117)
   const without = shoulder.rotation.x
   const stillEmoting = body.emoted
 
