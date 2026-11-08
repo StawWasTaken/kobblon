@@ -28,18 +28,27 @@ const query = new URLSearchParams(location.search)
 const clipNames = (query.get('poses') || 'idle').split(',')
 const moments = (query.get('t') || '0.4').split(',').map(Number)
 /*
- * Joints to pretend the rig does not have, as a comma list of substrings:
- * `?drop=Elbow,Knee` plays every clip with those channels thrown away.
+ * The joints that move nothing on a real avatar.
  *
- * This is here because the rigs the clips actually play on are not this
- * one. A rig with fewer joints drops the channels it has no bone for,
- * silently, and the clip still plays - so a wave whose whole motion lives
- * in the elbow comes out as a straight arm held out stiff, which is how
- * round 286's wave looked in a real World while looking fine here. The
- * preview rig's extra joints were hiding it. Now the poorer rig can be
- * looked at instead of assumed.
+ * **This is on by default, and it is not a simulation of some other rig -
+ * it is what `blockify` in `src/engine/body.ts` does to every avatar in
+ * every World.** Each of the six parts is one box bound entirely to one
+ * bone: LeftArm to `J_ShoulderL`, LeftLeg to `J_HipL`, and so on. Nothing
+ * is bound to an elbow, a knee or an ankle, and nothing hangs below one, so
+ * a channel on those bones is loaded, interpolated and thrown away.
+ *
+ * Dropping those channels here is exactly equivalent, and it is the default
+ * because the preview's job is to show what a player sees. It did the
+ * opposite for four rounds: `k6.glb` loaded raw has proper skinning, so the
+ * preview bent elbows that no avatar has ever bent, and round 286's wave -
+ * whose entire motion was in the forearm - looked like a wave here and
+ * played in a World as an arm held out stiff. Staw found it in a screenshot.
+ *
+ * `?full=1` loads the rig unblocked, which is worth looking at exactly once
+ * when you want to know how much of a clip is being thrown away.
  */
-const dropped = (query.get('drop') || '').split(',').filter(Boolean)
+const DEAD = ['Elbow', 'Knee', 'Ankle']
+const dropped = query.get('full') ? [] : (query.get('drop') || DEAD.join(',')).split(',').filter(Boolean)
 const thin = (clip) => {
   if (!dropped.length) return clip
   const cut = clip.clone()

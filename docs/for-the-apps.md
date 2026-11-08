@@ -20829,3 +20829,94 @@ in an afternoon which of the eleven clips still read and which need
 redrawing, and author everything after it against the real thing. Without
 it we are doing what we just did: drawing against a rig that is kinder than
 the one it plays on, and finding out from a screenshot.
+
+## Round two hundred and ninety-one - the rig was ours all along, and `blockify` is the whole story
+
+Round 290 asked Staw which rig the clips play on and where to find it. His
+answer: it is the avatar rig. Ours. And he is right, so the question was
+wrong and the answer was in `src/engine/body.ts` the whole time.
+
+### What `blockify` does, which every one of us had read past
+
+`K6` calls `blockify` on every avatar (`k6.ts:370`). It throws the skinned
+geometry away and gives each of the six parts **one box bound entirely to
+one bone**, weight 1:
+
+    LeftLeg  -> J_HipL        RightLeg -> J_HipR
+    Torso    -> J_Chest
+    LeftArm  -> J_ShoulderL   RightArm -> J_ShoulderR
+    Head     -> J_Head
+
+Its own comment says what that means and we all read past it: *"an arm
+swings rather than bending, the way a toy's does."*
+
+So on every avatar in every World, these bones move **nothing at all**:
+
+    J_ElbowL  J_ElbowR  J_KneeL  J_KneeR  J_AnkleL  J_AnkleR
+
+Nothing is bound to them and nothing hangs below them. A channel on one is
+loaded, interpolated every frame, and discarded. The rig has sixteen bones
+and ten of them matter.
+
+That is the bug, and it is bigger than the wave. Counted off the built file,
+before this round:
+
+    wave      4/5 live     shrug     5/7 live
+    kobdance  9/13 live    dance1    8/12 live
+    dance2    6/10 live    dance3    9/13 live
+    run       5/9 live     walk/jump/fall/land  lose both knees
+
+`dance2` was the worst: its left arm was a hand resting at the waist written
+entirely as a folded elbow, so on a real avatar the arm hung dead at the
+side for the whole clip. The shrug's palms-up was all forearm. `dance3`'s
+folded arms were all forearm.
+
+### Why it survived four rounds of being looked at
+
+**`npm run k6:look` loaded `k6.glb` raw.** The file has proper skinning, so
+the preview bent elbows no player has ever had. Every clip was checked, and
+checked against a rig kinder than the one it ships on.
+
+That is the first trap in this file again, in its fifth disguise: the rig
+was decided at authoring time, and the thing that actually decides it -
+`blockify`, at spawn - runs later and somewhere else.
+
+**The preview now blockifies by default.** It drops `Elbow`, `Knee` and
+`Ankle` channels before playing, which is exactly equivalent to one box per
+bone. `?full=1` loads it unblocked, which is worth doing once to see how
+much of a clip is being thrown away. This is the part that matters most to
+you: if you ever author a clip, look at it this way or it will lie to you
+the same way it lied to us.
+
+### What was rewritten
+
+- **`wave`** - the swing is in the shoulder, -98 to -120 over three passes.
+  The elbow bends with it and is decoration.
+- **`shrug`** - the gesture moved into the shoulders, out to 56 and forward
+  20. The palms-up forearms are kept and do nothing on a real avatar.
+- **`dance2`** - the left arm pumps at the shoulder between 14 and 40
+  instead of being a folded elbow. It stays well under the raised arm so
+  the clip keeps its one-up-one-down shape.
+- **`dance3`** - shoulders swing 40 to 74 rather than sitting fixed at 30 to
+  42, because the fold below them was doing the work and the work was being
+  discarded.
+- **`dance1` and `dance3` are faster**, as Staw asked: 1.8s to 1.2s and 2.0s
+  to 1.25s, through a `quicker` wrapper that divides the times so the keys
+  and the shape are untouched.
+
+The dead tracks are **kept**, deliberately. They are correct data for a rig
+that can use one, and a richer avatar would play them. The mistake was never
+having them; it was authoring into them alone.
+
+`emotes` is `wave, shrug, kobdance, dance1, dance2, dance3`. No code carries
+`shrug`. `engine:check` 210/210, and every clip above was looked at
+blockified.
+
+### The rule, for both of us
+
+**A clip must read with `J_Elbow*`, `J_Knee*` and `J_Ankle*` doing nothing.**
+Put the gesture in the shoulders, hips, chest, spine and head; use the
+elbows and knees for detail on top, never for the motion itself. The check
+is not "does it look right in the preview" - it is **"play it with those six
+bones switched off and is it still the gesture"**, which is now what the
+preview does unless you ask it not to.

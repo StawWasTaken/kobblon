@@ -300,14 +300,26 @@ export function animations({ index }) {
           [0, [0, 0, 0]], [0.3, [0, 0.16, 0]],
           [1.15, [0, 0.16, 0]], [1.5, [0, 0, 0]],
         ]),
-        // Elbows coming away from the ribs, not arms going up.
-        track(arms.L, [[0, turn(Z, 2)], [0.3, turn(Z, 36)], [1.15, turn(Z, 36)], [1.5, turn(Z, 2)]]),
-        track(arms.R, [[0, turn(Z, -2)], [0.3, turn(Z, -36)], [1.15, turn(Z, -36)], [1.5, turn(Z, -2)]]),
         /*
-         * Forearms out and a touch forward, which is where hands turned
-         * palm-up end up. The fold is on Z with a little X on it for the
-         * same reason the wave has: straight out to the sides is the one
-         * place a camera in front cannot see.
+         * The whole gesture, in the shoulders. It was in the elbows first -
+         * forearms levelling off, palms up - which is the shape a shrug
+         * really has and which a World throws away, because nothing is
+         * bound to an elbow. Out to 56 and a little forward is what is left
+         * when only the shoulder can speak, and it reads.
+         */
+        track(arms.L, [
+          [0, turn(Z, 2)], [0.3, spin(turn(Z, 56), turn(X, -20))],
+          [1.15, spin(turn(Z, 56), turn(X, -20))], [1.5, turn(Z, 2)],
+        ]),
+        track(arms.R, [
+          [0, turn(Z, -2)], [0.3, spin(turn(Z, -56), turn(X, -20))],
+          [1.15, spin(turn(Z, -56), turn(X, -20))], [1.5, turn(Z, -2)],
+        ]),
+        /*
+         * Forearms out and palms up, for a rig that has elbows. On the
+         * avatars in a World this does nothing at all; it is kept because
+         * it is correct, not because it is load-bearing. The shoulders
+         * above carry the shrug on their own.
          */
         track(elbows.L, [
           [0, turn(Z, 0)],
@@ -429,13 +441,21 @@ export function animations({ index }) {
         track(arms.R, [[0, turn(Z, -118)], [0.15, turn(Z, -100)], [0.3, turn(Z, -118)], [0.45, turn(Z, -100)], [0.6, turn(Z, -118)], [0.75, turn(Z, -100)], [0.9, turn(Z, -118)], [1.05, turn(Z, -100)], [1.2, turn(Z, -118)]]),
         track(elbows.R, [[0, turn(Z, 0)], [1.2, turn(Z, 0)]]),
         /*
-         * The other hand in at the waist, which is the elbow folded rather
-         * than the shoulder lifted. The shoulder was at 48 first and the arm
-         * read as a second raised arm rather than a hand on a hip - the
-         * whole shape of this one is one arm up and one arm down, and two
-         * arms out is a different clip.
+         * The other arm, swinging back and out on the offbeat.
+         *
+         * It was a hand at the waist, written entirely as a folded elbow so
+         * that the shoulder could stay down and the clip keep its shape -
+         * one arm up, one arm down. On a real avatar the elbow does nothing
+         * and the arm simply hung there, dead, for the whole clip. The
+         * shoulder has to do it, and it stays well under the raised arm so
+         * the shape survives: 14 to 40 is a pump, not a second raise.
          */
-        track(arms.L, [[0, turn(Z, 8)], [1.2, turn(Z, 8)]]),
+        track(arms.L, [
+          [0, turn(Z, 14)], [0.15, turn(Z, 40)], [0.3, turn(Z, 14)],
+          [0.45, turn(Z, 40)], [0.6, turn(Z, 14)],
+          [0.75, turn(Z, 40)], [0.9, turn(Z, 14)],
+          [1.05, turn(Z, 40)], [1.2, turn(Z, 14)],
+        ]),
         track(elbows.L, [[0, turn(X, -82)], [0.3, turn(X, -70)], [0.6, turn(X, -82)], [0.9, turn(X, -70)], [1.2, turn(X, -82)]]),
         track(knees.L, [[0, turn(X, -26)], [0.15, turn(X, -6)], [0.3, turn(X, -26)], [0.45, turn(X, -6)], [0.6, turn(X, -26)], [0.75, turn(X, -6)], [0.9, turn(X, -26)], [1.05, turn(X, -6)], [1.2, turn(X, -26)]]),
         track(knees.R, [[0, turn(X, -26)], [0.15, turn(X, -6)], [0.3, turn(X, -26)], [0.45, turn(X, -6)], [0.6, turn(X, -26)], [0.75, turn(X, -6)], [0.9, turn(X, -26)], [1.05, turn(X, -6)], [1.2, turn(X, -26)]]),
@@ -474,9 +494,14 @@ export function animations({ index }) {
          * body is doing, and on a twist they hid the one thing the clip is
          * about. The fold is on Z, not X - an X bend takes the forearm
          * toward the camera, where a view from the front cannot see it.
+         *
+         * The shoulders now swing between 40 and 74 rather than sitting at
+         * a fixed 30 to 42, because the fold below them does nothing on a
+         * real avatar: with the elbows thrown away the arms were two sticks
+         * held at an angle while the body turned under them.
          */
-        track(arms.L, [[0, turn(Z, 30)], [1.0, turn(Z, 42)], [2.0, turn(Z, 30)]]),
-        track(arms.R, [[0, turn(Z, -42)], [1.0, turn(Z, -30)], [2.0, turn(Z, -42)]]),
+        track(arms.L, [[0, turn(Z, 40)], [0.5, turn(Z, 74)], [1.0, turn(Z, 48)], [1.5, turn(Z, 74)], [2.0, turn(Z, 40)]]),
+        track(arms.R, [[0, turn(Z, -48)], [0.5, turn(Z, -74)], [1.0, turn(Z, -40)], [1.5, turn(Z, -74)], [2.0, turn(Z, -48)]]),
         track(elbows.L, [[0, turn(Z, 96)], [0.5, turn(Z, 72)], [1.0, turn(Z, 96)], [1.5, turn(Z, 72)], [2.0, turn(Z, 96)]]),
         track(elbows.R, [[0, turn(Z, -72)], [0.5, turn(Z, -96)], [1.0, turn(Z, -72)], [1.5, turn(Z, -96)], [2.0, turn(Z, -72)]]),
         // Knees a little apart and bent, which is what lets the hips turn
