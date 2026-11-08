@@ -5,7 +5,7 @@ import type { KobIcon } from '@/components/brand/Icon'
 import {
   faComment, faUserPlus, faClock, faCoins, faStar,
   faEllipsis, faLink, faCubes, faEye, faAward, faUsers, faBan,
-  faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart, faShapes,
+  faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart, faShapes, faBell,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -656,16 +656,19 @@ export default function Profile() {
                       </GuestGate>
                     )}
                     {/*
-                      * A heart, not a person with a tick. Staw: "make that
-                      * every icon for following someone is a heart instead
-                      * of a user" - the person icons belong to friendship,
-                      * which is a request and an answer, and following is
-                      * the one-sided thing the lists already mark with a
-                      * heart. Two icons for two different relations.
+                      * A bell, and the same bell as the notifications one in
+                      * the topbar. Staw: "make that the follow icon (on the
+                      * profiles) its the bell icon we also use for the
+                      * notifications". It says what following actually does
+                      * - their new Worlds come to you - where the heart only
+                      * said you liked them. The person icons still belong to
+                      * friendship, which is a request and an answer; the
+                      * hearts on this page are best friends and kept Worlds,
+                      * and the Followers and Following tabs still carry one.
                       */}
                     <Button
                       variant={following ? 'primary' : 'subtle'}
-                      icon={faHeart}
+                      icon={faBell}
                       onClick={toggleFollow}
                       disabled={!me}
                     >

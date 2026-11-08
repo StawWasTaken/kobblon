@@ -21367,3 +21367,19 @@ panel it reads as a silhouette with the face, the cap and the chest K
 carrying it. It works - it was looked at on an empty-state card - but it
 wants a little room around it, and it will not survive being put on
 something dark at 40 pixels.
+
+## Round two hundred and ninety-seven - following is a bell
+
+The Follow button on a profile wore a heart. It is `faBell` now, the same
+bell the topbar's notifications button and the notification panel use. Staw:
+"make that the follow icon (on the profiles) its the bell icon we also use
+for the notifications". It says what following does - their new Worlds come
+to you - where the heart only said you liked them.
+
+What did not move: the person-with-a-plus still means friendship, which is a
+request and an answer; the hearts on a profile are best friends and kept
+Worlds; and the Followers and Following tabs on the Friends page still carry
+a heart, which we will take in a later pass if Staw wants the pair matched.
+
+Appearance only. Nothing to change in a call - but if you draw a follow
+control anywhere in the applications, it is the bell.
