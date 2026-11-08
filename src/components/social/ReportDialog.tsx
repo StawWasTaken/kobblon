@@ -10,7 +10,7 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { useMaybeAuth } from '@/hooks/useAuth'
-import { submitReport } from '@/lib/api'
+import { submitReport, type ReportTarget } from '@/lib/api'
 import { cn } from '@/lib/cn'
 
 /**
@@ -139,6 +139,7 @@ const thingWord: Record<string, string> = {
   style: 'A look',
   avatar_item: 'An avatar item',
   outfit: 'An outfit',
+  voice: 'Voice chat',
 }
 
 /** One tappable row. The list on every step is made of these. */
@@ -189,14 +190,21 @@ function Row({
 }
 
 export function ReportDialog({
-  open, onClose, targetType, targetId, targetName,
+  open, onClose, targetType, targetId, targetName, where,
 }: {
   open: boolean
   onClose: () => void
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
-    | 'avatar_item' | 'outfit' | 'forum_topic' | 'forum_post'
+  targetType: ReportTarget
   targetId: string
   targetName: string
+  /**
+   * Where it happened, for a report about something with no row behind it:
+   * a World and a server, in the words a moderator reads. It goes on the
+   * report as its first line and is shown on the last step before it is
+   * sent, because a card that quietly attaches where you were is a card
+   * that surprises you.
+   */
+  where?: string | null
 }) {
   /* Not `useAuth`: that throws without a provider, and this card is opened
      from an asset page the Workspace can mount. Null means nobody told us. */
@@ -247,7 +255,8 @@ export function ReportDialog({
          reads first either way; it is not quietly dropped. */
       const said = [kind, details.trim()].filter(Boolean).join('\n\n')
       await submitReport({
-        reporterId: profile.id, targetType, targetId, reason: reason.value, details: said,
+        reporterId: profile.id, targetType, targetId, reason: reason.value,
+        details: said, where,
       })
       toast('Sent. A moderator reads every one of these.', 'success')
       onClose()
@@ -417,7 +426,7 @@ export function ReportDialog({
                 </p>
                 <p className="mt-1 truncate font-display text-base font-extrabold">{targetName}</p>
                 <p className="mt-0.5 text-xs text-muted">
-                  {thingWord[targetType] ?? 'Something'} on Kobblon
+                  {where || `${thingWord[targetType] ?? 'Something'} on Kobblon`}
                 </p>
                 <div className="mt-3 space-y-2 border-t border-ink-line pt-3">
                   <button
@@ -462,6 +471,27 @@ export function ReportDialog({
                   It will not slow anything down, but it is usually what decides it.
                 </p>
               </div>
+
+              {/*
+                * Voice is judged from what you write and nothing else.
+                *
+                * Kobblon records no voice chat, so a card that said "a
+                * moderator will listen to it" would be promising a thing
+                * that does not exist - and somebody who believed it would
+                * send a report with no words in it and wonder why nothing
+                * happened. Saying so is the difference between a report
+                * that can be acted on and one that cannot.
+                */}
+              {targetType === 'voice' && (
+                <p className="flex items-start gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+                  <Glyph icon={faLock} className="mt-0.5 shrink-0 text-sm text-muted" />
+                  <span>
+                    Nothing said out loud on Kobblon is recorded, so there is no clip for
+                    anybody to play back. What you write above is the whole report - say what
+                    was said, as near to the words as you can remember.
+                  </span>
+                </p>
+              )}
 
               {/* What actually happens, said plainly. A report that disappears
                   into a toast and is never mentioned again is why people stop

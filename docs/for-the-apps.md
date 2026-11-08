@@ -21061,3 +21061,191 @@ word.
   from here.
 
 `npx tsc --noEmit` clean, `npm run build` clean, `engine:check` 215/215.
+
+## Round two hundred and ninety-four - playing is something an account can be refused, and the wave is Staw's drawing
+
+Round 80 asked five questions about moderation. Most of the answers already
+exist in this repository and the short version is that the system is built,
+the console is the website's, and the one thing genuinely missing was the
+lock on the door a player walks through.
+
+### Staw has answered the console question, so neither of us invents one
+
+**The console lives on the website, and only there.** Everything that
+happens on the platform is centralised in the staff console here. The
+applications do not get a second one and should not build an approximation
+of the cards, the ladder or the queues.
+
+What the applications **do** carry is the receiving end: the chat and voice
+suspension cards, the warning card, the account suspension card and the ban
+card - the same ones the website shows, because they are our components and
+you mount them rather than copy them. `tools/site/standing-preview` and
+`tools/site/suspended-preview` mount them with no provider, no router and no
+session, which is exactly how a panel mounts them.
+
+And the flow he described for a sanction landing on somebody who is playing,
+Roblox-shaped:
+
+- you lose connection, with **no explanation** in the disconnect;
+- **Rejoin** puts you back on the same server of the same world, and while
+  you are banned or suspended it fails with the same message again;
+- **Leave** shows you the card - the same banned or suspended card as on the
+  website, in the Launcher.
+
+### The part of that which was not true, and now is
+
+`join_world_server` did not check standing. It asked whether you were signed
+in, whether the server was running and whether it was full, and then let a
+suspended or banned account walk straight back in.
+
+Every comment on this side says "whether this account may be in that room is
+decided by `join_world_server` over HTTPS". For standing, that was not true.
+A client refusing on its own is not a lock - it is a client-side permission
+check, and a modified client does not refuse.
+
+This is the fourth trap in its usual coat: the careful half was all there -
+a ladder, a ban, cards, appeals, a whole console - and the one door a player
+actually walks through had no lock on it.
+
+**Migration 0334.** Two doors, because there are two:
+
+- **`join_world_server`** refuses. It throws `Lost connection.` - the same
+  four words a vanished server gets, deliberately, because the place to be
+  told about your account is the card and the website, where there is room
+  to say it and an appeal to press. No row is written and no visit is
+  counted.
+- **`still_in_world`**, the heartbeat, **now returns a boolean, and false
+  means leave.** It returned void before, which meant a sanction landing on
+  somebody mid-game reached them only when they next tried to join
+  something: a player banned while playing carried on playing. It also
+  clears their row on the way out, so they stop being counted in the server
+  and stop being shown to their friends.
+
+Guarding only the first would have been the same mistake one layer in - the
+join locked and the session already open running for ever.
+
+**This is a signature change and it is yours to take.**
+
+```ts
+import { joinWorldServer, stillInWorld } from '@/lib/api'
+
+await joinWorldServer(serverId)       // throws. 'Lost connection.' means do the flow above
+const welcome = await stillInWorld(serverId)
+if (!welcome) { /* disconnect, same message, no explanation */ }
+```
+
+A lapsed suspension heals itself at the moment it lapses rather than when a
+moderator next opens a staff page: the guard clears the one row it is about
+before reading it. Checked, under real signed-in identities: a clean account
+joins and may stay; a suspended one is refused and leaves no row and no
+visit; a banned one gets the same message; a suspended account already in a
+server is told to go and its row is cleared; a lapsed suspension plays again
+and the row healed itself; and a signed-in client cannot call the guard
+about anybody, which is a separate revoke because a `security definer`
+function taking somebody else's id would otherwise be a way to ask the
+database whether a stranger is suspended, one name at a time.
+
+### Reporting: it exists, and voice can be reported now
+
+`ReportDialog` is already built - three steps that slide, seven reasons each
+with its own second question, the thing pinned on screen through the whole
+flow, and the last press the only one that sends. It takes no provider and
+no router. Mount it.
+
+Two changes for you:
+
+- **`voice` is now a `ReportTarget`.** It has been a legal `target_type` in
+  the database since 0219 and was missing from the TypeScript, so the one
+  place a voice report can come from - a client with a microphone - could
+  not name it. The database was ready and the door was not.
+- **`where`**, a new optional field on `submitReport` and on the dialog. A
+  reported message has an id a moderator can open; a line said in a World,
+  or a word said out loud, has nowhere to point, and without this the report
+  arrives as an accusation with no scene. It rides on the details as the
+  first line and is shown on the last step before it is sent, because a card
+  that quietly attaches where you were is a card that surprises you.
+
+```ts
+<ReportDialog
+  targetType="voice"
+  targetId={speakerId}
+  targetName={speakerName}
+  where="Said out loud in Tower of Hell but Worse, server 3f2a"
+/>
+```
+
+### Voice, beyond the suspension
+
+**Nothing is recorded.** 0219 is explicit about it and it is a policy
+decision before it is a feature: a word is in somebody's ears before
+anything could look at it, so voice moderation is after the fact, from a
+report, never a filter in the path. A voice report is judged from what the
+reporter writes and from the account's record, and from nothing else.
+
+So the card now says so, in as many words, on a voice report: there is no
+clip for anybody to play back. A card that implied a recording would collect
+reports with no words in them, and the person who sent one would wonder why
+nothing happened.
+
+**A per-listener mute does not exist and should not be a sanction.** If you
+want one - and you should - it is one listener's choice about one room, not
+a punishment, so it does not belong in `chat_timeouts` and it does not
+belong on the account. Build it in the room, client-side; if it later wants
+to persist, say so and it gets its own table. Say the word and we will build
+it here so there is one of it.
+
+### The ladder, once, by name
+
+In order, with the database's own words for them:
+
+| rung | what it does | who |
+| --- | --- | --- |
+| `nothing` | Looked at, nothing to answer. Recorded so the same report does not come back for ever. | moderator |
+| `content_removed` | The thing comes down, whoever made it is told why, the account is untouched. | moderator |
+| `warning` | Said to them and put on their standing. Nothing is taken away. | moderator |
+| `chat_suspension` | They cannot type for a while. **Kobblon picks the length, not the moderator** - five minutes, then six, then longer. | moderator |
+| `voice_suspension` | Chat **and** voice together, on the same ladder. Voice is never taken on its own: somebody who stops typing it and starts saying it has not improved. | moderator |
+| `suspension` | They cannot sign in. An end date, or until somebody lifts it. | moderator |
+| `termination` | The account closed. **A superadmin by hand - the AI is refused this by name, in the database.** | superadmin |
+
+A chat or voice suspension writes `chat_timeouts`; every other rung writes
+`violations`. That is why your two listeners are two listeners, and it is
+right.
+
+Issuing goes through `take_report` or `sanction_account`, and **the acting
+moderator is checked server-side every time.** The rank a card is given only
+decides which buttons are worth drawing - it is never the lock. An
+application cannot issue a sanction except through those functions, which is
+the answer to question three and the arrangement we would have asked for.
+
+### The wave is Staw's drawing now
+
+He drew the pose he wants and said to make it that: arm up beside the head,
+about thirty degrees out from vertical, square on to the front, hand clear
+above the head.
+
+So the forward lean is gone. Round 292 put seventeen to twenty-two degrees
+of X on the wave to stop the arm crossing the face, and it did stop it - but
+the lean was solving a problem that belonged to the angles above it. At -170
+the arm crosses whatever you do; at -157 it does not cross at all. The lean
+was tilting the gesture out of the plane the camera watches it from, for
+nothing.
+
+`wave` is now pure Z, peaking about -162 and rocking down to about -145,
+three passes winding down. Rendered through `blockify` and looked at: the
+arm is up beside the head, clear above it, and the face stays visible
+through the whole swing.
+
+Nothing to change on your side - same clip name, same length, same
+once-not-looping. Measure it again if you like; the last two rounds were
+worth exactly that.
+
+### What Staw still owes, and what is still open
+
+- **Deploy `register`** - still one command, still his.
+- **0334 to apply** - the migration above. Until it runs, a suspended
+  account can still walk back into a World.
+- The `danger` lip question from round 293 is with Staw.
+
+`npx tsc --noEmit` clean, `npm run build` clean, 0334 applied twice with the
+behavioural checks above.

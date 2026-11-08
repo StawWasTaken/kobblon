@@ -619,20 +619,44 @@ export async function markNotificationsRead(userId: string) {
 
 // ------------------------------------------------------------- moderation
 
+/**
+ * The kinds of thing a report can be about.
+ *
+ * `voice` has been a legal `target_type` in the database since 0219 and was
+ * missing from this union, which meant the one place a voice report can
+ * come from - a client with a microphone in it - could not name it. The
+ * database was ready and the door was not.
+ */
+export type ReportTarget =
+  | 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
+  | 'avatar_item' | 'outfit' | 'forum_topic' | 'forum_post'
+  /** Something said out loud. Judged from the report, never a recording. */
+  | 'voice'
+
 export async function submitReport(input: {
   reporterId: string
-  targetType: 'profile' | 'space' | 'message' | 'ad' | 'asset' | 'community' | 'style'
-    | 'avatar_item' | 'outfit' | 'forum_topic' | 'forum_post'
+  targetType: ReportTarget
   targetId: string
   reason: string
   details: string
+  /**
+   * Where it happened, when the thing being reported is not a row.
+   *
+   * A reported message has an id a moderator can open. A line said in a
+   * World, or a word said out loud, has nowhere to point: without this the
+   * report arrives as an accusation with no scene. The table holds a reason
+   * and free text and that is all it is going to hold, so this rides on the
+   * details as the first line rather than waiting for a column.
+   */
+  where?: string | null
 }) {
+  const said = [input.where?.trim(), input.details.trim()].filter(Boolean).join('\n\n')
   unwrap(await supabase.from('reports').insert({
     reporter_id: input.reporterId,
     target_type: input.targetType,
     target_id: input.targetId,
     reason: input.reason,
-    details: input.details || null,
+    details: said || null,
   }).select('id').single())
 }
 
@@ -3336,6 +3360,43 @@ export async function worldMedia(worldId: string): Promise<WorldMedium[]> {
     .order('position')
   if (error) throw new Error(error.message)
   return (data ?? []) as WorldMedium[]
+}
+
+/**
+ * Arriving in a World server.
+ *
+ * The one door, and the only thing on the platform that decides whether an
+ * account may be in a room. A `room=` in a `kobblon://play/<id>` link and a
+ * `?server=` in a web one are hints about where somebody wants to go; this
+ * is the answer about whether they may.
+ *
+ * It throws. A suspended or banned account gets `Lost connection.` and
+ * nothing else - the same four words a vanished server gets, because the
+ * place to be told about your account is the card and the website, where
+ * there is room to say it and an appeal to press. A client is not expected
+ * to read the message: it shows what it always shows and asks
+ * `myAccountStanding()` when somebody presses Leave.
+ */
+export async function joinWorldServer(server: string): Promise<void> {
+  unwrap(await supabase.rpc('join_world_server', { server }))
+}
+
+/**
+ * The heartbeat, said every so often while playing. **False means leave.**
+ *
+ * It returned nothing until 0334, which meant a sanction landing on
+ * somebody mid-game reached them only when they next tried to join
+ * something - so a player banned while playing carried on playing. The
+ * heartbeat was already running and already proving they were there, so it
+ * is the honest place for the answer rather than a second call nobody would
+ * remember to make.
+ *
+ * A client that ignores the `false` keeps its row warm and gains nothing by
+ * it: every other door is guarded on its own, and a row in `world_players`
+ * has never been permission to do anything.
+ */
+export async function stillInWorld(server: string): Promise<boolean> {
+  return (unwrap(await supabase.rpc('still_in_world', { server })) as boolean) ?? false
 }
 
 /** What the person reading the page has already said about this World. */

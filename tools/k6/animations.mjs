@@ -255,15 +255,26 @@ export function animations({ index }) {
          * front of the head and the wave is hidden behind itself. -158 is
          * the far end of where the hand is high and the face still visible,
          * and it was found by rendering the four angles side by side.
+         *
+         * **No forward lean, and that is Staw's drawing rather than a
+         * preference.** Round 292 added seventeen to twenty-two degrees of
+         * X to stop the arm crossing the face, which it did, but the lean
+         * was solving a problem that belonged to the angles above it: at
+         * -170 the arm crosses whatever you do, and at -152 it does not
+         * cross at all. Staw then drew the pose he wants - arm up beside
+         * the head, about thirty degrees out from vertical, square on to
+         * the front - and measured off the drawing that is pure Z at about
+         * -150. The lean was tilting the gesture out of the plane the
+         * camera watches it from, for nothing.
          */
         track(arms.R, [
           [0, turn(Z, 4)],
-          [0.26, spin(turn(Z, -156), turn(X, -18))],
-          [0.42, spin(turn(Z, -138), turn(X, -22))],
-          [0.6, spin(turn(Z, -158), turn(X, -17))], [0.78, spin(turn(Z, -139), turn(X, -22))],
-          [0.96, spin(turn(Z, -156), turn(X, -18))], [1.14, spin(turn(Z, -141), turn(X, -21))],
-          [1.32, spin(turn(Z, -153), turn(X, -19))], [1.5, spin(turn(Z, -145), turn(X, -20))],
-          [1.62, spin(turn(Z, -150), turn(X, -19))],
+          [0.26, turn(Z, -157)],
+          [0.42, turn(Z, -145)],
+          [0.6, turn(Z, -162)], [0.78, turn(Z, -146)],
+          [0.96, turn(Z, -159)], [1.14, turn(Z, -148)],
+          [1.32, turn(Z, -157)], [1.5, turn(Z, -151)],
+          [1.62, turn(Z, -154)],
           [1.95, turn(Z, 4)],
         ]),
         /*
