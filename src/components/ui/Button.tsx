@@ -74,9 +74,14 @@ const variants: Record<Variant, string> = {
    * press that most needs to look like a decision somebody made - read as
    * fainter than "Keep it" beside it. Same weight now; the colour is what
    * says it is different, which is the whole job of having one red.
+   *
+   * The lip is `danger-deep` now, not `danger-ink`. Blue moved off `ink`
+   * last round and red was the last one left on it, which made the one
+   * button that deletes things press with a heavier edge than every other
+   * button on the site. Staw: match it.
    */
   danger:
-    'bg-danger text-on-art hover:bg-danger-bright active:bg-danger border-b-[3px] border-danger-ink active:border-b-0 active:mt-[3px]',
+    'bg-danger text-on-art hover:bg-danger-bright active:bg-danger border-b-[3px] border-danger-deep active:border-b-0 active:mt-[3px]',
 }
 
 const sizes: Record<Size, string> = {

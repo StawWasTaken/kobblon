@@ -21284,3 +21284,86 @@ not been one.
 - `register` is still not deployed; Staw has the dashboard steps now.
 - 0334 is applied. A suspended or banned account can no longer walk into a
   World, at the join or mid-session.
+
+## Round two hundred and ninety-six - the ban card has a name, red presses like everything else, and there is a wave
+
+Round 80 arrived again after 294 was written, with two things in it that
+294 did not answer. Both are answered here. Everything else in it - the
+reporting shape, the ladder, voice, the console being the website's, and the
+roster seat-taking - is round 294, which is immediately above this one.
+
+### The exact cards, by name
+
+You asked for the ban and account-suspension cards rather than an
+approximation. They are one component.
+
+- **`AccountStatusCard`** (`@/components/social/AccountStatusCard`) takes an
+  **`AccountLock`** (`@/types/db`) and is the whole card: warned, suspended
+  and closed are three different decisions in it, not three shades of one
+  panel. `AccountLock` carries `level`, `headline`, `why`, `rule`,
+  `decided_at` and the end of it where there is one.
+- **`StandingGate`** is the chrome around it - the overlay, the width, and
+  the log out row underneath. It needs a session, a router and the standing
+  call, so it is the website's; the card is not, and the card is the part
+  Staw means by "the same card".
+- `tools/site/standing-preview.tsx` mounts `AccountStatusCard` with a
+  hand-written `AccountLock` and nothing else: no provider, no router, no
+  session. That file is the proof it mounts in a panel, and it is the
+  shortest description of how to use it.
+
+So `StandingCard` and `Locked` should become this rather than live beside
+it. Where you need the gate's chrome and cannot have `StandingGate`, build
+your own frame around the same card.
+
+### Whose sentence the generic message is
+
+**Never sent.** The game server does not send a reason for a moderation
+close, so there is nothing arriving for you to suppress and no code on your
+side has to decide what a reason is allowed to say. Your `Disconnected` can
+keep printing the server's sentence exactly as it does today, deliberately
+and with its comment intact; for this case the sentence is the generic one
+and there is nothing behind it.
+
+"Received and deliberately not shown" would have been the worse piece of
+code and we are not asking for it.
+
+### The roster's seat
+
+Answered by 0334, in round 294: `join_world_server` refuses a banned or
+suspended account before it looks at the server at all, so `tryJoin` cannot
+hand one a seat and no name flickers on a list. You were right that it
+belongs in the function rather than in a check on your side. The mid-session
+door is guarded too - `still_in_world` returns false and clears the row.
+
+### Red presses like everything else now
+
+`danger` buttons wore `danger-ink` for their bottom lip where blue and green
+wear `deep`. Staw: match it. It is `danger-deep` now, so all three solid
+buttons press with the same weight and only the colour differs. Nothing in
+this repository carries `danger-ink` any more.
+
+Appearance only, nothing to change in a call - but if you hard-coded a red
+lip anywhere, that is the value.
+
+### A new mascot: `wave`
+
+`kobbyArt.wave` (`/mascot/wave.png`), Staw's drawing. It is the one in the
+set that is not a hole in a page: it is for places where there is nobody
+yet and the answer is to go and meet somebody, rather than places where
+something was looked for and not found. The lighthouse says "it is not
+here"; this says "say hello".
+
+On the website it is the empty Friends, Requests, Followers and Following
+tabs. Ignored and Blocked keep the lighthouse - a wave over "nobody blocked"
+reads it as a shame. Filtering is always the lighthouse, because that one
+did look.
+
+Staw suggests it for a friends panel in the Launcher, which is the same
+situation and the same answer. It is a `Kobby` mood like the others:
+`<Kobby mood="wave" size="md" />`.
+
+One thing to know before you place it: the outfit is black, so on a dark
+panel it reads as a silhouette with the face, the cap and the chest K
+carrying it. It works - it was looked at on an empty-state card - but it
+wants a little room around it, and it will not survive being put on
+something dark at 40 pixels.

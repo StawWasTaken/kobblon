@@ -38,6 +38,17 @@ export const kobbyArt = {
   /** The Catalog's own, for the shelves rather than for a search. */
   style: asset('/mascot/sunglasses.png'),
   /*
+   * Waving. The one in this set that is not a hole in a page: it is for
+   * the places where there is nobody yet and the answer is to go and meet
+   * somebody, rather than places where something was looked for and not
+   * found. The lighthouse says "it is not here"; this says "say hello".
+   *
+   * Staw drew it and it was briefly mistaken for a reference for the wave
+   * emote, which it is not - that is a pose in `k6.glb` and this is a
+   * picture.
+   */
+  wave: asset('/mascot/wave.png'),
+  /*
    * The guest with the hammer, which is not an empty state and is not the
    * worker: the worker stands for a thing that is not finished, and this
    * one is a Kobblonian who builds, standing beside what is being

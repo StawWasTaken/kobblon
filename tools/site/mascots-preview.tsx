@@ -12,6 +12,7 @@ const what: Record<KobbyMood, string> = {
   construction: 'Not built yet',
   notification: 'Nothing has come in',
   style: 'The Catalog',
+  wave: 'Nobody here yet - go and say hello',
   building: 'Beside what is being advertised',
   default: 'Ask Kobby (a label, 28px)',
 }
@@ -29,7 +30,7 @@ createRoot(document.getElementById('root')!).render(
         ))}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {(['emptyBox', 'noResults', 'construction', 'style'] as KobbyMood[]).map((mood) => (
+        {(['wave', 'noResults', 'construction', 'style'] as KobbyMood[]).map((mood) => (
           <Card key={mood}>
             <EmptyState mood={mood} title={what[mood]} body="The body sits under it, two lines at most." />
           </Card>

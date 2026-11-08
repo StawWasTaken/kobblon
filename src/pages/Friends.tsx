@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Menu } from '@/components/ui/Menu'
 import { Avatar } from '@/components/ui/Avatar'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import type { KobbyMood } from '@/components/brand/Kobby'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { useChatDock } from '@/components/chat/ChatDock'
@@ -305,6 +306,26 @@ export default function Friends() {
   }
 
   /*
+   * Which drawing an empty tab gets, and it is not the same one for all
+   * six. Four of these are "there is nobody here yet, go and meet
+   * somebody", which is the wave; two of them are lists that being empty
+   * is good news for, and a wave over "nobody blocked" would be reading
+   * it as a shame. Filtering is always the lighthouse: that one did look
+   * and did not find it.
+   *
+   * It was `filter ? 'noResults' : 'noResults'` before, which picked the
+   * same drawing whichever way it went.
+   */
+  const moodFor: Record<Tab, KobbyMood> = {
+    Friends: 'wave',
+    Requests: 'wave',
+    Followers: 'wave',
+    Following: 'wave',
+    Ignored: 'noResults',
+    Blocked: 'noResults',
+  }
+
+  /*
    * Friends split by whether anybody is there. The page is mostly used to
    * start something with somebody, and somebody who is not there cannot be
    * started with, so the ones who are go first and say so.
@@ -521,7 +542,7 @@ export default function Friends() {
           {!source.loading && !shown.length && (
             <Card>
               <EmptyState
-                mood={filter ? 'noResults' : 'noResults'}
+                mood={filter ? 'noResults' : moodFor[current.name]}
                 title={filter ? 'Nobody here matches' : emptyFor[current.name].title}
                 body={filter ? 'Try fewer letters.' : emptyFor[current.name].body}
                 action={
