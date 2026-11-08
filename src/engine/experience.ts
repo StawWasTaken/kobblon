@@ -385,6 +385,21 @@ export type WorldManifest = {
      */
     shiftlock?: boolean
   }
+  /**
+   * Whether players may use emotes in this World.
+   *
+   * Absent means yes, the way `camera.shiftlock` does: a World saved before
+   * this field existed behaves the way it did, and only an explicit `false`
+   * turns them off. The Launcher drew "Emotes are disabled in this
+   * experience" on its wheel in round 77 and had nothing that could ever
+   * make it true; this is the thing that can.
+   *
+   * Top-level rather than under `camera`, because an emote is not a camera
+   * decision - it is what a creator lets a body do. A player's own
+   * preference about emotes, if there is ever one, belongs in their
+   * settings and not in somebody's World file.
+   */
+  emotes?: boolean
   /** Sounds that are not anywhere in particular. Ambience. */
   sounds?: WorldSound[]
   blocks: WorldPart[]
@@ -887,6 +902,8 @@ export function readManifest(raw: unknown): WorldManifest {
       // Absent means allowed: only an explicit false turns it off.
       shiftlock: data.camera?.shiftlock === false ? false : undefined,
     },
+    // Absent means allowed: only an explicit false turns it off.
+    emotes: data.emotes === false ? false : undefined,
     sounds: (Array.isArray(data.sounds) ? data.sounds : [])
       .map((one: any) => (one && typeof one.class === 'string' ? flatten(one) : one))
       .map((one) => readSound(one))

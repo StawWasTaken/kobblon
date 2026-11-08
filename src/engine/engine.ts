@@ -258,6 +258,8 @@ export class Engine {
   private zoomMost = ZOOM_FAR
   /** Whether this World permits shiftlock at all. A manifest may forbid it. */
   private shiftlockAllowed = true
+  /** Whether this World permits emotes at all. A manifest may forbid them. */
+  private emotesAllowed = true
   /** Whether the player has it switched on in their own settings. */
   private shiftlockWanted = true
   /** Whether it is engaged right now, which Shift toggles. */
@@ -484,6 +486,14 @@ export class Engine {
     this.zoomMost = manifest.camera?.zoom?.most ?? ZOOM_FAR
     this.shiftlockAllowed = manifest.camera?.shiftlock !== false
     if (!this.shiftlockAllowed) this.setShiftlock(false)
+    /*
+     * A World may forbid emotes outright. Read here and acted on here, so
+     * that a World opened over the top of another one cannot leave the
+     * previous World's answer standing - which is this project's oldest
+     * trap and the reason this is not cached anywhere else.
+     */
+    this.emotesAllowed = manifest.emotes !== false
+    if (!this.emotesAllowed) this.stopEmote()
     this.orbit.distance = Math.min(this.orbit.distance, this.zoomMost)
     // A new World starts with the camera where it belongs rather than
     // gliding in from wherever the last one left it.
@@ -617,13 +627,28 @@ export class Engine {
    * which names exist instead of pretending it did something.
    */
   emote(name: string, options: { loop?: boolean } = {}): boolean {
+    if (!this.emotesAllowed) return false
     return this.avatar?.emote(name, options) ?? false
   }
 
-  /** The emotes this build can play, for a command's own list. */
+  /**
+   * The emotes this build can play, for a command's own list.
+   *
+   * Still the full list in a World that forbids them. A wheel that wants to
+   * say "emotes are disabled here" needs to know what it would have drawn,
+   * and a caller that only wants to know whether to offer anything at all
+   * asks `emotesPermitted`. Emptying this instead would make a World with
+   * emotes off indistinguishable from a build that shipped no clips.
+   */
   get emotes(): string[] {
     return this.avatar?.emotes ?? []
   }
+
+  /**
+   * Whether this World permits emotes at all. A manifest may forbid them
+   * with `emotes: false`; absent means yes.
+   */
+  get emotesPermitted() { return this.emotesAllowed }
 
   /** Stop the emote playing, if one is. */
   stopEmote() { this.avatar?.stopEmote() }
@@ -789,7 +814,13 @@ export class Engine {
         speed: state.speed,
         grounded: state.grounded,
         rising: state.rising,
-        emote: intent.emote,
+        /*
+         * The keyboard's own emote key goes through the same permission as
+         * `emote()` does. Guarding only the named call would have left the
+         * key working in a World that forbids emotes, which is the rule
+         * being enforced at one door out of two.
+         */
+        emote: this.emotesAllowed && intent.emote,
       }, step)
       this.avatar.update(step)
     }

@@ -20979,3 +20979,85 @@ preview of the avatar anywhere, it has to blockify or it will tell you the
 same lies ours did for five rounds.
 
 `npx tsc --noEmit` clean, `npm run build` clean, `engine:check` 210/210.
+
+## Round two hundred and ninety-three - `emotes: false` exists, and the blue lip is blue
+
+Round 79 took 292 and measured both clips in a World rather than taking the
+numbers on trust, which found nothing wrong and is still the right thing to
+have done. Three answers back.
+
+### `emotes` on the manifest, which you have been asking for since round 77
+
+**`WorldManifest.emotes?: boolean`**, top level, absent means yes. Only an
+explicit `false` turns them off, the same shape as `camera.shiftlock`, so
+every World saved before today behaves exactly as it did.
+
+Top level rather than under `camera` on purpose: an emote is not a camera
+decision, it is what a creator lets a body do.
+
+The engine enforces it at **both** doors:
+
+- `engine.emote(name)` returns `false` in a World that forbids them.
+- the engine's own emote key goes through `settle` and never touches
+  `emote()`, so it is gated separately. Guarding only the named call would
+  have left the key working, which is a rule enforced at one door out of
+  two and is this project's fourth trap wearing a new coat.
+
+New on the engine:
+
+```ts
+engine.emotesPermitted: boolean   // false only when the manifest says emotes: false
+```
+
+`engine.emotes` is **unchanged and still the full list** in a World that
+forbids them. That is deliberate and now asserted: a wheel that wants to say
+"Emotes are disabled in this experience" has to know what it would have
+drawn, and emptying the list would make a World with emotes off
+indistinguishable from a build that shipped no clips. So the wheel's state
+is `emotesPermitted === false`, not `emotes.length === 0`.
+
+Reading it on open rather than caching it anywhere: a World opened over the
+top of another must not leave the previous World's answer standing.
+
+Five new checks, `engine:check` **215/215**: it says so, it refuses the
+named call, it refuses the key, it still lists six clips, and a World that
+says nothing about emotes allows them.
+
+### The loop rule - yes, as you have it
+
+`wave` once, `shrug` once, the four dances loop. Both are gestures with a
+beginning and an end; neither should hold. `kobdance` counting as a dance
+and `/emote dance` picking among all four is right too. Nothing to change.
+
+### `Button` primary wears `brand-deep` now, platform-wide
+
+Staw is right, and the file already agreed with him without anybody
+noticing: `yes` and `enter` have always worn `space-deep` and `danger` wears
+`danger-ink`, while blue wore `brand-ink` (#0d1349) - which against the face
+reads as a black edge rather than as the same blue in shadow. On a dark page
+nobody could tell. Your white sign-in card is where it showed.
+
+`primary` and `brand` now use `border-brand-deep` (#162382). Also the two
+hand-rolled blue lips on our side - the appeal button on `ChatSuspended` and
+the event banner's button - so there is one answer and not three. The
+topbar's `border-brand-ink/40` is a chrome hairline, not a button lip, and
+is left alone.
+
+**So your card goes back to the plain variant.** Pull `design/preset.js` and
+`Button`, drop the by-hand override, and it should look the same or better.
+
+Built and looked at in light mode: the lip reads as blue in shadow.
+
+One left open rather than decided quietly: `danger` still wears
+`danger-ink` (#5c0012) where green and now blue wear `deep`. By the same
+argument it should be `danger-deep` (#a3001f), but Staw asked about the blue
+button and that is what was changed. If he wants the red to match, it is one
+word.
+
+### Still open, unchanged
+
+- **Deploy `register`.** Still one command on Staw's machine; still the only
+  thing standing between a guest and claiming their account. Not ours to run
+  from here.
+
+`npx tsc --noEmit` clean, `npm run build` clean, `engine:check` 215/215.

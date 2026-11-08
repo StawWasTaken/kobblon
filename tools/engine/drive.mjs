@@ -2170,6 +2170,67 @@ check('a clip nobody has drawn yet is refused rather than pretended',
 check('and a real one plays', emotes.real === true, `wave ${emotes.real}`)
 
 /*
+ * -- a World that forbids emotes
+ *
+ * The Launcher drew "Emotes are disabled in this experience" on its wheel
+ * in round 77 and had nothing that could ever make it true. `emotes: false`
+ * on the manifest is that thing, and it is checked at both doors: the named
+ * call the wheel makes, and the engine's own emote key, which is a separate
+ * path through `settle` and would otherwise have kept working.
+ *
+ * The list itself is deliberately *not* emptied - a wheel saying "disabled
+ * here" has to know what it would have drawn - so that is asserted too,
+ * rather than left as an accident of the implementation.
+ */
+const forbidden = await p.evaluate(async () => {
+  const floor = (emotes) => ({
+    format: 1, id: 'e', name: 'Emotes', spawn: { at: [0, 6, 18] },
+    ...(emotes === undefined ? {} : { emotes }),
+    blocks: [{ kind: 'box', at: [0, -1, 0], size: [200, 2, 200] }],
+  })
+
+  await window.engine.open(floor(false))
+  window.drive({})
+  window.stepFrames(30)
+  const off = {
+    permitted: window.engine.emotesPermitted,
+    named: window.engine.emote('wave'),
+    list: window.engine.emotes.length,
+  }
+  // The key, which does not go through `emote()` at all.
+  window.drive({ emote: true })
+  window.stepFrames(30)
+  off.byKey = window.engine.body.emoted
+  window.drive({})
+
+  // And the same World with the field absent, which has to behave as it
+  // always did: absent is yes, only an explicit false turns it off.
+  await window.engine.open(floor(undefined))
+  window.drive({})
+  window.stepFrames(30)
+  const on = {
+    permitted: window.engine.emotesPermitted,
+    named: window.engine.emote('wave'),
+  }
+  window.engine.stopEmote()
+  window.stepFrames(10)
+  return { off, on }
+})
+check('a World with emotes off says so',
+  forbidden.off.permitted === false, String(forbidden.off.permitted))
+check('and refuses the named one the wheel asks for',
+  forbidden.off.named === false, String(forbidden.off.named))
+check('and the emote key as well, which is the other door',
+  forbidden.off.byKey === null || forbidden.off.byKey === undefined
+    || forbidden.off.byKey === false,
+  String(forbidden.off.byKey))
+check('and still says what it would have drawn',
+  forbidden.off.list === 6, `${forbidden.off.list} clips`)
+check('a World that says nothing about emotes allows them',
+  forbidden.on.permitted === true && forbidden.on.named === true,
+  `permitted ${forbidden.on.permitted}, played ${forbidden.on.named}`)
+
+/*
  * The E key bug: the hold pose was written over the wave clip every frame,
  * so the right arm never arrived and the head came along with it.
  *

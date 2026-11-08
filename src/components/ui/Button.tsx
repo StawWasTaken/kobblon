@@ -38,9 +38,21 @@ type Size = 'sm' | 'md' | 'lg'
  * `ghost` and `subtle` keep `text-white` on purpose: they sit on a theme
  * surface, so their label is supposed to flip with it.
  */
+/*
+ * The lip under a solid button is that button's own colour turned down,
+ * never black.
+ *
+ * Blue was the one that broke the rule: green has always worn `space-deep`
+ * and blue wore `brand-ink` (#0d1349), which against the face reads as a
+ * black edge rather than as the same blue in shadow. On a dark page nobody
+ * could tell; the applications put a blue button on a white sign-in card
+ * and Staw saw it at once - "the 3d shadow is not black but a darker brand
+ * blue". It is `brand-deep` now, which is the same hue turned down, and it
+ * matches how green and red were already built.
+ */
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
+    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
   /** The one thing this screen is for. Said on purpose, not by default. */
   yes:
     'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
@@ -49,7 +61,7 @@ const variants: Record<Variant, string> = {
     'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** The same blue as primary, kept for callers that name the platform. */
   brand:
-    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-ink active:border-b-0 active:mt-[3px]',
+    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
   ghost:
     'bg-transparent text-white/80 hover:bg-white/10 hover:text-white border border-transparent',
   subtle:
