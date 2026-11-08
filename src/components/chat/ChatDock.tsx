@@ -71,7 +71,7 @@ type ChatValue = {
  */
 const ChatContext = createContext<ChatValue>({
   openConversation: () => {},
-  quiet: { standing: null, left: '', read: () => {}, ask: () => {} },
+  quiet: { standing: null, left: '', read: () => {}, ask: () => {}, again: false, reopen: () => {} },
   openChat: () => {},
   chatOpen: false,
   chatUnread: 0,
@@ -654,16 +654,25 @@ function Window({
             )}
 
             {/*
-              * The bar replaces the box rather than greying it out. A
+              * The panel replaces the box rather than greying it out. A
               * disabled input under a line of red reads as something that
-              * went wrong; a solid bar with a lock on it reads as a
-              * decision, which is what it is - and it is what somebody sees
-              * when they come back in an hour, so it says how long is left
-              * rather than only that something happened.
+              * went wrong; a panel that names the rule reads as a decision,
+              * which is what it is - and it is what somebody sees for the
+              * whole hour, so it carries the same account the card gave
+              * once, and offers the card again.
               */}
             {locked ? (
               <div className="border-t border-ink-line p-2">
-                <ChatLockedBar until={quiet.standing!.until} onOver={quiet.ask} />
+                <ChatLockedBar
+                  until={quiet.standing!.until}
+                  onOver={quiet.ask}
+                  channels={quiet.standing!.channels}
+                  ruleOrd={quiet.standing!.rule_ord}
+                  ruleTitle={quiet.standing!.rule_title}
+                  reason={quiet.standing!.reason}
+                  source={quiet.standing!.source}
+                  onDetails={quiet.reopen}
+                />
               </div>
             ) : (
               <Composer
@@ -888,6 +897,8 @@ function useChatStanding() {
   const mine = useId()
   const [standing, setStanding] = useState<ChatStanding | null>(null)
   const [left, setLeft] = useState('')
+  /** Somebody pressed "what happened" on the locked panel. */
+  const [again, setAgain] = useState(false)
 
   const ask = useCallback(() => { void myChatStanding().then(setStanding) }, [])
   useEffect(() => { ask() }, [ask])
@@ -964,16 +975,35 @@ function useChatStanding() {
 
   const read = useCallback(() => {
     if (!standing) return
-    void chatCardSeen(standing.id, standing.over)
+    setAgain(false)
+    // Already marked read: this is somebody closing it a second time,
+    // which the server has nothing to learn from.
+    if (!standing.seen) void chatCardSeen(standing.id, standing.over)
     // Seen is seen: the card goes now rather than after a round trip, and
     // the row behind it is what stops it coming back.
     setStanding(standing.over ? null : { ...standing, seen: true })
   }, [standing])
 
+  /*
+   * Asking to read it again.
+   *
+   * The card is shown once and then the row says it has been seen, so the
+   * reason, the rule and the evidence were readable for as long as somebody
+   * left the card up and never again - while the suspension itself lasts an
+   * hour. This is local on purpose: it re-opens the card without touching
+   * `seen`, because pressing "what happened" is not the same event as being
+   * told, and overwriting the row would mean a second suspension skipped
+   * its own announcement.
+   */
+  const reopen = useCallback(() => setAgain(true), [])
+
   // Memoised because this now goes through a context: a fresh object every
   // render would hand every conversation a new value on every render of the
   // dock.
-  return useMemo(() => ({ standing, left, read, ask }), [standing, left, read, ask])
+  return useMemo(
+    () => ({ standing, left, read, ask, again, reopen }),
+    [standing, left, read, ask, again, reopen],
+  )
 }
 
 export function ChatDock({ children }: { children: ReactNode }) {
@@ -1223,7 +1253,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
         * or coming back tomorrow shows whichever is still unread rather
         * than nothing.
         */}
-      {quiet.standing && (quiet.standing.over || !quiet.standing.seen) && (
+      {quiet.standing && (quiet.standing.over || !quiet.standing.seen || quiet.again) && (
         <div className="fixed inset-0 z-[70] grid place-items-center bg-black/60 p-4">
           <ChatSuspended
             minutes={quiet.standing.minutes}

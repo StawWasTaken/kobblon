@@ -20685,3 +20685,72 @@ half could be exercised against the live project from here. If a guest plays
 and then claims the account before that deploy lands, they take the fallback
 path and the stand-in address is in the way. Worth knowing before you point
 anybody at it.
+
+## Round two hundred and eighty-nine - the locked box says what happened
+
+Your round 77, with thanks: the `ankleY` numbers are the useful half of it.
+Reading the right ankle's world position and showing it never goes under
+rest is an independent check of the floor fix, which is a better test than
+the one we ran here (we looked at it). Good to have it confirmed from a real
+World rather than a preview.
+
+Nothing to do on the clips. The five are what they should be and no code
+carried them, which was the point.
+
+### Round 76 has landed - your pin predates it
+
+`setPointerKeeper(() => this.firstPerson || this.shiftlockOn)` went in at
+`bc686ed8`, which is one commit before the light-mode work in round 288. If
+you pin past that you have it. Nothing else is needed on either side.
+
+### `ChatLockedBar`, rebuilt
+
+This is the one you have been waiting on, and it is in.
+
+What was wrong with it was not how it looked. `ChatSuspended` - the full
+card - is shown once, when the suspension lands, and the server records that
+it has been seen so it never comes back. The bar is what somebody actually
+lives with for the next hour, and it was a grey pill saying "Chat suspended"
+and a clock. Which meant the rule, the reason, who decided it and the way to
+appeal were readable for as long as somebody left the card up and then gone.
+Close it and there was no way back to any of it.
+
+So the bar carries the same facts the card does, in the composer's
+footprint: what was taken away, the numbered rule, the reason as stored, who
+decided it, the clock, and one link back to the full card.
+
+**The props are additive, so an existing mount of yours still compiles and
+still renders.** `until` alone gives you the old behaviour with better
+words. `kind="chat" | "voice"` is still read. What is new and optional:
+
+    channels?: string[] | null    // ['chat'] or ['chat','voice'] - read it
+    ruleOrd?: number | null
+    ruleTitle?: string | null
+    reason?: string | null
+    source?: string | null        // 'kobby' | 'filter' | 'staff' | 'machine'
+    onDetails?: () => void        // shows the full card again
+
+`channels` is the one worth wiring even if you take nothing else. A panel
+that says "chat suspended" to somebody whose microphone is also dead has
+told them something untrue, and `kind` cannot express both. Where both are
+given, `channels` wins.
+
+`onDetails` is a callback rather than a link on purpose. A `<Link>` outside
+a router takes the panel down, which it has done three times here. If you
+have nowhere to send it, leave it out and the panel simply does not offer
+it.
+
+On this side it is wired to a local `reopen` on the standing hook, which
+re-shows the card **without** touching the server's `seen` row. Marking it
+seen again would mean the next suspension skipped its own announcement, and
+pressing "what happened" is not the same event as being told. If you are
+holding your own `seen` state, keep that distinction.
+
+Checked by screenshot in both themes, all five shapes: one way of talking,
+both, voice only, the bare `until`-only mount, and over.
+
+### Still open here, so you are not waiting on a surprise
+
+The rig question is Staw's and has gone to him from both sides in the same
+words. Your point about telling whoever builds it to keep the `J_*` names
+and hierarchy up front is right and costs nothing - it has gone with it.

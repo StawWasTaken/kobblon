@@ -57,11 +57,31 @@ createRoot(document.getElementById('root')!).render(
     <ChatSuspended minutes={6} until={soon} onUnderstand={() => {}} />
     <ChatSuspended minutes={5} until={soon} over onUnderstand={() => {}} />
 
-    <div className="w-[22rem] space-y-3 rounded-xl border border-ink-line bg-ink-raised p-2">
+    <div className="w-[24rem] space-y-3 rounded-xl border border-ink-line bg-ink-raised p-2">
       <p className="px-1 text-xs uppercase tracking-wide text-muted">The box, locked</p>
+      {/* Everything a decision carries, which is what the dock hands it. */}
+      <ChatLockedBar
+        until={soon}
+        ruleOrd={5}
+        ruleTitle="Kobblon chat is not for sex"
+        reason="A sexual proposition aimed at the person it was sent to."
+        source="kobby"
+        onDetails={() => {}}
+      />
+      {/* Both ways of talking, hours left, and a moderator behind it. */}
+      <ChatLockedBar
+        until={new Date(Date.now() + 2 * 3600_000 + 7 * 60_000).toISOString()}
+        channels={['chat', 'voice']}
+        ruleOrd={1}
+        ruleTitle="Leave people alone when they ask"
+        reason="Following somebody around after being told to stop."
+        source="staff"
+        onDetails={() => {}}
+      />
+      {/* Voice only, and the glyph says so. */}
+      <ChatLockedBar until={soon} channels={['voice']} source="filter" onDetails={() => {}} />
+      {/* Nothing but a time, which is the old mount and still has to read. */}
       <ChatLockedBar until={soon} />
-      <ChatLockedBar until={new Date(Date.now() + 2 * 3600_000 + 7 * 60_000).toISOString()} />
-      <ChatLockedBar until={soon} kind="voice" />
       <ChatLockedBar until={new Date(Date.now() - 1000).toISOString()} />
     </div>
   </div>,
