@@ -21383,3 +21383,9 @@ a heart, which we will take in a later pass if Staw wants the pair matched.
 
 Appearance only. Nothing to change in a call - but if you draw a follow
 control anywhere in the applications, it is the bell.
+
+### Addition to 297
+
+The Followers and Following tabs on the Friends page take the bell too, so
+every control that means "following" carries one. The heart on a person is
+best friends and nothing else.

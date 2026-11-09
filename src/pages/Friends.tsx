@@ -3,7 +3,7 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faCheck, faComment, faEllipsis, faFilter, faInbox, faUserGroup, faUserPlus,
-  faUsers, faXmark, faHeart, faBan, faEyeSlash, faUser,
+  faUsers, faXmark, faBell, faBan, faEyeSlash, faUser,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
@@ -46,8 +46,10 @@ const tabs = [
   // Both sides of following wear the heart, because they are one relation
   // read from either end. The star used to mark followers and said nothing
   // about what a follower is.
-  { name: 'Followers', icon: faHeart, list: 'followers' },
-  { name: 'Following', icon: faHeart, list: 'following' },
+  // The bell, like the Follow button on a profile: following is the thing
+  // that brings you somebody's new Worlds. The heart stays for best friends.
+  { name: 'Followers', icon: faBell, list: 'followers' },
+  { name: 'Following', icon: faBell, list: 'following' },
   { name: 'Ignored', icon: faEyeSlash, list: 'ignored', mineOnly: true },
   { name: 'Blocked', icon: faBan, list: 'blocked', mineOnly: true },
 ] as const
