@@ -24,6 +24,16 @@ import { cn } from '@/lib/cn'
  * `src` going from one url to another resets it, which is the trap this
  * project keeps falling into: `loaded` is a value decided by a picture that
  * can be replaced afterwards, so it is keyed on the url rather than kept.
+ *
+ * **It fetches once, and only when it is on screen.** It used to load the
+ * url twice - a `new Image()` to find out whether it worked, and then the
+ * real `<img>` - and the first of those broke lazy loading entirely. A
+ * probe is an eager fetch by definition; the browser has no idea it belongs
+ * to an element four screens down, so a Catalog page of sixty cards pulled
+ * sixty full pictures the moment it mounted, whether anybody scrolled or
+ * not. With egress metered that is not a performance note, it is the bill.
+ * The real element reports on itself now, through `onLoad` and `onError`,
+ * and `loading="lazy"` does what it says.
  */
 export function Picture({
   src,
@@ -51,37 +61,46 @@ export function Picture({
   const [failed, setFailed] = useState(false)
 
   /*
-   * A picture already in the browser's cache fires `load` before React has
-   * attached the handler, which left the mark showing for ever over a
-   * picture that was sitting right there. Asked again on mount, which is
-   * the moment of use rather than a value captured before it.
+   * Keyed on the url rather than kept: a new `src` is a new question, and
+   * the old answer must not survive it even for a frame.
    */
   useEffect(() => {
-    setFailed(false)
     setShown(null)
-    if (!src) return
-    let live = true
-    const probe = new Image()
-    probe.onload = () => { if (live) setShown(src) }
-    probe.onerror = () => { if (live) setFailed(true) }
-    probe.src = src
-    if (probe.complete && probe.naturalWidth > 0) setShown(src)
-    return () => { live = false }
+    setFailed(false)
   }, [src])
+
+  /*
+   * A picture already in the browser's cache finishes before React has
+   * attached `onLoad`, which left the mark showing for ever over a picture
+   * that was sitting right there. The ref runs once the element exists and
+   * asks it directly, which is the moment of use rather than a value
+   * captured before it.
+   */
+  const askOnMount = (node: HTMLImageElement | null) => {
+    if (node?.complete && node.currentSrc) {
+      if (node.naturalWidth > 0) setShown(node.src)
+      else setFailed(true)
+    }
+  }
 
   const ready = shown === src && !!src && !failed
 
   return (
     <span className={cn('relative block overflow-hidden', className)}>
       <Missing why={why} className="absolute inset-0" />
-      {ready && (
+      {!!src && !failed && (
         <img
+          key={src}
+          ref={askOnMount}
           src={src}
           alt={alt}
           draggable={draggable}
           loading={loading}
+          onLoad={(event) => setShown(event.currentTarget.src)}
+          onError={() => setFailed(true)}
           className={cn(
-            'absolute inset-0 h-full w-full',
+            'absolute inset-0 h-full w-full transition-opacity duration-200',
+            ready ? 'opacity-100' : 'opacity-0',
             fit === 'cover' ? 'object-cover' : 'object-contain',
             pictureClassName,
           )}

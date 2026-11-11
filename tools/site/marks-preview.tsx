@@ -1,32 +1,25 @@
-/* The two marks that go with a name, at the sizes they are actually used. */
 import { createRoot } from 'react-dom/client'
-import { NameMarks } from '@/components/brand/Verified'
+import { NameMark, type MarkName } from '@/components/brand/Verified'
 import '@/index.css'
 
-const people = [
-  { who: 'Staw', is_admin: true, is_verified: true },
-  { who: 'A moderator', is_moderator: true },
-  { who: 'Somebody verified', is_verified: true },
-  { who: 'Anybody else' },
-]
+const all: MarkName[] = ['verified', 'staff', 'klub', 'guest']
+
+const Row = ({ name, wears }: { name: string; wears: MarkName[] }) => (
+  <div className="flex items-center gap-2 text-white">
+    <span className="text-base font-semibold">{name}</span>
+    <span className="inline-flex shrink-0 items-center gap-1 align-middle">
+      {wears.map((w) => <NameMark key={w} which={w} />)}
+    </span>
+  </div>
+)
 
 createRoot(document.getElementById('root')!).render(
-  <div className="min-h-screen space-y-6 bg-ink p-10 text-white">
-    {['text-sm', 'text-base', 'text-2xl'].map((size) => (
-      <div key={size} className="space-y-2">
-        {people.map((one) => (
-          <p key={one.who} className={`flex items-center gap-1.5 font-bold ${size}`}>
-            <span>{one.who}</span>
-            <NameMarks person={one} />
-          </p>
-        ))}
-      </div>
-    ))}
-    <div className="rounded-xl bg-ink-card p-4">
-      <p className="flex items-center gap-1.5 text-sm text-muted">
-        made by <span className="font-bold text-white">@staw</span>
-        <NameMarks person={{ is_admin: true, is_verified: true }} />
-      </p>
+  <div className="flex flex-col gap-4 bg-ink p-8">
+    {all.map((w) => <Row key={w} name={`somebody with ${w}`} wears={[w]} />)}
+    <Row name="all four at once" wears={all} />
+    <div className="flex items-center gap-2 text-2xl text-white">
+      <span className="font-semibold">at a heading size</span>
+      <span className="inline-flex gap-1">{all.map((w) => <NameMark key={w} which={w} />)}</span>
     </div>
   </div>,
 )

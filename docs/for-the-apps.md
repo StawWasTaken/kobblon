@@ -21389,3 +21389,136 @@ control anywhere in the applications, it is the bell.
 The Followers and Following tabs on the Friends page take the bell too, so
 every control that means "following" carries one. The heart on a person is
 best friends and nothing else.
+
+## Round two hundred and ninety-eight - four marks, Newbie, and the egress bill
+
+A long one, and three of the four parts change things you share with us.
+
+### The bytes. Read this one.
+
+Kobblon went through **5.83 GB of egress against a 5 GB allowance with seven
+monthly active accounts**. Nothing was looping. The files were simply
+enormous and were being fetched far more often than they changed.
+
+Three causes, all of them ours, all fixed on this side:
+
+1. **Nothing was shrunk before upload.** A profile picture was stored exactly
+   as it came off a phone - four megabytes, four thousand pixels wide - and
+   then sent in full to every card, every list, every chat row that draws a
+   face at thirty-two pixels. The plan has no image transformations, so the
+   only size that exists is the size that was stored. `@/lib/shrink` now
+   redraws a picture to WebP inside a budget before it goes up: 512 for a
+   face or an emblem, 1600 for anything that runs the width of a page.
+2. **Every upload used Supabase's default one-hour cache.** Every path this
+   project writes is unique - a `crypto.randomUUID()` or a `Date.now()` - so
+   a file at a given address never changes, and an hour meant the CDN came
+   back to origin for the same unchanged face all day. Every upload now
+   sends `cacheControl: '31536000, immutable'`.
+3. **`Picture` fetched every image twice and defeated its own lazy
+   loading.** It ran a `new Image()` probe to find out whether a url worked
+   and then rendered the real `<img>`. A probe is an eager fetch by
+   definition - the browser cannot know it belongs to an element four
+   screens down - so a Catalog page of sixty cards pulled sixty full
+   pictures the moment it mounted, scrolled or not. It reports on itself
+   through `onLoad` and `onError` now, and `loading="lazy"` does what it
+   says.
+
+**What this means for you.** If the applications upload anything to a
+Supabase bucket, both rules apply there too, and neither is optional any
+more: shrink before the upload, and send a long `cacheControl` whenever the
+path is unique. `@/lib/shrink` exports `shrink(file, longest)`, `BUDGET` and
+`FOREVER`, and it is mountable outside the website - it touches nothing but
+a canvas. Import it rather than writing a second one.
+
+What is **not** shrunk, deliberately: anything that is the thing itself
+rather than a picture of it. A mesh, a World file, a clothing texture, a
+video. Shrinking those is editing somebody's work.
+
+Still open, and it is Staw's call rather than ours: **the files already in
+the buckets are still full size with a one-hour cache.** Nothing here
+rewrites them. A one-off pass that re-encodes what is stored would need the
+service-role key and a script run deliberately; say the word and it gets
+written.
+
+### Four marks beside a name, four colours
+
+`name_marks` answered "verified, staff, or nothing" since 0180. It answers
+four things now, and **0335 has to be applied before any of this is true.**
+
+| mark | glyph | colour | means |
+| --- | --- | --- | --- |
+| `verified` | the tick | Kobblon blue `#4d68ff` | they are who they say |
+| `staff` | the k | white | they work here |
+| `klub` | a hard hat | gold `#f5b32b` | their Klub membership is running |
+| `guest` | an ID card | slate `#8a93a8` | the account is still a guest |
+
+Staw: "we should of course get different colours for the guest, verified,
+staff (& klub) badges to not confuse them." So each is a different glyph
+**and** a different colour, and the colour lives beside the artwork in
+`Verified.tsx` rather than at the call sites. If you draw a mark anywhere in
+the applications, take the colour from that table and nowhere else.
+
+The order is the order the array arrives in: verified, staff, klub, guest.
+Guest is last and quietest because it is the one that is not a credential.
+
+The part worth knowing if you ever add a fifth: **the two list functions
+filtered.** They returned only rows where somebody was verified or wore the
+k, so adding a mark to `name_marks` alone would have changed nothing anybody
+could see - the row was dropped before the mark was read. The filter is
+`wears_any_mark` now, said once.
+
+### Newbie
+
+A new account's `body` was null, which is not a colour scheme - it is the
+absence of one, and what it drew was whatever colour the rig was exported
+in. Staw: "for every new player, the default avatar must be these colours,
+with the kobblon tdecal & default smile ... the default avatar is called
+Newbie."
+
+Newbie is six colours and nothing else:
+
+```
+Head #f0f4fa   Torso #1cae71   LeftArm #f0f4fa
+RightArm #f0f4fa   LeftLeg #3a50ff   RightLeg #3a50ff
+```
+
+Off-white head and arms, Kobblon green torso, Kobblon blue legs. It is
+`newbie_body()` in the database and `NEWBIE_BODY` in `@/lib/mannequin`, and
+the two have to say the same thing - take it from one of those rather than
+typing six hex values into the Workspace. The t-decal and the free face are
+not in it because they are not colours: both have been in `starting_kit`
+since 0131 and are unchanged.
+
+0336 paints it on insert and backfills everybody still sitting on a null
+body. That is not a repaint of anybody's avatar - null was never a choice
+somebody made - and a person who has picked colours is untouched.
+
+### No welcome Brix
+
+Staw: "i want that when people arrive on kobblon they dont have a starter
+100 free brix welcome to kobbleston cuz we already have redeem codes for
+that." Three places handed out the hundred - the trigger on a new profile, a
+guest claiming their account, and staff making a guest real - and all three
+stop in 0336. A code is the way in now, which is the thing that can be timed,
+turned off and counted.
+
+**If the Launcher or the Workspace says anywhere that a new account arrives
+with 100 Brix, that line is now false.** Nothing on the website said it.
+
+The `signup_grant` transaction kind stays in the ledger's check constraint on
+purpose: rows written before today still say that, and narrowing it would
+make the ledger fail its own constraint. The label "Welcome" stays with it.
+
+### Two migrations to apply, in order
+
+**0335** `a_guest_and_a_klub_member_wear_their_own_mark` and
+**0336** `newbie_and_no_welcome_brix`. Both applied twice here against a real
+Postgres, both idempotent, both checked under a signed-in identity and a
+stranger rather than anonymously.
+
+One thing that came out of that and is worth repeating, because it is the
+trap in CLAUDE.md wearing a new hat: the first identity run read `auth.uid()`
+as **null** while `request.jwt.claim.sub` was plainly set, because
+`set_config(..., true)` is transaction-local and psql ends the transaction
+at every statement. Every assertion in that run passed for the wrong reason.
+Look at `auth.uid()` before believing any check that depends on it.

@@ -26,6 +26,31 @@ export const MANNEQUIN_BODY: Record<string, string> = {
 }
 
 /**
+ * Newbie: the body every account arrives in.
+ *
+ * Staw: "for every new player, the default avatar must be these colours,
+ * with the kobblon tdecal & default smile ... the default avatar is called
+ * Newbie". Off-white head and arms, a Kobblon-green torso, Kobblon-blue
+ * legs - the two brand colours on a neutral body, so a brand-new person
+ * looks like they came from here rather than like nobody had decided yet.
+ *
+ * Before this, a new account's `body` was null, which is not a colour
+ * scheme: it is the absence of one, and what it drew was whatever colour
+ * the rig happened to be exported in.
+ *
+ * `newbie_body()` in the database is the same six values and is what
+ * actually paints a new row. This copy is for drawing a Newbie without
+ * asking - the signup screen, a placeholder, the applications - and the two
+ * have to say the same thing. The shirt and the smile are not here because
+ * they are not colours: the Kobblon t-decal and the free face come from
+ * `starting_kit`, which has carried both since 0131.
+ */
+export const NEWBIE_BODY: Record<string, string> = {
+  Head: '#f0f4fa', Torso: '#1cae71', LeftArm: '#f0f4fa',
+  RightArm: '#f0f4fa', LeftLeg: '#3a50ff', RightLeg: '#3a50ff',
+}
+
+/**
  * Which face it wears: FACE-1119, the free one everybody starts with.
  *
  * The number lives here; fetching it lives in `@/lib/api`, which is the one

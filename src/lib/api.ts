@@ -3,6 +3,7 @@ import {
   canPreview, previewOf, previewOfUrl, PREVIEW_TYPE, PREVIEW_EXTENSION,
   CARD_MARK, cardIsCurrent,
 } from './preview'
+import { shrink, BUDGET, FOREVER } from './shrink'
 import { drawPortrait, drawItemCard, type PortraitLook } from './portrait'
 import { formatOf, socketFor, type WornFit } from '@/engine'
 import { FLOOR_FACE } from './mannequin'
@@ -714,7 +715,9 @@ export async function makeAssetPreview(input: {
   const path = `${input.userId}/${crypto.randomUUID()}.${CARD_MARK}.${PREVIEW_EXTENSION}`
   const put = await supabase.storage
     .from(previewBucket)
-    .upload(path, drawn, { contentType: drawn.type || PREVIEW_TYPE, upsert: false })
+    .upload(path, drawn, {
+      contentType: drawn.type || PREVIEW_TYPE, upsert: false, cacheControl: FOREVER,
+    })
   if (put.error) return null
 
   const saved = await supabase.from('assets')
@@ -1215,7 +1218,7 @@ export async function uploadAsset(input: {
 
   const uploaded = await supabase.storage
     .from(assetBucket)
-    .upload(path, input.file, { contentType, upsert: false })
+    .upload(path, input.file, { contentType, upsert: false, cacheControl: FOREVER })
   if (uploaded.error) throw new Error(storageRefusal(uploaded.error.message, input.file, input.kind))
 
   /*
@@ -1346,12 +1349,17 @@ export async function deleteAsset(id: string) {
 // --------------------------------------------------------- profile picture
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+  // A face is never drawn larger than a profile header, and what arrives
+  // from a phone is twenty times that. See `@/lib/shrink`.
+  const small = await shrink(file, BUDGET.face)
+  const extension = small.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `${userId}/${Date.now()}.${extension}`
 
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(path, file, { contentType: typeOf(file), upsert: true })
+    .upload(path, small, {
+      contentType: typeOf(small), upsert: true, cacheControl: FOREVER,
+    })
   if (error) throw new Error(error.message)
 
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
@@ -2037,10 +2045,13 @@ export async function linkSpaceToCommunity(communityId: string, spaceId: string,
  * inside a Space.
  */
 export async function uploadCommunityImage(userId: string, file: File, kind: 'emblem' | 'cover') {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+  const small = await shrink(file, kind === 'emblem' ? BUDGET.emblem : BUDGET.page)
+  const extension = small.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `${userId}/community-${kind}-${Date.now()}.${extension}`
   const { error } = await supabase.storage
-    .from('avatars').upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: true })
+    .from('avatars').upload(path, small, {
+      contentType: typeOf(small, 'image/png'), upsert: true, cacheControl: FOREVER,
+    })
   if (error) throw new Error(error.message)
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
 }
@@ -3507,7 +3518,7 @@ export async function uploadWorldFile(worldId: string, file: File, as: string) {
   const path = `${worldId}/${as}-${crypto.randomUUID()}.${extension}`
   const { error } = await supabase.storage
     .from('worlds')
-    .upload(path, file, { contentType: typeOf(file), upsert: false })
+    .upload(path, file, { contentType: typeOf(file), upsert: false, cacheControl: FOREVER })
   if (error) throw new Error(error.message)
   return path
 }
@@ -3954,7 +3965,7 @@ export async function replaceMeshFile(assetId: string, userId: string, file: Fil
 
   const { error } = await supabase.storage
     .from(assetBucket)
-    .upload(path, file, { contentType: typeOf(file), upsert: false })
+    .upload(path, file, { contentType: typeOf(file), upsert: false, cacheControl: FOREVER })
   if (error) throw new Error(error.message)
 
   try {
@@ -5182,11 +5193,14 @@ export async function deletePlatformEvent(which: string) {
 export const eventBucket = 'events'
 
 export async function uploadEventImage(file: File, as: 'art' | 'back'): Promise<string> {
-  const dot = file.name.lastIndexOf('.')
-  const ending = dot > -1 ? file.name.slice(dot + 1).toLowerCase() : 'png'
+  const small = await shrink(file, BUDGET.page)
+  const dot = small.name.lastIndexOf('.')
+  const ending = dot > -1 ? small.name.slice(dot + 1).toLowerCase() : 'png'
   const path = `${as}/${crypto.randomUUID()}.${ending}`
   const put = await supabase.storage.from(eventBucket)
-    .upload(path, file, { contentType: file.type || 'image/png', upsert: false })
+    .upload(path, small, {
+      contentType: small.type || 'image/png', upsert: false, cacheControl: FOREVER,
+    })
   if (put.error) throw new Error(put.error.message)
   return supabase.storage.from(eventBucket).getPublicUrl(path).data.publicUrl
 }
@@ -5955,7 +5969,9 @@ export async function drawAvatarCard(
 
   const path = `${userId}/card-${crypto.randomUUID()}.webp`
   const put = await supabase.storage.from(catalogBucket)
-    .upload(path, drawn, { contentType: 'image/webp', upsert: false })
+    .upload(path, drawn, {
+      contentType: 'image/webp', upsert: false, cacheControl: FOREVER,
+    })
   if (put.error) return null
 
   try {
@@ -6010,7 +6026,9 @@ export async function uploadCatalogImage(userId: string, file: File): Promise<st
   const extension = file.name.split('.').pop()?.toLowerCase() ?? 'png'
   const path = `${userId}/${crypto.randomUUID()}.${extension}`
   const put = await supabase.storage.from(catalogBucket)
-    .upload(path, file, { contentType: typeOf(file, 'image/png'), upsert: false })
+    .upload(path, file, {
+      contentType: typeOf(file, 'image/png'), upsert: false, cacheControl: FOREVER,
+    })
   if (put.error) throw new Error(put.error.message)
   return path
 }
@@ -6139,7 +6157,9 @@ export async function refreshPortrait(userId: string): Promise<string | null> {
    */
   const path = `${userId}/portrait-${Date.now()}.webp`
   const put = await supabase.storage.from('avatars')
-    .upload(path, drawn, { contentType: 'image/webp', upsert: false })
+    .upload(path, drawn, {
+      contentType: 'image/webp', upsert: false, cacheControl: FOREVER,
+    })
   if (put.error) return null
 
   const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
@@ -6515,11 +6535,16 @@ export function isForumClip(path: string): boolean {
  * is 0284's business rather than this function's.
  */
 export async function uploadForumImage(file: File, userId: string): Promise<string> {
-  const dot = file.name.lastIndexOf('.')
-  const ending = dot > -1 ? file.name.slice(dot + 1).toLowerCase() : 'png'
+  // Pictures come down to 1600; a video is not a picture and `shrink`
+  // hands it straight back.
+  const small = await shrink(file, BUDGET.page)
+  const dot = small.name.lastIndexOf('.')
+  const ending = dot > -1 ? small.name.slice(dot + 1).toLowerCase() : 'png'
   const path = `${userId}/${crypto.randomUUID()}.${ending}`
   const put = await supabase.storage.from(forumBucket)
-    .upload(path, file, { contentType: file.type || 'image/png', upsert: false })
+    .upload(path, small, {
+      contentType: small.type || 'image/png', upsert: false, cacheControl: FOREVER,
+    })
   if (put.error) throw new Error(put.error.message)
   return path
 }

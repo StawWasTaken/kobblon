@@ -3,7 +3,7 @@ import { useNameMarks } from '@/hooks/useNameMarks'
 import { cn } from '@/lib/cn'
 
 /*
- * The two marks that belong to a name.
+ * The four marks that belong to a name.
  *
  * Staw's rule, and it is about meaning rather than decoration: a mark is
  * **part of the display name**, not an ornament beside it. Wherever a name
@@ -19,19 +19,45 @@ import { cn } from '@/lib/cn'
  * name. An `<img>` would be a white square, and tracing them into paths
  * again would be a copy that drifts from the artwork.
  */
+/*
+ * Staw: "we should of course get different colours for the guest, verified,
+ * staff (& klub) badges to not confuse them."
+ *
+ * So each mark is a different glyph **and** a different colour, and no two
+ * of them can be read as the same thing at twelve pixels. The colour lives
+ * beside the artwork here rather than at the call sites, because the whole
+ * point of this file is that the question is answered once.
+ *
+ *   verified  a tick      Kobblon blue   somebody is who they say they are
+ *   staff     the k       white          they work here
+ *   klub      a hard hat  gold           their Klub membership is running
+ *   guest     an ID card  slate          they have not made the account real
+ *
+ * Guest is deliberately the quiet one. It is not an honour and it must not
+ * look like one; it is a fact worth knowing before you trade with somebody.
+ *
+ * The Klub artwork is the icon set's `klub-badge`, which is already drawn
+ * the right way - the glyph knocked out of a solid square - so it is used
+ * where it sits rather than copied into `/brand` to drift from itself.
+ */
 const MARKS = {
-  verified: '/brand/verified.png',
-  staff: '/brand/staff.png',
+  verified: { art: '/brand/verified.png', tone: 'text-[#4d68ff]', says: 'Verified by Kobblon' },
+  staff: { art: '/brand/staff.png', tone: 'text-white', says: 'Kobblon staff' },
+  klub: { art: '/icons/ui/klub-badge.png', tone: 'text-[#f5b32b]', says: 'In the Kobblon Klub' },
+  guest: { art: '/brand/guest.png', tone: 'text-[#8a93a8]', says: 'A guest account' },
 } as const
 
-function Mark({ which, className }: { which: keyof typeof MARKS; className?: string }) {
+export type MarkName = keyof typeof MARKS
+
+function Mark({ which, className }: { which: MarkName; className?: string }) {
+  const art = MARKS[which].art
   return (
     <span
       aria-hidden="true"
       className={cn('inline-block h-[1em] w-[1em] align-[-0.125em] bg-current', className)}
       style={{
-        maskImage: `url(${MARKS[which]})`,
-        WebkitMaskImage: `url(${MARKS[which]})`,
+        maskImage: `url(${art})`,
+        WebkitMaskImage: `url(${art})`,
         maskSize: 'contain',
         WebkitMaskSize: 'contain',
         maskRepeat: 'no-repeat',
@@ -50,6 +76,14 @@ export const VerifiedMark = ({ className }: { className?: string }) =>
 /** The Kobblon k, which is what staff carry. */
 export const StaffMark = ({ className }: { className?: string }) =>
   <Mark which="staff" className={className} />
+
+/** The hard hat, for a Klub membership that is running today. */
+export const KlubMark = ({ className }: { className?: string }) =>
+  <Mark which="klub" className={className} />
+
+/** The ID card, for an account that is still a guest. */
+export const GuestMark = ({ className }: { className?: string }) =>
+  <Mark which="guest" className={className} />
 
 /**
  * Whether somebody's name should carry the tick. Being staff implies it;
@@ -80,37 +114,40 @@ export const isStaff = (person?: {
   || person?.is_superadmin || person?.has_staff_badge
 )
 
-export function Verified({
-  label = 'Verified by Kobblon',
-  className,
-}: {
+/**
+ * One mark, in its own colour, with its own words under the pointer.
+ *
+ * Written once off the table above rather than as four near-identical
+ * components, which is how the tick and the k ended up with their colours
+ * typed into two different places to begin with.
+ */
+export function NameMark({ which, label, className }: {
+  which: MarkName
   label?: string
   className?: string
 }) {
+  const mark = MARKS[which]
+  const says = label ?? mark.says
   return (
-    <Tooltip label={label} side="top">
-      <span className="inline-flex shrink-0 align-middle text-[#4d68ff]" aria-label={label}>
-        <VerifiedMark className={className} />
+    <Tooltip label={says} side="top">
+      <span className={cn('inline-flex shrink-0 align-middle', mark.tone)} aria-label={says}>
+        <Mark which={which} className={className} />
       </span>
     </Tooltip>
   )
 }
 
-export function Staff({
-  label = 'Kobblon staff',
-  className,
-}: {
-  label?: string
-  className?: string
-}) {
-  return (
-    <Tooltip label={label} side="top">
-      <span className="inline-flex shrink-0 align-middle text-white" aria-label={label}>
-        <StaffMark className={className} />
-      </span>
-    </Tooltip>
-  )
-}
+export const Verified = (p: { label?: string; className?: string }) =>
+  <NameMark which="verified" {...p} />
+
+export const Staff = (p: { label?: string; className?: string }) =>
+  <NameMark which="staff" {...p} />
+
+export const Klub = (p: { label?: string; className?: string }) =>
+  <NameMark which="klub" {...p} />
+
+export const Guest = (p: { label?: string; className?: string }) =>
+  <NameMark which="guest" {...p} />
 
 /**
  * Everything that belongs after a name, in one place.
@@ -134,6 +171,8 @@ export function NameMarks({ person, id, username, className }: {
     is_moderator?: boolean | null
     is_superadmin?: boolean | null
     has_staff_badge?: boolean | null
+    is_guest?: boolean | null
+    membership?: string | null
   } | null
   /** The person's account id, so the marks can be asked rather than guessed. */
   id?: string | null
@@ -143,15 +182,22 @@ export function NameMarks({ person, id, username, className }: {
 }) {
   const said = useNameMarks(id, username)
 
+  /*
+   * The guess, for the moment before the database answers. It can see a
+   * guest - every list that carries `is_guest` carries it as a plain
+   * boolean - but it cannot see the Klub, because a row says which tier was
+   * bought and only `in_the_klub` knows whether it is still running. So the
+   * hat never appears in a guess, and arrives with the real answer.
+   */
   const wears = said ?? [
     isVerified(person) && 'verified',
     isStaff(person) && 'staff',
+    person?.is_guest && 'guest',
   ].filter(Boolean) as string[]
 
-  const marks = [
-    wears.includes('verified') && <Verified key="v" className={className} />,
-    wears.includes('staff') && <Staff key="s" className={className} />,
-  ].filter(Boolean)
+  const marks = (['verified', 'staff', 'klub', 'guest'] as MarkName[])
+    .filter((which) => wears.includes(which))
+    .map((which) => <NameMark key={which} which={which} className={className} />)
 
   if (!marks.length) return null
   return <span className="inline-flex shrink-0 items-center gap-1 align-middle">{marks}</span>

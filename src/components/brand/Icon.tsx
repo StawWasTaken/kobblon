@@ -32,7 +32,7 @@ export const UI_ICONS = [
   'laurel-quest', 'microphone', 'mute-microphone', 'notification', 'people',
   'reaction-angry', 'reaction-fire', 'reaction-happy-grin', 'reaction-heart-eyes',
   'reaction-laugh', 'reaction-sad', 'reaction-shocked', 'reaction-skull',
-  'klub', 'klub-badge',
+  'klub', 'klub-badge', 'badge',
   'reaction-smile', 'reaction-sunglasses', 'reaction-winky-grin',
   'remove-user', 'report',
   /* Somebody with a play mark beside them: people in a World right now, as
