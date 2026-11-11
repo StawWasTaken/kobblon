@@ -21678,3 +21678,29 @@ on the site. It was the last thing on the About side still wearing a
 Migrations **0335** and **0336** are written and checked and have not been
 applied yet. Until they are, a guest wears no mark and new accounts are not
 painted as Newbie.
+
+### Addition to 300 - the three are Safety, Players and Economy
+
+Staw, straight after: "the play report brix, i want different names okay?
+general/generic terms". He is right - Report, Play and Brix were the names of
+the buttons that do those things, not the names of the things themselves.
+Generic now, and the routes with them:
+
+```
+/about/safety     was /about/report
+/about/players    was /about/play
+/about/economy    was /about/brix
+```
+
+The pictures keep their file names (`report.webp`, `play.webp`,
+`brix.webp`): those are what the renders are of, and renaming a file to
+match a heading is how a path ends up meaning nothing.
+
+And the words on those three cards moved from the top of the render to the
+**bottom**. Staw: "i want the text to be into the shadow area of the image
+(bottom part)". All three are lit the same way - object in the upper half,
+gradient falling to near black underneath - so the picture already contains
+a place for type, and the top version was putting white text over the
+brightest part of each one. Worth knowing on your side too, since these
+renders will turn up in the Launcher: **the dark end is where the words go,
+and it means no scrim is needed at all.**

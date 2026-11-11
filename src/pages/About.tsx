@@ -51,25 +51,25 @@ import { currency } from '@/lib/currency'
  */
 const inside = [
   {
-    to: '/about/report',
+    to: '/about/safety',
     art: '/about/report.webp',
-    name: 'Report',
+    name: 'Safety',
     alt: 'A blue flag, raised',
     body: 'Report anything, anywhere, and it goes to a person. Your name never travels with it.',
   },
   {
-    to: '/about/play',
+    to: '/about/players',
     art: '/about/play.webp',
-    name: 'Play',
+    name: 'Players',
     alt: 'A player and a play mark',
     body: 'Every World here was built and published by somebody. Walk into any of them.',
   },
   {
-    to: '/about/brix',
+    to: '/about/economy',
     art: '/about/brix.webp',
-    name: currency.plural,
+    name: 'Economy',
     alt: 'A blue Kobblon brick',
-    body: `What Kobblon runs on. Earned playing and selling, spent on what other people made.`,
+    body: `${currency.plural} earned playing and selling, spent on what other people made.`,
   },
 ]
 

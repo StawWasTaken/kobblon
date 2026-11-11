@@ -63,9 +63,9 @@ const About = lazyPage(() => import('@/pages/About'))
 /* The three Inside Kobblon pages: one each for the three things being here
    actually is - you are safe, there is somewhere to go, and what you make is
    worth something. */
-const InsideReport = lazyPage(() => import('@/pages/inside/Report'))
-const InsidePlay = lazyPage(() => import('@/pages/inside/Play'))
-const InsideBrix = lazyPage(() => import('@/pages/inside/Brix'))
+const InsideSafety = lazyPage(() => import('@/pages/inside/Safety'))
+const InsidePlayers = lazyPage(() => import('@/pages/inside/Players'))
+const InsideEconomy = lazyPage(() => import('@/pages/inside/Economy'))
 const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
@@ -182,9 +182,9 @@ export default function App() {
               <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
-              <Route path="/about/report" element={<InsideReport />} />
-              <Route path="/about/play" element={<InsidePlay />} />
-              <Route path="/about/brix" element={<InsideBrix />} />
+              <Route path="/about/safety" element={<InsideSafety />} />
+              <Route path="/about/players" element={<InsidePlayers />} />
+              <Route path="/about/economy" element={<InsideEconomy />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
               <Route path="/inner-stock" element={<InnerStock />} />

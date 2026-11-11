@@ -16,20 +16,20 @@ import { asset } from '@/lib/asset'
  */
 export const INSIDE = [
   {
-    slug: 'report',
-    name: 'Report',
+    slug: 'safety',
+    name: 'Safety',
     art: '/about/report.webp',
     line: 'How we keep this a decent place to be.',
   },
   {
-    slug: 'play',
-    name: 'Play',
+    slug: 'players',
+    name: 'Players',
     art: '/about/play.webp',
     line: 'Worlds people built, and everybody in them.',
   },
   {
-    slug: 'brix',
-    name: 'Brix',
+    slug: 'economy',
+    name: 'Economy',
     art: '/about/brix.webp',
     line: 'What Kobblon runs on, and who gets paid.',
   },

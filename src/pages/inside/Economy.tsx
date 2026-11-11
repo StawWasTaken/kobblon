@@ -13,7 +13,7 @@ import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import { currency } from '@/lib/currency'
 
 /**
- * Brix, the third of the three Inside Kobblon pages.
+ * Economy, the third of the three Inside Kobblon pages.
  *
  * Every way money moves on this page is a real transaction kind on
  * `pixel_transactions` - daily, code, sale, purchase, donation, the listing
@@ -58,10 +58,10 @@ const spend = [
   ['Getting seen', 'Put Brix behind an ad for your World and it shows up where people are looking.'],
 ]
 
-export default function InsideBrix() {
-  useAtTitle(currency.plural)
+export default function InsideEconomy() {
+  useAtTitle('Economy')
   useSocialCard({
-    title: `${currency.plural} - Kobblon`,
+    title: 'Economy - Kobblon',
     description: 'What Kobblon runs on. Earned playing and selling, spent on what other people made.',
     image: null,
   })
@@ -168,7 +168,7 @@ export default function InsideBrix() {
         </div>
       </Band>
 
-      <InsideNav not="brix" />
+      <InsideNav not="economy" />
     </AboutShell>
   )
 }

@@ -12,7 +12,7 @@ import { InsideNav } from '@/components/about/InsideNav'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 
 /**
- * Report, the first of the three Inside Kobblon pages.
+ * Safety, the first of the three Inside Kobblon pages.
  *
  * Staw asked for these to be written "in a very proud & human way", and
  * not "AI-ish too wordy, too wiki stuff". So the rule for anybody editing
@@ -70,10 +70,10 @@ const promises = [
   },
 ]
 
-export default function InsideReport() {
-  useAtTitle('Report')
+export default function InsideSafety() {
+  useAtTitle('Safety')
   useSocialCard({
-    title: 'Report - Kobblon',
+    title: 'Safety - Kobblon',
     description: 'Report anything, anywhere. It goes to a person, and your name never travels with it.',
     image: null,
   })
@@ -188,7 +188,7 @@ export default function InsideReport() {
         </Reveal>
       </Band>
 
-      <InsideNav not="report" />
+      <InsideNav not="safety" />
     </AboutShell>
   )
 }

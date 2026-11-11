@@ -15,7 +15,7 @@ import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import { getPlatformStats } from '@/lib/api'
 
 /**
- * Play, the second of the three Inside Kobblon pages.
+ * Players, the second of the three Inside Kobblon pages.
  *
  * The numbers on this page come from `platform_stats` and nowhere else.
  * Staw's rule for the About side holds hardest here: never write a figure
@@ -50,10 +50,10 @@ const together: { icon: KobIcon; name: string; body: string }[] = [
   },
 ]
 
-export default function InsidePlay() {
-  useAtTitle('Play')
+export default function InsidePlayers() {
+  useAtTitle('Players')
   useSocialCard({
-    title: 'Play - Kobblon',
+    title: 'Players - Kobblon',
     description: 'Every World here was built and published by one person. Walk in and see what they did with it.',
     image: null,
   })
@@ -174,7 +174,7 @@ export default function InsidePlay() {
         </Reveal>
       </Band>
 
-      <InsideNav not="play" />
+      <InsideNav not="players" />
     </AboutShell>
   )
 }
