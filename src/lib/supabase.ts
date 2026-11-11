@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { reached, failed } from './reachable'
 
 /*
  * The client everything talks to, and a way to hand it a different one.
@@ -36,8 +37,41 @@ function website(): SupabaseClient {
   }
   own = createClient(url ?? 'http://localhost', key ?? 'anon', {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    global: { fetch: watchedFetch },
   })
   return own
+}
+
+/*
+ * Every request the website makes, passing one place that notices whether
+ * the database is answering at all.
+ *
+ * Here rather than in `unwrap` because `unwrap` is not the whole of it: it
+ * sees what PostgREST returned, and the case that matters most is the one
+ * where nothing returned - the fetch rejected, and no `{ data, error }` was
+ * ever built. Storage, auth and the functions do not go through `unwrap` at
+ * all. This sees all of it, and it sees it before anybody has had a chance
+ * to swallow the error.
+ *
+ * A status is an answer, including a rude one. **A 401, a 403 and a 404 are
+ * the database working**, and treating them as an outage would put the
+ * shutters up every time somebody opened a page they are not allowed to
+ * see. Only the gateway's own three - the request reached our host and
+ * never reached PostgREST - count, alongside a fetch that never completed.
+ */
+async function watchedFetch(input: RequestInfo | URL, init?: RequestInit) {
+  try {
+    const response = await fetch(input, init)
+    if (response.status === 502 || response.status === 503 || response.status === 504) {
+      failed(new Error('bad gateway'))
+    } else {
+      reached()
+    }
+    return response
+  } catch (error) {
+    failed(error)
+    throw error
+  }
 }
 
 /**

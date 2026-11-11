@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { siteState, type SiteState } from '@/lib/api'
+import { watchReachable } from '@/lib/reachable'
 import { supabase } from '@/lib/supabase'
 import Maintenance from '@/pages/Maintenance'
 
@@ -36,11 +37,33 @@ import Maintenance from '@/pages/Maintenance'
  *   * **`/login` stays open.** The people who can turn this off need a
  *     session to do it with, and a signed-out admin behind the curtain with
  *     no way to sign in is how a maintenance switch becomes a locked door.
+ *
+ * ## The curtain nobody threw
+ *
+ * There is a second way this page appears, and it is not the switch. Staw:
+ * "i want that when theres an issue about the database, instead of saying
+ * that stuff cant load bc of the database, make that the in maintenance
+ * mode is automatically activated."
+ *
+ * It cannot be the switch, because the switch is a row in the database: when
+ * the database is what has fallen over, nothing can write that row and
+ * nothing can read it. So each tab decides for itself, out of the only
+ * evidence it has - that its own calls have stopped being answered - and
+ * `@/lib/reachable` is where that is counted. One page instead of twenty
+ * "that did not load" boxes.
+ *
+ * **Staff do not walk past this one.** The switch is a request not to use
+ * the site and staff are exempt from it; an outage is not a request, and
+ * there is nothing behind the curtain for an admin either. It lifts itself
+ * the moment any call is answered, so nobody has to turn it off.
  */
 export function Shutters({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth()
   const location = useLocation()
   const [state, setState] = useState<SiteState | null>(null)
+  const [reachable, setReachable] = useState(true)
+
+  useEffect(() => watchReachable(({ reachable: now }) => setReachable(now)), [])
 
   useEffect(() => {
     let wanted = true
@@ -54,7 +77,13 @@ export function Shutters({ children }: { children: React.ReactNode }) {
       if (wanted) setState(answer)
     }
     void ask()
-    const again = window.setInterval(() => { void ask() }, 60_000)
+    /*
+     * Every ten seconds while the database is not answering, every minute
+     * while it is. The quick one is what lifts the automatic curtain: it is
+     * the only thing still knocking, so how often it knocks is how long
+     * somebody looks at a closed sign after the database has come back.
+     */
+    const again = window.setInterval(() => { void ask() }, reachable ? 60_000 : 10_000)
 
     /*
      * The row itself, as it changes. It carries `maintenance` and `note`,
@@ -73,7 +102,7 @@ export function Shutters({ children }: { children: React.ReactNode }) {
       window.clearInterval(again)
       void supabase.removeChannel(channel)
     }
-  }, [])
+  }, [reachable])
 
   const staff = !!profile?.is_admin || !!profile?.is_superadmin
 
@@ -83,9 +112,16 @@ export function Shutters({ children }: { children: React.ReactNode }) {
    * of the website is a far smaller wrong than half a second of a closed
    * sign that then disappears.
    */
-  const shut = !!state?.maintenance && !staff && !loading
-    && !location.pathname.startsWith('/login')
+  const onLogin = location.pathname.startsWith('/login')
 
+  /* The switch: staff walk past it, and `/login` stays open. */
+  const shut = !!state?.maintenance && !staff && !loading && !onLogin
+
+  /* The outage: nobody walks past it, and `/login` is no use either - there
+     is nothing to sign in to. */
+  const deaf = !reachable && !onLogin
+
+  if (deaf) return <Maintenance outage />
   if (shut) return <Maintenance note={state?.note} />
 
   return <>{children}</>

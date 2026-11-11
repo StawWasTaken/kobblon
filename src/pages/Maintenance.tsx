@@ -17,8 +17,20 @@ import { faArrowsRotate, faScrewdriverWrench } from '@fortawesome/free-solid-svg
  * The one address still open underneath is `/login`, so that staff who can
  * walk past this can get at a session to turn it off again. It is not
  * linked from here; somebody who needs it knows it.
+ *
+ * `outage` is the other way here: not a switch somebody threw, but the site
+ * noticing the database has stopped answering and drawing this instead of
+ * twenty "that did not load" boxes. The drawing is the same on purpose -
+ * what somebody wants to know is "it is not me and it is being dealt with",
+ * and that is true either way - but the words are not, because "somebody is
+ * working on the place" is a promise and nobody has made it. It also says
+ * out loud that it is watching, since this one goes away by itself.
  */
-export default function Maintenance({ note }: { note?: string | null }) {
+export default function Maintenance({ note, outage }: {
+  note?: string | null
+  /** The database stopped answering. Nobody threw a switch. */
+  outage?: boolean
+}) {
   useTitle('Back shortly')
 
   return (
@@ -44,9 +56,11 @@ export default function Maintenance({ note }: { note?: string | null }) {
         </h1>
 
         <p className="mt-3 text-white/70">
-          {note?.trim()
-            ? note
-            : 'Somebody is working on the place. Nothing is lost, nothing is broken, and it will be back shortly.'}
+          {outage
+            ? 'Kobblon cannot reach its database right now. Nothing you did caused this and nothing of yours is lost. This page is checking every few seconds and will let you straight back in.'
+            : note?.trim()
+              ? note
+              : 'Somebody is working on the place. Nothing is lost, nothing is broken, and it will be back shortly.'}
         </p>
 
         <Button
