@@ -123,7 +123,7 @@ export function BoardMark({ slug, className }: { slug: string; className?: strin
   const art = BOARD_ART[slug]
   return (
     <span className={cn(
-      'grid shrink-0 place-items-center rounded-lg border border-white/10 bg-ink-raised',
+      'grid shrink-0 place-items-center rounded-lg border-2 border-white/10 bg-ink-raised',
       BOARD_INK[slug] ?? 'text-brand-bright',
       className ?? 'h-7 w-7 text-xs',
     )}>
@@ -179,7 +179,7 @@ export function ForumSearchBox({ className }: { className?: string }) {
          * which lands beside ours: two crosses, one of them unstyled.
          * Ours stays, because it is the one that matches the site.
          */
-        className="w-full rounded-xl border border-white/10 bg-ink-card/60 py-2 pl-9 pr-9 text-sm font-semibold text-white placeholder:text-white/30 transition-colors focus:border-brand-bright/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+        className="w-full rounded-xl border-2 border-b-4 border-white/10 bg-ink-card/60 py-2 pl-9 pr-9 text-sm font-semibold text-white placeholder:text-white/30 transition-colors focus:border-brand-bright/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
       />
       {terms && (
         <button
@@ -414,7 +414,7 @@ export function BoardStrip({ boards }: { boards: ForumBoard[] }) {
         <Link
           key={board.slug}
           to={`/forum/c/${board.slug}`}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-ink-card/60 px-3 py-2 text-xs font-extrabold text-white/70"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl border-2 border-b-4 border-white/10 bg-ink-card/60 px-3 py-2 text-xs font-extrabold text-white/70"
         >
           <span className={cn('h-2 w-2 rounded-sm', BOARD_COLOUR[board.slug] ?? 'bg-white/30')} />
           {board.name}

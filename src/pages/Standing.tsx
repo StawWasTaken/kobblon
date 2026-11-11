@@ -84,17 +84,17 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
             </span>
             <ByBadge rank={one.by_rank} />
             {live && (
-              <span className="rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-danger">
+              <span className="rounded-full border-2 border-danger/40 bg-danger/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-danger">
                 Still on
               </span>
             )}
             {one.is_void && (
-              <span className="rounded-full border border-space/40 bg-space/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+              <span className="rounded-full border-2 border-space/40 bg-space/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
                 Taken back
               </span>
             )}
             {one.appeal_status === 'open' && (
-              <span className="rounded-full border border-brand-bright/50 bg-brand/20 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
+              <span className="rounded-full border-2 border-brand-bright/50 bg-brand/20 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
                 Appeal open
               </span>
             )}

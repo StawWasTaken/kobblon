@@ -202,7 +202,7 @@ export function ServerList({
   if (!servers.length) {
     if (look === 'quiet') {
       return (
-        <div className="rounded-2xl border border-dashed border-ink-line bg-ink-card/40 px-4 py-7 text-center">
+        <div className="rounded-2xl border-2 border-b-4 border-dashed border-ink-line bg-ink-card/40 px-4 py-7 text-center">
           <p className="font-display text-sm font-extrabold text-white/80">
             {empty?.title ?? 'No servers running'}
           </p>

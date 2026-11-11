@@ -196,7 +196,7 @@ function Field({
             type="button"
             onClick={() => onChange('')}
             aria-label={`Clear ${label ?? 'the date'}`}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-ink-line text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
           >
             <Glyph icon={faXmark} />
           </button>

@@ -87,7 +87,7 @@ export function BasketDialog({ open, onClose, lines, paying, balance, onBuy }: {
       )}
     >
       {sure && lines.length > 0 && (
-        <div className="mb-3 rounded-xl border border-brand/40 bg-brand/10 p-3">
+        <div className="mb-3 rounded-xl border-2 border-b-4 border-brand/40 bg-brand/10 p-3">
           <p className="text-sm font-bold">
             {lines.length === 1 ? 'Buy this one' : `Buy all ${lines.length}`}
             {total > 0 ? <> for <CurrencyMark className="mx-0.5" />{total}?</> : '?'}

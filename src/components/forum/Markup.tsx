@@ -171,7 +171,7 @@ export function Markup({ body, className }: { body: string; className?: string }
           return (
             <pre
               key={key}
-              className="overflow-x-auto rounded-xl border border-white/10 bg-ink p-4 font-mono text-[13px] leading-relaxed text-white/80"
+              className="overflow-x-auto rounded-xl border-2 border-b-4 border-white/10 bg-ink p-4 font-mono text-[13px] leading-relaxed text-white/80"
             >
               {block.lines.join('\n')}
             </pre>

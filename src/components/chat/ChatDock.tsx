@@ -317,7 +317,7 @@ function Window({
             */
           : cn(
               DOCK_SHAPE,
-              'rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              'rounded-t-2xl border-2 border-b-0 border-t-0 shadow-pop',
               'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
               'before:from-brand before:via-brand-bright before:to-space',
               'relative transition-[height] duration-150 motion-reduce:transition-none',
@@ -515,7 +515,7 @@ function Window({
                 }
               }}
               disabled={leaving}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-danger/40 px-2.5 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-danger/40 px-2.5 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
             >
               <Glyph icon={faRightFromBracket} className="text-xs" />
               Leave this group
@@ -738,7 +738,7 @@ function List({
              side at the foot of the page and a pair that do not match
              reads as one of them being a different kind of thing. */
           : cn(
-              'relative rounded-t-2xl border border-b-0 border-t-0 shadow-pop',
+              'relative rounded-t-2xl border-2 border-b-0 border-t-0 shadow-pop',
               DOCK_SHAPE,
               'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
               'before:from-brand before:via-brand-bright before:to-space',

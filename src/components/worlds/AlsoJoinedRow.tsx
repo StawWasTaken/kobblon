@@ -44,7 +44,7 @@ export function AlsoJoinedRow({ worlds, bare }: {
               to={worldLink(world)}
               className="group min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <div className="aspect-square overflow-hidden rounded-2xl border-2 border-ink-line bg-ink transition-colors group-hover:border-brand/70">
+              <div className="aspect-square overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink transition-colors group-hover:border-brand/70">
                 <Picture src={picture} alt={world.name} className="h-full w-full" />
               </div>
 

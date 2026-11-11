@@ -179,7 +179,7 @@ export function CommunityWall({
           </form>
 
           {picking && (
-            <div className="mt-3 overflow-hidden rounded-xl border-2 border-ink-line bg-ink/40">
+            <div className="mt-3 overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink/40">
               <StickerCard
                 onPick={(one) => { setPicking(false); void sendSticker(tokenFor(one)) }}
                 onClose={() => setPicking(false)}

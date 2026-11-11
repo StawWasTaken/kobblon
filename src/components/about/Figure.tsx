@@ -53,7 +53,7 @@ export function Figure({
       )}
       <div
         className={cn(
-          'relative overflow-hidden rounded-3xl bg-media shadow-pop',
+          'relative overflow-hidden rounded-2xl bg-media shadow-pop',
           'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]',
           shapes[ratio],
         )}

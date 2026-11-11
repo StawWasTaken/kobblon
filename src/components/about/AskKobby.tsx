@@ -93,8 +93,8 @@ export function AskKobby({
        * instead of a rectangle somebody drew on a picture.
        */
       className={cn(
-        'group rounded-[1.1rem] border border-white/10 bg-ink/70 shadow-[0_20px_55px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-colors focus-within:border-brand-bright/60',
-        wide && 'rounded-[1.4rem]',
+        'group rounded-xl border-2 border-b-4 border-white/10 bg-ink/70 shadow-[0_20px_55px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-colors focus-within:border-brand-bright/60',
+        wide && 'rounded-2xl',
       )}
     >
       <div className={cn('flex items-center gap-3 pl-3.5 pr-2.5 py-2.5', wide && 'gap-4 pl-5 pr-3.5 py-4')}>
@@ -197,7 +197,7 @@ export function AskKobby({
             type="button"
             onClick={() => askThis(one)}
             disabled={asking}
-            className="rounded-xl border border-white/10 bg-ink/60 px-3.5 py-2 text-left text-sm font-bold text-white/65 backdrop-blur-xl transition-colors hover:border-brand-bright/50 hover:text-white disabled:opacity-50"
+            className="rounded-xl border-2 border-b-4 border-white/10 bg-ink/60 px-3.5 py-2 text-left text-sm font-bold text-white/65 backdrop-blur-xl transition-colors hover:border-brand-bright/50 hover:text-white disabled:opacity-50"
           >
             {one}
           </button>

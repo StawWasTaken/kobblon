@@ -20,7 +20,7 @@ function AddTile({ to, says }: { to: string; says: string }) {
   return (
     <Link
       to={to}
-      className="group flex w-32 flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center outline-none transition-colors hover:border-ink-line focus-visible:border-brand"
+      className="group flex w-32 flex-col items-center gap-3 rounded-2xl border-2 border-transparent p-4 text-center outline-none transition-colors hover:border-ink-line focus-visible:border-brand"
     >
       <span className="flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-dashed border-ink-line text-2xl text-muted transition-colors group-hover:border-brand group-hover:text-brand">
         <Glyph icon={faPlus} />

@@ -82,7 +82,7 @@ const safety: { icon: KobIcon; name: string; body: string }[] = [
 function Nothing({ children }: { children: string }) {
   return (
     <Reveal>
-      <p className="rounded-3xl border border-dashed border-white/12 bg-white/[0.02] px-7 py-8 leading-relaxed text-white/50">
+      <p className="rounded-2xl border-2 border-b-4 border-dashed border-white/12 bg-white/[0.02] px-7 py-8 leading-relaxed text-white/50">
         {children}
       </p>
     </Reveal>
@@ -331,7 +331,7 @@ export default function Landing() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {safety.map((one, at) => (
             <Reveal key={one.name} delay={at * 70} className="h-full">
-              <div className="relative h-full overflow-hidden rounded-3xl border border-white/10 bg-ink-card/50 p-7">
+              <div className="relative h-full overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 p-7">
                 <PixelGrid from="bottom-right" className="opacity-30" />
                 <Icon name={one.icon} tone="currentColor" className="relative h-7 w-7 text-brand-bright" />
                 <p className="relative mt-5 font-display text-xl font-extrabold">{one.name}</p>

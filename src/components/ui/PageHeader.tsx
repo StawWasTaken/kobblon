@@ -59,7 +59,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        'relative overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card p-5 sm:p-8',
+        'relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-5 sm:p-8',
         className,
       )}
     >

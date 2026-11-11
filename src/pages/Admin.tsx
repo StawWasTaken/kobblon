@@ -439,7 +439,7 @@ export function CommunityCard({ row, rank, onChanged }: {
       )}
 
       {asking === 'close' && (
-        <div className="space-y-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
+        <div className="space-y-2 rounded-xl border-2 border-b-4 border-danger/40 bg-danger-soft p-3">
           <p className="text-xs leading-relaxed text-muted">
             It is marked closed and held for two months. The page stays and says so, nothing
             in it is lost, and any admin can put it back until the date runs out. The owner
@@ -521,7 +521,7 @@ export function CommunityCard({ row, rank, onChanged }: {
       )}
 
       {asking === 'erase' && (
-        <div className="space-y-2 rounded-xl border border-danger/40 bg-danger-soft p-3">
+        <div className="space-y-2 rounded-xl border-2 border-b-4 border-danger/40 bg-danger-soft p-3">
           <p className="text-xs font-bold leading-relaxed text-danger">
             This removes the data. Every post, every member, the funds and the audit go with
             it, and nothing here brings any of it back.
@@ -2314,7 +2314,7 @@ export function AnnounceSection() {
         ]}
         confirmText="Send it"
       >
-        <p className="rounded-xl border-2 border-ink-line bg-ink p-3 text-sm">
+        <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink p-3 text-sm">
           {confirming}
         </p>
       </Confirm>
@@ -2596,7 +2596,7 @@ export function WordsSection() {
         </div>
 
         {!!draft && (
-          <div className="animate-pop-in space-y-2 rounded-xl border-2 border-ink-line bg-ink p-3">
+          <div className="animate-pop-in space-y-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink p-3">
             {!!draft.note && <p className="text-xs leading-relaxed text-muted">{draft.note}</p>}
 
             {draft.words.map((one, i) => (
@@ -2628,7 +2628,7 @@ export function WordsSection() {
             ))}
 
             {!!draft.settings && (
-              <p className="rounded-lg border border-amber-400/30 bg-amber-400/5 px-3 py-2 text-xs text-amber-300">
+              <p className="rounded-lg border-2 border-amber-400/30 bg-amber-400/5 px-3 py-2 text-xs text-amber-300">
                 It also wants to change the machine:{' '}
                 {Object.entries(draft.settings)
                   .map(([key, value]) => `${key} → ${String(value)}`)
@@ -2775,7 +2775,7 @@ export function WordsSection() {
           {/* Trying it first, because this list runs against everything
               anybody types and a pattern that catches too much is only
               discovered through the people it wrongly refuses. */}
-          <div className="space-y-2 rounded-xl border-2 border-ink-line bg-ink p-3">
+          <div className="space-y-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink p-3">
             <Input
               label="Try it against"
               value={sample}
@@ -4317,7 +4317,7 @@ function Investors({ onChanged }: { onChanged: () => void }) {
       </div>
 
       {/* ------------------------------------------------------ adding one */}
-      <div className="space-y-3 rounded-xl border-2 border-ink-line bg-ink-hover/40 p-4">
+      <div className="space-y-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-hover/40 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
             label="Who"
@@ -6132,7 +6132,7 @@ export function MachineSection() {
             {faults.map((fault) => (
               <div
                 key={fault.what}
-                className="flex animate-row-in items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3"
+                className="flex animate-row-in items-start gap-3 rounded-xl border-2 border-b-4 border-amber-400/30 bg-amber-400/5 p-3"
               >
                 <FontAwesomeIcon icon={faHeartPulse} className="mt-0.5 shrink-0 text-amber-300" />
                 <span className="min-w-0">

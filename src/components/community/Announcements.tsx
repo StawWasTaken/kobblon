@@ -146,7 +146,7 @@ export function Announcements({
         {[current].filter((post): post is CommunityPost => !!post).map((post) => (
           <article
             key={post.id}
-            className="relative overflow-hidden rounded-2xl border border-brand/30 bg-brand/[0.07]"
+            className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-brand/30 bg-brand/[0.07]"
           >
 
             <div className="relative p-4 sm:p-5">

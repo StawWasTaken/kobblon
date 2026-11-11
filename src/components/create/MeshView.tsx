@@ -283,7 +283,7 @@ export function MeshView({
            */
           className={cn(
             'absolute bottom-2 right-2 rounded-full',
-            'border border-white/20 bg-ink/80 text-white/75 backdrop-blur-sm',
+            'border-2 border-white/20 bg-ink/80 text-white/75 backdrop-blur-sm',
             'transition-colors hover:border-brand hover:bg-brand hover:text-white',
             labelled
               ? 'flex h-9 items-center gap-2 px-3.5 text-xs font-bold'

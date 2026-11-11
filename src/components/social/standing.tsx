@@ -477,7 +477,7 @@ export function Evidence({ said, className }: { said: string; className?: string
         <Glyph icon={faQuoteLeft} />
         What we acted on
       </p>
-      <blockquote className="rounded-2xl rounded-tl-md border border-amber-400/30 bg-amber-400/[0.07] px-4 py-3">
+      <blockquote className="rounded-2xl rounded-tl-md border-2 border-b-4 border-amber-400/30 bg-amber-400/[0.07] px-4 py-3">
         <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white/85">
           {said}
         </p>

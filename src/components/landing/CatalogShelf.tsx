@@ -77,7 +77,7 @@ export function CatalogShelf({ items, loading }: { items: AvatarItem[]; loading:
 
 function Card({ item }: { item: AvatarItem }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-white/10 bg-ink-card">
+    <article className="overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card">
       {/*
        * `WornPicture`, not the item's own file. A shirt's own file is the
        * template sheet, and this shelf was showing nine of them: flat

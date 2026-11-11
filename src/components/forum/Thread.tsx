@@ -92,7 +92,7 @@ export function ReplyingTo({ parent, name }: { parent: ForumReply | null; name: 
       </button>
 
       {open && (
-        <blockquote className="mt-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+        <blockquote className="mt-2 rounded-xl border-2 border-b-4 border-white/10 bg-white/[0.03] px-4 py-3">
           <p className="text-sm leading-relaxed text-white/55">{gist(parent.body)}</p>
           <button
             type="button"

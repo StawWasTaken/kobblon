@@ -72,7 +72,7 @@ export function ActivityLine({ person, isMe, className }: {
    * load, which is a bug report nobody can act on.
    */
   const picture = (
-    <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-ink-raised">
+    <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-white/15 bg-ink-raised">
       {where.world_cover ? (
         <img src={where.world_cover} alt="" className="h-full w-full object-cover" />
       ) : (
@@ -86,7 +86,7 @@ export function ActivityLine({ person, isMe, className }: {
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-2xl border border-space/45 bg-gradient-to-br from-space/20 to-space/5 shadow-lg shadow-space/10',
+        'overflow-hidden rounded-2xl border-2 border-b-4 border-space/45 bg-gradient-to-br from-space/20 to-space/5 shadow-lg shadow-space/10',
         className,
       )}
     >

@@ -101,7 +101,7 @@ export default function PolicyHub() {
             <Reveal key={policy.slug} delay={(at % 3) * 70} className="h-full">
               <Link
                 to={`/policies/${policy.slug}`}
-                className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-ink-card/70 p-7 transition-[border-color,background-color,transform] hover:-translate-y-1 hover:border-brand-bright/50 hover:bg-ink-card"
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/70 p-7 transition-[border-color,background-color,transform] hover:-translate-y-1 hover:border-brand-bright/50 hover:bg-ink-card"
               >
                 <span
                   aria-hidden="true"
@@ -156,7 +156,7 @@ export default function PolicyHub() {
             <Reveal key={one.to} delay={at * 70} className="h-full">
               <Link
                 to={one.to}
-                className="group flex h-full items-start gap-5 rounded-3xl border border-white/10 bg-ink-card/60 p-7 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
+                className="group flex h-full items-start gap-5 rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-7 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
               >
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand/15 text-xl text-brand-bright">
                   <Glyph icon={one.icon} />
@@ -175,7 +175,7 @@ export default function PolicyHub() {
         </div>
 
         <Reveal delay={140}>
-          <p className="mt-10 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm leading-relaxed text-white/45">
+          <p className="mt-10 flex items-start gap-3 rounded-2xl border-2 border-b-4 border-white/10 bg-white/[0.03] p-6 text-sm leading-relaxed text-white/45">
             <Glyph icon={faCircleInfo} className="mt-0.5 shrink-0 text-white/30" />
             These pages say what actually happens. They have not been through a lawyer yet, and
             will be before Kobblon opens widely.

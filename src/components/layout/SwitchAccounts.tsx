@@ -252,7 +252,7 @@ export function SwitchAccounts({ open, onClose }: { open: boolean; onClose: () =
             <li>
               <button
                 onClick={() => addAnother('/login')}
-                className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-ink-line p-3 text-left transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                className="flex w-full items-center gap-3 rounded-2xl border-2 border-b-4 border-dashed border-ink-line p-3 text-left transition-colors hover:border-brand/60 hover:bg-ink-hover"
               >
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-white/60">
                   <Glyph icon={faPlus} />

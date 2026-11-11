@@ -64,7 +64,7 @@ export function NewGroupDialog({
         'pointer-events-auto flex flex-col overflow-hidden bg-ink-card',
         full
           ? 'h-full w-full'
-          : 'h-96 w-72 rounded-t-xl border border-b-0 border-ink-line shadow-pop',
+          : 'h-96 w-72 rounded-t-xl border-2 border-b-0 border-ink-line shadow-pop',
       )}
     >
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-ink-line px-3">

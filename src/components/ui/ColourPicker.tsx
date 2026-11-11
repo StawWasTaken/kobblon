@@ -272,7 +272,7 @@ function Panel({
               setTyped(swatch)
               onChange(swatch)
             }}
-            className="grid h-5 w-full place-items-center rounded-md border border-white/15"
+            className="grid h-5 w-full place-items-center rounded-md border-2 border-white/15"
             style={{ background: swatch }}
           >
             {swatch.toLowerCase() === current.toLowerCase() && (

@@ -76,7 +76,7 @@ export function Role({ person }: { person: ForumAuthor }) {
   const word = 'Staff'
 
   return (
-    <span className="rounded-md border border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
+    <span className="rounded-md border-2 border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
       {word}
     </span>
   )
@@ -97,7 +97,7 @@ export function TagChip({ person }: { person: ForumAuthor }) {
   if (!person.author_tag || person.author_tag === 'Staff') return null
 
   return (
-    <span className="rounded-md border border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
+    <span className="rounded-md border-2 border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
       {person.author_tag}
     </span>
   )
@@ -224,7 +224,7 @@ export function Attachments({ images }: { images: string[] }) {
               type="button"
               onClick={() => setOpen(i)}
               aria-label={clip ? 'Play this clip' : 'See this picture bigger'}
-              className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-media"
+              className="group relative block overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-media"
             >
               {clip ? (
                 <>

@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/Button'
  */
 export function GoneProfile({ handle }: { handle: string }) {
   return (
-    <section className="overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card">
+    <section className="overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
       {/* The banner that is not there. Hatched rather than flat, so it
           reads as a space somebody has left rather than as a panel that
           failed to load. */}

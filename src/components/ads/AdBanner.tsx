@@ -182,7 +182,7 @@ export function AdBanner({
           <Link
             to="/create/ads"
             style={frame}
-            className="group mx-auto flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-ink-line bg-ink-card/40 px-4 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+            className="group mx-auto flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-card/40 px-4 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
           >
             <Glyph icon={faRectangleAd} className="text-base text-white/25" />
             <span className="text-xs font-bold text-white/55">This space is for an ad</span>

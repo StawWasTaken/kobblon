@@ -384,7 +384,7 @@ export default function CatalogItem() {
                 'flex items-start gap-2 rounded-xl p-3 text-xs leading-relaxed',
                 closed
                   ? 'border-2 border-ink-line bg-ink-raised text-white/65'
-                  : 'border border-amber-400/40 bg-amber-400/10 text-amber-200',
+                  : 'border-2 border-amber-400/40 bg-amber-400/10 text-amber-200',
               )}>
                 <Glyph icon={faClock} className="mt-0.5" />
                 <span>

@@ -106,7 +106,7 @@ export function GifCard({ onPick, onClose }: {
                 key={one.id}
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); onPick(one.url) }}
-                className="mb-1.5 block w-full break-inside-avoid overflow-hidden rounded-lg border border-transparent transition-colors hover:border-brand-bright"
+                className="mb-1.5 block w-full break-inside-avoid overflow-hidden rounded-lg border-2 border-transparent transition-colors hover:border-brand-bright"
                 title="Send this"
               >
                 <img

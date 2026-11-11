@@ -55,7 +55,7 @@ function Lead({ world }: { world: World }) {
   return (
     <Link
       to={worldLink(world)}
-      className="group relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-ink-line bg-media sm:aspect-[16/9]"
+      className="group relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media sm:aspect-[16/9]"
     >
       <Cover world={world} className="group-hover:scale-[1.03]" />
 
@@ -64,7 +64,7 @@ function Lead({ world }: { world: World }) {
           <Picture
             src={world.emblem_url}
             alt={world.name}
-            className="h-12 w-12 shrink-0 rounded-xl border border-white/20"
+            className="h-12 w-12 shrink-0 rounded-xl border-2 border-white/20"
           />
         )}
         <span className="min-w-0">

@@ -35,7 +35,7 @@ export function ViewSwitch<T extends string>({ ways, value, onChange, className 
       className={cn(
         // The corner `MeshView` puts its switch in, so the gesture is in the
         // same place wherever somebody meets it.
-        'absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full border border-white/20 bg-ink/80 p-0.5 backdrop-blur-sm',
+        'absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full border-2 border-white/20 bg-ink/80 p-0.5 backdrop-blur-sm',
         className,
       )}
     >

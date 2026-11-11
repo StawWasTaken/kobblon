@@ -51,7 +51,7 @@ export function TopTopics({
   if (!rows.length) return null
 
   return (
-    <section className={cn('rounded-2xl border border-white/10 bg-ink-card/40 p-5 sm:p-6', className)}>
+    <section className={cn('rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40 p-5 sm:p-6', className)}>
       {head && (
       <div className="flex items-center gap-3">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand/15 text-brand-bright">

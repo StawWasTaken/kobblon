@@ -75,7 +75,7 @@ export function RatingBar({
 
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-3 rounded-xl border border-on-art/20 bg-black/45 px-3 py-2 backdrop-blur-sm">
+      <div className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-on-art/20 bg-black/45 px-3 py-2 backdrop-blur-sm">
         {/* The verdict. The thumb here is the label, not a control - it
             says what the number is a share of, so it is never pressable
             and never takes a colour from your own vote. */}

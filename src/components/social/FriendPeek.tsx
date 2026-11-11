@@ -72,7 +72,7 @@ function WorldHere({ where }: { where: Whereabouts }) {
     <>
       {/* No cover is drawn as the mark rather than as a hole: an empty box
           the size of a thumbnail reads as a picture that failed. */}
-      <span className="relative block h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-white/15 bg-ink-raised">
+      <span className="relative block h-9 w-9 shrink-0 overflow-hidden rounded-lg border-2 border-white/15 bg-ink-raised">
         {where.world_cover ? (
           <img src={where.world_cover} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -99,7 +99,7 @@ function WorldHere({ where }: { where: Whereabouts }) {
     </>
   )
 
-  const look = 'mt-2 flex items-center gap-2 rounded-lg border border-space/40 bg-space/10 p-1.5'
+  const look = 'mt-2 flex items-center gap-2 rounded-lg border-2 border-space/40 bg-space/10 p-1.5'
 
   return where.world_content_id
     ? (

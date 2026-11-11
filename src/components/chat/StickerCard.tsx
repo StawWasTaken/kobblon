@@ -121,7 +121,7 @@ export function StickerCard({ onPick, onClose }: {
                 onMouseDown={(e) => { e.preventDefault(); onPick(one) }}
                 title={one.label}
                 aria-label={one.label}
-                className="grid aspect-square place-items-center rounded-lg border border-transparent p-1 transition-colors hover:border-brand-bright hover:bg-white/5"
+                className="grid aspect-square place-items-center rounded-lg border-2 border-transparent p-1 transition-colors hover:border-brand-bright hover:bg-white/5"
               >
                 <img
                   src={pictureUrl(one.small ?? one.picture)}

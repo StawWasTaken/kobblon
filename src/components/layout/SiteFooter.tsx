@@ -174,7 +174,7 @@ export function SiteFooter({ className, compact }: { className?: string; compact
               <span>© {year} Kobblon</span>
               <span aria-hidden="true">&middot;</span>
               <span
-                className="rounded-md border border-white/10 px-1.5 py-0.5 font-bold text-white/45"
+                className="rounded-md border-2 border-white/10 px-1.5 py-0.5 font-bold text-white/45"
                 title={
                   version.next
                     ? `Kobblon is on V${version.name}. V${version.next.name} starts on ${version.next.on}. One number for the website, the Launcher and the Workspace.`

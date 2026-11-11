@@ -243,7 +243,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
         {ads.loading && <Skeleton className="h-16 rounded-xl" />}
 
         {!ads.loading && !ads.data?.length && (
-          <p className="rounded-xl border border-dashed border-ink-line p-4 text-center text-sm text-muted">
+          <p className="rounded-xl border-2 border-dashed border-ink-line p-4 text-center text-sm text-muted">
             Nothing in this campaign yet. Add an ad and it starts being shown.
           </p>
         )}

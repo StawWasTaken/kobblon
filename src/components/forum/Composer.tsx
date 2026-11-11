@@ -191,7 +191,7 @@ export function Composer({
    */
   if (!profile) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-ink-card/60 p-5 text-center">
+      <div className="rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-5 text-center">
         <p className="text-sm text-white/60">
           You need an account to post on the forum. Reading it needs nothing.
         </p>
@@ -302,7 +302,7 @@ export function Composer({
 
   return (
     <div className={cn(
-      'rounded-2xl border border-white/10 bg-ink-card/60',
+      'rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/60',
       compact ? 'p-3' : 'p-4 sm:p-5',
     )}>
       {withTitle && (
@@ -312,11 +312,11 @@ export function Composer({
           placeholder="What is it about? Say it in one line."
           maxLength={140}
           autoFocus={autoFocus}
-          className="mb-3 w-full rounded-xl border border-white/10 bg-ink px-4 py-3 font-display text-lg font-extrabold text-white outline-none transition-colors placeholder:font-bold placeholder:text-white/25 focus:border-brand-bright"
+          className="mb-3 w-full rounded-xl border-2 border-b-4 border-white/10 bg-ink px-4 py-3 font-display text-lg font-extrabold text-white outline-none transition-colors placeholder:font-bold placeholder:text-white/25 focus:border-brand-bright"
         />
       )}
 
-      <div className="mb-px flex flex-wrap items-center gap-1 rounded-t-xl border border-b-0 border-white/10 bg-ink-raised/60 px-2 py-1.5">
+      <div className="mb-px flex flex-wrap items-center gap-1 rounded-t-xl border-2 border-b-0 border-white/10 bg-ink-raised/60 px-2 py-1.5">
         {MARKS.map((group, at) => (
           <span key={at} className="flex items-center gap-0.5">
             {at > 0 && <span className="mx-1 h-4 w-px bg-white/10" />}
@@ -344,7 +344,7 @@ export function Composer({
         rows={compact ? 3 : 7}
         maxLength={12000}
         autoFocus={autoFocus && !withTitle}
-        className="w-full resize-y rounded-b-xl border border-white/10 bg-ink px-4 py-3 text-[15px] leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
+        className="w-full resize-y rounded-b-xl border-2 border-white/10 bg-ink px-4 py-3 text-[15px] leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
       />
 
       {images.length > 0 && (
@@ -426,7 +426,7 @@ export function Composer({
 
 function Thumb({ path, onDrop }: { path: string; onDrop: () => void }) {
   return (
-    <span className="group relative block h-20 w-20 overflow-hidden rounded-xl border border-white/10 bg-media">
+    <span className="group relative block h-20 w-20 overflow-hidden rounded-xl border-2 border-b-4 border-white/10 bg-media">
       {/*
         * The thumbnail is what is actually stored rather than a local
         * preview, for a clip as much as for a picture: `preload="metadata"`

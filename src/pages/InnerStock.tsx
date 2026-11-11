@@ -408,7 +408,7 @@ function YourShare({ mine, price, onLeft }: {
   const next = Math.round((price * mine.share) / 100)
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-brand/30 bg-brand/[0.07]">
+    <section className="overflow-hidden rounded-2xl border-2 border-b-4 border-brand/30 bg-brand/[0.07]">
       <h2 className="flex items-center gap-2 border-b border-brand/20 px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-brand-bright">
         <FontAwesomeIcon icon={faHandHoldingDollar} className="h-3.5 w-3.5" />
         Your share

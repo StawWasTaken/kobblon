@@ -128,7 +128,7 @@ export function WorldTile({ world }: { world: World }) {
     <article className="w-[7.5rem] shrink-0 sm:w-36">
       <Link
         to={worldLink(world)}
-        className="block aspect-square overflow-hidden rounded-xl border-2 border-ink-line bg-media"
+        className="block aspect-square overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media"
       >
         <Picture
           src={art}
@@ -154,7 +154,7 @@ export function WorldFeature({ world }: { world: World }) {
   return (
     <Link
       to={worldLink(world)}
-      className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border-2 border-ink-line bg-media sm:w-[22rem]"
+      className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media sm:w-[22rem]"
     >
       <Picture
         src={world.cover_url}
@@ -168,7 +168,7 @@ export function WorldFeature({ world }: { world: World }) {
           <Picture
             src={world.emblem_url}
             alt={world.name}
-            className="h-9 w-9 shrink-0 rounded-lg border border-white/20"
+            className="h-9 w-9 shrink-0 rounded-lg border-2 border-white/20"
           />
         )}
         <span className="min-w-0">

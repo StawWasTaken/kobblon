@@ -21704,3 +21704,37 @@ a place for type, and the top version was putting white text over the
 brightest part of each one. Worth knowing on your side too, since these
 renders will turn up in the Launcher: **the dark end is where the words go,
 and it means no scrim is needed at all.**
+
+## Round three hundred and one - the stroke is a width, not a colour
+
+Staw, looking at the landing page after round 299: "our new design system
+must apply to everywhere, including landing page & at kobblon pages."
+
+He is right and the reason is worth having, because the same thing will
+happen on your side the first time you adopt this.
+
+Round 299 thickened `border border-ink-line` - two hundred and fifty of
+them - and declared the job done. But `ink-line` is the app's stroke. The
+landing page, the What is Kobblon pages, the policies, Download, Support and
+the forum are drawn over photographs and gradients, so they use
+`border-white/10`, `border-white/12`, `border-brand/40`, `border-danger/40`
+and a dozen others. **A hundred and forty-two of those were still hairlines**,
+and they are exactly the pages somebody sees before they have an account.
+The system was real on the inside and absent on the front door.
+
+So, for both sides:
+
+- **The house stroke is `border-2`, whatever colour it is drawn in.** Not
+  "2px when it is ink-line". Every all-round stroke in the codebase is 2px
+  now; directional rules between rows of a list stay at 1px.
+- **Card-shaped means a radius, a stroke and a fill.** Anything with all
+  three carries `border-b-4`. A hundred and fifteen more boxes took it in
+  this pass, the landing sign-up panel and the nine policy cards among them.
+- **Two corner sizes, `xl` and `2xl`, and nothing else.** `rounded-3xl` is
+  gone, and so are the arbitrary ones - `rounded-[1.5rem]`,
+  `rounded-[1.75rem]`, `rounded-[1.4rem]`. An arbitrary radius is how one
+  card ends up rounder than the card beside it and nobody can say why.
+
+`design/preset.js` records all of it beside the `borderWidth` scale, so the
+next person to adopt this does not have to work out that the first pass was
+half a pass.

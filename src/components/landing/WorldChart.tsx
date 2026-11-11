@@ -32,7 +32,7 @@ function Row({ world, rank }: { world: World; rank: number }) {
           {String(rank).padStart(2, '0')}
         </span>
 
-        <span className="block aspect-[16/10] overflow-hidden rounded-2xl border border-white/10 bg-media">
+        <span className="block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-media">
           {world.cover_url ? (
             <img
               src={world.cover_url}

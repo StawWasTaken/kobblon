@@ -214,7 +214,7 @@ export default function About() {
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {safety.map((one, at) => (
             <Reveal key={one.name} delay={at * 70} className="h-full">
-              <div className="relative h-full overflow-hidden rounded-3xl border border-white/10 bg-ink-card/50 p-7">
+              <div className="relative h-full overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 p-7">
                 <PixelGrid from="bottom-right" className="opacity-30" />
                 <Icon name={one.icon} tone="currentColor" className="relative h-7 w-7 text-brand-bright" />
                 <p className="relative mt-5 font-display text-xl font-extrabold">{one.name}</p>
@@ -373,7 +373,7 @@ export default function About() {
             <Reveal key={one.to} delay={at * 70} className="h-full">
               <Link
                 to={one.to}
-                className="group flex h-full items-center gap-4 rounded-2xl border border-white/10 bg-ink-card/50 px-6 py-5 transition-colors hover:border-brand-bright/50"
+                className="group flex h-full items-center gap-4 rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 px-6 py-5 transition-colors hover:border-brand-bright/50"
               >
                 <span className="min-w-0">
                   <span className="block font-display text-lg font-extrabold">{one.name}</span>
@@ -407,7 +407,7 @@ export default function About() {
         */}
       <Band tone="night" edge>
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-ink-card/40 p-7 sm:p-9">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40 p-7 sm:p-9">
             <PixelGrid from="top-left" className="opacity-30" />
             <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">

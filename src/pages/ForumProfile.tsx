@@ -103,7 +103,7 @@ export default function ForumProfile() {
   if (!person) {
     return (
       <ForumShell boards={boards.data ?? []} loading={boards.loading}>
-        <div className="rounded-2xl border border-white/10 py-16">
+        <div className="rounded-2xl border-2 border-white/10 py-16">
           <EmptyState
             title="Nobody here by that name."
             body="The account may have been closed, or the name may have been changed."
@@ -123,7 +123,7 @@ export default function ForumProfile() {
   return (
     <ForumShell boards={boards.data ?? []} loading={boards.loading}>
       <div className="max-w-4xl">
-        <header className="rounded-2xl border border-white/10 bg-ink-card/40 p-6">
+        <header className="rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40 p-6">
           <div className="flex flex-wrap items-start gap-5">
             <Avatar
               src={person.avatar_url}
@@ -239,13 +239,13 @@ export default function ForumProfile() {
                     </Button>
                   )}
                   {standing.data?.request_sent && (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-white/40">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-white/10 px-2.5 py-1.5 text-xs font-bold text-white/40">
                       <Glyph icon={faCheck} className="text-[11px]" />
                       Asked
                     </span>
                   )}
                   {standing.data?.are_friends && (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-space/40 bg-space/10 px-2.5 py-1.5 text-xs font-bold text-space-bright">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-space/40 bg-space/10 px-2.5 py-1.5 text-xs font-bold text-space-bright">
                       <Glyph icon={faCheck} className="text-[11px]" />
                       Friends
                     </span>
@@ -360,7 +360,7 @@ function EditProfile({
             ? 'Say something about yourself.'
             : 'Leave this empty to keep using your Kobblon bio.'
         }
-        className="mt-3 w-full resize-y rounded-xl border border-white/10 bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
+        className="mt-3 w-full resize-y rounded-xl border-2 border-b-4 border-white/10 bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
       />
       <p className="mt-1.5 text-xs text-white/30">
         {bio.trim()
@@ -418,11 +418,11 @@ function Written({
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
         </div>
       ) : rows.length === 0 ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-white/10 px-5 py-8 text-center text-sm text-white/35">
+        <p className="mt-4 rounded-2xl border-2 border-dashed border-white/10 px-5 py-8 text-center text-sm text-white/35">
           {who.is_me ? 'You have not posted yet.' : 'Nothing yet.'}
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/10 bg-ink-card/40">
+        <ul className="mt-4 divide-y divide-white/[0.06] overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40">
           {rows.map((row) => (
             <li key={`${row.kind}-${row.id}`}>
               <Link

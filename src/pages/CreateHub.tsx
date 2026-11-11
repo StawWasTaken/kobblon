@@ -506,7 +506,7 @@ export function CreateMarketplace() {
     <div className="space-y-6">
       {/* The search is the page, so it opens the page rather than sitting in
           a corner of it. */}
-      <section className="relative overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9">
+      <section className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9">
 
         <div className="relative">
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Creator Marketplace</h1>

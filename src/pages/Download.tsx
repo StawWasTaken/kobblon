@@ -50,7 +50,7 @@ export default function Download() {
             {platforms.map((one) => (
               <div
                 key={one.name}
-                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-ink-card/50 px-5 py-4"
+                className="flex items-center gap-4 rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 px-5 py-4"
               >
                 <Glyph icon={one.icon} className="text-xl text-white/35" />
                 <div className="min-w-0">
@@ -61,7 +61,7 @@ export default function Download() {
                     {one.note}
                   </p>
                 </div>
-                <span className="ml-auto rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+                <span className="ml-auto rounded-lg border-2 border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">
                   Not yet
                 </span>
               </div>

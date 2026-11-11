@@ -426,7 +426,7 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
       {/* The save bar follows you down the page, and only when there is
           something to save. */}
       {dirty && (
-        <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-2xl border border-brand/40 bg-ink-card/95 px-4 py-3 shadow-pop backdrop-blur">
+        <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-2xl border-2 border-b-4 border-brand/40 bg-ink-card/95 px-4 py-3 shadow-pop backdrop-blur">
           <p className="flex-1 text-sm font-semibold">You have changes that are not saved.</p>
           <Button
             variant="ghost"

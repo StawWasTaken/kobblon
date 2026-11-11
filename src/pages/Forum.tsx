@@ -102,7 +102,7 @@ export default function Forum() {
         <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
           Community Forum
         </h1>
-        <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-ink-card/60 p-1">
+        <div className="flex items-center gap-1 rounded-xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-1">
           <Switch on={view === 'categories'} onPress={() => go('categories')}>Categories</Switch>
           <Switch on={view === 'latest'} onPress={() => go('latest')}>Latest</Switch>
         </div>
@@ -258,7 +258,7 @@ export function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading:
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10">
+    <div className="overflow-hidden rounded-2xl border-2 border-white/10">
       <div className="hidden grid-cols-[1fr_4.5rem_4.5rem_13rem] items-center gap-4 border-b border-white/10 bg-ink-raised/60 py-2.5 pl-5 pr-5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35 lg:grid">
         <span>Category</span>
         <span className="text-right">Topics</span>
@@ -382,7 +382,7 @@ function Activity({ topics, loading }: { topics: ForumTopic[]; loading: boolean 
         Recent activity
       </p>
 
-      <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-ink-card/40">
+      <div className="mt-3 overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40">
         {loading ? (
           <div className="space-y-px p-2">
             {[0, 1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
@@ -486,7 +486,7 @@ function TopicTable({ topics, loading, showCategory, empty, found }: {
 
   if (!topics.length) {
     return (
-      <div className="rounded-2xl border border-white/10 py-14">
+      <div className="rounded-2xl border-2 border-white/10 py-14">
         <EmptyState
           title={empty?.title ?? 'Nothing here yet.'}
           body={empty?.body ?? 'Somebody has to be first, and it may as well be you.'}
@@ -497,7 +497,7 @@ function TopicTable({ topics, loading, showCategory, empty, found }: {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10">
+    <div className="overflow-hidden rounded-2xl border-2 border-white/10">
       <div className="hidden grid-cols-[auto_1fr_auto] items-center gap-5 border-b border-white/10 bg-ink-raised/60 px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35 sm:grid">
         <span className="w-10" />
         <span>Topic</span>
@@ -690,7 +690,7 @@ export function ForumSearch() {
           />
         </>
       ) : (
-        <div className="rounded-2xl border border-white/10 py-14">
+        <div className="rounded-2xl border-2 border-white/10 py-14">
           <EmptyState
             title="What are you looking for?"
             body="Type it into the box. It reads titles and the first post of every topic, and the title counts for more."
@@ -749,7 +749,7 @@ export function ForumMine() {
           {[0, 1].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
         </div>
       ) : !rows.length ? (
-        <div className="mt-5 rounded-2xl border border-white/10 py-14">
+        <div className="mt-5 rounded-2xl border-2 border-white/10 py-14">
           <EmptyState
             title={profile ? 'You do not look after a board.' : 'Log in to see this.'}
             body={profile
@@ -769,7 +769,7 @@ export function ForumMine() {
                 <li key={one.category}>
                   <Link
                     to={`/forum/c/${one.category}`}
-                    className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-ink-card/40 p-4 transition-colors hover:border-white/20"
+                    className="group flex items-center gap-4 rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40 p-4 transition-colors hover:border-white/20"
                   >
                     <span className={cn(
                       'h-12 w-1.5 shrink-0 rounded-full',
@@ -802,7 +802,7 @@ export function ForumMine() {
            * being refused by a site is how people learn to distrust it.
            */}
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <section className="rounded-2xl border border-space/30 bg-space/[0.06] p-5">
+            <section className="rounded-2xl border-2 border-b-4 border-space/30 bg-space/[0.06] p-5">
               <h2 className="flex items-center gap-2 font-display text-sm font-extrabold text-space-bright">
                 <Glyph icon={faCheck} />
                 On {rows.length === 1 ? 'that board' : 'those boards'} you can
@@ -816,7 +816,7 @@ export function ForumMine() {
               </ul>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-ink-card/40 p-5">
+            <section className="rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40 p-5">
               <h2 className="flex items-center gap-2 font-display text-sm font-extrabold text-white/70">
                 <Glyph icon={faLock} />
                 What this is not
@@ -987,7 +987,7 @@ export function ForumCategory() {
                 <li key={one.slug}>
                   <Link
                     to={`/forum/c/${one.slug}`}
-                    className="group flex items-center gap-3 rounded-xl border border-white/10 bg-ink-card/60 p-3 transition-colors hover:border-white/20 hover:bg-white/[0.03]"
+                    className="group flex items-center gap-3 rounded-xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-3 transition-colors hover:border-white/20 hover:bg-white/[0.03]"
                   >
                     <span className={cn(
                       'h-8 w-1 shrink-0 rounded-full',
@@ -1039,7 +1039,7 @@ export function ForumCategory() {
               <Link
                 key={one.user_id}
                 to={`/forum/u/${one.username}`}
-                className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-card/60 py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
+                className="group inline-flex items-center gap-2 rounded-xl border-2 border-b-4 border-white/10 bg-ink-card/60 py-1 pl-1 pr-2.5 transition-colors hover:border-white/20"
               >
                 <Avatar
                   src={one.avatar_url}
@@ -1057,7 +1057,7 @@ export function ForumCategory() {
       </header>
 
       <div className="flex flex-wrap items-center gap-3 py-5">
-        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-ink-card/60 p-1">
+        <div className="flex flex-wrap items-center gap-1 rounded-xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-1">
           {SORTS.map((one) => (
             <Switch
               key={one.id}
@@ -1373,7 +1373,7 @@ export function ForumTopicPage() {
   if (!topic) {
     return (
       <ForumShell boards={boards.data ?? []} loading={boards.loading}>
-        <div className="rounded-2xl border border-white/10 py-16">
+        <div className="rounded-2xl border-2 border-white/10 py-16">
           <EmptyState
             title="That topic is not here."
             body="It may have been taken down, or it may never have existed."
@@ -1533,7 +1533,7 @@ export function ForumTopicPage() {
               {pairs.map((pair) => (
                 <span
                   key={pair.join('-')}
-                  className="inline-flex overflow-hidden rounded-xl border border-white/10 divide-x divide-white/10"
+                  className="inline-flex overflow-hidden rounded-xl border-2 border-white/10 divide-x divide-white/10"
                 >
                   {pair.map((word) => {
                     const on = topic.status === word
@@ -1609,7 +1609,7 @@ export function ForumTopicPage() {
       <section>
         <div className="mt-6" id="reply">
           {topic.is_locked && !staff ? (
-            <p className="rounded-2xl border border-white/10 bg-ink-card/60 p-5 text-center text-sm text-white/50">
+            <p className="rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-5 text-center text-sm text-white/50">
               This topic is closed to replies.
             </p>
           ) : (
@@ -1730,7 +1730,7 @@ function Reply({
 }) {
   if (reply.is_removed) {
     return (
-      <div className="rounded-2xl border border-dashed border-white/10 px-5 py-4 text-sm text-white/30">
+      <div className="rounded-2xl border-2 border-dashed border-white/10 px-5 py-4 text-sm text-white/30">
         This reply was taken down.
       </div>
     )

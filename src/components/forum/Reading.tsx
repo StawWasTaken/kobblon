@@ -134,7 +134,7 @@ export function SignedOutNote({ back }: { back: string }) {
   const where = `/login?next=${encodeURIComponent(back)}`
 
   return (
-    <aside className="mt-8 rounded-2xl border border-brand-bright/30 bg-brand/[0.12] p-5">
+    <aside className="mt-8 rounded-2xl border-2 border-b-4 border-brand-bright/30 bg-brand/[0.12] p-5">
       <p className="font-display text-base font-extrabold">
         Enjoying this one? There is more of it with an account.
       </p>
@@ -183,7 +183,7 @@ export function RelatedTopics({
         Related topics
       </p>
 
-      <ul className="mt-4 divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/10 bg-ink-card/40">
+      <ul className="mt-4 divide-y divide-white/[0.06] overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40">
         {loading
           ? [0, 1, 2].map((i) => (
             <li key={i} className="p-4"><Skeleton className="h-5 rounded-lg" /></li>
@@ -231,7 +231,7 @@ export function OpTag() {
   return (
     <span
       title="Opened this topic"
-      className="rounded-md border border-white/15 bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/55"
+      className="rounded-md border-2 border-white/15 bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/55"
     >
       OP
     </span>

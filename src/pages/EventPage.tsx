@@ -92,7 +92,7 @@ export default function EventPage() {
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
         <div className="space-y-4">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border-2 border-ink-line bg-media">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media">
             {it.cover_url ? (
               <img
                 src={it.cover_url}

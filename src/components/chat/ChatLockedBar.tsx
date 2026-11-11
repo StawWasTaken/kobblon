@@ -109,7 +109,7 @@ export function ChatLockedBar({
     return (
       <div
         className={cn(
-          'flex items-center gap-2.5 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5',
+          'flex items-center gap-2.5 rounded-xl border-2 border-b-4 border-space/40 bg-space/10 px-3.5 py-2.5',
           className,
         )}
         role="status"
@@ -126,7 +126,7 @@ export function ChatLockedBar({
   return (
     <div
       className={cn(
-        'rounded-xl border border-danger/35 bg-danger/[0.07] px-3.5 py-3',
+        'rounded-xl border-2 border-b-4 border-danger/35 bg-danger/[0.07] px-3.5 py-3',
         className,
       )}
       role="status"

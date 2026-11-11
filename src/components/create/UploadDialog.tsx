@@ -193,7 +193,7 @@ export function UploadDialog({
       <button
         type="button"
         onClick={() => fileInput.current?.click()}
-        className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+        className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
       >
         <Glyph icon={faUpload} className="text-xl text-white/40" />
         <span className="text-sm font-semibold">

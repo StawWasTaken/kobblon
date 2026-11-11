@@ -61,7 +61,7 @@ function Clip({ src }: { src: string | null }) {
         if (node.videoWidth && node.videoHeight) setRatio(node.videoWidth / node.videoHeight)
       }}
       style={{ aspectRatio: ratio ?? 16 / 9 }}
-      className="w-full rounded-[1.5rem] border border-white/10 bg-media object-cover"
+      className="w-full rounded-2xl border-2 border-b-4 border-white/10 bg-media object-cover"
     />
   )
 }
@@ -74,7 +74,7 @@ function Picture({ src, wash }: { src: string | null; wash: string }) {
     return (
       <span
         className={cn(
-          'block aspect-[4/3] rounded-[1.5rem] border border-white/10 bg-gradient-to-br to-ink-card',
+          'block aspect-[4/3] rounded-2xl border-2 border-b-4 border-white/10 bg-gradient-to-br to-ink-card',
           wash,
         )}
       />
@@ -94,7 +94,7 @@ function Picture({ src, wash }: { src: string | null; wash: string }) {
         }
       }}
       style={{ aspectRatio: ratio ?? 4 / 3 }}
-      className="w-full select-none rounded-[1.5rem] border border-white/10 bg-media object-cover"
+      className="w-full select-none rounded-2xl border-2 border-b-4 border-white/10 bg-media object-cover"
     />
   )
 }
@@ -126,7 +126,7 @@ function Letters({ src, wash }: { src: string | null; wash: string }) {
   return (
     <span
       className={cn(
-        'grid aspect-[4/3] place-items-center rounded-[1.5rem] border border-white/10 bg-gradient-to-br to-ink-card px-5',
+        'grid aspect-[4/3] place-items-center rounded-2xl border-2 border-b-4 border-white/10 bg-gradient-to-br to-ink-card px-5',
         wash,
       )}
     >
@@ -181,7 +181,7 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
         {item.kind === 'audio' && (
           <span
             className={cn(
-              'relative block aspect-square overflow-hidden rounded-[1.5rem] border border-white/10 bg-gradient-to-br to-ink-card',
+              'relative block aspect-square overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-gradient-to-br to-ink-card',
               kind.wash,
             )}
           >

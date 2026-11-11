@@ -95,7 +95,7 @@ export default function AppSignIn() {
       <div className="relative mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4 py-10">
         <Wordmark to="/" className="mx-auto mb-8 h-6" />
 
-        <div className="rounded-3xl border border-white/15 bg-ink-card/85 p-7 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.95)] backdrop-blur-xl">
+        <div className="rounded-2xl border-2 border-b-4 border-white/15 bg-ink-card/85 p-7 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.95)] backdrop-blur-xl">
           <img src={asset(app.mark)} alt="" className="mx-auto h-14 w-14 rounded-2xl" />
 
           <h1 className="mt-4 font-display text-xl font-extrabold leading-tight">

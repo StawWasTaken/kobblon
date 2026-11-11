@@ -225,7 +225,7 @@ export function RolesEditor({ communityId }: { communityId: string }) {
             </div>
 
             {isTop && (
-              <p className="mt-3 rounded-lg border border-brand/40 bg-brand/10 px-3 py-2 text-xs leading-relaxed text-link">
+              <p className="mt-3 rounded-lg border-2 border-brand/40 bg-brand/10 px-3 py-2 text-xs leading-relaxed text-link">
                 Rank 254 always has everything, and the owner keeps every permission
                 whatever their rank says. That is what makes it the top of the ladder.
               </p>

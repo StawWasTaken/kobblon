@@ -28,7 +28,7 @@ export default function DiscordJump() {
   }, [id])
 
   if (where === undefined) {
-    return <Page><Skeleton className="h-40 w-full rounded-3xl" /></Page>
+    return <Page><Skeleton className="h-40 w-full rounded-2xl" /></Page>
   }
 
   if (where) return <Navigate to={where} replace />

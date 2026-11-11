@@ -172,8 +172,8 @@ export default function BrixCodes() {
                 role="status"
                 className={
                   said.good
-                    ? 'mt-5 w-full animate-pop-in overflow-hidden rounded-2xl border border-space/40 bg-gradient-to-br from-space/20 to-ink-raised p-5'
-                    : 'mt-5 w-full animate-pop-in rounded-2xl border border-danger/40 bg-danger/10 p-4'
+                    ? 'mt-5 w-full animate-pop-in overflow-hidden rounded-2xl border-2 border-b-4 border-space/40 bg-gradient-to-br from-space/20 to-ink-raised p-5'
+                    : 'mt-5 w-full animate-pop-in rounded-2xl border-2 border-b-4 border-danger/40 bg-danger/10 p-4'
                 }
               >
                 {said.good ? (

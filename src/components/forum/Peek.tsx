@@ -136,7 +136,7 @@ export function PosterPeek({
  */
 export function PosterCard({ person, username }: { person: ForumPerson | null | undefined; username: string }) {
   return (
-    <span className="block overflow-hidden rounded-2xl border border-white/12 bg-ink-raised shadow-pop">
+    <span className="block overflow-hidden rounded-2xl border-2 border-b-4 border-white/12 bg-ink-raised shadow-pop">
       {person === undefined && (
         <span className="block animate-pulse p-4">
           <span className="block h-11 w-11 rounded-full bg-white/[0.07]" />

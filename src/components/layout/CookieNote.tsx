@@ -49,10 +49,10 @@ export function CookieNote() {
   return (
     <aside
       aria-label="How Kobblon uses your browser's storage"
-      className="fixed bottom-4 left-4 z-50 w-[min(calc(100vw-2rem),20rem)] rounded-3xl border border-white/10 bg-ink-card/95 p-4 shadow-[0_1.5rem_3rem_rgba(0,0,0,0.55)] backdrop-blur-xl sm:bottom-6 sm:left-6"
+      className="fixed bottom-4 left-4 z-50 w-[min(calc(100vw-2rem),20rem)] rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/95 p-4 shadow-[0_1.5rem_3rem_rgba(0,0,0,0.55)] backdrop-blur-xl sm:bottom-6 sm:left-6"
     >
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-white/10 bg-brand/20 text-brand-bright">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border-2 border-b-4 border-white/10 bg-brand/20 text-brand-bright">
           <Glyph icon={faCookieBite} className="text-base" />
         </span>
         <p className="font-display text-base font-extrabold leading-tight">

@@ -86,7 +86,7 @@ export function SearchBar({ className }: { className?: string }) {
           role="combobox"
           aria-expanded={showing}
           aria-controls="search-scopes"
-          className="h-9 w-full rounded-lg border border-onbrand/15 bg-field pl-9 pr-9 text-sm text-onbrand placeholder:text-onbrand/45 transition-colors focus:border-brand-bright"
+          className="h-9 w-full rounded-lg border-2 border-onbrand/15 bg-field pl-9 pr-9 text-sm text-onbrand placeholder:text-onbrand/45 transition-colors focus:border-brand-bright"
         />
         {term && (
           <button

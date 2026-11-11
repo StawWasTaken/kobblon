@@ -313,7 +313,7 @@ export function MediaPlayer({
       // The menu is blocked over the whole picture, not only the video
       // element, so pausing does not open a way to save the file.
       onContextMenu={(e) => e.preventDefault()}
-      className={cn('overflow-hidden rounded-xl border-2 border-ink-line bg-black', className)}
+      className={cn('overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-black', className)}
     >
       <div className="relative">
         <video

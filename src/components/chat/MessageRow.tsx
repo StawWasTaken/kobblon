@@ -220,7 +220,7 @@ export function MessageRow({
            * for anyway.
            */
           <div className="flex w-full flex-col gap-1">
-            <div className="flex items-center gap-1 rounded-xl border-2 border-brand/60 bg-ink/40 py-1 pl-1 pr-1">
+            <div className="flex items-center gap-1 rounded-xl border-2 border-b-4 border-brand/60 bg-ink/40 py-1 pl-1 pr-1">
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}

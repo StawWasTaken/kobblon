@@ -357,7 +357,7 @@ export default function Profile() {
   if (person.loading) {
     return (
       <Page className="space-y-4">
-        <Skeleton className="h-56 w-full rounded-3xl" />
+        <Skeleton className="h-56 w-full rounded-2xl" />
         <Skeleton className="h-8 w-48" />
       </Page>
     )
@@ -419,7 +419,7 @@ export default function Profile() {
       style={{ '--me': accent } as React.CSSProperties}
     >
       {/* ------------------------------------------------------- the person */}
-      <section className="relative overflow-hidden rounded-3xl border-2 border-ink-line">
+      <section className="relative overflow-hidden rounded-2xl border-2 border-ink-line">
         {/* Their own face, out of focus, is the backdrop: no stock banner,
             nothing everybody shares. */}
         <div className="absolute inset-0" aria-hidden="true">
@@ -555,7 +555,7 @@ export default function Profile() {
                   onClick={() => setPicking(true)}
                   aria-label="Your colour"
                   title="Your colour"
-                  className="grid h-10 w-10 place-items-center rounded-xl border-2 border-ink-line text-white/80 transition-colors hover:bg-ink-hover"
+                  className="grid h-10 w-10 place-items-center rounded-xl border-2 border-b-4 border-ink-line text-white/80 transition-colors hover:bg-ink-hover"
                   style={{ background: `${accent}33` }}
                 >
                   <Glyph icon={faPalette} />

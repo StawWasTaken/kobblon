@@ -551,7 +551,7 @@ export default function CreateAvatarItems() {
         * shelf has to live beside.
         */}
       {cardTrouble && (
-        <p className="flex items-start gap-2 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
+        <p className="flex items-start gap-2 rounded-xl border-2 border-b-4 border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
           <Glyph icon={faCircleExclamation} className="mt-0.5 text-danger" />
           <span>
             A picture would not draw: <span className="text-white/90">{cardTrouble}</span>
@@ -691,7 +691,7 @@ export default function CreateAvatarItems() {
           )}
 
           {!allowed && (
-            <p className="flex items-start gap-2 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
+            <p className="flex items-start gap-2 rounded-xl border-2 border-b-4 border-danger/40 bg-danger/10 p-3 text-xs leading-relaxed">
               <Glyph icon={faLock} className="mt-0.5 text-danger" />
               <span>
                 {rule?.kobblon_only
@@ -745,7 +745,7 @@ export default function CreateAvatarItems() {
                   <button
                     type="button"
                     onClick={() => meshPicked.current?.click()}
-                    className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                    className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
                   >
                     <Glyph icon={meshFile ? faCube : faUpload} className="text-xl text-white/40" />
                     <span className="text-sm font-semibold">
@@ -816,7 +816,7 @@ export default function CreateAvatarItems() {
                   <button
                     type="button"
                     onClick={() => skinPicked.current?.click()}
-                    className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-6 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                    className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-raised px-4 py-6 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
                   >
                     <Glyph icon={faImage} className="text-lg text-white/40" />
                     <span className="text-sm font-semibold">
@@ -980,7 +980,7 @@ export default function CreateAvatarItems() {
               <button
                 type="button"
                 onClick={() => picked.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
+                className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-raised px-4 py-8 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
               >
                 <Glyph icon={picture ? faImage : faUpload} className="text-xl text-white/40" />
                 <span className="text-sm font-semibold">
@@ -1390,7 +1390,7 @@ export function MadeCard({
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media">
+            <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media">
               <WornPicture item={item} />
             </span>
             <div className="min-w-0">
@@ -1564,7 +1564,7 @@ export function MadeCard({
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media">
+            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media">
               <WornPicture item={item} />
             </span>
             <p className="text-xs leading-relaxed text-muted">
@@ -1585,7 +1585,7 @@ export function MadeCard({
             * description, which is why this is not a general picture swap.
             */}
           {canRedraw && (
-            <label className="block cursor-pointer rounded-xl border border-dashed border-ink-line p-3 text-center text-xs text-muted transition-colors hover:border-brand/60 hover:text-white">
+            <label className="block cursor-pointer rounded-xl border-2 border-dashed border-ink-line p-3 text-center text-xs text-muted transition-colors hover:border-brand/60 hover:text-white">
               <input
                 type="file"
                 accept="image/png,image/webp"

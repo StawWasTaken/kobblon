@@ -13,7 +13,7 @@ export function CreatorShelf({ items, loading }: { items: MarketAsset[]; loading
     return (
       <div className="flex gap-5 overflow-hidden px-6">
         {[0, 1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-[17rem] w-[17rem] shrink-0 rounded-[1.5rem]" />
+          <Skeleton key={i} className="h-[17rem] w-[17rem] shrink-0 rounded-2xl" />
         ))}
       </div>
     )

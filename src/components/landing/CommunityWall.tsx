@@ -27,7 +27,7 @@ export function CommunityWall({
   if (loading) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-3xl" />)}
+        {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}
       </div>
     )
   }
@@ -38,9 +38,9 @@ export function CommunityWall({
         <li key={group.id}>
           <Link
             to={communityLink(group)}
-            className="group flex h-full flex-col rounded-3xl border border-white/10 bg-ink-card/60 p-6 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
+            className="group flex h-full flex-col rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-6 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
           >
-            <span className="block h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-media">
+            <span className="block h-16 w-16 overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-media">
               <Picture src={group.icon_url} alt={group.name} className="h-full w-full" />
             </span>
 

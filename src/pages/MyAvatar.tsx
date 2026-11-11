@@ -740,7 +740,7 @@ export default function MyAvatar() {
                             `off:${piece.item_id}`,
                             () => takeOffItem(piece.item_id!),
                           )}
-                          className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media p-1 transition-colors hover:border-danger"
+                          className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media p-1 transition-colors hover:border-danger"
                         >
                           <WornPicture item={{ ...piece, id: piece.item_id ?? '' }} />
                           <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">

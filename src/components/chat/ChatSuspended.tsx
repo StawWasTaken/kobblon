@@ -163,7 +163,7 @@ export function ChatSuspended({
               <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
                 What we acted on
               </p>
-              <blockquote className="rounded-xl rounded-tl-md border-2 border-ink-line bg-ink-raised px-3 py-2">
+              <blockquote className="rounded-xl rounded-tl-md border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2">
                 <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white">
                   {evidence}
                 </p>

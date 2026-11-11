@@ -69,7 +69,7 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
       className={cn(
         'group flex flex-col overflow-hidden rounded-2xl border p-4 transition-[border-color,transform,background-color]',
         glass
-          ? 'rounded-3xl border-white/10 bg-white/[0.04] p-5 hover:-translate-y-1 hover:border-brand-bright/50'
+          ? 'rounded-2xl border-white/10 bg-white/[0.04] p-5 hover:-translate-y-1 hover:border-brand-bright/50'
           : 'w-64 shrink-0 border-ink-line bg-ink-card hover:border-white/25 sm:w-72',
         className,
       )}

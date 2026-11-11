@@ -283,7 +283,7 @@ export function ReportDialog({
       head={
         <div className="relative bg-gradient-to-br from-danger/15 to-ink-card px-5 pb-4 pt-5">
           <div className="flex items-start gap-4 pr-10">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-danger/40 bg-danger/15 text-danger">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-b-4 border-danger/40 bg-danger/15 text-danger">
               <Glyph icon={faFlag} className="text-lg" />
             </span>
             <div className="min-w-0 flex-1">
@@ -387,8 +387,8 @@ export function ReportDialog({
 
           {step === 1 && reason && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-danger/40 bg-danger/15 text-danger">
+              <div className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-danger/40 bg-danger/10 px-3.5 py-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-danger/40 bg-danger/15 text-danger">
                   <Glyph icon={reason.icon} />
                 </span>
                 <p className="min-w-0 flex-1 text-sm font-bold leading-snug">{reason.label}</p>

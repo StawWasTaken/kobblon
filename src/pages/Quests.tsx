@@ -223,7 +223,7 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
           <img
             src={quest.world_emblem}
             alt=""
-            className="absolute bottom-2 left-2 h-9 w-9 rounded-lg border border-white/15 object-cover"
+            className="absolute bottom-2 left-2 h-9 w-9 rounded-lg border-2 border-white/15 object-cover"
           />
         )}
       </div>
@@ -249,7 +249,7 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
           read as one sentence running on. */}
       <div className="mx-3 flex-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
         <div className="flex gap-3">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border-2 border-ink-line bg-ink">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink">
             <Icon name="laurel-quest" className="h-8 w-8 text-brand-bright" />
           </span>
 

@@ -64,7 +64,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        'inline-grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10',
+        'inline-grid shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/10',
         sizes[size],
         className,
       )}

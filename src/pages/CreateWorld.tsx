@@ -262,7 +262,7 @@ export default function CreateWorld() {
         </p>
 
         <div className="flex flex-wrap items-center gap-4">
-          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media">
+          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media">
             {world.cover_url
               ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
               : <Glyph icon={faImage} className="text-white/30" />}
@@ -319,7 +319,7 @@ export default function CreateWorld() {
           <button
             onClick={() => shotInput.current?.click()}
             disabled={busy || (media.data?.length ?? 0) >= 12}
-            className="grid aspect-video place-items-center rounded-lg border border-dashed border-ink-line text-sm text-muted transition-colors hover:border-white/30 hover:text-white disabled:opacity-40"
+            className="grid aspect-video place-items-center rounded-lg border-2 border-dashed border-ink-line text-sm text-muted transition-colors hover:border-white/30 hover:text-white disabled:opacity-40"
           >
             <span className="flex flex-col items-center gap-1">
               <Glyph icon={faPlus} />

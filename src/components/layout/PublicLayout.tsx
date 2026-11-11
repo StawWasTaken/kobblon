@@ -100,7 +100,7 @@ function PublicTopbar() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
-            className="hidden h-9 w-36 rounded-xl border border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
+            className="hidden h-9 w-36 rounded-xl border-2 border-b-4 border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
           />
           <label className="sr-only" htmlFor="public-password">Password</label>
           <input
@@ -109,7 +109,7 @@ function PublicTopbar() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="hidden h-9 w-32 rounded-xl border border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
+            className="hidden h-9 w-32 rounded-xl border-2 border-b-4 border-white/12 bg-white/[0.06] px-3 text-sm text-white placeholder:text-white/40 focus:border-brand-bright/60 md:block"
           />
           <Button type="submit" size="sm" variant="subtle" className="hidden md:inline-flex">Log in</Button>
           <Button size="sm" to="/login" className="md:hidden">Log in</Button>

@@ -310,7 +310,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
                   <Glyph icon={faQuoteLeft} />
                   What it was based on
                 </p>
-                <blockquote className="rounded-xl rounded-tl-md border border-amber-400/30 bg-amber-400/[0.07] px-3 py-2">
+                <blockquote className="rounded-xl rounded-tl-md border-2 border-b-4 border-amber-400/30 bg-amber-400/[0.07] px-3 py-2">
                   <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white/85">
                     {one.evidence}
                   </p>

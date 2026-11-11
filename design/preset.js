@@ -119,6 +119,17 @@ export default {
        * Three, because two is not enough and Tailwind only ships 0, 1, 2,
        * 4 and 8. `border-2` is the house stroke; `border-[3px]` is the lip
        * under a button, which predates all of this and stays.
+       *
+       * The house stroke is the width, not a colour. The first pass only
+       * thickened `border-ink-line` and left every `border-white/10` at a
+       * hairline, which is most of the landing page and most of the At
+       * Kobblon side - so the system was real on the app and absent on the
+       * two pages a stranger sees first. Staw: "our new design system must
+       * apply to everywhere, including landing page & at kobblon pages."
+       * Every all-round stroke is 2px now whatever it is drawn in, and
+       * anything card-shaped (a radius, a stroke and a fill) carries the
+       * 4px bottom edge. Corners are `xl` and `2xl`; there is no `3xl` and
+       * no arbitrary radius left in the codebase.
        */
       borderWidth: { 3: '3px' },
       boxShadow: {

@@ -258,7 +258,7 @@ export function AboutNav({ className, measure, style }: {
 
       {open && (
         <nav className={cn(
-          'mx-auto max-w-6xl rounded-b-2xl border border-t-0 border-white/10 bg-ink/90 px-3 pb-3 pt-2',
+          'mx-auto max-w-6xl rounded-b-2xl border-2 border-t-0 border-white/10 bg-ink/90 px-3 pb-3 pt-2',
           'backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.45)] sm:hidden',
         )}>
           {ABOUT_NAV.map((one) => (
@@ -359,7 +359,7 @@ function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => bo
           * the width of its trigger reads as a tooltip.
           */
         <div className="absolute left-1/2 top-full z-50 w-[19rem] -translate-x-1/2 pt-3">
-          <div className="animate-pop-in overflow-hidden rounded-2xl border border-white/10 bg-ink/95 p-1.5 shadow-pop backdrop-blur-xl">
+          <div className="animate-pop-in overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink/95 p-1.5 shadow-pop backdrop-blur-xl">
             {(entry.under ?? []).map((one) => (
               <Link
                 key={one.to}
@@ -371,7 +371,7 @@ function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => bo
                 )}
               >
                 <span className={cn(
-                  'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/10 transition-colors',
+                  'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-white/10 transition-colors',
                   here(one.to) ? 'bg-brand text-white' : 'bg-white/5 text-white/70 group-hover/row:text-white',
                 )}>
                   <Glyph icon={UNDER_ART[one.to] ?? faCircleInfo} className="text-xs" />

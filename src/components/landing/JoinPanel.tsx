@@ -20,7 +20,7 @@ export function JoinPanel() {
   const [sent, setSent] = useState<string | null>(null)
 
   return (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-white/12 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl sm:p-7">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-white/12 bg-ink-card/85 p-6 shadow-pop backdrop-blur-xl sm:p-7">
       <span
         aria-hidden="true"
         className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-brand/30 blur-3xl"
@@ -41,7 +41,7 @@ export function JoinPanel() {
           </div>
         ) : (
           <>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white/70">
+            <span className="inline-flex items-center gap-2 rounded-full border-2 border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white/70">
               <Glyph icon={faBolt} />
               About a minute
             </span>

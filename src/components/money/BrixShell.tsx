@@ -134,7 +134,7 @@ export function BrixShell({
 
   return (
     <Page className="space-y-5">
-      <header className="relative overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card">
+      <header className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
         {/* Two lights rather than a flat panel: the brand one behind the
             words, a cooler one behind the balance, so the two halves of the
             header read as two things. */}

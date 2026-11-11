@@ -1057,7 +1057,7 @@ export default function Support() {
                         label={
                           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             {ticket.wants_human && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-amber-400/50 bg-amber-400/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-300">
                                 <Glyph icon={faBolt} className="text-[9px]" />
                                 Urgent
                               </span>

@@ -189,10 +189,10 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
 
           {/* ----------------------------------------------- the card */}
           <section className="mx-auto mt-6 w-full max-w-md">
-            <div className="relative rounded-3xl border border-white/10 bg-ink-card/85 p-5 shadow-pop backdrop-blur-xl sm:p-6">
+            <div className="relative rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/85 p-5 shadow-pop backdrop-blur-xl sm:p-6">
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute -inset-px rounded-3xl bg-gradient-to-b from-white/10 to-transparent opacity-60"
+                className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-b from-white/10 to-transparent opacity-60"
               />
 
               <div className="relative">
@@ -208,7 +208,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </div>
                 ) : claiming ? (
                   <>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-space/40 bg-space/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+                    <span className="inline-flex items-center gap-2 rounded-full border-2 border-space/40 bg-space/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
                       <Glyph icon={faCircleCheck} />
                       Nothing gets lost
                     </span>
@@ -227,7 +227,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </>
                 ) : (
                   <>
-                    <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
+                    <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl border-2 border-b-4 border-white/10 bg-white/[0.04] p-1">
                       {(['login', 'signup'] as const).map((which) => (
                         <Link
                           key={which}

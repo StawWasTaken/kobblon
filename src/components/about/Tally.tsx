@@ -114,7 +114,7 @@ export function StatTile({ value, label, icon, delay = 0 }: {
   return (
     <div
       ref={ref}
-      className="relative overflow-hidden rounded-3xl border border-white/10 bg-ink-card/50 p-6 sm:p-7"
+      className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 p-6 sm:p-7"
     >
       <PixelGrid from="top-right" className="opacity-40" />
 

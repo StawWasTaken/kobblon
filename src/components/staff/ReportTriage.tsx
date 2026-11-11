@@ -320,7 +320,7 @@ export function ReportTriage({
           )}
 
           {deed && (
-            <div className="space-y-3 rounded-xl border-2 border-ink-line bg-ink-hover p-3">
+            <div className="space-y-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-hover p-3">
               <Textarea
                 label={deed.value === 'nothing' ? 'A note, for the record' : 'Why - they are shown this'}
                 value={why}

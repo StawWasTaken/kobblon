@@ -535,7 +535,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
    * line like this a sale is a shop whose prices quietly changed.
    */
   const saleLine = sale.data && (
-    <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
+    <p className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border-2 border-b-4 border-space/40 bg-space/10 px-3.5 py-2.5 text-sm">
       {/* A sale, so it is `discount` and not a price tag. Staw, in
           capitals: "AND FOR DISCOUNTS ITS THIS ONE". */}
       <Glyph icon={faTag} name="discount" className="text-space-bright" />
