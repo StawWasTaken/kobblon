@@ -161,7 +161,7 @@ export function TopicLine({ one, onPin, onLock, onRestore, onTakeDown }: {
   return (
     <div
       className={cn(
-        'rounded-2xl border px-4 py-3 transition-colors',
+        'rounded-2xl border-2 px-4 py-3 transition-colors',
         one.is_removed
           ? 'border-rose-500/40 bg-rose-500/[0.06]'
           : 'border-ink-line bg-ink-raised hover:border-white/25',
@@ -299,7 +299,7 @@ function TakeDown({ one, onClose, onDone }: {
               type="button"
               onClick={() => setReason(said)}
               className={cn(
-                'rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+                'rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-colors',
                 reason === said
                   ? 'border-brand-bright bg-brand/25 text-white'
                   : 'border-ink-line bg-ink-raised text-muted hover:border-white/25',

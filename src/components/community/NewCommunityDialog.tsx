@@ -163,7 +163,7 @@ export function NewCommunityDialog({ open, onClose }: { open: boolean; onClose: 
               <label
                 key={policy.value}
                 className={cn(
-                  'flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors',
+                  'flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3.5 transition-colors',
                   joinPolicy === policy.value
                     ? 'border-brand-bright bg-brand/15'
                     : 'border-ink-line bg-ink-raised hover:bg-ink-hover',

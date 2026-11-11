@@ -177,7 +177,7 @@ export function ActionTag({ one }: { one: Violation }) {
   return (
     <span
       className={cn(
-        'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+        'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
         look,
       )}
     >
@@ -320,7 +320,7 @@ export function ByBadge({ rank, className }: { rank: ModeratedBy; className?: st
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-full border-2 px-2.5 py-0.5',
         'text-[11px] font-extrabold uppercase tracking-wide',
         rank === 'kobby'
           ? 'border-brand/40 bg-brand/10 text-brand-bright'

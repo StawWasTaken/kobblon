@@ -119,7 +119,7 @@ export function Select({
         onClick={() => setOpen((v) => !v)}
         onKeyDown={onKeyDown}
         className={cn(
-          'flex h-9 w-full items-center gap-2 rounded-lg border px-2.5 text-left text-sm font-semibold transition-colors disabled:opacity-40',
+          'flex h-9 w-full items-center gap-2 rounded-lg border-2 px-2.5 text-left text-sm font-semibold transition-colors disabled:opacity-40',
           open ? 'border-brand-bright bg-ink-hover' : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
         )}
       >

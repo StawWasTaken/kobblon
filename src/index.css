@@ -99,6 +99,34 @@
 
 @layer components {
   /*
+   * The two things every control here does, written once.
+   *
+   * Staw: "i want an even more polished design, cuz i want the best looking
+   * design system possible". The strokes were already the house's; what was
+   * missing is what happens when you touch one. A pill, a tile, a chip and
+   * an icon button each had their own hover and none of them moved under a
+   * press, so the whole interface read as a picture of controls.
+   *
+   * `kob-press` is the press: one pixel down, fast enough to feel like the
+   * button went in rather than the page jumped. `kob-chosen` is the lip -
+   * the same darker bottom edge every card in this system carries, drawn as
+   * an inset shadow rather than a thicker border so that choosing something
+   * cannot change its height and shuffle the row beside it.
+   */
+  .kob-press {
+    transition: transform 90ms ease, background-color 150ms ease,
+      border-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+  }
+
+  .kob-press:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .kob-chosen {
+    box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.25);
+  }
+
+  /*
    * Anything that sticks to the top of a page sticks under the bar, and the
    * bar is 3.5rem plus however many notices are up. A class rather than
    * `top-14` on each of them, because the notices can be closed while the

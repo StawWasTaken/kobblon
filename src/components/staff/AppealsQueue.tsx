@@ -129,7 +129,7 @@ export function AppealLine({ one, onOpen }: { one: AppealRow; onOpen: () => void
       type="button"
       onClick={onOpen}
       className={cn(
-        'flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-left transition-colors',
+        'flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border-2 px-4 py-3 text-left transition-colors',
         slow
           ? 'border-amber-400/40 bg-amber-400/[0.06] hover:border-amber-400/70'
           : 'border-ink-line bg-ink-raised hover:border-white/25',

@@ -30,7 +30,7 @@ function AccountRow({
         onClick={onUse}
         disabled={busy || current}
         className={cn(
-          'flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-colors',
+          'flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors',
           current
             ? 'border-brand-bright/60 bg-brand/15'
             : 'border-transparent hover:border-ink-line hover:bg-ink-hover',

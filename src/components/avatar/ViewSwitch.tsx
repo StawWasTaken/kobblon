@@ -46,8 +46,10 @@ export function ViewSwitch<T extends string>({ ways, value, onChange, className 
           aria-pressed={value === way.value}
           onClick={() => onChange(way.value)}
           className={cn(
-            'flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors',
-            value === way.value ? 'bg-brand text-white' : 'text-white/65 hover:text-white',
+            'kob-press flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold',
+            value === way.value
+              ? 'kob-chosen bg-brand text-white'
+              : 'text-white/65 hover:bg-white/10 hover:text-white',
           )}
         >
           <Glyph icon={way.icon} />

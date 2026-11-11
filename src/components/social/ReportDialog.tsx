@@ -159,7 +159,7 @@ function Row({
       onClick={onClick}
       style={{ animationDelay: `${delay}ms` }}
       className={cn(
-        'group flex w-full animate-row-in items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors',
+        'group flex w-full animate-row-in items-center gap-3 rounded-xl border-2 px-3.5 py-3 text-left transition-colors',
         picked
           ? 'border-danger/50 bg-danger/10'
           : 'border-ink-line bg-ink-raised hover:border-ink-line/80 hover:bg-ink-hover',
@@ -168,7 +168,7 @@ function Row({
       {icon && (
         <span
           className={cn(
-            'grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors',
+            'grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 transition-colors',
             picked
               ? 'border-danger/50 bg-danger/15 text-danger'
               : 'border-ink-line bg-ink-card text-white/45 group-hover:text-white/70',

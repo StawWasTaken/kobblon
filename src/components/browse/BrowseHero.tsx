@@ -136,7 +136,7 @@ export function ChipRail({ words, value, onPick, className }: {
             aria-pressed={on}
             onClick={() => onPick(on ? '' : word)}
             className={cn(
-              'h-8 shrink-0 rounded-full border px-3.5 text-xs font-bold capitalize transition-colors',
+              'h-8 shrink-0 rounded-full border-2 px-3.5 text-xs font-bold capitalize transition-colors',
               on
                 ? 'border-brand bg-brand text-onbrand'
                 : 'border-ink-line bg-ink-raised text-white/65 hover:border-brand/60 hover:text-white',

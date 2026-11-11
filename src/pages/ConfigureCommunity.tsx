@@ -397,7 +397,7 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
                   type="button"
                   onClick={() => setName(row.name)}
                   className={cn(
-                    'rounded-lg border px-2.5 py-1 text-sm font-bold transition-colors',
+                    'rounded-lg border-2 px-2.5 py-1 text-sm font-bold transition-colors',
                     name === row.name
                       ? 'border-brand-bright bg-brand/15 text-brand-bright'
                       : 'border-ink-line text-muted hover:border-brand/50 hover:text-fg',
@@ -478,7 +478,7 @@ function SettingsSection({ group, onSaved }: { group: NonNullable<Awaited<Return
             <label
               key={option.value}
               className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors',
+                'flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3.5 transition-colors',
                 policy === option.value
                   ? 'border-brand-bright bg-brand/15'
                   : 'border-ink-line bg-ink-raised hover:bg-ink-hover',

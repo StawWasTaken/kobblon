@@ -35,7 +35,7 @@ export function StatTile({
   )
 
   const shape = cn(
-    'flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors',
+    'flex items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-colors',
     active
       ? 'border-brand-bright bg-brand/15'
       : 'border-ink-line bg-ink-card hover:bg-ink-hover',

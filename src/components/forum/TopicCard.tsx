@@ -67,7 +67,7 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
     <Link
       to={`/forum/t/${topic.id}`}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-2xl border p-4 transition-[border-color,transform,background-color]',
+        'group flex flex-col overflow-hidden rounded-2xl border-2 p-4 transition-[border-color,transform,background-color]',
         glass
           ? 'rounded-2xl border-white/10 bg-white/[0.04] p-5 hover:-translate-y-1 hover:border-brand-bright/50'
           : 'w-64 shrink-0 border-ink-line bg-ink-card hover:border-white/25 sm:w-72',
@@ -88,7 +88,7 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
          * screenshot, which is most of what gets posted here.
          */
         <span className={cn(
-          'relative mb-4 block overflow-hidden rounded-xl bg-media ring-1 ring-inset ring-white/10',
+          'relative mb-4 block overflow-hidden rounded-xl bg-media ring-2 ring-inset ring-white/10',
           glass && 'mb-5 rounded-2xl',
         )}>
           {clip ? (

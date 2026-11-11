@@ -1083,7 +1083,7 @@ export function ForumCategory() {
             setParams(params, { replace: true })
           }}
           className={cn(
-            'rounded-xl border px-3 py-2 text-sm font-extrabold transition-colors',
+            'rounded-xl border-2 px-3 py-2 text-sm font-extrabold transition-colors',
             unanswered
               ? 'border-brand-bright/50 bg-brand/15 text-brand-bright'
               : 'border-white/10 text-white/50 hover:text-white',
@@ -1740,7 +1740,7 @@ function Reply({
     <div
       id={`post-${reply.id}`}
       className={cn(
-        'scroll-mt-24 rounded-2xl border p-5',
+        'scroll-mt-24 rounded-2xl border-2 p-5',
         reply.is_answer ? 'border-space/50 bg-space/[0.07]' : 'border-white/10 bg-ink-card/40',
       )}
     >
@@ -1883,7 +1883,7 @@ export function ForumNew() {
               type="button"
               onClick={() => setCategory(board.slug)}
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-extrabold transition-colors',
+                'inline-flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-extrabold transition-colors',
                 category === board.slug
                   ? 'border-brand-bright bg-brand/15 text-white'
                   : 'border-white/10 text-white/50 hover:text-white',

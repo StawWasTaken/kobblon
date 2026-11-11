@@ -37,7 +37,7 @@ function Thumb({ path, on }: { path: string; on: boolean }) {
   return (
     <span
       className={cn(
-        'block aspect-video w-full overflow-hidden rounded-lg border bg-media',
+        'block aspect-video w-full overflow-hidden rounded-lg border-2 bg-media',
         on ? 'border-brand-bright' : 'border-ink-line',
       )}
     >
@@ -169,7 +169,7 @@ export function AdEditor({
                 key={value}
                 onClick={() => setSize(value)}
                 className={cn(
-                  'rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition-colors',
+                  'rounded-xl border-2 px-3 py-2.5 text-left text-xs font-bold transition-colors',
                   size === value
                     ? 'border-brand-bright bg-brand/15'
                     : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
@@ -251,7 +251,7 @@ export function AdEditor({
                           key={row.id}
                           onClick={() => { setForWhat(row); setOutward('') }}
                           className={cn(
-                            'rounded-xl border px-3 py-2 text-left transition-colors',
+                            'rounded-xl border-2 px-3 py-2 text-left transition-colors',
                             forWhat?.id === row.id
                               ? 'border-brand-bright bg-brand/15'
                               : 'border-ink-line bg-ink-raised hover:bg-ink-hover',

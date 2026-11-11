@@ -167,7 +167,7 @@ export function PersonCard({
   return (
     <li
       className={cn(
-        'group relative flex flex-col gap-3 rounded-2xl border bg-ink-card p-4 transition-colors',
+        'group relative flex flex-col gap-3 rounded-2xl border-2 bg-ink-card p-4 transition-colors',
         friend ? 'border-space/40 hover:border-space/70' : 'border-ink-line hover:border-brand/60',
         quiet && 'opacity-70',
         className,

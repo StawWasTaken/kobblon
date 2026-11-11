@@ -260,7 +260,7 @@ function WhoBox({ picked, onPick, icon, title, lead, points }: {
       aria-pressed={picked}
       onClick={onPick}
       className={cn(
-        'flex h-full flex-col rounded-2xl border p-4 text-left transition-colors',
+        'flex h-full flex-col rounded-2xl border-2 p-4 text-left transition-colors',
         picked
           ? 'border-brand-bright bg-brand/20'
           : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
@@ -779,7 +779,7 @@ function Faq() {
                 className="group flex w-full items-center gap-4 py-5 text-left"
               >
                 <span className={cn(
-                  'grid size-8 shrink-0 place-items-center rounded-full border text-[11px] transition-colors',
+                  'grid size-8 shrink-0 place-items-center rounded-full border-2 text-[11px] transition-colors',
                   showing
                     ? 'border-brand-bright bg-brand text-white'
                     : 'border-white/15 bg-white/[0.04] text-white/45 group-hover:border-brand-bright/60 group-hover:text-white',
@@ -852,7 +852,7 @@ function FaqChip({ icon, label, on, onClick }: {
       onClick={onClick}
       aria-pressed={on}
       className={cn(
-        'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition-colors',
+        'inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors',
         on
           ? 'border-brand-bright bg-brand text-white'
           : 'border-white/12 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white',
@@ -1094,7 +1094,7 @@ export default function Support() {
                           <span className="flex items-center gap-3">
                             <span
                               className={cn(
-                                'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                                'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
                                 look.look,
                               )}
                             >

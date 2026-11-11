@@ -199,7 +199,7 @@ export function StoryPage({
                           {point.tone && (
                             <span
                               className={cn(
-                                'shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                                'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
                                 toneLook[point.tone],
                               )}
                             >

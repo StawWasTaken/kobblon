@@ -144,7 +144,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-extrabold',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-lg border-2 px-2 py-0.5 text-[11px] font-extrabold',
         mark.look,
         className,
       )}

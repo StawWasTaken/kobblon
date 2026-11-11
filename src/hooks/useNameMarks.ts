@@ -68,9 +68,12 @@ function flush() {
     })
     .catch(() => {
       /*
-       * Left unanswered on purpose. The row's own flags are what is on
-       * screen until this lands, so a failed question shows the old guess
-       * rather than stripping somebody's marks off.
+       * Left unanswered on purpose, which now means no marks are drawn at
+       * all until a later question succeeds. That is deliberate: since
+       * Staw's "only refer to the database" there is no guess to fall back
+       * on, and a name with nothing beside it is a smaller lie than a tick
+       * drawn out of a stale column. Nothing is recorded either, so the
+       * next render asks again rather than caching the failure.
        */
     })
 }

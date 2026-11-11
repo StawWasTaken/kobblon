@@ -313,7 +313,7 @@ export function EventBand({ event, className, flat }: {
     /* No `overflow-hidden` here: the art has to be able to rise out of the
        top edge. Everything that must stop at the edge is inside its own
        clipped layer above. */
-    'group relative block rounded-2xl border transition-colors',
+    'group relative block rounded-2xl border-2 transition-colors',
     /* A colour of its own beats the theme's, and a picture of its own
        covers both - so the class is only in the way when one is set. */
     !event.back_colour && look.back, look.edge, className,

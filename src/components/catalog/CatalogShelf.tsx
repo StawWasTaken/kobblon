@@ -468,7 +468,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
         onClick={() => setShowFilters(!showFilters)}
         aria-expanded={showFilters}
         className={cn(
-          'inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors',
+          'inline-flex h-9 items-center gap-2 rounded-xl border-2 px-3 text-xs font-bold transition-colors',
           showFilters
             ? 'border-brand bg-brand/15 text-white'
             : 'border-ink-line text-white/65 hover:text-white',
@@ -993,7 +993,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
                       picture,
                     }))}
                   className={cn(
-                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg border text-xs transition-colors',
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 text-xs transition-colors',
                     'disabled:cursor-not-allowed disabled:opacity-40',
                     inBasket
                       ? 'border-brand bg-brand/15 text-white'

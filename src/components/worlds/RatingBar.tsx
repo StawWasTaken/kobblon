@@ -57,7 +57,7 @@ export function RatingBar({
       aria-label={which === 'up' ? 'Like this World' : 'Dislike this World'}
       title={disabled ? why : undefined}
       className={cn(
-        'grid h-9 w-9 shrink-0 place-items-center rounded-lg border text-base transition-colors',
+        'grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 text-base transition-colors',
         'disabled:cursor-not-allowed disabled:opacity-40',
         on
           ? which === 'up'

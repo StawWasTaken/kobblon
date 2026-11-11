@@ -182,7 +182,7 @@ function Field({
           aria-expanded={open}
           aria-label={label}
           className={cn(
-            'flex h-11 flex-1 items-center gap-2.5 rounded-xl border px-3 text-left text-sm font-semibold transition-colors',
+            'flex h-11 flex-1 items-center gap-2.5 rounded-xl border-2 px-3 text-left text-sm font-semibold transition-colors',
             open ? 'border-brand-bright bg-ink-hover' : 'border-ink-line bg-ink-raised hover:bg-ink-hover',
             !chosen && 'text-white/35',
           )}
@@ -261,7 +261,7 @@ function Field({
                         : outside
                           ? 'text-white/30 hover:bg-ink-hover'
                           : 'text-white/80 hover:bg-ink-hover',
-                    !picked && sameDay(day, today) && 'ring-1 ring-brand-bright',
+                    !picked && sameDay(day, today) && 'ring-2 ring-brand-bright',
                   )}
                 >
                   {day.getDate()}

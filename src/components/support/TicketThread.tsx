@@ -144,7 +144,7 @@ export function TicketThread({
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={cn(
-                  'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide',
+                  'inline-flex items-center rounded-full border-2 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide',
                   look.look,
                 )}
               >

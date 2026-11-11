@@ -145,7 +145,7 @@ export default function ForumProfile() {
                     <span
                       key={code}
                       className={cn(
-                        'rounded-lg border px-2 py-0.5 text-[11px] font-extrabold',
+                        'rounded-lg border-2 px-2 py-0.5 text-[11px] font-extrabold',
                         /* Staff is the given one, so it is the one in our
                            own blue; a word somebody chose is quieter. */
                         code === 'staff'
@@ -387,7 +387,7 @@ function Pick({ on, onPress, children }: {
       onClick={onPress}
       aria-pressed={on}
       className={cn(
-        'rounded-lg border px-3 py-1.5 text-xs font-extrabold transition-colors',
+        'rounded-lg border-2 px-3 py-1.5 text-xs font-extrabold transition-colors',
         on
           ? 'border-brand-bright bg-brand/20 text-white'
           : 'border-white/10 bg-ink-raised text-white/55 hover:border-white/25 hover:text-white',

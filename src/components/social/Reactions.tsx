@@ -181,7 +181,7 @@ export function Reactions({
           onClick={() => void press(one.face)}
           aria-pressed={one.mine}
           className={cn(
-            'inline-flex items-center gap-1 rounded-full border py-0.5 pl-1 pr-2 text-xs font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-1 rounded-full border-2 py-0.5 pl-1 pr-2 text-xs font-bold transition-transform duration-150 hover:scale-105 active:scale-95',
             one.mine
               ? 'border-brand bg-brand/15 text-white'
               : 'border-ink-line bg-ink-raised text-white/70 hover:text-white',

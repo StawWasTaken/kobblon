@@ -171,7 +171,7 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
       type="button"
       onClick={onOpen}
       className={cn(
-        'flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border px-4 py-3 text-left transition-colors',
+        'flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border-2 px-4 py-3 text-left transition-colors',
         one.wants_human && one.status !== 'closed'
           ? 'border-amber-400/40 bg-amber-400/[0.06] hover:border-amber-400/70'
           : 'border-ink-line bg-ink-raised hover:border-white/25',
@@ -371,7 +371,7 @@ export function TicketDrawer({ one, onClose, onMove, onReplied }: {
               <li
                 key={m.id}
                 className={cn(
-                  'rounded-2xl border px-4 py-3',
+                  'rounded-2xl border-2 px-4 py-3',
                   m.from_staff
                     ? 'border-brand/35 bg-brand/10'
                     : 'border-ink-line bg-ink-raised',

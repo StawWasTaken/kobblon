@@ -647,7 +647,7 @@ function Queue({ icon, art, name, count, aside, delay, onClick }: {
       onClick={onClick}
       style={{ animationDelay: `${delay}ms` }}
       className={cn(
-        'group relative flex animate-row-in flex-col justify-between overflow-hidden rounded-2xl border p-4 text-left',
+        'group relative flex animate-row-in flex-col justify-between overflow-hidden rounded-2xl border-2 p-4 text-left',
         'transition-[transform,border-color] duration-150 hover:-translate-y-0.5',
         count === 0
           ? 'border-ink-line bg-ink-card hover:border-white/20'
@@ -985,7 +985,7 @@ function BoardKeys({ person, open, onClose }: {
                   disabled={!!busy}
                   onClick={() => void flip(board.slug, !on)}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors disabled:opacity-50',
+                    'flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition-colors disabled:opacity-50',
                     on
                       ? 'border-space/50 bg-space/[0.08] text-white'
                       : 'border-white/10 text-white/60 hover:border-white/20 hover:text-white',
@@ -1880,7 +1880,7 @@ export function PeopleSection({ initial }: { initial?: string }) {
               type="button"
               onClick={() => setOpen(showing ? null : person)}
               className={cn(
-                'flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left',
+                'flex w-full items-center gap-3 rounded-2xl border-2 px-3 py-2.5 text-left',
                 'transition-[background-color,border-color] duration-150',
                 showing
                   ? 'border-brand-bright/60 bg-brand/10'
@@ -5194,7 +5194,7 @@ export function NoticeSection() {
                     onClick={() => setColour(one.value)}
                     aria-pressed={colour === one.value}
                     className={cn(
-                      'flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+                      'flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-colors',
                       colour === one.value
                         ? 'border-white/60 bg-white/10 text-white'
                         : 'border-ink-line text-muted hover:text-white',
@@ -5674,7 +5674,7 @@ export function EventSection() {
                   onClick={() => change({ theme: one })}
                   aria-pressed={draft.theme === one}
                   className={cn(
-                    'flex items-center gap-2.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors',
+                    'flex items-center gap-2.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition-colors',
                     draft.theme === one
                       ? 'border-white/60 bg-white/10 text-white'
                       : 'border-ink-line text-muted hover:text-white',
@@ -6435,7 +6435,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
             onClick={() => onChange(one.name)}
             style={{ animationDelay: `${i * 25}ms` }}
             className={cn(
-              'group relative flex shrink-0 animate-row-in items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left',
+              'group relative flex shrink-0 animate-row-in items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-left',
               'lg:w-full lg:gap-3',
               'transition-[background-color,border-color,transform] duration-150',
               on
@@ -6443,7 +6443,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
                 : 'border-ink-line lg:border-transparent lg:hover:translate-x-0.5 lg:hover:bg-ink-hover',
             )}
           >
-            {/* The bar that says where you are. It is on the border rather
+            {/* The bar that says where you are. It is on the border-2 rather
                 than inside the padding so the rows keep one left edge. */}
             <span
               aria-hidden="true"
@@ -6610,7 +6610,7 @@ export default function Admin() {
               Staff console
               <span
                 className={cn(
-                  'rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide',
+                  'rounded-full border-2 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide',
                   rankLook[rank],
                 )}
               >

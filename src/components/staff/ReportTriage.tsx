@@ -285,7 +285,7 @@ export function ReportTriage({
                   disabled={off}
                   onClick={() => setChosen(on ? null : option.value)}
                   className={cn(
-                    'flex items-start gap-2.5 rounded-xl border p-3 text-left transition',
+                    'flex items-start gap-2.5 rounded-xl border-2 p-3 text-left transition',
                     off && 'cursor-not-allowed opacity-40',
                     on
                       ? option.danger

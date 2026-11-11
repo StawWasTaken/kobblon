@@ -133,8 +133,8 @@ export function Menu({
           <Pointer
             side={box.up ? 'bottom' : 'top'}
             /* Over the list and half on its edge, so the square's two drawn
-               sides continue the card's border and its fill hides the line
-               they cross. Under it the border ran straight through the
+               sides continue the card's border-2 and its fill hides the line
+               they cross. Under it the border-2 ran straight through the
                arrow's base and the two read as separate things. */
             className="z-[86]"
             style={{

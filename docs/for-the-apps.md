@@ -21738,3 +21738,63 @@ So, for both sides:
 `design/preset.js` records all of it beside the `borderWidth` scale, so the
 next person to adopt this does not have to work out that the first pass was
 half a pass.
+
+## Round three hundred and two - marks come from the database, Klub Kobblon, and the press
+
+Three things from Staw, and the first one changes meaning on your side, so
+read that one even if you skip the rest.
+
+**Name marks are only ever the database's answer now.** `NameMarks` used to
+draw a guess off whatever flags the row in hand happened to carry -
+`is_verified`, the staff columns, `is_guest` - so that nothing arrived late.
+Staw: "id like to precise that for the badges only refer to the database".
+It was wrong in both directions and wrong visibly: a list that selects
+`is_verified` but not the staff columns drew a tick on somebody who works
+here, a stale cached row kept a mark somebody had lost, and the Klub could
+never show at all, because only `in_the_klub` knows whether a membership is
+still running.
+
+So `NameMarks` now asks `name_marks_for` / `name_marks_by_name` through
+`useNameMarks(id, username)` and draws **nothing** until it is answered. A
+failed question shows no marks rather than an old guess, and caches nothing,
+so the next render asks again. The `person` prop is still accepted by the
+type - your hundred call sites keep compiling - and is **deliberately
+ignored**: you cannot put a mark on a name by handing this component a flag.
+If the Workspace draws marks of its own anywhere, move it to the same two
+RPCs; a flag on a row is no longer an answer.
+
+Pass `id` where you have one, `username` where the list carries that. With
+neither, no marks, by design.
+
+**The official name is Klub Kobblon, not Kobblon Klub.** Everywhere, in that
+order. The mark's tooltip now reads "In Klub Kobblon". If you have the words
+anywhere in the Workspace or Launcher, swap them.
+
+**The design system got its press.** Round 301 made every all-round stroke
+2px; that pass only moved strokes, and Staw was right that the result was
+still a picture of controls. Two new classes in `src/index.css`, and they
+are the house language for anything you can touch:
+
+- `kob-press` - one pixel down on `:active`, with the transition for colour,
+  border and shadow that goes with it. On everything pressable that is not
+  already a `Button` (which has carried its own press since the start).
+- `kob-chosen` - the chosen state's bottom lip, `inset 0 -3px 0` black at a
+  quarter, so a selected tile or pill reads as pressed in. An inset shadow
+  rather than a thicker border on purpose: choosing something must not
+  change its height and shuffle the row beside it.
+
+Applied to `Choices`, the settings `Choice` tiles, `ViewSwitch` and the
+Catalog item's star, "Yours" chip and overflow button, which now share one
+height and one shape instead of three. If you mount any of ours, you get
+both classes for free; if you draw your own controls, use the same two names
+so a pill in the Workspace presses like a pill on the website.
+
+**The friends row's Add Friends cell was not lined up.** It drew its own
+stack - bare circle, small label - beside `PersonFace`, which pads itself by
+two and writes a bold name over a quiet line. Same row, two different boxes.
+It is built like a cell now, with the second line ("Find somebody") carrying
+its own weight rather than being filler.
+
+**Still waiting on Staw:** migrations 0335 and 0336, in order. Until they are
+applied a guest wears no mark and new accounts are not painted as Newbie -
+which matters more now that marks come only from the database.

@@ -87,7 +87,7 @@ export function Picker({
         onClick={() => setOpen((v) => !v)}
         onKeyDown={onKeyDown}
         className={cn(
-          'flex h-10 w-full items-center justify-between gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors',
+          'flex h-10 w-full items-center justify-between gap-2 rounded-lg border-2 px-3 text-sm font-semibold transition-colors',
           invalid ? 'border-danger/60' : 'border-ink-line',
           open ? 'border-brand-bright bg-ink-hover' : 'bg-ink-raised hover:bg-ink-hover',
           selected ? 'text-white' : 'text-white/35',

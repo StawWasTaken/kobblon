@@ -200,7 +200,7 @@ export function AccountStatusCard({
           <label className="flex cursor-pointer items-start gap-3">
             <span
               className={cn(
-                'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border transition-colors',
+                'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border-2 transition-colors',
                 ticked ? 'border-brand-bright bg-brand-bright text-white' : 'border-ink-line bg-ink',
               )}
             >

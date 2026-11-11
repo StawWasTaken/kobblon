@@ -263,7 +263,7 @@ function Account() {
                   type="button"
                   onClick={() => setWanted(row.username)}
                   className={cn(
-                    'rounded-lg border px-2.5 py-1 text-sm font-bold transition-colors',
+                    'rounded-lg border-2 px-2.5 py-1 text-sm font-bold transition-colors',
                     wanted === row.username
                       ? 'border-brand-bright bg-brand/15 text-brand-bright'
                       : 'border-ink-line text-muted hover:border-brand/50 hover:text-fg',

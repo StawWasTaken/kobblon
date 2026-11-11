@@ -99,7 +99,7 @@ export function BrowseRail<T extends string>({
               onClick={() => onChange(one.value)}
               aria-current={on ? 'page' : undefined}
               className={cn(
-                'flex h-10 shrink-0 items-center gap-2.5 rounded-xl border px-3 text-left text-sm font-bold transition-colors',
+                'flex h-10 shrink-0 items-center gap-2.5 rounded-xl border-2 px-3 text-left text-sm font-bold transition-colors',
                 'lg:w-full lg:border-transparent lg:px-3',
                 on
                   ? 'border-brand bg-brand/15 text-white lg:border-brand/50'

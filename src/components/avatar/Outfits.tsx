@@ -434,7 +434,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
               onClick={() => setTab(one.id)}
               aria-current={tab === one.id}
               className={cn(
-                'rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors',
+                'rounded-xl border-2 px-3 py-1.5 text-xs font-bold transition-colors',
                 tab === one.id
                   ? 'border-brand bg-brand/15 text-white'
                   : 'border-ink-line bg-ink-card text-white/50 hover:text-white',

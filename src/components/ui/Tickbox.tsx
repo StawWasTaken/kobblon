@@ -13,7 +13,7 @@ export function Tick({ on, className }: { on: boolean; className?: string }) {
   return (
     <span
       className={cn(
-        'grid h-5 w-5 shrink-0 place-items-center rounded border text-[10px] transition-colors',
+        'grid h-5 w-5 shrink-0 place-items-center rounded border-2 text-[10px] transition-colors',
         on ? 'border-brand-bright bg-brand text-white' : 'border-ink-line',
         className,
       )}
@@ -37,7 +37,7 @@ export function Tickbox({ on, onChange, label, className }: {
       aria-checked={on}
       onClick={() => onChange(!on)}
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
+        'flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left text-sm transition-colors',
         on
           ? 'border-brand-bright bg-brand/15 text-white'
           : 'border-ink-line bg-ink-raised text-white/70 hover:bg-ink-hover',

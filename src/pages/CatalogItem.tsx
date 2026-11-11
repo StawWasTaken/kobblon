@@ -253,7 +253,7 @@ export default function CatalogItem() {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {owned && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-space/15 px-2.5 py-1 text-[11px] font-bold text-space-bright">
+                  <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border-2 border-b-4 border-space/40 bg-space/15 px-2.5 text-[11px] font-bold text-space-bright">
                     <Glyph icon={faCircleCheck} />
                     Yours
                   </span>
@@ -266,10 +266,10 @@ export default function CatalogItem() {
                   disabled={!profile || profile.is_guest}
                   onClick={() => void star()}
                   className={cn(
-                    'inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-bold transition-colors',
+                    'kob-press inline-flex h-8 items-center gap-1.5 rounded-lg border-2 border-b-4 px-2.5 text-xs font-bold',
                     'disabled:cursor-not-allowed disabled:opacity-40',
                     starred
-                      ? 'border-amber-400/50 bg-amber-400/15 text-amber-300'
+                      ? 'kob-chosen border-amber-400/50 bg-amber-400/15 text-amber-300'
                       : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
                   )}
                 >
@@ -282,7 +282,7 @@ export default function CatalogItem() {
                   label="More"
                   align="right"
                   trigger={
-                    <span className="grid h-8 w-8 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+                    <span className="kob-press grid h-8 w-8 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-white/60 hover:bg-ink-hover hover:text-white">
                       <Glyph icon={faEllipsis} />
                     </span>
                   }
@@ -450,7 +450,7 @@ export default function CatalogItem() {
                       picture: cardFor(item),
                     }))}
                   className={cn(
-                    'grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-colors',
+                    'grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 transition-colors',
                     'disabled:cursor-not-allowed disabled:opacity-40',
                     put
                       ? 'border-brand bg-brand/15 text-white'

@@ -95,24 +95,42 @@ export function FriendsRail() {
         * repaint, not a refetch.
         */}
       <div className="grid grid-cols-3 gap-x-4 gap-y-6 max-sm:[&>:nth-child(n+4)]:hidden sm:grid-cols-6 sm:gap-x-8 sm:gap-y-7 lg:grid-cols-9">
+        {/*
+          * Add Friends is one of the cells, so it is built like one.
+          *
+          * Staw: 'the "add friends" isnt lined up'. It was: this drew its
+          * own stack - a bare circle with a small label under it - while
+          * every face beside it is a `PersonFace`, which pads itself by two
+          * and writes a bold name with a quiet line under that. Same row,
+          * two different boxes, so the circle sat lower than the faces and
+          * the label sat higher than the names.
+          *
+          * It now carries the face's padding, the face's avatar size and
+          * the face's two lines, so the circles share a top edge and the
+          * words share a baseline. The second line is what the plus is
+          * for rather than filler: a row with nothing under the label
+          * would put this cell's words back on their own height.
+          */}
         <Link
           to="/friends"
-          className="group flex flex-col items-center gap-2 text-center sm:gap-2.5"
+          className="group block rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
         >
-          <span className="grid h-16 w-16 place-items-center rounded-full border-2 border-ink-line bg-ink-card text-xl text-white/50 transition-colors group-hover:bg-ink-hover group-hover:text-white sm:h-20 sm:w-20 sm:text-2xl">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border-2 border-ink-line bg-ink-card text-xl text-white/50 transition-colors group-hover:border-brand-bright/60 group-hover:bg-ink-hover group-hover:text-white sm:h-20 sm:w-20 sm:text-2xl">
             {/* Staw's own, by its name: this is the one that means
                 wanting to add somebody. A bare plus says "another of
                 these" and this is not another of these. */}
             <Glyph icon={faPlus} name="add-user" />
           </span>
-          <span className="truncate text-xs font-semibold text-white/70">Add Friends</span>
+          <p className="mt-2 truncate text-sm font-bold">Add Friends</p>
+          <p className="truncate text-[11px] text-muted">Find somebody</p>
         </Link>
 
         {loading &&
           [0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex flex-col items-center gap-2 sm:gap-2.5">
-              <Skeleton className="h-16 w-16 rounded-full sm:h-20 sm:w-20" />
-              <Skeleton className="h-3 w-14" />
+            <div key={i} className="p-2 text-center">
+              <Skeleton className="mx-auto h-16 w-16 rounded-full sm:h-20 sm:w-20" />
+              <Skeleton className="mx-auto mt-2 h-4 w-16" />
+              <Skeleton className="mx-auto mt-1 h-3 w-12" />
             </div>
           ))}
 

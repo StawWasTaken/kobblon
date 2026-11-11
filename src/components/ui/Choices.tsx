@@ -54,12 +54,12 @@ export function Choices<T extends string>({
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              'inline-flex shrink-0 items-center rounded-xl border font-bold transition-colors',
+              'kob-press inline-flex shrink-0 items-center rounded-xl border-2 font-bold',
               sizes[size],
               active
                 ? tone === 'solid'
-                  ? 'border-brand-bright bg-brand text-onbrand'
-                  : 'border-brand-bright bg-brand/15 text-white'
+                  ? 'kob-chosen border-brand-bright bg-brand text-onbrand'
+                  : 'kob-chosen border-brand-bright bg-brand/15 text-white'
                 : 'border-ink-line bg-ink-card text-white/60 hover:bg-ink-hover hover:text-white',
             )}
           >

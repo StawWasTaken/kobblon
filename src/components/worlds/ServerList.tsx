@@ -98,7 +98,7 @@ function ServerCard({ server, onJoin, onShare, lit, mates = [] }: {
   return (
     <article
       className={cn(
-        'flex flex-col gap-3 rounded-2xl border bg-ink-card p-4 transition-colors',
+        'flex flex-col gap-3 rounded-2xl border-2 bg-ink-card p-4 transition-colors',
         lit ? 'border-brand' : 'border-ink-line',
         !full && !lit && 'hover:border-brand/60',
       )}

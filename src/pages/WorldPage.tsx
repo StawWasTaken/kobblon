@@ -659,7 +659,7 @@ export default function WorldPage() {
                   canReact={!!profile && !profile.is_guest && inKlub}
                   whyNot={!profile
                     ? 'Sign in to react.'
-                    : 'Reacting to a World is a Kobblon Klub thing.'}
+                    : 'Reacting to a World is a Klub Kobblon thing.'}
                   onChanged={faces.reload}
                 />
 

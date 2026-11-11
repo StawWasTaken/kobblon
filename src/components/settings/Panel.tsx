@@ -175,9 +175,9 @@ export function Choice({ on, onClick, swatch, title, note, disabled }: {
       aria-pressed={on}
       disabled={disabled}
       className={cn(
-        'flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-colors disabled:opacity-60',
+        'kob-press flex items-center gap-3 rounded-2xl border-2 p-3.5 text-left disabled:opacity-60',
         on
-          ? 'border-brand-bright bg-brand/15'
+          ? 'kob-chosen border-brand-bright bg-brand/15'
           : 'border-ink-line bg-ink-card hover:bg-ink-hover',
       )}
     >

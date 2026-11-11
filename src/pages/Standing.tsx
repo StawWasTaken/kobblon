@@ -66,7 +66,7 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
       >
         <span
           className={cn(
-            'grid h-10 w-10 shrink-0 place-items-center rounded-xl border',
+            'grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2',
             one.is_void
               ? 'border-space/40 bg-space/10 text-space-bright'
               : live
@@ -172,7 +172,7 @@ function Crest({ one }: { one: ModerationRow }) {
 
   return (
     <span className={cn(
-      'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border',
+      'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2',
       tone,
     )}>
       <Glyph icon={historyIcon[one.action] ?? faShieldHalved} className="text-xl" />
@@ -184,7 +184,7 @@ function Crest({ one }: { one: ModerationRow }) {
 function Flag({ tone, children }: { tone: string; children: React.ReactNode }) {
   return (
     <span className={cn(
-      'rounded-full border px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+      'rounded-full border-2 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
       tone,
     )}>
       {children}

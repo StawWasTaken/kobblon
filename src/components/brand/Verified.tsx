@@ -43,7 +43,7 @@ import { cn } from '@/lib/cn'
 const MARKS = {
   verified: { art: '/brand/verified.png', tone: 'text-[#4d68ff]', says: 'Verified by Kobblon' },
   staff: { art: '/brand/staff.png', tone: 'text-white', says: 'Kobblon staff' },
-  klub: { art: '/icons/ui/klub-badge.png', tone: 'text-[#f5b32b]', says: 'In the Kobblon Klub' },
+  klub: { art: '/icons/ui/klub-badge.png', tone: 'text-[#f5b32b]', says: 'In Klub Kobblon' },
   guest: { art: '/brand/guest.png', tone: 'text-[#8a93a8]', says: 'A guest account' },
 } as const
 
@@ -157,14 +157,11 @@ export const Guest = (p: { label?: string; className?: string }) =>
  * counts as verified, and that is how one page ends up showing a tick where
  * another shows nothing for the same person.
  *
- * Pass `id` wherever one is in hand, which is almost everywhere. The row's
- * own flags are drawn immediately as a first guess so nothing arrives late,
- * and the database's answer replaces it the moment it lands - because the
- * guess is only ever as good as the columns that list happened to select,
- * and that is exactly what was wrong. With no `id` it stays a guess, which
- * is better than nothing and is said out loud here rather than hidden.
+ * Pass `id` wherever one is in hand, or `username` where that is what the
+ * list carries. One of the two is required in practice: with neither, there
+ * is nobody to ask about and no marks are drawn.
  */
-export function NameMarks({ person, id, username, className }: {
+export function NameMarks({ id, username, className }: {
   person?: {
     is_verified?: boolean | null
     is_admin?: boolean | null
@@ -180,23 +177,32 @@ export function NameMarks({ person, id, username, className }: {
   username?: string | null
   className?: string
 }) {
-  const said = useNameMarks(id, username)
+  const wears = useNameMarks(id, username)
 
   /*
-   * The guess, for the moment before the database answers. It can see a
-   * guest - every list that carries `is_guest` carries it as a plain
-   * boolean - but it cannot see the Klub, because a row says which tier was
-   * bought and only `in_the_klub` knows whether it is still running. So the
-   * hat never appears in a guess, and arrives with the real answer.
+   * **Only the database decides.** Staw: "id like to precise that for the
+   * badges only refer to the database".
+   *
+   * There used to be a guess here, drawn from whatever flags the row in
+   * hand happened to carry, so that nothing arrived late. It was wrong in
+   * both directions and it was wrong visibly: a list that selects
+   * `is_verified` but not the staff columns drew a tick on somebody who
+   * also works here, a stale cached row kept a mark somebody had lost, and
+   * the Klub could never show at all because only `in_the_klub` knows
+   * whether a membership is still running. Four different pages could
+   * therefore print four different sets of marks beside the same name.
+   *
+   * A mark is a claim about a person. A claim worth drawing is worth
+   * asking for, so this asks, and draws nothing until it is answered -
+   * `name_marks` is one round trip and it is cached per name. Nothing
+   * missing for a moment is cheaper than something untrue.
+   *
+   * `person` is still accepted and deliberately ignored, so that the
+   * hundred call sites passing it keep compiling and none of them can put
+   * a mark on a name by handing this component a flag.
    */
-  const wears = said ?? [
-    isVerified(person) && 'verified',
-    isStaff(person) && 'staff',
-    person?.is_guest && 'guest',
-  ].filter(Boolean) as string[]
-
   const marks = (['verified', 'staff', 'klub', 'guest'] as MarkName[])
-    .filter((which) => wears.includes(which))
+    .filter((which) => wears?.includes(which))
     .map((which) => <NameMark key={which} which={which} className={className} />)
 
   if (!marks.length) return null

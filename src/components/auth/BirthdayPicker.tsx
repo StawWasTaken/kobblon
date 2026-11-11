@@ -121,7 +121,7 @@ export function BirthdayPicker({
         aria-expanded={open}
         aria-label="Birthday"
         className={cn(
-          'flex h-11 w-full items-center gap-3 rounded-xl border px-3.5 text-sm font-semibold transition-colors',
+          'flex h-11 w-full items-center gap-3 rounded-xl border-2 px-3.5 text-sm font-semibold transition-colors',
           error ? 'border-danger/60' : 'border-ink-line',
           open ? 'border-brand-bright bg-ink-hover' : 'bg-ink-raised hover:bg-ink-hover',
         )}

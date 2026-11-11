@@ -82,7 +82,7 @@ export function WorkingAsMenu() {
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-colors',
+          'flex w-full items-center gap-2.5 rounded-xl border-2 px-3 py-2 text-left transition-colors',
           open ? 'border-brand-bright bg-ink-hover' : 'border-ink-line bg-ink-card hover:bg-ink-hover',
         )}
       >

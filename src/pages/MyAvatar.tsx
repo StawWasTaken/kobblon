@@ -543,7 +543,7 @@ export default function MyAvatar() {
               aria-current={drawer === one.id}
               title={one.label}
               className={cn(
-                'group relative flex h-[4.25rem] w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 transition-colors lg:h-[4.75rem] lg:w-[4.75rem]',
+                'group relative flex h-[4.25rem] w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-1 transition-colors lg:h-[4.75rem] lg:w-[4.75rem]',
                 drawer === one.id
                   ? 'border-brand bg-brand/15 text-white'
                   : 'border-ink-line bg-ink-card text-white/45 hover:border-brand/40 hover:text-white',
@@ -1039,7 +1039,7 @@ function Chip({ on, count, onPick, children }: {
       onClick={onPick}
       aria-pressed={on}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold',
+        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-[11px] font-bold',
         'transition-colors duration-150',
         on
           ? 'border-brand bg-brand/15 text-white'
@@ -1155,7 +1155,7 @@ function WornTile({ item, nth, on, busy, onToggle }: {
       disabled={busy}
       title={item.name}
       className={cn(
-        'group flex animate-row-in flex-col overflow-hidden rounded-2xl border bg-ink-card text-left',
+        'group flex animate-row-in flex-col overflow-hidden rounded-2xl border-2 bg-ink-card text-left',
         'transition-[border-color,transform] duration-150 active:scale-[0.97]',
         on ? 'border-brand' : 'border-ink-line hover:border-brand/60',
       )}

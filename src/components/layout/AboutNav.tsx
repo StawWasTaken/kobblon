@@ -146,7 +146,7 @@ export function AboutNav({ className, measure, style }: {
     >
       <div
         className={cn(
-          'relative mx-auto flex max-w-6xl items-center gap-5 rounded-2xl border px-4 py-3 sm:px-6',
+          'relative mx-auto flex max-w-6xl items-center gap-5 rounded-2xl border-2 px-4 py-3 sm:px-6',
           'backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300',
           /*
            * The page's own background colour. Staw: "i want the navbar to

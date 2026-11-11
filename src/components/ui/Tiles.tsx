@@ -34,7 +34,7 @@ export function Tiles<T extends string>({ value, onChange, options, label, colum
             aria-pressed={picked}
             onClick={() => onChange(one.value)}
             className={cn(
-              'flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition-colors',
+              'flex items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-left text-sm font-bold transition-colors',
               picked
                 ? 'border-brand-bright bg-brand/20 text-white'
                 : 'border-ink-line bg-ink-raised text-white/70 hover:bg-ink-hover',
