@@ -37,7 +37,7 @@ function Refresh({ onPress, busy }: { onPress: () => void; busy?: boolean }) {
       onClick={onPress}
       disabled={busy}
       className={cn(
-        'inline-flex items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1.5',
+        'inline-flex items-center gap-2 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-1.5',
         'text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white',
         'disabled:opacity-50',
       )}

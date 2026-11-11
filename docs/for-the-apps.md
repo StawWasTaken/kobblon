@@ -21522,3 +21522,90 @@ as **null** while `request.jwt.claim.sub` was plainly set, because
 `set_config(..., true)` is transaction-local and psql ends the transaction
 at every statement. Every assertion in that run passed for the wrong reason.
 Look at `auth.uid()` before believing any check that depends on it.
+
+## Round two hundred and ninety-nine - thick strokes, and a page that stops saying why
+
+### The design, and this one is yours as much as ours
+
+Staw: "we also wanna polish the whole design of the entire website, like not
+making a whole rebranding but polishing the design & instead of thin strokes,
+we want thick strokes, and a more gamification about stuff here on the
+website ... for kobblon we want something quite original and unique (to
+detach ourselves a bit from the roblox image)". He named Duolingo as an
+example of a platform that already gamifies its design, explicitly as a
+reference point and explicitly not as something to copy.
+
+**So the system is solidity, not softness.** Every gamified app reaches for
+soft, bouncy and rounded, and that is where the Duolingo comparison would be
+fair. Kobblon is a building platform - the currency is Brix, the people are
+blocky, the display face is blocky - so the honest gamified language here is
+that every surface is a *block*:
+
+```
+a card      rounded-xl  border-2 border-b-4 border-ink-line
+a button    unchanged - solid fill, 3px lip, presses into it
+a chip      rounded-full border-2, bold
+a field     border-2, and the whole edge turns brand blue on focus
+```
+
+Two strokes, not one: **2px all round and 4px along the bottom**. The thick
+bottom edge is the front face of a thing seen slightly from above, and it is
+what the buttons have always done - the lip under a Buy button was the only
+thing on the old item page with any weight to it, and this is that idea
+applied to everything.
+
+`--ink-line` was lifted at the same time, in all six appearances. That turned
+out to matter more than the width: a 2px stroke one shade off the surface it
+bounds is still invisible, and the first pass changed the width alone and was
+indistinguishable in a screenshot.
+
+**Something we built and threw away, so you do not build it.** The first
+version of the block edge was a hard offset shadow with no blur - literally a
+brick's side face, `0 4px 0 0 <darker>`. It does not work. On a page this
+close to black **there is nothing darker to put under a card**: drawn side by
+side with a plain 2px stroke it was the same picture. That is why this is a
+border and not a shadow. A blur is now reserved for the one thing that
+genuinely floats over the page - a menu, a dialog, the toast.
+
+**To uniformise, take these:**
+
+| | |
+| --- | --- |
+| house stroke | `border-2` |
+| card | `rounded-xl border-2 border-b-4 border-ink-line` |
+| line colour | `--ink-line`, now `84 86 104` in the dark appearance |
+| `--ink-edge` | new, and only for the lip under a pressed subtle button |
+| blurred shadow | `shadow-pop` only, for things that actually float |
+| control weight | `font-bold`, not semibold |
+
+`design/preset.js` and `design/tokens.css` carry all of it and the Workspace
+pulls them, so most of this arrives by updating. What will not arrive on its
+own: anywhere the Workspace writes `border border-ink-line` by hand. There
+were two hundred and fifty of those on this side and they are the whole
+reason the site read as a dashboard - the primitives were already right and
+the pages were not using them.
+
+Corners came in one step, `2xl` to `xl`. Directional dividers
+(`border-t`, `border-b` on a row) were deliberately left at 1px: a 2px rule
+between every row of a list is noise, not weight.
+
+### The maintenance page says less
+
+Round 298 added a maintenance page that comes up by itself when the site
+stops being answered. It named the database. Staw: "make it a general
+maintenance page with the famous We're making things more awesome".
+
+He is right and it is now one page with one set of words, whichever way it
+was reached. A visitor does not need our infrastructure explained to them,
+and a page that says which part of the machinery broke tells anybody looking
+for a weak spot where to push. **If the Launcher or the Workspace draws
+anything equivalent, say the same thing and name nothing.**
+
+### Not a bug, but worth saying
+
+`tools/site/friends-preview.tsx` was still drawing a heart on the Followers
+and Following tabs two rounds after the page took the bell, because the
+fixture keeps its own copy of the tab list. It is fixed. The general point
+holds for both sides: a preview that hardcodes what a page does is a copy
+that drifts, and it drifts silently, because a fixture is the one screen
+nobody is looking at when they check their change.

@@ -72,7 +72,7 @@ export function BuyDialog({
     >
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
             {item
               ? <WornPicture item={item} className="p-1" />
               : <Picture src={picture} alt={name} fit="contain" className="h-full w-full" pictureClassName="p-1" />}
@@ -93,7 +93,7 @@ export function BuyDialog({
           * second is the one somebody actually wants and the one a price tag
           * never answers.
           */}
-        <dl className="space-y-1.5 rounded-xl border border-ink-line bg-ink-raised p-3 text-sm">
+        <dl className="space-y-1.5 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm">
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-muted">You have</dt>
             <dd className="inline-flex items-center gap-1 font-semibold">

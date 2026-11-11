@@ -25,6 +25,14 @@ export default {
           card: 'rgb(var(--ink-card) / <alpha-value>)',
           hover: 'rgb(var(--ink-hover) / <alpha-value>)',
           line: 'rgb(var(--ink-line) / <alpha-value>)',
+          /*
+           * The side face of a brick.
+           *
+           * Darker than the card it belongs to, and used as a solid
+           * displaced edge rather than as a blur - see `shadow.lip` below
+           * for why that distinction is the whole design.
+           */
+          edge: 'rgb(var(--ink-edge) / <alpha-value>)',
         },
         white: 'rgb(var(--fg) / <alpha-value>)',
         /*
@@ -107,8 +115,43 @@ export default {
         sans: ['Inter', 'Twemoji', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       borderRadius: { xl2: '1.25rem' },
+      /*
+       * Three, because two is not enough and Tailwind only ships 0, 1, 2,
+       * 4 and 8. `border-2` is the house stroke; `border-[3px]` is the lip
+       * under a button, which predates all of this and stays.
+       */
+      borderWidth: { 3: '3px' },
       boxShadow: {
-        card: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.8)',
+        /*
+         * **There is one shadow left, and it is not for cards.**
+         *
+         * Staw: "instead of thin strokes, we want thick strokes, and a more
+         * gamification about stuff here on the website ... for kobblon we
+         * want something quite original and unique (to detach ourselves a
+         * bit from the roblox image)".
+         *
+         * Kobblon is a building platform - the currency is Brix, the people
+         * are blocky, the display face is blocky - so the gamified language
+         * here is solidity rather than the softness and bounce that every
+         * gamified app reaches for, and that is where a Duolingo comparison
+         * would be fair. Every surface is a block: a 2px stroke all round
+         * and a 4px stroke along the bottom, which is the front face of a
+         * thing seen slightly from above.
+         *
+         * The first attempt at that was a hard offset shadow with no blur -
+         * literally a brick's side face - and it was built, drawn and thrown
+         * away, which is worth writing down so nobody builds it again. **On
+         * a page this close to black there is nothing darker to put under a
+         * card.** Beside a plain 2px stroke it was indistinguishable; the
+         * screenshot of the two is why this is a border and not a shadow.
+         * `--ink-edge` survives as the colour of a pressed lip under a
+         * subtle button, where there is a lit surface above it to read
+         * against.
+         *
+         * So a blur is now reserved for the one thing that genuinely floats
+         * over the page - a menu, a dialog, the toast - which is not a block
+         * on a surface and should not pretend to be.
+         */
         pop: '0 24px 60px -20px rgba(0,0,0,0.85)',
       },
       keyframes: {

@@ -290,7 +290,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
             </p>
 
             {one.rule_title && (
-              <p className="flex items-start gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-sm">
+              <p className="flex items-start gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2 text-sm">
                 <Glyph icon={faScaleBalanced} className="mt-0.5 text-brand-bright" />
                 <span>
                   <span className="font-bold">
@@ -366,7 +366,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
                 rows={7}
                 maxLength={1000}
                 placeholder="Why it stands, or why it does not. They are sent this word for word, so write it to them."
-                className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+                className="w-full resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
               />
               <span className="mt-1 block text-xs text-muted">
                 {note.trim().length < 10

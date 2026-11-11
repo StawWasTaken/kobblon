@@ -40,7 +40,7 @@ export function EventCard({
   return (
     <article
       className={cn(
-        'flex flex-col overflow-hidden rounded-2xl border border-ink-line bg-ink-card',
+        'flex flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card',
         past && 'opacity-75 transition-opacity hover:opacity-100',
         className,
       )}

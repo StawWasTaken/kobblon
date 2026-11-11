@@ -43,7 +43,7 @@ export function BrowseHero({
            panel was 250px on People and 400px on Discover before a single
            thing somebody came for - half a screen of title. It is the same
            panel, asked for less room. */
-        'relative overflow-hidden rounded-3xl border border-ink-line bg-ink-card px-4 py-5',
+        'relative overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-5',
         'sm:px-8 sm:py-9',
         className,
       )}
@@ -82,7 +82,7 @@ export function BrowseHero({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             aria-label={placeholder}
-            className="h-12 w-full rounded-2xl sm:h-14 border border-ink-line bg-ink-raised pl-11 pr-11 text-base sm:pl-12 sm:pr-12 font-semibold shadow-card transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+            className="h-12 w-full rounded-2xl sm:h-14 border-2 border-ink-line bg-ink-raised pl-11 pr-11 text-base sm:pl-12 sm:pr-12 font-semibold transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
           />
           {value && (
             <button

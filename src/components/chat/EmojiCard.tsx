@@ -99,7 +99,7 @@ export function EmojiCard({ onPick, onClose }: {
   return (
     <div className="animate-pop-in flex h-[19rem] shrink-0 flex-col border-t border-ink-line">
       <div className="px-2.5 pb-1.5 pt-2">
-        <div className="flex items-center gap-2 rounded-lg border border-ink-line bg-ink/40 px-2.5 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg border-2 border-ink-line bg-ink/40 px-2.5 py-1.5">
           <Glyph icon={faMagnifyingGlass} className="text-[11px] text-muted" />
           <input
             value={term}

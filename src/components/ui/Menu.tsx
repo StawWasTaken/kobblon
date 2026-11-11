@@ -149,7 +149,7 @@ export function Menu({
           ref={list}
           role="menu"
           style={{ left: box?.left ?? -9999, top: box?.top ?? -9999, width: WIDTH }}
-          className="fixed z-[85] animate-pop-in overflow-hidden rounded-xl border border-ink-line bg-ink-card py-1 shadow-pop"
+          className="fixed z-[85] animate-pop-in overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card py-1 shadow-pop"
         >
           {items.map((item, at) => {
             const body = (

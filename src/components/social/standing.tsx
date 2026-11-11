@@ -507,7 +507,7 @@ export function RuleCard({ ord, title, body, gravity }: {
   if (!title) return null
 
   return (
-    <div className="space-y-2 rounded-2xl border border-ink-line bg-ink-raised px-4 py-3">
+    <div className="space-y-2 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <Glyph icon={faScaleBalanced} className="text-sm text-brand-bright" />
         <p className="font-display text-sm font-extrabold">

@@ -15,7 +15,7 @@ export function BadgeTile({
   return (
     <article
       className={cn(
-        'flex w-full flex-col items-center rounded-xl border border-ink-line bg-ink-card p-3 text-center',
+        'flex w-full flex-col items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-3 text-center',
         !earned && 'opacity-70',
         className,
       )}

@@ -84,7 +84,7 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
       to={tag ? `/create/${tag}` : '/create'}
       draggable={false}
       onDragStart={(e) => e.preventDefault()}
-      className="block select-none overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
+      className="block select-none overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
         {item.kind === 'mesh' ? (
           <MeshView

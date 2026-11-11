@@ -87,7 +87,7 @@ export function NewGroupDialog({
           onChange={(e) => setTitle(e.target.value)}
           maxLength={48}
           placeholder="Name your chat group"
-          className="h-9 w-full rounded-lg border border-ink-line bg-ink-raised px-3 text-sm placeholder:text-white/30 focus:border-brand-bright"
+          className="h-9 w-full rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-3 text-sm placeholder:text-white/30 focus:border-brand-bright"
         />
 
         <div className="relative">
@@ -101,7 +101,7 @@ export function NewGroupDialog({
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             placeholder="Search for friends"
-            className="h-9 w-full rounded-lg border border-ink-line bg-ink-raised pl-8 pr-12 text-sm placeholder:text-white/30 focus:border-brand-bright"
+            className="h-9 w-full rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised pl-8 pr-12 text-sm placeholder:text-white/30 focus:border-brand-bright"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-white/35">
             ({picked.length}/{MAX})

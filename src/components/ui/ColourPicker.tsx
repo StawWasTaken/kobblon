@@ -187,7 +187,7 @@ function Panel({
     <div
       ref={card}
       style={{ top: place.top, left: place.left }}
-      className="fixed z-[95] w-64 rounded-2xl border border-ink-line bg-ink-card p-3 shadow-pop"
+      className="fixed z-[95] w-64 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-3 shadow-pop"
       onPointerDown={(e) => e.stopPropagation()}
     >
       {/* how strong, how bright */}
@@ -240,7 +240,7 @@ function Panel({
 
       <div className="mt-3 flex items-center gap-2">
         <span
-          className="h-8 w-8 shrink-0 rounded-lg border border-ink-line"
+          className="h-8 w-8 shrink-0 rounded-lg border-2 border-ink-line"
           style={{ background: current }}
         />
         <input
@@ -256,7 +256,7 @@ function Panel({
           }}
           spellCheck={false}
           aria-label="Colour as hex"
-          className="h-8 w-full rounded-lg border border-ink-line bg-ink-raised px-2 text-xs font-bold uppercase tabular-nums focus:border-brand-bright focus:outline-none"
+          className="h-8 w-full rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2 text-xs font-bold uppercase tabular-nums focus:border-brand-bright focus:outline-none"
         />
       </div>
 
@@ -312,7 +312,7 @@ export function ColourPicker({
         disabled={disabled}
         onClick={() => setAnchor(anchor ? null : (button.current?.getBoundingClientRect() ?? null))}
         className={cn(
-          'relative h-9 w-10 shrink-0 overflow-hidden rounded-lg border border-ink-line',
+          'relative h-9 w-10 shrink-0 overflow-hidden rounded-lg border-2 border-ink-line',
           disabled && 'opacity-40',
         )}
         style={{
@@ -336,7 +336,7 @@ export function ColourPicker({
         spellCheck={false}
         aria-label="Colour"
         placeholder="#1B34E8"
-        className="h-9 w-full rounded-lg border border-ink-line bg-ink-raised px-3 text-sm font-semibold uppercase focus:border-brand-bright focus:outline-none"
+        className="h-9 w-full rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-3 text-sm font-semibold uppercase focus:border-brand-bright focus:outline-none"
       />
 
       {anchor && (

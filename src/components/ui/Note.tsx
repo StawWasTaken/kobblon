@@ -21,7 +21,7 @@ export function Note({ tone = 'brand', icon = faCircleInfo, children, side, clas
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3',
+        'flex flex-wrap items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3',
         className,
       )}
     >

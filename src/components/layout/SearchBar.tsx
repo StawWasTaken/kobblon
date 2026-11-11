@@ -104,7 +104,7 @@ export function SearchBar({ className }: { className?: string }) {
         <ul
           id="search-scopes"
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 animate-pop-in overflow-hidden rounded-lg border border-ink-line bg-ink-card py-1 shadow-pop"
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 animate-pop-in overflow-hidden rounded-lg border-2 border-b-4 border-ink-line bg-ink-card py-1 shadow-pop"
         >
           {searchScopes.map((scope, i) => (
             <li key={scope.tab}>

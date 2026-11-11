@@ -596,7 +596,7 @@ export default function MyAvatar() {
             * the half that makes it read as floating. The padding at the
             * bottom is what the panel hangs into.
             */}
-          <div className="relative rounded-2xl border border-ink-line bg-ink-card pb-12">
+          <div className="relative rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card pb-12">
             <div className="relative overflow-hidden rounded-2xl">
               {/*
                 * The whole frame is the viewport.
@@ -670,7 +670,7 @@ export default function MyAvatar() {
               * are clear of it, and they sit where a game puts its tools.
               */}
             <div className="absolute right-4 top-4 z-[3]">
-              <div className="flex flex-col items-center gap-1 rounded-2xl border border-ink-line bg-ink-card/85 p-1.5 shadow-pop backdrop-blur">
+              <div className="flex flex-col items-center gap-1 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/85 p-1.5 shadow-pop backdrop-blur">
                 <StageButton
                   label="Take everything off"
                   icon={faEraser}
@@ -708,7 +708,7 @@ export default function MyAvatar() {
               * somebody had to read rather than look, and the place where
               * looking is the whole point.
               */}
-            <div className="absolute bottom-3 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
+            <div className="absolute bottom-3 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
               <div className="flex items-center gap-2">
                 <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
                   Wearing
@@ -740,7 +740,7 @@ export default function MyAvatar() {
                             `off:${piece.item_id}`,
                             () => takeOffItem(piece.item_id!),
                           )}
-                          className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media p-1 transition-colors hover:border-danger"
+                          className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media p-1 transition-colors hover:border-danger"
                         >
                           <WornPicture item={{ ...piece, id: piece.item_id ?? '' }} />
                           <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">
@@ -843,7 +843,7 @@ export default function MyAvatar() {
                 * leaving the swatches a column two wide and a mile long.
                 */}
               <div className="grid gap-5 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-start">
-                <div className="rounded-2xl border border-ink-line bg-ink-raised p-4">
+                <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised p-4">
                   <BodyPicker
                     colours={look.body ?? DEFAULT_BODY}
                     chosen={parts}
@@ -1018,7 +1018,7 @@ function StageButton({ label, icon, busy, disabled, onClick }: {
         aria-label={label}
         disabled={busy || disabled}
         onClick={onClick}
-        className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white disabled:opacity-40"
+        className="grid h-10 w-10 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white disabled:opacity-40"
       >
         <Glyph icon={busy ? faCircleNotch : icon} className={cn(busy && 'animate-spin')} />
       </button>

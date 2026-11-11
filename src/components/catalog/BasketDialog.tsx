@@ -111,7 +111,7 @@ export function BasketDialog({ open, onClose, lines, paying, balance, onBuy }: {
           {lines.map((line) => (
             <li
               key={line.id}
-              className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised p-2"
+              className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2"
             >
               <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
                 <Picture src={line.picture} alt={line.name} fit="contain" className="h-full w-full" />

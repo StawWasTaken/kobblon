@@ -134,7 +134,7 @@ export function BrixShell({
 
   return (
     <Page className="space-y-5">
-      <header className="relative overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
+      <header className="relative overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card">
         {/* Two lights rather than a flat panel: the brand one behind the
             words, a cooler one behind the balance, so the two halves of the
             header read as two things. */}
@@ -157,7 +157,7 @@ export function BrixShell({
               {currency.plural}
             </p>
             <h1 className="mt-3 flex items-center gap-3 font-display text-3xl font-extrabold leading-[0.95] sm:text-4xl">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-raised text-base text-brand-bright">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-base text-brand-bright">
                 <Glyph icon={icon} name={ours} className="h-5 w-5" />
               </span>
               {title}
@@ -166,7 +166,7 @@ export function BrixShell({
             {actions && <div className="mt-5 flex flex-wrap items-center gap-2">{actions}</div>}
           </div>
 
-          <div className="rounded-2xl border border-ink-line bg-ink-raised/80 px-5 py-4 backdrop-blur-sm">
+          <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised/80 px-5 py-4 backdrop-blur-sm">
             <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
               Your balance
             </p>

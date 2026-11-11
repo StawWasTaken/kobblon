@@ -271,7 +271,7 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
               * edge: without it the date broke over two lines exactly
               * when the pointer was over the newest mark.
               */
-            className="pointer-events-none absolute z-10 whitespace-nowrap rounded-xl border border-ink-line bg-ink/95 px-3 py-2 shadow-pop"
+            className="pointer-events-none absolute z-10 whitespace-nowrap rounded-xl border-2 border-ink-line bg-ink/95 px-3 py-2 shadow-pop"
             style={{
               left: `${(held.x / W) * 100}%`,
               top: `${(held.y / H) * 100}%`,

@@ -129,7 +129,7 @@ export function UserMenu({ trigger = 'gear' }: { trigger?: 'gear' | 'avatar' }) 
 
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 animate-pop-in overflow-hidden rounded-lg border border-ink-line bg-ink-card py-1 shadow-pop"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 animate-pop-in overflow-hidden rounded-lg border-2 border-b-4 border-ink-line bg-ink-card py-1 shadow-pop"
         >
           {items.map((item) =>
             item.to ? (

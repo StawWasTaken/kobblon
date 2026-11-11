@@ -262,7 +262,7 @@ export default function CreateWorld() {
         </p>
 
         <div className="flex flex-wrap items-center gap-4">
-          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
+          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media">
             {world.cover_url
               ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
               : <Glyph icon={faImage} className="text-white/30" />}
@@ -296,7 +296,7 @@ export default function CreateWorld() {
           {(media.data ?? []).map((one) => (
             <div
               key={one.id}
-              className="group relative aspect-video overflow-hidden rounded-lg border border-ink-line bg-media"
+              className="group relative aspect-video overflow-hidden rounded-lg border-2 border-ink-line bg-media"
             >
               {one.kind === 'video' ? (
                 <span className="grid h-full w-full place-items-center text-white/50">

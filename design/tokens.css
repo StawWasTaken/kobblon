@@ -17,7 +17,8 @@
   --ink-raised: 22 22 26;
   --ink-card: 26 26 32;
   --ink-hover: 33 33 40;
-  --ink-line: 42 42 51;
+  --ink-line: 84 86 104;
+  --ink-edge: 10 10 13;
   --fg: 255 255 255;
   /*
    * White that stays white, whatever the theme is doing.
@@ -87,7 +88,8 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 234 236 243;
-  --ink-line: 214 218 228;
+  --ink-line: 186 192 209;
+  --ink-edge: 183 190 208;
   --fg: 16 16 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */
   --on-art: 255 255 255;
@@ -162,7 +164,8 @@
   --ink-raised: 22 22 26;
   --ink-card: 26 26 32;
   --ink-hover: 33 33 40;
-  --ink-line: 42 42 51;
+  --ink-line: 84 86 104;
+  --ink-edge: 10 10 13;
   --link: 159 173 255;
   --bubble: 38 38 47;
 }
@@ -179,7 +182,8 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 234 236 243;
-  --ink-line: 214 218 228;
+  --ink-line: 186 192 209;
+  --ink-edge: 183 190 208;
   --link: 27 52 232;
   --bubble: 24 25 32;
 }
@@ -197,7 +201,8 @@
   --ink-raised: 28 21 16;
   --ink-card: 32 24 18;
   --ink-hover: 44 32 23;
-  --ink-line: 59 42 29;
+  --ink-line: 112 80 54;
+  --ink-edge: 13 9 6;
   --link: 255 178 102;
   --bubble: 48 35 25;
 }
@@ -215,7 +220,8 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 247 236 226;
-  --ink-line: 232 216 201;
+  --ink-line: 208 185 162;
+  --ink-edge: 203 180 156;
   --link: 168 74 8;
   --bubble: 46 32 22;
 }
@@ -233,7 +239,8 @@
   --ink-raised: 19 27 22;
   --ink-card: 22 31 25;
   --ink-hover: 30 43 34;
-  --ink-line: 40 58 46;
+  --ink-line: 78 112 89;
+  --ink-edge: 7 14 9;
   --link: 126 226 164;
   --bubble: 34 48 39;
 }
@@ -251,7 +258,8 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 232 243 236;
-  --ink-line: 206 227 214;
+  --ink-line: 176 206 189;
+  --ink-edge: 170 200 181;
   --link: 12 92 50;
   --bubble: 22 40 29;
 }

@@ -150,7 +150,7 @@ export default function BrixCodes() {
                 maxLength={32}
                 placeholder="------"
                 aria-label="Your code"
-                className="h-[4.5rem] w-full rounded-2xl border-2 border-ink-line bg-ink-raised text-center font-mono text-2xl font-extrabold lowercase tracking-[0.35em] text-white outline-none transition-[border-color,box-shadow] placeholder:text-white/15 focus:border-brand-bright focus:shadow-[0_0_0_4px_rgba(27,52,232,0.25)]"
+                className="h-[4.5rem] w-full rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised text-center font-mono text-2xl font-extrabold lowercase tracking-[0.35em] text-white outline-none transition-[border-color,box-shadow] placeholder:text-white/15 focus:border-brand-bright focus:shadow-[0_0_0_4px_rgba(27,52,232,0.25)]"
               />
             </label>
 

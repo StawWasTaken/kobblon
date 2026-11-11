@@ -118,7 +118,7 @@ export default function ConfigureCommunity() {
 
       {/* The Community you are configuring, so it is never in doubt which
           one you are changing. */}
-      <header className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-ink-line bg-ink-card p-4">
+      <header className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
         <Emblem
           src={group.icon_url}
           name={group.name}

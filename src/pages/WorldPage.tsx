@@ -80,7 +80,7 @@ function Handover({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-sm rounded-2xl border border-ink-line bg-ink-card p-7 text-center shadow-pop animate-pop-in">
+      <div className="relative w-full max-w-sm rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-7 text-center shadow-pop animate-pop-in">
         <button
           onClick={onClose}
           aria-label="Close"

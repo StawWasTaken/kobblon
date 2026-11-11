@@ -76,7 +76,7 @@ export class Boundary extends Component<{ children: ReactNode }, State> {
             </button>
             <a
               href="/home"
-              className="inline-flex h-11 items-center rounded-xl border border-ink-line bg-ink-card px-5 text-sm font-bold transition-colors hover:bg-ink-hover"
+              className="inline-flex h-11 items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-5 text-sm font-bold transition-colors hover:bg-ink-hover"
             >
               Go home
             </a>
@@ -104,13 +104,13 @@ export class Boundary extends Component<{ children: ReactNode }, State> {
               What went wrong
             </summary>
 
-            <pre className="mt-3 w-full max-w-full max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-xl border border-ink-line bg-ink-card p-3 text-left text-[11px] leading-relaxed text-white/60">
+            <pre className="mt-3 w-full max-w-full max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-3 text-left text-[11px] leading-relaxed text-white/60">
               {details}
             </pre>
 
             <button
               onClick={() => { navigator.clipboard?.writeText(details) }}
-              className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-lg border border-ink-line bg-ink-card text-xs font-bold transition-colors hover:bg-ink-hover"
+              className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-card text-xs font-bold transition-colors hover:bg-ink-hover"
             >
               Copy the details
             </button>

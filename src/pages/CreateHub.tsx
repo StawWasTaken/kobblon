@@ -506,7 +506,7 @@ export function CreateMarketplace() {
     <div className="space-y-6">
       {/* The search is the page, so it opens the page rather than sitting in
           a corner of it. */}
-      <section className="relative overflow-hidden rounded-3xl border border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9">
+      <section className="relative overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9">
 
         <div className="relative">
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Creator Marketplace</h1>
@@ -527,7 +527,7 @@ export function CreateMarketplace() {
                 onChange={(e) => setTerm(e.target.value)}
                 placeholder="Search by name, by what it is, or by who made it"
                 aria-label="Search the marketplace"
-                className="h-14 w-full rounded-2xl border border-ink-line bg-ink-raised pl-12 pr-24 text-base font-semibold shadow-card transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+                className="h-14 w-full rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised pl-12 pr-24 text-base font-semibold transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
               />
               {term ? (
                 <button
@@ -538,7 +538,7 @@ export function CreateMarketplace() {
                   <Glyph icon={faXmark} />
                 </button>
               ) : (
-                <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-md border border-ink-line px-2 py-0.5 text-[11px] font-bold text-white/35 sm:block">
+                <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-md border-2 border-ink-line px-2 py-0.5 text-[11px] font-bold text-white/35 sm:block">
                   /
                 </kbd>
               )}
@@ -591,7 +591,7 @@ export function CreateMarketplace() {
                 onBlur={() => setMaker(makerDraft.trim())}
                 placeholder="somebody"
                 aria-label="Made by which person"
-                className="h-8 w-32 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+                className="h-8 w-32 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
               />
             </form>
           </div>

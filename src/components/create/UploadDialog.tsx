@@ -231,7 +231,7 @@ export function UploadDialog({
       </div>
 
       {kind === 'mesh' && (
-        <div className="mt-4 rounded-lg border border-ink-line bg-ink-raised p-3">
+        <div className="mt-4 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-white/50">
             Texture <span className="normal-case tracking-normal text-white/35">optional</span>
           </p>
@@ -295,7 +295,7 @@ export function UploadDialog({
         </div>
       )}
 
-      <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-ink-line bg-ink-raised p-3">
+      <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised p-3">
         <input
           type="checkbox"
           checked={list}
@@ -312,7 +312,7 @@ export function UploadDialog({
         </span>
       </label>
 
-      <p className="mt-3 flex items-start gap-2.5 rounded-lg border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/55">
+      <p className="mt-3 flex items-start gap-2.5 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/55">
         <Glyph icon={faShieldHalved} className="mt-0.5 shrink-0" />
         Uploads are checked automatically as soon as they arrive, so most go live straight
         away. Anything the check is unsure about waits for a person, and you will be told

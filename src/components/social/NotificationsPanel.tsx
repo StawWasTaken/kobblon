@@ -327,7 +327,7 @@ export function NotificationsPanel({
 
       <div
         ref={card}
-        className="absolute right-2 top-[3.25rem] z-50 w-[min(94vw,25rem)] animate-pop-in overflow-hidden rounded-2xl border border-ink-line bg-ink-card shadow-pop sm:right-5"
+        className="absolute right-2 top-[3.25rem] z-50 w-[min(94vw,25rem)] animate-pop-in overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop sm:right-5"
       >
         {/* ------------------------------------------------------- header */}
         <div className="relative overflow-hidden border-b border-ink-line bg-ink-raised px-4 py-3">

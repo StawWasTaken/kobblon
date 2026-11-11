@@ -439,7 +439,7 @@ function Window({
               {naming === null ? (
                 <button
                   onClick={() => setNaming((renamed === undefined ? conversation.title : renamed) ?? '')}
-                  className="flex w-full items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-2 text-left text-sm transition-colors hover:border-brand-bright/50"
+                  className="flex w-full items-center gap-2 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-2 text-left text-sm transition-colors hover:border-brand-bright/50"
                 >
                   <span className="min-w-0 flex-1 truncate font-bold">{name}</span>
                   <Glyph icon={faPen} className="shrink-0 text-[11px] text-muted" />
@@ -467,7 +467,7 @@ function Window({
                     maxLength={48}
                     placeholder="Nothing, and it goes by who is in it"
                     aria-label="What this group is called"
-                    className="h-8 min-w-0 flex-1 rounded-lg border border-ink-line bg-ink-raised px-2.5 text-sm placeholder:text-white/25 focus:border-brand-bright focus:outline-none"
+                    className="h-8 min-w-0 flex-1 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 text-sm placeholder:text-white/25 focus:border-brand-bright focus:outline-none"
                   />
                   <button
                     type="submit"
@@ -808,7 +808,7 @@ function List({
               value={term}
               onChange={(e) => setTerm(e.target.value)}
               placeholder="Search for friends"
-              className="h-9 w-full rounded-full border border-ink-line bg-ink-raised pl-8 pr-3 text-sm placeholder:text-white/30 focus:border-brand-bright"
+              className="h-9 w-full rounded-full border-2 border-ink-line bg-ink-raised pl-8 pr-3 text-sm placeholder:text-white/30 focus:border-brand-bright"
             />
           </div>
 

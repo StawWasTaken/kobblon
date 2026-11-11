@@ -247,9 +247,9 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
 
       {/* What it pays and what for, in a panel of its own so the two never
           read as one sentence running on. */}
-      <div className="mx-3 flex-1 rounded-xl border border-ink-line bg-ink-raised p-3">
+      <div className="mx-3 flex-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
         <div className="flex gap-3">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border-2 border-ink-line bg-ink">
             <Icon name="laurel-quest" className="h-8 w-8 text-brand-bright" />
           </span>
 

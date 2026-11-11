@@ -266,7 +266,7 @@ function CommunityTile({ community, joined }: {
   return (
     <Link
       to={communityLink(community)}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60"
     >
       <div className="relative h-24 shrink-0 overflow-hidden bg-media">
         {community.banner_url ? (

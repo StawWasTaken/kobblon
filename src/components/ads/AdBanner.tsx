@@ -137,7 +137,7 @@ export function AdBanner({
                 }
               }}
               style={frame}
-              className="relative block w-full overflow-hidden rounded-xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60"
+              className="relative block w-full overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60"
             >
               <img
                 src={picture}

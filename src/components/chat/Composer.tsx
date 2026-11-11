@@ -221,7 +221,7 @@ export function Composer({
       {bar && createPortal(
         <div
           style={{ left: bar.left, top: bar.top }}
-          className="fixed z-[95] flex items-center gap-0.5 rounded-xl border border-ink-line bg-ink-card p-1 shadow-pop"
+          className="fixed z-[95] flex items-center gap-0.5 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-1 shadow-pop"
         >
           {marks.map((one) => (
             <button

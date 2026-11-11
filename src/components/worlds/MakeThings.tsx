@@ -122,7 +122,7 @@ export function MakeThings({
       </div>
 
       {open && (
-        <div className="mt-4 space-y-3 rounded-2xl border border-ink-line p-4">
+        <div className="mt-4 space-y-3 rounded-2xl border-2 border-ink-line p-4">
           <Field label="Name">
             <Input value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} maxLength={48} />
           </Field>
@@ -150,7 +150,7 @@ export function MakeThings({
           {made.map((one) => (
             <li
               key={one.id}
-              className="flex items-center gap-3 rounded-xl border border-ink-line p-3"
+              className="flex items-center gap-3 rounded-xl border-2 border-ink-line p-3"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink">
                 <Glyph icon={badge ? faAward : faBagShopping} className="text-muted" />

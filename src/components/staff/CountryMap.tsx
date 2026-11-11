@@ -160,7 +160,7 @@ export function CountryMap({ countries, active, onHover, className }: {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-ink-line bg-ink-raised',
+        'relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised',
         className,
       )}
       onMouseLeave={() => onHover?.(null)}

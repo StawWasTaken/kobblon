@@ -104,7 +104,7 @@ export function PersonSheet({ person, rank = 'moderator' }: {
           Comings and goings
         </p>
 
-        <p className="flex items-start gap-2 rounded-xl border border-ink-line bg-ink-raised p-2.5 text-xs leading-relaxed text-muted">
+        <p className="flex items-start gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2.5 text-xs leading-relaxed text-muted">
           <Glyph icon={faGlobe} className="mt-0.5 shrink-0" />
           <span>
             {place
@@ -122,7 +122,7 @@ export function PersonSheet({ person, rank = 'moderator' }: {
             {sessions.data.slice(0, 12).map((one) => (
               <li
                 key={one.id}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-ink-line bg-ink-raised px-3 py-2"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2"
               >
                 <span className="font-bold">{when(one.started_at)}</span>
                 <span className="text-muted">

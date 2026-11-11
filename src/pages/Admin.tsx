@@ -340,7 +340,7 @@ export function CommunityCard({ row, rank, onChanged }: {
       </div>
 
       {closed && row.closed_reason && (
-        <p className="rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-xs leading-relaxed text-muted">
+        <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2 text-xs leading-relaxed text-muted">
           <span className="font-bold text-white/80">Closed because:</span> {row.closed_reason}
         </p>
       )}
@@ -419,7 +419,7 @@ export function CommunityCard({ row, rank, onChanged }: {
       </div>
 
       {asking === 'flag' && (
-        <div className="space-y-2 rounded-xl border border-ink-line bg-ink-raised p-3">
+        <div className="space-y-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
           <Textarea
             label="What is wrong with it"
             rows={2}
@@ -465,7 +465,7 @@ export function CommunityCard({ row, rank, onChanged }: {
       )}
 
       {asking === 'transfer' && (
-        <div className="space-y-2 rounded-xl border border-ink-line bg-ink-raised p-3">
+        <div className="space-y-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
           <Input
             label="Who gets it"
             placeholder="Search by name"
@@ -2314,7 +2314,7 @@ export function AnnounceSection() {
         ]}
         confirmText="Send it"
       >
-        <p className="rounded-xl border border-ink-line bg-ink p-3 text-sm">
+        <p className="rounded-xl border-2 border-ink-line bg-ink p-3 text-sm">
           {confirming}
         </p>
       </Confirm>
@@ -2596,7 +2596,7 @@ export function WordsSection() {
         </div>
 
         {!!draft && (
-          <div className="animate-pop-in space-y-2 rounded-xl border border-ink-line bg-ink p-3">
+          <div className="animate-pop-in space-y-2 rounded-xl border-2 border-ink-line bg-ink p-3">
             {!!draft.note && <p className="text-xs leading-relaxed text-muted">{draft.note}</p>}
 
             {draft.words.map((one, i) => (
@@ -2689,7 +2689,7 @@ export function WordsSection() {
         <p className="py-8 text-center text-sm text-muted">Nothing matches that.</p>
       )}
 
-      <div className="divide-y divide-ink-line overflow-hidden rounded-2xl border border-ink-line bg-ink-card">
+      <div className="divide-y divide-ink-line overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
         {shown.map((term, i) => (
           <div
             key={term.id}
@@ -2775,7 +2775,7 @@ export function WordsSection() {
           {/* Trying it first, because this list runs against everything
               anybody types and a pattern that catches too much is only
               discovered through the people it wrongly refuses. */}
-          <div className="space-y-2 rounded-xl border border-ink-line bg-ink p-3">
+          <div className="space-y-2 rounded-xl border-2 border-ink-line bg-ink p-3">
             <Input
               label="Try it against"
               value={sample}
@@ -2918,7 +2918,7 @@ function RecordCard({ entry, delay, onOpen }: {
       type="button"
       onClick={onOpen}
       style={{ animationDelay: `${delay}ms` }}
-      className="group relative flex w-full animate-row-in items-start gap-3.5 overflow-hidden rounded-2xl border border-ink-line bg-ink-card p-3.5 text-left transition-colors hover:border-white/15 hover:bg-ink-hover sm:gap-4 sm:p-4"
+      className="group relative flex w-full animate-row-in items-start gap-3.5 overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-3.5 text-left transition-colors hover:border-white/15 hover:bg-ink-hover sm:gap-4 sm:p-4"
     >
       <span className={cn('absolute inset-y-0 left-0 w-1', tone.edge)} aria-hidden />
 
@@ -2948,7 +2948,7 @@ function RecordCard({ entry, delay, onOpen }: {
             {gist.map((bit, i) => (
               <span
                 key={`${bit}-${i}`}
-                className="truncate rounded-lg border border-ink-line bg-ink-raised px-2 py-1 text-[11px] font-semibold text-white/70"
+                className="truncate rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2 py-1 text-[11px] font-semibold text-white/70"
               >
                 {bit}
               </span>
@@ -3119,7 +3119,7 @@ export function RecordSection() {
                 <span className="font-bold">@{open.subject_label}</span>
               </div>
             )}
-            <div className="overflow-hidden rounded-xl border border-ink-line">
+            <div className="overflow-hidden rounded-xl border-2 border-ink-line">
               {Object.entries(open.detail)
                 .filter(([, value]) => value !== null && value !== '')
                 .map(([key, value]) => (
@@ -3161,7 +3161,7 @@ export function RecordSection() {
 /** One key cap, for a line that tells somebody the shortcuts exist. */
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-md border border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
+    <kbd className="rounded-md border-2 border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
       {children}
     </kbd>
   )
@@ -3230,7 +3230,7 @@ export function ScreenRow({
         focused && 'ring-2 ring-brand-bright/70',
       )}
     >
-      <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+      <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
         {picture
           ? <img src={picture} alt="" className="h-full w-full object-contain" />
           : <FontAwesomeIcon icon={faFileImage} className="text-white/25" />}
@@ -3489,7 +3489,7 @@ function Figure({ label, value, mark, tone, note }: {
   note?: string
 }) {
   return (
-    <div className="rounded-2xl border border-ink-line bg-ink-card px-5 py-4">
+    <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-5 py-4">
       <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{label}</p>
       <p className={cn('mt-2 flex items-center gap-1.5 font-display text-2xl font-extrabold leading-none', tone)}>
         {mark && <CurrencyMark className="h-4" />}
@@ -3651,7 +3651,7 @@ function OneAccount({ onDone }: { onDone: () => void }) {
       </div>
 
       {picked ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-3 py-2">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2">
           <Avatar src={avatarOf(picked)} personId={picked.id} name={picked.display_name} size="sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{picked.display_name}</p>
@@ -3678,7 +3678,7 @@ function OneAccount({ onDone }: { onDone: () => void }) {
             placeholder="A name or a handle"
           />
           {!!found.data?.length && (
-            <div className="max-h-44 overflow-y-auto rounded-xl border border-ink-line">
+            <div className="max-h-44 overflow-y-auto rounded-xl border-2 border-ink-line">
               {found.data.map((one) => (
                 <button
                   key={one.id}
@@ -4317,7 +4317,7 @@ function Investors({ onChanged }: { onChanged: () => void }) {
       </div>
 
       {/* ------------------------------------------------------ adding one */}
-      <div className="space-y-3 rounded-xl border border-ink-line bg-ink-hover/40 p-4">
+      <div className="space-y-3 rounded-xl border-2 border-ink-line bg-ink-hover/40 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
             label="Who"
@@ -4340,7 +4340,7 @@ function Investors({ onChanged }: { onChanged: () => void }) {
                 key={one.id}
                 type="button"
                 onClick={() => { setPicked(one); setFound([]) }}
-                className="flex items-center gap-2 rounded-lg border border-ink-line bg-ink px-2.5 py-1.5 text-sm hover:border-brand"
+                className="flex items-center gap-2 rounded-lg border-2 border-ink-line bg-ink px-2.5 py-1.5 text-sm hover:border-brand"
               >
                 <PersonAvatar person={one} size="xs" />
                 <span className="font-bold">{one.display_name}</span>
@@ -4406,7 +4406,7 @@ function Investors({ onChanged }: { onChanged: () => void }) {
 function InvestorLine({ row, onDrop }: { row: InvestorRow; onDrop?: () => void }) {
   return (
     <div className={cn(
-      'flex flex-wrap items-center gap-3 rounded-xl border border-ink-line px-3 py-2.5',
+      'flex flex-wrap items-center gap-3 rounded-xl border-2 border-ink-line px-3 py-2.5',
       row.left_at ? 'bg-ink/40 opacity-60' : 'bg-ink-hover/40',
     )}>
       <div className="min-w-0 flex-1">
@@ -4642,7 +4642,7 @@ export function SaleSection() {
             * nothing at 50 Brix and as a lot at 1,200.
             */}
           {sane && (
-            <div className="rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
+            <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3">
               <p className="text-xs font-bold uppercase tracking-wide text-muted">
                 What that looks like
               </p>
@@ -5044,7 +5044,7 @@ export function ShuttersSection() {
 
         {down && (
           <>
-            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-sm">
+            <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm">
               {state.data?.note?.trim()
                 ? state.data.note
                 : 'The notice is showing the words the page carries.'}
@@ -5363,7 +5363,7 @@ function EventPicture({ label, hint, value, fallback, as, onChange }: {
       <p className="text-xs font-bold uppercase tracking-wide text-muted">{label}</p>
 
       <div className="flex items-center gap-3">
-        <span className="grid h-16 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+        <span className="grid h-16 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
           {value || fallback
             ? (
               <img
@@ -6468,7 +6468,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
               <span className="flex items-center gap-2">
                 <span className={cn('whitespace-nowrap text-sm font-bold lg:truncate', !on && 'text-white/85')}>{one.name}</span>
                 {one.needs !== 'moderator' && (
-                  <span className="hidden rounded border border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted lg:inline">
+                  <span className="hidden rounded border-2 border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted lg:inline">
                     {one.needs === 'superadmin' ? 'Super' : 'Admin'}
                   </span>
                 )}
@@ -6622,7 +6622,7 @@ export default function Admin() {
               {/* Nothing on a phone has a Ctrl key, so nothing on a phone
                   should be told about one. */}
               <span className="hidden whitespace-nowrap lg:inline">
-                <kbd className="rounded border border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
+                <kbd className="rounded border-2 border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
                   Ctrl K
                 </kbd>{' '}
                 jumps anywhere.

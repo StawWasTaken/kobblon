@@ -157,7 +157,7 @@ export function CommunityHeader({
               <Menu
                 label="More"
                 trigger={
-                  <span className="grid h-9 w-9 place-items-center rounded-lg border border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
                     <Glyph icon={faEllipsis} />
                   </span>
                 }

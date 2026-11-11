@@ -100,7 +100,7 @@ export function MeshEdit({ asset, userId, angle, onChanged }: {
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-ink-line bg-ink-raised p-4">
+    <div className="space-y-4 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-4">
       <h2 className="font-display text-sm uppercase tracking-wider">Change this mesh</h2>
 
       {/* --------------------------------------------------- the picture */}

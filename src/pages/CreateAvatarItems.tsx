@@ -668,7 +668,7 @@ export default function CreateAvatarItems() {
           {rules.loading ? (
             <Skeleton className="h-16 w-full rounded-xl" />
           ) : rule && (
-            <div className="grid gap-3 rounded-xl border border-ink-line bg-ink-raised p-3 sm:grid-cols-2">
+            <div className="grid gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 sm:grid-cols-2">
               <p className="text-xs leading-relaxed text-muted">
                 Making one costs{' '}
                 <span className="font-bold text-white">
@@ -705,7 +705,7 @@ export default function CreateAvatarItems() {
             <a
               href={chosen.template}
               download
-              className="inline-flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2.5 text-sm font-bold hover:border-brand"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2.5 text-sm font-bold hover:border-brand"
             >
               <Glyph icon={faDownload} className="text-white/50" />
               Download the {chosen.label.toLowerCase()} template
@@ -891,7 +891,7 @@ export default function CreateAvatarItems() {
                 <p className="font-display text-[10px] uppercase tracking-wider text-muted">
                   On a body
                 </p>
-                <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+                <div className="overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
                   {fitting ? (
                     <>
                       <AvatarStage
@@ -950,7 +950,7 @@ export default function CreateAvatarItems() {
                 <p className="font-display text-[10px] uppercase tracking-wider text-muted">
                   On a body
                 </p>
-                <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+                <div className="overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
                   {fitting ? (
                     <AvatarStage
                       look={fitting}
@@ -1006,7 +1006,7 @@ export default function CreateAvatarItems() {
             onChange={(e) => setAbout(e.target.value)} />
 
           {!!target && (
-            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+            <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
               It will say it is by{' '}
               <span className="font-bold text-white">{target.name}</span>, the fee
               comes out of their funds, and what it sells for goes back into them.
@@ -1019,7 +1019,7 @@ export default function CreateAvatarItems() {
             * you put it in the Catalog - which is also where the server
             * checks it against the kind's floor.
             */}
-          <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+          <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
             You set what it sells for when you list it, not now.
             {rule && rule.least_price > 0 && (
               <> The least a {chosen?.label.toLowerCase()} may go for is{' '}
@@ -1194,7 +1194,7 @@ export function MadeCard({
       : 'Waiting to be screened'
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-ink-line bg-ink-card">
+    <article className="flex flex-col overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card">
       <div className="relative grid aspect-square place-items-center overflow-hidden bg-media">
         {item.status === 'rejected'
           ? <Missing why="Turned down" />
@@ -1282,7 +1282,7 @@ export function MadeCard({
             label="More"
             align="right"
             trigger={
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
                 <Glyph icon={faEllipsis} />
               </span>
             }
@@ -1390,7 +1390,7 @@ export function MadeCard({
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
+            <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media">
               <WornPicture item={item} />
             </span>
             <div className="min-w-0">
@@ -1443,7 +1443,7 @@ export function MadeCard({
         }
       >
         <div className="space-y-3">
-          <div className="overflow-hidden rounded-xl border border-ink-line bg-ink-raised">
+          <div className="overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
             {worn ? (
               <AvatarStage
                 look={{
@@ -1564,7 +1564,7 @@ export function MadeCard({
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-line bg-media">
+            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink-line bg-media">
               <WornPicture item={item} />
             </span>
             <p className="text-xs leading-relaxed text-muted">

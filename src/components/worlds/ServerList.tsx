@@ -58,7 +58,7 @@ function Faces({ server, mates }: { server: RunningServer; mates: PlayerThere[] 
         </span>
       ))}
       {rest > 0 && (
-        <span className="grid h-9 w-9 place-items-center rounded-full border border-ink-line bg-ink text-[11px] font-bold text-muted">
+        <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-ink-line bg-ink text-[11px] font-bold text-muted">
           +{rest}
         </span>
       )}

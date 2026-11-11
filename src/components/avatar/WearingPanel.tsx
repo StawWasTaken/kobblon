@@ -51,7 +51,7 @@ export function WearingPanel({ look, loading }: {
     // The figure gets room, and not more than it can fill: a square, because
     // a tall frame is tall empty space above and below a standing body.
     <Card className="grid gap-4 p-4 sm:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-      <Studio className="relative aspect-square rounded-2xl border border-ink-line">
+      <Studio className="relative aspect-square rounded-2xl border-2 border-ink-line">
         {loading ? (
           <Skeleton className="h-full w-full" />
         ) : (
@@ -120,7 +120,7 @@ export function WearingPanel({ look, loading }: {
               key={piece.itemId ?? piece.contentId}
               to={`/catalog/${avatarTag(piece.kind ?? '', piece.contentId)}`}
               title={piece.name ?? undefined}
-              className="rounded-xl border border-ink-line bg-ink-raised p-2 transition-colors hover:border-brand/60"
+              className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2 transition-colors hover:border-brand/60"
             >
               <span className="relative block aspect-square overflow-hidden rounded-lg bg-ink-card">
                 {piece.cardUrl ? (

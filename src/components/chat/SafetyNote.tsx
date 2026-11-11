@@ -23,7 +23,7 @@ export function SafetyNote({
   className?: string
 }) {
   return (
-    <div className={cn('rounded-xl border border-ink-line bg-ink-raised p-3', className)}>
+    <div className={cn('rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3', className)}>
       <Link to={profileLink(person)} className="flex items-center gap-2">
         <Avatar src={avatarOf(person)} personId={person.id} name={person.display_name} size="sm" />
         <span className="min-w-0">
@@ -42,7 +42,7 @@ export function SafetyNote({
         {onIgnore && (
           <button
             onClick={onIgnore}
-            className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
+            className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-b-4 border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
           >
             <Glyph icon={ignored ? faEye : faEyeSlash} className="text-[10px]" />
             {ignored ? 'Unignore' : 'Ignore'}
@@ -50,14 +50,14 @@ export function SafetyNote({
         )}
         <button
           onClick={onBlock}
-          className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
+          className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-b-4 border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
         >
           <Glyph icon={faBan} className="text-[10px]" />
           Block
         </button>
         <button
           onClick={onReport}
-          className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
+          className="inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-b-4 border-ink-line bg-ink-card text-xs font-bold text-white/70 transition-colors hover:bg-ink-hover hover:text-white"
         >
           <Glyph icon={faFlag} className="text-[10px]" />
           Report

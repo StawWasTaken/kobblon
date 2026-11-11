@@ -55,7 +55,7 @@ function Lead({ world }: { world: World }) {
   return (
     <Link
       to={worldLink(world)}
-      className="group relative block aspect-[16/10] overflow-hidden rounded-2xl border border-ink-line bg-media sm:aspect-[16/9]"
+      className="group relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-ink-line bg-media sm:aspect-[16/9]"
     >
       <Cover world={world} className="group-hover:scale-[1.03]" />
 
@@ -83,12 +83,12 @@ function Runner({ world, place }: { world: World; place: number }) {
   return (
     <Link
       to={worldLink(world)}
-      className="group flex items-center gap-3 rounded-xl border border-ink-line bg-ink-card p-2 transition-colors hover:border-brand/60 hover:bg-ink-hover"
+      className="group flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-2 transition-colors hover:border-brand/60 hover:bg-ink-hover"
     >
       <span className="w-4 shrink-0 text-center font-display text-sm font-extrabold text-muted">
         {place}
       </span>
-      <span className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-ink-line bg-media">
+      <span className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 border-ink-line bg-media">
         <Cover world={world} className="group-hover:scale-[1.06]" />
       </span>
       <span className="min-w-0 flex-1">

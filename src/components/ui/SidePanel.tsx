@@ -28,7 +28,7 @@ export function SidePanel({ icon, title, to, all, children, bare, className }: {
   className?: string
 }) {
   return (
-    <section className={cn('overflow-hidden rounded-xl border border-ink-line bg-ink-card', className)}>
+    <section className={cn('overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card', className)}>
       <header className="flex items-center gap-2 border-b border-ink-line bg-ink-raised/70 px-4 py-2.5">
         {icon && <Glyph icon={icon} className="text-xs text-muted" />}
         <h2 className="font-display text-sm font-extrabold">{title}</h2>

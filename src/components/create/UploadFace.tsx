@@ -115,7 +115,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
   const sound = useSignedUrl(item.kind === 'audio' ? item.file_path : null)
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <Link
         to={tag ? `/create/${tag}` : '/create/uploads'}
         className="relative block aspect-[4/3] overflow-hidden bg-media"

@@ -109,7 +109,7 @@ export function Dialog({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative w-full animate-pop-in rounded-t-2xl border border-ink-line bg-ink-card shadow-pop sm:rounded-2xl',
+          'relative w-full animate-pop-in rounded-t-2xl border-2 border-ink-line bg-ink-card shadow-pop sm:rounded-2xl',
           size === 'sm' && 'sm:max-w-sm',
           size === 'md' && 'sm:max-w-lg',
           size === 'lg' && 'sm:max-w-2xl',

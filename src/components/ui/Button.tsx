@@ -63,9 +63,23 @@ const variants: Record<Variant, string> = {
   brand:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
   ghost:
-    'bg-transparent text-white/80 hover:bg-white/10 hover:text-white border border-transparent',
+    'bg-transparent text-white/80 hover:bg-white/10 hover:text-white border-2 border-transparent',
+  /*
+   * A block too, and this is the one that changed the page most.
+   *
+   * `subtle` is the second button in nearly every pair on Kobblon - Cancel
+   * beside Save, Follow beside Message - and it was a 1px outline standing
+   * next to a solid button with a 3px lip. The pair read as "a button, and
+   * some text that happens to be in a box", which is not what a choice
+   * between two things should look like.
+   *
+   * Same stroke and the same side face as everything else now, and it
+   * presses the same way: the lip disappears and the button moves down into
+   * it. The fill is what says it is the quieter one, not the weight.
+   */
   subtle:
-    'bg-ink-hover text-white hover:bg-[#2c2c36] border border-ink-line',
+    'bg-ink-hover text-white hover:bg-ink-line border-2 border-ink-line '
+    + 'border-b-[3px] border-b-ink-edge active:border-b-2 active:mt-[1px]',
   /*
    * Built exactly like primary and yes, in red. Staw: a red button should be
    * just like a blue or a green one, only red.
@@ -91,7 +105,9 @@ const sizes: Record<Size, string> = {
 }
 
 const base =
-  'inline-flex items-center justify-center font-semibold transition-[background-color,transform,box-shadow] duration-150 ' +
+  // `font-bold`, not semibold: a control on a gamified page is a thing you
+  // press, and it should look like it carries its own weight.
+  'inline-flex items-center justify-center font-bold transition-[background-color,transform,box-shadow] duration-150 ' +
   'active:translate-y-px disabled:opacity-50 disabled:pointer-events-none select-none whitespace-nowrap'
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

@@ -561,7 +561,7 @@ export function TicketCard({
             }))}
           />
           {topicHere && (
-            <p className="flex items-start gap-2.5 rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+            <p className="flex items-start gap-2.5 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
               <Glyph icon={topicHere.icon} className="mt-0.5 shrink-0 text-sm text-brand-bright" />
               <span><span className="font-bold text-white">{topicHere.label}</span> · {topicHere.note}</span>
             </p>
@@ -594,7 +594,7 @@ export function TicketCard({
               placeholder={business
                 ? 'Who you are, what you have in mind, and what you are hoping for from us.'
                 : 'What you did, what you expected, and what happened instead.'}
-              className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+              className="w-full resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
             />
             <p className="mt-1.5 text-xs text-muted">{4000 - body.length} characters left.</p>
           </div>
@@ -621,7 +621,7 @@ export function TicketCard({
       {step === 'you' && (
         <div className="space-y-3.5">
           {username && (
-            <div className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3">
+            <div className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3">
               <Glyph icon={faUser} className="text-sm text-brand-bright" />
               <p className="min-w-0 flex-1 text-sm">
                 Writing as <span className="font-bold">@{username}</span>

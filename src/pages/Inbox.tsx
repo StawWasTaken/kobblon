@@ -64,7 +64,7 @@ function Mark({ kind, size = 'md' }: { kind: MailKind; size?: 'sm' | 'md' }) {
   return (
     <span
       className={cn(
-        'grid shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-raised',
+        'grid shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised',
         size === 'sm' ? 'h-9 w-9' : 'h-11 w-11',
         look.tint,
       )}
@@ -169,7 +169,7 @@ function Reading({ letter, onBack }: { letter: Letter; onBack: () => void }) {
           {letter.link && (
             <Link
               to={letter.link}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-4 py-2.5 text-sm font-bold text-link transition-colors hover:bg-ink-hover"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-2.5 text-sm font-bold text-link transition-colors hover:bg-ink-hover"
             >
               Go to it
               <Glyph icon={faArrowRight} className="text-xs" />

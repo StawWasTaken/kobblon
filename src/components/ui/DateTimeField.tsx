@@ -196,7 +196,7 @@ function Field({
             type="button"
             onClick={() => onChange('')}
             aria-label={`Clear ${label ?? 'the date'}`}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-ink-line text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-ink-line text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
           >
             <Glyph icon={faXmark} />
           </button>
@@ -209,7 +209,7 @@ function Field({
           role="dialog"
           aria-label={label ?? 'Pick a date'}
           style={box ? { left: box.left, top: box.top } : { opacity: 0 }}
-          className="fixed z-[80] w-[20rem] animate-pop-in rounded-2xl border border-ink-line bg-ink-card p-3 shadow-pop"
+          className="fixed z-[80] w-[20rem] animate-pop-in rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-3 shadow-pop"
         >
           <div className="mb-2 flex items-center gap-2">
             <button

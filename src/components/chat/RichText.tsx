@@ -83,7 +83,7 @@ export function RichText({ text, people, me, className }: {
          * held by the width and a tall one by the height.
          */
         className={cn(
-          'mt-0.5 max-h-40 w-auto max-w-[220px] rounded-xl border border-ink-line',
+          'mt-0.5 max-h-40 w-auto max-w-[220px] rounded-xl border-2 border-ink-line',
           className,
         )}
       />

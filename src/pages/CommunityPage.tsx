@@ -193,7 +193,7 @@ export default function CommunityPage() {
     return (
       <Page width="narrow" className="py-10">
         <Card className="flex flex-col items-center gap-4 py-10 text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl border border-ink-line bg-ink-raised text-xl text-muted">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised text-xl text-muted">
             <Glyph icon={faLock} />
           </span>
           <h1 className="font-display text-2xl font-extrabold">

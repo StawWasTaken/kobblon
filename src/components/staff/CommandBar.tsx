@@ -102,7 +102,7 @@ export function CommandBar({ panels, onGo, onFindPerson }: {
         role="dialog"
         aria-modal="true"
         aria-label="Jump to"
-        className="relative w-full max-w-xl animate-pop-in overflow-hidden rounded-2xl border border-ink-line bg-ink-card shadow-pop"
+        className="relative w-full max-w-xl animate-pop-in overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop"
       >
         <div className="flex items-center gap-3 border-b border-ink-line px-4 py-3">
           <Glyph icon={faMagnifyingGlass} className="text-muted" />
@@ -115,7 +115,7 @@ export function CommandBar({ panels, onGo, onFindPerson }: {
             aria-label="Jump to a panel, or find somebody"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
           />
-          <kbd className="rounded-md border border-ink-line px-1.5 py-0.5 text-[10px] font-bold text-muted">
+          <kbd className="rounded-md border-2 border-ink-line px-1.5 py-0.5 text-[10px] font-bold text-muted">
             Esc
           </kbd>
         </div>

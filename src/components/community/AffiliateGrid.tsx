@@ -134,7 +134,7 @@ export function AffiliateGrid({
                   <button
                     onClick={() => onAnswer(other.id, false)}
                     aria-label={`Decline ${other.name}`}
-                    className="grid h-7 w-7 place-items-center rounded-lg border border-ink-line text-white/50 hover:bg-ink-hover hover:text-white"
+                    className="grid h-7 w-7 place-items-center rounded-lg border-2 border-ink-line text-white/50 hover:bg-ink-hover hover:text-white"
                   >
                     <Glyph icon={faXmark} className="text-[10px]" />
                   </button>

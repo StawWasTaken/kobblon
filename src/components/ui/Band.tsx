@@ -77,7 +77,7 @@ export function Ribbon({ children, className }: {
   return (
     <div
       className={cn(
-        'flex flex-wrap items-stretch rounded-2xl border border-ink-line bg-ink-card',
+        'flex flex-wrap items-stretch rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card',
         'divide-ink-line sm:flex-nowrap sm:divide-x',
         className,
       )}

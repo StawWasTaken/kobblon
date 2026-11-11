@@ -92,7 +92,7 @@ export default function EventPage() {
 
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr] lg:items-start">
         <div className="space-y-4">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-ink-line bg-media">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border-2 border-ink-line bg-media">
             {it.cover_url ? (
               <img
                 src={it.cover_url}
@@ -109,7 +109,7 @@ export default function EventPage() {
 
           <Link
             to={communityLink({ slug: it.community_slug, content_id: it.community_content_id })}
-            className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-card p-3 transition-colors hover:border-brand/60"
+            className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-3 transition-colors hover:border-brand/60"
           >
             <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-deep text-xs font-extrabold">
               {it.community_icon

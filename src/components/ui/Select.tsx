@@ -136,7 +136,7 @@ export function Select({
           role="listbox"
           aria-label={label}
           style={box ? { left: box.left, top: box.top, width: box.width } : { opacity: 0 }}
-          className="fixed z-[90] max-h-64 overflow-y-auto rounded-xl border border-ink-line bg-ink-card py-1 shadow-pop animate-pop-in kob-scroll"
+          className="fixed z-[90] max-h-64 overflow-y-auto rounded-xl border-2 border-b-4 border-ink-line bg-ink-card py-1 shadow-pop animate-pop-in kob-scroll"
         >
           {options.map((option, index) => (
             <button

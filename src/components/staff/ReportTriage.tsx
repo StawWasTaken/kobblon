@@ -132,7 +132,7 @@ function History({ ticket }: { ticket: ReportTicket }) {
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {bits.map((bit) => (
-          <div key={bit.label} className="rounded-lg border border-ink-line bg-ink-hover p-2">
+          <div key={bit.label} className="rounded-lg border-2 border-ink-line bg-ink-hover p-2">
             <p className={cn('text-lg font-black', bit.loud ? 'text-amber-300' : 'text-white')}>
               {bit.value}
             </p>
@@ -248,7 +248,7 @@ export function ReportTriage({
         </p>
 
         {ticket.details && (
-          <p className="whitespace-pre-wrap rounded-lg border border-ink-line bg-ink-hover p-3 text-sm text-white/80">
+          <p className="whitespace-pre-wrap rounded-lg border-2 border-ink-line bg-ink-hover p-3 text-sm text-white/80">
             {ticket.details}
           </p>
         )}
@@ -258,7 +258,7 @@ export function ReportTriage({
       <History ticket={ticket} />
 
       {settled ? (
-        <p className="rounded-lg border border-ink-line bg-ink-hover p-3 text-sm text-muted">
+        <p className="rounded-lg border-2 border-ink-line bg-ink-hover p-3 text-sm text-muted">
           Already settled as{' '}
           <span className="font-bold text-white/80">
             {SAID[ticket.outcome ?? ''] ?? ticket.outcome}
@@ -320,7 +320,7 @@ export function ReportTriage({
           )}
 
           {deed && (
-            <div className="space-y-3 rounded-xl border border-ink-line bg-ink-hover p-3">
+            <div className="space-y-3 rounded-xl border-2 border-ink-line bg-ink-hover p-3">
               <Textarea
                 label={deed.value === 'nothing' ? 'A note, for the record' : 'Why - they are shown this'}
                 value={why}

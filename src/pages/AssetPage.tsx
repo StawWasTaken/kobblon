@@ -115,7 +115,7 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl, onTurn }: {
 
   if (asset.kind === 'audio') {
     return (
-      <div className="grid aspect-square place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised">
+      <div className="grid aspect-square place-items-center overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised">
         {previewUrl ? (
           <img
             src={previewUrl}
@@ -142,7 +142,7 @@ function Stage({ asset, previewUrl, fileUrl, textureUrl, onTurn }: {
   return (
     <div
       className={cn(
-        'grid w-full place-items-center overflow-hidden rounded-2xl border border-ink-line bg-ink-raised',
+        'grid w-full place-items-center overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised',
         shape ? '' : 'aspect-square',
       )}
       style={shape ? { aspectRatio: `${shape.w} / ${shape.h}` } : undefined}
@@ -527,7 +527,7 @@ export default function AssetPage() {
             label="More"
             align="right"
             trigger={
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
                 <Glyph icon={faEllipsis} />
               </span>
             }
@@ -758,7 +758,7 @@ export default function AssetPage() {
           {asset.kind === 'mesh' && asset.texture_content_id && (
             <Link
               to={`/create/${kindCodes.image}-${asset.texture_content_id}`}
-              className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised px-3 py-2.5 hover:border-brand"
+              className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2.5 hover:border-brand"
             >
               <Glyph icon={kindIcons.image} className="text-white/40" />
               <span className="min-w-0 flex-1">
@@ -839,7 +839,7 @@ export default function AssetPage() {
                         const fee = listingFee(asked)
                         const keeps = asked - Math.round((asked * PLATFORM_SHARE) / 100)
                         return (
-                          <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+                          <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
                             Listing costs <span className="font-bold text-white">{fee}</span>{' '}
                             {currency.plural} now, a quarter back if you take it off sale. You keep{' '}
                             <span className="font-bold text-white">{keeps}</span> of every {asked};
@@ -849,7 +849,7 @@ export default function AssetPage() {
                       }
 
                       return (
-                        <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+                        <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
                           Taking it off sale hands back a quarter of what putting it up cost.
                           Anybody who has already bought it keeps it.
                         </p>
@@ -991,7 +991,7 @@ function ReviewBox({ asset, onDone }: { asset: AssetPageItem; onDone: () => void
    */
   if (!asset.i_can_use) {
     return (
-      <p className="rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm text-muted">
+      <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm text-muted">
         {asset.price > 0
           ? 'Buy it to rate it or write a review.'
           : 'Take it to rate it or write a review. It is free.'}
@@ -1000,7 +1000,7 @@ function ReviewBox({ asset, onDone }: { asset: AssetPageItem; onDone: () => void
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-ink-line bg-ink-raised p-4">
+    <div className="space-y-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-4">
       <div className="flex items-center gap-2">
         {[true, false].map((up) => (
           <button

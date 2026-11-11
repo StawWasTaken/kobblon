@@ -191,7 +191,7 @@ export function MeshView({
     <div
       className={cn(
         'relative grid w-full select-none place-items-center overflow-hidden',
-        bare ? 'h-full' : 'aspect-square rounded-2xl border border-ink-line bg-ink-raised',
+        bare ? 'h-full' : 'aspect-square rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised',
         className,
       )}
       draggable={false}
@@ -302,7 +302,7 @@ export function MeshView({
           role="menu"
           style={{ left: menu.x, top: menu.y }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute z-20 min-w-[11rem] overflow-hidden rounded-xl border border-ink-line bg-ink-raised py-1 shadow-pop"
+          className="absolute z-20 min-w-[11rem] overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised py-1 shadow-pop"
         >
           <button
             type="button"

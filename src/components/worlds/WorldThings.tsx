@@ -43,7 +43,7 @@ function Thing({
 }) {
   return (
     <div className="flex w-32 flex-col items-center gap-3 p-4 text-center">
-      <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-ink-line bg-ink">
+      <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-ink-line bg-ink">
         {picture ? (
           <img src={picture} alt="" className="h-full w-full object-cover" />
         ) : (

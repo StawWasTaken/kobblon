@@ -56,7 +56,7 @@ export function FriendRequestCard({
   return (
     <article
       className={cn(
-        'w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-ink-line bg-ink-card',
+        'w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card',
         'shadow-pop animate-slide-up',
       )}
     >

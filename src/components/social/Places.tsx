@@ -70,7 +70,7 @@ export function Places({ who, boards, className }: {
           <Link
             key={one.board}
             to="/leaderboards"
-            className="flex items-center gap-3 rounded-2xl border border-ink-line bg-ink-card px-4 py-3 transition-colors hover:bg-ink-hover"
+            className="flex items-center gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3 transition-colors hover:bg-ink-hover"
           >
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-ink-raised text-brand-bright">
               <Glyph icon={one.icon} />

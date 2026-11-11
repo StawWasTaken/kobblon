@@ -206,7 +206,7 @@ export function RolesEditor({ communityId }: { communityId: string }) {
                 }}
                 maxLength={32}
                 aria-label="Role name"
-                className="h-10 min-w-40 flex-1 rounded-lg border border-ink-line bg-ink-raised px-3 font-display text-lg font-extrabold focus:border-brand-bright"
+                className="h-10 min-w-40 flex-1 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-3 font-display text-lg font-extrabold focus:border-brand-bright"
               />
               <span className="grid h-10 w-12 shrink-0 place-items-center rounded-lg bg-brand-deep font-display text-sm font-extrabold">
                 {current.rank}
@@ -237,7 +237,7 @@ export function RolesEditor({ communityId }: { communityId: string }) {
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
                     {group.heading}
                   </p>
-                  <div className="divide-y divide-ink-line rounded-xl border border-ink-line">
+                  <div className="divide-y divide-ink-line rounded-xl border-2 border-ink-line">
                     {group.permissions.map((permission) => (
                       <div
                         key={permission.key}

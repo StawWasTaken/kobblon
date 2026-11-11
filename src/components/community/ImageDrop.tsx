@@ -123,7 +123,7 @@ export function ImageDrop({
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="rounded-lg border border-ink-line bg-ink-card px-3 py-1.5 text-xs font-bold transition-colors hover:bg-ink-hover"
+            className="rounded-lg border-2 border-b-4 border-ink-line bg-ink-card px-3 py-1.5 text-xs font-bold transition-colors hover:bg-ink-hover"
           >
             Select an image from your computer
           </button>

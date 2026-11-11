@@ -205,7 +205,7 @@ export function TicketThread({
                 maxLength={4000}
                 placeholder="Write back"
                 aria-label="Write back"
-                className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+                className="w-full resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
               />
             )}
           </div>

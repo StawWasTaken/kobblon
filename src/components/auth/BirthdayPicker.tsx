@@ -135,7 +135,7 @@ export function BirthdayPicker({
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-50 animate-pop-in overflow-hidden rounded-xl border border-ink-line bg-ink-card shadow-pop">
+        <div className="absolute inset-x-0 top-[calc(100%+6px)] z-50 animate-pop-in overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop">
           <div className="flex divide-x divide-ink-line">
             <Column
               label="Month"

@@ -190,7 +190,7 @@ function ShopCard({ item }: { item: AvatarItem }) {
     <div className="relative">
       {!item.price && <FreeCorner />}
       <div className={cn(
-        'overflow-hidden rounded-xl border border-ink-line bg-ink-card',
+        'overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card',
         'transition-colors hover:border-brand/60',
       )}>
         <Link

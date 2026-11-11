@@ -302,7 +302,7 @@ export function MeshViewer({
     <div
       className={cn(
         'relative grid aspect-square w-full place-items-center overflow-hidden',
-        !bare && 'rounded-2xl border border-ink-line bg-ink-raised',
+        !bare && 'rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised',
         className,
       )}
     >

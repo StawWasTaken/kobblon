@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
-import { faUserGroup, faInbox, faHeart, faEyeSlash, faBan, faComment, faEllipsis } from '@fortawesome/free-solid-svg-icons'
+import { faUserGroup, faInbox, faBell, faEyeSlash, faBan, faComment, faEllipsis } from '@fortawesome/free-solid-svg-icons'
 import { ListTab } from '@/pages/Friends'
 import { PersonCard, FaceGrid } from '@/components/social/PersonCard'
 import { ActivityLine } from '@/components/social/Whereabouts'
@@ -45,8 +45,8 @@ learnWhereabouts(['2'], [{
 function Demo() {
   const [tab, setTab] = useState('Friends')
   const tabs = [
-    ['Friends', faUserGroup, 24], ['Requests', faInbox, 2], ['Followers', faHeart, 180],
-    ['Following', faHeart, 31], ['Ignored', faEyeSlash, 0], ['Blocked', faBan, 1],
+    ['Friends', faUserGroup, 24], ['Requests', faInbox, 2], ['Followers', faBell, 180],
+    ['Following', faBell, 31], ['Ignored', faEyeSlash, 0], ['Blocked', faBan, 1],
   ] as const
 
   return (

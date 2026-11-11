@@ -88,7 +88,7 @@ export function Resale({ itemId, owned, canTrade, onChanged }: {
       {/* Yours to put up, or to take back. */}
       {owned && canTrade && (
         mine ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-ink-line bg-ink-raised p-2.5 text-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2.5 text-sm">
             <span>
               You are asking <CurrencyMark className="mx-0.5" />{formatCount(mine.price)}
             </span>
@@ -136,7 +136,7 @@ export function Resale({ itemId, owned, canTrade, onChanged }: {
           {offers.data.map((offer) => (
             <li
               key={offer.id}
-              className="flex items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-sm"
+              className="flex items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2 text-sm"
             >
               <span className="min-w-0 flex-1 truncate">
                 {offer.mine ? 'You' : offer.seller_display_name}

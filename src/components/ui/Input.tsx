@@ -5,8 +5,12 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { cn } from '@/lib/cn'
 
 const field =
-  'w-full rounded-xl border border-ink-line bg-ink-raised px-3.5 py-2.5 text-sm text-white ' +
-  'placeholder:text-white/30 transition-colors focus:border-brand-bright focus:bg-ink-hover'
+  // Two-pixel stroke like every other surface, and the focus is the whole
+  // edge turning brand blue rather than a hairline changing shade. On a
+  // page this dark, a 1px focus border was easy to miss entirely.
+  'w-full rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3.5 py-2.5 text-sm text-white ' +
+  'placeholder:text-white/30 transition-colors outline-none ' +
+  'focus:border-brand-bright focus:bg-ink-hover'
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string

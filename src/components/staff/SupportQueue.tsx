@@ -403,7 +403,7 @@ export function TicketDrawer({ one, onClose, onMove, onReplied }: {
               rows={5}
               maxLength={4000}
               placeholder="They see this exactly as you write it, and get it as a letter too."
-              className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+              className="w-full resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
             />
           </label>
           <div className="flex items-center gap-3">

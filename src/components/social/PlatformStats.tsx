@@ -46,7 +46,7 @@ function Tile({
   accent?: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-ink-line bg-ink-card/80 p-4 backdrop-blur">
+    <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/80 p-4 backdrop-blur">
       <span
         className={cn(
           'grid h-9 w-9 place-items-center rounded-xl text-sm',

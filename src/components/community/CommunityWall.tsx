@@ -138,7 +138,7 @@ export function CommunityWall({
               maxLength={1000}
               rows={3}
               placeholder="Say something..."
-              className="min-h-[5.5rem] flex-1 resize-y rounded-xl border border-ink-line bg-ink-raised px-3.5 py-2.5 text-sm placeholder:text-white/30 focus:border-brand-bright"
+              className="min-h-[5.5rem] flex-1 resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3.5 py-2.5 text-sm placeholder:text-white/30 focus:border-brand-bright"
             />
             <div className="flex shrink-0 flex-row items-center gap-3 sm:w-32 sm:flex-col sm:items-stretch">
               <Button
@@ -165,7 +165,7 @@ export function CommunityWall({
                   type="button"
                   onClick={() => setPicking((on) => !on)}
                   aria-expanded={picking}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-ink-line px-3 py-2 text-xs font-extrabold text-muted transition-colors hover:border-brand-bright hover:text-white"
+                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-ink-line px-3 py-2 text-xs font-extrabold text-muted transition-colors hover:border-brand-bright hover:text-white"
                 >
                   <img
                     src={pictureUrl(stickers[0].small ?? stickers[0].picture)}
@@ -179,7 +179,7 @@ export function CommunityWall({
           </form>
 
           {picking && (
-            <div className="mt-3 overflow-hidden rounded-xl border border-ink-line bg-ink/40">
+            <div className="mt-3 overflow-hidden rounded-xl border-2 border-ink-line bg-ink/40">
               <StickerCard
                 onPick={(one) => { setPicking(false); void sendSticker(tokenFor(one)) }}
                 onClose={() => setPicking(false)}

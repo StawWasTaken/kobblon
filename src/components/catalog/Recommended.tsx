@@ -127,7 +127,7 @@ function Card({ item, nth }: { item: AvatarItem; nth: number }) {
         to={to}
         draggable={false}
         className={cn(
-          'flex flex-col overflow-hidden rounded-2xl border border-ink-line bg-ink-card',
+          'flex flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card',
           'transition-colors hover:border-brand/60',
         )}
       >

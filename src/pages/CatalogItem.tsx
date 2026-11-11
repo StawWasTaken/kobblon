@@ -282,7 +282,7 @@ export default function CatalogItem() {
                   label="More"
                   align="right"
                   trigger={
-                    <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+                    <span className="grid h-8 w-8 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
                       <Glyph icon={faEllipsis} />
                     </span>
                   }
@@ -383,7 +383,7 @@ export default function CatalogItem() {
               <p className={cn(
                 'flex items-start gap-2 rounded-xl p-3 text-xs leading-relaxed',
                 closed
-                  ? 'border border-ink-line bg-ink-raised text-white/65'
+                  ? 'border-2 border-ink-line bg-ink-raised text-white/65'
                   : 'border border-amber-400/40 bg-amber-400/10 text-amber-200',
               )}>
                 <Glyph icon={faClock} className="mt-0.5" />
@@ -402,7 +402,7 @@ export default function CatalogItem() {
             )}
 
             {!item.is_public && (
-              <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/65">
+              <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-white/65">
                 This is not in the Catalog. You can see it because you made it.
               </p>
             )}
@@ -755,7 +755,7 @@ function ItemView({ item }: { item: AvatarItem }) {
   ].filter((one) => one.on)
 
   return (
-    <div className="relative rounded-2xl border border-ink-line bg-ink-card">
+    <div className="relative rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
       {/*
         * Outside the box that clips, which is where it has to be.
         *

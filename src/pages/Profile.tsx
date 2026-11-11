@@ -419,7 +419,7 @@ export default function Profile() {
       style={{ '--me': accent } as React.CSSProperties}
     >
       {/* ------------------------------------------------------- the person */}
-      <section className="relative overflow-hidden rounded-3xl border border-ink-line">
+      <section className="relative overflow-hidden rounded-3xl border-2 border-ink-line">
         {/* Their own face, out of focus, is the backdrop: no stock banner,
             nothing everybody shares. */}
         <div className="absolute inset-0" aria-hidden="true">
@@ -488,7 +488,7 @@ export default function Profile() {
                 <Link
                   key={label}
                   to={`${profileLink(user)}/friends?list=${list}`}
-                  className="rounded-full border border-ink-line bg-ink-card/80 px-4 py-1.5 text-sm font-bold transition-colors hover:bg-ink-hover"
+                  className="rounded-full border-2 border-ink-line bg-ink-card/80 px-4 py-1.5 text-sm font-bold transition-colors hover:bg-ink-hover"
                 >
                   <span className="tabular-nums">{formatCount(count)}</span>
                   <span className="ml-1.5 text-white/60">{label}</span>
@@ -535,7 +535,7 @@ export default function Profile() {
                     }
                     side="top"
                   >
-                    <p className="inline-flex cursor-default items-center gap-2 rounded-lg border border-ink-line bg-ink-raised px-2.5 py-1 text-xs font-bold">
+                    <p className="inline-flex cursor-default items-center gap-2 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-1 text-xs font-bold">
                       <Glyph icon={faDiscord} className="text-[#5865F2]" />
                       {user.discord_display}
                     </p>
@@ -555,7 +555,7 @@ export default function Profile() {
                   onClick={() => setPicking(true)}
                   aria-label="Your colour"
                   title="Your colour"
-                  className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line text-white/80 transition-colors hover:bg-ink-hover"
+                  className="grid h-10 w-10 place-items-center rounded-xl border-2 border-ink-line text-white/80 transition-colors hover:bg-ink-hover"
                   style={{ background: `${accent}33` }}
                 >
                   <Glyph icon={faPalette} />
@@ -683,7 +683,7 @@ export default function Profile() {
               label={`More about ${user.display_name}`}
               align="right"
               trigger={
-                <span className="grid h-10 w-10 place-items-center rounded-xl border border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
+                <span className="grid h-10 w-10 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-card text-white/70 transition-colors hover:bg-ink-hover hover:text-white">
                   <Glyph icon={faEllipsis} />
                 </span>
               }
@@ -1046,7 +1046,7 @@ export default function Profile() {
                 {names.data.map((row) => (
                   <span
                     key={row.username}
-                    className="rounded-full border border-ink-line bg-ink-raised px-3 py-1 text-xs font-bold text-white/70"
+                    className="rounded-full border-2 border-ink-line bg-ink-raised px-3 py-1 text-xs font-bold text-white/70"
                   >
                     @{row.username}
                   </span>

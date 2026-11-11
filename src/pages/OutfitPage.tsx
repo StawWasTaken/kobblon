@@ -133,7 +133,7 @@ export default function OutfitPage() {
 
       <div className="mx-auto grid w-full max-w-5xl items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
         {/* ----------------------------------------------------- the viewer */}
-        <div className="relative rounded-2xl border border-ink-line bg-ink-card">
+        <div className="relative rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
           {/* Outside the box that clips, which is where it has to be: the
               badge sits half on and half off the corner. */}
           {costs <= 0 && !one.mine && <FreeCorner size="page" />}
@@ -181,7 +181,7 @@ export default function OutfitPage() {
                   label="More"
                   align="right"
                   trigger={
-                    <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
+                    <span className="grid h-8 w-8 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-white/60 transition-colors hover:bg-ink-hover hover:text-white">
                       <Glyph icon={faEllipsis} />
                     </span>
                   }
@@ -331,7 +331,7 @@ export default function OutfitPage() {
                 <li key={piece.item_id}>
                   <Link
                     to={`/catalog/${avatarTag(piece.kind, piece.content_id)}`}
-                    className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised p-2.5 transition-colors hover:border-brand/60"
+                    className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2.5 transition-colors hover:border-brand/60"
                   >
                     <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-media">
                       {pictureOf(piece) ? (

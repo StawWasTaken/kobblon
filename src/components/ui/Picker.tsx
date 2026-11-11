@@ -107,7 +107,7 @@ export function Picker({
           aria-labelledby={id}
           tabIndex={-1}
           className={cn(
-            'absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-56 animate-pop-in overflow-y-auto rounded-lg border border-ink-line bg-ink-card p-1 shadow-pop kob-scroll',
+            'absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-56 animate-pop-in overflow-y-auto rounded-lg border-2 border-b-4 border-ink-line bg-ink-card p-1 shadow-pop kob-scroll',
             columns > 1 && 'grid gap-1',
           )}
           style={columns > 1 ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : undefined}

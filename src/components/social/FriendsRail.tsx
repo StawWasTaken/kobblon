@@ -99,7 +99,7 @@ export function FriendsRail() {
           to="/friends"
           className="group flex flex-col items-center gap-2 text-center sm:gap-2.5"
         >
-          <span className="grid h-16 w-16 place-items-center rounded-full border border-ink-line bg-ink-card text-xl text-white/50 transition-colors group-hover:bg-ink-hover group-hover:text-white sm:h-20 sm:w-20 sm:text-2xl">
+          <span className="grid h-16 w-16 place-items-center rounded-full border-2 border-ink-line bg-ink-card text-xl text-white/50 transition-colors group-hover:bg-ink-hover group-hover:text-white sm:h-20 sm:w-20 sm:text-2xl">
             {/* Staw's own, by its name: this is the one that means
                 wanting to add somebody. A bare plus says "another of
                 these" and this is not another of these. */}

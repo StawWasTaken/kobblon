@@ -105,7 +105,7 @@ export function FitEditor({ value, onChange, onReset, className }: {
     mode === 'size' ? value.s : (mode === 'move' ? value.p : value.r)[axis]
 
   return (
-    <div className={cn('space-y-3 rounded-xl border border-ink-line bg-ink-raised p-3', className)}>
+    <div className={cn('space-y-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3', className)}>
       <Choices
         label="What to adjust"
         size="sm"

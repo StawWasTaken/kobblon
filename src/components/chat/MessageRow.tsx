@@ -40,7 +40,7 @@ import { avatarOf } from '@/lib/avatars'
 export function DeletedRun({ count }: { count: number }) {
   return (
     <div className="my-1 flex items-center justify-center px-2">
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-line bg-ink/40 px-2.5 py-1 text-[11px] font-bold text-white/35">
+      <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink-line bg-ink/40 px-2.5 py-1 text-[11px] font-bold text-white/35">
         <Glyph icon={faTrash} className="text-[9px]" />
         {count === 1 ? 'Message deleted' : `${count} messages deleted`}
       </span>

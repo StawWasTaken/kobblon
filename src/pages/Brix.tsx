@@ -54,7 +54,7 @@ function Tile({ icon, label, amount, tone }: {
   tone: string
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-ink-line bg-ink-card px-4 py-3.5">
+    <div className="flex items-center gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3.5">
       <span className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-raised', tone)}>
         <Glyph icon={icon} />
       </span>

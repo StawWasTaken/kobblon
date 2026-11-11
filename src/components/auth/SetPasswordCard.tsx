@@ -55,7 +55,7 @@ export function SetPasswordCard() {
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
       <form
         onSubmit={save}
-        className="w-full max-w-sm animate-pop-in rounded-2xl border border-ink-line bg-ink-card p-7 shadow-pop"
+        className="w-full max-w-sm animate-pop-in rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-7 shadow-pop"
       >
         <img src={asset('/brand/favicon.png')} alt="" className="mx-auto h-14 w-14 rounded-2xl" />
 

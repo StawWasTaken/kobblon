@@ -223,7 +223,7 @@ export function Reactions({
           aria-label="React"
           aria-expanded={picking}
           className={cn(
-            'inline-flex items-center gap-0.5 rounded-full border border-ink-line bg-ink-raised py-0.5 pl-1 pr-1.5 transition-transform duration-150 hover:scale-105 active:scale-95',
+            'inline-flex items-center gap-0.5 rounded-full border-2 border-ink-line bg-ink-raised py-0.5 pl-1 pr-1.5 transition-transform duration-150 hover:scale-105 active:scale-95',
             canReact ? 'text-white/60 hover:text-white' : 'text-white/40 opacity-60',
           )}
         >
@@ -265,7 +265,7 @@ export function Reactions({
          */
         <div
           role="menu"
-          className="absolute bottom-full left-0 z-30 mb-3 animate-pop-in rounded-2xl border border-ink-line bg-ink-card p-1.5 shadow-pop"
+          className="absolute bottom-full left-0 z-30 mb-3 animate-pop-in rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-1.5 shadow-pop"
         >
           <div className="flex gap-0.5">
             {FACES.map((face, nth) => (

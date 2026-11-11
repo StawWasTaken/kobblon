@@ -405,7 +405,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
             onBlur={() => settleMaker(makerDraft.trim())}
             placeholder="username or Community"
             aria-label="Made by which person or Community"
-            className="h-9 w-44 rounded-xl border border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+            className="h-9 w-44 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
           />
         </form>
       )}
@@ -495,7 +495,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
 
   /** The two exact numbers, folded away until somebody asks for them. */
   const exactPrice = showFilters && (
-    <div className="mb-4 flex flex-wrap items-end gap-3 rounded-2xl border border-ink-line bg-ink-card p-3.5">
+    <div className="mb-4 flex flex-wrap items-end gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-3.5">
       {/*
         * Sized by a wrapper, not by a class on the Input.
         *
@@ -728,7 +728,7 @@ export function CatalogShelf({ onTook, compact, hero, actions }: {
 
           {saleLine}
 
-          <div className="space-y-3 rounded-2xl border border-ink-line bg-ink-card p-3.5">
+          <div className="space-y-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-3.5">
             <div className="flex flex-wrap items-center gap-2">
               {/* The avatar page mounts this shelf without a heading above
                   it, so the search has to live on the row instead. */}
@@ -840,7 +840,7 @@ function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
   const pieces = Array.isArray(outfit.pieces) ? outfit.pieces : []
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-ink-line bg-ink-card">
+    <div className="flex flex-col overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card">
       {/*
         * The outfit itself, on a body, rather than a list of the names of
         * the things in it. Staw: "the outfits on the catalog should be in
@@ -916,7 +916,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
     <div className="relative">
       {!item.price && <FreeCorner />}
       <div className={cn(
-        'overflow-hidden rounded-xl border border-ink-line bg-ink-card',
+        'overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card',
         'transition-colors hover:border-brand/60',
       )}>
         {/*

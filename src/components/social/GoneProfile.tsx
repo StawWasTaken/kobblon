@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/Button'
  */
 export function GoneProfile({ handle }: { handle: string }) {
   return (
-    <section className="overflow-hidden rounded-3xl border border-ink-line bg-ink-card">
+    <section className="overflow-hidden rounded-3xl border-2 border-b-4 border-ink-line bg-ink-card">
       {/* The banner that is not there. Hatched rather than flat, so it
           reads as a space somebody has left rather than as a panel that
           failed to load. */}
@@ -45,7 +45,7 @@ export function GoneProfile({ handle }: { handle: string }) {
           <Missing className="h-full w-full" />
         </div>
 
-        <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink-line bg-ink-raised px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+        <span className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink-raised px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
           <Glyph icon={faUserSlash} className="text-[10px]" />
           Account deleted
         </span>

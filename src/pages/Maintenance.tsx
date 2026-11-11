@@ -19,12 +19,19 @@ import { faArrowsRotate, faScrewdriverWrench } from '@fortawesome/free-solid-svg
  * linked from here; somebody who needs it knows it.
  *
  * `outage` is the other way here: not a switch somebody threw, but the site
- * noticing the database has stopped answering and drawing this instead of
- * twenty "that did not load" boxes. The drawing is the same on purpose -
- * what somebody wants to know is "it is not me and it is being dealt with",
- * and that is true either way - but the words are not, because "somebody is
- * working on the place" is a promise and nobody has made it. It also says
- * out loud that it is watching, since this one goes away by itself.
+ * noticing it has stopped being answered and drawing this instead of twenty
+ * "that did not load" boxes.
+ *
+ * **It says nothing about why.** Staw: "make it a general maintenance page
+ * with the famous We're making things more awesome". An earlier draft of
+ * this named the database, and he is right that it should not: somebody
+ * who came here to play does not need our infrastructure explained to them,
+ * and a page that says which part of the machinery broke is a page that
+ * tells anybody looking for a weak spot where to push. One maintenance
+ * page, one set of words, whichever way it was reached.
+ *
+ * The `outage` flag survives only so this one does not show a note that
+ * staff wrote for the other case - there is nobody to have written one.
  */
 export default function Maintenance({ note, outage }: {
   note?: string | null
@@ -46,7 +53,7 @@ export default function Maintenance({ note, outage }: {
             stuff behind the under construction". */}
         <Kobby mood="construction" size="xl" className="mt-8" />
 
-        <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-ink-line bg-ink-card px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted">
+        <p className="mt-6 inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink-card px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted">
           <Glyph icon={faScrewdriverWrench} className="text-[10px]" />
           Maintenance
         </p>
@@ -56,11 +63,9 @@ export default function Maintenance({ note, outage }: {
         </h1>
 
         <p className="mt-3 text-white/70">
-          {outage
-            ? 'Kobblon cannot reach its database right now. Nothing you did caused this and nothing of yours is lost. This page is checking every few seconds and will let you straight back in.'
-            : note?.trim()
-              ? note
-              : 'Somebody is working on the place. Nothing is lost, nothing is broken, and it will be back shortly.'}
+          {!outage && note?.trim()
+            ? note
+            : "We're making things more awesome. Nothing of yours is lost, and this page lets you straight back in as soon as it can."}
         </p>
 
         <Button

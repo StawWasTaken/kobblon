@@ -23,7 +23,7 @@ export function WorldCard({
   return (
     <article
       className={cn(
-        'group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-ink-line bg-ink-card transition-colors hover:border-brand/70',
+        'group flex min-w-0 flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/70',
         className,
       )}
     >

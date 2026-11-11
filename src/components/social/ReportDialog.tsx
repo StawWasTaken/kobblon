@@ -359,7 +359,7 @@ export function ReportDialog({
           {step === 0 && (
             <div className="space-y-4">
               {!profile && (
-                <p className="flex items-start gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+                <p className="flex items-start gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
                   <Glyph icon={faLock} className="mt-0.5 shrink-0 text-sm text-muted" />
                   <span>
                     Reports are tied to the account that sends them, so we can come back to
@@ -420,7 +420,7 @@ export function ReportDialog({
             <div className="space-y-5">
               {/* Roblox keeps the thing on screen through the whole flow. It
                   is the one line of this card that stops a misfire. */}
-              <div className="rounded-xl border border-ink-line bg-ink-raised p-4">
+              <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-4">
                 <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
                   You are reporting
                 </p>
@@ -465,7 +465,7 @@ export function ReportDialog({
                   rows={4}
                   maxLength={1000}
                   placeholder="Where it was, when, and what we should be looking at."
-                  className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+                  className="w-full resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
                 />
                 <p className="mt-1.5 text-xs text-muted">
                   It will not slow anything down, but it is usually what decides it.
@@ -483,7 +483,7 @@ export function ReportDialog({
                 * that can be acted on and one that cannot.
                 */}
               {targetType === 'voice' && (
-                <p className="flex items-start gap-3 rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+                <p className="flex items-start gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
                   <Glyph icon={faLock} className="mt-0.5 shrink-0 text-sm text-muted" />
                   <span>
                     Nothing said out loud on Kobblon is recorded, so there is no clip for

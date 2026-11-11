@@ -70,7 +70,7 @@ function AdRow({ ad, onEdit, onChanged }: {
   return (
     <li
       className={cn(
-        'flex flex-wrap items-center gap-3 rounded-xl border border-ink-line bg-ink-raised p-3',
+        'flex flex-wrap items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3',
         !ad.is_active && 'opacity-60',
       )}
     >
@@ -80,7 +80,7 @@ function AdRow({ ad, onEdit, onChanged }: {
 
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-center gap-2 text-xs font-bold">
-          <span className="rounded-full border border-ink-line px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-muted">
+          <span className="rounded-full border-2 border-ink-line px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-muted">
             {AD_SIZES[ad.size]?.label ?? ad.size}
           </span>
           {!ad.is_active && (
@@ -160,7 +160,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
   }
 
   return (
-    <article className="rounded-2xl border border-ink-line bg-ink-card">
+    <article className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
       <header className="flex flex-wrap items-start gap-4 border-b border-ink-line p-4">
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 font-display text-lg font-extrabold">

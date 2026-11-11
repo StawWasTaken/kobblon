@@ -37,7 +37,7 @@ export function WorldMap({ dots, active, onHover, className }: {
   const most = Math.max(1, ...placed.map((one) => one.how_many))
 
   return (
-    <div className={cn('relative overflow-hidden rounded-2xl border border-ink-line bg-ink-raised', className)}>
+    <div className={cn('relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised', className)}>
       {/* The land, tinted by the page rather than painted into the file. */}
       <img
         src={asset('/brand/world.svg')}

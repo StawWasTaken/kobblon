@@ -73,7 +73,7 @@ export function Tabs<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className={cn('inline-flex shrink-0 gap-1 rounded-xl border border-ink-line bg-ink-card p-1', className)}
+      className={cn('inline-flex shrink-0 gap-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-1', className)}
     >
       {options.map((option) => {
         const active = option.value === value

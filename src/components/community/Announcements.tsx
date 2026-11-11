@@ -266,7 +266,7 @@ export function Announcements({
       >
         <div className="space-y-4">
           {!editing && current && (
-            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
+            <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-xs leading-relaxed text-muted">
               A Community says one thing at a time. Posting this retires the announcement that
               is up now.
             </p>
@@ -296,7 +296,7 @@ export function Announcements({
             </p>
 
             {media ? (
-              <div className="relative overflow-hidden rounded-xl border border-ink-line">
+              <div className="relative overflow-hidden rounded-xl border-2 border-ink-line">
                 {media.kind === 'image'
                   ? <img src={media.url} alt="" className="max-h-56 w-full object-cover" />
                   : <MediaPlayer src={media.url} kind="video" />}

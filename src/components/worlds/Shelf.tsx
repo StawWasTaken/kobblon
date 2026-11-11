@@ -88,7 +88,7 @@ export function Shelf({ title, note, more, children, empty, className }: {
               onClick={() => nudge(way)}
               disabled={way === -1 ? !can.left : !can.right}
               aria-label={way === -1 ? `Scroll ${title} left` : `Scroll ${title} right`}
-              className="hidden h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card text-muted transition-colors hover:bg-ink-hover hover:text-white disabled:pointer-events-none disabled:opacity-35 sm:grid"
+              className="hidden h-8 w-8 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-card text-muted transition-colors hover:bg-ink-hover hover:text-white disabled:pointer-events-none disabled:opacity-35 sm:grid"
             >
               <Glyph icon={way === -1 ? faChevronLeft : faChevronRight} className="text-xs" />
             </button>
@@ -128,7 +128,7 @@ export function WorldTile({ world }: { world: World }) {
     <article className="w-[7.5rem] shrink-0 sm:w-36">
       <Link
         to={worldLink(world)}
-        className="block aspect-square overflow-hidden rounded-xl border border-ink-line bg-media"
+        className="block aspect-square overflow-hidden rounded-xl border-2 border-ink-line bg-media"
       >
         <Picture
           src={art}
@@ -154,7 +154,7 @@ export function WorldFeature({ world }: { world: World }) {
   return (
     <Link
       to={worldLink(world)}
-      className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border border-ink-line bg-media sm:w-[22rem]"
+      className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border-2 border-ink-line bg-media sm:w-[22rem]"
     >
       <Picture
         src={world.cover_url}

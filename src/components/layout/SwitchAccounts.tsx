@@ -62,7 +62,7 @@ function AccountRow({
             className="shrink-0 text-white/25 transition-colors group-hover:text-white"
           />
         ) : (
-          <span className="shrink-0 rounded-full border border-ink-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+          <span className="shrink-0 rounded-full border-2 border-ink-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
             Password
           </span>
         )}
@@ -73,7 +73,7 @@ function AccountRow({
           <button
             onClick={onForget}
             aria-label={`Forget ${account.displayName}`}
-            className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border border-ink-line bg-ink-card text-[10px] text-white/45 opacity-0 transition-opacity hover:text-white group-hover:opacity-100 focus:opacity-100"
+            className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-ink-line bg-ink-card text-[10px] text-white/45 opacity-0 transition-opacity hover:text-white group-hover:opacity-100 focus:opacity-100"
           >
             <Glyph icon={faXmark} />
           </button>
@@ -179,7 +179,7 @@ export function SwitchAccounts({ open, onClose }: { open: boolean; onClose: () =
     >
       {asking ? (
         <form onSubmit={sign} className="space-y-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-ink-line bg-ink-raised p-3">
+          <div className="flex items-center gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
             <Avatar
               src={asking.avatarUrl}
               name={asking.displayName}
@@ -254,7 +254,7 @@ export function SwitchAccounts({ open, onClose }: { open: boolean; onClose: () =
                 onClick={() => addAnother('/login')}
                 className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-ink-line p-3 text-left transition-colors hover:border-brand/60 hover:bg-ink-hover"
               >
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-ink-line bg-ink-raised text-white/60">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-white/60">
                   <Glyph icon={faPlus} />
                 </span>
                 <span className="min-w-0 flex-1">

@@ -110,7 +110,7 @@ function OutfitCard({ outfit, onChanged, onWear }: {
           <Menu
             label={`What to do with ${outfit.name}`}
             trigger={
-              <span className="grid h-8 w-8 place-items-center rounded-lg border border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white">
+              <span className="grid h-8 w-8 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white">
                 <Glyph icon={faGear} />
               </span>
             }
@@ -181,13 +181,13 @@ function OutfitCard({ outfit, onChanged, onWear }: {
               <li
                 key={piece.content_id}
                 title={piece.name}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised text-[9px] font-bold uppercase text-white/40"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-[9px] font-bold uppercase text-white/40"
               >
                 {(avatarKindLabels[piece.kind] ?? piece.kind).slice(0, 2)}
               </li>
             ))}
             {pieces.length > 4 && (
-              <li className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border border-ink-line bg-ink-raised px-1.5 text-[10px] font-bold text-white/40">
+              <li className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-1.5 text-[10px] font-bold text-white/40">
                 +{pieces.length - 4}
               </li>
             )}
@@ -534,7 +534,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
               <select
                 value={folder}
                 onChange={(e) => setFolder(e.target.value)}
-                className="w-full rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-sm"
+                className="w-full rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2 text-sm"
               >
                 <option value="">No folder</option>
                 {folders.data.map((one) => (

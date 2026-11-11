@@ -105,7 +105,7 @@ export function DiscordLink() {
       </div>
 
       {linked && (
-        <div className="rounded-xl border border-ink-line bg-ink-raised p-3">
+        <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">
             Who can see your Discord handle
           </p>
@@ -129,7 +129,7 @@ export function DiscordLink() {
       )}
 
       {linked && (
-        <div className="rounded-xl border border-ink-line bg-ink-raised p-3">
+        <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">
             Your link, for anywhere that takes one
           </p>

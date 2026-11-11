@@ -35,7 +35,7 @@ export function FontPreview({ src, name }: { src: string | null; name: string })
   if (!src) return <Skeleton className="h-20" />
 
   return (
-    <div className="rounded-xl border border-ink-line bg-ink-raised px-5 py-8">
+    <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-5 py-8">
       <p
         className="break-words text-2xl leading-relaxed sm:text-3xl"
         style={family ? { fontFamily: family } : undefined}

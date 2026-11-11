@@ -49,7 +49,7 @@ function Quoted({ label, children }: { label?: string; children: React.ReactNode
   return (
     <div>
       {label && <p className="mb-1.5 text-sm text-muted">{label}</p>}
-      <div className="whitespace-pre-wrap rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
+      <div className="whitespace-pre-wrap rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
         {children}
       </div>
     </div>
@@ -242,7 +242,7 @@ export default function StandingItem() {
                 maxLength={2000}
                 placeholder="What happened, from your side."
                 aria-label="Your appeal"
-                className="w-full resize-y rounded-xl border border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
+                className="w-full resize-y rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-white/30 focus:border-brand-bright"
               />
               <div className="flex flex-wrap items-center gap-3">
                 <p className="min-w-0 flex-1 text-xs text-muted">

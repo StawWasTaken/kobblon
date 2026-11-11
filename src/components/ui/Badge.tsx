@@ -27,7 +27,11 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold',
+        // `border-2` and a bolder weight, like everything else. Still a
+        // pill: a chip is the one thing on the page that is not a block,
+        // and keeping it round is what stops a row of them reading as more
+        // buttons.
+        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-[11px] font-bold',
         tones[tone],
         className,
       )}

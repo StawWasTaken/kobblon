@@ -195,7 +195,7 @@ export function AdEditor({
           {decals.loading && <Skeleton className="h-24 rounded-xl" />}
 
           {!decals.loading && !decals.data?.length && (
-            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-sm text-muted">
+            <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm text-muted">
               You have no approved decals in the Creator Hub yet. Upload one and it can go in an ad once it
               has been looked at.
             </p>
@@ -227,7 +227,7 @@ export function AdEditor({
           {targets.loading && <Skeleton className="h-24 rounded-xl" />}
 
           {!targets.loading && !targets.data?.length && (
-            <p className="rounded-xl border border-ink-line bg-ink-raised p-3 text-sm text-muted">
+            <p className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm text-muted">
               There is nothing here to advertise yet. Build a Space, run a community, or put
               something in the Marketplace, and it turns up in this list.
             </p>

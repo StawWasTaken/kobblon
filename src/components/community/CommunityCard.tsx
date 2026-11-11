@@ -17,7 +17,7 @@ export function CommunityCard({ community }: { community: Community | MemberComm
   return (
     <Link
       to={communityLink(community)}
-      className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-card p-3 transition-colors hover:border-brand/60"
+      className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-3 transition-colors hover:border-brand/60"
     >
       <Emblem src={icon} name={name} className="h-12 w-12 text-base" />
       <span className="min-w-0 flex-1">

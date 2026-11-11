@@ -146,7 +146,7 @@ export function AccountStatusCard({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-2xl border border-ink-line bg-ink-card shadow-pop',
+        'overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop',
         className,
       )}
     >
@@ -168,7 +168,7 @@ export function AccountStatusCard({
         <p className="text-sm leading-relaxed text-white/85">{line}</p>
 
         {/* The facts, in the order somebody asks for them. */}
-        <dl className="space-y-3 rounded-xl border border-ink-line bg-ink-raised p-3 text-sm">
+        <dl className="space-y-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm">
           <div>
             <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Reason</dt>
             <dd className="mt-0.5 capitalize text-white/85">{standing.rule || 'Other'}</dd>

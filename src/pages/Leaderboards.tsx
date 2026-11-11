@@ -177,7 +177,7 @@ function Face({ one, size }: { one: Entry; size: 'lg' | 'md' | 'sm' }) {
   return (
     <span
       className={cn(
-        'relative block shrink-0 overflow-hidden border border-ink-line bg-media',
+        'relative block shrink-0 overflow-hidden border-2 border-ink-line bg-media',
         size === 'sm' ? 'h-8 w-12 rounded-lg' : size === 'md' ? 'h-16 w-24 rounded-2xl' : 'h-20 w-32 rounded-2xl',
       )}
     >
@@ -454,7 +454,7 @@ export default function Leaderboards() {
                 title={isWorlds
                   ? 'A World belongs to a person, so this board has no Communities side.'
                   : `Net worth counts avatar items, which a Community does not have.`}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-ink-line bg-ink-raised px-3 py-2 text-xs font-bold text-muted"
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2 text-xs font-bold text-muted"
               >
                 <Glyph icon={faUser} className="h-3.5 w-3.5" />
                 {isWorlds ? 'Worlds' : 'Players only'}

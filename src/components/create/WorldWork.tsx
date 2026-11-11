@@ -18,7 +18,7 @@ import type { World } from '@/types/db'
 /** One World you are in the middle of: what it looks like, where it stands, the way in. */
 export function WorldWork({ world, onMissing }: { world: World; onMissing: () => void }) {
   return (
-    <article className="group overflow-hidden rounded-2xl border border-ink-line bg-ink-card transition-colors hover:border-brand/60">
+    <article className="group overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <Link to={`/create/worlds/${world.id}`} className="block">
         <span className="relative block aspect-[16/9] w-full overflow-hidden bg-brand-ink">
           {world.cover_url

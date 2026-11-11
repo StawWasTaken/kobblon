@@ -75,7 +75,7 @@ export function FavouritesDialog({
             return (
               <li
                 key={item.id}
-                className="flex items-center gap-3 rounded-xl border border-ink-line bg-ink-raised p-2"
+                className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2"
               >
                 <Link
                   to={`/catalog/${avatarTag(item.kind, item.content_id)}`}

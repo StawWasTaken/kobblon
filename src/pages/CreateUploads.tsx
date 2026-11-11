@@ -38,7 +38,7 @@ function Tally({ icon, label, value, tone }: {
   tone?: string
 }) {
   return (
-    <div className="rounded-2xl border border-ink-line bg-ink-card px-4 py-3">
+    <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3">
       <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
         <Glyph icon={icon} className={tone} />
         {label}
@@ -152,7 +152,7 @@ export default function CreateUploads() {
          * A Community's uploads are the Community's, whoever put them there,
          * and your own are somewhere else entirely.
          */
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-ink-line bg-ink-raised px-4 py-3 text-sm text-white/65">
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm text-white/65">
           <span>
             You are working as <span className="font-semibold text-white/90">{target.name}</span>,
             so this is what belongs to it rather than to you.
@@ -188,7 +188,7 @@ export default function CreateUploads() {
               aria-label="Search your uploads"
               className="flex-1"
             />
-            <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-ink-line p-0.5">
+            <div className="flex shrink-0 items-center gap-0.5 rounded-lg border-2 border-ink-line p-0.5">
               {([
                 { on: asGrid, icon: faTableCellsLarge, label: 'As cards', act: () => setAsGrid(true) },
                 { on: !asGrid, icon: faList, label: 'As a list', act: () => setAsGrid(false) },

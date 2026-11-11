@@ -257,7 +257,7 @@ export default function InnerStock() {
                 * line sat loose on the page and the tabs belonged to
                 * nothing; a frame is what says these two are one thing.
                 */}
-              <div className="mt-7 overflow-hidden rounded-2xl border border-ink-line bg-ink-raised/40">
+              <div className="mt-7 overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised/40">
                 {spans.length > 1 && (
                   <div className="flex flex-wrap items-center gap-1 border-b border-ink-line px-3 py-2.5">
                     {spans.map((one) => (
@@ -507,7 +507,7 @@ function Row({ label, value, tone }: {
 /** One panel of the rail: a quiet heading and a list of facts under it. */
 function Facts({ head, rows }: { head: string; rows: [string, string][] }) {
   return (
-    <section className="rounded-2xl border border-ink-line bg-ink-raised/40">
+    <section className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised/40">
       <h2 className="border-b border-ink-line px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/40">
         {head}
       </h2>

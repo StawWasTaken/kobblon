@@ -40,7 +40,7 @@ export function WorldStage({
   const step = (by: number) => setAt((i) => (i + by + shots.length) % shots.length)
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-ink-line bg-media">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-ink-line bg-media">
       <div className="group relative aspect-[16/10] sm:aspect-[2/1] lg:aspect-[21/8]">
         {!here ? (
           <div className="grid h-full w-full place-items-center">

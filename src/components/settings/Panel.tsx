@@ -55,7 +55,7 @@ export function Group({ children, className }: { children: ReactNode; className?
   return (
     <div
       className={cn(
-        'divide-y divide-ink-line overflow-hidden rounded-2xl border border-ink-line bg-ink-card',
+        'divide-y divide-ink-line overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card',
         className,
       )}
     >
