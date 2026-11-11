@@ -32,7 +32,7 @@ export function GlassCard({ to, art, alt, name, body, cue = 'Look' }: {
     <Link
       to={to}
       className={cn(
-        'group relative block overflow-hidden rounded-3xl border border-white/10',
+        'group relative block overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line',
         'transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50',
       )}
     >

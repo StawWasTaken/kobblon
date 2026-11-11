@@ -21609,3 +21609,72 @@ fixture keeps its own copy of the tab list. It is fixed. The general point
 holds for both sides: a preview that hardcodes what a page does is a copy
 that drifts, and it drifts silently, because a fixture is the one screen
 nobody is looking at when they check their change.
+
+## Round three hundred - Inside Kobblon is three things, and each has a page
+
+### The band, and what it now says
+
+The What is Kobblon page had a band of three cards called Inside Kobblon:
+Marketplace, Brix, Quests. Staw replaced all three with new renders and
+renamed two of them, and the reason is the useful part for both sides:
+
+> being inside kobblon is being able to play with other players while being
+> safe and able to have an economy system
+
+So the three are **Report**, **Play** and **Brix** - safety, the people and
+the Worlds, the money. Not three features picked off a list; three halves of
+one sentence. Each card now opens a page of its own rather than dropping
+somebody into the part of the app that does it:
+
+```
+/about/report   what happens when you press report, and what we will not do
+/about/play     Worlds, the live numbers, and everybody in them
+/about/brix     four ways it comes in, where it goes, and the ledger
+```
+
+They are written to be read by a person who has never heard of us, and they
+are deliberately short. Staw: "in a very proud & human way (i dont want
+AI-ish too wordy, too wiki stuff text)". The rule we settled on for anybody
+editing them: **say the thing, then stop.** No sentence explains the sentence
+before it.
+
+**Nothing on those three pages describes something we do not do.** The Report
+page says a person reads every report and that a machine never ends an
+account, because that is true today; it does not claim live automatic review,
+because that is not built yet. The Brix page names only transaction kinds
+that exist on `pixel_transactions`, prints no fee percentage (those live in
+the database and are shown on the form that charges them), and says plainly
+that Brix cannot be bought with money. If the applications ever draw an
+equivalent screen, hold it to the same test.
+
+### Pictures, and where they now live
+
+| path | what it is |
+| --- | --- |
+| `/about/report.png` `.webp` | the flag |
+| `/about/play.png` `.webp` | the player and the play mark |
+| `/about/brix.png` `.webp` | the brick (replaces the glass bricks) |
+| `/about/workspace.png` `.webp` | the white K on blue (was the towers banner) |
+| `/brand/banner4.png` | the same K, as a banner |
+| `/mascot/wave.png`, `/mascot/notification.png` | Staw's new drawings, same paths |
+
+Two things worth copying. **Each new render ships as a PNG and a WebP, and
+the site loads the WebP** - 12KB against 240KB for the same picture, which is
+twenty times the egress for no visible difference. The PNG stays because
+these URLs get linked by hand from outside the site and a dead link is worse
+than a large file. Second, `/about/workspace.png` changed *content* without
+changing name: anything of yours pointing at it now shows a K rather than the
+Workspace banner.
+
+### One line for the design system
+
+`GlassCard` took the house stroke from round 299 - `border-2 border-b-4
+border-ink-line`, corners `2xl` - so the three cards match every other card
+on the site. It was the last thing on the About side still wearing a
+`border-white/10` hairline.
+
+### Still open from our side
+
+Migrations **0335** and **0336** are written and checked and have not been
+applied yet. Until they are, a guest wears no mark and new accounts are not
+painted as Newbie.

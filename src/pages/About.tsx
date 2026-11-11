@@ -40,28 +40,36 @@ import { currency } from '@/lib/currency'
  *     shows you the site. This one says what the site is.
  */
 
-/** The three pieces underneath, one line each. */
+/**
+ * The three pieces underneath, one line each.
+ *
+ * Staw: being inside Kobblon is "being able to play with other players
+ * while being safe and able to have an economy system". So these three are
+ * not three features picked out of a list - they are the three halves of
+ * the same sentence, and each one now has a page of its own that says it
+ * properly rather than pointing at the part of the app that does it.
+ */
 const inside = [
   {
-    to: '/create',
-    art: '/about/marketplace.png',
-    alt: 'Glass shapes: a cube, a sphere and a wedge',
-    name: 'Marketplace',
-    body: 'Meshes, sounds, decals and fonts to build out of, uploaded by the people who made them.',
+    to: '/about/report',
+    art: '/about/report.webp',
+    name: 'Report',
+    alt: 'A blue flag, raised',
+    body: 'Report anything, anywhere, and it goes to a person. Your name never travels with it.',
   },
   {
-    to: '/policies/money',
-    art: '/about/brix.png',
-    alt: 'Glass Kobblon bricks, falling',
+    to: '/about/play',
+    art: '/about/play.webp',
+    name: 'Play',
+    alt: 'A player and a play mark',
+    body: 'Every World here was built and published by somebody. Walk into any of them.',
+  },
+  {
+    to: '/about/brix',
+    art: '/about/brix.webp',
     name: currency.plural,
+    alt: 'A blue Kobblon brick',
     body: `What Kobblon runs on. Earned playing and selling, spent on what other people made.`,
-  },
-  {
-    to: '/quests',
-    art: '/about/quests.png',
-    alt: 'A glass laurel wreath',
-    name: 'Quests',
-    body: 'Something to go and do, set by Kobblon and by the people who build the worlds.',
   },
 ]
 
@@ -241,8 +249,8 @@ export default function About() {
             <div className="relative">
               <Parallax strength={48}>
                 <Figure
-                  src="/about/workspace.png"
-                  alt="Kobblon Workspace: the best place to create"
+                  src="/about/workspace.webp"
+                  alt="The Kobblon K"
                   ratio="wide"
                 />
               </Parallax>

@@ -60,6 +60,12 @@ const ForumTopicPage = lazyPage(() => import('@/pages/Forum').then((m) => ({ def
 const ForumNew = lazyPage(() => import('@/pages/Forum').then((m) => ({ default: m.ForumNew })))
 const ForumProfile = lazyPage(() => import('@/pages/ForumProfile'))
 const About = lazyPage(() => import('@/pages/About'))
+/* The three Inside Kobblon pages: one each for the three things being here
+   actually is - you are safe, there is somewhere to go, and what you make is
+   worth something. */
+const InsideReport = lazyPage(() => import('@/pages/inside/Report'))
+const InsidePlay = lazyPage(() => import('@/pages/inside/Play'))
+const InsideBrix = lazyPage(() => import('@/pages/inside/Brix'))
 const AppSignIn = lazyPage(() => import('@/pages/AppSignIn'))
 const WorldPage = lazyPage(() => import('@/pages/WorldPage'))
 const Friends = lazyPage(() => import('@/pages/Friends'))
@@ -176,6 +182,9 @@ export default function App() {
               <Route path="/guidelines" element={<Guidelines />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
+              <Route path="/about/report" element={<InsideReport />} />
+              <Route path="/about/play" element={<InsidePlay />} />
+              <Route path="/about/brix" element={<InsideBrix />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
               <Route path="/inner-stock" element={<InnerStock />} />
