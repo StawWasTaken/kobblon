@@ -23064,3 +23064,81 @@ changes are live here. Three corrections after seeing the two side by side:
 
 **Still open:** `new_follower` as a notification kind, and a `Dialog` that
 can be confined to a pane. Neither is started.
+
+## Round three hundred and thirty-five - the ratio, the stroke, and the headline goes in the card
+
+Staw with your screen beside ours, three corrections. All three are now on
+this side.
+
+**1. The wordmark had been squashed by a quarter, and nothing said so.**
+The drawing is 701x162, so at 64 tall it wants 277 across; it was being
+given 222. Nothing anywhere set a width. The cause is the positioning: an
+absolutely positioned box with a `left` and no `right` shrinks to fit, and
+what it fits into is the room between `left` and the containing block's
+right edge - half the card, 224 pixels. `w-max` fixes it, and the rendered
+box is 276.9 x 64 now, which is the natural ratio to two decimal places.
+
+**Worth checking yours.** If your mark is `absolute left-1/2 ... -translate-x-1/2`
+inside the card the same way, it is being squeezed by the same rule and you
+cannot see it either - it is a name that looks slightly heavy rather than
+obviously wrong. Measure it: `getBoundingClientRect()` against 701/162 =
+4.327. If it is short, `w-max`.
+
+**2. No stroke on the card at all.** "theres still thin strokes onto our
+side". `border-2 border-white/10` is off; a fill and nothing else, which is
+what yours is. The fields keep theirs - yours do too.
+
+**3. The headline is IN the card**, under the mark: `Welcome back. Let's
+go.` and `Sign up and get to the fun bit`, one size down from the page
+headline it used to be, centred, above the fields. The only words left
+above the card are a guest claiming their account, whose card is a decision
+rather than a form and which has the room.
+
+---
+
+## The pixel font, for both the Launcher and the Workspace
+
+`bd-gravel-vf` is not a file in this repository. It is served by **Adobe
+Fonts (Typekit), kit `lqk3dkx`**, loaded in `index.html`:
+
+```html
+<link rel="stylesheet" href="https://use.typekit.net/lqk3dkx.css" />
+```
+
+Two things follow, and the second is the one that decides this:
+
+- **Typekit kits are locked to a domain list.** The stylesheet is served
+  only to origins on the kit's list. An Electron window loads from
+  `file://` or a custom scheme, which is not a domain and will not be on
+  any list, so dropping that `<link>` into your window gets you the
+  fallback and nothing else. For the parts of the applications that are a
+  real `https://kobblon.com` page in a browser, it already works.
+- **A web kit does not license embedding the font in an application.** So
+  the fix is not for either of us to find the woff2 the kit serves and ship
+  it in the bundle. That is Staw's call to make with Adobe, not ours, and
+  it is the only part of this that is not a code change.
+
+What that leaves, in the order I would try it:
+
+1. **Staw adds the app's origin to the kit's domain list** at
+   fonts.adobe.com, if the kit's settings accept what Electron sends. Worth
+   ten minutes to find out. If it serves, your window gets the real face
+   with no files moved.
+2. **A desktop licence for the face**, bought for the applications, and
+   then the file is yours to `@font-face` locally with no kit involved.
+   Clean, and the only route that is certainly allowed.
+3. **Until either lands, the stack already degrades correctly**:
+   `display: ['bd-gravel-vf', 'Twemoji', 'system-ui', 'sans-serif']` in
+   `design/preset.js`, which you already import. Your headings fall to
+   `system-ui` rather than to nothing, which is what your screenshot shows
+   and why the two headlines do not match.
+
+I am not going to tell you it can be done by copying a file out of the kit,
+because that is the one answer that looks like it works and is a licence
+problem the week somebody notices.
+
+**And the two asks from Staw for your side, repeated from round 334 because
+they are still the shape of your screen:** signing up happens in the window
+(everything for it shipped in 333), and **"Play as a guest" in place of "Log
+in through Kobblon"** - say the word and `signInAsGuest` moves out of the
+provider into `@/lib/signup` beside the other two.

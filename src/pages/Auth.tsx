@@ -14,7 +14,6 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import { useAuth } from '@/hooks/useAuth'
 import { useForceDark } from '@/hooks/useTheme'
 import { useTitle } from '@/hooks/useTitle'
-import { cn } from '@/lib/cn'
 
 /*
  * The door.
@@ -137,55 +136,34 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
         <main className="w-full max-w-xl py-10 lg:py-2">
           {/* ------------------------------------------------- the words */}
           {/*
-           * One line, and in the ordinary case nothing else. The eyebrow and
-           * the explaining sentence only appear for a guest claiming their
-           * account, whose card is shorter by a tab row and a guest button
-           * and so has the room for them.
+           * Only a guest claiming their account says anything above the card
+           * now. Staw, with the Launcher's screen beside ours: the headline
+           * is IN the card, under the mark - which is where the Launcher put
+           * it and where it belongs, because the card is the whole screen
+           * and a line floating above it was a second thing to look at.
+           * Claiming keeps its own words out here: that card is a page about
+           * a decision rather than a form, and it is shorter by a guest
+           * button, so it has the room.
            */}
-          <div className="text-center">
-            {claiming && (
+          {claiming && (
+            <div className="text-center">
               <Reveal>
                 <Eyebrow>You have been looking around</Eyebrow>
               </Reveal>
-            )}
-            <Reveal delay={70}>
-              {/*
-               * Written out rather than `Title level={1}`, because `cn`
-               * joins and does not merge: a second `text-[clamp(...)]` beside
-               * the one Title already carries loses to whichever Tailwind
-               * emitted later, and the heading stayed at the page-title size
-               * however small the override said. Same trap as `Character`
-               * and its `relative`.
-               */}
-              <h1 className={cn(
-                'font-display text-[clamp(1.8rem,2.6vw,2.2rem)] font-extrabold leading-[1.05] tracking-tight',
-                claiming && 'mt-4',
-              )}>
-                {claiming ? (
-                  <>
-                    Keep what you
-                    <span className="block text-brand-bright">already made</span>
-                  </>
-                ) : mode === 'login' ? (
-                  <>
-                    Welcome back. <span className="text-brand-bright">Let's go.</span>
-                  </>
-                ) : (
-                  <>
-                    Sign up and <span className="text-brand-bright">get to the fun bit</span>
-                  </>
-                )}
-              </h1>
-            </Reveal>
-            {claiming && (
+              <Reveal delay={70}>
+                <h1 className="mt-4 font-display text-[clamp(1.8rem,2.6vw,2.2rem)] font-extrabold leading-[1.05] tracking-tight">
+                  Keep what you
+                  <span className="block text-brand-bright">already made</span>
+                </h1>
+              </Reveal>
               <Reveal delay={140}>
                 <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-white/55">
                   The Worlds you entered, the people you met and anything you collected stay exactly
                   where they are.
                 </p>
               </Reveal>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* ----------------------------------------------- the card */}
           {/* The gap is the mark's: half of it hangs above the card, so a
@@ -200,20 +178,31 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               * kobblon wordmark to be over both the card & the background
               * (like the minecraft launcher)".
               *
-              * So `shadow-pop` is gone and the lifted bottom edge with it -
-              * a stroke and a fill, sitting on the page. The mark is out of
-              * the flow, centred on the top edge, with `z-10` so the card's
+              * So `shadow-pop` is gone, the lifted bottom edge with it, and
+              * then the stroke too - Staw, looking at the two side by side:
+              * "theres still thin strokes onto our side". A fill and
+              * nothing else, which is what the Launcher's card is. The mark
+              * is out of the flow, centred on the top edge, with `z-10` so the card's
               * own surface does not cover its lower half and `pt-12` to
               * make the room it now needs.
               */}
-            <div className="relative rounded-2xl border-2 border-white/10 bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
+            <div className="relative rounded-2xl bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
               <Wordmark
                 to={null}
                 always
-                /* A height and nothing else, so the drawing keeps its own
-                   proportions - the images inside are `h-full w-auto` and
-                   nothing here gives them a width to be squeezed into. */
-                className="absolute left-1/2 top-0 z-10 h-14 w-auto -translate-x-1/2 -translate-y-1/2 sm:h-16"
+                /*
+                  * `w-max`, and it is the whole of why the mark was squat.
+                  *
+                  * An absolutely positioned box with a `left` and no `right`
+                  * shrinks to fit, and what it fits into is the room left
+                  * between `left` and the card's right edge - half the card,
+                  * 224 pixels. The drawing is 701x162, so at 64 tall it
+                  * wants 277 and was being given 222: the right height, the
+                  * wrong width, and a name squashed by a quarter. Nothing
+                  * about it said `width` anywhere, which is why it read as
+                  * correct.
+                  */
+                className="absolute left-1/2 top-0 z-10 h-14 w-max -translate-x-1/2 -translate-y-1/2 sm:h-16"
               />
               <div className="relative">
                 {sentTo ? (
@@ -247,6 +236,14 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </>
                 ) : (
                   <>
+                    <h1 className="mb-5 text-center font-display text-[clamp(1.5rem,2.2vw,1.9rem)] font-extrabold leading-[1.05] tracking-tight">
+                      {isSignup ? (
+                        <>Sign up and <span className="text-brand-bright">get to the fun bit</span></>
+                      ) : (
+                        <>Welcome back. <span className="text-brand-bright">Let's go.</span></>
+                      )}
+                    </h1>
+
                     {isSignup
                       ? (
                         /*
