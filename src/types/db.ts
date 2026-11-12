@@ -350,7 +350,7 @@ export type Notification = {
     | 'best_friend_request' | 'best_friend_accepted'
     | 'space_like' | 'space_visit' | 'message'
     | 'system' | 'event_started' | 'world_updated' | 'content_removed'
-    | 'forum_reply' | 'forum_staff'
+    | 'forum_reply' | 'forum_staff' | 'world_invite'
   actor_id: string | null
   space_id: string | null
   world_id?: string | null

@@ -47,6 +47,13 @@ const marks: Record<Notification['kind'], { icon: IconDefinition; tint: string; 
   content_removed: { icon: faGavel, tint: 'bg-danger text-on-art', ring: 'ring-danger/40' },
   forum_reply: { icon: faComment, tint: 'bg-brand-deep text-on-art', ring: 'ring-brand/30' },
   forum_staff: { icon: faShieldHalved, tint: 'bg-space text-on-art', ring: 'ring-space/40' },
+  /*
+   * Somebody holding a door open, which is the same picture `space_visit`
+   * wears and deliberately not the same colour: one is somebody arriving
+   * and this is somebody asking you to come. Blue, because it is an
+   * invitation to play and blue is Kobblon.
+   */
+  world_invite: { icon: faDoorOpen, tint: 'bg-brand text-onbrand', ring: 'ring-brand/40' },
 }
 
 /*
@@ -63,12 +70,22 @@ const marks: Record<Notification['kind'], { icon: IconDefinition; tint: string; 
  * written down: a migration can add a kind without this file knowing, and
  * a lookup that assumes it knows them all turns that into a blank panel.
  */
-function markFor(kind: string) {
+export function markFor(kind: string) {
   return marks[kind as Notification['kind']] ?? marks.system
 }
 
-/** Said as a sentence, with whoever did it in bold at the front of it. */
-function words(n: Notification) {
+/**
+ * Said as a sentence, with whoever did it in bold at the front of it.
+ *
+ * Exported, with `markFor`, because the Workspace had its own copy of this
+ * and a second copy of a wording function does what a second copy always
+ * does: five kinds the site had been sending for months were not in theirs
+ * at all and every one of them arrived over there as "Something happened on
+ * Kobblon", and `space_visit` was "played" in one window and "walked into"
+ * in the other. Both take a `Notification` and hand back data rather than
+ * markup, so neither needs a provider, a router or Supabase.
+ */
+export function words(n: Notification) {
   const who = n.actor?.display_name ?? 'Somebody'
   switch (n.kind) {
     case 'friend_request': return { who, rest: 'sent you a friend request' }
@@ -87,6 +104,15 @@ function words(n: Notification) {
      */
     case 'forum_reply': return { who, rest: n.body ?? 'replied to you on the forum' }
     case 'forum_staff': return { who, rest: n.body ?? 'changed what you look after on the forum' }
+    /*
+     * The joined World first and the stored name second. `body` is a copy
+     * taken when the invite was sent, so a World renamed since then keeps
+     * the old name in the row; the join is what it is actually called now.
+     */
+    case 'world_invite': return {
+      who,
+      rest: `invited you to ${n.world?.name ?? n.body ?? 'a World'}`,
+    }
     case 'world_updated': return {
       who,
       rest: n.body?.trim()
@@ -146,7 +172,11 @@ function whenGroup(iso: string) {
  * right where an eye scanning down finds it in one column, and unread is
  * said twice and no more - the tint and the lit edge.
  */
-function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
+function Line({ n, onClose, onOpen }: {
+  n: Notification
+  onClose: () => void
+  onOpen?: (n: Notification | null, href: string) => void
+}) {
   const mark = markFor(n.kind)
   const said = words(n)
   /*
@@ -162,15 +192,25 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
     return () => { live = false }
   }, [n.actor])
 
-  return (
-    <Link
-      to={linkFor(n)}
-      onClick={onClose}
-      className={cn(
-        'group relative flex items-start gap-3 overflow-hidden rounded-xl px-3 py-2.5 transition-colors',
-        n.is_read ? 'hover:bg-ink-hover' : 'bg-brand/[0.08] hover:bg-brand/[0.14]',
-      )}
-    >
+  /*
+   * A `<Link>` on the site, a `<button>` anywhere else.
+   *
+   * The Workspace has a bell and could not use this card for exactly one
+   * reason: every row navigated to a website path, and over there a
+   * `<Link>` needs a router it has not got. Wrapping it in a MemoryRouter
+   * would have mounted it and made every row dead, which is worse - a row
+   * that looks pressable and does nothing is the one thing this project
+   * does not ship. So the caller says what a press does, and `linkFor`
+   * works out the address either way.
+   */
+  const href = linkFor(n)
+  const look = cn(
+    'group relative flex w-full items-start gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
+    n.is_read ? 'hover:bg-ink-hover' : 'bg-brand/[0.08] hover:bg-brand/[0.14]',
+  )
+
+  const inside = (
+    <>
       {/* Unread is a lit edge rather than a dot to go looking for. */}
       {!n.is_read && (
         <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-brand-bright" />
@@ -211,6 +251,24 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
       <span className="shrink-0 pt-0.5 text-tiny tabular-nums text-muted">
         {timeAgo(n.created_at)}
       </span>
+    </>
+  )
+
+  if (onOpen) {
+    return (
+      <button
+        type="button"
+        className={look}
+        onClick={() => { onOpen(n, href); onClose() }}
+      >
+        {inside}
+      </button>
+    )
+  }
+
+  return (
+    <Link to={href} onClick={onClose} className={look}>
+      {inside}
     </Link>
   )
 }
@@ -225,7 +283,7 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
  * Workspace can mount this one too if it ever grows a bell.
  */
 export function NotificationsCard({
-  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, className,
+  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, onOpen, className,
 }: {
   rows: Notification[]
   loading?: boolean
@@ -237,6 +295,17 @@ export function NotificationsCard({
   onMarkAll?: () => void
   /** Everything has just been marked read, so the header says so. */
   readNow?: boolean
+  /**
+   * Where a row leads, for a window that is not the website.
+   *
+   * Handed the row and the address the site would have gone to. Given, the
+   * rows are buttons and nothing in this card needs a router; left out,
+   * they are `<Link>`s exactly as they were.
+   *
+   * The row is null for the one press that is not a notification: the
+   * "waiting on you" strip in the header, which leads to the friends list.
+   */
+  onOpen?: (n: Notification | null, href: string) => void
   className?: string
 }) {
   const unread = rows.filter((n) => !n.is_read)
@@ -296,16 +365,27 @@ export function NotificationsCard({
 
       {/* A friend request is a thing to answer rather than a thing to read,
           so it gets its own way through. */}
-      {waiting > 0 && (
-        <Link
-          to="/friends?list=requests"
-          onClick={onClose}
-          className="flex items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-sm font-bold transition-colors hover:bg-brand/20"
-        >
-          <Glyph icon={faUserGroup} className="text-brand-bright" />
-          {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
-        </Link>
-      )}
+      {waiting > 0 && (() => {
+        const to = '/friends?list=requests'
+        const look = 'flex w-full items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-brand/20'
+        const said = (
+          <>
+            <Glyph icon={faUserGroup} className="text-brand-bright" />
+            {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
+          </>
+        )
+        /* The strip is a press too, so it follows the rows: a router's link
+           on the site, and the caller's business anywhere else. A card that
+           is router-free except for one row in its header is not
+           router-free. */
+        return onOpen ? (
+          <button type="button" className={look} onClick={() => { onOpen(null, to); onClose() }}>
+            {said}
+          </button>
+        ) : (
+          <Link to={to} onClick={onClose} className={look}>{said}</Link>
+        )
+      })()}
 
       {/* --------------------------------------------------------- list */}
       <div className="max-h-[27rem] overflow-y-auto kob-scroll">
@@ -335,7 +415,9 @@ export function NotificationsCard({
               {group.name}
             </h3>
             <div className="space-y-0.5 px-2 pb-1">
-              {group.rows.map((n) => <Line key={n.id} n={n} onClose={onClose} />)}
+              {group.rows.map((n) => (
+                <Line key={n.id} n={n} onClose={onClose} onOpen={onOpen} />
+              ))}
             </div>
           </section>
         ))}

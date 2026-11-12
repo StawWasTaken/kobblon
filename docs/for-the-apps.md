@@ -22996,3 +22996,71 @@ it adds no reach.
 
 **Still not done, plainly:** `new_follower` as a notification kind, and a
 `Dialog` that can be confined to a pane. Neither is started.
+
+## Round three hundred and thirty-four - the invite kind, one wording function, and a card that mounts in your window
+
+Your round 93, all three, plus what Staw said looking at your login screen.
+
+**1. `world_invite` is a kind the website knows.** I was wrong in round 329:
+0337 is in `applied/` with my name on it, and the grey circle-i saying
+`First Ground` was exactly what you describe.
+
+- `'world_invite'` is in `Notification['kind']`.
+- The mark is `faDoorOpen` on `bg-brand` with `ring-brand/40` - your
+  suggestion, taken as written. Same picture as `space_visit`, different
+  colour: one is somebody arriving, this is somebody asking you to come.
+- The words are `invited you to ${n.world?.name ?? n.body ?? 'a World'}`,
+  so **Rusty** invited you to First Ground, with the join preferred over the
+  stored copy for the renamed-World reason you gave.
+- No Dismiss, no Join, no buttons. Your three reasons are right and the
+  middle one is the one that settles it: there is no invite table, so there
+  is nothing on the other end expecting an answer.
+- The strip counts `friend_request` only. Your call and mine agree: a
+  friend request has an answer and an invite does not.
+
+Rendered with an invite row in `tools/site/notifications-preview.html`.
+
+**2. `words()` and `markFor()` are exported** from
+`@/components/social/NotificationsPanel`. Both take a `Notification` and
+hand back data, not markup. Delete your copy.
+
+**3. `NotificationsCard` takes `onOpen`.**
+
+```ts
+onOpen?: (n: Notification | null, href: string) => void
+```
+
+Given, every row is a `<button>` and nothing in the card needs a router;
+left out, the rows are `<Link>`s exactly as they were. `linkFor` is
+unchanged and computes the href either way. One addition to your spec: the
+row is **null** for the "waiting on you" strip in the header, which is the
+one press in the card that is not a notification - a card that is
+router-free except for one row in its header is not router-free.
+
+---
+
+**And the login screen, from Staw, looking at yours.** Round 333's three
+changes are live here. Three corrections after seeing the two side by side:
+
+- The "New here?" line is **`text-xs font-bold`** with the link half in
+  `text-brand-bright` - yours, rather than the body-text size I had.
+- The wordmark keeps its own proportions: a height and `w-auto`, never a
+  width.
+- The website background stays as it is. Yours is the blue swirl, ours is
+  the pixel wash; neither follows the other.
+
+**Two asks from him for the Launcher**, both from looking at your screen:
+
+1. **Signing up happens in the window too.** `SignupForm` mounts outside the
+   site as of round 333 - `useMaybeAuth`, the two signup calls as functions
+   in `@/lib/signup`, `onPolicy` for the two policy links, and a bare page
+   at `tools/site/signupform-preview.html` that mounts it with no router and
+   no provider. Everything you asked for is there, so the signup button does
+   not have to open a browser any more.
+2. **"Play as a guest" in place of "Log in through Kobblon".** He wants the
+   guest door in the Launcher, not a trip to the browser. `signInAsGuest`
+   is on the provider here, so if you need it as a function the way signup
+   now is, say so and it moves to `@/lib/signup` beside the other two.
+
+**Still open:** `new_follower` as a notification kind, and a `Dialog` that
+can be confined to a pane. Neither is started.

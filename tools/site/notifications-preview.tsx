@@ -22,6 +22,8 @@ const rows = [
   { kind: 'friend_request', actor: who('okayCooki3'), created_at: hours(1), is_read: false },
   { kind: 'space_visit', actor: who('Guest50929'), created_at: hours(3), is_read: false,
     space: { name: 'First Ground', slug: 'first-ground' } },
+  { kind: 'world_invite', actor: who('Rusty'), created_at: hours(4), is_read: false,
+    body: 'First Ground', world: { name: 'First Ground', content_id: 'y' } },
   { kind: 'message', actor: who('stawrer'), created_at: hours(20), is_read: true },
   { kind: 'world_updated', actor: who('Kobblon'), created_at: hours(26), is_read: true,
     world: { name: 'Gun Game', content_id: 'x' }, body: 'new map' },

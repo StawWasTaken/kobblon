@@ -210,7 +210,10 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               <Wordmark
                 to={null}
                 always
-                className="absolute left-1/2 top-0 z-10 h-14 -translate-x-1/2 -translate-y-1/2 sm:h-16"
+                /* A height and nothing else, so the drawing keeps its own
+                   proportions - the images inside are `h-full w-auto` and
+                   nothing here gives them a width to be squeezed into. */
+                className="absolute left-1/2 top-0 z-10 h-14 w-auto -translate-x-1/2 -translate-y-1/2 sm:h-16"
               />
               <div className="relative">
                 {sentTo ? (
@@ -283,14 +286,17 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       * still switches both ways, and `next` rides along
                       * exactly as the tabs carried it.
                       */}
-                    <p className="mt-4 text-center text-sm text-white/45">
+                    {/* The Launcher's own line, which is the one Staw is
+                        looking at: smaller than body text, bold, and the
+                        half that is the link in brand blue. */}
+                    <p className="mt-4 text-center text-xs font-bold text-white/45">
                       {isSignup ? 'Got an account? ' : 'New here? '}
                       <Link
                         to={`${isSignup ? '/login' : '/signup'}${
                           asked && after !== '/home' ? `?next=${encodeURIComponent(after)}` : ''
                         }`}
                         replace
-                        className="font-bold text-brand-bright hover:underline"
+                        className="text-brand-bright hover:underline"
                       >
                         {isSignup ? 'Log in' : 'Make a Kobblon account'}
                       </Link>
