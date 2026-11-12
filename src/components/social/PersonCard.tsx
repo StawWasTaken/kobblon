@@ -243,43 +243,37 @@ export function PersonFace({ person, big }: {
           ring="ring-ink"
         />
         {/*
-          * The name wraps rather than being cut.
+          * The name and its marks, on one line, with the handle under it.
           *
-          * This row is a heart, a name and up to three marks on one line,
-          * and `truncate` on the name meant the marks took their width
-          * first and the name got whatever was left - Kobblon's own card
-          * read "Kob..." beside three badges. Staw: "i dont like how we
-          * dont see the full displayname here".
+          * This took four goes. Staw, on the version that cut the name:
+          * "i dont like how we dont see the full displayname here"; on the
+          * versions that wrapped: "i want that the displaynames + badges be
+          * on a single line and the username under is too far away".
           *
-          * Two goes at keeping the marks on the name's own line failed for
-          * the same reason: a face in this grid is about a hundred and
-          * twenty pixels wide, and "Kobblon" with three marks after it does
-          * not fit in one. Flex put them on a third line; inline text put
-          * them on a second. Either way they orphan, and which names orphan
-          * depends on how long a name happens to be, so a row of friends
-          * read as ragged.
+          * Both are the same constraint - a face in this grid is about a
+          * hundred and twenty pixels wide - so the answer is not where to
+          * put the overflow, it is to need less of it. The name is 13px and
+          * the marks are 9px, which fits a name like Kobblon with all three
+          * of them and leaves the handle sitting directly underneath. One
+          * line, always, for everybody, so a row of faces is level without
+          * anything being held at a fixed height.
           *
-          * So the marks have a line of their own, always, for everybody.
-          * The name gets up to two lines in a fixed `h-9` cell and is never
-          * cut; the marks sit centred under it in a fixed `h-4`; the handle
-          * is therefore at the same height on every face in the row whether
-          * somebody wears three marks or none. The heart stays with the
-          * name, because it is about this list rather than about them.
+          * The name truncates and the marks do not, because at that point
+          * the name is long enough that the start of it is what identifies
+          * somebody; the full name is one hover away on the card behind the
+          * face. The heart stays with the name - it is about this list
+          * rather than about them.
           */}
-        <p className="mt-2 flex h-9 items-center justify-center overflow-hidden text-center text-sm font-bold leading-tight">
-          <span className="line-clamp-2 break-words">
-            {person.best && (
-              <Glyph
-                icon={faHeart}
-                className="mr-1 inline-block align-[-0.1em] text-[10px] text-brand-bright"
-                title="Best friends"
-              />
-            )}
-            {person.display_name}
-          </span>
-        </p>
-        <p className="flex h-4 items-center justify-center">
-          <NameMarks person={person} className="text-[11px]" />
+        <p className="mt-2 flex items-center justify-center gap-1 text-[13px] font-bold leading-tight">
+          {person.best && (
+            <Glyph
+              icon={faHeart}
+              className="shrink-0 text-[9px] text-brand-bright"
+              title="Best friends"
+            />
+          )}
+          <span className="truncate">{person.display_name}</span>
+          <NameMarks person={person} className="text-[9px]" />
         </p>
         {/*
           * The World under the name, when they are in one.

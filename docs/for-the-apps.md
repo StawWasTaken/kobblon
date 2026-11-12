@@ -22226,3 +22226,30 @@ shadows or off-budget radii left in `Admin.tsx` or `components/staff/*`.
 What cannot be checked here is how it **looks**, because the console will
 not render without a staff session and a database. Any judgement about its
 layout has to come from somebody who can open it.
+
+## Round three hundred and seventeen - one line, and the handle right under it
+
+Rounds 311, 314 and 315 were all the same mistake in different clothes: each
+of them took "the name and three marks do not fit in a hundred and twenty
+pixels" as a question about **where to put the overflow**. Cut the name,
+wrap the marks, give the marks a line of their own. Staw turned all three
+down, and the last note said what was actually wanted: "i want that the
+displaynames + badges be on a single line and the username under is too far
+away under the displayname".
+
+The answer was to need less width, not to find somewhere to put it. The name
+is 13px and the marks are 9px, which fits a name like Kobblon with all three
+after it. So:
+
+* one line, always, for everybody - name, then marks, then nothing;
+* the handle directly under it, with no fixed-height cell between them;
+* a row of faces is level because every cell is one line, rather than
+  because anything is being propped to a height.
+
+Where a name really is too long for the line it truncates and the marks do
+not, because by then the start of the name is what identifies somebody and
+the whole of it is one hover away on the card behind the face.
+
+This replaces rounds 314 and 315. If the Workspace draws a name with marks
+in a narrow fixed cell: **size the type to fit the pair, and truncate the
+name rather than moving the marks.**
