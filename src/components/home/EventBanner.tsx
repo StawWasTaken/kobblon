@@ -233,10 +233,10 @@ export function EventBand({ event, className, flat }: {
                face, which is what every heading on the site is set in and
                what the band's own name above it is already wearing. */
             'bg-brand font-display text-lg font-extrabold tracking-wide text-on-art',
-            'border-b-[3px] border-brand-deep',
+            'border-2 border-b-[5px] border-brand-deep',
             'transition-[background-color,transform,box-shadow] duration-150',
             'group-hover:bg-brand-bright',
-            'group-active:mt-[1.6875rem] group-active:translate-y-px group-active:border-b-0',
+            'group-active:mt-[1.6875rem] group-active:translate-y-px group-active:border-b-2',
           )}
         >
           {event.action}

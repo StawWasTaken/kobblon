@@ -22629,3 +22629,54 @@ land in, and because the trap is one both sides keep falling into.
 **Not verified here:** the Machine panel's appearance. It needs a staff session
 and a live database, and this session has neither. The logic typechecks and
 builds; what it looks like is unchecked.
+
+## Round three hundred and twenty-five - a solid button wears its own stroke
+
+**Shared, and it changes how every coloured button is drawn: `@/components/ui/Button`.**
+
+The solid variants - `primary`, `brand`, `yes`, `enter`, `danger` - were a
+coloured face with a bottom lip and no stroke anywhere else. `subtle`, the
+quiet one, was `border-2` all the way round *plus* a thicker bottom. Put the
+two side by side in a row (Chat beside Follow on a profile) and they are not
+two weights of one button, they are two different shapes: one is a block with
+an edge drawn round it, the other is a face floating over a shadow.
+
+Staw, looking at that row: the regular buttons "have a stroke of the same
+colour too but the other buttons dont".
+
+So every solid variant now carries `border-2` in **its own `deep` colour**,
+with `border-b-[5px]` for the bottom:
+
+- blue: `border-brand-deep`
+- green: `border-space-deep`
+- red: `border-danger-deep`
+
+Never a neutral, never black - which is the rule the lip was already
+following, now applied to all four sides.
+
+**What it means for the applications.** Nothing to change if you import
+`Button`; it already looks right. If the Workspace draws a coloured button by
+hand anywhere - a blue face with `border-b-[3px] border-brand-deep` and
+nothing else - that is now the old shape and will read as the odd one out
+next to anything the website renders. The replacement is the same string:
+`border-2 border-<colour>-deep border-b-[5px]`, pressing to `border-b-2` with
+`mt-[3px]`.
+
+**The press is unchanged on purpose.** 2px of stroke plus 3px of lip means the
+bottom edge is 5px at rest and 2px held, so the travel is still exactly 3px -
+the same movement it has always had. Nothing about timing or height moved;
+buttons are `box-border`, so `h-8`/`h-10`/`h-12` are what they were.
+
+Two hand-rolled blue buttons on the website were brought with it: the suspended
+-chat notice and the event band's call to action.
+
+**Not done, said plainly.** The small flat blue squares - the send button in a
+message row, the chat dock's, the one in the date field - have neither stroke
+nor lip and were left alone. They are a different thing: a 28px icon square,
+not a button with a label, and a 2px stroke at that size is most of the button.
+If they should match, it is a separate decision and somebody should say so.
+
+**Blue is already one blue.** Checked while in here: every blue button on the
+website is `bg-brand` (`#1B34E8`). There is no second button blue to merge.
+The other blues that exist are not buttons and stay - the verified badge's
+`#4d68ff`, which matches Staw's own badge artwork, and Discord's `#5865F2`.

@@ -189,7 +189,7 @@ export function ChatSuspended({
          * thing you are standing inside, and a card with one button on it is
          * exactly that. White read as a borrowed screen.
          */
-        className="mt-5 w-full rounded-xl border-b-[3px] border-brand-deep bg-brand px-4 py-2.5 font-display text-sm font-bold text-on-art transition-colors hover:bg-brand-bright active:mt-[calc(1.25rem+3px)] active:border-b-0"
+        className="mt-5 w-full rounded-xl border-2 border-b-[5px] border-brand-deep bg-brand px-4 py-2.5 font-display text-sm font-bold text-on-art transition-colors hover:bg-brand-bright active:mt-[calc(1.25rem+3px)] active:border-b-2"
       >
         {over ? 'Thanks' : 'I understand'}
       </button>

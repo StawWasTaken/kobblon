@@ -75,9 +75,26 @@ type Size = 'sm' | 'md' | 'lg'
  * stays lit; the movement and the lip disappearing are what say pressed,
  * which is what they say on every other button too.
  */
+/*
+ * A solid button wears the same stroke as a quiet one, in its own colour.
+ *
+ * `subtle` was `border-2` all the way round plus a thicker bottom, and the
+ * solid variants were a bottom lip and nothing else. Side by side that is
+ * two different shapes: the grey one is a block with an edge drawn round
+ * it, the blue one is a face floating over a shadow. Staw, looking at Chat
+ * beside Follow: the regular buttons "have a stroke of the same colour too
+ * but the other buttons dont".
+ *
+ * So every solid variant is `border-2` in its own `deep` colour with a
+ * `border-b-[5px]` bottom - 2px of stroke plus the same 3px of lip it had
+ * before, so the press travels exactly as far as it always did. The stroke
+ * is never a neutral and never black: blue is edged in `brand-deep`, green
+ * in `space-deep`, red in `danger-deep`, which is the rule the lip was
+ * already following.
+ */
 const variants: Record<Variant, string> = {
   primary:
-    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
+    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-2 border-brand-deep border-b-[5px] active:border-b-2 active:mt-[3px]',
   /** The one thing this screen is for. Said on purpose, not by default. */
   /*
    * Green rests on `bright` and lifts to `lift`.
@@ -95,13 +112,13 @@ const variants: Record<Variant, string> = {
    * platform has always been.
    */
   yes:
-    'bg-space-bright text-on-art hover:bg-space-lift active:bg-space-lift border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space-bright text-on-art hover:bg-space-lift active:bg-space-lift border-2 border-space-deep border-b-[5px] active:border-b-2 active:mt-[3px]',
   /** Going into a World, which is the loudest yes Kobblon has. */
   enter:
-    'bg-space-bright text-on-art hover:bg-space-lift active:bg-space-lift border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space-bright text-on-art hover:bg-space-lift active:bg-space-lift border-2 border-space-deep border-b-[5px] active:border-b-2 active:mt-[3px]',
   /** The same blue as primary, kept for callers that name the platform. */
   brand:
-    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
+    'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-2 border-brand-deep border-b-[5px] active:border-b-2 active:mt-[3px]',
   ghost:
     'bg-transparent text-white/80 hover:bg-white/10 hover:text-white border-2 border-transparent',
   /*
@@ -146,7 +163,7 @@ const variants: Record<Variant, string> = {
    * button on the site. Staw: match it.
    */
   danger:
-    'bg-danger text-on-art hover:bg-danger-bright active:bg-danger border-b-[3px] border-danger-deep active:border-b-0 active:mt-[3px]',
+    'bg-danger text-on-art hover:bg-danger-bright active:bg-danger border-2 border-danger-deep border-b-[5px] active:border-b-2 active:mt-[3px]',
 }
 
 const sizes: Record<Size, string> = {
