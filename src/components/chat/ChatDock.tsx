@@ -472,7 +472,7 @@ function Window({
                     type="submit"
                     aria-label="Save the name"
                     title="Save the name"
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-on-art transition-colors hover:bg-brand-bright"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-b-[5px] border-brand-deep bg-brand text-on-art transition-colors hover:bg-brand-bright active:mt-[3px] active:border-b-2"
                   >
                     <Glyph icon={faCheck} className="text-xs" />
                   </button>

@@ -22738,3 +22738,44 @@ one warm thing in a cold window. Worth a look rather than a diff.
 untouched in both modes - their paper is warm because their chrome is, which
 is the whole point of a season. Brand blue, Space green, the gem, warn and
 danger are fixed colours and do not move with the theme, as always.
+
+## Round three hundred and twenty-seven - the small blue buttons, and the mark on the Launcher card
+
+Follows on from Round 325, which gave the solid `Button` variants a stroke
+in their own colour. Two things the website found afterwards.
+
+**The small blue squares now match.** Round 325 said plainly that the flat
+icon-sized blue buttons were left alone and that somebody should say whether
+they should match. Staw: "make the small blue icon buttons match too". Six of
+them on the website, all hand-rolled rather than `Button`:
+
+- the send button in a message row (28px) and in the chat dock (32px)
+- the affiliate card's action (28px)
+- the date field's "Now" (36px)
+- the error boundary's reload (44px)
+- the media player's play, which is round (40px)
+
+All six take the same string the variants take - `border-2
+border-brand-deep border-b-[5px]`, pressing to `border-b-2` with
+`mt-[3px]`. Including the round one: a `rounded-full` button wears the lip
+the same way, and it reads correctly.
+
+**The rule, now that it has been asked twice.** Anything blue you press
+carries the stroke and the lip, whatever its size and whatever its shape.
+There is no small-button exception. A blue square that is *not* pressable -
+a count badge, a chart bar, a meter fill, the tick on a tile - stays flat,
+because the stroke is what says a thing can be pressed.
+
+**The mark on the Launcher card is built like a button.** The dialog that
+says "Get the Kobblon Launcher to play Worlds" showed the favicon as a flat
+rounded square directly above a blue button with a stroke and a lip. Staw:
+make it "a 3d thing + stroke too (like the bleu button)". It is a frame now -
+`border-2 border-b-[5px] border-brand-deep`, `overflow-hidden` - with the art
+clipped by it, so the mark's own blue runs to the edge with no gap. The
+spinner block in the same dialog's "opening" state got the same treatment, so
+the card is one object in both of its states.
+
+**What it means for the applications.** The Launcher's own "get the Launcher"
+moments, and anything in the Workspace that frames the Kobblon mark above a
+button, should do the same thing or they will be the flat one. Nothing
+exported changed; this is the convention, not an API.

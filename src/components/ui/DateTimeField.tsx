@@ -323,7 +323,7 @@ function Field({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="h-9 flex-1 rounded-lg bg-brand text-xs font-bold text-on-art transition-colors hover:bg-brand-bright"
+              className="h-9 flex-1 rounded-lg border-2 border-b-[5px] border-brand-deep bg-brand text-xs font-bold text-on-art transition-colors hover:bg-brand-bright active:mt-[3px] active:border-b-2"
             >
               Done
             </button>

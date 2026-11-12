@@ -127,7 +127,7 @@ export function AffiliateGrid({
                 <div className="mt-2 flex gap-1.5">
                   <button
                     onClick={() => onAnswer(other.id, true)}
-                    className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg bg-brand text-xs font-bold text-on-art hover:bg-brand-bright"
+                    className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg border-2 border-b-[5px] border-brand-deep bg-brand text-xs font-bold text-on-art transition-colors hover:bg-brand-bright active:mt-[3px] active:border-b-2"
                   >
                     <Glyph icon={faCheck} className="text-tiny" /> Accept
                   </button>

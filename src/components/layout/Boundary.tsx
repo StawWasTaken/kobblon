@@ -70,7 +70,7 @@ export class Boundary extends Component<{ children: ReactNode }, State> {
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <button
               onClick={() => window.location.reload()}
-              className="inline-flex h-11 items-center rounded-xl bg-brand px-5 text-sm font-bold text-onbrand transition-colors hover:bg-brand-bright"
+              className="inline-flex h-11 items-center rounded-xl border-2 border-b-[5px] border-brand-deep bg-brand px-5 text-sm font-bold text-onbrand transition-colors hover:bg-brand-bright active:mt-[3px] active:border-b-2"
             >
               Load it again
             </button>

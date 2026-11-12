@@ -89,12 +89,20 @@ function Handover({
           <Glyph icon={faXmark} />
         </button>
 
-        {/* Kobblon's own mark, not a stand-in for one. */}
-        <img
-          src={asset('/brand/favicon.png')}
-          alt=""
-          className="mx-auto h-14 w-14 rounded-2xl"
-        />
+        {/*
+          * Kobblon's own mark, not a stand-in for one, and built like a
+          * button: `border-2` with a `border-b-[5px]` bottom in
+          * `brand-deep`. Staw wanted the mark on this card to be "a 3d
+          * thing + stroke too (like the bleu button)" - it sits directly
+          * above one, and a flat square over a block reads as a picture
+          * that was dropped on top rather than part of the card.
+          *
+          * The stroke is on the frame and the art is clipped by it, so the
+          * mark's own blue runs right up to the edge with no gap.
+          */}
+        <span className="mx-auto block h-16 w-16 overflow-hidden rounded-2xl border-2 border-b-[5px] border-brand-deep">
+          <img src={asset('/brand/favicon.png')} alt="" className="h-full w-full object-cover" />
+        </span>
 
         {state === 'opening' ? (
           <>
@@ -102,7 +110,7 @@ function Handover({
               Kobblon is opening. Get ready!
             </p>
             {/* Blue: the green is Play's and nothing else's. */}
-            <div className="mt-5 grid h-11 place-items-center rounded-xl bg-brand text-on-art">
+            <div className="mt-5 grid h-11 place-items-center rounded-xl border-2 border-b-[5px] border-brand-deep bg-brand text-on-art">
               <Glyph icon={faSpinner} spin />
             </div>
           </>

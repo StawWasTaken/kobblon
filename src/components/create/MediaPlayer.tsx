@@ -270,7 +270,7 @@ export function MediaPlayer({
         onClick={toggle}
         disabled={!src}
         aria-label={playing ? 'Pause' : 'Play'}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand text-[#fff] transition-colors hover:bg-brand-bright disabled:opacity-40"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-b-[5px] border-brand-deep bg-brand text-[#fff] transition-colors hover:bg-brand-bright active:mt-[3px] active:border-b-2 disabled:opacity-40"
       >
         <Glyph
           icon={ended ? faRotateRight : playing ? faPause : faPlay}

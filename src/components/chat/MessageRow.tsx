@@ -239,7 +239,7 @@ export function MessageRow({
                 disabled={busy}
                 aria-label="Save"
                 title="Save"
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-on-art transition-colors hover:bg-brand-bright disabled:opacity-50"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border-2 border-b-[5px] border-brand-deep bg-brand text-on-art transition-colors hover:bg-brand-bright active:mt-[3px] active:border-b-2 disabled:opacity-50"
               >
                 <Glyph icon={faCheck} className="text-mini" />
               </button>
