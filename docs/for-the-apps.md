@@ -22835,3 +22835,44 @@ desktop and under the words on a phone. Same order in both.
 **For the applications:** if anything there renders a platform event, those
 two fields are both live now, and `note` can arrive alongside a non-empty
 `prizes`.
+
+## Round three hundred and twenty-nine - the notifications card, and a header that sat on its own name
+
+Staw, looking at the bell: the design "kinda sucks (not the card itself)".
+The card was right; what was in it was not.
+
+**The header sat on top of itself.** The mascot, the title, the count and the
+All/New tray were all on one row, and the tray does not shrink and the title
+does not wrap, so on a narrow card the tabs were drawn straight over the word
+"Notifications". It is visible in the screenshot he sent. The header is two
+lines now: who the card is on the first, the tray and "Mark all read" on the
+second. There is a close button on it as well, which it never had - the only
+way out was clicking the page behind it, which on a phone is most of the
+screen covered by the card.
+
+**The rows.** Every one was a full-width band with a hairline under it, the
+time was under the words in the same grey as the words, and an unread one
+carried a tint, a lit edge and a NEW chip at once - three marks saying one
+thing, so the loudest thing on the row was that it was unread rather than
+what had happened. Rows are their own rounded blocks with air round them now,
+the time is a right-hand column you can scan straight down, and unread is
+said twice and no more: the tint and the lit edge.
+
+**`NotificationsCard` is now exported** from
+`@/components/social/NotificationsPanel`, taking its rows, its tab and its
+handlers as props. `NotificationsPanel` keeps the data, the bell it points
+at, and the overlay, and renders the card inside. The split exists because
+the card could previously only be looked at by signing in and waiting for
+something to happen to you, which is how the header fault survived; there is
+a bare page for it now at `tools/site/notifications-preview.html`.
+
+**For the applications:** nothing changed in the data, the kinds or the API.
+If the Workspace ever grows a bell, `NotificationsCard` is mountable on its
+own - no router needed beyond the `<Link>`s it already contains, no auth
+provider, no Supabase. Hand it `Notification[]` and it draws.
+
+**Not built, said plainly:** there is no invite notification kind. Staw's
+second screenshot (an invite card with Dismiss and Join) is not ours and
+nothing on this side sends or receives World invites. If invites are coming
+from the Launcher side, the kind, the row and the two buttons need
+specifying before either of us builds half of it.

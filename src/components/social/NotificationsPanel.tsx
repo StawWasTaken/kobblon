@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay, faGavel,
   faShieldHalved,
-  faCheckDouble, faBell, faUserGroup,
+  faCheckDouble, faBell, faUserGroup, faXmark, faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { worldIcon } from '@/lib/naming'
@@ -132,6 +132,20 @@ function whenGroup(iso: string) {
   return 'Before that'
 }
 
+/*
+ * One thing that happened, as a row.
+ *
+ * Staw on the old one: the design "kinda sucks", and the card around it is
+ * fine. It was right about where the fault was. Every row was a full-width
+ * band with a hairline under it, the time sat under the words in the same
+ * grey as the words, and the unread ones carried three separate marks at
+ * once - a tint, a lit edge and a NEW chip - so the loudest thing on the
+ * row was the row telling you it was unread rather than what happened.
+ *
+ * So: rows are their own blocks with air around them, the time goes to the
+ * right where an eye scanning down finds it in one column, and unread is
+ * said twice and no more - the tint and the lit edge.
+ */
 function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
   const mark = markFor(n.kind)
   const said = words(n)
@@ -153,8 +167,8 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
       to={linkFor(n)}
       onClick={onClose}
       className={cn(
-        'group relative flex items-start gap-3 border-b border-ink-line/60 px-4 py-3 transition-colors last:border-0',
-        n.is_read ? 'hover:bg-ink-hover' : 'bg-brand/[0.07] hover:bg-brand/[0.12]',
+        'group relative flex items-start gap-3 overflow-hidden rounded-xl px-3 py-2.5 transition-colors',
+        n.is_read ? 'hover:bg-ink-hover' : 'bg-brand/[0.08] hover:bg-brand/[0.14]',
       )}
     >
       {/* Unread is a lit edge rather than a dot to go looking for. */}
@@ -185,23 +199,183 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
         </span>
       </span>
 
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1 pt-0.5">
         <span className="block text-sm leading-snug text-white/90">
           {said.who && <span className="font-bold text-white">{said.who} </span>}
           {/* An address in the words is a link you can press, and nothing
               here is ever rendered as markup. */}
           {typeof said.rest === 'string' ? <Linkify>{said.rest}</Linkify> : said.rest}
         </span>
-        <span className="mt-1 flex items-center gap-2 text-xs text-muted">
-          {timeAgo(n.created_at)}
-          {!n.is_read && (
-            <span className="rounded-lg bg-brand/20 px-1.5 py-0.5 text-tiny font-bold uppercase tracking-wide text-brand-bright">
-              New
-            </span>
-          )}
-        </span>
+      </span>
+
+      <span className="shrink-0 pt-0.5 text-tiny tabular-nums text-muted">
+        {timeAgo(n.created_at)}
       </span>
     </Link>
+  )
+}
+
+/**
+ * The card itself, with the rows handed to it.
+ *
+ * Split out from the panel so it can be mounted on its own under
+ * `tools/site/` with made-up rows: the panel reads Supabase and measures the
+ * bell it came out of, neither of which exists on a bare page, and a card
+ * that can only be looked at by signing in is a card nobody looks at. The
+ * Workspace can mount this one too if it ever grows a bell.
+ */
+export function NotificationsCard({
+  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, className,
+}: {
+  rows: Notification[]
+  loading?: boolean
+  error?: string | null
+  onRetry?: () => void
+  tab: 'all' | 'unread'
+  onTab: (next: 'all' | 'unread') => void
+  onClose: () => void
+  onMarkAll?: () => void
+  /** Everything has just been marked read, so the header says so. */
+  readNow?: boolean
+  className?: string
+}) {
+  const unread = rows.filter((n) => !n.is_read)
+  const shown = tab === 'unread' ? unread : rows
+
+  const groups = useMemo(() => {
+    const out: { name: string; rows: Notification[] }[] = []
+    for (const row of shown) {
+      const name = whenGroup(row.created_at)
+      const last = out[out.length - 1]
+      if (last?.name === name) last.rows.push(row)
+      else out.push({ name, rows: [row] })
+    }
+    return out
+  }, [shown])
+
+  const waiting = rows.filter((n) => n.kind === 'friend_request').length
+
+  return (
+    <div
+      className={cn(
+        'w-[min(94vw,25rem)] overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop',
+        className,
+      )}
+    >
+      {/* ------------------------------------------------------- header */}
+      {/*
+        * Two lines, because one was not enough room for them.
+        *
+        * The name, the count and the two tabs were on one row, and on a
+        * phone the tray simply sat on top of the word "Notifications" -
+        * which is what Staw's screenshot showed. Nothing truncates its way
+        * out of that: the tray will not shrink and the title will not wrap.
+        * So the identity is one line and the controls are the next.
+        */}
+      <div className="border-b border-ink-line bg-ink-raised px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Kobby mood="notification" size="sm" bob={false} className="h-10 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate font-display text-base font-extrabold leading-tight">Notifications</h2>
+            <p className="truncate text-xs text-muted">
+              {unread.length
+                ? `${unread.length} new`
+                : readNow ? 'All caught up' : 'Nothing new'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close notifications"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border-2 border-b-[3px] border-ink-line text-muted transition-colors hover:text-white active:mt-[1px] active:border-b-2"
+          >
+            <Glyph icon={faXmark} />
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <Tabs
+            label="Which notifications"
+            value={tab}
+            onChange={onTab}
+            options={[
+              { value: 'all', label: 'All' },
+              { value: 'unread', label: 'New', count: unread.length || null },
+            ]}
+          />
+          {!!unread.length && !!onMarkAll && (
+            <button
+              type="button"
+              onClick={onMarkAll}
+              className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-link transition-colors hover:underline"
+            >
+              <Glyph icon={faCheckDouble} />
+              Mark all read
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* A friend request is a thing to answer rather than a thing to read,
+          so it gets its own way through. */}
+      {waiting > 0 && (
+        <Link
+          to="/friends?list=requests"
+          onClick={onClose}
+          className="flex items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-sm font-bold transition-colors hover:bg-brand/20"
+        >
+          <Glyph icon={faUserGroup} className="text-brand-bright" />
+          <span className="min-w-0 flex-1 truncate">
+            {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
+          </span>
+          <Glyph icon={faChevronRight} className="text-xs text-muted" />
+        </Link>
+      )}
+
+      {/* --------------------------------------------------------- list */}
+      <div className="max-h-[27rem] overflow-y-auto kob-scroll">
+        {loading && (
+          <div className="space-y-2 p-4">
+            {[0, 1, 2].map((i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
+          </div>
+        )}
+
+        {error && <ErrorState message={error} onRetry={onRetry} />}
+
+        {!loading && !error && !shown.length && (
+          <EmptyState
+            mood="notification"
+            title={tab === 'unread' ? 'Nothing new' : 'Nothing yet'}
+            body={
+              tab === 'unread'
+                ? 'You have read everything. The rest is under All.'
+                : 'When people add you, message you or walk into your Worlds, it turns up here.'
+            }
+          />
+        )}
+
+        {groups.map((group) => (
+          <section key={group.name}>
+            <h3 className="sticky top-0 z-10 bg-ink-card/95 px-4 pb-1 pt-3 text-mini font-bold uppercase tracking-wide text-muted backdrop-blur">
+              {group.name}
+            </h3>
+            <div className="space-y-0.5 px-2 pb-1">
+              {group.rows.map((n) => <Line key={n.id} n={n} onClose={onClose} />)}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* ------------------------------------------------------- footer */}
+      {!!rows.length && (
+        <div className="flex items-center gap-3 border-t border-ink-line px-4 py-2.5">
+          <Glyph icon={faBell} className="text-xs text-muted" />
+          <p className="min-w-0 flex-1 truncate text-xs text-muted">
+            {rows.length} in the last while
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -254,24 +428,6 @@ export function NotificationsPanel({
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  const rows = data ?? []
-  const unread = rows.filter((n) => !n.is_read)
-  const shown = tab === 'unread' ? unread : rows
-
-  const groups = useMemo(() => {
-    const out: { name: string; rows: Notification[] }[] = []
-    for (const row of shown) {
-      const name = whenGroup(row.created_at)
-      const last = out[out.length - 1]
-      if (last?.name === name) last.rows.push(row)
-      else out.push({ name, rows: [row] })
-    }
-    return out
-  }, [shown])
-
-  const waiting = rows.filter((n) => n.kind === 'friend_request').length
-
-  const card = useRef<HTMLDivElement>(null)
   const [point, setPoint] = useState<number | null>(null)
 
   /*
@@ -325,102 +481,21 @@ export function NotificationsPanel({
         />
       )}
 
-      <div
-        ref={card}
-        className="absolute right-2 top-[3.25rem] z-50 w-[min(94vw,25rem)] animate-pop-in overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop sm:right-5"
-      >
-        {/* ------------------------------------------------------- header */}
-        <div className="relative overflow-hidden border-b border-ink-line bg-ink-raised px-4 py-3">
-          <div className="relative flex items-center gap-3">
-            <Kobby mood="notification" size="sm" bob={false} className="h-10" />
-            <div className="min-w-0 flex-1">
-              <h2 className="font-display text-base font-extrabold leading-tight">Notifications</h2>
-              <p className="text-xs text-muted">
-                {unread.length
-                  ? `${unread.length} new`
-                  : readNow ? 'All caught up' : 'Nothing new'}
-              </p>
-            </div>
-
-            <Tabs
-              label="Which notifications"
-              value={tab}
-              onChange={setTab}
-              options={[
-                { value: 'all', label: 'All' },
-                { value: 'unread', label: 'New', count: unread.length || null },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* A friend request is a thing to answer rather than a thing to read,
-            so it gets its own way through. */}
-        {waiting > 0 && (
-          <Link
-            to="/friends?list=requests"
-            onClick={onClose}
-            className="flex items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-sm font-bold transition-colors hover:bg-brand/20"
-          >
-            <Glyph icon={faUserGroup} className="text-brand-bright" />
-            {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
-          </Link>
-        )}
-
-        {/* --------------------------------------------------------- list */}
-        <div className="max-h-[27rem] overflow-y-auto kob-scroll">
-          {loading && (
-            <div className="space-y-2 p-4">
-              {[0, 1, 2].map((i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
-            </div>
-          )}
-
-          {error && <ErrorState message={error} onRetry={reload} />}
-
-          {!loading && !error && !shown.length && (
-            <EmptyState
-              mood="notification"
-              title={tab === 'unread' ? 'Nothing new' : 'Nothing yet'}
-              body={
-                tab === 'unread'
-                  ? 'You have read everything. The rest is under All.'
-                  : 'When people add you, message you or walk into your Worlds, it turns up here.'
-              }
-            />
-          )}
-
-          {groups.map((group) => (
-            <section key={group.name}>
-              <h3 className="sticky top-0 z-10 border-b border-ink-line/60 bg-ink-card/95 px-4 py-1.5 text-mini font-bold uppercase tracking-wide text-muted backdrop-blur">
-                {group.name}
-              </h3>
-              {group.rows.map((n) => <Line key={n.id} n={n} onClose={onClose} />)}
-            </section>
-          ))}
-        </div>
-
-        {/* ------------------------------------------------------- footer */}
-        {!!rows.length && (
-          <div className="flex items-center gap-3 border-t border-ink-line px-4 py-2.5">
-            <Glyph icon={faBell} className="text-xs text-muted" />
-            <p className="min-w-0 flex-1 truncate text-xs text-muted">
-              {rows.length} in the last while
-            </p>
-            {!!unread.length && (
-              <button
-                onClick={() => {
-                  if (!profile) return
-                  void markNotificationsRead(profile.id).then(() => { setReadNow(true); onReadAll(); reload() })
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-link transition-colors hover:underline"
-              >
-                <Glyph icon={faCheckDouble} />
-                Mark all read
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      <NotificationsCard
+        className="absolute right-2 top-[3.25rem] z-50 animate-pop-in sm:right-5"
+        rows={data ?? []}
+        loading={loading}
+        error={error}
+        onRetry={reload}
+        tab={tab}
+        onTab={setTab}
+        onClose={onClose}
+        readNow={readNow}
+        onMarkAll={() => {
+          if (!profile) return
+          void markNotificationsRead(profile.id).then(() => { setReadNow(true); onReadAll(); reload() })
+        }}
+      />
     </>
   )
 }
