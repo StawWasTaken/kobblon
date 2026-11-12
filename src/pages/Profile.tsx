@@ -864,9 +864,15 @@ export default function Profile() {
           *
           * The left is what the page is about and what wants the width:
           * them standing there in what they are wearing, the Worlds they
-          * kept, their friends. The right is the smaller facts - the groups
-          * they are in and what they have been given - at a size those
-          * things deserve, and it stays put while the left scrolls.
+          * kept, their friends and the communities they are in. The right
+          * is what they have been given, at the size that deserves, and it
+          * stays put while the left scrolls.
+          *
+          * Communities went into the rail for one round and came straight
+          * back out - Staw: "the only thing i really dont like is the
+          * comunities being put here on the profile". A community is a
+          * picture people recognise, so it wants the width the main column
+          * gives it, not a two-wide stack of thumbnails.
           *
           * One column again under `xl`, in the order it reads in: a rail
           * forced onto a phone is just the same stack with less room.
@@ -954,9 +960,6 @@ export default function Profile() {
           )}
 
 
-          </div>
-
-          <aside className="space-y-8 xl:sticky xl:top-24">
           {!!communities.data?.length && (
             <section>
               <Heading icon={faUsers}>Communities</Heading>
@@ -965,7 +968,7 @@ export default function Profile() {
                 * how the page Staw sent shows a group: a community is a
                 * picture people recognise before it is a name.
                 */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-2">
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
                 {communities.data.map((community) => (
                   <Link
                     key={community.id}
@@ -1008,6 +1011,10 @@ export default function Profile() {
               </div>
             </section>
           )}
+
+          </div>
+
+          <aside className="space-y-8 xl:sticky xl:top-24">
 
           {!!badges.data?.length && (
             <section>

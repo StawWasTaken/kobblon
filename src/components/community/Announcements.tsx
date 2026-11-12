@@ -310,7 +310,7 @@ export function Announcements({
                 </button>
               </div>
             ) : (
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-ink-hover px-3 py-2 text-xs font-bold transition-colors hover:bg-ink-line">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-ink-raised px-3 py-2 text-xs font-bold transition-colors hover:bg-ink-hover">
                 <Glyph icon={faImage} />
                 <Glyph icon={faVideo} />
                 {pending ? 'Uploading...' : 'Add a picture or a clip'}

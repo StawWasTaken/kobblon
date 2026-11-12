@@ -22,21 +22,38 @@
    * daylight half and in the gem accent, which is where it does the work
    * without changing the room everybody already builds in.
    *
-   * `--ink-line` went up and has come most of the way back down. It was
-   * lifted to 113 116 139 so a 2px stroke cleared 3.0 against its card,
-   * and at that value every card on the page was outlined in pale slate -
-   * Staw: "the strokes & 3d stuff create a too big contrast ... doesnt fit
-   * what we want". A stroke is meant to give a card an edge, not to be the
-   * loudest thing on it. 88 90 110 sits at 2.5 against the card: visible
-   * at two pixels, which is the weight the house stroke is drawn at, and
-   * quiet enough that a screen of cards reads as surfaces rather than as
-   * a wireframe.
-   */
-  --ink: 16 16 18;
-  --ink-raised: 22 22 26;
-  --ink-card: 26 26 32;
-  --ink-hover: 33 33 40;
-  --ink-line: 88 90 110;
+   * **The stroke is darker than the thing it outlines, not lighter.**
+   *
+   * Staw: "you STILL DIDNT REPLACE THE UGLY TOO BRIGHT GREY THING COLOUR
+   * BY A DARKER ONE THAT FITS THE BACKGROUND, i was even thinking about
+   * doing actually the opposite, instead of a lighter contrast thick
+   * strokes & 3d stuff, make it darker contrast." Two rounds were spent
+   * tuning how pale the stroke should be, which was the wrong axis
+   * entirely. A pale outline on a dark surface is a wireframe; a near-black
+   * one is a drawn edge, which is what everything this platform is modelled
+   * on actually does.
+   *
+   * It only works if the surfaces come up to meet it, because a black line
+   * on a near-black card is invisible. So the page went slightly darker and
+   * the cards came up: the page is now clearly behind the cards, each card
+   * has a black edge and a black lip under it, and the depth reads as a
+   * thing sitting on a surface rather than as an outline drawn around a
+   * hole.
+   *
+   *   page   16 16 18  ->  14 14 16
+   *   raised 22 22 26  ->  28 28 34
+   *   card   26 26 32  ->  36 36 44
+   *   hover  33 33 40  ->  48 48 58
+   *   line   88 90 110 ->  8 8 11
+   *
+   * The hue is unchanged - the same cold slate, which is the thing Staw
+   * asked for back when a round made it warm.
+      */
+  --ink: 14 14 16;
+  --ink-raised: 28 28 34;
+  --ink-card: 36 36 44;
+  --ink-hover: 48 48 58;
+  --ink-line: 8 8 11;
   --ink-edge: 10 10 13;
   --fg: 255 255 255;
   /*
@@ -108,7 +125,7 @@
   --ink-raised: 255 254 252;
   --ink-card: 255 254 252;
   --ink-hover: 237 232 225;
-  --ink-line: 184 173 160;
+  --ink-line: 86 77 68;
   --ink-edge: 196 186 173;
   --fg: 20 19 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */
@@ -180,11 +197,11 @@
   --on-chrome: 255 255 255;
   --pick: 27 52 232;
   --on-pick: 255 255 255;
-  --ink: 16 16 18;
-  --ink-raised: 22 22 26;
-  --ink-card: 26 26 32;
-  --ink-hover: 33 33 40;
-  --ink-line: 84 86 104;
+  --ink: 14 14 16;
+  --ink-raised: 28 28 34;
+  --ink-card: 36 36 44;
+  --ink-hover: 48 48 58;
+  --ink-line: 8 8 11;
   --ink-edge: 10 10 13;
   --link: 159 173 255;
   --bubble: 38 38 47;
@@ -202,7 +219,7 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 234 236 243;
-  --ink-line: 186 192 209;
+  --ink-line: 84 88 102;
   --ink-edge: 183 190 208;
   --link: 27 52 232;
   --bubble: 24 25 32;
@@ -221,7 +238,7 @@
   --ink-raised: 28 21 16;
   --ink-card: 32 24 18;
   --ink-hover: 44 32 23;
-  --ink-line: 112 80 54;
+  --ink-line: 10 7 5;
   --ink-edge: 13 9 6;
   --link: 255 178 102;
   --bubble: 48 35 25;
@@ -240,7 +257,7 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 247 236 226;
-  --ink-line: 208 185 162;
+  --ink-line: 96 70 44;
   --ink-edge: 203 180 156;
   --link: 168 74 8;
   --bubble: 46 32 22;
@@ -259,7 +276,7 @@
   --ink-raised: 19 27 22;
   --ink-card: 22 31 25;
   --ink-hover: 30 43 34;
-  --ink-line: 78 112 89;
+  --ink-line: 6 10 8;
   --ink-edge: 7 14 9;
   --link: 126 226 164;
   --bubble: 34 48 39;
@@ -278,7 +295,7 @@
   --ink-raised: 255 255 255;
   --ink-card: 255 255 255;
   --ink-hover: 232 243 236;
-  --ink-line: 176 206 189;
+  --ink-line: 52 84 66;
   --ink-edge: 170 200 181;
   --link: 12 92 50;
   --bubble: 22 40 29;

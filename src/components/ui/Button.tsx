@@ -129,7 +129,7 @@ const variants: Record<Variant, string> = {
    * last one that was not.
    */
   subtle:
-    'bg-ink-hover text-white hover:bg-ink-line border-2 border-ink-line '
+    'bg-ink-raised text-white hover:bg-ink-hover border-2 border-ink-line '
     + 'border-b-[3px] active:border-b-2 active:mt-[1px]',
   /*
    * Built exactly like primary and yes, in red. Staw: a red button should be

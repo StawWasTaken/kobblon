@@ -22396,3 +22396,57 @@ Said plainly: this page cannot be screenshotted from here, because it needs
 a signed-in session and a database. The new layout was built and looked at
 as a static replica at the real widths with the real stylesheet; the live
 page has been typechecked and built but not seen.
+
+## Round three hundred and twenty-one - the stroke is darker than what it outlines
+
+**This is a meaning change to a shared thing and the applications have to
+follow it, or the two windows will read as two different products.**
+
+Staw: "you STILL DIDNT REPLACE THE UGLY TOO BRIGHT GREY THING COLOUR BY A
+DARKER ONE THAT FITS THE BACKGROUND, i was even thinking about doing
+actually the opposite, instead of a lighter contrast thick strokes & 3d
+stuff, make it darker contrast."
+
+Three rounds were spent arguing about **how pale** the house stroke should
+be. That was the wrong axis. A pale outline on a dark surface is a
+wireframe; a near-black one is a drawn edge, which is what everything this
+platform is modelled on actually does.
+
+It only works if the surfaces come up to meet it - a black line on a
+near-black card is invisible - so the page dropped slightly and the cards
+came up:
+
+    --ink         16 16 18   ->  14 14 16
+    --ink-raised  22 22 26   ->  28 28 34
+    --ink-card    26 26 32   ->  36 36 44
+    --ink-hover   33 33 40   ->  48 48 58
+    --ink-line    88 90 110  ->  8 8 11
+
+Same cold slate hue throughout; nothing got warmer. Every appearance moved
+with it - halloween and christmas strokes are near-black in their own hue,
+and in daylight the stroke is a dark ink on paper (`86 77 68`) rather than a
+pale grey.
+
+**What this means for the Workspace.** `border-ink-line` now draws a dark
+edge, not a light one. A panel that gets its separation from a pale outline
+will look like it lost its border; a panel that sits on `--ink-card` against
+`--ink` gets its separation from the surfaces instead, which is how it
+should have been. The depth language is unchanged in shape - 2px stroke,
+`border-b-4` lip on card-shaped things - only the colour of it flipped.
+
+Three places here used `--ink-line` as a **fill** rather than an edge and
+had to move, which is the thing to check on your side too:
+
+* `Button`'s `subtle` rested on `ink-hover` and hovered to `ink-line`; it
+  now rests on `ink-raised` and hovers to `ink-hover`, so it still lightens.
+* a label in `Announcements` did the same and moved the same way.
+* `Switch`'s off track was `ink-line/60`, a pale bar; it is `ink` now, so it
+  reads as a groove cut into the card.
+
+### Also: communities came back out of the profile's rail
+
+Round 320 put them in the right-hand rail. Staw: "the only thing i really
+dont like is the comunities being put here on the profile". A community is a
+picture people recognise before it is a name, so it wants the width the main
+column gives it rather than a two-wide stack of thumbnails. The rail holds
+badges only.
