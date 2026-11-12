@@ -78,10 +78,48 @@ export default {
           deep: '#162382',
           ink: '#0d1349',
         },
+        /*
+         * Yes, and the thing you are buying.
+         *
+         * The scale moved down one step so that white on the resting fill
+         * passes AA: `#1CAE71` against white is 2.86, which is the colour
+         * every buy button on the site was drawn in, and it was the only
+         * failing pair in the whole palette. The old default is `bright`
+         * now, so nothing lost its green - the button is a shade deeper
+         * and the hover is exactly the colour it always was.
+         */
         space: {
-          DEFAULT: '#1CAE71',
-          bright: '#25D68C',
-          deep: '#14855a',
+          DEFAULT: '#148556',
+          bright: '#1CAE71',
+          deep: '#0f6b45',
+        },
+        /*
+         * The gem, and it is the whole of the reward language.
+         *
+         * One accent with one job: XP, levels, streaks, quests, anything
+         * earned. Nothing that is merely important may wear it, which is
+         * what stops a gamified interface turning into confetti - if it
+         * glows, somebody earned it. Warm, because the rest of the base is
+         * warm stone and a cool accent on warm stone reads as a different
+         * product's colour.
+         *
+         * It is deliberately not `warn`: an amber that means "careful" and
+         * an amber that means "you levelled up" cannot be the same amber,
+         * so `warn` below is the deeper ochre and this one is the lit one.
+         */
+        gem: {
+          DEFAULT: '#FFB224',
+          bright: '#FFC85A',
+          deep: '#B06E00',
+          ink: '#4A2E00',
+          soft: 'rgb(255 178 36 / 0.16)',
+        },
+        /* Careful, and nothing else. Never a button on its own. */
+        warn: {
+          DEFAULT: '#C2740A',
+          bright: '#E08C17',
+          deep: '#7A4705',
+          soft: 'rgb(194 116 10 / 0.14)',
         },
         muted: 'rgb(var(--muted) / <alpha-value>)',
         /*

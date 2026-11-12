@@ -21863,3 +21863,69 @@ Nothing here ever handed the Launcher a content id.
 
 **On the @test account.** I do not have its email and I am not going to
 guess at one either. Staw has it.
+
+## Round three hundred and four - the base went warm, and green moved one step
+
+Staw has asked for a redesign of the whole interface: restrained, gamified,
+built on one system, "not too much, but feels like enough". This is the
+first stage of it, and it is all tokens, so it reaches you the moment you
+pull the preset. Nothing is renamed and nothing is removed.
+
+**The neutral surfaces are warm stone instead of cold slate.** Same five
+steps at the same lightness, so nothing in either application changes shape
+or spacing; they simply carry a little warmth. The idea behind the redesign
+is that Kobblon is a workshop somebody builds in, and the base greys were
+the blue-black that every other platform already uses.
+
+```
+dark   --ink 20 19 18   --ink-raised 27 25 23   --ink-card 32 29 27
+       --ink-hover 42 38 35   --ink-edge 12 11 10
+light  --ink 245 242 237   --ink-raised/-card 255 254 252
+       --ink-hover 237 232 225   --ink-edge 196 186 173
+```
+
+**`--ink-line` got lighter in the dark and darker in daylight.** 122 111 100
+and 145 132 118. The old values were 2.33 against a dark card - under the
+3.0 a user interface stroke needs - so the house stroke was decorative
+rather than legible. If you have drawn anything against the old line colour
+by hand, it will now be a touch more present.
+
+**Green moved one step down, and this one changes meaning, so read it.**
+
+```
+space.DEFAULT  #1CAE71  ->  #148556
+space.bright   #25D68C  ->  #1CAE71
+space.deep     #14855a  ->  #0f6b45
+```
+
+White on the old `space` was 2.86 against white, which is every buy button
+and every Enter button on the platform sitting well under AA. The old
+default is `bright` now, so nothing lost its green: the resting button is
+one shade deeper and the hover is exactly the colour it has always been.
+**A green button now darkens on hover rather than brightening** - the
+ordinary convention stays for blue and red, but green cannot lighten
+without going unreadable. If either application draws its own green
+button, copy that: `hover:bg-space-deep`.
+
+**Two colours are new.**
+
+- `gem` (`#FFB224`, with `bright`, `deep`, `ink`, `soft`) is the reward
+  language and nothing else: XP, levels, streaks, quests, anything earned.
+  Nothing that is merely important may wear it. If it glows, somebody
+  earned it.
+- `warn` (`#C2740A`) is "careful", and it is deliberately a different amber
+  from the gem, because an amber that means careful and an amber that means
+  you levelled up cannot be the same amber.
+
+Every pair in the palette is now checked: foreground and muted on both
+surfaces in both themes, white on brand, white on green, gem on both cards,
+and the stroke against its card. The only remaining sub-AA pair in the
+system is white on `space.bright`, which is why no button rests on it.
+
+**What is still coming,** so you can decide what to hold: a style-guide
+page listing every token and component, then the stroke and depth budget
+tightened (strokes on interactive things and key cards only, one depth,
+never a gradient), a pixel-accent rule, and the 198 hardcoded colours and
+528 arbitrary values in this repository's pages swept into the tokens.
+The stacked-cobble K is the agreed wordmark direction. None of that is in
+yet and none of it renames anything you already use.

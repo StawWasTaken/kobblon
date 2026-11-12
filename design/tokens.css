@@ -13,12 +13,21 @@
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --ink: 16 16 18;
-  --ink-raised: 22 22 26;
-  --ink-card: 26 26 32;
-  --ink-hover: 33 33 40;
-  --ink-line: 84 86 104;
-  --ink-edge: 10 10 13;
+  /*
+   * Warm stone, not cold slate.
+   *
+   * Kobblon is a workshop somebody builds in, and the base greys were a
+   * blue-black that belongs to every other platform. These are the same
+   * five steps at the same lightness - nothing in the interface changes
+   * shape - carrying a little warmth, so the blue reads as a decision
+   * rather than as the colour everything already was.
+   */
+  --ink: 20 19 18;
+  --ink-raised: 27 25 23;
+  --ink-card: 32 29 27;
+  --ink-hover: 42 38 35;
+  --ink-line: 122 111 100;
+  --ink-edge: 12 11 10;
   --fg: 255 255 255;
   /*
    * White that stays white, whatever the theme is doing.
@@ -36,9 +45,9 @@
    * daylight - so a white pill with `text-ink` on it had white words.
    */
   --art-ink: 16 16 18;
-  --muted: 139 139 153;
+  --muted: 150 142 133;
   --link: 159 173 255;
-  --bubble: 38 38 47;
+  --bubble: 45 41 38;
   /*
    * The toast in the corner, which is the one thing on the site that is
    * deliberately the wrong way round. Staw: "i want the notification popup
@@ -84,17 +93,18 @@
    untouched, so what a colour means never depends on the theme. */
 :root[data-theme='light'] {
   color-scheme: light;
-  --ink: 242 243 247;
-  --ink-raised: 255 255 255;
-  --ink-card: 255 255 255;
-  --ink-hover: 234 236 243;
-  --ink-line: 186 192 209;
-  --ink-edge: 183 190 208;
-  --fg: 16 16 18;
+  /* Warm paper, the daylight half of the stone above. */
+  --ink: 245 242 237;
+  --ink-raised: 255 254 252;
+  --ink-card: 255 254 252;
+  --ink-hover: 237 232 225;
+  --ink-line: 145 132 118;
+  --ink-edge: 196 186 173;
+  --fg: 20 19 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */
   --on-art: 255 255 255;
   --art-ink: 16 16 18;
-  --muted: 92 97 112;
+  --muted: 95 89 82;
   --link: 27 52 232;
   /* The other way round in daylight, for the same reason. */
   --toast: 18 18 22;
