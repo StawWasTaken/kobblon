@@ -22109,3 +22109,27 @@ The row wraps now and the name is allowed two lines, with a `min-h` holding
 the cell at the height of two so a grid of six faces still sits level
 whatever their names are. **If either application draws a face card with a
 name and marks on one line, the marks are the thing that gives way.**
+
+## Round three hundred and twelve - a label on a solid fill never flips
+
+Fifty-two places on the website put `text-white` on a solid brand, green,
+red or gem fill. `white` is the theme's foreground: it is white in the dark
+and near-black in daylight. So every one of those - the tick in a tickbox,
+the selected day in the date picker, the unread count on the phone bar, the
+notification tints, the chat bubble you sent - went dark the moment somebody
+turned the lights on, on a fill that does not flip with the theme.
+
+`text-on-art` is the one that stays white, and the rule it comes from has
+been in `Button.tsx` since the solid variants were built: **anything
+standing on a picture or on a fixed brand colour wears `on-art`, never
+`white`.** It was right in the buttons and nowhere else.
+
+Two smaller things in the same push:
+
+* **Green keeps its colour while it is held.** Staw: "green buttons still
+  feel weird when you press them they get transparent". Its resting fill
+  sits a long way under its hover since the scale moved down for AA, so
+  going back to it under the finger read as draining out. The movement and
+  the lip disappearing say pressed, on green as on everything else.
+* **No bare `rounded` anywhere.** Nineteen 1px radii became `rounded-lg`,
+  so the corner budget is now closed with no exceptions.

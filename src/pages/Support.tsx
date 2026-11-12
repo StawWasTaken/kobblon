@@ -781,7 +781,7 @@ function Faq() {
                 <span className={cn(
                   'grid size-8 shrink-0 place-items-center rounded-full border-2 text-[11px] transition-colors',
                   showing
-                    ? 'border-brand-bright bg-brand text-white'
+                    ? 'border-brand-bright bg-brand text-on-art'
                     : 'border-white/15 bg-white/[0.04] text-white/45 group-hover:border-brand-bright/60 group-hover:text-white',
                 )}>
                   <Glyph icon={showing ? faMinus : faPlus} />
@@ -854,7 +854,7 @@ function FaqChip({ icon, label, on, onClick }: {
       className={cn(
         'inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors',
         on
-          ? 'border-brand-bright bg-brand text-white'
+          ? 'border-brand-bright bg-brand text-on-art'
           : 'border-white/12 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white',
       )}
     >

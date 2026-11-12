@@ -34,19 +34,19 @@ import { cn } from '@/lib/cn'
  */
 const marks: Record<Notification['kind'], { icon: IconDefinition; tint: string; ring: string }> = {
   friend_request: { icon: faUserPlus, tint: 'bg-brand text-onbrand', ring: 'ring-brand/40' },
-  friend_accepted: { icon: faUserCheck, tint: 'bg-space text-white', ring: 'ring-space/40' },
+  friend_accepted: { icon: faUserCheck, tint: 'bg-space text-on-art', ring: 'ring-space/40' },
   // Best friends wear the heart the lists wear, so the two read as one thing.
   best_friend_request: { icon: faHeart, tint: 'bg-brand text-onbrand', ring: 'ring-brand/40' },
-  best_friend_accepted: { icon: faHeart, tint: 'bg-space text-white', ring: 'ring-space/40' },
-  space_like: { icon: faHeart, tint: 'bg-danger text-white', ring: 'ring-danger/40' },
-  space_visit: { icon: faDoorOpen, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
+  best_friend_accepted: { icon: faHeart, tint: 'bg-space text-on-art', ring: 'ring-space/40' },
+  space_like: { icon: faHeart, tint: 'bg-danger text-on-art', ring: 'ring-danger/40' },
+  space_visit: { icon: faDoorOpen, tint: 'bg-brand-deep text-on-art', ring: 'ring-brand/30' },
   message: { icon: faComment, tint: 'bg-brand-bright text-onbrand', ring: 'ring-brand/40' },
   system: { icon: faCircleInfo, tint: 'bg-ink-raised text-white/70', ring: 'ring-ink-line' },
-  event_started: { icon: faCalendarDay, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
-  world_updated: { icon: worldIcon, tint: 'bg-space text-white', ring: 'ring-space/40' },
-  content_removed: { icon: faGavel, tint: 'bg-danger text-white', ring: 'ring-danger/40' },
-  forum_reply: { icon: faComment, tint: 'bg-brand-deep text-white', ring: 'ring-brand/30' },
-  forum_staff: { icon: faShieldHalved, tint: 'bg-space text-white', ring: 'ring-space/40' },
+  event_started: { icon: faCalendarDay, tint: 'bg-brand-deep text-on-art', ring: 'ring-brand/30' },
+  world_updated: { icon: worldIcon, tint: 'bg-space text-on-art', ring: 'ring-space/40' },
+  content_removed: { icon: faGavel, tint: 'bg-danger text-on-art', ring: 'ring-danger/40' },
+  forum_reply: { icon: faComment, tint: 'bg-brand-deep text-on-art', ring: 'ring-brand/30' },
+  forum_staff: { icon: faShieldHalved, tint: 'bg-space text-on-art', ring: 'ring-space/40' },
 }
 
 /*

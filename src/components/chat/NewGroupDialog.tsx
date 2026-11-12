@@ -139,7 +139,7 @@ export function NewGroupDialog({
               <span
                 className={cn(
                   'grid h-5 w-5 shrink-0 place-items-center rounded-lg border-2 text-[10px] transition-colors',
-                  on ? 'border-brand-bright bg-brand text-white' : 'border-ink-line',
+                  on ? 'border-brand-bright bg-brand text-on-art' : 'border-ink-line',
                 )}
               >
                 {on && <Glyph icon={faCheck} />}

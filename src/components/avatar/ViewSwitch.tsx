@@ -48,7 +48,7 @@ export function ViewSwitch<T extends string>({ ways, value, onChange, className 
           className={cn(
             'kob-press flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold',
             value === way.value
-              ? 'kob-chosen bg-brand text-white'
+              ? 'kob-chosen bg-brand text-on-art'
               : 'text-white/65 hover:bg-white/10 hover:text-white',
           )}
         >

@@ -35,7 +35,7 @@ export function GenderPicker({
               className={cn(
                 'flex h-10 items-center justify-center gap-2 rounded-lg border-2 text-sm font-semibold transition-colors',
                 active
-                  ? 'border-brand-bright bg-brand text-white'
+                  ? 'border-brand-bright bg-brand text-on-art'
                   : 'border-ink-line bg-ink-raised text-white/60 hover:bg-ink-hover hover:text-white',
               )}
             >

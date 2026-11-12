@@ -53,7 +53,7 @@ function AccountRow({
         {busy ? (
           <Glyph icon={faSpinner} className="shrink-0 animate-spin text-white/50" />
         ) : current ? (
-          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-space text-[11px] text-white">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-space text-[11px] text-on-art">
             <Glyph icon={faCheck} />
           </span>
         ) : account.session ? (

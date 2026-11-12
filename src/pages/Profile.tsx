@@ -915,7 +915,7 @@ export default function Profile() {
                         )}
                       />
                       {community.is_primary && (
-                        <span className="absolute -right-1.5 -top-1.5 grid size-7 place-items-center rounded-full border-2 border-ink bg-brand text-[11px] text-white">
+                        <span className="absolute -right-1.5 -top-1.5 grid size-7 place-items-center rounded-full border-2 border-ink bg-brand text-[11px] text-on-art">
                           <Glyph icon={faStar} />
                         </span>
                       )}

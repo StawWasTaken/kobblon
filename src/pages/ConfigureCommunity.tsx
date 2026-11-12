@@ -157,7 +157,7 @@ export default function ConfigureCommunity() {
                     className={cn(
                       'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
                       section === item.name
-                        ? 'bg-brand text-white'
+                        ? 'bg-brand text-on-art'
                         : 'text-white/65 hover:bg-ink-hover hover:text-white',
                     )}
                   >

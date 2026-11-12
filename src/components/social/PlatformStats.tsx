@@ -50,7 +50,7 @@ function Tile({
       <span
         className={cn(
           'grid h-9 w-9 place-items-center rounded-xl text-sm',
-          accent ? 'bg-space text-white' : 'bg-brand/25 text-link',
+          accent ? 'bg-space text-on-art' : 'bg-brand/25 text-link',
         )}
       >
         <Glyph icon={icon} />

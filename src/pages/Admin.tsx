@@ -789,7 +789,7 @@ export function OverviewSection({ onGo }: { onGo: (to: Section) => void }) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <span className={cn(
                 'grid size-10 shrink-0 place-items-center rounded-2xl',
-                pulse.data?.is_on ? 'bg-brand text-white' : 'bg-ink-raised text-white/30',
+                pulse.data?.is_on ? 'bg-brand text-on-art' : 'bg-ink-raised text-white/30',
               )}>
                 <FontAwesomeIcon icon={faRobot} />
               </span>
@@ -6055,7 +6055,7 @@ export function MachineSection() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               <span className={cn(
                 'grid size-12 shrink-0 place-items-center rounded-2xl text-xl transition-colors duration-200',
-                on ? 'bg-brand text-white' : 'bg-ink-raised text-white/30',
+                on ? 'bg-brand text-on-art' : 'bg-ink-raised text-white/30',
               )}>
                 <FontAwesomeIcon icon={faRobot} />
               </span>

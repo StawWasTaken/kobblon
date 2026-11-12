@@ -461,7 +461,7 @@ export function Composer({
                * and a spinning one beside a calm row was the loudest
                * thing in the window.
                */
-              ready ? 'bg-brand text-white hover:bg-brand-bright' : 'bg-ink-hover text-white/40',
+              ready ? 'bg-brand text-on-art hover:bg-brand-bright' : 'bg-ink-hover text-white/40',
             )}
           >
             <Glyph icon={faPaperPlane} className="text-[13px]" />

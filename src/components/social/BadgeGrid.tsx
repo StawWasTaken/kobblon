@@ -23,7 +23,7 @@ export function BadgeTile({
       <span
         className={cn(
           'grid h-16 w-16 place-items-center overflow-hidden rounded-full ring-2',
-          earned ? 'bg-brand text-white ring-brand-bright/60' : 'bg-ink-hover text-white/35 ring-ink-line',
+          earned ? 'bg-brand text-on-art ring-brand-bright/60' : 'bg-ink-hover text-white/35 ring-ink-line',
         )}
       >
         {badge.icon_url ? (

@@ -134,7 +134,7 @@ export function AskKobby({
           disabled={!question.trim() || asking}
           aria-label="Ask"
           className={cn(
-            'grid shrink-0 place-items-center rounded-full bg-brand text-white transition-all hover:bg-brand-bright hover:scale-105 disabled:scale-100 disabled:bg-white/[0.07] disabled:text-white/25',
+            'grid shrink-0 place-items-center rounded-full bg-brand text-on-art transition-all hover:bg-brand-bright hover:scale-105 disabled:scale-100 disabled:bg-white/[0.07] disabled:text-white/25',
             wide ? 'h-11 w-11' : 'h-9 w-9',
           )}
         >

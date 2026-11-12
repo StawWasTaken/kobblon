@@ -152,7 +152,7 @@ export function PhoneBar() {
               className={chatOpen ? 'text-brand-bright' : undefined}
             />
             {chatUnread > 0 && (
-              <span className="absolute -right-2 -top-1 grid h-4 min-w-[1rem] place-items-center rounded-full bg-danger px-1 text-[10px] font-extrabold text-white">
+              <span className="absolute -right-2 -top-1 grid h-4 min-w-[1rem] place-items-center rounded-full bg-danger px-1 text-[10px] font-extrabold text-on-art">
                 {chatUnread > 9 ? '9+' : chatUnread}
               </span>
             )}

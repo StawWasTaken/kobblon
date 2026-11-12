@@ -85,7 +85,7 @@ export function ListTab({
       aria-current={active ? 'page' : undefined}
       className={cn(
         'flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-bold transition-colors',
-        active ? 'bg-brand text-white' : 'text-muted hover:bg-ink-hover hover:text-white',
+        active ? 'bg-brand text-on-art' : 'text-muted hover:bg-ink-hover hover:text-white',
       )}
     >
       <Glyph icon={icon} className="text-xs" />

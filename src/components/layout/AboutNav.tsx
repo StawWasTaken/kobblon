@@ -372,7 +372,7 @@ function NavGroup({ entry, here }: { entry: AboutEntry; here: (to: string) => bo
               >
                 <span className={cn(
                   'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-white/10 transition-colors',
-                  here(one.to) ? 'bg-brand text-white' : 'bg-white/5 text-white/70 group-hover/row:text-white',
+                  here(one.to) ? 'bg-brand text-on-art' : 'bg-white/5 text-white/70 group-hover/row:text-white',
                 )}>
                   <Glyph icon={UNDER_ART[one.to] ?? faCircleInfo} className="text-xs" />
                 </span>

@@ -126,7 +126,7 @@ export function Picker({
                   className={cn(
                     'w-full rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold transition-colors',
                     isSelected
-                      ? 'bg-brand text-white'
+                      ? 'bg-brand text-on-art'
                       : index === active
                         ? 'bg-ink-hover text-white'
                         : 'text-white/70',

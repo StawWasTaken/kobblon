@@ -239,7 +239,7 @@ export function MessageRow({
                 disabled={busy}
                 aria-label="Save"
                 title="Save"
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-white transition-colors hover:bg-brand-bright disabled:opacity-50"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-on-art transition-colors hover:bg-brand-bright disabled:opacity-50"
               >
                 <Glyph icon={faCheck} className="text-[11px]" />
               </button>
@@ -275,7 +275,7 @@ export function MessageRow({
               // The top corner nearest the avatar is cut short, so the bubble
               // points at whoever said it rather than floating beside them.
               !(sticker && !hidden) && (mine ? 'rounded-tr-[5px]' : 'rounded-tl-[5px]'),
-              !(sticker && !hidden) && (mine ? 'bg-brand text-white' : 'bg-ink-hover text-white/90'),
+              !(sticker && !hidden) && (mine ? 'bg-brand text-on-art' : 'bg-ink-hover text-white/90'),
               hidden && 'cursor-pointer select-none',
             )}
             onClick={hidden ? () => setShown(true) : undefined}

@@ -61,7 +61,7 @@ function Column({
               onClick={() => onSelect(option.value)}
               className={cn(
                 'w-full rounded-lg px-2 py-1.5 text-center text-sm font-semibold transition-colors',
-                selected ? 'bg-brand text-white' : 'text-white/70 hover:bg-ink-hover hover:text-white',
+                selected ? 'bg-brand text-on-art' : 'text-white/70 hover:bg-ink-hover hover:text-white',
               )}
             >
               {option.label}

@@ -472,7 +472,7 @@ function Window({
                     type="submit"
                     aria-label="Save the name"
                     title="Save the name"
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white transition-colors hover:bg-brand-bright"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-on-art transition-colors hover:bg-brand-bright"
                   >
                     <Glyph icon={faCheck} className="text-xs" />
                   </button>
@@ -837,7 +837,7 @@ function List({
                         <PersonAvatar person={solo} size="sm" />
                       </>
                     ) : (
-                      <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-deep text-xs text-white">
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-deep text-xs text-on-art">
                         <Glyph icon={faUserGroup} />
                       </span>
                     )}
@@ -867,7 +867,7 @@ function List({
                   <span className="shrink-0 text-right">
                     <span className="block text-[11px] text-muted">{timeAgo(c.last_message_at)}</span>
                     {c.unread_count > 0 && (
-                      <span className="mt-1 inline-grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-white">
+                      <span className="mt-1 inline-grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-on-art">
                         {c.unread_count > 9 ? '9+' : c.unread_count}
                       </span>
                     )}

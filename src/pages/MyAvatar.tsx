@@ -1179,7 +1179,7 @@ function WornTile({ item, nth, on, busy, onToggle }: {
           )}
         </span>
         {on && !busy && (
-          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 animate-pop-in place-items-center rounded-lg bg-brand text-white shadow-pop">
+          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 animate-pop-in place-items-center rounded-lg bg-brand text-on-art shadow-pop">
             <Icon name="checkmark" tone="currentColor" className="h-3 w-3" />
           </span>
         )}

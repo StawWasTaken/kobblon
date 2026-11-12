@@ -255,7 +255,7 @@ function Field({
                   className={cn(
                     'grid h-9 place-items-center rounded-lg text-sm font-semibold transition-colors',
                     picked
-                      ? 'bg-brand text-white'
+                      ? 'bg-brand text-on-art'
                       : past
                         ? 'text-white/20'
                         : outside
@@ -323,7 +323,7 @@ function Field({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="h-9 flex-1 rounded-lg bg-brand text-xs font-bold text-white transition-colors hover:bg-brand-bright"
+              className="h-9 flex-1 rounded-lg bg-brand text-xs font-bold text-on-art transition-colors hover:bg-brand-bright"
             >
               Done
             </button>

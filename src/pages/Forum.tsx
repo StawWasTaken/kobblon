@@ -232,7 +232,7 @@ function Switch({ on, onPress, children }: {
       onClick={onPress}
       className={cn(
         'rounded-lg px-3 py-1.5 text-sm font-extrabold transition-colors',
-        on ? 'bg-brand text-white' : 'text-white/50 hover:bg-white/5 hover:text-white',
+        on ? 'bg-brand text-on-art' : 'text-white/50 hover:bg-white/5 hover:text-white',
       )}
     >
       {children}
@@ -1547,7 +1547,7 @@ export function ForumTopicPage() {
                         className={cn(
                           'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold transition-colors',
                           on
-                            ? 'bg-brand text-white'
+                            ? 'bg-brand text-on-art'
                             : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.09] hover:text-white',
                         )}
                       >

@@ -57,7 +57,7 @@ export function LiveEventBar({ communityId, showing }: {
   if (!event || closed) return null
 
   return (
-    <div className="sticky kob-under-bar z-30 overflow-hidden bg-space text-white">
+    <div className="sticky kob-under-bar z-30 overflow-hidden bg-space text-on-art">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"

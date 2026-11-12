@@ -1011,7 +1011,7 @@ function ReviewBox({ asset, onDone }: { asset: AssetPageItem; onDone: () => void
             className={cn(
               'inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-bold transition-colors',
               asset.my_vote === up
-                ? up ? 'bg-space text-white' : 'bg-ink-hover text-white'
+                ? up ? 'bg-space text-on-art' : 'bg-ink-hover text-white'
                 : 'bg-ink-card text-white/60 hover:bg-ink-hover hover:text-white',
             )}
           >

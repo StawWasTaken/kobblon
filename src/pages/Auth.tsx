@@ -236,7 +236,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                           className={cn(
                             'rounded-lg py-2 text-center text-sm font-bold transition-colors',
                             mode === which
-                              ? 'bg-brand text-white'
+                              ? 'bg-brand text-on-art'
                               : 'text-white/55 hover:bg-white/5 hover:text-white',
                           )}
                         >

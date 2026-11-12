@@ -146,7 +146,7 @@ export function RolesEditor({ communityId }: { communityId: string }) {
                 onClick={() => setSelected(rank.id)}
                 className={cn(
                   'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-semibold transition-colors',
-                  selected === rank.id ? 'bg-brand text-white' : 'text-white/70 hover:bg-ink-hover',
+                  selected === rank.id ? 'bg-brand text-on-art' : 'text-white/70 hover:bg-ink-hover',
                 )}
               >
                 {/* A person, because a role is a person with a name for

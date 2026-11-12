@@ -19,10 +19,10 @@ const icons: Record<ActivityEvent['kind'], IconDefinition> = {
 }
 
 const tones: Record<ActivityEvent['kind'], string> = {
-  space_published: 'bg-brand text-white',
+  space_published: 'bg-brand text-on-art',
   space_updated: 'bg-white/10 text-white/80',
-  space_entered: 'bg-space text-white',
-  user_joined: 'bg-brand-deep text-white',
+  space_entered: 'bg-space text-on-art',
+  user_joined: 'bg-brand-deep text-on-art',
 }
 
 function Line({ event }: { event: ActivityEvent }) {
