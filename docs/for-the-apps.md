@@ -22023,3 +22023,32 @@ only thing that says it.
 The staff screens keep the word - `PersonSheet` and the two Admin lists are
 lists of facts about an account, not a name on a page, and nothing there
 draws marks.
+
+## Round three hundred and eight - a guest is named after its account
+
+**Migration 0338, needs applying.** Staw: a guest's name should be
+"Guest[user-id]".
+
+`handle_new_user` was naming guests `'Guest' || lpad(random() * 100000, 5)`
+- five random digits. It is now `'Guest' || substr(replace(id::text,'-',''), 1, 12)`,
+so the account id is in the name: `Guest4f3a9c217b6d`. Seventeen characters,
+inside the 3-20 the username check allows.
+
+Why it matters beyond the look: a report naming Guest50929 was a report
+about nobody, because the number pointed at nothing. Now support can go from
+a name on a screenshot straight to the row. The old space was also small -
+a hundred thousand names collides more often than not somewhere past four
+hundred guests, and every collision was another re-roll against
+`who_holds_name`.
+
+The loop stays, taking four more hex each time, because a retired name could
+in principle hold the first one. **Existing guests keep their names**: a
+guest account is thrown away by design, and renaming live ones would break
+every link pointing at them.
+
+Checked on a full local replica, applied twice: an anonymous sign-in gets
+`Guest<12 hex>` and passes the username check; an ordinary sign-up still
+gets the name it asked for; and a guest whose name is already held falls
+through to the longer one.
+
+**Still waiting on Staw:** nothing. 0337 is in.
