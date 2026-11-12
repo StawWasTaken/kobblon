@@ -14,20 +14,25 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
   /*
-   * Warm stone, not cold slate.
+   * The original cold slate, kept.
    *
-   * Kobblon is a workshop somebody builds in, and the base greys were a
-   * blue-black that belongs to every other platform. These are the same
-   * five steps at the same lightness - nothing in the interface changes
-   * shape - carrying a little warmth, so the blue reads as a decision
-   * rather than as the colour everything already was.
+   * The warm-stone pass went into these five steps and Staw: "i dont want
+   * the dark to be warmer i want the original colour". The dark theme is
+   * Kobblon's own and it stays exactly as it was; the warmth lives in the
+   * daylight half and in the gem accent, which is where it does the work
+   * without changing the room everybody already builds in.
+   *
+   * The one value that did not go back is `--ink-line`: at 84 86 104 the
+   * house stroke was 2.33 against its card, under the 3.0 a stroke needs
+   * to be seen at all. It is the same slate hue, lifted to 3.4 - the
+   * stroke is readable, not warmer.
    */
-  --ink: 20 19 18;
-  --ink-raised: 27 25 23;
-  --ink-card: 32 29 27;
-  --ink-hover: 42 38 35;
-  --ink-line: 122 111 100;
-  --ink-edge: 12 11 10;
+  --ink: 16 16 18;
+  --ink-raised: 22 22 26;
+  --ink-card: 26 26 32;
+  --ink-hover: 33 33 40;
+  --ink-line: 113 116 139;
+  --ink-edge: 10 10 13;
   --fg: 255 255 255;
   /*
    * White that stays white, whatever the theme is doing.
@@ -45,9 +50,9 @@
    * daylight - so a white pill with `text-ink` on it had white words.
    */
   --art-ink: 16 16 18;
-  --muted: 150 142 133;
+  --muted: 139 139 153;
   --link: 159 173 255;
-  --bubble: 45 41 38;
+  --bubble: 38 38 47;
   /*
    * The toast in the corner, which is the one thing on the site that is
    * deliberately the wrong way round. Staw: "i want the notification popup

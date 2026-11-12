@@ -21929,3 +21929,21 @@ never a gradient), a pixel-accent rule, and the 198 hardcoded colours and
 528 arbitrary values in this repository's pages swept into the tokens.
 The stacked-cobble K is the agreed wordmark direction. None of that is in
 yet and none of it renames anything you already use.
+
+## Round three hundred and five - the dark theme keeps its own colour
+
+Round 304 moved both themes to warm stone. Staw: "i dont want the dark to be
+warmer i want the original colour". So the dark surfaces are back to exactly
+what they were - `--ink 16 16 18`, `--ink-raised 22 22 26`,
+`--ink-card 26 26 32`, `--ink-hover 33 33 40`, `--ink-edge 10 10 13`,
+`--muted 139 139 153`, `--bubble 38 38 47`. If you copied round 304's dark
+values across, put the old ones back.
+
+**One dark value did not go back.** `--ink-line` is `113 116 139`, not the
+original `84 86 104`. At 84 86 104 the house stroke was 2.33 against its
+card, under the 3.0 a UI stroke needs to be visible at all - so the stroke
+that the whole design system rests on was decorative rather than legible. It
+is the same slate hue, lifted: 3.8 against a card, 4.1 against the page.
+
+The light theme stays warm paper, and `gem`, `warn` and the green move from
+round 304 are unchanged - none of those are the dark surfaces.
