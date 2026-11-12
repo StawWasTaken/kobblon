@@ -22450,3 +22450,41 @@ dont like is the comunities being put here on the profile". A community is a
 picture people recognise before it is a name, so it wants the width the main
 column gives it rather than a two-wide stack of thumbnails. The rail holds
 badges only.
+
+## Round three hundred and twenty-two - the stroke lands in the middle, and the profile goes back
+
+**Round 321 is reverted.** Staw, after seeing it: "dont make it darker, make
+it lighter, but not too much lighter." If you took 321's near-black stroke
+and lifted surfaces, drop both.
+
+    --ink         back to  16 16 18
+    --ink-raised  back to  22 22 26
+    --ink-card    back to  26 26 32
+    --ink-hover   back to  33 33 40
+    --ink-line             58 60 74
+
+The surfaces are exactly the values Staw has now defended three times. The
+stroke is the only thing that moved, and this is where it settles: 113 116
+139 and 88 90 110 were both "the ugly too bright grey thing", a near-black
+drawn edge was turned down on sight, and **58 60 74** is the middle -
+clearly lighter than the 26 26 32 card, so a card has a visible edge at the
+two pixels the house stroke is drawn at, and far enough under the old values
+that the edge is the quietest thing on the card rather than the loudest.
+Same cold slate hue it has always been. Every appearance moved by the same
+amount; in daylight it is a soft grey on paper.
+
+The three fill-sites round 321 had to move - `Button`'s `subtle`, a label in
+`Announcements`, `Switch`'s off track - are all back to what they were,
+because the reason for moving them is gone.
+
+### The profile layout is reverted too
+
+Staw: "for the layout of the profile page i want it to be reverted to the
+one before we started making changes on it." So round 320 is gone in full -
+the two-column About, the rail, the larger banner, the accent-coloured
+bottom stroke. `Profile.tsx` is byte-for-byte what it was before that round.
+
+Nothing of 320 or 321 survives except this note. Worth keeping as a record
+of what has been tried: pale strokes, a dark drawn edge, a two-column
+profile. The stroke question is answered; the layout question is open again
+and will not be answered by guessing at it.

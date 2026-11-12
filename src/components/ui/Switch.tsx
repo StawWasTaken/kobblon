@@ -41,7 +41,7 @@ export function Switch({ on, onChange, label, note, busy, disabled, className }:
       <span
         className={cn(
           'relative h-6 w-11 shrink-0 rounded-full border-2 transition-colors',
-          on ? 'border-space bg-space' : 'border-ink-line bg-ink',
+          on ? 'border-space bg-space' : 'border-ink-line bg-ink-line/60',
         )}
       >
         <span
