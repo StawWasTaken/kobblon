@@ -22178,3 +22178,27 @@ so every face in a row sits level whatever its name is.
 Worth carrying if the Workspace draws a name with marks anywhere: **do not
 put `NameMarks` beside a name as a flex sibling.** Inline, in the same text
 run, or it detaches from the name it belongs to the moment the name wraps.
+
+## Round three hundred and fifteen - a face card's marks get a line of their own
+
+Round 314 was still wrong, and for a reason worth writing down: a face in
+the friends grid is about a hundred and twenty pixels wide, and "Kobblon"
+with three marks after it does not fit on one line at any arrangement.
+Round 311's flex pushed them onto a third line; round 314's inline text
+pushed them onto a second. Which names orphaned depended on how long the
+name happened to be, so the row read as ragged either way.
+
+So the marks have a line of their own now, always, for everybody:
+
+* the name, up to two lines, in a fixed `h-9` cell, never cut;
+* the marks, centred, in a fixed `h-4` line under it;
+* then the handle, or the World they are in.
+
+Both cells are a fixed height whether somebody wears three marks or none,
+so every face in a row sits level. The heart stays inline with the name,
+because it says something about this list rather than about them.
+
+This replaces round 314's advice. Carrying it to the Workspace: **where the
+space is wide, keep the marks inline with the name; where it is a narrow
+fixed cell, give them their own line rather than letting them wrap.** The
+one thing that does not work is making them a flex sibling of the name.

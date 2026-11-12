@@ -251,15 +251,20 @@ export function PersonFace({ person, big }: {
           * read "Kob..." beside three badges. Staw: "i dont like how we
           * dont see the full displayname here".
           *
-          * The first fix wrapped the row with flex, and that was worse:
-          * a flex item cannot break inside a line, so the marks became
-          * their own third line under a two-line name and the handles in a
-          * row of friends sat at three different heights. The marks are
-          * **part of the name**, so they are inline text inside the same
-          * span - they wrap after the last word the way a word does -
-          * and `line-clamp-2` clamps the whole thing together. The cell is
-          * a fixed `h-9`, so every face in the row sits level whatever its
-          * name is.
+          * Two goes at keeping the marks on the name's own line failed for
+          * the same reason: a face in this grid is about a hundred and
+          * twenty pixels wide, and "Kobblon" with three marks after it does
+          * not fit in one. Flex put them on a third line; inline text put
+          * them on a second. Either way they orphan, and which names orphan
+          * depends on how long a name happens to be, so a row of friends
+          * read as ragged.
+          *
+          * So the marks have a line of their own, always, for everybody.
+          * The name gets up to two lines in a fixed `h-9` cell and is never
+          * cut; the marks sit centred under it in a fixed `h-4`; the handle
+          * is therefore at the same height on every face in the row whether
+          * somebody wears three marks or none. The heart stays with the
+          * name, because it is about this list rather than about them.
           */}
         <p className="mt-2 flex h-9 items-center justify-center overflow-hidden text-center text-sm font-bold leading-tight">
           <span className="line-clamp-2 break-words">
@@ -271,9 +276,10 @@ export function PersonFace({ person, big }: {
               />
             )}
             {person.display_name}
-            {' '}
-            <NameMarks person={person} className="text-[10px]" />
           </span>
+        </p>
+        <p className="flex h-4 items-center justify-center">
+          <NameMarks person={person} className="text-[11px]" />
         </p>
         {/*
           * The World under the name, when they are in one.
