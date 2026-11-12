@@ -30,6 +30,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
+import { Tick } from '@/components/ui/Tickbox'
 import { DateField } from '@/components/ui/DateTimeField'
 import { Select } from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
@@ -2605,15 +2606,28 @@ export function WordsSection() {
                 style={{ animationDelay: `${i * 40}ms` }}
                 className="flex animate-row-in cursor-pointer items-start gap-3 rounded-lg px-2 py-1.5 hover:bg-ink-hover"
               >
+                {/*
+                  * The site's own tick rather than the browser's.
+                  *
+                  * This was the last native checkbox on the platform, so
+                  * the console drew a different tick from every form a
+                  * person fills in. The input is still here and still what
+                  * is clicked and focused - only the square it draws is
+                  * ours.
+                  */}
                 <input
                   type="checkbox"
-                  className="mt-1 accent-brand"
+                  className="peer sr-only"
                   checked={taking.has(i)}
                   onChange={(e) => {
                     const next = new Set(taking)
                     if (e.target.checked) next.add(i); else next.delete(i)
                     setTaking(next)
                   }}
+                />
+                <Tick
+                  on={taking.has(i)}
+                  className="mt-0.5 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-bright"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">

@@ -22202,3 +22202,27 @@ This replaces round 314's advice. Carrying it to the Workspace: **where the
 space is wide, keep the marks inline with the name; where it is a narrow
 fixed cell, give them their own line rather than letting them wrap.** The
 one thing that does not work is making them a flex sibling of the name.
+
+## Round three hundred and sixteen - the last native checkbox on the platform
+
+The staff console's word-list review drew a browser checkbox with
+`accent-brand` on it. It was the only one left anywhere on the site, so the
+one screen where somebody is deciding what gets censored drew a different
+tick from every form an ordinary person fills in.
+
+It is `Tick` from `@/components/ui/Tickbox` now. The `<input>` is still
+there and is still what is clicked, focused and read by a screen reader -
+it is `sr-only` and the square beside it is ours, with the focus ring
+driven off `peer-focus-visible` so keyboard focus still shows.
+
+Nothing about this is shared with the applications; it is here because
+"one tick everywhere" is the rule and the console was the exception.
+
+Said plainly about the staff console generally, since it has been on the
+list for a while: everything that can be checked from outside a signed-in
+session has been - its strokes, corners, lips, presses, solid-fill labels
+and now its tick all match the system, and there are no gradients, stray
+shadows or off-budget radii left in `Admin.tsx` or `components/staff/*`.
+What cannot be checked here is how it **looks**, because the console will
+not render without a staff session and a database. Any judgement about its
+layout has to come from somebody who can open it.
