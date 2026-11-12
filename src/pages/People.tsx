@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faUserPlus, faCheck, faEllipsis, faUser, faBolt, faSeedling,
@@ -12,7 +12,6 @@ import type { RailItem } from '@/components/browse/BrowseRail'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
-import { NameMarks } from '@/components/brand/Verified'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -26,7 +25,6 @@ import { profileLink } from '@/lib/links'
 import { formatCount } from '@/lib/format'
 import type { Profile } from '@/types/db'
 import { AdBanner } from '@/components/ads/AdBanner'
-import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { PersonCard } from '@/components/social/PersonCard'
 import { useWhereabouts } from '@/hooks/usePresenceStore'
 
@@ -151,15 +149,32 @@ export default function People() {
   const found = people.data ?? []
 
   /*
-   * Your own card is lifted out of the grid. It was in there, sorted among
-   * strangers with a small "You" tag on it, which means the one card on the
-   * page you can do nothing with was taking a tile in the middle of the
-   * forty-seven you can.
+   * You are in the grid, as a card like everybody else's.
+   *
+   * It went the other way for a round: your card was lifted out into a wide
+   * banner above the grid, on the argument that a tile you can do nothing
+   * with is a tile wasted. Staw, looking at that banner: "in people i want
+   * the self-view to be amongst the other people but seen as yourself ofc,
+   * but like everyone else". He is right, and the argument was wrong about
+   * what the page is - People is everybody on Kobblon, and a page of
+   * everybody that puts you in a different shape at the top is a page that
+   * says you are not one of them.
+   *
+   * So: the same `PersonCard`, first in the list so it is where you look,
+   * wearing "You" where a friend wears "Friend", and with your own profile
+   * where the Message and Add buttons are - because those two are the only
+   * things on the card that cannot be done to yourself.
+   *
+   * Not on the friends shelf. "Your friends" is a list of other people by
+   * definition, and you are not on it.
    */
-  const you = profile ? found.find((one) => one.id === profile.id) ?? null : null
   const others = useMemo(() => {
-    const rows = found.filter((one) => one.id !== profile?.id)
-    return shelf === 'friends' ? rows.filter((one) => friendIds.has(one.id)) : rows
+    if (shelf === 'friends') {
+      return found.filter((one) => one.id !== profile?.id && friendIds.has(one.id))
+    }
+    const me = profile ? found.find((one) => one.id === profile.id) ?? null : null
+    const rest = found.filter((one) => one.id !== profile?.id)
+    return me ? [me, ...rest] : rest
   }, [found, profile?.id, shelf, friendIds])
 
   /* Where the people on this grid are, asked once for the grid. Without
@@ -217,28 +232,6 @@ export default function People() {
           />
         }
       >
-        {/* You, once, at the top. One rectangle with your face and where to
-            go from it, which is all your own card on this page can be. */}
-        {you && (
-          <Link
-            to={profileLink(you)}
-            className="mb-5 flex items-center gap-4 rounded-2xl border-2 border-b-4 border-brand/40 bg-brand/12 p-4 transition-colors hover:border-brand/70"
-          >
-            <PersonAvatar person={you} size="lg" square ring="ring-ink-card" />
-            <span className="min-w-0 flex-1">
-              <span className="font-display text-tiny font-extrabold uppercase tracking-[0.25em] text-white/45">
-                This is you
-              </span>
-              <span className="mt-0.5 flex items-center gap-1.5">
-                <span className="truncate font-bold">{you.display_name}</span>
-                <NameMarks person={you} className="text-mini" />
-              </span>
-              <span className="block truncate text-xs text-muted">@{you.username}</span>
-            </span>
-            <span className="hidden text-xs font-bold text-link sm:block">Your profile</span>
-          </Link>
-        )}
-
         <BrowseHeading
           title={heading}
           note={
@@ -292,6 +285,7 @@ export default function People() {
         {!people.loading && !!others.length && (
           <ul className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
             {others.map((person) => {
+              const mine = person.id === profile?.id
               const friend = friendIds.has(person.id)
               const asked = sent.includes(person.id)
               return (
@@ -301,15 +295,26 @@ export default function People() {
                   square
                   bio
                   friend={friend}
-                  menu={menuFor(person)}
-                  tag={friend ? (
+                  mine={mine}
+                  /* No menu on your own card: every item on it - report,
+                     block, add - is a thing you do about somebody else. */
+                  menu={mine ? undefined : menuFor(person)}
+                  tag={mine ? (
+                    <span className="text-mini font-extrabold uppercase tracking-wide text-brand-bright">
+                      You
+                    </span>
+                  ) : friend ? (
                     <span className="text-mini font-extrabold uppercase tracking-wide text-space-bright">
                       Friend
                     </span>
                   ) : undefined}
                   actions={
                     <>
-                      {friend ? (
+                      {mine ? (
+                        <Button size="sm" variant="subtle" icon={faUser} to={profileLink(person)}>
+                          Your profile
+                        </Button>
+                      ) : friend ? (
                         <Button size="sm" variant="subtle" icon={faComment} onClick={() => chat(person)}>
                           Message
                         </Button>
@@ -327,7 +332,9 @@ export default function People() {
                           {asked ? 'Sent' : 'Add'}
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" to={profileLink(person)}>Profile</Button>
+                      {!mine && (
+                        <Button size="sm" variant="ghost" to={profileLink(person)}>Profile</Button>
+                      )}
                     </>
                   }
                 />

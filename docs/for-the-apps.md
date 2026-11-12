@@ -22779,3 +22779,59 @@ the card is one object in both of its states.
 moments, and anything in the Workspace that frames the Kobblon mark above a
 button, should do the same thing or they will be the flat one. Nothing
 exported changed; this is the convention, not an API.
+
+## Round three hundred and twenty-eight - you are in the grid, and two things the event band was dropping
+
+Three fixes. One of them touches a shared component.
+
+### `PersonCard` has a `mine` prop
+
+**Shared: `@/components/social/PersonCard`.** New optional prop, `mine?:
+boolean`. It draws the card's edge in brand blue instead of the neutral
+stroke (or the green a `friend` gets), and it means "this one is you".
+Nothing else about the card changes - same shape, same size, same slots -
+and leaving it out behaves exactly as before, so nothing needs updating on
+your side.
+
+Why it exists: on People, your own row was lifted out of the grid into a
+wide banner across the top, on the argument that a tile you can do nothing
+with is a tile wasted. Staw: "in people i want the self-view to be amongst
+the other people but seen as yourself ofc, but like everyone else". He is
+right and the argument was wrong about what the page is - People is
+everybody on Kobblon, and a page of everybody that puts you in a different
+shape at the top is a page saying you are not one of them.
+
+So your card is in the grid, first, wearing **You** where a friend wears
+**Friend**, with **Your profile** where Message and Add would be, and with
+no overflow menu - every item on that menu (report, block, add) is a thing
+you do about somebody else. Not on the "Your friends" shelf, which is a
+list of other people by definition.
+
+If the Workspace lists people anywhere, the same prop is there for the same
+job.
+
+### The event band stopped stamping the theme's name on uploaded art
+
+The theme's wordmark was drawn whenever the theme had one, including over
+art and a background somebody had uploaded. That is the fault the glow and
+the halo were already fixed for, and worse than either, because a wordmark
+is a **name**: the uploaded picture says what the event is called and the
+theme's mark then says, in the corner, that it is called something else.
+
+Upload either half - the art or the background - and the band is yours; the
+theme's wordmark is not drawn. The theme's band still gets it.
+
+### A note and prizes can be on the band at once
+
+`note` and `prizes` shared the band's bottom-right corner, guarded
+`!prizes.length && note` and `prizes.length`. So a note typed into the staff
+console **silently vanished the moment a prize was added** - stored, saved,
+confirmed by the console, and dropped by the band. Nobody would ever find
+that except by missing it.
+
+They stack now: the note on top, the prizes under it, in the corner on a
+desktop and under the words on a phone. Same order in both.
+
+**For the applications:** if anything there renders a platform event, those
+two fields are both live now, and `note` can arrive alongside a non-empty
+`prizes`.

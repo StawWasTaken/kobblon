@@ -179,8 +179,24 @@ export function EventBand({ event, className, flat }: {
         </span>
       )}
 
-      {/* The event's own mark, where the reference puts the thing's name. */}
-      {!!look.wordmark && (
+      {/*
+        * The event's own mark, where the reference puts the thing's name -
+        * and only where the band is still the theme's.
+        *
+        * It was drawn whenever the theme had one, including over art and a
+        * background somebody had uploaded. That is the same fault the glow
+        * and the halo were already fixed for: a theme's wordmark stamped on
+        * top of a picture that was chosen is the theme overruling the
+        * choice, and it is worse than the glow, because a wordmark is a
+        * name. An uploaded picture says what the event is called; the
+        * theme's then says it is called something else, in the corner, over
+        * the top of it.
+        *
+        * So: the theme's mark belongs to the theme's band. Upload either
+        * half - the art or the background - and the band is yours, and
+        * whatever the picture says is the name on it.
+        */}
+      {!own && !back && !!look.wordmark && (
         <img
           src={asset(look.wordmark)}
           alt=""
@@ -252,14 +268,27 @@ export function EventBand({ event, className, flat }: {
         * Not drawn at all where nothing is being given away - three empty
         * chips under a contest with no prize is furniture.
         */}
-      {!event.prizes.length && !!event.note && (
-        <p className="pointer-events-none absolute bottom-4 right-5 hidden max-w-[26ch] text-right text-mini font-bold text-on-art/60 sm:right-7 sm:block">
-          {event.note}
-        </p>
-      )}
-
-      {!!event.prizes.length && (
-        <div className="pointer-events-none absolute bottom-4 right-5 hidden items-center gap-3 sm:right-7 sm:flex">
+      {/*
+        * The note and the prizes share this corner, stacked, rather than
+        * one of them winning.
+        *
+        * They used to be two blocks guarded `!prizes.length && note` and
+        * `prizes.length`, so a note typed into the staff console simply
+        * never appeared once a prize had been added - stored, saved,
+        * confirmed, and silently dropped by the band. Nobody would find
+        * that except by missing it. The note is the line that says who may
+        * enter and until when; the prizes are what is being given away.
+        * Both are small print and both belong here.
+        */}
+      {(!!event.note || !!event.prizes.length) && (
+        <div className="pointer-events-none absolute bottom-4 right-5 hidden flex-col items-end gap-1.5 sm:right-7 sm:flex">
+          {!!event.note && (
+            <p className="max-w-[26ch] text-right text-mini font-bold text-on-art/60">
+              {event.note}
+            </p>
+          )}
+          {!!event.prizes.length && (
+          <div className="flex items-center gap-3">
           {event.prizes.map((prize) => (
             <span
               key={prize.place}
@@ -279,13 +308,16 @@ export function EventBand({ event, className, flat }: {
               </span>
             </span>
           ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* On a phone there is no room beside the art, so the small print
-          sits under the words instead of in the corner. */}
-      {!event.prizes.length && !!event.note && (
-        <p className="relative px-5 pb-5 text-mini font-bold text-on-art/60 sm:hidden">
+          sits under the words instead of in the corner - the note first,
+          then the prizes, the same order as the corner. */}
+      {!!event.note && (
+        <p className="relative px-5 pb-2 text-mini font-bold text-on-art/60 sm:hidden">
           {event.note}
         </p>
       )}

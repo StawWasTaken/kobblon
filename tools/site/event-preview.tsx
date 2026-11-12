@@ -69,6 +69,19 @@ function Page() {
         />
       </section>
 
+      {/* Prizes and a note at once, which is the case the band used to
+          drop: the note was guarded on there being no prizes, so a line
+          typed in the console vanished the moment a prize was added. */}
+      <section className="space-y-2">
+        <h2 className="font-display text-sm font-extrabold uppercase tracking-wide text-muted">
+          Prizes and a line of small print
+        </h2>
+        <EventBand
+          event={{ ...words, theme: 'halloween', note: 'Open to everybody, until the 31st' }}
+          flat
+        />
+      </section>
+
       {/* Its own art, its own background and its own colour - the three
           things a superadmin can upload over the theme. */}
       <section className="space-y-2">

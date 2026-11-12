@@ -147,7 +147,7 @@ export function PersonLine({ person, note, className }: {
  * six of them in a grid is a row of dots and nothing else.
  */
 export function PersonCard({
-  person, note, bio, tag, actions, menu, quiet, friend, square, className,
+  person, note, bio, tag, actions, menu, quiet, friend, mine, square, className,
 }: {
   person: Somebody
   note?: string
@@ -161,6 +161,14 @@ export function PersonCard({
   quiet?: boolean
   /** A friend gets the green edge, because green is yes. */
   friend?: boolean
+  /**
+   * Your own card, in a list of other people. Brand blue round it, which
+   * is the colour of where you are - the same thing the rail does to the
+   * page you are on. It is not a second kind of card: the shape, the size
+   * and the slots are everybody's, and only the edge says which one is
+   * you.
+   */
+  mine?: boolean
   square?: boolean
   className?: string
 }) {
@@ -168,7 +176,9 @@ export function PersonCard({
     <li
       className={cn(
         'group relative flex flex-col gap-3 rounded-2xl border-2 bg-ink-card p-4 transition-colors',
-        friend ? 'border-space/40 hover:border-space/70' : 'border-ink-line hover:border-brand/60',
+        mine
+          ? 'border-brand/50 hover:border-brand/80'
+          : friend ? 'border-space/40 hover:border-space/70' : 'border-ink-line hover:border-brand/60',
         quiet && 'opacity-70',
         className,
       )}
