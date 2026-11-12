@@ -242,7 +242,19 @@ export function PersonFace({ person, big }: {
           className={cn('mx-auto', big && 'h-16 w-16 sm:h-20 sm:w-20')}
           ring="ring-ink"
         />
-        <p className="mt-2 flex items-center justify-center gap-1 text-sm font-bold">
+        {/*
+          * The name wraps rather than being cut.
+          *
+          * This row is a heart, a name and up to three marks on one line,
+          * and `truncate` on the name meant the marks took their width
+          * first and the name got whatever was left - Kobblon's own card
+          * read "Kob..." beside three badges. Staw: "i dont like how we
+          * dont see the full displayname here". The marks are the thing
+          * that should give way, so the row wraps and the name is allowed
+          * two lines; `min-h` holds the cell at the height of two so a row
+          * of six faces still sits level whatever their names are.
+          */}
+        <p className="mt-2 flex min-h-[2.25rem] flex-wrap items-center justify-center gap-x-1 text-sm font-bold leading-tight">
           {person.best && (
             <Glyph
               icon={faHeart}
@@ -250,7 +262,7 @@ export function PersonFace({ person, big }: {
               title="Best friends"
             />
           )}
-          <span className="truncate">{person.display_name}</span>
+          <span className="line-clamp-2 break-words">{person.display_name}</span>
           <NameMarks person={person} className="text-[10px]" />
         </p>
         {/*

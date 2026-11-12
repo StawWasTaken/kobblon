@@ -22094,3 +22094,18 @@ own colour turned down, and never black.
 **`ink-edge` is still a token** and the applications can still reach for
 it, but nothing on the website draws with it any more. If either app put a
 black lip under a pale-stroked control, this is the same fix.
+
+## Round three hundred and eleven - a name on a face card is not cut short
+
+Staw, on his own card in a friends list: "i dont like how we dont see the
+full displayname here" - it read "Kob..." with three marks beside it.
+
+The row is a heart, a name and up to three marks on one line, and the name
+carried `truncate`. So the marks took their width first and the name got
+whatever was left: the more somebody has earned, the less of their name you
+could read, which is exactly backwards.
+
+The row wraps now and the name is allowed two lines, with a `min-h` holding
+the cell at the height of two so a grid of six faces still sits level
+whatever their names are. **If either application draws a face card with a
+name and marks on one line, the marks are the thing that gives way.**
