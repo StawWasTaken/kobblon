@@ -51,23 +51,30 @@ type Size = 'sm' | 'md' | 'lg'
  * matches how green and red were already built.
  */
 /*
- * Green is the one that darkens on hover rather than brightening.
+ * Green behaves exactly like blue: it lightens under the pointer.
  *
- * Every other solid button lightens, which is the ordinary convention and
- * stays. Kobblon's green cannot: white on `space-bright` is 2.86 against
- * white, well under AA, so a buy button that brightened under the pointer
- * spent its whole hover unreadable. It goes down a step instead, which
- * reads as the button taking the press and keeps the label at 6.5.
+ * It spent one round darkening instead, because white on `space-bright` is
+ * 2.86 and a green button that brightens spends its hover under AA. Staw
+ * looked at it: "i dont like how the green buttons behave - make them
+ * behave like the blue buttons again (keep the green colour)". A button
+ * that goes the other way from every other button on the site reads as
+ * broken, and that is a worse thing to be than dim for the half second a
+ * pointer is on it - the label is still there, it is the contrast ratio
+ * that drops, and nothing is decided during a hover.
+ *
+ * So all four solid variants are one rule now: resting fill, lighter on
+ * hover, back to the resting fill on the press, and the lip disappears
+ * under it.
  */
 const variants: Record<Variant, string> = {
   primary:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
   /** The one thing this screen is for. Said on purpose, not by default. */
   yes:
-    'bg-space text-on-art hover:bg-space-deep active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** Going into a World, which is the loudest yes Kobblon has. */
   enter:
-    'bg-space text-on-art hover:bg-space-deep active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** The same blue as primary, kept for callers that name the platform. */
   brand:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',

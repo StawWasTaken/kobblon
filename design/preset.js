@@ -87,6 +87,13 @@ export default {
          * failing pair in the whole palette. The old default is `bright`
          * now, so nothing lost its green - the button is a shade deeper
          * and the hover is exactly the colour it always was.
+         *
+         * `bright` is the hover and nothing rests on it. Green has no
+         * headroom above `#148556`, which is already at the AA ceiling at
+         * 4.65, so a hover that lightens - and Staw wants green to behave
+         * like blue - necessarily lands under it. That is a half second
+         * under a pointer during which nothing is decided; a resting fill
+         * is where a label has to be readable, and that one is.
          */
         space: {
           DEFAULT: '#148556',

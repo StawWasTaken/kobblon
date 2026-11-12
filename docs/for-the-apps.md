@@ -22052,3 +22052,24 @@ gets the name it asked for; and a guest whose name is already held falls
 through to the longer one.
 
 **Still waiting on Staw:** nothing. 0337 is in.
+
+## Round three hundred and nine - green behaves like blue again
+
+Staw: "i dont like how the green buttons behave - make them behave like the
+blue buttons again (keep the green colour)."
+
+Round 304 made green the one solid button that darkens under the pointer,
+because white on `space-bright` is 2.86 and a green button that brightens
+spends its hover under AA. That was the wrong trade: a button that goes the
+other way from every other button on the site reads as broken.
+
+So `yes` and `enter` are `hover:bg-space-bright` again, and all four solid
+variants are one rule: resting fill, lighter on hover, back to the resting
+fill on the press, lip gone under it. **Copy this if either application
+drew a green button that darkens.**
+
+The colour is unchanged - `space` is still `#148556`, `bright` still
+`#1CAE71`. Nothing rests on `bright`; it is the hover and only the hover.
+Green has no headroom above the resting fill, which is already at the AA
+ceiling at 4.65, so a hover that lightens necessarily lands under it. A
+resting fill is where a label has to be readable, and that one is.
