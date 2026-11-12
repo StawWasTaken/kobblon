@@ -3161,7 +3161,7 @@ export function RecordSection() {
 /** One key cap, for a line that tells somebody the shortcuts exist. */
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-lg border-2 border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
+    <kbd className="rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
       {children}
     </kbd>
   )
@@ -6621,7 +6621,7 @@ export default function Admin() {
               {/* Nothing on a phone has a Ctrl key, so nothing on a phone
                   should be told about one. */}
               <span className="hidden whitespace-nowrap lg:inline">
-                <kbd className="rounded-lg border-2 border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
+                <kbd className="rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
                   Ctrl K
                 </kbd>{' '}
                 jumps anywhere.

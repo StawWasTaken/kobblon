@@ -127,7 +127,7 @@ export default function StyleGuide() {
             <Swatch name="warn" cls="bg-warn" on="text-on-art" job="Careful. A review, a limit, a room nearly full. Never a button on its own." />
             <Swatch name="danger" cls="bg-danger" on="text-on-art" job="Danger. Delete, report, block, ban. Nothing else is red." />
             <Swatch name="craft" cls="bg-craft" on="text-on-art" job="The workshop. Scripting, building, meshes - the things somebody makes." />
-            <Swatch name="link" cls="bg-link" on="text-art-ink" job="A word you can press, inside a sentence." />
+            <Swatch name="link" cls="bg-link" on="text-on-art" job="A word you can press, inside a sentence." />
             <Swatch name="muted" cls="bg-muted" on="text-ink" job="A second line that is true but not the point." />
           </div>
 

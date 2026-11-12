@@ -22133,3 +22133,26 @@ Two smaller things in the same push:
   the lip disappearing say pressed, on green as on everything else.
 * **No bare `rounded` anywhere.** Nineteen 1px radii became `rounded-lg`,
   so the corner budget is now closed with no exceptions.
+
+## Round three hundred and thirteen - two leftovers from the solid-fill sweep
+
+Nothing here changes a signature or a shape you import. It is the tail of
+round 312, said out loud because both are the same mistake in two places.
+
+* **The style guide's own `link` swatch was wrong.** `/style` drew the
+  `link` colour with `text-art-ink` on it - dark words on a bright blue
+  fill - which is exactly the pairing round 312 went round the site to
+  remove, sitting in the page that is supposed to be the reference. It is
+  `text-on-art` now. If you have been reading `/style` to decide what a
+  colour is for, that one swatch was lying.
+* **Key caps in the staff console have a lip.** The two `<kbd>` elements
+  were the only card-shaped things on the console with a flat bottom. A key
+  cap is the one shape on the platform that literally depicts something you
+  press, so it carries `border-b-[3px]` like every other pressable face.
+
+Still blocked on Staw, unchanged from round 309: **Kobby does not review
+instantly yet.** `pg_net` needs enabling under Supabase -> Database ->
+Extensions, and the one `ai_poke` statement at the bottom of migration 0224
+needs pasting in the SQL editor. Until both happen new work waits for the
+clock instead of being screened the moment it lands; the console's Machine
+panel says which of the two is missing.
