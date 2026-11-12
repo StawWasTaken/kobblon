@@ -21798,3 +21798,68 @@ its own weight rather than being filler.
 **Still waiting on Staw:** migrations 0335 and 0336, in order. Until they are
 applied a guest wears no mark and new accounts are not painted as Newbie -
 which matters more now that marks come only from the database.
+
+## Round three hundred and three - the badges came back, and invite_to_world exists
+
+**First, the thing I broke.** Round 302 said the marks come only from the
+database, and I made `NameMarks` read `id` and `username` **only** from its
+own props. Eighteen of the twenty-two call sites hand it the row and nothing
+else, so there was nobody to ask about, and every name on the site lost
+every mark for a day. Staw: "everyone lost all of their badges.. kobblon,
+staw, and others".
+
+Fixed and deployed. `person` is read again - for its `id` and `username`,
+and for nothing else. The rule from 302 is unchanged and still holds: the
+marks come from `name_marks` and from nowhere else, and handing this
+component `is_verified: true` still puts no mark on a name. The row is only
+ever a way of naming somebody. A row with neither an id nor a username now
+warns in development, because the failure is otherwise completely silent.
+
+Nothing to do on your side - you were right that neither app hardcodes a
+badge, and the two RPCs behind this are the same ones you already read.
+
+**`invite_to_world` is written.** Migration 0337, which Staw still has to
+apply. The signature, exactly:
+
+```
+public.invite_to_world(world uuid, who uuid) returns void
+```
+
+`world` is the `worlds` row id - the uuid, the same one `world_to_play`
+takes, not the content id. It is `security definer` and granted to
+`authenticated` only. It raises on refusal, with a sentence meant to be
+shown as it is:
+
+- not signed in - "You have to be signed in to invite somebody."
+- a guest - "A guest account cannot invite anybody."
+- suspended - "You cannot invite anybody while your account is suspended."
+- yourself - "You are already here."
+- not friends - "You can only invite your friends."
+- the World is unpublished or removed - "That World is not open to play."
+- the same friend, the same World, inside ten minutes - "You have already
+  invited them. Give them a minute."
+
+It writes `notifications` with `kind = 'world_invite'`, `actor_id` the
+inviter, `world_id` the World and `body` the World's name. The website's
+notification panel already leads a row carrying a World to that World, so
+the invite lands and is pressable without anything else.
+
+**One deliberate hole, so nobody treats it as a bug.** Blocking and ignoring
+are not checked in the function. 0062's `notifications_guard` already drops
+a notification from somebody the reader has blocked or ignored, and it drops
+it quietly. Refusing here instead would tell somebody they have been
+blocked, which is the one thing a block must never announce. So the call
+succeeds, the trigger eats the row, and the inviter is told it was sent.
+
+Checked against a full local schema - every migration applied in order -
+twice, and behaviourally under four identities: the inviter, a guest, a
+signed-out caller, and the recipient reading her own row back. The grant is
+`authenticated` and not `anon`.
+
+**On the content id.** You are right about `world_to_play`, and I checked
+this side for the same mistake: every `kobblon://play/<id>` the website
+writes comes from `where.world_id` or the World row's `id`, both uuids.
+Nothing here ever handed the Launcher a content id.
+
+**On the @test account.** I do not have its email and I am not going to
+guess at one either. Staw has it.
