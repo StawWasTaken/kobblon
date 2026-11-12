@@ -11,7 +11,6 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { Hop } from '@/components/ui/Hop'
 import { EmptyState, ErrorState, SpaceCardSkeleton, Skeleton } from '@/components/ui/States'
@@ -471,8 +470,12 @@ export default function Profile() {
           <div className="min-w-0 flex-1">
             <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-4xl">
               {user.display_name}
+              {/* The guest mark comes from `NameMarks` and nowhere else.
+                  There used to be a word in a pill beside it saying the
+                  same thing twice; Staw: "drop the text one". The staff
+                  screens still spell it out, because those are lists of
+                  facts about an account rather than a name on a page. */}
               <NameMarks person={user} className="text-xl" />
-              {user.is_guest && <Badge tone="neutral">Guest</Badge>}
             </h1>
 
             <p className="mt-1.5 text-sm text-muted">@{user.username}</p>

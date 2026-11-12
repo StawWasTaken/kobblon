@@ -22012,3 +22012,14 @@ check a colour before inventing one.
 appearance use; a design system is not a rebrand. The seasonal event colours
 in `src/lib/event.ts` keep their own orange and green, because a season is
 allowed its own colour.
+
+## Round three hundred and seven - one guest mark, not two
+
+A guest's profile said it twice: the mark `NameMarks` draws beside the name,
+and a pill with the word "Guest" in it right after. Staw: "drop the text
+one". The pill is gone from the profile; the mark stays and is still the
+only thing that says it.
+
+The staff screens keep the word - `PersonSheet` and the two Admin lists are
+lists of facts about an account, not a name on a page, and nothing there
+draws marks.
