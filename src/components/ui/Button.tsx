@@ -63,18 +63,27 @@ type Size = 'sm' | 'md' | 'lg'
  * that drops, and nothing is decided during a hover.
  *
  * So all four solid variants are one rule now: resting fill, lighter on
- * hover, back to the resting fill on the press, and the lip disappears
- * under it.
+ * hover, and the lip disappears under the press.
+ *
+ * Green is the one that keeps the hover colour while it is held, and that
+ * is not an inconsistency - it is the same intent as the others. Blue goes
+ * from `#3A50FF` back to `#1B34E8`, which is a small step down. Green's
+ * resting fill sits a long way under its hover, because the scale moved
+ * down a step to clear AA, so the same "back to the resting fill" read as
+ * the button draining rather than being pressed. Staw: "green buttons
+ * still feel weird when you press them they get transparent". Held, it
+ * stays lit; the movement and the lip disappearing are what say pressed,
+ * which is what they say on every other button too.
  */
 const variants: Record<Variant, string> = {
   primary:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
   /** The one thing this screen is for. Said on purpose, not by default. */
   yes:
-    'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space text-on-art hover:bg-space-bright active:bg-space-bright border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** Going into a World, which is the loudest yes Kobblon has. */
   enter:
-    'bg-space text-on-art hover:bg-space-bright active:bg-space border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space text-on-art hover:bg-space-bright active:bg-space-bright border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** The same blue as primary, kept for callers that name the platform. */
   brand:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',

@@ -6435,11 +6435,10 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
             onClick={() => onChange(one.name)}
             style={{ animationDelay: `${i * 25}ms` }}
             className={cn(
-              'group relative flex shrink-0 animate-row-in items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-left',
+              'kob-press group relative flex shrink-0 animate-row-in items-center gap-2.5 rounded-xl border-2 px-3 py-2.5 text-left',
               'lg:w-full lg:gap-3',
-              'transition-[background-color,border-color,transform] duration-150',
               on
-                ? 'border-brand-bright/60 bg-brand/15'
+                ? 'kob-chosen border-brand-bright/60 bg-brand/15'
                 : 'border-ink-line lg:border-transparent lg:hover:translate-x-0.5 lg:hover:bg-ink-hover',
             )}
           >
@@ -6468,7 +6467,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
               <span className="flex items-center gap-2">
                 <span className={cn('whitespace-nowrap text-sm font-bold lg:truncate', !on && 'text-white/85')}>{one.name}</span>
                 {one.needs !== 'moderator' && (
-                  <span className="hidden rounded border-2 border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted lg:inline">
+                  <span className="hidden rounded-lg border-2 border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted lg:inline">
                     {one.needs === 'superadmin' ? 'Super' : 'Admin'}
                   </span>
                 )}
@@ -6477,7 +6476,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
             {many > 0 && (
               <span className={cn(
                 'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums',
-                many > 10 ? 'bg-danger text-white' : 'bg-brand text-white',
+                many > 10 ? 'bg-danger text-on-art' : 'bg-brand text-on-art',
               )}>
                 {many > 99 ? '99+' : many}
               </span>
@@ -6602,7 +6601,7 @@ export default function Admin() {
       {/* --------------------------------------------------- who you are */}
       <header className="sticky top-0 z-30 border-b border-ink-line bg-ink/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-4 px-4 py-4 sm:px-6">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-white">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl border-2 border-b-4 border-brand-deep bg-brand text-on-art">
             <FontAwesomeIcon icon={faUserShield} />
           </span>
           <div className="min-w-0">
@@ -6622,7 +6621,7 @@ export default function Admin() {
               {/* Nothing on a phone has a Ctrl key, so nothing on a phone
                   should be told about one. */}
               <span className="hidden whitespace-nowrap lg:inline">
-                <kbd className="rounded border-2 border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
+                <kbd className="rounded-lg border-2 border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
                   Ctrl K
                 </kbd>{' '}
                 jumps anywhere.

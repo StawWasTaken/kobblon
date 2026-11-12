@@ -50,7 +50,7 @@ function inline(text: string, keyed: string): ReactNode[] {
 
     if (found[1] !== undefined) {
       out.push(
-        <code key={key} className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-white/90">
+        <code key={key} className="rounded-lg bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-white/90">
           {found[1]}
         </code>,
       )

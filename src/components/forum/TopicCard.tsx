@@ -80,7 +80,7 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
          * round it, rather than bleeding to the edges.
          *
          * Staw: "i want the posts with images to be polished and look even
-         * better, like the thumbnail is like a rounded rectangle inside of
+         * better, like the thumbnail is like a rounded-lg rectangle inside of
          * it and slightly smaller to leave a path around the image". A
          * bled cover makes the card look like a cut-out of a bigger page;
          * an inset one reads as a thing the card is holding. The ring is

@@ -42,7 +42,7 @@ export function Marked({ text, terms, className }: {
          * itself would collide.
          */
         at % 2 === 1
-          ? <mark key={at} className="rounded bg-brand/30 px-0.5 text-white">{piece}</mark>
+          ? <mark key={at} className="rounded-lg bg-brand/30 px-0.5 text-white">{piece}</mark>
           : <Fragment key={at}>{piece}</Fragment>
       ))}
     </span>

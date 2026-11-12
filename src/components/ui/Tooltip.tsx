@@ -11,7 +11,7 @@ const EDGE = 8
 /**
  * The bubble and its nib are the same colour with no border between them, so
  * they read as one shape rather than a box with a triangle stuck to it. The
- * nib is a rotated square with a rounded corner, which is what gives the tip
+ * nib is a rotated square with a rounded-lg corner, which is what gives the tip
  * the same softness as the bubble.
  *
  * It renders into the body so nothing can clip it, and it is kept inside the

@@ -108,7 +108,7 @@ export function RichText({ text, people, me, className }: {
                 <span
                   key={which}
                   className={cn(
-                    dressed, 'rounded px-[0.2em] font-extrabold',
+                    dressed, 'rounded-lg px-[0.2em] font-extrabold',
                     bit.me ? 'bg-brand/35 text-white' : 'bg-brand/20 text-brand-bright',
                   )}
                 >

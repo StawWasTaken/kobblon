@@ -140,8 +140,8 @@ export function PosterCard({ person, username }: { person: ForumPerson | null | 
       {person === undefined && (
         <span className="block animate-pulse p-4">
           <span className="block h-11 w-11 rounded-full bg-white/[0.07]" />
-          <span className="mt-3 block h-3.5 w-28 rounded bg-white/[0.07]" />
-          <span className="mt-2.5 block h-3 w-40 rounded bg-white/[0.05]" />
+          <span className="mt-3 block h-3.5 w-28 rounded-lg bg-white/[0.07]" />
+          <span className="mt-2.5 block h-3 w-40 rounded-lg bg-white/[0.05]" />
         </span>
       )}
 

@@ -138,7 +138,7 @@ export function NewGroupDialog({
               </span>
               <span
                 className={cn(
-                  'grid h-5 w-5 shrink-0 place-items-center rounded border-2 text-[10px] transition-colors',
+                  'grid h-5 w-5 shrink-0 place-items-center rounded-lg border-2 text-[10px] transition-colors',
                   on ? 'border-brand-bright bg-brand text-white' : 'border-ink-line',
                 )}
               >

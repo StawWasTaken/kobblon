@@ -139,7 +139,7 @@ export function StoryPage({
            * One column of text, not nine dark boxes.
            *
            * Staw: "we also need a better design for the policies rather than
-           * this". What was there put every section in a rounded card on a
+           * this". What was there put every section in a rounded-lg card on a
            * card-coloured panel, so a page whose whole job is to be read
            * looked like a settings screen and read like one - nine
            * containers of equal weight, none of which is a paragraph you

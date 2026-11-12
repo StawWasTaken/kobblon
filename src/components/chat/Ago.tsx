@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-/** One unit, rounded down. `now` under five seconds, stopping at days. */
+/** One unit, rounded-lg down. `now` under five seconds, stopping at days. */
 function said(at: number): string {
   const by = Math.max(0, Date.now() - at)
   if (by < 5_000) return 'now'

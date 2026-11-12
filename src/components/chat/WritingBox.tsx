@@ -204,7 +204,7 @@ export function WritingBox({
 
       for (const bit of mentionBits(run.text, (name) => people.has(name), me)) {
         piece(bit.text, 'at' in bit
-          ? cn(dressed, 'rounded px-[0.2em] font-extrabold',
+          ? cn(dressed, 'rounded-lg px-[0.2em] font-extrabold',
               bit.me ? 'bg-brand/35 text-white' : 'bg-brand/20 text-brand-bright')
           : dressed)
       }

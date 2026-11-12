@@ -145,7 +145,7 @@ export function WearingPanel({ look, loading }: {
                   */}
                 {piece.sellsUntil && (
                   <span className={cn(
-                    'absolute bottom-1 left-1 rounded px-1 py-0.5 text-[8px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
+                    'absolute bottom-1 left-1 rounded-lg px-1 py-0.5 text-[8px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
                     new Date(piece.sellsUntil).getTime() <= Date.now()
                       ? 'bg-ink/85 text-white/60'
                       : 'bg-warn/90 text-ink',

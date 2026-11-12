@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
  * The About side's design system, band by band.
  *
  * The first version of these pages was the signed-in design with the rail
- * taken off: one narrow column, everything in a rounded card, every card
+ * taken off: one narrow column, everything in a rounded-lg card, every card
  * the same. That reads as a settings page, and the About side is not a
  * settings page - it is the only thing a person sees before they decide
  * whether Kobblon is worth an account.

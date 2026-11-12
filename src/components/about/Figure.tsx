@@ -78,7 +78,7 @@ export function Figure({
  *
  * Staw wants the mascots to carry these pages, and a character reads as a
  * character only when it has no box around it - the moment it gets a
- * rounded border it becomes a thumbnail of a character. So this is the
+ * rounded-lg border it becomes a thumbnail of a character. So this is the
  * cut-out: the drawing, a soft pool of light under its feet, and nothing
  * else.
  */

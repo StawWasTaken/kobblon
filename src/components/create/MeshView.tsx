@@ -180,7 +180,7 @@ export function MeshView({
   /*
    * One frame, two contents.
    *
-   * Both views used to draw their own: the viewer a bordered rounded panel,
+   * Both views used to draw their own: the viewer a bordered rounded-lg panel,
    * the picture an image filling whatever it was in. So pressing the switch
    * changed the shape of the card as well as what was in it, and on an item
    * page the model sat in a box the picture did not have. Staw: the preview
