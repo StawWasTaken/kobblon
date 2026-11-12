@@ -461,7 +461,7 @@ export default function Profile() {
                   className="absolute inset-0 grid place-items-center gap-1 rounded-xl bg-black/55 text-[#fff] opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100"
                 >
                   <Glyph icon={faShirt} />
-                  <span className="text-[10px] font-bold uppercase tracking-wide">Avatar</span>
+                  <span className="text-tiny font-bold uppercase tracking-wide">Avatar</span>
                 </Hop>
               ) : undefined}
             />
@@ -861,7 +861,7 @@ export default function Profile() {
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
               >
                 See all
-                <Glyph icon={faArrowRight} className="text-[10px]" />
+                <Glyph icon={faArrowRight} className="text-tiny" />
               </Link>
             }>
               Friends{friends.data?.length ? ` (${friends.data.length})` : ''}
@@ -915,7 +915,7 @@ export default function Profile() {
                         )}
                       />
                       {community.is_primary && (
-                        <span className="absolute -right-1.5 -top-1.5 grid size-7 place-items-center rounded-full border-2 border-ink bg-brand text-[11px] text-on-art">
+                        <span className="absolute -right-1.5 -top-1.5 grid size-7 place-items-center rounded-full border-2 border-ink bg-brand text-mini text-on-art">
                           <Glyph icon={faStar} />
                         </span>
                       )}
@@ -1027,7 +1027,7 @@ export default function Profile() {
                     onClick={() => setWritingBio(true)}
                     className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
                   >
-                    <Glyph icon={faPen} className="text-[10px]" />
+                    <Glyph icon={faPen} className="text-tiny" />
                     Edit bio
                   </button>
                 )}

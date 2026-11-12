@@ -41,7 +41,7 @@ function Column({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <p className="border-b border-ink-line px-2 pb-2 text-center text-[11px] font-bold uppercase tracking-wide text-muted">
+      <p className="border-b border-ink-line px-2 pb-2 text-center text-mini font-bold uppercase tracking-wide text-muted">
         {label}
       </p>
       <div

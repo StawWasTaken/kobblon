@@ -103,7 +103,7 @@ export function StoryPage({
           {/* --------------------------------------------------- contents */}
           <aside className="hidden lg:block">
             <div className="sticky top-24">
-              <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+              <p className="mb-4 text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
                 Contents
               </p>
               {/*
@@ -199,7 +199,7 @@ export function StoryPage({
                           {point.tone && (
                             <span
                               className={cn(
-                                'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                                'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-mini font-extrabold uppercase tracking-wide',
                                 toneLook[point.tone],
                               )}
                             >

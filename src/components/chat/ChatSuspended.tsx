@@ -160,7 +160,7 @@ export function ChatSuspended({
           </p>
           {evidence && (
             <div className="mt-4 text-left">
-              <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
                 What we acted on
               </p>
               <blockquote className="rounded-xl rounded-tl-md border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-2">

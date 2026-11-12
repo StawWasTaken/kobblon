@@ -42,9 +42,9 @@ const sizes = {
   xs: 'h-2.5 w-2.5 text-[0px]',
   sm: 'h-3 w-3 text-[6px]',
   md: 'h-3.5 w-3.5 text-[7px]',
-  lg: 'h-4 w-4 text-[8px]',
-  xl: 'h-5 w-5 text-[10px]',
-  '2xl': 'h-7 w-7 text-[13px]',
+  lg: 'h-4 w-4 text-nib',
+  xl: 'h-5 w-5 text-tiny',
+  '2xl': 'h-7 w-7 text-note',
 }
 
 /** How long somebody can be quiet before they count as gone. */

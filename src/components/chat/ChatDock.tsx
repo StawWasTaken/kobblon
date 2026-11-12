@@ -371,7 +371,7 @@ function Window({
             <button
               onClick={() => setDetails(false)}
               aria-label="Back to the conversation"
-              className="grid h-6 w-6 place-items-center rounded-lg text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+              className="grid h-6 w-6 place-items-center rounded-lg text-mini text-white/45 transition-colors hover:bg-white/10 hover:text-white"
             >
               <Glyph icon={faArrowLeft} />
             </button>
@@ -389,10 +389,10 @@ function Window({
               * title, and a dock carries this much only because there can
               * be two of them open and they have to be told apart.
               */}
-            <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg text-[12px] text-muted">
+            <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg text-xs text-muted">
               {solo ? <PersonAvatar person={solo} size="xs" /> : <Glyph icon={faUserGroup} />}
             </span>
-            <span className="truncate text-[13px] font-extrabold tracking-wide text-white">{name}</span>
+            <span className="truncate text-note font-extrabold tracking-wide text-white">{name}</span>
           </button>
         )}
 
@@ -401,7 +401,7 @@ function Window({
             <button
               onClick={() => { setDetails(true); setCollapsed(false) }}
               aria-label="Chat details"
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-mini text-white/45 transition-colors hover:bg-white/10 hover:text-white"
             >
               <Glyph icon={faGear} />
             </button>
@@ -416,7 +416,7 @@ function Window({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-mini text-white/45 transition-colors hover:bg-white/10 hover:text-white"
         >
           <Glyph icon={faXmark} />
         </button>
@@ -441,7 +441,7 @@ function Window({
                   className="flex w-full items-center gap-2 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-2 text-left text-sm transition-colors hover:border-brand-bright/50"
                 >
                   <span className="min-w-0 flex-1 truncate font-bold">{name}</span>
-                  <Glyph icon={faPen} className="shrink-0 text-[11px] text-muted" />
+                  <Glyph icon={faPen} className="shrink-0 text-mini text-muted" />
                 </button>
               ) : (
                 <form
@@ -849,7 +849,7 @@ function List({
                         <Glyph
                           icon={faEyeSlash}
                           title="You are ignoring this person"
-                          className="shrink-0 text-[10px] text-white/35"
+                          className="shrink-0 text-tiny text-white/35"
                         />
                       )}
                     </span>
@@ -865,9 +865,9 @@ function List({
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block text-[11px] text-muted">{timeAgo(c.last_message_at)}</span>
+                    <span className="block text-mini text-muted">{timeAgo(c.last_message_at)}</span>
                     {c.unread_count > 0 && (
-                      <span className="mt-1 inline-grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-on-art">
+                      <span className="mt-1 inline-grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-tiny font-bold text-on-art">
                         {c.unread_count > 9 ? '9+' : c.unread_count}
                       </span>
                     )}

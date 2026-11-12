@@ -61,7 +61,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                  shadow is what lifts it instead, and it is a heavier one
                  than `shadow-pop` because a white card on a dark page has
                  no edge of its own to be found by. */
-              'bg-toast text-toast-fg shadow-[0_8px_30px_rgba(0,0,0,0.45)]',
+              'bg-toast text-toast-fg shadow-lift',
             )}
           >
             <Glyph icon={icons[t.tone]} className={tones[t.tone]} />

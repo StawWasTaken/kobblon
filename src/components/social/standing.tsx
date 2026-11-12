@@ -156,7 +156,7 @@ export function StandingBar({ level, className }: { level: StandingLevel; classN
           />
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between text-[11px] font-bold text-muted">
+      <div className="mt-1.5 flex justify-between text-mini font-bold text-muted">
         <span>Banned</span>
         <span>All good</span>
       </div>
@@ -177,7 +177,7 @@ export function ActionTag({ one }: { one: Violation }) {
   return (
     <span
       className={cn(
-        'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+        'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-mini font-extrabold uppercase tracking-wide',
         look,
       )}
     >
@@ -279,7 +279,7 @@ export function BehaviourBar({ score, band, className, tall }: {
           />
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between text-[11px] font-bold text-muted">
+      <div className="mt-1.5 flex justify-between text-mini font-bold text-muted">
         <span>Very poor</span>
         <span>Exemplary</span>
       </div>
@@ -321,14 +321,14 @@ export function ByBadge({ rank, className }: { rank: ModeratedBy; className?: st
     <span
       className={cn(
         'inline-flex shrink-0 items-center gap-1.5 rounded-full border-2 px-2.5 py-0.5',
-        'text-[11px] font-extrabold uppercase tracking-wide',
+        'text-mini font-extrabold uppercase tracking-wide',
         rank === 'kobby'
           ? 'border-brand/40 bg-brand/10 text-brand-bright'
           : 'border-white/15 bg-white/[0.06] text-white/70',
         className,
       )}
     >
-      <Glyph icon={byIcon[rank]} className="text-[10px]" />
+      <Glyph icon={byIcon[rank]} className="text-tiny" />
       {rank === 'kobby' ? 'Kobby' : rank === 'staff' ? 'Staff' : rank}
     </span>
   )
@@ -515,7 +515,7 @@ export function RuleCard({ ord, title, body, gravity }: {
         </p>
         {!!gravity && (
           <span className={cn(
-            'ml-auto text-[11px] font-extrabold uppercase tracking-wide',
+            'ml-auto text-mini font-extrabold uppercase tracking-wide',
             gravityTone[gravity] ?? 'text-muted',
           )}>
             {gravityWord[gravity] ?? ''}
@@ -533,7 +533,7 @@ export function RuleCard({ ord, title, body, gravity }: {
         className="inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
       >
         Read the guidelines
-        <Glyph icon={faArrowRight} className="text-[10px]" />
+        <Glyph icon={faArrowRight} className="text-tiny" />
       </a>
     </div>
   )

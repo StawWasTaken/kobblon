@@ -238,7 +238,7 @@ export function ForumShell({
               <MineLink here={pathname === '/forum/mine'} />
             </nav>
 
-            <p className="mb-2 mt-7 px-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+            <p className="mb-2 mt-7 px-3 text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
               Categories
             </p>
             {/*
@@ -377,8 +377,8 @@ function RailBoard({ board, here }: { board: ForumBoard; here: boolean }) {
       <span className={cn('h-2.5 w-2.5 shrink-0 rounded-sm', BOARD_COLOUR[board.slug] ?? 'bg-white/30')} />
       <span className="min-w-0 flex-1 truncate">{board.name}</span>
       {board.staff_only
-        ? <Glyph icon={faLock} className="text-[10px] text-white/25" />
-        : <span className="text-[11px] tabular-nums text-white/25">
+        ? <Glyph icon={faLock} className="text-tiny text-white/25" />
+        : <span className="text-mini tabular-nums text-white/25">
             {formatCount(board.topic_count)}
           </span>}
     </Link>

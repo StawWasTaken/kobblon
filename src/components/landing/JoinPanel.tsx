@@ -41,7 +41,7 @@ export function JoinPanel() {
           </div>
         ) : (
           <>
-            <span className="inline-flex items-center gap-2 rounded-full border-2 border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white/70">
+            <span className="inline-flex items-center gap-2 rounded-full border-2 border-white/10 bg-white/[0.06] px-3 py-1 text-mini font-extrabold uppercase tracking-wide text-white/70">
               <Glyph icon={faBolt} />
               About a minute
             </span>

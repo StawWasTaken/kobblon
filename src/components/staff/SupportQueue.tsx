@@ -180,14 +180,14 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
       {one.kind === 'business' && (
         /* A company, not a player. Different form, different answer, and
            the row says which before anybody opens it. */
-        <span className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-space/50 bg-space/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-space/50 bg-space/15 px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide text-space-bright">
           <Glyph icon={faBriefcase} />
           Business
         </span>
       )}
 
       {one.wants_human && one.status !== 'closed' && (
-        <span className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-warn/50 bg-warn/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-warn-bright shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-warn/50 bg-warn/15 px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide text-warn-bright shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
           <Glyph icon={faBolt} />
           Urgent
         </span>

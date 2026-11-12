@@ -106,7 +106,7 @@ export function Stat({ label, value, tone }: {
       >
         {value}
       </p>
-      <p className="mt-1.5 truncate text-[11px] font-semibold uppercase tracking-wide text-muted">
+      <p className="mt-1.5 truncate text-mini font-semibold uppercase tracking-wide text-muted">
         {label}
       </p>
     </div>

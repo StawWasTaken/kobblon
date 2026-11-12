@@ -287,7 +287,7 @@ export function ReportDialog({
               <Glyph icon={faFlag} className="text-lg" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              <p className="text-mini font-extrabold uppercase tracking-wide text-muted">
                 {thingWord[targetType] ?? 'Something'} · private
               </p>
               <h2 className="mt-1 truncate font-display text-xl font-extrabold leading-tight">
@@ -310,7 +310,7 @@ export function ReportDialog({
                 </div>
                 <p
                   className={cn(
-                    'mt-1.5 truncate text-[10px] font-extrabold uppercase tracking-wide transition-colors',
+                    'mt-1.5 truncate text-tiny font-extrabold uppercase tracking-wide transition-colors',
                     i === step ? 'text-white/80' : 'text-white/30',
                   )}
                 >
@@ -393,7 +393,7 @@ export function ReportDialog({
                 </span>
                 <p className="min-w-0 flex-1 text-sm font-bold leading-snug">{reason.label}</p>
               </div>
-              <h3 className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              <h3 className="text-mini font-extrabold uppercase tracking-wide text-muted">
                 Which of these is it
               </h3>
               <div className="space-y-2">
@@ -421,7 +421,7 @@ export function ReportDialog({
               {/* Roblox keeps the thing on screen through the whole flow. It
                   is the one line of this card that stops a misfire. */}
               <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-4">
-                <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                <p className="text-mini font-extrabold uppercase tracking-wide text-muted">
                   You are reporting
                 </p>
                 <p className="mt-1 truncate font-display text-base font-extrabold">{targetName}</p>

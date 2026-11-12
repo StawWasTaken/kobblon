@@ -237,7 +237,7 @@ function Field({
 
           <div className="grid grid-cols-7 gap-1 text-center">
             {DAYS.map((day) => (
-              <span key={day} className="py-1 text-[11px] font-bold text-muted">{day}</span>
+              <span key={day} className="py-1 text-mini font-bold text-muted">{day}</span>
             ))}
 
             {monthGrid(view).map((day) => {

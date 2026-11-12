@@ -167,7 +167,7 @@ export function BrixShell({
           </div>
 
           <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised/80 px-5 py-4 backdrop-blur-sm">
-            <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            <p className="text-mini font-extrabold uppercase tracking-wide text-muted">
               Your balance
             </p>
             <p className="mt-1 flex items-center gap-2 font-display text-3xl font-extrabold tabular-nums">

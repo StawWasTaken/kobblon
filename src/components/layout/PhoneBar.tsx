@@ -55,7 +55,7 @@ function Slot({ on, label, children, onClick, to, end }: {
   )
 
   const look = cn(
-    'relative flex w-full flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-bold transition-colors',
+    'relative flex w-full flex-col items-center gap-1 pb-2 pt-2.5 text-mini font-bold transition-colors',
     on ? 'text-white' : 'text-white/45',
   )
 
@@ -90,7 +90,7 @@ export function PhoneBar() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  'relative flex flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-bold transition-colors',
+                  'relative flex flex-col items-center gap-1 pb-2 pt-2.5 text-mini font-bold transition-colors',
                   isActive ? 'text-white' : 'text-white/45',
                 )
               }
@@ -152,7 +152,7 @@ export function PhoneBar() {
               className={chatOpen ? 'text-brand-bright' : undefined}
             />
             {chatUnread > 0 && (
-              <span className="absolute -right-2 -top-1 grid h-4 min-w-[1rem] place-items-center rounded-full bg-danger px-1 text-[10px] font-extrabold text-on-art">
+              <span className="absolute -right-2 -top-1 grid h-4 min-w-[1rem] place-items-center rounded-full bg-danger px-1 text-tiny font-extrabold text-on-art">
                 {chatUnread > 9 ? '9+' : chatUnread}
               </span>
             )}

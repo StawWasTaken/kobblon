@@ -230,11 +230,11 @@ function Progress({ steps, at, done, go }: {
               />
               <span
                 className={cn(
-                  'mt-1.5 flex items-center gap-1 truncate text-[11px] font-extrabold uppercase tracking-wide',
+                  'mt-1.5 flex items-center gap-1 truncate text-mini font-extrabold uppercase tracking-wide',
                   here ? 'text-white' : done[i] ? 'text-space-bright' : 'text-white/35',
                 )}
               >
-                {done[i] && !here && <Glyph icon={faCheck} className="text-[9px]" />}
+                {done[i] && !here && <Glyph icon={faCheck} className="text-mark" />}
                 <span className="truncate">{STEP_NAME[step]}</span>
               </span>
             </button>
@@ -277,7 +277,7 @@ function WhoBox({ picked, onPick, icon, title, lead, points }: {
       <span className="mt-3 block space-y-1">
         {points.map((one) => (
           <span key={one} className="flex items-start gap-2 text-xs text-white/45">
-            <Glyph icon={faCheck} className="mt-[3px] shrink-0 text-[9px] text-space" />
+            <Glyph icon={faCheck} className="mt-[3px] shrink-0 text-mark text-space" />
             <span>{one}</span>
           </span>
         ))}
@@ -626,7 +626,7 @@ export function TicketCard({
               <p className="min-w-0 flex-1 text-sm">
                 Writing as <span className="font-bold">@{username}</span>
               </p>
-              <span className="shrink-0 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              <span className="shrink-0 text-mini font-extrabold uppercase tracking-wide text-muted">
                 Signed in
               </span>
             </div>
@@ -779,7 +779,7 @@ function Faq() {
                 className="group flex w-full items-center gap-4 py-5 text-left"
               >
                 <span className={cn(
-                  'grid size-8 shrink-0 place-items-center rounded-full border-2 text-[11px] transition-colors',
+                  'grid size-8 shrink-0 place-items-center rounded-full border-2 text-mini transition-colors',
                   showing
                     ? 'border-brand-bright bg-brand text-on-art'
                     : 'border-white/15 bg-white/[0.04] text-white/45 group-hover:border-brand-bright/60 group-hover:text-white',
@@ -790,7 +790,7 @@ function Faq() {
                   <span className="block font-display text-lg font-extrabold leading-snug">
                     {one.section.heading}
                   </span>
-                  <span className="mt-0.5 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+                  <span className="mt-0.5 block text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
                     {one.article.eyebrow}
                   </span>
                 </span>
@@ -806,7 +806,7 @@ function Faq() {
                     <ul className="mt-4 space-y-2">
                       {one.section.points.map((point) => (
                         <li key={point.label} className="flex gap-2.5 text-sm">
-                          <Glyph icon={faCheck} className="mt-1 text-[11px] text-space-bright" />
+                          <Glyph icon={faCheck} className="mt-1 text-mini text-space-bright" />
                           <span>
                             <span className="font-bold">{point.label}</span>
                             {point.note && <span className="text-white/50"> - {point.note}</span>}
@@ -821,7 +821,7 @@ function Faq() {
                     className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
                   >
                     More in “{one.article.title}”
-                    <Glyph icon={faArrowRight} className="text-[11px]" />
+                    <Glyph icon={faArrowRight} className="text-mini" />
                   </Link>
                 </div>
               )}
@@ -858,7 +858,7 @@ function FaqChip({ icon, label, on, onClick }: {
           : 'border-white/12 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white',
       )}
     >
-      <Glyph icon={icon} className="text-[11px]" />
+      <Glyph icon={icon} className="text-mini" />
       {label}
     </button>
   )
@@ -974,7 +974,7 @@ export default function Support() {
           </Reveal>
           <Reveal delay={260}>
             <p className="mx-auto mt-6 flex items-center justify-center gap-2 text-sm text-white/45">
-              <Glyph icon={faLock} className="text-[11px]" />
+              <Glyph icon={faLock} className="text-mini" />
               Kobblon never asks for your password, here or anywhere else.
             </p>
           </Reveal>
@@ -1057,8 +1057,8 @@ export default function Support() {
                         label={
                           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             {ticket.wants_human && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-warn/50 bg-warn/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-warn-bright">
-                                <Glyph icon={faBolt} className="text-[9px]" />
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border-2 border-warn/50 bg-warn/10 px-2 py-0.5 text-tiny font-extrabold uppercase tracking-wide text-warn-bright">
+                                <Glyph icon={faBolt} className="text-mark" />
                                 Urgent
                               </span>
                             )}
@@ -1070,7 +1070,7 @@ export default function Support() {
                             {ticket.kind === 'business' && (
                               <>
                                 <span className="inline-flex items-center gap-1.5 font-bold text-space-bright">
-                                  <Glyph icon={faBriefcase} className="text-[10px]" />
+                                  <Glyph icon={faBriefcase} className="text-tiny" />
                                   {ticket.org ?? 'Business'}
                                 </span>
                                 <span aria-hidden="true">·</span>
@@ -1083,7 +1083,7 @@ export default function Support() {
                               <>
                                 <span aria-hidden="true">·</span>
                                 <span className="inline-flex items-center gap-1.5">
-                                  <Glyph icon={was.icon} className="text-[10px]" />
+                                  <Glyph icon={was.icon} className="text-tiny" />
                                   {was.label}
                                 </span>
                               </>
@@ -1094,7 +1094,7 @@ export default function Support() {
                           <span className="flex items-center gap-3">
                             <span
                               className={cn(
-                                'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                                'shrink-0 rounded-full border-2 px-2.5 py-0.5 text-mini font-extrabold uppercase tracking-wide',
                                 look.look,
                               )}
                             >

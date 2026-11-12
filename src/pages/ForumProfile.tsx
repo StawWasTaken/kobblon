@@ -145,7 +145,7 @@ export default function ForumProfile() {
                     <span
                       key={code}
                       className={cn(
-                        'rounded-lg border-2 px-2 py-0.5 text-[11px] font-extrabold',
+                        'rounded-lg border-2 px-2 py-0.5 text-mini font-extrabold',
                         /* Staff is the given one, so it is the one in our
                            own blue; a word somebody chose is quieter. */
                         code === 'staff'
@@ -161,18 +161,18 @@ export default function ForumProfile() {
 
               <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-bold text-white/40">
                 <span className="inline-flex items-center gap-1.5">
-                  <Glyph icon={faCalendarDays} className="text-[11px]" />
+                  <Glyph icon={faCalendarDays} className="text-mini" />
                   Here since {timeAgo(person.joined_at)}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Glyph icon={faComment} className="text-[11px]" />
+                  <Glyph icon={faComment} className="text-mini" />
                   {formatCount(person.topic_count)} topics
                   {' · '}
                   {formatCount(person.post_count)} replies
                 </span>
                 {person.discord && (
                   <span className="inline-flex items-center gap-1.5">
-                    <Glyph icon={faDiscord} className="text-[11px] text-[#5865F2]" />
+                    <Glyph icon={faDiscord} className="text-mini text-[#5865F2]" />
                     {person.discord}
                   </span>
                 )}
@@ -240,13 +240,13 @@ export default function ForumProfile() {
                   )}
                   {standing.data?.request_sent && (
                     <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-white/10 px-2.5 py-1.5 text-xs font-bold text-white/40">
-                      <Glyph icon={faCheck} className="text-[11px]" />
+                      <Glyph icon={faCheck} className="text-mini" />
                       Asked
                     </span>
                   )}
                   {standing.data?.are_friends && (
                     <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-space/40 bg-space/10 px-2.5 py-1.5 text-xs font-bold text-space-bright">
-                      <Glyph icon={faCheck} className="text-[11px]" />
+                      <Glyph icon={faCheck} className="text-mini" />
                       Friends
                     </span>
                   )}
@@ -331,7 +331,7 @@ function EditProfile({
 
   return (
     <div>
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+      <p className="text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
         What you do
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -348,7 +348,7 @@ function EditProfile({
         </p>
       )}
 
-      <p className="mt-6 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+      <p className="mt-6 text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
         About you, on the forum
       </p>
       <textarea
@@ -409,7 +409,7 @@ function Written({
 }) {
   return (
     <section className="mt-8">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+      <p className="text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
         Everything they have written
       </p>
 
@@ -437,12 +437,12 @@ function Written({
                   <span className="min-w-0 flex-1 truncate text-sm font-bold text-white/85 transition-colors group-hover:text-brand-bright">
                     {row.title}
                   </span>
-                  <span className="shrink-0 rounded-lg bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
+                  <span className="shrink-0 rounded-lg bg-white/[0.07] px-1.5 py-0.5 text-tiny font-extrabold uppercase tracking-wider text-white/45">
                     {row.kind === 'topic' ? 'Topic' : 'Reply'}
                   </span>
                 </span>
                 <span className="mt-1 block truncate text-xs text-white/40">{row.body}</span>
-                <span className="mt-1 block text-[11px] font-bold text-white/25">
+                <span className="mt-1 block text-mini font-bold text-white/25">
                   {row.category_name} · {timeAgo(row.created_at)}
                   {row.edited_at && ' (edited)'}
                 </span>

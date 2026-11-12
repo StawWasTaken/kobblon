@@ -109,7 +109,7 @@ export function ActivityFeed({ limit = 10, className }: { limit?: number; classN
               size="sm"
             />
             <span
-              className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full text-[9px] ring-2 ring-ink-card ${tones[event.kind]}`}
+              className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full text-mark ring-2 ring-ink-card ${tones[event.kind]}`}
             >
               <Glyph icon={icons[event.kind]} />
             </span>

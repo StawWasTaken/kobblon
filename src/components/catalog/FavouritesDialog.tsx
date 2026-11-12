@@ -91,7 +91,7 @@ export function FavouritesDialog({
                     className="block truncate text-sm font-bold transition-colors hover:text-link"
                   >
                     {item.name}
-                    <Glyph icon={faArrowUpRightFromSquare} className="ml-1.5 text-[10px] text-white/35" />
+                    <Glyph icon={faArrowUpRightFromSquare} className="ml-1.5 text-tiny text-white/35" />
                   </Link>
                   <span className="block text-xs font-bold">
                     {item.price > 0

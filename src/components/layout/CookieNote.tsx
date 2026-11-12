@@ -49,7 +49,7 @@ export function CookieNote() {
   return (
     <aside
       aria-label="How Kobblon uses your browser's storage"
-      className="fixed bottom-4 left-4 z-50 w-[min(calc(100vw-2rem),20rem)] rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/95 p-4 shadow-[0_1.5rem_3rem_rgba(0,0,0,0.55)] backdrop-blur-xl sm:bottom-6 sm:left-6"
+      className="fixed bottom-4 left-4 z-50 w-[min(calc(100vw-2rem),20rem)] rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/95 p-4 shadow-pop backdrop-blur-xl sm:bottom-6 sm:left-6"
     >
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border-2 border-b-4 border-white/10 bg-brand/20 text-brand-bright">
@@ -60,7 +60,7 @@ export function CookieNote() {
         </p>
       </div>
 
-      <p className="mt-3 text-[13px] leading-relaxed text-white/60">
+      <p className="mt-3 text-note leading-relaxed text-white/60">
         Only the kind that keeps you signed in and remembers what you
         picked. Nothing for advertisers, nothing that follows you elsewhere.
       </p>
@@ -69,7 +69,7 @@ export function CookieNote() {
         <Button size="sm" onClick={close}>Okay</Button>
         <Link
           to="/policies/privacy"
-          className="text-[13px] font-bold text-white/50 transition-colors hover:text-brand-bright"
+          className="text-note font-bold text-white/50 transition-colors hover:text-brand-bright"
         >
           Privacy policy
         </Link>

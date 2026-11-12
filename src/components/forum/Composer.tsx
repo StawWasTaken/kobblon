@@ -344,7 +344,7 @@ export function Composer({
         rows={compact ? 3 : 7}
         maxLength={12000}
         autoFocus={autoFocus && !withTitle}
-        className="w-full resize-y rounded-b-xl border-2 border-white/10 bg-ink px-4 py-3 text-[15px] leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
+        className="w-full resize-y rounded-b-xl border-2 border-white/10 bg-ink px-4 py-3 text-lede leading-relaxed text-white outline-none transition-colors placeholder:text-white/25 focus:border-brand-bright"
       />
 
       {images.length > 0 && (

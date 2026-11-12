@@ -139,10 +139,10 @@ function Card({ item, nth }: { item: AvatarItem; nth: number }) {
         <span className="block px-3 pb-3 pt-0.5">
           <span className="block truncate text-xs font-bold leading-snug">{item.name}</span>
           <span className="mt-0.5 flex items-center justify-between gap-2">
-            <span className="truncate text-[10px] text-muted">
+            <span className="truncate text-tiny text-muted">
               {avatarKindLabels[item.kind] ?? item.kind}
             </span>
-            <Price amount={item.price} className="shrink-0 text-[11px] font-bold" />
+            <Price amount={item.price} className="shrink-0 text-mini font-bold" />
           </span>
         </span>
       </Link>

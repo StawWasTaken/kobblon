@@ -118,7 +118,7 @@ export function BuyDialog({
           </p>
         )}
 
-        <p className="text-[11px] leading-relaxed text-muted">
+        <p className="text-mini leading-relaxed text-muted">
           It is yours to keep and you can put it on straight away. Brix are
           spent the moment you press, and a purchase is not undone.
         </p>

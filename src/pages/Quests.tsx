@@ -212,7 +212,7 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-3 py-2 text-[11px]">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 text-mini">
         <span className="flex min-w-0 items-center gap-1 text-muted">
           Promoted by
           <span className="truncate font-bold text-white/85">
@@ -221,7 +221,7 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
           <NameMarks
             id={quest.author_id}
             person={{ is_verified: quest.author_verified }}
-            className="shrink-0 text-[11px]"
+            className="shrink-0 text-mini"
           />
         </span>
         {quest.ends_at && (
@@ -238,7 +238,7 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
           </span>
 
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="truncate font-display text-[10px] font-bold uppercase tracking-wider text-brand-bright">
+            <p className="truncate font-display text-tiny font-bold uppercase tracking-wider text-brand-bright">
               {(quest.custom_tag ?? quest.world_tag ?? 'Kobblon')} quest
             </p>
             <p className="flex items-center gap-1.5 font-display text-sm font-extrabold">
@@ -259,7 +259,7 @@ export function QuestCard({ quest, onChange }: { quest: Quest; onChange: () => v
         {quest.started && !claimed && (
           <div className="mt-3 space-y-1.5">
             <Bar done={quest.done} goal={quest.goal} />
-            <div className="flex items-center justify-between text-[11px] text-muted">
+            <div className="flex items-center justify-between text-mini text-muted">
               <span className="tabular-nums">{bits.done} of {bits.goal}</span>
               <span className={cn(finished && 'font-bold text-space-bright')}>{bits.left}</span>
             </div>
@@ -596,7 +596,7 @@ function MyRequests({ reloadKey }: { reloadKey: number }) {
 
   return (
     <Card className="space-y-2 p-4">
-      <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+      <p className="font-display text-tiny uppercase tracking-wider text-muted">
         What you have asked for
       </p>
       {rows.data.map((one) => (
@@ -743,7 +743,7 @@ export default function Quests() {
 
           {done.length > 0 && (
             <div className="space-y-3">
-              <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="font-display text-tiny uppercase tracking-wider text-muted">
                 Already claimed
               </p>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -40,8 +40,8 @@ import { avatarOf } from '@/lib/avatars'
 export function DeletedRun({ count }: { count: number }) {
   return (
     <div className="my-1 flex items-center justify-center px-2">
-      <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink-line bg-ink/40 px-2.5 py-1 text-[11px] font-bold text-white/35">
-        <Glyph icon={faTrash} className="text-[9px]" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink-line bg-ink/40 px-2.5 py-1 text-mini font-bold text-white/35">
+        <Glyph icon={faTrash} className="text-mark" />
         {count === 1 ? 'Message deleted' : `${count} messages deleted`}
       </span>
     </div>
@@ -197,7 +197,7 @@ export function MessageRow({
           * there, not the words inside it that are reversed.
           */}
         {!grouped && !editing && (
-          <span className="mb-0.5 flex max-w-full items-center gap-1 px-1 text-[11px] leading-none">
+          <span className="mb-0.5 flex max-w-full items-center gap-1 px-1 text-mini leading-none">
             <span
               className="truncate font-extrabold"
               style={{ color: colourOf(message.sender_id, sender?.display_name) }}
@@ -241,7 +241,7 @@ export function MessageRow({
                 title="Save"
                 className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-on-art transition-colors hover:bg-brand-bright disabled:opacity-50"
               >
-                <Glyph icon={faCheck} className="text-[11px]" />
+                <Glyph icon={faCheck} className="text-mini" />
               </button>
               <button
                 type="button"
@@ -250,10 +250,10 @@ export function MessageRow({
                 title="Cancel"
                 className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white/45 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <Glyph icon={faXmark} className="text-[11px]" />
+                <Glyph icon={faXmark} className="text-mini" />
               </button>
             </div>
-            <span className={cn('px-1 text-[10px] font-bold text-muted', mine && 'text-right')}>
+            <span className={cn('px-1 text-tiny font-bold text-muted', mine && 'text-right')}>
               Enter to save · Esc to cancel
             </span>
           </div>
@@ -307,7 +307,7 @@ export function MessageRow({
                 <span
                   title={`Edited ${new Date(message.edited_at).toLocaleString()}`}
                   className={cn(
-                    'ml-1.5 align-baseline text-[10px] font-bold',
+                    'ml-1.5 align-baseline text-tiny font-bold',
                     mine ? 'text-white/55' : 'text-white/35',
                   )}
                 >
@@ -327,7 +327,7 @@ export function MessageRow({
             items={items}
             trigger={
               <span className="grid h-6 w-6 place-items-center rounded-lg text-white/35 transition-colors hover:bg-ink-hover hover:text-white">
-                <Glyph icon={faEllipsis} className="text-[11px]" />
+                <Glyph icon={faEllipsis} className="text-mini" />
               </span>
             }
           />

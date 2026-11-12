@@ -104,7 +104,7 @@ export class Boundary extends Component<{ children: ReactNode }, State> {
               What went wrong
             </summary>
 
-            <pre className="mt-3 w-full max-w-full max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-3 text-left text-[11px] leading-relaxed text-white/60">
+            <pre className="mt-3 w-full max-w-full max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-3 text-left text-mini leading-relaxed text-white/60">
               {details}
             </pre>
 

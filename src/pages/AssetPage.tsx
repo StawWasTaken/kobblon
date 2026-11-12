@@ -191,7 +191,7 @@ function UseChart({ days }: { days: AssetDay[] }) {
           >
             <div className="flex h-32 flex-1 items-end">
               <div
-                className="w-full rounded-t-sm bg-brand transition-colors hover:bg-brand-bright"
+                className="w-full rounded-t-lg bg-brand transition-colors hover:bg-brand-bright"
                 style={{ height: `${Math.max(height, 2)}%` }}
               />
             </div>
@@ -762,7 +762,7 @@ export default function AssetPage() {
             >
               <Glyph icon={kindIcons.image} className="text-white/40" />
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-[10px] uppercase tracking-wider text-muted">
+                <span className="block font-display text-tiny uppercase tracking-wider text-muted">
                   Wearing
                 </span>
                 <span className="block truncate text-sm font-bold">

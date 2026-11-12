@@ -158,7 +158,7 @@ export function AppealLine({ one, onOpen }: { one: AppealRow; onOpen: () => void
         <span className={cn('block font-display text-lg font-extrabold tabular-nums', bandTone[one.band])}>
           {one.score}
         </span>
-        <span className="block text-[11px] text-muted">their bar</span>
+        <span className="block text-mini text-muted">their bar</span>
       </span>
     </button>
   )
@@ -306,7 +306,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
 
             {one.evidence && (
               <div>
-                <p className="mb-1.5 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                <p className="mb-1.5 flex items-center gap-2 text-mini font-extrabold uppercase tracking-wide text-muted">
                   <Glyph icon={faQuoteLeft} />
                   What it was based on
                 </p>

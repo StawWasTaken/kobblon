@@ -160,7 +160,7 @@ export function AdEditor({
     >
       <div className="space-y-4">
         <div>
-          <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+          <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
             Shape
           </p>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -183,7 +183,7 @@ export function AdEditor({
 
         <div>
           <div className="mb-1.5 flex items-center gap-3">
-            <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">Decal</p>
+            <p className="text-mini font-extrabold uppercase tracking-wide text-muted">Decal</p>
             <button
               onClick={() => setUploading(true)}
               className="text-xs font-bold text-link hover:underline"
@@ -206,7 +206,7 @@ export function AdEditor({
               {decals.data.map((asset) => (
                 <button key={asset.id} onClick={() => setPicked(asset)} className="text-left">
                   <Thumb path={asset.file_path} on={picked?.id === asset.id} />
-                  <span className="mt-1 block truncate text-[11px] font-semibold text-muted">
+                  <span className="mt-1 block truncate text-mini font-semibold text-muted">
                     {asset.name}
                   </span>
                 </button>
@@ -216,7 +216,7 @@ export function AdEditor({
         </div>
 
         <div>
-          <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+          <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
             What it is for
           </p>
           <p className="mb-2 text-xs text-muted">
@@ -241,7 +241,7 @@ export function AdEditor({
 
                 return (
                   <div key={kind}>
-                    <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
                       <Glyph icon={targetLook[kind].icon} />
                       {targetLook[kind].label}
                     </p>
@@ -258,7 +258,7 @@ export function AdEditor({
                           )}
                         >
                           <span className="block truncate text-xs font-bold">{row.label}</span>
-                          <span className="block truncate text-[11px] text-muted">
+                          <span className="block truncate text-mini text-muted">
                             {row.note} · {row.path}
                           </span>
                         </button>
@@ -282,7 +282,7 @@ export function AdEditor({
               />
             </div>
           ) : (
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted">
+            <p className="mt-3 inline-flex items-center gap-1.5 text-mini text-muted">
               <Glyph icon={faLock} />
               Ads cannot be pointed off Kobblon.
             </p>

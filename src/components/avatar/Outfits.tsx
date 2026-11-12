@@ -159,7 +159,7 @@ function OutfitCard({ outfit, onChanged, onWear }: {
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="min-w-0">
           <p className="truncate font-display text-sm font-extrabold">{outfit.name}</p>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-muted">
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-mini text-muted">
             <span>{pieces.length} {pieces.length === 1 ? 'thing' : 'things'}</span>
             {outfit.folder_name && <span>· {outfit.folder_name}</span>}
             {outfit.is_public && <span>· in the Catalog</span>}
@@ -181,13 +181,13 @@ function OutfitCard({ outfit, onChanged, onWear }: {
               <li
                 key={piece.content_id}
                 title={piece.name}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-[9px] font-bold uppercase text-white/40"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised text-mark font-bold uppercase text-white/40"
               >
                 {(avatarKindLabels[piece.kind] ?? piece.kind).slice(0, 2)}
               </li>
             ))}
             {pieces.length > 4 && (
-              <li className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-1.5 text-[10px] font-bold text-white/40">
+              <li className="grid h-8 min-w-8 shrink-0 place-items-center rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-1.5 text-tiny font-bold text-white/40">
                 +{pieces.length - 4}
               </li>
             )}
@@ -441,7 +441,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
               )}
             >
               {one.label}
-              <span className="ml-1.5 text-[10px] text-white/40">{one.how_many}</span>
+              <span className="ml-1.5 text-tiny text-white/40">{one.how_many}</span>
             </button>
           ))}
         </div>
@@ -528,7 +528,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
           />
           {!!folders.data?.length && (
             <label className="block space-y-1.5">
-              <span className="font-display text-[10px] uppercase tracking-wider text-muted">
+              <span className="font-display text-tiny uppercase tracking-wider text-muted">
                 Folder
               </span>
               <select

@@ -321,7 +321,7 @@ function Row({ one, place, top, unit }: {
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate text-sm font-bold">{one.name}</span>
-          {one.ticked && <Verified className="text-[11px]" />}
+          {one.ticked && <Verified className="text-mini" />}
         </span>
         <span className="block truncate text-xs text-muted">{one.under}</span>
       </span>

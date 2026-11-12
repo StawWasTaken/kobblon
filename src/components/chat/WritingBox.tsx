@@ -321,7 +321,7 @@ export function WritingBox({
           put(e.clipboardData.getData('text/plain').replace(/\r/g, ''))
         }}
         className={cn(
-          'min-h-[1.65rem] whitespace-pre-wrap break-words px-3.5 text-[14px] leading-[1.65rem]',
+          'min-h-[1.65rem] whitespace-pre-wrap break-words px-3.5 text-sm leading-[1.65rem]',
           'focus:outline-none [overflow-wrap:anywhere]',
           /*
            * No ring of its own. `index.css` gives every `:focus-visible`
@@ -350,7 +350,7 @@ export function WritingBox({
         * or selected.
         */}
       {!value && placeholder && (
-        <span className="pointer-events-none absolute inset-0 flex items-center truncate px-3.5 text-[14px] text-muted">
+        <span className="pointer-events-none absolute inset-0 flex items-center truncate px-3.5 text-sm text-muted">
           {placeholder}
         </span>
       )}

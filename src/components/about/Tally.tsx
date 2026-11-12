@@ -65,7 +65,7 @@ export function Tally({ value, label, className }: {
       <p className="font-display text-4xl font-extrabold tabular-nums leading-none sm:text-5xl">
         {formatCount(shown)}
       </p>
-      <p className="mt-2.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">
+      <p className="mt-2.5 text-mini font-extrabold uppercase tracking-[0.18em] text-white/40">
         {label}
       </p>
     </div>

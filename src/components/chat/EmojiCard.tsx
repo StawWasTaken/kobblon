@@ -100,7 +100,7 @@ export function EmojiCard({ onPick, onClose }: {
     <div className="animate-pop-in flex h-[19rem] shrink-0 flex-col border-t border-ink-line">
       <div className="px-2.5 pb-1.5 pt-2">
         <div className="flex items-center gap-2 rounded-lg border-2 border-ink-line bg-ink/40 px-2.5 py-1.5">
-          <Glyph icon={faMagnifyingGlass} className="text-[11px] text-muted" />
+          <Glyph icon={faMagnifyingGlass} className="text-mini text-muted" />
           <input
             value={term}
             onChange={(e) => setTerm(e.target.value)}
@@ -112,7 +112,7 @@ export function EmojiCard({ onPick, onClose }: {
             }}
             placeholder="Search emoji"
             aria-label="Search emoji"
-            className="min-w-0 flex-1 bg-transparent text-[13px] placeholder:text-muted focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-note placeholder:text-muted focus:outline-none"
           />
         </div>
       </div>
@@ -124,7 +124,7 @@ export function EmojiCard({ onPick, onClose }: {
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setOnly(null)}
             className={cn(
-              'shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold transition-colors',
+              'shrink-0 rounded-lg px-2 py-1 text-mini font-extrabold transition-colors',
               only === null ? 'bg-brand/25 text-brand-bright' : 'text-muted hover:bg-white/5',
             )}
           >
@@ -137,7 +137,7 @@ export function EmojiCard({ onPick, onClose }: {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setOnly(group.slug)}
               className={cn(
-                'shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold transition-colors',
+                'shrink-0 rounded-lg px-2 py-1 text-mini font-extrabold transition-colors',
                 only === group.slug ? 'bg-brand/25 text-brand-bright' : 'text-muted hover:bg-white/5',
               )}
             >
@@ -148,13 +148,13 @@ export function EmojiCard({ onPick, onClose }: {
       )}
 
       <div ref={list} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2.5 pb-2 kob-scroll">
-        {!groups && <p className="p-4 text-center text-[12px] text-muted">Loading…</p>}
+        {!groups && <p className="p-4 text-center text-xs text-muted">Loading…</p>}
         {groups && !shown.length && (
-          <p className="p-4 text-center text-[12px] text-muted">Nothing like that.</p>
+          <p className="p-4 text-center text-xs text-muted">Nothing like that.</p>
         )}
         {shown.map((group) => (
           <section key={group.slug} className="mb-1.5">
-            <p className="px-0.5 pb-1 pt-1 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            <p className="px-0.5 pb-1 pt-1 text-mini font-extrabold uppercase tracking-wide text-muted">
               {group.name}
             </p>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1">

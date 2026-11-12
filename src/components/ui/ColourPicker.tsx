@@ -276,7 +276,7 @@ function Panel({
             style={{ background: swatch }}
           >
             {swatch.toLowerCase() === current.toLowerCase() && (
-              <Glyph icon={faCheck} className="text-[8px] mix-blend-difference" />
+              <Glyph icon={faCheck} className="text-nib mix-blend-difference" />
             )}
           </button>
         ))}
@@ -326,7 +326,7 @@ export function ColourPicker({
         <span className="absolute inset-0" style={{ background: value }} />
         <Glyph
           icon={faEyeDropper}
-          className="absolute bottom-0.5 right-0.5 text-[9px] text-white mix-blend-difference"
+          className="absolute bottom-0.5 right-0.5 text-mark text-white mix-blend-difference"
         />
       </button>
 

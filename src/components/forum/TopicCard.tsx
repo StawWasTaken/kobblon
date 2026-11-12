@@ -122,13 +122,13 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
       <span className="flex items-center gap-2">
         {showBoard && (
           <span className={cn(
-            'rounded-lg px-1.5 py-0.5 text-[11px] font-extrabold',
+            'rounded-lg px-1.5 py-0.5 text-mini font-extrabold',
             glass ? 'bg-brand/20 text-brand-bright' : 'bg-white/[0.07] text-white/60',
           )}>
             {topic.category_name}
           </span>
         )}
-        <span className="text-[11px] font-bold uppercase tracking-wider text-white/35">
+        <span className="text-mini font-bold uppercase tracking-wider text-white/35">
           {timeAgo(topic.last_post_at)}
         </span>
       </span>
@@ -136,14 +136,14 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
       <span
         className={cn(
           'mt-3 line-clamp-2 font-display font-extrabold leading-snug text-white transition-colors group-hover:text-brand-bright',
-          glass ? 'text-lg' : 'text-[15px]',
+          glass ? 'text-lg' : 'text-lede',
         )}
       >
         {topic.title}
       </span>
 
       {gist && (
-        <span className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-white/50">
+        <span className="mt-2 line-clamp-3 text-note leading-relaxed text-white/50">
           {gist}
         </span>
       )}
@@ -163,11 +163,11 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
         </span>
         <span className="flex shrink-0 items-center gap-3 text-xs font-bold tabular-nums text-white/40">
           <span className="inline-flex items-center gap-1.5">
-            <Glyph icon={faComment} className="text-[11px] text-white/25" />
+            <Glyph icon={faComment} className="text-mini text-white/25" />
             {formatCount(topic.reply_count)}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Glyph icon={faThumbsUp} className="text-[11px] text-white/25" />
+            <Glyph icon={faThumbsUp} className="text-mini text-white/25" />
             {formatCount(topic.like_count)}
           </span>
         </span>

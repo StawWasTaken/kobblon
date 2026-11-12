@@ -568,7 +568,7 @@ export default function MyAvatar() {
                 </span>
                 {!!counts[one.id] && (
                   <span className={cn(
-                    'text-[9px] font-bold leading-none',
+                    'text-mark font-bold leading-none',
                     drawer === one.id ? 'text-white/70' : 'text-white/30',
                   )}>
                     {counts[one.id]}
@@ -710,11 +710,11 @@ export default function MyAvatar() {
               */}
             <div className="absolute bottom-3 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
               <div className="flex items-center gap-2">
-                <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+                <p className="font-display text-tiny font-extrabold uppercase tracking-wider text-muted">
                   Wearing
                 </p>
                 {!!wearing.length && (
-                  <span className="rounded-full bg-ink-hover px-1.5 py-0.5 text-[9px] font-extrabold leading-none text-white/50">
+                  <span className="rounded-full bg-ink-hover px-1.5 py-0.5 text-mark font-extrabold leading-none text-white/50">
                     {wearing.length}
                   </span>
                 )}
@@ -1039,7 +1039,7 @@ function Chip({ on, count, onPick, children }: {
       onClick={onPick}
       aria-pressed={on}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-[11px] font-bold',
+        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-mini font-bold',
         'transition-colors duration-150',
         on
           ? 'border-brand bg-brand/15 text-white'
@@ -1057,7 +1057,7 @@ function Quick({ onPick, children }: { onPick: () => void; children: React.React
     <button
       type="button"
       onClick={onPick}
-      className="rounded-lg bg-ink-hover px-2.5 py-1 text-[11px] font-bold text-white/70 transition-colors hover:text-white"
+      className="rounded-lg bg-ink-hover px-2.5 py-1 text-mini font-bold text-white/70 transition-colors hover:text-white"
     >
       {children}
     </button>
@@ -1077,7 +1077,7 @@ function Shelf({ label, colours, parts, look, busy, onPick, nth }: {
 }) {
   return (
     <div className="animate-row-in space-y-2" style={{ animationDelay: `${nth * 45}ms` }}>
-      <p className="font-display text-[10px] font-extrabold uppercase tracking-wider text-muted">
+      <p className="font-display text-tiny font-extrabold uppercase tracking-wider text-muted">
         {label}
       </p>
       <Swatches
@@ -1186,7 +1186,7 @@ function WornTile({ item, nth, on, busy, onToggle }: {
         {limited && (
           <span className={cn(
             'absolute bottom-3.5 left-3.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5',
-            'text-[9px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
+            'text-mark font-extrabold uppercase tracking-wide backdrop-blur-sm',
             closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
           )}>
             <Glyph icon={faClock} />
@@ -1196,7 +1196,7 @@ function WornTile({ item, nth, on, busy, onToggle }: {
       </span>
       <span className="block px-3 pb-3 pt-0.5">
         <span className="block truncate text-xs font-bold leading-snug">{item.name}</span>
-        <span className="mt-0.5 block text-[10px] text-muted">
+        <span className="mt-0.5 block text-tiny text-muted">
           {avatarKindLabels[item.kind] ?? item.kind}
         </span>
       </span>

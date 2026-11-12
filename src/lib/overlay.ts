@@ -8,7 +8,7 @@
  * page reads as a hole punched in it.
  */
 export const overlayChip =
-  'rounded-md bg-ink-card/80 px-1.5 py-0.5 text-[9px] font-extrabold uppercase '
+  'rounded-lg bg-ink-card/80 px-1.5 py-0.5 text-mark font-extrabold uppercase '
   + 'tracking-wide text-white ring-1 ring-ink-line backdrop-blur'
 
 export const overlayButton =

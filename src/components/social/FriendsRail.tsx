@@ -55,7 +55,7 @@ export function FriendsRail() {
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-link hover:underline"
           >
             See all
-            <Glyph icon={faArrowRight} className="text-[10px]" />
+            <Glyph icon={faArrowRight} className="text-tiny" />
           </Link>
         )}
       </div>
@@ -122,7 +122,7 @@ export function FriendsRail() {
             <Glyph icon={faPlus} name="add-user" />
           </span>
           <p className="mt-2 truncate text-sm font-bold">Add Friends</p>
-          <p className="truncate text-[11px] text-muted">Find somebody</p>
+          <p className="truncate text-mini text-muted">Find somebody</p>
         </Link>
 
         {loading &&

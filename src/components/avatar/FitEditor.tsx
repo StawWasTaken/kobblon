@@ -143,7 +143,7 @@ export function FitEditor({ value, onChange, onReset, className }: {
             onChange={(e) => slide(axis.key, Number(e.target.value))}
             className="h-1.5 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-ink-hover accent-brand-bright"
           />
-          <span className="w-[4.5rem] shrink-0 whitespace-nowrap text-right font-mono text-[11px] tabular-nums text-muted">
+          <span className="w-[4.5rem] shrink-0 whitespace-nowrap text-right font-mono text-mini tabular-nums text-muted">
             {mode === 'turn' ? Math.round(at(axis.key)) : at(axis.key).toFixed(2)}
             {limit.unit}
           </span>

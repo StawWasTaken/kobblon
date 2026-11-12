@@ -18,7 +18,7 @@ export function TimeSeparator({ at }: { at: string }) {
   return (
     <div className="flex items-center gap-3 py-2" role="separator">
       <span className="h-px flex-1 bg-ink-line" />
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-white/35">
+      <span className="text-tiny font-semibold uppercase tracking-wide text-white/35">
         {label}
       </span>
       <span className="h-px flex-1 bg-ink-line" />

@@ -62,7 +62,7 @@ export function ReplyingTo({ parent, name }: { parent: ForumReply | null; name: 
      */
     return (
       <p className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/[0.05] px-2.5 py-1 text-xs font-bold text-white/35">
-        <Glyph icon={faReply} className="text-[10px]" />
+        <Glyph icon={faReply} className="text-tiny" />
         {name}
       </p>
     )
@@ -76,7 +76,7 @@ export function ReplyingTo({ parent, name }: { parent: ForumReply | null; name: 
         aria-expanded={open}
         className="inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-full bg-white/[0.05] py-1 pl-1 pr-2.5 text-xs font-bold text-white/45 transition-colors hover:bg-white/[0.09] hover:text-white"
       >
-        <Glyph icon={faReply} className="ml-1 text-[10px]" />
+        <Glyph icon={faReply} className="ml-1 text-tiny" />
         <Avatar
           src={parent.author_avatar}
           name={parent.author_name}
@@ -87,7 +87,7 @@ export function ReplyingTo({ parent, name }: { parent: ForumReply | null; name: 
         <span className="truncate">{parent.author_name}</span>
         <Glyph
           icon={faAngleDown}
-          className={cn('text-[10px] transition-transform', open && 'rotate-180')}
+          className={cn('text-tiny transition-transform', open && 'rotate-180')}
         />
       </button>
 
@@ -99,7 +99,7 @@ export function ReplyingTo({ parent, name }: { parent: ForumReply | null; name: 
             onClick={() => goTo(parent.id)}
             className="mt-2 inline-flex items-center gap-1.5 text-xs font-extrabold text-brand-bright transition-colors hover:text-white"
           >
-            <Glyph icon={faArrowDown} className="text-[10px] rotate-180" />
+            <Glyph icon={faArrowDown} className="text-tiny rotate-180" />
             Go to that post
           </button>
         </blockquote>
@@ -143,7 +143,7 @@ export function Answered({ kids }: { kids: ForumReply[] }) {
         {kids.length === 1 ? '1 reply' : `${kids.length} replies`}
         <Glyph
           icon={faAngleDown}
-          className={cn('text-[10px] transition-transform', open && 'rotate-180')}
+          className={cn('text-tiny transition-transform', open && 'rotate-180')}
         />
       </button>
 
@@ -193,7 +193,7 @@ export function Later({ from, to }: { from: string; to: string }) {
   return (
     <li aria-hidden="true" className="flex items-center gap-4 py-2">
       <span className="h-px flex-1 bg-white/[0.07]" />
-      <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/25">
+      <span className="text-mini font-extrabold uppercase tracking-[0.18em] text-white/25">
         {said}
       </span>
       <span className="h-px flex-1 bg-white/[0.07]" />

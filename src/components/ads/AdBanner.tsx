@@ -161,7 +161,7 @@ export function AdBanner({
                 aria-label={`Report the ad ${ad.name}`}
                 title="Report this ad"
                 className={cn(
-                  'absolute right-1.5 top-1.5 h-6 w-6 text-[10px] opacity-0',
+                  'absolute right-1.5 top-1.5 h-6 w-6 text-tiny opacity-0',
                   'focus-visible:opacity-100 group-hover:opacity-100 sm:opacity-70',
                   overlayButton,
                 )}
@@ -186,9 +186,9 @@ export function AdBanner({
           >
             <Glyph icon={faRectangleAd} className="text-base text-white/25" />
             <span className="text-xs font-bold text-white/55">This space is for an ad</span>
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-link">
+            <span className="inline-flex items-center gap-1.5 text-mini font-bold text-link">
               Put your work here
-              <Glyph icon={faArrowRight} className="text-[9px] transition-transform group-hover:translate-x-0.5" />
+              <Glyph icon={faArrowRight} className="text-mark transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
         )}

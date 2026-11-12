@@ -609,7 +609,7 @@ export default function CreateAvatarItems() {
               <Glyph icon={faPlus} className="text-lg" />
             </span>
             <span className="text-sm font-bold">Make something</span>
-            <span className="px-4 text-center text-[11px] leading-snug text-muted">
+            <span className="px-4 text-center text-mini leading-snug text-muted">
               A shirt, trousers, a t-decal, an accessory or hair
             </span>
           </button>
@@ -722,7 +722,7 @@ export default function CreateAvatarItems() {
                 * its texture become ordinary Decals and meshes of theirs,
                 * rather than something only the Catalog can see.
                 */}
-              <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="font-display text-tiny uppercase tracking-wider text-muted">
                 The model
               </p>
               <Choices
@@ -789,7 +789,7 @@ export default function CreateAvatarItems() {
                   hair goes, and asking was what broke it. */}
               {kind === 'accessory' && (
                 <>
-                  <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
+                  <p className="pt-2 font-display text-tiny uppercase tracking-wider text-muted">
                     Where it goes
                   </p>
                   <Choices
@@ -808,7 +808,7 @@ export default function CreateAvatarItems() {
                 * none renders in flat grey and reads as broken rather than as
                 * undressed. One of your own Decals, or anybody's by id.
                 */}
-              <p className="pt-2 font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="pt-2 font-display text-tiny uppercase tracking-wider text-muted">
                 What it wears
               </p>
               {fresh && (
@@ -872,7 +872,7 @@ export default function CreateAvatarItems() {
                 />
               )}
               {!textureId && !decal && !skinFile && (
-                <p className="text-[11px] leading-snug text-muted">
+                <p className="text-mini leading-snug text-muted">
                   Without one it is flat grey, which reads as broken rather than
                   as plain.
                 </p>
@@ -888,7 +888,7 @@ export default function CreateAvatarItems() {
                 * It follows the slot, so changing where it goes moves it.
                 */}
               <div className="space-y-2 pt-2">
-                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                <p className="font-display text-tiny uppercase tracking-wider text-muted">
                   On a body
                 </p>
                 <div className="overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
@@ -919,7 +919,7 @@ export default function CreateAvatarItems() {
             </div>
           ) : isShape ? (
             <div className="space-y-2">
-              <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="font-display text-tiny uppercase tracking-wider text-muted">
                 The shape
               </p>
               <Choices
@@ -934,7 +934,7 @@ export default function CreateAvatarItems() {
                   icon: faPersonRays,
                 }))}
               />
-              <p className="text-[11px] leading-snug text-muted">
+              <p className="text-mini leading-snug text-muted">
                 The shapes are built into the engine, so this list is what
                 there is. A new one is a change to the engine and arrives with
                 the next build, not from here.
@@ -947,7 +947,7 @@ export default function CreateAvatarItems() {
                 * person as the arms.
                 */}
               <div className="space-y-2 pt-2">
-                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                <p className="font-display text-tiny uppercase tracking-wider text-muted">
                   On a body
                 </p>
                 <div className="overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised">
@@ -969,7 +969,7 @@ export default function CreateAvatarItems() {
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="font-display text-tiny uppercase tracking-wider text-muted">
                 The picture
               </p>
               {/*
@@ -1199,7 +1199,7 @@ export function MadeCard({
         {item.status === 'rejected'
           ? <Missing why="Turned down" />
           : <WornPicture item={item} />}
-        <span className="absolute left-2 top-2 rounded-lg bg-ink/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
+        <span className="absolute left-2 top-2 rounded-lg bg-ink/80 px-2 py-0.5 text-tiny font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
           {item.kind}
         </span>
         {item.sells_until && (
@@ -1210,7 +1210,7 @@ export function MadeCard({
            */
           <span className={cn(
             'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5',
-            'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
+            'text-tiny font-bold uppercase tracking-wide backdrop-blur-sm',
             closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
           )}>
             <Glyph icon={faClock} />
@@ -1222,7 +1222,7 @@ export function MadeCard({
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-bold">{item.name}</h3>
-          <p className="truncate text-[11px] text-muted">
+          <p className="truncate text-mini text-muted">
             {state}
             {typeof item.taken === 'number' && item.taken > 0
               && ` · ${item.taken} ${item.taken === 1 ? 'has it' : 'have it'}`}
@@ -1230,8 +1230,8 @@ export function MadeCard({
           {/* Whose it is, when it is not yours. Three Communities' worth of
               shirts in one list is otherwise one list of shirts. */}
           {item.community_name && (
-            <p className="flex items-center gap-1.5 truncate text-[11px] font-semibold text-brand-bright">
-              <Glyph icon={faUsers} className="text-[10px]" />
+            <p className="flex items-center gap-1.5 truncate text-mini font-semibold text-brand-bright">
+              <Glyph icon={faUsers} className="text-tiny" />
               For {item.community_name}
             </p>
           )}

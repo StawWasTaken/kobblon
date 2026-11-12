@@ -234,7 +234,7 @@ export function Reactions({
             * faces here" and a grey one says the opposite.
             */}
           <Icon name="reaction-smile" tone={canReact ? FACE_YELLOW : undefined} className="h-5 w-5" />
-          <Glyph icon={faPlus} className="text-[10px]" />
+          <Glyph icon={faPlus} className="text-tiny" />
         </button>
       </Tooltip>
 

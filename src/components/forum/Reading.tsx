@@ -74,7 +74,7 @@ export function ReadingRail({
   return (
     <aside className="hidden w-32 shrink-0 xl:block">
       <div className="sticky top-24">
-        <p className="text-[11px] font-bold text-white/30">{timeAgo(started)}</p>
+        <p className="text-mini font-bold text-white/30">{timeAgo(started)}</p>
 
         <div className="relative my-3 flex h-56 gap-3">
           <span className="relative w-0.5 shrink-0 rounded-full bg-white/10">
@@ -97,7 +97,7 @@ export function ReadingRail({
           </span>
         </div>
 
-        <p className="text-[11px] font-bold text-white/30">{timeAgo(last)}</p>
+        <p className="text-mini font-bold text-white/30">{timeAgo(last)}</p>
       </div>
     </aside>
   )
@@ -178,7 +178,7 @@ export function RelatedTopics({
 
   return (
     <section className="mt-10 border-t border-white/[0.07] pt-6">
-      <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+      <p className="flex items-center gap-2 text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
         <Glyph icon={faLayerGroup} className="text-xs text-brand-bright" />
         Related topics
       </p>
@@ -202,17 +202,17 @@ export function RelatedTopics({
                   <span className="block truncate text-sm font-bold text-white/85 transition-colors group-hover:text-brand-bright">
                     {one.title}
                   </span>
-                  <span className="mt-0.5 block text-[11px] font-bold text-white/30">
+                  <span className="mt-0.5 block text-mini font-bold text-white/30">
                     {one.category_name} · {timeAgo(one.last_post_at)}
                   </span>
                 </span>
-                <span className="flex shrink-0 items-center gap-3 text-[11px] font-bold tabular-nums text-white/35">
+                <span className="flex shrink-0 items-center gap-3 text-mini font-bold tabular-nums text-white/35">
                   <span className="inline-flex items-center gap-1">
-                    <Glyph icon={faComment} className="text-[10px]" />
+                    <Glyph icon={faComment} className="text-tiny" />
                     {formatCount(one.reply_count)}
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <Glyph icon={faEye} className="text-[10px]" />
+                    <Glyph icon={faEye} className="text-tiny" />
                     {forumViews(one.view_count)}
                   </span>
                 </span>
@@ -231,7 +231,7 @@ export function OpTag() {
   return (
     <span
       title="Opened this topic"
-      className="rounded-lg border-2 border-white/15 bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/55"
+      className="rounded-lg border-2 border-white/15 bg-white/[0.07] px-1.5 py-0.5 text-tiny font-extrabold uppercase tracking-wider text-white/55"
     >
       OP
     </span>

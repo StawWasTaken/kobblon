@@ -31,12 +31,12 @@ export function Badge({
         // pill: a chip is the one thing on the page that is not a block,
         // and keeping it round is what stops a row of them reading as more
         // buttons.
-        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-[11px] font-bold',
+        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-mini font-bold',
         tones[tone],
         className,
       )}
     >
-      {icon && <Glyph icon={icon} className="text-[10px]" />}
+      {icon && <Glyph icon={icon} className="text-tiny" />}
       {children}
     </span>
   )

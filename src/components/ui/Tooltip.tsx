@@ -122,7 +122,7 @@ export function TipBubble({ anchor, label, side = 'top', id }: {
       className={cn(
         'pointer-events-none fixed z-[80] max-w-[15rem] rounded-xl bg-[rgb(var(--bubble))] px-3 py-1.5',
         'text-center text-xs font-semibold leading-snug text-[rgb(var(--on-bubble))] shadow-pop',
-        'shadow-[0_8px_24px_-8px_rgba(0,0,0,0.9)] transition-opacity duration-100',
+        'shadow-lift transition-opacity duration-100',
         placed ? 'opacity-100' : 'opacity-0',
       )}
       style={{

@@ -160,8 +160,8 @@ export function AboutNav({ className, measure, style }: {
            * hero, so the art still shows through it at the top of a page.
            */
           moved || open
-            ? 'border-white/10 bg-ink/90 shadow-[0_10px_40px_rgba(0,0,0,0.45)]'
-            : 'border-white/[0.08] bg-ink/55 shadow-[0_8px_30px_rgba(0,0,0,0.25)]',
+            ? 'border-white/10 bg-ink/90 shadow-pop'
+            : 'border-white/[0.08] bg-ink/55 shadow-lift',
           open && 'rounded-b-none',
         )}
       >
@@ -259,14 +259,14 @@ export function AboutNav({ className, measure, style }: {
       {open && (
         <nav className={cn(
           'mx-auto max-w-6xl rounded-b-2xl border-2 border-t-0 border-white/10 bg-ink/90 px-3 pb-3 pt-2',
-          'backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.45)] sm:hidden',
+          'backdrop-blur-xl shadow-pop sm:hidden',
         )}>
           {ABOUT_NAV.map((one) => (
             one.under
               ? (
                 /* The group is a heading and its pages, not a menu inside a menu. */
                 <div key={one.label} className="mt-2 border-t border-white/[0.06] pt-2">
-                  <p className="px-4 pb-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/30">
+                  <p className="px-4 pb-1 text-mini font-extrabold uppercase tracking-[0.14em] text-white/30">
                     {one.label}
                   </p>
                   {one.under.map((page) => (

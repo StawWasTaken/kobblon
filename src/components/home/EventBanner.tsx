@@ -197,7 +197,7 @@ export function EventBand({ event, className, flat }: {
           * behind it - which is the one thing the reference's own pill is
           * doing that a coloured one would not survive.
           */}
-        <span className="inline-flex w-fit items-center rounded-full bg-on-art px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-art-ink">
+        <span className="inline-flex w-fit items-center rounded-full bg-on-art px-2.5 py-1 text-mini font-extrabold uppercase tracking-[0.12em] text-art-ink">
           {event.tag}
         </span>
 
@@ -253,7 +253,7 @@ export function EventBand({ event, className, flat }: {
         * chips under a contest with no prize is furniture.
         */}
       {!event.prizes.length && !!event.note && (
-        <p className="pointer-events-none absolute bottom-4 right-5 hidden max-w-[26ch] text-right text-[11px] font-bold text-on-art/60 sm:right-7 sm:block">
+        <p className="pointer-events-none absolute bottom-4 right-5 hidden max-w-[26ch] text-right text-mini font-bold text-on-art/60 sm:right-7 sm:block">
           {event.note}
         </p>
       )}
@@ -263,7 +263,7 @@ export function EventBand({ event, className, flat }: {
           {event.prizes.map((prize) => (
             <span
               key={prize.place}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-on-art/70"
+              className="inline-flex items-center gap-1.5 text-mini font-bold text-on-art/70"
             >
               <span className="text-on-art/40">{prize.place}</span>
               <Icon name="brix" className="h-3.5 w-3.5 text-gem-bright" />
@@ -285,7 +285,7 @@ export function EventBand({ event, className, flat }: {
       {/* On a phone there is no room beside the art, so the small print
           sits under the words instead of in the corner. */}
       {!event.prizes.length && !!event.note && (
-        <p className="relative px-5 pb-5 text-[11px] font-bold text-on-art/60 sm:hidden">
+        <p className="relative px-5 pb-5 text-mini font-bold text-on-art/60 sm:hidden">
           {event.note}
         </p>
       )}
@@ -295,7 +295,7 @@ export function EventBand({ event, className, flat }: {
           {event.prizes.map((prize) => (
             <span
               key={prize.place}
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold text-on-art/70"
+              className="inline-flex items-center gap-1.5 text-mini font-bold text-on-art/70"
             >
               <span className="text-on-art/40">{prize.place}</span>
               <Icon name="brix" className="h-3.5 w-3.5 text-gem-bright" />

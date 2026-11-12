@@ -162,7 +162,7 @@ export default function OutfitPage() {
           <Card className="space-y-4 p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                <p className="font-display text-tiny uppercase tracking-wider text-muted">
                   Outfit
                 </p>
                 <h1 className="mt-1 font-display text-2xl font-extrabold leading-tight">
@@ -171,7 +171,7 @@ export default function OutfitPage() {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {one.mine && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-space/15 px-2.5 py-1 text-[11px] font-bold text-space-bright">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-space/15 px-2.5 py-1 text-mini font-bold text-space-bright">
                     <Glyph icon={faCircleCheck} />
                     Yours
                   </span>
@@ -241,7 +241,7 @@ export default function OutfitPage() {
               <span className="truncate font-semibold text-white/90">
                 {one.owner_display_name}
               </span>
-              <NameMarks username={one.owner_username} className="text-[11px]" />
+              <NameMarks username={one.owner_username} className="text-mini" />
             </Link>
 
             <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function OutfitPage() {
             * "Traffic Wizard" actually was involved searching for it.
             */}
           <Card className="space-y-3 p-5">
-            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+            <p className="font-display text-tiny uppercase tracking-wider text-muted">
               What is in it
             </p>
             <ul className="space-y-2">
@@ -341,7 +341,7 @@ export default function OutfitPage() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">{piece.name}</span>
-                      <span className="block text-[11px] text-muted">
+                      <span className="block text-mini text-muted">
                         {avatarKindLabels[piece.kind] ?? piece.kind}
                       </span>
                     </span>

@@ -93,7 +93,7 @@ export function ActivityLine({ person, isMe, className }: {
       {/* The eyebrow, so the panel says what kind of thing it is before it
           says which World. The ring says it is happening now rather than
           that it happened. */}
-      <p className="flex items-center gap-2 border-b border-space/30 bg-space/15 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-space-bright">
+      <p className="flex items-center gap-2 border-b border-space/30 bg-space/15 px-3 py-1.5 text-mini font-extrabold uppercase tracking-wider text-space-bright">
         <span className="relative grid h-2 w-2 place-items-center">
           <span className="absolute inset-0 animate-ping rounded-full bg-space-bright/60" />
           <span className="relative h-2 w-2 rounded-full bg-space-bright" />
@@ -119,7 +119,7 @@ export function ActivityLine({ person, isMe, className }: {
           )}
 
           <p className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-white/60">
-            <Glyph icon={faUserGroup} className="shrink-0 text-[10px]" />
+            <Glyph icon={faUserGroup} className="shrink-0 text-tiny" />
             <span className="tabular-nums">
               {formatCount(where.how_many)} of {formatCount(where.capacity)}
             </span>

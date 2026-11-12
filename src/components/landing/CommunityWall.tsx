@@ -48,7 +48,7 @@ export function CommunityWall({
               <span className="min-w-0 truncate font-display text-lg font-extrabold">
                 {group.name}
               </span>
-              {group.is_verified && <Verified className="shrink-0 text-[10px]" />}
+              {group.is_verified && <Verified className="shrink-0 text-tiny" />}
             </span>
 
             <span className="mt-auto flex items-center gap-2 pt-4 text-xs font-bold text-white/40">

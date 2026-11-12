@@ -47,13 +47,13 @@ export function WorldStats({ world, size = 'sm', className }: {
     <span
       className={cn(
         'inline-flex items-center gap-3 font-bold text-muted',
-        size === 'sm' ? 'text-[11px]' : 'text-xs',
+        size === 'sm' ? 'text-mini' : 'text-xs',
         className,
       )}
     >
       {score !== null && (
         <span className="inline-flex items-center gap-1">
-          <Glyph icon={faThumbsUp} className={size === 'sm' ? 'text-[10px]' : undefined} />
+          <Glyph icon={faThumbsUp} className={size === 'sm' ? 'text-tiny' : undefined} />
           {score}%
         </span>
       )}

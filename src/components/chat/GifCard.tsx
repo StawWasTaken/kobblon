@@ -60,7 +60,7 @@ export function GifCard({ onPick, onClose }: {
     <div className="animate-pop-in flex h-[19rem] shrink-0 flex-col border-t border-ink-line">
       <div className="px-2.5 pb-1.5 pt-2">
         <div className="flex items-center gap-2 rounded-lg border-2 border-ink-line bg-ink/40 px-2.5 py-1.5">
-          <Glyph icon={faMagnifyingGlass} className="text-[11px] text-muted" />
+          <Glyph icon={faMagnifyingGlass} className="text-mini text-muted" />
           <input
             value={term}
             onChange={(e) => setTerm(e.target.value)}
@@ -70,7 +70,7 @@ export function GifCard({ onPick, onClose }: {
             }}
             placeholder="Search GIFs"
             aria-label="Search GIFs"
-            className="min-w-0 flex-1 bg-transparent text-[13px] placeholder:text-muted focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-note placeholder:text-muted focus:outline-none"
           />
         </div>
       </div>
@@ -82,7 +82,7 @@ export function GifCard({ onPick, onClose }: {
             type="button"
             onMouseDown={(e) => { e.preventDefault(); setTerm(''); setMood(word) }}
             className={cn(
-              'shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold transition-colors',
+              'shrink-0 rounded-lg px-2 py-1 text-mini font-extrabold transition-colors',
               !term && mood === word ? 'bg-brand/25 text-brand-bright' : 'text-muted hover:bg-white/5',
             )}
           >
@@ -92,9 +92,9 @@ export function GifCard({ onPick, onClose }: {
       </div>
 
       <div ref={list} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2.5 pb-2 kob-scroll">
-        {!rows && <p className="p-4 text-center text-[12px] text-muted">Looking…</p>}
+        {!rows && <p className="p-4 text-center text-xs text-muted">Looking…</p>}
         {rows && !rows.length && (
-          <p className="p-4 text-center text-[12px] text-muted">
+          <p className="p-4 text-center text-xs text-muted">
             {failed ? 'GIFs are not answering right now.' : 'Nothing like that.'}
           </p>
         )}

@@ -188,7 +188,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
                 >
                   <Glyph icon={faEnvelope} />
                   {post > 0 && (
-                    <span className="absolute right-0.5 top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-space px-1 text-[10px] font-bold text-onbrand">
+                    <span className="absolute right-0.5 top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-space px-1 text-tiny font-bold text-onbrand">
                       {post > 9 ? '9+' : post}
                     </span>
                   )}
@@ -205,7 +205,7 @@ export function AppTopbar({ onOpenNav }: { onOpenNav: () => void }) {
               >
                 <Glyph icon={faBell} />
                 {unread > 0 && (
-                  <span className="absolute right-0.5 top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-space px-1 text-[10px] font-bold text-onbrand">
+                  <span className="absolute right-0.5 top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-space px-1 text-tiny font-bold text-onbrand">
                     {unread > 9 ? '9+' : unread}
                   </span>
                 )}

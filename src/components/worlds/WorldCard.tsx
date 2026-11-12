@@ -59,7 +59,7 @@ export function WorldCard({
           </p>
         )}
 
-        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[11px] font-bold text-muted">
+        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-mini font-bold text-muted">
           <WorldStats world={world} />
           {/* Not on a phone: two cards across leaves room for one line of
               numbers, and with the genre on it the line wrapped on one card

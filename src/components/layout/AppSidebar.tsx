@@ -118,10 +118,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 )
               }
             >
-              <Glyph icon={item.icon} name={item.ours} className="w-5 text-[15px]" />
+              <Glyph icon={item.icon} name={item.ours} className="w-5 text-lede" />
               <span className="flex-1">{item.label}</span>
               {badge > 0 && (
-                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-onbrand px-1.5 text-[11px] font-extrabold text-brand-deep">
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-onbrand px-1.5 text-mini font-extrabold text-brand-deep">
                   {badge > 99 ? '99+' : badge}
                 </span>
               )}
@@ -137,7 +137,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           * the rail is yours and these are the platform's, and running them
           * together is how the two menus stopped meaning anything distinct.
           */}
-        <p className="px-3.5 pb-1 pt-4 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-onbrand/40 lg:hidden">
+        <p className="px-3.5 pb-1 pt-4 font-display text-tiny font-extrabold uppercase tracking-[0.2em] text-onbrand/40 lg:hidden">
           Browse
         </p>
         <div className="space-y-1.5 lg:hidden">
@@ -155,13 +155,13 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 )
               }
             >
-              <Glyph icon={item.icon} name={item.ours} className="w-5 text-[15px]" />
+              <Glyph icon={item.icon} name={item.ours} className="w-5 text-lede" />
               <span className="flex-1">{item.label}</span>
             </NavLink>
           ))}
         </div>
 
-        <p className="px-3.5 pb-1 pt-5 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-onbrand/40">
+        <p className="px-3.5 pb-1 pt-5 font-display text-tiny font-extrabold uppercase tracking-[0.2em] text-onbrand/40">
           At Kobblon
         </p>
         <div className="space-y-0.5">
@@ -172,14 +172,14 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3.5 rounded-xl px-3.5 py-2 text-[13px] font-bold transition-colors',
+                  'flex items-center gap-3.5 rounded-xl px-3.5 py-2 text-note font-bold transition-colors',
                   isActive
                     ? 'bg-onbrand/15 text-onbrand'
                     : 'text-onbrand/55 hover:bg-onbrand/10 hover:text-onbrand',
                 )
               }
             >
-              <Glyph icon={item.icon} className="w-5 text-[13px]" />
+              <Glyph icon={item.icon} className="w-5 text-note" />
               <span className="flex-1">{item.label}</span>
             </NavLink>
           ))}

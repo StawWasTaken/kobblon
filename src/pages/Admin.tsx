@@ -1374,7 +1374,7 @@ export function PersonRow({ person, onChanged }: {
             () => setStanding(person.id, { staffBadge: !person.has_staff_badge }),
           )}
         >
-          <StaffMark className="text-[11px]" />
+          <StaffMark className="text-mini" />
           {person.is_moderator || person.is_admin
             ? 'Wears the k'
             : person.has_staff_badge ? 'Take the k' : 'Give the k'}
@@ -2199,7 +2199,7 @@ export function MapSection() {
                 over === one.code ? 'bg-ink-hover text-white' : 'text-muted hover:bg-ink-hover',
               )}
             >
-              <span className="w-7 shrink-0 font-display text-[11px] uppercase tracking-wider">
+              <span className="w-7 shrink-0 font-display text-mini uppercase tracking-wider">
                 {one.code}
               </span>
               <span className="min-w-0 flex-1 truncate">{one.name}</span>
@@ -2555,7 +2555,7 @@ export function WordsSection() {
           </Button>
         </div>
         {!!quick.trim() && (
-          <p className="truncate font-mono text-[11px] text-muted">{patternFor(quick)}</p>
+          <p className="truncate font-mono text-mini text-muted">{patternFor(quick)}</p>
         )}
         <button
           type="button"
@@ -2632,7 +2632,7 @@ export function WordsSection() {
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <Badge tone={tone(one.decision)}>{decisionWord(one.decision)}</Badge>
-                    <code className="min-w-0 break-all font-mono text-[11px]">{one.pattern}</code>
+                    <code className="min-w-0 break-all font-mono text-mini">{one.pattern}</code>
                   </span>
                   <span className="mt-0.5 block text-xs text-muted">
                     {one.reason} · {scopeWords[one.scope] ?? one.scope}
@@ -2715,7 +2715,7 @@ export function WordsSection() {
               {term.pattern}
             </code>
             <span className="text-xs text-muted">{term.reason}</span>
-            <span className="text-[10px] uppercase tracking-wider text-white/25">
+            <span className="text-tiny uppercase tracking-wider text-white/25">
               {scopeWords[term.scope] ?? term.scope}
             </span>
             <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
@@ -2743,7 +2743,7 @@ export function WordsSection() {
         ))}
       </div>
 
-      <p className="text-[11px] leading-relaxed text-muted">
+      <p className="text-mini leading-relaxed text-muted">
         Every pattern is a regular expression, matched without regard to case against
         names, descriptions and messages. A change here is live at once; it used to
         take a migration.
@@ -2962,7 +2962,7 @@ function RecordCard({ entry, delay, onOpen }: {
             {gist.map((bit, i) => (
               <span
                 key={`${bit}-${i}`}
-                className="truncate rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2 py-1 text-[11px] font-semibold text-white/70"
+                className="truncate rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2 py-1 text-mini font-semibold text-white/70"
               >
                 {bit}
               </span>
@@ -3091,7 +3091,7 @@ export function RecordSection() {
 
       {days.map(({ day, entries }) => (
         <div key={day} className="space-y-2 pt-1">
-          <p className="sticky kob-under-bar z-10 -mx-1 bg-ink/90 px-1 py-1.5 font-display text-[11px] uppercase tracking-wider text-muted backdrop-blur-sm">
+          <p className="sticky kob-under-bar z-10 -mx-1 bg-ink/90 px-1 py-1.5 font-display text-mini uppercase tracking-wider text-muted backdrop-blur-sm">
             {day}
             <span className="ml-2 font-sans normal-case tracking-normal text-white/25">
               {entries.length}
@@ -3111,7 +3111,7 @@ export function RecordSection() {
       ))}
 
       {!!rows.data?.length && (
-        <p className="text-[11px] text-muted">
+        <p className="text-mini text-muted">
           {rows.data.length === 200 ? 'The newest two hundred.' : `${rows.data.length} of them.`}{' '}
           Kept where whoever did it cannot edit it, and a deleted account keeps its name here.
         </p>
@@ -3151,7 +3151,7 @@ export function RecordSection() {
                 <p className="px-3 py-3 text-sm text-muted">Nothing else was written down.</p>
               )}
             </div>
-            <p className="text-[11px] text-muted">
+            <p className="text-mini text-muted">
               Written at {new Date(open.created_at).toLocaleString()}.
             </p>
           </div>
@@ -3175,7 +3175,7 @@ export function RecordSection() {
 /** One key cap, for a line that tells somebody the shortcuts exist. */
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
+    <kbd className="rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-raised px-1.5 py-0.5 text-tiny font-bold text-white/70">
       {children}
     </kbd>
   )
@@ -3504,12 +3504,12 @@ function Figure({ label, value, mark, tone, note }: {
 }) {
   return (
     <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-5 py-4">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-muted">{label}</p>
+      <p className="text-mini font-bold uppercase tracking-wide text-muted">{label}</p>
       <p className={cn('mt-2 flex items-center gap-1.5 font-display text-2xl font-extrabold leading-none', tone)}>
         {mark && <CurrencyMark className="h-4" />}
         {formatCount(value)}
       </p>
-      {note && <p className="mt-1.5 truncate text-[11px] text-muted">{note}</p>}
+      {note && <p className="mt-1.5 truncate text-mini text-muted">{note}</p>}
     </div>
   )
 }
@@ -3920,7 +3920,7 @@ export function EconomySection() {
           <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
             <table className="w-full min-w-[42rem] text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                <tr className="text-left text-mini uppercase tracking-wide text-muted">
                   <th className="pb-2.5 font-bold">Item</th>
                   <th className="pb-2.5 font-bold">Closes</th>
                   <th className="pb-2.5 text-right font-bold">Going for</th>
@@ -4073,7 +4073,7 @@ export function InnerStockSection() {
           a panel that said otherwise would be lying about money.
         </p>
         <div className="text-right">
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+          <p className="text-mini font-extrabold uppercase tracking-wide text-muted">
             One Inner Stock
           </p>
           <p className="font-display text-2xl font-extrabold tabular-nums text-white">
@@ -4142,7 +4142,7 @@ export function InnerStockSection() {
             <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
               <table className="w-full min-w-[34rem] text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                  <tr className="text-left text-mini uppercase tracking-wide text-muted">
                     <th className="pb-2.5 font-bold">Account</th>
                     <th className="pb-2.5 font-bold">Paid as</th>
                     <th className="pb-2.5 text-right font-bold">Share</th>
@@ -4207,7 +4207,7 @@ export function InnerStockSection() {
           <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
             <table className="w-full min-w-[36rem] text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wide text-muted">
+                <tr className="text-left text-mini uppercase tracking-wide text-muted">
                   <th className="pb-2.5 font-bold">Month</th>
                   <th className="pb-2.5 font-bold">Open</th>
                   <th className="pb-2.5 font-bold">Close</th>
@@ -4381,7 +4381,7 @@ function Investors({ onChanged }: { onChanged: () => void }) {
           ))}
           {!!past.length && (
             <>
-              <p className="pt-3 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              <p className="pt-3 text-mini font-extrabold uppercase tracking-wide text-muted">
                 No longer investors
               </p>
               {past.map((one) => <InvestorLine key={one.user_id} row={one} />)}
@@ -4453,7 +4453,7 @@ function InvestorLine({ row, onDrop }: { row: InvestorRow; onDrop?: () => void }
             {row.earned > 0 ? '+' : row.earned < 0 ? '−' : ''}
             {formatCount(Math.abs(row.earned))}
           </p>
-          <p className="text-[11px] text-muted">
+          <p className="text-mini text-muted">
             over {row.months} month{row.months === 1 ? '' : 's'}
           </p>
         </div>
@@ -4664,7 +4664,7 @@ export function SaleSection() {
                 {[50, 250, 1200].map((was) => (
                   <span key={was} className="flex items-center gap-2">
                     <span className="text-muted line-through">{formatCount(was)}</span>
-                    <FontAwesomeIcon icon={faArrowRight} className="text-[10px] text-white/30" />
+                    <FontAwesomeIcon icon={faArrowRight} className="text-tiny text-white/30" />
                     <span className="flex items-center gap-1 font-bold">
                       <CurrencyMark className="h-3.5" />
                       {formatCount(Math.max(1, Math.round(was * (1 - off / 100))))}
@@ -4876,7 +4876,7 @@ export function VersionSection() {
                 <span className="font-display text-lg font-extrabold">V{one.name}</span>
                 <span
                   className={cn(
-                    'rounded-full px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+                    'rounded-full px-2.5 py-0.5 text-mini font-extrabold uppercase tracking-wide',
                     inForce ? 'bg-space/15 text-space-bright'
                       : ahead ? 'bg-brand/15 text-brand-bright' : 'bg-white/[0.06] text-muted',
                   )}
@@ -5387,7 +5387,7 @@ function EventPicture({ label, hint, value, fallback, as, onChange }: {
                 className={cn('h-full w-full', value && as === 'back' ? 'object-cover' : 'object-contain p-1.5')}
               />
             )
-            : <span className="text-[11px] font-bold text-muted">The theme's</span>}
+            : <span className="text-mini font-bold text-muted">The theme's</span>}
         </span>
 
         <div className="flex min-w-0 flex-col items-start gap-1.5">
@@ -6193,7 +6193,7 @@ export function MachineSection() {
                 </div>
               ))}
             </div>
-            <p className="text-[11px] leading-relaxed text-muted">
+            <p className="text-mini leading-relaxed text-muted">
               Two things it will never do, and neither is a setting: close an account,
               and act against staff. Anything it is unsure about is left for a person
               rather than guessed at - which is the one case where an empty console
@@ -6203,7 +6203,7 @@ export function MachineSection() {
 
           {/* ------------------------------------------- when it looks */}
           <Card className="space-y-3 p-4">
-            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+            <p className="font-display text-tiny uppercase tracking-wider text-muted">
               When it looks at things
             </p>
             <Choices
@@ -6239,7 +6239,7 @@ export function MachineSection() {
 
           {/* ------------------------------------ what it may do to people */}
           <Card className="space-y-3 p-4">
-            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+            <p className="font-display text-tiny uppercase tracking-wider text-muted">
               What it may do to people
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -6263,7 +6263,7 @@ export function MachineSection() {
                 note="There is no door for this, here or in the database."
               />
             </div>
-            <p className="text-[11px] leading-relaxed text-muted">
+            <p className="text-mini leading-relaxed text-muted">
               Kobby answers approved, rejected or unsure, and unsure leaves the thing for a
               person. It never touches staff, and a sanction against somebody nobody reported
               is refused to it by name.
@@ -6272,7 +6272,7 @@ export function MachineSection() {
 
           {/* ------------------------------------------------ the models */}
           <Card className="space-y-3 p-4">
-            <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+            <p className="font-display text-tiny uppercase tracking-wider text-muted">
               Which models it uses
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -6300,7 +6300,7 @@ export function MachineSection() {
                 ]}
               />
             </div>
-            <p className="text-[11px] leading-relaxed text-muted">
+            <p className="text-mini leading-relaxed text-muted">
               {modelTrouble
                 ? `Groq's list could not be fetched, so only what is already set is offered. ${modelTrouble}`
                 : models.length
@@ -6315,7 +6315,7 @@ export function MachineSection() {
 
       {!!checked?.length && (
         <Card className="space-y-2 p-4">
-          <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+          <p className="font-display text-tiny uppercase tracking-wider text-muted">
             Why it has or has not run
           </p>
           {checked.map((one, i) => (
@@ -6334,7 +6334,7 @@ export function MachineSection() {
               </span>
             </div>
           ))}
-          <p className="text-[11px] text-muted">
+          <p className="text-mini text-muted">
             The first cross is the one to fix; everything under it is waiting on that.
           </p>
         </Card>
@@ -6343,7 +6343,7 @@ export function MachineSection() {
       {/* ------------------------------------------------- what is queued */}
       {!!waiting.data?.length && (
         <Card className="space-y-2 p-4">
-          <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+          <p className="font-display text-tiny uppercase tracking-wider text-muted">
             In front of it right now
           </p>
           {waiting.data.slice(0, 12).map((one, i) => (
@@ -6362,7 +6362,7 @@ export function MachineSection() {
             </div>
           ))}
           {waiting.data.length > 12 && (
-            <p className="text-[11px] text-muted">
+            <p className="text-mini text-muted">
               And {formatCount(waiting.data.length - 12)} more.
             </p>
           )}
@@ -6481,7 +6481,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
               <span className="flex items-center gap-2">
                 <span className={cn('whitespace-nowrap text-sm font-bold lg:truncate', !on && 'text-white/85')}>{one.name}</span>
                 {one.needs !== 'moderator' && (
-                  <span className="hidden rounded-lg border-2 border-ink-line px-1 text-[9px] font-extrabold uppercase tracking-wide text-muted lg:inline">
+                  <span className="hidden rounded-lg border-2 border-ink-line px-1 text-mark font-extrabold uppercase tracking-wide text-muted lg:inline">
                     {one.needs === 'superadmin' ? 'Super' : 'Admin'}
                   </span>
                 )}
@@ -6489,7 +6489,7 @@ export function ConsoleRail({ rank, value, onChange, counts }: {
             </span>
             {many > 0 && (
               <span className={cn(
-                'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums',
+                'shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-extrabold tabular-nums',
                 many > 10 ? 'bg-danger text-on-art' : 'bg-brand text-on-art',
               )}>
                 {many > 99 ? '99+' : many}
@@ -6623,7 +6623,7 @@ export default function Admin() {
               Staff console
               <span
                 className={cn(
-                  'rounded-full border-2 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide',
+                  'rounded-full border-2 px-2 py-0.5 text-tiny font-extrabold uppercase tracking-wide',
                   rankLook[rank],
                 )}
               >
@@ -6635,7 +6635,7 @@ export default function Admin() {
               {/* Nothing on a phone has a Ctrl key, so nothing on a phone
                   should be told about one. */}
               <span className="hidden whitespace-nowrap lg:inline">
-                <kbd className="rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-raised px-1 py-0.5 text-[10px] font-bold">
+                <kbd className="rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-raised px-1 py-0.5 text-tiny font-bold">
                   Ctrl K
                 </kbd>{' '}
                 jumps anywhere.
@@ -6680,7 +6680,7 @@ export default function Admin() {
         <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <ConsoleRail rank={rank} value={open} onChange={go} counts={badges} />
           {rank !== 'superadmin' && (
-            <p className="mt-3 px-3 text-[11px] leading-relaxed text-muted">
+            <p className="mt-3 px-3 text-mini leading-relaxed text-muted">
               Closing an account, and clearing a behaviour record, are a superadmin's.
             </p>
           )}

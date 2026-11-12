@@ -23,7 +23,7 @@ export function BackLink({
         className,
       )}
     >
-      <span className="grid h-6 w-6 place-items-center rounded-lg bg-ink-hover text-[11px]">
+      <span className="grid h-6 w-6 place-items-center rounded-lg bg-ink-hover text-mini">
         <Glyph icon={faChevronLeft} />
       </span>
       {children}

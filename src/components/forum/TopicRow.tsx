@@ -70,7 +70,7 @@ export function TopicRow({
 
         <span className="min-w-0">
           <span className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="min-w-0 truncate font-display text-[15px] font-extrabold text-white transition-colors group-hover:text-brand-bright sm:text-base">
+            <span className="min-w-0 truncate font-display text-lede font-extrabold text-white transition-colors group-hover:text-brand-bright sm:text-base">
               {found ? <Marked text={topic.title} terms={found} /> : topic.title}
             </span>
             <Flags pinned={topic.is_pinned} locked={topic.is_locked} />
@@ -78,7 +78,7 @@ export function TopicRow({
           </span>
 
           {!!found && !!snippet && (
-            <span className="mt-1.5 block line-clamp-2 text-[13px] leading-relaxed text-white/45">
+            <span className="mt-1.5 block line-clamp-2 text-note leading-relaxed text-white/45">
               <Marked text={snippet} terms={found} />
             </span>
           )}
@@ -122,7 +122,7 @@ function Count({
 }) {
   return (
     <span className="inline-flex w-14 items-center gap-1.5" title={`${shown(n)} ${what}`}>
-      <Glyph icon={icon} className="text-[11px] text-white/25" />
+      <Glyph icon={icon} className="text-mini text-white/25" />
       {shown(n)}
     </span>
   )

@@ -101,7 +101,7 @@ export function WorldStage({
               >
                 {shot.kind === 'video' ? (
                   <span className="grid h-full w-full place-items-center bg-black/60 text-on-art/80">
-                    <Glyph icon={faPlay} className="text-[10px]" />
+                    <Glyph icon={faPlay} className="text-tiny" />
                   </span>
                 ) : (
                   <img src={shot.url} alt="" className="h-full w-full object-cover" />

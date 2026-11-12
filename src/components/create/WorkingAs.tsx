@@ -73,7 +73,7 @@ export function WorkingAsMenu() {
 
   return (
     <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
-      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted">
+      <span className="mb-1 block text-mini font-bold uppercase tracking-wide text-muted">
         Working as
       </span>
 
@@ -87,7 +87,7 @@ export function WorkingAsMenu() {
         )}
       >
         {target ? (
-          <Emblem src={target.icon_url} name={target.name} className="h-8 w-8 text-[11px]" />
+          <Emblem src={target.icon_url} name={target.name} className="h-8 w-8 text-mini" />
         ) : (
           <Avatar src={avatarOf(profile)} personId={profile.id} name={profile.display_name} size="sm" className="rounded-lg" />
         )}
@@ -96,7 +96,7 @@ export function WorkingAsMenu() {
           <span className="block truncate text-sm font-bold">
             {target ? target.name : profile.display_name}
           </span>
-          <span className="block text-[11px] text-muted">
+          <span className="block text-mini text-muted">
             {target ? 'Community' : 'You'}
           </span>
         </span>
@@ -125,7 +125,7 @@ export function WorkingAsMenu() {
             {!target && <Glyph icon={faCheck} className="text-xs text-link" />}
           </button>
 
-          <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wide text-muted">
+          <p className="px-3 pb-1 pt-2 text-mini font-bold uppercase tracking-wide text-muted">
             Communities
           </p>
 
@@ -148,7 +148,7 @@ export function WorkingAsMenu() {
                 src={option.icon_url}
                 name={option.name}
                 rounded="rounded-lg"
-                className="h-6 w-6 text-[10px]"
+                className="h-6 w-6 text-tiny"
               />
               <span className="min-w-0 flex-1 truncate text-sm font-semibold">{option.name}</span>
               {target?.id === option.id && (

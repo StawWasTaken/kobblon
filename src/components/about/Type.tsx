@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <p className={cn(
-      'text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright',
+      'text-mini font-extrabold uppercase tracking-[0.22em] text-brand-bright',
       className,
     )}>
       {children}

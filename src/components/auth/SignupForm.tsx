@@ -233,7 +233,7 @@ export function SignupForm({
         {claiming ? 'Keep this account' : 'Sign up'}
       </Button>
 
-      <p className="text-center text-[11px] leading-relaxed text-muted">
+      <p className="text-center text-mini leading-relaxed text-muted">
         By carrying on you agree to our{' '}
         <Link to="/policies/terms" className="font-semibold text-link hover:underline">Terms of Service</Link>
         {' '}and{' '}

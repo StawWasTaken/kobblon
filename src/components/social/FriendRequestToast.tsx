@@ -68,7 +68,7 @@ export function FriendRequestCard({
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 truncate font-display text-base font-extrabold">
             {asking.display_name}
-            <NameMarks person={asking} className="text-[11px]" />
+            <NameMarks person={asking} className="text-mini" />
           </p>
           {/* Not truncated: the sentence is the whole point of the card. */}
           <p className="flex items-center gap-1.5 text-sm leading-snug text-muted">

@@ -244,7 +244,7 @@ export default function CatalogItem() {
           <Card className="space-y-4 p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+                <p className="font-display text-tiny uppercase tracking-wider text-muted">
                   {KIND_WORDS[item.kind] ?? item.kind}
                 </p>
                 <h1 className="mt-1 font-display text-2xl font-extrabold leading-tight">
@@ -253,7 +253,7 @@ export default function CatalogItem() {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {owned && (
-                  <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border-2 border-b-4 border-space/40 bg-space/15 px-2.5 text-[11px] font-bold text-space-bright">
+                  <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border-2 border-b-4 border-space/40 bg-space/15 px-2.5 text-mini font-bold text-space-bright">
                     <Glyph icon={faCircleCheck} />
                     Yours
                   </span>
@@ -362,7 +362,7 @@ export default function CatalogItem() {
                 {madeBy.name}
               </span>
               {!madeBy.community && (
-                <NameMarks id={item.creator_id} className="text-[11px]" />
+                <NameMarks id={item.creator_id} className="text-mini" />
               )}
             </Link>
 
@@ -510,7 +510,7 @@ export default function CatalogItem() {
 
           {item.description && (
             <Card className="space-y-2 p-5">
-              <p className="font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="font-display text-tiny uppercase tracking-wider text-muted">
                 About it
               </p>
               {/*

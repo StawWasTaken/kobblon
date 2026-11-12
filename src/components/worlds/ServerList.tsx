@@ -58,7 +58,7 @@ function Faces({ server, mates }: { server: RunningServer; mates: PlayerThere[] 
         </span>
       ))}
       {rest > 0 && (
-        <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-ink-line bg-ink text-[11px] font-bold text-muted">
+        <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-ink-line bg-ink text-mini font-bold text-muted">
           +{rest}
         </span>
       )}
@@ -161,7 +161,7 @@ function ServerCard({ server, onJoin, onShare, lit, mates = [] }: {
         * servers apart, and the thing somebody quotes when asking a friend
         * which one to come to.
         */}
-      <p className="font-mono text-[11px] text-muted" title={server.id}>
+      <p className="font-mono text-mini text-muted" title={server.id}>
         ID: {server.id.slice(0, 4)}-{server.id.slice(4, 8)}
       </p>
     </article>

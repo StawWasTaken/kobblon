@@ -148,7 +148,7 @@ export function ChatLockedBar({
           </div>
 
           {!!ruleTitle && (
-            <p className="mt-0.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            <p className="mt-0.5 text-mini font-extrabold uppercase tracking-wide text-muted">
               {ruleOrd ? `Rule ${ruleOrd} - ` : ''}{ruleTitle}
             </p>
           )}
@@ -160,7 +160,7 @@ export function ChatLockedBar({
           </p>
 
           {!!source && (
-            <p className="mt-1 text-[11px] text-muted/80">
+            <p className="mt-1 text-mini text-muted/80">
               {source === 'kobby' ? 'Decided by Kobby, reading what was said.'
                 : source === 'filter' ? 'Given by the word filter.'
                 : source === 'staff' ? 'Given by a moderator.'
@@ -174,7 +174,7 @@ export function ChatLockedBar({
               onClick={onDetails}
               className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-white underline underline-offset-2 transition-colors hover:text-brand-bright"
             >
-              <Glyph icon={faCircleInfo} className="text-[11px]" />
+              <Glyph icon={faCircleInfo} className="text-mini" />
               What happened, and how to appeal
             </button>
           )}

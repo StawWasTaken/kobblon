@@ -409,7 +409,7 @@ function YourShare({ mine, price, onLeft }: {
 
   return (
     <section className="overflow-hidden rounded-2xl border-2 border-b-4 border-brand/30 bg-brand/[0.07]">
-      <h2 className="flex items-center gap-2 border-b border-brand/20 px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-brand-bright">
+      <h2 className="flex items-center gap-2 border-b border-brand/20 px-4 py-2.5 text-mini font-extrabold uppercase tracking-[0.14em] text-brand-bright">
         <FontAwesomeIcon icon={faHandHoldingDollar} className="h-3.5 w-3.5" />
         Your share
       </h2>
@@ -491,9 +491,9 @@ function Row({ label, value, tone }: {
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4 px-4 py-2">
-      <dt className="shrink-0 text-[13px] text-muted">{label}</dt>
+      <dt className="shrink-0 text-note text-muted">{label}</dt>
       <dd className={cn(
-        'text-right text-[13px] font-bold tabular-nums',
+        'text-right text-note font-bold tabular-nums',
         tone === 'good' && 'text-space-bright',
         tone === 'bad' && 'text-danger-bright',
         !tone && 'text-white/90',
@@ -508,14 +508,14 @@ function Row({ label, value, tone }: {
 function Facts({ head, rows }: { head: string; rows: [string, string][] }) {
   return (
     <section className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised/40">
-      <h2 className="border-b border-ink-line px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-white/40">
+      <h2 className="border-b border-ink-line px-4 py-2.5 text-mini font-extrabold uppercase tracking-[0.14em] text-white/40">
         {head}
       </h2>
       <dl className="divide-y divide-white/[0.05]">
         {rows.map(([key, value]) => (
           <div key={key} className="flex items-baseline justify-between gap-4 px-4 py-2">
-            <dt className="shrink-0 text-[13px] text-muted">{key}</dt>
-            <dd className="text-right text-[13px] font-bold tabular-nums text-white/90">{value}</dd>
+            <dt className="shrink-0 text-note text-muted">{key}</dt>
+            <dd className="text-right text-note font-bold tabular-nums text-white/90">{value}</dd>
           </div>
         ))}
       </dl>

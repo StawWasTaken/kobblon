@@ -107,10 +107,10 @@ function LetterLine({ letter, active, onPick }: {
 
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className={cn('truncate text-[11px] font-extrabold uppercase tracking-wide', look.tint)}>
+          <span className={cn('truncate text-mini font-extrabold uppercase tracking-wide', look.tint)}>
             {look.word}
           </span>
-          <span className="ml-auto shrink-0 text-[11px] text-muted">{timeAgo(letter.created_at)}</span>
+          <span className="ml-auto shrink-0 text-mini text-muted">{timeAgo(letter.created_at)}</span>
           {!letter.is_read && (
             <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-brand-bright" />
           )}
@@ -149,7 +149,7 @@ function Reading({ letter, onBack }: { letter: Letter; onBack: () => void }) {
           <Mark kind={letter.kind} />
 
           <div className="min-w-0 flex-1">
-            <p className={cn('text-[11px] font-extrabold uppercase tracking-wide', look.tint)}>
+            <p className={cn('text-mini font-extrabold uppercase tracking-wide', look.tint)}>
               {look.word}
             </p>
             <h2 className="mt-1 font-display text-xl font-extrabold leading-snug">
@@ -293,7 +293,7 @@ export default function Inbox() {
               letter && 'hidden lg:block',
             )}
           >
-            <p className="flex items-center gap-2 border-b border-ink-line px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            <p className="flex items-center gap-2 border-b border-ink-line px-4 py-3 text-mini font-extrabold uppercase tracking-wide text-muted">
               <Glyph icon={faInbox} className="text-brand-bright" />
               {shown.length} letter{shown.length === 1 ? '' : 's'}
             </p>

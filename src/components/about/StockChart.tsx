@@ -197,7 +197,7 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
               )}
             />
             {(!plot.flat || i === RULES / 2) && (
-              <span className="absolute left-full top-0 -translate-y-1/2 pl-2.5 text-[11px] font-semibold tabular-nums leading-none text-white/35">
+              <span className="absolute left-full top-0 -translate-y-1/2 pl-2.5 text-mini font-semibold tabular-nums leading-none text-white/35">
                 {euros(rule.cents)}
               </span>
             )}
@@ -285,13 +285,13 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
             <p className="font-display text-sm font-extrabold tabular-nums leading-none text-white">
               {euros(held.mark.cents)}
             </p>
-            <p className="mt-1 text-[11px] leading-none text-muted">
+            <p className="mt-1 text-mini leading-none text-muted">
               {new Date(held.mark.at).toLocaleDateString('en-GB', {
                 day: 'numeric', month: 'short', year: 'numeric',
               })}
             </p>
             {held.mark.note && (
-              <p className="mt-1.5 max-w-44 whitespace-normal text-[11px] leading-snug text-white/60">
+              <p className="mt-1.5 max-w-44 whitespace-normal text-mini leading-snug text-white/60">
                 {held.mark.note}
               </p>
             )}
@@ -302,7 +302,7 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
         {plot.dates.map((one) => (
           <span
             key={one.i}
-            className="pointer-events-none absolute top-full mt-2 whitespace-nowrap text-[11px] font-semibold leading-none text-white/30"
+            className="pointer-events-none absolute top-full mt-2 whitespace-nowrap text-mini font-semibold leading-none text-white/30"
             style={{
               left: `${one.left * 100}%`,
               transform: one.i === 0

@@ -93,7 +93,7 @@ export function AskKobby({
        * instead of a rectangle somebody drew on a picture.
        */
       className={cn(
-        'group rounded-xl border-2 border-b-4 border-white/10 bg-ink/70 shadow-[0_20px_55px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-colors focus-within:border-brand-bright/60',
+        'group rounded-xl border-2 border-b-4 border-white/10 bg-ink/70 shadow-pop backdrop-blur-xl transition-colors focus-within:border-brand-bright/60',
         wide && 'rounded-2xl',
       )}
     >
@@ -157,16 +157,16 @@ export function AskKobby({
                   <Link
                     key={one.slug}
                     to={one.at ?? `/policies/${one.slug}`}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 py-1 text-[11px] font-extrabold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 py-1 text-mini font-extrabold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                   >
                     {one.title}
-                    <Glyph icon={faArrowRight} className="text-[10px] text-link" />
+                    <Glyph icon={faArrowRight} className="text-tiny text-link" />
                   </Link>
                 ))}
                 {/* Said on the answer itself rather than in the small print,
                     because the one answer somebody must not act on is the
                     one about their own account. */}
-                <span className="text-[11px] text-white/30">
+                <span className="text-mini text-white/30">
                   Kobby reads the rules; it decides nothing.{' '}
                   <Link to="/support" className="font-bold text-link hover:underline">
                     Write to a person

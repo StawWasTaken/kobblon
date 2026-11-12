@@ -191,7 +191,7 @@ export function PosterCard({ person, username }: { person: ForumPerson | null | 
                   <span
                     key={word}
                     className={cn(
-                      'rounded-lg border-2 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider',
+                      'rounded-lg border-2 px-1.5 py-0.5 text-tiny font-extrabold uppercase tracking-wider',
                       person.tags[at] === 'staff'
                         ? 'border-brand-bright/40 bg-brand/15 text-brand-bright'
                         : 'border-white/12 bg-white/[0.05] text-white/45',
@@ -219,7 +219,7 @@ export function PosterCard({ person, username }: { person: ForumPerson | null | 
                   month: 'short', year: 'numeric',
                 })}
               </span>
-              <span className="mt-0.5 block text-[10px] font-extrabold uppercase tracking-wider text-white/30">
+              <span className="mt-0.5 block text-tiny font-extrabold uppercase tracking-wider text-white/30">
                 Joined
               </span>
             </span>
@@ -232,7 +232,7 @@ export function PosterCard({ person, username }: { person: ForumPerson | null | 
         className="flex items-center justify-between gap-2 border-t border-white/[0.08] px-4 py-2.5 text-xs font-extrabold text-brand-bright transition-colors hover:bg-white/[0.04]"
       >
         See their profile
-        <Glyph icon={faArrowRight} className="text-[10px]" />
+        <Glyph icon={faArrowRight} className="text-tiny" />
       </Link>
     </span>
   )
@@ -244,7 +244,7 @@ function Count({ value, word }: { value: number; word: string }) {
       <span className="block font-display text-sm font-extrabold tabular-nums text-white/80">
         {formatCount(value)}
       </span>
-      <span className="mt-0.5 block text-[10px] font-extrabold uppercase tracking-wider text-white/30">
+      <span className="mt-0.5 block text-tiny font-extrabold uppercase tracking-wider text-white/30">
         {word}
       </span>
     </span>

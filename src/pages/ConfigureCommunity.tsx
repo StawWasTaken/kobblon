@@ -146,7 +146,7 @@ export default function ConfigureCommunity() {
           <nav aria-label="Configure sections" className="space-y-3">
             {groups.map((name) => (
               <div key={name}>
-                <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted">
+                <p className="px-2 pb-1 text-mini font-bold uppercase tracking-wide text-muted">
                   {name}
                 </p>
                 {sections.filter((item) => item.group === name).map((item) => (
@@ -166,7 +166,7 @@ export default function ConfigureCommunity() {
                       <span className="block text-sm font-semibold">{item.name}</span>
                       <span
                         className={cn(
-                          'mt-0.5 block text-[11px] leading-snug',
+                          'mt-0.5 block text-mini leading-snug',
                           section === item.name ? 'text-white/70' : 'text-muted',
                         )}
                       >
@@ -174,7 +174,7 @@ export default function ConfigureCommunity() {
                       </span>
                     </span>
                     {item.name === 'Members' && !!rights.data?.request_count && (
-                      <span className="mt-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-white px-1.5 text-[11px] font-extrabold text-brand-deep">
+                      <span className="mt-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-white px-1.5 text-mini font-extrabold text-brand-deep">
                         {rights.data.request_count}
                       </span>
                     )}
@@ -350,7 +350,7 @@ function Information({ group, onSaved }: { group: NonNullable<Awaited<ReturnType
               {description || 'No description yet.'}
             </p>
           </div>
-          <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted">
+          <span className="shrink-0 text-mini font-bold uppercase tracking-wide text-muted">
             Preview
           </span>
         </div>

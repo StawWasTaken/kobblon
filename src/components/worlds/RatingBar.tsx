@@ -89,7 +89,7 @@ export function RatingBar({
           <p className="font-display text-2xl font-extrabold tabular-nums text-on-art">
             {share === null ? '-' : `${share}%`}
           </p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-on-art/60">
+          <p className="mt-1 text-tiny font-bold uppercase tracking-[0.08em] text-on-art/60">
             {total === 1 ? '1 vote' : `${formatCount(total)} votes`}
           </p>
         </div>
@@ -103,7 +103,7 @@ export function RatingBar({
       {/* Said out loud rather than left as two grey thumbs: a control that
           does nothing and does not say why is the page sulking. */}
       {disabled && why && (
-        <p className="mt-1 text-center text-[11px] text-on-art/60">{why}</p>
+        <p className="mt-1 text-center text-mini text-on-art/60">{why}</p>
       )}
     </div>
   )

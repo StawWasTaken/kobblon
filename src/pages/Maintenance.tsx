@@ -54,7 +54,7 @@ export default function Maintenance({ note, outage }: {
         <Kobby mood="construction" size="xl" className="mt-8" />
 
         <p className="mt-6 inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink-card px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted">
-          <Glyph icon={faScrewdriverWrench} className="text-[10px]" />
+          <Glyph icon={faScrewdriverWrench} className="text-tiny" />
           Maintenance
         </p>
 

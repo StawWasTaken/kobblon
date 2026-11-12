@@ -45,8 +45,8 @@ export function GoneProfile({ handle }: { handle: string }) {
           <Missing className="h-full w-full" />
         </div>
 
-        <span className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink-raised px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-          <Glyph icon={faUserSlash} className="text-[10px]" />
+        <span className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink-raised px-3 py-1 text-mini font-bold uppercase tracking-[0.14em] text-muted">
+          <Glyph icon={faUserSlash} className="text-tiny" />
           Account deleted
         </span>
 

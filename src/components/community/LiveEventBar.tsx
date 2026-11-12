@@ -84,7 +84,7 @@ export function LiveEventBar({ communityId, showing }: {
 
         {event.attending_count > 0 && (
           <span className="hidden shrink-0 items-center gap-1.5 text-xs font-bold text-white/80 sm:inline-flex">
-            <Glyph icon={faUserGroup} className="text-[10px]" />
+            <Glyph icon={faUserGroup} className="text-tiny" />
             {formatCount(event.attending_count)} going
           </span>
         )}
@@ -94,7 +94,7 @@ export function LiveEventBar({ communityId, showing }: {
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-extrabold text-space-deep transition-colors hover:bg-white/90"
         >
           Go
-          <Glyph icon={faArrowRight} className="text-[10px]" />
+          <Glyph icon={faArrowRight} className="text-tiny" />
         </Link>
 
         <button

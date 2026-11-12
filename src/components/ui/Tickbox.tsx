@@ -13,7 +13,7 @@ export function Tick({ on, className }: { on: boolean; className?: string }) {
   return (
     <span
       className={cn(
-        'grid h-5 w-5 shrink-0 place-items-center rounded-lg border-2 text-[10px] transition-colors',
+        'grid h-5 w-5 shrink-0 place-items-center rounded-lg border-2 text-tiny transition-colors',
         on ? 'border-brand-bright bg-brand text-on-art' : 'border-ink-line',
         className,
       )}

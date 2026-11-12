@@ -80,20 +80,20 @@ function AdRow({ ad, onEdit, onChanged }: {
 
       <div className="min-w-0 flex-1">
         <p className="flex flex-wrap items-center gap-2 text-xs font-bold">
-          <span className="rounded-full border-2 border-ink-line px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-muted">
+          <span className="rounded-full border-2 border-ink-line px-2 py-0.5 text-tiny font-extrabold uppercase tracking-wide text-muted">
             {AD_SIZES[ad.size]?.label ?? ad.size}
           </span>
           {!ad.is_active && (
-            <span className="rounded-full bg-ink-hover px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-muted">
+            <span className="rounded-full bg-ink-hover px-2 py-0.5 text-tiny font-extrabold uppercase tracking-wide text-muted">
               Resting
             </span>
           )}
         </p>
-        <p className="mt-1 flex items-center gap-1.5 truncate text-[11px] text-muted">
+        <p className="mt-1 flex items-center gap-1.5 truncate text-mini text-muted">
           <Glyph icon={ad.target_kind === 'link' ? faGlobe : look.icon} />
           {ad.target_path}
         </p>
-        <p className="mt-1 flex flex-wrap items-center gap-x-3 text-[11px] font-bold text-muted">
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 text-mini font-bold text-muted">
           <span className="inline-flex items-center gap-1.5">
             <Glyph icon={faEye} />
             {formatCount(ad.views)}
@@ -170,7 +170,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
               aria-label="Rename this campaign"
               className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-ink-hover hover:text-white"
             >
-              <Glyph icon={faPen} className="text-[10px]" />
+              <Glyph icon={faPen} className="text-tiny" />
             </button>
           </p>
 
@@ -480,7 +480,7 @@ export default function CreateAds() {
           />
 
           <div>
-            <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
               {currency.plural} behind it
             </p>
             <div className="flex items-center gap-3">

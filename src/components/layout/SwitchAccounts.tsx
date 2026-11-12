@@ -53,7 +53,7 @@ function AccountRow({
         {busy ? (
           <Glyph icon={faSpinner} className="shrink-0 animate-spin text-white/50" />
         ) : current ? (
-          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-space text-[11px] text-on-art">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-space text-mini text-on-art">
             <Glyph icon={faCheck} />
           </span>
         ) : account.session ? (
@@ -62,7 +62,7 @@ function AccountRow({
             className="shrink-0 text-white/25 transition-colors group-hover:text-white"
           />
         ) : (
-          <span className="shrink-0 rounded-full border-2 border-ink-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+          <span className="shrink-0 rounded-full border-2 border-ink-line px-2 py-0.5 text-tiny font-bold uppercase tracking-wide text-muted">
             Password
           </span>
         )}
@@ -73,7 +73,7 @@ function AccountRow({
           <button
             onClick={onForget}
             aria-label={`Forget ${account.displayName}`}
-            className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-ink-line bg-ink-card text-[10px] text-white/45 opacity-0 transition-opacity hover:text-white group-hover:opacity-100 focus:opacity-100"
+            className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-ink-line bg-ink-card text-tiny text-white/45 opacity-0 transition-opacity hover:text-white group-hover:opacity-100 focus:opacity-100"
           >
             <Glyph icon={faXmark} />
           </button>

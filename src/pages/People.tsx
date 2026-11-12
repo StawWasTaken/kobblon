@@ -226,12 +226,12 @@ export default function People() {
           >
             <PersonAvatar person={you} size="lg" square ring="ring-ink-card" />
             <span className="min-w-0 flex-1">
-              <span className="font-display text-[10px] font-extrabold uppercase tracking-[0.25em] text-white/45">
+              <span className="font-display text-tiny font-extrabold uppercase tracking-[0.25em] text-white/45">
                 This is you
               </span>
               <span className="mt-0.5 flex items-center gap-1.5">
                 <span className="truncate font-bold">{you.display_name}</span>
-                <NameMarks person={you} className="text-[11px]" />
+                <NameMarks person={you} className="text-mini" />
               </span>
               <span className="block truncate text-xs text-muted">@{you.username}</span>
             </span>
@@ -303,7 +303,7 @@ export default function People() {
                   friend={friend}
                   menu={menuFor(person)}
                   tag={friend ? (
-                    <span className="text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+                    <span className="text-mini font-extrabold uppercase tracking-wide text-space-bright">
                       Friend
                     </span>
                   ) : undefined}

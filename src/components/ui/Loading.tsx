@@ -130,7 +130,7 @@ function TakingTooLong() {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="mt-3 rounded-full bg-brand px-4 py-2 text-[13px] font-bold text-on-art"
+        className="mt-3 rounded-full bg-brand px-4 py-2 text-note font-bold text-on-art"
       >
         Load it again
       </button>

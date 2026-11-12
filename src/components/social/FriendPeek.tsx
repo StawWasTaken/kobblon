@@ -77,16 +77,16 @@ function WorldHere({ where }: { where: Whereabouts }) {
           <img src={where.world_cover} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="grid h-full w-full place-items-center text-white/30">
-            <Glyph icon={faPlay} className="text-[9px]" />
+            <Glyph icon={faPlay} className="text-mark" />
           </span>
         )}
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[11px] font-extrabold leading-tight text-white">
+        <span className="block truncate text-mini font-extrabold leading-tight text-white">
           {where.world_name}
         </span>
-        <span className="mt-0.5 block text-[10px] font-semibold tabular-nums text-white/50">
+        <span className="mt-0.5 block text-tiny font-semibold tabular-nums text-white/50">
           {where.how_many} of {where.capacity} in there
         </span>
         <span className="mt-1 block h-0.5 overflow-hidden rounded-full bg-black/50">
@@ -226,10 +226,10 @@ export function FriendPeek({ friend, children, className }: {
 
             <div className="relative overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop">
               <div className="border-b border-ink-line px-3 py-2">
-                <p className="truncate text-[13px] font-bold leading-tight text-white">
+                <p className="truncate text-note font-bold leading-tight text-white">
                   {friend.display_name}
                 </p>
-                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted">
+                <p className="mt-1 flex items-center gap-1.5 text-mini text-muted">
                   <StatusDot presence={presence} size="sm" />
                   {/* "In a World" over the World's own name says the same thing
                       twice; the name below is the half worth reading. */}
@@ -252,18 +252,18 @@ export function FriendPeek({ friend, children, className }: {
                     type="button"
                     onClick={join}
                     disabled={where.how_many >= where.capacity}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] font-bold text-space-bright transition-colors hover:bg-ink-hover disabled:text-white/35 disabled:hover:bg-transparent"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-note font-bold text-space-bright transition-colors hover:bg-ink-hover disabled:text-white/35 disabled:hover:bg-transparent"
                   >
-                    <Glyph icon={faPlay} className="w-3.5 text-[11px]" />
+                    <Glyph icon={faPlay} className="w-3.5 text-mini" />
                     {where.how_many >= where.capacity ? 'That copy is full' : 'Join them'}
                   </button>
                 )}
 
                 <Link
                   to={profileLink(friend)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-note font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white"
                 >
-                  <Glyph icon={faUser} className="w-3.5 text-[11px] text-muted" />
+                  <Glyph icon={faUser} className="w-3.5 text-mini text-muted" />
                   Profile
                 </Link>
 
@@ -271,11 +271,11 @@ export function FriendPeek({ friend, children, className }: {
                   type="button"
                   onClick={() => void chat()}
                   disabled={opening}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13px] font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-60"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-note font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-60"
                 >
                   <Glyph
                     icon={opening ? faSpinner : faComment}
-                    className={cn('w-3.5 text-[11px] text-muted', opening && 'animate-spin')}
+                    className={cn('w-3.5 text-mini text-muted', opening && 'animate-spin')}
                   />
                   Message
                 </button>

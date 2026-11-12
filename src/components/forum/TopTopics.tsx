@@ -63,7 +63,7 @@ export function TopTopics({
           className="ml-auto inline-flex items-center gap-1.5 text-xs font-extrabold text-white/45 transition-colors hover:text-brand-bright"
         >
           All topics
-          <Glyph icon={faArrowRight} className="text-[10px]" />
+          <Glyph icon={faArrowRight} className="text-tiny" />
         </Link>
       </div>
       )}
@@ -99,11 +99,11 @@ export function TopTopics({
                   the room there is. */}
               <span className="hidden shrink-0 items-center gap-4 text-xs font-bold tabular-nums text-white/40 sm:flex">
                 <span className="inline-flex items-center gap-1.5">
-                  <Glyph icon={faComment} className="text-[11px] text-white/25" />
+                  <Glyph icon={faComment} className="text-mini text-white/25" />
                   {formatCount(topic.reply_count)}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Glyph icon={faThumbsUp} className="text-[11px] text-white/25" />
+                  <Glyph icon={faThumbsUp} className="text-mini text-white/25" />
                   {formatCount(topic.like_count)}
                 </span>
               </span>

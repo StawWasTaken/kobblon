@@ -76,7 +76,7 @@ export function Role({ person }: { person: ForumAuthor }) {
   const word = 'Staff'
 
   return (
-    <span className="rounded-lg border-2 border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
+    <span className="rounded-lg border-2 border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-tiny font-extrabold uppercase tracking-wider text-brand-bright">
       {word}
     </span>
   )
@@ -97,7 +97,7 @@ export function TagChip({ person }: { person: ForumAuthor }) {
   if (!person.author_tag || person.author_tag === 'Staff') return null
 
   return (
-    <span className="rounded-lg border-2 border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
+    <span className="rounded-lg border-2 border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-tiny font-extrabold uppercase tracking-wider text-white/45">
       {person.author_tag}
     </span>
   )
@@ -144,12 +144,12 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-lg border-2 px-2 py-0.5 text-[11px] font-extrabold',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-lg border-2 px-2 py-0.5 text-mini font-extrabold',
         mark.look,
         className,
       )}
     >
-      {(status === 'solved' || status === 'approved') && <Glyph icon={faCheck} className="text-[10px]" />}
+      {(status === 'solved' || status === 'approved') && <Glyph icon={faCheck} className="text-tiny" />}
       {mark.word}
       {by && <span className="font-bold opacity-60">· {by}</span>}
     </span>

@@ -40,7 +40,7 @@ export function BadgeTile({
       {badge.description && (
         <p className="mt-1 line-clamp-2 text-xs text-muted">{badge.description}</p>
       )}
-      <p className="mt-2 text-[11px] text-white/35">
+      <p className="mt-2 text-mini text-white/35">
         {formatCount(badge.awarded_count)} earned
       </p>
     </article>

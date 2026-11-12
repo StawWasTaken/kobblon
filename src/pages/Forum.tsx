@@ -259,7 +259,7 @@ export function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading:
 
   return (
     <div className="overflow-hidden rounded-2xl border-2 border-white/10">
-      <div className="hidden grid-cols-[1fr_4.5rem_4.5rem_13rem] items-center gap-4 border-b border-white/10 bg-ink-raised/60 py-2.5 pl-5 pr-5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35 lg:grid">
+      <div className="hidden grid-cols-[1fr_4.5rem_4.5rem_13rem] items-center gap-4 border-b border-white/10 bg-ink-raised/60 py-2.5 pl-5 pr-5 text-mini font-extrabold uppercase tracking-[0.16em] text-white/35 lg:grid">
         <span>Category</span>
         <span className="text-right">Topics</span>
         <span className="text-right">Posts</span>
@@ -311,13 +311,13 @@ export function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading:
                   >
                     {board.name}
                     {board.staff_only && (
-                      <Glyph icon={faLock} className="text-[11px] text-white/30" title="Staff post here" />
+                      <Glyph icon={faLock} className="text-mini text-white/30" title="Staff post here" />
                     )}
                     {/* 0314: this one is filing, not a room. */}
                     {board.holds_only_categories && (
                       <Glyph
                         icon={faFolderTree}
-                        className="text-[11px] text-white/30"
+                        className="text-mini text-white/30"
                         title="Holds other categories"
                       />
                     )}
@@ -377,7 +377,7 @@ export function BoardTable({ boards, loading }: { boards: ForumBoard[]; loading:
 function Activity({ topics, loading }: { topics: ForumTopic[]; loading: boolean }) {
   return (
     <aside className="min-w-0">
-      <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+      <p className="flex items-center gap-2 text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
         <Glyph icon={faClockRotateLeft} className="text-brand-bright" />
         Recent activity
       </p>
@@ -403,10 +403,10 @@ function Activity({ topics, loading }: { topics: ForumTopic[]; loading: boolean 
                     className="shrink-0"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-bold text-white/80 transition-colors group-hover:text-brand-bright">
+                    <span className="block truncate text-note font-bold text-white/80 transition-colors group-hover:text-brand-bright">
                       {topic.title}
                     </span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/35">
+                    <span className="mt-0.5 flex items-center gap-1.5 text-mini text-white/35">
                       <span className={cn(
                         'h-1.5 w-1.5 shrink-0 rounded-sm',
                         BOARD_COLOUR[topic.category] ?? 'bg-white/30',
@@ -416,7 +416,7 @@ function Activity({ topics, loading }: { topics: ForumTopic[]; loading: boolean 
                       <span className="shrink-0 whitespace-nowrap">{timeAgo(topic.last_post_at)}</span>
                     </span>
                   </span>
-                  <span className="shrink-0 text-[11px] font-bold tabular-nums text-white/30">
+                  <span className="shrink-0 text-mini font-bold tabular-nums text-white/30">
                     {formatCount(topic.reply_count)}
                   </span>
                 </Link>
@@ -440,7 +440,7 @@ function Shelf({ title, icon, topics, loading, note }: {
 }) {
   return (
     <div>
-      <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/40">
+      <p className="flex items-center gap-2 text-mini font-extrabold uppercase tracking-[0.18em] text-white/40">
         <Glyph icon={icon} className="text-brand-bright" />
         {title}
       </p>
@@ -498,7 +498,7 @@ function TopicTable({ topics, loading, showCategory, empty, found }: {
 
   return (
     <div className="overflow-hidden rounded-2xl border-2 border-white/10">
-      <div className="hidden grid-cols-[auto_1fr_auto] items-center gap-5 border-b border-white/10 bg-ink-raised/60 px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35 sm:grid">
+      <div className="hidden grid-cols-[auto_1fr_auto] items-center gap-5 border-b border-white/10 bg-ink-raised/60 px-4 py-2.5 text-mini font-extrabold uppercase tracking-[0.16em] text-white/35 sm:grid">
         <span className="w-10" />
         <span>Topic</span>
         <span className="flex gap-4">
@@ -979,7 +979,7 @@ export function ForumCategory() {
           */}
         {!!inside.length && (
           <div className="mt-5">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+            <p className="text-mini font-extrabold uppercase tracking-[0.16em] text-white/35">
               Inside this category
             </p>
             <ul className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -1000,12 +1000,12 @@ export function ForumCategory() {
                           {one.name}
                         </span>
                         {one.staff_only && (
-                          <Glyph icon={faLock} className="text-[10px] text-white/30" title="Staff post here" />
+                          <Glyph icon={faLock} className="text-tiny text-white/30" title="Staff post here" />
                         )}
                         {one.holds_only_categories && (
                           <Glyph
                             icon={faFolderTree}
-                            className="text-[10px] text-white/30"
+                            className="text-tiny text-white/30"
                             title="Holds other categories"
                           />
                         )}
@@ -1032,7 +1032,7 @@ export function ForumCategory() {
          */}
         {!!(minders.data ?? []).length && (
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+            <span className="text-mini font-extrabold uppercase tracking-[0.16em] text-white/35">
               Looked after by
             </span>
             {(minders.data ?? []).map((one) => (
@@ -1551,7 +1551,7 @@ export function ForumTopicPage() {
                             : 'bg-white/[0.04] text-white/55 hover:bg-white/[0.09] hover:text-white',
                         )}
                       >
-                        {on && <Glyph icon={faCheck} className="text-[10px]" />}
+                        {on && <Glyph icon={faCheck} className="text-tiny" />}
                         {STATUS_WORDS[word]}
                       </button>
                     )
@@ -1564,7 +1564,7 @@ export function ForumTopicPage() {
       </article>
 
       <section className="py-6">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+        <p className="text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
           {replies.length ? `${formatCount(replies.length)} replies` : 'No replies yet'}
         </p>
 
@@ -1873,7 +1873,7 @@ export function ForumNew() {
       </header>
 
       <div className="max-w-3xl py-6">
-        <p className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/35">
+        <p className="mb-3 text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
           Category
         </p>
         <div className="flex flex-wrap gap-2">

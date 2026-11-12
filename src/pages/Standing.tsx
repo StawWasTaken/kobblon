@@ -84,17 +84,17 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
             </span>
             <ByBadge rank={one.by_rank} />
             {live && (
-              <span className="rounded-full border-2 border-danger/40 bg-danger/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-danger">
+              <span className="rounded-full border-2 border-danger/40 bg-danger/10 px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide text-danger">
                 Still on
               </span>
             )}
             {one.is_void && (
-              <span className="rounded-full border-2 border-space/40 bg-space/10 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+              <span className="rounded-full border-2 border-space/40 bg-space/10 px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide text-space-bright">
                 Taken back
               </span>
             )}
             {one.appeal_status === 'open' && (
-              <span className="rounded-full border-2 border-brand-bright/50 bg-brand/20 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">
+              <span className="rounded-full border-2 border-brand-bright/50 bg-brand/20 px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide text-white">
                 Appeal open
               </span>
             )}
@@ -115,7 +115,7 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
                 style={{ width: `${Math.max(press, press === 0 ? 0 : 4)}%` }}
               />
             </span>
-            <span className="shrink-0 text-[11px] font-bold tabular-nums text-muted">
+            <span className="shrink-0 text-mini font-bold tabular-nums text-muted">
               {one.counts && press > 0 ? `−${press} on the bar` : 'counts for nothing'}
             </span>
           </span>
@@ -184,7 +184,7 @@ function Crest({ one }: { one: ModerationRow }) {
 function Flag({ tone, children }: { tone: string; children: React.ReactNode }) {
   return (
     <span className={cn(
-      'rounded-full border-2 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide',
+      'rounded-full border-2 px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide',
       tone,
     )}>
       {children}
@@ -271,7 +271,7 @@ export function RowCard({ one, onClose, onAppealed }: {
           <div className="flex items-start gap-4 pr-10">
             <Crest one={one} />
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+              <p className="text-mini font-extrabold uppercase tracking-wide text-muted">
                 {stamp(one.at)}
                 {heldFor(one) && <> · {heldFor(one)}</>}
               </p>
@@ -327,7 +327,7 @@ export function RowCard({ one, onClose, onAppealed }: {
       <div className="space-y-5">
         {/* Why, in the words it was written in. Left-aligned: this runs to a
             paragraph on a bad day, and centred prose is a poster. */}
-        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-white/85">
+        <p className="whitespace-pre-wrap text-lede leading-relaxed text-white/85">
           {one.reason}
         </p>
 
@@ -351,7 +351,7 @@ export function RowCard({ one, onClose, onAppealed }: {
 
         {/* ------------------------------------------------- the facts */}
         <div className="space-y-2.5">
-          <h3 className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+          <h3 className="text-mini font-extrabold uppercase tracking-wide text-muted">
             The facts of it
           </h3>
           <Group>
@@ -422,7 +422,7 @@ export function RowCard({ one, onClose, onAppealed }: {
         {/* ------------------------------------------------- the appeal */}
         {one.appeal_status && (
           <div className="space-y-2.5">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-wide text-muted">
+            <h3 className="text-mini font-extrabold uppercase tracking-wide text-muted">
               Your appeal
             </h3>
             <Card className="space-y-3 p-4">
@@ -451,7 +451,7 @@ export function RowCard({ one, onClose, onAppealed }: {
               </p>
               {one.appeal_body && (
                 <div>
-                  <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                  <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
                     What you sent
                   </p>
                   <p className="whitespace-pre-wrap rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">
@@ -461,7 +461,7 @@ export function RowCard({ one, onClose, onAppealed }: {
               )}
               {one.appeal_note && (
                 <div>
-                  <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+                  <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
                     What we said
                   </p>
                   <p className="whitespace-pre-wrap rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-4 py-3 text-sm leading-relaxed text-white/75">

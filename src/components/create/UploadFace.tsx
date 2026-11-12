@@ -60,7 +60,7 @@ function FontFace_({ src, name }: { src: string | null; name: string }) {
       style={family ? { fontFamily: family } : undefined}
     >
       <span className="text-3xl leading-none">Aa</span>
-      <span className="truncate text-[11px] opacity-60">{name}</span>
+      <span className="truncate text-mini opacity-60">{name}</span>
     </span>
   )
 }
@@ -124,7 +124,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
 
         <span className={cn(
           'absolute left-2 top-2 inline-flex items-center gap-1.5', overlayChip,
-          'rounded-full px-2 py-1 font-display text-[10px] uppercase tracking-wide',
+          'rounded-full px-2 py-1 font-display text-tiny uppercase tracking-wide',
           look.tone,
         )}>
           <span className={cn('h-1.5 w-1.5 rounded-full', look.pip)} />
@@ -132,7 +132,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
         </span>
 
         {!item.is_public && (
-          <span className={cn('absolute right-2 top-2 h-6 w-6 rounded-full text-[10px]', overlayButton)}>
+          <span className={cn('absolute right-2 top-2 h-6 w-6 rounded-full text-tiny', overlayButton)}>
             <Glyph icon={faLock} />
           </span>
         )}
@@ -140,7 +140,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="flex items-start gap-2">
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-ink-hover text-[11px] text-white/60">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-ink-hover text-mini text-white/60">
             <Glyph icon={kindIcons[item.kind]} />
           </span>
           <div className="min-w-0 flex-1">
@@ -150,7 +150,7 @@ export function UploadCard({ item }: { item: OwnAsset }) {
             >
               {item.name}
             </Link>
-            <p className="truncate text-[11px] text-muted">
+            <p className="truncate text-mini text-muted">
               {kindLabels[item.kind]} · {timeAgo(item.created_at)}
               {item.uploaded_by && <> · by {item.uploaded_by}</>}
             </p>
@@ -160,12 +160,12 @@ export function UploadCard({ item }: { item: OwnAsset }) {
         {item.kind === 'audio' && <MediaPlayer src={sound} kind="audio" className="text-white" />}
 
         {item.status === 'rejected' && item.review_note && (
-          <p className="rounded-lg bg-danger/10 px-2 py-1.5 text-[11px] leading-relaxed text-danger">
+          <p className="rounded-lg bg-danger/10 px-2 py-1.5 text-mini leading-relaxed text-danger">
             {item.review_note}
           </p>
         )}
 
-        <div className="mt-auto flex items-center gap-3 pt-1 text-[11px] font-bold text-muted">
+        <div className="mt-auto flex items-center gap-3 pt-1 text-mini font-bold text-muted">
           <span className="font-mono text-white/45">{tag || 'No number yet'}</span>
           <span className="ml-auto inline-flex items-center gap-1">
             <Glyph icon={faHardDrive} />

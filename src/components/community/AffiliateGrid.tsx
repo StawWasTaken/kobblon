@@ -114,10 +114,10 @@ export function AffiliateGrid({
                     />
                   </span>
 
-                  <span className="mt-1.5 block truncate text-[13px] font-bold group-hover:text-link">
+                  <span className="mt-1.5 block truncate text-note font-bold group-hover:text-link">
                     {other.name}
                   </span>
-                  <span className="block text-[11px] text-muted">
+                  <span className="block text-mini text-muted">
                     {formatCount(other.member_count)} Members
                   </span>
                 </Link>
@@ -129,24 +129,24 @@ export function AffiliateGrid({
                     onClick={() => onAnswer(other.id, true)}
                     className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg bg-brand text-xs font-bold text-on-art hover:bg-brand-bright"
                   >
-                    <Glyph icon={faCheck} className="text-[10px]" /> Accept
+                    <Glyph icon={faCheck} className="text-tiny" /> Accept
                   </button>
                   <button
                     onClick={() => onAnswer(other.id, false)}
                     aria-label={`Decline ${other.name}`}
                     className="grid h-7 w-7 place-items-center rounded-lg border-2 border-ink-line text-white/50 hover:bg-ink-hover hover:text-white"
                   >
-                    <Glyph icon={faXmark} className="text-[10px]" />
+                    <Glyph icon={faXmark} className="text-tiny" />
                   </button>
                 </div>
               )}
 
               {onAnswer && !other.incoming && (
-                <p className="mt-2 text-[11px] font-semibold text-white/40">Waiting on them</p>
+                <p className="mt-2 text-mini font-semibold text-white/40">Waiting on them</p>
               )}
 
               {!onAnswer && other.incoming && (
-                <p className="mt-1 text-[11px] font-semibold text-danger">Declared us</p>
+                <p className="mt-1 text-mini font-semibold text-danger">Declared us</p>
               )}
             </article>
           ))}

@@ -74,7 +74,7 @@ export function BrowseRail<T extends string>({
   return (
     <div className={cn('lg:space-y-2', className)}>
       {heading && (
-        <p className="hidden px-1 pb-1 font-display text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35 lg:block">
+        <p className="hidden px-1 pb-1 font-display text-tiny font-extrabold uppercase tracking-[0.2em] text-white/35 lg:block">
           {heading}
         </p>
       )}

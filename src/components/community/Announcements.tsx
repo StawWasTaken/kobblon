@@ -180,7 +180,7 @@ export function Announcements({
                       <NameMarks
                         id={post.author_id}
                         person={{ is_verified: post.author_is_verified }}
-                        className="text-[11px]"
+                        className="text-mini"
                       />
                     </Link>
                     {post.author_rank && <span> · {post.author_rank}</span>}

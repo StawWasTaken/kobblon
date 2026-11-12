@@ -61,8 +61,8 @@ export function EventCard({
         )}
 
         {(event.is_cancelled || over) && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-ink/85 px-2 py-1 text-[11px] font-bold backdrop-blur">
-            <Glyph icon={faBan} className="text-[10px]" />
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-ink/85 px-2 py-1 text-mini font-bold backdrop-blur">
+            <Glyph icon={faBan} className="text-tiny" />
             {event.is_cancelled ? 'Cancelled' : 'Finished'}
           </span>
         )}
@@ -76,7 +76,7 @@ export function EventCard({
 
         <p className="mt-1.5 text-xs font-semibold">{eventWhen(event.starts_at)}</p>
 
-        <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted">
+        <p className="mt-0.5 flex items-center gap-1.5 text-mini text-muted">
           <Glyph icon={faUserGroup} />
           {formatCount(event.attending_count)} going
         </p>

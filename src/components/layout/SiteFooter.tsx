@@ -98,7 +98,7 @@ const social: {
 
 function Heading({ children }: { children: string }) {
   return (
-    <p className="font-display text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40">
+    <p className="font-display text-mini font-extrabold uppercase tracking-[0.2em] text-white/40">
       {children}
     </p>
   )

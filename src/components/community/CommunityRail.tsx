@@ -110,7 +110,7 @@ export function CommunityRail() {
           * heading goes: it is a list of what matched then, not a shelf.
           */}
         {!term.trim() && shown.some((one) => one.is_primary) && (
-          <p className="px-2 pb-1 pt-1 font-display text-[10px] uppercase tracking-wider text-muted">
+          <p className="px-2 pb-1 pt-1 font-display text-tiny uppercase tracking-wider text-muted">
             My main one
           </p>
         )}
@@ -118,7 +118,7 @@ export function CommunityRail() {
         {shown.map((community, at) => (
           <div key={community.id}>
             {!term.trim() && at > 0 && shown[at - 1].is_primary && (
-              <p className="px-2 pb-1 pt-3 font-display text-[10px] uppercase tracking-wider text-muted">
+              <p className="px-2 pb-1 pt-3 font-display text-tiny uppercase tracking-wider text-muted">
                 The rest
               </p>
             )}

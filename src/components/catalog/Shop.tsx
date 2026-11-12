@@ -118,7 +118,7 @@ export function Shop({ owner, who, handle, isMine, actions }: {
               className="inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
             >
               See this shop in the Catalog
-              <Glyph icon={faArrowRight} className="text-[11px]" />
+              <Glyph icon={faArrowRight} className="text-mini" />
             </Link>
           ) : <span />}
           {actions}
@@ -203,7 +203,7 @@ function ShopCard({ item }: { item: AvatarItem }) {
           {item.sells_until && (
             <span className={cn(
               'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5',
-              'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
+              'text-tiny font-bold uppercase tracking-wide backdrop-blur-sm',
               closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
             )}>
               <Glyph icon={faClock} />

@@ -83,7 +83,7 @@ export function Places({ who, boards, className }: {
                 {one.label}
                 {top && (
                   <span className="ml-1.5 font-bold text-space-bright">
-                    <Glyph icon={faRankingStar} className="mr-1 text-[10px]" />
+                    <Glyph icon={faRankingStar} className="mr-1 text-tiny" />
                     {row.place}
                     {row.place === 1 ? 'st' : row.place === 2 ? 'nd' : row.place === 3 ? 'rd' : 'th'}
                   </span>

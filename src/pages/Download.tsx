@@ -61,7 +61,7 @@ export default function Download() {
                     {one.note}
                   </p>
                 </div>
-                <span className="ml-auto rounded-lg border-2 border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/35">
+                <span className="ml-auto rounded-lg border-2 border-white/10 bg-white/[0.04] px-2 py-1 text-tiny font-extrabold uppercase tracking-[0.16em] text-white/35">
                   Not yet
                 </span>
               </div>

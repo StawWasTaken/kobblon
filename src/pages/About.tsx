@@ -131,7 +131,7 @@ export default function About() {
             </h1>
           </ScrollIn>
           <Reveal delay={260}>
-            <p className="mt-10 flex items-center justify-center gap-2.5 text-[11px] font-extrabold uppercase tracking-[0.22em] text-white/50">
+            <p className="mt-10 flex items-center justify-center gap-2.5 text-mini font-extrabold uppercase tracking-[0.22em] text-white/50">
               Keep going
               <Glyph icon={faArrowDown} className="text-xs" />
             </p>
@@ -411,7 +411,7 @@ export default function About() {
             <PixelGrid from="top-left" className="opacity-30" />
             <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-brand-bright">
+                <p className="text-mini font-extrabold uppercase tracking-[0.22em] text-brand-bright">
                   Keeping up
                 </p>
                 <Title className="mt-4">Where things get said.</Title>

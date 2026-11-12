@@ -30,7 +30,7 @@ export function Byline({ item, className }: { item: AvatarItem; className?: stri
 
   const inside = (
     <>
-      {community && <Glyph icon={faUsers} className="shrink-0 text-[10px]" />}
+      {community && <Glyph icon={faUsers} className="shrink-0 text-tiny" />}
       <span className="truncate">{name}</span>
       {!community && (
         <NameMarks
@@ -39,7 +39,7 @@ export function Byline({ item, className }: { item: AvatarItem; className?: stri
             is_verified: item.creator_is_verified,
             has_staff_badge: item.creator_is_staff,
           }}
-          className="text-[10px]"
+          className="text-tiny"
         />
       )}
     </>

@@ -203,7 +203,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </div>
                 ) : claiming ? (
                   <>
-                    <span className="inline-flex items-center gap-2 rounded-full border-2 border-space/40 bg-space/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-space-bright">
+                    <span className="inline-flex items-center gap-2 rounded-full border-2 border-space/40 bg-space/15 px-3 py-1 text-mini font-extrabold uppercase tracking-wide text-space-bright">
                       <Glyph icon={faCircleCheck} />
                       Nothing gets lost
                     </span>
@@ -256,7 +256,7 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       )
                       : <LoginForm />}
 
-                    <div className="my-3.5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-white/25">
+                    <div className="my-3.5 flex items-center gap-3 text-mini font-bold uppercase tracking-wide text-white/25">
                       <span className="h-px flex-1 bg-white/10" />
                       or
                       <span className="h-px flex-1 bg-white/10" />

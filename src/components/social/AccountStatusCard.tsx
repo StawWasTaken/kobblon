@@ -170,24 +170,24 @@ export function AccountStatusCard({
         {/* The facts, in the order somebody asks for them. */}
         <dl className="space-y-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3 text-sm">
           <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Reason</dt>
+            <dt className="text-mini font-bold uppercase tracking-wide text-muted">Reason</dt>
             <dd className="mt-0.5 capitalize text-white/85">{standing.rule || 'Other'}</dd>
           </div>
           <div>
-            <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Note</dt>
+            <dt className="text-mini font-bold uppercase tracking-wide text-muted">Note</dt>
             <dd className="mt-0.5 whitespace-pre-wrap leading-relaxed text-white/85">
               {standing.why?.trim() || 'No reason was recorded, which is itself worth appealing.'}
             </dd>
           </div>
           {standing.decided_at && (
             <div>
-              <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Decided</dt>
+              <dt className="text-mini font-bold uppercase tracking-wide text-muted">Decided</dt>
               <dd className="mt-0.5 text-white/85">{day(standing.decided_at)}</dd>
             </div>
           )}
           {until && !over && (
             <div>
-              <dt className="text-[11px] font-bold uppercase tracking-wide text-muted">Until</dt>
+              <dt className="text-mini font-bold uppercase tracking-wide text-muted">Until</dt>
               <dd className="mt-0.5 text-white/85">{dayAndTime(until)}</dd>
             </div>
           )}
@@ -204,7 +204,7 @@ export function AccountStatusCard({
                 ticked ? 'border-brand-bright bg-brand-bright text-on-art' : 'border-ink-line bg-ink',
               )}
             >
-              {ticked && <Glyph icon={faCheck} className="text-[11px]" />}
+              {ticked && <Glyph icon={faCheck} className="text-mini" />}
             </span>
             <input
               type="checkbox"

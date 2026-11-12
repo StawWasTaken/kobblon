@@ -287,7 +287,7 @@ function CommunityTile({ community, joined }: {
         <span className="absolute inset-0 bg-gradient-to-t from-ink-card via-ink-card/30 to-transparent" />
 
         {joined && (
-          <span className="absolute right-3 top-3 rounded-lg bg-ink/75 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-space-bright backdrop-blur">
+          <span className="absolute right-3 top-3 rounded-lg bg-ink/75 px-2 py-1 text-tiny font-extrabold uppercase tracking-wide text-space-bright backdrop-blur">
             Joined
           </span>
         )}

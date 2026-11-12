@@ -57,7 +57,7 @@ function Swatch({ name, cls, job, on }: { name: string; cls: string; job: string
       <div className={cn('grid h-16 place-items-center text-sm font-bold', cls, on)}>{on ? 'Aa' : ''}</div>
       <div className="px-3 py-2.5">
         <p className="font-mono text-xs font-bold">{name}</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted">{job}</p>
+        <p className="mt-0.5 text-mini leading-snug text-muted">{job}</p>
       </div>
     </div>
   )
@@ -181,7 +181,7 @@ export default function StyleGuide() {
                 {[['rounded-lg', 'h-10 w-16'], ['rounded-xl', 'h-14 w-20'], ['rounded-2xl', 'h-16 w-24'], ['rounded-full', 'h-12 w-12']].map(([r, size]) => (
                   <div key={r} className="text-center">
                     <div className={cn('border-2 border-b-4 border-ink-line bg-ink-hover', r, size)} />
-                    <p className="mt-1.5 font-mono text-[10px] text-muted">{r}</p>
+                    <p className="mt-1.5 font-mono text-tiny text-muted">{r}</p>
                   </div>
                 ))}
               </div>
@@ -208,6 +208,28 @@ export default function StyleGuide() {
               </div>
             </div>
           </div>
+
+          {/*
+            Two lifts, near and far. There used to be one, and seven bespoke
+            blurs written around it - which is one token and seven exceptions
+            rather than one system.
+          */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-5 shadow-lift">
+              <p className="font-display font-extrabold">The near lift</p>
+              <p className="mt-1 text-sm text-muted">
+                `shadow-lift`. A tooltip, a toast, the cookie note: a few
+                pixels off the page, not above it.
+              </p>
+            </div>
+            <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-5 shadow-pop">
+              <p className="font-display font-extrabold">The far lift</p>
+              <p className="mt-1 text-sm text-muted">
+                `shadow-pop`. A dialog, a menu, the sticky bar once it has
+                left the top. Nothing else gets a blur at all.
+              </p>
+            </div>
+          </div>
         </Section>
 
         {/* ------------------------------------------------------- type */}
@@ -227,6 +249,39 @@ export default function StyleGuide() {
             <p className="text-sm text-muted">A second line that is true but not the point.</p>
             <p className="font-display text-xs font-extrabold uppercase tracking-[0.3em] text-white/45">
               An eyebrow
+            </p>
+          </div>
+
+          {/*
+            Tailwind's scale stops at 12px and Kobblon does not. Six named
+            steps below it, so a mark beside a name and a handle under a face
+            card are the same size in both places by name rather than by two
+            people happening to type the same number.
+          */}
+          <div className="mt-4 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-6">
+            <p className="font-display text-xs font-extrabold uppercase tracking-[0.3em] text-white/45">
+              Under body text
+            </p>
+            <div className="mt-4 space-y-2.5">
+              {([
+                ['lede', 'text-lede', '15px', 'A line that should carry.'],
+                ['note', 'text-note', '13px', 'A display name on a face card.'],
+                ['mini', 'text-mini', '11px', 'A handle, a label on a chip.'],
+                ['tiny', 'text-tiny', '10px', 'A count, a caption.'],
+                ['mark', 'text-mark', '9px', 'A verified mark beside a name.'],
+                ['nib', 'text-nib', '8px', 'The smallest thing still a letter.'],
+              ] as const).map(([name, cls, px, what]) => (
+                <div key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <p className="w-20 shrink-0 font-mono text-xs font-bold text-brand-bright">{cls}</p>
+                  <p className="w-12 shrink-0 font-mono text-xs text-muted">{px}</p>
+                  <p className={cn(cls, 'font-bold')}>{what}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-muted">
+              Sizes only, no leading. That is on purpose: the names are a
+              rename of four hundred and fifty-five arbitrary values that were
+              already on the page, so naming them moved nothing.
             </p>
           </div>
         </Section>
@@ -386,7 +441,7 @@ export default function StyleGuide() {
                   style={{ animationDelay: `${i * 90}ms` }}
                 >
                   <p className="font-mono text-xs font-bold">{name}</p>
-                  <p className="mt-1 text-[11px] text-muted">{job}</p>
+                  <p className="mt-1 text-mini text-muted">{job}</p>
                 </div>
               ))}
             </div>

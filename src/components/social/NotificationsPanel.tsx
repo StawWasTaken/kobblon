@@ -177,7 +177,7 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
         />
         <span
           className={cn(
-            'absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full text-[10px] ring-2 ring-ink-card',
+            'absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full text-tiny ring-2 ring-ink-card',
             mark.tint,
           )}
         >
@@ -195,7 +195,7 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
         <span className="mt-1 flex items-center gap-2 text-xs text-muted">
           {timeAgo(n.created_at)}
           {!n.is_read && (
-            <span className="rounded-lg bg-brand/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-bright">
+            <span className="rounded-lg bg-brand/20 px-1.5 py-0.5 text-tiny font-bold uppercase tracking-wide text-brand-bright">
               New
             </span>
           )}
@@ -391,7 +391,7 @@ export function NotificationsPanel({
 
           {groups.map((group) => (
             <section key={group.name}>
-              <h3 className="sticky top-0 z-10 border-b border-ink-line/60 bg-ink-card/95 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted backdrop-blur">
+              <h3 className="sticky top-0 z-10 border-b border-ink-line/60 bg-ink-card/95 px-4 py-1.5 text-mini font-bold uppercase tracking-wide text-muted backdrop-blur">
                 {group.name}
               </h3>
               {group.rows.map((n) => <Line key={n.id} n={n} onClose={onClose} />)}

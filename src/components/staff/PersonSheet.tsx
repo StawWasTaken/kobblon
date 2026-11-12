@@ -72,7 +72,7 @@ export function PersonSheet({ person, rank = 'moderator' }: {
             to={`/u/${person.username}`}
             className="ml-auto shrink-0 text-xs font-bold text-link hover:underline"
           >
-            Their profile <Glyph icon={faArrowUpRightFromSquare} className="text-[10px]" />
+            Their profile <Glyph icon={faArrowUpRightFromSquare} className="text-tiny" />
           </Link>
         </div>
 
@@ -134,7 +134,7 @@ export function PersonSheet({ person, rank = 'moderator' }: {
                   <span className="text-muted">{countryName(one.country)}</span>
                 )}
                 {one.agent && (
-                  <span className="ml-auto flex items-center gap-1.5 truncate text-[11px] text-muted">
+                  <span className="ml-auto flex items-center gap-1.5 truncate text-mini text-muted">
                     <Glyph icon={faDesktop} />
                     <span className="max-w-[14rem] truncate">{one.agent}</span>
                   </span>

@@ -245,7 +245,7 @@ export function Composer({
           there is one thing to learn rather than two that nearly match. */}
       {suggesting && picks.length > 0 && (
         <div className="animate-pop-in shrink-0 border-t border-ink-line">
-          <p className="px-3.5 pb-1 pt-2 text-[11px] font-extrabold uppercase tracking-wide text-muted">
+          <p className="px-3.5 pb-1 pt-2 text-mini font-extrabold uppercase tracking-wide text-muted">
             {suggesting.kind === 'people' ? 'People' : 'Emoji'}
           </p>
           <div className="max-h-40 overflow-y-auto overflow-x-hidden pb-1 kob-scroll">
@@ -256,13 +256,13 @@ export function Composer({
                 onMouseDown={(e) => { e.preventDefault(); take(one) }}
                 onMouseEnter={() => setLit(at)}
                 className={cn(
-                  'flex w-full items-center gap-3 px-3.5 py-2 text-left text-[13px] transition-colors',
+                  'flex w-full items-center gap-3 px-3.5 py-2 text-left text-note transition-colors',
                   at === lit ? 'bg-white/10 text-white' : 'text-muted hover:bg-white/5',
                 )}
               >
                 <span className="grid h-5 w-5 shrink-0 place-items-center">{one.lead}</span>
                 <span className="min-w-0 flex-1 truncate font-bold">{one.label}</span>
-                {one.hint && <span className="shrink-0 text-[11px] text-muted">{one.hint}</span>}
+                {one.hint && <span className="shrink-0 text-mini text-muted">{one.hint}</span>}
               </button>
             ))}
           </div>
@@ -331,7 +331,7 @@ export function Composer({
 
           {left <= COUNT_FROM && (
             <span className={cn(
-              'shrink-0 text-[12px] font-bold tabular-nums',
+              'shrink-0 text-xs font-bold tabular-nums',
               left <= 20 ? 'text-danger' : 'text-muted',
             )}>
               {left}
@@ -464,7 +464,7 @@ export function Composer({
               ready ? 'bg-brand text-on-art hover:bg-brand-bright' : 'bg-ink-hover text-white/40',
             )}
           >
-            <Glyph icon={faPaperPlane} className="text-[13px]" />
+            <Glyph icon={faPaperPlane} className="text-note" />
           </button>
         </div>
       </div>

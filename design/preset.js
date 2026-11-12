@@ -194,6 +194,36 @@ export default {
         display: ['bd-gravel-vf', 'Twemoji', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'Twemoji', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
+      /*
+       * The small end of the scale, which Tailwind does not ship.
+       *
+       * Tailwind stops at 12px and Kobblon does not: a mark beside a name,
+       * the count on a tab, the handle under a face card all live below it,
+       * and for a long time every one of them was written as an arbitrary
+       * `text-[11px]`. Four hundred and fifty-five of them, which is a type
+       * scale that exists and is simply not written down - so two places
+       * meaning the same thing could drift a pixel apart and nothing would
+       * say so.
+       *
+       * These are sizes only, no line height. That is deliberate: it makes
+       * the names a rename of what was already there rather than a change
+       * to it, so the sweep that introduced them moved nothing on screen.
+       * Leading stays where the component sets it.
+       */
+      fontSize: {
+        /** A mark on a glyph: the smallest thing that is still a letter. */
+        nib: '8px',
+        /** A verified mark, a badge beside a name. */
+        mark: '9px',
+        /** A count on a tab, a caption under a thumbnail. */
+        tiny: '10px',
+        /** The handle under a display name, a label on a chip. */
+        mini: '11px',
+        /** A display name on a face card: one step under body text. */
+        note: '13px',
+        /** One step over body text, for a line that should carry. */
+        lede: '15px',
+      },
       borderRadius: { xl2: '1.25rem' },
       /*
        * Three, because two is not enough and Tailwind only ships 0, 1, 2,
@@ -249,6 +279,22 @@ export default {
          * on a surface and should not pretend to be.
          */
         pop: '0 24px 60px -20px rgba(0,0,0,0.85)',
+        /*
+         * The near lift, for a thing that floats a few pixels off the page
+         * rather than above it: a tooltip, a toast, the cookie note, the
+         * sticky About bar once it has left the top.
+         *
+         * This is a second shadow and the paragraph above says there is one,
+         * so it owes an explanation. There was one, and the codebase had
+         * seven bespoke blurs anyway - `0_8px_24px_-8px`, `0_8px_30px`,
+         * `0_10px_40px`, `0_1.5rem_3rem`, `0_20px_55px_-18px` - every one of
+         * them written because `pop` is a 60px blur pulled 20px in, which is
+         * right under a dialog and absurd under a tooltip. One token that
+         * does not fit half its cases is not one design system; it is one
+         * token and seven exceptions. So: two lifts, near and far, and
+         * nothing drawn by hand.
+         */
+        lift: '0 8px 24px -8px rgba(0,0,0,0.8)',
       },
       keyframes: {
         'pop-in': {

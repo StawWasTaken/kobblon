@@ -111,7 +111,7 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
           {kindLabels[item.kind]}
         </span>
         {owned && (
-          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-lg bg-space text-[11px] text-[#fff]">
+          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-lg bg-space text-mini text-[#fff]">
             <Glyph icon={faCheck} />
           </span>
         )}
@@ -133,10 +133,10 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
               is_admin: item.creator_is_admin,
               is_verified: item.creator_is_verified,
             }}
-            className="text-[11px]"
+            className="text-mini"
           />
         </span>
-        <p className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/40">
+        <p className="mt-2 flex items-center justify-between gap-2 text-mini text-white/40">
           {typeof item.score === 'number' && item.score !== null ? (
             <span className="inline-flex items-center gap-1.5">
               <Glyph icon={faThumbsUp} />

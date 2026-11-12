@@ -22488,3 +22488,77 @@ Nothing of 320 or 321 survives except this note. Worth keeping as a record
 of what has been tried: pale strokes, a dark drawn edge, a two-column
 profile. The stroke question is answered; the layout question is open again
 and will not be answered by guessing at it.
+
+
+## Round three hundred and twenty-three - the scale under body text, and the second lift
+
+Two tokens that did not exist, and the four hundred and sixty-odd hand-written
+values that existed because they did not. Nothing on screen moved; what moved
+is that the system now has words for things it was already doing.
+
+**`fontSize`, six new steps.** Tailwind's scale stops at `xs`, 12px. Kobblon
+does not stop there - a verified mark beside a name, the count on a tab, the
+handle under a face card all live below it - so the codebase had written them
+by hand: 255 `text-[11px]`, 134 `text-[10px]`, 27 `text-[13px]`, and so on down
+to 8px. Four hundred and fifty-five arbitrary sizes, which is a type scale that
+exists and is simply not written down, so two places meaning the same thing
+could sit a pixel apart and nothing anywhere would say so.
+
+    nib   8px   the smallest thing that is still a letter
+    mark  9px   a verified mark, a badge beside a name
+    tiny  10px  a count on a tab, a caption under a thumbnail
+    mini  11px  the handle under a display name, a label on a chip
+    note  13px  a display name on a face card
+    lede  15px  one step over body text, for a line that should carry
+
+`text-[12px]` and `text-[14px]` went to `text-xs` and `text-sm`, which they
+already equalled.
+
+**These are sizes only, with no line height, and that is deliberate.** An
+arbitrary `text-[11px]` sets font-size and nothing else, so leading stays
+wherever the component put it. Giving the token a line height would have made
+the sweep a change to four hundred and fifty-five places rather than a rename
+of them. Leading stays the component's business.
+
+**For the applications:** these are in `design/preset.js`, so a pull picks them
+up. `text-xs` and above have not moved. If the Workspace or the Launcher has
+its own `text-[11px]` anywhere, it is the same 11px and can be renamed at
+leisure - nothing breaks either way. There is a specimen of all six on `/style`
+under Type.
+
+**`shadow-lift`, the near lift.** There was one blurred shadow, `shadow-pop`
+(`0 24px 60px -20px`), and the rule that it is the only one. The codebase had
+seven bespoke blurs anyway - `0_8px_24px_-8px`, `0_8px_30px`, `0_10px_40px`,
+`0_1.5rem_3rem`, `0_20px_55px_-18px` - every one written because `pop` is a
+60px blur pulled 20px in, which is right under a dialog and absurd under a
+tooltip. One token that does not fit half its cases is not one design system;
+it is one token and seven exceptions.
+
+So there are two now, and nothing drawn by hand:
+
+    shadow-lift  0 8px 24px -8px rgba(0,0,0,0.8)    a few pixels off the page
+    shadow-pop   0 24px 60px -20px rgba(0,0,0,0.85) above the page
+
+`lift` is a tooltip, a toast, the cookie note, the sticky About bar before it
+has fully left the top. `pop` is a dialog, a menu, the bar once it has. Nothing
+else gets a blur at all - a card is a stroke and a bottom edge, which has not
+changed.
+
+**The landing placeholder tiles are flat.** The asset tiles on the landing page
+that have no artwork yet were `bg-gradient-to-br from-<kind>/35 to-ink-card` -
+a gradient on a solid surface, which the system forbids and which three tiles
+were doing in plain sight. They are a flat tint of the kind's colour now
+(`bg-brand/20`, `bg-space/20` and so on). The rule stands as it was: a gradient
+is a scrim between a picture and what sits on top of it, and never anything
+else. Every other gradient on the site was checked against that and every one
+of them is over art.
+
+**Two corners off the budget** - `rounded-md` on the overlay badge and
+`rounded-t-sm` on the asset page's bar - are `lg` now. The 8px board-colour
+squares in the forum keep `rounded-sm` on purpose: at that size `lg` is a
+circle, and they are meant to read as little squares.
+
+**Still not done, and said plainly:** the layout half of the polish work is
+open. Staw's three complaints - everything is a bordered box, the layouts are
+lazy, it is flat and lifeless - are about arrangement, not tokens, and the
+first attempt at them was reverted. Nothing in this round addresses them.

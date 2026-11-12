@@ -12,12 +12,12 @@ import { cn } from '@/lib/cn'
 import type { AssetKind, MarketAsset } from '@/types/db'
 
 const look: Record<AssetKind, { icon: IconDefinition; word: string; wash: string }> = {
-  image: { icon: faImage, word: 'Decal', wash: 'from-brand/40' },
-  audio: { icon: faMusic, word: 'Sound', wash: 'from-space/35' },
-  video: { icon: faVideo, word: 'Video', wash: 'from-link/30' },
-  font: { icon: faFont, word: 'Font', wash: 'from-warn/30' },
-  mesh: { icon: faCube, word: 'Mesh', wash: 'from-craft/35' },
-  build: { icon: faShapes, word: 'Build', wash: 'from-brand-bright/30' },
+  image: { icon: faImage, word: 'Decal', wash: 'bg-brand/20' },
+  audio: { icon: faMusic, word: 'Sound', wash: 'bg-space/20' },
+  video: { icon: faVideo, word: 'Video', wash: 'bg-link/18' },
+  font: { icon: faFont, word: 'Font', wash: 'bg-warn/18' },
+  mesh: { icon: faCube, word: 'Mesh', wash: 'bg-craft/20' },
+  build: { icon: faShapes, word: 'Build', wash: 'bg-brand-bright/18' },
 }
 
 const SAMPLE = 'Aa Bb Cc'
@@ -74,7 +74,7 @@ function Picture({ src, wash }: { src: string | null; wash: string }) {
     return (
       <span
         className={cn(
-          'block aspect-[4/3] rounded-2xl border-2 border-b-4 border-white/10 bg-gradient-to-br to-ink-card',
+          'block aspect-[4/3] rounded-2xl border-2 border-b-4 border-white/10',
           wash,
         )}
       />
@@ -126,7 +126,7 @@ function Letters({ src, wash }: { src: string | null; wash: string }) {
   return (
     <span
       className={cn(
-        'grid aspect-[4/3] place-items-center rounded-2xl border-2 border-b-4 border-white/10 bg-gradient-to-br to-ink-card px-5',
+        'grid aspect-[4/3] place-items-center rounded-2xl border-2 border-b-4 border-white/10 px-5',
         wash,
       )}
     >
@@ -181,7 +181,7 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
         {item.kind === 'audio' && (
           <span
             className={cn(
-              'relative block aspect-square overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-gradient-to-br to-ink-card',
+              'relative block aspect-square overflow-hidden rounded-2xl border-2 border-b-4 border-white/10',
               kind.wash,
             )}
           >
@@ -201,13 +201,13 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
           </span>
         )}
 
-        <span className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-ink/75 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide backdrop-blur">
+        <span className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-ink/75 px-3 py-1 text-mini font-extrabold uppercase tracking-wide backdrop-blur">
           <Glyph icon={kind.icon} />
           {kind.word}
         </span>
 
         {tag && (
-          <span className="pointer-events-none absolute right-4 top-4 rounded-full bg-ink/75 px-3 py-1 font-display text-[11px] font-extrabold tabular-nums backdrop-blur">
+          <span className="pointer-events-none absolute right-4 top-4 rounded-full bg-ink/75 px-3 py-1 font-display text-mini font-extrabold tabular-nums backdrop-blur">
             {tag}
           </span>
         )}
@@ -230,7 +230,7 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
             is_admin: item.creator_is_admin,
             is_verified: item.creator_is_verified,
           }}
-          className="text-[10px]"
+          className="text-tiny"
         />
       </span>
     </Link>

@@ -34,7 +34,7 @@ function Moment({ title, at, children, last }: {
       {!last && <span className="absolute left-[7px] top-5 h-full w-px bg-ink-line" />}
       <Glyph
         icon={faDiamond}
-        className="relative mt-1 text-[15px] text-white/30"
+        className="relative mt-1 text-lede text-white/30"
       />
       <div className="min-w-0 flex-1">
         <p className="font-bold">{title}</p>

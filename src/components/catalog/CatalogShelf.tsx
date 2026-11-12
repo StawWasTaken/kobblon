@@ -873,11 +873,11 @@ function OutfitShelfCard({ outfit, busy, canTake, onTake }: {
               is_verified: outfit.owner_is_verified,
               has_staff_badge: outfit.owner_is_staff,
             }}
-            className="text-[10px]"
+            className="text-tiny"
           />
         </span>
 
-        <p className="text-[11px] text-muted">
+        <p className="text-mini text-muted">
           {pieces.length} {pieces.length === 1 ? 'piece' : 'pieces'}
           {outfit.owned_already > 0 && <> · you have {outfit.owned_already}</>}
         </p>
@@ -939,7 +939,7 @@ function ShelfCard({ item, busy, canTake, inBasket, onTake, sale }: {
           {item.sells_until && (
             <span className={cn(
               'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5',
-              'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
+              'text-tiny font-bold uppercase tracking-wide backdrop-blur-sm',
               closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
             )}>
               <Glyph icon={faClock} />

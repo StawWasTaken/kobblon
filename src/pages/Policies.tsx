@@ -109,7 +109,7 @@ export default function PolicyHub() {
                 >
                   {String(at + 1).padStart(2, '0')}
                 </span>
-                <p className="relative text-[11px] font-extrabold uppercase tracking-[0.18em] text-brand-bright">
+                <p className="relative text-mini font-extrabold uppercase tracking-[0.18em] text-brand-bright">
                   {policy.eyebrow}
                 </p>
                 <h3 className="relative mt-3 font-display text-2xl font-extrabold leading-tight">

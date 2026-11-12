@@ -668,7 +668,7 @@ export default function WorldPage() {
                     onClick={() => setReporting(true)}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
                   >
-                    <Glyph icon={faFlag} className="text-[10px]" />
+                    <Glyph icon={faFlag} className="text-tiny" />
                     Report Abuse
                   </button>
                 )}

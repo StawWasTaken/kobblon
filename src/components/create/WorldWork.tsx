@@ -30,7 +30,7 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
             )}
           {/* Out in the world, said in the colour Kobblon says alive in. */}
           {world.is_published && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-bold text-space-bright backdrop-blur-sm">
+            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-ink/80 px-2 py-0.5 text-tiny font-bold text-space-bright backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-space-bright" />
               Live
             </span>

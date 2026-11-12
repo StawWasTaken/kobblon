@@ -145,7 +145,7 @@ export function WearingPanel({ look, loading }: {
                   */}
                 {piece.sellsUntil && (
                   <span className={cn(
-                    'absolute bottom-1 left-1 rounded-lg px-1 py-0.5 text-[8px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
+                    'absolute bottom-1 left-1 rounded-lg px-1 py-0.5 text-nib font-extrabold uppercase tracking-wide backdrop-blur-sm',
                     new Date(piece.sellsUntil).getTime() <= Date.now()
                       ? 'bg-ink/85 text-white/60'
                       : 'bg-warn/90 text-ink',
@@ -154,14 +154,14 @@ export function WearingPanel({ look, loading }: {
                   </span>
                 )}
               </span>
-              <span className="mt-1.5 block truncate text-[11px] font-bold">{piece.name}</span>
+              <span className="mt-1.5 block truncate text-mini font-bold">{piece.name}</span>
               <span className="flex items-center justify-between gap-1">
-                <span className="truncate text-[10px] uppercase tracking-wide text-muted">
+                <span className="truncate text-tiny uppercase tracking-wide text-muted">
                   {avatarKindLabels[piece.kind ?? ''] ?? piece.kind}
                 </span>
                 {/* What it goes for. Free is said in words; a price is said
                     with the mark, never with the word "Brix". */}
-                <span className="shrink-0 text-[10px] font-bold text-white/70">
+                <span className="shrink-0 text-tiny font-bold text-white/70">
                   {piece.price
                     ? <><CurrencyMark className="mr-0.5" />{formatCount(piece.price)}</>
                     : 'Free'}

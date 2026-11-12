@@ -69,7 +69,7 @@ export function PersonName({ person, className, size = 'base' }: {
           broken, so the reason is on the row. */}
       {person.best && (
         <Tooltip label="Best friends" side="top">
-          <Glyph icon={faHeart} className="shrink-0 text-[11px] text-brand-bright" />
+          <Glyph icon={faHeart} className="shrink-0 text-mini text-brand-bright" />
         </Tooltip>
       )}
       <span
@@ -80,7 +80,7 @@ export function PersonName({ person, className, size = 'base' }: {
       >
         {nameOf(person)}
       </span>
-      <NameMarks person={person} className="text-[11px]" />
+      <NameMarks person={person} className="text-mini" />
     </Link>
   )
 }
@@ -129,7 +129,7 @@ export function PersonLine({ person, note, className }: {
       </span>
       {person.i_ignore && (
         <Tooltip label="You are ignoring this person" side="top">
-          <span className="shrink-0 rounded-lg bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+          <span className="shrink-0 rounded-lg bg-white/10 px-1.5 py-0.5 text-tiny font-bold uppercase tracking-wide text-muted">
             Ignored
           </span>
         </Tooltip>
@@ -264,16 +264,16 @@ export function PersonFace({ person, big }: {
           * face. The heart stays with the name - it is about this list
           * rather than about them.
           */}
-        <p className="mt-2 flex items-center justify-center gap-1 text-[13px] font-bold leading-tight">
+        <p className="mt-2 flex items-center justify-center gap-1 text-note font-bold leading-tight">
           {person.best && (
             <Glyph
               icon={faHeart}
-              className="shrink-0 text-[9px] text-brand-bright"
+              className="shrink-0 text-mark text-brand-bright"
               title="Best friends"
             />
           )}
           <span className="truncate">{person.display_name}</span>
-          <NameMarks person={person} className="text-[9px]" />
+          <NameMarks person={person} className="text-mark" />
         </p>
         {/*
           * The World under the name, when they are in one.
@@ -287,12 +287,12 @@ export function PersonFace({ person, big }: {
           * the half worth reading on a friends list.
           */}
         {where ? (
-          <p className="flex items-center justify-center gap-1 truncate text-[11px] font-bold text-space-bright">
-            <Glyph icon={faPlay} className="shrink-0 text-[8px]" />
+          <p className="flex items-center justify-center gap-1 truncate text-mini font-bold text-space-bright">
+            <Glyph icon={faPlay} className="shrink-0 text-nib" />
             <span className="truncate">{where.world_name}</span>
           </p>
         ) : (
-          <p className="truncate text-[11px] text-muted">@{person.username}</p>
+          <p className="truncate text-mini text-muted">@{person.username}</p>
         )}
       </Link>
     </FriendPeek>
