@@ -10,7 +10,7 @@ import { myZone, placeOfZone } from '@/lib/places'
 import { clearAccountSession, rememberAccount, updateAccountSession } from '@/lib/accounts'
 import { portraitIsCurrent } from '@/lib/headshots'
 import {
-  signUpWithEmail, signUpWithoutEmailAddress, takePendingAvatar,
+  signUpWithEmail, signUpWithoutEmailAddress, takePendingAvatar, signInAsGuest,
 } from '@/lib/signup'
 import type { SignupDetails } from '@/lib/signup'
 import type { Profile } from '@/types/db'
@@ -360,13 +360,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return true
       },
-      async signInAsGuest() {
-        // A guest is a real but throwaway account, so presence, entering a
-        // Space and the chat dock all behave normally. Supabase needs
-        // anonymous sign-ins turned on for this.
-        const { error } = await supabase.auth.signInAnonymously()
-        if (error) throw error
-      },
+      signInAsGuest,
       async signOut(options) {
         await supabase.rpc('touch_presence', { online: false })
         /*

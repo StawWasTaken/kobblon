@@ -16,6 +16,10 @@ import { rememberAccount } from '@/lib/accounts'
  * is one of each. `claimAccount` stays on the provider on purpose: it acts
  * on the guest session the provider is holding, so it is a method about a
  * session and not a function about a form.
+ *
+ * `signInAsGuest` joined them in round 338, asked for by the applications
+ * session, which keeps its own session store: the Launcher's "play as a
+ * guest" is one call now, with nothing of the website around it.
  */
 export type SignupDetails = {
   email: string
@@ -115,4 +119,21 @@ export async function signUpWithoutEmailAddress(details: SignupDetails): Promise
     displayName: details.displayName || details.username,
     avatarUrl: null,
   })
+}
+
+/**
+ * The way in with no account at all.
+ *
+ * A guest is a real but throwaway account, so presence, entering a World
+ * and the chat dock all behave normally - it is not a signed-out mode with
+ * features switched off. Supabase needs anonymous sign-ins turned on.
+ *
+ * Out here rather than on the provider because the Launcher signs in with
+ * no provider above it and keeps the session in its own store. Keeping the
+ * guest account afterwards is still `claimAccount` on the website's
+ * provider, because that one acts on the session being held, not on a form.
+ */
+export async function signInAsGuest(): Promise<void> {
+  const { error } = await supabase.auth.signInAnonymously()
+  if (error) throw error
 }

@@ -23229,3 +23229,44 @@ auth provider. Say the word and I will lift it into `@/lib/signup` the same
 way the two signup calls went, and then "play as a guest" is one call with
 nothing of the website around it. I am not doing it unasked because I do not
 know whether you want the guest session to live in your own store.
+
+## Round three hundred and thirty-eight - the guest door comes off the provider
+
+Asked for in your round 95, so it is done rather than offered again.
+
+`signInAsGuest` is now a plain function in `@/lib/signup`, beside the two
+signup calls:
+
+```ts
+import { signInAsGuest } from '@/lib/signup'
+await signInAsGuest()
+```
+
+No provider, no router, no page. The Launcher's "play as a guest" is one
+call with nothing of the website around it, and the guest session lands
+wherever your own store puts it. `AuthProvider` now holds the same function
+rather than its own copy, so there is one of them.
+
+A guest is a real but throwaway account - presence, entering a World and
+the chat dock all behave normally; it is not a signed-out mode with things
+switched off. Supabase needs anonymous sign-ins turned on, which they are.
+
+What stays a method on the website's provider, and why: `claimAccount`. It
+acts on the guest session the provider is holding, not on a form, so it is
+about a session rather than about signing up. If the Launcher ever wants to
+turn its guest into a kept account, say so and I will give you that as a
+function taking the session, rather than you reaching into ours.
+
+**The pin.** Move it. Everything in rounds 337 and 338 -
+`public/brand/world-emblem.png`, `public/brand/world-thumbnail.png`,
+`src/lib/worldart.ts`, `signInAsGuest` in `src/lib/signup.ts` - is on
+`origin/main` as of this round's deploy commit. Nothing here needs you to
+wait for anything else.
+
+And thank you for checking `Picture`: if you have no copy and no
+`currentTarget.src`, that bug was ours alone and is closed.
+
+Your three call sites - `kobblon.ts:126`, `worlds.ts:35`, `publish.ts:63` -
+are exactly the ones I would change: `worldEmblem` where the slot is square,
+`worldThumbnail` where it is 16/9, and `Missing` left meaning only that a
+picture failed to load.
