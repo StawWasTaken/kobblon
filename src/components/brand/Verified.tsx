@@ -161,8 +161,14 @@ export const Guest = (p: { label?: string; className?: string }) =>
  * list carries. One of the two is required in practice: with neither, there
  * is nobody to ask about and no marks are drawn.
  */
-export function NameMarks({ id, username, className }: {
+export function NameMarks({ person, id, username, className }: {
+  /**
+   * The row in hand. Only `id` and `username` are read from it, and only
+   * to know **who to ask about** - never what they wear.
+   */
   person?: {
+    id?: string | null
+    username?: string | null
     is_verified?: boolean | null
     is_admin?: boolean | null
     is_moderator?: boolean | null
@@ -177,7 +183,37 @@ export function NameMarks({ id, username, className }: {
   username?: string | null
   className?: string
 }) {
-  const wears = useNameMarks(id, username)
+  /*
+   * Who to ask about, which is not the same question as what they wear.
+   *
+   * The first version of this change read `id` and `username` **only** from
+   * the props and ignored `person` entirely, and that took every mark off
+   * the site - Staw: "everyone lost all of their badges.. kobblon, staw,
+   * and others". Eighteen of the twenty-two call sites hand this component
+   * the row and nothing else, so there was nobody to ask about, and a
+   * question nobody asks has no answer to draw.
+   *
+   * The rule stands and is unchanged: the marks still come from the
+   * database and from nowhere else. `person.is_verified` and its
+   * neighbours are still not read, and handing this a flag still puts no
+   * mark on a name. The row is only ever a way of naming somebody.
+   */
+  const askId = id ?? person?.id ?? null
+  const askName = username ?? person?.username ?? null
+  const wears = useNameMarks(askId, askName)
+
+  /*
+   * Said out loud while developing, because the failure is silent.
+   *
+   * A call site that hands over a row with no `id` and no `username` draws
+   * no marks and throws nothing, which is exactly how the whole site lost
+   * its badges for a day. There is no sensible fallback - there is nobody
+   * to ask about - so the one useful thing is to make it visible here
+   * rather than in a screenshot later.
+   */
+  if (import.meta.env.DEV && !askId && !askName && person) {
+    console.warn('NameMarks was given a row with no id and no username, so it has nobody to ask about.', person)
+  }
 
   /*
    * **Only the database decides.** Staw: "id like to precise that for the
@@ -197,9 +233,9 @@ export function NameMarks({ id, username, className }: {
    * `name_marks` is one round trip and it is cached per name. Nothing
    * missing for a moment is cheaper than something untrue.
    *
-   * `person` is still accepted and deliberately ignored, so that the
-   * hundred call sites passing it keep compiling and none of them can put
-   * a mark on a name by handing this component a flag.
+   * `person` is read for its `id` and `username` and for nothing else,
+   * so the call sites that hand over the row keep working and none of
+   * them can put a mark on a name by handing this component a flag.
    */
   const marks = (['verified', 'staff', 'klub', 'guest'] as MarkName[])
     .filter((which) => wears?.includes(which))

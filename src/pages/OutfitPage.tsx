@@ -241,13 +241,7 @@ export default function OutfitPage() {
               <span className="truncate font-semibold text-white/90">
                 {one.owner_display_name}
               </span>
-              <NameMarks
-                person={{
-                  is_verified: one.owner_is_verified,
-                  is_admin: one.owner_is_staff,
-                }}
-                className="text-[11px]"
-              />
+              <NameMarks username={one.owner_username} className="text-[11px]" />
             </Link>
 
             <div className="flex items-center gap-2">

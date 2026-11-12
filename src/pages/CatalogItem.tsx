@@ -362,13 +362,7 @@ export default function CatalogItem() {
                 {madeBy.name}
               </span>
               {!madeBy.community && (
-                <NameMarks
-                  person={{
-                    is_verified: item.creator_is_verified,
-                    is_admin: item.creator_is_staff,
-                  }}
-                  className="text-[11px]"
-                />
+                <NameMarks id={item.creator_id} className="text-[11px]" />
               )}
             </Link>
 
