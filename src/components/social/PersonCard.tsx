@@ -249,21 +249,31 @@ export function PersonFace({ person, big }: {
           * and `truncate` on the name meant the marks took their width
           * first and the name got whatever was left - Kobblon's own card
           * read "Kob..." beside three badges. Staw: "i dont like how we
-          * dont see the full displayname here". The marks are the thing
-          * that should give way, so the row wraps and the name is allowed
-          * two lines; `min-h` holds the cell at the height of two so a row
-          * of six faces still sits level whatever their names are.
+          * dont see the full displayname here".
+          *
+          * The first fix wrapped the row with flex, and that was worse:
+          * a flex item cannot break inside a line, so the marks became
+          * their own third line under a two-line name and the handles in a
+          * row of friends sat at three different heights. The marks are
+          * **part of the name**, so they are inline text inside the same
+          * span - they wrap after the last word the way a word does -
+          * and `line-clamp-2` clamps the whole thing together. The cell is
+          * a fixed `h-9`, so every face in the row sits level whatever its
+          * name is.
           */}
-        <p className="mt-2 flex min-h-[2.25rem] flex-wrap items-center justify-center gap-x-1 text-sm font-bold leading-tight">
-          {person.best && (
-            <Glyph
-              icon={faHeart}
-              className="shrink-0 text-[10px] text-brand-bright"
-              title="Best friends"
-            />
-          )}
-          <span className="line-clamp-2 break-words">{person.display_name}</span>
-          <NameMarks person={person} className="text-[10px]" />
+        <p className="mt-2 flex h-9 items-center justify-center overflow-hidden text-center text-sm font-bold leading-tight">
+          <span className="line-clamp-2 break-words">
+            {person.best && (
+              <Glyph
+                icon={faHeart}
+                className="mr-1 inline-block align-[-0.1em] text-[10px] text-brand-bright"
+                title="Best friends"
+              />
+            )}
+            {person.display_name}
+            {' '}
+            <NameMarks person={person} className="text-[10px]" />
+          </span>
         </p>
         {/*
           * The World under the name, when they are in one.

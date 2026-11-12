@@ -22156,3 +22156,25 @@ Extensions, and the one `ai_poke` statement at the bottom of migration 0224
 needs pasting in the SQL editor. Until both happen new work waits for the
 clock instead of being screened the moment it lands; the console's Machine
 panel says which of the two is missing.
+
+## Round three hundred and fourteen - the marks wrap with the name, not under it
+
+Round 311 stopped a face card cutting somebody's display name short, and
+made it worse in a way the screenshot showed straight away: a row of eight
+friends where the handles sat at three different heights and two of them had
+their badges alone on a line under the name.
+
+The cause is a flex box. Round 311 made the name row `flex flex-wrap` with
+the name and `NameMarks` as two items, and **a flex item cannot break inside
+a line** - so when the name took two lines the marks could only go onto a
+third, and `min-h` on a cell that is already too tall does nothing.
+
+A mark is part of the display name; that has been this platform's rule since
+the marks were built. So they are now inline text inside the same span as
+the name, wrapping after the last word the way a word does, with
+`line-clamp-2` clamping the whole thing together. The cell is a fixed `h-9`,
+so every face in a row sits level whatever its name is.
+
+Worth carrying if the Workspace draws a name with marks anywhere: **do not
+put `NameMarks` beside a name as a flex sibling.** Inline, in the same text
+run, or it detaches from the name it belongs to the moment the name wraps.
