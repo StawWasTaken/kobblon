@@ -92,10 +92,21 @@ const variants: Record<Variant, string> = {
    * Same stroke and the same side face as everything else now, and it
    * presses the same way: the lip disappears and the button moves down into
    * it. The fill is what says it is the quieter one, not the weight.
+   *
+   * The lip is the stroke, thicker - not `ink-edge`. A near-black bottom
+   * edge under a pale grey outline is the one place on the site where the
+   * two strokes round a single shape were different colours, and Staw: "i
+   * dont like the black shadow it feels weird with the stroke around it".
+   * He is describing the mismatch rather than the depth: a card does this
+   * with one colour at two widths and reads as a block, and a button that
+   * draws its own shadow in a different colour reads as a button with
+   * something underneath it. Every solid variant already follows this rule
+   * - the lip is that button's own colour turned down - and this is the
+   * last one that was not.
    */
   subtle:
     'bg-ink-hover text-white hover:bg-ink-line border-2 border-ink-line '
-    + 'border-b-[3px] border-b-ink-edge active:border-b-2 active:mt-[1px]',
+    + 'border-b-[3px] active:border-b-2 active:mt-[1px]',
   /*
    * Built exactly like primary and yes, in red. Staw: a red button should be
    * just like a blue or a green one, only red.

@@ -143,7 +143,7 @@ export default function StyleGuide() {
             <Swatch name="ink-card" cls="bg-ink-card" on="text-white" job="A card." />
             <Swatch name="ink-hover" cls="bg-ink-hover" on="text-white" job="The one under the pointer." />
             <Swatch name="ink-line" cls="bg-ink-line" on="text-ink" job="The house stroke. 3.8 against a card, so it is seen and not guessed at." />
-            <Swatch name="ink-edge" cls="bg-ink-edge" on="text-white" job="The pressed lip under a quiet button." />
+            <Swatch name="ink-edge" cls="bg-ink-edge" on="text-white" job="Darker than the page. Nothing on the website rests on it now; the applications still can." />
           </div>
         </Section>
 

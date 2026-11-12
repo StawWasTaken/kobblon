@@ -219,9 +219,14 @@ export default {
          * a page this close to black there is nothing darker to put under a
          * card.** Beside a plain 2px stroke it was indistinguishable; the
          * screenshot of the two is why this is a border and not a shadow.
-         * `--ink-edge` survives as the colour of a pressed lip under a
-         * subtle button, where there is a lit surface above it to read
-         * against.
+         * `--ink-edge` survives as a token the applications can reach for,
+         * but nothing on the website draws with it any more. It was the
+         * lip under the `subtle` button, and that was the one shape on the
+         * site whose two strokes were different colours - a pale grey
+         * outline with a near-black bottom edge. Staw: "i dont like the
+         * black shadow it feels weird with the stroke around it". A lip is
+         * the stroke turned thicker, or the fill turned down; it is never
+         * black.
          *
          * So a blur is now reserved for the one thing that genuinely floats
          * over the page - a menu, a dialog, the toast - which is not a block

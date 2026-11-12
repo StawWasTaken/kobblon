@@ -22073,3 +22073,24 @@ The colour is unchanged - `space` is still `#148556`, `bright` still
 Green has no headroom above the resting fill, which is already at the AA
 ceiling at 4.65, so a hover that lightens necessarily lands under it. A
 resting fill is where a label has to be readable, and that one is.
+
+## Round three hundred and ten - the subtle button's lip is its own stroke
+
+Staw, on `subtle`: "i dont like the black shadow it feels weird with the
+stroke around it."
+
+He is describing a mismatch rather than the depth. `subtle` was drawn with
+a pale grey outline (`ink-line`) and a near-black bottom edge
+(`ink-edge`) - the one shape on the site whose two strokes round a single
+rectangle were different colours. A card does this with one colour at two
+widths and reads as a block; a button whose bottom edge is a different
+colour reads as a button with something underneath it.
+
+The lip is now the stroke, thicker: `border-2 border-ink-line
+border-b-[3px]`, and the press still takes it away. Every solid variant
+already followed the rule this one was breaking - the lip is that button's
+own colour turned down, and never black.
+
+**`ink-edge` is still a token** and the applications can still reach for
+it, but nothing on the website draws with it any more. If either app put a
+black lip under a pale-stroked control, this is the same fix.
