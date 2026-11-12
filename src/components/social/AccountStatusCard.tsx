@@ -53,9 +53,9 @@ import type { AccountLock } from '@/types/db'
  * not a louder warning, which is what it used to come out as.
  */
 const tones = {
-  warned: { word: 'Warning', icon: faTriangleExclamation, text: 'text-yellow-300' },
-  limited: { word: 'Restriction', icon: faCircleMinus, text: 'text-orange-300' },
-  suspended: { word: 'Suspension', icon: faLock, text: 'text-fuchsia-300' },
+  warned: { word: 'Warning', icon: faTriangleExclamation, text: 'text-warn-bright' },
+  limited: { word: 'Restriction', icon: faCircleMinus, text: 'text-warn' },
+  suspended: { word: 'Suspension', icon: faLock, text: 'text-craft-bright' },
   banned: { word: 'Banned', icon: faBan, text: 'text-danger' },
 }
 

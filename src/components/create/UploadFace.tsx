@@ -26,7 +26,7 @@ export const statusLook: Record<ModerationStatus, {
   pip: string
 }> = {
   approved: { icon: faCircleCheck, label: 'Live', tone: 'text-space-bright', pip: 'bg-space' },
-  pending: { icon: faClock, label: 'In review', tone: 'text-amber-300', pip: 'bg-amber-300' },
+  pending: { icon: faClock, label: 'In review', tone: 'text-warn-bright', pip: 'bg-warn-bright' },
   rejected: { icon: faCircleXmark, label: 'Turned down', tone: 'text-danger', pip: 'bg-danger' },
 }
 
@@ -102,7 +102,7 @@ export function Preview({ item }: { item: OwnAsset }) {
 
   // Sound and models: the mark for what it is, on the house colours.
   return (
-    <span className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-deep to-brand/40">
+    <span className="grid h-full w-full place-items-center bg-brand-deep">
       <Glyph icon={kindIcons[item.kind]} className="text-2xl text-white/70" />
     </span>
   )

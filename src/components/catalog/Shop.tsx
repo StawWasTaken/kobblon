@@ -202,9 +202,9 @@ function ShopCard({ item }: { item: AvatarItem }) {
 
           {item.sells_until && (
             <span className={cn(
-              'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5',
+              'absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-lg px-2 py-0.5',
               'text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm',
-              closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
+              closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
             )}>
               <Glyph icon={faClock} />
               {closed ? 'Closed' : 'Limited'}

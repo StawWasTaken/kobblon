@@ -125,7 +125,7 @@ export function BehaviourPanel({ personId, username, rank }: {
                 icon={historyIcon[one.action] ?? faGavel}
                 className={cn(
                   'shrink-0 text-xs',
-                  one.is_void ? 'text-space-bright' : one.counts ? 'text-amber-300' : 'text-white/35',
+                  one.is_void ? 'text-space-bright' : one.counts ? 'text-warn-bright' : 'text-white/35',
                 )}
               />
               <span className={cn('font-bold', one.is_void && 'text-white/60 line-through')}>
@@ -146,7 +146,7 @@ export function BehaviourPanel({ personId, username, rank }: {
                 {one.rule_ord ? `Rule ${one.rule_ord} · ` : ''}{one.reason}
               </span>
               {one.evidence && (
-                <span className="w-full truncate rounded-lg border-2 border-amber-400/25 bg-amber-400/[0.07] px-2 py-1 text-xs italic text-white/70">
+                <span className="w-full truncate rounded-lg border-2 border-warn/25 bg-warn/[0.07] px-2 py-1 text-xs italic text-white/70">
                   “{one.evidence}”
                 </span>
               )}
@@ -163,8 +163,8 @@ export function BehaviourPanel({ personId, username, rank }: {
         description="Everything on record stops counting against them and their bar goes back to a hundred. The decisions stay readable on their status page - this is mercy, not a rewrite of what happened."
       >
         <div className="space-y-3">
-          <p className="flex items-start gap-3 rounded-xl border-2 border-b-4 border-amber-400/40 bg-amber-400/10 p-3 text-sm leading-relaxed text-white/80">
-            <Glyph icon={faTriangleExclamation} className="mt-0.5 text-amber-300" />
+          <p className="flex items-start gap-3 rounded-xl border-2 border-b-4 border-warn/40 bg-warn/10 p-3 text-sm leading-relaxed text-white/80">
+            <Glyph icon={faTriangleExclamation} className="mt-0.5 text-warn-bright" />
             It also forgives their place on the chat suspension ladder, so their next one starts
             at five minutes again. They are told, by letter, and it goes in the staff record.
           </p>

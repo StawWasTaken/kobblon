@@ -14,10 +14,10 @@ import type { AssetKind, MarketAsset } from '@/types/db'
 const look: Record<AssetKind, { icon: IconDefinition; word: string; wash: string }> = {
   image: { icon: faImage, word: 'Decal', wash: 'from-brand/40' },
   audio: { icon: faMusic, word: 'Sound', wash: 'from-space/35' },
-  video: { icon: faVideo, word: 'Video', wash: 'from-fuchsia-500/30' },
-  font: { icon: faFont, word: 'Font', wash: 'from-amber-400/30' },
-  mesh: { icon: faCube, word: 'Mesh', wash: 'from-cyan-400/30' },
-  build: { icon: faShapes, word: 'Build', wash: 'from-emerald-400/30' },
+  video: { icon: faVideo, word: 'Video', wash: 'from-link/30' },
+  font: { icon: faFont, word: 'Font', wash: 'from-warn/30' },
+  mesh: { icon: faCube, word: 'Mesh', wash: 'from-craft/35' },
+  build: { icon: faShapes, word: 'Build', wash: 'from-brand-bright/30' },
 }
 
 const SAMPLE = 'Aa Bb Cc'

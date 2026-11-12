@@ -218,7 +218,7 @@ export default function InnerStock() {
                   */}
                 {now && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 py-1 font-bold tabular-nums text-white">
-                    <Icon name="brix" className="h-4 w-4 text-amber-300" />
+                    <Icon name="brix" className="h-4 w-4 text-gem-bright" />
                     {now.cents.toLocaleString('fr-FR')}
                     <span className="font-semibold text-muted">Brix</span>
                   </span>

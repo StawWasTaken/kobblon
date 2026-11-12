@@ -141,7 +141,7 @@ const rankLook: Record<StaffRank, string> = {
   none: 'border-ink-line bg-ink-raised text-muted',
   moderator: 'border-space/40 bg-space/10 text-space-bright',
   admin: 'border-brand-bright/50 bg-brand/20 text-white',
-  superadmin: 'border-amber-400/50 bg-amber-400/10 text-amber-300',
+  superadmin: 'border-gem/50 bg-gem/10 text-gem-bright',
 }
 
 /**
@@ -695,7 +695,7 @@ export function Heartbeat({ pulse, compact = false }: { pulse: MachinePulse | nu
   const word = !pulse?.is_on ? 'stopped'
     : live ? 'awake' : 'on, but nothing is running it'
   const tone = !pulse?.is_on ? 'text-white/50'
-    : live ? 'text-space-bright' : 'text-amber-300'
+    : live ? 'text-space-bright' : 'text-warn-bright'
 
   return (
     <span className={cn('inline-flex items-center gap-2', compact ? 'text-xs' : 'text-sm')}>
@@ -2628,7 +2628,7 @@ export function WordsSection() {
             ))}
 
             {!!draft.settings && (
-              <p className="rounded-lg border-2 border-amber-400/30 bg-amber-400/5 px-3 py-2 text-xs text-amber-300">
+              <p className="rounded-lg border-2 border-warn/30 bg-warn/5 px-3 py-2 text-xs text-warn-bright">
                 It also wants to change the machine:{' '}
                 {Object.entries(draft.settings)
                   .map(([key, value]) => `${key} → ${String(value)}`)
@@ -3161,7 +3161,7 @@ export function RecordSection() {
 /** One key cap, for a line that tells somebody the shortcuts exist. */
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded-md border-2 border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
+    <kbd className="rounded-lg border-2 border-ink-line bg-ink-raised px-1.5 py-0.5 text-[10px] font-bold text-white/70">
       {children}
     </kbd>
   )
@@ -6132,11 +6132,11 @@ export function MachineSection() {
             {faults.map((fault) => (
               <div
                 key={fault.what}
-                className="flex animate-row-in items-start gap-3 rounded-xl border-2 border-b-4 border-amber-400/30 bg-amber-400/5 p-3"
+                className="flex animate-row-in items-start gap-3 rounded-xl border-2 border-b-4 border-warn/30 bg-warn/5 p-3"
               >
-                <FontAwesomeIcon icon={faHeartPulse} className="mt-0.5 shrink-0 text-amber-300" />
+                <FontAwesomeIcon icon={faHeartPulse} className="mt-0.5 shrink-0 text-warn-bright" />
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold text-amber-300">{fault.what}</span>
+                  <span className="block text-sm font-bold text-warn-bright">{fault.what}</span>
                   <span className="mt-0.5 block text-xs leading-relaxed text-muted">{fault.fix}</span>
                 </span>
               </div>
@@ -6637,7 +6637,7 @@ export default function Admin() {
           </div>
 
           {!!asked.error && (
-            <p className="w-full text-xs font-semibold text-amber-300">
+            <p className="w-full text-xs font-semibold text-warn-bright">
               The database would not say what rank you hold, so this is read off your profile
               instead. Anything only a superadmin may do will refuse until that is fixed.
             </p>

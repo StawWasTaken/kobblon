@@ -115,7 +115,7 @@ export function CommandBar({ panels, onGo, onFindPerson }: {
             aria-label="Jump to a panel, or find somebody"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
           />
-          <kbd className="rounded-md border-2 border-ink-line px-1.5 py-0.5 text-[10px] font-bold text-muted">
+          <kbd className="rounded-lg border-2 border-ink-line px-1.5 py-0.5 text-[10px] font-bold text-muted">
             Esc
           </kbd>
         </div>

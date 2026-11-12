@@ -437,7 +437,7 @@ function Written({
                   <span className="min-w-0 flex-1 truncate text-sm font-bold text-white/85 transition-colors group-hover:text-brand-bright">
                     {row.title}
                   </span>
-                  <span className="shrink-0 rounded-md bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
+                  <span className="shrink-0 rounded-lg bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
                     {row.kind === 'topic' ? 'Topic' : 'Reply'}
                   </span>
                 </span>

@@ -93,7 +93,7 @@ export function TopicRow({
             {showCategory && (
               <>
                 <span aria-hidden="true">·</span>
-                <span className="rounded-md bg-white/[0.07] px-1.5 py-0.5 font-bold text-white/55">
+                <span className="rounded-lg bg-white/[0.07] px-1.5 py-0.5 font-bold text-white/55">
                   {topic.category_name}
                 </span>
               </>

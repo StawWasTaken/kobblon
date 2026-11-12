@@ -538,7 +538,7 @@ export function CreateMarketplace() {
                   <Glyph icon={faXmark} />
                 </button>
               ) : (
-                <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-md border-2 border-ink-line px-2 py-0.5 text-[11px] font-bold text-white/35 sm:block">
+                <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-lg border-2 border-ink-line px-2 py-0.5 text-[11px] font-bold text-white/35 sm:block">
                   /
                 </kbd>
               )}

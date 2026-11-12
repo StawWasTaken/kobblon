@@ -133,7 +133,7 @@ function History({ ticket }: { ticket: ReportTicket }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {bits.map((bit) => (
           <div key={bit.label} className="rounded-lg border-2 border-ink-line bg-ink-hover p-2">
-            <p className={cn('text-lg font-black', bit.loud ? 'text-amber-300' : 'text-white')}>
+            <p className={cn('text-lg font-black', bit.loud ? 'text-warn-bright' : 'text-white')}>
               {bit.value}
             </p>
             <p className="text-[0.7rem] uppercase tracking-wide text-muted">{bit.label}</p>

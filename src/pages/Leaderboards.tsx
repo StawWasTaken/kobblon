@@ -121,10 +121,14 @@ const boards: {
 ]
 
 /** Gold, silver, bronze, and then the rest of the page. */
+/* Gold is the gem, because first place is the most earned thing on the
+   site and the palette already has the colour that means earned. Silver is
+   the foreground at three quarters and bronze is the gem turned down - one
+   family, three steps, rather than three hex values nothing else uses. */
 const metals = [
-  { ring: 'border-[#f0c040]/60 bg-[#f0c040]/10', text: 'text-[#f0c040]' },
+  { ring: 'border-gem/60 bg-gem/10', text: 'text-gem' },
   { ring: 'border-white/35 bg-white/10', text: 'text-white/80' },
-  { ring: 'border-[#d08a4a]/55 bg-[#d08a4a]/10', text: 'text-[#d08a4a]' },
+  { ring: 'border-gem-deep/60 bg-gem-deep/10', text: 'text-gem-deep' },
 ]
 
 /** The number, with the mark on it only where it is money. */

@@ -29,6 +29,7 @@ import { currency } from '@/lib/currency'
 import { formatCount } from '@/lib/format'
 import { worldLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
+import { Meter } from '@/components/ui/Meter'
 import { NameMarks } from '@/components/brand/Verified'
 import type { Quest, QuestCounted } from '@/types/db'
 
@@ -123,24 +124,7 @@ function howFar(quest: Quest) {
 }
 
 function Bar({ done, goal }: { done: number; goal: number }) {
-  const part = Math.max(0, Math.min(1, goal > 0 ? done / goal : 0))
-  return (
-    <div
-      className="h-2 overflow-hidden rounded-full bg-ink-hover"
-      role="progressbar"
-      aria-valuenow={Math.round(part * 100)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-    >
-      <span
-        className={cn(
-          'block h-full rounded-full transition-[width] duration-500',
-          part >= 1 ? 'bg-space' : 'bg-brand-bright',
-        )}
-        style={{ width: `${part * 100}%` }}
-      />
-    </div>
-  )
+  return <Meter done={done} goal={goal} tone="gem" label="Progress" />
 }
 
 /** One quest. The button is whatever this person's next move actually is. */

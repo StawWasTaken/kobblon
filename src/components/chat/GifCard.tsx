@@ -82,7 +82,7 @@ export function GifCard({ onPick, onClose }: {
             type="button"
             onMouseDown={(e) => { e.preventDefault(); setTerm(''); setMood(word) }}
             className={cn(
-              'shrink-0 rounded-md px-2 py-1 text-[11px] font-extrabold transition-colors',
+              'shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold transition-colors',
               !term && mood === word ? 'bg-brand/25 text-brand-bright' : 'text-muted hover:bg-white/5',
             )}
           >

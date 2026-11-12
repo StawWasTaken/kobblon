@@ -195,7 +195,7 @@ function Line({ n, onClose }: { n: Notification; onClose: () => void }) {
         <span className="mt-1 flex items-center gap-2 text-xs text-muted">
           {timeAgo(n.created_at)}
           {!n.is_read && (
-            <span className="rounded-md bg-brand/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-bright">
+            <span className="rounded-lg bg-brand/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-bright">
               New
             </span>
           )}

@@ -233,7 +233,7 @@ export function EventBand({ event, className, flat }: {
                face, which is what every heading on the site is set in and
                what the band's own name above it is already wearing. */
             'bg-brand font-display text-lg font-extrabold tracking-wide text-on-art',
-            'border-b-[3px] border-brand-deep shadow-lg shadow-black/30',
+            'border-b-[3px] border-brand-deep',
             'transition-[background-color,transform,box-shadow] duration-150',
             'group-hover:bg-brand-bright',
             'group-active:mt-[1.6875rem] group-active:translate-y-px group-active:border-b-0',
@@ -266,7 +266,7 @@ export function EventBand({ event, className, flat }: {
               className="inline-flex items-center gap-1.5 text-[11px] font-bold text-on-art/70"
             >
               <span className="text-on-art/40">{prize.place}</span>
-              <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
+              <Icon name="brix" className="h-3.5 w-3.5 text-gem-bright" />
               {/*
                 * Written out, not shortened. `formatCount` turns 10,000
                 * into "10K" and leaves 5,000 and 2,500 alone, which puts
@@ -298,7 +298,7 @@ export function EventBand({ event, className, flat }: {
               className="inline-flex items-center gap-1.5 text-[11px] font-bold text-on-art/70"
             >
               <span className="text-on-art/40">{prize.place}</span>
-              <Icon name="brix" className="h-3.5 w-3.5 text-amber-300" />
+              <Icon name="brix" className="h-3.5 w-3.5 text-gem-bright" />
               <span className="tabular-nums text-on-art">
                 {prize.brix.toLocaleString('en-GB')}
               </span>

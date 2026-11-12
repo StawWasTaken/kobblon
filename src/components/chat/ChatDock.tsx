@@ -318,8 +318,7 @@ function Window({
           : cn(
               DOCK_SHAPE,
               'rounded-t-2xl border-2 border-b-0 border-t-0 shadow-pop',
-              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
-              'before:from-brand before:via-brand-bright before:to-space',
+              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-brand-bright',
               'relative transition-[height] duration-150 motion-reduce:transition-none',
               /*
                * One size for every window in the corner, and it is the
@@ -390,7 +389,7 @@ function Window({
               * title, and a dock carries this much only because there can
               * be two of them open and they have to be told apart.
               */}
-            <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-md text-[12px] text-muted">
+            <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg text-[12px] text-muted">
               {solo ? <PersonAvatar person={solo} size="xs" /> : <Glyph icon={faUserGroup} />}
             </span>
             <span className="truncate text-[13px] font-extrabold tracking-wide text-white">{name}</span>
@@ -740,8 +739,7 @@ function List({
           : cn(
               'relative rounded-t-2xl border-2 border-b-0 border-t-0 shadow-pop',
               DOCK_SHAPE,
-              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r',
-              'before:from-brand before:via-brand-bright before:to-space',
+              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-brand-bright',
               open ? DOCK_TALL : 'h-12',
             ),
       )}
@@ -779,7 +777,7 @@ function List({
           <button
             onClick={onNewGroup}
             aria-label="New chat group"
-            className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+            className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
           >
             <Glyph icon={faPenToSquare} />
           </button>
@@ -788,7 +786,7 @@ function List({
         <button
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? 'Minimise chat' : 'Open chat'}
-          className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+          className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
         >
           <Glyph icon={open ? faChevronDown : faChevronUp} />
         </button>

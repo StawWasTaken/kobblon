@@ -170,7 +170,7 @@ export default function CreateUploads() {
       {!!all.length && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <Tally icon={faCircleCheck} tone="text-space-bright" label="Live" value={formatCount(sums.live)} />
-          <Tally icon={faClock} tone="text-amber-300" label="In review" value={formatCount(sums.waiting)} />
+          <Tally icon={faClock} tone="text-warn-bright" label="In review" value={formatCount(sums.waiting)} />
           <Tally icon={faCircleXmark} tone="text-danger" label="Turned down" value={formatCount(sums.refused)} />
           <Tally icon={faHardDrive} label="Room used" value={size(sums.bytes)} />
           <Tally icon={faFileArrowDown} label="Taken" value={formatCount(sums.taken)} />
@@ -199,7 +199,7 @@ export default function CreateUploads() {
                   aria-label={one.label}
                   aria-pressed={one.on}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-md text-xs transition-colors',
+                    'grid h-8 w-8 place-items-center rounded-lg text-xs transition-colors',
                     one.on ? 'bg-brand text-onbrand' : 'text-white/50 hover:text-white',
                   )}
                 >

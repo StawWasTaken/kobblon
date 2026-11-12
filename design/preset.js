@@ -114,6 +114,25 @@ export default {
           ink: '#4A2E00',
           soft: 'rgb(255 178 36 / 0.16)',
         },
+        /*
+         * The maker accent: violet, and it belongs to the workshop.
+         *
+         * Scripting, building, meshes and builds - the things somebody
+         * makes rather than earns or is warned about. It exists because
+         * the forum and the asset kinds both need a set of hues that can
+         * be told apart at a glance, and before this the two of them were
+         * reaching into Tailwind's own palette for fuchsia, cyan, violet
+         * and emerald: four colours Kobblon does not have, in two places,
+         * meaning nothing in either.
+         *
+         * One colour, one job, same as the rest.
+         */
+        craft: {
+          DEFAULT: '#7A4BD8',
+          bright: '#9B74F0',
+          deep: '#4E2C94',
+          soft: 'rgb(122 75 216 / 0.14)',
+        },
         /* Careful, and nothing else. Never a button on its own. */
         warn: {
           DEFAULT: '#C2740A',

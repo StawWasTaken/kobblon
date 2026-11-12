@@ -113,7 +113,7 @@ export function BuyDialog({
 
         {note && (
           <p className="flex items-start gap-2 text-xs leading-relaxed text-muted">
-            <Glyph icon={faTriangleExclamation} className="mt-0.5 text-amber-300" />
+            <Glyph icon={faTriangleExclamation} className="mt-0.5 text-warn-bright" />
             <span>{note}</span>
           </p>
         )}

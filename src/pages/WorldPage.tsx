@@ -435,7 +435,7 @@ export default function WorldPage() {
             in all sit on the art, because they belong to it. */}
         <WorldStage shots={shots} name={thing.name}>
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-on-art/25 bg-gradient-to-br from-brand to-brand-deep shadow-pop sm:h-20 sm:w-20">
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-on-art/25 bg-brand shadow-pop sm:h-20 sm:w-20">
               <Picture
                 src={thing.emblem_url ?? thing.cover_url}
                 alt={thing.name}
@@ -519,7 +519,7 @@ export default function WorldPage() {
                   className={cn(
                     'grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-on-art/20',
                     'bg-black/40 backdrop-blur-sm transition-colors disabled:opacity-40',
-                    favourited ? 'text-amber-300' : 'text-on-art/80 hover:bg-black/70 hover:text-on-art',
+                    favourited ? 'text-gem-bright' : 'text-on-art/80 hover:bg-black/70 hover:text-on-art',
                   )}
                 >
                   <Glyph icon={faStar} on={favourited} />

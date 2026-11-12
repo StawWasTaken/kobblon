@@ -224,7 +224,7 @@ export function FriendPeek({ friend, children, className }: {
               */}
             <span className="absolute -top-[6px] left-1/2 z-10 h-3 w-3 -translate-x-1/2 rotate-45 rounded-[2px] border-l border-t border-ink-line bg-ink-card" />
 
-            <div className="relative overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card shadow-xl shadow-black/50">
+            <div className="relative overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-ink-card shadow-pop">
               <div className="border-b border-ink-line px-3 py-2">
                 <p className="truncate text-[13px] font-bold leading-tight text-white">
                   {friend.display_name}

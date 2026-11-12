@@ -231,7 +231,7 @@ export function OpTag() {
   return (
     <span
       title="Opened this topic"
-      className="rounded-md border-2 border-white/15 bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/55"
+      className="rounded-lg border-2 border-white/15 bg-white/[0.07] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/55"
     >
       OP
     </span>

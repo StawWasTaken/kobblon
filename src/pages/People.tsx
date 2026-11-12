@@ -222,7 +222,7 @@ export default function People() {
         {you && (
           <Link
             to={profileLink(you)}
-            className="mb-5 flex items-center gap-4 rounded-2xl border-2 border-b-4 border-brand/40 bg-gradient-to-br from-brand/20 via-ink-card to-ink-card p-4 transition-colors hover:border-brand/70"
+            className="mb-5 flex items-center gap-4 rounded-2xl border-2 border-b-4 border-brand/40 bg-brand/12 p-4 transition-colors hover:border-brand/70"
           >
             <PersonAvatar person={you} size="lg" square ring="ring-ink-card" />
             <span className="min-w-0 flex-1">

@@ -124,7 +124,7 @@ export function EmojiCard({ onPick, onClose }: {
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setOnly(null)}
             className={cn(
-              'shrink-0 rounded-md px-2 py-1 text-[11px] font-extrabold transition-colors',
+              'shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold transition-colors',
               only === null ? 'bg-brand/25 text-brand-bright' : 'text-muted hover:bg-white/5',
             )}
           >
@@ -137,7 +137,7 @@ export function EmojiCard({ onPick, onClose }: {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setOnly(group.slug)}
               className={cn(
-                'shrink-0 rounded-md px-2 py-1 text-[11px] font-extrabold transition-colors',
+                'shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold transition-colors',
                 only === group.slug ? 'bg-brand/25 text-brand-bright' : 'text-muted hover:bg-white/5',
               )}
             >

@@ -163,7 +163,7 @@ export function TopicLine({ one, onPin, onLock, onRestore, onTakeDown }: {
       className={cn(
         'rounded-2xl border-2 px-4 py-3 transition-colors',
         one.is_removed
-          ? 'border-rose-500/40 bg-rose-500/[0.06]'
+          ? 'border-danger/40 bg-danger/[0.06]'
           : 'border-ink-line bg-ink-raised hover:border-white/25',
       )}
     >
@@ -287,7 +287,7 @@ function TakeDown({ one, onClose, onDone }: {
     >
       <div className="space-y-3">
         <p className="flex items-start gap-2 text-sm text-muted">
-          <span className="mt-0.5 text-amber-300"><Glyph icon={faTriangleExclamation} /></span>
+          <span className="mt-0.5 text-warn-bright"><Glyph icon={faTriangleExclamation} /></span>
           The author reads this word for word, and it is what an appeal
           argues against. Say the thing, not the rule number.
         </p>

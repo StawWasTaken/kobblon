@@ -281,7 +281,7 @@ function CommunityTile({ community, joined }: {
              card that looks like somebody made it. */
           <span
             aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-br from-brand/35 via-ink-raised to-ink-raised"
+            className="absolute inset-0 bg-brand/25"
           />
         )}
         <span className="absolute inset-0 bg-gradient-to-t from-ink-card via-ink-card/30 to-transparent" />

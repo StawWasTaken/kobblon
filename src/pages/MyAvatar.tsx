@@ -1185,9 +1185,9 @@ function WornTile({ item, nth, on, busy, onToggle }: {
         )}
         {limited && (
           <span className={cn(
-            'absolute bottom-3.5 left-3.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5',
+            'absolute bottom-3.5 left-3.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5',
             'text-[9px] font-extrabold uppercase tracking-wide backdrop-blur-sm',
-            closed ? 'bg-ink/85 text-white/60' : 'bg-amber-400/90 text-ink',
+            closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
           )}>
             <Glyph icon={faClock} />
             {closed ? 'Closed' : 'Limited'}

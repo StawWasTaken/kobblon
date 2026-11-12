@@ -282,7 +282,7 @@ function Account() {
         {/* The wait first, because it is the one that cannot be solved by
             going and earning something. */}
         {waiting && (
-          <p className="mt-3 flex items-start gap-2 rounded-xl border-2 border-b-4 border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-200">
+          <p className="mt-3 flex items-start gap-2 rounded-xl border-2 border-b-4 border-warn/40 bg-warn/10 p-3 text-sm text-warn-bright">
             <Glyph icon={faClock} className="mt-0.5 shrink-0" />
             <span>
               You changed your name less than a day ago.

@@ -110,7 +110,7 @@ export function HistoryRow({ one, onOpen }: { one: ModerationRow; onOpen: () => 
               <span
                 className={cn(
                   'block h-full rounded-full',
-                  press === 0 ? 'bg-space' : press >= 40 ? 'bg-danger' : 'bg-amber-400',
+                  press === 0 ? 'bg-space' : press >= 40 ? 'bg-danger' : 'bg-warn',
                 )}
                 style={{ width: `${Math.max(press, press === 0 ? 0 : 4)}%` }}
               />
@@ -255,10 +255,10 @@ export function RowCard({ one, onClose, onAppealed }: {
     : historyWord[one.action] ?? one.action
 
   const band = one.is_void
-    ? 'from-space/20'
+    ? 'bg-space/12'
     : live
-      ? 'from-danger/20'
-      : 'from-white/[0.06]'
+      ? 'bg-danger/12'
+      : 'bg-white/[0.05]'
 
   return (
     <Dialog
@@ -267,7 +267,7 @@ export function RowCard({ one, onClose, onAppealed }: {
       title={rowTitle(one)}
       size="lg"
       head={
-        <div className={cn('bg-gradient-to-br to-ink-card px-5 py-5', band)}>
+        <div className={cn('px-5 py-5', band)}>
           <div className="flex items-start gap-4 pr-10">
             <Crest one={one} />
             <div className="min-w-0 flex-1">

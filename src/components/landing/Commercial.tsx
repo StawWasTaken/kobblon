@@ -50,7 +50,7 @@ export function Commercial() {
             ambient
             src={asset('/brand/kobblon-its-free.mp4')}
             poster={asset('/brand/landing-interior.png')}
-            className="shadow-2xl"
+            className="shadow-pop"
           />
         </Reveal>
       </div>

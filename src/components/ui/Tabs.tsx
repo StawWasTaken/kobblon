@@ -94,7 +94,7 @@ export function Tabs<T extends string>({
             {typeof option.count === 'number' && (
               <span
                 className={cn(
-                  'rounded-md px-1.5 text-xs tabular-nums',
+                  'rounded-lg px-1.5 text-xs tabular-nums',
                   active ? 'bg-onbrand/20' : 'bg-ink-raised text-white/50',
                 )}
               >

@@ -76,7 +76,7 @@ export function Role({ person }: { person: ForumAuthor }) {
   const word = 'Staff'
 
   return (
-    <span className="rounded-md border-2 border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
+    <span className="rounded-lg border-2 border-brand-bright/40 bg-brand/15 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand-bright">
       {word}
     </span>
   )
@@ -97,7 +97,7 @@ export function TagChip({ person }: { person: ForumAuthor }) {
   if (!person.author_tag || person.author_tag === 'Staff') return null
 
   return (
-    <span className="rounded-md border-2 border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
+    <span className="rounded-lg border-2 border-white/12 bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white/45">
       {person.author_tag}
     </span>
   )

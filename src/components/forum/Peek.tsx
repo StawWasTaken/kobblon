@@ -191,7 +191,7 @@ export function PosterCard({ person, username }: { person: ForumPerson | null | 
                   <span
                     key={word}
                     className={cn(
-                      'rounded-md border-2 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider',
+                      'rounded-lg border-2 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider',
                       person.tags[at] === 'staff'
                         ? 'border-brand-bright/40 bg-brand/15 text-brand-bright'
                         : 'border-white/12 bg-white/[0.05] text-white/45',

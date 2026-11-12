@@ -150,7 +150,9 @@ export function StockChart({ marks, className }: { marks: Mark[]; className?: st
   const last = marks[marks.length - 1]?.cents ?? 0
   const up = last > first
   const down = last < first
-  const stroke = up ? '#2fb96b' : down ? '#e5484d' : '#3b5bfd'
+  /* The palette's own three, not a chart library's: green is yes, red is
+     the one red, and flat is brand blue. */
+  const stroke = up ? '#1CAE71' : down ? '#ff0033' : '#3A50FF'
 
   /*
    * Which mark the pointer is nearest, in the SVG's own coordinates. The

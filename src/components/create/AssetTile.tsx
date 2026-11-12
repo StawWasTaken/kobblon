@@ -111,7 +111,7 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
           {kindLabels[item.kind]}
         </span>
         {owned && (
-          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-md bg-space text-[11px] text-[#fff]">
+          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-lg bg-space text-[11px] text-[#fff]">
             <Glyph icon={faCheck} />
           </span>
         )}

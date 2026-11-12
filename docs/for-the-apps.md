@@ -21947,3 +21947,68 @@ is the same slate hue, lifted: 3.8 against a card, 4.1 against the page.
 
 The light theme stays warm paper, and `gem`, `warn` and the green move from
 round 304 are unchanged - none of those are the dark surfaces.
+
+## Round three hundred and six - one design system, applied everywhere
+
+Staw: "now do the whole design system to everything to the whole website."
+This is the sweep. Four things changed in `design/preset.js` and one in
+`src/index.css`, and everything else is the website being brought onto them.
+**Pull the preset and the tokens; three of these change meaning.**
+
+**1. `craft` is a new palette colour.** Violet: `#7A4BD8`, with `bright`
+`#9B74F0`, `deep` `#4E2C94` and `soft`. Its job is the workshop - scripting,
+building, meshes, the things somebody makes rather than earns. It exists
+because the forum categories and the asset kinds both needed a set of hues
+that can be told apart, and both were reaching into Tailwind's own palette
+for fuchsia, cyan, violet and emerald: four colours Kobblon does not have,
+meaning nothing in either place. `text-craft` is 3.15 against a card, so
+text uses `craft-bright` (5.07) and `craft` is for fills.
+
+**2. Amber is gone, and what it meant is now two colours.** There were 86
+raw `amber-300/400/500` classes across 28 files doing two different jobs at
+once. They are now:
+
+* `warn` - careful. In review, nearly full, a limit, a restriction, a
+  heads-up. This is the large majority of them.
+* `gem` - earned. Brix amounts, a favourited World, a rank, a quest meter.
+
+If anything in the applications draws a Brix figure or a "pending review"
+chip in amber, those are now two different colours, and picking the wrong
+one says the wrong thing.
+
+**3. One depth, and gradients have a rule now.** A gradient is allowed only
+as a scrim between a picture and the words on top of it. It is not allowed
+on a solid surface. Thirteen tinted surface gradients became flat tints of
+the colour that was already there (`from-brand/25 via-ink-raised` is just
+`bg-brand/15`), the chat dock's three-colour head rule is one colour, and
+the five stray `shadow-lg`/`shadow-xl`/`shadow-2xl` are either `shadow-pop`
+- still the only blurred shadow, still only for things that genuinely float
+- or nothing at all where the thing already had a lip.
+
+**4. The corner budget is closed.** No `rounded-md` and no arbitrary radius
+anywhere: `lg` for a small control, `xl` for a card, `2xl` for something
+that holds cards, `full` for a face or a chip. `rounded-sm` survives on the
+2px category pips and `rounded-tl-md` on the speech-bubble notch, which are
+both shapes rather than radii.
+
+**5. `Meter` is new, and it is the only progress bar.**
+`@/components/ui/Meter` - `done`, `goal`, `tone` (`brand` for something
+merely happening, `gem` for something earned, `space` for finished),
+`label`. The fill is cut into cells by a new `.kob-steps` utility in
+`src/index.css`, so progress arrives a block at a time. **That is the whole
+of the pixel flavour in this system** - nothing else on Kobblon carries a
+pixel grid, which is what keeps it a seasoning. If the Launcher draws a
+download bar, this is the one to use, and it needs `src/index.css` for the
+mask.
+
+**6. There is a style guide, at `/style`.** Every token and every shared
+component, rendered live rather than drawn, with the job each colour is
+allowed to do written under it. It needs no account and no database, so it
+is the page to look at when everything else is down. It is also the place to
+check a colour before inventing one.
+
+**Not done, deliberately.** The logo is untouched. Staw's `logomark.png` and
+`wordmark.png` are still what the bar, the footer and every seasonal
+appearance use; a design system is not a rebrand. The seasonal event colours
+in `src/lib/event.ts` keep their own orange and green, because a season is
+allowed its own colour.

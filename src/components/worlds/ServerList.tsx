@@ -117,7 +117,7 @@ function ServerCard({ server, onJoin, onShare, lit, mates = [] }: {
         <p
           className={cn(
             'inline-flex items-center gap-1.5 text-sm font-extrabold tabular-nums',
-            full || quiet ? 'text-muted' : nearly ? 'text-amber-300' : 'text-space-bright',
+            full || quiet ? 'text-muted' : nearly ? 'text-warn-bright' : 'text-space-bright',
           )}
         >
           <Icon name="playing" className="h-3.5 w-3.5" />
@@ -128,7 +128,7 @@ function ServerCard({ server, onJoin, onShare, lit, mates = [] }: {
           <div
             className={cn(
               'h-full rounded-full transition-[width] duration-300',
-              full ? 'bg-muted' : nearly ? 'bg-amber-300' : 'bg-space',
+              full ? 'bg-muted' : nearly ? 'bg-warn-bright' : 'bg-space',
             )}
             style={{ width: `${share}%` }}
           />

@@ -73,7 +73,7 @@ export function NewGroupDialog({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
+          className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
         >
           &times;
         </button>

@@ -70,7 +70,7 @@ export function Band({
       {tone === 'brand' && (
         <>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60rem_30rem_at_50%_0%,rgba(58,80,255,0.55),transparent_70%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-bright/60 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-brand-bright/40" />
         </>
       )}
       {decor}

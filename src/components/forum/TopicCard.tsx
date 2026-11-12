@@ -122,7 +122,7 @@ export function TopicCard({ topic, look = 'tile', className, showBoard = true, u
       <span className="flex items-center gap-2">
         {showBoard && (
           <span className={cn(
-            'rounded-md px-1.5 py-0.5 text-[11px] font-extrabold',
+            'rounded-lg px-1.5 py-0.5 text-[11px] font-extrabold',
             glass ? 'bg-brand/20 text-brand-bright' : 'bg-white/[0.07] text-white/60',
           )}>
             {topic.category_name}

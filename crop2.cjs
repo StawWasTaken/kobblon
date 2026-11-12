@@ -1,0 +1,13 @@
+const { chromium } = require('playwright')
+;(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] })
+  const c = await b.newContext({ viewport: { width: 900, height: 900 }, deviceScaleFactor: 2 })
+  const page = await c.newPage()
+  await page.route('**/*', r => r.request().url().includes('supabase') ? r.fulfill({ status: 200, body: '[]' }) : r.continue())
+  await page.goto('http://localhost:5398/style', { waitUntil: 'networkidle' })
+  await page.waitForTimeout(500)
+  const el = page.locator('text=A meter, filling a block at a time').locator('xpath=ancestor::div[contains(@class,"rounded-xl")][1]')
+  await el.scrollIntoViewIfNeeded(); await page.waitForTimeout(300)
+  await el.screenshot({ path: '/tmp/claude-0/crop-meter.png' })
+  await b.close()
+})()

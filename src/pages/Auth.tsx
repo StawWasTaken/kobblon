@@ -190,11 +190,6 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
           {/* ----------------------------------------------- the card */}
           <section className="mx-auto mt-6 w-full max-w-md">
             <div className="relative rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/85 p-5 shadow-pop backdrop-blur-xl sm:p-6">
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-b from-white/10 to-transparent opacity-60"
-              />
-
               <div className="relative">
                 {sentTo ? (
                   <div className="text-center">

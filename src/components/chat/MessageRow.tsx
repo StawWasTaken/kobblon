@@ -326,7 +326,7 @@ export function MessageRow({
             align="left"
             items={items}
             trigger={
-              <span className="grid h-6 w-6 place-items-center rounded-md text-white/35 transition-colors hover:bg-ink-hover hover:text-white">
+              <span className="grid h-6 w-6 place-items-center rounded-lg text-white/35 transition-colors hover:bg-ink-hover hover:text-white">
                 <Glyph icon={faEllipsis} className="text-[11px]" />
               </span>
             }

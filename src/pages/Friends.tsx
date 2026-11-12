@@ -403,7 +403,7 @@ export default function Friends() {
         * anybody appears.
         */}
       <header className="overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
-        <div className="flex flex-wrap items-center gap-4 bg-gradient-to-br from-brand/25 via-ink-raised to-ink-raised px-5 py-5 sm:px-6">
+        <div className="flex flex-wrap items-center gap-4 bg-brand/15 px-5 py-5 sm:px-6">
           {who && (
             <Link to={profileLink(who)} className="shrink-0">
               <Avatar

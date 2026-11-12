@@ -43,8 +43,8 @@ export const levelIcon: Record<StandingLevel, IconDefinition> = {
 
 export const levelTone: Record<StandingLevel, string> = {
   clear: 'text-space-bright',
-  warned: 'text-amber-300',
-  limited: 'text-amber-300',
+  warned: 'text-warn-bright',
+  limited: 'text-warn-bright',
   suspended: 'text-danger',
   terminated: 'text-danger',
 }
@@ -150,7 +150,7 @@ export function StandingBar({ level, className }: { level: StandingLevel; classN
             className={cn(
               'h-2 flex-1 rounded-full transition-colors',
               step < filled
-                ? heavy ? 'bg-danger' : 'bg-amber-400'
+                ? heavy ? 'bg-danger' : 'bg-warn'
                 : 'bg-ink-line',
             )}
           />
@@ -169,7 +169,7 @@ export function ActionTag({ one }: { one: Violation }) {
   const look = one.is_void
     ? 'border-space/40 bg-space/10 text-space-bright'
     : one.action === 'warning' || one.action === 'feature_block'
-      ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+      ? 'border-warn/40 bg-warn/10 text-warn-bright'
       : one.action === 'content_removed'
         ? 'border-white/15 bg-white/[0.06] text-white/70'
         : 'border-danger/40 bg-danger/10 text-danger'
@@ -220,16 +220,16 @@ export const bandLine: Record<BehaviourBand, string> = {
 export const bandFill: Record<BehaviourBand, string> = {
   exemplary: 'bg-space',
   good: 'bg-space',
-  mixed: 'bg-amber-400',
-  poor: 'bg-amber-500',
+  mixed: 'bg-warn',
+  poor: 'bg-warn-deep',
   critical: 'bg-danger',
 }
 
 export const bandTone: Record<BehaviourBand, string> = {
   exemplary: 'text-space-bright',
   good: 'text-space-bright',
-  mixed: 'text-amber-300',
-  poor: 'text-amber-300',
+  mixed: 'text-warn-bright',
+  poor: 'text-warn-bright',
   critical: 'text-danger',
 }
 
@@ -436,9 +436,9 @@ export const gravityWord: Record<number, string> = {
 
 export const gravityTone: Record<number, string> = {
   1: 'text-white/60',
-  2: 'text-amber-300',
-  3: 'text-amber-300',
-  4: 'text-red-300',
+  2: 'text-warn-bright',
+  3: 'text-warn-bright',
+  4: 'text-danger-bright',
 }
 
 export const channelWord: Record<string, string> = {
@@ -477,7 +477,7 @@ export function Evidence({ said, className }: { said: string; className?: string
         <Glyph icon={faQuoteLeft} />
         What we acted on
       </p>
-      <blockquote className="rounded-2xl rounded-tl-md border-2 border-b-4 border-amber-400/30 bg-amber-400/[0.07] px-4 py-3">
+      <blockquote className="rounded-2xl rounded-tl-md border-2 border-b-4 border-warn/30 bg-warn/[0.07] px-4 py-3">
         <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white/85">
           {said}
         </p>

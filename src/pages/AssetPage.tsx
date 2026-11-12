@@ -674,7 +674,7 @@ export default function AssetPage() {
         <p className={cn(
           'flex items-start gap-2 rounded-xl px-4 py-3 text-sm',
           asset.status === 'pending'
-            ? 'bg-amber-400/10 text-amber-200'
+            ? 'bg-warn/10 text-warn-bright'
             : 'bg-danger/10 text-danger',
         )}>
           <Glyph

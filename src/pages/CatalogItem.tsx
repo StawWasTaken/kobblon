@@ -269,7 +269,7 @@ export default function CatalogItem() {
                     'kob-press inline-flex h-8 items-center gap-1.5 rounded-lg border-2 border-b-4 px-2.5 text-xs font-bold',
                     'disabled:cursor-not-allowed disabled:opacity-40',
                     starred
-                      ? 'kob-chosen border-amber-400/50 bg-amber-400/15 text-amber-300'
+                      ? 'kob-chosen border-gem/50 bg-gem/15 text-gem-bright'
                       : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
                   )}
                 >
@@ -378,7 +378,7 @@ export default function CatalogItem() {
                 'flex items-start gap-2 rounded-xl p-3 text-xs leading-relaxed',
                 closed
                   ? 'border-2 border-ink-line bg-ink-raised text-white/65'
-                  : 'border-2 border-amber-400/40 bg-amber-400/10 text-amber-200',
+                  : 'border-2 border-warn/40 bg-warn/10 text-warn-bright',
               )}>
                 <Glyph icon={faClock} className="mt-0.5" />
                 <span>

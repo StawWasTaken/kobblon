@@ -168,7 +168,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
             <button
               onClick={onRename}
               aria-label="Rename this campaign"
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-white/40 hover:bg-ink-hover hover:text-white"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-ink-hover hover:text-white"
             >
               <Glyph icon={faPen} className="text-[10px]" />
             </button>

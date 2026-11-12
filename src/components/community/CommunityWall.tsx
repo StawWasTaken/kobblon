@@ -280,7 +280,7 @@ export function CommunityWall({
                 <Menu
                   label="Post options"
                   trigger={
-                    <span className="grid h-7 w-7 place-items-center rounded-md text-white/35 transition-colors hover:bg-ink-hover hover:text-white">
+                    <span className="grid h-7 w-7 place-items-center rounded-lg text-white/35 transition-colors hover:bg-ink-hover hover:text-white">
                       <Glyph icon={faEllipsis} />
                     </span>
                   }

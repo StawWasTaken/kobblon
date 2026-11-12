@@ -86,7 +86,7 @@ export function ActivityLine({ person, isMe, className }: {
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-2xl border-2 border-b-4 border-space/45 bg-gradient-to-br from-space/20 to-space/5 shadow-lg shadow-space/10',
+        'overflow-hidden rounded-2xl border-2 border-b-4 border-space/45 bg-space/12',
         className,
       )}
     >

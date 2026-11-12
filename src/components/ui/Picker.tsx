@@ -124,7 +124,7 @@ export function Picker({
                   onMouseEnter={() => setActive(index)}
                   onClick={() => commit(index)}
                   className={cn(
-                    'w-full rounded-md px-2.5 py-1.5 text-left text-sm font-semibold transition-colors',
+                    'w-full rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold transition-colors',
                     isSelected
                       ? 'bg-brand text-white'
                       : index === active

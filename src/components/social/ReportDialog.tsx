@@ -281,7 +281,7 @@ export function ReportDialog({
       title={`Report ${targetName}`}
       size="lg"
       head={
-        <div className="relative bg-gradient-to-br from-danger/15 to-ink-card px-5 pb-4 pt-5">
+        <div className="relative bg-danger/10 px-5 pb-4 pt-5">
           <div className="flex items-start gap-4 pr-10">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-b-4 border-danger/40 bg-danger/15 text-danger">
               <Glyph icon={faFlag} className="text-lg" />

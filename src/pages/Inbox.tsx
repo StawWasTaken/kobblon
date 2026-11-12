@@ -50,7 +50,7 @@ const kindLook: Record<MailKind, {
   tint: string
   edge: string
 }> = {
-  moderation: { icon: faGavel, word: 'Moderation', tint: 'text-amber-300', edge: 'bg-amber-300' },
+  moderation: { icon: faGavel, word: 'Moderation', tint: 'text-warn-bright', edge: 'bg-warn-bright' },
   security: { icon: faLock, word: 'Security', tint: 'text-danger', edge: 'bg-danger' },
   support: { icon: faHeadset, word: 'Support', tint: 'text-link', edge: 'bg-link' },
   policy: { icon: faScroll, word: 'Policy', tint: 'text-white/70', edge: 'bg-white/50' },

@@ -94,7 +94,7 @@ export function SupportQueue() {
   return (
     <div className="space-y-4">
       <Note>
-        Anything marked <span className="font-bold text-amber-300">urgent</span> asked for a
+        Anything marked <span className="font-bold text-warn-bright">urgent</span> asked for a
         person, so it sits at the top. Kobby answers the plain ones and passes the rest here.
       </Note>
 
@@ -104,7 +104,7 @@ export function SupportQueue() {
           icon={faBolt}
           value={sums?.urgent ?? null}
           label="Asked for a person"
-          className={sums?.urgent ? 'border-amber-400/40 bg-amber-400/[0.07]' : undefined}
+          className={sums?.urgent ? 'border-warn/40 bg-warn/[0.07]' : undefined}
         />
         <StatTile icon={faHourglassHalf} value={sums?.waiting ?? null} label="Waiting on us" />
         <StatTile icon={faCircleCheck} value={sums?.closed_today ?? null} label="Closed today" />
@@ -173,7 +173,7 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
       className={cn(
         'flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border-2 px-4 py-3 text-left transition-colors',
         one.wants_human && one.status !== 'closed'
-          ? 'border-amber-400/40 bg-amber-400/[0.06] hover:border-amber-400/70'
+          ? 'border-warn/40 bg-warn/[0.06] hover:border-warn/70'
           : 'border-ink-line bg-ink-raised hover:border-white/25',
       )}
     >
@@ -187,7 +187,7 @@ export function TicketLine({ one, onOpen }: { one: TicketRow; onOpen: () => void
       )}
 
       {one.wants_human && one.status !== 'closed' && (
-        <span className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-amber-400/50 bg-amber-400/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-amber-200 shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-warn/50 bg-warn/15 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-warn-bright shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
           <Glyph icon={faBolt} />
           Urgent
         </span>

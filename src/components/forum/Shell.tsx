@@ -88,9 +88,9 @@ export const BOARD_ART: Record<string, { ours?: KobIcon; fa?: IconDefinition }> 
 export const BOARD_COLOUR: Record<string, string> = {
   announcements: 'bg-brand-bright',
   'community-creations': 'bg-space-bright',
-  'feedback-and-suggestions': 'bg-amber-400',
+  'feedback-and-suggestions': 'bg-warn',
   'help-and-support': 'bg-link',
-  'building-and-scripting': 'bg-violet-400',
+  'building-and-scripting': 'bg-craft-bright',
   'off-topic': 'bg-white/40',
   /* Orange went with the contest rooms; nothing on the forum uses it now. */
 }
@@ -113,9 +113,9 @@ export const BOARD_COLOUR: Record<string, string> = {
 export const BOARD_INK: Record<string, string> = {
   announcements: 'text-brand-bright',
   'community-creations': 'text-space-bright',
-  'feedback-and-suggestions': 'text-amber-400',
+  'feedback-and-suggestions': 'text-warn',
   'help-and-support': 'text-link',
-  'building-and-scripting': 'text-violet-400',
+  'building-and-scripting': 'text-craft-bright',
   'off-topic': 'text-white/60',
 }
 
@@ -186,7 +186,7 @@ export function ForumSearchBox({ className }: { className?: string }) {
           type="button"
           onClick={() => setTerms('')}
           aria-label="Clear"
-          className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-white/35 transition-colors hover:bg-white/10 hover:text-white"
+          className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-lg text-white/35 transition-colors hover:bg-white/10 hover:text-white"
         >
           <Glyph icon={faXmark} className="text-xs" />
         </button>

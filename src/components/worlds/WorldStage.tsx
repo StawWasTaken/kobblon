@@ -93,7 +93,7 @@ export function WorldStage({
                 aria-label={`Show picture ${i + 1}`}
                 aria-current={i === at}
                 className={cn(
-                  'h-10 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-all',
+                  'h-10 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all',
                   i === at
                     ? 'border-on-art shadow-pop'
                     : 'border-on-art/25 opacity-70 hover:opacity-100',

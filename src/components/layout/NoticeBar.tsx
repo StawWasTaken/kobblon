@@ -197,7 +197,7 @@ export function NoticeBar() {
   return (
     <div
       ref={box}
-      className="fixed right-0 top-14 z-30 divide-y divide-black/10 shadow-lg shadow-black/20 left-0 lg:left-56"
+      className="fixed right-0 top-14 z-30 divide-y divide-black/10 shadow-pop left-0 lg:left-56"
     >
       {notices.map((one) => (
         <NoticeLine

@@ -129,7 +129,7 @@ export function PersonLine({ person, note, className }: {
       </span>
       {person.i_ignore && (
         <Tooltip label="You are ignoring this person" side="top">
-          <span className="shrink-0 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
+          <span className="shrink-0 rounded-lg bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
             Ignored
           </span>
         </Tooltip>

@@ -79,7 +79,7 @@ export function AppealsQueue() {
           icon={faHourglassHalf}
           value={sums ? waited(sums.oldest_hours) : null}
           label="Oldest one"
-          className={sums && sums.oldest_hours > 72 ? 'border-amber-400/40 bg-amber-400/[0.07]' : undefined}
+          className={sums && sums.oldest_hours > 72 ? 'border-warn/40 bg-warn/[0.07]' : undefined}
         />
         <StatTile icon={faThumbsUp} value={sums?.upheld_30d ?? null} label="Upheld, 30 days" />
         <StatTile icon={faThumbsDown} value={sums?.declined_30d ?? null} label="Declined, 30 days" />
@@ -131,7 +131,7 @@ export function AppealLine({ one, onOpen }: { one: AppealRow; onOpen: () => void
       className={cn(
         'flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border-2 px-4 py-3 text-left transition-colors',
         slow
-          ? 'border-amber-400/40 bg-amber-400/[0.06] hover:border-amber-400/70'
+          ? 'border-warn/40 bg-warn/[0.06] hover:border-warn/70'
           : 'border-ink-line bg-ink-raised hover:border-white/25',
       )}
     >
@@ -310,7 +310,7 @@ export function AppealDrawer({ one, onClose, onDecided }: {
                   <Glyph icon={faQuoteLeft} />
                   What it was based on
                 </p>
-                <blockquote className="rounded-xl rounded-tl-md border-2 border-b-4 border-amber-400/30 bg-amber-400/[0.07] px-3 py-2">
+                <blockquote className="rounded-xl rounded-tl-md border-2 border-b-4 border-warn/30 bg-warn/[0.07] px-3 py-2">
                   <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white/85">
                     {one.evidence}
                   </p>

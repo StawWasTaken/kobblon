@@ -87,7 +87,7 @@ export function TopTopics({
                   {topic.title}
                 </span>
                 <span className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 text-xs text-white/35">
-                  <span className="rounded-md bg-white/[0.07] px-1.5 py-0.5 font-bold text-white/55">
+                  <span className="rounded-lg bg-white/[0.07] px-1.5 py-0.5 font-bold text-white/55">
                     {topic.category_name}
                   </span>
                   <span>{timeAgo(topic.last_post_at)}</span>

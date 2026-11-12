@@ -60,7 +60,7 @@ function Column({
               aria-selected={selected}
               onClick={() => onSelect(option.value)}
               className={cn(
-                'w-full rounded-md px-2 py-1.5 text-center text-sm font-semibold transition-colors',
+                'w-full rounded-lg px-2 py-1.5 text-center text-sm font-semibold transition-colors',
                 selected ? 'bg-brand text-white' : 'text-white/70 hover:bg-ink-hover hover:text-white',
               )}
             >

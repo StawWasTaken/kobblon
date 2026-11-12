@@ -327,7 +327,7 @@ export function Composer({
                 title={mark.title}
                 aria-label={mark.title}
                 onClick={() => put(mark)}
-                className="grid h-7 w-7 place-items-center rounded-md text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+                className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-white/10 hover:text-white"
               >
                 <Glyph icon={mark.icon} className="text-xs" />
               </button>
