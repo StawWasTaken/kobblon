@@ -22355,3 +22355,44 @@ still too much. It now pulls the whole sweep towards the card colour -
 lightly across the middle, hard at the edges - so the step from panel into
 stage is a step rather than a cliff. His backdrop artwork is still
 untouched.
+
+## Round three hundred and twenty - a profile is laid out, not stacked
+
+Staw on the design system as a whole: "all you did was making stuff in 3d
+and adding thicker strokes but we want more than that, better design
+layouts, better designs". Asked what was most wrong, he named three things
+and all three were about layout rather than about tokens: everything is a
+bordered box; the layouts are lazy; it is flat and lifeless.
+
+Profile is the first page rebuilt against that, as the worked example.
+
+**The top is a banner, not a bar.** It was a 96-pixel square beside two
+lines of text inside the same bordered box every other section wears, so the
+person whose page it is had no more presence on it than their badge list.
+The figure is 144 now, the name is twice the size, the banner has room, and
+the bottom stroke is **their own colour** rather than house slate - the one
+edge on the page that belongs to them.
+
+**About is two columns above `xl`.** It was five sections of equal weight
+running one under another, so on a wide screen the whole page was a column
+down the middle with empty space either side. Now:
+
+* left, what the page is about and what wants the width - the figure in
+  what they are wearing, the Worlds they kept, their friends;
+* right, a 21rem rail that stays put while the left scrolls - the
+  communities they are in and the badges they have been given, at the size
+  those things deserve.
+
+Under `xl` it is one column again in reading order, because a rail forced
+onto a phone is the same stack with less room.
+
+Nothing shared changed in this round - no token, no component signature, no
+engine call. It is listed because it is the direction the rest of the site
+is being taken in, and the Workspace's own panels will want the same read:
+**size a thing by how much it matters, and stop drawing every section as the
+same outlined rectangle.**
+
+Said plainly: this page cannot be screenshotted from here, because it needs
+a signed-in session and a database. The new layout was built and looked at
+as a static replica at the real widths with the real stylesheet; the live
+page has been typechecked and built but not seen.

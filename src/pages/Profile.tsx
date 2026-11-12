@@ -418,7 +418,24 @@ export default function Profile() {
       style={{ '--me': accent } as React.CSSProperties}
     >
       {/* ------------------------------------------------------- the person */}
-      <section className="relative overflow-hidden rounded-2xl border-2 border-ink-line">
+      {/*
+        * The top of a profile is a banner, not a bar.
+        *
+        * It used to be a 96-pixel square beside two lines of text in a
+        * bordered box - the same box every other section on the site is
+        * drawn in, so the person whose page it is had no more presence on
+        * it than their list of badges. Staw: "layouts are lazy ...
+        * everything is a bordered box".
+        *
+        * Now the figure is large enough to be looked at, the banner has
+        * room to breathe, and the stroke along the bottom is their own
+        * colour rather than the house slate - the one edge on the page
+        * that belongs to them.
+        */}
+      <section
+        className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line"
+        style={{ borderBottomColor: 'var(--me)' }}
+      >
         {/* Their own face, out of focus, is the backdrop: no stock banner,
             nothing everybody shares. */}
         <div className="absolute inset-0" aria-hidden="true">
@@ -431,12 +448,12 @@ export default function Profile() {
           )}
           <div
             className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${accent}2e, transparent 55%)` }}
+            style={{ background: `linear-gradient(135deg, ${accent}55, ${accent}14 45%, transparent 70%)` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/75 to-ink/40" />
         </div>
 
-        <div className="relative z-10 flex flex-col gap-5 p-5 sm:flex-row sm:p-7">
+        <div className="relative z-10 flex flex-col gap-5 p-5 sm:flex-row sm:gap-7 sm:p-8">
           {/*
             * The picture, which is nobody's to upload any more.
             *
@@ -451,7 +468,7 @@ export default function Profile() {
             <PersonAvatar
               person={user}
               size="3xl"
-              className="h-24 w-24 sm:h-28 sm:w-28"
+              className="h-28 w-28 sm:h-36 sm:w-36"
               square
               frame={`0 0 0 3px ${accent}`}
               overlay={isMe ? (
@@ -468,7 +485,7 @@ export default function Profile() {
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-4xl">
+            <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-5xl">
               {user.display_name}
               {/* The guest mark comes from `NameMarks` and nowhere else.
                   There used to be a word in a pill beside it saying the
@@ -835,7 +852,27 @@ export default function Profile() {
 
         </div>
       ) : (
-        <div className="space-y-10">
+        /*
+          * About is two columns, not one stack.
+          *
+          * Staw, on the design generally: "layouts are lazy ... everything
+          * is a bordered box". A profile had five sections of equal weight
+          * running one under another, so the figure somebody is actually
+          * here to look at sat at the same size and importance as the list
+          * of communities they are in, and on a wide screen the whole page
+          * was a column down the middle with nothing either side of it.
+          *
+          * The left is what the page is about and what wants the width:
+          * them standing there in what they are wearing, the Worlds they
+          * kept, their friends. The right is the smaller facts - the groups
+          * they are in and what they have been given - at a size those
+          * things deserve, and it stays put while the left scrolls.
+          *
+          * One column again under `xl`, in the order it reads in: a rail
+          * forced onto a phone is just the same stack with less room.
+          */
+        <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="space-y-10">
           {/* --------------------------------------------- currently wearing */}
           {/*
             * Them, standing there, and everything they have on beside them.
@@ -883,6 +920,43 @@ export default function Profile() {
             {!!friends.data?.length && <FaceGrid people={friends.data.slice(0, 8)} />}
           </section>
 
+
+          {/* ------------------------------------------- the ones they kept */}
+          {/*
+            * Staw: "make that we see favourited worlds onto profiles".
+            *
+            * Under Friends and Communities rather than in Creations,
+            * because this is not something they made - it is something
+            * they like, which is what the About side of a profile is for.
+            *
+            * Drawn only when there is something to draw. An empty
+            * "Favourites" heading on every profile on the platform is a
+            * row of nothing that teaches people the feature is broken; the
+            * one person who should be told the list is empty is the owner,
+            * and they already know.
+            */}
+          {!!kept.data?.length && (
+            <section>
+              <Heading icon={faHeart} aside={
+                <span className="text-xs text-muted">
+                  {formatCount(kept.data.length)}{' '}
+                  {kept.data.length === 1 ? 'World' : 'Worlds'}
+                </span>
+              }>
+                {isMe ? 'Worlds you kept' : 'Worlds they kept'}
+              </Heading>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {kept.data.slice(0, 10).map((world) => (
+                  <WorldCard key={world.id} world={world} />
+                ))}
+              </div>
+            </section>
+          )}
+
+
+          </div>
+
+          <aside className="space-y-8 xl:sticky xl:top-24">
           {!!communities.data?.length && (
             <section>
               <Heading icon={faUsers}>Communities</Heading>
@@ -891,7 +965,7 @@ export default function Profile() {
                 * how the page Staw sent shows a group: a community is a
                 * picture people recognise before it is a name.
                 */}
-              <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-2">
                 {communities.data.map((community) => (
                   <Link
                     key={community.id}
@@ -935,42 +1009,10 @@ export default function Profile() {
             </section>
           )}
 
-          {/* ------------------------------------------- the ones they kept */}
-          {/*
-            * Staw: "make that we see favourited worlds onto profiles".
-            *
-            * Under Friends and Communities rather than in Creations,
-            * because this is not something they made - it is something
-            * they like, which is what the About side of a profile is for.
-            *
-            * Drawn only when there is something to draw. An empty
-            * "Favourites" heading on every profile on the platform is a
-            * row of nothing that teaches people the feature is broken; the
-            * one person who should be told the list is empty is the owner,
-            * and they already know.
-            */}
-          {!!kept.data?.length && (
-            <section>
-              <Heading icon={faHeart} aside={
-                <span className="text-xs text-muted">
-                  {formatCount(kept.data.length)}{' '}
-                  {kept.data.length === 1 ? 'World' : 'Worlds'}
-                </span>
-              }>
-                {isMe ? 'Worlds you kept' : 'Worlds they kept'}
-              </Heading>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {kept.data.slice(0, 10).map((world) => (
-                  <WorldCard key={world.id} world={world} />
-                ))}
-              </div>
-            </section>
-          )}
-
           {!!badges.data?.length && (
             <section>
               <Heading icon={faAward}>Badges</Heading>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-2">
                 {badges.data.map((badge) => (
                   <Link key={badge.id} to={`/u/${badge.space_owner}/${badge.space_slug}`}>
                     <BadgeTile
@@ -983,7 +1025,7 @@ export default function Profile() {
               </div>
             </section>
           )}
-
+          </aside>
         </div>
       )}
 
