@@ -62,6 +62,30 @@ export function Studio({ className, children }: {
           className="kob-backdrop absolute inset-0 -z-10 h-full w-full select-none object-cover"
         />
       ))}
+      {/*
+        * The one place a gradient is allowed: between a picture and the
+        * surface it sits on.
+        *
+        * Staw, on the avatar stage in a profile: "it feels weird it creates
+        * a big contrast that gives a 'too much' vibe, doesnt really fit the
+        * aesthetic we want". The backdrop is his own artwork and is not
+        * touched - what was wrong is the edge. A photographer's sweep is a
+        * lit, pale rectangle, and dropped hard-cornered into a dark card it
+        * reads as a lightbox cut into the page rather than a place the
+        * avatar is standing.
+        *
+        * So the corners fall to the card's own colour and the middle is
+        * left exactly as he drew it. The stage keeps its light where the
+        * avatar is and stops being a slab where it meets the panel.
+        */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            'radial-gradient(118% 100% at 50% 32%, transparent 38%, rgb(var(--ink-card) / 0.55) 82%, rgb(var(--ink-card) / 0.92) 100%)',
+        }}
+      />
       {children}
     </div>
   )

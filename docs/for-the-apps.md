@@ -22253,3 +22253,50 @@ the whole of it is one hover away on the card behind the face.
 This replaces rounds 314 and 315. If the Workspace draws a name with marks
 in a narrow fixed cell: **size the type to fit the pair, and truncate the
 name rather than moving the marks.**
+
+## Round three hundred and eighteen - green is a real green now, and the avatar stage stops being a slab
+
+Two things Staw called out looking at a profile. The first is **shared** and
+changes a colour the Workspace draws with, so it needs acting on there.
+
+### `space` is a saturated green
+
+Staw: "i dont like how the green buttons look semi transparent". Nothing
+was transparent. `#148556` was a desaturated, cyan-leaning green - a third
+of the way to teal - and beside Kobblon's fully saturated blue it read as
+washed out, which at a glance looks the same as being drawn at partial
+opacity.
+
+    space.DEFAULT   #148556  ->  #00893E
+    space.bright    #1CAE71  ->  #00B04F
+    space.deep      #0f6b45  ->  #005826
+
+`#00893E` is the most saturated green that still carries white text: 4.52
+against white, and there is no greener colour at that luminance because the
+red and blue channels are already at zero. The ceiling has not moved - a
+brighter green cannot wear a white label, so `bright` is still the hover and
+still never a resting fill under text. `bright` against a dark card is 6.0,
+so `text-space-bright` is unchanged in standing.
+
+**If the Workspace hard-codes any of those three hexes, they are stale.**
+Pull `design/preset.js`. Two places here were hard-coding `#1CAE71` - the
+colour picker's swatch row and the About page's stock chart - and both now
+read the new value.
+
+### The avatar stage
+
+Staw: "the 3d thing is like.. it feels weird it creates a big contrast that
+gives a 'too much' vibe, doesnt really fit the aesthetic we want".
+
+His backdrop artwork is untouched. What was wrong is the edge: a
+photographer's sweep is a lit, pale rectangle, and dropped hard-cornered
+into a dark card it reads as a lightbox cut into the page rather than
+somewhere the avatar is standing. `Studio` now lays a radial scrim over the
+backdrop that is fully clear across the middle third and falls to the card's
+own `--ink-card` at the corners. The light stays where the avatar is; the
+slab edge is gone.
+
+This is the gradient rule working as written rather than an exception to it:
+a gradient is allowed as a scrim between a picture and the surface it sits
+on, and nowhere else. The Workspace gets this for free if it mounts
+`Studio`; if it draws its own avatar backdrop, it wants the same treatment.

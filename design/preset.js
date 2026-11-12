@@ -81,24 +81,43 @@ export default {
         /*
          * Yes, and the thing you are buying.
          *
-         * The scale moved down one step so that white on the resting fill
-         * passes AA: `#1CAE71` against white is 2.86, which is the colour
-         * every buy button on the site was drawn in, and it was the only
-         * failing pair in the whole palette. The old default is `bright`
-         * now, so nothing lost its green - the button is a shade deeper
-         * and the hover is exactly the colour it always was.
+         * Two separate corrections landed on this scale. The first moved it
+         * down a step so white on the resting fill passes AA - the buy
+         * buttons used to be drawn on a green that scored 2.86 against
+         * white, the only failing pair in the whole palette. The second is
+         * below: the green it moved to was desaturated and read as washed.
          *
-         * `bright` is the hover and nothing rests on it. Green has no
-         * headroom above `#148556`, which is already at the AA ceiling at
-         * 4.65, so a hover that lightens - and Staw wants green to behave
-         * like blue - necessarily lands under it. That is a half second
-         * under a pointer during which nothing is decided; a resting fill
-         * is where a label has to be readable, and that one is.
+         * `bright` is the hover and nothing rests on it, because green has
+         * no headroom above the AA ceiling: a hover that lightens, and Staw
+         * wants green to behave like blue, necessarily lands under it. That
+         * is a half second under a pointer during which nothing is decided;
+         * a resting fill is where a label has to be readable, and that one
+         * is.
+         */
+        /*
+         * Green is yes, and it has to look like a painted button rather
+         * than a tint of the card behind it.
+         *
+         * Staw: "i dont like how the green buttons look semi transparent".
+         * The old #148556 was a desaturated, cyan-leaning green - a third
+         * of the way to teal - and beside Kobblon's fully saturated blue it
+         * read as washed out, which at a glance is indistinguishable from
+         * being drawn at partial opacity. Nothing was transparent; it was
+         * just low in chroma.
+         *
+         * So this is the most saturated green there is at the contrast the
+         * rule needs. White on #00893E is 4.52, which clears AA, and there
+         * is no greener colour at that luminance - the red and blue
+         * channels are already at zero. That is the ceiling: a brighter
+         * green cannot carry white text, which is why `bright` is the hover
+         * and never a resting fill under a label.
          */
         space: {
-          DEFAULT: '#148556',
-          bright: '#1CAE71',
-          deep: '#0f6b45',
+          DEFAULT: '#00893E',
+          /** The hover, and the green of words on a dark card (6.0 there). */
+          bright: '#00B04F',
+          /** The lip under a green button. */
+          deep: '#005826',
         },
         /*
          * The gem, and it is the whole of the reward language.
