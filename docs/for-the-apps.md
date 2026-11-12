@@ -22893,3 +22893,12 @@ tint and the lit edge - rather than three times.
 `NotificationsCard` stays exported, and the bare page at
 `tools/site/notifications-preview.html` with it. Nothing about the data, the
 kinds or the API has moved in either round.
+
+## Round three hundred and thirty-one - the title and the tabs stop sharing a space
+
+Only the overlap, nothing else in the notifications card. The title had no
+`truncate` and the drawing beside it had no width, so the header row simply
+overflowed and the tab tray was painted on top of the word "Notifications".
+The drawing is capped at 4rem and the title and its count truncate, so at the
+card's real width everything fits side by side and on a narrow one the title
+shortens instead of being covered. No other change.

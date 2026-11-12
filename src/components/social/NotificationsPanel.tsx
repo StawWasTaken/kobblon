@@ -265,10 +265,17 @@ export function NotificationsCard({
       {/* ------------------------------------------------------- header */}
       <div className="relative overflow-hidden border-b border-ink-line bg-ink-raised px-4 py-3">
         <div className="relative flex items-center gap-3">
-          <Kobby mood="notification" size="sm" bob={false} className="h-10" />
+          <Kobby mood="notification" size="sm" bob={false} className="h-10 max-w-[4rem] shrink-0" />
+          {/*
+            * The drawing is wide, so it is given a width rather than left to
+            * take whatever its aspect wants; and the title truncates, because the tray will not shrink and the title will
+            * not wrap: without this the title keeps its full width, the row
+            * overflows, and the tabs are drawn straight over the word
+            * "Notifications" on a narrow card.
+            */}
           <div className="min-w-0 flex-1">
-            <h2 className="font-display text-base font-extrabold leading-tight">Notifications</h2>
-            <p className="text-xs text-muted">
+            <h2 className="truncate font-display text-base font-extrabold leading-tight">Notifications</h2>
+            <p className="truncate text-xs text-muted">
               {unread.length
                 ? `${unread.length} new`
                 : readNow ? 'All caught up' : 'Nothing new'}
