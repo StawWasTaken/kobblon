@@ -78,7 +78,7 @@ export function Picture({
    */
   const askOnMount = (node: HTMLImageElement | null) => {
     if (node?.complete && node.currentSrc) {
-      if (node.naturalWidth > 0) setShown(node.src)
+      if (node.naturalWidth > 0) setShown(src ?? null)
       else setFailed(true)
     }
   }
@@ -96,7 +96,7 @@ export function Picture({
           alt={alt}
           draggable={draggable}
           loading={loading}
-          onLoad={(event) => setShown(event.currentTarget.src)}
+          onLoad={() => setShown(src ?? null)}
           onError={() => setFailed(true)}
           className={cn(
             'absolute inset-0 h-full w-full transition-opacity duration-200',

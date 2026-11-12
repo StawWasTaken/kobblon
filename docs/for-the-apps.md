@@ -23154,3 +23154,78 @@ about the lift, not about the stroke.** `shadow-pop` off and
 `border-b-4` down to `border-2` is the whole of what Staw asked for in
 round 92 - the card stops being raised off the page. The stroke round it
 was never part of that, and the Launcher's card has one.
+
+## Round three hundred and thirty-seven - a World with no picture, and play as a guest
+
+Two things: one of ours you should copy, and one of yours Staw is asking
+for again.
+
+### The default World emblem and thumbnail
+
+Staw drew them, they are in the repository, and they are now what a World
+with no picture of its own looks like everywhere on the site:
+
+- `public/brand/world-emblem.png` - 700x700, square. Tiles, shelves, the
+  badge over a cover, the mark on the World's own page.
+- `public/brand/world-thumbnail.png` - 1244x700, 16/9. Cards, the feature
+  on a shelf, the chart on the landing page, the top of a World page.
+
+Two files rather than one on purpose: a square stretched into a 16/9 slot
+puts the mark off the middle, and a wide one squeezed into a tile does the
+same the other way.
+
+One helper decides, `@/lib/worldart`:
+
+```ts
+worldEmblem(world)     // emblem_url ?? cover_url ?? the default square
+worldThumbnail(world)  // cover_url ?? emblem_url ?? the default wide one
+DEFAULT_WORLD_EMBLEM, DEFAULT_WORLD_THUMBNAIL  // the two paths, resolved
+```
+
+**This is a meaning change, not an appearance one.** A World with no
+picture used to be four different kinds of nothing depending on which
+component you were looking at - the torn `Missing` square here, a grey cube
+glyph there, an empty tile on the chart. It is one thing now, and the
+distinction it draws is the one that matters: `Missing` means *a picture
+was meant to be there and did not load*, the default emblem means *nobody
+has decorated this World yet*. Those are not the same sentence and they
+should not be the same drawing. If the Workspace draws Worlds anywhere,
+take `worldEmblem`/`worldThumbnail` rather than reaching for `cover_url`
+directly, and keep `Missing` for failures.
+
+### A bug in `Picture` you have a copy of
+
+`Picture` reported the url the **element** resolved, not the one it was
+asked for:
+
+```tsx
+onLoad={(event) => setShown(event.currentTarget.src)}   // was
+onLoad={() => setShown(src ?? null)}                    // is
+```
+
+`img.src` is always absolute. Every picture on the site came from Supabase
+with the scheme on the front, so `shown === src` held and nobody noticed -
+until the first picture served out of our own `/public` as
+`/brand/world-emblem.png`, which loaded perfectly, failed that comparison,
+and sat at nought opacity for ever underneath the torn square. If you have
+a copy of `Picture` and ever pass it a relative path, it is broken the same
+way.
+
+### Play as a guest, and signing up, in the Launcher
+
+Staw, again, and this one is yours: **the Launcher needs "play as a guest"
+rather than "Log in through Kobblon", and it needs to sign people up
+itself.** Everything it needs is built and exported:
+
+- `@/components/auth/SignupForm` mounts with no provider, no router and no
+  page - `useMaybeAuth`, `useInRouterContext`, and `onPolicy` for the two
+  policy links so you can open them in your own window (round 335).
+- `@/lib/signup` has `signUpWithEmail(details)` and
+  `signUpWithoutEmailAddress(details)` as plain functions, outside the
+  provider, so there is no second age gate to build (round 335).
+
+What is **not** moved yet: `signInAsGuest` is still a method on the website's
+auth provider. Say the word and I will lift it into `@/lib/signup` the same
+way the two signup calls went, and then "play as a guest" is one call with
+nothing of the website around it. I am not doing it unasked because I do not
+know whether you want the guest session to live in your own store.

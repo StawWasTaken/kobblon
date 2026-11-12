@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
+import { worldThumbnail } from '@/lib/worldart'
 import { Skeleton } from '@/components/ui/States'
 import type { World } from '@/types/db'
 
@@ -33,18 +33,12 @@ function Row({ world, rank }: { world: World; rank: number }) {
         </span>
 
         <span className="block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-media">
-          {world.cover_url ? (
-            <img
-              src={world.cover_url}
-              alt=""
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
-            />
-          ) : (
-            <span className="grid h-full w-full place-items-center">
-              <Glyph icon={worldIcon} className="text-2xl text-white/15" />
-            </span>
-          )}
+          <img
+            src={worldThumbnail(world)}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
+          />
         </span>
 
         <span className="min-w-0">

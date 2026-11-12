@@ -10,6 +10,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
 import type { KobIcon } from '@/components/brand/Icon'
 import { Card } from '@/components/ui/Card'
+import { DEFAULT_WORLD_EMBLEM } from '@/lib/worldart'
 import { Choices } from '@/components/ui/Choices'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { Verified } from '@/components/brand/Verified'
@@ -354,7 +355,7 @@ const asWorld = (row: WorldBoardRow): Entry => ({
   to: worldLink({ content_id: row.content_id ?? 0, slug: row.slug, name: row.name }),
   name: row.name,
   under: row.owner_name ? `by ${row.owner_name}` : 'by somebody who has left',
-  image: row.cover_url,
+  image: row.cover_url ?? DEFAULT_WORLD_EMBLEM,
   ticked: row.owner_verified,
   amount: row.amount,
   face: false,

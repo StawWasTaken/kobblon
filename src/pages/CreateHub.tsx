@@ -7,6 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { worldEmblem } from '@/lib/worldart'
 import { Select } from '@/components/ui/Select'
 import { Choices } from '@/components/ui/Choices'
 import { Menu } from '@/components/ui/Menu'
@@ -26,7 +27,6 @@ import { UploadDialog } from '@/components/create/UploadDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { CREATE_ICON, useFavicon, useTitle } from '@/hooks/useTitle'
-import { worldIcon } from '@/lib/naming'
 
 /** Everything under Create names itself inside Create, not inside the site. */
 const CREATE = 'Creator Hub'
@@ -360,9 +360,7 @@ export function CreateWorlds() {
                     className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
                   >
                     <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink">
-                      {world.cover_url
-                        ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
-                        : <Glyph icon={worldIcon} className="text-white/50" />}
+                      <img src={worldEmblem(world)} alt="" className="h-full w-full object-cover" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">{world.name}</span>

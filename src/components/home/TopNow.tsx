@@ -7,6 +7,7 @@ import { EmptyState, Skeleton } from '@/components/ui/States'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
+import { worldEmblem, worldThumbnail } from '@/lib/worldart'
 import type { World } from '@/types/db'
 
 /**
@@ -27,7 +28,7 @@ import type { World } from '@/types/db'
 
 
 function Cover({ world, className }: { world: World; className?: string }) {
-  const art = world.cover_url ?? world.emblem_url
+  const art = worldThumbnail(world)
   return (
     <Picture
       src={art}
@@ -60,13 +61,11 @@ function Lead({ world }: { world: World }) {
       <Cover world={world} className="group-hover:scale-[1.03]" />
 
       <span className="absolute inset-x-0 bottom-0 flex items-end gap-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-16">
-        {world.emblem_url && (
-          <Picture
-            src={world.emblem_url}
-            alt={world.name}
-            className="h-12 w-12 shrink-0 rounded-xl border-2 border-white/20"
-          />
-        )}
+        <Picture
+          src={worldEmblem(world)}
+          alt={world.name}
+          className="h-12 w-12 shrink-0 rounded-xl border-2 border-white/20"
+        />
         <span className="min-w-0">
           <span className="block truncate font-display text-lg font-extrabold text-[#fff] sm:text-xl">
             {world.name}

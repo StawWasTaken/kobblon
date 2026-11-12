@@ -5,6 +5,7 @@ import { faTag } from '@fortawesome/free-solid-svg-icons'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
+import { worldThumbnail } from '@/lib/worldart'
 import type { World, WorldGenre } from '@/types/db'
 
 /**
@@ -29,7 +30,7 @@ export function WorldCard({
     >
       <Link to={worldLink(world)} className="relative block aspect-[16/10] overflow-hidden bg-media">
         <Picture
-          src={world.cover_url}
+          src={worldThumbnail(world)}
           alt={world.name}
           className="h-full w-full"
           pictureClassName="transition-transform duration-300 group-hover:scale-[1.03]"

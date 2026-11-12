@@ -40,6 +40,7 @@ import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
+import { DEFAULT_WORLD_THUMBNAIL, worldEmblem } from '@/lib/worldart'
 import { asset } from '@/lib/asset'
 
 /*
@@ -308,7 +309,7 @@ export default function WorldPage() {
 
   /* The emblem leads, because it is what a World chose to be known by. */
   const shots: Shot[] = [
-    ...(thing.cover_url ? [{ id: 'emblem', kind: 'image' as const, url: thing.cover_url }] : []),
+    { id: 'emblem', kind: 'image' as const, url: thing.cover_url ?? DEFAULT_WORLD_THUMBNAIL },
     ...(media.data ?? []).map((one) => ({
       id: one.id,
       kind: one.kind,
@@ -445,7 +446,7 @@ export default function WorldPage() {
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-on-art/25 bg-brand shadow-pop sm:h-20 sm:w-20">
               <Picture
-                src={thing.emblem_url ?? thing.cover_url}
+                src={worldEmblem(thing)}
                 alt={thing.name}
                 className="h-full w-full"
               />

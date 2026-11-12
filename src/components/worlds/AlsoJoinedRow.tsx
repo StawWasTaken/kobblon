@@ -6,6 +6,7 @@ import { worldLink } from '@/lib/links'
 import { formatCount } from '@/lib/format'
 import type { AlsoJoined } from '@/lib/api'
 import { cn } from '@/lib/cn'
+import { worldEmblem } from '@/lib/worldart'
 
 /**
  * Worlds the people who played this one also played.
@@ -36,7 +37,7 @@ export function AlsoJoinedRow({ worlds, bare }: {
           const up = world.like_count ?? 0
           const down = world.dislike_count ?? 0
           const score = up + down ? Math.round((up / (up + down)) * 100) : null
-          const picture = world.emblem_url ?? world.cover_url
+          const picture = worldEmblem(world)
 
           return (
             <Link

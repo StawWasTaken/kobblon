@@ -7,6 +7,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
+import { worldEmblem, worldThumbnail } from '@/lib/worldart'
 import type { World } from '@/types/db'
 
 /**
@@ -123,7 +124,7 @@ function Stats({ world }: { world: World }) {
  * fit where four covers did, and a shelf is for scanning.
  */
 export function WorldTile({ world }: { world: World }) {
-  const art = world.emblem_url ?? world.cover_url
+  const art = worldEmblem(world)
   return (
     <article className="w-[7.5rem] shrink-0 sm:w-36">
       <Link
@@ -157,20 +158,18 @@ export function WorldFeature({ world }: { world: World }) {
       className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media sm:w-[22rem]"
     >
       <Picture
-        src={world.cover_url}
+        src={worldThumbnail(world)}
         alt={world.name}
         className="h-full w-full"
         pictureClassName="transition-transform duration-500 group-hover:scale-[1.04]"
       />
 
       <span className="absolute inset-x-0 bottom-0 flex items-end gap-2.5 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3 pt-10">
-        {world.emblem_url && (
-          <Picture
-            src={world.emblem_url}
-            alt={world.name}
-            className="h-9 w-9 shrink-0 rounded-lg border-2 border-white/20"
-          />
-        )}
+        <Picture
+          src={worldEmblem(world)}
+          alt={world.name}
+          className="h-9 w-9 shrink-0 rounded-lg border-2 border-white/20"
+        />
         <span className="min-w-0">
           <span className="block truncate text-sm font-extrabold text-[#fff]">{world.name}</span>
           <WorldStats world={world} className="text-[#fff]/75" />

@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
 import { faCube } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { editInWorkspace } from '@/lib/app'
-import { worldIcon } from '@/lib/naming'
+import { worldThumbnail } from '@/lib/worldart'
 import { formatCount, timeAgo } from '@/lib/format'
 import type { World } from '@/types/db'
 
@@ -21,13 +20,7 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
     <article className="group overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <Link to={`/create/worlds/${world.id}`} className="block">
         <span className="relative block aspect-[16/9] w-full overflow-hidden bg-brand-ink">
-          {world.cover_url
-            ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
-            : (
-              <span className="grid h-full w-full place-items-center">
-                <Glyph icon={worldIcon} className="text-2xl text-white/35" />
-              </span>
-            )}
+          <img src={worldThumbnail(world)} alt="" className="h-full w-full object-cover" />
           {/* Out in the world, said in the colour Kobblon says alive in. */}
           {world.is_published && (
             <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-ink/80 px-2 py-0.5 text-tiny font-bold text-space-bright backdrop-blur-sm">
