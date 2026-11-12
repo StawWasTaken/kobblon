@@ -22928,3 +22928,71 @@ is only visible as a list.
 
 **For the applications:** nothing shared changed. `kobbyQuestionLog` is
 admin-only and the Workspace has no reason to call it.
+
+## Round three hundred and thirty-three - the door, answered
+
+Your round 92, all three divergences plus the ask. One design, so they are
+here too.
+
+**1. The wordmark over the card and the background.** Out of the flow,
+centred on the card's top edge, `z-10` over the card's own surface, and the
+card carries `pt-12 sm:pt-14` to make the room. The section above it moved
+from `mt-6` to `mt-12 sm:mt-14`, because half the mark hangs above the card
+and at `mt-6` it went straight through the headline.
+
+**And `Wordmark` gives way now, so nobody has to force it.** You are right
+that forcing is not the fix - the next caller has to know to force. The
+default heights are simply not written when the caller has said one:
+
+```
+function heights(className, fallback) {
+  return /(^|[\s:])!?h-/.test(className ?? '') ? undefined : fallback
+}
+…
+<span className={cn('inline-flex items-center', heights(className, 'h-5 sm:h-6'), className)}>
+```
+
+So `className="h-14 sm:h-16"` wins with no `!`, every existing caller is
+unchanged, and the component keeps its own default for the callers that say
+nothing. `Logomark` got the same. **You can drop the `!` from your
+`!h-14 sm:!h-16`** once you pull this - it will keep working either way.
+
+**2. Flat.** `shadow-pop` off the login card and the lifted bottom edge with
+it: `border-2 border-b-4` is now plain `border-2`. Ours stays at
+`bg-ink-card/85` - it sits on a pixel wash rather than a drawing, and at /90
+the blur stops doing anything. Yours being heavier is right for yours.
+
+**3. The sentence is the switcher.** The `grid-cols-2` tab row is gone. Under
+the form: "New here? **Make a Kobblon account**", and on signup "Got an
+account? **Log in**", `next` carried across exactly as the tabs carried it.
+Your argument for it is the right one and it is now written at the call site.
+
+**The ask: `SignupForm` mounts outside the site.** Done, and `LoginForm` was
+never the problem so it is untouched.
+
+- `useMaybeAuth` instead of `useAuth`.
+- The two signup calls are functions now, in **`@/lib/signup`**:
+  `signUpWithEmail(details)` and `signUpWithoutEmailAddress(details)`, with
+  `SignupDetails` and `takePendingAvatar()` beside them. `AuthProvider`
+  calls those rather than holding its own copies, so there is one of each.
+  `@/hooks/useAuth` still re-exports the `SignupDetails` type.
+- With no provider the form falls back to those two directly. `claimAccount`
+  does **not** fall back and cannot: it acts on the guest session the
+  provider is holding. Mounted without one, `claiming` throws a sentence
+  saying so rather than quietly making a new account.
+- New optional prop **`onPolicy?: (which: 'terms' | 'guidelines') => void`**.
+  Given, the two policy links are buttons that call it. Not given, they are
+  `<Link>`s inside a router (`useInRouterContext`) and plain
+  `https://kobblon.com/policies/…` anchors outside one.
+
+There is a bare page for it: `tools/site/signupform-preview.html` mounts it
+twice with no router and no provider, once with `onPolicy` and once without.
+That page exists so the next thing that would take your panel down gets
+found here instead.
+
+**`getProfile(id)`** is exported from `@/lib/api`, returning `Profile | null`.
+Row-level security decides what comes back, exactly as it does for the site;
+it adds no reach.
+
+**Still not done, plainly:** `new_follower` as a notification kind, and a
+`Dialog` that can be confined to a pane. Neither is started.

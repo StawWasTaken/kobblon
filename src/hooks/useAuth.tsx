@@ -4,11 +4,15 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import {
   claimGuestAccount, endSession, linkGuestEmail, refreshPortrait, setSessionCountry,
-  registerWithoutEmail, signInWithUsername, touchSession, uploadAvatar,
+  signInWithUsername, touchSession, uploadAvatar,
 } from '@/lib/api'
 import { myZone, placeOfZone } from '@/lib/places'
 import { clearAccountSession, rememberAccount, updateAccountSession } from '@/lib/accounts'
 import { portraitIsCurrent } from '@/lib/headshots'
+import {
+  signUpWithEmail, signUpWithoutEmailAddress, takePendingAvatar,
+} from '@/lib/signup'
+import type { SignupDetails } from '@/lib/signup'
 import type { Profile } from '@/types/db'
 
 type AuthValue = {
@@ -29,15 +33,12 @@ type AuthValue = {
   refreshProfile: () => Promise<void>
 }
 
-export type SignupDetails = {
-  email: string
-  password: string
-  username: string
-  displayName: string
-  avatarFile: File | null
-  birthDate: string
-  gender: string
-}
+/*
+ * The shape lives in `@/lib/signup` now, with the two functions that take
+ * it, so a form mounted outside the site can reach both without this file.
+ * Re-exported here because most of the site imports it from the hook.
+ */
+export type { SignupDetails }
 
 /*
  * Exported so a bare page under `tools/site/` can hand a component a
@@ -68,9 +69,6 @@ export function useMaybeAuth() {
 }
 
 const PRESENCE_INTERVAL = 60_000
-
-/** Held when signup could not upload yet because no session existed. */
-let pendingAvatar: File | null = null
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -158,9 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
 
     const run = async () => {
-      if (pendingAvatar) {
-        const file = pendingAvatar
-        pendingAvatar = null
+      const file = takePendingAvatar()
+      if (file) {
         try {
           const url = await uploadAvatar(userId, file)
           await supabase.from('profiles').update({ avatar_url: url }).eq('id', userId)
@@ -285,77 +282,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
       },
-      async signUp(details) {
-        const { data, error } = await supabase.auth.signUp({
-          email: details.email,
-          password: details.password,
-          options: {
-            data: {
-              username: details.username,
-              display_name: details.displayName || details.username,
-              // Nothing. A profile picture is a shot of their own avatar
-              // now, drawn the first time they look at themselves - so an
-              // account starts without one rather than wearing somebody
-              // else's face until it notices.
-              avatar_url: '',
-              birth_date: details.birthDate,
-              gender: details.gender,
-            },
-          },
-        })
-        if (error) throw error
-
-        // Joins the account switcher straight away. Supabase returns the new
-        // user even when it is still waiting on an email confirmation, so
-        // this does not depend on a session existing yet; the real picture
-        // and name overwrite this once the profile loads.
-        if (data.user) {
-          rememberAccount({
-            id: data.user.id,
-            email: details.email,
-            username: details.username,
-            displayName: details.displayName || details.username,
-            avatarUrl: null,
-          })
-        }
-
-        // Storage needs a signed-in user. When the project asks for email
-        // confirmation there is no session yet, so the picture is set on the
-        // first sign-in instead and a Kobby picture stands in until then.
-        if (details.avatarFile && data.session) {
-          const url = await uploadAvatar(data.session.user.id, details.avatarFile)
-          await supabase.from('profiles').update({ avatar_url: url }).eq('id', data.session.user.id)
-        } else if (details.avatarFile) {
-          pendingAvatar = details.avatarFile
-        }
-      },
-      async signUpWithoutEmail(details) {
-        /*
-         * The account is made behind the service role - see `register` -
-         * because Supabase would otherwise send a confirmation email to a
-         * stand-in address that nobody can read. What comes back is a
-         * session, so this tab is signed in by the time it returns and
-         * there is nothing to go and check.
-         */
-        const tokens = await registerWithoutEmail({
-          username: details.username,
-          password: details.password,
-          displayName: details.displayName || details.username,
-          birthDate: details.birthDate,
-          gender: details.gender,
-        })
-
-        const { error } = await supabase.auth.setSession(tokens)
-        if (error) throw new Error(error.message)
-
-        rememberAccount({
-          id: (await supabase.auth.getUser()).data.user?.id ?? '',
-          email: '',
-          username: details.username,
-          displayName: details.displayName || details.username,
-          avatarUrl: null,
-        })
-      },
+      /*
+       * Both of these are `@/lib/signup` now rather than bodies here, so
+       * the signup form can be mounted with no provider above it and still
+       * call the same thing the site calls.
+       */
+      signUp: signUpWithEmail,
+      signUpWithoutEmail: signUpWithoutEmailAddress,
       async claimAccount(details) {
         /*
          * The guest is already signed in, so the account stays and the email

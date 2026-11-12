@@ -60,6 +60,26 @@ const LOOKS = [
 ] as const
 
 /*
+ * A height the caller asks for actually wins.
+ *
+ * `cn` joins rather than merges, so a default `h-5 sm:h-6` written into the
+ * class list and an `h-14 sm:h-16` passed in from outside are both present
+ * and whichever Tailwind emitted later wins - which is not the one the
+ * caller asked for, and which is silent. The applications session lost
+ * three goes to it putting this mark over the Launcher's login card, and
+ * had to force it with `!h-14`.
+ *
+ * Forcing is not the fix, because the next caller has to know to force. The
+ * default is simply not written when the caller has said a height, so the
+ * two never meet in the first place. Same trap as `Title` and `Character`;
+ * this is the first one where the component could keep its own default and
+ * still give way.
+ */
+function heights(className: string | undefined, fallback: string) {
+  return /(^|[\s:])!?h-/.test(className ?? '') ? undefined : fallback
+}
+
+/*
  * The name, falling back to the mark where the name will not fit.
  *
  * Staw: "for the logomark its only when the wordmark is too small". So the
@@ -85,7 +105,7 @@ export function Wordmark({ className, to = '/', always = false }: {
   always?: boolean
 }) {
   const img = (
-    <span className={cn('inline-flex h-5 items-center sm:h-6', className)}>
+    <span className={cn('inline-flex items-center', heights(className, 'h-5 sm:h-6'), className)}>
       {!always && (
         <span className="inline-flex h-full items-center sm:hidden">
           {LOOKS.map((one) => (
@@ -145,7 +165,7 @@ export function Wordmark({ className, to = '/', always = false }: {
  */
 export function Logomark({ className }: { className?: string }) {
   return (
-    <span className={cn('inline-flex h-7 items-center', className)} aria-hidden="true">
+    <span className={cn('inline-flex items-center', heights(className, 'h-7'), className)} aria-hidden="true">
       {LOOKS.map((one) => (
         <img
           key={`${one.look}-${one.mode}`}

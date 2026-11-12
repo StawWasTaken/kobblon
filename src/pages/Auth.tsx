@@ -188,8 +188,30 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
           </div>
 
           {/* ----------------------------------------------- the card */}
-          <section className="mx-auto mt-6 w-full max-w-md">
-            <div className="relative rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/85 p-5 shadow-pop backdrop-blur-xl sm:p-6">
+          {/* The gap is the mark's: half of it hangs above the card, so a
+              `mt-6` here put it straight through the headline. */}
+          <section className="mx-auto mt-12 w-full max-w-md sm:mt-14">
+            {/*
+              * Flat, and the mark sitting on its top edge.
+              *
+              * Both are Staw's, through the applications session, and both
+              * are about one design across the two: "i want it to be not
+              * with a shadow, flat, like for the roblox one", and "the
+              * kobblon wordmark to be over both the card & the background
+              * (like the minecraft launcher)".
+              *
+              * So `shadow-pop` is gone and the lifted bottom edge with it -
+              * a stroke and a fill, sitting on the page. The mark is out of
+              * the flow, centred on the top edge, with `z-10` so the card's
+              * own surface does not cover its lower half and `pt-12` to
+              * make the room it now needs.
+              */}
+            <div className="relative rounded-2xl border-2 border-white/10 bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
+              <Wordmark
+                to={null}
+                always
+                className="absolute left-1/2 top-0 z-10 h-14 -translate-x-1/2 -translate-y-1/2 sm:h-16"
+              />
               <div className="relative">
                 {sentTo ? (
                   <div className="text-center">
@@ -222,29 +244,6 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                   </>
                 ) : (
                   <>
-                    <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl border-2 border-b-4 border-white/10 bg-white/[0.04] p-1">
-                      {(['login', 'signup'] as const).map((which) => (
-                        <Link
-                          key={which}
-                          /* Carrying `next` across: somebody sent here by a
-                             link, who then switches to Sign up, still lands
-                             where they were going once they are in. */
-                          to={`${which === 'login' ? '/login' : '/signup'}${
-                            asked && after !== '/home' ? `?next=${encodeURIComponent(after)}` : ''
-                          }`}
-                          replace
-                          className={cn(
-                            'rounded-lg py-2 text-center text-sm font-bold transition-colors',
-                            mode === which
-                              ? 'bg-brand text-on-art'
-                              : 'text-white/55 hover:bg-white/5 hover:text-white',
-                          )}
-                        >
-                          {which === 'login' ? 'Log in' : 'Sign up'}
-                        </Link>
-                      ))}
-                    </div>
-
                     {isSignup
                       ? (
                         /*
@@ -268,6 +267,34 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                     {guestError && (
                       <p className="mt-2 text-center text-xs text-danger">{guestError}</p>
                     )}
+
+                    {/*
+                      * The sentence is the switcher.
+                      *
+                      * Staw: "i dont want the 'login/signup' switcher but
+                      * instead the text like you put it 'new here' thingy
+                      * opens the signup page (like clicking on the text
+                      * itself is used as the switcher, instead of an ugly
+                      * switcher thingy)".
+                      *
+                      * The tab row it replaces gave half the width of the
+                      * card to the rarer of the two people on this screen,
+                      * which is what made it read as furniture. A line
+                      * still switches both ways, and `next` rides along
+                      * exactly as the tabs carried it.
+                      */}
+                    <p className="mt-4 text-center text-sm text-white/45">
+                      {isSignup ? 'Got an account? ' : 'New here? '}
+                      <Link
+                        to={`${isSignup ? '/login' : '/signup'}${
+                          asked && after !== '/home' ? `?next=${encodeURIComponent(after)}` : ''
+                        }`}
+                        replace
+                        className="font-bold text-brand-bright hover:underline"
+                      >
+                        {isSignup ? 'Log in' : 'Make a Kobblon account'}
+                      </Link>
+                    </p>
                   </>
                 )}
               </div>

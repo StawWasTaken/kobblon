@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { Link, useInRouterContext } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Reveal } from '@/components/ui/Reveal'
@@ -7,7 +8,8 @@ import { BirthdayPicker, birthdayToDate, emptyBirthday } from './BirthdayPicker'
 import type { Birthday } from './BirthdayPicker'
 import { GenderPicker } from './GenderPicker'
 import type { Gender } from './GenderPicker'
-import { useAuth } from '@/hooks/useAuth'
+import { useMaybeAuth } from '@/hooks/useAuth'
+import { signUpWithEmail, signUpWithoutEmailAddress } from '@/lib/signup'
 import { checkUsername } from '@/lib/api'
 import { isOldEnough, MINIMUM_AGE } from '@/lib/age'
 
@@ -27,18 +29,79 @@ const NAME_SHAPE = /^[A-Za-z0-9_]{1,32}$/
 const NAME_SAID = 'Letters, numbers and underscores. No spaces.'
 
 /**
+ * One of the two policy links, wherever this form has been mounted.
+ *
+ * On the site it is a `<Link>`. In an application there is no router, so a
+ * `<Link>` throws and takes the panel down - the third time that has
+ * happened here - and the address bar it would change does not exist
+ * either. So: whatever `onPolicy` does, else an ordinary address at
+ * kobblon.com opened in a new tab.
+ */
+function Policy({ which, routed, onPolicy, children }: {
+  which: 'terms' | 'guidelines'
+  routed: boolean
+  onPolicy?: (which: 'terms' | 'guidelines') => void
+  children: ReactNode
+}) {
+  const look = 'font-semibold text-link hover:underline'
+  if (onPolicy) {
+    return (
+      <button type="button" className={look} onClick={() => onPolicy(which)}>{children}</button>
+    )
+  }
+  if (routed) return <Link to={`/policies/${which}`} className={look}>{children}</Link>
+  return (
+    <a
+      href={`https://kobblon.com/policies/${which}`}
+      target="_blank"
+      rel="noreferrer"
+      className={look}
+    >
+      {children}
+    </a>
+  )
+}
+
+/**
  * The same form does both jobs. A guest keeps the account they are already
  * signed in with, so nothing they made is thrown away when they decide to
  * stay; anybody else gets a new one.
  */
 export function SignupForm({
-  onSent, claiming, onClaimed,
+  onSent, claiming, onClaimed, onPolicy,
 }: {
   onSent: (email: string) => void
   claiming?: boolean
   onClaimed?: () => void
+  /**
+   * What to do when somebody wants to read the terms or the guidelines.
+   *
+   * For an application that has no router and no address bar: it is handed
+   * which one was asked for and opens it however it opens things. Left
+   * out, the two are links on the site and plain addresses anywhere else.
+   */
+  onPolicy?: (which: 'terms' | 'guidelines') => void
 }) {
-  const { signUp, signUpWithoutEmail, claimAccount } = useAuth()
+  /*
+   * Mountable with nothing around it, which is the whole point of this one.
+   *
+   * The Launcher signs people up in its own window now, and building a
+   * second age gate there is exactly the second copy this repository exists
+   * to prevent. So: `useMaybeAuth` rather than `useAuth`, because there is
+   * no provider over there; the two signup calls come from `@/lib/signup`
+   * when there is no provider to supply them; and the policy links below
+   * stop being `<Link>`s when there is no router above this.
+   *
+   * `claimAccount` is the one thing that is not available outside the site,
+   * and it cannot be: it acts on the guest session the provider is holding.
+   * An application mounting this is not claiming anything, so `claiming`
+   * is a site-only prop and it says so when asked for without a provider.
+   */
+  const auth = useMaybeAuth()
+  const signUp = auth?.signUp ?? signUpWithEmail
+  const signUpWithoutEmail = auth?.signUpWithoutEmail ?? signUpWithoutEmailAddress
+  const claimAccount = auth?.claimAccount
+  const routed = useInRouterContext()
 
   const [birthday, setBirthday] = useState<Birthday>(emptyBirthday)
   const [username, setUsername] = useState('')
@@ -123,6 +186,10 @@ export function SignupForm({
       }
 
       if (claiming) {
+        /* Only the site has a guest session to keep, and the provider is
+           what holds it. Asked for without one, this is a mistake worth
+           hearing about rather than a silent new account. */
+        if (!claimAccount) throw new Error('Keeping a guest account only works on the website.')
         await claimAccount(details)
         onClaimed?.()
       } else if (email.trim()) {
@@ -235,9 +302,9 @@ export function SignupForm({
 
       <p className="text-center text-mini leading-relaxed text-muted">
         By carrying on you agree to our{' '}
-        <Link to="/policies/terms" className="font-semibold text-link hover:underline">Terms of Service</Link>
+        <Policy which="terms" routed={routed} onPolicy={onPolicy}>Terms of Service</Policy>
         {' '}and{' '}
-        <Link to="/policies/guidelines" className="font-semibold text-link hover:underline">Community Guidelines</Link>.
+        <Policy which="guidelines" routed={routed} onPolicy={onPolicy}>Community Guidelines</Policy>.
       </p>
     </form>
   )

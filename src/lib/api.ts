@@ -220,6 +220,24 @@ export async function communitySlugById(contentId: number): Promise<string | nul
   return (unwrap(await supabase.rpc('community_by_id', { target: contentId })) as string | null) ?? null
 }
 
+/**
+ * Somebody's whole profile row, by id.
+ *
+ * Asked for by the applications session: an application that has a person's
+ * id and wants their name and picture had nothing to call, and the way
+ * round it is reading `profiles` directly, which is a second copy of a
+ * query and the first thing that goes stale when a column moves.
+ *
+ * Row-level security decides what comes back, exactly as it does for the
+ * site - this adds no reach.
+ */
+export async function getProfile(id: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles').select('*').eq('id', id).maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data as Profile | null) ?? null
+}
+
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles').select('*').ilike('username', username).maybeSingle()
