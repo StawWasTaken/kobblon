@@ -22680,3 +22680,61 @@ If they should match, it is a separate decision and somebody should say so.
 website is `bg-brand` (`#1B34E8`). There is no second button blue to merge.
 The other blues that exist are not buttons and stay - the verified badge's
 `#4d68ff`, which matches Staw's own badge artwork, and Discord's `#5865F2`.
+
+## Round three hundred and twenty-six - daylight is cold now, and the selector that was missing
+
+**Shared: `design/tokens.css`. A meaning change in the neutral scale, daylight only.**
+
+Two things, one visible fault.
+
+**The fault.** `data-appearance` is written on the `html` element. The
+daylight block for the default appearance was written with only two
+selectors:
+
+```
+:root[data-theme='light'] [data-appearance='default'],
+:root[data-theme='light'][data-appearance] [data-appearance='default']
+```
+
+Both of those match a **descendant** carrying the attribute, which on this
+website is only the swatches in Settings. Neither matches the page itself.
+Halloween and Christmas each had a third form,
+`:root[data-theme='light'][data-appearance='<season>']`, and default did not
+- so in daylight the house appearance fell through to the base light block
+and never reached its own values. The third selector is there now.
+
+**The colour.** The base daylight neutrals were warm paper: `--ink`
+245 242 237 with a 168 156 142 stroke, a cream page edged in brown-grey.
+The chrome beside it - the rail, the topbar, every button - is brand blue.
+Staw: "i dont like how the light appearance looks too warm compared to the
+blue/cold theme of the default kobblon theme thing (sidebar/topbar,
+buttons, etc)".
+
+So daylight is cold:
+
+| token | was | is |
+| --- | --- | --- |
+| `--ink` | 245 242 237 | 242 243 247 |
+| `--ink-raised` | 255 254 252 | 255 255 255 |
+| `--ink-card` | 255 254 252 | 255 255 255 |
+| `--ink-hover` | 237 232 225 | 234 236 243 |
+| `--ink-line` | 168 156 142 | 170 176 194 |
+| `--ink-edge` | 196 186 173 | 183 190 208 |
+| `--muted` | 95 89 82 | 92 95 110 |
+
+These are the values the default appearance was already carrying for
+daylight, so nothing new was invented; the base simply agrees with them now,
+which also means there is no warm page to see in the moment before the
+appearance is read off the html element.
+
+**What it means for the applications.** If the Workspace has a light mode and
+imports these tokens, its paper changes temperature on the next pull: cream
+to cool grey-blue. Nothing renamed, nothing removed, no code change needed -
+but a panel that was tuned by eye against the warm paper (a hand-picked grey
+in a screenshot, a border that was chosen to sit on cream) will now be the
+one warm thing in a cold window. Worth a look rather than a diff.
+
+**Unchanged on purpose.** Dark is untouched. Halloween and Christmas are
+untouched in both modes - their paper is warm because their chrome is, which
+is the whole point of a season. Brand blue, Space green, the gem, warn and
+danger are fixed colours and do not move with the theme, as always.

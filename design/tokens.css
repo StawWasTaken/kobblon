@@ -114,18 +114,34 @@
    untouched, so what a colour means never depends on the theme. */
 :root[data-theme='light'] {
   color-scheme: light;
-  /* Warm paper, the daylight half of the stone above. */
-  --ink: 245 242 237;
-  --ink-raised: 255 254 252;
-  --ink-card: 255 254 252;
-  --ink-hover: 237 232 225;
-  --ink-line: 168 156 142;
-  --ink-edge: 196 186 173;
+  /*
+   * Cool paper, the daylight half of the stone above.
+   *
+   * It was warm - 245 242 237 with a 168 156 142 stroke, a cream page with
+   * a brown-grey edge. On its own that is a perfectly good paper; next to
+   * the rail and the topbar, which are brand blue in daylight, it is not,
+   * because the two halves of the same window are then reading as two
+   * different temperatures. Staw: "i dont like how the light appearance
+   * looks too warm compared to the blue/cold theme of the default kobblon
+   * theme thing (sidebar/topbar, buttons, etc)".
+   *
+   * These are the values the default appearance already carried for
+   * daylight; the base simply agrees with them now, so there is no warm
+   * page to see before the appearance is read off the html element.
+   * Halloween and Christmas override every one of them and are untouched -
+   * their paper is supposed to be warm, because their chrome is.
+   */
+  --ink: 242 243 247;
+  --ink-raised: 255 255 255;
+  --ink-card: 255 255 255;
+  --ink-hover: 234 236 243;
+  --ink-line: 170 176 194;
+  --ink-edge: 183 190 208;
   --fg: 20 19 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */
   --on-art: 255 255 255;
   --art-ink: 16 16 18;
-  --muted: 95 89 82;
+  --muted: 92 95 110;
   --link: 27 52 232;
   /* The other way round in daylight, for the same reason. */
   --toast: 18 18 22;
@@ -201,8 +217,19 @@
   --bubble: 38 38 47;
 }
 
+/*
+ * The third selector is the one that was missing.
+ *
+ * `data-appearance` is written on the html element, so the form that
+ * actually matches the page is `:root[data-theme='light'][data-appearance=
+ * 'default']` - the other two match a descendant carrying the attribute,
+ * which is only the swatches in Settings. Halloween and Christmas both had
+ * all three; default had two, so in daylight it fell through to the base
+ * block and the page came out warm while its own chrome was blue.
+ */
 :root[data-theme='light'] [data-appearance='default'],
-:root[data-theme='light'][data-appearance] [data-appearance='default'] {
+:root[data-theme='light'][data-appearance] [data-appearance='default'],
+:root[data-theme='light'][data-appearance='default'] {
   --chrome: 214 230 255;
   --media: 226 232 244;
   --field: 255 255 255;
