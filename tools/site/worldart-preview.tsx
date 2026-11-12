@@ -13,6 +13,14 @@ import { WorldTile, WorldFeature } from '@/components/worlds/Shelf'
 import type { World } from '@/types/db'
 import '@/index.css'
 
+const broken = {
+  id: '2', content_id: 8, slug: 'gun-game', name: 'Gun Game',
+  creator_name: 'Staw', description: 'A World whose picture will not load.',
+  emblem_url: 'https://example.invalid/gone.png',
+  cover_url: 'https://example.invalid/gone.png',
+  visit_count: 12, like_count: 1, dislike_count: 0,
+} as unknown as World
+
 const bare = {
   id: '1', content_id: 7, slug: 'first-ground', name: 'First Ground',
   creator_name: 'Staw', description: 'A World nobody has decorated yet.',
@@ -26,6 +34,8 @@ createRoot(document.getElementById('root')!).render(
         <WorldCard world={bare} className="w-72" />
         <WorldTile world={bare} />
         <WorldFeature world={bare} />
+        <WorldCard world={broken} className="w-72" />
+        <WorldTile world={broken} />
       </div>
     </div>
   </MemoryRouter>,
