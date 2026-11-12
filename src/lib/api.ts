@@ -6973,3 +6973,31 @@ export async function refreshEveryPortrait(): Promise<number> {
   if (error) throw new Error(error.message)
   return Number(data ?? 0)
 }
+
+/* ------------------------------------------- what people ask Kobby about */
+
+export type KobbyQuestion = {
+  id: number
+  asked_by: string | null
+  question: string
+  answered: boolean
+  created_at: string
+}
+
+/**
+ * The questions people have put to Kobby about the rules, newest first.
+ *
+ * `kobby_questions` has no grants on purpose - nothing reads the table
+ * directly, including this. It comes through `kobby_question_log`, which is
+ * `security definer` and refuses anybody whose profile is not `is_admin`,
+ * so the rank is decided in the database and not by which panel this is
+ * called from.
+ *
+ * It has existed since the day Ask Kobby shipped and nothing on the site
+ * called it, which means every question anybody has asked was being written
+ * down where no one could read it. That is the whole reason this is here.
+ */
+export async function kobbyQuestionLog(howMany = 100): Promise<KobbyQuestion[]> {
+  const rows = unwrap(await supabase.rpc('kobby_question_log', { how_many: howMany }))
+  return (rows as KobbyQuestion[]) ?? []
+}

@@ -80,7 +80,7 @@ import {
   refreshEveryPortrait,
   type NoticeColour, makeAccountReal,
   reportTicket, takeReport, myStaffRank,
-  aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
+  aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels, kobbyQuestionLog,
   checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
   machinePulse, startTheHeartbeat, staffOverview, askKobbyForWords,
   staffCommunities, flagCommunity, verifyCommunity, staffCloseCommunity,
@@ -5888,6 +5888,8 @@ export function MachineSection() {
   const pulse = useAsync(async () => machinePulse(), [])
   const recent = useAsync(async () => aiRecent(30), [])
   const waiting = useAsync(async () => aiWork(50), [])
+  /* The questions put to Kobby about the rules, which nothing has ever read. */
+  const asked = useAsync(async () => kobbyQuestionLog(50), [])
   const [busy, setBusy] = useState<string | null>(null)
   /** The self-check's answers, once somebody has asked for them. */
   const [checked, setChecked] = useState<MachineStep[] | null>(null)
@@ -6435,6 +6437,56 @@ export function MachineSection() {
             </Badge>
             <span className="text-xs text-muted">{one.subject}</span>
             <span className="min-w-0 flex-1 truncate text-white/75">{one.reason}</span>
+            <span className="shrink-0 text-xs text-muted">{timeAgo(one.created_at)}</span>
+          </Card>
+        ))}
+      </div>
+
+      {/* ----------------------------------------- what it is being asked */}
+      {/*
+        * Every question anybody has put to Kobby about the rules has been
+        * written down since the day Ask Kobby shipped, and nothing read it
+        * back. `kobby_questions` has no grants by design and
+        * `kobby_question_log` was granted and never called, so the whole
+        * record existed where no one could see it.
+        *
+        * It belongs here rather than in Support: the log is refused to
+        * anybody who is not `is_admin`, so a moderator opening a panel
+        * built on it would be shown "Only Kobblon reads this." and nothing
+        * else.
+        *
+        * What it is for is the unanswered ones. A question Kobby would not
+        * answer is a rule nobody has written yet, or one written where
+        * nobody finds it, and that is only visible as a list.
+        */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <p className="font-display text-xs uppercase tracking-wider text-muted">
+            What people are asking it
+          </p>
+          {!!asked.data?.length && (
+            <p className="text-mini text-muted">
+              {asked.data.filter((one) => !one.answered).length} of {asked.data.length} went
+              unanswered
+            </p>
+          )}
+        </div>
+
+        {asked.loading ? <Skeleton className="h-24" /> : asked.error ? (
+          <p className="text-sm text-muted">{asked.error}</p>
+        ) : !asked.data?.length ? (
+          <p className="text-sm text-muted">Nobody has asked Kobby anything yet.</p>
+        ) : asked.data.map((one, i) => (
+          <Card
+            key={one.id}
+            style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}
+            className="flex animate-row-in flex-wrap items-baseline gap-x-3 gap-y-1 p-3 text-sm"
+          >
+            <Badge tone={one.answered ? 'space' : 'warm'}>
+              {one.answered ? 'answered' : 'no answer'}
+            </Badge>
+            {/* Somebody's own words, so they are text and never markup. */}
+            <span className="min-w-0 flex-1 truncate text-white/75">{one.question}</span>
             <span className="shrink-0 text-xs text-muted">{timeAgo(one.created_at)}</span>
           </Card>
         ))}

@@ -22902,3 +22902,29 @@ overflowed and the tab tray was painted on top of the word "Notifications".
 The drawing is capped at 4rem and the title and its count truncate, so at the
 card's real width everything fits side by side and on a narrow one the title
 shortens instead of being covered. No other change.
+
+## Round three hundred and thirty-two - the questions people put to Kobby are readable now
+
+Ask Kobby has been writing down every question anybody puts to it about the
+rules since the day it shipped. `kobby_questions` has no grants, by design -
+nothing reads the table directly - and the way in, `kobby_question_log`, was
+granted and then never called by anything. So the whole record existed where
+no one could see it.
+
+`kobbyQuestionLog(howMany = 100)` is in `@/lib/api` now, returning
+`KobbyQuestion[]` (`id`, `asked_by`, `question`, `answered`, `created_at`),
+newest first, capped at 500 by the function itself. The console's **Machine**
+panel lists the last fifty under "What people are asking it", each marked
+answered or not, with a count of the unanswered ones above the list.
+
+It is in Machine and not in Support on purpose: the log refuses anybody whose
+profile is not `is_admin`, so a moderator-level panel built on it would show
+"Only Kobblon reads this." and nothing else. The rank is decided in the
+database, not by which panel the call came from.
+
+What it is for is the unanswered ones: a question Kobby would not answer is a
+rule nobody has written yet, or one written where nobody finds it, and that
+is only visible as a list.
+
+**For the applications:** nothing shared changed. `kobbyQuestionLog` is
+admin-only and the Workspace has no reason to call it.
