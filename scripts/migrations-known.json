@@ -798,5 +798,10 @@
     "search-path-misses-extensions": [
       "public"
     ]
+  },
+  "0336_newbie_and_no_welcome_brix.sql": {
+    "search-path-misses-extensions": [
+      "public"
+    ]
   }
 }

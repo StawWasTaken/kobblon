@@ -22562,3 +22562,70 @@ circle, and they are meant to read as little squares.
 open. Staw's three complaints - everything is a bordered box, the layouts are
 lazy, it is flat and lifeless - are about arrangement, not tokens, and the
 first attempt at them was reverted. Nothing in this round addresses them.
+
+
+## Round three hundred and twenty-four - the heartbeat can be started after the fact
+
+`pg_net` is on now, so the database can call out and the triggers from 0224
+knock on the worker the moment something lands. That half is live.
+
+The other half was not, and it was not for a reason worth writing down,
+because it is trap one wearing a new coat.
+
+**0253 scheduled the every-minute sweep in a `do` block.** The block looks up
+`cron.schedule` by name rather than assuming it - which is right, and is why
+the file applies against a plain Postgres with no `pg_cron` in it. But a `do`
+block runs once, when the file is applied, and then it is gone. Turn `pg_cron`
+on afterwards and nothing in the database ever looks again. The console reads
+`cron.job` live and correctly reported "nothing is scheduled to run it"; its
+own advice was *apply migration 0253 again*, which means re-pasting two
+hundred lines into the SQL editor to run fifteen of them.
+
+That is a value read once at install time, when the thing that decides it
+arrives later. `poke_the_worker` gets this exactly right about `pg_net` - it
+calls `to_regprocedure` at the moment of use, every time - and the schedule two
+hundred lines below it gets it wrong about `pg_cron`. Same file, same trap,
+opposite answers.
+
+**0339** turns the scheduling into `start_the_heartbeat()`, callable whenever
+anybody asks, and applies it once at the end of the file for a project where
+`pg_cron` is already on. It is staff-gated inside the function body rather than
+by a grant, because `security definer` changes a function's rights and not who
+it reports as - `auth.uid()` inside `is_moderator()` is still the caller, which
+is the point. Returns false rather than raising when there is no `pg_cron`,
+since that is a thing the console has to be able to say.
+
+Checked under two real identities with `auth.uid()` read back first, which is
+the only way a guard whose subject is identity proves anything: a signed-in
+ordinary account is refused, a moderator gets through. With a stand-in
+`cron.schedule` created after the migration had been applied, it finds it,
+schedules `kobblon-machine` on `* * * * *`, and calling it twice leaves one
+minute hand rather than two.
+
+**In the console**, the fault that said "apply migration 0253 again" is now a
+**Start the sweep** button on the fault itself. If `pg_cron` is not on the
+project it says so and names where to turn it on.
+
+**0340** is one line: `claim_guest_account` from 0336 was `security definer`
+pinned to `public` alone while every other function in that file is pinned to
+`public, extensions`. It has not broken anything, and the reason is luck
+rather than design - nothing in its body reaches for pgcrypto, and what it
+calls sets its own search path. `alter function` rather than re-stating forty
+lines of body to change the line above them.
+
+**What is still manual, and will stay manual:** the worker's address and
+service-role key. They are set with one statement in the SQL editor and are
+not settable from the console, because a key typed into a web page is a key
+that has been in a browser. `ai_poke` has row level security on and no grants
+to any role, so `authenticated`, `anon` and `service_role` alike get permission
+denied reading it; only the definer functions touch it, and `poke_state` and
+`machine_pulse` return whether it is set and never what it is.
+
+**Nothing in this round is shared with the applications.** No signature, field
+or limit they build against moved. It is here because the machine being
+genuinely awake is the thing that drains the queues the Workspace's uploads
+land in, and because the trap is one both sides keep falling into.
+
+**Not verified here:** the Machine panel's appearance. It needs a staff session
+and a live database, and this session has neither. The logic typechecks and
+builds; what it looks like is unchecked.

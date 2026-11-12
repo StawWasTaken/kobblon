@@ -82,7 +82,7 @@ import {
   reportTicket, takeReport, myStaffRank,
   aiSettings, setAiSettings, aiRecent, aiWork, runModeration, groqModels,
   checkTheMachine, sanctionAccount, banAccount, liftAccountBan,
-  machinePulse, staffOverview, askKobbyForWords,
+  machinePulse, startTheHeartbeat, staffOverview, askKobbyForWords,
   staffCommunities, flagCommunity, verifyCommunity, staffCloseCommunity,
   staffReopenCommunity, staffTransferCommunity, eraseCommunity,
   searchProfiles, type CommunityTab, reopenAccount, eraseAccount,
@@ -5969,6 +5969,33 @@ export function MachineSection() {
     }
   }
 
+  /*
+   * Start the every-minute sweep from here.
+   *
+   * It used to be a sentence telling somebody to re-apply migration 0253,
+   * which is two hundred lines pasted into the SQL editor to run fifteen of
+   * them - and only because 0253 scheduled the job in a `do` block, which
+   * runs once, at apply time, and never looks again when pg_cron is turned
+   * on afterwards. 0339 made it a function instead; this is the button.
+   */
+  const startBeat = async () => {
+    setBusy('beat')
+    try {
+      const scheduled = await startTheHeartbeat()
+      say(
+        scheduled
+          ? 'The sweep is scheduled: every minute, from the database itself.'
+          : 'pg_cron is not installed on this project, so there is nothing to schedule with. Database, Extensions, pg_cron - then press this again.',
+        scheduled ? 'success' : 'info',
+      )
+      pulse.reload()
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const check = async () => {
     setBusy('check')
     setChecked(null)
@@ -6038,7 +6065,8 @@ export function MachineSection() {
   const faults = !on ? [] : [
     !beat?.beating && {
       what: 'Nothing is scheduled to run it',
-      fix: 'The every-minute sweep lives in the database as the pg_cron job "kobblon-machine". Install pg_cron on the project and apply migration 0253 again. Until then it moves when something lands, every five minutes from the schedule on the repository, and every minute while this panel is open - but a console nobody has open sweeps nothing.',
+      fix: 'The every-minute sweep lives in the database as the pg_cron job "kobblon-machine". Press Start the sweep; if pg_cron is not on the project yet it will say so, and it can be turned on under Database, Extensions. Until then it moves when something lands, every five minutes from the schedule on the repository, and every minute while this panel is open - but a console nobody has open sweeps nothing.',
+      act: { word: 'Start the sweep', run: startBeat, key: 'beat' },
     },
     !beat?.wired && {
       what: 'The database does not know where the worker is',
@@ -6048,7 +6076,11 @@ export function MachineSection() {
       what: 'There is nothing to knock with',
       fix: 'pg_net is not installed, so the database cannot call the function at all.',
     },
-  ].filter(Boolean) as { what: string; fix: string }[]
+  ].filter(Boolean) as {
+    what: string
+    fix: string
+    act?: { word: string; run: () => Promise<void>; key: string }
+  }[]
 
   return (
     <div className="space-y-5">
@@ -6149,10 +6181,22 @@ export function MachineSection() {
                 className="flex animate-row-in items-start gap-3 rounded-xl border-2 border-b-4 border-warn/30 bg-warn/5 p-3"
               >
                 <FontAwesomeIcon icon={faHeartPulse} className="mt-0.5 shrink-0 text-warn-bright" />
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block text-sm font-bold text-warn-bright">{fault.what}</span>
                   <span className="mt-0.5 block text-xs leading-relaxed text-muted">{fault.fix}</span>
                 </span>
+                {fault.act && (
+                  <Button
+                    size="sm"
+                    variant="subtle"
+                    className="shrink-0"
+                    loading={busy === fault.act.key}
+                    disabled={!!busy}
+                    onClick={() => { void fault.act!.run() }}
+                  >
+                    {fault.act.word}
+                  </Button>
+                )}
               </div>
             ))}
           </Card>

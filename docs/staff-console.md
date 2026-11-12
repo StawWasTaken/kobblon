@@ -315,6 +315,18 @@ A status row: an **On** / **Off** badge, how many things are waiting right
 now, a **Turn it on / off** button, and **Run it now** (disabled while it is
 off).
 
+**Whether it is actually running**, which is three questions and not one:
+whether it is switched on, whether anything is *scheduled* to run it, and
+whether the database can physically knock on the worker. The heartbeat beside
+the name says so in a word - *stopped*, *awake*, or *on, but nothing is
+running it* - and whatever stands between on and working is listed underneath
+in plain words. The sweep fault carries a **Start the sweep** button: it
+schedules the every-minute `pg_cron` job from here, and says so if `pg_cron`
+is not on the project yet. The worker's address and service key are the one
+thing that is never settable from this page - a key typed into a web page is a
+key that has been in a browser - so that stays one statement in the SQL
+editor.
+
 **When it works**, three mutually exclusive choices:
 
 - *Whenever anything is waiting*

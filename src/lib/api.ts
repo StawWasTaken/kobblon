@@ -4659,6 +4659,18 @@ export type MachinePulse = {
   oldest_minutes: number | null
 }
 
+/**
+ * Schedule the every-minute sweep, now.
+ *
+ * False means there is no `pg_cron` on the project to schedule with, which
+ * is a thing to show rather than throw about; it raises only when the
+ * account is not staff. See migration 0339 for why this is a call and not
+ * something that happened once when a file was applied.
+ */
+export async function startTheHeartbeat(): Promise<boolean> {
+  return Boolean(unwrap(await supabase.rpc('start_the_heartbeat')))
+}
+
 export async function machinePulse(): Promise<MachinePulse | null> {
   const rows = unwrap(await supabase.rpc('machine_pulse')) as MachinePulse[] | null
   return rows?.[0] ?? null
