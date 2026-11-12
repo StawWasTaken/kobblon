@@ -178,15 +178,15 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               * kobblon wordmark to be over both the card & the background
               * (like the minecraft launcher)".
               *
-              * So `shadow-pop` is gone, the lifted bottom edge with it, and
-              * then the stroke too - Staw, looking at the two side by side:
-              * "theres still thin strokes onto our side". A fill and
-              * nothing else, which is what the Launcher's card is. The mark
-              * is out of the flow, centred on the top edge, with `z-10` so the card's
+              * So `shadow-pop` is gone and the lifted bottom edge with it:
+              * flat is about the lift, not about the stroke. The stroke
+              * stays - it came off for one round and Staw put it straight
+              * back, because the Launcher's card has one and so should
+              * this. The mark is out of the flow, centred on the top edge, with `z-10` so the card's
               * own surface does not cover its lower half and `pt-12` to
               * make the room it now needs.
               */}
-            <div className="relative rounded-2xl bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
+            <div className="relative rounded-2xl border-2 border-white/10 bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
               <Wordmark
                 to={null}
                 always

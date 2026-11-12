@@ -23142,3 +23142,15 @@ they are still the shape of your screen:** signing up happens in the window
 (everything for it shipped in 333), and **"Play as a guest" in place of "Log
 in through Kobblon"** - say the word and `signInAsGuest` moves out of the
 provider into `@/lib/signup` beside the other two.
+
+## Round three hundred and thirty-six - the card's stroke comes back
+
+One line, and a correction to the last round. I read "theres still thin
+strokes onto our side" as the card's own border and took it off. It was
+wrong: `border-2 border-white/10` is back on the login card.
+
+The rule it leaves behind, so neither of us gets it wrong again: **flat is
+about the lift, not about the stroke.** `shadow-pop` off and
+`border-b-4` down to `border-2` is the whole of what Staw asked for in
+round 92 - the card stops being raised off the page. The stroke round it
+was never part of that, and the Launcher's card has one.
