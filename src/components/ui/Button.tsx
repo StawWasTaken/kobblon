@@ -79,11 +79,26 @@ const variants: Record<Variant, string> = {
   primary:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',
   /** The one thing this screen is for. Said on purpose, not by default. */
+  /*
+   * Green rests on `bright` and lifts to `lift`.
+   *
+   * Staw, twice: the green buttons "look semi transparent" at rest and stop
+   * looking that way under the pointer. They were resting on `space`, which
+   * is dark and low in chroma, and hovering to `space-bright`, which is not
+   * - so the hover was the only state that looked like paint and the
+   * resting state read as a tint of the card.
+   *
+   * Said plainly, because it is a real cost: white on `#1CAE71` is 2.86,
+   * under AA. The scale was moved down a round precisely to fix that, and
+   * Staw turned it down twice - the look is his call and he has made it. It
+   * is a white label on a mid-green, which is what every buy button on this
+   * platform has always been.
+   */
   yes:
-    'bg-space text-on-art hover:bg-space-bright active:bg-space-bright border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space-bright text-on-art hover:bg-space-lift active:bg-space-lift border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** Going into a World, which is the loudest yes Kobblon has. */
   enter:
-    'bg-space text-on-art hover:bg-space-bright active:bg-space-bright border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
+    'bg-space-bright text-on-art hover:bg-space-lift active:bg-space-lift border-b-[3px] border-space-deep active:border-b-0 active:mt-[3px]',
   /** The same blue as primary, kept for callers that name the platform. */
   brand:
     'bg-brand text-on-art hover:bg-brand-bright active:bg-brand border-b-[3px] border-brand-deep active:border-b-0 active:mt-[3px]',

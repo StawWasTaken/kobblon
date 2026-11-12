@@ -22,16 +22,21 @@
    * daylight half and in the gem accent, which is where it does the work
    * without changing the room everybody already builds in.
    *
-   * The one value that did not go back is `--ink-line`: at 84 86 104 the
-   * house stroke was 2.33 against its card, under the 3.0 a stroke needs
-   * to be seen at all. It is the same slate hue, lifted to 3.4 - the
-   * stroke is readable, not warmer.
+   * `--ink-line` went up and has come most of the way back down. It was
+   * lifted to 113 116 139 so a 2px stroke cleared 3.0 against its card,
+   * and at that value every card on the page was outlined in pale slate -
+   * Staw: "the strokes & 3d stuff create a too big contrast ... doesnt fit
+   * what we want". A stroke is meant to give a card an edge, not to be the
+   * loudest thing on it. 88 90 110 sits at 2.5 against the card: visible
+   * at two pixels, which is the weight the house stroke is drawn at, and
+   * quiet enough that a screen of cards reads as surfaces rather than as
+   * a wireframe.
    */
   --ink: 16 16 18;
   --ink-raised: 22 22 26;
   --ink-card: 26 26 32;
   --ink-hover: 33 33 40;
-  --ink-line: 113 116 139;
+  --ink-line: 88 90 110;
   --ink-edge: 10 10 13;
   --fg: 255 255 255;
   /*
@@ -103,7 +108,7 @@
   --ink-raised: 255 254 252;
   --ink-card: 255 254 252;
   --ink-hover: 237 232 225;
-  --ink-line: 145 132 118;
+  --ink-line: 184 173 160;
   --ink-edge: 196 186 173;
   --fg: 20 19 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */

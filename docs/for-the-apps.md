@@ -22300,3 +22300,58 @@ This is the gradient rule working as written rather than an exception to it:
 a gradient is allowed as a scrim between a picture and the surface it sits
 on, and nowhere else. The Workspace gets this for free if it mounts
 `Studio`; if it draws its own avatar backdrop, it wants the same treatment.
+
+## Round three hundred and nineteen - the green is Staw's again, and the strokes come down
+
+Round 318 got the green wrong and it is reverted. Staw: "youve literally
+changed the colours of the green - i want the old colour back, the
+transparent issue is that when you dont hover them they look transparent and
+dont anymore when you hover them."
+
+**`space.DEFAULT`, `bright` and `deep` are exactly what they were** -
+`#148556`, `#1CAE71`, `#0f6b45`. If you pulled round 318's hexes, drop them.
+Those values are Staw's and are not to be retuned; a complaint about how a
+green button looks is a complaint about which of them the button rests on.
+
+There is one addition: **`space.lift` (`#35C98C`)**, a step above `bright`.
+
+    space.DEFAULT  #148556   the deep green, tints and edges
+    space.bright   #1CAE71   what a green button RESTS on, and green text
+    space.lift     #35C98C   what it hovers to
+    space.deep     #0f6b45   the lip
+
+The button was resting on `space` and hovering to `space-bright`. `space` is
+dark and low in chroma, so at rest it read as a tint of the card and only
+the hover looked like paint - which is exactly "transparent until you hover
+it". It rests on `bright` now and lifts to `lift`, so both states are solid
+and the hover still lightens the way blue does.
+
+Said plainly because it is a real cost and it is not the first time it has
+been raised: white on `#1CAE71` is 2.86, under AA. The scale was moved down
+a round precisely to fix that and Staw has now turned that down twice. The
+look is his call; it is a white label on a mid-green, which is what every
+buy button on this platform has always been.
+
+### The house stroke comes down
+
+Staw: "the strokes & 3d stuff create a too big contrast ... doesnt fit what
+we want". `--ink-line` had been lifted to `113 116 139` so a 2px stroke
+cleared 3.0 against its card, and at that value every card on a page was
+outlined in pale slate - a screen read as a wireframe rather than as
+surfaces.
+
+    --ink-line   dark   113 116 139  ->  88 90 110
+    --ink-line   light  145 132 118  ->  184 173 160
+
+2.5 against the card, which at the two pixels the house stroke is actually
+drawn at is clearly visible and no longer the loudest thing on the card.
+**Anything in the Workspace that draws a 1px hairline in `--ink-line` will
+now be faint** - the value assumes two pixels.
+
+### The avatar stage, again
+
+Round 318's scrim only touched the corners and Staw said the contrast was
+still too much. It now pulls the whole sweep towards the card colour -
+lightly across the middle, hard at the edges - so the step from panel into
+stage is a step rather than a cliff. His backdrop artwork is still
+untouched.

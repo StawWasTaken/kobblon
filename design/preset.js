@@ -95,29 +95,26 @@ export default {
          * is.
          */
         /*
-         * Green is yes, and it has to look like a painted button rather
-         * than a tint of the card behind it.
+         * Green is yes.
          *
-         * Staw: "i dont like how the green buttons look semi transparent".
-         * The old #148556 was a desaturated, cyan-leaning green - a third
-         * of the way to teal - and beside Kobblon's fully saturated blue it
-         * read as washed out, which at a glance is indistinguishable from
-         * being drawn at partial opacity. Nothing was transparent; it was
-         * just low in chroma.
-         *
-         * So this is the most saturated green there is at the contrast the
-         * rule needs. White on #00893E is 4.52, which clears AA, and there
-         * is no greener colour at that luminance - the red and blue
-         * channels are already at zero. That is the ceiling: a brighter
-         * green cannot carry white text, which is why `bright` is the hover
-         * and never a resting fill under a label.
+         * These are the values Staw drew and they are not to be retuned. A
+         * round went and replaced them with a fully saturated green because
+         * "the green buttons look semi transparent" was read as a problem
+         * with the colour; it was not. Staw: "youve literally changed the
+         * colours of the green - i want the old colour back, the
+         * transparent issue is that when you dont hover them they look
+         * transparent and dont anymore when you hover them." The fault was
+         * which of these two the button rests on, and that is fixed in
+         * `Button.tsx`, not here.
          */
         space: {
-          DEFAULT: '#00893E',
-          /** The hover, and the green of words on a dark card (6.0 there). */
-          bright: '#00B04F',
+          DEFAULT: '#148556',
+          /** What a green button rests on, and green words on a dark card. */
+          bright: '#1CAE71',
+          /** Brighter still: the hover, so green lifts the way blue does. */
+          lift: '#35C98C',
           /** The lip under a green button. */
-          deep: '#005826',
+          deep: '#0f6b45',
         },
         /*
          * The gem, and it is the whole of the reward language.

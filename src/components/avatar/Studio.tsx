@@ -74,16 +74,20 @@ export function Studio({ className, children }: {
         * reads as a lightbox cut into the page rather than a place the
         * avatar is standing.
         *
-        * So the corners fall to the card's own colour and the middle is
-        * left exactly as he drew it. The stage keeps its light where the
-        * avatar is and stops being a slab where it meets the panel.
+        * So the whole sweep is pulled towards the card's own colour, hard
+        * at the corners and lightly across the middle, rather than being a
+        * lit box set into a dark page. The light stays where the avatar is
+        * standing - it is still a room with a floor and a wall - but the
+        * jump from the panel into it is a step rather than a cliff. The
+        * first go at this only touched the corners and Staw said the
+        * contrast was still too much, so the middle is in it now too.
         */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           backgroundImage:
-            'radial-gradient(118% 100% at 50% 32%, transparent 38%, rgb(var(--ink-card) / 0.55) 82%, rgb(var(--ink-card) / 0.92) 100%)',
+            'radial-gradient(112% 92% at 50% 34%, rgb(var(--ink-card) / 0.22) 0%, rgb(var(--ink-card) / 0.42) 48%, rgb(var(--ink-card) / 0.8) 82%, rgb(var(--ink-card) / 0.97) 100%)',
         }}
       />
       {children}

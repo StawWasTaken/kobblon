@@ -91,7 +91,7 @@ function fromHsv(h: number, s: number, v: number, a: number): Rgba {
 
 /** The house colours, plus the greys a page is usually laid out with. */
 const HOUSE = [
-  '#1B34E8', '#3A50FF', '#162382', '#00B04F', '#ff0033', '#FFB020',
+  '#1B34E8', '#3A50FF', '#162382', '#1CAE71', '#ff0033', '#FFB020',
   '#101012', '#17171A', '#24242A', '#8A8A94', '#F4F4F6', '#FFFFFF',
   '#00000000', '#FFFFFF12', '#FFFFFF22', '#FFFFFF55', '#00000055', '#000000',
 ]
