@@ -4,7 +4,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import {
   faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay, faGavel,
   faShieldHalved,
-  faCheckDouble, faBell, faUserGroup, faXmark, faChevronRight,
+  faCheckDouble, faBell, faUserGroup,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { worldIcon } from '@/lib/naming'
@@ -263,37 +263,18 @@ export function NotificationsCard({
       )}
     >
       {/* ------------------------------------------------------- header */}
-      {/*
-        * Two lines, because one was not enough room for them.
-        *
-        * The name, the count and the two tabs were on one row, and on a
-        * phone the tray simply sat on top of the word "Notifications" -
-        * which is what Staw's screenshot showed. Nothing truncates its way
-        * out of that: the tray will not shrink and the title will not wrap.
-        * So the identity is one line and the controls are the next.
-        */}
-      <div className="border-b border-ink-line bg-ink-raised px-4 py-3">
-        <div className="flex items-center gap-3">
-          <Kobby mood="notification" size="sm" bob={false} className="h-10 shrink-0" />
+      <div className="relative overflow-hidden border-b border-ink-line bg-ink-raised px-4 py-3">
+        <div className="relative flex items-center gap-3">
+          <Kobby mood="notification" size="sm" bob={false} className="h-10" />
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-display text-base font-extrabold leading-tight">Notifications</h2>
-            <p className="truncate text-xs text-muted">
+            <h2 className="font-display text-base font-extrabold leading-tight">Notifications</h2>
+            <p className="text-xs text-muted">
               {unread.length
                 ? `${unread.length} new`
                 : readNow ? 'All caught up' : 'Nothing new'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close notifications"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border-2 border-b-[3px] border-ink-line text-muted transition-colors hover:text-white active:mt-[1px] active:border-b-2"
-          >
-            <Glyph icon={faXmark} />
-          </button>
-        </div>
 
-        <div className="mt-3 flex items-center gap-2">
           <Tabs
             label="Which notifications"
             value={tab}
@@ -303,16 +284,6 @@ export function NotificationsCard({
               { value: 'unread', label: 'New', count: unread.length || null },
             ]}
           />
-          {!!unread.length && !!onMarkAll && (
-            <button
-              type="button"
-              onClick={onMarkAll}
-              className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-link transition-colors hover:underline"
-            >
-              <Glyph icon={faCheckDouble} />
-              Mark all read
-            </button>
-          )}
         </div>
       </div>
 
@@ -325,10 +296,7 @@ export function NotificationsCard({
           className="flex items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-sm font-bold transition-colors hover:bg-brand/20"
         >
           <Glyph icon={faUserGroup} className="text-brand-bright" />
-          <span className="min-w-0 flex-1 truncate">
-            {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
-          </span>
-          <Glyph icon={faChevronRight} className="text-xs text-muted" />
+          {waiting === 1 ? 'One person is waiting on you' : `${waiting} people are waiting on you`}
         </Link>
       )}
 
@@ -356,7 +324,7 @@ export function NotificationsCard({
 
         {groups.map((group) => (
           <section key={group.name}>
-            <h3 className="sticky top-0 z-10 bg-ink-card/95 px-4 pb-1 pt-3 text-mini font-bold uppercase tracking-wide text-muted backdrop-blur">
+            <h3 className="sticky top-0 z-10 border-b border-ink-line/60 bg-ink-card/95 px-4 py-1.5 text-mini font-bold uppercase tracking-wide text-muted backdrop-blur">
               {group.name}
             </h3>
             <div className="space-y-0.5 px-2 pb-1">
@@ -373,6 +341,16 @@ export function NotificationsCard({
           <p className="min-w-0 flex-1 truncate text-xs text-muted">
             {rows.length} in the last while
           </p>
+          {!!unread.length && !!onMarkAll && (
+            <button
+              type="button"
+              onClick={onMarkAll}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-link transition-colors hover:underline"
+            >
+              <Glyph icon={faCheckDouble} />
+              Mark all read
+            </button>
+          )}
         </div>
       )}
     </div>

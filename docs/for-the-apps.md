@@ -22876,3 +22876,20 @@ second screenshot (an invite card with Dismiss and Join) is not ours and
 nothing on this side sends or receives World invites. If invites are coming
 from the Launcher side, the kind, the row and the two buttons need
 specifying before either of us builds half of it.
+
+## Round three hundred and thirty - the card goes back, the rows stay
+
+Staw on the last round: the previous card was the one he wanted, and it was
+only each notification inside it that needed redesigning. So the header, the
+tab tray, the "waiting on you" strip and the footer are exactly as they were
+before round 329 - one header row, no close button, "Mark all read" back in
+the footer where it was.
+
+What stays is the row itself: its own rounded block with air round it rather
+than a full-width band under a hairline, the time as a right-hand column
+instead of a second grey line under the words, and unread said twice - the
+tint and the lit edge - rather than three times.
+
+`NotificationsCard` stays exported, and the bare page at
+`tools/site/notifications-preview.html` with it. Nothing about the data, the
+kinds or the API has moved in either round.
