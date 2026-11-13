@@ -186,11 +186,13 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               * own surface does not cover its lower half and `pt-12` to
               * make the room it now needs.
               */}
-            {/* Staw: the thick stroke the Launcher's card has. The same one
-                every card on the site carries - two all round and four at
-                the foot - rather than the hairline this had, which was the
-                one card on Kobblon drawn in somebody else's weight. */}
-            <div className="relative rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
+            {/* Staw: the thick stroke the Launcher's card has, and only that.
+                The first pass gave it `border-b-4` as well, which is the
+                site's lift - and the Launcher's card does not have one:
+                "i just wanted thicker strokes". Even all the way round,
+                in the line colour rather than the hairline white/10 it
+                had. Flat is about the lift, not about the stroke. */}
+            <div className="relative rounded-2xl border-2 border-ink-line bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
               <Wordmark
                 to={null}
                 always

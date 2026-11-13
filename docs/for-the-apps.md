@@ -23489,9 +23489,11 @@ it keeping - the button says favourite - so neither does the heading.
 Small one, and it goes the other way for once: Staw wants the website's
 login and signup card to look like **yours**. It was drawn with
 `border-2 border-white/10` - a hairline, and the one card on Kobblon not
-in the platform's own weight. It is `border-2 border-b-4 border-ink-line`
-now, the same as every other card on the site and the same as the
-Launcher's.
+in the platform's own weight. It is `border-2 border-ink-line` now:
+even all the way round, in the line colour, and **no `border-b-4`**. The
+first pass added the lift as well and Staw sent it back - the Launcher's
+card has a stroke and no lift, and "i just wanted thicker strokes". Flat
+is about the lift, not about the stroke.
 
 "Play as a guest" carries our `badge` icon (`public/icons/ui/badge.png`,
 `iconName="badge"` on `Button`). If the Launcher's own guest button has a
