@@ -23501,3 +23501,47 @@ glyph on it, that is the one.
 
 Nothing moved underneath: same form, same `signInAsGuest` out of
 `@/lib/signup`.
+
+## Round three hundred and forty-four - a visit is somebody arriving
+
+**Stop calling `world_started`.** It still exists and it now does nothing,
+on purpose, so a Launcher that calls it keeps working while you take the
+call out.
+
+What it was: one statement, `update worlds set visit_count = visit_count +
+1`, `security definer`, granted to PUBLIC and to `anon`. No account needed,
+no check that the caller was anywhere near that World, no limit. Anybody
+who could reach the API could run any published World's visit count up as
+far as they liked - and that number orders `trending`, which is the front
+of Discover and the top of Home, one of the two leaderboards, and half the
+ranking on the home feed. The one forgeable number was the one deciding
+what everybody is shown.
+
+**0345** moves the count to the door people actually walk through.
+`join_world_server` already proves who the caller is, that they may play,
+that the server is real and open and has room, and already records the row
+in `world_visits`; it now moves `visit_count` too, **once per arrival** -
+not on a reconnect, and not when somebody hops between two servers of the
+same World, because neither is arriving. `world_started` and
+`experience_started` are empty, no longer `security definer`, and revoked
+from `anon`.
+
+Nothing to change on your side beyond dropping the call: if the Launcher
+calls `join_world_server`, visits are counted. If it ever shows a World
+without joining a server - a preview, a spectate - that is deliberately
+not a visit.
+
+Existing `visit_count` values are left exactly as they are. Some of it is
+real arrivals and some may not be, and there is no way from here to tell
+which; rewriting everybody's numbers on a guess would be a worse lie than
+the one being fixed.
+
+Worth stealing: `revoke ... from public` did **not** take the right away.
+0074 had granted execute to `anon` outright as well as to PUBLIC, so the
+role a visitor with no account actually is kept it, and the check read
+`true` until the revoke named `anon`. Two grants, two revokes.
+
+### Staw: one migration to apply
+
+`0345_a_visit_is_somebody_arriving.sql`, and `0344` before it if it has not
+been run yet.
