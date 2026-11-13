@@ -23448,3 +23448,38 @@ are showing a face. `avatar_url` being empty is not a gap to paper over.
 
 The Launcher reporting `where_from` on `open_world_server`, so Discover's
 location filter has something to offer. Rounds 339 and 340 both said it.
+
+## Round three hundred and forty-two - one drawing of a World, and it is the tile
+
+Round 339 said a World is drawn two ways and no more. It was still drawn
+three: the square tile on shelves, the wide thumbnail, and a bordered card
+with the picture let into the top and two clamped lines of description
+under the name - which is what every grid on the website used. Staw, on
+seeing the two side by side: "most liked, just published and being played
+doesnt use a correct way to display worlds. this one isnt valid", and the
+same of "You might like" and the favourites on a profile.
+
+**`WorldCard` is now the tile**: the square emblem, the name under it, who
+made it, and the numbers. No card around it, no description, no genre tag.
+It takes whatever width it is given, so a grid cell and a shelf are the
+same drawing at two sizes.
+
+**`WorldTile` is `WorldCard` with a width on it** - 7.5rem on a phone, 9rem
+from `sm`, and `creator={false}` because "By somebody" eight times across a
+shelf is noise. It is not a second component any more, which is how the two
+drifted apart in the first place. `WorldFeature` is unchanged and is still
+the only wide one, still capped at `22rem`.
+
+So: **square emblem everywhere, wide thumbnail on Home and Discover only.**
+If either application draws a World, that is the whole rule.
+
+`WorldCard` has one new thing: an unpublished World carries a small
+**Draft** mark in the corner of its emblem. It can only ever appear on your
+own Worlds - `worlds_read` lets nobody else see an unpublished row, so a
+visitor looking at somebody's profile sees their published Worlds and
+nothing else. That was already true server-side; the mark is so that the
+owner can tell which of their own is which.
+
+Also on profiles: "Worlds they kept" is **Favourited Worlds**, with our own
+star (`favourite` in `public/icons/ui`). Nothing else on the platform calls
+it keeping - the button says favourite - so neither does the heading.

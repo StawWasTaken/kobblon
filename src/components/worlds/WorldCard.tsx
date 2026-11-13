@@ -1,81 +1,76 @@
 import { Picture } from '@/components/brand/Picture'
 import { Link } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
-import { faTag } from '@fortawesome/free-solid-svg-icons'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
 import { worldEmblem } from '@/lib/worldart'
-import type { World, WorldGenre } from '@/types/db'
+import type { World } from '@/types/db'
 
 /**
- * A World the way a grid of them shows one: the emblem, square, with the
- * name under it, who built it, and how many have been.
+ * A World, the one way a World is drawn: the square emblem, the name under
+ * it, and the numbers under that.
  *
- * Staw, round 339: a World is drawn two ways on Kobblon and no more. The
- * square emblem is the one, used nearly everywhere; the wide thumbnail is
- * the exception and it belongs to Home and Discover, where a shelf is being
- * looked at rather than scanned. This is the everywhere one, so it is
- * square - the same picture on a profile, in a library, under a World page
- * and in the Discover grid.
+ * Staw, on the panel this replaces: "most liked, just published and being
+ * played doesnt use a correct way to display worlds. this one isnt valid".
+ * What was there was a bordered card with the picture let into the top of
+ * it and two clamped lines of description under the name - the shape every
+ * platform's browse grid has, and the shape a shelf of them does not read
+ * as. Beside `WorldTile` on the same page it was plainly a second way of
+ * drawing the same thing, which round 339 says there is not.
+ *
+ * So there is one drawing now and this is it, at whatever width it is given:
+ * a grid cell, or the fixed width `WorldTile` hands it on a shelf. No card
+ * around it, no description, no genre tag - the emblem is the thing being
+ * looked at, and a border drawn round the whole card fights the border on
+ * the emblem.
  */
 export function WorldCard({
-  world, genres, className,
-}: { world: World; genres?: WorldGenre[]; className?: string }) {
-  const genre = genres?.find((one) => one.id === world.genre)
+  world, creator = true, className,
+}: {
+  world: World
+  /** "By somebody" under the name. Off on a shelf, where it is noise. */
+  creator?: boolean
+  className?: string
+}) {
+  /*
+   * Only ever on your own Worlds: `worlds_read` lets nobody else see an
+   * unpublished row, so this cannot appear on somebody else's profile.
+   * Drawn because without it the Creator Hub and your own profile show
+   * drafts beside published Worlds with nothing saying which is which.
+   */
+  const draft = world.is_published === false
 
   return (
-    <article
-      className={cn(
-        'group flex min-w-0 flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/70',
-        className,
-      )}
-    >
-      <Link to={worldLink(world)} className="relative block aspect-square overflow-hidden bg-media">
+    <article className={cn('group min-w-0', className)}>
+      <Link
+        to={worldLink(world)}
+        className="relative block aspect-square overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media transition-colors group-hover:border-brand/70"
+      >
         <Picture
           src={worldEmblem(world)}
           alt={world.name}
           className="h-full w-full"
-          pictureClassName="transition-transform duration-300 group-hover:scale-[1.03]"
+          pictureClassName="transition-transform duration-300 group-hover:scale-[1.04]"
         />
+        {draft && (
+          <span className="absolute left-1.5 top-1.5 rounded-lg bg-ink/85 px-1.5 py-0.5 text-mini font-extrabold uppercase tracking-wide text-white/80">
+            Draft
+          </span>
+        )}
       </Link>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3">
-        <Link
-          to={worldLink(world)}
-          className="truncate font-display text-base font-extrabold text-link hover:underline"
-        >
-          {world.name}
-        </Link>
+      <Link
+        to={worldLink(world)}
+        className="mt-1.5 block line-clamp-2 text-sm font-bold leading-tight hover:text-link"
+      >
+        {world.name}
+      </Link>
 
-        <p className="truncate text-xs text-muted">
-          By {world.creator_name ?? 'Kobblon'}
-        </p>
+      {creator && (
+        <p className="truncate text-xs text-muted">By {world.creator_name ?? 'Kobblon'}</p>
+      )}
 
-        {/* Not on a phone. Two of these cards fit across a phone, which is
-            the only way a shelf of Worlds is not one card per screen - and
-            at that width two clamped lines of description is what turns a
-            card back into a block. The name, who made it and the numbers
-            are what somebody is choosing between. */}
-        {world.description && (
-          <p className="hidden line-clamp-2 text-xs leading-relaxed text-white/50 sm:block">
-            {world.description}
-          </p>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-mini font-bold text-muted">
-          <WorldStats world={world} />
-          {/* Not on a phone: two cards across leaves room for one line of
-              numbers, and with the genre on it the line wrapped on one card
-              and not the other, so a tidy grid came out ragged. */}
-          {genre && (
-            <span className="hidden sm:inline-flex items-center gap-1 truncate">
-              <Glyph icon={faTag} />
-              {genre.label}
-            </span>
-          )}
-        </div>
-      </div>
+      <WorldStats world={world} className="mt-0.5" />
     </article>
   )
 }

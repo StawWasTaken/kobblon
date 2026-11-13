@@ -935,7 +935,7 @@ export default function Profile() {
             </section>
           )}
 
-          {/* ------------------------------------------- the ones they kept */}
+          {/* ------------------------------------- the ones they favourited */}
           {/*
             * Staw: "make that we see favourited worlds onto profiles".
             *
@@ -951,13 +951,16 @@ export default function Profile() {
             */}
           {!!kept.data?.length && (
             <section>
-              <Heading icon={faHeart} aside={
+              <Heading icon={faStar} name="favourite" aside={
                 <span className="text-xs text-muted">
                   {formatCount(kept.data.length)}{' '}
                   {kept.data.length === 1 ? 'World' : 'Worlds'}
                 </span>
               }>
-                {isMe ? 'Worlds you kept' : 'Worlds they kept'}
+                {/* Staw: favourited Worlds, with our own star. "Kept" was
+                    a word for it that nothing else on the platform uses -
+                    the button that puts a World here says favourite. */}
+                Favourited Worlds
               </Heading>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {kept.data.slice(0, 10).map((world) => (

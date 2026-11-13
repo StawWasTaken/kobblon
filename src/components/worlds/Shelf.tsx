@@ -6,6 +6,7 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 import { Glyph } from '@/components/brand/Glyph'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
+import { WorldCard } from '@/components/worlds/WorldCard'
 import { cn } from '@/lib/cn'
 import { worldEmblem, worldThumbnail } from '@/lib/worldart'
 import type { World } from '@/types/db'
@@ -111,37 +112,17 @@ export function Shelf({ title, note, more, children, empty, className }: {
 }
 
 
-function Stats({ world }: { world: World }) {
-  return <WorldStats world={world} className="mt-0.5" />
-}
-
 /**
- * One World on a shelf: the square mark it chose to be known by.
+ * One World on a shelf: the same drawing as everywhere else, at a width
+ * that lets eight of them fit across.
  *
- * Square rather than wide because the mark is square - a cover cropped to
- * 16/9 is the picture of the World, and this is its badge. Staw asked for
- * the emblems and the emblems are what a dense shelf wants: eight of them
- * fit where four covers did, and a shelf is for scanning.
+ * It used to be its own copy of the square tile. It is `WorldCard` with a
+ * width on it now, so a shelf and a grid cannot drift apart again - which
+ * is how the page ended up with two ways of drawing a World in the first
+ * place.
  */
 export function WorldTile({ world }: { world: World }) {
-  const art = worldEmblem(world)
-  return (
-    <article className="w-[7.5rem] shrink-0 sm:w-36">
-      <Link
-        to={worldLink(world)}
-        className="block aspect-square overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media"
-      >
-        <Picture
-          src={art}
-          alt={world.name}
-          className="h-full w-full"
-          pictureClassName="transition-transform duration-300 hover:scale-[1.04]"
-        />
-      </Link>
-      <p className="mt-1.5 line-clamp-2 text-sm font-bold leading-tight">{world.name}</p>
-      <Stats world={world} />
-    </article>
-  )
+  return <WorldCard world={world} creator={false} className="w-[7.5rem] shrink-0 sm:w-36" />
 }
 
 /**

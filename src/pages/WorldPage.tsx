@@ -741,7 +741,7 @@ export default function WorldPage() {
                   <Skeleton key={i} className="h-56 rounded-2xl" />
                 ))
                 : (suggested.data ?? []).slice(0, 8).map((one) => (
-                  <WorldCard key={one.id} world={one} genres={genres.data ?? []} />
+                  <WorldCard key={one.id} world={one} />
                 ))}
             </div>
           </Band>

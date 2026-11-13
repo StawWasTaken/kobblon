@@ -407,7 +407,7 @@ export default function Discover() {
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                 {found.map((world) => (
-                  <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
+                  <WorldCard key={world.id} world={world} />
                 ))}
               </div>
               <AdBanner className="mt-6" />

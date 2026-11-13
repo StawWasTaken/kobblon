@@ -14,7 +14,7 @@ import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { listFavouriteWorlds, myWorlds, worldGenres } from '@/lib/api'
+import { listFavouriteWorlds, myWorlds } from '@/lib/api'
 import { useTitle } from '@/hooks/useTitle'
 import { overlayButton } from '@/lib/overlay'
 
@@ -82,7 +82,6 @@ export default function Library() {
     async () => (profile ? listFavouriteWorlds(profile.id) : []),
     [profile?.id],
   )
-  const genres = useAsync(worldGenres, [])
 
   const drafts = (mine.data ?? []).filter((one) => !one.is_published)
   const published = (mine.data ?? []).filter((one) => one.is_published)
@@ -184,7 +183,7 @@ export default function Library() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
             {shown.map((world) => (
               <div key={world.id} className="group/tile relative">
-                <WorldCard world={world} genres={genres.data ?? undefined} />
+                <WorldCard world={world} />
 
                 {shelf !== 'Saved' && (
                   <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/tile:opacity-100">
