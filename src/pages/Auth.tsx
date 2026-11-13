@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { faArrowLeft, faCircleCheck } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faCircleCheck, faIdBadge } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { PixelField } from '@/components/brand/PixelField'
@@ -186,7 +186,11 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
               * own surface does not cover its lower half and `pt-12` to
               * make the room it now needs.
               */}
-            <div className="relative rounded-2xl border-2 border-white/10 bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
+            {/* Staw: the thick stroke the Launcher's card has. The same one
+                every card on the site carries - two all round and four at
+                the foot - rather than the hairline this had, which was the
+                one card on Kobblon drawn in somebody else's weight. */}
+            <div className="relative rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/85 p-5 pt-12 backdrop-blur-xl sm:p-6 sm:pt-14">
               <Wordmark
                 to={null}
                 always
@@ -261,7 +265,14 @@ export default function Auth({ mode }: { mode: 'login' | 'signup' }) {
                       <span className="h-px flex-1 bg-white/10" />
                     </div>
 
-                    <Button variant="subtle" block loading={guestPending} onClick={enterAsGuest}>
+                    <Button
+                      variant="subtle"
+                      block
+                      icon={faIdBadge}
+                      iconName="badge"
+                      loading={guestPending}
+                      onClick={enterAsGuest}
+                    >
                       Play as a guest
                     </Button>
                     {guestError && (

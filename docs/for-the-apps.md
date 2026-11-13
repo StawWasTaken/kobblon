@@ -23483,3 +23483,19 @@ owner can tell which of their own is which.
 Also on profiles: "Worlds they kept" is **Favourited Worlds**, with our own
 star (`favourite` in `public/icons/ui`). Nothing else on the platform calls
 it keeping - the button says favourite - so neither does the heading.
+
+## Round three hundred and forty-three - the login card carries the house stroke
+
+Small one, and it goes the other way for once: Staw wants the website's
+login and signup card to look like **yours**. It was drawn with
+`border-2 border-white/10` - a hairline, and the one card on Kobblon not
+in the platform's own weight. It is `border-2 border-b-4 border-ink-line`
+now, the same as every other card on the site and the same as the
+Launcher's.
+
+"Play as a guest" carries our `badge` icon (`public/icons/ui/badge.png`,
+`iconName="badge"` on `Button`). If the Launcher's own guest button has a
+glyph on it, that is the one.
+
+Nothing moved underneath: same form, same `signInAsGuest` out of
+`@/lib/signup`.
