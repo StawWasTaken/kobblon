@@ -10,6 +10,14 @@
  * The two policy links are the thing to look at: with `onPolicy` they are
  * buttons that call back, and without it they are plain addresses rather
  * than routed links.
+ *
+ * The third panel is the one the applications session found: `claiming`
+ * with no provider. It used to throw "Keeping a guest account only works
+ * on the website" from the submit handler, because the component read
+ * `claimAccount` off the provider alone while both of its siblings fell
+ * back to the plain function. Submitting it here with nobody signed in
+ * should now say "You are not signed in as a guest." - the honest answer
+ * from the function, rather than the component refusing to try.
  */
 import { createRoot } from 'react-dom/client'
 import { SignupForm } from '@/components/auth/SignupForm'
@@ -29,6 +37,12 @@ function Page() {
           <p className="mb-3 text-xs text-muted">The same, with onPolicy</p>
           <div className="w-full max-w-md rounded-2xl border-2 border-white/10 bg-ink-card p-5">
             <SignupForm onSent={() => {}} onPolicy={(which) => window.alert(which)} />
+          </div>
+        </div>
+        <div>
+          <p className="mb-3 text-xs text-muted">Claiming a guest account, still no provider</p>
+          <div className="w-full max-w-md rounded-2xl border-2 border-white/10 bg-ink-card p-5">
+            <SignupForm claiming onSent={() => {}} onClaimed={() => window.alert('claimed')} />
           </div>
         </div>
       </div>

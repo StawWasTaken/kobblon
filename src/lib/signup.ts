@@ -156,6 +156,26 @@ export async function signInAsGuest(): Promise<void> {
  */
 export async function claimAccount(
   details: SignupDetails,
+  /**
+   * Left out where the caller does not hold the account itself: then the
+   * client is asked who is signed in, at the moment of use.
+   *
+   * Which is the rule this project keeps relearning. The first version of
+   * this took the user as a required argument, and the applications
+   * session found what that costs: `SignupForm` mounted outside a provider
+   * has no session to pass, so the one call it could not fall back to was
+   * this one. Asking the client at the moment of use needs nothing passed
+   * and cannot go stale between the ask and the write.
+   */
+  user?: { id: string },
+): Promise<{ avatarUrl: string | null }> {
+  const who = user ?? (await supabase.auth.getUser()).data.user
+  if (!who) throw new Error('You are not signed in as a guest.')
+  return claimFor(details, who)
+}
+
+async function claimFor(
+  details: SignupDetails,
   user: { id: string },
 ): Promise<{ avatarUrl: string | null }> {
   const avatarUrl = details.avatarFile

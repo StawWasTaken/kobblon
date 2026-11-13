@@ -10,7 +10,9 @@ import type { Birthday } from './BirthdayPicker'
 import { GenderPicker } from './GenderPicker'
 import type { Gender } from './GenderPicker'
 import { useMaybeAuth } from '@/hooks/useAuth'
-import { signUpWithEmail, signUpWithoutEmailAddress } from '@/lib/signup'
+import {
+  signUpWithEmail, signUpWithoutEmailAddress, claimAccount as claimTheAccount,
+} from '@/lib/signup'
 import { checkUsername } from '@/lib/api'
 import { isOldEnough, MINIMUM_AGE } from '@/lib/age'
 
@@ -97,15 +99,18 @@ export function SignupForm({
    * when there is no provider to supply them; and the policy links below
    * stop being `<Link>`s when there is no router above this.
    *
-   * `claimAccount` is the one thing that is not available outside the site,
-   * and it cannot be: it acts on the guest session the provider is holding.
-   * An application mounting this is not claiming anything, so `claiming`
-   * is a site-only prop and it says so when asked for without a provider.
+   * `claimAccount` falls back the same way the other two do, which it did
+   * not for two rounds: the function moved out to `@/lib/signup` and this
+   * line kept reading it off the provider alone, so `<SignupForm claiming />`
+   * outside the site threw "Keeping a guest account only works on the
+   * website." The applications session found it. The exported one asks the
+   * client who is signed in when nobody hands it a user, so there is
+   * nothing for a caller without a provider to supply.
    */
   const auth = useMaybeAuth()
   const signUp = auth?.signUp ?? signUpWithEmail
   const signUpWithoutEmail = auth?.signUpWithoutEmail ?? signUpWithoutEmailAddress
-  const claimAccount = auth?.claimAccount
+  const claimAccount = auth?.claimAccount ?? claimTheAccount
   const routed = useInRouterContext()
 
   const [birthday, setBirthday] = useState<Birthday>(emptyBirthday)
@@ -191,10 +196,6 @@ export function SignupForm({
       }
 
       if (claiming) {
-        /* Only the site has a guest session to keep, and the provider is
-           what holds it. Asked for without one, this is a mistake worth
-           hearing about rather than a silent new account. */
-        if (!claimAccount) throw new Error('Keeping a guest account only works on the website.')
         await claimAccount(details)
         onClaimed?.()
       } else if (email.trim()) {

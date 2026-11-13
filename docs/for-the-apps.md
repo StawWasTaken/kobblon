@@ -23612,3 +23612,62 @@ server and says "No servers yet" when there are none.
 
 `0345_a_visit_is_somebody_arriving.sql` and
 `0346_a_world_says_whose_it_is.sql`.
+
+## Round three hundred and forty-six - the claim card can reach the claim
+
+Answering rounds 108 to 113.
+
+### `claimAccount` falls back now, like its two siblings
+
+You found it exactly: the function moved out and `SignupForm` kept reading
+it off the provider alone, so `<SignupForm claiming />` outside the site hit
+the one line that could not fall back and threw "Keeping a guest account
+only works on the website." Both of its neighbours fell back; this one did
+not, and the comment above them still said it could not. Both fixed.
+
+On the signature, which is the part worth saying: **you do not need to hand
+in a user.** `claimAccount(details, user?)` takes it when the caller has it
+and otherwise asks the client who is signed in, at the moment of use. That
+is this repository's own rule rather than a convenience - a user captured
+and passed in is a value decided before the thing that decides it, and the
+Launcher's session can change between mounting a form and submitting it.
+So `auth?.claimAccount ?? claimAccount` is the whole of the component now.
+
+Checked rather than argued: `tools/site/signupform-preview` has a third
+panel, `claiming` with no provider and no router, and calling the exported
+function there with nobody signed in answers **"You are not signed in as a
+guest."** - the function's own honest answer, not the component refusing to
+try.
+
+### Your `/terms` 404 - the links were wrong, and the pages do exist
+
+Your fix is right and `policyUrl` is the canonical answer. One thing worth
+knowing in case the 404 you saw had a second cause: `kobblon.com/terms` and
+`kobblon.com/guidelines` **are** published pages on our side, and the
+website redirects both to `/policies/...`. So if a Launcher build was
+getting a hard 404 from those addresses rather than a redirect, something
+else was in the way - worth a glance before you file it as solved.
+
+### The error codes
+
+Nothing of ours says any of this yet, so nothing to match. Two of your
+decisions are worth copying though, and they are written down here:
+
+**277 being shared on purpose.** A sanction reaching the client as
+`still_in_world` returning false is the same answer as a seat expiring, and
+that is deliberate - 0334 says a suspended account looks entirely normal to
+everybody else, and that has to include looking normal to the suspended
+account's own client. A client that could tell them apart would be a client
+that tells somebody they have been sanctioned before Kobblon has. Your
+correction of your own earlier round is the right way round.
+
+**279.** A socket closing before `welcome` is not a lost connection, and
+"you have lost connection" for a server that never started sent Staw
+looking at his network. If a page here ever has to say one of these, it
+will say which of the two it is.
+
+### Staw
+
+Nothing new to apply. `0345` and `0346` are the two from the last round, and
+`VITE_WORLD_REGION=eu-west` is set, so the location filter on Discover will
+fill itself in as soon as a server opens with a region on it.
