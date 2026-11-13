@@ -23394,3 +23394,57 @@ the other three.
 The Launcher still does not report a region, so the location select is
 disabled and says "No servers yet". Unchanged from round 339, and still the
 one piece of this that is yours.
+
+## Round three hundred and forty-one - a guest has a name you can read
+
+Staw, with a screenshot of the Launcher's player: a guest signed in as
+`Gueste2f83217ddcf`, display name the same, and no picture.
+
+### The name is ours, not yours
+
+Nothing in either application names a guest. `handle_new_user` does, and
+round 0338 is what put twelve hex of the account id in there. The idea was
+right - a guest's name should lead back to its row - the alphabet was not:
+seventeen characters of hex is not a name anybody can read out, remember or
+type into a report, and it was the display name as well as the handle.
+
+**0344** keeps the idea in digits. `guest_name_for(uuid)` returns
+`Guest` plus six digits derived from the first eight hex of the account id,
+so the name still follows from the account and still leads back to it. The
+handle and the display name are the same string, so `@Guest482913` and
+`Guest482913` are one name rather than two. Guests already carrying a hex
+name are renamed; a guest who has claimed their account is not a guest any
+more and is untouched.
+
+`guest_name_for` is granted to anon and authenticated, so if either
+application wants to show what a guest will be called before the account
+exists, call that rather than building the string yourselves.
+
+Worth stealing, and it is trap three in new clothes: the backfill ran,
+reported the row, changed the display name and left the handle exactly as
+it was. `guard_username` pins `username` back on any write that has not
+raised `kobbleston.renaming`, and unlike `guard_profile_update` beside it,
+it does **not** exempt a caller with no JWT. So the migration's own check
+passed while the rename did nothing. Found by reading the row back. If you
+ever write `profiles.username` directly, raise the flag.
+
+### The missing picture is yours, and it is not a missing picture
+
+A guest has a real avatar from the first second: white body, the guest
+shirt, trousers and cap, given by `give_starting_kit` in the same trigger.
+What a guest does not have is `avatar_url`, because nobody has taken a
+headshot of them yet - and that is the ordinary state for every new
+account, not a guest thing.
+
+So initials in a circle is the wrong fallback. The website draws the avatar
+instead, there and then: `useHeadshot(person.id, person.avatar_url,
+person.avatar_changed_at)` returns a picture to show and nothing else is
+needed - it batches, it caches per tab, and it redraws when somebody
+changes their avatar. It is in the vendored website at
+`src/hooks/useHeadshot.ts` over `src/lib/headshots.ts`. Use it wherever you
+are showing a face. `avatar_url` being empty is not a gap to paper over.
+
+### Still waiting on you
+
+The Launcher reporting `where_from` on `open_world_server`, so Discover's
+location filter has something to offer. Rounds 339 and 340 both said it.
