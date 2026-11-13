@@ -5,16 +5,19 @@ import { faTag } from '@fortawesome/free-solid-svg-icons'
 import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
-import { worldThumbnail } from '@/lib/worldart'
+import { worldEmblem } from '@/lib/worldart'
 import type { World, WorldGenre } from '@/types/db'
 
 /**
- * A World the way a shelf of them shows one: the emblem, big, with the name
- * under it, who built it, and how many have been.
+ * A World the way a grid of them shows one: the emblem, square, with the
+ * name under it, who built it, and how many have been.
  *
- * The emblem does the work, so it is given the room. A World with none is
- * not a broken card: it is its mark on its own colours, which is still
- * something to look at.
+ * Staw, round 339: a World is drawn two ways on Kobblon and no more. The
+ * square emblem is the one, used nearly everywhere; the wide thumbnail is
+ * the exception and it belongs to Home and Discover, where a shelf is being
+ * looked at rather than scanned. This is the everywhere one, so it is
+ * square - the same picture on a profile, in a library, under a World page
+ * and in the Discover grid.
  */
 export function WorldCard({
   world, genres, className,
@@ -28,9 +31,9 @@ export function WorldCard({
         className,
       )}
     >
-      <Link to={worldLink(world)} className="relative block aspect-[16/10] overflow-hidden bg-media">
+      <Link to={worldLink(world)} className="relative block aspect-square overflow-hidden bg-media">
         <Picture
-          src={worldThumbnail(world)}
+          src={worldEmblem(world)}
           alt={world.name}
           className="h-full w-full"
           pictureClassName="transition-transform duration-300 group-hover:scale-[1.03]"

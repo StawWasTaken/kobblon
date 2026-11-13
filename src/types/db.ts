@@ -877,6 +877,14 @@ export type TicketMessage = {
 
 // ------------------------------------------------------------------ worlds
 
+/** The four machines a World can say it runs on. */
+export type WorldDevice = 'computer' | 'phone' | 'tablet' | 'console'
+
+/** Where a server is, as `world_servers.region` spells it (0342). */
+export type WorldRegion =
+  | 'eu-west' | 'eu-central' | 'na-east' | 'na-west'
+  | 'south-america' | 'asia' | 'oceania' | 'africa'
+
 export type World = {
   id: string
   content_id: number
@@ -887,6 +895,13 @@ export type World = {
   cover_url: string | null
   /** The square mark. Null falls back to the cover, which is wide. */
   emblem_url: string | null
+  /**
+   * What it runs on, said by whoever built it: any of `computer`, `phone`,
+   * `tablet`, `console`. Never empty - a World that runs on nothing cannot
+   * be saved (0341) - and everything published before the column existed
+   * says all four.
+   */
+  devices?: WorldDevice[]
   runtime_version: number
   visit_count: number
   like_count: number

@@ -1,8 +1,9 @@
 import {
   faImage, faMusic, faVideo, faFont, faCube, faShapes,
+  faDesktop, faMobileScreenButton, faTabletScreenButton, faGamepad,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import type { AssetKind } from '@/types/db'
+import type { AssetKind, WorldDevice, WorldRegion } from '@/types/db'
 
 /*
  * What each kind of content is called, everywhere.
@@ -153,3 +154,49 @@ export const madeElsewhere: AssetKind[] = ['build']
 /** The kinds somebody can actually choose in an upload dialog. */
 export const uploadableKinds = (Object.keys(kindLabels) as AssetKind[])
   .filter((one) => !madeElsewhere.includes(one))
+
+// ------------------------------------------------- what a World runs on
+
+/**
+ * The four machines a World can say it plays on, with the words and the
+ * drawings for them.
+ *
+ * Here rather than in either page because Discover filters by them and the
+ * Creator Hub sets them, and a World that says "Computer" in one place and
+ * "Desktop" in the other is two products. The applications import this for
+ * the same reason.
+ */
+export const deviceLabels: Record<WorldDevice, string> = {
+  computer: 'Computer',
+  phone: 'Phone',
+  tablet: 'Tablet',
+  console: 'Console',
+}
+
+export const deviceIcons: Record<WorldDevice, IconDefinition> = {
+  computer: faDesktop,
+  phone: faMobileScreenButton,
+  tablet: faTabletScreenButton,
+  console: faGamepad,
+}
+
+export const everyDevice = Object.keys(deviceLabels) as WorldDevice[]
+
+/**
+ * Where a server can be, in words.
+ *
+ * Regions and not countries: a filter whose options mostly find nothing is
+ * a filter that lies, and a server lives in a datacentre rather than in a
+ * country. The list matches the check on `world_servers.region` (0342), and
+ * Discover only offers the ones actually reported as live.
+ */
+export const regionLabels: Record<WorldRegion, string> = {
+  'eu-west': 'Western Europe',
+  'eu-central': 'Central Europe',
+  'na-east': 'North America, east',
+  'na-west': 'North America, west',
+  'south-america': 'South America',
+  asia: 'Asia',
+  oceania: 'Oceania',
+  africa: 'Africa',
+}

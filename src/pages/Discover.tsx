@@ -14,12 +14,14 @@ import { WorldCard } from '@/components/worlds/WorldCard'
 import { Shelf, WorldTile, WorldFeature } from '@/components/worlds/Shelf'
 import { Skeleton } from '@/components/ui/States'
 import { useAsync } from '@/hooks/useAsync'
-import { listWorlds, worldGenres } from '@/lib/api'
+import { listWorlds, liveWorldRegions, worldGenres } from '@/lib/api'
 import type { WorldSort } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { useTitle } from '@/hooks/useTitle'
 import { AdBanner } from '@/components/ads/AdBanner'
-import type { World } from '@/types/db'
+import type { World, WorldDevice, WorldRegion } from '@/types/db'
+import { Select } from '@/components/ui/Select'
+import { deviceLabels, everyDevice, regionLabels } from '@/lib/kinds'
 
 /*
  * Discover, put in order.
@@ -67,7 +69,25 @@ export default function Discover() {
   const [debounced, setDebounced] = useState(term)
   const [view, setView] = useState<View>('charts')
   const [genre, setGenre] = useState<string>('all')
+  /*
+   * Staw asked for the two filters the big platforms put at the top of
+   * their browse page: what you are holding, and where you would be
+   * playing. They are different questions from the rail's two - the rail
+   * asks what kind of World and in what order, these two ask what can
+   * actually be played from here - so they sit over the Worlds rather than
+   * in the rail.
+   */
+  const [device, setDevice] = useState<WorldDevice | 'any'>('any')
+  const [region, setRegion] = useState<WorldRegion | 'anywhere'>('anywhere')
   const genres = useAsync(worldGenres, [])
+  /*
+   * The locations on offer are the ones that actually have a server open in
+   * them, read from the database, rather than a list of places. Nothing is
+   * reporting a region yet - the Launcher is what knows where it opened a
+   * server - so this comes back empty and the control says so. That is the
+   * truth; a list of eight that all find nothing would not be.
+   */
+  const regions = useAsync(liveWorldRegions, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -88,12 +108,15 @@ export default function Discover() {
    * the rail follows, so the page never shows a grid with nothing in the
    * rail lit up.
    */
-  const browsing = view !== 'charts' || !!debounced || genre !== 'all'
+  const filtered = device !== 'any' || region !== 'anywhere'
+  const browsing = view !== 'charts' || !!debounced || genre !== 'all' || filtered
   const sort: WorldSort = view === 'charts' ? 'trending' : view
 
   const { data, error, loading, reload } = useAsync(
-    async () => (browsing ? listWorlds({ sort, genre, search: debounced, limit: 48 }) : []),
-    [browsing, sort, genre, debounced],
+    async () => (browsing
+      ? listWorlds({ sort, genre, search: debounced, limit: 48, device, region })
+      : []),
+    [browsing, sort, genre, debounced, device, region],
   )
 
   /*
@@ -148,6 +171,57 @@ export default function Discover() {
         onChange={setTerm}
         placeholder="Search Worlds by name"
       />
+
+      {/*
+          Over the Worlds and under the search, because they narrow what is
+          found rather than choosing what to look at. Two controls and no
+          more: a row of pills that keeps growing is the filter bar every
+          browse page ends up with and nobody reads.
+      */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          label="What you are playing on"
+          value={device}
+          onChange={(value) => setDevice(value as WorldDevice | 'any')}
+          className="w-44"
+          options={[
+            { value: 'any', label: 'Any device' },
+            ...everyDevice.map((one) => ({ value: one, label: deviceLabels[one] })),
+          ]}
+        />
+
+        <Select
+          label="Where you would be playing"
+          value={region}
+          onChange={(value) => setRegion(value as WorldRegion | 'anywhere')}
+          className="w-52"
+          disabled={!regions.data?.length}
+          options={[
+            {
+              value: 'anywhere',
+              label: regions.data?.length ? 'Anywhere' : 'No servers yet',
+              note: regions.data?.length
+                ? undefined
+                : 'Nowhere is reporting a location at the moment',
+            },
+            ...(regions.data ?? []).map((one) => ({
+              value: one.region,
+              label: regionLabels[one.region],
+              note: `${formatCount(one.worlds)} ${one.worlds === 1 ? 'World' : 'Worlds'}, ${formatCount(one.servers)} open`,
+            })),
+          ]}
+        />
+
+        {filtered && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => { setDevice('any'); setRegion('anywhere') }}
+          >
+            Any of them
+          </Button>
+        )}
+      </div>
 
       <BrowseFrame
         rail={
@@ -238,11 +312,11 @@ export default function Discover() {
                   : `${formatCount(found.length)} ${found.length === 1 ? 'World' : 'Worlds'}`
             }
           >
-            {(debounced || genre !== 'all') && (
+            {(debounced || genre !== 'all' || filtered) && (
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => { setTerm(''); setGenre('all'); setView('charts') }}
+                onClick={() => { setTerm(''); setGenre('all'); setDevice('any'); setRegion('anywhere'); setView('charts') }}
               >
                 Clear
               </Button>
@@ -260,25 +334,29 @@ export default function Discover() {
           {!loading && !error && !found.length && (
             <Card className="p-5">
               <EmptyState
-                mood={debounced || genre !== 'all' ? 'noResults' : 'construction'}
+                mood={debounced || genre !== 'all' || filtered ? 'noResults' : 'construction'}
                 title={
-                  debounced || genre !== 'all'
+                  debounced || genre !== 'all' || filtered
                     ? 'Kobby could not find anything'
                     : 'Nothing published yet'
                 }
                 body={
                   debounced
                     ? `No World matches "${debounced}". Try a shorter word, or look at everything.`
-                    : genre !== 'all'
-                      ? 'Nothing of this kind yet. Try everything instead.'
-                      : 'Be the first person to publish something here.'
+                    : region !== 'anywhere'
+                      ? 'Nothing is open there right now. Try anywhere, or another device.'
+                      : device !== 'any'
+                        ? `No World says it runs on a ${deviceLabels[device].toLowerCase()} yet.`
+                        : genre !== 'all'
+                          ? 'Nothing of this kind yet. Try everything instead.'
+                          : 'Be the first person to publish something here.'
                 }
                 action={
-                  debounced || genre !== 'all'
+                  debounced || genre !== 'all' || filtered
                     ? (
                       <Button
                         variant="subtle"
-                        onClick={() => { setTerm(''); setGenre('all'); setView('charts') }}
+                        onClick={() => { setTerm(''); setGenre('all'); setDevice('any'); setRegion('anywhere'); setView('charts') }}
                       >
                         Everything
                       </Button>

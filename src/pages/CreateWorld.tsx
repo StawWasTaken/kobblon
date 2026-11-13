@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Tooltip } from '@/components/ui/Tooltip'
 import {
   faArrowUpRightFromSquare, faBell, faCheck, faCopy, faImage, faLink, faPlus,
   faTrash, faUpload, faVideo,
@@ -26,7 +27,9 @@ import {
   removeWorldMedium, uploadWorldFile, worldFileUrl, worldGenres, worldMedia,
 } from '@/lib/api'
 import { worldLink } from '@/lib/links'
-import type { WorldMaturity } from '@/types/db'
+import { deviceIcons, deviceLabels, everyDevice } from '@/lib/kinds'
+import { cn } from '@/lib/cn'
+import type { WorldDevice, WorldMaturity } from '@/types/db'
 
 /*
  * Setting a World up, on the website.
@@ -78,6 +81,12 @@ export default function CreateWorld() {
   const [about, setAbout] = useState('')
   const [genre, setGenre] = useState('')
   const [maturity, setMaturity] = useState<WorldMaturity>('everyone')
+  /*
+   * What it runs on. Everything published before the column existed says
+   * all four, so a World that has never been asked the question starts here
+   * saying yes to everything rather than being quietly unfindable.
+   */
+  const [devices, setDevices] = useState<WorldDevice[]>(everyDevice)
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
   const [announcement, setAnnouncement] = useState('')
@@ -99,6 +108,7 @@ export default function CreateWorld() {
     setAbout(world.description ?? '')
     setGenre(world.genre ?? '')
     setMaturity((world.maturity as WorldMaturity) ?? 'everyone')
+    setDevices(world.devices?.length ? world.devices : everyDevice)
   }, [world?.id])
 
   if (worlds.loading) return <Skeleton className="h-64" />
@@ -150,6 +160,7 @@ export default function CreateWorld() {
       description: about,
       genre: genre || null,
       maturity,
+      devices,
     }),
     'Saved.',
   )
@@ -248,6 +259,48 @@ export default function CreateWorld() {
             />
           </Field>
         </div>
+
+        <Field label="What it runs on">
+          {/*
+            * Four toggles rather than a dropdown: it is not one answer, it
+            * is four yes-or-nos, and a dropdown that takes several is a
+            * control nobody reads correctly. The last one cannot be turned
+            * off - a World that runs on nothing is a World nobody can find,
+            * and the database refuses it anyway (0343), so it is said here
+            * rather than discovered by pressing Save.
+            */}
+          <div className="flex flex-wrap gap-2">
+            {everyDevice.map((one) => {
+              const on = devices.includes(one)
+              const last = on && devices.length === 1
+              return (
+                <Tooltip key={one} label={last ? 'It has to run on something' : deviceLabels[one]}>
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    disabled={last}
+                    onClick={() => setDevices((was) => (
+                      was.includes(one) ? was.filter((x) => x !== one) : [...was, one]
+                    ))}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors',
+                      on
+                        ? 'border-brand bg-brand/15 text-brand-bright'
+                        : 'border-ink-line text-muted hover:border-white/25 hover:text-white',
+                      last && 'cursor-default',
+                    )}
+                  >
+                    <Glyph icon={deviceIcons[one]} />
+                    {deviceLabels[one]}
+                  </button>
+                </Tooltip>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            Discover lets people keep the Worlds that run on what they are holding.
+          </p>
+        </Field>
 
         <div className="flex justify-end">
           <Button variant="yes" onClick={save} disabled={busy || !name.trim()}>Save</Button>

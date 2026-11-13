@@ -23270,3 +23270,75 @@ Your three call sites - `kobblon.ts:126`, `worlds.ts:35`, `publish.ts:63` -
 are exactly the ones I would change: `worldEmblem` where the slot is square,
 `worldThumbnail` where it is 16/9, and `Missing` left meaning only that a
 picture failed to load.
+
+## Round three hundred and thirty-nine - two ways to draw a World, and two filters
+
+### A World is drawn two ways and no more
+
+Staw: "on kobblon i only want 2 ways of displaying a kobblon world. main
+one: square/emblem, widely used a bit everywhere. secondary:
+rectangle/thumbnail; only used in homepage, discover and thats it."
+
+So:
+
+- **Square, `worldEmblem(world)`** - the rule. Cards in a grid, tiles on a
+  shelf, profiles, libraries, the Creator Hub, the related row under a
+  World, leaderboards. `WorldCard` is square now; it used to be 16/10.
+- **Wide, `worldThumbnail(world)`** - the exception, and it belongs to Home
+  and Discover: the one World at the top of Top Now, the `WorldFeature`
+  shelf, and the chart on the landing page. Nowhere else.
+
+"What people liked" on Home went from wide to square with it: mainly
+squares, a line or two of rectangles, which is what he asked for.
+
+If the Workspace draws a World, follow the same rule - square unless it is
+a shelf meant to be looked at rather than scanned.
+
+### Three migrations, and one of them changes a signature you call
+
+**0341 `worlds.devices`** - `text[]`, one or more of `computer`, `phone`,
+`tablet`, `console`, never empty. Everything already published says all
+four.
+
+**0342 `world_servers.region`** - nullable `text`, one of `eu-west`,
+`eu-central`, `na-east`, `na-west`, `south-america`, `asia`, `oceania`,
+`africa`. **`open_world_server` has a fourth parameter**:
+
+```sql
+open_world_server(wanted uuid, room_for integer default 50,
+                  private boolean default false, where_from text default null)
+```
+
+The old three-argument version is **dropped**, not kept beside it - a
+default on the new parameter would have made a three-argument call
+ambiguous. Your existing calls keep working because the parameter has a
+default, but **the Launcher is the only thing that knows where it opened a
+server**, so please start sending `where_from`. Until it does, the location
+filter has nothing to offer and says "No servers yet" rather than listing
+eight places that all find nothing. `live_world_regions()` returns the
+regions with live servers, and that is what builds the control.
+
+**0343 `configure_world`** gains `runs_on text[]`, and the six-argument
+version is dropped for the same reason. If Creator calls `configure_world`
+positionally, add the seventh argument or pass null.
+
+Staw applies all three by hand. They are written, applied twice against a
+local Postgres, and checked under two identities: the owner can set the
+devices, a stranger gets `That is not your World.`, `vr` and an empty list
+are both refused. One thing worth stealing from that: the first version of
+the check was `array_length(devices, 1) between 1 and 4`, which refused
+`vr` and happily accepted a World that runs on nothing, because
+`array_length` of an empty array is null and a null check passes. It is
+`coalesce(array_length(devices, 1), 0)` now.
+
+### The words for both
+
+`@/lib/kinds` holds them, so neither side invents its own: `deviceLabels`,
+`deviceIcons` (filled Font Awesome), `everyDevice`, `regionLabels`. A
+device called "Computer" here and "Desktop" there is two products.
+
+### What is not done
+
+The Launcher does not report a region yet, so the location filter is a
+control that honestly says there is nothing to filter by. That is the one
+piece of this that is yours.

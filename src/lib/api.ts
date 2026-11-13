@@ -26,7 +26,7 @@ import type {
   AssetRequest, OwnedAsset, AssetReview, CreatorPage,
   CommunityEvent, EventPage, EventAttendee, BuildTarget, CommunityMoneyRow,
   AccountStanding, AccountLock, Violation, Appeal, Letter, Ticket, TicketMessage, TicketTopic,
-  World, Quest, QuestCounted, QuestRequest, StaffCommunity,
+  World, WorldDevice, WorldRegion, Quest, QuestCounted, QuestRequest, StaffCommunity,
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice, TicketKind,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,
@@ -2908,7 +2908,7 @@ export async function getAppeal(violationId: number): Promise<Appeal | null> {
 
 // ------------------------------------------------------------------ worlds
 
-const WORLD_FIELDS = 'id, owner_id, is_published, archived_at, updated_at, content_id, slug, name, description, creator_name, cover_url, emblem_url, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
+const WORLD_FIELDS = 'id, owner_id, is_published, archived_at, updated_at, content_id, slug, name, description, creator_name, cover_url, emblem_url, devices, runtime_version, visit_count, like_count, dislike_count, favourite_count, genre, maturity, published_at'
 
 export type WorldSort = 'trending' | 'new' | 'popular'
 
@@ -2923,10 +2923,39 @@ export async function listWorlds(options: {
   genre?: string | 'all'
   search?: string
   limit?: number
+  /** Keep only Worlds that say they run on this machine (0341). */
+  device?: WorldDevice | 'any'
+  /** Keep only Worlds with a live server in this region (0342). */
+  region?: WorldRegion | 'anywhere'
 } | number = {}): Promise<World[]> {
   // The old call took a count. Anything still doing that keeps working.
   const settings = typeof options === 'number' ? { limit: options } : options
-  const { sort = 'new', genre = 'all', search, limit = 24 } = settings
+  const {
+    sort = 'new', genre = 'all', search, limit = 24,
+    device = 'any', region = 'anywhere',
+  } = settings
+
+  /*
+   * Where, first, because it decides which Worlds can be in the answer at
+   * all. It is a second read rather than a join: PostgREST would need an
+   * inner embed on world_servers to filter by one, and that drags every
+   * matching server row back with the Worlds. This asks the servers table
+   * for the ids and nothing else.
+   *
+   * No live server in that region means no Worlds, and that is the honest
+   * answer rather than everything unfiltered.
+   */
+  let onlyThese: string[] | null = null
+  if (region !== 'anywhere') {
+    const { data: there, error: whereError } = await supabase
+      .from('world_servers')
+      .select('world_id')
+      .eq('region', region)
+      .is('closed_at', null)
+    if (whereError) throw new Error(whereError.message)
+    onlyThese = [...new Set((there ?? []).map((one) => one.world_id as string))]
+    if (!onlyThese.length) return []
+  }
 
   let query = supabase
     .from('worlds')
@@ -2936,6 +2965,8 @@ export async function listWorlds(options: {
     .limit(limit)
 
   if (genre !== 'all') query = query.eq('genre', genre)
+  if (device !== 'any') query = query.contains('devices', [device])
+  if (onlyThese) query = query.in('id', onlyThese)
   if (search?.trim()) query = query.ilike('name', `%${search.trim()}%`)
 
   query = sort === 'new'
@@ -2947,6 +2978,22 @@ export async function listWorlds(options: {
   const { data, error } = await query
   if (error) throw new Error(error.message)
   return (data ?? []) as World[]
+}
+
+/** One region with servers open in it right now. */
+export type LiveRegion = { region: WorldRegion; servers: number; worlds: number }
+
+/**
+ * The regions that actually have a server open in them.
+ *
+ * The location filter is built from this rather than from a list of places,
+ * so it never offers somewhere that would come back empty. Until the
+ * Launcher starts saying where it opened a server, this is empty and the
+ * control says so, which is the truth rather than two hundred countries
+ * that all find nothing.
+ */
+export async function liveWorldRegions(): Promise<LiveRegion[]> {
+  return (unwrap(await supabase.rpc('live_world_regions')) ?? []) as LiveRegion[]
 }
 
 /**
@@ -3146,6 +3193,8 @@ export async function configureWorld(id: string, changes: {
   maturity?: WorldMaturity
   /** A path inside this World's own folder, or '' to take the emblem off. */
   cover?: string
+  /** What it runs on. Left out, it is left alone; never empty (0343). */
+  devices?: WorldDevice[]
 }): Promise<World> {
   return unwrap(await supabase.rpc('configure_world', {
     which: id,
@@ -3154,6 +3203,7 @@ export async function configureWorld(id: string, changes: {
     genre: changes.genre ?? null,
     maturity: changes.maturity ?? null,
     cover: changes.cover ?? null,
+    runs_on: changes.devices ?? null,
   })) as World
 }
 

@@ -175,9 +175,14 @@ export default function Home() {
 
       <AdBanner className="mb-8" quiet />
 
+      {/* Marks, not covers. Staw, round 339: a World is drawn two ways on
+          Kobblon and the square one is the rule - the wide one is for a line
+          or two a page, not for every other shelf. Home keeps two of them:
+          the one World at the top of Top Now, and New on Kobblon, where the
+          point is being shown something rather than finding it. */}
       {best.length > 0 && (
         <Shelf title="What people liked" more={{ to: '/discover', label: 'Discover' }}>
-          {best.map((world) => <WorldFeature key={world.id} world={world} />)}
+          {best.map((world) => <WorldTile key={world.id} world={world} />)}
         </Shelf>
       )}
 
