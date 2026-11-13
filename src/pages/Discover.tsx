@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  faCompass, faFire, faSeedling, faHeart, faLayerGroup, faChartSimple,
+  faCompass, faFire, faSeedling, faHeart, faChartSimple,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { BrowseHero } from '@/components/browse/BrowseHero'
-import { BrowseRail, BrowseFrame, BrowseHeading } from '@/components/browse/BrowseRail'
-import type { RailItem } from '@/components/browse/BrowseRail'
+import { BrowseHeading } from '@/components/browse/BrowseRail'
+import { Toolbar } from '@/components/ui/Toolbar'
+import { Tabs } from '@/components/ui/Tabs'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorState, SpaceCardSkeleton } from '@/components/ui/States'
 import { WorldCard } from '@/components/worlds/WorldCard'
@@ -19,40 +20,35 @@ import type { WorldSort } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { useTitle } from '@/hooks/useTitle'
 import { AdBanner } from '@/components/ads/AdBanner'
-import type { World, WorldDevice, WorldRegion } from '@/types/db'
+import type { World, WorldDevice, WorldGenre, WorldRegion } from '@/types/db'
 import { Select } from '@/components/ui/Select'
 import { deviceLabels, everyDevice, regionLabels } from '@/lib/kinds'
 
 /*
- * Discover, put in order.
+ * Discover, laid out again.
  *
- * Staw, on what was wrong with it: "three headed rows down a narrow column
- * with an advert beside them, so the Worlds are the smallest thing on a page
- * about Worlds."
+ * Staw: "redesign the discover page (new layout) cuz it sucks ... add more
+ * square & rectangle lines for worlds in discover page too".
  *
- * He is right and it is worth being precise about how it happened. The page
- * had an `xl:grid-cols-[minmax(0,1fr)_160px]` around its body for the tall
- * advert, each row then capped itself at eight cards, and the grid inside
- * that was still asking for four columns - so on an ordinary laptop the
- * Worlds came out three narrow cards wide in a column with a banner over it,
- * a sticky filter bar under that, and an advert to the right. Four things
- * competing for a page whose subject is the Worlds.
+ * What it was: a hero, a row of two filters, and then a thirteen-rem rail
+ * down the left with two columns of buttons in it, the Worlds in whatever
+ * was left. So the page about Worlds spent its left edge and a third of its
+ * controls budget on navigation, and the charts under it were three shelves
+ * and a feature row - a short page with a long sidebar.
  *
- * Now: one grid, as wide as the page allows, and the three rows are three
- * entries on the rail instead - because "trending" is not a section, it is
- * an order, and giving an order its own heading and its own eight-card row
- * is what made the page feel like three pages stacked.
- */
-
-/*
- * Charts is not a sort, it is the front of the page.
+ * What it is now:
  *
- * Staw asked for the front page the big platforms have: shelves of Worlds
- * that slide, a few picked out at the top, and a way through each shelf to
- * all of it. That is a different page from the grid, not a fourth ordering
- * of it, so it sits at the top of the same rail and the rail switches
- * between the two. Searching or picking a kind of World leaves it on its
- * own, because a shelf of eighteen is not an answer to a search.
+ * - **No rail.** Everything that narrows the page is one sticky bar: the
+ *   four ways of looking on the left, the three things to narrow by on the
+ *   right. It stays with you as the shelves run on, which the rail could
+ *   never do past its own height, and the Worlds get the whole width.
+ * - **Nine lines instead of four**, and mainly square ones. Two wide lines,
+ *   at the top and in the middle, and squares everywhere else, including a
+ *   shelf for each of the first kinds of World that have any. That is the
+ *   shape Staw asked for: "mainly square worlds but also sometimes some
+ *   lines with rectangles".
+ * - **A wider grid.** Up to six columns of emblems rather than four, which
+ *   is what the page can hold now that nothing stands beside it.
  */
 type View = WorldSort | 'charts'
 
@@ -62,6 +58,21 @@ const SHELVES: { value: WorldSort; label: string; icon: typeof faFire; note: str
   { value: 'popular', label: 'Most liked', icon: faHeart, note: 'What people came back and said' },
 ]
 
+/*
+ * How many kinds of World get a shelf of their own.
+ *
+ * Three, and the ones that actually have Worlds in them. Every kind on the
+ * list would be a page of near-empty shelves on a platform this young, and
+ * a shelf with two things on it reads as a mistake rather than as a
+ * category.
+ */
+const KIND_SHELVES = 3
+
+type Charts = {
+  sorts: Record<WorldSort, World[]>
+  kinds: { genre: WorldGenre; worlds: World[] }[]
+}
+
 export default function Discover() {
   useTitle('Discover')
   const [params, setParams] = useSearchParams()
@@ -70,12 +81,9 @@ export default function Discover() {
   const [view, setView] = useState<View>('charts')
   const [genre, setGenre] = useState<string>('all')
   /*
-   * Staw asked for the two filters the big platforms put at the top of
-   * their browse page: what you are holding, and where you would be
-   * playing. They are different questions from the rail's two - the rail
-   * asks what kind of World and in what order, these two ask what can
-   * actually be played from here - so they sit over the Worlds rather than
-   * in the rail.
+   * What you are holding and where you would be playing: the two questions
+   * the rail never asked. They narrow rather than choose, so they sit with
+   * the kind of World on the right of the bar, away from the four views.
    */
   const [device, setDevice] = useState<WorldDevice | 'any'>('any')
   const [region, setRegion] = useState<WorldRegion | 'anywhere'>('anywhere')
@@ -98,62 +106,61 @@ export default function Discover() {
   }, [term, setParams])
 
   /*
-   * One query for the whole page. It used to run four - the grid, plus one
-   * per row - and three of them were the same forty Worlds in three orders,
-   * which is three requests to answer a question the first one answered.
-   */
-  /*
-   * Which of the two is on screen. A search or a kind takes the grid even
-   * while the rail still says Charts, because that is what was asked for;
-   * the rail follows, so the page never shows a grid with nothing in the
-   * rail lit up.
+   * Which of the two is on screen. A search or a narrowing takes the grid
+   * even while the bar still says Charts, because that is what was asked
+   * for; the bar follows, so the page never shows a grid with nothing lit
+   * up in it.
    */
   const filtered = device !== 'any' || region !== 'anywhere'
-  const browsing = view !== 'charts' || !!debounced || genre !== 'all' || filtered
+  const narrowed = !!debounced || genre !== 'all' || filtered
+  const browsing = view !== 'charts' || narrowed
   const sort: WorldSort = view === 'charts' ? 'trending' : view
 
   const { data, error, loading, reload } = useAsync(
     async () => (browsing
-      ? listWorlds({ sort, genre, search: debounced, limit: 48, device, region })
+      ? listWorlds({ sort, genre, search: debounced, limit: 60, device, region })
       : []),
     [browsing, sort, genre, debounced, device, region],
   )
 
   /*
-   * The three shelves, in one go. They are three different orderings of the
-   * same table, so they cannot come out of one query - but they can come
-   * out of one await, and they are only asked for while the charts are the
-   * thing on screen.
+   * Every shelf on the front of the page, in one await.
+   *
+   * The three orderings cannot come out of one query - they are three
+   * orders of the same table - and neither can the kinds. But they are all
+   * asked for at once and only while the charts are what is on screen, so
+   * the page makes one round of requests rather than one per line as each
+   * scrolls into view.
    */
-  const charts = useAsync(
-    async () => (browsing
-      ? null
-      : Object.fromEntries(await Promise.all(SHELVES.map(async (one) => [
-        one.value, await listWorlds({ sort: one.value, limit: 18 }),
-      ] as const))) as Record<WorldSort, World[]>),
-    [browsing],
+  const charts = useAsync<Charts | null>(
+    async () => {
+      if (browsing) return null
+      const ready = genres.data
+      const picked = (ready ?? []).slice(0, KIND_SHELVES)
+      const [sorts, kinds] = await Promise.all([
+        Promise.all(SHELVES.map(async (one) => [
+          one.value, await listWorlds({ sort: one.value, limit: 24 }),
+        ] as const)).then((rows) => Object.fromEntries(rows) as Record<WorldSort, World[]>),
+        Promise.all(picked.map(async (one) => ({
+          genre: one,
+          worlds: await listWorlds({ sort: 'trending', genre: one.id, limit: 18 }),
+        }))),
+      ])
+      /* A kind with nothing in it is not a shelf. */
+      return { sorts, kinds: kinds.filter((one) => one.worlds.length >= 3) }
+    },
+    [browsing, genres.data],
   )
 
   const found = data ?? []
+  const sorts = charts.data?.sorts
+  /* The ones under the five at the top, so the wide line in the middle of
+     the page is not the top of the page a second time. */
+  const standout = (sorts?.popular ?? []).slice(5, 11)
 
-  /*
-   * No counts on the sorts. They would each have shown the length of
-   * whatever is on screen, which is the same number beside all three and
-   * true of only one of them - and the heading says it once already.
-   */
-  const sorts: RailItem<View>[] = [
+  const views: { value: View; label: string; icon: typeof faFire }[] = [
     { value: 'charts', label: 'Charts', icon: faChartSimple },
     ...SHELVES.map((one) => ({ value: one.value, label: one.label, icon: one.icon })),
-  ]
-
-  const kinds: RailItem<string>[] = [
-    { value: 'all', label: 'Everything', icon: faLayerGroup },
-    /* No icon: there is no drawing of "roleplay", and six compasses in a
-       column is six icons that say nothing. */
-    ...(genres.data ?? []).map((one) => ({
-      value: one.id,
-      label: one.label,
-    })),
   ]
 
   const named = SHELVES.find((one) => one.value === view)?.label ?? 'Worlds'
@@ -161,8 +168,12 @@ export default function Discover() {
     ? null
     : (genres.data ?? []).find((one) => one.id === genre)?.label ?? null
 
+  const clear = () => {
+    setTerm(''); setGenre('all'); setDevice('any'); setRegion('anywhere'); setView('charts')
+  }
+
   return (
-    <Page width="wide" className="space-y-6">
+    <Page width="wide" className="space-y-5">
       <BrowseHero
         title="Discover"
         lead="What people are building and playing right now."
@@ -173,135 +184,177 @@ export default function Discover() {
       />
 
       {/*
-          Over the Worlds and under the search, because they narrow what is
-          found rather than choosing what to look at. Two controls and no
-          more: a row of pills that keeps growing is the filter bar every
-          browse page ends up with and nobody reads.
+          One bar, and it sticks. The four views on the left because they
+          choose what the page is; the three narrowings on the right because
+          they cut down whatever it chose. On a phone the whole thing wraps
+          into two lines and the tabs scroll, rather than the eleven-button
+          column the rail turned into down there.
       */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select
-          label="What you are playing on"
-          value={device}
-          onChange={(value) => setDevice(value as WorldDevice | 'any')}
-          className="w-44"
-          options={[
-            { value: 'any', label: 'Any device' },
-            ...everyDevice.map((one) => ({ value: one, label: deviceLabels[one] })),
-          ]}
+      <Toolbar className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <Tabs
+          label="What to see"
+          value={browsing && view === 'charts' ? 'trending' : view}
+          onChange={(next) => setView(next)}
+          options={views}
+          className="max-w-full overflow-x-auto kob-scroll"
         />
 
-        <Select
-          label="Where you would be playing"
-          value={region}
-          onChange={(value) => setRegion(value as WorldRegion | 'anywhere')}
-          className="w-52"
-          disabled={!regions.data?.length}
-          options={[
-            {
-              value: 'anywhere',
-              label: regions.data?.length ? 'Anywhere' : 'No servers yet',
-              note: regions.data?.length
-                ? undefined
-                : 'Nowhere is reporting a location at the moment',
-            },
-            ...(regions.data ?? []).map((one) => ({
-              value: one.region,
-              label: regionLabels[one.region],
-              note: `${formatCount(one.worlds)} ${one.worlds === 1 ? 'World' : 'Worlds'}, ${formatCount(one.servers)} open`,
-            })),
-          ]}
-        />
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Select
+            label="What kind of World"
+            value={genre}
+            onChange={setGenre}
+            className="w-40"
+            align="right"
+            options={[
+              { value: 'all', label: 'Every kind' },
+              ...(genres.data ?? []).map((one) => ({ value: one.id, label: one.label })),
+            ]}
+          />
 
-        {filtered && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => { setDevice('any'); setRegion('anywhere') }}
-          >
-            Any of them
-          </Button>
-        )}
-      </div>
+          <Select
+            label="What you are playing on"
+            value={device}
+            onChange={(value) => setDevice(value as WorldDevice | 'any')}
+            className="w-40"
+            align="right"
+            options={[
+              { value: 'any', label: 'Any device' },
+              ...everyDevice.map((one) => ({ value: one, label: deviceLabels[one] })),
+            ]}
+          />
 
-      <BrowseFrame
-        rail={
-          <>
-            {/* Two questions, so two columns rather than one unbroken
-                list of eleven buttons that reads as a single choice. */}
-            <BrowseRail
-              label="How to sort the Worlds"
-              heading="What to see"
-              items={sorts}
-              value={browsing && view === 'charts' ? 'trending' : view}
-              onChange={setView}
-            />
-            <BrowseRail
-              label="What kind of World"
-              heading="What kind"
-              items={kinds}
-              value={genre}
-              onChange={setGenre}
-              foot={<AdBanner size="tall" quiet />}
-            />
-          </>
-        }
-      >
-        {!browsing && (
-          <>
-            {charts.loading && (
+          <Select
+            label="Where you would be playing"
+            value={region}
+            onChange={(value) => setRegion(value as WorldRegion | 'anywhere')}
+            className="w-44"
+            align="right"
+            disabled={!regions.data?.length}
+            options={[
+              {
+                value: 'anywhere',
+                label: regions.data?.length ? 'Anywhere' : 'No servers yet',
+                note: regions.data?.length
+                  ? undefined
+                  : 'Nowhere is reporting a location at the moment',
+              },
+              ...(regions.data ?? []).map((one) => ({
+                value: one.region,
+                label: regionLabels[one.region],
+                note: `${formatCount(one.worlds)} ${one.worlds === 1 ? 'World' : 'Worlds'}, ${formatCount(one.servers)} open`,
+              })),
+            ]}
+          />
+
+          {narrowed && (
+            <Button size="sm" variant="ghost" onClick={clear}>Clear</Button>
+          )}
+        </div>
+      </Toolbar>
+
+      {!browsing && (
+        <div>
+          {charts.loading && (
+            <div className="space-y-8">
               <div className="flex gap-4 pb-2">
                 {[0, 1, 2, 3].map((i) => (
                   <Skeleton key={i} className="aspect-[16/9] w-72 shrink-0 rounded-xl sm:w-[22rem]" />
                 ))}
               </div>
-            )}
-
-            {charts.error && <ErrorState message={charts.error} onRetry={charts.reload} />}
-
-            {!charts.loading && !charts.error && !(charts.data?.trending.length) && (
-              <Card className="p-5">
-                <EmptyState
-                  mood="construction"
-                  title="Nothing published yet"
-                  body="Be the first person to publish something here."
-                  action={<Button to="/create/worlds">Make a World</Button>}
-                />
-              </Card>
-            )}
-
-            {/* The four most liked, given the room to be looked at. Picked
-                by what people said rather than by what is busiest, so the
-                top of the page is not the same four Worlds as the shelf
-                under it. */}
-            {!!charts.data?.popular.length && (
-              <Shelf title="Featured" note="Top picks on Kobblon">
-                {charts.data.popular.slice(0, 4).map((world) => (
-                  <WorldFeature key={world.id} world={world} />
+              <div className="flex gap-4 pb-2">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <Skeleton key={i} className="aspect-square w-[7.5rem] shrink-0 rounded-xl sm:w-36" />
                 ))}
-              </Shelf>
-            )}
+              </div>
+            </div>
+          )}
 
-            {SHELVES.map((one) => {
-              const worlds = charts.data?.[one.value] ?? []
-              if (!worlds.length) return null
-              return (
-                <Shelf
-                  key={one.value}
-                  title={one.label}
-                  note={one.note}
-                  more={{ onClick: () => setView(one.value) }}
-                >
-                  {worlds.map((world) => <WorldTile key={world.id} world={world} />)}
-                </Shelf>
-              )
-            })}
+          {charts.error && <ErrorState message={charts.error} onRetry={charts.reload} />}
 
-            <AdBanner className="mt-2 lg:hidden" />
-          </>
-        )}
+          {!charts.loading && !charts.error && !sorts?.trending.length && (
+            <Card className="p-5">
+              <EmptyState
+                mood="construction"
+                title="Nothing published yet"
+                body="Be the first person to publish something here."
+                action={<Button to="/create/worlds">Make a World</Button>}
+              />
+            </Card>
+          )}
 
-        {browsing && (
-          <>
+          {/* Wide line, one of two. The most liked rather than the busiest,
+              so the top of the page is not the same Worlds as the shelf
+              under it. */}
+          {!!sorts?.popular.length && (
+            <Shelf title="Featured" note="Top picks on Kobblon">
+              {sorts.popular.slice(0, 5).map((world) => (
+                <WorldFeature key={world.id} world={world} />
+              ))}
+            </Shelf>
+          )}
+
+          {!!sorts?.trending.length && (
+            <Shelf
+              title="Being played"
+              note="Busiest on Kobblon right now"
+              more={{ onClick: () => setView('trending') }}
+            >
+              {sorts.trending.map((world) => <WorldTile key={world.id} world={world} />)}
+            </Shelf>
+          )}
+
+          {!!sorts?.new.length && (
+            <Shelf
+              title="Just published"
+              note="Straight out of the Workspace"
+              more={{ onClick: () => setView('new') }}
+            >
+              {sorts.new.map((world) => <WorldTile key={world.id} world={world} />)}
+            </Shelf>
+          )}
+
+          {/* Wide line, two of two, and it sits in the middle of the page
+              rather than beside the first one. Two rectangles in a row read
+              as the page changing shape; one every few shelves reads as a
+              shelf worth stopping at. */}
+          {!!standout.length && (
+            <Shelf title="Standout Worlds" note="Well liked, and given the room">
+              {standout.map((world) => <WorldFeature key={world.id} world={world} />)}
+            </Shelf>
+          )}
+
+          {!!sorts?.popular.length && (
+            <Shelf
+              title="Most liked"
+              note="What people came back and said"
+              more={{ onClick: () => setView('popular') }}
+            >
+              {sorts.popular.map((world) => <WorldTile key={world.id} world={world} />)}
+            </Shelf>
+          )}
+
+          {/* One shelf per kind, square, and only the kinds that have
+              enough Worlds to be a shelf. Through the heading is the grid
+              for that kind, which is the one thing the old rail did that
+              this has to keep. */}
+          {(charts.data?.kinds ?? []).map((one) => (
+            <Shelf
+              key={one.genre.id}
+              title={one.genre.label}
+              note="Worlds of this kind, busiest first"
+              more={{ onClick: () => { setGenre(one.genre.id); setView('trending') } }}
+            >
+              {one.worlds.map((world) => <WorldTile key={world.id} world={world} />)}
+            </Shelf>
+          ))}
+
+          {!!sorts?.trending.length && <AdBanner className="mt-2" />}
+        </div>
+      )}
+
+      {browsing && (
+        <div>
           <BrowseHeading
             title={kindName ? `${named}: ${kindName}` : named}
             note={
@@ -312,20 +365,14 @@ export default function Discover() {
                   : `${formatCount(found.length)} ${found.length === 1 ? 'World' : 'Worlds'}`
             }
           >
-            {(debounced || genre !== 'all' || filtered) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => { setTerm(''); setGenre('all'); setDevice('any'); setRegion('anywhere'); setView('charts') }}
-              >
-                Clear
-              </Button>
+            {narrowed && (
+              <Button size="sm" variant="ghost" onClick={clear}>Clear</Button>
             )}
           </BrowseHeading>
 
           {loading && (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <SpaceCardSkeleton key={i} />)}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => <SpaceCardSkeleton key={i} />)}
             </div>
           )}
 
@@ -334,12 +381,8 @@ export default function Discover() {
           {!loading && !error && !found.length && (
             <Card className="p-5">
               <EmptyState
-                mood={debounced || genre !== 'all' || filtered ? 'noResults' : 'construction'}
-                title={
-                  debounced || genre !== 'all' || filtered
-                    ? 'Kobby could not find anything'
-                    : 'Nothing published yet'
-                }
+                mood={narrowed ? 'noResults' : 'construction'}
+                title={narrowed ? 'Kobby could not find anything' : 'Nothing published yet'}
                 body={
                   debounced
                     ? `No World matches "${debounced}". Try a shorter word, or look at everything.`
@@ -352,15 +395,8 @@ export default function Discover() {
                           : 'Be the first person to publish something here.'
                 }
                 action={
-                  debounced || genre !== 'all' || filtered
-                    ? (
-                      <Button
-                        variant="subtle"
-                        onClick={() => { setTerm(''); setGenre('all'); setDevice('any'); setRegion('anywhere'); setView('charts') }}
-                      >
-                        Everything
-                      </Button>
-                    )
+                  narrowed
+                    ? <Button variant="subtle" onClick={clear}>Everything</Button>
                     : <Button to="/create/worlds">Make a World</Button>
                 }
               />
@@ -368,19 +404,17 @@ export default function Discover() {
           )}
 
           {!loading && !!found.length && (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
-              {found.map((world) => (
-                <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                {found.map((world) => (
+                  <WorldCard key={world.id} world={world} genres={genres.data ?? undefined} />
+                ))}
+              </div>
+              <AdBanner className="mt-6" />
+            </>
           )}
-
-          {/* The rail's foot is hidden on a phone, so the one slot that says
-              what it is when it is empty goes under the grid there. */}
-          {!loading && !!found.length && <AdBanner className="mt-6 lg:hidden" />}
-          </>
-        )}
-      </BrowseFrame>
+        </div>
+      )}
     </Page>
   )
 }

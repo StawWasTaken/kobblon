@@ -51,12 +51,20 @@ function Stats({ world, light }: { world: World; light?: boolean }) {
  * than as the top of a ranking.
  */
 
-/** The busiest World, with the room to be looked at. */
+/**
+ * The busiest World, with the room to be looked at - and no more room than
+ * that.
+ *
+ * Staw, on the wide ones: a rectangle is never bigger than the one on
+ * Discover. That one is `22rem` across, so this is too, rather than the
+ * 1.6fr of a wide page it used to take, which on a desktop was twice the
+ * size of every other rectangle on the site.
+ */
 function Lead({ world }: { world: World }) {
   return (
     <Link
       to={worldLink(world)}
-      className="group relative block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media sm:aspect-[16/9]"
+      className="group relative block aspect-[16/10] w-full max-w-[22rem] overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media sm:aspect-[16/9]"
     >
       <Cover world={world} className="group-hover:scale-[1.03]" />
 
@@ -87,8 +95,16 @@ function Runner({ world, place }: { world: World; place: number }) {
       <span className="w-4 shrink-0 text-center font-display text-sm font-extrabold text-muted">
         {place}
       </span>
+      {/* The square slot takes the square picture. It was handed the wide
+          one, so a 16/9 thumbnail was cropped to a 48px box and every
+          runner showed the middle third of a cover. */}
       <span className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 border-ink-line bg-media">
-        <Cover world={world} className="group-hover:scale-[1.06]" />
+        <Picture
+          src={worldEmblem(world)}
+          alt=""
+          className="h-full w-full"
+          pictureClassName="transition-transform duration-500 group-hover:scale-[1.06]"
+        />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-bold">{world.name}</span>
@@ -106,8 +122,8 @@ export function TopNow({ worlds, loading, className }: {
   if (loading) {
     return (
       <section className={cn('mb-8', className)}>
-        <div className="grid gap-4 sm:grid-cols-[1.6fr_1fr]">
-          <Skeleton className="aspect-[16/10] rounded-2xl sm:aspect-[16/9]" />
+        <div className="grid max-w-4xl gap-4 sm:grid-cols-[22rem_minmax(0,1fr)]">
+          <Skeleton className="aspect-[16/10] w-full max-w-[22rem] rounded-2xl sm:aspect-[16/9]" />
           <div className="hidden flex-col gap-2 sm:flex">
             {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
           </div>
@@ -145,7 +161,7 @@ export function TopNow({ worlds, loading, className }: {
           />
         </Card>
       ) : (
-        <div className={cn('grid gap-4', behind.length > 0 ? 'sm:grid-cols-[1.6fr_1fr]' : 'sm:max-w-3xl')}>
+        <div className={cn('grid gap-4', behind.length > 0 ? 'max-w-4xl sm:grid-cols-[22rem_minmax(0,1fr)]' : 'sm:max-w-[22rem]')}>
           <Lead world={lead} />
           {behind.length > 0 && (
             <div className="flex flex-col gap-2">

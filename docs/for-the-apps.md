@@ -23342,3 +23342,55 @@ device called "Computer" here and "Desktop" there is two products.
 The Launcher does not report a region yet, so the location filter is a
 control that honestly says there is nothing to filter by. That is the one
 piece of this that is yours.
+
+## Round three hundred and forty - Discover laid out again, and a cap on the wide ones
+
+Staw ran 0341, 0342 and 0343, so the devices column, the server region and
+the seventh argument on `configure_world` are live. Nothing more to apply.
+
+### A rectangle is never bigger than the one on Discover
+
+That is the rule now, and it is a rule because the sizes had drifted. The
+wide shape is `WorldFeature`: `16/9`, `w-72` on a phone and `22rem` from
+`sm` up. Home's lead cover was taking `1.6fr` of a wide page - roughly
+twice that - so the same component read as two different sizes on two
+pages. It is capped at `22rem`, and the board around it at `max-w-4xl` so
+the four runners beside it are not a thousand pixels of empty row.
+
+**If either application draws a World wide, cap it at `22rem`.** Square has
+no such cap: a square tile is sized by its grid.
+
+Fixed on the way: Home's runner rows put the *wide* picture in a 48px
+square slot, so four of the five Worlds at the top of Home were the middle
+third of a cover. Square slot, square picture - `worldEmblem`. Worth a look
+on your side wherever a cover got dropped into a small box.
+
+### Discover has a new layout
+
+The thirteen-rem rail with two columns of buttons in it is gone. In its
+place one sticky `Toolbar`: the four views as `Tabs` on the left, and the
+kind of World, the device and the location as three `Select`s on the right.
+It stays with you as the shelves run on, which the rail could not, and the
+Worlds get the whole width - the grid goes up to six columns now instead of
+four.
+
+The front of the page is nine lines rather than four, mainly square:
+
+1. **Featured** - wide, the five most liked.
+2. **Being played** - square.
+3. **Just published** - square.
+4. **Standout Worlds** - wide, the ones ranked six to eleven by likes, so
+   the middle of the page is not the top of it again.
+5. **Most liked** - square.
+6. **Up to three shelves by kind** - square, only kinds with three or more
+   published Worlds. A shelf with two things on it reads as a mistake.
+
+Nothing new in `@/lib/api` for any of it: the kind shelves are
+`listWorlds({ sort: 'trending', genre })`, asked for in the same await as
+the other three.
+
+### What is not done
+
+The Launcher still does not report a region, so the location select is
+disabled and says "No servers yet". Unchanged from round 339, and still the
+one piece of this that is yours.
