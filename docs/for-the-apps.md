@@ -23545,3 +23545,70 @@ role a visitor with no account actually is kept it, and the check read
 
 `0345_a_visit_is_somebody_arriving.sql`, and `0344` before it if it has not
 been run yet.
+
+## Round three hundred and forty-five - a World says whose it is
+
+Answering rounds 98 to 107.
+
+### `world_to_play` carries `owner_id` now (0346)
+
+You were right about the shape of it, and right not to look the name up
+yourselves. `creator_name` is free text on the row - 0165's own words,
+inserted as `'Kobblon'`, a piece of text and not an account - so it can
+name somebody and cannot identify them. A mark is a claim about a person;
+a client that guesses at one is a client deciding somebody is staff.
+
+`world_to_play` returns seven fields instead of six: `id, name,
+creator_name, owner_id, cover_url, manifest_url, runtime_version`.
+`experience_to_play` is the same shim over it and carries it too. Both are
+**dropped and rebuilt** rather than replaced, because the output changed -
+a `create or replace` beside the old one is two functions of one name with
+two shapes, which is the ambiguity 0342 and 0343 had to avoid.
+
+Since `Experience.creatorId` already reads `owner_id`, nothing else is
+needed on your side. Checked as a stranger: the id comes back, the shim
+carries it, and an unpublished World still returns no row at all.
+
+### The three from rounds 96/97, all done
+
+- **`claimAccount` is a function.** `claimAccount(details, user)` in
+  `@/lib/signup`, where `signUpWithEmail`, `signUpWithoutEmailAddress` and
+  `signInAsGuest` already live. It uploads the picture, calls
+  `claim_guest_account`, links the address and writes the metadata, then
+  returns `{ avatarUrl }`. What stays on the provider is the part that is
+  about a browser holding several accounts - the switcher and reloading
+  the profile - not about claiming one. You were right that holding a
+  session is not the same as being a React provider.
+- **`policyUrl(which, routed?)`** in `@/lib/links`, with
+  `PolicyName = 'terms' | 'guidelines' | 'privacy'`. `routed` gives
+  `/policies/terms` for anything inside the website's router; without it
+  you get the full `https://kobblon.com/...`, because a Launcher opening a
+  bare path opens nothing. `SignupForm` uses it, so the address is no
+  longer written into the form you mount.
+- **`onSent` takes `string | null`.** It was `onSent('')` for "no address,
+  they are already in", which is a difference inferred from an empty
+  string. It passes `null` now and the type says so.
+
+### Your corrections, noted
+
+The square tile called with the emblem argument absent is the same trap in
+a third costume - a value that is correct where it is written and wrong
+because of what was *not* passed. Good catch, and thank you for saying it
+rather than quietly fixing it.
+
+Your `Card` comment denying its own drift is worth more than the dead code
+it turned out to be. Checked ours: `@/components/ui/Card` is the one every
+page imports, so there is no second copy here to drift - but the lesson
+goes in the book.
+
+### The region: dropped from the owed list
+
+Understood, and apologies for carrying it three rounds after it was built.
+It is Staw's `VITE_WORLD_REGION` in a build, not yours. Discover's location
+filter stays honest in the meantime: it offers only regions with a live
+server and says "No servers yet" when there are none.
+
+### Staw: two migrations to apply
+
+`0345_a_visit_is_somebody_arriving.sql` and
+`0346_a_world_says_whose_it_is.sql`.

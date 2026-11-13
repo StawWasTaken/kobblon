@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import {
-  claimGuestAccount, endSession, linkGuestEmail, refreshPortrait, setSessionCountry,
+  endSession, refreshPortrait, setSessionCountry,
   signInWithUsername, touchSession, uploadAvatar,
 } from '@/lib/api'
 import { myZone, placeOfZone } from '@/lib/places'
@@ -11,6 +11,7 @@ import { clearAccountSession, rememberAccount, updateAccountSession } from '@/li
 import { portraitIsCurrent } from '@/lib/headshots'
 import {
   signUpWithEmail, signUpWithoutEmailAddress, takePendingAvatar, signInAsGuest,
+  claimAccount as claimTheAccount,
 } from '@/lib/signup'
 import type { SignupDetails } from '@/lib/signup'
 import type { Profile } from '@/types/db'
@@ -291,50 +292,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUpWithoutEmail: signUpWithoutEmailAddress,
       async claimAccount(details) {
         /*
-         * The guest is already signed in, so the account stays and the email
-         * and password are linked to it. Their Spaces, their friends and
-         * anything they collected come with them.
+         * The guest is already signed in, so the account stays and the
+         * email and password are linked to it. Their Worlds, their friends
+         * and anything they collected come with them.
+         *
+         * The claim itself is `@/lib/signup` now, asked for by the
+         * applications session: it holds a session of its own and no
+         * provider. What is left here is the part that is about this
+         * browser rather than about the account - the switcher, and
+         * reading the profile back.
          */
         const user = session?.user
         if (!user) throw new Error('You are not signed in as a guest.')
 
-        const avatarUrl = details.avatarFile
-          ? await uploadAvatar(user.id, details.avatarFile)
-          : null
-
-        await claimGuestAccount({
-          username: details.username,
-          displayName: details.displayName || details.username,
-          birthDate: details.birthDate,
-          gender: details.gender,
-          avatarUrl,
-        })
-
-        /*
-         * The address goes on behind the service role when it can.
-         *
-         * A guest who has opened the Launcher already carries the stand-in
-         * address `app-signin` gave them, and setting a real one over that
-         * is an email *change* - confirmed from the old address, which is a
-         * mailbox that does not exist. Linking only ever worked because a
-         * guest had no address at all.
-         *
-         * `linkGuestEmail` says false when the function is not deployed,
-         * and then the old path runs, which is still right for a guest who
-         * has never opened an app.
-         */
-        const linked = await linkGuestEmail(details.email, details.password)
-
-        const { error } = await supabase.auth.updateUser({
-          ...(linked ? {} : { email: details.email, password: details.password }),
-          data: {
-            username: details.username,
-            display_name: details.displayName || details.username,
-            birth_date: details.birthDate,
-            gender: details.gender,
-          },
-        })
-        if (error) throw error
+        const { avatarUrl } = await claimTheAccount(details, user)
 
         rememberAccount({
           id: user.id,

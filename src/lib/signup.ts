@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { registerWithoutEmail, uploadAvatar } from '@/lib/api'
+import { claimGuestAccount, linkGuestEmail, registerWithoutEmail, uploadAvatar } from '@/lib/api'
 import { rememberAccount } from '@/lib/accounts'
 
 /**
@@ -13,9 +13,12 @@ import { rememberAccount } from '@/lib/accounts'
  * ways in live here, where nothing needs a provider above it.
  *
  * `AuthProvider` calls these rather than holding its own copies, so there
- * is one of each. `claimAccount` stays on the provider on purpose: it acts
- * on the guest session the provider is holding, so it is a method about a
- * session and not a function about a form.
+ * is one of each. `claimAccount` was the exception for several rounds -
+ * it acts on a session rather than on a form, so it stayed a method. The
+ * applications session asked for it anyway in round 97 and they are
+ * right: holding a session is not the same as being a React provider, and
+ * theirs holds one. It takes the account it is acting on as an argument
+ * now, so anything with a signed-in guest can call it.
  *
  * `signInAsGuest` joined them in round 338, asked for by the applications
  * session, which keeps its own session store: the Launcher's "play as a
@@ -136,4 +139,62 @@ export async function signUpWithoutEmailAddress(details: SignupDetails): Promise
 export async function signInAsGuest(): Promise<void> {
   const { error } = await supabase.auth.signInAnonymously()
   if (error) throw error
+}
+
+/**
+ * A guest keeping what they made.
+ *
+ * The caller passes the account the session is for rather than this
+ * reaching for one, which is the whole reason it can live here: a client
+ * with its own session store has a user and no provider.
+ *
+ * What it does not do is anything about *this* website - the account
+ * switcher and reloading the profile are the provider's, because they are
+ * about a browser holding several accounts rather than about claiming one.
+ * So it hands back the picture it uploaded and lets the caller decide what
+ * else to remember.
+ */
+export async function claimAccount(
+  details: SignupDetails,
+  user: { id: string },
+): Promise<{ avatarUrl: string | null }> {
+  const avatarUrl = details.avatarFile
+    ? await uploadAvatar(user.id, details.avatarFile)
+    : null
+
+  await claimGuestAccount({
+    username: details.username,
+    displayName: details.displayName || details.username,
+    birthDate: details.birthDate,
+    gender: details.gender,
+    avatarUrl,
+  })
+
+  /*
+   * The address goes on behind the service role when it can.
+   *
+   * A guest who has opened the Launcher already carries the stand-in
+   * address `app-signin` gave them, and setting a real one over that is an
+   * email *change* - confirmed from the old address, which is a mailbox
+   * that does not exist. Linking only ever worked because a guest had no
+   * address at all.
+   *
+   * `linkGuestEmail` says false when the function is not deployed, and
+   * then the old path runs, which is still right for a guest who has never
+   * opened an app.
+   */
+  const linked = await linkGuestEmail(details.email, details.password)
+
+  const { error } = await supabase.auth.updateUser({
+    ...(linked ? {} : { email: details.email, password: details.password }),
+    data: {
+      username: details.username,
+      display_name: details.displayName || details.username,
+      birth_date: details.birthDate,
+      gender: details.gender,
+    },
+  })
+  if (error) throw error
+
+  return { avatarUrl }
 }

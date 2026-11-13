@@ -49,3 +49,23 @@ export function eventLink(event: { content_id: number | null; title: string }) {
  */
 export const worldLink = (one: { content_id: number; slug?: string | null; name: string }) =>
   `/worlds/${one.content_id}/${one.slug || slugify(one.name)}`
+
+/**
+ * Where a policy lives.
+ *
+ * The applications session asked for this in round 97: both doors had
+ * `https://kobblon.com/policies/terms` written into them, so the day one
+ * of these moves it moves in four places and one of them is in somebody
+ * else's repository.
+ *
+ * `routed` is for anything mounted inside the website's router, which
+ * wants a path rather than an address; everything else gets the full one,
+ * because a Launcher opening `/policies/terms` opens nothing.
+ */
+export type PolicyName = 'terms' | 'guidelines' | 'privacy'
+
+export const POLICY_HOME = 'https://kobblon.com'
+
+export function policyUrl(which: PolicyName, routed = false): string {
+  return routed ? `/policies/${which}` : `${POLICY_HOME}/policies/${which}`
+}

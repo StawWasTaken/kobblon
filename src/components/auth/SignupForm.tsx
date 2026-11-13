@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useInRouterContext } from 'react-router-dom'
+import { policyUrl } from '@/lib/links'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Reveal } from '@/components/ui/Reveal'
@@ -49,10 +50,10 @@ function Policy({ which, routed, onPolicy, children }: {
       <button type="button" className={look} onClick={() => onPolicy(which)}>{children}</button>
     )
   }
-  if (routed) return <Link to={`/policies/${which}`} className={look}>{children}</Link>
+  if (routed) return <Link to={policyUrl(which, true)} className={look}>{children}</Link>
   return (
     <a
-      href={`https://kobblon.com/policies/${which}`}
+      href={policyUrl(which)}
       target="_blank"
       rel="noreferrer"
       className={look}
@@ -70,7 +71,11 @@ function Policy({ which, routed, onPolicy, children }: {
 export function SignupForm({
   onSent, claiming, onClaimed, onPolicy,
 }: {
-  onSent: (email: string) => void
+  /**
+   * Where to go and look, or null where there is nowhere: a signup with no
+   * address is signed in by the time this is called.
+   */
+  onSent: (email: string | null) => void
   claiming?: boolean
   onClaimed?: () => void
   /**
@@ -199,11 +204,16 @@ export function SignupForm({
         /*
          * No address, so no confirmation to wait for: the account is made
          * behind the service role and this tab is signed in by the time
-         * the call comes back. `onSent('')` is what the page reads as
-         * "there is nothing to go and check".
+         * the call comes back. `onSent(null)` is what the caller reads as
+         * "there is nothing to go and check, they are in".
+         *
+         * It was `onSent('')` and the applications session asked for the
+         * difference to be sayable rather than inferred from an empty
+         * string - an empty address and no address are not the same thing,
+         * and one of them is a bug somewhere else.
          */
         await signUpWithoutEmail(details)
-        onSent('')
+        onSent(null)
       }
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : 'That did not go through. Try again.' })
