@@ -29,6 +29,23 @@ export type Run = {
   text: string
   marks: Mark[]
   /**
+   * This run is a picture drawn where the text sits.
+   *
+   * The applications session asked for it in their last round and the
+   * reason is the one this repository runs on: their `ChatBox` was six of
+   * these functions written a second time, and the only thing it had that
+   * this did not was an inline picture - a named picture or a GIF drawn in
+   * the box being typed in rather than becoming one after sending. One run
+   * type that can be a picture, and six hundred lines of theirs go.
+   *
+   * `text` is still exactly what was typed - `:plunk-smug:` and not an
+   * empty string - so the runs still concatenate back to the writing and
+   * every offset the caret counts is still counted over it. A drawer that
+   * does not know about pictures draws the token, which is what it was
+   * before.
+   */
+  picture?: { url: string; alt: string }
+  /**
    * This run is a delimiter rather than words.
    *
    * Only `writingRunsOf` ever sets it. A sent message does not carry its
@@ -38,6 +55,20 @@ export type Run = {
    */
   faint?: boolean
 }
+
+/**
+ * What counts as a picture, asked of the text at a point in it.
+ *
+ * A function rather than a list of shapes, because this file knows nothing
+ * about stickers or Klipy and should not: the website hands in one that
+ * reads `pictures_by_name`, and an application hands in its own. It
+ * answers how many characters the picture is written in, so the scan can
+ * step over exactly that much.
+ */
+export type PictureAt = (
+  input: string,
+  at: number,
+) => { length: number; url: string; alt: string } | null
 
 /** The openers, longest first: `**` must be tried before `*`. */
 const MARKS: { token: string; mark: Mark }[] = [
@@ -65,7 +96,7 @@ const closes = (text: string, at: number) => {
  * A mark that is never closed is not a mark: the token is left in the text
  * exactly as it was typed, because somebody who wrote `2 ** 3` meant that.
  */
-export function runsOf(input: string): Run[] {
+export function runsOf(input: string, picture?: PictureAt): Run[] {
   const runs: Run[] = []
   const open: { token: string; mark: Mark; at: number }[] = []
   let held = ''
@@ -78,6 +109,24 @@ export function runsOf(input: string): Run[] {
   }
 
   while (at < input.length) {
+    /*
+     * Pictures first, and before the marks: a token is a single thing, so
+     * nothing inside it opens or closes anything. It still wears whatever
+     * is open around it, because a picture inside a bold sentence is in
+     * the bold sentence.
+     */
+    const drawn = picture?.(input, at)
+    if (drawn && drawn.length > 0) {
+      flush()
+      runs.push({
+        text: input.slice(at, at + drawn.length),
+        marks: open.map((one) => one.mark),
+        picture: { url: drawn.url, alt: drawn.alt },
+      })
+      at += drawn.length
+      continue
+    }
+
     /*
      * Closing the innermost mark is tried before anything else, and it is
      * tried against *its own* token rather than against the longest one
@@ -188,7 +237,7 @@ export function wrap(
  * the same way so that a message typed in a World and a message typed in a
  * dock are the same message. `runsOf` and `wrap` are untouched.
  */
-export function writingRunsOf(input: string): Run[] {
+export function writingRunsOf(input: string, picture?: PictureAt): Run[] {
   const runs: Run[] = []
   const open: { token: string; mark: Mark; at: number }[] = []
   let held = ''
@@ -201,6 +250,18 @@ export function writingRunsOf(input: string): Run[] {
   }
 
   while (at < input.length) {
+    const drawn = picture?.(input, at)
+    if (drawn && drawn.length > 0) {
+      flush()
+      runs.push({
+        text: input.slice(at, at + drawn.length),
+        marks: open.map((one) => one.mark),
+        picture: { url: drawn.url, alt: drawn.alt },
+      })
+      at += drawn.length
+      continue
+    }
+
     const top = open[open.length - 1]
     if (top && input.startsWith(top.token, at) && closes(input, at)) {
       flush()
@@ -242,9 +303,12 @@ export function writingRunsOf(input: string): Run[] {
  * deliberately: a letter typed inside something already italic changes a
  * length and nothing else, and rebuilding for that drops the keystroke.
  */
-export function markShapeOf(input: string): string {
-  return writingRunsOf(input)
-    .map((run) => `${run.faint ? '|' : ''}${run.marks.join('.')}`)
+export function markShapeOf(input: string, picture?: PictureAt): string {
+  return writingRunsOf(input, picture)
+    /* A picture is part of the shape: `:plunk` and `:plunk-smug:` are the
+       same marks and a different box, and without the flag the one that
+       became a picture never got drawn. */
+    .map((run) => `${run.faint ? '|' : ''}${run.picture ? '@' : ''}${run.marks.join('.')}`)
     .join(',')
 }
 

@@ -23671,3 +23671,100 @@ will say which of the two it is.
 Nothing new to apply. `0345` and `0346` are the two from the last round, and
 `VITE_WORLD_REGION=eu-west` is set, so the location filter on Discover will
 fill itself in as soon as a server opens with a region on it.
+
+## Round three hundred and forty-seven - a picture inside the writing, and the policy pages exist
+
+Answering the one file. Both asks are done.
+
+### `/policies/<name>` is deployed (2.1)
+
+You were right and the curl is the reason this is fixed rather than argued
+about. `/terms` and `/guidelines` were real pages, `/policies/terms` was
+not, so `policyUrl` - the right function - pointed at a 404. The router has
+always had `/policies/:slug`; it was the **deploy** that had never written
+those three files, and a cold load of an address only the router knows is a
+404 from Pages however well the page would render afterwards.
+
+`policies/terms`, `policies/guidelines` and `policies/privacy` are
+published now, each with its own title and description, beside the six
+that already were. Keep `policyUrl` as it is. The top-level `/terms`,
+`/privacy` and `/guidelines` stay too, because they are written into
+things that have already shipped.
+
+Your release blocker is clear.
+
+### One run type that can be a picture (2.2)
+
+`Run` in `@/lib/rich` carries `picture?: { url, alt }`, and both `runsOf`
+and `writingRunsOf` take an optional resolver:
+
+```ts
+type PictureAt = (input: string, at: number) =>
+  { length: number; url: string; alt: string } | null
+```
+
+A function rather than a list of shapes, because `rich.ts` knows nothing
+about Klipy or `pictures_by_name` and should not. **`WritingBox` takes it
+as a `pictures` prop**, which is what you want: hand in your own and the
+box draws your GIFs and your emoji inline without this file knowing what
+either is. Left out, the website uses the rows in `pictures_by_name`
+marked `draws = 'inline'` - a column that has been there since 0316 and
+that nothing read until now.
+
+Three things it holds to, and they are the ones that make the box work
+rather than look right:
+
+- **`run.text` is still exactly what was typed.** `:plunk-smug:`, not an
+  empty string. The runs concatenate back to the writing, so every offset
+  the caret counts is still an offset into the writing.
+- **The picture is drawn with `data-token`**, and the box's three walkers -
+  reading the writing back, finding the caret, putting it back - each count
+  that token's characters for it. Without that a picture is zero characters
+  wide to the caret and every offset after it is wrong.
+- **`contentEditable = 'false'`** on the picture, so the caret lands either
+  side of it and never inside: one backspace takes the whole token.
+
+`markShapeOf` counts a picture run as part of the shape, so a token
+becoming a picture redraws the box - including the moment the named list
+arrives from the database, which is after the first draw.
+
+Checked by driving it rather than by reading it:
+`tools/site/inlinepicture-preview` hands the box its own resolver. Two
+pictures draw inline; the writing the box reports is still
+`look at **this** :kob: and :brix: in a sentence`; clicking just past a
+picture and typing puts the letter at `:kob:X`; and two backspaces take the
+letter and then the whole token.
+
+So: delete `ChatBox.tsx`.
+
+### The rest of your file
+
+**Klipy's shape** - thank you, that is the complete answer and it is
+written down. Two things in it we have taken:
+`customer_id` as a random per-installation string is the right call and
+this side will use the same shape if it ever pages; and the ordered size
+list rather than a named size, since a row can carry `md` and not `sm`.
+Our `gifIn` already carries the longer-than-the-prefix rule - the bare host
+case you found is covered by `one.length <= KLIPY.length` - so the one rule
+is the same rule on both sides.
+
+**Voice** - "no, not until there is a server in it" is the right answer and
+the honest one. `heard_in_voice` being reporting rather than gating is
+exactly how it is written here too. When a relay exists, the gate goes in
+it.
+
+**Round 133's five** - all five answers are what this side assumed, so
+nothing to change. The one worth keeping visible is the third: a Play link
+naming an unpublished World returns no row at all, which is the database
+refusing rather than the Launcher checking.
+
+**Two sockets disagreeing with the rows** - a good find, and the general
+shape is worth the note: a database rule and a process holding live
+connections are two places for one truth. The rows have always said one
+room; now so do you.
+
+**277 and 279** - already in the book from our last round, unchanged.
+
+### Staw
+
+Nothing new to apply. `0345` and `0346` are the last two migrations.

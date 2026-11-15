@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { markShapeOf, writingRunsOf } from '@/lib/rich'
+import type { PictureAt } from '@/lib/rich'
+import { inlinePicturesIn, useNamedPictures } from '@/lib/stickers'
 import { mentionBits } from '@/lib/mentions'
 import { cn } from '@/lib/cn'
 
@@ -31,7 +33,7 @@ import { cn } from '@/lib/cn'
  */
 export function WritingBox({
   id, value, onChange, onCaret, onSend, onKey, people, me, placeholder, want,
-  max = 2000, className,
+  pictures, max = 2000, className,
 }: {
   id: string
   value: string
@@ -52,11 +54,37 @@ export function WritingBox({
   /** Who can be mentioned here, lowercased usernames. */
   people?: Set<string>
   me?: string | null
+  /**
+   * What counts as an inline picture here.
+   *
+   * Left out on the website, where it is the named pictures marked
+   * `inline` in `pictures_by_name`. Handed in by anything with its own
+   * idea of one - the Launcher's GIF card and its own emoji - because
+   * this box has no business knowing where a picture came from, only that
+   * there is one at this point in the writing.
+   */
+  pictures?: PictureAt
   placeholder?: string
   max?: number
   className?: string
 }) {
   const box = useRef<HTMLDivElement>(null)
+  /*
+   * The inline pictures, held in a ref rather than closed over.
+   *
+   * `draw` is a `useCallback` the effect below depends on, and the list
+   * arrives from the database some time after the first draw. Putting it
+   * in the dependencies would rebuild the drawer - and with it the whole
+   * box - on a list that has not changed; putting it in a ref and letting
+   * the shape do the telling is what makes a token become a picture when
+   * the list lands without taking the caret away.
+   */
+  const named = useNamedPictures()
+  const inline = useRef<PictureAt | undefined>(undefined)
+  inline.current = useMemo(
+    () => pictures ?? inlinePicturesIn(named),
+    [pictures, named],
+  )
   const shape = useRef<string>('')
   const caret = useRef<{ from: number; to: number }>({ from: 0, to: 0 })
 
@@ -77,6 +105,14 @@ export function WritingBox({
       if (node.nodeType === Node.TEXT_NODE) out += node.textContent ?? ''
       else if (node.nodeName === 'BR') {
         if (!(node as HTMLElement).dataset?.filler) out += '\n'
+      } else if ((node as HTMLElement).dataset?.token !== undefined) {
+        /*
+         * An inline picture reads back as the token it was drawn from, and
+         * nothing below it is walked - it has no text of its own. This is
+         * what keeps the writing the box reports equal to the writing
+         * somebody typed while a picture sits in the middle of it.
+         */
+        out += (node as HTMLElement).dataset.token ?? ''
       } else if (node.nodeType === Node.ELEMENT_NODE) out += read(node as HTMLElement)
     }
     return out
@@ -97,7 +133,9 @@ export function WritingBox({
           return step.nodeType === Node.TEXT_NODE ? seen + offset : seen
         }
         if (step.nodeType === Node.TEXT_NODE) seen += step.textContent?.length ?? 0
-        else if (step.nodeName === 'BR') seen += 1
+        else if ((step as HTMLElement).dataset?.token !== undefined) {
+          seen += ((step as HTMLElement).dataset.token ?? '').length
+        } else if (step.nodeName === 'BR') seen += 1
         step = walk.nextNode()
       }
       return seen
@@ -138,6 +176,15 @@ export function WritingBox({
           if (seen + long >= at) return [node, at - seen]
           seen += long
           last = [node, long]
+        } else if ((node as HTMLElement).dataset?.token !== undefined) {
+          /* The caret never goes inside a picture: it lands before it or
+             after it, which is what a token being one thing means. */
+          const token = (node as HTMLElement).dataset.token ?? ''
+          const parent = node.parentNode as Node
+          const which = Array.prototype.indexOf.call(parent.childNodes, node)
+          if (at <= seen) return [parent, which]
+          seen += token.length
+          last = [parent, which + 1]
         } else if (node.nodeName === 'BR' && !(node as HTMLElement).dataset?.filler) {
           const parent = node.parentNode as Node
           const which = Array.prototype.indexOf.call(parent.childNodes, node)
@@ -188,7 +235,21 @@ export function WritingBox({
       })
     }
 
-    for (const run of writingRunsOf(text)) {
+    for (const run of writingRunsOf(text, inline.current)) {
+      if (run.picture) {
+        const img = document.createElement('img')
+        img.src = run.picture.url
+        img.alt = run.picture.alt
+        img.title = run.picture.alt
+        img.dataset.token = run.text
+        img.className = 'inline-block h-[1.35em] w-auto -mt-[0.2em] align-middle'
+        /* Nothing inside it is editable, so a caret cannot end up in the
+           middle of a picture and a backspace takes the whole token. */
+        img.contentEditable = 'false'
+        el.append(img)
+        continue
+      }
+
       const dressed = [
         run.marks.includes('bold') && 'font-extrabold',
         run.marks.includes('italic') && 'italic',
@@ -229,7 +290,7 @@ export function WritingBox({
     const el = box.current
     if (!el) return
     const held = read(el)
-    const now = markShapeOf(value)
+    const now = markShapeOf(value, inline.current)
     const outside = held !== value
 
     if (outside || now !== shape.current) {
@@ -249,7 +310,7 @@ export function WritingBox({
     // `want` is deliberately not a reason to run: it is read when a change
     // to the text brings this round, never on its own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, draw, read, place])
+  }, [value, draw, read, place, named, pictures])
 
   /** Put words in at the caret, and say where the caret went. */
   const put = (words: string) => {

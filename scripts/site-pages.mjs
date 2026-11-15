@@ -88,6 +88,36 @@ export const pages = [
     title: 'Policies - Kobblon',
     description: 'Every rule Kobblon has, split by subject, each with the day its wording last changed.',
   },
+  /*
+   * The three that are also published at the top level, published under
+   * `/policies/` as well.
+   *
+   * The applications session found this one by curl, after we both got it
+   * wrong in opposite directions: `/terms` and `/guidelines` are real
+   * pages and `/policies/terms` was not, so `policyUrl` - which is the
+   * right function - pointed at a 404. The router has always had
+   * `/policies/:slug`, so this was only ever missing from the deploy, and
+   * a cold load of an address that only the router knows is a 404 from
+   * Pages however well the page would have rendered.
+   *
+   * Both forms stay. The old addresses are written into things that have
+   * already shipped.
+   */
+  {
+    path: 'policies/terms',
+    title: 'Terms of Service - Kobblon',
+    description: 'The short version of the deal between you and Kobblon, written so it can actually be read.',
+  },
+  {
+    path: 'policies/guidelines',
+    title: 'Community Guidelines - Kobblon',
+    description: 'What is fine on Kobblon, and what will get your things taken down.',
+  },
+  {
+    path: 'policies/privacy',
+    title: 'Privacy - Kobblon',
+    description: 'What Kobblon keeps about you, why, who can see it, and what you can do about it.',
+  },
   {
     path: 'policies/moderation',
     title: 'Moderation and appeals - Kobblon',

@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import { runsOf } from '@/lib/rich'
 import { gifIn } from '@/lib/gifs'
-import { pictureUrl, stickerIn, useNamedPictures } from '@/lib/stickers'
+import { inlinePicturesIn, pictureUrl, stickerIn, useNamedPictures } from '@/lib/stickers'
 import { mentionBits } from '@/lib/mentions'
 import { cn } from '@/lib/cn'
 import type { Mark } from '@/lib/rich'
@@ -49,6 +49,9 @@ export function RichText({ text, people, me, className }: {
   const named = useNamedPictures()
   const sticker = stickerIn(text, named)
   const gif = gifIn(text)
+  /* The small ones, drawn where they sit. A sticker is the whole message
+     and these are part of a sentence; the table says which a picture is. */
+  const inline = inlinePicturesIn(named)
 
   if (sticker) {
     return (
@@ -92,10 +95,25 @@ export function RichText({ text, people, me, className }: {
 
   return (
     <span className={className}>
-      {runsOf(text).map((run, at) => {
+      {runsOf(text, inline).map((run, at) => {
         const dressed = run.marks.length
           ? cn(...run.marks.map((mark) => look[mark]))
           : undefined
+
+        if (run.picture) {
+          return (
+            <img
+              key={at}
+              src={run.picture.url}
+              alt={run.picture.alt}
+              title={run.picture.alt}
+              loading="lazy"
+              /* Sized against the words around it rather than in pixels, so
+                 it sits on the line at whatever size the text is. */
+              className="inline-block h-[1.35em] w-auto -mt-[0.2em] align-middle"
+            />
+          )
+        }
 
         const bits = people?.size
           ? mentionBits(run.text, (name) => people.has(name), me)

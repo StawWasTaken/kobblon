@@ -115,3 +115,42 @@ export function stickersToOffer(list: NamedPicture[] | null): NamedPicture[] {
 
 /** What goes in the box to send one. */
 export const tokenFor = (one: NamedPicture) => `:${one.name}:`
+
+/* ------------------------------------------------- one inside a sentence */
+
+const INLINE = /^:([a-z0-9]+(?:-[a-z0-9]+)*):/
+
+/**
+ * The ones that are drawn *in* the writing rather than instead of it.
+ *
+ * `draws` has said `alone` or `inline` since the table was written and
+ * only `alone` was ever read, so an inline picture was a token somebody
+ * saw the characters of. The applications session asked for the run type
+ * that fixes it - `rich.ts` carries a picture run now - and this is the
+ * website's answer to "is there a picture at this point in the text".
+ *
+ * It matches at a position rather than over the whole string, because a
+ * token in a sentence is the entire point of it; `stickerIn` keeps the
+ * whole-message rule for the big ones, and the two do not overlap because
+ * a picture is one or the other and the table says which.
+ *
+ * A name nobody has is not a picture: the characters stay as they were
+ * typed, which is what keeps a retired sticker readable and stops a
+ * misspelling becoming a broken frame.
+ */
+export function inlinePicturesIn(list: NamedPicture[] | null) {
+  if (!list?.length) return undefined
+  const byName = new Map(
+    list.filter((one) => one.draws === 'inline').map((one) => [one.name, one]),
+  )
+  if (!byName.size) return undefined
+
+  return (input: string, at: number) => {
+    if (input[at] !== ':') return null
+    const hit = INLINE.exec(input.slice(at))
+    if (!hit) return null
+    const found = byName.get(hit[1])
+    if (!found) return null
+    return { length: hit[0].length, url: pictureUrl(found.picture), alt: found.label }
+  }
+}
