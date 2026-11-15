@@ -16,13 +16,13 @@
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Glyph } from '@/components/brand/Glyph'
 import { cn } from '@/lib/cn'
-import { faCube, faImage, faShirt } from '@fortawesome/free-solid-svg-icons'
+import { faCube, faImage } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/States'
 import { AvatarStage, type AvatarLook } from '@/components/avatar/AvatarStage'
 import { Studio } from '@/components/avatar/Studio'
+import { WornPicture } from '@/components/catalog/WornPicture'
 import { ViewSwitch } from '@/components/avatar/ViewSwitch'
 import { useFlatPicture } from '@/components/avatar/useFlatPicture'
 import { avatarTag, avatarKindLabels } from '@/lib/kinds'
@@ -123,18 +123,35 @@ export function WearingPanel({ look, loading }: {
               className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-2 transition-colors hover:border-brand/60"
             >
               <span className="relative block aspect-square overflow-hidden rounded-lg bg-ink-card">
-                {piece.cardUrl ? (
-                  <img
-                    src={piece.cardUrl}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <span className="grid h-full w-full place-items-center text-white/30">
-                    <Glyph icon={faShirt} />
-                  </span>
-                )}
+                {/*
+                  * Staw: "the avatar previews in the profile page dont
+                  * always appear". They always appeared in the Catalog, and
+                  * that is the whole of the bug: `cardFor` returns null on
+                  * purpose for a shirt, a pair of trousers or a body part
+                  * with no saved card - a garment's own picture is the
+                  * template sheet and showing that at card size is handing
+                  * it over - and the Catalog answers that null by drawing
+                  * the mannequin in the browser. This panel answered it
+                  * with a grey shirt, so the three kinds that are *never*
+                  * shown as themselves were the three that showed nothing.
+                  *
+                  * `WornPicture` is that answer, used here rather than
+                  * copied: one place decides what a thing looks like when
+                  * there is no card for it.
+                  */}
+                <WornPicture
+                  saved={piece.cardUrl}
+                  item={{
+                    id: piece.itemId ?? String(piece.contentId),
+                    kind: piece.kind,
+                    slot: piece.slot,
+                    /* Already an address by the time a look is built, so it
+                       goes in as one; there is no path left to give. */
+                    imageUrl: piece.imageUrl,
+                    shape: piece.shape,
+                  }}
+                  alt={piece.name ?? ''}
+                />
 
                 {/*
                   * A limited says so here too. Staw: "we dont show the

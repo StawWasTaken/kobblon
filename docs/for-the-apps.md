@@ -23768,3 +23768,34 @@ room; now so do you.
 ### Staw
 
 Nothing new to apply. `0345` and `0346` are the last two migrations.
+
+## Round three hundred and forty-eight - the things somebody is wearing always draw
+
+Staw: "the avatar previews in the profile page dont always appear". Three
+tiles out of eight were a grey shirt - a torso, a shirt and a pair of
+trousers - and the same three things draw correctly in the Catalog.
+
+That is the whole shape of it. `cardFor` returns **null on purpose** for a
+shirt, trousers or a body part with no saved card: a garment's own picture
+is the template sheet, and showing that at card size beside a Buy button is
+handing it over. The Catalog answers that null with `WornPicture`, which
+draws the mannequin in the browser. The profile's `WearingPanel` answered
+it with a grey shirt glyph - so the three kinds that are never shown as
+themselves were exactly the three that showed nothing.
+
+`WearingPanel` uses `WornPicture` now, rather than carrying a second idea
+of what a thing looks like when there is no card for it. Two small
+widenings came with it, and both are yours too if the Workspace ever draws
+worn items:
+
+- **`WornPicture` takes `saved`**, the card a caller has already worked
+  out. A profile's pieces come out of `buildLook` with `cardUrl` on them;
+  without this the component worked it out again from fields a look does
+  not carry.
+- **`wornCard` takes `imageUrl`** as well as a path. A look resolves its
+  addresses when it is built and never kept the path, so there was nothing
+  to hand in - which is why the panel could not draw the mannequin even
+  though everything it needed was on screen.
+
+`tools/site/face-preview` now mounts the three failing kinds with no saved
+card, so the case is on the bare page rather than only on a profile.

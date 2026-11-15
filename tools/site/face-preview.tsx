@@ -32,6 +32,14 @@ const face = (wide: number, high: number, margin: number, matte: string | null =
   )}`
 }
 
+/** A stand-in template sheet, so a garment has something to be drawn from. */
+const sheet = (colour: string) => `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="585" height="559">`
+  + `<rect width="585" height="559" fill="${colour}"/>`
+  + `<rect x="60" y="60" width="465" height="200" fill="#ffffff" opacity="0.25"/>`
+  + `</svg>`,
+)}`
+
 const body = {
   Head: '#f3c98b', Torso: '#2f6df6', LeftArm: '#f3c98b',
   RightArm: '#f3c98b', LeftLeg: '#2b3550', RightLeg: '#2b3550',
@@ -72,8 +80,16 @@ createRoot(document.getElementById('root')!).render(
           body,
           pieces: [
             { slot: 'face', kind: 'face', imageUrl: looks[0].picture, name: 'Spooked Jack', contentId: 1119, cardUrl: looks[0].picture, price: 150 },
-            { slot: 'shirt', kind: 'shirt', name: 'Kobblon Shirt', contentId: 1221, price: 5 },
-            { slot: 'trousers', kind: 'trousers', name: 'Kobblon Trousers', contentId: 1220 },
+            /*
+             * The three Staw photographed as empty squares: a shirt, a
+             * pair of trousers and a body part, none of them with a saved
+             * card. `cardFor` returns null for all three on purpose, and
+             * the panel now draws the mannequin for them the way the
+             * Catalog always has - so these three are the check.
+             */
+            { slot: 'shirt', kind: 'shirt', name: 'Kobblon Shirt', contentId: 1221, price: 5, imageUrl: sheet('#2f6df6') },
+            { slot: 'trousers', kind: 'trousers', name: 'Kobblon Trousers', contentId: 1220, imageUrl: sheet('#2b3550') },
+            { slot: 'torso', kind: 'bodypart', name: 'Girl Torso', contentId: 1301, price: 5, shape: 'girl' },
             { slot: 'hat', kind: 'accessory', name: 'Kobblon Cap', contentId: 1212, price: 855 },
             { slot: 'tdecal', kind: 'tdecal', name: 'Kobblon Tdecal', contentId: 1196 },
           ],

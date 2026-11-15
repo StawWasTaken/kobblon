@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
  * accessory's model card is already a picture of the thing.
  */
 export function WornPicture({
-  item, className, alt,
+  item, saved: given, className, alt,
 }: {
   item: {
     id: string
@@ -26,13 +26,25 @@ export function WornPicture({
     mesh_preview_path?: string | null
     image_path?: string | null
     image_bucket?: string | null
+    /** The sheet as an address, for a caller that has no path to give. */
+    imageUrl?: string | null
     /** Which shape in the engine, for a body part. */
     shape?: string | null
   }
+  /**
+   * The card this caller has already worked out.
+   *
+   * For anything that resolved it before asking - a profile's worn pieces
+   * carry `cardUrl` out of `buildLook` - so the saved card is used rather
+   * than worked out a second time from fields this caller does not have.
+   * Null is an answer: it means there is no card, and the mannequin is
+   * drawn, which is what null means everywhere else here.
+   */
+  saved?: string | null
   className?: string
   alt?: string
 }) {
-  const saved = cardFor(item)
+  const saved = given !== undefined ? given : cardFor(item)
   const [made, setMade] = useState<string | null>(null)
   const [tried, setTried] = useState(false)
 

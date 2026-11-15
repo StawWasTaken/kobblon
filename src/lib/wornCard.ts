@@ -38,6 +38,16 @@ export function wornCard(item: {
   slot?: string | null
   image_path?: string | null
   image_bucket?: string | null
+  /**
+   * The sheet, already an address.
+   *
+   * For a caller that resolved it before this was asked - a profile's
+   * `PortraitLook` is the case: it carries `imageUrl` and never carried
+   * the path it came from, so the panel beside somebody's avatar had
+   * nothing to hand in here and drew a grey shirt instead. Taken only
+   * when there is no path.
+   */
+  imageUrl?: string | null
   /** Which shape in the engine, for a body part. */
   shape?: string | null
 }): Promise<string | null> {
@@ -47,7 +57,7 @@ export function wornCard(item: {
   const making = waitTurn(async () => {
     const picture = item.image_path
       ? catalogUrl(item.image_path, item.image_bucket ?? undefined)
-      : null
+      : item.imageUrl ?? null
     /*
      * A garment needs its sheet and a body part needs its shape; neither
      * can be drawn without the one thing it is made of.
