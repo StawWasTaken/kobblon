@@ -15,6 +15,9 @@ import { DiscordLink } from '@/components/social/DiscordLink'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
 import { Skeleton } from '@/components/ui/States'
+import { GenderPicker } from '@/components/auth/GenderPicker'
+import type { Gender } from '@/components/auth/GenderPicker'
+import type { Profile } from '@/types/db'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useTheme } from '@/hooks/useTheme'
@@ -81,6 +84,7 @@ function Account() {
   const toast = useToast()
 
   const [name, setName] = useState('')
+  const [gender, setGender] = useState<Gender>('')
   const [saving, setSaving] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [wanted, setWanted] = useState('')
@@ -98,14 +102,18 @@ function Account() {
   )
 
   useEffect(() => {
-    if (profile) setName(profile.display_name)
+    if (profile) {
+      setName(profile.display_name)
+      setGender((profile.gender ?? '') as Gender)
+    }
   }, [profile])
 
   if (!profile) return <Skeleton className="h-64" />
 
   /* The button appears when there is something to save, which is the only
      honest moment for it: a Save that is always there is always asking. */
-  const changed = name.trim() !== profile.display_name && !!name.trim()
+  const changed = (name.trim() !== profile.display_name && !!name.trim())
+    || gender !== ((profile.gender ?? '') as Gender)
   const cost = renameState.data?.cost ?? USERNAME_CHANGE_COST
   const affordable = profile.pixels >= cost
   /*
@@ -125,7 +133,12 @@ function Account() {
     e.preventDefault()
     setSaving(true)
     try {
-      await updateProfile(profile.id, { display_name: name.trim() })
+      await updateProfile(profile.id, {
+        display_name: name.trim(),
+        /* Null rather than an empty string: the column's check allows the
+           three answers and nothing else, and "" is not one of them. */
+        gender: (gender || null) as Profile['gender'],
+      })
       await refreshProfile()
       toast('Saved.', 'success')
     } catch (err) {
@@ -174,6 +187,23 @@ function Account() {
                 required
               />
             </div>
+            {/*
+              * Staw asked for the signup answer to be changeable here,
+              * because it decides something now: a girl's Newbie wears the
+              * Waisted Torso (0347), and a question you can only answer
+              * once is a question half the people answer wrongly.
+              *
+              * The same picker the signup card uses, rather than a second
+              * one that looks nearly like it.
+              */}
+            <div className="max-w-sm space-y-1.5">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted">Gender</p>
+              <GenderPicker value={gender} onChange={setGender} />
+              <p className="text-xs text-muted">
+                Only used to pick the body you start in. Nobody else is shown it.
+              </p>
+            </div>
+
             {changed && (
               <div className="flex justify-end">
                 <Button type="submit" size="sm" loading={saving}>Save</Button>

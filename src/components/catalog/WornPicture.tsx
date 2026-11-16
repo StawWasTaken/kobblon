@@ -28,6 +28,13 @@ export function WornPicture({
     image_bucket?: string | null
     /** The sheet as an address, for a caller that has no path to give. */
     imageUrl?: string | null
+    /** The model, for an accessory whose card was never drawn. */
+    mesh_path?: string | null
+    texture_path?: string | null
+    mesh_format?: string | null
+    /** The model as an address, where the caller already signed for it. */
+    meshUrl?: string | null
+    textureUrl?: string | null
     /** Which shape in the engine, for a body part. */
     shape?: string | null
   }

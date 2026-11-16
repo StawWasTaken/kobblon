@@ -23799,3 +23799,49 @@ worn items:
 
 `tools/site/face-preview` now mounts the three failing kinds with no saved
 card, so the case is on the bare page rather than only on a profile.
+
+## Round three hundred and forty-nine - the girl torso, and two kinds of card that never drew
+
+### 0347: a new account that said it is a girl starts in the girl torso
+
+Staw: the answer on the signup card (changeable in Settings now) decides
+which torso Newbie wears. The item is 0248's `torso-girl` - BODY-1352.
+
+`dress_for_gender(target)` hangs off a trigger on `profiles`, `after insert
+or update of gender`, so it works for a new account and for somebody
+changing their mind years later. Three rules in it:
+
+- **A default, not a rule.** A torso slot with something in it is left
+  alone - 0131's rule for the starting kit, applied here.
+- **Given, not sold.** The torso costs five Brix and a new account has
+  none, so it is granted at `paid = 0`.
+- **Changing the answer changes it back, unless it was bought.** `paid > 0`
+  is a purchase and stays worn whatever the answer says. Ownership is never
+  taken away.
+
+`girl_torso()` finds it by shape rather than by content id, because 0248
+wrote the row by shape and a number copied into a second place is wrong on
+any database where things were made in a different order.
+
+### Two kinds of thing whose card never drew
+
+Staw: "body parts dont have 2d previews" and "accessories' previews dont
+load properly either". Same absence, two kinds:
+
+- A **body part** has no picture of its own - it is a shape the engine
+  builds - so the item page offered no 2D at all. `bodypart` is on the
+  drawable list now and `wornCard` draws it from its shape.
+- An **accessory** is a mesh and nothing else, so `wornCard` had nothing to
+  draw from and every one whose maker never opened Create showed the torn
+  mark for ever. It signs and draws the model now.
+
+Both widenings are yours too if the Workspace ever draws worn things:
+`wornCard` takes `imageUrl`, `meshUrl` and `textureUrl` as well as storage
+paths, for a caller that resolved them already - which is what a
+`PortraitLook` piece carries. `tools/site/wornpicture-preview` has all four
+cases side by side, including the one that genuinely has nothing to draw
+from and so is still the torn mark.
+
+### Staw: one migration to apply
+
+`0347_the_torso_follows_the_answer.sql`.

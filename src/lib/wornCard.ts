@@ -14,7 +14,7 @@
  * person who made it and has no business writing to their folder.
  */
 import { drawItemCard } from './portrait'
-import { catalogUrl, mannequinFace } from './api'
+import { assetUrl, catalogUrl, mannequinFace } from './api'
 
 /** One drawing per thing, for as long as the tab is open. */
 const drawn = new Map<string, Promise<string | null>>()
@@ -50,6 +50,25 @@ export function wornCard(item: {
   imageUrl?: string | null
   /** Which shape in the engine, for a body part. */
   shape?: string | null
+  /**
+   * The model, for an accessory with no card drawn for it.
+   *
+   * Staw: "accessories' previews dont load properly either". An accessory
+   * is a mesh and nothing else - no sheet, no shape - so this function had
+   * nothing to draw from and every one whose maker never opened Create
+   * showed the torn mark for ever. A mesh is something to draw from, and
+   * the card it comes out as is the same one `drawItemCard` makes.
+   */
+  mesh_path?: string | null
+  texture_path?: string | null
+  mesh_format?: string | null
+  /**
+   * The model as an address, for a caller that signed it already - a
+   * profile's worn pieces carry `meshUrl`, the same way they carry
+   * `imageUrl` and never carried the paths either came from.
+   */
+  meshUrl?: string | null
+  textureUrl?: string | null
 }): Promise<string | null> {
   const had = drawn.get(item.id)
   if (had) return had
@@ -59,16 +78,37 @@ export function wornCard(item: {
       ? catalogUrl(item.image_path, item.image_bucket ?? undefined)
       : item.imageUrl ?? null
     /*
-     * A garment needs its sheet and a body part needs its shape; neither
-     * can be drawn without the one thing it is made of.
+     * A garment needs its sheet, a body part needs its shape, an accessory
+     * needs its model; none can be drawn without the one thing it is made
+     * of, and a thing with none of the three is not a drawing problem.
      */
-    if (!picture && !item.shape) return null
+    if (!picture && !item.shape && !item.mesh_path && !item.meshUrl) return null
+
+    /*
+     * Signed only when it is going to be used - one request per card, and
+     * only for the cards that have nothing else to be drawn from.
+     */
+    const needsModel = !picture && !item.shape
+    const mesh = !needsModel
+      ? null
+      : item.meshUrl ?? (item.mesh_path
+        ? await assetUrl(item.mesh_path).catch(() => null)
+        : null)
+    const skin = !mesh
+      ? null
+      : item.textureUrl ?? (item.texture_path
+        ? await assetUrl(item.texture_path).catch(() => null)
+        : null)
+    if (!picture && !item.shape && !mesh) return null
 
     const blob = await drawItemCard({
       kind: item.kind ?? 'shirt',
       slot: item.slot ?? item.kind ?? 'shirt',
       imageUrl: picture,
       shape: item.shape ?? null,
+      meshUrl: mesh,
+      textureUrl: skin,
+      meshFormat: item.mesh_format ?? null,
       faceUrl: await mannequinFace().catch(() => null),
     }).catch(() => null)
 

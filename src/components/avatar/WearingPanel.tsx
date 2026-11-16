@@ -148,6 +148,11 @@ export function WearingPanel({ look, loading }: {
                     /* Already an address by the time a look is built, so it
                        goes in as one; there is no path left to give. */
                     imageUrl: piece.imageUrl,
+                    /* Signed when the look was built, so an accessory with
+                       no saved card can be drawn here too. */
+                    meshUrl: piece.meshUrl,
+                    textureUrl: piece.textureUrl,
+                    mesh_format: piece.meshFormat,
                     shape: piece.shape,
                   }}
                   alt={piece.name ?? ''}

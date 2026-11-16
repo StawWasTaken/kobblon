@@ -636,7 +636,16 @@ function ItemView({ item }: { item: AvatarItem }) {
    * be drawn here from its texture. What it never has is its template shown
    * flat - that is the thing being sold, and `cardFor` returns null for it.
    */
-  const drawable = item.kind === 'shirt' || item.kind === 'trousers' || item.kind === 'tdecal'
+  /*
+   * A body part is on this list too, and Staw found it missing: "body parts
+   * dont have 2d previews". It has no picture of its own - it is a shape
+   * the engine builds - so `cardFor` is null for it and the switch had
+   * nothing to offer, which left the one kind of thing whose 2D view has to
+   * be drawn as the one kind that could not be looked at flat. `wornCard`
+   * has drawn these from the shape since the mannequin cards went in.
+   */
+  const drawable = item.kind === 'shirt' || item.kind === 'trousers'
+    || item.kind === 'tdecal' || item.kind === 'bodypart'
 
   /**
    * Whether it can be put on a body at all: a model, a picture to lay on,
