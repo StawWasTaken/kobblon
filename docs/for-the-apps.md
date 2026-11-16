@@ -23891,3 +23891,32 @@ copied from the website should not grow its own glass.
 ### Staw: one migration to apply
 
 `0348_a_creation_says_the_handle.sql`.
+
+## Round three hundred and fifty-one - a topic can be started off
+
+Staff can now give a forum topic a number of marks it starts with. Staw
+asked for it on the announcements; the mechanism is general.
+
+**`forum_topics.like_seed`**, and `forum_like` computes
+`like_seed + count(*)` rather than `count(*)`. Nothing else changes: the
+rows in `forum_likes` are still the record of who actually pressed it, a
+person pressing it still moves the number by one, and taking a seed off is
+one update.
+
+Worth knowing if either application ever shows or sets one of these counts:
+
+- **`like_count` is recomputed, not incremented.** Adding to the column
+  directly looks like it worked and is undone by the next person who
+  presses the mark. That is what made a seed need a column of its own.
+- **`view_count` is incremented**, by `forum_seen`, once per account ever.
+  Adding to that column does stick.
+- A seed is never written into `forum_likes`. A like row belongs to an
+  account, and a fabricated one would show on a real person's screen as a
+  post they had marked.
+
+### Staw: one migration to apply
+
+`0349_a_topic_can_be_started_off.sql`. It sets the announcements to thirty
+and topic 17 to forty, and adds two hundred views to topic 17. The seeds
+are set rather than added, so re-running leaves the same numbers - **but
+the two hundred views are an addition, so that line runs once.**
