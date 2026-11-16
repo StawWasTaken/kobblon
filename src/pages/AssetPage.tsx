@@ -719,7 +719,8 @@ export default function AssetPage() {
               name={asset.creator_display_name}
               size="xs"
             />
-            <span className="truncate">{asset.creator_display_name}</span>
+            {/* The handle, like every byline since round 350. */}
+            <span className="truncate">@{asset.creator_username}</span>
           </Link>
 
           {/*

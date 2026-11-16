@@ -114,7 +114,8 @@ export default function CatalogItem() {
     community: !!(item?.community_id && item.community_slug),
     name: item?.community_id && item.community_slug
       ? (item.community_name ?? 'A Community')
-      : (item?.creator_display_name ?? ''),
+      /* The handle, like every byline on the platform since round 350. */
+      : (item?.creator_username ? `@${item.creator_username}` : (item?.creator_display_name ?? '')),
     to: item?.community_id && item.community_slug
       ? communityLink({ slug: item.community_slug })
       : `/u/${item?.creator_username ?? ''}`,

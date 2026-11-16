@@ -23845,3 +23845,49 @@ from and so is still the torn mark.
 ### Staw: one migration to apply
 
 `0347_the_torso_follows_the_answer.sql`.
+
+## Round three hundred and fifty - a creation says the handle, and nothing sits on the avatar
+
+### 0348: `worlds.creator_username`
+
+Staw: every creation says "by [username] [badges]". A display name is a
+label somebody changes twice a day and two people can share; the handle is
+theirs, unique, and the thing you would type to find them. Catalog items
+have carried `creator_username` since 0102 and Worlds never did.
+
+The column is denormalised like `creator_name` beside it, and kept in step
+by two triggers rather than by whoever remembers - because the first copy
+already went stale: `create_world` wrote `creator_name` once and nothing
+updated it, so a World published before a rename credited a name nobody
+had. A rename now reaches every World its owner published.
+
+**If either application credits a World, credit `creator_username` with an
+`@` and ask `name_marks` about `owner_id` for what goes beside it.** The
+website has one `WorldBy` component doing exactly that, in place of the
+three bylines that had drifted apart. A World with no handle is Kobblon's
+own - inserted as text, not as an account - and it links nowhere.
+
+### The avatar page: nothing sits on the body
+
+A player's screenshot, passed on by Staw: "I cant see my avatar." The page
+floated two panels over the lower half of the viewport - what you have on,
+and a column of tools - and on a phone six worn things at fourteen pixels
+wrap to two rows and the body is behind them.
+
+Nothing is drawn on the figure now except the one small switch that decides
+how the figure is drawn. What you have on and what you can do to it are a
+**bar under the viewport**, the things you are wearing scrolling sideways
+so the bar is the same height with two on and with twelve. The stage is
+portrait on a phone and capped at half the screen, so the bar is reachable
+without scrolling past the thing it belongs to.
+
+The staggered entrance on every tile is gone too, along with the last of
+the blur and the pop. Staw's direction for the platform, in his words:
+polished and simple, "without weird effects", Xbox and Steam rather than a
+toybox - 15-23 rather than 8-13. Worth knowing on your side: that is the
+direction the shared components will be polished in from here, so a panel
+copied from the website should not grow its own glass.
+
+### Staw: one migration to apply
+
+`0348_a_creation_says_the_handle.sql`.

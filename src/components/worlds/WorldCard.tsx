@@ -4,6 +4,7 @@ import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
 import { worldEmblem } from '@/lib/worldart'
+import { WorldBy } from '@/components/worlds/WorldBy'
 import type { World } from '@/types/db'
 
 /**
@@ -66,9 +67,7 @@ export function WorldCard({
         {world.name}
       </Link>
 
-      {creator && (
-        <p className="truncate text-xs text-muted">By {world.creator_name ?? 'Kobblon'}</p>
-      )}
+      {creator && <WorldBy world={world} className="text-xs text-muted" />}
 
       <WorldStats world={world} className="mt-0.5" />
     </article>

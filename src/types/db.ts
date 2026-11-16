@@ -892,6 +892,8 @@ export type World = {
   name: string
   description: string | null
   creator_name: string | null
+  /** The owner's handle, kept in step by 0348. What a byline credits. */
+  creator_username?: string | null
   cover_url: string | null
   /** The square mark. Null falls back to the cover, which is wide. */
   emblem_url: string | null

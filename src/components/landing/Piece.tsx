@@ -223,7 +223,7 @@ export function Piece({ item, width = 'w-[17rem] sm:w-[19rem]' }: {
       </span>
 
       <span className="mt-0.5 flex items-center gap-1.5 text-sm text-white/45">
-        {item.creator_display_name}
+        @{item.creator_username}
         <NameMarks
           username={item.creator_username}
           person={{

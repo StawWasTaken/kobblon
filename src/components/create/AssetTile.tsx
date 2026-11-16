@@ -120,7 +120,7 @@ export function AssetTile({ item, owned }: { item: MarketAsset; owned?: boolean 
       <div className="p-3">
         <h3 className="truncate text-sm font-bold">{item.name}</h3>
         <span className="mt-1 flex items-center gap-1.5 text-xs text-muted">
-          <span className="truncate">{item.creator_display_name}</span>
+          <span className="truncate">@{item.creator_username}</span>
           {/*
             * Asked of the database rather than read off this card's own
             * columns. Deciding it here is how a card came to show the tick

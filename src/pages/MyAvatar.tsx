@@ -596,8 +596,24 @@ export default function MyAvatar() {
             * the half that makes it read as floating. The padding at the
             * bottom is what the panel hangs into.
             */}
-          <div className="relative rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card pb-12">
-            <div className="relative overflow-hidden rounded-2xl">
+          {/*
+            * The stage, and under it the bar.
+            *
+            * What was here floated two panels over the lower half of the
+            * picture - the things you have on, and a column of tools - and
+            * on a phone that is the bug Staw was sent: six things on at
+            * fourteen pixels each wrap to two rows, and the body is behind
+            * them. "I cant see my avatar."
+            *
+            * So nothing sits on the figure any more except the one small
+            * switch that decides how the figure is drawn. What you have on
+            * and what you can do to it are a bar under the viewport, the
+            * way a console puts its controls under what you are looking
+            * at - which is also the direction Staw wants this platform to
+            * read in: Xbox and Steam, not a toybox.
+            */}
+          <div className="overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
+            <div className="relative">
               {/*
                 * The whole frame is the viewport.
                 *
@@ -609,7 +625,15 @@ export default function MyAvatar() {
                 * stage take the box; its camera already fits the body to
                 * whatever aspect it is handed.
                 */}
-              <Studio className="aspect-[4/3] w-full">
+              {/* Portrait on a phone, landscape from `sm` up. A standing
+                  figure in a 4:3 box on a 390px screen is a small figure
+                  with air either side of it; the room a phone has is
+                  vertical. */}
+              {/* And never more than half the screen on a phone, so the
+                  bar under it is on screen without scrolling: a viewport
+                  you have to scroll past to reach its own controls is the
+                  same bug in a politer shape. */}
+              <Studio className="aspect-[3/4] max-h-[48svh] w-full sm:max-h-none sm:aspect-[4/3]">
                 {worn.loading
                   ? <Skeleton className="h-full w-full" />
                   : (
@@ -662,15 +686,66 @@ export default function MyAvatar() {
             </div>
 
             {/*
-              * Up the right-hand side rather than across the bottom.
+              * The bar: what you have on, and what you can do to it.
               *
-              * Across the bottom they fought the Wearing panel for the same
-              * strip of picture, and a control that overlaps another control
-              * is a control somebody presses by accident. Up the side they
-              * are clear of it, and they sit where a game puts its tools.
+              * One row, under the picture and never over it. The things
+              * you are wearing scroll sideways rather than wrapping, so
+              * the bar is the same height with two things on and with
+              * twelve - a panel that grows downwards as you dress is a
+              * layout that moves while you use it.
               */}
-            <div className="absolute right-4 top-4 z-[3]">
-              <div className="flex flex-col items-center gap-1 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/85 p-1.5 shadow-pop backdrop-blur">
+            <div className="flex items-center gap-3 border-t-2 border-ink-line p-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-display text-tiny font-extrabold uppercase tracking-wider text-muted">
+                    Wearing
+                  </p>
+                  {!!wearing.length && (
+                    <span className="rounded-full bg-ink-hover px-1.5 py-0.5 text-mark font-extrabold leading-none text-white/50">
+                      {wearing.length}
+                    </span>
+                  )}
+                </div>
+
+                {!wearing.length ? (
+                  <p className="mt-1.5 text-xs text-muted">
+                    Nothing on. Pick something from the shelf.
+                  </p>
+                ) : (
+                  <ul className="mt-2 flex gap-2 overflow-x-auto pb-1 kob-scroll">
+                    {/* Keyed by the item, because two hats are two rows and
+                        a key of "hat" would make them one. The cross takes
+                        that one off rather than emptying the socket. */}
+                    {wearing.map((piece) => (
+                      <li key={piece.item_id} className="shrink-0">
+                        <Tooltip label={piece.item_name ?? 'Something'} side="top">
+                          <button
+                            type="button"
+                            aria-label={`Take off ${piece.item_name ?? 'this'}`}
+                            disabled={busy === `off:${piece.item_id}`}
+                            onClick={() => void after(
+                              `off:${piece.item_id}`,
+                              () => takeOffItem(piece.item_id!),
+                            )}
+                            className="group relative grid h-12 w-12 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media p-1 transition-colors hover:border-danger"
+                          >
+                            <WornPicture item={{ ...piece, id: piece.item_id ?? '' }} />
+                            <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">
+                              <Glyph icon={faXmark} className="text-danger" />
+                            </span>
+                          </button>
+                        </Tooltip>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* The four tools, at the end of the bar. They were a floating
+                  column on the picture; a control that sits on top of the
+                  thing it changes is a control somebody presses by
+                  accident. */}
+              <div className="flex shrink-0 items-center gap-1 self-start">
                 <StageButton
                   label="Take everything off"
                   icon={faEraser}
@@ -698,60 +773,6 @@ export default function MyAvatar() {
                   onClick={() => void after('portrait', async () => {})}
                 />
               </div>
-            </div>
-
-            {/*
-              * What you have on, as pictures with a cross on each, floating
-              * half over the picture and half below it.
-              *
-              * It was a column of names - the one place on this page
-              * somebody had to read rather than look, and the place where
-              * looking is the whole point.
-              */}
-            <div className="absolute bottom-3 left-4 z-[2] w-fit max-w-[calc(100%-2rem)] rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card/90 p-3 shadow-pop backdrop-blur sm:left-6 sm:max-w-[calc(100%-3rem)]">
-              <div className="flex items-center gap-2">
-                <p className="font-display text-tiny font-extrabold uppercase tracking-wider text-muted">
-                  Wearing
-                </p>
-                {!!wearing.length && (
-                  <span className="rounded-full bg-ink-hover px-1.5 py-0.5 text-mark font-extrabold leading-none text-white/50">
-                    {wearing.length}
-                  </span>
-                )}
-              </div>
-
-              {!wearing.length ? (
-                <p className="mt-1.5 text-xs text-muted">
-                  Nothing yet. Pick something from the shelf below to put it on.
-                </p>
-              ) : (
-                <ul className="mt-2 flex flex-wrap gap-2">
-                  {/* Keyed by the item, because two hats are two rows and a
-                      key of "hat" would make them one. The cross takes that
-                      one off rather than emptying the socket. */}
-                  {wearing.map((piece) => (
-                    <li key={piece.item_id}>
-                      <Tooltip label={piece.item_name ?? 'Something'} side="top">
-                        <button
-                          type="button"
-                          aria-label={`Take off ${piece.item_name ?? 'this'}`}
-                          disabled={busy === `off:${piece.item_id}`}
-                          onClick={() => void after(
-                            `off:${piece.item_id}`,
-                            () => takeOffItem(piece.item_id!),
-                          )}
-                          className="group relative grid h-14 w-14 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media p-1 transition-colors hover:border-danger"
-                        >
-                          <WornPicture item={{ ...piece, id: piece.item_id ?? '' }} />
-                          <span className="absolute inset-0 grid place-items-center bg-ink/75 opacity-0 transition-opacity group-hover:opacity-100">
-                            <Glyph icon={faXmark} className="text-danger" />
-                          </span>
-                        </button>
-                      </Tooltip>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
           </div>
 
@@ -836,7 +857,7 @@ export default function MyAvatar() {
              * which is the keyed `row-in` below: pick an arm and the
              * colours arrive for that arm.
              */
-            <Card className="animate-pop-in p-5">
+            <Card className="p-5">
               {/*
                 * The figure gets what it needs and the colours get the
                 * rest. At 20rem the body was taking most of the panel and
@@ -908,10 +929,10 @@ export default function MyAvatar() {
                         : 'pointer-events-none select-none opacity-30',
                     )}
                   >
-                    <Shelf nth={0} label="Skin" colours={SKIN} parts={parts} look={look} busy={busy} onPick={paint} />
-                    <Shelf nth={1} label="Bright" colours={BRIGHT} parts={parts} look={look} busy={busy} onPick={paint} />
-                    <Shelf nth={2} label="Quiet" colours={QUIET} parts={parts} look={look} busy={busy} onPick={paint} />
-                    <Shelf nth={3} label="Deep" colours={DARK} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf label="Skin" colours={SKIN} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf label="Bright" colours={BRIGHT} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf label="Quiet" colours={QUIET} parts={parts} look={look} busy={busy} onPick={paint} />
+                    <Shelf label="Deep" colours={DARK} parts={parts} look={look} busy={busy} onPick={paint} />
                   </div>
                 </div>
               </div>
@@ -950,11 +971,10 @@ export default function MyAvatar() {
              * only two of them.
              */
             <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3 [&>*]:max-w-[11rem]">
-              {shelf.map((item, i) => (
+              {shelf.map((item) => (
                 <WornTile
                   key={item.id}
                   item={item}
-                  nth={i}
                   on={onNow.has(item.id)}
                   busy={busy === `wear:${item.id}`}
                   onToggle={() => void after(
@@ -1018,7 +1038,7 @@ function StageButton({ label, icon, busy, disabled, onClick }: {
         aria-label={label}
         disabled={busy || disabled}
         onClick={onClick}
-        className="grid h-10 w-10 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-card/90 text-sm text-white/80 backdrop-blur transition-colors hover:text-white disabled:opacity-40"
+        className="grid h-10 w-10 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-sm text-white/80 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-40"
       >
         <Glyph icon={busy ? faCircleNotch : icon} className={cn(busy && 'animate-spin')} />
       </button>
@@ -1065,10 +1085,16 @@ function Quick({ onPick, children }: { onPick: () => void; children: React.React
 }
 
 /** A labelled row of swatches. */
-function Shelf({ label, colours, parts, look, busy, onPick, nth }: {
+/*
+ * No staggered entrance on any of these.
+ *
+ * Staw, on the direction the platform is going: polished and simple,
+ * "without weird effects". A grid that deals itself out a tile at a time
+ * reads young, and it is also the thing that makes a page feel slow - the
+ * last tile of a long shelf arrived a third of a second after the first.
+ */
+function Shelf({ label, colours, parts, look, busy, onPick }: {
   label: string
-  /** Where in the stack it sits, which is all the delay is worked out from. */
-  nth: number
   colours: string[]
   parts: K6Part[]
   look: AvatarLook
@@ -1076,7 +1102,7 @@ function Shelf({ label, colours, parts, look, busy, onPick, nth }: {
   onPick: (colour: string) => void
 }) {
   return (
-    <div className="animate-row-in space-y-2" style={{ animationDelay: `${nth * 45}ms` }}>
+    <div className="space-y-2">
       <p className="font-display text-tiny font-extrabold uppercase tracking-wider text-muted">
         {label}
       </p>
@@ -1132,9 +1158,8 @@ function Swatches({ colours, current, busy, onPick }: {
   )
 }
 
-function WornTile({ item, nth, on, busy, onToggle }: {
+function WornTile({ item, on, busy, onToggle }: {
   item: AvatarItem
-  nth: number
   on: boolean
   busy: boolean
   onToggle: () => void
@@ -1155,11 +1180,10 @@ function WornTile({ item, nth, on, busy, onToggle }: {
       disabled={busy}
       title={item.name}
       className={cn(
-        'group flex animate-row-in flex-col overflow-hidden rounded-2xl border-2 bg-ink-card text-left',
+        'group flex flex-col overflow-hidden rounded-2xl border-2 bg-ink-card text-left',
         'transition-[border-color,transform] duration-150 active:scale-[0.97]',
         on ? 'border-brand' : 'border-ink-line hover:border-brand/60',
       )}
-      style={{ animationDelay: `${Math.min(nth, 12) * 25}ms` }}
     >
       {/*
         * Inset rather than bleeding to the edge.
@@ -1179,14 +1203,14 @@ function WornTile({ item, nth, on, busy, onToggle }: {
           )}
         </span>
         {on && !busy && (
-          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 animate-pop-in place-items-center rounded-lg bg-brand text-on-art shadow-pop">
+          <span className="absolute right-3.5 top-3.5 grid h-6 w-6 place-items-center rounded-lg bg-brand text-on-art">
             <Icon name="checkmark" tone="currentColor" className="h-3 w-3" />
           </span>
         )}
         {limited && (
           <span className={cn(
             'absolute bottom-3.5 left-3.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5',
-            'text-mark font-extrabold uppercase tracking-wide backdrop-blur-sm',
+            'text-mark font-extrabold uppercase tracking-wide',
             closed ? 'bg-ink/85 text-white/60' : 'bg-warn/90 text-ink',
           )}>
             <Glyph icon={faClock} />

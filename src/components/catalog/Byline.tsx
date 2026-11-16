@@ -24,9 +24,16 @@ export function Byline({ item, className }: { item: AvatarItem; className?: stri
   const to = community
     ? communityLink({ slug: item.community_slug as string })
     : (item.creator_username ? profileLink({ username: item.creator_username }) : null)
+  /*
+   * The handle for a person, the name for a Community.
+   *
+   * Staw, round 350: a creation says who made it by handle. A Community is
+   * not a handle - it is a group with a name and a page - so it keeps its
+   * name, and the icon beside it already says which of the two this is.
+   */
   const name = community
     ? (item.community_name ?? 'A Community')
-    : (item.creator_display_name ?? 'Somebody')
+    : (item.creator_username ? `@${item.creator_username}` : (item.creator_display_name ?? 'Somebody'))
 
   const inside = (
     <>

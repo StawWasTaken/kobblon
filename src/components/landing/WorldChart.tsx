@@ -45,8 +45,11 @@ function Row({ world, rank }: { world: World; rank: number }) {
           <span className="block truncate font-display text-xl font-extrabold leading-tight transition-colors group-hover:text-brand-bright sm:text-3xl">
             {world.name}
           </span>
+          {/* The handle, like every other byline since round 350. The
+              marks are off here: this is the landing page's chart and a
+              tick at this size is a speck. */}
           <span className="mt-1 block truncate text-sm text-white/45">
-            by {world.creator_name ?? 'Kobblon'}
+            {world.creator_username ? `by @${world.creator_username}` : `by ${world.creator_name ?? 'Kobblon'}`}
           </span>
         </span>
 

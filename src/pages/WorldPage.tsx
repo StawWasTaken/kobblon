@@ -470,12 +470,16 @@ export default function WorldPage() {
                   className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-on-art/75 transition-colors hover:text-on-art"
                 >
                   <PersonAvatar person={owner} size="xs" />
-                  By <span className="font-bold text-on-art">{owner.display_name}</span>
+                  {/* The handle. Staw, round 350: a creation credits the
+                      name that is actually theirs, not the label. */}
+                  By <span className="font-bold text-on-art">@{owner.username}</span>
                   <NameMarks person={owner} />
                 </Link>
               ) : (
                 <p className="mt-1.5 text-sm text-on-art/75">
-                  By <span className="font-bold text-on-art">{thing.creator_name ?? 'Kobblon'}</span>
+                  By <span className="font-bold text-on-art">
+                    {thing.creator_username ? `@${thing.creator_username}` : (thing.creator_name ?? 'Kobblon')}
+                  </span>
                 </p>
               )}
             </div>
