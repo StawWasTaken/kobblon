@@ -29,7 +29,13 @@ export type Profile = {
   pixels: number
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null
+  /** Their number, counting the people in the order they arrived: 1, 2, 3. */
   content_id: number | null
+  /**
+   * The number they had when people and Worlds drew from the same pot. Old
+   * links still resolve through it; nothing on the site shows it.
+   */
+  legacy_content_id?: number | null
   /**
    * When they last changed how their avatar looks. A profile picture drawn
    * before this is out of date and is drawn again rather than shown.

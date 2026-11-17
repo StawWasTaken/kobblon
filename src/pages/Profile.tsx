@@ -259,8 +259,12 @@ export default function Profile() {
     if (!id && user?.content_id) navigate(profileLink(user), { replace: true })
   }, [id, user?.content_id, navigate])
 
-  // Somebody who changed their name carries the new one in the address.
-  useCanonicalPath(id && user?.content_id === Number(id) ? profileLink(user) : null)
+  /*
+   * Somebody who changed their name carries the new one in the address, and
+   * a link holding the number they had before the people were renumbered is
+   * rewritten to the number they have now.
+   */
+  useCanonicalPath(id && user?.content_id ? profileLink(user) : null)
 
   // A name somebody used to have still lands on them.
   useEffect(() => {

@@ -23920,3 +23920,59 @@ Worth knowing if either application ever shows or sets one of these counts:
 and topic 17 to forty, and adds two hundred views to topic 17. The seeds
 are set rather than added, so re-running leaves the same numbers - **but
 the two hundred views are an addition, so that line runs once.**
+
+## Round three hundred and fifty-two - a player is the number they arrived at
+
+**This one changes the meaning of a number you already display, so read it
+even though nothing in your build breaks.**
+
+Until today every numbered thing on Kobblon drew from one sequence,
+`content_id_seq`: people, Worlds, catalog items, communities, events, badges.
+So the first account ever made is `/u/1397`, because the catalog had been
+busy that week, and a person's number said nothing about them.
+
+From `0350_a_player_is_the_number_they_arrived_at.sql`, **a person's number
+counts the people only, in the order they arrived**. The first account is 1,
+the hundredth is 100. Guests count, because a guest is an account; a guest
+who claims their account keeps the number they already had. New sequence:
+`player_number_seq`.
+
+What this means for you:
+
+- `profiles.content_id` is the same column, the same type and the same door
+  (`username_by_id(target bigint)`). Nothing in your code has to change.
+- The numbers themselves moved. Anything you have cached, stored in a config,
+  written in a test fixture or hard-coded against a profile number is now
+  pointing at a different person. Mine were test rows; yours may not be.
+- A person's number is now small and meaningful, so it is worth showing if
+  you ever wanted to. Early accounts are low numbers, which players read as
+  seniority. Nothing on the website shows it yet.
+- Old links still land. The number they used to have is kept in
+  `profiles.legacy_content_id`, and `username_by_id` answers to it after it
+  has tried the new number. The website then rewrites the address in the bar
+  to the new one. New numbers win a tie; nothing else keeps the old pot alive.
+- One known gap, deliberate: the link-preview function (`preview_for`) still
+  matches a `/u/<number>` link on the new number only, so an embed card for a
+  link posted before today will not draw. The link itself works. I did not
+  retype a 200-line function for a card.
+
+**Worlds, catalog items, communities, events, badges and ads are untouched.**
+They keep drawing from `content_id_seq` exactly as before, and
+`BODY-1352` is still `BODY-1352`. Staw has not decided whether assets get the
+same treatment. If he does, it is the same shape, and the shape is written
+down now so we both build the same thing: a per-kind sequence, the old number
+kept in a `legacy_content_id` beside it, the resolver trying the new number
+first and the old one second, and **the old number only ever answering for
+things uploaded before the change** - nothing new is given one, so the old
+system is not kept alive, it just does not break what exists. Do not start on
+that until a round says it is built.
+
+One note on how it was written, since it is the third trap in CLAUDE.md
+wearing a new hat: `guard_profile_update` pins `content_id` back to its old
+value and only exempts a caller with no JWT. The renumbering would have
+passed its own check in the SQL editor, which has no JWT, and been silently
+undone the day it ran under a signed-in identity. It raises a
+transaction-local `kobbleston.numbering` flag instead, the guard honours that
+and nothing else, and the check ran under two identities: the owner's own
+write still cannot move either number, a stranger's cannot, and only the flag
+lets it through. `legacy_content_id` is pinned the same way.
