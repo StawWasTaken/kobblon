@@ -67,21 +67,25 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
   const wearing = faceOf(face)
   const show = !!said || (!!mine && !small)
 
+  /* How far the tail is from the bubble's right edge, and the dot from it. */
+  const tail = small ? 'right-5' : 'right-7'
+
   const bubble = (
     <>
       {/*
-        * The big shape and the one that belongs to it, drawn as one
-        * silhouette.
+        * The big shape, with its tail growing out of the bottom edge.
         *
-        * Staw: "make it so the stroke doesnt appear on the intersection of
-        * the second bubble and the big one". Two bordered shapes laid over
-        * each other always show the seam where they meet, whichever is in
-        * front, so neither of these has a border at all. Every piece is
-        * drawn twice instead: once in the edge colour, then again a couple
-        * of pixels smaller in the fill colour, and **all the edges are
-        * painted before any of the fills**. The fills then cover each
-        * other's rims where they overlap, so what is left is one unbroken
-        * outline round the pair of them.
+        * It was a circle laid over the corner, and Staw drew a ring round
+        * exactly that: "we can see here that its not the same shape and
+        * that its 2 put together (i dont want that)". A circle meeting a
+        * straight edge always reads as two things, because the contour
+        * turns a corner twice where they join.
+        *
+        * So the tail is not a second shape stuck on. It is a triangle
+        * whose base lies flush along the bubble's bottom edge, in the same
+        * fill, with its corners rounded by a stroke of its own colour - so
+        * the silhouette runs out of the bubble and down to a point with
+        * nothing to see at the join.
         *
         * The step under the bubble is the lip every button on this site
         * has, and pressing your own presses it the same way: Staw, of the
@@ -94,18 +98,13 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
           mine && 'group-active:mt-[3px]',
         )}
       >
-        {/* The edges, both of them, first. */}
         <span className="absolute inset-0 rounded-2xl bg-thought-deep" />
-        <span className="absolute -bottom-3 right-4 h-6 w-6 rounded-full bg-thought-deep" />
-
-        {/* Then the fills, which hide the rims where the two meet. */}
         <span
           className={cn(
             'absolute inset-x-[2px] top-[2px] rounded-[0.85rem] bg-thought',
             mine ? 'bottom-[5px] group-active:bottom-[2px]' : 'bottom-[5px]',
           )}
         />
-        <span className="absolute -bottom-2 right-5 h-4 w-4 rounded-full bg-thought" />
 
         <span
           className={cn(
@@ -119,15 +118,40 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
           <span className="line-clamp-2 flex-1">{said || 'What are you thinking?'}</span>
           {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-50" />}
         </span>
-      </span>
 
-      {/*
-        * And the last one, on its own below and to the left: the smallest
-        * of the three, and the same colour as the other two. All three are
-        * white on a dark page and Kobblon's black in daylight, which is
-        * Staw's sketch - the words take the opposite.
-        */}
-      <span className="ml-8 mt-2 h-3 w-3 rounded-full bg-thought" />
+        {/*
+          * The tail. It starts two pixels inside the bubble so the two
+          * fills meet rather than abut, and the stroke is the same colour
+          * as the fill, which is what rounds the point.
+          */}
+        <svg
+          viewBox="0 0 24 22"
+          aria-hidden="true"
+          className={cn('absolute top-full -mt-[3px] text-thought', tail, small ? 'h-3.5 w-4' : 'h-4 w-5')}
+        >
+          <path
+            d="M3 1 H21 L10 17 Z"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeWidth="5"
+            strokeLinejoin="round"
+          />
+        </svg>
+
+        {/*
+          * And the last one, carrying on where the tail points: the
+          * smallest of the three, the same colour as the bubble, placed
+          * against the tail rather than against the middle of a row - a
+          * dot that floats off on its own is the "random third bubble"
+          * Staw drew a ring round.
+          */}
+        <span
+          className={cn(
+            'absolute rounded-full bg-thought',
+            small ? 'right-[2.1rem] top-full mt-[0.8rem] h-2 w-2' : 'right-[2.9rem] top-full mt-[1.05rem] h-2.5 w-2.5',
+          )}
+        />
+      </span>
 
     </>
   )

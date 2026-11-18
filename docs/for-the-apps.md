@@ -24342,3 +24342,34 @@ Everything else about the drawing is as round 361 described it: one
 silhouette with no stroke where the two shapes meet, every edge painted
 before any fill, the button lip underneath, a very rounded rectangle rather
 than a capsule.
+
+## Round three hundred and sixty-four - the tail grows out of the bubble
+
+Drawing only, and the shape is settled differently from round 361. Copy
+this one.
+
+Staw drew a ring round the join and said it plainly: "its not the same shape
+and that its 2 put together (i dont want that)". He was right, and the
+reason is geometric rather than a matter of pixels - a circle meeting a
+straight edge turns a corner twice where they join, so the eye reads two
+objects however carefully the seam is hidden.
+
+So the second shape is not a circle laid over the corner any more. **It is a
+tail: a triangle whose base lies flush along the bubble's bottom edge**, in
+the same fill, its corners rounded by a stroke of its own colour. The
+silhouette runs out of the bubble and down to a point with nothing to see at
+the join, because there is no join - the two fills share an edge rather than
+crossing one.
+
+The third shape sits where the tail points, anchored to it rather than to
+the middle of the row. It was floating on its own before, which is the
+"random third bubble" he marked.
+
+Everything else stands: the fill is the foreground colour and the words the
+opposite (white bubble, dark words, in the dark; the reverse in daylight),
+the big shape is a very rounded rectangle rather than a capsule, and it
+carries the button lip and presses like one.
+
+Also: the Privacy section in Settings is drawn on the raised card the Discord
+setting always used - small capitals, one line of what it means, the choices
+under it. Same four settings, same rules, nothing changed about what they do.

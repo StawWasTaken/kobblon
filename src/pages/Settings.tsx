@@ -605,12 +605,18 @@ function Audience({ title, note, value, onChange, extra }: {
     ...(extra && extra.value === value ? [extra] : []),
   ]
 
+  /*
+   * The card the Discord handle's setting has always been drawn on, which
+   * is where this setting came from and what Staw asked for back: a raised
+   * card, the question in small capitals, one line saying what it means,
+   * and the choices under it.
+   */
   return (
-    <div className="p-4">
-      <p className="font-display text-sm font-extrabold">{title}</p>
+    <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-muted">{title}</p>
       <p className="mt-1 text-xs leading-relaxed text-muted">{note}</p>
       <Choices
-        className="mt-2.5"
+        className="mt-2"
         size="sm"
         label={title}
         value={value}
@@ -642,7 +648,7 @@ function Privacy() {
 
   return (
     <Panel title="Privacy" note="Who sees what. Everything here starts at friends only.">
-      <Group className={busy ? 'opacity-70' : undefined}>
+      <div className={cn('space-y-3', busy && 'opacity-70')}>
         <Audience
           title="Who sees your thought"
           note="The line over your picture, wherever your picture is big enough to carry it."
@@ -663,14 +669,14 @@ function Privacy() {
         />
         {profile.discord_id && (
           <Audience
-            title="Who sees your Discord handle"
+            title="Who can see your Discord handle"
             note="Your Discord name is on your profile for anybody. The handle, the one people search for, is yours to give out."
             value={profile.discord_visibility ?? 'friends'}
             onChange={(next) => void save({ discord_visibility: next as 'everyone' | 'friends' | 'nobody' })}
             extra={{ value: 'nobody', label: 'Nobody' }}
           />
         )}
-      </Group>
+      </div>
 
       <p className="px-1 text-xs leading-relaxed text-muted">
         These are answered by the database, not by the page you are looking at. A thought
