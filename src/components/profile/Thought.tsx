@@ -86,13 +86,15 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
         className={cn(
           'relative block w-max rounded-2xl bg-thought text-center font-bold text-thought-ink',
           small
-            ? 'max-w-[8.5rem] px-2.5 py-1.5 text-[0.65rem] leading-[0.85rem]'
-            : 'max-w-[11rem] px-3.5 py-2 text-xs leading-[1.1rem]',
+            ? 'max-w-[7rem] px-2.5 py-1.5 text-[0.65rem] leading-[0.85rem]'
+            : 'max-w-[9.5rem] px-3 py-1.5 text-[0.7rem] leading-[0.95rem]',
         )}
       >
         <span className="flex items-center gap-1.5">
           {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
-          <span className="line-clamp-2 flex-1">{said || 'What are you thinking?'}</span>
+          <span className={cn('line-clamp-2 flex-1', !said && 'italic text-muted')}>
+            {said || 'What are you thinking?'}
+          </span>
           {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-50" />}
         </span>
 
@@ -120,7 +122,7 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
       {children}
 
       {show && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[66%] z-20 flex flex-col items-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-[74%] z-20 flex flex-col items-center">
           {mine ? (
             <button
               type="button"

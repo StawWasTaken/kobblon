@@ -495,17 +495,7 @@ export default function Profile() {
             face={thought.data?.face}
             mine={isMe}
             onEdit={() => setThinking(true)}
-            /*
-              * On a phone the card's top padding is five, and a thought
-              * that wraps to two lines is taller than that - so the whole
-              * column, picture and bubble together, starts a little lower
-              * there. The bubble never moves the picture on its own; the
-              * two move together or not at all.
-              */
-            className={cn(
-              'shrink-0 self-center sm:self-start',
-              thought.data?.body && 'mt-3 sm:mt-0',
-            )}
+            className="shrink-0 self-center sm:self-start"
           >
             <PersonAvatar
               person={user}
@@ -532,7 +522,7 @@ export default function Profile() {
             * - so the name moves down rather than the picture, which is the
             * one thing that must not move.
             */}
-          <div className={cn('min-w-0 flex-1', (thought.data?.body || isMe) && 'sm:pt-7')}>
+          <div className="min-w-0 flex-1">
             <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-4xl">
               {user.display_name}
               {/* The guest mark comes from `NameMarks` and nowhere else.

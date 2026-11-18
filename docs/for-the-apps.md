@@ -24397,3 +24397,14 @@ Nothing changed about what they do.
 The bubble straddles the top edge of the picture: half of it over whatever
 is behind, half over the picture itself, with the circle and the dot on the
 picture. Nothing else changed.
+
+## Round three hundred and sixty-seven - the bubble, smaller and out of the way
+
+Three corrections, drawing only:
+
+- It is narrower and sits higher, so it covers the top corner of the
+  picture rather than a third of it, and never reaches the name beside it.
+- **It moves nothing.** The page used to make room for it; it does not any
+  more - the picture, the name and everything under them sit where they sit
+  whether there is a thought or not.
+- Your own empty one says "What are you thinking?" in grey italics.
