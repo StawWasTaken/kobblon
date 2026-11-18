@@ -109,7 +109,7 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
 
         <span
           className={cn(
-            'relative flex w-max items-center gap-1.5 text-center font-bold text-on-art',
+            'relative flex w-max items-center gap-1.5 text-center font-bold text-thought-ink',
             small
               ? 'max-w-[8.5rem] px-2.5 pb-2 pt-1.5 text-[0.65rem] leading-[0.85rem]'
               : 'max-w-[11rem] px-3.5 pb-2.5 pt-2 text-xs leading-[1.1rem]',
@@ -123,12 +123,11 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
 
       {/*
         * And the last one, on its own below and to the left: the smallest
-        * of the three, in the foreground colour - white on a dark page,
-        * Kobblon's black in daylight - so it holds against whatever
-        * picture is behind it. This one touches nothing, so it keeps its
-        * own edge.
+        * of the three, and the same colour as the other two. All three are
+        * white on a dark page and Kobblon's black in daylight, which is
+        * Staw's sketch - the words take the opposite.
         */}
-      <span className="ml-8 mt-2 h-3 w-3 rounded-full border-2 border-thought-deep bg-white" />
+      <span className="ml-8 mt-2 h-3 w-3 rounded-full bg-thought" />
 
     </>
   )

@@ -56,8 +56,9 @@
    * daylight, and the pale one read as a disabled chip rather than a
    * bubble.
    */
-  --thought: 58 60 74;
-  --thought-deep: 30 31 41;
+  --thought: 255 255 255;
+  --thought-deep: 196 199 210;
+  --thought-ink: 16 16 18;
   --fg: 255 255 255;
   /*
    * White that stays white, whatever the theme is doing.
@@ -147,8 +148,9 @@
   --ink-line: 170 176 194;
   --ink-edge: 183 190 208;
   /* Dark enough to hold white words on paper. See the dark block. */
-  --thought: 92 97 116;
-  --thought-deep: 58 62 80;
+  --thought: 20 19 18;
+  --thought-deep: 0 0 0;
+  --thought-ink: 255 255 255;
   --fg: 20 19 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */
   --on-art: 255 255 255;

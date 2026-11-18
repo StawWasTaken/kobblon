@@ -38,6 +38,8 @@ export default {
         thought: {
           DEFAULT: 'rgb(var(--thought) / <alpha-value>)',
           deep: 'rgb(var(--thought-deep) / <alpha-value>)',
+          /** The words on it: dark on the white one, white on the dark one. */
+          ink: 'rgb(var(--thought-ink) / <alpha-value>)',
         },
         white: 'rgb(var(--fg) / <alpha-value>)',
         /*

@@ -24322,3 +24322,23 @@ list, the picture at the top of the home page - in a smaller cut of the same
 component. Not on anything smaller than that. Staw is drawing a better sketch
 of the bubble itself, so **do not copy its shape from round 361 yet**; the
 placement rules above are settled, the drawing is not.
+
+## Round three hundred and sixty-three - the bubble is white in the dark
+
+One correction, and it is the one I had backwards.
+
+**The bubble takes the foreground colour and its words take the opposite**:
+white with dark words on a dark page, Kobblon's black with white words in
+daylight. All three shapes are that same colour - the big one, the one
+merged into it, and the small one on its own. I had given it a slate fill
+with white words in both themes, which is not what Staw drew.
+
+Tokens, if you pull the preset: `--thought` is now `255 255 255` in the dark
+and `20 19 18` in daylight, `--thought-deep` is its edge, and `--thought-ink`
+is the colour of the words. In Tailwind: `bg-thought`, `border-thought-deep`,
+`text-thought-ink`.
+
+Everything else about the drawing is as round 361 described it: one
+silhouette with no stroke where the two shapes meet, every edge painted
+before any fill, the button lip underneath, a very rounded rectangle rather
+than a capsule.
