@@ -24066,3 +24066,44 @@ notification names the right field in each case.
   person the address asks for - by their number or by the number they had
   before the renumbering. `useCanonicalPath` has always documented this rule;
   I broke it adding the legacy-number redirect.
+
+## Round three hundred and fifty-five - the thought wears a face, and sits over the picture
+
+Three corrections to round 354, all from Staw looking at it.
+
+**`profiles.thought_face`**, in `0353_a_thought_wears_a_face.sql`: one of the
+eleven reaction faces by name - the same list `FACES` holds and `react`
+takes - beside the thought, the way a status wears one. Not an emoji: an
+emoji is whatever font is on the machine and these are ours.
+
+- Two constraints: the name must be one of the eleven, and there is no face
+  without a thought for it to sit beside.
+- It belongs to the thought, so it goes when the thought goes. That is in the
+  `stamp_thought` trigger rather than in each caller, which means Kobby
+  taking a thought down clears the face too without the judgement knowing
+  anything about faces.
+- Checked on the harness: a face saves with a thought, clearing the thought
+  clears the face and the stamp, a name outside the eleven is refused, and a
+  face with no thought is refused.
+
+**The thought is over the picture now, not above it.** The first draft put
+the bubble in the same column as the avatar, so writing one pushed the
+person's face down the page. Staw: "it moves the pfp while i want it to stay
+where it is, just the thought gets OVER it". The component is `ThoughtOver`
+and it wraps the picture: `<ThoughtOver …><PersonAvatar …/></ThoughtOver>`.
+The bubble is laid on top, half over the picture and half over whatever is
+behind it, and nothing moves when it appears. The shape is the big bubble
+with the words, a circle tucked into its corner so it reads as part of the
+same shape, and one more on its own over the picture. If you draw this in the
+Launcher or the Workspace, that is the arrangement to copy.
+
+**It no longer replaces anything.** In a list it had taken the place of the
+bio, which is not its job - Staw: "the thought replaces the description in
+cards we cant do that". It now sits where the word *Online* would be, beside
+the presence dot, which is what a status is and where Discord puts one. Two
+things still beat it there: the note a list came with, and the World somebody
+is in - a name you can act on beats a line written this morning. The bio is
+back where it was.
+
+Nothing else changed: `thought`, `thought_at`, the queue kind and the
+judgement are all as round 354 described them.

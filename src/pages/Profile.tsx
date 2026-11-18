@@ -12,7 +12,7 @@ import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { ThoughtBubble, ThoughtDialog } from '@/components/profile/Thought'
+import { ThoughtOver, ThoughtDialog } from '@/components/profile/Thought'
 import { Hop } from '@/components/ui/Hop'
 import { EmptyState, ErrorState, SpaceCardSkeleton, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -476,19 +476,20 @@ export default function Profile() {
             * and for the list of what it has on; up here it was a tall card
             * pushing everything else down the page.
             */}
-          <div className="flex shrink-0 flex-col items-center">
-            {/*
-              * What they are thinking, over their picture, in a thinking
-              * bubble - the Launcher's bubble over a player in a World, in
-              * two dimensions. Only here: in a list it is a line with no
-              * bubble on it.
-              */}
-            <ThoughtBubble
-              thought={user.thought}
-              mine={isMe}
-              onEdit={() => setThinking(true)}
-              className="mb-1"
-            />
+          {/*
+            * What they are thinking, laid over the top of their picture in
+            * a thinking bubble - the Launcher's bubble over a player in a
+            * World, in two dimensions. It is over the picture rather than
+            * above it, so writing one moves nothing. Only here: in a list
+            * it is a line with no bubble, beside the dot.
+            */}
+          <ThoughtOver
+            thought={user.thought}
+            face={user.thought_face}
+            mine={isMe}
+            onEdit={() => setThinking(true)}
+            className="shrink-0 self-center sm:self-start"
+          >
             <PersonAvatar
               person={user}
               size="3xl"
@@ -506,9 +507,15 @@ export default function Profile() {
                 </Hop>
               ) : undefined}
             />
-          </div>
+          </ThoughtOver>
 
-          <div className="min-w-0 flex-1">
+          {/*
+            * Room for the bubble. It is laid over the picture and reaches a
+            * little past it, and the display name starts at the same height
+            * - so the name moves down rather than the picture, which is the
+            * one thing that must not move.
+            */}
+          <div className={cn('min-w-0 flex-1', user.thought && 'sm:pt-7')}>
             <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-4xl">
               {user.display_name}
               {/* The guest mark comes from `NameMarks` and nowhere else.
@@ -1158,9 +1165,10 @@ export default function Profile() {
           open={thinking}
           onClose={() => setThinking(false)}
           thought={user.thought}
+          face={user.thought_face}
           onSave={async (next) => {
             try {
-              await updateProfile(user.id, { thought: next })
+              await updateProfile(user.id, { thought: next.thought, thought_face: next.face })
               person.reload()
               refreshProfile()
             } catch {

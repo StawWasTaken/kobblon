@@ -39,6 +39,8 @@ export type Somebody = {
   bio?: string | null
   /** The line over their head. Drawn without its bubble in a list. */
   thought?: string | null
+  /** The face beside it, one of the eleven. */
+  thought_face?: string | null
   /** A best friend, who is first in the list and says so. */
   best?: boolean
   /** Still a friend, kept quiet. */
@@ -111,6 +113,29 @@ export function PersonLine({ person, note, className }: {
    * and the name does, so the name wins whenever there is one.
    */
   const where = useWhereabout(person.id)
+
+  /*
+   * What they are thinking stands where the word Online would be, which is
+   * what a status is and where Discord puts one. Two things it never
+   * covers: the note this list came with, and the World they are in - a
+   * name you can act on beats a line somebody wrote this morning.
+   */
+  const thought = person.thought?.trim()
+  if (!note && !where && thought) {
+    return (
+      <p className={cn('flex items-center gap-1.5 text-xs text-white/70', className)}>
+        <StatusDot presence={presence} size="md" />
+        <ThoughtLine thought={thought} face={person.thought_face} className="min-w-0" />
+        {person.i_ignore && (
+          <Tooltip label="You are ignoring this person" side="top">
+            <span className="shrink-0 rounded-lg bg-white/10 px-1.5 py-0.5 text-tiny font-bold uppercase tracking-wide text-muted">
+              Ignored
+            </span>
+          </Tooltip>
+        )}
+      </p>
+    )
+  }
 
   return (
     <p className={cn('flex items-center gap-1.5 text-xs', className)}>
@@ -213,18 +238,9 @@ export function PersonCard({
       </div>
 
       {bio && (
-        /*
-         * What they are thinking wins over what they wrote about
-         * themselves, because it is the newer of the two and the one they
-         * chose today. No bubble here: that belongs on their own page.
-         */
-        person.thought?.trim() ? (
-          <ThoughtLine thought={person.thought} className="min-h-[2.25rem]" />
-        ) : (
-          <p className="line-clamp-2 min-h-[2.25rem] text-xs leading-relaxed text-white/55">
-            {person.bio || <span className="text-white/25">Nothing written yet.</span>}
-          </p>
-        )
+        <p className="line-clamp-2 min-h-[2.25rem] text-xs leading-relaxed text-white/55">
+          {person.bio || <span className="text-white/25">Nothing written yet.</span>}
+        </p>
       )}
 
       {tag && <div className="flex flex-wrap items-center gap-1.5">{tag}</div>}

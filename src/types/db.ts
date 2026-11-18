@@ -31,6 +31,8 @@ export type Profile = {
   gender: 'male' | 'female' | 'other' | null
   /** The one line they have over their head, shown on their profile. */
   thought?: string | null
+  /** The reaction face beside it, one of the eleven, or none. */
+  thought_face?: string | null
   /** When they wrote it. Stamped by the database, never by the client. */
   thought_at?: string | null
   /** Their number, counting the people in the order they arrived: 1, 2, 3. */
