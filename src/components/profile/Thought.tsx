@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { faPen } from '@fortawesome/free-solid-svg-icons'
+import { useEffect, useRef, useState } from 'react'
+import { faPen, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
 import { Button } from '@/components/ui/Button'
@@ -62,28 +62,33 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
 
   const bubble = (
     <>
+      {/*
+        * Solid fill, no outline, words in the middle: Staw wants TikTok's,
+        * and TikTok's is a plain grey shape with nothing drawn round it. It
+        * takes `ink-line`, which is a mid grey in the dark and a light one
+        * in daylight, so the same bubble works in both themes without a
+        * second colour being invented for it.
+        */}
       <span
         className={cn(
-          'flex w-max max-w-[13rem] items-center gap-1.5 rounded-2xl rounded-bl-md border-2 border-ink-line',
-          'bg-ink-card px-2.5 py-1.5 text-left text-xs font-bold leading-snug shadow-sm',
-          said ? 'text-white/90' : 'text-muted',
-          mine && 'transition-colors group-hover:border-brand/60 group-hover:bg-ink-hover',
+          'flex w-max max-w-[11.5rem] items-center justify-center gap-1.5 rounded-[1.4rem]',
+          'bg-ink-line px-3.5 py-2 text-center text-sm font-bold leading-snug text-white',
+          mine && 'transition-opacity group-hover:opacity-80',
         )}
       >
         {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
-        <span className="line-clamp-2">{said || 'What are you thinking?'}</span>
-        {mine && <Glyph icon={faPen} className="shrink-0 text-tiny text-white/35" />}
+        <span className="line-clamp-3">{said || 'What are you thinking?'}</span>
+        {mine && <Glyph icon={faPen} className="shrink-0 text-tiny opacity-50" />}
       </span>
 
       {/*
-        * The two that make it a thought. The first is tucked into the
-        * corner of the big one so it reads as part of the same shape; the
-        * second stands on its own, over the picture.
+        * The tail. The first circle is pulled up into the bubble so the two
+        * read as one shape rather than a bubble with a dot under it - same
+        * fill, no outline, so there is no seam where they meet. The second
+        * stands on its own, over the picture.
         */}
-      <span className="-mt-1 ml-3 flex items-center gap-1">
-        <span className="h-3.5 w-3.5 rounded-full border-2 border-ink-line bg-ink-card" />
-      </span>
-      <span className="ml-1 mt-0.5 h-2 w-2 rounded-full border-2 border-ink-line bg-ink-card" />
+      <span className="-ml-10 -mt-1.5 h-[1.15rem] w-[1.15rem] rounded-full bg-ink-line" />
+      <span className="-ml-[3.6rem] mt-1 h-2.5 w-2.5 rounded-full bg-ink-line" />
     </>
   )
 
@@ -92,7 +97,7 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
       {children}
 
       {show && (
-        <div className="pointer-events-none absolute bottom-[62%] left-1/2 z-20 flex -translate-x-1/2 flex-col items-start">
+        <div className="pointer-events-none absolute bottom-[70%] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center">
           {mine ? (
             <button
               type="button"
@@ -150,7 +155,19 @@ export function ThoughtDialog({ open, onClose, thought, face, onSave }: {
 }) {
   const [text, setText] = useState(thought ?? '')
   const [wearing, setWearing] = useState<Face | null>(faceOf(face))
+  const [picking, setPicking] = useState(false)
   const [saving, setSaving] = useState(false)
+  const picker = useRef<HTMLDivElement>(null)
+
+  /* A list that only closes by choosing is a list you cannot put away. */
+  useEffect(() => {
+    if (!picking) return
+    const away = (e: PointerEvent) => {
+      if (!picker.current?.contains(e.target as Node)) setPicking(false)
+    }
+    document.addEventListener('pointerdown', away)
+    return () => document.removeEventListener('pointerdown', away)
+  }, [picking])
 
   const said = text.trim()
   const unchanged = said === (thought ?? '').trim() && wearing === faceOf(face)
@@ -187,39 +204,71 @@ export function ThoughtDialog({ open, onClose, thought, face, onSave }: {
         </div>
       }
     >
-      <Input
-        label="Thought"
-        labelNote={`${said.length}/${THOUGHT_LIMIT}`}
-        value={text}
-        maxLength={THOUGHT_LIMIT}
-        autoFocus
-        placeholder="What are you thinking?"
-        onChange={(e) => setText(e.target.value)}
-      />
+      {/*
+        * The face sits at the left of the line, the way it sits in the
+        * bubble, and it is a plus until there is one. The eleven open from
+        * it rather than lying on the card: a grid of faces under the box
+        * made the smaller of the two things look like the point of it.
+        */}
+      <div ref={picker}>
+        <div className="flex items-end gap-2">
+          <button
+            type="button"
+            aria-haspopup="true"
+            aria-expanded={picking}
+            aria-label={wearing ? `Face: ${wearing.replace('-', ' ')}` : 'Add a face'}
+            onClick={() => setPicking((was) => !was)}
+            className={cn(
+              'grid h-[2.85rem] w-[2.85rem] shrink-0 place-items-center rounded-xl border-2 transition-colors',
+              picking ? 'border-brand bg-ink-hover' : 'border-ink-line bg-ink hover:border-brand/50',
+            )}
+          >
+            {wearing
+              ? <Icon name={`reaction-${wearing}`} tone={FACE_COLOUR[wearing]} className="h-6 w-6" />
+              : <Glyph icon={faPlus} className="text-sm text-muted" />}
+          </button>
 
-      <p className="mb-1.5 mt-4 font-display text-xs font-bold uppercase tracking-wide text-muted">
-        Face
-        <span className="ml-1.5 font-medium normal-case text-white/30">beside it, if you want one</span>
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {FACES.map((one) => {
-          const on = wearing === one
-          return (
-            <button
-              key={one}
-              type="button"
-              aria-pressed={on}
-              aria-label={one.replace('-', ' ')}
-              onClick={() => setWearing(on ? null : one)}
-              className={cn(
-                'grid h-10 w-10 place-items-center rounded-xl border-2 transition-colors',
-                on ? 'border-brand bg-ink-hover' : 'border-ink-line bg-ink hover:border-brand/50',
-              )}
-            >
-              <Icon name={`reaction-${one}`} tone={FACE_COLOUR[one]} className="h-6 w-6" />
-            </button>
-          )
-        })}
+          <Input
+            label="Thought"
+            labelNote={`${said.length}/${THOUGHT_LIMIT}`}
+            value={text}
+            maxLength={THOUGHT_LIMIT}
+            autoFocus
+            placeholder="What are you thinking?"
+            onChange={(e) => setText(e.target.value)}
+          />
+        </div>
+
+        {picking && (
+          <div className="mt-2 rounded-2xl border-2 border-ink-line bg-ink p-2">
+            <div className="flex flex-wrap gap-1">
+              {FACES.map((one) => (
+                <button
+                  key={one}
+                  type="button"
+                  aria-label={one.replace('-', ' ')}
+                  onClick={() => { setWearing(wearing === one ? null : one); setPicking(false) }}
+                  className={cn(
+                    'grid h-10 w-10 place-items-center rounded-xl transition-colors',
+                    wearing === one ? 'bg-ink-hover' : 'hover:bg-ink-hover',
+                  )}
+                >
+                  <Icon name={`reaction-${one}`} tone={FACE_COLOUR[one]} className="h-6 w-6" />
+                </button>
+              ))}
+            </div>
+
+            {wearing && (
+              <button
+                type="button"
+                onClick={() => { setWearing(null); setPicking(false) }}
+                className="mt-1 w-full rounded-xl px-2 py-1.5 text-left text-xs font-bold text-muted hover:bg-ink-hover"
+              >
+                No face
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </Dialog>
   )

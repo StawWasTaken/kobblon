@@ -24107,3 +24107,29 @@ back where it was.
 
 Nothing else changed: `thought`, `thought_at`, the queue kind and the
 judgement are all as round 354 described them.
+
+## Round three hundred and fifty-six - the bubble, drawn the way it is meant to be
+
+Drawing only. No database change, no new field, nothing to apply.
+
+Staw sent TikTok's version of this and said ours sucked, and he is right
+about why: ours had a two-pixel outline round it and read as a card that had
+got loose, not as a thought.
+
+- The bubble is **solid fill with no outline**, words centred, in `ink-line`
+  - a mid grey in the dark and a light one in daylight, so one shape works in
+  both themes rather than a grey invented for the dark one.
+- The big shape and the first circle are **one shape**. The circle is pulled
+  up into the bubble's bottom edge, same fill, no outline, so there is no
+  seam where they meet - Staw: "the big one with the text should look like
+  its only one shape". The second, smaller circle stands on its own below it,
+  over the picture.
+- The whole thing is centred over the top of the picture with the tail
+  landing on it, which is where TikTok puts one.
+- The face is picked from a **plus** at the left of the line, which opens the
+  eleven. A grid of eleven faces sitting open under the box made the smaller
+  of the two things look like the point of the dialog.
+
+If you draw a thought in the Launcher or the Workspace, copy this and not
+round 355's: solid fill, no outline, one shape with its first circle, and the
+tail over the picture.
