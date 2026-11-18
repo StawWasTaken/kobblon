@@ -71,27 +71,27 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
         */}
       <span
         className={cn(
-          'flex w-max max-w-[10rem] items-center justify-center gap-1.5 rounded-[1.15rem]',
-          'bg-ink-line px-3 py-1.5 text-center text-xs font-bold leading-snug text-white',
-          mine && 'transition-opacity group-hover:opacity-80',
+          'flex w-max max-w-[11rem] items-center gap-1.5 rounded-[1.25rem]',
+          'bg-ink-line px-3.5 py-2 text-center text-xs font-bold leading-[1.1rem] text-white',
+          mine && 'transition-opacity group-hover:opacity-90',
         )}
       >
-        {wearing && <ThoughtFace face={wearing} className="h-3.5 w-3.5" />}
-        <span className="line-clamp-2">{said || 'What are you thinking?'}</span>
-        {mine && <Glyph icon={faPen} className="shrink-0 text-tiny opacity-50" />}
+        {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
+        <span className="line-clamp-2 flex-1">{said || 'What are you thinking?'}</span>
+        {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-40" />}
       </span>
 
       {/*
-        * The tail. The first circle is pulled up into the bubble's bottom
-        * edge - same fill, no outline - so the two read as one shape rather
-        * than a bubble with a dot under it, and it sits to the right of
-        * centre. The last one is smaller, a little to its left and below,
-        * and it is the foreground colour: white on a dark page and
-        * Kobblon's black in daylight, so it holds against whatever picture
-        * is behind it.
+        * The tail: the same shape walking down to the picture. The first
+        * circle is pulled up into the bubble's bottom edge, same fill and
+        * no outline, so the two read as one shape rather than a bubble with
+        * a dot under it, and it sits to the right of centre. The last one
+        * is smaller, a little to its left and below, and it takes the
+        * foreground colour - white on a dark page, Kobblon's black in
+        * daylight - so it holds against whatever picture is behind it.
         */}
-      <span className="-mt-1 ml-14 h-3 w-3 rounded-full bg-ink-line" />
-      <span className="ml-6 mt-1 h-[0.45rem] w-[0.45rem] rounded-full bg-white" />
+      <span className="-mt-2 ml-12 h-5 w-5 rounded-full bg-ink-line" />
+      <span className="ml-7 mt-0.5 h-2.5 w-2.5 rounded-full bg-white" />
 
     </>
   )

@@ -24168,3 +24168,20 @@ dark page, Kobblon's black in daylight - rather than the bubble's grey, so it
 holds against whatever picture is behind it. The big shape is unchanged:
 solid fill, no outline, words centred, its first circle pulled into its
 bottom edge so the two are one shape.
+
+## Round three hundred and fifty-nine - the bubble, tidied
+
+Drawing only. The shape was right and the proportions were not.
+
+- The circle that belongs to the big shape is bigger and overlaps it less,
+  so it reads as a rounded swelling on the bubble's bottom right rather than
+  a nub half-hidden behind it. One shape, still, with no seam.
+- The white circle below it is bigger too, and sits closer, so the three
+  pieces taper instead of leaving a speck stranded on the picture.
+- The bubble is a touch wider and better padded, the words sit on a tighter
+  line, and the face beside them is a size up so it is a face rather than a
+  smudge. The pencil on your own is smaller and quieter.
+
+Nothing about the arrangement changed: solid fill, no outline, words centred,
+one shape with its circle, the white one below and to its left, all of it
+centred on the picture.
