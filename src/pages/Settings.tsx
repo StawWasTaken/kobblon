@@ -177,7 +177,26 @@ function Account() {
     : null
 
   return (
-    <Panel title="Account" note="What Kobblon calls you, and what it has on file.">
+    <Panel title="Account">
+      {/* Whose account is open, which a shared machine makes worth saying,
+          and the one door out of here to the page it is all drawn on. */}
+      <Group>
+        <Line
+          label={profile.display_name}
+          value={`@${profile.username}`}
+          to={profileLink(profile)}
+          action={
+            <Avatar
+              src={avatarOf(profile)}
+              personId={profile.id}
+              name={profile.display_name}
+              size="md"
+              className="rounded-xl"
+            />
+          }
+        />
+      </Group>
+
       <form onSubmit={save}>
         <Group>
           <div className="space-y-3 px-5 py-4">
@@ -191,20 +210,13 @@ function Account() {
               />
             </div>
             {/*
-              * Staw asked for the signup answer to be changeable here,
-              * because it decides something now: a girl's Newbie wears the
-              * Waisted Torso (0347), and a question you can only answer
-              * once is a question half the people answer wrongly.
-              *
-              * The same picker the signup card uses, rather than a second
-              * one that looks nearly like it.
+              * The signup answer, changeable: a girl's Newbie wears the
+              * Waisted Torso, and a question you can only answer once is a
+              * question half the people answer wrongly. The picker draws
+              * its own label.
               */}
-            <div className="max-w-sm space-y-1.5">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted">Gender</p>
+            <div className="max-w-sm">
               <GenderPicker value={gender} onChange={setGender} />
-              <p className="text-xs text-muted">
-                Only used to pick the body you start in. Nobody else is shown it.
-              </p>
             </div>
 
             {changed && (
@@ -226,7 +238,6 @@ function Account() {
 
           <Line
             label="Picture, bio and colour"
-            note="Changed on your profile, where you can see them while you do it."
             to={profileLink(profile)}
           />
         </Group>
@@ -356,7 +367,7 @@ function Security() {
   }
 
   return (
-    <Panel title="Security" note="Nothing here is shown to anybody else.">
+    <Panel title="Security">
       <Group>
         <Line
           label="Password"
@@ -490,7 +501,7 @@ export function Looks() {
 
   return (
     <div className="space-y-8">
-      <Panel title="Appearance" note="The mode stays on this device. The appearance travels with the account.">
+      <Panel title="Appearance">
         <div className="grid gap-2.5 sm:grid-cols-3">
           {modes.map((mode) => (
             <Choice
@@ -512,7 +523,7 @@ export function Looks() {
        * was would be bigger words in a box built for smaller ones, which is
        * crowding rather than comfort.
        */}
-      <Panel title="Size" note="How big the interface is. Kept on this device, like the mode.">
+      <Panel title="Size">
         <div className="grid gap-2.5 sm:grid-cols-3">
           {TEXT_SIZES.map((one) => (
             <Choice
@@ -534,7 +545,7 @@ export function Looks() {
        * "here is a thing you cannot have" is not news for a settings page.
        * When each comes round is said instead, because that can be acted on.
        */}
-      <Panel title="Theme appearances" note="Yours for good once claimed, on whatever you sign in on.">
+      <Panel title="Theme appearances">
         <div className="grid gap-2.5 sm:grid-cols-2">
           {mine.map((one) => (
             <Choice
@@ -560,10 +571,7 @@ export function Looks() {
         </div>
 
         {!!missing.length && (
-          <p className="text-xs leading-relaxed text-muted">
-            {missing.map((one) => LOOKS[one].when).join(' ')} A card shows up while one is
-            being given away, and claiming it is the only way to keep it.
-          </p>
+          <p className="text-xs text-muted">{missing.map((one) => LOOKS[one].when).join(' ')}</p>
         )}
       </Panel>
     </div>
@@ -623,7 +631,7 @@ function Privacy() {
   )
 
   return (
-    <Panel title="Privacy" note="Everything here starts at friends only.">
+    <Panel title="Privacy">
       <div className="space-y-2">
         {row('Your thought', profile.thought_privacy, (next) => void save({ thought_privacy: next }))}
         {row('The World you are in', profile.where_privacy, (next) => void save({ where_privacy: next }))}
@@ -643,7 +651,7 @@ function Safety() {
   const clear = (standing.data?.level ?? 'clear') === 'clear'
 
   return (
-    <Panel title="Safety" note="Where this account stands, and how to reach a person about it.">
+    <Panel title="Safety">
       <Group>
         <Line
           label="Where you stand"
@@ -661,27 +669,20 @@ function Safety() {
       <Group>
         <Line
           label="Write to us"
-          note="A ticket goes to a person, and the reply lands in your inbox."
           icon={faHeadset}
           to="/support"
         />
         <Line
           label="Policies"
-          note="Every policy, each with the day its wording last changed."
           icon={faScroll}
           to="/policies"
         />
         <Line
           label="Moderation and appeals"
-          note="What happens when a rule is broken, and in what order."
           icon={faArrowUpRightFromSquare}
           to="/policies/moderation"
         />
       </Group>
-
-      <p className="px-1 text-xs text-muted">
-        Kobblon is for people aged 15 and over. Reports are anonymous.
-      </p>
 
     </Panel>
   )
@@ -691,7 +692,6 @@ function Safety() {
 
 export default function Settings() {
   useTitle('Settings')
-  const { profile } = useAuth()
   const [section, setSection] = useState<Section>('Account')
 
   return (
@@ -703,19 +703,7 @@ export default function Settings() {
        * normal case for this platform - and nothing else is, because the
        * rail says what the page holds and the panel says where you are.
        */}
-      <PageTop
-        title="Settings"
-        note={profile ? `@${profile.username}` : 'Your account'}
-        aside={
-          <Avatar
-            src={avatarOf(profile)}
-            personId={profile?.id}
-            name={profile?.display_name ?? 'You'}
-            size="md"
-            className="rounded-xl"
-          />
-        }
-      />
+      <PageTop title="Settings" />
 
       <BrowseFrame
         rail={
@@ -740,7 +728,7 @@ export default function Settings() {
           {section === 'Security' && <Security />}
           {section === 'Privacy' && <Privacy />}
           {section === 'Connections' && (
-            <Panel title="Connections" note="Other places this account is tied to.">
+            <Panel title="Connections">
               <DiscordLink />
             </Panel>
           )}

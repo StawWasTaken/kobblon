@@ -91,11 +91,17 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
         )}
       >
         <span className="flex items-center gap-1.5">
-          {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
+          {/* A face when there is one; a plus when the bubble is empty and
+              yours, because then the bubble is an invitation. */}
+          {wearing
+            ? <ThoughtFace face={wearing} className="h-4 w-4" />
+            : !said && mine
+              ? <Glyph icon={faPlus} className="shrink-0 text-[0.7rem] text-muted" />
+              : null}
           <span className={cn('line-clamp-2 flex-1', !said && 'italic text-muted')}>
             {said || 'What are you thinking?'}
           </span>
-          {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-50" />}
+          {mine && said && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-50" />}
         </span>
 
         {/* Centred on the bottom edge, so half of it shows. */}

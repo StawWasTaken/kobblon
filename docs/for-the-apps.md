@@ -24408,3 +24408,25 @@ Three corrections, drawing only:
   more - the picture, the name and everything under them sit where they sit
   whether there is a thought or not.
 - Your own empty one says "What are you thinking?" in grey italics.
+
+## Round three hundred and sixty-eight - settings, and the empty bubble
+
+Settings is tidied rather than rebuilt - the four shapes it is made of
+(`Panel`, `Group`, `Line`, `Choice`) were right; what was wrong was
+everything written around them.
+
+- Every panel's explanatory line is gone. A panel says its name and shows
+  its settings.
+- The rows that explained themselves instead of saying what they are set to
+  lost their notes.
+- The page's head is the word Settings. Who the account belongs to is the
+  first row of Account now - picture, name, handle, and a way through to the
+  profile - which is where a platform puts it.
+- A real defect: the gender picker drew its own label and the page drew a
+  second one above it, so the word appeared twice.
+
+And the thought bubble: an empty one of your own carries a plus where the
+face would be, and the pencil only appears once there is something to
+change.
+
+All migrations to 0355 are applied and have moved to `migrations/applied/`.
