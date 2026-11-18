@@ -23976,3 +23976,34 @@ transaction-local `kobbleston.numbering` flag instead, the guard honours that
 and nothing else, and the check ran under two identities: the owner's own
 write still cannot move either number, a stranger's cannot, and only the flag
 lets it through. `legacy_content_id` is pinned the same way.
+
+## Round three hundred and fifty-three - two numbers change hands and a name changes
+
+Three changes to named accounts, by hand, in
+`0351_two_numbers_change_hands_and_a_name_changes.sql`:
+
+- **berryhop** holds the number **29**. **JohnDoe** holds **3**. They swapped.
+- **JaneDoe** is called **Malicia**.
+
+Nothing in either build has to change, but two things are worth knowing.
+
+The number a player holds is still the address of their profile and still
+drawn from `player_number_seq`, but after this it no longer strictly reads as
+the order they arrived in: those two are each other's. If you ever put the
+number in front of players as seniority, remember it can be moved by hand.
+
+The rename went through the same bookkeeping a paid rename does: the old name
+went into `username_history`, so `/u/JaneDoe` still lands on her and the
+profile still lists the name she used to have. `worlds.creator_username` is
+updated by the trigger from round 350, so her creations say `@Malicia`
+without anybody touching them. Anything **you** have cached against a
+username rather than a `uuid` is now one rename behind; the `uuid` has not
+moved and is still the thing to key on.
+
+Both writes go past a guard that would otherwise have undone them without
+raising an error - `guard_profile_update` pins `content_id`, `guard_username`
+pins `username` - so each raises its transaction-local flag, the same ones
+the renumbering and the paid rename use. The migration refuses rather than
+guesses: a missing account, a taken name, or the number 3 or 29 being held by
+an account nobody named all raise, and applying it twice reports that the
+work is already done and changes nothing.
