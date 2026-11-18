@@ -24133,3 +24133,26 @@ got loose, not as a thought.
 If you draw a thought in the Launcher or the Workspace, copy this and not
 round 355's: solid fill, no outline, one shape with its first circle, and the
 tail over the picture.
+
+## Round three hundred and fifty-seven - the tail points at the middle of the picture
+
+Drawing only again, and the correction that matters if you have started
+copying this.
+
+- **The tail runs down the centre of the picture.** It did not: the group was
+  laid out from its left edge, and because an absolutely positioned box is
+  only as wide as the thing it sits on, the circles ended up beside the
+  picture rather than on it while the bubble hung off to one side. Everything
+  in the group is centred on the picture now, and the bubble overflows it
+  evenly on both sides.
+- **It is smaller.** The words are one size down, the shape is tighter, and
+  the whole group is about three quarters of the height it was. The old one
+  was taller than the space above the picture and was being cut off by the
+  top of the card it sits in.
+- It sits higher, so it covers the top edge of the picture rather than the
+  face.
+
+So the arrangement to copy, in full: solid fill, no outline, words centred,
+the first circle pulled up into the bubble so the two are one shape, the
+second circle on its own below it, and all of it centred on the picture with
+the tail landing in the middle of it.

@@ -488,7 +488,17 @@ export default function Profile() {
             face={user.thought_face}
             mine={isMe}
             onEdit={() => setThinking(true)}
-            className="shrink-0 self-center sm:self-start"
+            /*
+              * On a phone the card's top padding is five, and a thought
+              * that wraps to two lines is taller than that - so the whole
+              * column, picture and bubble together, starts a little lower
+              * there. The bubble never moves the picture on its own; the
+              * two move together or not at all.
+              */
+            className={cn(
+              'shrink-0 self-center sm:self-start',
+              user.thought && 'mt-3 sm:mt-0',
+            )}
           >
             <PersonAvatar
               person={user}

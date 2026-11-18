@@ -71,24 +71,26 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
         */}
       <span
         className={cn(
-          'flex w-max max-w-[11.5rem] items-center justify-center gap-1.5 rounded-[1.4rem]',
-          'bg-ink-line px-3.5 py-2 text-center text-sm font-bold leading-snug text-white',
+          'flex w-max max-w-[10rem] items-center justify-center gap-1.5 rounded-[1.15rem]',
+          'bg-ink-line px-3 py-1.5 text-center text-xs font-bold leading-snug text-white',
           mine && 'transition-opacity group-hover:opacity-80',
         )}
       >
-        {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
-        <span className="line-clamp-3">{said || 'What are you thinking?'}</span>
+        {wearing && <ThoughtFace face={wearing} className="h-3.5 w-3.5" />}
+        <span className="line-clamp-2">{said || 'What are you thinking?'}</span>
         {mine && <Glyph icon={faPen} className="shrink-0 text-tiny opacity-50" />}
       </span>
 
       {/*
-        * The tail. The first circle is pulled up into the bubble so the two
-        * read as one shape rather than a bubble with a dot under it - same
-        * fill, no outline, so there is no seam where they meet. The second
-        * stands on its own, over the picture.
+        * The tail, straight down the middle of the picture - Staw: "the
+        * bubles stuff should point at the center of the pfp". The first
+        * circle is pulled up into the bubble's bottom edge, same fill and
+        * no outline, so the two read as one shape rather than a bubble
+        * with a dot under it. The second stands on its own, on the picture.
         */}
-      <span className="-ml-10 -mt-1.5 h-[1.15rem] w-[1.15rem] rounded-full bg-ink-line" />
-      <span className="-ml-[3.6rem] mt-1 h-2.5 w-2.5 rounded-full bg-ink-line" />
+      <span className="-mt-1 h-3 w-3 rounded-full bg-ink-line" />
+      <span className="mt-1 h-[0.45rem] w-[0.45rem] rounded-full bg-ink-line" />
+
     </>
   )
 
@@ -97,13 +99,13 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
       {children}
 
       {show && (
-        <div className="pointer-events-none absolute bottom-[70%] left-1/2 z-20 flex -translate-x-1/2 flex-col items-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-[60%] z-20 flex flex-col items-center">
           {mine ? (
             <button
               type="button"
               onClick={onEdit}
               aria-label={said ? 'Change your thought' : 'Write a thought'}
-              className="group pointer-events-auto flex flex-col items-start"
+              className="group pointer-events-auto flex flex-col items-center"
             >
               {bubble}
             </button>
