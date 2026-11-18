@@ -31,6 +31,10 @@ export type Profile = {
   gender: 'male' | 'female' | 'other' | null
   /** Who may read their thought. 'friends' unless they changed it. */
   thought_privacy?: 'everyone' | 'friends' | null
+  /** Who may see which World they are in. */
+  where_privacy?: 'everyone' | 'friends' | null
+  /** Who may walk into it after them. */
+  join_privacy?: 'everyone' | 'friends' | null
   /** Their number, counting the people in the order they arrived: 1, 2, 3. */
   content_id: number | null
   /**

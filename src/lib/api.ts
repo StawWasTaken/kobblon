@@ -432,8 +432,29 @@ export async function setThought(
 }
 
 /** Who may read it, without touching what it says. */
-export async function setThoughtPrivacy(userId: string, privacy: 'everyone' | 'friends') {
-  unwrap(await supabase.from('thoughts').update({ privacy }).eq('user_id', userId).select('user_id'))
+/*
+ * The privacy answers, which live on the account rather than on the thing
+ * they are about: somebody can set one before they have written a thought
+ * or stepped into a World, and a control that only works afterwards is a
+ * control that lies.
+ *
+ * This wrote to `thoughts.privacy` for a day, which is a column that was
+ * moved to `profiles` before it shipped - so turning the thought to
+ * everyone failed with nothing to show for it. Staw found it.
+ */
+export type Audience = 'everyone' | 'friends'
+
+export async function setPrivacy(userId: string, patch: {
+  thought_privacy?: Audience
+  where_privacy?: Audience
+  join_privacy?: Audience
+  discord_visibility?: Audience | 'nobody'
+}) {
+  unwrap(await supabase.from('profiles').update(patch).eq('id', userId).select('id').single())
+}
+
+export async function setThoughtPrivacy(userId: string, privacy: Audience) {
+  await setPrivacy(userId, { thought_privacy: privacy })
 }
 
 export async function clearThought(userId: string) {

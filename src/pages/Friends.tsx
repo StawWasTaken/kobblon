@@ -22,7 +22,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  getProfileByUsername, peopleList, removeFriendship, respondToFriendRequest,
+  getProfileByUsername, getThoughts, peopleList, removeFriendship, respondToFriendRequest,
   startConversation, usernameById,
 } from '@/lib/api'
 import type { PeopleList, PersonRow as Person } from '@/lib/api'
@@ -229,6 +229,16 @@ export default function Friends() {
    */
   useWhereabouts(source.data ?? [])
 
+  /*
+   * What the people on this list are thinking, where they let you read it.
+   * One ask for the lot, and a thought the database does not hand over is
+   * simply not in the answer.
+   */
+  const thoughts = useAsync(
+    async () => getThoughts((source.data ?? []).map((one) => one.id)),
+    [source.data],
+  )
+
   const matches = (person: Person) =>
     !filter
     || person.display_name.toLowerCase().includes(filter)
@@ -372,7 +382,11 @@ export default function Friends() {
   const cardFor = (person: Person) => (
     <PersonCard
       key={person.id}
-      person={person}
+      person={{
+        ...person,
+        thought: thoughts.data?.[person.id]?.body ?? null,
+        thought_face: thoughts.data?.[person.id]?.face ?? null,
+      }}
       quiet={current.name === 'Blocked' || person.i_ignore}
       friend={current.name === 'Friends'}
       note={

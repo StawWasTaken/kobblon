@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
+import { Choices } from '@/components/ui/Choices'
 import { Logomark } from '@/components/brand/Wordmark'
 import {
   faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck,
-  faTriangleExclamation, faKey, faArrowUpRightFromSquare, faClock, faEye, faUserGroup, faGlobe,
+  faTriangleExclamation, faKey, faArrowUpRightFromSquare, faClock, faEye,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -26,7 +27,7 @@ import { useAsync } from '@/hooks/useAsync'
 import {
   USERNAME_CHANGE_COST, changeUsername, getStanding, updateProfile, usernameChangeState,
   usernameHistory,
-  setThoughtPrivacy,
+  setPrivacy,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { currency } from '@/lib/currency'
@@ -573,75 +574,108 @@ export function Looks() {
 /* ------------------------------------------------------------------ privacy */
 
 /**
- * Who sees what.
+ * Who sees what, in one place.
  *
- * One setting so far - the thought over your picture - and it is here
- * rather than in the dialog that writes one because it is a standing
- * answer, not part of writing a line. Friends only is the default, which
- * is why the row says so out loud rather than leaving it to be discovered.
+ * Four answers of the same shape - what you are thinking, your Discord
+ * handle, which World you are in, and who may walk into it after you - and
+ * every one of them starts at friends. A default that opens somebody up is
+ * a default nobody chose.
  *
- * The rule itself is the database's: `thoughts` is read through a policy
- * that asks this setting, so a thought set to friends is not handed to
- * anybody else by any door - this page, the applications, or a token
- * somebody found.
+ * None of these is enforced here. The thought is a table with a policy on
+ * it; where you are and who may follow you are decided inside
+ * `where_they_are`, which is the one door that hands either out; the
+ * handle has been server-side since 0071. This page only says what the
+ * answer is.
  */
+function Audience({ title, note, value, onChange, extra }: {
+  title: string
+  note: string
+  value: string
+  onChange: (next: string) => void
+  /**
+   * An answer somebody already holds that is not one of the two. Nobody is
+   * moved off it silently: widening a person's privacy because the choices
+   * were tidied is the one mistake this panel must not make.
+   */
+  extra?: { value: string; label: string }
+}) {
+  const options = [
+    { value: 'friends', label: 'Friends' },
+    { value: 'everyone', label: 'Everyone' },
+    ...(extra && extra.value === value ? [extra] : []),
+  ]
+
+  return (
+    <div className="p-4">
+      <p className="font-display text-sm font-extrabold">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-muted">{note}</p>
+      <Choices
+        className="mt-2.5"
+        size="sm"
+        label={title}
+        value={value}
+        options={options}
+        onChange={onChange}
+      />
+    </div>
+  )
+}
+
 function Privacy() {
   const { profile, refreshProfile } = useAuth()
   const toast = useToast()
-  const [open, setOpen] = useState<'everyone' | 'friends'>(
-    (profile?.thought_privacy as 'everyone' | 'friends') ?? 'friends',
-  )
-  const [saving, setSaving] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    if (profile?.thought_privacy) setOpen(profile.thought_privacy as 'everyone' | 'friends')
-  }, [profile?.thought_privacy])
+  if (!profile) return null
 
-  const choose = async (next: 'everyone' | 'friends') => {
-    if (!profile || next === open) return
-    const was = open
-    setOpen(next)
-    setSaving(true)
+  const save = async (patch: Parameters<typeof setPrivacy>[1]) => {
+    setBusy(true)
     try {
-      await setThoughtPrivacy(profile.id, next)
-      refreshProfile()
+      await setPrivacy(profile.id, patch)
+      await refreshProfile()
     } catch {
-      setOpen(was)
       toast('That did not save.', 'error')
     } finally {
-      setSaving(false)
+      setBusy(false)
     }
   }
 
   return (
-    <Panel title="Privacy" note="Who sees what, when it is not everybody by default.">
-      <Group>
-        <div className="p-4">
-          <p className="font-display text-sm font-extrabold">Who sees your thought</p>
-          <p className="mt-1 text-xs text-muted">
-            The line over your picture. Friends only unless you say otherwise.
-          </p>
-
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Choice
-              on={open === 'friends'}
-              disabled={saving}
-              onClick={() => choose('friends')}
-              swatch={<Glyph icon={faUserGroup} />}
-              title="Friends only"
-              note="The people you are friends with."
-            />
-            <Choice
-              on={open === 'everyone'}
-              disabled={saving}
-              onClick={() => choose('everyone')}
-              swatch={<Glyph icon={faGlobe} />}
-              title="Everyone"
-              note="Anybody who opens your profile."
-            />
-          </div>
-        </div>
+    <Panel title="Privacy" note="Who sees what. Everything here starts at friends only.">
+      <Group className={busy ? 'opacity-70' : undefined}>
+        <Audience
+          title="Who sees your thought"
+          note="The line over your picture, wherever your picture is big enough to carry it."
+          value={profile.thought_privacy ?? 'friends'}
+          onChange={(next) => void save({ thought_privacy: next as 'everyone' | 'friends' })}
+        />
+        <Audience
+          title="Who sees which World you are in"
+          note="Closed, nobody is told where you are - not the lists, not your profile."
+          value={profile.where_privacy ?? 'friends'}
+          onChange={(next) => void save({ where_privacy: next as 'everyone' | 'friends' })}
+        />
+        <Audience
+          title="Who can join you"
+          note="Walking into the World you are in, from a list or from your profile."
+          value={profile.join_privacy ?? 'friends'}
+          onChange={(next) => void save({ join_privacy: next as 'everyone' | 'friends' })}
+        />
+        {profile.discord_id && (
+          <Audience
+            title="Who sees your Discord handle"
+            note="Your Discord name is on your profile for anybody. The handle, the one people search for, is yours to give out."
+            value={profile.discord_visibility ?? 'friends'}
+            onChange={(next) => void save({ discord_visibility: next as 'everyone' | 'friends' | 'nobody' })}
+            extra={{ value: 'nobody', label: 'Nobody' }}
+          />
+        )}
       </Group>
+
+      <p className="px-1 text-xs leading-relaxed text-muted">
+        These are answered by the database, not by the page you are looking at. A thought
+        set to friends is not handed to anybody else by any door.
+      </p>
     </Panel>
   )
 }

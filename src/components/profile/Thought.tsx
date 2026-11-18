@@ -47,18 +47,25 @@ function ThoughtFace({ face, className }: { face: Face; className?: string }) {
  * Everywhere somebody is listed it is a line with no bubble at all, beside
  * the dot that says whether they are here, the way a status is.
  */
-export function ThoughtOver({ thought, face, mine, onEdit, children, className }: {
+export function ThoughtOver({ thought, face, mine, small, onEdit, children, className }: {
   thought?: string | null
   face?: string | null
   /** Your own page: an empty bubble invites you to write one. */
   mine?: boolean
+  /**
+   * A middle-sized picture - a row in a friends list rather than the one
+   * at the top of a profile. Same shape, fewer words across it, and it
+   * never invites: an empty bubble on every row of a list is a list of
+   * empty bubbles.
+   */
+  small?: boolean
   onEdit?: () => void
   children: React.ReactNode
   className?: string
 }) {
   const said = thought?.trim()
   const wearing = faceOf(face)
-  const show = !!said || !!mine
+  const show = !!said || (!!mine && !small)
 
   const bubble = (
     <>
@@ -102,8 +109,10 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
 
         <span
           className={cn(
-            'relative flex w-max max-w-[11rem] items-center gap-1.5',
-            'px-3.5 pb-2.5 pt-2 text-center text-xs font-bold leading-[1.1rem] text-on-art',
+            'relative flex w-max items-center gap-1.5 text-center font-bold text-on-art',
+            small
+              ? 'max-w-[8.5rem] px-2.5 pb-2 pt-1.5 text-[0.65rem] leading-[0.85rem]'
+              : 'max-w-[11rem] px-3.5 pb-2.5 pt-2 text-xs leading-[1.1rem]',
           )}
         >
           {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}

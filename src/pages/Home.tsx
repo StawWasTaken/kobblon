@@ -12,17 +12,26 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds, listWorlds, myWorlds,
+  clearThought, getThought, listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds,
+  listWorlds, myWorlds, setThought,
 } from '@/lib/api'
+import { ThoughtOver, ThoughtDialog } from '@/components/profile/Thought'
+import { useToast } from '@/components/ui/Toast'
+import { useState } from 'react'
 import { CommunityCard } from '@/components/community/CommunityCard'
 
 export default function Home() {
   useTitle('Home')
   const { profile } = useAuth()
+  const toast = useToast()
   /* The forum, drawn as a shelf below and not at all when it is quiet. */
   const talk = useTopTopics(8)
 
   const mine = useAsync(async () => (profile ? myWorlds() : []), [profile?.id])
+
+  /* The line over your own head, and the card that writes it. */
+  const thought = useAsync(async () => (profile ? getThought(profile.id) : null), [profile?.id])
+  const [thinking, setThinking] = useState(false)
   /*
    * Three different questions, not one list cut into three.
    *
@@ -99,7 +108,18 @@ export default function Home() {
         {/* Bigger than anything else on the page, the way the Workspace opens.
             The responsive pair wins over the size prop's own classes because
             Tailwind writes its breakpoints after its base utilities. */}
-        {profile && <PersonAvatar person={profile} size="2xl" className="sm:h-28 sm:w-28" />}
+        {profile && (
+          /* Your own, over your own picture, the same as on your profile -
+             and pressable here too, because this is the page you open. */
+          <ThoughtOver
+            thought={thought.data?.body}
+            face={thought.data?.face}
+            onEdit={() => setThinking(true)}
+            className="shrink-0"
+          >
+            <PersonAvatar person={profile} size="2xl" className="sm:h-28 sm:w-28" />
+          </ThoughtOver>
+        )}
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-4xl">
             {hello.hello}
@@ -227,6 +247,26 @@ export default function Home() {
           ))}
         </Shelf>
       )}
+    
+      {profile && (
+        <ThoughtDialog
+          open={thinking}
+          onClose={() => setThinking(false)}
+          thought={thought.data?.body}
+          face={thought.data?.face}
+          privacy={profile.thought_privacy ?? 'friends'}
+          onSave={async (next) => {
+            try {
+              if (next.thought) await setThought(profile.id, { body: next.thought, face: next.face })
+              else await clearThought(profile.id)
+              thought.reload()
+            } catch {
+              toast('That did not save.', 'error')
+            }
+          }}
+        />
+      )}
+
     </Page>
   )
 }

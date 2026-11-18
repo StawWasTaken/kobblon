@@ -24268,3 +24268,57 @@ own below and to the left. Copy these four rules if you draw it:
   presses it the same way. It does not fade.
 - The small one keeps its own edge, and takes the foreground colour: white on
   a dark page, Kobblon's black in daylight.
+
+## Round three hundred and sixty-two - who may see where you are, and who may follow you in
+
+**Two more settings, both enforced inside `where_they_are`. If the Launcher
+or the Workspace reads that function, this changes what it gets back.**
+
+`0355_who_may_see_where_you_are.sql` adds to `profiles`:
+
+    where_privacy  -- 'everyone' | 'friends', default 'friends'
+    join_privacy   -- 'everyone' | 'friends', default 'friends'
+
+Both are answered in `where_they_are`, which is the one door that hands out
+a person's whereabouts and the `server_id` you need to walk in after them:
+
+- **where_privacy closed to a stranger: no row at all.** Not the World, not
+  the picture, not the count.
+- **join_privacy closed: the row comes back with `server_id` null.** They can
+  see what somebody is playing and cannot follow them into that copy.
+
+So `server_id` is now nullable in practice and you have to handle it.
+On the website the button says "Open this World" rather than "Join them" when
+it is null, because a control that promises their copy and opens a different
+one is worse than no control. Checked on the harness under the owner, a
+friend and a stranger, in all three states.
+
+The standing rule has not changed and still matters: **`room` is a hint and
+never a permission.** `join_world_server` over HTTPS is where a room refuses,
+and the applications should keep refusing there too - this setting narrows
+who is handed the id, it does not replace the check.
+
+**Everything privacy is in one place now.** Settings has a Privacy section
+holding four answers of the same shape: the thought, which World you are in,
+who may join you, and the Discord handle, which moved there from Connections.
+All of them default to friends. Where somebody already holds an answer that
+is not one of the two - a Discord handle set to nobody - that choice is still
+offered and nothing is silently widened.
+
+**A bug of mine, found by Staw:** turning the thought's privacy to everyone
+did nothing. The setter was still writing `thoughts.privacy`, a column that
+moved to `profiles` before it shipped. Fixed, and the privacy setters are one
+function now instead of four places to make the same mistake.
+
+**The status line.** Where somebody is listed, the thought stands where the
+word *Online* would be. When they are in a World it is the console mark in
+green, then a dot, then the thought; in the Workspace, the hammer in orange.
+Staw's words: "instead of 'In a world' or 'on workspace/creator hub' theres
+a console icon in green with a white dot next to it and then the text of ur
+thought". The note a list came with still wins over all of it.
+
+**And the bubble is on middle-sized pictures too** - a row in a friends
+list, the picture at the top of the home page - in a smaller cut of the same
+component. Not on anything smaller than that. Staw is drawing a better sketch
+of the bubble itself, so **do not copy its shape from round 361 yet**; the
+placement rules above are settled, the drawing is not.

@@ -59,6 +59,12 @@ function Stage() {
           </ThoughtOver>
         </Face>
 
+        <Face label="Mid picture, in a list">
+          <ThoughtOver thought="to pee, is to be. to shit, is to exist." face="skull" small>
+            <PersonAvatar person={person} size="lg" className="h-14 w-14" square />
+          </ThoughtOver>
+        </Face>
+
         <div className="w-60 rounded-2xl border-2 border-ink-line bg-ink-card p-4">
           <p className="font-display text-base font-extrabold">Staw</p>
           <p className="text-xs text-muted">@stawrer</p>

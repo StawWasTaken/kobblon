@@ -255,7 +255,16 @@ export function FriendPeek({ friend, children, className }: {
                     className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-note font-bold text-space-bright transition-colors hover:bg-ink-hover disabled:text-white/35 disabled:hover:bg-transparent"
                   >
                     <Glyph icon={faPlay} className="w-3.5 text-mini" />
-                    {where.how_many >= where.capacity ? 'That copy is full' : 'Join them'}
+                    {/*
+                      * No room id, no following: the World is open to
+                      * anybody, their copy of it is not. `where_they_are`
+                      * holds the id back when somebody's "who can join
+                      * you" is friends only, so the button says what it
+                      * will actually do rather than promising their copy.
+                      */}
+                    {where.how_many >= where.capacity
+                      ? 'That copy is full'
+                      : where.server_id ? 'Join them' : 'Open this World'}
                   </button>
                 )}
 

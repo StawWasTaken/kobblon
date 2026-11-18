@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
-import { faHeart, faPlay } from '@fortawesome/free-solid-svg-icons'
+import { faHeart, faPlay, faHammer } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
 import { NameMarks } from '@/components/brand/Verified'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { StatusDot, presenceWords } from '@/components/ui/StatusDot'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useLivePresence, useWhereabout } from '@/hooks/usePresenceStore'
 import { FriendPeek } from '@/components/social/FriendPeek'
-import { ThoughtLine } from '@/components/profile/Thought'
+import { ThoughtLine, ThoughtOver } from '@/components/profile/Thought'
 import { nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
@@ -121,11 +122,39 @@ export function PersonLine({ person, note, className }: {
    * name you can act on beats a line somebody wrote this morning.
    */
   const thought = person.thought?.trim()
-  if (!note && !where && thought) {
+
+  /*
+   * What they are thinking stands where the word Online would be, which is
+   * what a status is and where Discord puts one.
+   *
+   * It does not lose what they are doing: in a World the dot is replaced by
+   * the console mark in green, and in the Workspace by the hammer in
+   * orange, so the row still says playing or building - Staw: "instead of
+   * 'In a world' or 'on workspace/creator hub' theres a console icon in
+   * green with a white dot next to it and then the text of ur thought".
+   *
+   * The note a list came with still wins over all of it: "wants to be your
+   * friend" is why the row is on the screen at all.
+   */
+  if (!note && thought) {
+    const doing = where || presence === 'in-space' ? 'playing' : presence === 'building' ? 'building' : null
+
     return (
       <p className={cn('flex items-center gap-1.5 text-xs text-white/70', className)}>
-        <StatusDot presence={presence} size="md" />
+        {doing === 'playing' ? (
+          <Icon name="playing" label="Playing" tone="rgb(var(--space-bright))" className="h-3.5 w-3.5 shrink-0" />
+        ) : doing === 'building' ? (
+          <Glyph icon={faHammer} className="shrink-0 text-mini text-warn-bright" aria-label="Building" />
+        ) : (
+          <StatusDot presence={presence} size="md" />
+        )}
+
+        {/* The dot between the mark and the words, so the two read as two
+            things rather than a label and its icon. */}
+        {doing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
+
         <ThoughtLine thought={thought} face={person.thought_face} className="min-w-0" />
+
         {person.i_ignore && (
           <Tooltip label="You are ignoring this person" side="top">
             <span className="shrink-0 rounded-lg bg-white/10 px-1.5 py-0.5 text-tiny font-bold uppercase tracking-wide text-muted">
@@ -219,15 +248,20 @@ export function PersonCard({
 
       <div className="flex items-center gap-3">
         <FriendPeek friend={person} className="shrink-0">
-          <Link to={profileLink(person)} className="block">
-            <PersonAvatar
-              person={person}
-              size="lg"
-              square={square}
-              className="h-14 w-14"
-              ring="ring-ink-card"
-            />
-          </Link>
+          {/* The bubble belongs on a picture with room round it - this one
+              and the big one on a profile. Not on the face in a chat list,
+              which is half this size. */}
+          <ThoughtOver thought={person.thought} face={person.thought_face} small>
+            <Link to={profileLink(person)} className="block">
+              <PersonAvatar
+                person={person}
+                size="lg"
+                square={square}
+                className="h-14 w-14"
+                ring="ring-ink-card"
+              />
+            </Link>
+          </ThoughtOver>
         </FriendPeek>
 
         <div className="min-w-0 flex-1 pr-6">
