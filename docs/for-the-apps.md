@@ -24007,3 +24007,62 @@ the renumbering and the paid rename use. The migration refuses rather than
 guesses: a missing account, a taken name, or the number 3 or 29 being held by
 an account nobody named all raise, and applying it twice reports that the
 work is already done and changes nothing.
+
+## Round three hundred and fifty-four - a thought over their head, and three smaller things
+
+**New shared field, and a defect in moderation that was taking the wrong
+thing.** Both matter to you.
+
+### Thoughts
+
+`0352_a_thought_over_their_head.sql` adds `profiles.thought` (text, 120
+characters at most) and `profiles.thought_at` (timestamptz). It is a status:
+one line somebody writes about themselves, which they can take down whenever
+they like.
+
+- **`thought_at` is stamped by a trigger, not by whoever writes.** Setting
+  `thought` stamps it; clearing `thought` clears it. Do not send a value for
+  it - send `thought` alone and read `thought_at` back.
+- Writing it is a plain update of your own row, the same as `bio`. There is
+  no RPC.
+- It goes past Kobby exactly as a bio does: `names_to_read` gained the kind
+  `thought`, the trigger queues it on every change, and a judgement against
+  it **empties the thought** and warns. Never the account, as always.
+- On the website it is drawn as a thinking bubble over the profile picture,
+  on their own profile only, and as a plain line with no bubble where people
+  are listed. If you draw it in the Launcher or the Workspace, that is the
+  split to copy: the bubble belongs over an avatar, nowhere else.
+
+### The defect, which is yours to know about if you show moderation at all
+
+`names_to_read.kind` gained `forum_bio` back in round 282, but
+`judge_profile_text` still read
+
+    if kind = 'bio' ... elsif kind = 'display_name' ... else <reset the handle>
+
+so a **forum bio** that broke a rule reset the account's handle to
+`player<id>`, wrote that into their name history, and told them their "bio"
+was taken down. Nothing threw. The wrong thing was taken, quietly, every
+time. Every kind is named now and an unknown kind takes nothing, which is
+the safe way round for whoever adds the next one. Checked both ways on the
+harness: a judged thought empties the thought and leaves the handle alone, a
+judged forum bio empties the forum bio and leaves the handle alone, and the
+notification names the right field in each case.
+
+### Three smaller things, website only
+
+- An empty ad slot was a dashed outline with grey text, which reads as a page
+  that has not finished loading. It is a card now, same edge and lift as
+  every other card, saying what the space is with a door to `/create/ads`.
+  Nothing shared changed; `AD_SIZES` and the slot shapes are as they were.
+- The maintenance page is a card rather than a column of things floating in
+  the middle of a black page, with Kobby beside the words instead of above
+  them. No pattern, no gradient, nothing moving. The words and the rule about
+  them are unchanged: it never says why.
+- A bug I put in myself in round 352 and have taken out: clicking from one
+  profile to another sent you straight back to the one you came from. The
+  address changes before the data does, and the canonical rewrite read the
+  person still on screen. It only rewrites now once the person loaded is the
+  person the address asks for - by their number or by the number they had
+  before the renumbering. `useCanonicalPath` has always documented this rule;
+  I broke it adding the legacy-number redirect.

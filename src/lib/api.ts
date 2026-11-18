@@ -389,7 +389,7 @@ export async function communityNameHistory(
 }
 
 export async function updateProfile(id: string, patch: Partial<Pick<Profile,
-  'display_name' | 'bio' | 'avatar_url' | 'username' | 'accent_color' | 'gender'>>) {
+  'display_name' | 'bio' | 'avatar_url' | 'username' | 'accent_color' | 'gender' | 'thought'>>) {
   unwrap(await supabase.from('profiles').update(patch).eq('id', id).select('id').single())
 }
 

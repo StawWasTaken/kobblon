@@ -1,6 +1,5 @@
 import { Kobby } from '@/components/brand/Kobby'
 import { Wordmark } from '@/components/brand/Wordmark'
-import { PixelField } from '@/components/brand/PixelField'
 import { Button } from '@/components/ui/Button'
 import { useTitle } from '@/hooks/useTitle'
 import { Glyph } from '@/components/brand/Glyph'
@@ -32,6 +31,12 @@ import { faArrowsRotate, faScrewdriverWrench } from '@fortawesome/free-solid-svg
  *
  * The `outage` flag survives only so this one does not show a note that
  * staff wrote for the other case - there is nobody to have written one.
+ *
+ * On the drawing of it: everything used to float in the middle of a black
+ * page with a pixel pattern behind it, so there was nothing to hold on to
+ * and Kobby was the size of the heading. It is a card now, the same edge
+ * and the same lift as every other card on the site, with him beside the
+ * words rather than above them. No pattern, no gradient, nothing moving.
  */
 export default function Maintenance({ note, outage }: {
   note?: string | null
@@ -40,41 +45,55 @@ export default function Maintenance({ note, outage }: {
 }) {
   useTitle('Back shortly')
 
+  const message = !outage && note?.trim() ? note.trim() : null
+
   return (
-    <div className="relative grid min-h-dvh place-items-center overflow-hidden bg-ink px-4 py-16">
-      <PixelField className="opacity-25" />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/40 to-ink" />
+    <div className="grid min-h-dvh place-items-center bg-ink px-4 py-12">
+      <div className="flex w-full max-w-2xl flex-col items-center">
+        <Wordmark to="/" className="h-7" always />
 
-      <div className="relative flex w-full max-w-lg flex-col items-center text-center">
-        <Wordmark to="/" className="h-8" always />
+        <div className="mt-6 w-full rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6 sm:p-8">
+          <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left">
+            {/* Nothing behind him. There was a halo here for a day because
+                he is black on a nearly black page; Staw: "dont add a
+                shining stuff behind the under construction". */}
+            <Kobby mood="construction" size="lg" className="shrink-0" />
 
-        {/* Nothing behind him. There was a halo here for a day because he
-            is black on a nearly black page; Staw: "dont add a shining
-            stuff behind the under construction". */}
-        <Kobby mood="construction" size="xl" className="mt-8" />
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink px-2.5 py-1 text-tiny font-extrabold uppercase tracking-wide text-muted">
+                <Glyph icon={faScrewdriverWrench} className="text-tiny" />
+                Maintenance
+              </p>
 
-        <p className="mt-6 inline-flex items-center gap-2 rounded-full border-2 border-ink-line bg-ink-card px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted">
-          <Glyph icon={faScrewdriverWrench} className="text-tiny" />
-          Maintenance
-        </p>
+              <h1 className="mt-3 font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+                Kobblon will be right back
+              </h1>
 
-        <h1 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">
-          Kobblon will be right back
-        </h1>
+              <p className="mt-2 text-sm leading-relaxed text-white/70">
+                We're making things more awesome. Nothing of yours is lost, and this page lets
+                you straight back in as soon as it can.
+              </p>
+            </div>
+          </div>
 
-        <p className="mt-3 text-white/70">
-          {!outage && note?.trim()
-            ? note
-            : "We're making things more awesome. Nothing of yours is lost, and this page lets you straight back in as soon as it can."}
-        </p>
+          {/* What staff wrote, kept apart from the standing words so it
+              reads as somebody saying something rather than as more copy. */}
+          {message && (
+            <p className="mt-5 rounded-xl border-2 border-ink-line bg-ink p-3 text-sm text-white/80">
+              {message}
+            </p>
+          )}
 
-        <Button
-          className="mt-7"
-          icon={faArrowsRotate}
-          onClick={() => window.location.reload()}
-        >
-          Try again
-        </Button>
+          <div className="mt-6 border-t-2 border-ink-line pt-5">
+            <Button
+              className="w-full sm:w-auto"
+              icon={faArrowsRotate}
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import { StatusDot, presenceWords } from '@/components/ui/StatusDot'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useLivePresence, useWhereabout } from '@/hooks/usePresenceStore'
 import { FriendPeek } from '@/components/social/FriendPeek'
+import { ThoughtLine } from '@/components/profile/Thought'
 import { nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
@@ -36,6 +37,8 @@ export type Somebody = {
   avatar_changed_at?: string | null
   content_id?: number | null
   bio?: string | null
+  /** The line over their head. Drawn without its bubble in a list. */
+  thought?: string | null
   /** A best friend, who is first in the list and says so. */
   best?: boolean
   /** Still a friend, kept quiet. */
@@ -210,9 +213,18 @@ export function PersonCard({
       </div>
 
       {bio && (
-        <p className="line-clamp-2 min-h-[2.25rem] text-xs leading-relaxed text-white/55">
-          {person.bio || <span className="text-white/25">Nothing written yet.</span>}
-        </p>
+        /*
+         * What they are thinking wins over what they wrote about
+         * themselves, because it is the newer of the two and the one they
+         * chose today. No bubble here: that belongs on their own page.
+         */
+        person.thought?.trim() ? (
+          <ThoughtLine thought={person.thought} className="min-h-[2.25rem]" />
+        ) : (
+          <p className="line-clamp-2 min-h-[2.25rem] text-xs leading-relaxed text-white/55">
+            {person.bio || <span className="text-white/25">Nothing written yet.</span>}
+          </p>
+        )
       )}
 
       {tag && <div className="flex flex-wrap items-center gap-1.5">{tag}</div>}

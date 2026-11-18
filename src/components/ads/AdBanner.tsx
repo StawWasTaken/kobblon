@@ -44,6 +44,55 @@ export function AdsProvider({ children }: { children: React.ReactNode }) {
   return <AdsOnPage.Provider value={ask}>{children}</AdsOnPage.Provider>
 }
 
+/*
+ * A slot with nothing in it.
+ *
+ * It used to be a dashed outline with grey text in the middle, which reads as
+ * a page that has not finished loading rather than as space somebody can buy.
+ * So it is a card like every other card here - same edge, same lift - and it
+ * says what the space is and what to do about it. A wide slot sets it out in
+ * a row; a tall or a box one is 160 or 300 across, so there it stacks.
+ */
+export function EmptySlot({ wide, frame }: { wide: boolean; frame: React.CSSProperties }) {
+  return (
+    <Link
+      to="/create/ads"
+      style={frame}
+      className={cn(
+        'group mx-auto flex w-full items-center rounded-xl border-2 border-b-4 border-ink-line',
+        'bg-ink-card px-4 transition-colors hover:border-brand/60 hover:bg-ink-hover',
+        wide ? 'gap-3 text-left' : 'flex-col justify-center gap-2 py-4 text-center',
+      )}
+    >
+      <span
+        className={cn(
+          'flex shrink-0 items-center justify-center rounded-lg bg-brand/15 text-brand',
+          wide ? 'h-10 w-10 text-base' : 'h-9 w-9 text-sm',
+        )}
+      >
+        <Glyph icon={faRectangleAd} />
+      </span>
+
+      <span className={cn('min-w-0', wide && 'flex-1')}>
+        <span className="block text-sm font-bold leading-tight">This space is for an ad</span>
+        <span className="mt-0.5 block text-mini leading-tight text-muted">
+          {wide ? 'Put your work in front of players on Kobblon' : 'Reach players on Kobblon'}
+        </span>
+      </span>
+
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1.5 rounded-lg border-2 border-ink-line px-2.5 py-1',
+          'text-mini font-bold text-link transition-colors group-hover:border-brand/60',
+        )}
+      >
+        {wide ? 'Put your work here' : 'Start an ad'}
+        <Glyph icon={faArrowRight} className="text-mark transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </Link>
+  )
+}
+
 /**
  * The one ad for a slot of this size, and the link to its picture. Asking is
  * what counts a view, so it happens once per slot and never in a loop.
@@ -179,18 +228,7 @@ export function AdBanner({
             />
           </>
         ) : (
-          <Link
-            to="/create/ads"
-            style={frame}
-            className="group mx-auto flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-card/40 px-4 text-center transition-colors hover:border-brand/60 hover:bg-ink-hover"
-          >
-            <Glyph icon={faRectangleAd} className="text-base text-white/25" />
-            <span className="text-xs font-bold text-white/55">This space is for an ad</span>
-            <span className="inline-flex items-center gap-1.5 text-mini font-bold text-link">
-              Put your work here
-              <Glyph icon={faArrowRight} className="text-mark transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </Link>
+          <EmptySlot wide={size === 'banner'} frame={frame} />
         )}
       </div>
     </aside>

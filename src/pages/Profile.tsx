@@ -12,6 +12,7 @@ import { Page } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { ThoughtBubble, ThoughtDialog } from '@/components/profile/Thought'
 import { Hop } from '@/components/ui/Hop'
 import { EmptyState, ErrorState, SpaceCardSkeleton, Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
@@ -120,6 +121,8 @@ export default function Profile() {
   const [writingBio, setWritingBio] = useState(false)
   const [savingBio, setSavingBio] = useState(false)
   const [picking, setPicking] = useState(false)
+  /** Writing the line over your own head. */
+  const [thinking, setThinking] = useState(false)
 
   const person = useAsync(
     async () => {
@@ -215,6 +218,20 @@ export default function Profile() {
     image: user?.avatar_url ?? null,
   })
 
+  /*
+   * Walking from one person to the next reuses this page, so everything it
+   * holds about the last one is cleared here rather than left to be
+   * overwritten: a follow state that has not arrived yet reads as not
+   * following, not as whatever the last person was.
+   */
+  useEffect(() => {
+    setFollowingState(false)
+    setAbout(false)
+    setThinking(false)
+    setWritingBio(false)
+    setTab('About')
+  }, [user?.id])
+
   useEffect(() => {
     if (!me || !user || isMe) return
     isFollowing(me.id, user.id).then(setFollowingState)
@@ -263,8 +280,16 @@ export default function Profile() {
    * Somebody who changed their name carries the new one in the address, and
    * a link holding the number they had before the people were renumbered is
    * rewritten to the number they have now.
+   *
+   * Only once the person on screen is the person the address asks for.
+   * Clicking through to somebody else changes the address first and the
+   * data a moment later, and rewriting in that moment sends you straight
+   * back to the profile you just left - which is exactly what it did.
    */
-  useCanonicalPath(id && user?.content_id ? profileLink(user) : null)
+  const asked = Number(id)
+  const arrived =
+    !!id && !!user && (user.content_id === asked || user.legacy_content_id === asked)
+  useCanonicalPath(arrived ? profileLink(user!) : null)
 
   // A name somebody used to have still lands on them.
   useEffect(() => {
@@ -451,7 +476,19 @@ export default function Profile() {
             * and for the list of what it has on; up here it was a tall card
             * pushing everything else down the page.
             */}
-          <div className="shrink-0">
+          <div className="flex shrink-0 flex-col items-center">
+            {/*
+              * What they are thinking, over their picture, in a thinking
+              * bubble - the Launcher's bubble over a player in a World, in
+              * two dimensions. Only here: in a list it is a line with no
+              * bubble on it.
+              */}
+            <ThoughtBubble
+              thought={user.thought}
+              mine={isMe}
+              onEdit={() => setThinking(true)}
+              className="mb-1"
+            />
             <PersonAvatar
               person={user}
               size="3xl"
@@ -1115,6 +1152,23 @@ export default function Profile() {
         targetId={user.id}
         targetName={user.display_name}
       />
+
+      {isMe && (
+        <ThoughtDialog
+          open={thinking}
+          onClose={() => setThinking(false)}
+          thought={user.thought}
+          onSave={async (next) => {
+            try {
+              await updateProfile(user.id, { thought: next })
+              person.reload()
+              refreshProfile()
+            } catch {
+              toast('That did not save.', 'error')
+            }
+          }}
+        />
+      )}
 
       {people.dialog}
     </Page>

@@ -29,6 +29,10 @@ export type Profile = {
   pixels: number
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null
+  /** The one line they have over their head, shown on their profile. */
+  thought?: string | null
+  /** When they wrote it. Stamped by the database, never by the client. */
+  thought_at?: string | null
   /** Their number, counting the people in the order they arrived: 1, 2, 3. */
   content_id: number | null
   /**
