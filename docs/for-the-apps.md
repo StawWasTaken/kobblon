@@ -24185,3 +24185,27 @@ Drawing only. The shape was right and the proportions were not.
 Nothing about the arrangement changed: solid fill, no outline, words centred,
 one shape with its circle, the white one below and to its left, all of it
 centred on the picture.
+
+## Round three hundred and sixty - two things that only looked right in the dark
+
+**A new colour token, so this one matters to the Workspace if it pulls the
+preset.** `design/preset.js` gains `thought`, from `--thought` in
+`design/tokens.css`: `58 60 74` in the dark and `92 97 116` in daylight. It
+is the fill of a thought bubble and nothing else, and its words are
+`on-art`, which is white in both themes.
+
+Why it needed its own pair: the bubble was `ink-line`, which is a dark slate
+in the dark and a pale grey on paper, so in daylight the bubble came out a
+washed chip with dark text on it rather than a bubble. One token, two
+deliberate values, white words in both.
+
+**And the chat dock's heads.** Both of them - a conversation's and the
+friends list's - were `bg-black/30`. Black at a third over a dark card is a
+slightly darker bar, which is what was wanted; over a white card it is a grey
+slab, which is what daylight got. They are `bg-ink` now: the page's own
+colour, which is a step off the card in both themes and reads the same way
+round in each. The dark one is within two values of what it was, so nothing
+moved there.
+
+If you have copied either of these into the applications, copy the fix: a
+colour mixed with black or white only works in the theme it was eyeballed in.

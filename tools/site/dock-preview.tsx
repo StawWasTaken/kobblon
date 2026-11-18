@@ -102,7 +102,7 @@ function TheList() {
         'before:from-brand before:via-brand-bright before:to-space',
       )}
     >
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-black/30 px-3">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-3">
         <span className="flex flex-1 items-center gap-2 text-sm font-extrabold">
           <Icon name="chatbubble" className="h-4 w-4" />
           Friends Chat
@@ -161,7 +161,7 @@ function Window() {
         card ? 'h-[45rem] max-h-[85vh]' : 'h-[26rem]',
       )}
     >
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-black/30 px-2">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-2">
         <span className="grid h-6 w-6 place-items-center rounded-md text-[12px] text-muted">
           <Glyph icon={faUserGroup} />
         </span>

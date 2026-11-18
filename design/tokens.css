@@ -49,6 +49,14 @@
   --ink-hover: 33 33 40;
   --ink-line: 58 60 74;
   --ink-edge: 10 10 13;
+  /*
+   * The thought bubble over a profile picture. Its own pair, because it is
+   * the one shape on the site that carries white words on a solid fill in
+   * both themes: `ink-line` is a dark slate here and a pale grey in
+   * daylight, and the pale one read as a disabled chip rather than a
+   * bubble.
+   */
+  --thought: 58 60 74;
   --fg: 255 255 255;
   /*
    * White that stays white, whatever the theme is doing.
@@ -137,6 +145,8 @@
   --ink-hover: 234 236 243;
   --ink-line: 170 176 194;
   --ink-edge: 183 190 208;
+  /* Dark enough to hold white words on paper. See the dark block. */
+  --thought: 92 97 116;
   --fg: 20 19 18;
   /* Both unchanged in daylight on purpose: see the note in the dark block. */
   --on-art: 255 255 255;

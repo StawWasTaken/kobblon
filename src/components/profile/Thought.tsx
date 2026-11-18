@@ -72,7 +72,7 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
       <span
         className={cn(
           'flex w-max max-w-[11rem] items-center gap-1.5 rounded-[1.25rem]',
-          'bg-ink-line px-3.5 py-2 text-center text-xs font-bold leading-[1.1rem] text-white',
+          'bg-thought px-3.5 py-2 text-center text-xs font-bold leading-[1.1rem] text-on-art',
           mine && 'transition-opacity group-hover:opacity-90',
         )}
       >
@@ -90,7 +90,7 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
         * foreground colour - white on a dark page, Kobblon's black in
         * daylight - so it holds against whatever picture is behind it.
         */}
-      <span className="-mt-2 ml-12 h-5 w-5 rounded-full bg-ink-line" />
+      <span className="-mt-2 ml-12 h-5 w-5 rounded-full bg-thought" />
       <span className="ml-7 mt-0.5 h-2.5 w-2.5 rounded-full bg-white" />
 
     </>

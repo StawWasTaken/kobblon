@@ -34,6 +34,8 @@ export default {
            */
           edge: 'rgb(var(--ink-edge) / <alpha-value>)',
         },
+        /** The fill of a thought bubble, in both themes. */
+        thought: 'rgb(var(--thought) / <alpha-value>)',
         white: 'rgb(var(--fg) / <alpha-value>)',
         /*
          * `white` is the theme's foreground: it is white in the dark and

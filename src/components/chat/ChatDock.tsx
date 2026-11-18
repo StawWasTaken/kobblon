@@ -355,14 +355,20 @@ function Window({
       aria-label={`Chat with ${name}`}
     >
       <header className={cn(
-        'flex shrink-0 items-center gap-2 border-b border-ink-line bg-black/30 px-2',
+        'flex shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-2',
         /*
          * Flat, like the applications' chat card. Staw, with three
          * pictures of the in-game one: adapt that design here. Its head
          * is a title and a way out and a hairline, and nothing else - a
          * *tinted* head reads as a second surface stacked on the window,
-         * which is why this is `bg-black/30` and not a gradient: darker
+         * which is why this is a flat fill and not a gradient: darker
          * than the card under it, the same colour as it.
+         *
+         * `bg-ink` and not `bg-black/30`: black at a third over a white
+         * card is a grey bar, so in daylight the head came out a dull
+         * slab with the window's own white under it. The page colour is
+         * darker than the card in the dark and lighter in daylight, which
+         * is the same idea said in a way both themes can answer.
          */
         full ? 'h-11' : 'h-12',
       )}>
@@ -757,12 +763,12 @@ function List({
         * topbar we have for each chat". It had been a blue wash fading
         * out, which is a second surface stacked on the window - and
         * beside a flat black head on the conversation next to it, the
-        * pair read as two different pieces of furniture. `bg-black/30` is
-        * darker than the card under it and the same colour as it, which
-        * is the whole idea.
+        * pair read as two different pieces of furniture. `bg-ink` is the
+        * page's own colour, which is a step off the card in both themes -
+        * black at a third was a grey slab in daylight.
         */}
       {!full && (
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-black/30 px-3">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-3">
         <button
           onClick={() => setOpen((v) => !v)}
           className="flex flex-1 items-center gap-2 text-left text-sm font-extrabold"
