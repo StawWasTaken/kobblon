@@ -1,1 +1,0 @@
-import{fc as e}from"./api-LGlJ85EQ.js";import{E as t,M as n,T as r}from"./Input-uzD5RtWl.js";var i=e(n(),1);function a(e){let{pathname:n,search:a,hash:o}=r(),s=t();(0,i.useEffect)(()=>{e&&decodeURIComponent(n).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,n,a,o,s])}export{a as t};
