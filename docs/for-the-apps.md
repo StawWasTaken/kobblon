@@ -24373,3 +24373,21 @@ carries the button lip and presses like one.
 Also: the Privacy section in Settings is drawn on the raised card the Discord
 setting always used - small capitals, one line of what it means, the choices
 under it. Same four settings, same rules, nothing changed about what they do.
+
+## Round three hundred and sixty-five - the bubble, from Staw's SVG
+
+Drawing only. The shape is Staw's own SVG, so this one is final unless he
+says otherwise:
+
+- a rounded rectangle;
+- a circle whose **centre sits on its bottom edge**, about four fifths of
+  the way across - so half of it shows and it reads as the bubble swelling
+  rather than a second shape;
+- a small circle below it and a little to its left.
+
+One colour for all three, no outline on any of them, no lip. Pressing your
+own moves it down two pixels. Fill is the foreground colour, words the
+opposite, as round 363 said.
+
+Privacy in Settings is four switches now: on is everyone, off is friends.
+Nothing changed about what they do.

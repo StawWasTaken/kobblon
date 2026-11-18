@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
-import { Choices } from '@/components/ui/Choices'
+import { Switch } from '@/components/ui/Switch'
 import { Logomark } from '@/components/brand/Wordmark'
 import {
   faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
@@ -587,46 +587,6 @@ export function Looks() {
  * handle has been server-side since 0071. This page only says what the
  * answer is.
  */
-function Audience({ title, note, value, onChange, extra }: {
-  title: string
-  note: string
-  value: string
-  onChange: (next: string) => void
-  /**
-   * An answer somebody already holds that is not one of the two. Nobody is
-   * moved off it silently: widening a person's privacy because the choices
-   * were tidied is the one mistake this panel must not make.
-   */
-  extra?: { value: string; label: string }
-}) {
-  const options = [
-    { value: 'friends', label: 'Friends' },
-    { value: 'everyone', label: 'Everyone' },
-    ...(extra && extra.value === value ? [extra] : []),
-  ]
-
-  /*
-   * The card the Discord handle's setting has always been drawn on, which
-   * is where this setting came from and what Staw asked for back: a raised
-   * card, the question in small capitals, one line saying what it means,
-   * and the choices under it.
-   */
-  return (
-    <div className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-muted">{title}</p>
-      <p className="mt-1 text-xs leading-relaxed text-muted">{note}</p>
-      <Choices
-        className="mt-2"
-        size="sm"
-        label={title}
-        value={value}
-        options={options}
-        onChange={onChange}
-      />
-    </div>
-  )
-}
-
 function Privacy() {
   const { profile, refreshProfile } = useAuth()
   const toast = useToast()
@@ -646,42 +606,31 @@ function Privacy() {
     }
   }
 
-  return (
-    <Panel title="Privacy" note="Who sees what. Everything here starts at friends only.">
-      <div className={cn('space-y-3', busy && 'opacity-70')}>
-        <Audience
-          title="Who sees your thought"
-          note="The line over your picture, wherever your picture is big enough to carry it."
-          value={profile.thought_privacy ?? 'friends'}
-          onChange={(next) => void save({ thought_privacy: next as 'everyone' | 'friends' })}
-        />
-        <Audience
-          title="Who sees which World you are in"
-          note="Closed, nobody is told where you are - not the lists, not your profile."
-          value={profile.where_privacy ?? 'friends'}
-          onChange={(next) => void save({ where_privacy: next as 'everyone' | 'friends' })}
-        />
-        <Audience
-          title="Who can join you"
-          note="Walking into the World you are in, from a list or from your profile."
-          value={profile.join_privacy ?? 'friends'}
-          onChange={(next) => void save({ join_privacy: next as 'everyone' | 'friends' })}
-        />
-        {profile.discord_id && (
-          <Audience
-            title="Who can see your Discord handle"
-            note="Your Discord name is on your profile for anybody. The handle, the one people search for, is yours to give out."
-            value={profile.discord_visibility ?? 'friends'}
-            onChange={(next) => void save({ discord_visibility: next as 'everyone' | 'friends' | 'nobody' })}
-            extra={{ value: 'nobody', label: 'Nobody' }}
-          />
-        )}
-      </div>
+  /** On is everyone, off is friends. One shape for all four. */
+  const row = (
+    label: string,
+    value: string | null | undefined,
+    set: (next: 'everyone' | 'friends') => void,
+  ) => (
+    <Switch
+      key={label}
+      label={label}
+      note={value === 'nobody' ? 'Nobody' : value === 'everyone' ? 'Everyone' : 'Friends only'}
+      on={value === 'everyone'}
+      busy={busy}
+      onChange={(on) => set(on ? 'everyone' : 'friends')}
+    />
+  )
 
-      <p className="px-1 text-xs leading-relaxed text-muted">
-        These are answered by the database, not by the page you are looking at. A thought
-        set to friends is not handed to anybody else by any door.
-      </p>
+  return (
+    <Panel title="Privacy" note="Everything here starts at friends only.">
+      <div className="space-y-2">
+        {row('Your thought', profile.thought_privacy, (next) => void save({ thought_privacy: next }))}
+        {row('The World you are in', profile.where_privacy, (next) => void save({ where_privacy: next }))}
+        {row('Joining you', profile.join_privacy, (next) => void save({ join_privacy: next }))}
+        {profile.discord_id
+          && row('Your Discord handle', profile.discord_visibility, (next) => void save({ discord_visibility: next }))}
+      </div>
     </Panel>
   )
 }
@@ -730,12 +679,10 @@ function Safety() {
         />
       </Group>
 
-      {/* Two sentences. The rest of it is on the pages above, which exist
-          for exactly this and are kept up to date in one place. */}
-      <p className="px-1 text-xs leading-relaxed text-muted">
-        Kobblon is for people aged 15 and over. Reports go straight to moderators, and the
-        person you report is never told who reported them.
+      <p className="px-1 text-xs text-muted">
+        Kobblon is for people aged 15 and over. Reports are anonymous.
       </p>
+
     </Panel>
   )
 }

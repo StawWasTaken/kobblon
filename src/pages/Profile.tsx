@@ -1183,7 +1183,6 @@ export default function Profile() {
           onClose={() => setThinking(false)}
           thought={thought.data?.body}
           face={thought.data?.face}
-          privacy={me?.thought_privacy ?? 'friends'}
           onSave={async (next) => {
             try {
               if (next.thought) await setThought(user.id, { body: next.thought, face: next.face })

@@ -67,93 +67,52 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
   const wearing = faceOf(face)
   const show = !!said || (!!mine && !small)
 
-  /* How far the tail is from the bubble's right edge, and the dot from it. */
-  const tail = small ? 'right-5' : 'right-7'
-
   const bubble = (
-    <>
-      {/*
-        * The big shape, with its tail growing out of the bottom edge.
-        *
-        * It was a circle laid over the corner, and Staw drew a ring round
-        * exactly that: "we can see here that its not the same shape and
-        * that its 2 put together (i dont want that)". A circle meeting a
-        * straight edge always reads as two things, because the contour
-        * turns a corner twice where they join.
-        *
-        * So the tail is not a second shape stuck on. It is a triangle
-        * whose base lies flush along the bubble's bottom edge, in the same
-        * fill, with its corners rounded by a stroke of its own colour - so
-        * the silhouette runs out of the bubble and down to a point with
-        * nothing to see at the join.
-        *
-        * The step under the bubble is the lip every button on this site
-        * has, and pressing your own presses it the same way: Staw, of the
-        * version that faded instead, "it shouldnt get semi transparent it
-        * should do the same animation as the buttons when you click".
-        */}
+    /*
+     * Staw's own drawing of it, as an SVG: a rounded rectangle, a circle
+     * whose centre sits on its bottom edge about four fifths of the way
+     * across, and a small one below and a little to its left. Three
+     * shapes, one colour, no outline on any of them - so the circle on the
+     * edge reads as the bubble swelling rather than as a second thing
+     * stuck to it.
+     */
+    <span
+      className={cn(
+        'relative block',
+        mine && 'transition-transform group-active:translate-y-[2px]',
+      )}
+    >
       <span
         className={cn(
-          'relative block',
-          mine && 'group-active:mt-[3px]',
+          'relative block w-max rounded-2xl bg-thought text-center font-bold text-thought-ink',
+          small
+            ? 'max-w-[8.5rem] px-2.5 py-1.5 text-[0.65rem] leading-[0.85rem]'
+            : 'max-w-[11rem] px-3.5 py-2 text-xs leading-[1.1rem]',
         )}
       >
-        <span className="absolute inset-0 rounded-2xl bg-thought-deep" />
-        <span
-          className={cn(
-            'absolute inset-x-[2px] top-[2px] rounded-[0.85rem] bg-thought',
-            mine ? 'bottom-[5px] group-active:bottom-[2px]' : 'bottom-[5px]',
-          )}
-        />
-
-        <span
-          className={cn(
-            'relative flex w-max items-center gap-1.5 text-center font-bold text-thought-ink',
-            small
-              ? 'max-w-[8.5rem] px-2.5 pb-2 pt-1.5 text-[0.65rem] leading-[0.85rem]'
-              : 'max-w-[11rem] px-3.5 pb-2.5 pt-2 text-xs leading-[1.1rem]',
-          )}
-        >
+        <span className="flex items-center gap-1.5">
           {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
           <span className="line-clamp-2 flex-1">{said || 'What are you thinking?'}</span>
           {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-50" />}
         </span>
 
-        {/*
-          * The tail. It starts two pixels inside the bubble so the two
-          * fills meet rather than abut, and the stroke is the same colour
-          * as the fill, which is what rounds the point.
-          */}
-        <svg
-          viewBox="0 0 24 22"
-          aria-hidden="true"
-          className={cn('absolute top-full -mt-[3px] text-thought', tail, small ? 'h-3.5 w-4' : 'h-4 w-5')}
-        >
-          <path
-            d="M3 1 H21 L10 17 Z"
-            fill="currentColor"
-            stroke="currentColor"
-            strokeWidth="5"
-            strokeLinejoin="round"
-          />
-        </svg>
-
-        {/*
-          * And the last one, carrying on where the tail points: the
-          * smallest of the three, the same colour as the bubble, placed
-          * against the tail rather than against the middle of a row - a
-          * dot that floats off on its own is the "random third bubble"
-          * Staw drew a ring round.
-          */}
+        {/* Centred on the bottom edge, so half of it shows. */}
         <span
           className={cn(
-            'absolute rounded-full bg-thought',
-            small ? 'right-[2.1rem] top-full mt-[0.8rem] h-2 w-2' : 'right-[2.9rem] top-full mt-[1.05rem] h-2.5 w-2.5',
+            'absolute left-[79%] top-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-thought',
+            small ? 'h-3 w-3' : 'h-[1.05rem] w-[1.05rem]',
           )}
         />
       </span>
 
-    </>
+      {/* And the little one, carrying on down and to the left. */}
+      <span
+        className={cn(
+          'absolute left-[67%] top-full -translate-x-1/2 rounded-full bg-thought',
+          small ? 'mt-1 h-1.5 w-1.5' : 'mt-[0.45rem] h-2 w-2',
+        )}
+      />
+    </span>
   )
 
   return (
@@ -210,13 +169,11 @@ export function ThoughtLine({ thought, face, className }: {
  * The limit is the database's, said out loud rather than enforced quietly:
  * a box that silently stops taking letters reads as broken.
  */
-export function ThoughtDialog({ open, onClose, thought, face, privacy, onSave }: {
+export function ThoughtDialog({ open, onClose, thought, face, onSave }: {
   open: boolean
   onClose: () => void
   thought?: string | null
   face?: string | null
-  /** Who may read it, so the card can say so rather than leaving it to be found. */
-  privacy?: 'everyone' | 'friends' | null
   onSave: (next: { thought: string | null; face: Face | null }) => Promise<void>
 }) {
   const [text, setText] = useState(thought ?? '')
@@ -253,7 +210,7 @@ export function ThoughtDialog({ open, onClose, thought, face, privacy, onSave }:
       open={open}
       onClose={onClose}
       title="Your thought"
-      description="One line over your head, on your profile. Take it down whenever you like."
+      description="One line over your head."
       footer={
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -337,13 +294,6 @@ export function ThoughtDialog({ open, onClose, thought, face, privacy, onSave }:
         )}
       </div>
 
-      {/* Where the setting lives, and what it is set to right now. */}
-      <p className="mt-4 text-xs text-muted">
-        {privacy === 'everyone'
-          ? 'Anybody who opens your profile can see this.'
-          : 'Only your friends can see this.'}
-        {' '}Change that under Settings, Privacy.
-      </p>
     </Dialog>
   )
 }
