@@ -24391,3 +24391,9 @@ opposite, as round 363 said.
 
 Privacy in Settings is four switches now: on is everyone, off is friends.
 Nothing changed about what they do.
+
+## Round three hundred and sixty-six - where the bubble sits
+
+The bubble straddles the top edge of the picture: half of it over whatever
+is behind, half over the picture itself, with the circle and the dot on the
+picture. Nothing else changed.

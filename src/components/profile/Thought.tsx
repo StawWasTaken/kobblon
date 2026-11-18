@@ -120,7 +120,7 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
       {children}
 
       {show && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[60%] z-20 flex flex-col items-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-[66%] z-20 flex flex-col items-center">
           {mine ? (
             <button
               type="button"
