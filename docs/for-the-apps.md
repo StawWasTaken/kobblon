@@ -24156,3 +24156,15 @@ So the arrangement to copy, in full: solid fill, no outline, words centred,
 the first circle pulled up into the bubble so the two are one shape, the
 second circle on its own below it, and all of it centred on the picture with
 the tail landing in the middle of it.
+
+## Round three hundred and fifty-eight - where the two circles sit
+
+Drawing only, and the last of the thought bubble.
+
+The circle that is part of the big shape sits to the **right** of centre
+rather than under the middle of it, and the last one is smaller, a little to
+its **left** and below. The last one is the foreground colour - white on a
+dark page, Kobblon's black in daylight - rather than the bubble's grey, so it
+holds against whatever picture is behind it. The big shape is unchanged:
+solid fill, no outline, words centred, its first circle pulled into its
+bottom edge so the two are one shape.

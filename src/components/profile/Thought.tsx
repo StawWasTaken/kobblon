@@ -82,14 +82,16 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
       </span>
 
       {/*
-        * The tail, straight down the middle of the picture - Staw: "the
-        * bubles stuff should point at the center of the pfp". The first
-        * circle is pulled up into the bubble's bottom edge, same fill and
-        * no outline, so the two read as one shape rather than a bubble
-        * with a dot under it. The second stands on its own, on the picture.
+        * The tail. The first circle is pulled up into the bubble's bottom
+        * edge - same fill, no outline - so the two read as one shape rather
+        * than a bubble with a dot under it, and it sits to the right of
+        * centre. The last one is smaller, a little to its left and below,
+        * and it is the foreground colour: white on a dark page and
+        * Kobblon's black in daylight, so it holds against whatever picture
+        * is behind it.
         */}
-      <span className="-mt-1 h-3 w-3 rounded-full bg-ink-line" />
-      <span className="mt-1 h-[0.45rem] w-[0.45rem] rounded-full bg-ink-line" />
+      <span className="-mt-1 ml-14 h-3 w-3 rounded-full bg-ink-line" />
+      <span className="ml-6 mt-1 h-[0.45rem] w-[0.45rem] rounded-full bg-white" />
 
     </>
   )
