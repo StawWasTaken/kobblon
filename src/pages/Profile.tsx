@@ -47,6 +47,7 @@ import {
   startConversation,
   usernameHistory, usernameById, updateProfile, lookOf,
   askBestFriend, answerBestFriend, unbestFriend, cancelFriendRequest,
+  getThought, setThought, clearThought,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
 import { communityLink, profileLink } from '@/lib/links'
@@ -137,6 +138,12 @@ export default function Profile() {
   const accent = accentOf(colour ?? user?.accent_color)
 
   const overview = useAsync(async () => (user ? getProfileOverview(user.id) : null), [user?.id])
+  /*
+   * What they are thinking, if the row lets you read it. Friends only
+   * unless they said everyone, and that is the database's answer rather
+   * than this page's: a thought you may not read does not arrive at all.
+   */
+  const thought = useAsync(async () => (user ? getThought(user.id) : null), [user?.id])
   const spaces = useAsync(
     async () => (user ? listWorldsByOwner(user.id, Boolean(isMe)) : []),
     [user?.id, isMe],
@@ -484,8 +491,8 @@ export default function Profile() {
             * it is a line with no bubble, beside the dot.
             */}
           <ThoughtOver
-            thought={user.thought}
-            face={user.thought_face}
+            thought={thought.data?.body}
+            face={thought.data?.face}
             mine={isMe}
             onEdit={() => setThinking(true)}
             /*
@@ -497,7 +504,7 @@ export default function Profile() {
               */
             className={cn(
               'shrink-0 self-center sm:self-start',
-              user.thought && 'mt-3 sm:mt-0',
+              thought.data?.body && 'mt-3 sm:mt-0',
             )}
           >
             <PersonAvatar
@@ -525,7 +532,7 @@ export default function Profile() {
             * - so the name moves down rather than the picture, which is the
             * one thing that must not move.
             */}
-          <div className={cn('min-w-0 flex-1', user.thought && 'sm:pt-7')}>
+          <div className={cn('min-w-0 flex-1', (thought.data?.body || isMe) && 'sm:pt-7')}>
             <h1 className="flex flex-wrap items-center gap-2 font-display text-3xl font-extrabold sm:text-4xl">
               {user.display_name}
               {/* The guest mark comes from `NameMarks` and nowhere else.
@@ -1174,13 +1181,14 @@ export default function Profile() {
         <ThoughtDialog
           open={thinking}
           onClose={() => setThinking(false)}
-          thought={user.thought}
-          face={user.thought_face}
+          thought={thought.data?.body}
+          face={thought.data?.face}
+          privacy={me?.thought_privacy ?? 'friends'}
           onSave={async (next) => {
             try {
-              await updateProfile(user.id, { thought: next.thought, thought_face: next.face })
-              person.reload()
-              refreshProfile()
+              if (next.thought) await setThought(user.id, { body: next.thought, face: next.face })
+              else await clearThought(user.id)
+              thought.reload()
             } catch {
               toast('That did not save.', 'error')
             }

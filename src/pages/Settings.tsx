@@ -4,7 +4,7 @@ import { Logomark } from '@/components/brand/Wordmark'
 import {
   faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck,
-  faTriangleExclamation, faKey, faArrowUpRightFromSquare, faClock,
+  faTriangleExclamation, faKey, faArrowUpRightFromSquare, faClock, faEye, faUserGroup, faGlobe,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
@@ -26,6 +26,7 @@ import { useAsync } from '@/hooks/useAsync'
 import {
   USERNAME_CHANGE_COST, changeUsername, getStanding, updateProfile, usernameChangeState,
   usernameHistory,
+  setThoughtPrivacy,
 } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { currency } from '@/lib/currency'
@@ -67,11 +68,12 @@ import { APPEARANCES, LOOKS, type Appearance } from '@/lib/appearances'
  *     page that exists for it.
  */
 
-type Section = 'Account' | 'Security' | 'Connections' | 'Appearance' | 'Safety'
+type Section = 'Account' | 'Security' | 'Privacy' | 'Connections' | 'Appearance' | 'Safety'
 
 const sections: { name: Section; icon: IconDefinition }[] = [
   { name: 'Account', icon: faUser },
   { name: 'Security', icon: faLock },
+  { name: 'Privacy', icon: faEye },
   { name: 'Connections', icon: faLink },
   { name: 'Appearance', icon: faPalette },
   { name: 'Safety', icon: faShieldHalved },
@@ -567,7 +569,85 @@ export function Looks() {
   )
 }
 
+
+/* ------------------------------------------------------------------ privacy */
+
+/**
+ * Who sees what.
+ *
+ * One setting so far - the thought over your picture - and it is here
+ * rather than in the dialog that writes one because it is a standing
+ * answer, not part of writing a line. Friends only is the default, which
+ * is why the row says so out loud rather than leaving it to be discovered.
+ *
+ * The rule itself is the database's: `thoughts` is read through a policy
+ * that asks this setting, so a thought set to friends is not handed to
+ * anybody else by any door - this page, the applications, or a token
+ * somebody found.
+ */
+function Privacy() {
+  const { profile, refreshProfile } = useAuth()
+  const toast = useToast()
+  const [open, setOpen] = useState<'everyone' | 'friends'>(
+    (profile?.thought_privacy as 'everyone' | 'friends') ?? 'friends',
+  )
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (profile?.thought_privacy) setOpen(profile.thought_privacy as 'everyone' | 'friends')
+  }, [profile?.thought_privacy])
+
+  const choose = async (next: 'everyone' | 'friends') => {
+    if (!profile || next === open) return
+    const was = open
+    setOpen(next)
+    setSaving(true)
+    try {
+      await setThoughtPrivacy(profile.id, next)
+      refreshProfile()
+    } catch {
+      setOpen(was)
+      toast('That did not save.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Panel title="Privacy" note="Who sees what, when it is not everybody by default.">
+      <Group>
+        <div className="p-4">
+          <p className="font-display text-sm font-extrabold">Who sees your thought</p>
+          <p className="mt-1 text-xs text-muted">
+            The line over your picture. Friends only unless you say otherwise.
+          </p>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Choice
+              on={open === 'friends'}
+              disabled={saving}
+              onClick={() => choose('friends')}
+              swatch={<Glyph icon={faUserGroup} />}
+              title="Friends only"
+              note="The people you are friends with."
+            />
+            <Choice
+              on={open === 'everyone'}
+              disabled={saving}
+              onClick={() => choose('everyone')}
+              swatch={<Glyph icon={faGlobe} />}
+              title="Everyone"
+              note="Anybody who opens your profile."
+            />
+          </div>
+        </div>
+      </Group>
+    </Panel>
+  )
+}
+
 /* ------------------------------------------------------------------- safety */
+
 
 function Safety() {
   const standing = useAsync(async () => getStanding(), [])
@@ -671,6 +751,7 @@ export default function Settings() {
         <div className="min-w-0 max-w-2xl">
           {section === 'Account' && <Account />}
           {section === 'Security' && <Security />}
+          {section === 'Privacy' && <Privacy />}
           {section === 'Connections' && (
             <Panel title="Connections" note="Other places this account is tied to.">
               <DiscordLink />

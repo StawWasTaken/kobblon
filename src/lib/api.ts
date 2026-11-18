@@ -30,7 +30,7 @@ import type {
   Behaviour, ModerationRow, StaffModerationRow, TicketDevice, TicketKind,
   WorldGenre, WorldMedium, WorldMaturity, WorldStanding, AvatarRule, AvatarPiece, AvatarItem, AvatarKind, AvatarSlot,
   TicketStatus, BehaviourBand, ViolationAction, ModeratedBy,
-  ForumBoard, ForumTopic, ForumReply, ForumSort, ForumStatus,} from '@/types/db'
+  ForumBoard, ForumTopic, ForumReply, ForumSort, ForumStatus, Thought,} from '@/types/db'
 import { kindLabels, kindMaxBytes, kindMaxLabel } from '@/lib/kinds'
 
 const SPACE_FIELDS =
@@ -389,8 +389,56 @@ export async function communityNameHistory(
 }
 
 export async function updateProfile(id: string, patch: Partial<Pick<Profile,
-  'display_name' | 'bio' | 'avatar_url' | 'username' | 'accent_color' | 'gender' | 'thought' | 'thought_face'>>) {
+  'display_name' | 'bio' | 'avatar_url' | 'username' | 'accent_color' | 'gender'>>) {
   unwrap(await supabase.from('profiles').update(patch).eq('id', id).select('id').single())
+}
+
+/*
+ * Thoughts.
+ *
+ * The row decides who may read it - `privacy`, answered by row-level
+ * security - so these ask for rows and trust the answer. A thought you
+ * cannot read simply is not there, which is the same thing the page should
+ * draw either way.
+ */
+export async function getThought(userId: string): Promise<Thought | null> {
+  const { data, error } = await supabase
+    .from('thoughts').select('*').eq('user_id', userId).maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data as Thought | null) ?? null
+}
+
+/** The thoughts of a list of people, for the lines beside their names. */
+export async function getThoughts(ids: string[]): Promise<Record<string, Thought>> {
+  if (!ids.length) return {}
+  const { data, error } = await supabase.from('thoughts').select('*').in('user_id', ids)
+  if (error) throw new Error(error.message)
+  const by: Record<string, Thought> = {}
+  for (const one of (data ?? []) as Thought[]) by[one.user_id] = one
+  return by
+}
+
+/** Writing your own. `at` is the database's to set, so it is not sent. */
+export async function setThought(
+  userId: string,
+  next: { body: string; face: string | null; privacy?: 'everyone' | 'friends' },
+) {
+  unwrap(await supabase.from('thoughts').upsert({
+    user_id: userId,
+    body: next.body,
+    face: next.face,
+    ...(next.privacy ? { privacy: next.privacy } : {}),
+  }).select('user_id').single())
+}
+
+/** Who may read it, without touching what it says. */
+export async function setThoughtPrivacy(userId: string, privacy: 'everyone' | 'friends') {
+  unwrap(await supabase.from('thoughts').update({ privacy }).eq('user_id', userId).select('user_id'))
+}
+
+export async function clearThought(userId: string) {
+  const { error } = await supabase.from('thoughts').delete().eq('user_id', userId)
+  if (error) throw new Error(error.message)
 }
 
 /**

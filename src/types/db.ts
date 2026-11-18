@@ -29,12 +29,8 @@ export type Profile = {
   pixels: number
   birth_date: string | null
   gender: 'male' | 'female' | 'other' | null
-  /** The one line they have over their head, shown on their profile. */
-  thought?: string | null
-  /** The reaction face beside it, one of the eleven, or none. */
-  thought_face?: string | null
-  /** When they wrote it. Stamped by the database, never by the client. */
-  thought_at?: string | null
+  /** Who may read their thought. 'friends' unless they changed it. */
+  thought_privacy?: 'everyone' | 'friends' | null
   /** Their number, counting the people in the order they arrived: 1, 2, 3. */
   content_id: number | null
   /**
@@ -1457,4 +1453,20 @@ export type ForumRelated = {
   last_post_at: string
   /** How many words its title shares with the one being read. */
   shared: number
+}
+
+/**
+ * The one line somebody has over their head.
+ *
+ * Its own table, not three columns on a profile, because `privacy` has to
+ * be answered by the database for every caller rather than by whichever
+ * page happens to be drawing it. A row you can read is a row you are
+ * allowed to read.
+ */
+export type Thought = {
+  user_id: string
+  body: string
+  face: string | null
+  privacy: 'everyone' | 'friends'
+  at: string
 }

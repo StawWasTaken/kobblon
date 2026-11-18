@@ -63,35 +63,63 @@ export function ThoughtOver({ thought, face, mine, onEdit, children, className }
   const bubble = (
     <>
       {/*
-        * Solid fill, no outline, words in the middle: Staw wants TikTok's,
-        * and TikTok's is a plain grey shape with nothing drawn round it. It
-        * takes `ink-line`, which is a mid grey in the dark and a light one
-        * in daylight, so the same bubble works in both themes without a
-        * second colour being invented for it.
+        * The big shape and the one that belongs to it, drawn as one
+        * silhouette.
+        *
+        * Staw: "make it so the stroke doesnt appear on the intersection of
+        * the second bubble and the big one". Two bordered shapes laid over
+        * each other always show the seam where they meet, whichever is in
+        * front, so neither of these has a border at all. Every piece is
+        * drawn twice instead: once in the edge colour, then again a couple
+        * of pixels smaller in the fill colour, and **all the edges are
+        * painted before any of the fills**. The fills then cover each
+        * other's rims where they overlap, so what is left is one unbroken
+        * outline round the pair of them.
+        *
+        * The step under the bubble is the lip every button on this site
+        * has, and pressing your own presses it the same way: Staw, of the
+        * version that faded instead, "it shouldnt get semi transparent it
+        * should do the same animation as the buttons when you click".
         */}
       <span
         className={cn(
-          'flex w-max max-w-[11rem] items-center gap-1.5 rounded-[1.25rem]',
-          'bg-thought px-3.5 py-2 text-center text-xs font-bold leading-[1.1rem] text-on-art',
-          mine && 'transition-opacity group-hover:opacity-90',
+          'relative block',
+          mine && 'group-active:mt-[3px]',
         )}
       >
-        {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
-        <span className="line-clamp-2 flex-1">{said || 'What are you thinking?'}</span>
-        {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-40" />}
+        {/* The edges, both of them, first. */}
+        <span className="absolute inset-0 rounded-2xl bg-thought-deep" />
+        <span className="absolute -bottom-3 right-4 h-6 w-6 rounded-full bg-thought-deep" />
+
+        {/* Then the fills, which hide the rims where the two meet. */}
+        <span
+          className={cn(
+            'absolute inset-x-[2px] top-[2px] rounded-[0.85rem] bg-thought',
+            mine ? 'bottom-[5px] group-active:bottom-[2px]' : 'bottom-[5px]',
+          )}
+        />
+        <span className="absolute -bottom-2 right-5 h-4 w-4 rounded-full bg-thought" />
+
+        <span
+          className={cn(
+            'relative flex w-max max-w-[11rem] items-center gap-1.5',
+            'px-3.5 pb-2.5 pt-2 text-center text-xs font-bold leading-[1.1rem] text-on-art',
+          )}
+        >
+          {wearing && <ThoughtFace face={wearing} className="h-4 w-4" />}
+          <span className="line-clamp-2 flex-1">{said || 'What are you thinking?'}</span>
+          {mine && <Glyph icon={faPen} className="shrink-0 text-[0.6rem] opacity-50" />}
+        </span>
       </span>
 
       {/*
-        * The tail: the same shape walking down to the picture. The first
-        * circle is pulled up into the bubble's bottom edge, same fill and
-        * no outline, so the two read as one shape rather than a bubble with
-        * a dot under it, and it sits to the right of centre. The last one
-        * is smaller, a little to its left and below, and it takes the
-        * foreground colour - white on a dark page, Kobblon's black in
-        * daylight - so it holds against whatever picture is behind it.
+        * And the last one, on its own below and to the left: the smallest
+        * of the three, in the foreground colour - white on a dark page,
+        * Kobblon's black in daylight - so it holds against whatever
+        * picture is behind it. This one touches nothing, so it keeps its
+        * own edge.
         */}
-      <span className="-mt-2 ml-12 h-5 w-5 rounded-full bg-thought" />
-      <span className="ml-7 mt-0.5 h-2.5 w-2.5 rounded-full bg-white" />
+      <span className="ml-8 mt-2 h-3 w-3 rounded-full border-2 border-thought-deep bg-white" />
 
     </>
   )
@@ -150,11 +178,13 @@ export function ThoughtLine({ thought, face, className }: {
  * The limit is the database's, said out loud rather than enforced quietly:
  * a box that silently stops taking letters reads as broken.
  */
-export function ThoughtDialog({ open, onClose, thought, face, onSave }: {
+export function ThoughtDialog({ open, onClose, thought, face, privacy, onSave }: {
   open: boolean
   onClose: () => void
   thought?: string | null
   face?: string | null
+  /** Who may read it, so the card can say so rather than leaving it to be found. */
+  privacy?: 'everyone' | 'friends' | null
   onSave: (next: { thought: string | null; face: Face | null }) => Promise<void>
 }) {
   const [text, setText] = useState(thought ?? '')
@@ -274,6 +304,14 @@ export function ThoughtDialog({ open, onClose, thought, face, onSave }: {
           </div>
         )}
       </div>
+
+      {/* Where the setting lives, and what it is set to right now. */}
+      <p className="mt-4 text-xs text-muted">
+        {privacy === 'everyone'
+          ? 'Anybody who opens your profile can see this.'
+          : 'Only your friends can see this.'}
+        {' '}Change that under Settings, Privacy.
+      </p>
     </Dialog>
   )
 }

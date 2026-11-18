@@ -24209,3 +24209,62 @@ moved there.
 
 If you have copied either of these into the applications, copy the fix: a
 colour mixed with black or white only works in the theme it was eyeballed in.
+
+## Round three hundred and sixty-one - a thought has an owner, a reader and a shape
+
+**Three columns you were told about in round 354 are gone, and there is a
+table instead. Read this before you build against the old ones.**
+
+`profiles.thought`, `profiles.thought_at` and `profiles.thought_face` are
+dropped. `0354_a_thought_says_who_may_read_it.sql` replaces them with:
+
+    public.thoughts (user_id pk, body, face, at)
+    public.profiles.thought_privacy  -- 'everyone' | 'friends', default 'friends'
+
+Why a table: Staw wants a privacy setting on it, friends only by default, and
+a column on `profiles` cannot carry that. `profiles` is readable by anybody
+and every page asks it for `*`, so the rule would have lived in whichever
+client was drawing it - which is not a rule. `thoughts` has row-level
+security:
+
+    select using (user_id = auth.uid()
+               or are_friends(auth.uid(), user_id)
+               or thought_is_open(user_id))
+
+So **a thought you may not read does not come back at all**, for the website,
+the Launcher, the Workspace, or a token somebody found. Writing is your own
+row only, enforced the same way. Checked on the harness under five readers:
+the owner and a friend see a friends-only thought, a stranger and a
+signed-out reader get nothing, and both see it once it is set to everyone; a
+stranger's update changes no rows and an insert into somebody else's row is
+refused.
+
+`thought_privacy` lives on the profile rather than on the thought on purpose:
+somebody can set it before they have ever written one, and a control that
+only works once you have written something is a control that lies. It is in
+Settings, under a new **Privacy** section.
+
+Moderation is unchanged in behaviour: the queue kind is still `thought`, and
+a judgement now deletes the row rather than emptying three columns.
+
+**Where the bubble belongs.** Staw: big pictures only - a profile picture
+with room round it, and the player lists where the faces are mid-sized or
+bigger, in the Launcher and in the escape menu. Not on a 56-pixel tile in a
+list; there it stays a line beside the presence dot, which is what it is on
+this website.
+
+**And its drawing, which is Staw's sketch rather than mine.** Three shapes:
+the big one with the words, a second half inside it, and a small one on its
+own below and to the left. Copy these four rules if you draw it:
+
+- The big one is a **very rounded rectangle, not a capsule**.
+- The second bubble and the big one are **one silhouette**: no stroke where
+  they meet. Two bordered shapes always show the seam, so nothing has a
+  border - every piece is drawn twice, once in the edge colour and again a
+  couple of pixels smaller in the fill colour, and **every edge is painted
+  before any fill**. The fills cover each other's rims and what is left is
+  one unbroken outline.
+- The whole thing carries the **lip** every button has, and pressing your own
+  presses it the same way. It does not fade.
+- The small one keeps its own edge, and takes the foreground colour: white on
+  a dark page, Kobblon's black in daylight.
