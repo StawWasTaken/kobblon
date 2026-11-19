@@ -344,7 +344,7 @@ function EditProfile({
       </div>
       {given && (
         <p className="mt-2 text-xs text-white/35">
-          Staff is given rather than chosen, so it stays beside whichever of these you pick.
+          Staff is given, not chosen. It stays beside whichever of these you pick.
         </p>
       )}
 

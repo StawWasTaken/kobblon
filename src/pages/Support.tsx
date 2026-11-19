@@ -1163,7 +1163,6 @@ export function HelpPage() {
       intro={article.intro}
       updated={article.updated}
       sections={article.sections}
-      footnote="This says how Kobblon works today. Where it says something is not built, that is the current state of it and not a simplification."
     />
   )
 }

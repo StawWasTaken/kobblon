@@ -70,8 +70,7 @@ export default function Maintenance({ note, outage }: {
               </h1>
 
               <p className="mt-2 text-sm leading-relaxed text-white/70">
-                We're making things more awesome. Nothing of yours is lost, and this page lets
-                you straight back in as soon as it can.
+                We're making things more awesome. Nothing of yours is lost.
               </p>
             </div>
           </div>

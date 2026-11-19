@@ -24468,3 +24468,30 @@ so this widens nothing.
 Also: the small bubble sits where the big one does, half over the picture
 and half over what is behind it, and the three counts on a profile stay on
 one line instead of wrapping two-and-one.
+
+## Round three hundred and seventy - the voice, and where we go next
+
+**A copy sweep.** Staw, on a line I had written under a privacy setting:
+"STOP TALKING TO PEOPLE LIKE THAT ... IT LOOKS AI-GENERATED BULLSHIT". He is
+right, and the rule is worth copying into the applications because the same
+habit shows up there:
+
+> A control says what it is and what it is set to. It does not explain how
+> the platform works, why the rule exists, or what we were thinking.
+
+Kept: what a destructive button will actually destroy, anything legal or
+about safety, and the rules of an appeal. Cut: the paragraphs explaining the
+site to the person using it.
+
+Swept: the privacy and safety notes in Settings, the Support footnote, the
+maintenance line, the About opening, Create Hub, the Forum's screening
+notice, Download, the Forum profile's staff line, the colour dialog, and the
+record-clearing dialog's editorial tail.
+
+**And a document, for Staw rather than for you**, though it says where the
+platform is going and that changes what the applications will be asked for:
+`docs/where-kobblon-goes-next.md`. The five it argues for are a party that
+exists before a World does, playtime and a score that add up, a World page
+built like a store page with written reviews, clips out of the Launcher, and
+following a World rather than only liking it. Three of those five are mostly
+Launcher work, which is why you are being told now rather than later.

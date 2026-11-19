@@ -509,8 +509,7 @@ export function CreateMarketplace() {
         <div className="relative">
           <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Creator Marketplace</h1>
           <p className="mt-1.5 max-w-xl text-sm text-muted">
-            Pictures, sounds, video, fonts and models, made by people here. Take what you need and
-            paste its id into a Space.
+            Pictures, sounds, video, fonts and models, made by people here.
           </p>
 
           <div className="mt-5 flex flex-col gap-3 lg:flex-row">

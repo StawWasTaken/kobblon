@@ -1146,7 +1146,7 @@ export default function Profile() {
         open={picking}
         onClose={() => setPicking(false)}
         title="Your colour"
-        description="It runs through your whole page: the ring round your face, the rule under every heading, the tab you are on."
+        description="It runs through your whole page."
         size="sm"
         footer={<Button onClick={() => setPicking(false)}>Done</Button>}
       >

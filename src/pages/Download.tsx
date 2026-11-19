@@ -42,8 +42,7 @@ export default function Download() {
             Kobblon Launcher
           </h1>
           <p className="mt-3 text-white/55">
-            Worlds run in the Launcher rather than in a browser tab. It is being
-            built, so there is nothing to download yet.
+            Worlds run in the Launcher, not a browser tab. It is still being built.
           </p>
 
           <div className="mt-8 space-y-2.5">

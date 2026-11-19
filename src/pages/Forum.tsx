@@ -1908,8 +1908,7 @@ export function ForumNew() {
         </div>
 
         <p className="mt-5 text-xs leading-relaxed text-white/30">
-          Everything posted here is screened, and the Community Guidelines apply
-          to it exactly as they do everywhere else on Kobblon.
+          Posts here are screened. The Community Guidelines apply.
         </p>
       </div>
     </ForumShell>
