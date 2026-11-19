@@ -22,7 +22,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  getProfileByUsername, getThoughts, peopleList, removeFriendship, respondToFriendRequest,
+  getProfileByUsername, peopleList, removeFriendship, respondToFriendRequest,
   startConversation, usernameById,
 } from '@/lib/api'
 import type { PeopleList, PersonRow as Person } from '@/lib/api'
@@ -31,6 +31,7 @@ import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { PersonCard, PersonGrid } from '@/components/social/PersonCard'
+import { useThoughts } from '@/hooks/useThoughtStore'
 
 /*
  * One page for everybody you are tied to, and everybody you are not.
@@ -229,15 +230,8 @@ export default function Friends() {
    */
   useWhereabouts(source.data ?? [])
 
-  /*
-   * What the people on this list are thinking, where they let you read it.
-   * One ask for the lot, and a thought the database does not hand over is
-   * simply not in the answer.
-   */
-  const thoughts = useAsync(
-    async () => getThoughts((source.data ?? []).map((one) => one.id)),
-    [source.data],
-  )
+  /* What they are thinking, asked once for the lot and kept live. */
+  useThoughts(source.data ?? [])
 
   const matches = (person: Person) =>
     !filter
@@ -382,11 +376,7 @@ export default function Friends() {
   const cardFor = (person: Person) => (
     <PersonCard
       key={person.id}
-      person={{
-        ...person,
-        thought: thoughts.data?.[person.id]?.body ?? null,
-        thought_face: thoughts.data?.[person.id]?.face ?? null,
-      }}
+      person={person}
       quiet={current.name === 'Blocked' || person.i_ignore}
       friend={current.name === 'Friends'}
       note={

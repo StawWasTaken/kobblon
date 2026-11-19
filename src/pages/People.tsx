@@ -16,7 +16,8 @@ import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
-import { getThoughts, listPeople, peopleList, sendFriendRequest, startConversation } from '@/lib/api'
+import { listPeople, peopleList, sendFriendRequest, startConversation } from '@/lib/api'
+import { useThoughts } from '@/hooks/useThoughtStore'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { Menu } from '@/components/ui/Menu'
 import { usePersonActions } from '@/components/social/personActions'
@@ -86,15 +87,8 @@ export default function People() {
    * about one person is forty-eight requests to answer a question one
    * request answers.
    */
-  /*
-   * What the people on this page are thinking, where they let you read it.
-   * One ask for the lot rather than one each, and a thought the database
-   * does not hand over simply is not in the answer.
-   */
-  const thoughts = useAsync(
-    async () => getThoughts((people.data ?? []).map((one) => one.id)),
-    [people.data],
-  )
+  /* What the people on this page are thinking, asked once for the lot. */
+  useThoughts(people.data ?? [])
 
   const friends = useAsync(
     async () => (profile && !profile.is_guest ? peopleList(profile.id, 'friends') : []),
@@ -301,11 +295,7 @@ export default function People() {
               return (
                 <PersonCard
                   key={person.id}
-                  person={{
-                    ...person,
-                    thought: thoughts.data?.[person.id]?.body ?? null,
-                    thought_face: thoughts.data?.[person.id]?.face ?? null,
-                  }}
+                  person={person}
                   square
                   bio
                   friend={friend}

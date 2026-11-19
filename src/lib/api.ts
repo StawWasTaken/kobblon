@@ -5669,7 +5669,7 @@ export async function inTheKlub(
  */
 export const FACES = [
   'smile', 'laugh', 'happy-grin', 'winky-grin', 'heart-eyes',
-  'sunglasses', 'shocked', 'sad', 'angry', 'skull', 'fire',
+  'sunglasses', 'shocked', 'sad', 'angry', 'skull', 'fire', 'heart',
 ] as const
 
 export type Face = (typeof FACES)[number]

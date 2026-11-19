@@ -31,6 +31,7 @@ export const UI_ICONS = [
   'favourite-stroke', 'favourite', 'gear', 'gif', 'heart-user', 'laurel-quest-stroke',
   'laurel-quest', 'microphone', 'mute-microphone', 'notification', 'people',
   'reaction-angry', 'reaction-fire', 'reaction-happy-grin', 'reaction-heart-eyes',
+  'reaction-heart',
   'reaction-laugh', 'reaction-sad', 'reaction-shocked', 'reaction-skull',
   'klub', 'klub-badge', 'badge',
   'reaction-smile', 'reaction-sunglasses', 'reaction-winky-grin',
@@ -117,6 +118,24 @@ export function iconUrl(name: KobIcon) {
  */
 const TEAR_BLUE = '#5DADEC'
 
+/*
+ * The holes in a face, filled.
+ *
+ * A reaction is one silhouette painted through a mask, so the mouth and the
+ * eyes are whatever is behind the icon - black on a card, white on paper,
+ * and on white it falls apart. Staw: "i want that the reactions ... have
+ * their mouth, or other holes filled with the kobblon black colour".
+ *
+ * So each face has a companion mask holding its outer boundary filled
+ * (`tools/icons/fill-reaction-holes.py`), painted in Kobblon's black under
+ * the face itself. The flame is left out: one colour, no holes.
+ */
+const HOLES = new Set<string>([
+  'reaction-smile', 'reaction-laugh', 'reaction-happy-grin', 'reaction-winky-grin',
+  'reaction-heart-eyes', 'reaction-sunglasses', 'reaction-shocked', 'reaction-sad',
+  'reaction-angry', 'reaction-skull', 'reaction-heart',
+])
+
 const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
   'reaction-heart-eyes': [{ part: 'reaction-heart-eyes-eyes', colour: '#DF1F2D' }],
   'reaction-winky-grin': [{ part: 'reaction-winky-grin-tongue', colour: '#FF6F9C' }],
@@ -197,6 +216,7 @@ export function Icon({
    */
   if (paint) {
     const details = paint === 'currentColor' ? undefined : DETAILS[name as UiIcon]
+    const holes = paint === 'currentColor' ? false : HOLES.has(name)
 
     const face = (
       <span
@@ -220,7 +240,7 @@ export function Icon({
       />
     )
 
-    if (!details) return face
+    if (!details && !holes) return face
 
     return (
       <span
@@ -231,6 +251,26 @@ export function Icon({
         title={title}
         style={style}
       >
+        {/* Kobblon's black behind the face, so a mouth is a mouth rather
+            than a window onto the page. */}
+        {holes && (
+          <span
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              backgroundColor: 'rgb(var(--art-ink))',
+              maskImage: `url(${asset(`/icons/ui/${name}-fill.png`)})`,
+              WebkitMaskImage: `url(${asset(`/icons/ui/${name}-fill.png`)})`,
+              maskSize: 'contain',
+              WebkitMaskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              WebkitMaskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              WebkitMaskPosition: 'center',
+            }}
+          />
+        )}
+
         {/*
           * The face itself, stretched to the wrapper rather than sized by
           * the class the caller passed - that class is on the wrapper now,
@@ -252,7 +292,7 @@ export function Icon({
             WebkitMaskPosition: 'center',
           }}
         />
-        {details.map((one) => (
+        {(details ?? []).map((one) => (
           <span
             key={one.part}
             aria-hidden

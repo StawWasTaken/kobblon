@@ -24430,3 +24430,41 @@ face would be, and the pencil only appears once there is something to
 change.
 
 All migrations to 0355 are applied and have moved to `migrations/applied/`.
+
+## Round three hundred and sixty-nine - a thought is live, and a twelfth face
+
+**New face.** `reaction_faces()` gains `heart`, in the red the heart-eyes
+face already uses. The list is asked for in one place, so the reactions
+table, `react` and now `thoughts.face` all pick it up - 0353 had written
+the faces out a second time and 0357 puts that right. Icon:
+`reaction-heart`.
+
+**The faces have their holes filled.** A reaction is one silhouette painted
+through a mask, so every mouth and eye was whatever happened to be behind
+it - black on a card, white on paper, and on white the face fell apart.
+Each one now has a companion mask of its outer boundary
+(`tools/icons/fill-reaction-holes.py` writes `reaction-<face>-fill.png`),
+painted in Kobblon's black under the face. The flame is left out: one
+colour, no holes.
+
+**Thoughts are live.** `thoughts` is in the realtime publication
+(`0356_a_thought_is_heard_as_it_changes.sql`, with `replica identity full`
+so a delete says whose row it was). The website keeps one copy per tab and
+hears changes, the same way presence works - a status that is one reload
+behind is not a status. Row-level security still decides who is sent what,
+so this widens nothing.
+
+**Where a thought shows, and when.**
+
+- Wherever somebody is listed, it stands where the word *Online* would be -
+  the friends list, the people grid, a chat's members, a community's roster.
+- Over middle-sized pictures as well as big ones: the faces on the home
+  rail, the rows in a friends list, your own picture on the home page, and
+  a profile.
+- **Not at all when somebody is offline**, the way a status is. Staw:
+  "thoughts (+ the thought bubble) dont appear to anyone when youre offline
+  (like for discord)".
+
+Also: the small bubble sits where the big one does, half over the picture
+and half over what is behind it, and the three counts on a profile stay on
+one line instead of wrapping two-and-one.

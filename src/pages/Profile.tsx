@@ -537,7 +537,10 @@ export default function Profile() {
 
             {/* The three lists are links, because they are a page of their
                 own rather than something to unfold here. */}
-            <div className="mt-4 flex flex-wrap gap-2">
+            {/* One line, always: three of these wrapping two-and-one is a
+                row that looks broken rather than a row that ran out of
+                space. They shrink instead. */}
+            <div className="mt-4 flex flex-nowrap items-center gap-2">
               {([
                 ['Friends', 'friends', friends.data?.length ?? stats?.friend_count ?? 0],
                 ['Followers', 'followers', stats?.follower_count ?? 0],
@@ -546,10 +549,10 @@ export default function Profile() {
                 <Link
                   key={label}
                   to={`${profileLink(user)}/friends?list=${list}`}
-                  className="rounded-full border-2 border-ink-line bg-ink-card/80 px-4 py-1.5 text-sm font-bold transition-colors hover:bg-ink-hover"
+                  className="flex min-w-0 items-center gap-1.5 rounded-full border-2 border-ink-line bg-ink-card/80 px-3 py-1.5 text-sm font-bold transition-colors hover:bg-ink-hover sm:px-4"
                 >
                   <span className="tabular-nums">{formatCount(count)}</span>
-                  <span className="ml-1.5 text-white/60">{label}</span>
+                  <span className="truncate text-white/60">{label}</span>
                 </Link>
               ))}
             </div>

@@ -128,7 +128,15 @@ export function ThoughtOver({ thought, face, mine, small, onEdit, children, clas
       {children}
 
       {show && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[74%] z-20 flex flex-col items-center">
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-0 z-20 flex flex-col items-center',
+            /* Half over the picture, half over whatever is behind it, at
+               either size: the small one is shorter, so it has to sit
+               lower to land in the same place. */
+            small ? 'bottom-[80%]' : 'bottom-[74%]',
+          )}
+        >
           {mine ? (
             <button
               type="button"

@@ -19,6 +19,7 @@ import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { NameMarks } from '@/components/brand/Verified'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
+import { useThoughts } from '@/hooks/useThoughtStore'
 
 export function CommunityMembers({
   communityId, ownerId, rights, onChanged,
@@ -46,6 +47,9 @@ export function CommunityMembers({
       toast(err instanceof Error ? err.message : 'That did not work.', 'error')
     }
   }
+
+  /* What the members are thinking, for the line under each name. */
+  useThoughts(roster.data ?? [])
 
   return (
     <div className="space-y-6">

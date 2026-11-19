@@ -37,6 +37,7 @@ import type { Conversation, Message } from '@/types/db'
 import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
+import { useThoughts } from '@/hooks/useThoughtStore'
 
 /*
  * The standing lives here, once.
@@ -177,6 +178,9 @@ function Window({
       .concat(profile?.username ? [profile.username.toLowerCase()] : [])),
     [conversation.members, profile?.username],
   )
+
+  /* What they are thinking, which is what the line under a name says. */
+  useThoughts(conversation.members)
 
   const name = renamed === undefined
     ? conversationName(conversation)

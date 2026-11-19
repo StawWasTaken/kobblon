@@ -1,4 +1,9 @@
+import { faHammer } from '@fortawesome/free-solid-svg-icons'
 import { PresenceLabel, StatusDot, presenceWords } from '@/components/ui/StatusDot'
+import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
+import { ThoughtLine } from '@/components/profile/Thought'
+import { useThought } from '@/hooks/useThoughtStore'
 import { Avatar } from '@/components/ui/Avatar'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useLivePresence } from '@/hooks/usePresenceStore'
@@ -51,9 +56,37 @@ const dots: Record<keyof typeof sizes, 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'>
  * because the corner of a circle is empty; a square one takes the corner
  * itself.
  */
-/** The words for somebody's state, kept live the same way the dot is. */
+/**
+ * What somebody is, in one line, kept live the same way the dot is.
+ *
+ * Their thought stands where the word would be, when they have one you may
+ * read - the same rule as the rows in a friends list. In a World or the
+ * Workspace the mark says so and the thought still gets the words, which is
+ * what a status is for.
+ */
 export function LivePresenceLabel({ person }: { person: Parameters<typeof useLivePresence>[0] }) {
-  return <PresenceLabel presence={useLivePresence(person)} />
+  const presence = useLivePresence(person)
+  const mind = useThought(person?.id)
+  /* Not here, nothing to say: a status belongs to somebody who is around. */
+  const thought = presence === 'offline' ? null : mind
+
+  if (!thought) return <PresenceLabel presence={presence} />
+
+  const doing = presence === 'in-space' ? 'playing' : presence === 'building' ? 'building' : null
+
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-white/70">
+      {doing === 'playing' ? (
+        <Icon name="playing" label="Playing" tone="rgb(var(--space-bright))" className="h-3.5 w-3.5 shrink-0" />
+      ) : doing === 'building' ? (
+        <Glyph icon={faHammer} className="shrink-0 text-mini text-warn-bright" aria-label="Building" />
+      ) : (
+        <StatusDot presence={presence} size="md" />
+      )}
+      {doing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
+      <ThoughtLine thought={thought.body} face={thought.face} className="min-w-0" />
+    </span>
+  )
 }
 
 export function PersonAvatar({

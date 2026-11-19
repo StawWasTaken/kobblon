@@ -14,6 +14,7 @@ import { cn } from '@/lib/cn'
 import { AdsProvider } from '@/components/ads/AdBanner'
 import { usePresence, useMyActivity, useMySpace } from '@/hooks/usePresence'
 import { usePresenceChannel } from '@/hooks/usePresenceStore'
+import { useThoughtsLive } from '@/hooks/useThoughtStore'
 import { useAuth } from '@/hooks/useAuth'
 
 export function AppShell() {
@@ -30,6 +31,8 @@ export function AppShell() {
   const doing = useMyActivity()
   const inSpace = useMySpace()
   usePresenceChannel(profile?.id, doing, inSpace)
+  /* A thought changes while you are looking at it, like the dot does. */
+  useThoughtsLive()
 
   useEffect(() => { setNavOpen(false) }, [location.pathname])
 

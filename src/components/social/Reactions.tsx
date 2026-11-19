@@ -74,6 +74,9 @@ export const FACE_COLOUR: Record<Face, string> = {
   shocked: FACE_YELLOW,
   sad: FACE_YELLOW,
   angry: '#DF1F2D',
+  /* The red of the hearts in the heart-eyes face, which is where it came
+     from: one red on the site, not two that nearly match. */
+  heart: '#DF1F2D',
   skull: 'rgb(var(--face-bone))',
 }
 

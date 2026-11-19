@@ -9,6 +9,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { useLivePresence, useWhereabout } from '@/hooks/usePresenceStore'
 import { FriendPeek } from '@/components/social/FriendPeek'
 import { ThoughtLine, ThoughtOver } from '@/components/profile/Thought'
+import { useThought } from '@/hooks/useThoughtStore'
 import { nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { timeAgo } from '@/lib/format'
@@ -121,7 +122,9 @@ export function PersonLine({ person, note, className }: {
    * covers: the note this list came with, and the World they are in - a
    * name you can act on beats a line somebody wrote this morning.
    */
-  const thought = person.thought?.trim()
+  const mind = useThought(person.id)
+  /* Nothing is shown for somebody who is not here, the way a status is. */
+  const thought = presence === 'offline' ? undefined : mind?.body?.trim()
 
   /*
    * What they are thinking stands where the word Online would be, which is
@@ -153,7 +156,7 @@ export function PersonLine({ person, note, className }: {
             things rather than a label and its icon. */}
         {doing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
 
-        <ThoughtLine thought={thought} face={person.thought_face} className="min-w-0" />
+        <ThoughtLine thought={thought} face={mind?.face} className="min-w-0" />
 
         {person.i_ignore && (
           <Tooltip label="You are ignoring this person" side="top">
@@ -229,6 +232,9 @@ export function PersonCard({
   square?: boolean
   className?: string
 }) {
+  const here = useLivePresence(person) !== 'offline'
+  const theirThought = useThought(person.id)
+
   return (
     <li
       className={cn(
@@ -251,7 +257,11 @@ export function PersonCard({
           {/* The bubble belongs on a picture with room round it - this one
               and the big one on a profile. Not on the face in a chat list,
               which is half this size. */}
-          <ThoughtOver thought={person.thought} face={person.thought_face} small>
+          <ThoughtOver
+            thought={here ? theirThought?.body : null}
+            face={theirThought?.face}
+            small
+          >
             <Link to={profileLink(person)} className="block">
               <PersonAvatar
                 person={person}
@@ -299,6 +309,8 @@ export function PersonFace({ person, big }: {
   big?: boolean
 }) {
   const where = useWhereabout(person.id)
+  const around = useLivePresence(person) !== 'offline'
+  const mind = useThought(person.id)
 
   return (
     <FriendPeek friend={person}>
@@ -308,12 +320,21 @@ export function PersonFace({ person, big }: {
         // the dot on one picture is nowhere near the next one.
         className="block rounded-xl p-2 text-center transition-colors hover:bg-ink-hover"
       >
-        <PersonAvatar
-          person={person}
-          size={big ? '2xl' : 'xl'}
-          className={cn('mx-auto', big && 'h-16 w-16 sm:h-20 sm:w-20')}
-          ring="ring-ink"
-        />
+        {/* A face this size carries the bubble; the ones in a chat list do
+            not, which is where the line beside the name does the job. */}
+        <ThoughtOver
+          thought={around ? mind?.body : null}
+          face={mind?.face}
+          small
+          className="mx-auto w-max"
+        >
+          <PersonAvatar
+            person={person}
+            size={big ? '2xl' : 'xl'}
+            className={cn('mx-auto', big && 'h-16 w-16 sm:h-20 sm:w-20')}
+            ring="ring-ink"
+          />
+        </ThoughtOver>
         {/*
           * The name and its marks, on one line, with the handle under it.
           *

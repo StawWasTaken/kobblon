@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { peopleList } from '@/lib/api'
 import { PersonFace } from '@/components/social/PersonCard'
+import { useThoughts } from '@/hooks/useThoughtStore'
 import { presenceNow, usePresenceVersion, useWhereabouts } from '@/hooks/usePresenceStore'
 
 /**
@@ -42,6 +43,9 @@ export function FriendsRail() {
     .sort((a, b) =>
       Number(Boolean(b.best)) - Number(Boolean(a.best))
       || Number(presenceNow(b) !== 'offline') - Number(presenceNow(a) !== 'offline'))
+
+  /* What they are thinking, for the bubbles over the faces. */
+  useThoughts(friends)
 
   return (
     <section className="mb-8">
