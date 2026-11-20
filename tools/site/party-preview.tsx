@@ -49,6 +49,7 @@ createRoot(document.getElementById('root')!).render(
           onRemove={nothing}
           onPlay={nothing}
           onInvite={nothing}
+          onOpenChat={nothing}
         />
         <PartyPanel
           me="me"
@@ -60,6 +61,7 @@ createRoot(document.getElementById('root')!).render(
           onRemove={nothing}
           onPlay={nothing}
           onInvite={nothing}
+          onOpenChat={nothing}
         />
         <PartyPanel
           me="b"
@@ -71,6 +73,7 @@ createRoot(document.getElementById('root')!).render(
           onRemove={nothing}
           onPlay={nothing}
           onInvite={nothing}
+          onOpenChat={nothing}
         />
       </div>
     </div>

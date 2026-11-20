@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  faCrown, faPlay, faRightFromBracket, faUserPlus, faXmark,
+  faComment, faCrown, faPlay, faRightFromBracket, faUserPlus, faXmark,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
@@ -40,7 +40,17 @@ export const PARTY_CAP = 8
  * mounts with no providers at all - the rule this project has broken three
  * times.
  */
-export function PartyWiring({ className }: { className?: string }) {
+export function PartyWiring({ onOpenChat, className }: {
+  /**
+   * Open the party's chat window.
+   *
+   * Passed in rather than reached for, because the thing that knows how to
+   * open a dock window is the dock, and the dock is what draws this - so
+   * asking it from here would be two files importing each other.
+   */
+  onOpenChat?: () => void
+  className?: string
+}) {
   const { profile } = useAuth()
   const { party, invites, reload } = useParty()
   const say = useToast()
@@ -74,6 +84,7 @@ export function PartyWiring({ className }: { className?: string }) {
         onLeave={() => void run('leave', leaveParty)}
         onRemove={(id) => void run(`out:${id}`, () => removeFromParty(id))}
         onInvite={() => setAsking(true)}
+        onOpenChat={onOpenChat}
         onPlay={() => {
           if (!party?.world_id) return
           play(party.world_id, () => {
@@ -101,7 +112,8 @@ export function PartyWiring({ className }: { className?: string }) {
  * whatever holds it draws its own edges.
  */
 export function PartyPanel({
-  me, party, invites, busy, onAccept, onDecline, onLeave, onRemove, onInvite, onPlay, className,
+  me, party, invites, busy, onAccept, onDecline, onLeave, onRemove, onInvite, onPlay,
+  onOpenChat, className,
 }: {
   me: string
   party: Party | null
@@ -113,6 +125,8 @@ export function PartyPanel({
   onRemove: (who: string) => void
   onInvite: () => void
   onPlay: () => void
+  /** Opens the party's chat. Absent where there is nowhere to open it. */
+  onOpenChat?: () => void
   className?: string
 }) {
   const leader = party?.leader_id === me
@@ -224,6 +238,11 @@ export function PartyPanel({
         <Button size="sm" variant="subtle" icon={faUserPlus} onClick={onInvite}>
           Invite
         </Button>
+        {!!party && !!onOpenChat && (
+          <Button size="sm" variant="subtle" icon={faComment} onClick={onOpenChat}>
+            Chat
+          </Button>
+        )}
         {!!party && (
           <Tooltip label="Leave the party" side="top">
             <Button

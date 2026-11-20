@@ -145,7 +145,7 @@ export function PersonLine({ person, note, className }: {
     return (
       <p className={cn('flex items-center gap-1.5 text-xs text-white/70', className)}>
         {doing === 'playing' ? (
-          <Icon name="playing" label="Playing" tone="rgb(var(--space-bright))" className="h-3.5 w-3.5 shrink-0" />
+          <Icon name="playing" label="Playing" tone="#1CAE71" className="h-3.5 w-3.5 shrink-0" />
         ) : doing === 'building' ? (
           <Glyph icon={faHammer} className="shrink-0 text-mini text-warn-bright" aria-label="Building" />
         ) : (

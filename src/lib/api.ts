@@ -1976,6 +1976,9 @@ export async function leaveConversation(conversationId: string): Promise<boolean
 
 /** What a conversation is called when it has no name of its own. */
 export function conversationName(conversation: Conversation) {
+  /* A party is called Party, whatever is in `title`, because it is not a
+     group somebody named - it is the party you are in. */
+  if (conversation.party_id) return 'Party'
   if (conversation.title) return conversation.title
   /*
    * `nameOf`, so a chat with somebody whose account has gone is titled
@@ -7350,6 +7353,11 @@ export async function myParty(): Promise<Party | null> {
       joined_at: row.joined_at,
     })),
   }
+}
+
+/** Your party's chat, made the first time it is asked for. */
+export async function myPartyChat(): Promise<string | null> {
+  return (unwrap(await supabase.rpc('my_party_chat')) as string | null) ?? null
 }
 
 export async function partyInvitesForMe(): Promise<PartyInvite[]> {

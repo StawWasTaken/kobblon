@@ -23,7 +23,7 @@ import { ReportDialog } from '@/components/social/ReportDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useNarrow } from '@/hooks/useWidth'
 import {
-  chatRoster, conversationName, deleteMessage, editMessage, ignorePerson, listMessages,
+  chatRoster, conversationName, myPartyChat, deleteMessage, editMessage, ignorePerson, listMessages,
   markConversationRead, sendMessage, startConversation, unignorePerson,
   myChatStanding, chatCardSeen, renameConversation, leaveConversation,
   type ChatStanding,
@@ -402,7 +402,11 @@ function Window({
               * be two of them open and they have to be told apart.
               */}
             <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg text-xs text-muted">
-              {solo ? <PersonAvatar person={solo} size="xs" /> : <Glyph icon={faUserGroup} />}
+              {solo
+                ? <PersonAvatar person={solo} size="xs" />
+                : conversation.party_id
+                  ? <Icon name="party" className="h-3.5 w-3.5" />
+                  : <Glyph icon={faUserGroup} />}
             </span>
             <span className="truncate text-note font-extrabold tracking-wide text-white">{name}</span>
           </button>
@@ -849,7 +853,11 @@ function List({
             </div>
           </div>
 
-          {tab === 'party' && <PartyWiring />}
+          {tab === 'party' && (
+            <PartyWiring
+              onOpenChat={() => { void myPartyChat().then((id) => { if (id) onOpen(id) }) }}
+            />
+          )}
         </>
       )}
 
@@ -897,8 +905,15 @@ function List({
                         <PersonAvatar person={solo} size="sm" />
                       </>
                     ) : (
-                      <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-deep text-xs text-on-art">
-                        <Glyph icon={faUserGroup} />
+                      /* A party wears its own mark, because it is not a
+                         group somebody named - it is who you are with. */
+                      <span className={cn(
+                        'grid h-8 w-8 place-items-center rounded-full text-xs text-on-art',
+                        c.party_id ? 'bg-space' : 'bg-brand-deep',
+                      )}>
+                        {c.party_id
+                          ? <Icon name="party" className="h-4 w-4" />
+                          : <Glyph icon={faUserGroup} />}
                       </span>
                     )}
                   </span>
@@ -1088,6 +1103,16 @@ export function ChatDock({ children }: { children: ReactNode }) {
   }, [profile])
 
   useEffect(() => { load() }, [load])
+
+  /*
+   * A party's chat is an ordinary conversation, so it appears in this list
+   * the moment the party exists - but nothing here would hear about it
+   * until the next message landed. The party provider already listens to
+   * the three party tables, so the id of the party you are in is the
+   * signal: it changes, the list is asked again.
+   */
+  const { party: myParty } = useParty()
+  useEffect(() => { load() }, [myParty?.id, load])
 
   useEffect(() => {
     if (!profile) return

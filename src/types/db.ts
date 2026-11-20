@@ -632,6 +632,15 @@ export type Conversation = {
   members: ConversationMember[]
   /** True when you are ignoring the person on the other side of it. */
   ignored?: boolean
+  /**
+   * The party this chat belongs to, when it is one.
+   *
+   * A party is an ordinary group conversation that points at a party row -
+   * so it gets the window, the unread count, the list and realtime for
+   * nothing - and this is how the dock knows to draw it as a party rather
+   * than as a group somebody named "Party".
+   */
+  party_id?: string | null
 }
 
 export type SpaceStats = {

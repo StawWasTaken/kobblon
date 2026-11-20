@@ -24913,3 +24913,78 @@ too.
 
 Nothing else shared changed. Rounds 377 to 379 - hours, the score, clips,
 and the avatar page's strips - are above.
+
+## Round three hundred and eighty-one - the green, and a party is a group chat
+
+### The green changed, and this one matters to you
+
+`space.DEFAULT` in `design/preset.js` was **#148556**. It is now **#1CAE71**.
+
+Staw, looking at the platform: "every green on the platform is displayed as
+#148556 ... when it should be #1cae71 (the colour of a green button, ofc the
+green buttons keep their shadows, but im talking about other stuff that use
+a wrong green like for icons and etc)".
+
+Why it happened, because it is worth not repeating: the scale had two greens
+either side of the one everybody means. A green button rests on `bright`
+(#1CAE71), while every plain `bg-space` and `text-space` on the site - the
+online dot, a switch that is on, a success toast, every green icon - took
+`DEFAULT`, the darker one. Two greens, one meaning, and the darker one
+winning everywhere nobody had thought about it.
+
+So `DEFAULT` and `bright` are now the same green. `lift` (the hover) and
+`deep` (the lip under a button) are unchanged - a button still has its
+shadow. **If the Workspace has copied this scale, the green it paints
+anything that is not a button's lip changes with this.**
+
+Also fixed while there: three places on the website asked for
+`rgb(var(--space))` and `rgb(var(--space-bright))`, and **neither token has
+ever existed**. An invalid colour is dropped by CSS, so those elements
+quietly inherited whatever was above them - a green icon that was not green
+and nothing anywhere saying so. They name the colour directly now. If you
+see `var(--space...)` anywhere on your side, it is painting nothing.
+
+### A party is a group chat - migration 0363
+
+Staw: "i meant for the party to be displayed like a groupchat (make that you
+can also chat inside of a party, and parties also have their docks too on
+the website)".
+
+Rather than a party growing messages of its own - a second message table, a
+second unread count, a second realtime channel, a second window - **a party
+has a conversation, and it is an ordinary group conversation.**
+
+- `conversations.party_id` points at the party, `on delete cascade`, so the
+  chat dies with the party and there is no cycle between the two tables.
+- `party_chat(party uuid)` makes it the first time it is asked for, and
+  `my_party_chat()` returns yours. Lazily, because parties already existed
+  when this landed.
+- **Membership is kept in step by a trigger on `party_members`**, not by the
+  four functions that write it. `make_party`, `accept_party_invite`,
+  `leave_party` and `remove_from_party` all move rows there, and a fifth way
+  in would be a fifth place to forget.
+- `my_conversations()` gained a `party_id` column - the return type changed,
+  so the function is dropped and recreated. **Anything of yours that reads
+  it should be re-generated.**
+
+Everything the chat already does works at once: the window, unread counts,
+the list, ignoring somebody, taking a message down, the staff tools, the
+word filter, the machine queue. Nothing new is granted - `messages_send`
+already only asks whether you are in the conversation, and a party member
+is.
+
+**For the Launcher's friends chat:** a party is just a row in
+`my_conversations()` with `party_id` set. Draw it with the party mark and
+the title "Party" rather than whatever `title` holds, open it like any
+group, and the in-game party chat is done.
+
+On the website: the party row carries the party mark in the list and in the
+window's head, the Party tab has a **Chat** button that opens that window,
+and the chat list refreshes the moment the party you are in changes rather
+than waiting for the next message to land.
+
+### Not built
+
+No party voice. No message in a party chat that is a party event ("maker
+joined") - it is a chat, not a log. The party chat has no name of its own
+and cannot be renamed, because it is the party.

@@ -234,8 +234,8 @@ export const bandTone: Record<BehaviourBand, string> = {
 }
 
 export const bandGlow: Record<BehaviourBand, string> = {
-  exemplary: 'shadow-[0_0_24px_-6px_rgb(var(--space)/0.75)]',
-  good: 'shadow-[0_0_24px_-6px_rgb(var(--space)/0.6)]',
+  exemplary: 'shadow-[0_0_24px_-6px_#1CAE71BF]',
+  good: 'shadow-[0_0_24px_-6px_#1CAE7199]',
   mixed: 'shadow-[0_0_24px_-8px_rgb(251_191_36/0.6)]',
   poor: 'shadow-[0_0_24px_-8px_rgb(245_158_11/0.6)]',
   critical: 'shadow-[0_0_24px_-6px_rgb(var(--danger)/0.7)]',

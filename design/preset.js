@@ -115,8 +115,24 @@ export default {
          * `Button.tsx`, not here.
          */
         space: {
-          DEFAULT: '#148556',
-          /** What a green button rests on, and green words on a dark card. */
+          /*
+           * Staw, looking at the platform: "every green on the platform is
+           * displayed as #148556 ... when it should be #1cae71 (the colour
+           * of a green button)".
+           *
+           * He is right, and the reason it happened is that this scale had
+           * two greens either side of the one everybody means. The deep one
+           * sat on DEFAULT, so every plain `bg-space` and `text-space` on
+           * the site - the online dot, a switch that is on, a success
+           * toast, every green icon - took it, while the button beside
+           * them rested on `bright`. Two greens, one meaning, and the
+           * darker one winning everywhere nobody had thought about it.
+           *
+           * So the green is the green. `deep` below is still the lip under
+           * a button, which is the one place a darker one belongs.
+           */
+          DEFAULT: '#1CAE71',
+          /** The same green, for callers that name it rather than rest on it. */
           bright: '#1CAE71',
           /** Brighter still: the hover, so green lifts the way blue does. */
           lift: '#35C98C',
