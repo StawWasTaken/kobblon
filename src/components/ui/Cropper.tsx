@@ -97,7 +97,7 @@ export function Cropper({
       open={open}
       onClose={onCancel}
       title="Cut it to shape"
-      description="Drag the picture and pinch the slider. What is inside the frame is what people see."
+      description="What is inside the frame is what people see."
       footer={
         <>
           <Button variant="ghost" onClick={onCancel}>Cancel</Button>

@@ -234,7 +234,7 @@ function OutfitCard({ outfit, onChanged, onWear }: {
         open={renaming}
         onClose={() => { setRenaming(false); setName(outfit.name) }}
         title="Rename this outfit"
-        description="Only the name moves. What is in it, where it sits and what it sells for all stay as they are."
+        description="Only the name changes."
         size="sm"
         footer={
           <>
@@ -286,7 +286,7 @@ function OutfitCard({ outfit, onChanged, onWear }: {
         open={selling}
         onClose={() => setSelling(false)}
         title={`Sell ${outfit.name}`}
-        description="Anybody who buys it buys every piece they do not already own. Kobblon takes its cut and you take yours on every sale."
+        description="A buyer gets every piece they do not already own."
         size="sm"
         footer={
           <>
@@ -507,7 +507,7 @@ export function Outfits({ onWear }: { onWear: () => void }) {
         open={saving}
         onClose={() => setSaving(false)}
         title="Save this outfit"
-        description="Whatever you have on right now, kept under a name. Your colours go with it."
+        description="What you have on, kept under a name."
         size="sm"
         footer={
           <>

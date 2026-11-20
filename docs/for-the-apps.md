@@ -24608,3 +24608,22 @@ too".
 The shape stays his - a dark bar of pills, the one you are on filled - and
 the fill is Kobblon's blue with `on-art` words on it. One language for
 "this is the one", in all three places.
+
+## Round three hundred and seventy-six - the popups say less
+
+Staw, with a picture of the rename card: "our popup cards have a lot and too
+much wordy stuff and not simple enough, and its not only this card, its most
+of them".
+
+The rule, the same one the copy sweep ran on: **a card says what it is, what
+it will do, and the way to do it.** It does not restate the price that is
+written on its own button, explain a rule nobody asked about, or print a
+balance under every dialog.
+
+Rename, as the example: four sentences and a balance are now one line, a
+field with a short hint, and the button. The balance only appears when it is
+in the way - you cannot afford it.
+
+Fifteen other cards trimmed the same way across Create, the Catalog,
+outfits, uploads, Communities, the staff panels and the cropper. What was
+kept everywhere: what a destructive button actually destroys.

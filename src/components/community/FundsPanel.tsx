@@ -127,7 +127,7 @@ export function FundsPanel({
         open={giving}
         onClose={() => setGiving(false)}
         title={`Give ${currency.plural} to a member`}
-        description="It comes out of the Community's funds and lands in their balance straight away."
+        description="Out of the Community's funds, into theirs."
         footer={
           <>
             <Button variant="ghost" onClick={() => setGiving(false)}>Cancel</Button>

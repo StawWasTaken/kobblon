@@ -258,7 +258,7 @@ function Account() {
         open={renaming}
         onClose={() => setRenaming(false)}
         title="Change your username"
-        description={`It costs ${currency.amount(cost)} and may be done once a day. Your old names stay on your profile.`}
+        description="Once a day. Your old names stay yours."
         footer={
           <>
             <Button variant="ghost" onClick={() => setRenaming(false)}>Cancel</Button>
@@ -278,7 +278,7 @@ function Account() {
           onChange={(e) => setWanted(e.target.value)}
           maxLength={16}
           placeholder={profile.username}
-          hint="3 to 16 letters, numbers or underscores."
+          hint="3-16 letters, numbers or underscores"
         />
 
         {/*
@@ -317,10 +317,6 @@ function Account() {
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted">
-              Nobody else can take one of these. Claiming one back costs the same as any
-              other change.
-            </p>
           </div>
         )}
         {/* The wait first, because it is the one that cannot be solved by
@@ -334,10 +330,13 @@ function Account() {
             </span>
           </p>
         )}
-        <p className={cn('mt-3 text-sm', affordable ? 'text-muted' : 'text-danger')}>
-          You have {currency.amount(profile.pixels)}.
-          {!affordable && ` You need ${cost}.`}
-        </p>
+        {/* Only when it is in the way: a balance printed under every
+            dialog is a number nobody came to read. */}
+        {!affordable && (
+          <p className="mt-3 text-sm text-danger">
+            You have {currency.amount(profile.pixels)}.
+          </p>
+        )}
       </Dialog>
     </Panel>
   )

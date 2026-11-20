@@ -349,7 +349,7 @@ function AskForOne({ open, onClose, onDone }: {
       open={open}
       onClose={onClose}
       title="Ask for a quest"
-      description="One of your published Worlds, on the quest tab, for whoever plays it long enough."
+      description="One of your published Worlds, on the quest tab."
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Not now</Button>

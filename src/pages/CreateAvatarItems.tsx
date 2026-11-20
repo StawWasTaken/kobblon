@@ -1364,7 +1364,7 @@ export function MadeCard({
         open={listing}
         onClose={() => setListing(false)}
         title={`Publish ${item.name}`}
-        description="It goes into the Catalog at this price. You can take it down again whenever you like, for nothing."
+        description="It goes into the Catalog at this price. You can take it down whenever."
         footer={
           <>
             <Button variant="ghost" onClick={() => setListing(false)}>Cancel</Button>
@@ -1417,7 +1417,7 @@ export function MadeCard({
         open={placing}
         onClose={() => setPlacing(false)}
         title={`Where ${item.name} sits`}
-        description="Adjusted on top of where the measuring puts it, so nothing is where it was before you touched it."
+        description="On top of where the measuring puts it."
         footer={
           <>
             <Button variant="ghost" onClick={() => setPlacing(false)}>Cancel</Button>
@@ -1480,7 +1480,7 @@ export function MadeCard({
         open={limiting}
         onClose={() => setLimiting(false)}
         title={item.sells_until ? `When ${item.name} closes` : `Make ${item.name} a limited`}
-        description="After the moment you pick, nobody can buy it. It still exists and everybody who has one keeps it."
+        description="After this, nobody can buy it. Everybody who has one keeps it."
         footer={
           <>
             {item.sells_until && (
@@ -1539,7 +1539,7 @@ export function MadeCard({
         open={editing}
         onClose={() => setEditing(false)}
         title={`Edit ${item.name}`}
-        description="What it is and the picture on it stay as they are. Somebody who bought this bought this."
+        description="The picture and what it is stay as they are."
         footer={
           <>
             <Button variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>

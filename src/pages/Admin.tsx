@@ -2753,7 +2753,7 @@ export function WordsSection() {
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
         title={editing?.id ? 'Edit this pattern' : 'A new pattern'}
-        description="Try it against a line of text before saving it. This list is read against everything anybody types."
+        description="Try it against a line of text before saving it."
       >
         <div className="space-y-3">
           <Input

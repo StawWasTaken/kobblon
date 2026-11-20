@@ -1028,7 +1028,7 @@ export default function MyAvatar() {
         open={keeping}
         onClose={() => setKeeping(false)}
         title="Keep this outfit"
-        description="Whatever you have on right now, kept under a name. Your colours go with it."
+        description="What you have on, kept under a name."
         size="sm"
         footer={
           <>

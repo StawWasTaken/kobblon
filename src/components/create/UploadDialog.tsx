@@ -164,7 +164,7 @@ export function UploadDialog({
       open={open}
       onClose={onClose}
       title="Upload to the Creator Hub"
-      description="Decals, sounds, video, fonts and meshes. A mesh may be 100 MB; everything else 25 MB."
+      description="A mesh may be 100 MB; everything else 25 MB."
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>

@@ -606,7 +606,7 @@ export default function AssetPage() {
         open={deleting}
         onClose={() => setDeleting(false)}
         title={`Delete ${asset.name}?`}
-        description="This takes the file away as well. Anything already using it stops working, and the number is not given out again."
+        description="The file goes too. Anything using it stops working."
         size="sm"
         footer={
           <>

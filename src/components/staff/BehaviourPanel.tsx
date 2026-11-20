@@ -160,7 +160,7 @@ export function BehaviourPanel({ personId, username, rank }: {
         open={asking}
         onClose={() => setAsking(false)}
         title={`Clear @${username}'s record?`}
-        description="Everything on record stops counting against them and their bar goes back to a hundred. The decisions stay readable on their status page."
+        description="Nothing on record counts against them any more. The decisions stay readable."
       >
         <div className="space-y-3">
           <p className="flex items-start gap-3 rounded-xl border-2 border-b-4 border-warn/40 bg-warn/10 p-3 text-sm leading-relaxed text-white/80">
