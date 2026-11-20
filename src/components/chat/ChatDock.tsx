@@ -364,7 +364,7 @@ function Window({
                * where the conversation gives up the difference instead.
                */
               collapsed
-                ? 'h-12'
+                ? 'h-14'
                 : card
                   ? 'h-[45rem] max-h-[85vh]'
                   : DOCK_TALL,
@@ -388,7 +388,7 @@ function Window({
          * darker than the card in the dark and lighter in daylight, which
          * is the same idea said in a way both themes can answer.
          */
-        full ? 'h-11' : 'h-12',
+        full ? 'h-12' : 'h-14',
       )}>
         {details ? (
           <>
@@ -408,13 +408,27 @@ function Window({
             aria-expanded={!collapsed}
           >
             {/*
-              * Who it is with, small and unpainted. It had been a tinted
-              * tile; the applications' chat head carries nothing but its
-              * title, and a dock carries this much only because there can
-              * be two of them open and they have to be told apart.
+              * Who it is with, and what they are doing.
+              *
+              * Staw wants the feel of Xbox's chat here, and the thing
+              * Xbox's head does that ours did not is answer the second
+              * question: a name on its own tells you which window this
+              * is, and a name with "In a World" under it tells you
+              * whether there is any point typing. The picture is the
+              * conversation's - a face for a person, the mark on white
+              * for a party or a group.
               */}
-            <ConversationFace conversation={conversation} size="xs" />
-            <span className="truncate text-note font-extrabold tracking-wide text-white">{name}</span>
+            <ConversationFace conversation={conversation} size="sm" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-note font-extrabold tracking-wide text-white">
+                {name}
+              </span>
+              {solo && (
+                <span className="block truncate text-mini leading-tight">
+                  <LivePresenceLabel person={solo} />
+                </span>
+              )}
+            </span>
           </button>
         )}
 
@@ -574,7 +588,7 @@ function Window({
             * sideways. The applications hit it first; Staw: "just make it
             * so we cant scroll to the right".
             */}
-          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-2.5 kob-scroll">
+          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden bg-ink px-2.5 py-2.5 kob-scroll">
             {loading && (
               <div className="space-y-2">
                 {[0, 1].map((i) => <Skeleton key={i} className="h-8 w-2/3" />)}

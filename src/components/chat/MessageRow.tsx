@@ -163,8 +163,15 @@ export function MessageRow({
         grouped ? 'mt-0.5' : 'mt-2',
       )}
     >
-      {/* One picture per run of messages; the rest line up under it. */}
-      {grouped ? (
+      {/*
+        * One picture per run, and none at all on your own.
+        *
+        * Your own face beside your own words, once a line, is the thing
+        * that made this read as a wall of furniture: you know who you
+        * are. Xbox does not draw it either. The side the bubble sits on
+        * is what says who is talking, which is all a chat needs.
+        */}
+      {mine ? null : grouped ? (
         <span className="w-6 shrink-0" aria-hidden="true" />
       ) : (
         <Link
@@ -176,7 +183,7 @@ export function MessageRow({
         </Link>
       )}
 
-      <div className={cn('flex min-w-0 max-w-[78%] flex-col', mine && 'items-end')}>
+      <div className={cn('flex min-w-0 max-w-[82%] flex-col', mine && 'items-end')}>
         {/*
           * Who said it and when, over the first bubble of a run.
           *
@@ -197,16 +204,22 @@ export function MessageRow({
           * there, not the words inside it that are reversed.
           */}
         {!grouped && !editing && (
-          <span className="mb-0.5 flex max-w-full items-center gap-1 px-1 text-mini leading-none">
-            <span
-              className="truncate font-extrabold"
-              style={{ color: colourOf(message.sender_id, sender?.display_name) }}
-            >
-              {sender?.display_name ?? 'Somebody'}
+          mine ? (
+            /* Your own name over your own words says nothing. The time
+               alone, quiet, so a run still has a when. */
+            <Ago at={message.created_at} className="mb-0.5 px-1 text-mini font-bold leading-none text-muted/60" />
+          ) : (
+            <span className="mb-0.5 flex max-w-full items-center gap-1 px-1 text-mini leading-none">
+              <span
+                className="truncate font-extrabold"
+                style={{ color: colourOf(message.sender_id, sender?.display_name) }}
+              >
+                {sender?.display_name ?? 'Somebody'}
+              </span>
+              <NameMarks id={message.sender_id} className="text-[0.9em]" />
+              <Ago at={message.created_at} className="shrink-0 font-bold text-muted/70" />
             </span>
-            <NameMarks id={message.sender_id} className="text-[0.9em]" />
-            <Ago at={message.created_at} className="shrink-0 font-bold text-muted/70" />
-          </span>
+          )
         )}
 
         {editing ? (
@@ -271,11 +284,11 @@ export function MessageRow({
                * somebody being ignored is blurred and has to be pressed,
                * and that needs a shape to press.
                */
-              !(sticker && !hidden) && 'rounded-2xl px-3 py-1.5',
+              !(sticker && !hidden) && 'rounded-2xl px-3 py-2',
               // The top corner nearest the avatar is cut short, so the bubble
               // points at whoever said it rather than floating beside them.
               !(sticker && !hidden) && (mine ? 'rounded-tr-[5px]' : 'rounded-tl-[5px]'),
-              !(sticker && !hidden) && (mine ? 'bg-brand text-on-art' : 'bg-ink-hover text-white/90'),
+              !(sticker && !hidden) && (mine ? 'bg-brand text-on-art' : 'bg-bubble text-bubble-ink'),
               hidden && 'cursor-pointer select-none',
             )}
             onClick={hidden ? () => setShown(true) : undefined}

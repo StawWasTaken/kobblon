@@ -25137,3 +25137,40 @@ untouched; that is the one that says they are here.
 Both `LivePresenceLabel` and `PersonLine` do this, so anywhere the Workspace
 draws a status line from a thought, the same rule applies: a face replaces
 the dot, it does not sit next to it.
+
+## Round three hundred and eighty-five - the chat window, quieted
+
+Staw: the friends chat dock "sucks and not very harmonized with the one we
+have on the launcher"; he wants the feel of Xbox's chat, in our design,
+"not a copy" of yours.
+
+What was actually wrong, from his own screenshot: **every message carried a
+name, a set of marks, a time and a picture - including his own.** Three
+messages filled a window and two thirds of it was furniture.
+
+What changed:
+
+- **Your own messages have no picture and no name.** You know who you are,
+  and the side a bubble sits on is what says who is talking. Xbox does not
+  draw it either. Just the time, quiet, over the first bubble of a run.
+- **Their messages keep all of it, once per run** - picture, name in their
+  own colour, marks, time - which is the order a line of chat reads in a
+  World, so the two still match.
+- **The window's head answers two questions, not one.** The picture, the
+  name, and under it what they are doing: In a World, building, their
+  thought. A name tells you which window this is; a name with "In a World"
+  under it tells you whether there is any point typing.
+- **The thread sits on the page colour** rather than the card's, so the
+  bubbles read as things lying on it.
+
+### A token that was never exposed
+
+`--bubble` and `--on-bubble` have been in `design/tokens.css` since the chat
+was built and were **never added to `design/preset.js`**, so `bg-bubble`
+was a class that painted nothing. They are exposed now as `bubble` and
+`bubble.ink`.
+
+Worth knowing on your side: a Tailwind class for a colour that is not in the
+preset does not fail, it does nothing - the element keeps whatever is behind
+it. That reads as "the bubbles are gone", not as a missing token, which is
+why it survived.

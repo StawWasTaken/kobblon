@@ -34,6 +34,19 @@ export default {
            */
           edge: 'rgb(var(--ink-edge) / <alpha-value>)',
         },
+        /*
+         * What somebody else's chat bubble is filled with.
+         *
+         * `--bubble` and `--on-bubble` have been in the tokens since the
+         * chat was built and were never exposed here, so `bg-bubble`
+         * painted nothing at all - a class that does nothing leaves the
+         * bubble the colour of whatever is behind it, which reads as "the
+         * bubbles are gone" rather than as a missing token.
+         */
+        bubble: {
+          DEFAULT: 'rgb(var(--bubble) / <alpha-value>)',
+          ink: 'rgb(var(--on-bubble) / <alpha-value>)',
+        },
         /** The fill of a thought bubble, and the edge under it. */
         thought: {
           DEFAULT: 'rgb(var(--thought) / <alpha-value>)',
