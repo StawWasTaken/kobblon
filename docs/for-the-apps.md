@@ -24518,3 +24518,10 @@ Two columns instead of three: the body, and everything that goes on it.
 If the Workspace or the Launcher ever draws a dressing screen, this is the
 shape to copy: the figure on one side, tabs over a grid on the other, and
 nothing floating on top of the figure.
+
+## Round three hundred and seventy-two - the flat body is not cut any more
+
+The 2D view drew the picture edge to edge in the stage, so its feet met the
+bar under the viewport and the 2D/3D switch lay across its shins. It is
+contained with room round it now, and more of that room at the bottom where
+the switch sits. The 3D view is unchanged.

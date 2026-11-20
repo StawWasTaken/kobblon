@@ -604,12 +604,21 @@ export default function MyAvatar() {
                   * place.
                   */}
                 {mode === 'picture' && (
-                  <div className="absolute inset-0 grid place-items-center">
+                  /*
+                    * Room round the picture, and more of it at the bottom
+                    * where the 2D/3D switch sits. The flat body was drawn
+                    * edge to edge in the frame, so its feet met the bar
+                    * under the stage and the switch lay across its shins -
+                    * Staw: "make that the 2d image isnt cut by the ui".
+                    */
+                  <div className="absolute inset-0 grid place-items-center p-3 pb-14">
                     {flat
                       ? (
-                        <div className="aspect-square h-full">
-                          <img src={flat} alt="" className="h-full w-full object-contain" />
-                        </div>
+                        <img
+                          src={flat}
+                          alt=""
+                          className="max-h-full max-w-full object-contain"
+                        />
                       )
                       : <p className="text-sm text-muted">Drawing…</p>}
                   </div>
