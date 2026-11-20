@@ -25237,3 +25237,29 @@ holding one for a week is a Play button pointed at nobody.
 **`my_party()` is volatile now, not stable.** The shape of what comes back
 is identical; if anything of yours caches it on the assumption it is a pure
 read, that assumption was already wrong - it can now change the database.
+
+## Round three hundred and eighty-seven - the last of the dock tidy-up
+
+Small round, and nothing in it changes a signature or a payload. All of
+round 386's migrations are applied now (`0364_a_party_of_one_lets_go.sql`
+included, so the five-minute lonely-party rule is live in production, not
+just written); the file has moved into `supabase/migrations/applied/` and
+there is nothing pending on this side.
+
+What changed on the website:
+
+- **The phone sheets are the same colour as the docks.** The full-screen
+  chat and the new-group sheet were on `--ink`; everything else in the
+  friends chat was on `--ink-card` (`#1a1a20`). One background now, topbar
+  and body, on desktop and on a phone.
+- **The phone topbar matches the desktop one**: the chat-bubble mark, and
+  "Friends chat" rather than "Friends Chat". Inside a conversation it says
+  "Chat", because the conversation's own name is on the row under it.
+- The pinned party strip sits on the same `#1a1a20` as the list instead of
+  a raised panel; the green edge band is what marks it, not a different
+  colour of card.
+
+Nothing for you to copy unless your Launcher dock still paints its phone
+or full-screen state a different shade from its docked state - that was
+the whole of the bug here, and it only shows up when the two are open
+side by side.

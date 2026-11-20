@@ -314,7 +314,7 @@ export function PartyStrip({ names, asked, going, onOpen }: {
   return (
     <button
       onClick={onOpen}
-      className="group relative flex w-full items-center gap-2.5 overflow-hidden border-b-2 border-ink-line bg-ink-raised px-3 py-2.5 text-left transition-colors hover:bg-ink-hover"
+      className="group relative flex w-full items-center gap-2.5 overflow-hidden border-b-2 border-ink-line bg-ink-card px-3 py-2.5 text-left transition-colors hover:bg-ink-hover"
     >
       <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-space" />
 

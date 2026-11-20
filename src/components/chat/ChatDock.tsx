@@ -4,6 +4,7 @@ import {
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
 import {
   faXmark, faPenToSquare,
   faGear, faArrowLeft, faPen, faRightFromBracket, faCheck,
@@ -1101,7 +1102,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
             * changed, nothing on screen, no error.
             */}
           {making && (
-            <div className="fixed inset-0 z-[65] flex flex-col bg-ink">
+            <div className="fixed inset-0 z-[65] flex flex-col bg-ink-card">
               <NewGroupDialog
                 full
                 onClose={() => setMaking(false)}
@@ -1114,7 +1115,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
           )}
 
           {phone && (
-            <div className="fixed inset-0 z-[60] flex flex-col bg-ink">
+            <div className="fixed inset-0 z-[60] flex flex-col bg-ink-card">
               <div className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line px-3">
                 <button
                   type="button"
@@ -1124,7 +1125,12 @@ export function ChatDock({ children }: { children: ReactNode }) {
                 >
                   <Glyph icon={phone === 'list' ? faXmark : faArrowLeft} />
                 </button>
-                <p className="flex-1 font-display text-sm font-bold">Friends Chat</p>
+                {phone === 'list' && (
+                  <Icon name="chatbubble" className="h-4 w-4" />
+                )}
+                <p className="flex-1 font-display text-sm font-bold tracking-wide">
+                  {phone === 'list' ? 'Friends chat' : 'Chat'}
+                </p>
                 {phone === 'list' && (
                   <button
                     type="button"
