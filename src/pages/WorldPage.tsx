@@ -3,27 +3,21 @@ import { ClipShelf } from '@/components/clips/ClipCard'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import { Icon } from '@/components/brand/Icon'
 import {
-  faPlay, faStar, faBell, faFlag, faSliders, faFilm, faBookmark, faEye,
-  faClockRotateLeft, faFlagCheckered,
-  faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCompass,
+  faFlag, faFilm, faXmark, faSpinner, faDownload, faUsers, faCompass,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Menu } from '@/components/ui/Menu'
 import { Tabs } from '@/components/ui/Tabs'
-import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { Avatar } from '@/components/ui/Avatar'
 import { NameMarks } from '@/components/brand/Verified'
-import { RatingBar } from '@/components/worlds/RatingBar'
 import { Reactions } from '@/components/social/Reactions'
 import { reactionsOn, inTheKlub } from '@/lib/api'
 import { WorldGallery, type Shot } from '@/components/worlds/WorldStage'
+import { WorldPanel } from '@/components/worlds/WorldPanel'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { ServersTab } from '@/components/worlds/ServersTab'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
@@ -45,9 +39,7 @@ import {
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
-import { formatCount, timeAgo } from '@/lib/format'
 import { deviceLabels } from '@/lib/kinds'
-import { cn } from '@/lib/cn'
 import { DEFAULT_WORLD_THUMBNAIL, worldEmblem } from '@/lib/worldart'
 import { asset } from '@/lib/asset'
 
@@ -540,164 +532,38 @@ export default function WorldPage() {
 
           {/* The panel that does something: the rating, the way in, what it
               is, and the numbers - in the order somebody reads them. */}
-          <aside className="flex min-w-0 flex-col gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
-            <RatingBar
-              likes={counts.likes}
-              dislikes={counts.dislikes}
-              iLike={opinion === true}
-              iDislike={opinion === false}
-              disabled={!canRate}
-              why={!profile
-                ? 'Sign in to rate this World.'
-                : 'Play this World before rating it.'}
-              onLike={like}
-              onDislike={dislike}
-            />
-
-            {/* Play is the width Staw sent, not the width of the column:
-                a button that fills its box reads as a banner. The three
-                beside it are the same height, so the row is one block. */}
-            <div className="flex items-stretch gap-2">
-              <Button
-                size="lg"
-                variant="enter"
-                onClick={() => start()}
-                className="w-40 shrink-0"
-              >
-                <Glyph icon={faPlay} />
-                <span className="font-display text-lg font-extrabold">Play</span>
-              </Button>
-
-              <Tooltip
-                label={profile ? (favourited ? 'Saved' : 'Save this World') : 'Sign in to save it'}
-                side="top"
-              >
-                <button
-                  onClick={keep}
-                  disabled={!profile}
-                  aria-pressed={favourited}
-                  aria-label="Save this World"
-                  className={cn(
-                    'grid flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line',
-                    'bg-ink-raised transition-colors disabled:opacity-40',
-                    favourited ? 'text-gem-bright' : 'text-white/70 hover:border-brand/60 hover:text-white',
-                  )}
-                >
-                  <Glyph icon={faStar} on={favourited} />
-                </button>
-              </Tooltip>
-
-              <Tooltip
-                label={profile
-                  ? (notify
-                    ? 'You will be told when this World changes'
-                    : 'Get told when this World changes')
-                  : 'Sign in to be told'}
-                side="top"
-              >
-                <button
-                  onClick={tell}
-                  disabled={!profile}
-                  aria-pressed={notify}
-                  aria-label="Get told when this World changes"
-                  className={cn(
-                    'grid flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line',
-                    'bg-ink-raised transition-colors disabled:opacity-40',
-                    notify ? 'text-link' : 'text-white/70 hover:border-brand/60 hover:text-white',
-                  )}
-                >
-                  <Glyph icon={faBell} />
-                </button>
-              </Tooltip>
-
-              <Menu
-                label="More"
-                align="right"
-                trigger={
-                  <span className="grid h-full flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 text-white/70 transition-colors hover:border-brand/60 hover:text-white">
-                    <Glyph icon={faEllipsis} />
-                  </span>
-                }
-                items={[
-                  {
-                    label: 'Copy link',
-                    icon: faLink,
-                    onSelect: () => {
-                      void navigator.clipboard?.writeText(window.location.href)
-                      toast('Link copied.', 'success')
-                    },
-                  },
-                  ...(mine ? [
-                    { label: 'Edit the page', icon: faSliders, to: `/create/worlds/${thing.id}` },
-                    {
-                      label: 'Open in Workspace',
-                      icon: faCube,
-                      onSelect: () => { void editInWorkspace(thing.id, () => setHanding('missing')) },
-                    },
-                  ] : []),
-                  { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
-                ]}
-              />
-            </div>
-
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/75">
-              {thing.description || 'Whoever built this has not described it yet.'}
-            </p>
-
-            {/* The numbers, each with the mark that means it elsewhere on
-                this platform: Staw's `playing` for people in there now, the
-                Library's bookmark for saves, an eye for visits, a clock
-                turned back for the last update. */}
-            <dl className="space-y-2 border-t-2 border-ink-line pt-3 text-sm">
-              <Fact
-                mark={<Icon name="playing" className="h-4 w-4" />}
-                label="Playing now"
-                value={formatCount(playing_now)}
-                live={playing_now > 0}
-              />
-              <Fact mark={<Glyph icon={faEye} />} label="Visits" value={formatCount(thing.visit_count)} />
-              <Fact mark={<Glyph icon={faBookmark} />} label="Saved" value={formatCount(counts.favourites)} />
-              <Fact
-                mark={<Glyph icon={faClockRotateLeft} />}
-                label="Updated"
-                value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
-              />
-              <Fact
-                mark={<Glyph icon={faFlagCheckered} />}
-                label="Published"
-                value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
-              />
-            </dl>
-
-            {/* Friends in a server of this World at this moment - not
-                friends who have ever played it. The two are different
-                numbers and only this one is worth interrupting somebody
-                for. */}
-            {!!friendsHere.length && (
-              <div className="border-t-2 border-ink-line pt-3">
-                <p className="text-tiny font-extrabold uppercase tracking-wide text-muted">
-                  Friends in there now
-                </p>
-                <div className="mt-2 flex -space-x-2">
-                  {friendsHere.slice(0, 6).map((one) => (
-                    <Avatar
-                      key={one.id}
-                      size="sm"
-                      personId={one.id}
-                      src={one.avatar_url}
-                      changedAt={one.avatar_changed_at}
-                      name={one.display_name ?? one.username}
-                    />
-                  ))}
-                  {friendsHere.length > 6 && (
-                    <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-ink-line bg-ink-raised text-mini font-bold">
-                      +{friendsHere.length - 6}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </aside>
+          <WorldPanel
+            description={thing.description}
+            likes={counts.likes}
+            dislikes={counts.dislikes}
+            opinion={opinion}
+            canRate={canRate}
+            whyNotRate={!profile
+              ? 'Sign in to rate this World.'
+              : 'Play this World before rating it.'}
+            onLike={like}
+            onDislike={dislike}
+            onPlay={() => start()}
+            favourited={favourited}
+            onFavourite={keep}
+            notify={notify}
+            onNotify={tell}
+            signedIn={!!profile}
+            mine={mine}
+            editTo={`/create/worlds/${thing.id}`}
+            onWorkspace={() => { void editInWorkspace(thing.id, () => setHanding('missing')) }}
+            onCopyLink={() => {
+              void navigator.clipboard?.writeText(window.location.href)
+              toast('Link copied.', 'success')
+            }}
+            onReport={() => setReporting(true)}
+            playingNow={playing_now}
+            visits={thing.visit_count}
+            favourites={counts.favourites}
+            updatedAt={thing.updated_at}
+            publishedAt={thing.published_at}
+            friendsHere={friendsHere}
+          />
         </div>
 
         {/*
@@ -858,30 +724,5 @@ function Chip({ children }: { children: React.ReactNode }) {
     <span className="rounded-full border-2 border-ink-line bg-ink-card px-3 py-1 text-xs font-bold text-white/70">
       {children}
     </span>
-  )
-}
-
-/** One number in the panel, with the mark that means it everywhere else. */
-function Fact({ mark, label, value, live }: {
-  mark: React.ReactNode
-  label: string
-  value: string
-  live?: boolean
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <dt className="flex items-center gap-2 text-white/55">
-        <span className={cn(
-          'grid h-5 w-5 shrink-0 place-items-center',
-          live ? 'text-space' : 'text-white/45',
-        )}>
-          {mark}
-        </span>
-        {label}
-      </dt>
-      <dd className={cn('font-extrabold tabular-nums', live ? 'text-space' : 'text-white/85')}>
-        {value}
-      </dd>
-    </div>
   )
 }

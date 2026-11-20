@@ -25353,3 +25353,18 @@ What that means for you:
   so and the block goes in.
 
 Nothing in `@/lib/api` changed in this round, so no call of yours moves.
+
+## Round three hundred and ninety-one - the panel is a component, and `Menu` takes a className
+
+Two things came out of shipping the store page, both shared:
+
+- **`WorldPanel`** (`@/components/worlds/WorldPanel`) is the panel beside a
+  World's pictures: rating, Play, save, notify, more, description, the
+  numbers, friends in there now. It holds no state and fetches nothing -
+  every number and every handler is a prop - so it mounts anywhere,
+  including in the Launcher's World view if you want the same block there.
+  `tools/site/worldpage-preview` mounts it beside `WorldGallery` with
+  nothing around it.
+- **`Menu` takes a `className`**, applied to its wrapper. It was a block
+  box of its own content, so a "..." trigger in a row of stretched buttons
+  came out short. Nothing changes for an existing call that passes none.

@@ -35,12 +35,18 @@ const WIDTH = 224
 
 /** The menu behind a "..." button. */
 export function Menu({
-  label, trigger, items, align = 'right', arrow = false,
+  label, trigger, items, align = 'right', arrow = false, className,
 }: {
   label: string
   trigger: ReactNode
   items: MenuItem[]
   align?: 'left' | 'right'
+  /**
+   * What the wrapper around the trigger is, for a row that sizes its
+   * children. Without it the menu is a block box of its own content and a
+   * "..." button in a row of stretched buttons comes out short.
+   */
+  className?: string
   /**
    * Draw the little arrow pointing back at the button.
    *
@@ -117,7 +123,7 @@ export function Menu({
     'flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-ink-hover'
 
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className={cn('relative', className)}>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
