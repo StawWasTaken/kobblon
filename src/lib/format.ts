@@ -53,3 +53,19 @@ const VIEW_FACTOR = 10
 export function forumViews(count: number): string {
   return formatCount(Math.round((count ?? 0) * VIEW_FACTOR))
 }
+
+/**
+ * Seconds in a World, as a person would say them.
+ *
+ * Minutes under an hour, then one decimal up to ten hours - the difference
+ * between 1.4 and 1.9 is most of an evening - then whole hours, because
+ * nobody reads 247.3.
+ */
+export function playedFor(seconds: number): string {
+  if (!seconds || seconds < 60) return 'under a minute'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} min`
+  const hours = seconds / 3600
+  if (hours < 10) return `${(Math.floor(hours * 10) / 10).toFixed(1)} h`
+  return `${formatCount(Math.floor(hours))} h`
+}

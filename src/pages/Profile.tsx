@@ -20,6 +20,7 @@ import { ReportDialog } from '@/components/social/ReportDialog'
 import { SendBrixDialog } from '@/components/social/SendBrixDialog'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { BadgeTile } from '@/components/social/BadgeGrid'
+import { Playtime } from '@/components/profile/Playtime'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { worldIcon } from '@/lib/naming'
@@ -42,6 +43,7 @@ import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   addressNow, discordHandleOf, getProfileByUsername, getProfileOverview, isFollowing, listEarnedBadges, peopleList,
+  playtimeOf, playtimeTotal, playerScore, listEarnedWorldBadges,
   listFavouriteWorlds,
   listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
@@ -50,7 +52,7 @@ import {
   getThought, setThought, clearThought,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
-import { communityLink, profileLink } from '@/lib/links'
+import { communityLink, profileLink, worldLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 import { GoneProfile } from '@/components/social/GoneProfile'
 import { avatarOf, goneHandle, isGone } from '@/lib/avatars'
@@ -149,6 +151,18 @@ export default function Profile() {
     [user?.id, isMe],
   )
   const badges = useAsync(async () => (user ? listEarnedBadges(user.id) : []), [user?.id])
+  const worldBadges = useAsync(
+    async () => (user ? listEarnedWorldBadges(user.id) : []),
+    [user?.id],
+  )
+  /*
+   * The hours and the number. One ask, because they are read as one thing
+   * and two spinners landing a beat apart in the same block reads as the
+   * page thinking twice about the same question.
+   */
+  const hours = useAsync(async () => (user ? Promise.all([
+    playtimeOf(user.id), playtimeTotal(user.id), playerScore(user.id),
+  ]) : null), [user?.id])
   // Their handle, if they have said you may have it. The database decides.
   const handle = useAsync(
     async () => (user?.discord_display ? discordHandleOf(user.id) : null),
@@ -1028,11 +1042,59 @@ export default function Profile() {
             </section>
           )}
 
-          {!!badges.data?.length && (
+          {/*
+            * Hours, and the number they add up to.
+            *
+            * Staw's note: Steam's hook is the hours, Xbox's is the score,
+            * and we had per-World badges that added up to nothing. It sits
+            * above Badges because it is the same sentence - what they have
+            * put in, then what they got for it.
+            *
+            * Drawn once there is something to draw. A profile that has
+            * never played says "under a minute" and a zero, which is a way
+            * of telling somebody they have done nothing.
+            */}
+          {!!hours.data && (hours.data[1] > 0 || hours.data[2] > 0) && (
             <section>
-              <Heading icon={faAward}>Badges</Heading>
+              <Heading icon={faClock}>Hours</Heading>
+              <Playtime
+                worlds={hours.data[0]}
+                total={hours.data[1]}
+                score={hours.data[2]}
+                loading={hours.loading}
+              />
+            </section>
+          )}
+
+          {!!(badges.data?.length || worldBadges.data?.length) && (
+            <section>
+              <Heading icon={faAward} aside={
+                hours.data?.[2]
+                  ? <span className="text-xs font-bold text-muted tabular-nums">
+                      {formatCount(hours.data[2])} score
+                    </span>
+                  : undefined
+              }>
+                Badges
+              </Heading>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-                {badges.data.map((badge) => (
+                {worldBadges.data?.map((badge) => (
+                  <Link
+                    key={badge.id}
+                    to={worldLink({
+                      content_id: badge.world_content_id ?? 0,
+                      slug: badge.world_slug,
+                      name: badge.world_name,
+                    })}
+                  >
+                    <BadgeTile
+                      badge={{ ...badge, awarded_count: 0 }}
+                      earned
+                      className="h-full transition-colors hover:border-brand/60"
+                    />
+                  </Link>
+                ))}
+                {badges.data?.map((badge) => (
                   <Link key={badge.id} to={`/u/${badge.space_owner}/${badge.space_slug}`}>
                     <BadgeTile
                       badge={{ ...badge, awarded_count: 0 }}

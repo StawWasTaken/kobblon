@@ -1560,6 +1560,73 @@ export async function listEarnedBadges(userId: string): Promise<EarnedBadge[]> {
   return unwrap(await supabase.rpc('earned_badges', { target: userId })) ?? []
 }
 
+// ------------------------------------------------------- hours and score
+
+/** One World and how long somebody has been in it. */
+export type Playtime = {
+  world_id: string
+  content_id: number | null
+  name: string
+  slug: string | null
+  cover_url: string | null
+  creator_username: string | null
+  seconds: number
+  last_at: string
+}
+
+/** A badge a World has handed somebody. */
+export type EarnedWorldBadge = {
+  id: string
+  name: string
+  description: string | null
+  icon_url: string | null
+  awarded_at: string
+  world_name: string
+  world_slug: string | null
+  world_content_id: number | null
+  world_creator: string | null
+}
+
+/** The Worlds somebody has spent the most time in. */
+export async function playtimeOf(userId: string, howMany = 8): Promise<Playtime[]> {
+  return (unwrap(await supabase.rpc('playtime_of', {
+    target: userId, limit_count: howMany,
+  })) as Playtime[]) ?? []
+}
+
+/** Their lifetime total, in seconds, Worlds that are gone included. */
+export async function playtimeTotal(userId: string): Promise<number> {
+  return Number(unwrap(await supabase.rpc('playtime_total', { target: userId })) ?? 0)
+}
+
+/** How long you have been in one World. */
+export async function myPlaytimeIn(worldId: string): Promise<number> {
+  return Number(unwrap(await supabase.rpc('my_playtime_in', { wanted: worldId })) ?? 0)
+}
+
+/** Ten a badge, of either kind. */
+export async function playerScore(userId: string): Promise<number> {
+  return Number(unwrap(await supabase.rpc('player_score', { target: userId })) ?? 0)
+}
+
+export async function listEarnedWorldBadges(userId: string): Promise<EarnedWorldBadge[]> {
+  return (unwrap(await supabase.rpc('earned_world_badges', { target: userId })) as EarnedWorldBadge[]) ?? []
+}
+
+/** Which of a World's badges you hold. */
+export async function myWorldBadges(worldId: string): Promise<string[]> {
+  const rows = unwrap(await supabase.rpc('my_world_badges', { wanted: worldId })) as
+    { badge_id: string }[] | null
+  return (rows ?? []).map((row) => row.badge_id)
+}
+
+/** Hand one of your World's badges to somebody. True the first time only. */
+export async function awardWorldBadge(badgeId: string, recipientId: string): Promise<boolean> {
+  return unwrap(await supabase.rpc('award_world_badge', {
+    badge: badgeId, recipient: recipientId,
+  })) as boolean
+}
+
 // ------------------------------------------------------------- communities
 
 export async function getProfileOverview(userId: string): Promise<ProfileOverview> {

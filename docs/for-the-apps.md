@@ -24627,3 +24627,103 @@ in the way - you cannot afford it.
 Fifteen other cards trimmed the same way across Create, the Catalog,
 outfits, uploads, Communities, the staff panels and the cropper. What was
 kept everywhere: what a destructive button actually destroys.
+
+## Round three hundred and seventy-seven - hours, and a score
+
+Staw: "Steam's hook is hours, Xbox's is score. We have per-World badges that
+add up to nothing."
+
+Two migrations, **0359** and **0360**, both yours to build against.
+
+### Hours
+
+New table `world_playtime (user_id, world_id, seconds, first_at, last_at)`.
+Read by anybody, written by nothing but the heartbeat - no insert or update
+is granted to any role, so a hand-written request cannot award itself a
+thousand hours.
+
+**Nothing new has to be sent.** `still_in_world` already turned the gap
+between two heartbeats into seconds; it now sends that same number to the
+playtime table as well as to quests. The gap is capped at `stale_after()`
+(90 seconds), so a shut lid credits the window rather than the hour, and a
+heartbeat every millisecond credits a millisecond. The total can never run
+faster than real time.
+
+`left_world_server` now credits the last stretch before it deletes the row.
+It was a bare delete, so every session was losing up to 90 seconds - on a
+short visit, most of the visit. **It is worth calling on the way out**; if
+the Launcher only has it on a clean quit, the tail of a crash-exit is lost
+and nothing else breaks.
+
+Reading it back:
+
+- `playtime_of(target uuid, limit_count int default 8)` - world id,
+  content_id, name, slug, cover, creator, seconds, last_at. Published
+  Worlds only.
+- `playtime_total(target uuid) -> bigint` - everything, taken-down Worlds
+  included.
+- `my_playtime_in(world uuid) -> bigint` - your own hours in one World.
+
+### One thing that was broken, found doing this
+
+**`still_in_world` has not been counting anything since 0334.** 0264 made it
+the only thing on the platform that turns heartbeats into seconds; 0334
+replaced it to add the standing check and wrote the counting out. Nothing
+threw, nothing logged, and every `world_time` quest on the platform has sat
+at zero ever since. If the Workspace or the Launcher shows quest progress,
+that is why it never moved. 0359 restores it, standing check and all.
+
+This is the project's own trap in a new coat: a replacement that kept what
+the file in front of it was about and dropped what the last one was.
+
+### The score
+
+World badges existed from 0166 and **nobody could ever earn one**: badges,
+passes, pass holders, and no awards table. Now:
+
+- `world_badge_awards (badge_id, user_id, awarded_at)`.
+- `award_world_badge(badge uuid, recipient uuid) -> boolean` - **the
+  World's owner only**, which is who the Workspace is signed in as. True the
+  first time, false on a repeat, and the awarded count moves with the award
+  because both happen inside the function. It also posts the notification.
+- `my_world_badges(world uuid)` - which of a World's badges you hold, for
+  drawing a shelf with the earned ones lit.
+- `earned_world_badges(target uuid, limit_count int default 24)`.
+- `badge_points()` - what one badge is worth. **Ten**, flat, in one place so
+  the day it stops being flat there is one thing to change.
+- `player_score(target uuid) -> integer` - ten times every badge they hold,
+  of either kind. Badges from Worlds that were taken down still count.
+
+If the Workspace lets a creator define badges, `award_world_badge` is the
+door; there is no other way in and a direct insert is refused.
+
+### Two grants that were never written
+
+`space_badges` and `badge_awards` have had row-level security and a policy
+saying "anybody may read this" since 0008, and no grant of their own.
+Supabase's bootstrap grants the public schema, so whether they have been
+reachable live depends on that rather than on anything in this repository.
+0360 says it where the policies are. No-op where the bootstrap already did.
+
+### On the website
+
+A profile gains an **Hours** block above Badges: two tiles (Played, Score)
+and the Worlds they have put the most time into, each with a bar as long as
+its share of the biggest. It is drawn only once there is something to draw -
+"under a minute" and a zero is a way of telling somebody they have done
+nothing.
+
+Badges now shows World badges beside Space ones, with the score on the
+heading.
+
+`playedFor(seconds)` in `@/lib/format` is the shared wording: minutes under
+an hour, one decimal up to ten hours, whole hours after. `Playtime` in
+`@/components/profile/Playtime` takes its rows as props and mounts with no
+providers - `tools/site/playtime-preview.html`.
+
+### Not built
+
+No hours on a World's own page yet (`my_playtime_in` is there for it), no
+leaderboard by hours, no score anywhere but a profile, and no screen
+anywhere that awards a World badge - that is the Workspace's to put
+somewhere, and the function is waiting for it.
