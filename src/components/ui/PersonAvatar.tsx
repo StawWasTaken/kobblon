@@ -2,7 +2,7 @@ import { faHammer } from '@fortawesome/free-solid-svg-icons'
 import { PresenceLabel, StatusDot, presenceWords } from '@/components/ui/StatusDot'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
-import { ThoughtLine } from '@/components/profile/Thought'
+import { ThoughtLine, faceOf } from '@/components/profile/Thought'
 import { useThought } from '@/hooks/useThoughtStore'
 import { Avatar } from '@/components/ui/Avatar'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -73,6 +73,16 @@ export function LivePresenceLabel({ person }: { person: Parameters<typeof useLiv
   if (!thought) return <PresenceLabel presence={presence} />
 
   const doing = presence === 'in-space' ? 'playing' : presence === 'building' ? 'building' : null
+  /*
+   * A reaction stands in for the dot.
+   *
+   * Staw: "when theres a reaction used in a thought - i want that instead
+   * of using the blue dot you use only that reaction cuz it looks weird".
+   * The line was a dot, then a dot, then a heart, then the words - two
+   * marks saying "they are here" and a third saying what they feel. The
+   * one on the picture already says they are here.
+   */
+  const wearing = faceOf(thought.face)
 
   return (
     <span className="flex items-center gap-1.5 text-xs text-white/70">
@@ -80,10 +90,10 @@ export function LivePresenceLabel({ person }: { person: Parameters<typeof useLiv
         <Icon name="playing" label="Playing" tone="#1CAE71" className="h-3.5 w-3.5 shrink-0" />
       ) : doing === 'building' ? (
         <Glyph icon={faHammer} className="shrink-0 text-mini text-warn-bright" aria-label="Building" />
-      ) : (
+      ) : !wearing ? (
         <StatusDot presence={presence} size="md" />
-      )}
-      {doing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
+      ) : null}
+      {doing && !wearing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
       <ThoughtLine thought={thought.body} face={thought.face} className="min-w-0" />
     </span>
   )

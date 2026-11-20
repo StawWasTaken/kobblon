@@ -25089,3 +25089,51 @@ same thing back. What was rebuilt is everything around them: the list, the
 party module, the faces, and how a window decides what it is.
 
 Nothing in the database changed.
+
+## Round three hundred and eighty-four - two ways to show somebody, and one mark
+
+Staw, with a picture of a card wearing a hover card on top of it: "i dont
+want a lot of ways to display profiles".
+
+**There are two, and only two.** They are not new; what changed is that
+nothing else pretends to be one of them.
+
+1. **In a list** - a face with the name under it, or a row. Home, a
+   profile's friends, the friends dock. This is the one that carries the
+   **hover card**, and now the only one: a card is already the long answer
+   to "who is this", so opening a smaller one on top of it was the same
+   information twice, over itself.
+2. **A card** - the People page and the friends lists.
+
+Neither of these is the byline on a post or over a creation: those are a
+name and its marks and nothing else, and they stay that way.
+
+### The card, redesigned
+
+- **No hover card on it**, per above.
+- **No floating thought bubble on it.** The bubble belongs over a face with
+  room above it - the grid on a profile, the row on the home page. On a
+  card there is a border eight pixels above the picture, so it drew itself
+  through the edge and across the name, which is what the screenshot was
+  of. The thought is still on the card: it is the line under the name,
+  which is where Staw put it in the first place.
+- The word a list puts on somebody - YOU, FRIEND - sits **beside the name**
+  rather than floating in its own row.
+- The buttons share one row along the foot, over a rule, so every card is
+  the same height whatever is in it.
+
+### A reaction instead of the dot
+
+Staw: "when theres a reaction used in a thought - i want that instead of
+using the blue dot you use only that reaction cuz it looks weird (i dont
+mean the dots that are INSIDE of the pfp)".
+
+The status line was: a dot, then a dot, then a heart, then the words. Two
+marks saying somebody is here and a third saying what they feel. When a
+thought carries a face, the face **is** the mark now - the dot beside it is
+gone, in the rows and in the dock alike. The dot on the picture itself is
+untouched; that is the one that says they are here.
+
+Both `LivePresenceLabel` and `PersonLine` do this, so anywhere the Workspace
+draws a status line from a thought, the same rule applies: a face replaces
+the dot, it does not sit next to it.

@@ -8,7 +8,7 @@ import { StatusDot, presenceWords } from '@/components/ui/StatusDot'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useLivePresence, useWhereabout } from '@/hooks/usePresenceStore'
 import { FriendPeek } from '@/components/social/FriendPeek'
-import { ThoughtLine, ThoughtOver } from '@/components/profile/Thought'
+import { ThoughtLine, ThoughtOver, faceOf } from '@/components/profile/Thought'
 import { useThought } from '@/hooks/useThoughtStore'
 import { nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
@@ -141,6 +141,12 @@ export function PersonLine({ person, note, className }: {
    */
   if (!note && thought) {
     const doing = where || presence === 'in-space' ? 'playing' : presence === 'building' ? 'building' : null
+    /*
+     * A reaction stands in for the dot. Staw: "instead of using the blue
+     * dot you use only that reaction cuz it looks weird". Two marks saying
+     * they are here, and the one on the picture already said it.
+     */
+    const wearing = faceOf(mind?.face)
 
     return (
       <p className={cn('flex items-center gap-1.5 text-xs text-white/70', className)}>
@@ -148,13 +154,13 @@ export function PersonLine({ person, note, className }: {
           <Icon name="playing" label="Playing" tone="#1CAE71" className="h-3.5 w-3.5 shrink-0" />
         ) : doing === 'building' ? (
           <Glyph icon={faHammer} className="shrink-0 text-mini text-warn-bright" aria-label="Building" />
-        ) : (
+        ) : !wearing ? (
           <StatusDot presence={presence} size="md" />
-        )}
+        ) : null}
 
         {/* The dot between the mark and the words, so the two read as two
             things rather than a label and its icon. */}
-        {doing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
+        {doing && !wearing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
 
         <ThoughtLine thought={thought} face={mind?.face} className="min-w-0" />
 
@@ -232,9 +238,6 @@ export function PersonCard({
   square?: boolean
   className?: string
 }) {
-  const here = useLivePresence(person) !== 'offline'
-  const theirThought = useThought(person.id)
-
   return (
     <li
       className={cn(
@@ -253,29 +256,37 @@ export function PersonCard({
       )}
 
       <div className="flex items-center gap-3">
-        <FriendPeek friend={person} className="shrink-0">
-          {/* The bubble belongs on a picture with room round it - this one
-              and the big one on a profile. Not on the face in a chat list,
-              which is half this size. */}
-          <ThoughtOver
-            thought={here ? theirThought?.body : null}
-            face={theirThought?.face}
-            small
-          >
-            <Link to={profileLink(person)} className="block">
-              <PersonAvatar
-                person={person}
-                size="lg"
-                square={square}
-                className="h-14 w-14"
-                ring="ring-ink-card"
-              />
-            </Link>
-          </ThoughtOver>
-        </FriendPeek>
+        {/*
+          * No hover card on a card.
+          *
+          * Staw: "the hover profile should only be for the first one" -
+          * the rows and face grids. A card is already the long answer to
+          * "who is this"; opening a second, smaller one on top of it is
+          * the same information twice, over itself.
+          */}
+        {/*
+          * No floating thought bubble here either. It belongs over a face
+          * with room above it - the grid on a profile, the row on the home
+          * page - and on a card there is a border eight pixels above the
+          * picture, so it drew itself through the edge and over the name.
+          * The thought is already under the name, which is where Staw put
+          * it: "i want that the text itself replaces the online text".
+          */}
+        <Link to={profileLink(person)} className="shrink-0">
+          <PersonAvatar
+            person={person}
+            size="lg"
+            square={square}
+            className="h-14 w-14"
+            ring="ring-ink-card"
+          />
+        </Link>
 
         <div className="min-w-0 flex-1 pr-6">
-          <PersonName person={person} />
+          <div className="flex min-w-0 items-center gap-2">
+            <PersonName person={person} className="min-w-0" />
+            {tag}
+          </div>
           <p className="truncate text-xs text-muted">@{person.username}</p>
           <PersonLine person={person} note={note} className="mt-1" />
         </div>
@@ -287,9 +298,11 @@ export function PersonCard({
         </p>
       )}
 
-      {tag && <div className="flex flex-wrap items-center gap-1.5">{tag}</div>}
-
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex items-center gap-2 border-t-2 border-ink-line pt-3 [&>*]:flex-1">
+          {actions}
+        </div>
+      )}
     </li>
   )
 }
