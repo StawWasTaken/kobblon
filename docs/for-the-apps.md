@@ -24581,3 +24581,18 @@ stranger cannot accept somebody else's invite, a member cannot set the
 destination, the leader can, leadership passes when the leader leaves, the
 party disappears when the last member leaves, and a direct insert into
 `party_members` is refused.
+
+## Round three hundred and seventy-four - the strips, and a redraw
+
+**The categories are one shape now**, the one Staw drew: a dark bar holding
+pills, the one you are on filled white (and filled black in daylight - it is
+the foreground colour, not a hardcoded white). Two of them, stacked: the
+drawers on top, the divisions inside the drawer underneath. If the Workspace
+or the Launcher draws a row of categories, copy this rather than inventing a
+third.
+
+**And a redraw.** "Avatar isn't loading correctly? Redraw", under the stage.
+A mesh or a texture that did not arrive leaves a piece missing and nothing
+asks for it again - the stage has already decided what it has. The button
+builds the stage afresh and takes the picture again, which is the only
+honest version of that offer.

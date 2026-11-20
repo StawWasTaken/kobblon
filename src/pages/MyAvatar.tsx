@@ -31,7 +31,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder,
+  faShirt, faStore, faXmark, faFaceSmile, faHatCowboy, faPalette, faFolder, faArrowsRotate,
   faPersonRays,
   faCircleNotch, faCheck, faPlus, faShuffle, faCamera, faMagnifyingGlass,
   faEraser, faBookmark, faImage, faCube, faClock,
@@ -206,6 +206,16 @@ export default function MyAvatar() {
   const [keeping, setKeeping] = useState(false)
   /** Which way the body is being looked at: in three dimensions, or flat. */
   const [mode, setMode] = useState<'picture' | 'body'>('body')
+  /*
+   * What the stage is drawn under.
+   *
+   * A mesh or a texture that did not arrive leaves a piece missing, and
+   * nothing on the page asks for it again - the stage has already decided
+   * what it has. Bumping this builds the stage afresh, which is the only
+   * honest way to offer a redraw: Staw asked for the same line the
+   * Workspace has, "Avatar isn't loading correctly? Redraw".
+   */
+  const [drawnAs, setDrawnAs] = useState(0)
   const [outfitName, setOutfitName] = useState('')
   /*
    * Which parts a swatch would paint. More than one, because "both arms"
@@ -579,6 +589,7 @@ export default function MyAvatar() {
                   ? <Skeleton className="h-full w-full" />
                   : (
                     <AvatarStage
+                      key={drawnAs}
                       look={dressed}
                       handled
                       fill
@@ -722,6 +733,29 @@ export default function MyAvatar() {
                 />
               </div>
             </div>
+
+            {/*
+              * When a piece did not load.
+              *
+              * The stage keeps what it managed to fetch, so a hat whose
+              * file was slow stays missing until something asks again.
+              * This is that something: the body is built afresh and the
+              * picture of it is taken again.
+              */}
+            <div className="flex items-center justify-between gap-3 border-t-2 border-ink-line px-3 py-2">
+              <p className="text-xs text-muted">Avatar isn&apos;t loading correctly?</p>
+              <Button
+                size="sm"
+                variant="subtle"
+                icon={faArrowsRotate}
+                loading={busy === 'redraw'}
+                onClick={() => void after('redraw', async () => {
+                  setDrawnAs((was) => was + 1)
+                })}
+              >
+                Redraw
+              </Button>
+            </div>
           </div>
 
         </div>
@@ -739,7 +773,7 @@ export default function MyAvatar() {
           */}
         <nav
           aria-label="What to change"
-          className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 kob-scroll xl:flex-wrap xl:overflow-visible"
+          className="-mx-1 flex gap-1 overflow-x-auto rounded-2xl bg-ink-raised p-1 kob-scroll"
         >
           {DRAWERS.map((one) => (
             <button
@@ -748,10 +782,10 @@ export default function MyAvatar() {
               onClick={() => { setDrawer(one.id); setTerm(''); setPart(null) }}
               aria-current={drawer === one.id}
               className={cn(
-                'group flex shrink-0 items-center gap-2 rounded-xl border-2 px-3 py-2 transition-colors',
+                'flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 transition-colors',
                 drawer === one.id
-                  ? 'border-brand bg-brand/15 text-white'
-                  : 'border-ink-line bg-ink-card text-white/55 hover:border-brand/40 hover:text-white',
+                  ? 'bg-white text-ink'
+                  : 'text-white/55 hover:bg-ink-hover hover:text-white',
               )}
             >
               <Glyph
@@ -763,7 +797,7 @@ export default function MyAvatar() {
               {!!counts[one.id] && (
                 <span className={cn(
                   'text-mark font-bold leading-none',
-                  drawer === one.id ? 'text-white/70' : 'text-white/30',
+                  drawer === one.id ? 'text-ink/50' : 'text-white/30',
                 )}>
                   {counts[one.id]}
                 </span>
@@ -800,7 +834,7 @@ export default function MyAvatar() {
             * a control.
             */}
           {divisions.length > 1 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="-mx-1 flex gap-1 overflow-x-auto rounded-2xl bg-ink-raised p-1 kob-scroll">
               <Chip on={!part} onPick={() => setPart(null)} count={drawerItems.length}>
                 Everything
               </Chip>
@@ -1054,15 +1088,13 @@ function Chip({ on, count, onPick, children }: {
       onClick={onPick}
       aria-pressed={on}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-mini font-bold',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-mini font-bold',
         'transition-colors duration-150',
-        on
-          ? 'border-brand bg-brand/15 text-white'
-          : 'border-ink-line bg-ink-raised text-white/60 hover:text-white',
+        on ? 'bg-white text-ink' : 'text-white/55 hover:bg-ink-hover hover:text-white',
       )}
     >
       {children}
-      <span className={on ? 'text-white/70' : 'text-white/30'}>{count}</span>
+      <span className={on ? 'text-ink/50' : 'text-white/30'}>{count}</span>
     </button>
   )
 }
