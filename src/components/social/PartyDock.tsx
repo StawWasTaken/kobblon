@@ -40,7 +40,7 @@ export const PARTY_CAP = 8
  * mounts with no providers at all - the rule this project has broken three
  * times.
  */
-export function PartyWiring({ onOpenChat, className }: {
+export function PartyWiring({ onOpenChat, compact, className }: {
   /**
    * Open the party's chat window.
    *
@@ -49,6 +49,8 @@ export function PartyWiring({ onOpenChat, className }: {
    * asking it from here would be two files importing each other.
    */
   onOpenChat?: () => void
+  /** A strip over the party's own chat rather than a tab of its own. */
+  compact?: boolean
   className?: string
 }) {
   const { profile } = useAuth()
@@ -79,6 +81,7 @@ export function PartyWiring({ onOpenChat, className }: {
         invites={invites}
         busy={busy}
         className={className}
+        compact={compact}
         onAccept={(id) => void run(`yes:${id}`, () => acceptPartyInvite(id))}
         onDecline={(id) => void run(`no:${id}`, () => declinePartyInvite(id))}
         onLeave={() => void run('leave', leaveParty)}
@@ -113,7 +116,7 @@ export function PartyWiring({ onOpenChat, className }: {
  */
 export function PartyPanel({
   me, party, invites, busy, onAccept, onDecline, onLeave, onRemove, onInvite, onPlay,
-  onOpenChat, className,
+  onOpenChat, compact, className,
 }: {
   me: string
   party: Party | null
@@ -127,10 +130,102 @@ export function PartyPanel({
   onPlay: () => void
   /** Opens the party's chat. Absent where there is nowhere to open it. */
   onOpenChat?: () => void
+  /**
+   * The short version: a row of faces, where it is going, and the buttons.
+   *
+   * It sits over the party's own messages, so it has to leave the chat
+   * most of the window - a list of eight names above a thread is a thread
+   * nobody can read.
+   */
+  compact?: boolean
   className?: string
 }) {
   const leader = party?.leader_id === me
   const going = party?.world_id && party.world_name
+
+  /*
+   * The strip over the chat: faces rather than a list, one line for where
+   * it is going, and the buttons on the end of it.
+   */
+  if (compact) {
+    return (
+      <div className={cn('shrink-0 border-b-2 border-ink-line px-2.5 py-2', className)}>
+        {invites.map((one) => (
+          <div key={one.party_id} className="mb-2 flex items-center gap-2">
+            <Avatar src={avatarOf(one)} personId={one.asked_by} name={nameOf(one)} size="xs" />
+            <p className="min-w-0 flex-1 truncate text-xs">
+              <span className="font-bold">{nameOf(one)}</span> asked you in
+            </p>
+            <Button
+              size="sm"
+              variant="yes"
+              loading={busy === `yes:${one.party_id}`}
+              onClick={() => onAccept(one.party_id)}
+            >
+              Join
+            </Button>
+          </div>
+        ))}
+
+        {!!party && (
+          <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center -space-x-2">
+              {party.members.slice(0, 6).map((one) => (
+                <Link
+                  key={one.user_id}
+                  to={profileLink(one)}
+                  title={nameOf(one)}
+                  className="relative shrink-0 rounded-full ring-2 ring-ink-card transition-transform hover:z-10 hover:-translate-y-0.5"
+                >
+                  <Avatar src={avatarOf(one)} personId={one.user_id} name={nameOf(one)} size="xs" />
+                  {party.leader_id === one.user_id && (
+                    <Glyph
+                      icon={faCrown}
+                      className="absolute -right-0.5 -top-1 text-[0.5rem] text-space"
+                    />
+                  )}
+                </Link>
+              ))}
+              {party.members.length > 6 && (
+                <span className="pl-3 text-mini font-bold text-muted">
+                  +{party.members.length - 6}
+                </span>
+              )}
+            </div>
+
+            {going && (
+              <Button size="sm" variant="yes" icon={faPlay} onClick={onPlay} aria-label="Play" />
+            )}
+            <Tooltip label="Ask somebody in" side="top">
+              <Button size="sm" variant="subtle" icon={faUserPlus} aria-label="Ask somebody in" onClick={onInvite} />
+            </Tooltip>
+            <Tooltip label="Leave the party" side="top">
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={faRightFromBracket}
+                aria-label="Leave the party"
+                loading={busy === 'leave'}
+                onClick={onLeave}
+              />
+            </Tooltip>
+          </div>
+        )}
+
+        {going && (
+          <Link
+            to={worldLink({
+              content_id: party.world_content_id ?? 0,
+              name: party.world_name ?? '',
+            })}
+            className="mt-1.5 block truncate text-mini text-muted hover:text-link"
+          >
+            Going to <span className="font-bold text-white/70">{party.world_name}</span>
+          </Link>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
@@ -240,7 +335,7 @@ export function PartyPanel({
         </Button>
         {!!party && !!onOpenChat && (
           <Button size="sm" variant="subtle" icon={faComment} onClick={onOpenChat}>
-            Chat
+            Open
           </Button>
         )}
         {!!party && (

@@ -324,7 +324,10 @@ function Window({
           : cn(
               DOCK_SHAPE,
               'rounded-t-2xl border-2 border-b-0 border-t-0 shadow-pop',
-              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-brand-bright',
+              'before:absolute before:inset-x-0 before:top-0 before:h-[3px]',
+              /* Blue is Kobblon and green is the party, which is the band
+                 it has worn since it had a window of its own. */
+              conversation.party_id ? 'before:bg-space' : 'before:bg-brand-bright',
               'relative transition-[height] duration-150 motion-reduce:transition-none',
               /*
                * One size for every window in the corner, and it is the
@@ -542,6 +545,16 @@ function Window({
       {!collapsed && !details && (
         <>
           {/*
+            * The party, over its own chat.
+            *
+            * Staw: "the dock with the green band but under the members
+            * theres the chat". So this is one window and not two - who you
+            * are with, then what they are saying - rather than a party
+            * panel beside a chat panel saying the same thing twice.
+            */}
+          {conversation.party_id && <PartyWiring compact />}
+
+          {/*
             * Both axes are named. `overflow-y-auto` on its own is not one
             * axis - CSS turns the other from `visible` into `auto` the
             * moment either is anything else - so one unbreakable word puts
@@ -721,12 +734,14 @@ function Window({
 }
 
 function List({
-  conversations, loading, onOpen, onNewGroup, full,
+  conversations, loading, onOpen, onNewGroup, onOpenParty, full,
 }: {
   conversations: Conversation[]
   loading: boolean
   onOpen: (id: string) => void
   onNewGroup: () => void
+  /** Bring the party's window back after it was closed. */
+  onOpenParty: () => void
   /** Filling a phone's screen rather than sitting in a corner of a desktop. */
   full?: boolean
 }) {
@@ -855,7 +870,7 @@ function List({
 
           {tab === 'party' && (
             <PartyWiring
-              onOpenChat={() => { void myPartyChat().then((id) => { if (id) onOpen(id) }) }}
+              onOpenChat={onOpenParty}
             />
           )}
         </>
@@ -1114,6 +1129,33 @@ export function ChatDock({ children }: { children: ReactNode }) {
   const { party: myParty } = useParty()
   useEffect(() => { load() }, [myParty?.id, load])
 
+  /*
+   * The party window opens itself, once.
+   *
+   * It is what the panel beside the chats used to do - you are in a party,
+   * there it is - and Staw wants that back with a way to put it away:
+   * "you can close it and open it from the friends tab". So the party id
+   * it was last closed on is remembered, and a party you shut stays shut
+   * until you open it from the Party tab or until it is a different party.
+   */
+  const [shutParty, setShutParty] = useState<string | null>(null)
+  const openParty = useCallback(() => {
+    setShutParty(null)
+    void myPartyChat().then((chat) => {
+      if (chat) setOpenIds((all) => (all.includes(chat) ? all : [chat, ...all].slice(0, MAX_OPEN)))
+    })
+  }, [])
+  useEffect(() => {
+    if (!myParty?.id || shutParty === myParty.id) return
+    let wanted = true
+    void myPartyChat().then((chat) => {
+      if (wanted && chat) {
+        setOpenIds((all) => (all.includes(chat) ? all : [chat, ...all].slice(0, MAX_OPEN)))
+      }
+    })
+    return () => { wanted = false }
+  }, [myParty?.id, shutParty])
+
   useEffect(() => {
     if (!profile) return
     const channel = supabase
@@ -1200,7 +1242,10 @@ export function ChatDock({ children }: { children: ReactNode }) {
               <Window
                 key={id}
                 conversation={conversation}
-                onClose={() => setOpenIds((all) => all.filter((open) => open !== id))}
+                onClose={() => {
+                  if (conversation.party_id) setShutParty(conversation.party_id)
+                  setOpenIds((all) => all.filter((open) => open !== id))
+                }}
                 onOpened={(real) => {
                   setOpenIds((all) => all.map((open) => (open === id ? real : open)))
                   load()
@@ -1214,6 +1259,7 @@ export function ChatDock({ children }: { children: ReactNode }) {
             loading={loading}
             onOpen={openConversation}
             onNewGroup={() => setMaking(true)}
+            onOpenParty={openParty}
           />
         </div>
       )}
@@ -1283,6 +1329,11 @@ export function ChatDock({ children }: { children: ReactNode }) {
                     loading={loading}
                     onOpen={(id) => { openConversation(id); setPhone(id) }}
                     onNewGroup={() => setMaking(true)}
+                    onOpenParty={() => {
+                      void myPartyChat().then((chat) => {
+                        if (chat) { openConversation(chat); setPhone(chat) }
+                      })
+                    }}
                   />
                 ) : (
                   (() => {

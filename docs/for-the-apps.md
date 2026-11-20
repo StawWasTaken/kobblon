@@ -24988,3 +24988,36 @@ than waiting for the next message to land.
 No party voice. No message in a party chat that is a party event ("maker
 joined") - it is a chat, not a log. The party chat has no name of its own
 and cannot be renamed, because it is the party.
+
+## Round three hundred and eighty-two - the party has its window back
+
+Staw: "for parties, i want it to be like before, the dock with the green
+band but under the members theres the chat and you can close it and open it
+from the friends tab".
+
+So the party is a window at the foot of the page again, and it is **one
+window rather than two**: the green band along the top, who you are with
+under it, and the party's own chat under them.
+
+What it actually is: the party's conversation window, the same component
+every chat in the dock uses, with the party drawn above the thread. Nothing
+about the chat is new or separate - it is the window from 0363 with the
+party strip on top. The band is green rather than Kobblon blue, which is
+the one thing that says at a glance which of the windows along that edge is
+the party.
+
+The strip is **faces, not a list**: six avatars with the leader's crown,
+Play when the leader has said where, Invite, and leave. Then one line for
+where it is going. A list of eight names above a thread is a thread nobody
+can read.
+
+**Opening and closing.** It opens itself when you join a party, which is
+what the old panel did. Closing it remembers *which party* you closed, so it
+stays shut until you open it again from the Party tab in Friends Chat or
+until you are in a different party. The Party tab's button says Open.
+
+Nothing in the database changed; this is all 0363.
+
+For your side, the shape is the same as the round before: a party is a row
+in `my_conversations()` with `party_id` set. If the Launcher's friends chat
+can draw a strip above a thread, this is the same window.

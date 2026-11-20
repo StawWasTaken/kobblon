@@ -38,8 +38,9 @@ const nothing = () => {}
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
     <div className="min-h-dvh bg-ink p-8">
-      <div className="flex items-stretch gap-4 [&>*]:h-80 [&>*]:w-72 [&>*]:rounded-2xl [&>*]:border-2 [&>*]:border-b-4 [&>*]:border-ink-line [&>*]:bg-ink-card">
+      <div className="flex items-start gap-4 [&>*]:w-80 [&>*]:self-stretch [&>*]:rounded-2xl [&>*]:border-2 [&>*]:border-b-4 [&>*]:border-ink-line [&>*]:bg-ink-card">
         <PartyPanel
+          compact
           me="me"
           party={party}
           invites={[]}
