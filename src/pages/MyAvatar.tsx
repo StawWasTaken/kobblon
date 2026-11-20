@@ -491,13 +491,10 @@ export default function MyAvatar() {
 
   if (!profile) return null
 
-  const open = DRAWERS.find((one) => one.id === drawer)!
-
   return (
     <Page width="wide" className="space-y-5">
       <PageHeader
         title="My Avatar"
-        lead="Your body, what it wears, and the face on it."
         icon={faShirt}
         actions={
           <>
@@ -510,75 +507,19 @@ export default function MyAvatar() {
       />
 
       {/*
-        * Three columns and the body in the middle of them.
+        * Two columns: the body, and everything that goes on it.
         *
-        * Staw: "make it so the avatar thing is centered in the center but
-        * slightly on the left", and then "i dont want stuff to be bigger
-        * than everything else, i want good ratios".
+        * It was three - a column of big square drawer tiles, the stage, the
+        * wardrobe - and the rail was a sixth of the page spent on six
+        * words. The drawers are a strip across the top of the wardrobe now,
+        * which is where a console puts them, and the width that bought
+        * pays for the grid underneath.
         *
-        * Both at once, which is the whole of the layout. The stage is
-        * capped rather than taking every pixel left over - at full width it
-        * was twice the wardrobe and the page was one enormous avatar with a
-        * list beside it. Capped at forty rem it is about one and a bit times
-        * the wardrobe, which reads as two panels in a composition rather
-        * than a picture with a sidebar; and because the wardrobe takes the
-        * slack instead, the figure still sits left of the page's centre.
+        * The stage is capped rather than taking the slack: at full width it
+        * was twice the wardrobe and the page read as one enormous avatar
+        * with a list beside it.
         */}
-      <div className="grid items-start justify-center gap-5 lg:grid-cols-[auto_minmax(22rem,38rem)_minmax(18rem,32rem)]">
-        {/* ------------------------------------------------------- the rail */}
-        {/*
-          * Down the side rather than across the top. Five tabs over a grid
-          * push the grid down; five down the side cost nothing, and it is
-          * the one change that stops this reading as somebody else's page.
-          */}
-        <nav
-          aria-label="What to change"
-          className="flex shrink-0 gap-2 overflow-x-auto pb-1 lg:w-[5.5rem] lg:flex-col lg:overflow-visible lg:pb-0"
-        >
-          {DRAWERS.map((one) => (
-            <button
-              key={one.id}
-              type="button"
-              onClick={() => { setDrawer(one.id); setTerm(''); setPart(null) }}
-              aria-current={drawer === one.id}
-              title={one.label}
-              className={cn(
-                'group relative flex h-[4.25rem] w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-1 transition-colors lg:h-[4.75rem] lg:w-[4.75rem]',
-                drawer === one.id
-                  ? 'border-brand bg-brand/15 text-white'
-                  : 'border-ink-line bg-ink-card text-white/45 hover:border-brand/40 hover:text-white',
-              )}
-            >
-              {/*
-                * Icon over a word, with the count on the word's line.
-                *
-                * It was a pill pinned to the top right of each tile, which
-                * sat over the icon and made every drawer look like it had
-                * an unread notification on it. On the line it is a number
-                * beside a label, which is what it is.
-                */}
-              <Glyph
-                icon={one.icon}
-                name={'ours' in one ? one.ours : undefined}
-                className="text-[1.3rem]"
-              />
-              <span className="flex max-w-full items-baseline gap-1">
-                <span className="font-display text-[9.5px] font-extrabold uppercase leading-none tracking-wide">
-                  {'short' in one ? one.short : one.label}
-                </span>
-                {!!counts[one.id] && (
-                  <span className={cn(
-                    'text-mark font-bold leading-none',
-                    drawer === one.id ? 'text-white/70' : 'text-white/30',
-                  )}>
-                    {counts[one.id]}
-                  </span>
-                )}
-              </span>
-            </button>
-          ))}
-        </nav>
-
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(20rem,34rem)_minmax(20rem,1fr)]">
         {/* ------------------------------------------------------- the body */}
         <div className="min-w-0 space-y-4 lg:sticky lg:top-20">
           {/*
@@ -708,9 +649,7 @@ export default function MyAvatar() {
                 </div>
 
                 {!wearing.length ? (
-                  <p className="mt-1.5 text-xs text-muted">
-                    Nothing on. Pick something from the shelf.
-                  </p>
+                  <p className="mt-1.5 text-xs text-muted">Nothing on.</p>
                 ) : (
                   <ul className="mt-2 flex gap-2 overflow-x-auto pb-1 kob-scroll">
                     {/* Keyed by the item, because two hats are two rows and
@@ -776,34 +715,73 @@ export default function MyAvatar() {
             </div>
           </div>
 
-          {/*
-            * Things to put on, under the body they would go on.
-            *
-            * Staw: "under that i want the catalog recommended items". The
-            * same component the Catalog uses, so what is suggested here and
-            * what is suggested there cannot disagree.
-            */}
-          <Recommended layout="row" howMany={14} />
         </div>
 
         {/* --------------------------------------------------- the wardrobe */}
         <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-base font-extrabold">{open.label}</h2>
-            {drawer !== 'body' && drawer !== 'outfits' && (
-              <>
-                <span className="text-xs text-muted">{shelf.length}</span>
-                <div className="ml-auto w-full sm:w-44">
-                  <Input
-                    value={term}
-                    onChange={(e) => setTerm(e.target.value)}
-                    placeholder="Search"
-                    icon={faMagnifyingGlass}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+        {/*
+          * The drawers, as a strip across the top of the wardrobe.
+          *
+          * They were six square tiles down the side of the page, each a
+          * picture over a word in capitals, and together they were a sixth
+          * of the width spent on six words. Across the top they are what a
+          * console's tabs are: the name, the number in it, and the one you
+          * are on underlined.
+          */}
+        <nav
+          aria-label="What to change"
+          className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 kob-scroll xl:flex-wrap xl:overflow-visible"
+        >
+          {DRAWERS.map((one) => (
+            <button
+              key={one.id}
+              type="button"
+              onClick={() => { setDrawer(one.id); setTerm(''); setPart(null) }}
+              aria-current={drawer === one.id}
+              className={cn(
+                'group flex shrink-0 items-center gap-2 rounded-xl border-2 px-3 py-2 transition-colors',
+                drawer === one.id
+                  ? 'border-brand bg-brand/15 text-white'
+                  : 'border-ink-line bg-ink-card text-white/55 hover:border-brand/40 hover:text-white',
+              )}
+            >
+              <Glyph
+                icon={one.icon}
+                name={'ours' in one ? one.ours : undefined}
+                className="text-sm"
+              />
+              <span className="font-display text-xs font-extrabold">{one.label}</span>
+              {!!counts[one.id] && (
+                <span className={cn(
+                  'text-mark font-bold leading-none',
+                  drawer === one.id ? 'text-white/70' : 'text-white/30',
+                )}>
+                  {counts[one.id]}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+          {/* The tab above says which drawer this is, so the heading would
+              be the same word twice. What is left is how many are in it and
+              a way to find one. */}
+          {drawer !== 'body' && drawer !== 'outfits' && (
+            <div className="flex items-center gap-3">
+              <p className="shrink-0 text-xs text-muted">
+                <span className="font-bold text-white/70">{shelf.length}</span>
+                {shelf.length === 1 ? ' thing' : ' things'}
+              </p>
+              <div className="ml-auto w-full max-w-[14rem]">
+                <Input
+                  value={term}
+                  onChange={(e) => setTerm(e.target.value)}
+                  placeholder="Search"
+                  icon={faMagnifyingGlass}
+                />
+              </div>
+            </div>
+          )}
 
           {/*
             * The divisions, as chips under the heading. Only drawn when
@@ -989,6 +967,14 @@ export default function MyAvatar() {
           )}
         </div>
       </div>
+
+      {/*
+        * Things to put on, at the foot of the page rather than squeezed
+        * under the stage. Staw: "under that i want the catalog recommended
+        * items" - it is still under the body, and now it has the width of
+        * the page to be a row rather than three cards in a column.
+        */}
+      <Recommended layout="row" howMany={14} />
 
       <Dialog
         open={keeping}

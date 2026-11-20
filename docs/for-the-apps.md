@@ -24495,3 +24495,26 @@ exists before a World does, playtime and a score that add up, a World page
 built like a store page with written reviews, clips out of the Launcher, and
 following a World rather than only liking it. Three of those five are mostly
 Launcher work, which is why you are being told now rather than later.
+
+## Round three hundred and seventy-one - the avatar page
+
+Two columns instead of three: the body, and everything that goes on it.
+
+- **The drawers are a strip across the top of the wardrobe**, not a column
+  of big square tiles down the side of the page. Six tiles were a sixth of
+  the width spent on six words; as tabs they are a name, a number, and the
+  one you are on. They wrap on a wide screen and scroll on a phone.
+- **The stage takes the width that bought**, capped so the page is two
+  panels in a composition rather than one enormous avatar with a list
+  beside it. The bar under it is unchanged: what you have on, and the four
+  things you can do to it.
+- **The heading above the grid is gone.** The tab already says which drawer
+  this is, so the heading was the same word twice. What is left is how many
+  are in it and a way to find one.
+- **Suggestions moved to the foot of the page**, full width, so they are a
+  row rather than three cards squeezed under the stage.
+- The page's own explanatory line is gone, with the rest of them.
+
+If the Workspace or the Launcher ever draws a dressing screen, this is the
+shape to copy: the figure on one side, tabs over a grid on the other, and
+nothing floating on top of the figure.
