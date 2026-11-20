@@ -1,4 +1,4 @@
-/* The party window on its own: with a party, and with somebody asking. */
+/* The party tab on its own: with a party, with somebody asking, and empty. */
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { PartyPanel } from '@/components/social/PartyDock'
@@ -38,7 +38,7 @@ const nothing = () => {}
 createRoot(document.getElementById('root')!).render(
   <MemoryRouter>
     <div className="min-h-dvh bg-ink p-8">
-      <div className="flex items-end gap-4">
+      <div className="flex items-stretch gap-4 [&>*]:h-80 [&>*]:w-72 [&>*]:rounded-2xl [&>*]:border-2 [&>*]:border-b-4 [&>*]:border-ink-line [&>*]:bg-ink-card">
         <PartyPanel
           me="me"
           party={party}
@@ -48,6 +48,7 @@ createRoot(document.getElementById('root')!).render(
           onLeave={nothing}
           onRemove={nothing}
           onPlay={nothing}
+          onInvite={nothing}
         />
         <PartyPanel
           me="me"
@@ -58,16 +59,18 @@ createRoot(document.getElementById('root')!).render(
           onLeave={nothing}
           onRemove={nothing}
           onPlay={nothing}
+          onInvite={nothing}
         />
         <PartyPanel
           me="b"
-          party={party}
-          invites={invites}
+          party={null}
+          invites={[]}
           onAccept={nothing}
           onDecline={nothing}
           onLeave={nothing}
           onRemove={nothing}
           onPlay={nothing}
+          onInvite={nothing}
         />
       </div>
     </div>

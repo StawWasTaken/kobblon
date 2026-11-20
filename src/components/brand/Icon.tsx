@@ -38,7 +38,11 @@ export const UI_ICONS = [
   'remove-user', 'report',
   /* Somebody with a play mark beside them: people in a World right now, as
      opposed to people who have been in it, which is the eye. */
-  'playing', 'search-user', 'send', 'thumbs-down-stroke',
+  'playing',
+  /* Staw's own: two people with a play mark beside them. A party is people
+     who are going somewhere together, which is exactly that drawing. */
+  'party',
+  'search-user', 'send', 'thumbs-down-stroke',
   'thumbs-down', 'thumbs-up-stroke', 'thumbs-up', 'user', 'users', 'voice-user',
   /*
    * Staw's own drawings of a World and of an asset, added for the boards.
@@ -133,7 +137,14 @@ const TEAR_BLUE = '#5DADEC'
 const HOLES = new Set<string>([
   'reaction-smile', 'reaction-laugh', 'reaction-happy-grin', 'reaction-winky-grin',
   'reaction-heart-eyes', 'reaction-sunglasses', 'reaction-shocked', 'reaction-sad',
-  'reaction-angry', 'reaction-skull', 'reaction-heart',
+  'reaction-angry', 'reaction-skull',
+  /*
+   * Not the heart. Staw drew his own and it is one solid shape that runs
+   * to the edge of its own picture - so the flood fill that finds an
+   * enclosed background finds nothing to get around, calls the whole heart
+   * an interior, and paints it Kobblon black over the red. A shape with no
+   * hole in it does not belong on this list.
+   */
 ])
 
 const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {

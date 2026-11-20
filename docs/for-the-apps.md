@@ -24854,3 +24854,62 @@ Nothing shared changed; this is the website's page only. It is here because
 the Workspace draws segmented strips of its own, and the rule for them is
 the one above: a flat pill beside a block button reads as a label
 pretending to be a control.
+
+## Round three hundred and eighty - the party moves into the chat dock
+
+Staw: "make that the parties can be in the friends chat dock too (and that
+in the other session they make that we can acess them through the friends
+chat Ui of the launcher too, ingame)".
+
+**This one is for you to mirror.** The party had a window of its own beside
+the chats, which is a shape the Launcher does not have: there is one chat
+panel in a World, not a row of docked windows, so a party living beside the
+chats could not be reached while playing at all - which is the one moment it
+is for.
+
+So on the website the party is now **a tab inside the Friends Chat dock**:
+two segmented pills at the top of the panel, `Chats` and `Party`, the party
+one carrying how many are with you (or how many have asked you in, when you
+have no party). The separate window is gone. Same on a phone, where the dock
+fills the screen.
+
+The suggestion for your side: the same two tabs in the Launcher's friends
+chat panel. Nothing new in the database - `my_party`, `party_invites_for_me`
+and the rest from 0358 are what both sides read.
+
+**The drawing is shared and it takes props only.** `PartyPanel` in
+`@/components/social/PartyDock` has no header, no window and no collapse any
+more - it is the inside of a tab, and whatever holds it draws its own edges.
+It needs no provider: `tools/site/party-preview.html` mounts it bare.
+`PartyWiring` beside it is the same thing with the website's hooks attached,
+for anywhere that wants it wired.
+
+### An invite card
+
+`PartyInviteDialog`: your friends, a box to search them, and an Invite
+button each, which turns to "Asked". People already with you are not in the
+list. It is wired to `invite_to_party(who)`, which **makes a party around
+you if you have none** - that is why the empty party tab is one line and not
+a "Start a party" button, because there is nothing to start.
+
+The cap is still eight, `party_cap()`.
+
+### Two icons from Staw
+
+`public/icons/ui/party.png` - two people with a play mark - is registered as
+`party` and is the tab's mark and the empty state's. `reaction-heart.png` is
+now his drawing rather than the one I generated.
+
+**One thing worth knowing if you copy the icon code:** the heart came off
+the `HOLES` list. That list is for faces with an enclosed background - a
+mouth, an eye - which get a second layer painted Kobblon black underneath.
+Staw's heart is one solid shape that runs to the edge of its own picture, so
+the flood fill that looks for an enclosed background cannot get round the
+outside of it, calls the entire heart an interior, and paints the whole
+thing black over the red. The tool that generates those layers now skips it
+too.
+
+### Also in this batch, for the record
+
+Nothing else shared changed. Rounds 377 to 379 - hours, the score, clips,
+and the avatar page's strips - are above.

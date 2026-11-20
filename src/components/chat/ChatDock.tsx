@@ -38,7 +38,8 @@ import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
 import { useThoughts } from '@/hooks/useThoughtStore'
-import { PartyDock } from '@/components/social/PartyDock'
+import { useParty } from '@/hooks/useParty'
+import { PartyWiring } from '@/components/social/PartyDock'
 
 /*
  * The standing lives here, once.
@@ -734,6 +735,15 @@ function List({
    */
   const open = full ? true : remembered
   const [term, setTerm] = useState('')
+  /*
+   * Chats, or who you are with. Two tabs rather than two windows: the
+   * Launcher has one chat panel and no corner to put a second one in, and
+   * a party you can only reach on the website is a party you cannot use
+   * while you are playing.
+   */
+  const [tab, setTab] = useState<'chats' | 'party'>('chats')
+  const { party, invites } = useParty()
+  const withYou = party?.members.length ?? 0
 
   const shown = conversations.filter((c) =>
     conversationName(c).toLowerCase().includes(term.trim().toLowerCase()))
@@ -805,6 +815,45 @@ function List({
       )}
 
       {open && (
+        <>
+          {/* The switcher, in the site's own segmented shape. */}
+          <div className="shrink-0 px-2 pt-2">
+            <div className="flex gap-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-1">
+              {([
+                ['chats', 'Chats', null],
+                ['party', 'Party', withYou || invites.length || null],
+              ] as const).map(([which, label, count]) => (
+                <button
+                  key={which}
+                  type="button"
+                  onClick={() => setTab(which)}
+                  aria-pressed={tab === which}
+                  className={cn(
+                    'flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 px-2 py-1 text-xs font-extrabold transition-colors',
+                    tab === which
+                      ? 'border-brand-deep border-b-[4px] bg-brand text-on-art'
+                      : 'border-transparent border-b-[4px] text-white/55 hover:bg-ink-hover hover:text-white',
+                  )}
+                >
+                  {which === 'party'
+                    ? <Icon name="party" className="h-3.5 w-3.5" />
+                    : <Icon name="chatbubble" className="h-3.5 w-3.5" />}
+                  {label}
+                  {!!count && (
+                    <span className={tab === which ? 'text-on-art/60' : 'text-white/30'}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {tab === 'party' && <PartyWiring />}
+        </>
+      )}
+
+      {open && tab === 'chats' && (
         <>
           <div className="relative shrink-0 p-2">
             <label className="sr-only" htmlFor="chat-filter">Search for friends</label>
@@ -1134,9 +1183,6 @@ export function ChatDock({ children }: { children: ReactNode }) {
               />
             )
           })}
-
-          {/* Who you are with, beside what everybody is saying. */}
-          <PartyDock />
 
           <List
             conversations={conversations}

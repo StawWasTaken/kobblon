@@ -22,7 +22,11 @@ UI = 'public/icons/ui'
 
 FACES = [
     'smile', 'laugh', 'happy-grin', 'winky-grin', 'heart-eyes',
-    'sunglasses', 'shocked', 'sad', 'angry', 'skull', 'heart',
+    'sunglasses', 'shocked', 'sad', 'angry', 'skull',
+    # Not 'heart'. Staw drew his own and it is one solid shape that runs to
+    # the edge of its picture, so the flood fill cannot get round it, calls
+    # the whole heart an interior, and would paint it black over the red.
+    # A shape with no hole in it has nothing for this script to do.
 ]
 
 
