@@ -3,8 +3,10 @@ import { ClipShelf } from '@/components/clips/ClipCard'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
 import {
-  faPlay, faStar, faBell, faFlag, faSliders, faFilm,
+  faPlay, faStar, faBell, faFlag, faSliders, faFilm, faBookmark, faEye,
+  faClockRotateLeft, faFlagCheckered,
   faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCompass,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
@@ -16,18 +18,19 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { useToast } from '@/components/ui/Toast'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
+import { Avatar } from '@/components/ui/Avatar'
 import { NameMarks } from '@/components/brand/Verified'
 import { RatingBar } from '@/components/worlds/RatingBar'
 import { Reactions } from '@/components/social/Reactions'
 import { reactionsOn, inTheKlub } from '@/lib/api'
-import { WorldStage, type Shot } from '@/components/worlds/WorldStage'
+import { WorldGallery, type Shot } from '@/components/worlds/WorldStage'
 import { ReportDialog } from '@/components/social/ReportDialog'
 import { ServersTab } from '@/components/worlds/ServersTab'
 import { AlsoJoinedRow } from '@/components/worlds/AlsoJoinedRow'
 import { WorldThings } from '@/components/worlds/WorldThings'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { WorldCard } from '@/components/worlds/WorldCard'
-import { Band, Ribbon, Stat } from '@/components/ui/Band'
+import { Band } from '@/components/ui/Band'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
@@ -38,10 +41,12 @@ import {
   passesOf, playingNow, recommendedWorlds, serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
   partyIsGoingTo,
+  type PlayerThere,
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
 import { formatCount, timeAgo } from '@/lib/format'
+import { deviceLabels } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 import { DEFAULT_WORLD_THUMBNAIL, worldEmblem } from '@/lib/worldart'
 import { asset } from '@/lib/asset'
@@ -64,7 +69,7 @@ import { asset } from '@/lib/asset'
  */
 
 /** The four ways of looking at a World, the way a profile has three. */
-type WorldTab = 'About' | 'Servers' | 'Badges' | 'Store'
+type WorldTab = 'Servers' | 'Badges' | 'Store'
 
 /**
  * The small window that says what is happening when Play is pressed.
@@ -198,7 +203,7 @@ export default function WorldPage() {
   )
   const passes = useAsync(async () => (thing ? passesOf(thing.id) : []), [thing?.id])
 
-  const [tab, setTab] = useState<WorldTab>(sentTo ? 'Servers' : 'About')
+  const [tab, setTab] = useState<WorldTab>('Servers')
   const [handing, setHanding] = useState<'off' | 'opening' | 'missing'>('off')
   const [reporting, setReporting] = useState(false)
 
@@ -323,6 +328,19 @@ export default function WorldPage() {
   ]
 
   const genre = genres.data?.find((one) => one.id === thing.genre)
+
+  /*
+   * Friends in a server of this World at this moment.
+   *
+   * `friendsInServers` answers per room, and a person can only be in one
+   * of them, but the rooms are read one at a time and a friend who moves
+   * between two reads can land in both - so this is deduplicated by id
+   * rather than flattened.
+   */
+  const byRoom = (mates.data ?? {}) as Record<string, PlayerThere[]>
+  const friendsHere: PlayerThere[] = Object.values(byRoom)
+    .flat()
+    .filter((one, i, all) => all.findIndex((other) => other.id === one.id) === i)
 
   /**
    * A press moves the page first and tells the database after.
@@ -460,81 +478,91 @@ export default function WorldPage() {
   return (
     <>
       <Page>
-        {/* The World, the size of the page. Its name, its maker and the way
-            in all sit on the art, because they belong to it. */}
-        <WorldStage shots={shots} name={thing.name}>
-          <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-on-art/25 bg-brand shadow-pop sm:h-20 sm:w-20">
-              <Picture
-                src={worldEmblem(thing)}
-                alt={thing.name}
-                className="h-full w-full"
-              />
+        {/*
+          * A World page built like a shop window.
+          *
+          * Staw, after seeing the proposal: ship it. So the stage is gone
+          * from here - the art owns two thirds of the width and the panel
+          * beside it owns the decision, which is the arrangement a person
+          * arriving from Discover actually needs: what it is, whether
+          * anybody is in it, and the way in, all in one eyeful.
+          *
+          * Everything in the panel is a number something real writes.
+          * There is no "latest update" block, which the proposal drew:
+          * nothing on this platform writes patch notes yet, and a block
+          * that would always say the same thing is a drawing of a feature.
+          */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-brand sm:h-14 sm:w-14">
+              <Picture src={worldEmblem(thing)} alt={thing.name} className="h-full w-full" />
             </div>
 
-            <div className="min-w-0 flex-1">
-              {playing_now > 0 && (
-                <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-space/25 px-2.5 py-1 text-xs font-bold text-space-bright backdrop-blur-sm">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-space-bright" />
-                  {formatCount(playing_now)} playing now
-                </span>
-              )}
-
-              <h1 className="font-display text-2xl font-black leading-tight text-on-art drop-shadow-lg sm:text-4xl">
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl font-black leading-tight sm:text-3xl">
                 {thing.name}
               </h1>
 
               {owner ? (
                 <Link
                   to={profileLink(owner)}
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-on-art/75 transition-colors hover:text-on-art"
+                  className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-white"
                 >
                   <PersonAvatar person={owner} size="xs" />
                   {/* The handle. Staw, round 350: a creation credits the
                       name that is actually theirs, not the label. */}
-                  By <span className="font-bold text-on-art">@{owner.username}</span>
+                  By <span className="font-bold text-white/80">@{owner.username}</span>
                   <NameMarks person={owner} />
                 </Link>
               ) : (
-                <p className="mt-1.5 text-sm text-on-art/75">
-                  By <span className="font-bold text-on-art">
+                <p className="mt-1 text-sm text-muted">
+                  By <span className="font-bold text-white/80">
                     {thing.creator_username ? `@${thing.creator_username}` : (thing.creator_name ?? 'Kobblon')}
                   </span>
                 </p>
               )}
             </div>
+          </div>
 
-            {/* Play, and the things you do to a World you are not playing
-                right now, kept beside it rather than in a rail of their own.
-                Staw wants the rating over the three of them: it is an
-                opinion about the World, not another way in. */}
-            <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-              {/*
-                * The rating draws its own pill now, so this is only the
-                * width it gets to be. It used to carry the border and the
-                * blur for a bar that had none of its own.
-                */}
-              <div className="w-full sm:w-72">
-                <RatingBar
-                  likes={counts.likes}
-                  dislikes={counts.dislikes}
-                  iLike={opinion === true}
-                  iDislike={opinion === false}
-                  disabled={!canRate}
-                  why={!profile
-                    ? 'Sign in to rate this World.'
-                    : 'Play this World before rating it.'}
-                  onLike={like}
-                  onDislike={dislike}
-                />
-              </div>
+          {/* What it is, in chips: the genre it was filed under and what it
+              runs on. Both are set by whoever made it, so a World with
+              neither simply has no chips rather than an empty rail. */}
+          <div className="flex flex-wrap gap-1.5">
+            {genre && <Chip>{genre.label}</Chip>}
+            {(thing.devices ?? []).map((one) => (
+              <Chip key={one}>{deviceLabels[one]}</Chip>
+            ))}
+          </div>
+        </div>
 
-              <div className="flex items-center gap-2">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
+          <WorldGallery shots={shots} name={thing.name} />
+
+          {/* The panel that does something: the rating, the way in, what it
+              is, and the numbers - in the order somebody reads them. */}
+          <aside className="flex min-w-0 flex-col gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
+            <RatingBar
+              likes={counts.likes}
+              dislikes={counts.dislikes}
+              iLike={opinion === true}
+              iDislike={opinion === false}
+              disabled={!canRate}
+              why={!profile
+                ? 'Sign in to rate this World.'
+                : 'Play this World before rating it.'}
+              onLike={like}
+              onDislike={dislike}
+            />
+
+            {/* Play is the width Staw sent, not the width of the column:
+                a button that fills its box reads as a banner. The three
+                beside it are the same height, so the row is one block. */}
+            <div className="flex items-stretch gap-2">
               <Button
                 size="lg"
                 variant="enter"
                 onClick={() => start()}
-                className="flex-1 sm:flex-none sm:px-10"
+                className="w-40 shrink-0"
               >
                 <Glyph icon={faPlay} />
                 <span className="font-display text-lg font-extrabold">Play</span>
@@ -550,9 +578,9 @@ export default function WorldPage() {
                   aria-pressed={favourited}
                   aria-label="Save this World"
                   className={cn(
-                    'grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-on-art/20',
-                    'bg-black/40 backdrop-blur-sm transition-colors disabled:opacity-40',
-                    favourited ? 'text-gem-bright' : 'text-on-art/80 hover:bg-black/70 hover:text-on-art',
+                    'grid flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line',
+                    'bg-ink-raised transition-colors disabled:opacity-40',
+                    favourited ? 'text-gem-bright' : 'text-white/70 hover:border-brand/60 hover:text-white',
                   )}
                 >
                   <Glyph icon={faStar} on={favourited} />
@@ -573,9 +601,9 @@ export default function WorldPage() {
                   aria-pressed={notify}
                   aria-label="Get told when this World changes"
                   className={cn(
-                    'grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 border-on-art/20',
-                    'bg-black/40 backdrop-blur-sm transition-colors disabled:opacity-40',
-                    notify ? 'text-link' : 'text-on-art/80 hover:bg-black/70 hover:text-on-art',
+                    'grid flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line',
+                    'bg-ink-raised transition-colors disabled:opacity-40',
+                    notify ? 'text-link' : 'text-white/70 hover:border-brand/60 hover:text-white',
                   )}
                 >
                   <Glyph icon={faBell} />
@@ -586,7 +614,7 @@ export default function WorldPage() {
                 label="More"
                 align="right"
                 trigger={
-                  <span className="grid h-12 w-12 place-items-center rounded-xl border-2 border-b-4 border-on-art/20 bg-black/40 text-on-art/80 backdrop-blur-sm transition-colors hover:bg-black/70 hover:text-on-art">
+                  <span className="grid h-full flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 text-white/70 transition-colors hover:border-brand/60 hover:text-white">
                     <Glyph icon={faEllipsis} />
                   </span>
                 }
@@ -610,36 +638,100 @@ export default function WorldPage() {
                   { label: 'Report abuse', icon: faFlag, danger: true, onSelect: () => setReporting(true) },
                 ]}
               />
-              </div>
             </div>
-          </div>
-        </WorldStage>
 
-        {/* One row of numbers across the page. Everything in it is written by
-            something real; nothing here is a placeholder for a number we do
-            not have yet. */}
-        <Ribbon className="mt-4">
-          {/* Printed even at zero: "how many are in there" with no number
-              beside it is a question the page refused to answer. Green only
-              when somebody actually is. */}
-          <Stat
-            label="Playing"
-            value={formatCount(playing_now)}
-            tone={playing_now > 0 ? 'live' : undefined}
-          />
-          <Stat label="Visits" value={formatCount(thing.visit_count)} />
-          <Stat label="Saved" value={formatCount(counts.favourites)} />
-          <Stat label="Genre" value={genre?.label ?? 'Not set'} />
-          <Stat
-            label="Updated"
-            value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
-          />
-          <Stat
-            label="Published"
-            value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/75">
+              {thing.description || 'Whoever built this has not described it yet.'}
+            </p>
+
+            {/* The numbers, each with the mark that means it elsewhere on
+                this platform: Staw's `playing` for people in there now, the
+                Library's bookmark for saves, an eye for visits, a clock
+                turned back for the last update. */}
+            <dl className="space-y-2 border-t-2 border-ink-line pt-3 text-sm">
+              <Fact
+                mark={<Icon name="playing" className="h-4 w-4" />}
+                label="Playing now"
+                value={formatCount(playing_now)}
+                live={playing_now > 0}
+              />
+              <Fact mark={<Glyph icon={faEye} />} label="Visits" value={formatCount(thing.visit_count)} />
+              <Fact mark={<Glyph icon={faBookmark} />} label="Saved" value={formatCount(counts.favourites)} />
+              <Fact
+                mark={<Glyph icon={faClockRotateLeft} />}
+                label="Updated"
+                value={thing.updated_at ? timeAgo(thing.updated_at) : 'Never'}
+              />
+              <Fact
+                mark={<Glyph icon={faFlagCheckered} />}
+                label="Published"
+                value={thing.published_at ? timeAgo(thing.published_at) : 'Not yet'}
+              />
+            </dl>
+
+            {/* Friends in a server of this World at this moment - not
+                friends who have ever played it. The two are different
+                numbers and only this one is worth interrupting somebody
+                for. */}
+            {!!friendsHere.length && (
+              <div className="border-t-2 border-ink-line pt-3">
+                <p className="text-tiny font-extrabold uppercase tracking-wide text-muted">
+                  Friends in there now
+                </p>
+                <div className="mt-2 flex -space-x-2">
+                  {friendsHere.slice(0, 6).map((one) => (
+                    <Avatar
+                      key={one.id}
+                      size="sm"
+                      personId={one.id}
+                      src={one.avatar_url}
+                      changedAt={one.avatar_changed_at}
+                      name={one.display_name ?? one.username}
+                    />
+                  ))}
+                  {friendsHere.length > 6 && (
+                    <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-ink-line bg-ink-raised text-mini font-bold">
+                      +{friendsHere.length - 6}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
+
+        {/*
+          * Faces, under the window.
+          *
+          * Staw: "worlds keep the dislikes & likes only, but klub users can
+          * also click a third button to add reactions to worlds". The bar
+          * is a rating and a rating has to be one number; a face says
+          * something the number cannot, and it does not move the number.
+          * The server refuses a non-member, so this only saves somebody a
+          * round trip.
+          */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+          <Reactions
+            what="world"
+            which={thing.id}
+            counts={faces.data ?? []}
+            canReact={!!profile && !profile.is_guest && inKlub}
+            whyNot={!profile
+              ? 'Sign in to react.'
+              : 'Reacting to a World is a Klub Kobblon thing.'}
+            onChanged={faces.reload}
           />
 
-        </Ribbon>
+          {profile && !mine && (
+            <button
+              onClick={() => setReporting(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
+            >
+              <Glyph icon={faFlag} className="text-tiny" />
+              Report Abuse
+            </button>
+          )}
+        </div>
 
         {/*
           * About, Servers, Badges and Store, the way a profile holds About,
@@ -656,11 +748,10 @@ export default function WorldPage() {
         <Tabs
           look="line"
           className="mt-8"
-          label="About this World, who is in it, and what it has"
+          label="Who is in this World, and what it has"
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'About', label: 'About' },
             { value: 'Servers', label: 'Servers', count: servers.data?.length ?? null },
             { value: 'Badges', label: 'Badges', count: badgeCount },
             { value: 'Store', label: 'Store', count: passCount },
@@ -668,47 +759,6 @@ export default function WorldPage() {
         />
 
         <div className="mt-6 space-y-8">
-          {tab === 'About' && (
-            <>
-              <p className="max-w-3xl whitespace-pre-wrap leading-relaxed text-white/75">
-                {thing.description || 'Whoever built this has not described it yet.'}
-              </p>
-
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                {/*
-                  * Faces, beside the rating rather than instead of it.
-                  *
-                  * Staw: "worlds keep the dislikes & likes only, but klub
-                  * users can also click a third button to add reactions to
-                  * worlds". The bar is a rating and a rating has to be one
-                  * number; a face says something the number cannot, and it
-                  * does not move the number. The server refuses a
-                  * non-member, so this only saves somebody a round trip.
-                  */}
-                <Reactions
-                  what="world"
-                  which={thing.id}
-                  counts={faces.data ?? []}
-                  canReact={!!profile && !profile.is_guest && inKlub}
-                  whyNot={!profile
-                    ? 'Sign in to react.'
-                    : 'Reacting to a World is a Klub Kobblon thing.'}
-                  onChanged={faces.reload}
-                />
-
-                {profile && !mine && (
-                  <button
-                    onClick={() => setReporting(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-danger/80 hover:text-danger"
-                  >
-                    <Glyph icon={faFlag} className="text-tiny" />
-                    Report Abuse
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
           {tab === 'Servers' && (
             <ServersTab
               servers={servers.data ?? []}
@@ -799,5 +849,39 @@ export default function WorldPage() {
         targetName={thing.name}
       />
     </>
+  )
+}
+
+/** What a World is, in a word: its genre, and what it runs on. */
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border-2 border-ink-line bg-ink-card px-3 py-1 text-xs font-bold text-white/70">
+      {children}
+    </span>
+  )
+}
+
+/** One number in the panel, with the mark that means it everywhere else. */
+function Fact({ mark, label, value, live }: {
+  mark: React.ReactNode
+  label: string
+  value: string
+  live?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <dt className="flex items-center gap-2 text-white/55">
+        <span className={cn(
+          'grid h-5 w-5 shrink-0 place-items-center',
+          live ? 'text-space' : 'text-white/45',
+        )}>
+          {mark}
+        </span>
+        {label}
+      </dt>
+      <dd className={cn('font-extrabold tabular-nums', live ? 'text-space' : 'text-white/85')}>
+        {value}
+      </dd>
+    </div>
   )
 }

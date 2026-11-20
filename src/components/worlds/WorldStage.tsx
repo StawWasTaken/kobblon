@@ -124,3 +124,99 @@ export function WorldStage({
     </div>
   )
 }
+
+/**
+ * The same shots, drawn as a shop window's gallery.
+ *
+ * Staw adopted the store layout for the World page, and a stage cannot be
+ * one: a stage is a 21/8 strip with the name and Play written across its
+ * foot, which only works when the art owns the whole width. Here the art
+ * owns two thirds and the panel beside it owns the decision, so the frame
+ * is an ordinary 16/9, the arrows are always visible rather than waiting
+ * for a hover, and the other pictures sit under it instead of over it.
+ *
+ * `WorldStage` is kept and still exported: it was handed to the
+ * applications in round 342 and the World page is not the only thing
+ * allowed to show a World the size of a page.
+ */
+export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
+  const [at, setAt] = useState(0)
+  const many = shots.length > 1
+  const here = shots[Math.min(at, shots.length - 1)]
+  const step = (by: number) => setAt((i) => (i + by + shots.length) % shots.length)
+
+  return (
+    <div className="min-w-0">
+      <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media">
+        <div className="relative aspect-video">
+          {!here ? (
+            <div className="grid h-full w-full place-items-center">
+              <div className="text-center">
+                <Glyph icon={worldIcon} className="text-4xl text-on-art/20" />
+                <p className="mt-3 text-sm text-muted">Nothing to show of this World yet.</p>
+              </div>
+            </div>
+          ) : here.kind === 'video' ? (
+            <video
+              key={here.id}
+              src={here.url}
+              controls
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <img src={here.url} alt={name} className="h-full w-full object-cover" />
+          )}
+
+          {many && here?.kind !== 'video' && ([-1, 1] as const).map((by) => (
+            <button
+              key={by}
+              onClick={() => step(by)}
+              aria-label={by === -1 ? 'Previous picture' : 'Next picture'}
+              className={cn(
+                'absolute top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full',
+                'border-2 border-on-art/20 bg-black/55 text-on-art/85 backdrop-blur-sm transition-colors',
+                'hover:bg-black/80 hover:text-on-art',
+                by === -1 ? 'left-2' : 'right-2',
+              )}
+            >
+              <Glyph icon={by === -1 ? faChevronLeft : faChevronRight} />
+            </button>
+          ))}
+
+          {many && (
+            <span className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-mini font-bold text-on-art/85 backdrop-blur-sm">
+              {Math.min(at, shots.length - 1) + 1} / {shots.length}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {many && (
+        <div className="mt-2 flex gap-2 overflow-x-auto kob-scroll">
+          {shots.map((shot, i) => (
+            <button
+              key={shot.id}
+              onClick={() => setAt(i)}
+              aria-label={`Show picture ${i + 1}`}
+              aria-current={i === at}
+              className={cn(
+                'h-14 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-colors',
+                i === at ? 'border-brand' : 'border-ink-line hover:border-brand/50',
+              )}
+            >
+              {shot.kind === 'video' ? (
+                <span className="grid h-full w-full place-items-center bg-black/60 text-on-art/80">
+                  <Glyph icon={faPlay} className="text-tiny" />
+                </span>
+              ) : (
+                <img src={shot.url} alt="" className="h-full w-full object-cover" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

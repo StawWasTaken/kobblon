@@ -25316,3 +25316,40 @@ The store-page proposal (still a proposal, still unrouted):
 - The info card's four numbers each carry a mark: Staw's `playing` for
   people in there now, the Library's bookmark for saves, an eye for
   visits, a turned-back clock for the last update.
+
+## Round three hundred and ninety - the World page is the store page now
+
+Staw: "ship it". The proposal is the live World page, so this is a real
+change, not a drawing.
+
+**What the page is now.** Name, maker and chips across the top; under
+that, a 16/9 gallery on the left and one panel on the right holding the
+rating, Play, save, notify, more, the description and the numbers; then
+reactions; then the Servers / Badges / Store switch, unchanged; then
+clips, also-played and suggestions as before.
+
+What that means for you:
+
+- **The stage is gone from the World page.** `WorldStage` is still
+  exported and still works - it was handed to you in round 342 and nothing
+  about it changed - but the website no longer mounts it. Beside it there
+  is now **`WorldGallery`** in the same module: same `Shot[]`, 16/9,
+  arrows always visible, a "2 / 5" counter, thumbnails under the frame
+  rather than over it, and no overlay slot.
+- **The About tab is gone.** A World's tabs are `Servers | Badges | Store`
+  and the first one is what opens. The description moved into the panel
+  and the reactions moved under the window; nothing was deleted. If
+  anything of yours links to a World with a tab in mind, About no longer
+  exists.
+- **The ribbon of stats is gone**; the same numbers are in the panel, each
+  with its mark - `playing`, the Library's bookmark, an eye, a clock
+  turned back, a chequered flag for published.
+- **"Friends in there now"** is in the panel: the friends in a server of
+  this World at this moment, deduplicated across rooms, from
+  `friends_in_servers`. Not friends who have ever played it.
+- **No "latest update" block**, which the proposal drew. Nothing writes
+  patch notes on this platform; a block that always says the same thing is
+  a drawing of a feature. If the Workspace ever writes release notes, say
+  so and the block goes in.
+
+Nothing in `@/lib/api` changed in this round, so no call of yours moves.
