@@ -22,22 +22,25 @@ createRoot(document.getElementById('root')!).render(
         updated={ago(30)}
         updatedNote={"Added the water tower route and fixed the ledge on block four that ate people.\nSirens are 20% slower on the first lap."}
         friends={[{ name: 'Malicia' }, { name: 'JohnDoe' }, { name: 'maker' }]}
-        badges={[
-          { id: '1', name: 'First Steps', held: true },
-          { id: '2', name: 'Clean Run', held: true },
-          { id: '3', name: 'No Falls' },
-        ]}
-        passes={[
-          { id: '1', name: 'Skyline Skin', price: 150 },
-          { id: '2', name: 'Double Jump', price: 400 },
-        ]}
+        worldId="00000000-0000-0000-0000-000000000000"
+        mine={false}
         likes={412}
         dislikes={64}
-        servers={[
-          { id: '1', players: 7, cap: 8, friends: 2 },
-          { id: '2', players: 4, cap: 8, friends: 0 },
-          { id: '3', players: 1, cap: 8, friends: 0 },
+        badges={[
+          { id: '1', content_id: 101, world_id: 'w', name: 'First Steps', description: 'Finish the first roof.', icon_url: null, is_enabled: true, awarded_count: 8120 },
+          { id: '2', content_id: 102, world_id: 'w', name: 'Clean Run', description: 'A lap without falling.', icon_url: null, is_enabled: true, awarded_count: 940 },
+          { id: '3', content_id: 103, world_id: 'w', name: 'No Falls', description: 'Three laps, no falls.', icon_url: null, is_enabled: true, awarded_count: 61 },
         ]}
+        passes={[
+          { id: '1', content_id: 201, world_id: 'w', name: 'Skyline Skin', description: 'The blue one.', icon_url: null, price: 150, is_for_sale: true },
+          { id: '2', content_id: 202, world_id: 'w', name: 'Double Jump', description: 'One more jump, mid-air.', icon_url: null, price: 400, is_for_sale: true },
+        ]}
+        servers={[
+          { id: 's1', capacity: 8, how_many: 7, people: [] },
+          { id: 's2', capacity: 8, how_many: 4, people: [] },
+          { id: 's3', capacity: 8, how_many: 1, people: [] },
+        ]}
+        inServers={{ s1: [{ id: 'malicia', username: 'malicia', display_name: 'Malicia', avatar_url: null, avatar_changed_at: null }, { id: 'johndoe', username: 'johndoe', display_name: 'JohnDoe', avatar_url: null, avatar_changed_at: null }] }}
       />
     </div>
   </MemoryRouter>,

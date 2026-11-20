@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  faBell, faChevronLeft, faChevronRight, faCoins, faEllipsis, faPlay, faStar,
+  faBell, faBookmark, faChevronLeft, faChevronRight, faClockRotateLeft, faEllipsis,
+  faEye, faPlay, faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
@@ -10,6 +11,9 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Tabs } from '@/components/ui/Tabs'
 import { RatingBar } from '@/components/worlds/RatingBar'
+import { ServersTab } from '@/components/worlds/ServersTab'
+import { WorldThings } from '@/components/worlds/WorldThings'
+import type { PlayerThere, RunningServer, WorldBadge, WorldPass } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
@@ -44,7 +48,8 @@ import { cn } from '@/lib/cn'
  */
 export function WorldStorePage({
   name, creator, creatorId, description, tags, shots, playing, visits, favourites,
-  updated, updatedNote, friends, likes, dislikes, badges, passes, servers, className,
+  updated, updatedNote, friends, likes, dislikes, badges, passes, servers, inServers,
+  worldId, mine, className,
 }: {
   name: string
   creator: string
@@ -62,9 +67,14 @@ export function WorldStorePage({
   friends: { name: string; avatar?: string | null }[]
   likes: number
   dislikes: number
-  badges: { id: string; name: string; icon_url?: string | null; held?: boolean }[]
-  passes: { id: string; name: string; price: number }[]
-  servers: { id: string; players: number; cap: number; friends: number }[]
+  badges: WorldBadge[]
+  passes: WorldPass[]
+  servers: RunningServer[]
+  /** Which friends are in which room, by server id - what `ServersTab` wants. */
+  inServers: Record<string, PlayerThere[]>
+  worldId: string
+  /** Whether this World is yours, which is what puts the make buttons in. */
+  mine: boolean
   className?: string
 }) {
   const [shot, setShot] = useState(0)
@@ -162,11 +172,17 @@ export function WorldStorePage({
 
           <p className="text-sm leading-relaxed text-white/75">{description}</p>
 
-          <dl className="space-y-1.5 border-t-2 border-ink-line pt-3 text-sm">
-            <Row label="Playing now" value={formatCount(playing)} live={playing > 0} />
-            <Row label="Visits" value={formatCount(visits)} />
-            <Row label="Saved" value={formatCount(favourites)} />
-            <Row label="Updated" value={timeAgo(updated)} />
+          {/*
+            * The four numbers, each with the mark that means it elsewhere
+            * on this platform: Staw's `playing` for people in there now,
+            * the Library's bookmark for saves, an eye for visits and a
+            * turned-back clock for the last update.
+            */}
+          <dl className="space-y-2 border-t-2 border-ink-line pt-3 text-sm">
+            <Row mark={<Icon name="playing" className="h-4 w-4" />} label="Playing now" value={formatCount(playing)} live={playing > 0} />
+            <Row mark={<Glyph icon={faEye} />} label="Visits" value={formatCount(visits)} />
+            <Row mark={<Glyph icon={faBookmark} />} label="Saved" value={formatCount(favourites)} />
+            <Row mark={<Glyph icon={faClockRotateLeft} />} label="Updated" value={timeAgo(updated)} />
           </dl>
 
           {!!friends.length && (
@@ -212,74 +228,26 @@ export function WorldStorePage({
         ]}
       />
 
+      {/* The three panels are the ones the World page already draws -
+          `ServersTab` and `WorldThings` - because Staw wants their design
+          kept. Nothing here is a second version of them. */}
       <div className="mt-5">
         {tab === 'Servers' && (
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {servers.map((one) => (
-              <li
-                key={one.id}
-                className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-3 py-2.5"
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink-raised">
-                  <Icon name="world" className="h-5 w-5" tone={null} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold tabular-nums">
-                    {one.players} / {one.cap}
-                  </span>
-                  <span className="block text-xs text-muted">
-                    {one.friends ? `${one.friends} of your friends in here` : 'Nobody you know'}
-                  </span>
-                </span>
-                <Button size="sm" variant="yes">Join</Button>
-              </li>
-            ))}
-            {!servers.length && <Empty>Nobody is in this World right now.</Empty>}
-          </ul>
+          <ServersTab
+            servers={servers}
+            friends={inServers}
+            name={name}
+            signedIn
+            onRefresh={() => {}}
+          />
         )}
 
         {tab === 'Badges' && (
-          <div className="flex flex-wrap gap-2">
-            {badges.map((one) => (
-              <span
-                key={one.id}
-                className={cn(
-                  'flex items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-3 py-2 text-sm font-bold',
-                  !one.held && 'opacity-55',
-                )}
-              >
-                <span className={cn(
-                  'grid h-8 w-8 place-items-center rounded-full',
-                  one.held ? 'bg-brand' : 'bg-ink-hover',
-                )}>
-                  <Icon
-                    name="badge"
-                    className="h-4 w-4"
-                    tone={one.held ? '#ffffff' : 'rgba(255,255,255,0.35)'}
-                  />
-                </span>
-                {one.name}
-              </span>
-            ))}
-            {!badges.length && <Empty>This World has no badges yet.</Empty>}
-          </div>
+          <WorldThings kind="badges" badges={badges} mine={mine} worldId={worldId} />
         )}
 
         {tab === 'Store' && (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {passes.map((one) => (
-              <div
-                key={one.id}
-                className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-3 py-2.5"
-              >
-                <span className="min-w-0 flex-1 truncate text-sm font-bold">{one.name}</span>
-                <Button size="sm" variant="brand" icon={faCoins}>
-                  {formatCount(one.price)}
-                </Button>
-              </div>
-            ))}
-            {!passes.length && <Empty>Nothing for sale in here.</Empty>}
-          </div>
+          <WorldThings kind="shop" passes={passes} mine={mine} worldId={worldId} />
         )}
       </div>
     </div>
@@ -317,10 +285,20 @@ function Side({ label, icon }: { label: string; icon: typeof faStar }) {
   )
 }
 
-function Row({ label, value, live }: { label: string; value: string; live?: boolean }) {
+function Row({ mark, label, value, live }: {
+  mark: React.ReactNode
+  label: string
+  value: string
+  live?: boolean
+}) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <dt className="text-white/55">{label}</dt>
+      <dt className="flex items-center gap-2 text-white/55">
+        <span className={cn('grid h-5 w-5 shrink-0 place-items-center', live ? 'text-space' : 'text-white/45')}>
+          {mark}
+        </span>
+        {label}
+      </dt>
       <dd className={cn(
         'font-extrabold tabular-nums',
         live ? 'text-space' : 'text-white/85',
@@ -328,13 +306,5 @@ function Row({ label, value, live }: { label: string; value: string; live?: bool
         {value}
       </dd>
     </div>
-  )
-}
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-xl border-2 border-dashed border-ink-line px-3 py-6 text-center text-sm text-muted">
-      {children}
-    </p>
   )
 }

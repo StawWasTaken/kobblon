@@ -25292,3 +25292,27 @@ now".** It means friends in a server of that World at this moment, from
 Launcher shows a friends-on-this-World line anywhere, that is the meaning
 to use, because the two are different numbers and the ambiguous label was
 mine.
+
+## Round three hundred and eighty-nine - new default World art, and the store page's third pass
+
+**The default World pictures changed.** Staw redrew both, and they are the
+same two files at the same two paths:
+
+- `public/brand/world-emblem.png` - 700 x 700, the square one.
+- `public/brand/world-thumbnail.png` - 1244 x 700 (16/9), the wide one.
+
+Same names, same shapes, same `worldEmblem()` / `worldThumbnail()` in
+`@/lib/worldart`, so nothing of yours breaks. **If the Launcher ships its
+own copy of either picture rather than reading the website's, it is now
+the old drawing and the two products show different "no picture yet"
+art.** That is the only thing in this round that can go wrong silently,
+which is why it is first.
+
+The store-page proposal (still a proposal, still unrouted):
+
+- The Servers, Badges and Store panels are now the **real** `ServersTab`
+  and `WorldThings` the World page already draws, not re-drawn versions.
+  Staw: keep their design.
+- The info card's four numbers each carry a mark: Staw's `playing` for
+  people in there now, the Library's bookmark for saves, an eye for
+  visits, a turned-back clock for the last update.
