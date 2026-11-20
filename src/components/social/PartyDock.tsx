@@ -147,11 +147,23 @@ export function PartyPanel({
    * The strip over the chat: faces rather than a list, one line for where
    * it is going, and the buttons on the end of it.
    */
+  /*
+   * The party, over its own chat.
+   *
+   * Not the chat's own furniture with a party in it - Staw: "dont blindly
+   * copy the group chat design". A party is a roster and a destination,
+   * which is what Xbox puts at the top of its guide: who is with you, one
+   * line for where you are all going, and the green button that takes you
+   * there. The talking happens underneath.
+   *
+   * It is kept short on purpose. Four rows and then it scrolls, because
+   * eight names above a thread is a thread nobody can read.
+   */
   if (compact) {
     return (
-      <div className={cn('shrink-0 border-b-2 border-ink-line px-2.5 py-2', className)}>
+      <div className={cn('shrink-0 border-b-2 border-ink-line bg-ink-raised', className)}>
         {invites.map((one) => (
-          <div key={one.party_id} className="mb-2 flex items-center gap-2">
+          <div key={one.party_id} className="flex items-center gap-2 border-b border-ink-line px-2.5 py-2">
             <Avatar src={avatarOf(one)} personId={one.asked_by} name={nameOf(one)} size="xs" />
             <p className="min-w-0 flex-1 truncate text-xs">
               <span className="font-bold">{nameOf(one)}</span> asked you in
@@ -164,64 +176,97 @@ export function PartyPanel({
             >
               Join
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={busy === `no:${one.party_id}`}
+              onClick={() => onDecline(one.party_id)}
+            >
+              No
+            </Button>
           </div>
         ))}
 
         {!!party && (
-          <div className="flex items-center gap-2">
-            <div className="flex min-w-0 flex-1 items-center -space-x-2">
-              {party.members.slice(0, 6).map((one) => (
-                <Link
-                  key={one.user_id}
-                  to={profileLink(one)}
-                  title={nameOf(one)}
-                  className="relative shrink-0 rounded-full ring-2 ring-ink-card transition-transform hover:z-10 hover:-translate-y-0.5"
-                >
-                  <Avatar src={avatarOf(one)} personId={one.user_id} name={nameOf(one)} size="xs" />
+          <>
+            <div className="max-h-[7.5rem] overflow-y-auto kob-scroll px-1.5 py-1.5">
+              {party.members.map((one) => (
+                <div key={one.user_id} className="group flex items-center gap-2 rounded-lg px-1.5 py-1">
+                  <Link to={profileLink(one)} className="shrink-0">
+                    <Avatar src={avatarOf(one)} personId={one.user_id} name={nameOf(one)} size="xs" />
+                  </Link>
+                  <Link
+                    to={profileLink(one)}
+                    className="min-w-0 flex-1 truncate text-xs font-bold hover:text-link"
+                  >
+                    {nameOf(one)}
+                  </Link>
                   {party.leader_id === one.user_id && (
-                    <Glyph
-                      icon={faCrown}
-                      className="absolute -right-0.5 -top-1 text-[0.5rem] text-space"
-                    />
+                    <Tooltip label="Leader" side="top">
+                      <Glyph icon={faCrown} className="shrink-0 text-tiny text-space" />
+                    </Tooltip>
                   )}
-                </Link>
+                  {leader && one.user_id !== me && (
+                    <button
+                      type="button"
+                      aria-label={`Take ${nameOf(one)} out of the party`}
+                      onClick={() => onRemove(one.user_id)}
+                      className="shrink-0 rounded p-0.5 text-tiny text-white/30 opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+                    >
+                      <Glyph icon={faXmark} />
+                    </button>
+                  )}
+                </div>
               ))}
-              {party.members.length > 6 && (
-                <span className="pl-3 text-mini font-bold text-muted">
-                  +{party.members.length - 6}
-                </span>
-              )}
             </div>
 
-            {going && (
-              <Button size="sm" variant="yes" icon={faPlay} onClick={onPlay} aria-label="Play" />
+            {/* Where you are all going, and the one button that does it. */}
+            {going ? (
+              <div className="flex items-center gap-2 border-t border-ink-line px-2 py-2">
+                <Link
+                  to={worldLink({
+                    content_id: party.world_content_id ?? 0,
+                    name: party.world_name ?? '',
+                  })}
+                  className="min-w-0 flex-1 truncate text-xs hover:text-link"
+                >
+                  <span className="text-muted">Going to </span>
+                  <span className="font-bold">{party.world_name}</span>
+                </Link>
+                <Button size="sm" variant="yes" icon={faPlay} onClick={onPlay}>Play</Button>
+                <Tooltip label="Ask somebody in" side="top">
+                  <Button size="sm" variant="subtle" icon={faUserPlus} aria-label="Ask somebody in" onClick={onInvite} />
+                </Tooltip>
+                <Tooltip label="Leave the party" side="top">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon={faRightFromBracket}
+                    aria-label="Leave the party"
+                    loading={busy === 'leave'}
+                    onClick={onLeave}
+                  />
+                </Tooltip>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 border-t border-ink-line px-2 py-2">
+                <p className="min-w-0 flex-1 truncate text-xs text-muted">
+                  Nowhere yet.
+                </p>
+                <Button size="sm" variant="subtle" icon={faUserPlus} onClick={onInvite}>Invite</Button>
+                <Tooltip label="Leave the party" side="top">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon={faRightFromBracket}
+                    aria-label="Leave the party"
+                    loading={busy === 'leave'}
+                    onClick={onLeave}
+                  />
+                </Tooltip>
+              </div>
             )}
-            <Tooltip label="Ask somebody in" side="top">
-              <Button size="sm" variant="subtle" icon={faUserPlus} aria-label="Ask somebody in" onClick={onInvite} />
-            </Tooltip>
-            <Tooltip label="Leave the party" side="top">
-              <Button
-                size="sm"
-                variant="ghost"
-                icon={faRightFromBracket}
-                aria-label="Leave the party"
-                loading={busy === 'leave'}
-                onClick={onLeave}
-              />
-            </Tooltip>
-          </div>
-        )}
-
-        {going && (
-          <Link
-            to={worldLink({
-              content_id: party.world_content_id ?? 0,
-              name: party.world_name ?? '',
-            })}
-            className="mt-1.5 block truncate text-mini text-muted hover:text-link"
-          >
-            Going to <span className="font-bold text-white/70">{party.world_name}</span>
-          </Link>
+          </>
         )}
       </div>
     )

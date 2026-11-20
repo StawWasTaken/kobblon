@@ -5,14 +5,13 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faChevronDown, faChevronUp, faXmark, faMagnifyingGlass, faPenToSquare,
-  faGear, faArrowLeft, faUserGroup, faEyeSlash, faPen, faRightFromBracket, faCheck,
+  faXmark, faPenToSquare,
+  faGear, faArrowLeft, faPen, faRightFromBracket, faCheck,
 } from '@fortawesome/free-solid-svg-icons'
 import { Avatar } from '@/components/ui/Avatar'
 import { LoadingMark } from '@/components/ui/Loading'
 import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
-import { Icon } from '@/components/brand/Icon'
 import { NewGroupDialog } from './NewGroupDialog'
 import { Composer } from '@/components/chat/Composer'
 import { MessageRow, DeletedRun } from './MessageRow'
@@ -31,15 +30,16 @@ import {
 import { ChatSuspended } from '@/components/chat/ChatSuspended'
 import { ChatLockedBar } from '@/components/chat/ChatLockedBar'
 import { supabase } from '@/lib/supabase'
-import { timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { Conversation, Message } from '@/types/db'
 import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
-import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
+import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
 import { useThoughts } from '@/hooks/useThoughtStore'
 import { useParty } from '@/hooks/useParty'
 import { PartyWiring } from '@/components/social/PartyDock'
+import { FriendsWindow } from '@/components/chat/FriendsWindow'
+import { ConversationFace, soloOf } from '@/components/chat/ConversationFace'
 
 /*
  * The standing lives here, once.
@@ -187,7 +187,16 @@ function Window({
   const name = renamed === undefined
     ? conversationName(conversation)
     : conversationName({ ...conversation, title: renamed })
-  const solo = conversation.members.length === 1 ? conversation.members[0] : null
+  /*
+   * One other person, or a room.
+   *
+   * It used to count: one member meant a private chat. `members` is
+   * everybody but you, so a party of two and a group of two both counted
+   * as one - and got that person's face, that person's name, and the card
+   * offering to block them, in a window that was not about them. `soloOf`
+   * asks what the conversation is instead.
+   */
+  const solo = soloOf(conversation)
 
   // A row for a friend nobody has messaged yet carries no real conversation
   // until the first message opens one.
@@ -404,18 +413,21 @@ function Window({
               * title, and a dock carries this much only because there can
               * be two of them open and they have to be told apart.
               */}
-            <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg text-xs text-muted">
-              {solo
-                ? <PersonAvatar person={solo} size="xs" />
-                : conversation.party_id
-                  ? <Icon name="party" className="h-3.5 w-3.5" />
-                  : <Glyph icon={faUserGroup} />}
-            </span>
+            <ConversationFace conversation={conversation} size="xs" />
             <span className="truncate text-note font-extrabold tracking-wide text-white">{name}</span>
           </button>
         )}
 
-        {!details && (
+        {/*
+          * A party has no chat details.
+          *
+          * Staw: "dont blindly copy the group chat design". That panel is
+          * who is in a chat, renaming it, leaving it, and the card that
+          * offers to ignore, block and report the person on the other side
+          * - none of which a party has. Everything a party can be asked is
+          * in the strip under this head.
+          */}
+        {!details && !conversation.party_id && (
           <Tooltip label="Chat details" side="top">
             <button
               onClick={() => { setDetails(true); setCollapsed(false) }}
@@ -733,254 +745,6 @@ function Window({
   )
 }
 
-function List({
-  conversations, loading, onOpen, onNewGroup, onOpenParty, full,
-}: {
-  conversations: Conversation[]
-  loading: boolean
-  onOpen: (id: string) => void
-  onNewGroup: () => void
-  /** Bring the party's window back after it was closed. */
-  onOpenParty: () => void
-  /** Filling a phone's screen rather than sitting in a corner of a desktop. */
-  full?: boolean
-}) {
-  // Open the first time somebody sees it, and however they left it after that.
-  const [remembered, setOpen] = useRemembered(LIST_STATE, true)
-  /*
-   * Filling the screen means always open: the collapse is what makes a
-   * corner window get out of the way, and a sheet somebody deliberately
-   * opened has nothing to get out of the way of.
-   */
-  const open = full ? true : remembered
-  const [term, setTerm] = useState('')
-  /*
-   * Chats, or who you are with. Two tabs rather than two windows: the
-   * Launcher has one chat panel and no corner to put a second one in, and
-   * a party you can only reach on the website is a party you cannot use
-   * while you are playing.
-   */
-  const [tab, setTab] = useState<'chats' | 'party'>('chats')
-  const { party, invites } = useParty()
-  const withYou = party?.members.length ?? 0
-
-  const shown = conversations.filter((c) =>
-    conversationName(c).toLowerCase().includes(term.trim().toLowerCase()))
-
-  return (
-    <section
-      className={cn(
-        'pointer-events-auto flex flex-col overflow-hidden border-ink-line bg-ink-card',
-        full
-          ? 'h-full w-full'
-          /* The same shape as a conversation window: the two sit side by
-             side at the foot of the page and a pair that do not match
-             reads as one of them being a different kind of thing. */
-          : cn(
-              'relative rounded-t-2xl border-2 border-b-0 border-t-0 shadow-pop',
-              DOCK_SHAPE,
-              'before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-brand-bright',
-              open ? DOCK_TALL : 'h-12',
-            ),
-      )}
-      aria-label="Friends Chat"
-    >
-      {/*
-        * No header in the sheet. The phone sheet draws its own title bar
-        * with a way out of it, so this one made "Friends Chat" appear twice
-        * down the top of the screen - and its collapse chevron did nothing
-        * there, because `full` forces the list open.
-        */}
-      {/*
-        * The head is the conversation window's, to the colour. Staw: "i
-        * want the friends chat dock get its topbar the same colour as the
-        * topbar we have for each chat". It had been a blue wash fading
-        * out, which is a second surface stacked on the window - and
-        * beside a flat black head on the conversation next to it, the
-        * pair read as two different pieces of furniture. `bg-ink` is the
-        * page's own colour, which is a step off the card in both themes -
-        * black at a third was a grey slab in daylight.
-        */}
-      {!full && (
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-3">
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex flex-1 items-center gap-2 text-left text-sm font-extrabold"
-          aria-expanded={open}
-        >
-          {/* Staw's own mark, not a glyph that looks like it. */}
-          <Icon name="chatbubble" className="h-4 w-4" />
-          Friends Chat
-        </button>
-
-        <Tooltip label="New chat group" side="top">
-          <button
-            onClick={onNewGroup}
-            aria-label="New chat group"
-            className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
-          >
-            <Glyph icon={faPenToSquare} />
-          </button>
-        </Tooltip>
-
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? 'Minimise chat' : 'Open chat'}
-          className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
-        >
-          <Glyph icon={open ? faChevronDown : faChevronUp} />
-        </button>
-      </header>
-      )}
-
-      {open && (
-        <>
-          {/* The switcher, in the site's own segmented shape. */}
-          <div className="shrink-0 px-2 pt-2">
-            <div className="flex gap-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised p-1">
-              {([
-                ['chats', 'Chats', null],
-                ['party', 'Party', withYou || invites.length || null],
-              ] as const).map(([which, label, count]) => (
-                <button
-                  key={which}
-                  type="button"
-                  onClick={() => setTab(which)}
-                  aria-pressed={tab === which}
-                  className={cn(
-                    'flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 px-2 py-1 text-xs font-extrabold transition-colors',
-                    tab === which
-                      ? 'border-brand-deep border-b-[4px] bg-brand text-on-art'
-                      : 'border-transparent border-b-[4px] text-white/55 hover:bg-ink-hover hover:text-white',
-                  )}
-                >
-                  {which === 'party'
-                    ? <Icon name="party" className="h-3.5 w-3.5" />
-                    : <Icon name="chatbubble" className="h-3.5 w-3.5" />}
-                  {label}
-                  {!!count && (
-                    <span className={tab === which ? 'text-on-art/60' : 'text-white/30'}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {tab === 'party' && (
-            <PartyWiring
-              onOpenChat={onOpenParty}
-            />
-          )}
-        </>
-      )}
-
-      {open && tab === 'chats' && (
-        <>
-          <div className="relative shrink-0 p-2">
-            <label className="sr-only" htmlFor="chat-filter">Search for friends</label>
-            <Glyph
-              icon={faMagnifyingGlass}
-              className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-xs text-white/35"
-            />
-            <input
-              id="chat-filter"
-              value={term}
-              onChange={(e) => setTerm(e.target.value)}
-              placeholder="Search for friends"
-              className="h-9 w-full rounded-full border-2 border-ink-line bg-ink-raised pl-8 pr-3 text-sm placeholder:text-white/30 focus:border-brand-bright"
-            />
-          </div>
-
-          <div className="flex-1 overflow-y-auto kob-scroll">
-            {loading && (
-              <div className="space-y-2 p-2">
-                {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}
-              </div>
-            )}
-
-            {!loading && !conversations.length && (
-              <p className="px-4 py-6 text-center text-xs text-muted">
-                No chats yet. You can message people once you are friends.
-              </p>
-            )}
-
-            {shown.map((c) => {
-              const solo = c.members.length === 1 ? c.members[0] : null
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => onOpen(c.id)}
-                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-ink-hover"
-                >
-                  <span className="shrink-0">
-                    {solo ? (
-                      <>
-                        <PersonAvatar person={solo} size="sm" />
-                      </>
-                    ) : (
-                      /* A party wears its own mark, because it is not a
-                         group somebody named - it is who you are with. */
-                      <span className={cn(
-                        'grid h-8 w-8 place-items-center rounded-full text-xs text-on-art',
-                        c.party_id ? 'bg-space' : 'bg-brand-deep',
-                      )}>
-                        {c.party_id
-                          ? <Icon name="party" className="h-4 w-4" />
-                          : <Glyph icon={faUserGroup} />}
-                      </span>
-                    )}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-bold">{conversationName(c)}</span>
-                      {c.ignored && (
-                        <Glyph
-                          icon={faEyeSlash}
-                          title="You are ignoring this person"
-                          className="shrink-0 text-tiny text-white/35"
-                        />
-                      )}
-                    </span>
-                    {/* What somebody you are ignoring said stays covered here
-                        as well, not only inside the chat. */}
-                    <span
-                      className={cn(
-                        'block truncate text-xs text-muted',
-                        c.ignored && c.last_message && 'blur-[3px]',
-                      )}
-                    >
-                      {c.last_message ?? 'No messages yet'}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right">
-                    <span className="block text-mini text-muted">{timeAgo(c.last_message_at)}</span>
-                    {c.unread_count > 0 && (
-                      <span className="mt-1 inline-grid h-4 min-w-4 place-items-center rounded-full bg-brand px-1 text-tiny font-bold text-on-art">
-                        {c.unread_count > 9 ? '9+' : c.unread_count}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </>
-      )}
-    </section>
-  )
-}
-
-/**
- * Whether this person is allowed to talk, and the card that says so.
- *
- * Asked once when the dock mounts and again when the clock runs out, not
- * on a timer: the server said when it ends, so the only moment the answer
- * can change on its own is that one. (A suspension *given* while somebody
- * is sitting here is caught by the send being refused, which is the
- * server's job and not a poll's.)
- */
 function useChatStanding() {
   const mine = useId()
   const [standing, setStanding] = useState<ChatStanding | null>(null)
@@ -1100,6 +864,8 @@ export function ChatDock({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [openIds, setOpenIds] = useState<string[]>([])
+  /* Open the first time somebody sees it, and however they left it after. */
+  const [listOpen, setListOpen] = useRemembered(LIST_STATE, true)
   const [making, setMaking] = useState(false)
 
   const load = useCallback(async () => {
@@ -1254,12 +1020,14 @@ export function ChatDock({ children }: { children: ReactNode }) {
             )
           })}
 
-          <List
+          <FriendsWindow
             conversations={conversations}
             loading={loading}
             onOpen={openConversation}
             onNewGroup={() => setMaking(true)}
             onOpenParty={openParty}
+            open={listOpen}
+            onToggle={() => setListOpen((v) => !v)}
           />
         </div>
       )}
@@ -1323,8 +1091,10 @@ export function ChatDock({ children }: { children: ReactNode }) {
 
               <div className="min-h-0 flex-1">
                 {phone === 'list' ? (
-                  <List
+                  <FriendsWindow
                     full
+                    open
+                    onToggle={() => {}}
                     conversations={conversations}
                     loading={loading}
                     onOpen={(id) => { openConversation(id); setPhone(id) }}

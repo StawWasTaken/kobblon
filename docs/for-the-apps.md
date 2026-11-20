@@ -25021,3 +25021,71 @@ Nothing in the database changed; this is all 0363.
 For your side, the shape is the same as the round before: a party is a row
 in `my_conversations()` with `party_id` set. If the Launcher's friends chat
 can draw a strip above a thread, this is the same window.
+
+## Round three hundred and eighty-three - the dock, rebuilt
+
+Staw, with a picture of the party window: "this is a catastrophe". Four
+things, and he is right about all of them.
+
+### The bug underneath it
+
+`solo` - whether a conversation is one other person - was
+`members.length === 1`. `members` is everybody **but you**, so a party of
+two and a group of two both counted as one. They got that person's face,
+that person's name, and the card that offers to ignore, block and report
+them, inside a window that was not about them at all.
+
+Staw: "in the group members (& pfp) its not only the other person, its
+EVERYONE including you". `soloOf(conversation)` now asks what the
+conversation *is* - a party or a group is never solo, whatever the count.
+**If the Workspace or the Launcher counts members to decide this, it has the
+same bug.**
+
+### The face
+
+New, and shared: `ConversationFace` in `@/components/chat/ConversationFace`.
+
+- One person: their own picture.
+- A **party**: the party mark, green, on a white tile.
+- A **group**: the friends mark, brand blue, on a white tile.
+
+Staw's words exactly. A room full of people does not wear one of their
+faces.
+
+### No switcher
+
+The Chats / Party tabs are gone. The party is a **module pinned to the top
+of the friends list**, which is where Xbox keeps it - always in sight,
+never a tab you have to be on.
+
+### The list is a friends list now, not a list of chats
+
+Rebuilt as `FriendsWindow`. What changed, and why, taken from the two
+platforms Staw named rather than just said:
+
+- **Sorted by what people are doing**, not by who typed last: `Groups`,
+  `In a World`, `Online`, `Offline`, under quiet headings. The reason the
+  list is open is to find somebody to play with.
+- **A row says what they are doing** - the World, the build, their thought -
+  rather than the last line of the chat. The message is one press away, in
+  the window.
+- Unread counts and search stay.
+
+### The party window is its own window
+
+Not the chat's furniture with a party in it. It has no chat details panel,
+no rename, no ignore/block/report card - none of which a party has. What it
+has: the roster with the leader crowned, one line for where you are all
+going, the green Play, Invite, and leave. Then the party's chat underneath.
+Green band along the top, because that is the party's colour.
+
+### What was not rebuilt, said plainly
+
+The message thread and the composer are the same components as before -
+`MessageRow`, `Composer`, the mentions, the GIF and sticker pickers, the
+word filter, the suspension bar. Those are the chat, not the dock, and
+rewriting them would have thrown away a dozen rounds of fixes to get the
+same thing back. What was rebuilt is everything around them: the list, the
+party module, the faces, and how a window decides what it is.
+
+Nothing in the database changed.
