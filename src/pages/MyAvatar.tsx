@@ -763,6 +763,32 @@ export default function MyAvatar() {
         {/* --------------------------------------------------- the wardrobe */}
         <div className="min-w-0 space-y-3">
         {/*
+          * How many are in here, and the way to find one, above both
+          * strips rather than wedged between them.
+          *
+          * Staw: "the search bar should be ontop of these two categories
+          * thingies". He is right about why: the drawer and its divisions
+          * are one control read top to bottom, and a search box sitting in
+          * the middle of it cut the thing in half.
+          */}
+        {drawer !== 'body' && drawer !== 'outfits' && (
+          <div className="flex items-center gap-3">
+            <p className="shrink-0 text-xs text-muted">
+              <span className="font-bold text-white/70">{shelf.length}</span>
+              {shelf.length === 1 ? ' thing' : ' things'}
+            </p>
+            <div className="ml-auto w-full max-w-[14rem]">
+              <Input
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder="Search"
+                icon={faMagnifyingGlass}
+              />
+            </div>
+          </div>
+        )}
+
+        {/*
           * The drawers, as a strip across the top of the wardrobe.
           *
           * They were six square tiles down the side of the page, each a
@@ -773,7 +799,7 @@ export default function MyAvatar() {
           */}
         <nav
           aria-label="What to change"
-          className="-mx-1 flex gap-1 overflow-x-auto rounded-2xl bg-ink-raised p-1 kob-scroll"
+          className="flex gap-1 overflow-x-auto rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised p-1.5 kob-scroll"
         >
           {DRAWERS.map((one) => (
             <button
@@ -782,15 +808,21 @@ export default function MyAvatar() {
               onClick={() => { setDrawer(one.id); setTerm(''); setPart(null) }}
               aria-current={drawer === one.id}
               className={cn(
-                'flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 transition-colors',
+                'flex shrink-0 items-center gap-2 rounded-xl border-2 px-3 py-1.5 transition-colors',
                 /* Blue is Kobblon, and the one you are on is the same
                    blue as the rail, the tabs and the 2D/3D switch. The
                    shape is Staw's segmented bar; the colour is the site's,
                    because two languages for "this is the one" is two
                    languages. */
+                /* The lip, because everything else blue on this page has
+                   one and a flat pill beside a block button reads as a
+                   label pretending to be a control. Staw: "they look too
+                   flat compared to our kinda 3d design with thick
+                   strokes". The one that is off carries the same border in
+                   nothing, so the row does not jump by five pixels. */
                 drawer === one.id
-                  ? 'bg-brand text-on-art'
-                  : 'text-white/55 hover:bg-ink-hover hover:text-white',
+                  ? 'border-brand-deep border-b-[5px] bg-brand text-on-art'
+                  : 'border-transparent border-b-[5px] text-white/55 hover:bg-ink-hover hover:text-white',
               )}
             >
               <Glyph
@@ -811,26 +843,6 @@ export default function MyAvatar() {
           ))}
         </nav>
 
-          {/* The tab above says which drawer this is, so the heading would
-              be the same word twice. What is left is how many are in it and
-              a way to find one. */}
-          {drawer !== 'body' && drawer !== 'outfits' && (
-            <div className="flex items-center gap-3">
-              <p className="shrink-0 text-xs text-muted">
-                <span className="font-bold text-white/70">{shelf.length}</span>
-                {shelf.length === 1 ? ' thing' : ' things'}
-              </p>
-              <div className="ml-auto w-full max-w-[14rem]">
-                <Input
-                  value={term}
-                  onChange={(e) => setTerm(e.target.value)}
-                  placeholder="Search"
-                  icon={faMagnifyingGlass}
-                />
-              </div>
-            </div>
-          )}
-
           {/*
             * The divisions, as chips under the heading. Only drawn when
             * there is more than one thing to choose between - a single
@@ -839,7 +851,7 @@ export default function MyAvatar() {
             * a control.
             */}
           {divisions.length > 1 && (
-            <div className="-mx-1 flex gap-1 overflow-x-auto rounded-2xl bg-ink-raised p-1 kob-scroll">
+            <div className="flex gap-1 overflow-x-auto rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised p-1.5 kob-scroll">
               <Chip on={!part} onPick={() => setPart(null)} count={drawerItems.length}>
                 Everything
               </Chip>
@@ -1093,9 +1105,11 @@ function Chip({ on, count, onPick, children }: {
       onClick={onPick}
       aria-pressed={on}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-mini font-bold',
+        'inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-3 py-1 text-mini font-bold',
         'transition-colors duration-150',
-        on ? 'bg-brand text-on-art' : 'text-white/55 hover:bg-ink-hover hover:text-white',
+        on
+          ? 'border-brand-deep border-b-[5px] bg-brand text-on-art'
+          : 'border-transparent border-b-[5px] text-white/55 hover:bg-ink-hover hover:text-white',
       )}
     >
       {children}

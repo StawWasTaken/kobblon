@@ -24835,3 +24835,22 @@ paragraph, and the hours played beside the name, which 0359 now makes
 possible.
 
 If he says no, that file goes and the current page stays as it is.
+
+## Round three hundred and seventy-nine - the wardrobe strips stand up
+
+Staw, with a picture of the avatar page: the search box should be above both
+category strips, not between them, and the strips "look too flat compared to
+our kinda 3d design with thick strokes".
+
+Both fixed on My Avatar. The count and the search box now sit above the
+drawer strip, so the drawer and its divisions read as one control from top
+to bottom instead of being cut in half. The strips themselves carry the
+site's own thickness - a two-pixel edge with a four-pixel bottom on the
+track, and the pill that is on carries the same deep lip every blue block
+button on this platform has, with the ones that are off holding the same
+border in nothing so the row does not jump when you change tab.
+
+Nothing shared changed; this is the website's page only. It is here because
+the Workspace draws segmented strips of its own, and the rule for them is
+the one above: a flat pill beside a block button reads as a label
+pretending to be a control.
