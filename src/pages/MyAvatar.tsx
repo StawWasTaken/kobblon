@@ -783,8 +783,13 @@ export default function MyAvatar() {
               aria-current={drawer === one.id}
               className={cn(
                 'flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 transition-colors',
+                /* Blue is Kobblon, and the one you are on is the same
+                   blue as the rail, the tabs and the 2D/3D switch. The
+                   shape is Staw's segmented bar; the colour is the site's,
+                   because two languages for "this is the one" is two
+                   languages. */
                 drawer === one.id
-                  ? 'bg-white text-ink'
+                  ? 'bg-brand text-on-art'
                   : 'text-white/55 hover:bg-ink-hover hover:text-white',
               )}
             >
@@ -797,7 +802,7 @@ export default function MyAvatar() {
               {!!counts[one.id] && (
                 <span className={cn(
                   'text-mark font-bold leading-none',
-                  drawer === one.id ? 'text-ink/50' : 'text-white/30',
+                  drawer === one.id ? 'text-on-art/60' : 'text-white/30',
                 )}>
                   {counts[one.id]}
                 </span>
@@ -1090,11 +1095,11 @@ function Chip({ on, count, onPick, children }: {
       className={cn(
         'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-mini font-bold',
         'transition-colors duration-150',
-        on ? 'bg-white text-ink' : 'text-white/55 hover:bg-ink-hover hover:text-white',
+        on ? 'bg-brand text-on-art' : 'text-white/55 hover:bg-ink-hover hover:text-white',
       )}
     >
       {children}
-      <span className={on ? 'text-ink/50' : 'text-white/30'}>{count}</span>
+      <span className={on ? 'text-on-art/60' : 'text-white/30'}>{count}</span>
     </button>
   )
 }

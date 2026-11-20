@@ -24596,3 +24596,15 @@ A mesh or a texture that did not arrive leaves a piece missing and nothing
 asks for it again - the stage has already decided what it has. The button
 builds the stage afresh and takes the picture again, which is the only
 honest version of that offer.
+
+## Round three hundred and seventy-five - one blue for "this is the one"
+
+The avatar page's category strips had their selected pill filled white,
+which put a second answer on the screen for a question the site already
+answers in blue - the rail, the tabs, the 2D/3D switch. Staw saw it: "we
+have a lot of blue stuff while in the avatar page we use a bit of white
+too".
+
+The shape stays his - a dark bar of pills, the one you are on filled - and
+the fill is Kobblon's blue with `on-art` words on it. One language for
+"this is the one", in all three places.
