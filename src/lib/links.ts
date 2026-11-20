@@ -69,3 +69,7 @@ export const POLICY_HOME = 'https://kobblon.com'
 export function policyUrl(which: PolicyName, routed = false): string {
   return routed ? `/policies/${which}` : `${POLICY_HOME}/policies/${which}`
 }
+
+/** Where a clip lives. The number first, like everything else with a page. */
+export const clipLink = (one: { content_id: number; title?: string | null }) =>
+  `/clips/${one.content_id}${one.title ? `/${slugify(one.title)}` : ''}`

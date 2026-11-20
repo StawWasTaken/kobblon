@@ -83,7 +83,7 @@ export const FACE_COLOUR: Record<Face, string> = {
 export function Reactions({
   what, which, counts, canReact = true, whyNot, onChanged, className,
 }: {
-  what: 'post' | 'world'
+  what: 'post' | 'world' | 'clip'
   which: string
   /** What the page already knows, so a wall does not ask once per post. */
   counts: ReactionCount[]

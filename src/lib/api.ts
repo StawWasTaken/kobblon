@@ -1560,6 +1560,77 @@ export async function listEarnedBadges(userId: string): Promise<EarnedBadge[]> {
   return unwrap(await supabase.rpc('earned_badges', { target: userId })) ?? []
 }
 
+// -------------------------------------------------------------- clips
+
+/**
+ * Thirty seconds of a World, kept.
+ *
+ * The recording is the Launcher's. This side holds the row, who may see it,
+ * and the places it is asked for.
+ */
+export type Clip = {
+  id: string
+  content_id: number
+  title: string | null
+  path: string
+  poster_path: string | null
+  seconds: number
+  privacy: 'everyone' | 'friends'
+  view_count: number
+  created_at: string
+  owner_id: string
+  owner_username: string
+  owner_display_name: string | null
+  owner_avatar_url: string | null
+  world_id: string | null
+  world_name: string | null
+  world_slug: string | null
+  world_content_id: number | null
+}
+
+/** Where the file actually is. The bucket is public; the row is the door. */
+export function clipUrl(path: string): string {
+  return supabase.storage.from('clips').getPublicUrl(path).data.publicUrl
+}
+
+export function clipPoster(clip: Clip): string | null {
+  return clip.poster_path ? clipUrl(clip.poster_path) : null
+}
+
+export async function clipsOf(userId: string, howMany = 12): Promise<Clip[]> {
+  return (unwrap(await supabase.rpc('clips_of', {
+    target: userId, limit_count: howMany,
+  })) as Clip[]) ?? []
+}
+
+export async function clipsInWorld(worldId: string, howMany = 12): Promise<Clip[]> {
+  return (unwrap(await supabase.rpc('clips_in_world', {
+    wanted: worldId, limit_count: howMany,
+  })) as Clip[]) ?? []
+}
+
+/** The nearest thing to a feed: friends and the people you follow. */
+export async function clipsFromFriends(howMany = 12): Promise<Clip[]> {
+  return (unwrap(await supabase.rpc('clips_from_friends', { limit_count: howMany })) as Clip[]) ?? []
+}
+
+export async function clipByNumber(number: number): Promise<Clip | null> {
+  const rows = unwrap(await supabase.rpc('clip_by_number', { wanted: number })) as Clip[] | null
+  return rows?.[0] ?? null
+}
+
+export async function watchedClip(id: string): Promise<void> {
+  await supabase.rpc('watched_clip', { which: id })
+}
+
+export async function removeClip(id: string): Promise<void> {
+  unwrap(await supabase.rpc('remove_clip', { which: id }))
+}
+
+export async function setClipPrivacy(id: string, who: 'everyone' | 'friends'): Promise<void> {
+  unwrap(await supabase.rpc('set_clip_privacy', { which: id, who_sees: who }))
+}
+
 // ------------------------------------------------------- hours and score
 
 /** One World and how long somebody has been in it. */
@@ -5751,14 +5822,14 @@ export type ReactionCount = { face: Face; how_many: number; mine: boolean }
  * or null. Reacting to a World is a Klub thing and the server says so.
  */
 export async function react(
-  what: 'post' | 'world', which: string, face: Face | null,
+  what: 'post' | 'world' | 'clip', which: string, face: Face | null,
 ): Promise<Face | null> {
   return unwrap(await supabase.rpc('react', { what, which, face })) as Face | null
 }
 
 /** What is on one thing: the faces used, how many times, and which is mine. */
 export async function reactionsOn(
-  what: 'post' | 'world', which: string,
+  what: 'post' | 'world' | 'clip', which: string,
 ): Promise<ReactionCount[]> {
   return (unwrap(await supabase.rpc('reactions_on', { what, which })) as ReactionCount[]) ?? []
 }
@@ -5770,7 +5841,7 @@ export async function reactionsOn(
  * anybody can read the first one.
  */
 export async function reactionsOnMany(
-  what: 'post' | 'world', whichever: string[],
+  what: 'post' | 'world' | 'clip', whichever: string[],
 ): Promise<Record<string, ReactionCount[]>> {
   if (!whichever.length) return {}
   const rows = (unwrap(await supabase.rpc('reactions_on_many', {

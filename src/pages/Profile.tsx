@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import type { KobIcon } from '@/components/brand/Icon'
 import {
-  faComment, faUserPlus, faClock, faCoins, faStar,
+  faComment, faUserPlus, faClock, faCoins, faStar, faFilm,
   faEllipsis, faLink, faCubes, faEye, faAward, faUsers, faBan,
   faPalette, faPen, faCircleInfo, faShirt, faArrowRight, faHeart, faShapes, faBell,
 } from '@fortawesome/free-solid-svg-icons'
@@ -21,6 +21,7 @@ import { SendBrixDialog } from '@/components/social/SendBrixDialog'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { BadgeTile } from '@/components/social/BadgeGrid'
 import { Playtime } from '@/components/profile/Playtime'
+import { ClipShelf } from '@/components/clips/ClipCard'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { worldIcon } from '@/lib/naming'
@@ -44,6 +45,7 @@ import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   addressNow, discordHandleOf, getProfileByUsername, getProfileOverview, isFollowing, listEarnedBadges, peopleList,
   playtimeOf, playtimeTotal, playerScore, listEarnedWorldBadges,
+  clipsOf, clipPoster,
   listFavouriteWorlds,
   listMemberCommunities, listWorldsByOwner, sendFriendRequest, setFollowing, standingWith,
   startConversation,
@@ -151,6 +153,8 @@ export default function Profile() {
     [user?.id, isMe],
   )
   const badges = useAsync(async () => (user ? listEarnedBadges(user.id) : []), [user?.id])
+  /* What they kept. The Launcher records them; this is where they land. */
+  const clips = useAsync(async () => (user ? clipsOf(user.id, 8) : []), [user?.id])
   const worldBadges = useAsync(
     async () => (user ? listEarnedWorldBadges(user.id) : []),
     [user?.id],
@@ -1039,6 +1043,19 @@ export default function Profile() {
                   <WorldCard key={world.id} world={world} />
                 ))}
               </div>
+            </section>
+          )}
+
+          {/*
+            * Thirty seconds of a World, kept.
+            *
+            * Drawn only when there are some. A profile is not the place to
+            * tell somebody that a feature they have never used exists.
+            */}
+          {!!clips.data?.length && (
+            <section>
+              <Heading icon={faFilm}>Clips</Heading>
+              <ClipShelf clips={clips.data} posterOf={clipPoster} />
             </section>
           )}
 

@@ -1,9 +1,10 @@
 import { Picture } from '@/components/brand/Picture'
+import { ClipShelf } from '@/components/clips/ClipCard'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
-  faPlay, faStar, faBell, faFlag, faSliders,
+  faPlay, faStar, faBell, faFlag, faSliders, faFilm,
   faXmark, faSpinner, faDownload, faEllipsis, faLink, faCube, faUsers, faCompass,
 } from '@fortawesome/free-solid-svg-icons'
 import { Page } from '@/components/layout/AppShell'
@@ -33,7 +34,7 @@ import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useParty } from '@/hooks/useParty'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
-  alsoJoined, badgesOf, doIWatchWorld, favouriteWorld, friendsInServers, getWorld, myWorldStanding,
+  alsoJoined, badgesOf, clipsInWorld, clipPoster, doIWatchWorld, favouriteWorld, friendsInServers, getWorld, myWorldStanding,
   passesOf, playingNow, recommendedWorlds, serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
   partyIsGoingTo,
@@ -189,6 +190,7 @@ export default function WorldPage() {
   )
   const alsoPlayed = useAsync(async () => (thing ? alsoJoined(thing.id) : []), [thing?.id])
   const badges = useAsync(async () => (thing ? badgesOf(thing.id) : []), [thing?.id])
+  const clips = useAsync(async () => (thing ? clipsInWorld(thing.id, 8) : []), [thing?.id])
   /* What to play next. Its own genre first, then the busiest of the rest. */
   const suggested = useAsync(
     async () => (thing ? recommendedWorlds(thing.id, thing.genre, 8) : []),
@@ -732,6 +734,23 @@ export default function WorldPage() {
           {tab === 'Store' && (
             <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
           )}
+
+          {/*
+            * What people kept out of it.
+            *
+            * Under the switcher, because a clip taken in this World is
+            * about the World rather than about About. It is the cheapest
+            * advertising this platform has: somebody else's thirty seconds,
+            * with the Play button underneath.
+            */}
+          <Band
+            id="clips"
+            icon={faFilm}
+            title="Clips from this World"
+            hide={!clips.data?.length}
+          >
+            <ClipShelf clips={clips.data ?? []} posterOf={clipPoster} />
+          </Band>
 
           {/* Under the switcher rather than inside it: what else to play is
               true of the page, not of the tab somebody happens to be on. */}

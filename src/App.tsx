@@ -36,6 +36,7 @@ const CreateInventory = lazyPage(() => import('@/pages/CreateHub').then((m) => (
 const CreateAnalytics = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateAnalytics })))
 const CreatorPage = lazyPage(() => import('@/pages/CreatorPage'))
 const EventPage = lazyPage(() => import('@/pages/EventPage'))
+const ClipPage = lazyPage(() => import('@/pages/ClipPage'))
 const People = lazyPage(() => import('@/pages/People'))
 const Communities = lazyPage(() => import('@/pages/Communities'))
 const CommunityPage = lazyPage(() => import('@/pages/CommunityPage'))
@@ -269,6 +270,8 @@ export default function App() {
                 <Route path="/discover" element={<Discover />} />
                 {/* A World is readable by anybody; playing it needs the
                     Launcher. Not /e/, which community events already own. */}
+                <Route path="/clips/:id" element={<ClipPage />} />
+                <Route path="/clips/:id/:slug" element={<ClipPage />} />
                 <Route path="/worlds/:id" element={<WorldPage />} />
                 <Route path="/worlds/:id/:slug" element={<WorldPage />} />
                 <Route path="/create" element={<CreateHub />}>

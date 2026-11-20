@@ -4,6 +4,7 @@ import { TopicCard, useTopTopics } from '@/components/forum/TopicCard'
 import { FriendsRail } from '@/components/social/FriendsRail'
 import { PersonAvatar } from '@/components/ui/PersonAvatar'
 import { Shelf, WorldTile, WorldFeature } from '@/components/worlds/Shelf'
+import { ClipCard } from '@/components/clips/ClipCard'
 import { TopNow } from '@/components/home/TopNow'
 import { greeting } from '@/lib/greeting'
 import { AdBanner } from '@/components/ads/AdBanner'
@@ -12,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  clearThought, getThought, listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds,
+  clearThought, clipsFromFriends, clipPoster, getThought, listFavouriteWorlds, listMemberCommunities, listRecentlyPlayedWorlds,
   listWorlds, myWorlds, setThought,
 } from '@/lib/api'
 import { ThoughtOver, ThoughtDialog } from '@/components/profile/Thought'
@@ -44,6 +45,14 @@ export default function Home() {
    * sixteen and seventeen to twenty-four.
    */
   const busiest = useAsync(() => listWorlds({ sort: 'trending', limit: 5 }), [])
+  /*
+   * Thirty seconds somebody you know kept.
+   *
+   * The nearest thing to a feed this platform has, and deliberately only
+   * friends and the people you follow. A wall of clips from strangers is
+   * the thing Staw's own list says not to build.
+   */
+  const clips = useAsync(async () => (profile ? clipsFromFriends(12) : []), [profile?.id])
   const fresh = useAsync(() => listWorlds({ sort: 'new', limit: 12 }), [])
   const liked = useAsync(() => listWorlds({ sort: 'popular', limit: 12 }), [])
   /*
@@ -170,6 +179,14 @@ export default function Home() {
       {!!played.data?.length && (
         <Shelf title="Recently played" more={{ to: '/library', label: 'Your library' }}>
           {played.data.map((world) => <WorldTile key={world.id} world={world} />)}
+        </Shelf>
+      )}
+
+      {!!clips.data?.length && (
+        <Shelf title="Clips from your friends">
+          {clips.data.map((clip) => (
+            <ClipCard key={clip.id} clip={clip} poster={clipPoster(clip)} className="w-64 shrink-0" />
+          ))}
         </Shelf>
       )}
 

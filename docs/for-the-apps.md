@@ -24727,3 +24727,111 @@ No hours on a World's own page yet (`my_playtime_in` is there for it), no
 leaderboard by hours, no score anywhere but a profile, and no screen
 anywhere that awards a World badge - that is the Workspace's to put
 somewhere, and the function is waiting for it.
+
+## Round three hundred and seventy-eight - clips, and a World page to look at
+
+Two things in here: clips, which are built, and a proposal for the World
+page, which is not.
+
+### Clips - migrations 0361 and 0362
+
+Staw's idea four: the Launcher can draw the World, so it can keep the last
+thirty seconds of it. **The recording is yours and none of it is here.**
+Nothing on the website pretends to record - there is no Record button, no
+upload dialog for one, no screen that implies the browser can do it.
+
+What this side holds:
+
+**A bucket, `clips`** - public, 128 MB a file, `video/mp4`, `video/webm` and
+the three picture types for a poster frame. Writing is **your own folder
+only**: `clips/<your uuid>/whatever.mp4`. The storage policy enforces that,
+and `make_clip` checks it again, because a path is a string somebody sent
+us.
+
+**A table, `clips`**: `content_id` (the number in the link), owner, world
+(nullable, `on delete set null` - a World going away does not take the clip
+with it), title, path, poster_path, seconds (0-60), privacy, view_count,
+is_removed.
+
+**How the Launcher posts one.** Upload the file, then:
+
+```
+make_clip(world uuid, file text, poster text default null,
+          title text default null, how_long int default 0,
+          who_sees text default 'everyone') -> clips
+```
+
+Returns the whole row, `content_id` included, so you can build the link
+straight away: `https://kobblon.com/clips/<content_id>`. Longer than sixty
+seconds is **cut to sixty rather than refused** - a clip is not worth
+failing an upload over. A file outside your own folder raises. A suspended
+account raises.
+
+The rest: `remove_clip(which)` (owner or staff; marks removed),
+`set_clip_privacy(which, who_sees)`, `watched_clip(which)`.
+
+Reading: `clips_of(target, limit)`, `clips_in_world(world, limit)`,
+`clips_from_friends(limit)`, `clip_by_number(bigint)`. All one row shape, so
+there is one card to draw. Each is `security definer` and spells its privacy
+test out in its own `where`, because a definer function does not see the
+table's policy.
+
+**Privacy is `everyone` or `friends`**, the same two words the rest of the
+platform uses, and it defaults to **everyone** - unlike thoughts and
+whereabouts, because reach is the whole point of the feature. The owner can
+narrow it per clip. The table's own policy says the same thing, so a
+friends-only clip is invisible to a stranger reading the table directly;
+that is checked under two identities.
+
+**0362: a clip can be reacted to.** Rather than a second like table, clips
+joined the reaction system posts and Worlds already use - same eleven faces,
+same three-at-most, same heart from 0357. `react('clip', <clip uuid>,
+<face>)`. Reacting to a World is still a Klub thing; reacting to a clip is
+not, because a clip travels.
+
+### Clips on the website
+
+- **A page of its own**, `/clips/<number>`, which is the address that
+  travels. It plays without signing in, says who kept it, and puts **Open
+  <World>** under the player - that link is the entire point of the feature.
+  Under it, more from the same World.
+- **A shelf on a profile**, above Hours.
+- **A row on a World's page**, "Clips from this World", under the tabs. The
+  cheapest advertising this platform has.
+- **"Clips from your friends" on Home** - friends and the people you follow
+  only. A wall of clips from strangers is the one thing Staw's own list says
+  not to build.
+
+`ClipCard` and `ClipShelf` in `@/components/clips/ClipCard` take a row and a
+poster address as props and fetch nothing, so they mount in the Workspace
+too - `tools/site/clips-preview.html`.
+
+### Not built
+
+No clip in a chat message yet (a link works; it does not unfurl into a
+player). No clip in a notification. No sweeper deleting the file of a
+removed clip - the row is marked and the object stays. No trimming, no
+titles-after-the-fact, no thumbnail picking: whatever the Launcher uploads
+is what it is.
+
+### Following a World
+
+Staw: we already have this, with the bell on the World page. Confirmed -
+`doIWatchWorld` and the bell are the feature, and nothing was added.
+
+### The World page as a store page - a proposal only
+
+Staw wanted to see it before deciding. `WorldStorePage` in
+`@/components/worlds/WorldStorePage`, drawn at
+`tools/site/worldstore-preview.html`. **Nothing routes to it and the live
+World page is untouched.**
+
+What it rearranges: the shots become a gallery with a strip under it, the
+Play button and the numbers become one panel beside it, the latest patch
+note comes out onto the page, and badges and passes come out of their tabs.
+Everything in it is something this platform already writes - except
+**reviews**, which do not exist and would be the one new table: a thumb, a
+paragraph, and the hours played beside the name, which 0359 now makes
+possible.
+
+If he says no, that file goes and the current page stays as it is.
