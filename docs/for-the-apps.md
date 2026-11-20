@@ -25263,3 +25263,32 @@ Nothing for you to copy unless your Launcher dock still paints its phone
 or full-screen state a different shade from its docked state - that was
 the whole of the bug here, and it only shows up when the two are open
 side by side.
+
+## Round three hundred and eighty-eight - the store page, second pass
+
+Still a proposal and still nothing routes to it, so there is nothing here
+you have to build against. Written down because the next round may adopt
+it, and because one of the notes settles a word we both use.
+
+Staw's notes on the first draft, applied:
+
+- **No reviews.** The like/dislike this platform already has stays, drawn
+  by the existing `RatingBar`. Reviews were the only thing in the draft
+  with no table behind them, and they are not happening.
+- **Our icons, not Font Awesome's**: star, bell, thumbs and Brix all go
+  through `Glyph`, which swaps in Staw's drawings. One exception, on
+  purpose - the Play triangle. `playing` is a person beside a triangle; it
+  means "in a World right now", and inside a Play button it says the wrong
+  thing. If you have a bare triangle of his, send it.
+- **The description sits under the buttons**, not above them.
+- **The Servers / Badges / Store switch stays** - same `Tabs`, same counts.
+- **Arrows on the gallery**, plus a "1 / 4" counter.
+- **Marks after the creator's handle**, through `NameMarks`, which asks
+  the database rather than reading a flag off a row.
+
+**The word worth agreeing on: "friends who play" is now "Friends in there
+now".** It means friends in a server of that World at this moment, from
+`friends_in_servers` - not friends who have ever played it. If your
+Launcher shows a friends-on-this-World line anywhere, that is the meaning
+to use, because the two are different numbers and the ambiguous label was
+mine.

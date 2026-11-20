@@ -1,11 +1,16 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  faBell, faCirclePlay, faEllipsis, faPen, faStar, faThumbsDown, faThumbsUp,
+  faBell, faChevronLeft, faChevronRight, faCoins, faEllipsis, faPlay, faStar,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
+import { NameMarks } from '@/components/brand/Verified'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
-import { formatCount, playedFor, timeAgo } from '@/lib/format'
+import { Tabs } from '@/components/ui/Tabs'
+import { RatingBar } from '@/components/worlds/RatingBar'
+import { formatCount, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 /*
@@ -13,32 +18,38 @@ import { cn } from '@/lib/cn'
  *
  * Staw's idea three: right now a World page is a picture and a Play button,
  * where a Steam page is a row of screenshots, what it is in one line, tags,
- * how many are in there now, what changed in the last update, and what
- * people say about it. We already hold nearly all of that - media, patch
- * notes, likes, visits, the live roster, badges, passes - arranged as tabs,
- * which is four filing cabinets rather than a window.
+ * how many are in there now, what changed in the last update, and what the
+ * World holds. We already write every number in here.
  *
- * This is the proposal, drawn so it can be looked at before it replaces
- * anything. Everything in it is a number this platform already writes,
- * except reviews, which do not exist yet and are the one new thing the idea
- * asks for.
+ * Second pass, to Staw's notes on the first:
+ *
+ * - **No reviews.** The like and dislike this platform already has stays,
+ *   as `RatingBar`, which is the same component the World page uses now.
+ *   Reviews were the one thing in the first draft with no table behind it
+ *   and he does not want them.
+ * - **The description moved under the buttons**, because the buttons are
+ *   what somebody came for and the paragraph is what they read if the
+ *   buttons did not already decide it.
+ * - **Our icons**, through `Glyph`, which swaps in Staw's drawings for the
+ *   star, the bell, the thumbs and Brix. The Play triangle stays Font
+ *   Awesome's on purpose: `playing` is a person beside a triangle - it is
+ *   the "in a World right now" mark - and putting a little person inside a
+ *   Play button says the wrong thing.
+ * - **The Servers / Badges / Store switch stays**, under the window, the
+ *   same `Tabs` the World page has today.
+ * - **Arrows on the gallery**, either side of the big picture.
+ *
+ * Still a proposal: nothing routes here. `tools/site/worldstore-preview`
+ * mounts it.
  */
-export type StoreReview = {
-  id: string
-  who: string
-  avatar?: string | null
-  liked: boolean
-  seconds: number
-  at: string
-  body: string
-}
-
 export function WorldStorePage({
-  name, creator, description, tags, shots, playing, visits, favourites,
-  updated, updatedNote, friends, reviews, badges, passes, className,
+  name, creator, creatorId, description, tags, shots, playing, visits, favourites,
+  updated, updatedNote, friends, likes, dislikes, badges, passes, servers, className,
 }: {
   name: string
   creator: string
+  /** Who to ask about for the marks after the handle, where one is in hand. */
+  creatorId?: string | null
   description: string
   tags: string[]
   shots: string[]
@@ -47,15 +58,20 @@ export function WorldStorePage({
   favourites: number
   updated: string
   updatedNote: string
+  /** Friends **in there right now**, not friends who have ever played it. */
   friends: { name: string; avatar?: string | null }[]
-  reviews: StoreReview[]
+  likes: number
+  dislikes: number
   badges: { id: string; name: string; icon_url?: string | null; held?: boolean }[]
   passes: { id: string; name: string; price: number }[]
+  servers: { id: string; players: number; cap: number; friends: number }[]
   className?: string
 }) {
   const [shot, setShot] = useState(0)
-  const liked = reviews.filter((one) => one.liked).length
-  const share = reviews.length ? Math.round((liked / reviews.length) * 100) : 0
+  const [tab, setTab] = useState<'Servers' | 'Badges' | 'Store'>('Servers')
+  const [iLike, setILike] = useState<boolean | null>(null)
+
+  const step = (by: number) => setShot((was) => (was + by + shots.length) % shots.length)
 
   return (
     <div className={cn('mx-auto w-full max-w-6xl px-4 py-8', className)}>
@@ -63,8 +79,14 @@ export function WorldStorePage({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-3xl font-extrabold leading-tight sm:text-4xl">{name}</h1>
-          <p className="mt-1 text-sm text-muted">
-            by <span className="font-bold text-white/80">@{creator}</span>
+          <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
+            by
+            <Link to={`/@${creator}`} className="inline-flex items-center gap-1.5 hover:text-white">
+              <span className="font-bold text-white/80">@{creator}</span>
+              {/* The marks come from the database, so in the bare preview
+                  there is nobody to ask and nothing is drawn. */}
+              <NameMarks id={creatorId ?? undefined} username={creator} />
+            </Link>
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -82,13 +104,20 @@ export function WorldStorePage({
       {/* ------------------------------------------------- the window */}
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
         <div className="min-w-0">
-          <div className="overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
-            <img
-              src={shots[shot]}
-              alt=""
-              className="aspect-video w-full object-cover"
-            />
+          <div className="group relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
+            <img src={shots[shot]} alt="" className="aspect-video w-full object-cover" />
+
+            {shots.length > 1 && (
+              <>
+                <Arrow side="left" onClick={() => step(-1)} />
+                <Arrow side="right" onClick={() => step(1)} />
+                <span className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-mini font-bold text-white/85 backdrop-blur-sm">
+                  {shot + 1} / {shots.length}
+                </span>
+              </>
+            )}
           </div>
+
           <div className="mt-2 flex gap-2 overflow-x-auto kob-scroll">
             {shots.map((one, i) => (
               <button
@@ -110,19 +139,30 @@ export function WorldStorePage({
             it is the right place: everything you came to press, in one
             column, at eye level. */}
         <aside className="flex min-w-0 flex-col gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
-          <p className="text-sm leading-relaxed text-white/75 line-clamp-4">{description}</p>
+          <RatingBar
+            likes={likes + (iLike === true ? 1 : 0)}
+            dislikes={dislikes + (iLike === false ? 1 : 0)}
+            iLike={iLike === true}
+            iDislike={iLike === false}
+            onLike={() => setILike((was) => (was === true ? null : true))}
+            onDislike={() => setILike((was) => (was === false ? null : false))}
+          />
 
-          <Button variant="yes" size="lg" icon={faCirclePlay} className="w-full">
-            Play
-          </Button>
-
-          <div className="flex gap-2">
-            <Button variant="subtle" icon={faStar} className="flex-1" aria-label="Favourite" />
-            <Button variant="subtle" icon={faBell} className="flex-1" aria-label="Get told" />
-            <Button variant="subtle" icon={faEllipsis} className="flex-1" aria-label="More" />
+          {/* Play is the width Staw sent, not the width of the column: a
+              button that fills its box reads as a banner. The three beside
+              it are the same height, so the row is one block. */}
+          <div className="flex items-stretch gap-2">
+            <Button variant="yes" size="lg" icon={faPlay} className="w-40 shrink-0">
+              Play
+            </Button>
+            <Side label="Save this World" icon={faStar} />
+            <Side label="Get told when it changes" icon={faBell} />
+            <Side label="More" icon={faEllipsis} />
           </div>
 
-          <dl className="mt-1 space-y-1.5 border-t-2 border-ink-line pt-3 text-sm">
+          <p className="text-sm leading-relaxed text-white/75">{description}</p>
+
+          <dl className="space-y-1.5 border-t-2 border-ink-line pt-3 text-sm">
             <Row label="Playing now" value={formatCount(playing)} live={playing > 0} />
             <Row label="Visits" value={formatCount(visits)} />
             <Row label="Saved" value={formatCount(favourites)} />
@@ -131,8 +171,11 @@ export function WorldStorePage({
 
           {!!friends.length && (
             <div className="border-t-2 border-ink-line pt-3">
+              {/* Named for what it actually is: the friends who are in a
+                  server of this World at this moment, which is the thing
+                  worth interrupting somebody for. */}
               <p className="text-tiny font-extrabold uppercase tracking-wide text-muted">
-                Friends who play
+                Friends in there now
               </p>
               <div className="mt-2 flex -space-x-2">
                 {friends.slice(0, 6).map((one) => (
@@ -155,97 +198,122 @@ export function WorldStorePage({
         </div>
       </section>
 
-      {/* -------------------------------------------------- what it holds */}
-      {(!!badges.length || !!passes.length) && (
-        <section className="mt-8 grid gap-5 sm:grid-cols-2">
-          {!!badges.length && (
-            <div>
-              <h2 className="font-display text-xl font-extrabold">Badges</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {badges.map((one) => (
-                  <span
-                    key={one.id}
-                    className={cn(
-                      'flex items-center gap-2 rounded-xl border-2 border-ink-line bg-ink-card px-3 py-2 text-sm font-bold',
-                      !one.held && 'opacity-60',
-                    )}
-                  >
-                    <span className={cn(
-                      'grid h-7 w-7 place-items-center rounded-full',
-                      one.held ? 'bg-brand text-on-art' : 'bg-ink-hover text-white/35',
-                    )}>
-                      <Glyph icon={faStar} className="text-tiny" />
-                    </span>
-                    {one.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {!!passes.length && (
-            <div>
-              <h2 className="font-display text-xl font-extrabold">Store</h2>
-              <div className="mt-3 space-y-2">
-                {passes.map((one) => (
-                  <div
-                    key={one.id}
-                    className="flex items-center gap-3 rounded-xl border-2 border-ink-line bg-ink-card px-3 py-2"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-sm font-bold">{one.name}</span>
-                    <Button size="sm" variant="brand">{formatCount(one.price)} Brix</Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
+      {/* ------------------------------------- the switch, kept as it is */}
+      <Tabs
+        look="line"
+        className="mt-8"
+        label="Who is in it, and what it has"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'Servers', label: 'Servers', count: servers.length },
+          { value: 'Badges', label: 'Badges', count: badges.length },
+          { value: 'Store', label: 'Store', count: passes.length },
+        ]}
+      />
 
-      {/* ------------------------------------------------------- reviews */}
-      <section className="mt-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl font-extrabold">What people say</h2>
-          <Button size="sm" variant="subtle" icon={faPen}>Write a review</Button>
-        </div>
-
-        <div className="mt-3 flex items-center gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
-          <span className="font-display text-3xl font-extrabold tabular-nums text-yes-bright">
-            {share}%
-          </span>
-          <p className="text-sm text-white/70">
-            of {formatCount(reviews.length)} reviews are positive
-          </p>
-        </div>
-
-        <ul className="mt-3 space-y-3">
-          {reviews.map((one) => (
-            <li
-              key={one.id}
-              className="rounded-2xl border-2 border-ink-line bg-ink-card p-4"
-            >
-              <div className="flex items-center gap-2.5">
-                <Avatar src={one.avatar ?? undefined} name={one.who} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{one.who}</p>
-                  <p className="text-xs text-muted">
-                    {playedFor(one.seconds)} played · {timeAgo(one.at)}
-                  </p>
-                </div>
-                <span className={cn(
-                  'grid h-8 w-8 shrink-0 place-items-center rounded-lg',
-                  one.liked ? 'bg-yes/20 text-yes-bright' : 'bg-danger/15 text-danger',
-                )}>
-                  <Glyph icon={one.liked ? faThumbsUp : faThumbsDown} className="text-sm" />
+      <div className="mt-5">
+        {tab === 'Servers' && (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {servers.map((one) => (
+              <li
+                key={one.id}
+                className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-3 py-2.5"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink-raised">
+                  <Icon name="world" className="h-5 w-5" tone={null} />
                 </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold tabular-nums">
+                    {one.players} / {one.cap}
+                  </span>
+                  <span className="block text-xs text-muted">
+                    {one.friends ? `${one.friends} of your friends in here` : 'Nobody you know'}
+                  </span>
+                </span>
+                <Button size="sm" variant="yes">Join</Button>
+              </li>
+            ))}
+            {!servers.length && <Empty>Nobody is in this World right now.</Empty>}
+          </ul>
+        )}
+
+        {tab === 'Badges' && (
+          <div className="flex flex-wrap gap-2">
+            {badges.map((one) => (
+              <span
+                key={one.id}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-3 py-2 text-sm font-bold',
+                  !one.held && 'opacity-55',
+                )}
+              >
+                <span className={cn(
+                  'grid h-8 w-8 place-items-center rounded-full',
+                  one.held ? 'bg-brand' : 'bg-ink-hover',
+                )}>
+                  <Icon
+                    name="badge"
+                    className="h-4 w-4"
+                    tone={one.held ? '#ffffff' : 'rgba(255,255,255,0.35)'}
+                  />
+                </span>
+                {one.name}
+              </span>
+            ))}
+            {!badges.length && <Empty>This World has no badges yet.</Empty>}
+          </div>
+        )}
+
+        {tab === 'Store' && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {passes.map((one) => (
+              <div
+                key={one.id}
+                className="flex items-center gap-3 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card px-3 py-2.5"
+              >
+                <span className="min-w-0 flex-1 truncate text-sm font-bold">{one.name}</span>
+                <Button size="sm" variant="brand" icon={faCoins}>
+                  {formatCount(one.price)}
+                </Button>
               </div>
-              <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-white/80">
-                {one.body}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
+            ))}
+            {!passes.length && <Empty>Nothing for sale in here.</Empty>}
+          </div>
+        )}
+      </div>
     </div>
+  )
+}
+
+function Arrow({ side, onClick }: { side: 'left' | 'right'; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={side === 'left' ? 'Previous picture' : 'Next picture'}
+      className={cn(
+        'absolute top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full',
+        'border-2 border-white/20 bg-black/55 text-white/85 backdrop-blur-sm transition-colors',
+        'hover:bg-black/80 hover:text-white',
+        side === 'left' ? 'left-2' : 'right-2',
+      )}
+    >
+      <Glyph icon={side === 'left' ? faChevronLeft : faChevronRight} />
+    </button>
+  )
+}
+
+function Side({ label, icon }: { label: string; icon: typeof faStar }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className="grid flex-1 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-white/75 transition-colors hover:border-brand/60 hover:text-white"
+    >
+      <Glyph icon={icon} on={false} />
+    </button>
   )
 }
 
@@ -255,10 +323,18 @@ function Row({ label, value, live }: { label: string; value: string; live?: bool
       <dt className="text-white/55">{label}</dt>
       <dd className={cn(
         'font-extrabold tabular-nums',
-        live ? 'text-yes-bright' : 'text-white/85',
+        live ? 'text-space' : 'text-white/85',
       )}>
         {value}
       </dd>
     </div>
+  )
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-xl border-2 border-dashed border-ink-line px-3 py-6 text-center text-sm text-muted">
+      {children}
+    </p>
   )
 }

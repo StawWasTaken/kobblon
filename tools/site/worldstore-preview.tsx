@@ -31,19 +31,12 @@ createRoot(document.getElementById('root')!).render(
           { id: '1', name: 'Skyline Skin', price: 150 },
           { id: '2', name: 'Double Jump', price: 400 },
         ]}
-        reviews={[
-          {
-            id: '1', who: 'Malicia', liked: true, seconds: 61 * 3600, at: ago(20),
-            body: 'The water tower route is the best thing added to this all year. Took me nine goes and I would do it again.',
-          },
-          {
-            id: '2', who: 'JohnDoe', liked: true, seconds: 4 * 3600, at: ago(70),
-            body: 'Good with friends, pointless alone. Get three people in a party first.',
-          },
-          {
-            id: '3', who: 'stranger', liked: false, seconds: 25 * 60, at: ago(190),
-            body: 'Sirens are unfair on the first lap.',
-          },
+        likes={412}
+        dislikes={64}
+        servers={[
+          { id: '1', players: 7, cap: 8, friends: 2 },
+          { id: '2', players: 4, cap: 8, friends: 0 },
+          { id: '3', players: 1, cap: 8, friends: 0 },
         ]}
       />
     </div>
