@@ -30,11 +30,13 @@ import { Band, Ribbon, Stat } from '@/components/ui/Band'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
+import { useParty } from '@/hooks/useParty'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
 import {
   alsoJoined, badgesOf, doIWatchWorld, favouriteWorld, friendsInServers, getWorld, myWorldStanding,
   passesOf, playingNow, recommendedWorlds, serversOf, setWorldOpinion, watchWorld,
   worldFileUrl, worldGenres, worldMedia,
+  partyIsGoingTo,
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
@@ -142,6 +144,7 @@ export default function WorldPage() {
   const sentTo = query.get('server')
   const number = Number(id)
   const { profile } = useAuth()
+  const { party } = useParty()
   const toast = useToast()
 
   const world = useAsync(async () => (number ? getWorld(number) : null), [number])
@@ -410,6 +413,21 @@ export default function WorldPage() {
 
   const start = (room?: string) => {
     setHanding('opening')
+    /*
+     * A party follows its leader.
+     *
+     * Pressing play while you are leading one says where the party is
+     * going, and the Launcher takes everybody there. It is said before the
+     * hand-over rather than after, so the others are told while this
+     * machine is still opening its own copy.
+     *
+     * If it fails there is nothing to tell anybody: this person still
+     * goes, and a party that did not follow is better than a play button
+     * that refused to work.
+     */
+    if (party?.leader_id === profile?.id) {
+      void partyIsGoingTo(thing.id, room ?? null).catch(() => {})
+    }
     /*
      * `room` is which copy of the World, from the Servers tab - and it is
      * a hint, never a permission. Whether this account may be in that room

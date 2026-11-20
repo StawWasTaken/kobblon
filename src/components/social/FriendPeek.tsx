@@ -1,6 +1,6 @@
 import { useId, useRef, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
-import { faUser, faComment, faSpinner, faPlay } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faComment, faSpinner, faPlay, faUserPlus } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { StatusDot, presenceWords } from '@/components/ui/StatusDot'
 import { useLivePresence, useWhereabout, useWhereabouts } from '@/hooks/usePresenceStore'
@@ -9,7 +9,8 @@ import type { Whereabouts } from '@/lib/api'
 import { worldLink } from '@/lib/links'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { useToast } from '@/components/ui/Toast'
-import { startConversation } from '@/lib/api'
+import { inviteToParty, startConversation } from '@/lib/api'
+import { useInMyParty, useParty } from '@/hooks/useParty'
 import { profileLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 
@@ -189,6 +190,25 @@ export function FriendPeek({ friend, children, className }: {
     }, where.server_id)
   }
 
+  /* Asking somebody into your party, which makes one if you have none. */
+  const withMe = useInMyParty(friend.id)
+  const { reload } = useParty()
+  const [asking, setAsking] = useState(false)
+
+  const ask = async () => {
+    setAsking(true)
+    try {
+      await inviteToParty(friend.id)
+      await reload()
+      raise(null)
+      say('Asked them into your party.', 'success')
+    } catch (error) {
+      say(error instanceof Error ? error.message : 'That did not work.', 'error')
+    } finally {
+      setAsking(false)
+    }
+  }
+
   const chat = async () => {
     setOpening(true)
     try {
@@ -288,6 +308,24 @@ export function FriendPeek({ friend, children, className }: {
                   />
                   Message
                 </button>
+
+                {/* Into the party you are in, or into one this starts.
+                    Only offered where it would work: a friend who is not
+                    already with you. */}
+                {!withMe && (
+                  <button
+                    type="button"
+                    onClick={() => void ask()}
+                    disabled={asking}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-note font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-60"
+                  >
+                    <Glyph
+                      icon={asking ? faSpinner : faUserPlus}
+                      className={cn('w-3.5 text-mini text-muted', asking && 'animate-spin')}
+                    />
+                    Ask into party
+                  </button>
+                )}
               </div>
             </div>
           </div>

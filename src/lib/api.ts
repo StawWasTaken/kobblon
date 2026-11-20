@@ -7138,3 +7138,107 @@ export async function kobbyQuestionLog(howMany = 100): Promise<KobbyQuestion[]> 
   const rows = unwrap(await supabase.rpc('kobby_question_log', { how_many: howMany }))
   return (rows as KobbyQuestion[]) ?? []
 }
+
+/* ----------------------------------------------------------------- parties */
+
+/**
+ * A party: people who are together before a World is picked, and who land
+ * in the same copy when the leader presses play.
+ *
+ * Every rule about who may be in one is in the database - a friend asked
+ * you, there is room, you are in one party at a time - so these just ask.
+ */
+export type PartyMember = {
+  user_id: string
+  username: string
+  display_name: string
+  avatar_url: string | null
+  avatar_changed_at: string | null
+  is_guest: boolean
+  joined_at: string
+}
+
+export type Party = {
+  id: string
+  leader_id: string
+  world_id: string | null
+  world_name: string | null
+  world_content_id: number | null
+  server_id: string | null
+  going_at: string | null
+  members: PartyMember[]
+}
+
+export type PartyInvite = {
+  party_id: string
+  asked_at: string
+  asked_by: string
+  username: string
+  display_name: string
+  avatar_url: string | null
+  avatar_changed_at: string | null
+  how_many: number
+}
+
+type PartyRow = PartyMember & {
+  party_id: string
+  leader_id: string
+  world_id: string | null
+  world_name: string | null
+  world_content_id: number | null
+  server_id: string | null
+  going_at: string | null
+}
+
+export async function myParty(): Promise<Party | null> {
+  const rows = (unwrap(await supabase.rpc('my_party')) as PartyRow[]) ?? []
+  if (!rows.length) return null
+  const [first] = rows
+  return {
+    id: first.party_id,
+    leader_id: first.leader_id,
+    world_id: first.world_id,
+    world_name: first.world_name,
+    world_content_id: first.world_content_id,
+    server_id: first.server_id,
+    going_at: first.going_at,
+    members: rows.map((row) => ({
+      user_id: row.user_id,
+      username: row.username,
+      display_name: row.display_name,
+      avatar_url: row.avatar_url,
+      avatar_changed_at: row.avatar_changed_at,
+      is_guest: row.is_guest,
+      joined_at: row.joined_at,
+    })),
+  }
+}
+
+export async function partyInvitesForMe(): Promise<PartyInvite[]> {
+  return (unwrap(await supabase.rpc('party_invites_for_me')) as PartyInvite[]) ?? []
+}
+
+export async function inviteToParty(who: string) {
+  unwrap(await supabase.rpc('invite_to_party', { who }))
+}
+
+export async function acceptPartyInvite(party: string) {
+  unwrap(await supabase.rpc('accept_party_invite', { party }))
+}
+
+export async function declinePartyInvite(party: string) {
+  unwrap(await supabase.rpc('decline_party_invite', { party }))
+}
+
+export async function leaveParty() {
+  unwrap(await supabase.rpc('leave_party'))
+}
+
+export async function removeFromParty(who: string) {
+  unwrap(await supabase.rpc('remove_from_party', { who }))
+}
+
+/** Where the party is going. The leader's to say; the Launcher reads it. */
+export async function partyIsGoingTo(world: string, room?: string | null) {
+  unwrap(await supabase.rpc('party_is_going_to', { world, room: room ?? null }))
+}

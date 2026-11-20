@@ -38,6 +38,7 @@ import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { LivePresenceLabel, PersonAvatar } from '@/components/ui/PersonAvatar'
 import { useThoughts } from '@/hooks/useThoughtStore'
+import { PartyDock } from '@/components/social/PartyDock'
 
 /*
  * The standing lives here, once.
@@ -1133,6 +1134,9 @@ export function ChatDock({ children }: { children: ReactNode }) {
               />
             )
           })}
+
+          {/* Who you are with, beside what everybody is saying. */}
+          <PartyDock />
 
           <List
             conversations={conversations}

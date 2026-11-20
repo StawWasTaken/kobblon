@@ -24525,3 +24525,59 @@ The 2D view drew the picture edge to edge in the stage, so its feet met the
 bar under the viewport and the 2D/3D switch lay across its shins. It is
 contained with room round it now, and more of that room at the bottom where
 the switch sits. The 3D view is unchanged.
+
+## Round three hundred and seventy-three - parties
+
+**This one is mostly yours.** The website can make a party, fill it and say
+where it is going; taking everybody there is the Launcher's half.
+
+`0358_a_party_exists_before_a_world_does.sql` adds three tables and the
+doors into them. Nothing writes to the tables directly - `authenticated`
+has `select` and nothing else, and every change goes through a function
+that checks who is asking.
+
+    parties        (id, leader_id, world_id, server_id, going_at)
+    party_members  (party_id, user_id, joined_at)   -- unique on user_id
+    party_invites  (party_id, user_id, asked_by, asked_at)
+
+The rules, enforced in the database:
+
+- **one party at a time**, which is a unique index on `user_id` rather than
+  a hope;
+- **eight at most** (`party_cap()`);
+- **a friend has to ask you** (`are_friends`), and neither of you may be a
+  guest, suspended, banned or closed;
+- **only the leader** sets the destination or takes somebody out;
+- the leader leaving hands it to whoever has been in longest, and the last
+  one out takes the party with them.
+
+Functions: `make_party()`, `invite_to_party(who)`, `accept_party_invite(party)`,
+`decline_party_invite(party)`, `leave_party()`, `remove_from_party(who)`,
+`party_is_going_to(world, room)`, `my_party()`, `party_invites_for_me()`.
+Notifications gained the kind `party_invite`. All three tables are in the
+realtime publication, so a panel hears a join rather than polling for it.
+
+**What the Launcher needs to do.** `my_party()` returns the party, its
+members, and where it is going (`world_id`, `server_id`, `going_at`). When
+the leader presses play on a World the website calls
+`party_is_going_to(world, room)` first, so by the time the hand-over
+happens the row already says where everybody is headed. Watch that row -
+it is in the realtime publication - and take your member into the same
+copy.
+
+**And the rule that has not changed:** `server_id` here is a hint in
+exactly the way `room` in a link is. `join_world_server` over HTTPS decides
+whether that account may be in that copy - a full room, a closed one or a
+private one refuses there, party or no party.
+
+On the website: a window in the corner beside the chats, showing who is in
+it, where it is going, Play, Ask somebody and Leave; an invite arrives in
+the same window with Join and No; and a friend's hover card has "Ask into
+party", which makes a party if you had none. The drawing is `PartyPanel`,
+which takes everything as props and mounts with nothing around it.
+
+Checked on the harness under four identities: a stranger cannot be asked, a
+stranger cannot accept somebody else's invite, a member cannot set the
+destination, the leader can, leadership passes when the leader leaves, the
+party disappears when the last member leaves, and a direct insert into
+`party_members` is refused.

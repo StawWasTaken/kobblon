@@ -8,6 +8,7 @@ import { PublicLayout } from '@/components/layout/PublicLayout'
 import { StandingGate } from '@/components/social/StandingGate'
 import { CommunityShell } from '@/components/community/CommunityRail'
 import { ToastProvider } from '@/components/ui/Toast'
+import { PartyProvider } from '@/hooks/useParty'
 import { TitleTips } from '@/components/ui/TitleTips'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
@@ -158,6 +159,7 @@ export default function App() {
       <AuthProvider>
         <AppearanceProvider>
         <ToastProvider>
+        <PartyProvider>
           {/* The one appearance that is being given away, offered once. It
               is mounted here rather than on a page because it is about the
               account and not about where somebody happens to be. */}
@@ -356,6 +358,7 @@ export default function App() {
             </Shutters>
           </Suspense>
           </Boundary>
+        </PartyProvider>
         </ToastProvider>
         </AppearanceProvider>
       </AuthProvider>
