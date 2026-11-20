@@ -1,1 +1,0 @@
-import{Rc as e}from"./api-B5Jd5p34.js";import{A as t,C as n,w as r}from"./useTitle-CqJSMlpc.js";var i=e(t(),1);function a(e){let{pathname:t,search:a,hash:o}=n(),s=r();(0,i.useEffect)(()=>{e&&decodeURIComponent(t).replace(/\/+$/,``)!==decodeURIComponent(e).replace(/\/+$/,``)&&s(`${e}${a}${o}`,{replace:!0})},[e,t,a,o,s])}export{a as t};
