@@ -164,14 +164,16 @@ export function MessageRow({
       )}
     >
       {/*
-        * One picture per run, and none at all on your own.
+        * One picture per run, your own included.
         *
-        * Your own face beside your own words, once a line, is the thing
-        * that made this read as a wall of furniture: you know who you
-        * are. Xbox does not draw it either. The side the bubble sits on
-        * is what says who is talking, which is all a chat needs.
+        * A round took your own face and name off, on the grounds that you
+        * know who you are. Staw looked at it beside the Launcher and asked
+        * for them back - "your displayname + badges + pfp when you sent
+        * messages (was already there, bring it back)" - and he is right
+        * that the two reading differently is worse than either of them
+        * being busy.
         */}
-      {mine ? null : grouped ? (
+      {grouped ? (
         <span className="w-6 shrink-0" aria-hidden="true" />
       ) : (
         <Link
@@ -204,22 +206,16 @@ export function MessageRow({
           * there, not the words inside it that are reversed.
           */}
         {!grouped && !editing && (
-          mine ? (
-            /* Your own name over your own words says nothing. The time
-               alone, quiet, so a run still has a when. */
-            <Ago at={message.created_at} className="mb-0.5 px-1 text-mini font-bold leading-none text-muted/60" />
-          ) : (
-            <span className="mb-0.5 flex max-w-full items-center gap-1 px-1 text-mini leading-none">
-              <span
-                className="truncate font-extrabold"
-                style={{ color: colourOf(message.sender_id, sender?.display_name) }}
-              >
-                {sender?.display_name ?? 'Somebody'}
-              </span>
-              <NameMarks id={message.sender_id} className="text-[0.9em]" />
-              <Ago at={message.created_at} className="shrink-0 font-bold text-muted/70" />
+          <span className="mb-0.5 flex max-w-full items-center gap-1 px-1 text-mini leading-none">
+            <span
+              className="truncate font-extrabold"
+              style={{ color: colourOf(message.sender_id, sender?.display_name) }}
+            >
+              {sender?.display_name ?? 'Somebody'}
             </span>
-          )
+            <NameMarks id={message.sender_id} className="text-[0.9em]" />
+            <Ago at={message.created_at} className="shrink-0 font-bold text-muted/70" />
+          </span>
         )}
 
         {editing ? (

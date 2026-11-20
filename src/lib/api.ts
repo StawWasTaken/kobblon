@@ -7355,6 +7355,14 @@ export async function myParty(): Promise<Party | null> {
   }
 }
 
+/** When your party became a party of one, or null while it is not. */
+export async function myPartyAloneSince(): Promise<string | null> {
+  return (unwrap(await supabase.rpc('my_party_alone_since')) as string | null) ?? null
+}
+
+/** How long one person may hold a party open, in seconds. */
+export const PARTY_ALONE_SECONDS = 5 * 60
+
 /** Your party's chat, made the first time it is asked for. */
 export async function myPartyChat(): Promise<string | null> {
   return (unwrap(await supabase.rpc('my_party_chat')) as string | null) ?? null

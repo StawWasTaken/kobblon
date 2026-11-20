@@ -22,7 +22,7 @@ import { ReportDialog } from '@/components/social/ReportDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useNarrow } from '@/hooks/useWidth'
 import {
-  chatRoster, conversationName, myPartyChat, deleteMessage, editMessage, ignorePerson, listMessages,
+  chatRoster, conversationName, myPartyChat, leaveParty, deleteMessage, editMessage, ignorePerson, listMessages,
   markConversationRead, sendMessage, startConversation, unignorePerson,
   myChatStanding, chatCardSeen, renameConversation, leaveConversation,
   type ChatStanding,
@@ -373,7 +373,7 @@ function Window({
       aria-label={`Chat with ${name}`}
     >
       <header className={cn(
-        'flex shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-2',
+        'flex shrink-0 items-center gap-2 border-b border-ink-line bg-ink-card px-2',
         /*
          * Flat, like the applications' chat card. Staw, with three
          * pictures of the in-game one: adapt that design here. Its head
@@ -395,11 +395,13 @@ function Window({
             <button
               onClick={() => setDetails(false)}
               aria-label="Back to the conversation"
-              className="grid h-6 w-6 place-items-center rounded-lg text-mini text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+              className="grid h-7 w-7 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
             >
               <Glyph icon={faArrowLeft} />
             </button>
-            <h3 className="flex-1 truncate text-sm font-bold">Chat Details</h3>
+            <h3 className="flex-1 truncate font-display text-sm font-extrabold tracking-wide">
+              {conversation.party_id ? 'Party' : 'Chat details'}
+            </h3>
           </>
         ) : (
           <button
@@ -408,45 +410,38 @@ function Window({
             aria-expanded={!collapsed}
           >
             {/*
-              * Who it is with, and what they are doing.
+              * The picture and the name, and nothing under them.
               *
-              * Staw wants the feel of Xbox's chat here, and the thing
-              * Xbox's head does that ours did not is answer the second
-              * question: a name on its own tells you which window this
-              * is, and a name with "In a World" under it tells you
-              * whether there is any point typing. The picture is the
-              * conversation's - a face for a person, the mark on white
-              * for a party or a group.
+              * A line saying what they are doing went in here and came
+              * straight back out; Staw, holding it up against the
+              * Launcher: "for your friend theres no online under it, its
+              * just your friends pfp + his displayname". The dot on the
+              * picture already says whether they are around, and the row
+              * in the list beside this window says the rest.
+              *
+              * The name is in the pixel face, like every other dock head.
               */}
             <ConversationFace conversation={conversation} size="sm" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-note font-extrabold tracking-wide text-white">
-                {name}
-              </span>
-              {solo && (
-                <span className="block truncate text-mini leading-tight">
-                  <LivePresenceLabel person={solo} />
-                </span>
-              )}
+            <span className="truncate font-display text-note font-extrabold tracking-wide text-white">
+              {name}
             </span>
           </button>
         )}
 
         {/*
-          * A party has no chat details.
+          * A party has details too.
           *
-          * Staw: "dont blindly copy the group chat design". That panel is
-          * who is in a chat, renaming it, leaving it, and the card that
-          * offers to ignore, block and report the person on the other side
-          * - none of which a party has. Everything a party can be asked is
-          * in the strip under this head.
+          * It lost them for a round, when the panel was a chat's panel
+          * wearing a party's name. It is not any more: it is who is in
+          * here, you included, and the way out - which a party has as much
+          * as a group does. Staw: the two should be "uniformized (kinda)".
           */}
-        {!details && !conversation.party_id && (
+        {!details && (
           <Tooltip label="Chat details" side="top">
             <button
               onClick={() => { setDetails(true); setCollapsed(false) }}
               aria-label="Chat details"
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-mini text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
             >
               <Glyph icon={faGear} />
             </button>
@@ -461,7 +456,7 @@ function Window({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-mini text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
         >
           <Glyph icon={faXmark} />
         </button>
@@ -476,7 +471,9 @@ function Window({
             * person writing into a room nobody is in, which is what
             * unfriending is for.
             */}
-          {conversation.is_group && !pending && (
+          {/* A party is called Party. It is the one group here that did
+              not get its name from whoever made it. */}
+          {conversation.is_group && !conversation.party_id && !pending && (
             <div className="mb-4 space-y-2">
               <p className="text-xs font-bold uppercase tracking-wide text-muted">Name</p>
 
@@ -528,9 +525,34 @@ function Window({
             </div>
           )}
 
-          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">Members</p>
+          {/*
+            * Everybody in it, you included.
+            *
+            * `members` is everybody but you, so this list was the room
+            * minus the person reading it - which in a chat between two
+            * people is one name, and in a party of three is two. Staw: "in
+            * chat details you should be able to see every member of a DM,
+            * GC, Party (including you)". You go last, because a list of
+            * people you know reads better with you at the end of it than
+            * at the top.
+            */}
+          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">
+            Members
+            <span className="ml-1.5 font-extrabold text-white/50">
+              {conversation.members.length + (profile ? 1 : 0)}
+            </span>
+          </p>
           <ul className="space-y-1">
-            {conversation.members.map((member) => (
+            {[...conversation.members, ...(profile ? [{
+              id: profile.id,
+              username: profile.username,
+              display_name: profile.display_name,
+              avatar_url: profile.avatar_url,
+              is_online: true,
+              in_space_id: profile.in_space_id,
+              closed_at: null,
+              is_banned: false,
+            } as typeof conversation.members[number]] : [])].map((member) => (
               <li key={member.id}>
                 <Link
                   to={profileLink(member)}
@@ -538,7 +560,14 @@ function Window({
                 >
                   <Avatar src={avatarOf(member)} personId={member.id} name={nameOf(member)} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{nameOf(member)}</span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-sm font-bold">{nameOf(member)}</span>
+                      {member.id === profile?.id && (
+                        <span className="shrink-0 text-tiny font-extrabold uppercase tracking-wide text-brand-bright">
+                          You
+                        </span>
+                      )}
+                    </span>
                     <LivePresenceLabel person={member} />
                   </span>
                 </Link>
@@ -551,7 +580,12 @@ function Window({
               onClick={async () => {
                 setLeaving(true)
                 try {
-                  await leaveConversation(conversation.id)
+                  /* The same button, because a party and a group are the
+                     same window now - it is what is behind it that
+                     differs. Walking out of a party chat is walking out of
+                     the party; there is no chat left to stay in. */
+                  if (conversation.party_id) await leaveParty()
+                  else await leaveConversation(conversation.id)
                   onClose()
                 } catch (err) {
                   setError(err instanceof Error ? err.message : 'That did not work.')
@@ -562,7 +596,7 @@ function Window({
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-danger/40 px-2.5 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
             >
               <Glyph icon={faRightFromBracket} className="text-xs" />
-              Leave this group
+              {conversation.party_id ? 'Leave the party' : 'Leave this group'}
             </button>
           )}
         </div>
@@ -588,7 +622,7 @@ function Window({
             * sideways. The applications hit it first; Staw: "just make it
             * so we cant scroll to the right".
             */}
-          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden bg-ink px-2.5 py-2.5 kob-scroll">
+          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden bg-ink-card px-2.5 py-2.5 kob-scroll">
             {loading && (
               <div className="space-y-2">
                 {[0, 1].map((i) => <Skeleton key={i} className="h-8 w-2/3" />)}

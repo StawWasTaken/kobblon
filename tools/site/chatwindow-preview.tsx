@@ -43,9 +43,8 @@ createRoot(document.getElementById('root')!).render(
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-2">
           <span className="flex min-w-0 flex-1 items-center gap-2 px-1">
             <ConversationFace conversation={conversation} size="sm" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-note font-extrabold tracking-wide text-white">rusty</span>
-              <span className="block truncate text-mini leading-tight text-white/70">In a World</span>
+            <span className="truncate font-display text-note font-extrabold tracking-wide text-white">
+              rusty
             </span>
           </span>
           <Glyph icon={faGear} className="text-mini text-white/45" />

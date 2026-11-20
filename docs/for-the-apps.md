@@ -25174,3 +25174,66 @@ Worth knowing on your side: a Tailwind class for a colour that is not in the
 preset does not fail, it does nothing - the element keeps whatever is behind
 it. That reads as "the bubbles are gone", not as a missing token, which is
 why it survived.
+
+## Round three hundred and eighty-six - the docks, matched to yours
+
+Staw put the two side by side and listed what the website should take from
+the Launcher's friends chat. All of it is done.
+
+**From your side, taken:**
+
+- The friends dock's head is the **chat mark, not the friends one**, and it
+  is called **"Friends chat"** - your name for it, in the pixel face.
+- A conversation's head is **the picture and the name, and nothing under
+  them.** A line saying "In a World" went in last round and came straight
+  back out: "for your friend theres no online under it". The dot on the
+  picture already says whether they are around.
+- Every head title is in the pixel face.
+- **Close and settings are the same size as the new-group button** in the
+  friends dock. Three buttons that do the same kind of thing were three
+  different sizes.
+- **Your own name, marks and picture are back on your own messages.** A
+  round took them off; held up against yours, the two reading differently
+  was worse than either being busy.
+- The search box says **"Search friends"**.
+
+**And the rest of what he asked:**
+
+- **One colour for every dock**, head and body alike: `#1a1a20`, which is
+  `ink-card`. The heads were the page colour and the threads were a third
+  thing.
+- **Chat details shows everybody, you included** - a DM, a group or a
+  party. `members` is everybody *but* you, so the list used to be the room
+  minus the person reading it: one name in a chat between two people. You
+  are last in the list and marked YOU.
+- **A party and a group chat are the same window now.** Same head, same
+  details panel, same way out - the button says "Leave the party" or "Leave
+  this group" and calls the right one. A party cannot be renamed, because
+  it is called Party. The only thing a party has that a group does not is
+  one bar over the thread: who is in it, where it is going, Play, Invite.
+
+### A party of one lets go - migration 0364
+
+Staw: "if theres only one person left in a party then you automatically
+leave it in 5 minutes (you can stay in a group chat indefinitely alone
+tho)". The difference is right: a group chat is a room with a history in
+it; a party is an intention to go somewhere together, and one person
+holding one for a week is a Play button pointed at nobody.
+
+- `parties.alone_since` - set by a **trigger on `party_members`**, not by
+  the functions that move them, so the fourth way in cannot forget.
+- `party_alone_for()` is the five minutes, in one place.
+- **There is no scheduler, and this does not wait for one.** `my_party()`
+  sweeps the ones that are out of time before it answers - so a party that
+  should be gone is gone the next time anybody asks, and `my_party` is what
+  every client calls on every party change. `sweep_lonely_parties()` is
+  there to be called directly if you want it.
+- Deleting the party takes its members, its invites and its chat, because
+  `conversations.party_id` cascades.
+- `my_party_alone_since()` tells a client when the clock runs out, so the
+  one person still sitting there can watch the window close rather than
+  finding out on the next reload. The website sets a timer off it.
+
+**`my_party()` is volatile now, not stable.** The shape of what comes back
+is identical; if anything of yours caches it on the assumption it is a pure
+read, that assumption was already wrong - it can now change the database.

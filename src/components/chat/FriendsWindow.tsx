@@ -76,14 +76,16 @@ export function FriendsWindow({
       aria-label="Friends"
     >
       {!full && (
-        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-ink px-3">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-ink-line bg-ink-card px-3">
           <button
             onClick={onToggle}
-            className="flex flex-1 items-center gap-2 text-left text-sm font-extrabold"
+            className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-extrabold"
             aria-expanded={open}
           >
-            <Icon name="users" className="h-4 w-4" />
-            Friends
+            {/* The chat mark, not the friends one, and the Launcher's
+                own name for it - one window, one name, both sides. */}
+            <Icon name="chatbubble" className="h-4 w-4" />
+            <span className="font-display tracking-wide">Friends chat</span>
           </button>
 
           <Tooltip label="New chat group" side="top">
@@ -123,7 +125,7 @@ export function FriendsWindow({
           )}
 
           <div className="relative shrink-0 p-2">
-            <label className="sr-only" htmlFor="friends-filter">Search</label>
+            <label className="sr-only" htmlFor="friends-filter">Search friends</label>
             <Glyph
               icon={faMagnifyingGlass}
               className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-xs text-white/35"
@@ -132,7 +134,7 @@ export function FriendsWindow({
               id="friends-filter"
               value={term}
               onChange={(e) => setTerm(e.target.value)}
-              placeholder="Search"
+              placeholder="Search friends"
               className="h-9 w-full rounded-full border-2 border-ink-line bg-ink-raised pl-8 pr-3 text-sm placeholder:text-white/30 focus:border-brand-bright"
             />
           </div>

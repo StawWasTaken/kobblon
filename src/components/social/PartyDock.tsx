@@ -159,6 +159,16 @@ export function PartyPanel({
    * It is kept short on purpose. Four rows and then it scrolls, because
    * eight names above a thread is a thread nobody can read.
    */
+  /*
+   * The one bar a party has that a group chat does not.
+   *
+   * Staw wants the two "uniformized (kinda)", and the honest reading of
+   * that is: the same window, the same head, the same details panel with
+   * everybody in it - and then the one thing only a party has, which is
+   * somewhere to go and a button that takes you there. Who is in it used
+   * to be listed here as well; it is in the details panel now, where a
+   * group chat keeps the same list.
+   */
   if (compact) {
     return (
       <div className={cn('shrink-0 border-b-2 border-ink-line bg-ink-raised', className)}>
@@ -188,85 +198,46 @@ export function PartyPanel({
         ))}
 
         {!!party && (
-          <>
-            <div className="max-h-[7.5rem] overflow-y-auto kob-scroll px-1.5 py-1.5">
-              {party.members.map((one) => (
-                <div key={one.user_id} className="group flex items-center gap-2 rounded-lg px-1.5 py-1">
-                  <Link to={profileLink(one)} className="shrink-0">
-                    <Avatar src={avatarOf(one)} personId={one.user_id} name={nameOf(one)} size="xs" />
-                  </Link>
-                  <Link
-                    to={profileLink(one)}
-                    className="min-w-0 flex-1 truncate text-xs font-bold hover:text-link"
-                  >
-                    {nameOf(one)}
-                  </Link>
-                  {party.leader_id === one.user_id && (
-                    <Tooltip label="Leader" side="top">
-                      <Glyph icon={faCrown} className="shrink-0 text-tiny text-space" />
-                    </Tooltip>
-                  )}
-                  {leader && one.user_id !== me && (
-                    <button
-                      type="button"
-                      aria-label={`Take ${nameOf(one)} out of the party`}
-                      onClick={() => onRemove(one.user_id)}
-                      className="shrink-0 rounded p-0.5 text-tiny text-white/30 opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
-                    >
-                      <Glyph icon={faXmark} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Where you are all going, and the one button that does it. */}
-            {going ? (
-              <div className="flex items-center gap-2 border-t border-ink-line px-2 py-2">
+          <div className="flex items-center gap-2 px-2.5 py-2">
+            <span className="flex shrink-0 items-center -space-x-2">
+              {party.members.slice(0, 4).map((one) => (
                 <Link
-                  to={worldLink({
-                    content_id: party.world_content_id ?? 0,
-                    name: party.world_name ?? '',
-                  })}
-                  className="min-w-0 flex-1 truncate text-xs hover:text-link"
+                  key={one.user_id}
+                  to={profileLink(one)}
+                  title={nameOf(one)}
+                  className="relative rounded-full ring-2 ring-ink-raised transition-transform hover:z-10 hover:-translate-y-0.5"
                 >
-                  <span className="text-muted">Going to </span>
-                  <span className="font-bold">{party.world_name}</span>
+                  <Avatar src={avatarOf(one)} personId={one.user_id} name={nameOf(one)} size="xs" />
+                  {party.leader_id === one.user_id && (
+                    <Glyph
+                      icon={faCrown}
+                      className="absolute -right-0.5 -top-1 text-[0.5rem] text-space"
+                    />
+                  )}
                 </Link>
-                <Button size="sm" variant="yes" icon={faPlay} onClick={onPlay}>Play</Button>
-                <Tooltip label="Ask somebody in" side="top">
-                  <Button size="sm" variant="subtle" icon={faUserPlus} aria-label="Ask somebody in" onClick={onInvite} />
-                </Tooltip>
-                <Tooltip label="Leave the party" side="top">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    icon={faRightFromBracket}
-                    aria-label="Leave the party"
-                    loading={busy === 'leave'}
-                    onClick={onLeave}
-                  />
-                </Tooltip>
-              </div>
+              ))}
+            </span>
+
+            {going ? (
+              <Link
+                to={worldLink({
+                  content_id: party.world_content_id ?? 0,
+                  name: party.world_name ?? '',
+                })}
+                className="min-w-0 flex-1 truncate text-xs hover:text-link"
+              >
+                <span className="text-muted">Going to </span>
+                <span className="font-bold">{party.world_name}</span>
+              </Link>
             ) : (
-              <div className="flex items-center gap-2 border-t border-ink-line px-2 py-2">
-                <p className="min-w-0 flex-1 truncate text-xs text-muted">
-                  Nowhere yet.
-                </p>
-                <Button size="sm" variant="subtle" icon={faUserPlus} onClick={onInvite}>Invite</Button>
-                <Tooltip label="Leave the party" side="top">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    icon={faRightFromBracket}
-                    aria-label="Leave the party"
-                    loading={busy === 'leave'}
-                    onClick={onLeave}
-                  />
-                </Tooltip>
-              </div>
+              <span className="min-w-0 flex-1 truncate text-xs text-muted">Nowhere yet.</span>
             )}
-          </>
+
+            {going && <Button size="sm" variant="yes" icon={faPlay} aria-label="Play" onClick={onPlay} />}
+            <Tooltip label="Ask somebody in" side="top">
+              <Button size="sm" variant="subtle" icon={faUserPlus} aria-label="Ask somebody in" onClick={onInvite} />
+            </Tooltip>
+          </div>
         )}
       </div>
     )

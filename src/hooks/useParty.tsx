@@ -1,6 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { myParty, partyInvitesForMe, type Party, type PartyInvite } from '@/lib/api'
+import {
+  myParty, myPartyAloneSince, partyInvitesForMe, PARTY_ALONE_SECONDS,
+  type Party, type PartyInvite,
+} from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 
 /*
@@ -73,6 +76,29 @@ export function PartyProvider({ children }: { children: React.ReactNode }) {
 
     return () => { void supabase.removeChannel(channel) }
   }, [me, reload])
+
+  /*
+   * A party of one lets go after five minutes.
+   *
+   * The database decides it - `my_party` sweeps the ones that are out of
+   * time before it answers - but nothing would ask again while the one
+   * person left is sitting there looking at it. So when you are the only
+   * one in it, this comes back once, just after the clock runs out, and
+   * asks. The answer is an empty party and the window closes itself.
+   */
+  useEffect(() => {
+    if (!party || party.members.length !== 1) return
+    let wanted = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    void myPartyAloneSince().then((since) => {
+      if (!wanted || !since) return
+      const over = new Date(since).getTime() + PARTY_ALONE_SECONDS * 1000
+      timer = setTimeout(() => { void reload() }, Math.max(1000, over - Date.now() + 1000))
+    })
+
+    return () => { wanted = false; if (timer) clearTimeout(timer) }
+  }, [party?.id, party?.members.length, reload])
 
   const value = useMemo<PartyBox>(
     () => ({ party, invites, loading, reload }),
