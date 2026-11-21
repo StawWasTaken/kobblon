@@ -25636,3 +25636,15 @@ the dock's face, the pinned strip and the invite card already use.
 Nothing shared changed; mentioned because the rule behind it is shared:
 where a mark of Staw's exists for a thing, that thing wears it, and a
 borrowed glyph that already means something else is worse than no glyph.
+
+## Round four hundred and one - green all through
+
+Staw, on the round above: "if you make the party icon green then make the
+text too". He is right - a green mark beside white words reads as a mark
+that wandered in from somewhere else, not as the row being about a party.
+"Ask into party" is `text-space`, and hovering it lifts to
+`text-space-bright` over a green tint rather than the grey hover the other
+rows use.
+
+Same rule as before, one step further: a row that borrows a colour borrows
+all of it.

@@ -318,7 +318,11 @@ export function FriendPeek({ friend, children, className }: {
                     type="button"
                     onClick={() => void ask()}
                     disabled={asking}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-note font-semibold text-white/75 transition-colors hover:bg-ink-hover hover:text-white disabled:opacity-60"
+                    /* Green all through, mark and words. Staw: "if you make
+                       the party icon green then make the text too" - a
+                       green mark beside white words reads as a mark that
+                       wandered in from somewhere else. */
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-note font-semibold text-space transition-colors hover:bg-space/15 hover:text-space-bright disabled:opacity-60"
                   >
                     {/* Staw's party mark, which is what a party is called
                         everywhere else on the platform - the dock's face,
@@ -326,7 +330,7 @@ export function FriendPeek({ friend, children, className }: {
                         here said "friend request" beside a row that is
                         not one. */}
                     {asking ? (
-                      <Glyph icon={faSpinner} className="w-3.5 animate-spin text-mini text-muted" />
+                      <Glyph icon={faSpinner} className="w-3.5 animate-spin text-mini" />
                     ) : (
                       <Icon name="party" className="h-3.5 w-3.5 shrink-0" tone="#1CAE71" />
                     )}
