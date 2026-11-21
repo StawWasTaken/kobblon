@@ -376,8 +376,10 @@ export type Notification = {
   is_read: boolean
   created_at: string
   actor?: Pick<Profile, 'username' | 'display_name' | 'avatar_url'> | null
-  space?: Pick<Space, 'name' | 'slug'> | null
-  world?: Pick<World, 'name' | 'slug' | 'content_id'> | null
+  /* The art comes with the row so a notification about a World can show
+     the World rather than a letter. */
+  space?: Pick<Space, 'name' | 'slug' | 'emblem_url' | 'cover_url'> | null
+  world?: Pick<World, 'name' | 'slug' | 'content_id' | 'emblem_url' | 'cover_url'> | null
 }
 
 export type SpaceBadge = {

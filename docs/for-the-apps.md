@@ -25368,3 +25368,46 @@ Two things came out of shipping the store page, both shared:
 - **`Menu` takes a `className`**, applied to its wrapper. It was a block
   box of its own content, so a "..." trigger in a row of stretched buttons
   came out short. Nothing changes for an existing call that passes none.
+
+## Round three hundred and ninety-two - the bell, rebuilt
+
+Staw: grouping, filtering, pressable - and then "keep a Kobblon vibe, but
+more Xbox/Steam; the rails themselves need a huge redesign with proper
+buttons, images, texts". `NotificationsCard` is the shared one you mount,
+so all of this reaches you.
+
+**The row.** It was a 40px face, one grey sentence and a time. It is now a
+block with the platform's edge on it: a 48px picture, the name of what the
+row is about in the pixel font, the sentence under it in smaller text, the
+time top right, and the way on as an arrow.
+
+- **The picture is the World** where the row is about one. For that,
+  `listNotifications` now selects `emblem_url, cover_url` on both the
+  joined World and the joined Space, so `Notification['world']` and
+  `['space']` each carry two more fields. Additive; nothing of yours
+  breaks, and a World with no art falls back to the new default emblem.
+- The name is said once. The heading is the World or the person, so the
+  sentence drops what the heading already said - "Malicia and 3 others
+  liked this", not "liked First Ground" under a heading reading First
+  Ground.
+
+**Grouping.** Rows of the same kind about the same thing on the same day
+are one row: three faces on the right and "and 4 others" in the sentence.
+`system`, `content_removed` and the two request kinds are never grouped -
+each says its own thing. Exported as nothing; it is internal to the card.
+
+**Filtering.** The All/New tabs are a rail of six: All, New, People,
+Worlds, Forum, Kobblon, each with its count, and a family rail hides
+itself when it has nothing in it. **This changes the card's props**:
+`tab` and `onTab` are now `NotifFilter`
+(`'all' | 'unread' | 'people' | 'worlds' | 'forum' | 'kobblon'`), exported
+from the same module with `familyOf(kind)`. **If your bell holds that
+state as `'all' | 'unread'`, it will not compile until you widen it** -
+that is the one breaking line in this round.
+
+**Pressable.** New optional prop `onAnswer(n, yes)`. Given, a friend
+request or a best-friend request draws Accept and Decline on the row
+itself and the arrow still leads to them; left out, those rows are exactly
+what they were. The card still reads and writes nothing - the website's
+panel does the work, and looks the friendship id up at the moment of
+pressing rather than holding one from when the list was read.

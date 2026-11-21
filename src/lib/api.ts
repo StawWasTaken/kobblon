@@ -697,7 +697,8 @@ export async function markConversationRead(conversationId: string, userId: strin
 export async function listNotifications(userId: string): Promise<Notification[]> {
   return (unwrap(await supabase.from('notifications')
     .select('*, actor:profiles!actor_id (username, display_name, avatar_url, is_guest), ' +
-      'space:spaces!space_id (name, slug), world:worlds!world_id (name, slug, content_id)')
+      'space:spaces!space_id (name, slug, emblem_url, cover_url), ' +
+      'world:worlds!world_id (name, slug, content_id, emblem_url, cover_url)')
     .eq('user_id', userId).order('created_at', { ascending: false }).limit(40)) as unknown as Notification[]) ?? []
 }
 

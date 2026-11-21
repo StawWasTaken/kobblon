@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
-import { NotificationsCard } from '@/components/social/NotificationsPanel'
+import { NotificationsCard, type NotifFilter } from '@/components/social/NotificationsPanel'
 import type { Notification } from '@/types/db'
 import '@/index.css'
 
@@ -20,8 +20,16 @@ const who = (name: string) => ({ id: name, display_name: name, username: name })
 const rows = [
   { kind: 'friend_request', actor: who('HaczkyEndre'), created_at: hours(0.2), is_read: false },
   { kind: 'friend_request', actor: who('okayCooki3'), created_at: hours(1), is_read: false },
+  { kind: 'space_like', actor: who('Malicia'), created_at: hours(2), is_read: false,
+    space_id: 'sp1', space: { name: 'First Ground', slug: 'first-ground' } },
+  { kind: 'space_like', actor: who('JohnDoe'), created_at: hours(2.4), is_read: false,
+    space_id: 'sp1', space: { name: 'First Ground', slug: 'first-ground' } },
+  { kind: 'space_like', actor: who('berryhop'), created_at: hours(2.6), is_read: false,
+    space_id: 'sp1', space: { name: 'First Ground', slug: 'first-ground' } },
+  { kind: 'space_like', actor: who('noodle'), created_at: hours(2.8), is_read: true,
+    space_id: 'sp1', space: { name: 'First Ground', slug: 'first-ground' } },
   { kind: 'space_visit', actor: who('Guest50929'), created_at: hours(3), is_read: false,
-    space: { name: 'First Ground', slug: 'first-ground' } },
+    space_id: 'sp2', space: { name: 'First Ground', slug: 'first-ground' } },
   { kind: 'world_invite', actor: who('Rusty'), created_at: hours(4), is_read: false,
     body: 'First Ground', world: { name: 'First Ground', content_id: 'y' } },
   { kind: 'message', actor: who('stawrer'), created_at: hours(20), is_read: true },
@@ -34,11 +42,18 @@ const rows = [
 ].map((row, i) => ({ id: String(i), actor_id: row.actor?.id ?? null, ...row })) as unknown as Notification[]
 
 function Page() {
-  const [tab, setTab] = useState<'all' | 'unread'>('all')
+  const [tab, setTab] = useState<NotifFilter>('all')
   return (
     <div className="min-h-screen bg-ink p-8">
       <div className="flex flex-wrap items-start gap-10">
-        <NotificationsCard rows={rows} tab={tab} onTab={setTab} onClose={() => {}} onMarkAll={() => {}} />
+        <NotificationsCard
+          rows={rows}
+          tab={tab}
+          onTab={setTab}
+          onClose={() => {}}
+          onMarkAll={() => {}}
+          onAnswer={() => {}}
+        />
         <div className="w-[22rem]">
           <p className="mb-3 text-xs text-muted">Nothing in it</p>
           <NotificationsCard rows={[]} tab="all" onTab={() => {}} onClose={() => {}} />

@@ -1,25 +1,29 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Picture } from '@/components/brand/Picture'
 import {
   faUserPlus, faUserCheck, faHeart, faComment, faCircleInfo, faDoorOpen, faCalendarDay, faGavel,
   faShieldHalved,
-  faCheckDouble, faBell, faUserGroup,
+  faCheckDouble, faBell, faUserGroup, faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { worldIcon } from '@/lib/naming'
 import { worldLink } from '@/lib/links'
 import { Avatar } from '@/components/ui/Avatar'
-import { Tabs } from '@/components/ui/Tabs'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { Kobby } from '@/components/brand/Kobby'
 import { Pointer } from '@/components/ui/Pointer'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import { listNotifications, markNotificationsRead , houseAccount} from '@/lib/api'
+import {
+  listNotifications, markNotificationsRead, houseAccount,
+  standingWith, respondToFriendRequest, answerBestFriend,
+} from '@/lib/api'
 import { timeAgo } from '@/lib/format'
 import type { Notification } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
+import { DEFAULT_WORLD_EMBLEM } from '@/lib/worldart'
 import { Linkify } from '@/components/ui/Linkify'
 import { cn } from '@/lib/cn'
 
@@ -148,6 +152,107 @@ function linkFor(n: Notification) {
   return '/home'
 }
 
+/**
+ * Which rail a kind belongs to.
+ *
+ * Staw's note on the bell was three words - grouping, filtering, pressable -
+ * and this is the filtering. Four families rather than thirteen kinds,
+ * because a filter with one row behind it is a filter nobody presses, and
+ * because what somebody is actually looking for is "people" or "my Worlds",
+ * never `best_friend_accepted`.
+ *
+ * A kind this build has not heard of lands in Kobblon rather than nowhere:
+ * the same fallback `markFor` has, for the same reason - a migration can
+ * add a kind without this file knowing.
+ */
+export type NotifFamily = 'people' | 'worlds' | 'forum' | 'kobblon'
+
+const FAMILY: Partial<Record<Notification['kind'], NotifFamily>> = {
+  friend_request: 'people',
+  friend_accepted: 'people',
+  best_friend_request: 'people',
+  best_friend_accepted: 'people',
+  message: 'people',
+  world_invite: 'people',
+  space_like: 'worlds',
+  space_visit: 'worlds',
+  world_updated: 'worlds',
+  forum_reply: 'forum',
+  forum_staff: 'forum',
+  system: 'kobblon',
+  content_removed: 'kobblon',
+  event_started: 'kobblon',
+}
+
+export function familyOf(kind: string): NotifFamily {
+  return FAMILY[kind as Notification['kind']] ?? 'kobblon'
+}
+
+/** What the rail offers, and what each one is called. */
+export type NotifFilter = 'all' | 'unread' | NotifFamily
+
+const RAIL: { value: NotifFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'unread', label: 'New' },
+  { value: 'people', label: 'People' },
+  { value: 'worlds', label: 'Worlds' },
+  { value: 'forum', label: 'Forum' },
+  { value: 'kobblon', label: 'Kobblon' },
+]
+
+/**
+ * Several of the same thing, said once.
+ *
+ * Twelve people liking a World was twelve rows, which pushed everything
+ * else off the card and read as noise rather than as twelve people liking
+ * a World. A bundle is rows of the same kind about the same thing on the
+ * same day: it wears the faces of up to three of them, says how many, and
+ * leads where any one of them led.
+ *
+ * What it is "about" is the World or the Space where there is one, and the
+ * person otherwise - so three messages from one friend are one row and
+ * three messages from three friends are three. A kind with neither is
+ * never bundled: `system` and `content_removed` each say their own thing
+ * and stacking them would hide what was taken down.
+ */
+type Bundle = { key: string; rows: Notification[] }
+
+const NEVER_BUNDLED = new Set(['system', 'content_removed', 'friend_request', 'best_friend_request'])
+
+function aboutOf(n: Notification) {
+  if (NEVER_BUNDLED.has(n.kind)) return null
+  const what = n.world_id ?? n.space_id ?? n.actor_id
+  return what ? `${n.kind}:${what}` : null
+}
+
+function bundle(rows: Notification[]): Bundle[] {
+  const out: Bundle[] = []
+  const byKey = new Map<string, Bundle>()
+  for (const row of rows) {
+    const about = aboutOf(row)
+    const key = about ? `${about}:${whenGroup(row.created_at)}` : String(row.id)
+    const had = about ? byKey.get(key) : undefined
+    if (had) { had.rows.push(row); continue }
+    const made = { key, rows: [row] }
+    out.push(made)
+    if (about) byKey.set(key, made)
+  }
+  return out
+}
+
+/** Who a bundle is from, deduplicated, newest first. */
+function actorsOf(rows: Notification[]) {
+  const seen = new Set<string>()
+  const out: Notification[] = []
+  for (const row of rows) {
+    const id = row.actor_id ?? 'house'
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push(row)
+  }
+  return out
+}
+
 /** Today, yesterday, and everything before that. */
 function whenGroup(iso: string) {
   const then = new Date(iso)
@@ -172,13 +277,22 @@ function whenGroup(iso: string) {
  * right where an eye scanning down finds it in one column, and unread is
  * said twice and no more - the tint and the lit edge.
  */
-function Line({ n, onClose, onOpen }: {
+function Line({ n, also, onClose, onOpen, onAnswer }: {
   n: Notification
+  /** The others in this bundle, newest first, this one not among them. */
+  also?: Notification[]
   onClose: () => void
   onOpen?: (n: Notification | null, href: string) => void
+  onAnswer?: (n: Notification, yes: boolean) => void | Promise<void>
 }) {
   const mark = markFor(n.kind)
   const said = words(n)
+  const others = also ?? []
+  const more = others.length
+  const answerable = !!onAnswer
+    && (n.kind === 'friend_request' || n.kind === 'best_friend_request')
+  const [answered, setAnswered] = useState<'yes' | 'no' | null>(null)
+  const [answering, setAnswering] = useState(false)
   /*
    * The house, for the ones nobody sent. Asked once for the whole site and
    * handed back from memory after that, so a list of twenty is one request.
@@ -204,72 +318,252 @@ function Line({ n, onClose, onOpen }: {
    * works out the address either way.
    */
   const href = linkFor(n)
+
+  /*
+   * The row, rebuilt.
+   *
+   * Staw: a Kobblon vibe with an Xbox/Steam one over it, and "the rails
+   * themselves need a huge redesign with proper buttons, images, texts".
+   * The old row was a 40px face, one grey sentence and a timestamp - a
+   * mailing list. A console tells you what happened by showing you the
+   * thing it happened to.
+   *
+   * So each row is a block with the platform's own edge on it: a square
+   * picture, the name of what this is about in the pixel font, the
+   * sentence under it, the time and the way on at the right. Unread is the
+   * blue lip and a lit band, which is how everything else on this site
+   * says "this one".
+   */
+  const art = n.world
+    ? (n.world.cover_url ?? n.world.emblem_url ?? null)
+    : n.space
+      ? (n.space.cover_url ?? n.space.emblem_url ?? null)
+      : null
+
+  /*
+   * The sentence, with what the heading already said taken out of it.
+   *
+   * The heading is the World or the person this is about, so a row read
+   * top to bottom was saying the name twice: "HaczkyEndre / HaczkyEndre
+   * sent you a friend request", "First Ground / Malicia liked First
+   * Ground". The name leads when there is a picture of a World beside it
+   * and goes when the picture is the person's own face.
+   */
+  /* What the row is about, in two or three words, in the pixel font. */
+  const heading = n.world?.name
+    ?? n.space?.name
+    ?? n.actor?.display_name
+    ?? house?.display_name
+    ?? 'Kobblon'
+
+  const aboutAThing = !!(n.world || n.space)
+  const rest = typeof said.rest === 'string' && aboutAThing && said.rest.endsWith(heading)
+    ? `${said.rest.slice(0, -heading.length)}this`
+    : said.rest
+
   const look = cn(
-    'group relative flex w-full items-start gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
-    n.is_read ? 'hover:bg-ink-hover' : 'bg-brand/[0.08] hover:bg-brand/[0.14]',
+    'group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border-2 border-b-4 px-3 py-2.5 text-left transition-colors',
+    /* Unread is the lit band and a blue lip, not a blue card: seven
+       unread used to be a wall of brand colour with the words inside it
+       fighting for contrast. */
+    n.is_read
+      ? 'border-ink-line bg-ink-raised hover:border-brand/40'
+      : 'border-ink-line bg-brand/[0.07] hover:bg-brand/[0.12]',
   )
 
   const inside = (
     <>
-      {/* Unread is a lit edge rather than a dot to go looking for. */}
       {!n.is_read && (
-        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-brand-bright" />
+        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-brand-bright" />
       )}
 
+      {/* The picture: the World where there is one, the person otherwise,
+          with the kind's mark sat on its corner. A World with no art of
+          its own wears the platform's default drawing rather than a
+          letter. */}
       <span className="relative shrink-0">
-        {/*
-          * A notification with no actor was sent by the platform, so it
-          * wears the platform's face rather than the letter K - which is
-          * what Staw was looking at.
-          */}
-        <Avatar
-          src={n.actor ? avatarOf(n.actor) : house?.avatar_url ?? null}
-          personId={n.actor_id ?? house?.id}
-          changedAt={n.actor ? undefined : house?.avatar_changed_at}
-          name={n.actor?.display_name ?? house?.display_name ?? 'Kobblon'}
-          size="md"
-        />
-        <span
-          className={cn(
-            'absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full text-tiny ring-2 ring-ink-card',
-            mark.tint,
+        <span className="relative z-10 block">
+          {n.world || n.space ? (
+            <span className="block h-12 w-12 overflow-hidden rounded-xl border-2 border-b-[3px] border-ink-line bg-ink">
+              <Picture
+                src={art ?? DEFAULT_WORLD_EMBLEM}
+                alt={heading}
+                className="h-full w-full"
+              />
+            </span>
+          ) : (
+            <Avatar
+              src={n.actor ? avatarOf(n.actor) : house?.avatar_url ?? null}
+              personId={n.actor_id ?? house?.id}
+              changedAt={n.actor ? undefined : house?.avatar_changed_at}
+              name={n.actor?.display_name ?? house?.display_name ?? 'Kobblon'}
+              size="lg"
+            />
           )}
-        >
-          <Glyph icon={mark.icon} />
+
+          <span
+            className={cn(
+              'absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full text-tiny ring-2 ring-ink-raised',
+              mark.tint,
+            )}
+          >
+            <Glyph icon={mark.icon} />
+          </span>
         </span>
       </span>
 
-      <span className="min-w-0 flex-1 pt-0.5">
-        <span className="block text-sm leading-snug text-white/90">
-          {said.who && <span className="font-bold text-white">{said.who} </span>}
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="min-w-0 flex-1 truncate font-display text-sm font-extrabold leading-tight">
+            {heading}
+          </span>
+          <span className="shrink-0 text-tiny tabular-nums text-muted">
+            {timeAgo(n.created_at)}
+          </span>
+        </span>
+
+        <span className="mt-0.5 block text-xs leading-snug text-white/70">
+          {said.who && aboutAThing && (
+            <span className="font-bold text-white/85">
+              {said.who}
+              {!!more && (more === 1 ? ' and 1 other' : ` and ${more} others`)}
+              {' '}
+            </span>
+          )}
+          {!aboutAThing && !!more && (
+            <span className="font-bold text-white/85">
+              {more === 1 ? 'and 1 other, ' : `and ${more} others, `}
+            </span>
+          )}
           {/* An address in the words is a link you can press, and nothing
               here is ever rendered as markup. */}
-          {typeof said.rest === 'string' ? <Linkify>{said.rest}</Linkify> : said.rest}
+          {typeof rest === 'string' ? <Linkify>{rest}</Linkify> : rest}
         </span>
       </span>
 
-      <span className="shrink-0 pt-0.5 text-tiny tabular-nums text-muted">
-        {timeAgo(n.created_at)}
-      </span>
+      {/* Who else, on the right, where a console puts the crowd: three
+          faces and nothing more, because the sentence already says how
+          many. The way on is said rather than implied - a row you can
+          press should look like one even when nothing on it is a
+          button. */}
+      {!answerable && (
+        <span className="flex shrink-0 items-center gap-2">
+          {!!more && (
+            <span className="flex items-center -space-x-2">
+              {others.slice(0, 3).map((other) => (
+                <Avatar
+                  key={other.id}
+                  src={other.actor ? avatarOf(other.actor) : null}
+                  personId={other.actor_id ?? undefined}
+                  name={other.actor?.display_name ?? 'Kobblon'}
+                  size="sm"
+                />
+              ))}
+            </span>
+          )}
+          <Glyph
+            icon={faChevronRight}
+            className="text-muted transition-colors group-hover:text-white"
+          />
+        </span>
+      )}
     </>
   )
 
-  if (onOpen) {
-    return (
-      <button
-        type="button"
-        className={look}
-        onClick={() => { onOpen(n, href); onClose() }}
-      >
-        {inside}
-      </button>
-    )
-  }
-
-  return (
+  const press = onOpen ? (
+    <button
+      type="button"
+      className={look}
+      onClick={() => { onOpen(n, href); onClose() }}
+    >
+      {inside}
+    </button>
+  ) : (
     <Link to={href} onClick={onClose} className={look}>
       {inside}
     </Link>
+  )
+
+  if (!answerable) return press
+
+  /*
+   * A request is a thing to answer, so it is answered here, on the row.
+   *
+   * Staw's third word was "pressable". A friend request that only leads to
+   * the page where you could answer it is a notification about a
+   * notification - two presses and a page load to say yes to somebody.
+   *
+   * The whole row is not a link in this one case, because a button inside
+   * a link is a button inside a link and the browser gives the press to
+   * whichever it feels like. The picture and the name still lead to them:
+   * that is what the small arrow on the right is for. Answering is the
+   * caller's business, so this card still asks nothing of a database.
+   */
+  const answerLook = 'rounded-lg border-2 border-b-4 px-3 py-1.5 text-xs font-extrabold transition-colors disabled:opacity-50'
+
+  return (
+    <div className={cn(look, 'flex-col items-stretch gap-2 cursor-default')}>
+      <span className="flex items-center gap-3">
+        {inside}
+
+        {onOpen ? (
+          <button
+            type="button"
+            aria-label="Open"
+            onClick={() => { onOpen(n, href); onClose() }}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-ink-hover hover:text-white"
+          >
+            <Glyph icon={faChevronRight} />
+          </button>
+        ) : (
+          <Link
+            to={href}
+            aria-label="Open"
+            onClick={onClose}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-ink-hover hover:text-white"
+          >
+            <Glyph icon={faChevronRight} />
+          </Link>
+        )}
+      </span>
+
+      <span className="flex items-center gap-1.5 pl-[3.75rem]">
+        {answered ? (
+          <span className="text-xs font-bold text-muted">
+            {answered === 'yes' ? 'Accepted' : 'Turned down'}
+          </span>
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled={answering}
+              onClick={() => {
+                setAnswering(true)
+                void Promise.resolve(onAnswer?.(n, true))
+                  .then(() => setAnswered('yes'))
+                  .finally(() => setAnswering(false))
+              }}
+              className={cn(answerLook, 'border-space-deep bg-space text-on-art hover:bg-space-bright')}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              disabled={answering}
+              onClick={() => {
+                setAnswering(true)
+                void Promise.resolve(onAnswer?.(n, false))
+                  .then(() => setAnswered('no'))
+                  .finally(() => setAnswering(false))
+              }}
+              className={cn(answerLook, 'border-ink-line bg-ink-card text-white/70 hover:text-white')}
+            >
+              Decline
+            </button>
+          </>
+        )}
+      </span>
+    </div>
   )
 }
 
@@ -283,14 +577,14 @@ function Line({ n, onClose, onOpen }: {
  * Workspace can mount this one too if it ever grows a bell.
  */
 export function NotificationsCard({
-  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, onOpen, className,
+  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, onOpen, onAnswer, className,
 }: {
   rows: Notification[]
   loading?: boolean
   error?: string | null
   onRetry?: () => void
-  tab: 'all' | 'unread'
-  onTab: (next: 'all' | 'unread') => void
+  tab: NotifFilter
+  onTab: (next: NotifFilter) => void
   onClose: () => void
   onMarkAll?: () => void
   /** Everything has just been marked read, so the header says so. */
@@ -306,18 +600,30 @@ export function NotificationsCard({
    * "waiting on you" strip in the header, which leads to the friends list.
    */
   onOpen?: (n: Notification | null, href: string) => void
+  /**
+   * Answering a friend request from the row itself.
+   *
+   * The card does not read or write anything, so whoever mounts it says
+   * what yes and no do. Left out, the request rows are what they were: a
+   * way through to the page where they can be answered.
+   */
+  onAnswer?: (n: Notification, yes: boolean) => void | Promise<void>
   className?: string
 }) {
   const unread = rows.filter((n) => !n.is_read)
-  const shown = tab === 'unread' ? unread : rows
+  const shown = tab === 'all'
+    ? rows
+    : tab === 'unread'
+      ? unread
+      : rows.filter((n) => familyOf(n.kind) === tab)
 
   const groups = useMemo(() => {
-    const out: { name: string; rows: Notification[] }[] = []
-    for (const row of shown) {
-      const name = whenGroup(row.created_at)
+    const out: { name: string; bundles: Bundle[] }[] = []
+    for (const made of bundle(shown)) {
+      const name = whenGroup(made.rows[0].created_at)
       const last = out[out.length - 1]
-      if (last?.name === name) last.rows.push(row)
-      else out.push({ name, rows: [row] })
+      if (last?.name === name) last.bundles.push(made)
+      else out.push({ name, bundles: [made] })
     }
     return out
   }, [shown])
@@ -351,15 +657,45 @@ export function NotificationsCard({
             </p>
           </div>
 
-          <Tabs
-            label="Which notifications"
-            value={tab}
-            onChange={onTab}
-            options={[
-              { value: 'all', label: 'All' },
-              { value: 'unread', label: 'New', count: unread.length || null },
-            ]}
-          />
+        </div>
+
+        {/*
+          * The rail, under the title rather than beside it.
+          *
+          * Six words do not fit on a 25rem card next to a drawing and a
+          * heading, and the two that were there - All and New - were the
+          * whole of the filtering. These scroll sideways on a narrow card
+          * and keep the one you are on in the site's blue, the same way
+          * every other switch on the platform says "this one".
+          */}
+        <div className="relative mt-3 flex gap-1 overflow-x-auto kob-scroll">
+          {RAIL.map((one) => {
+            const count = one.value === 'unread'
+              ? unread.length
+              : one.value === 'all'
+                ? 0
+                : rows.filter((n) => familyOf(n.kind) === one.value).length
+            if (one.value !== 'all' && one.value !== 'unread' && !count) return null
+            return (
+              <button
+                key={one.value}
+                type="button"
+                onClick={() => onTab(one.value)}
+                aria-current={tab === one.value}
+                className={cn(
+                  'shrink-0 rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors',
+                  tab === one.value
+                    ? 'border-brand-deep bg-brand text-on-art'
+                    : 'border-ink-line bg-ink-card text-white/55 hover:text-white',
+                )}
+              >
+                {one.label}
+                {!!count && one.value !== 'all' && (
+                  <span className="ml-1.5 tabular-nums opacity-70">{count}</span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -400,11 +736,13 @@ export function NotificationsCard({
         {!loading && !error && !shown.length && (
           <EmptyState
             mood="notification"
-            title={tab === 'unread' ? 'Nothing new' : 'Nothing yet'}
+            title={tab === 'unread' ? 'Nothing new' : tab === 'all' ? 'Nothing yet' : 'Nothing here'}
             body={
               tab === 'unread'
                 ? 'You have read everything. The rest is under All.'
-                : 'When people add you, message you or walk into your Worlds, it turns up here.'
+                : tab === 'all'
+                  ? 'When people add you, message you or walk into your Worlds, it turns up here.'
+                  : 'Nothing of this sort lately. All has the rest.'
             }
           />
         )}
@@ -414,10 +752,20 @@ export function NotificationsCard({
             <h3 className="sticky top-0 z-10 border-b border-ink-line/60 bg-ink-card/95 px-4 py-1.5 text-mini font-bold uppercase tracking-wide text-muted backdrop-blur">
               {group.name}
             </h3>
-            <div className="space-y-0.5 px-2 pb-1">
-              {group.rows.map((n) => (
-                <Line key={n.id} n={n} onClose={onClose} onOpen={onOpen} />
-              ))}
+            <div className="space-y-2 px-3 pb-2">
+              {group.bundles.map((made) => {
+                const [first, ...rest] = actorsOf(made.rows)
+                return (
+                  <Line
+                    key={made.key}
+                    n={first}
+                    also={rest}
+                    onClose={onClose}
+                    onOpen={onOpen}
+                    onAnswer={onAnswer}
+                  />
+                )
+              })}
             </div>
           </section>
         ))}
@@ -465,7 +813,7 @@ export function NotificationsPanel({
   anchor?: React.RefObject<HTMLElement | null>
 }) {
   const { profile } = useAuth()
-  const [tab, setTab] = useState<'all' | 'unread'>('all')
+  const [tab, setTab] = useState<NotifFilter>('all')
   const [readNow, setReadNow] = useState(false)
 
   const { data, error, loading, reload } = useAsync(
@@ -558,6 +906,29 @@ export function NotificationsPanel({
         onTab={setTab}
         onClose={onClose}
         readNow={readNow}
+        /*
+          * Yes and no, from the row.
+          *
+          * The row carries who asked, not which row of `friendships` the
+          * asking is - so the id is fetched at the moment of pressing
+          * rather than held from when the list was read. That is the trap
+          * this project keeps falling into, and here it would bite for
+          * real: a request answered on the friends page and then answered
+          * again from a stale bell is a write against a row that is gone.
+          */
+        onAnswer={async (n, yes) => {
+          const target = n.actor_id
+          if (!target) return
+          if (n.kind === 'best_friend_request') {
+            await answerBestFriend(target, yes)
+          } else {
+            const standing = await standingWith(target)
+            const id = standing.request_id
+            if (!id) throw new Error('That request is no longer there.')
+            await respondToFriendRequest(id, yes)
+          }
+          reload()
+        }}
         onMarkAll={() => {
           if (!profile) return
           void markNotificationsRead(profile.id).then(() => { setReadNow(true); onReadAll(); reload() })
