@@ -53,6 +53,9 @@ function Page() {
           onClose={() => {}}
           onMarkAll={() => {}}
           onAnswer={() => {}}
+          onJoin={() => {}}
+          onDismiss={() => {}}
+          settled={{ '1': 'accepted' }}
         />
         <div className="w-[22rem]">
           <p className="mb-3 text-xs text-muted">Nothing in it</p>

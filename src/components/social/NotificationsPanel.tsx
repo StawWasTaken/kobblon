@@ -19,10 +19,13 @@ import { useAsync } from '@/hooks/useAsync'
 import {
   listNotifications, markNotificationsRead, houseAccount,
   standingWith, respondToFriendRequest, answerBestFriend,
+  dismissNotification, friendsInServers,
 } from '@/lib/api'
+import { play } from '@/lib/app'
 import { timeAgo } from '@/lib/format'
 import type { Notification } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
+import { useHeadshot } from '@/hooks/useHeadshot'
 import { DEFAULT_WORLD_EMBLEM } from '@/lib/worldart'
 import { Linkify } from '@/components/ui/Linkify'
 import { cn } from '@/lib/cn'
@@ -277,20 +280,37 @@ function whenGroup(iso: string) {
  * right where an eye scanning down finds it in one column, and unread is
  * said twice and no more - the tint and the lit edge.
  */
-function Line({ n, also, onClose, onOpen, onAnswer }: {
+function Line({ n, also, settled, onClose, onOpen, onAnswer, onJoin, onDismiss }: {
   n: Notification
   /** The others in this bundle, newest first, this one not among them. */
   also?: Notification[]
+  /**
+   * This request has already been dealt with somewhere else.
+   *
+   * Staw: "what if ive accepted already a friend request". The bell is a
+   * list of things that happened, not a list of things still open, so a
+   * request answered on the friends page was still drawing Accept here -
+   * and pressing it wrote to a row that no longer exists. Whoever mounts
+   * the card says which are still open; this says so on the row and draws
+   * no buttons.
+   */
+  settled?: 'accepted' | 'gone' | null
   onClose: () => void
   onOpen?: (n: Notification | null, href: string) => void
   onAnswer?: (n: Notification, yes: boolean) => void | Promise<void>
+  /** Into the World, and into the room the one who asked is in. */
+  onJoin?: (n: Notification) => void | Promise<void>
+  /** Put this one away without going anywhere. */
+  onDismiss?: (n: Notification) => void | Promise<void>
 }) {
   const mark = markFor(n.kind)
   const said = words(n)
   const others = also ?? []
   const more = others.length
-  const answerable = !!onAnswer
-    && (n.kind === 'friend_request' || n.kind === 'best_friend_request')
+  const isRequest = n.kind === 'friend_request' || n.kind === 'best_friend_request'
+  const answerable = !!onAnswer && isRequest && !settled
+  const joinable = !!onJoin && n.kind === 'world_invite'
+  const hasActions = answerable || joinable
   const [answered, setAnswered] = useState<'yes' | 'no' | null>(null)
   const [answering, setAnswering] = useState(false)
   /*
@@ -318,6 +338,16 @@ function Line({ n, also, onClose, onOpen, onAnswer }: {
    * works out the address either way.
    */
   const href = linkFor(n)
+
+  /*
+   * Their face, drawn where nothing is stored - the same hook `Avatar`
+   * uses, asked here because this row frames it square rather than round.
+   */
+  const face = useHeadshot(
+    n.actor_id ?? house?.id,
+    n.actor ? avatarOf(n.actor) : house?.avatar_url ?? null,
+    n.actor ? undefined : house?.avatar_changed_at,
+  )
 
   /*
    * The row, rebuilt.
@@ -382,24 +412,26 @@ function Line({ n, also, onClose, onOpen, onAnswer }: {
           its own wears the platform's default drawing rather than a
           letter. */}
       <span className="relative shrink-0">
+        {/*
+          * One frame for both, and it is a square.
+          *
+          * A circle cropped the drawn headshots badly at this size - the
+          * shoulders came through the bottom corners as two coloured
+          * slivers, which is the "lil bug" Staw saw and is really the
+          * round mask taking a bite out of a portrait that was never
+          * round. A tile holds the whole picture, and it is the frame the
+          * World rows already wear, so a list of both reads as one list.
+          */}
+        <span className="relative z-10 block h-12 w-12 overflow-hidden rounded-xl border-2 border-b-[3px] border-ink-line bg-ink">
+          <Picture
+            src={n.world || n.space
+              ? (art ?? DEFAULT_WORLD_EMBLEM)
+              : (face ?? DEFAULT_WORLD_EMBLEM)}
+            alt={heading}
+            className="h-full w-full"
+          />
+        </span>
         <span className="relative z-10 block">
-          {n.world || n.space ? (
-            <span className="block h-12 w-12 overflow-hidden rounded-xl border-2 border-b-[3px] border-ink-line bg-ink">
-              <Picture
-                src={art ?? DEFAULT_WORLD_EMBLEM}
-                alt={heading}
-                className="h-full w-full"
-              />
-            </span>
-          ) : (
-            <Avatar
-              src={n.actor ? avatarOf(n.actor) : house?.avatar_url ?? null}
-              personId={n.actor_id ?? house?.id}
-              changedAt={n.actor ? undefined : house?.avatar_changed_at}
-              name={n.actor?.display_name ?? house?.display_name ?? 'Kobblon'}
-              size="lg"
-            />
-          )}
 
           <span
             className={cn(
@@ -446,7 +478,7 @@ function Line({ n, also, onClose, onOpen, onAnswer }: {
           many. The way on is said rather than implied - a row you can
           press should look like one even when nothing on it is a
           button. */}
-      {!answerable && (
+      {!hasActions && (
         <span className="flex shrink-0 items-center gap-2">
           {!!more && (
             <span className="flex items-center -space-x-2">
@@ -484,7 +516,20 @@ function Line({ n, also, onClose, onOpen, onAnswer }: {
     </Link>
   )
 
-  if (!answerable) return press
+  /* Dealt with elsewhere: said once, quietly, instead of two buttons that
+     would write to a row that is not there. */
+  if (isRequest && settled) {
+    return (
+      <div className={cn(look, 'cursor-default')}>
+        {inside}
+        <span className="shrink-0 text-xs font-bold text-muted">
+          {settled === 'accepted' ? 'Friends now' : 'Dealt with'}
+        </span>
+      </div>
+    )
+  }
+
+  if (!hasActions) return press
 
   /*
    * A request is a thing to answer, so it is answered here, on the row.
@@ -528,7 +573,44 @@ function Line({ n, also, onClose, onOpen, onAnswer }: {
       </span>
 
       <span className="flex items-center gap-1.5 pl-[3.75rem]">
-        {answered ? (
+        {joinable ? (
+          answered ? (
+            <span className="text-xs font-bold text-muted">
+              {answered === 'yes' ? 'On your way.' : 'Put away'}
+            </span>
+          ) : (
+            <>
+              {/* Straight into the room they are in, not merely to the
+                  World's page - that is what being invited means. */}
+              <button
+                type="button"
+                disabled={answering}
+                onClick={() => {
+                  setAnswering(true)
+                  void Promise.resolve(onJoin?.(n))
+                    .then(() => setAnswered('yes'))
+                    .finally(() => setAnswering(false))
+                }}
+                className={cn(answerLook, 'border-space-deep bg-space text-on-art hover:bg-space-bright')}
+              >
+                Join
+              </button>
+              <button
+                type="button"
+                disabled={answering}
+                onClick={() => {
+                  setAnswering(true)
+                  void Promise.resolve(onDismiss?.(n))
+                    .then(() => setAnswered('no'))
+                    .finally(() => setAnswering(false))
+                }}
+                className={cn(answerLook, 'border-ink-line bg-ink-card text-white/70 hover:text-white')}
+              >
+                Dismiss
+              </button>
+            </>
+          )
+        ) : answered ? (
           <span className="text-xs font-bold text-muted">
             {answered === 'yes' ? 'Accepted' : 'Turned down'}
           </span>
@@ -577,7 +659,8 @@ function Line({ n, also, onClose, onOpen, onAnswer }: {
  * Workspace can mount this one too if it ever grows a bell.
  */
 export function NotificationsCard({
-  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, onOpen, onAnswer, className,
+  rows, loading, error, onRetry, tab, onTab, onClose, onMarkAll, readNow, onOpen, onAnswer,
+  onJoin, onDismiss, settled, className,
 }: {
   rows: Notification[]
   loading?: boolean
@@ -608,6 +691,18 @@ export function NotificationsCard({
    * way through to the page where they can be answered.
    */
   onAnswer?: (n: Notification, yes: boolean) => void | Promise<void>
+  /** Into the World and into the room the one who asked is in. */
+  onJoin?: (n: Notification) => void | Promise<void>
+  /** Put one row away without going anywhere. */
+  onDismiss?: (n: Notification) => void | Promise<void>
+  /**
+   * Which request rows have already been dealt with, by notification id.
+   *
+   * Asked of whoever mounts the card rather than worked out here: the card
+   * reads nothing, and only the thing holding a session can say whether
+   * two people are friends by now.
+   */
+  settled?: Record<string, 'accepted' | 'gone'>
   className?: string
 }) {
   const unread = rows.filter((n) => !n.is_read)
@@ -628,7 +723,10 @@ export function NotificationsCard({
     return out
   }, [shown])
 
-  const waiting = rows.filter((n) => n.kind === 'friend_request').length
+  /* Only the ones still open: a request answered on the friends page was
+     still being counted here, which is the bell telling you to go and do
+     something that is already done. */
+  const waiting = rows.filter((n) => n.kind === 'friend_request' && !settled?.[String(n.id)]).length
 
   return (
     <div
@@ -640,7 +738,10 @@ export function NotificationsCard({
       {/* ------------------------------------------------------- header */}
       <div className="relative overflow-hidden border-b border-ink-line bg-ink-raised px-4 py-3">
         <div className="relative flex items-center gap-3">
-          <Kobby mood="notification" size="sm" bob={false} className="h-10 max-w-[4rem] shrink-0" />
+          {/* Staw: make the notification guy bigger. He is the only
+              drawing on the card and at 40px he was a sticker on a
+              header; at 64 he is what the card is. */}
+          <Kobby mood="notification" size="md" bob={false} className="-my-1 h-16 max-w-[6rem] shrink-0" />
           {/*
             * The drawing is wide, so it is given a width rather than left to
             * take whatever its aspect wants; and the title truncates, because the tray will not shrink and the title will
@@ -649,8 +750,8 @@ export function NotificationsCard({
             * "Notifications" on a narrow card.
             */}
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-display text-base font-extrabold leading-tight">Notifications</h2>
-            <p className="truncate text-xs text-muted">
+            <h2 className="truncate font-display text-lg font-extrabold leading-tight">Notifications</h2>
+            <p className="truncate text-xs font-bold text-muted">
               {unread.length
                 ? `${unread.length} new`
                 : readNow ? 'All caught up' : 'Nothing new'}
@@ -703,7 +804,7 @@ export function NotificationsCard({
           so it gets its own way through. */}
       {waiting > 0 && (() => {
         const to = '/friends?list=requests'
-        const look = 'flex w-full items-center gap-2.5 border-b border-ink-line bg-brand/10 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-brand/20'
+        const look = 'flex min-w-0 flex-1 items-center gap-2.5 px-4 py-2.5 text-left text-sm font-bold transition-colors hover:bg-brand/20'
         const said = (
           <>
             <Glyph icon={faUserGroup} className="text-brand-bright" />
@@ -714,12 +815,28 @@ export function NotificationsCard({
            on the site, and the caller's business anywhere else. A card that
            is router-free except for one row in its header is not
            router-free. */
-        return onOpen ? (
-          <button type="button" className={look} onClick={() => { onOpen(null, to); onClose() }}>
-            {said}
-          </button>
-        ) : (
-          <Link to={to} onClick={onClose} className={look}>{said}</Link>
+        return (
+          <div className="flex items-center border-b border-ink-line bg-brand/10">
+            {onOpen ? (
+              <button type="button" className={look} onClick={() => { onOpen(null, to); onClose() }}>
+                {said}
+              </button>
+            ) : (
+              <Link to={to} onClick={onClose} className={look}>{said}</Link>
+            )}
+
+            {/* Quieting the strip without answering anybody. Staw asked for
+                it: being reminded is useful once and nagging after that. */}
+            {!!onMarkAll && (
+              <button
+                type="button"
+                onClick={onMarkAll}
+                className="mr-3 shrink-0 rounded-lg border-2 border-b-[3px] border-ink-line bg-ink-card px-2.5 py-1 text-xs font-bold text-white/70 transition-colors hover:text-white"
+              >
+                Mark read
+              </button>
+            )}
+          </div>
         )
       })()}
 
@@ -760,9 +877,12 @@ export function NotificationsCard({
                     key={made.key}
                     n={first}
                     also={rest}
+                    settled={settled?.[String(first.id)] ?? null}
                     onClose={onClose}
                     onOpen={onOpen}
                     onAnswer={onAnswer}
+                    onJoin={onJoin}
+                    onDismiss={onDismiss}
                   />
                 )
               })}
@@ -820,6 +940,42 @@ export function NotificationsPanel({
     async () => (profile && open ? listNotifications(profile.id) : []),
     [profile?.id, open],
   )
+
+  /*
+   * Which requests are still open.
+   *
+   * Asked once each time the card is opened, for the request rows only -
+   * never held from a previous open. A notification is a record that
+   * somebody asked; whether they are still waiting is a different
+   * question with a different answer by now, and the bell was answering
+   * the first one while drawing buttons for the second.
+   */
+  const [settled, setSettled] = useState<Record<string, 'accepted' | 'gone'>>({})
+
+  useEffect(() => {
+    if (!open || !profile) return
+    const asks = (data ?? []).filter(
+      (n) => n.kind === 'friend_request' && n.actor_id,
+    )
+    if (!asks.length) return setSettled({})
+
+    let live = true
+    void Promise.all(asks.map(async (n) => {
+      try {
+        const standing = await standingWith(n.actor_id as string)
+        if (standing.are_friends) return [String(n.id), 'accepted' as const]
+        if (!standing.request_received) return [String(n.id), 'gone' as const]
+      } catch {
+        /* Asked and not answered: the row keeps its buttons, and pressing
+           one says so plainly rather than the row deciding on a guess. */
+      }
+      return null
+    })).then((found) => {
+      if (!live) return
+      setSettled(Object.fromEntries(found.filter(Boolean) as [string, 'accepted' | 'gone'][]))
+    })
+    return () => { live = false }
+  }, [open, profile, data])
 
   /*
    * Opening the card marks everything read after a moment, so the count on
@@ -916,6 +1072,36 @@ export function NotificationsPanel({
           * real: a request answered on the friends page and then answered
           * again from a stale bell is a write against a row that is gone.
           */
+        settled={settled}
+        onDismiss={async (n) => {
+          await dismissNotification(String(n.id))
+          reload()
+        }}
+        /*
+          * Into the room they are in, not merely to the World's page.
+          *
+          * Which room is asked for at the moment of pressing: an invite
+          * sent twenty minutes ago knows the World and cannot know where
+          * they are standing now. If they have left, this still opens the
+          * World - a Join that refuses because the friend moved is worse
+          * than one that takes you there anyway.
+          */
+        onJoin={async (n) => {
+          const world = n.world_id
+          if (!world) return
+          let room: string | undefined
+          try {
+            const rooms = await friendsInServers(world)
+            const found = Object.entries(rooms)
+              .find(([, who]) => who.some((one) => one.id === n.actor_id))
+            room = found?.[0]
+          } catch {
+            /* Not knowing which room is not a reason to refuse the World. */
+          }
+          void play(world, () => {}, room)
+          await dismissNotification(String(n.id))
+          reload()
+        }}
         onAnswer={async (n, yes) => {
           const target = n.actor_id
           if (!target) return
@@ -927,6 +1113,7 @@ export function NotificationsPanel({
             if (!id) throw new Error('That request is no longer there.')
             await respondToFriendRequest(id, yes)
           }
+          setSettled((was) => ({ ...was, [String(n.id)]: yes ? 'accepted' : 'gone' }))
           reload()
         }}
         onMarkAll={() => {

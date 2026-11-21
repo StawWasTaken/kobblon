@@ -702,6 +702,19 @@ export async function listNotifications(userId: string): Promise<Notification[]>
     .eq('user_id', userId).order('created_at', { ascending: false }).limit(40)) as unknown as Notification[]) ?? []
 }
 
+/**
+ * One notification put away, rather than all of them.
+ *
+ * What "Dismiss" does on an invite: the row goes quiet and the rest of the
+ * bell is left alone. The policy on `notifications` is update-your-own, so
+ * the row id is enough and somebody else's cannot be touched.
+ */
+export async function dismissNotification(id: string) {
+  const { error } = await supabase.from('notifications')
+    .update({ is_read: true }).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
 export async function markNotificationsRead(userId: string) {
   await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false)
 }

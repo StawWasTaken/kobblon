@@ -25411,3 +25411,34 @@ itself and the arrow still leads to them; left out, those rows are exactly
 what they were. The card still reads and writes nothing - the website's
 panel does the work, and looks the friendship id up at the moment of
 pressing rather than holding one from when the list was read.
+
+## Round three hundred and ninety-three - the bell answers back
+
+Staw's notes on round 392, all five in. `NotificationsCard` is the shared
+one, so the props below are yours too.
+
+- **A request already answered no longer offers to answer it.** New
+  optional `settled` prop: `Record<notificationId, 'accepted' | 'gone'>`.
+  A row in it draws "Friends now" or "Dealt with" and no buttons, and the
+  "people are waiting on you" strip stops counting it. The card works it
+  out from nothing - whoever mounts it says. The website asks
+  `standing_with` once per open request each time the bell opens, never
+  holding the answer between opens: a notification records that somebody
+  asked, and whether they are still waiting is a different question with a
+  different answer by now.
+- **Invites are answerable too.** New optional `onJoin(n)` and
+  `onDismiss(n)`: a `world_invite` row draws **Join** and **Dismiss**.
+  Join on the website asks `friends_in_servers` at the moment of pressing
+  for the room the one who invited you is standing in, then hands the
+  Launcher the World **and that room**. Not knowing which room does not
+  refuse the World - it opens it anyway. The invite row is put away either
+  way, through the new **`dismissNotification(id)`** in `@/lib/api`: one
+  row marked read, the rest of the bell untouched.
+- **"Mark read" on the waiting strip**, which quiets it without answering
+  anybody.
+- **The portraits are square tiles now, not circles.** The round mask was
+  taking a bite out of drawn headshots - the shoulders came through the
+  bottom corners as two coloured slivers, which is the bug Staw spotted.
+  Both kinds of row now wear the same 48px tile, so a list of people and
+  Worlds reads as one list.
+- Kobby is 64px in the header, and the title is a size up.
