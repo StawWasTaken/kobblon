@@ -29,6 +29,7 @@ import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
 import { Switch } from '@/components/ui/Switch'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/cn'
 import '@/index.css'
 
@@ -317,29 +318,45 @@ function Appearance() {
         ))}
       </div>
 
-      {/* Kept, and it was the thing the first drawing lost. */}
+      {/*
+        * Kept - it was the thing the first drawing lost - and drawn small.
+        *
+        * Staw: there will be a lot of these, and he does not want them as
+        * long rectangles. So the mark is the tile and the name is under
+        * it: a shelf that takes five across where the old one took two,
+        * and that still reads at a glance because each appearance *is* its
+        * own colour. The sentence moves to the tooltip, where a line that
+        * only matters once is worth having and worth not spending a row
+        * on.
+        */}
       <Head>Theme appearances</Head>
-      <div className="grid gap-2.5 py-2 sm:grid-cols-2">
+      <div className="grid grid-cols-3 gap-2.5 py-2 sm:grid-cols-5">
         {([
           ['kobblon', 'Kobblon', 'The blue one. Everybody has this.'],
           ['halloween', 'Halloween', 'The bar and the rail in pumpkin orange.'],
           ['christmas', 'Christmas', 'Deep green chrome, and snow on some pages.'],
         ] as const).map(([key, title, note]) => (
-          <Pick
-            key={key}
-            on={look === key}
-            onClick={() => setLook(key)}
-            title={title}
-            note={note}
-            swatch={
+          <Tooltip key={key} label={note} side="top">
+            <button
+              type="button"
+              onClick={() => setLook(key)}
+              aria-pressed={look === key}
+              className={cn(
+                'kob-press flex w-full flex-col items-center gap-2 rounded-2xl border-2 px-2 py-3 transition-colors',
+                look === key
+                  ? 'border-brand-deep border-b-[6px] bg-brand text-on-art'
+                  : 'border-ink-line border-b-4 bg-ink-card text-white/75 hover:border-brand/50 hover:text-white',
+              )}
+            >
               <span
                 data-appearance={key}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-ink-line bg-chrome"
+                className="grid h-12 w-12 place-items-center rounded-xl border-2 border-ink-line bg-chrome"
               >
-                <Logomark className="h-6" />
+                <Logomark className="h-7" />
               </span>
-            }
-          />
+              <span className="block truncate font-display text-xs font-extrabold">{title}</span>
+            </button>
+          </Tooltip>
         ))}
       </div>
       <p className="px-1 pb-2 text-xs text-muted">
@@ -379,9 +396,11 @@ function Preview() {
         <h1 className="font-display text-3xl font-extrabold">Settings</h1>
 
         <div className="mt-5 grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
-          {/* The rail, with the lip - the avatar page's drawers down the
-              side rather than across the top. */}
-          <nav className="flex gap-2 overflow-x-auto pb-1 kob-scroll lg:block lg:space-y-1.5 lg:overflow-visible">
+          {/* One card with six rows in it, not six cards.
+              Staw: "make this into a common card thingy instead of
+              multiple ones" - six bordered pills down a column read as six
+              separate things, when the rail is one thing with six rows. */}
+          <nav className="flex gap-1 overflow-x-auto pb-1 kob-scroll lg:block lg:space-y-1 lg:overflow-visible lg:rounded-2xl lg:border-2 lg:border-b-4 lg:border-ink-line lg:bg-ink-card lg:p-2">
             {ROOMS.map((one) => {
               const on = one.name === room
               return (
@@ -390,10 +409,12 @@ function Preview() {
                   onClick={() => setRoom(one.name)}
                   aria-current={on}
                   className={cn(
-                    'kob-press flex shrink-0 items-center gap-2.5 rounded-xl border-2 px-3 py-2 text-left text-sm font-bold transition-colors lg:w-full',
+                    'kob-press flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-bold transition-colors lg:w-full',
+                    /* The lip is on the one you are on, and nowhere else:
+                       inside a card, a border on every row is a grid. */
                     on
-                      ? 'border-brand-deep border-b-[5px] bg-brand text-on-art'
-                      : 'border-ink-line border-b-4 bg-ink-card text-white/65 hover:border-brand/50 hover:text-white',
+                      ? 'border-2 border-b-[5px] border-brand-deep bg-brand text-on-art'
+                      : 'border-2 border-b-[5px] border-transparent text-white/65 hover:bg-ink-hover hover:text-white',
                   )}
                 >
                   <Glyph icon={one.icon} className={cn('w-4 text-xs', !on && 'text-brand-bright')} />
