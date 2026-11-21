@@ -1,37 +1,32 @@
 /*
- * The Settings page, proposed rather than shipped.
+ * The Settings page, proposed rather than shipped. Second pass.
  *
- * The first attempt went straight onto the site and Staw's verdict was
- * three things: not everything was redesigned, it was overcomplicated, and
- * it was not what we were after. So this is a drawing with nothing behind
- * it - every section, mocked, nothing routed, nothing saved - and it is
- * what the rule is from now on: a preview first, then a yes.
+ * Staw's notes on the first drawing, all four in:
  *
- * What is different from the page that is live:
- *
- * - **One column of settings, not a stack of cards.** A console's settings
- *   are a long list with rules between the rows and a heading every few
- *   rows. Cards inside a panel inside a frame was three boxes deep for a
- *   row that says "Email".
- * - **The rail is names, not paragraphs.** Six words down the side. The
- *   sentence under each was the overcomplication.
- * - **The value is on the right, where it is answered.** Every row reads
- *   left to right: what it is, what it is set to, the way to change it.
- * - **Every section is drawn**, including the three that were left as they
- *   were: Privacy, Appearance, Safety.
+ * - **No account strip across the top.** The page is already about you.
+ * - **Every piece of content kept.** The first pass quietly lost the
+ *   theme appearances and had invented privacy rows that do not exist.
+ *   This mirrors what the live page actually holds, section by section,
+ *   including the appearances and the three text sizes.
+ * - **Some icons, not a field of them.** The rail, the section heading and
+ *   the tiles that are choices. Nothing on an ordinary row, where a mark
+ *   beside every line is noise rather than help.
+ * - **Nothing flat.** The rail and every selector carry the lip the avatar
+ *   page's drawers wear: two-pixel border, four under it, and the chosen
+ *   one in Kobblon blue. That is the platform's own "this is the one".
  */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Logomark } from '@/components/brand/Wordmark'
 import {
   faUser, faLock, faEye, faLink, faPalette, faShieldHalved,
   faChevronRight, faPen, faRightFromBracket, faMoon, faSun, faDesktop,
-  faCircleCheck,
+  faCircleCheck, faKey, faHeadset, faScroll, faArrowUpRightFromSquare,
 } from '@fortawesome/free-solid-svg-icons'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Switch } from '@/components/ui/Switch'
 import { cn } from '@/lib/cn'
@@ -48,10 +43,24 @@ const ROOMS: { name: Room; icon: IconDefinition }[] = [
   { name: 'Safety', icon: faShieldHalved },
 ]
 
-/** A heading inside a section: a few words and a rule out to the edge. */
+/* ------------------------------------------------------------- the shapes */
+
+/** The name of the room, with its mark, once at the top of the panel. */
+function Title({ icon, children }: { icon: IconDefinition; children: React.ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2.5 font-display text-2xl font-extrabold">
+      <span className="grid h-9 w-9 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-base text-brand-bright">
+        <Glyph icon={icon} />
+      </span>
+      {children}
+    </h2>
+  )
+}
+
+/** A few words over the rows they belong to, and a rule out to the edge. */
 function Head({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 pb-2 pt-6 first:pt-0">
+    <div className="flex items-center gap-3 pb-1 pt-6 first:pt-1">
       <h3 className="shrink-0 font-display text-tiny font-extrabold uppercase tracking-[0.18em] text-white/40">
         {children}
       </h3>
@@ -60,14 +69,7 @@ function Head({ children }: { children: React.ReactNode }) {
   )
 }
 
-/**
- * One setting.
- *
- * Name on the left, what it is set to on the right, and the control after
- * it. No card, no tile, no icon: the rule under it is what separates it
- * from the next one, which is how every console settings list on earth is
- * drawn and it is lighter than anything we have.
- */
+/** One setting: what it is, what it is set to, and the way to change it. */
 function Row({ label, note, value, action, to, danger }: {
   label: string
   note?: string
@@ -82,9 +84,7 @@ function Row({ label, note, value, action, to, danger }: {
         <span className={cn('block text-sm font-bold', danger && 'text-danger')}>{label}</span>
         {note && <span className="mt-0.5 block text-xs leading-snug text-muted">{note}</span>}
       </span>
-      {value !== undefined && (
-        <span className="shrink-0 text-sm text-white/60">{value}</span>
-      )}
+      {value !== undefined && <span className="shrink-0 text-sm text-white/60">{value}</span>}
       {action}
       {to && <Glyph icon={faChevronRight} className="shrink-0 text-xs text-muted" />}
     </>
@@ -97,20 +97,75 @@ function Row({ label, note, value, action, to, danger }: {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-4 border-b border-ink-line px-1 py-3.5 last:border-0">
+    <div className="flex flex-wrap items-center gap-4 border-b border-ink-line px-1 py-3.5 last:border-0">
       <span className="w-40 shrink-0 text-sm font-bold">{label}</span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   )
 }
 
-const input = 'h-10 w-full rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 text-sm focus:border-brand-bright focus:outline-none'
+const INPUT = 'h-10 w-full rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 text-sm focus:border-brand-bright focus:outline-none'
+
+/**
+ * A choice, with the lip.
+ *
+ * The avatar page's drawers are the shape: two-pixel border, four under
+ * it, and the one you are on in Kobblon blue with a deeper lip. The one
+ * that is off keeps the same thickness in a quiet colour so the row does
+ * not jump by three pixels when you press it.
+ */
+function Pick({ on, icon, swatch, title, note, onClick, wide }: {
+  on: boolean
+  icon?: IconDefinition
+  swatch?: React.ReactNode
+  title: string
+  note?: string
+  onClick: () => void
+  wide?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        'kob-press flex items-center gap-3 rounded-2xl border-2 px-3.5 py-3 text-left transition-colors',
+        on
+          ? 'border-brand-deep border-b-[6px] bg-brand text-on-art'
+          : 'border-ink-line border-b-4 bg-ink-card text-white/75 hover:border-brand/50 hover:text-white',
+        wide && 'w-full',
+      )}
+    >
+      {swatch ?? (icon && (
+        <span className={cn(
+          'grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2',
+          on ? 'border-white/25 bg-white/15' : 'border-ink-line bg-ink-raised text-brand-bright',
+        )}>
+          <Glyph icon={icon} />
+        </span>
+      ))}
+      <span className="min-w-0">
+        <span className="block font-display text-sm font-extrabold leading-tight">{title}</span>
+        {note && (
+          <span className={cn('mt-0.5 block text-xs leading-snug', on ? 'text-on-art/75' : 'text-muted')}>
+            {note}
+          </span>
+        )}
+      </span>
+    </button>
+  )
+}
+
+/* -------------------------------------------------------------- the rooms */
 
 function Account() {
+  const [gender, setGender] = useState('Male')
   return (
     <>
+      <Title icon={faUser}>Account</Title>
+
       <Head>Who you are</Head>
-      <Field label="Display name"><input className={input} defaultValue="Staw" /></Field>
+      <Field label="Display name"><input className={INPUT} defaultValue="Staw" /></Field>
       <Field label="Username">
         <div className="flex items-center gap-2">
           <p className="min-w-0 flex-1 truncate text-sm text-white/70">@stawrer</p>
@@ -118,13 +173,16 @@ function Account() {
         </div>
       </Field>
       <Field label="Gender">
-        <div className="flex gap-2">
-          {['Male', 'Female', 'Other'].map((one, i) => (
+        <div className="flex flex-wrap gap-2">
+          {['Male', 'Female', 'Other'].map((one) => (
             <button
               key={one}
+              onClick={() => setGender(one)}
               className={cn(
-                'rounded-xl border-2 border-b-4 px-3 py-1.5 text-sm font-bold',
-                i === 0 ? 'border-brand-deep bg-brand text-on-art' : 'border-ink-line bg-ink-raised text-white/70',
+                'kob-press rounded-xl border-2 px-3.5 py-1.5 text-sm font-bold transition-colors',
+                gender === one
+                  ? 'border-brand-deep border-b-[5px] bg-brand text-on-art'
+                  : 'border-ink-line border-b-4 bg-ink-raised text-white/70 hover:text-white',
               )}
             >
               {one}
@@ -145,13 +203,14 @@ function Account() {
 function Security() {
   return (
     <>
+      <Title icon={faLock}>Security</Title>
+
       <Head>Getting in</Head>
       <Row
         label="Password"
         note="At least eight characters. You stay signed in here."
-        action={<Button size="sm" variant="subtle">Change</Button>}
+        action={<Button size="sm" variant="subtle" icon={faKey}>Change</Button>}
       />
-      <Row label="Email" value="staw@kobblon.com" action={<Button size="sm" variant="subtle">Change</Button>} />
 
       <Head>This device</Head>
       <Row
@@ -163,40 +222,30 @@ function Security() {
   )
 }
 
+/* The four the live page has, and no invented ones: a thought, where you
+   are, who may follow you in, and the Discord handle. */
 function Privacy() {
+  const [on, setOn] = useState<Record<string, boolean>>({ thought: true, where: false, join: false, discord: false })
   const rows: [string, string, string][] = [
-    ['Who can message you', 'Friends', 'Everybody · Friends · Nobody'],
-    ['Who can see your Worlds', 'Everybody', 'Everybody · Friends'],
-    ['Who can see what you are playing', 'Friends', 'Everybody · Friends · Nobody'],
-    ['Who can ask to be your friend', 'Everybody', 'Everybody · Nobody'],
+    ['thought', 'Your thought', 'What you are saying about yourself.'],
+    ['where', 'The World you are in', 'Shown on your page and in lists.'],
+    ['join', 'Joining you', 'Whether somebody can walk in after you.'],
+    ['discord', 'Your Discord handle', 'Only where you have linked one.'],
   ]
   return (
     <>
-      <Head>Who may</Head>
-      {rows.map(([label, value, note]) => (
-        <Row
-          key={label}
-          label={label}
-          note={note}
-          action={
-            <span className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-1.5 text-sm font-bold">
-              {value}
-            </span>
-          }
-        />
-      ))}
-
-      {/* A switch draws its own row - label, note and the toggle - so it
-          is the row rather than something put inside one. */}
-      <Head>Showing</Head>
+      <Title icon={faEye}>Privacy</Title>
+      <Head>Everyone, or friends only</Head>
       <div className="space-y-2 py-2">
-        <Switch on onChange={() => {}} label="Show when you are online" />
-        <Switch
-          on={false}
-          onChange={() => {}}
-          label="Show your Brix on your page"
-          note="The number, not what you spent it on."
-        />
+        {rows.map(([key, label, note]) => (
+          <Switch
+            key={key}
+            label={label}
+            note={on[key] ? 'Everyone' : `Friends only · ${note}`}
+            on={on[key]}
+            onChange={(next) => setOn((was) => ({ ...was, [key]: next }))}
+          />
+        ))}
       </div>
     </>
   )
@@ -205,21 +254,23 @@ function Privacy() {
 function Connections() {
   return (
     <>
+      <Title icon={faLink}>Connections</Title>
       <Head>Linked</Head>
       <Row
         label="Discord"
-        note="Linked 12 November"
-        value={<span className="inline-flex items-center gap-2"><Glyph icon={faDiscord} className="text-[#5865F2]" />@staw</span>}
+        note="Linked 12 November."
+        value={
+          <span className="inline-flex items-center gap-2 font-bold">
+            <Glyph icon={faDiscord} className="text-[#5865F2]" />@staw
+          </span>
+        }
         action={<Button size="sm" variant="subtle">Unlink</Button>}
       />
       <Row
-        label="Who sees it"
-        note="Your friends can see your handle."
-        action={
-          <span className="rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-3 py-1.5 text-sm font-bold">
-            Friends
-          </span>
-        }
+        label="Who sees your handle"
+        note="Set in Privacy, so there is one answer and one place for it."
+        value="Friends"
+        to
       />
     </>
   )
@@ -227,42 +278,73 @@ function Connections() {
 
 function Appearance() {
   const [mode, setMode] = useState('dark')
+  const [size, setSize] = useState('default')
+  const [look, setLook] = useState('kobblon')
+
   return (
     <>
-      <Head>Theme</Head>
-      <div className="grid gap-2 py-3 sm:grid-cols-3">
-        {([['dark', faMoon, 'Dark'], ['light', faSun, 'Light'], ['system', faDesktop, 'System']] as const).map(
-          ([key, icon, name]) => (
-            <button
-              key={key}
-              onClick={() => setMode(key)}
-              className={cn(
-                'flex items-center gap-3 rounded-xl border-2 border-b-4 px-3 py-2.5 text-left',
-                mode === key ? 'border-brand-deep bg-brand text-on-art' : 'border-ink-line bg-ink-raised text-white/70',
-              )}
-            >
-              <Glyph icon={icon} />
-              <span className="text-sm font-bold">{name}</span>
-            </button>
-          ),
-        )}
+      <Title icon={faPalette}>Appearance</Title>
+
+      <Head>Light or dark</Head>
+      <div className="grid gap-2.5 py-2 sm:grid-cols-3">
+        <Pick on={mode === 'dark'} onClick={() => setMode('dark')} icon={faMoon} title="Dark" note="The way Kobblon is built." />
+        <Pick on={mode === 'light'} onClick={() => setMode('light')} icon={faSun} title="Light" note="The same interface in daylight." />
+        <Pick on={mode === 'system'} onClick={() => setMode('system')} icon={faDesktop} title="System" note="Follows this machine." />
       </div>
 
-      <Head>Text size</Head>
-      <div className="flex gap-2 py-3">
-        {[14, 16, 18, 20].map((px, i) => (
-          <button
-            key={px}
-            className={cn(
-              'h-11 w-14 rounded-xl border-2 border-b-4 font-bold',
-              i === 1 ? 'border-brand-deep bg-brand text-on-art' : 'border-ink-line bg-ink-raised text-white/70',
-            )}
-            style={{ fontSize: px }}
-          >
-            A
-          </button>
+      <Head>Size</Head>
+      <div className="grid gap-2.5 py-2 sm:grid-cols-3">
+        {([
+          ['minimalist', 'Minimalist', 'Smaller text, less room taken.', 12],
+          ['default', 'Default', 'The way Kobblon is built.', 15],
+          ['comfortable', 'Comfortable', 'Bigger text, more room to read.', 18],
+        ] as const).map(([key, title, note, px]) => (
+          <Pick
+            key={key}
+            on={size === key}
+            onClick={() => setSize(key)}
+            title={title}
+            note={note}
+            swatch={
+              <span className={cn(
+                'grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 font-bold',
+                size === key ? 'border-white/25 bg-white/15' : 'border-ink-line bg-ink-raised',
+              )} style={{ fontSize: px }}>
+                Aa
+              </span>
+            }
+          />
         ))}
       </div>
+
+      {/* Kept, and it was the thing the first drawing lost. */}
+      <Head>Theme appearances</Head>
+      <div className="grid gap-2.5 py-2 sm:grid-cols-2">
+        {([
+          ['kobblon', 'Kobblon', 'The blue one. Everybody has this.'],
+          ['halloween', 'Halloween', 'The bar and the rail in pumpkin orange.'],
+          ['christmas', 'Christmas', 'Deep green chrome, and snow on some pages.'],
+        ] as const).map(([key, title, note]) => (
+          <Pick
+            key={key}
+            on={look === key}
+            onClick={() => setLook(key)}
+            title={title}
+            note={note}
+            swatch={
+              <span
+                data-appearance={key}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-ink-line bg-chrome"
+              >
+                <Logomark className="h-6" />
+              </span>
+            }
+          />
+        ))}
+      </div>
+      <p className="px-1 pb-2 text-xs text-muted">
+        Halloween comes round in October. Christmas comes round in December.
+      </p>
     </>
   )
 }
@@ -270,6 +352,8 @@ function Appearance() {
 function Safety() {
   return (
     <>
+      <Title icon={faShieldHalved}>Safety</Title>
+
       <Head>Your standing</Head>
       <Row
         label="Nothing on record"
@@ -279,9 +363,9 @@ function Safety() {
       />
 
       <Head>If something is wrong</Head>
-      <Row label="Write to us" note="Reports are anonymous to the person reported." to />
-      <Row label="Policies" to />
-      <Row label="Moderation and appeals" to />
+      <Row label="Write to us" note="Reports are anonymous to the person reported." value={<Glyph icon={faHeadset} className="text-muted" />} to />
+      <Row label="Policies" value={<Glyph icon={faScroll} className="text-muted" />} to />
+      <Row label="Moderation and appeals" value={<Glyph icon={faArrowUpRightFromSquare} className="text-muted" />} to />
     </>
   )
 }
@@ -294,30 +378,22 @@ function Preview() {
       <div className="mx-auto w-full max-w-5xl">
         <h1 className="font-display text-3xl font-extrabold">Settings</h1>
 
-        {/* Who is signed in, as one line rather than a card: the page is
-            already about you, so this only has to say which you. */}
-        <div className="mt-3 flex items-center gap-3 border-b-2 border-ink-line pb-4">
-          <Avatar name="Staw" size="md" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-base font-extrabold">Staw</p>
-            <p className="truncate text-xs text-muted">@stawrer · 48.2K Brix · here since Oct 2025</p>
-          </div>
-          <Button size="sm" variant="subtle">Your page</Button>
-        </div>
-
-        <div className="mt-5 grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
-          {/* Six words. No sentences, no tiles: a settings rail is a table
-              of contents and a table of contents is a list of names. */}
-          <nav className="flex gap-1 overflow-x-auto pb-1 kob-scroll lg:block lg:space-y-0.5 lg:overflow-visible">
+        <div className="mt-5 grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
+          {/* The rail, with the lip - the avatar page's drawers down the
+              side rather than across the top. */}
+          <nav className="flex gap-2 overflow-x-auto pb-1 kob-scroll lg:block lg:space-y-1.5 lg:overflow-visible">
             {ROOMS.map((one) => {
               const on = one.name === room
               return (
                 <button
                   key={one.name}
                   onClick={() => setRoom(one.name)}
+                  aria-current={on}
                   className={cn(
-                    'flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-bold transition-colors lg:w-full',
-                    on ? 'bg-brand text-on-art' : 'text-white/60 hover:bg-ink-hover hover:text-white',
+                    'kob-press flex shrink-0 items-center gap-2.5 rounded-xl border-2 px-3 py-2 text-left text-sm font-bold transition-colors lg:w-full',
+                    on
+                      ? 'border-brand-deep border-b-[5px] bg-brand text-on-art'
+                      : 'border-ink-line border-b-4 bg-ink-card text-white/65 hover:border-brand/50 hover:text-white',
                   )}
                 >
                   <Glyph icon={one.icon} className={cn('w-4 text-xs', !on && 'text-brand-bright')} />
@@ -328,15 +404,12 @@ function Preview() {
           </nav>
 
           <section className="min-w-0">
-            <h2 className="font-display text-2xl font-extrabold">{room}</h2>
-            <div className="mt-3">
-              {room === 'Account' && <Account />}
-              {room === 'Security' && <Security />}
-              {room === 'Privacy' && <Privacy />}
-              {room === 'Connections' && <Connections />}
-              {room === 'Appearance' && <Appearance />}
-              {room === 'Safety' && <Safety />}
-            </div>
+            {room === 'Account' && <Account />}
+            {room === 'Security' && <Security />}
+            {room === 'Privacy' && <Privacy />}
+            {room === 'Connections' && <Connections />}
+            {room === 'Appearance' && <Appearance />}
+            {room === 'Safety' && <Safety />}
           </section>
         </div>
       </div>
