@@ -25532,3 +25532,23 @@ to copy. The Workspace sending `activity: 'building'` is what makes
 "working in the Workspace" show up at all; today the site cannot know it.
 Nothing else needs to change on either side - `presenceNow` already
 prefers the roster, then the channel, then the row.
+
+## Round three hundred and ninety-seven - two margins for one gap
+
+Staw: "why do we have big spaces in messages". Because every gap in a
+thread was set twice.
+
+The thread had `space-y-1`, every message is wrapped in a div so the time
+separator can ride above it, and `MessageRow` carries its own `mt-2`
+(`mt-0.5` when the message continues a run). The container's gap landed on
+the wrapper and the row's own margin landed inside it, so an ordinary gap
+was 12px where the row asked for 8, a run was 6 where it asked for 2, and
+a time separator added its `py-2` on top of both - about 24px of air
+around a line of dates.
+
+**`MessageRow` is the only thing that knows whether a message continues a
+run, so the spacing is its alone now.** The container sets no gap, and the
+separator's padding came down to `py-1.5`. If your thread wraps rows the
+same way, check it for the same double margin - the row has always carried
+its own and still does; nothing about `MessageRow`'s props or markup
+changed.

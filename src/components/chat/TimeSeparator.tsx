@@ -16,7 +16,7 @@ export function TimeSeparator({ at }: { at: string }) {
       : `${when.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} · ${time}`
 
   return (
-    <div className="flex items-center gap-3 py-2" role="separator">
+    <div className="flex items-center gap-3 py-1.5" role="separator">
       <span className="h-px flex-1 bg-ink-line" />
       <span className="text-tiny font-semibold uppercase tracking-wide text-white/35">
         {label}

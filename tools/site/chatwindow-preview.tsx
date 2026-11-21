@@ -51,7 +51,7 @@ createRoot(document.getElementById('root')!).render(
           <Glyph icon={faXmark} className="text-mini text-white/45" />
         </header>
 
-        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto bg-ink px-2.5 py-2.5 kob-scroll">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-ink px-2.5 py-2.5 kob-scroll">
           <TimeSeparator at={ago(44)} />
           {thread.map(({ m, mine, grouped }) => (
             <MessageRow

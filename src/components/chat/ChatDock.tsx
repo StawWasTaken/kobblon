@@ -628,7 +628,18 @@ function Window({
             * sideways. The applications hit it first; Staw: "just make it
             * so we cant scroll to the right".
             */}
-          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden bg-ink-card px-2.5 py-2.5 kob-scroll">
+          {/*
+            * No `space-y` here on purpose.
+            *
+            * Every message is wrapped in a div so the time separator can
+            * ride above it, so a gap set on this container applied to the
+            * wrapper **and** `MessageRow`'s own `mt-2` applied inside it -
+            * two margins for one gap, plus the separator's own padding on
+            * top of both. Staw: "why do we have big spaces in messages".
+            * The run spacing belongs to the row, which is the only thing
+            * that knows whether this message continues a run.
+            */}
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-ink-card px-2.5 py-2.5 kob-scroll">
             {loading && (
               <div className="space-y-2">
                 {[0, 1].map((i) => <Skeleton key={i} className="h-8 w-2/3" />)}
