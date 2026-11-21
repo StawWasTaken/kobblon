@@ -16,6 +16,7 @@ import {
 import { timeAgo } from '@/lib/format'
 import type { CommunityOverview } from '@/types/db'
 import { avatarOf } from '@/lib/avatars'
+import { useAuth } from '@/hooks/useAuth'
 import { profileLink } from '@/lib/links'
 import { NameMarks } from '@/components/brand/Verified'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
@@ -31,6 +32,7 @@ export function CommunityMembers({
   onChanged: () => void
 }) {
   const toast = useToast()
+  const { profile: me } = useAuth()
   const roster = useAsync(() => listCommunityRoster(communityId), [communityId])
   const ranks = useAsync(() => listCommunityRanks(communityId), [communityId])
   const requests = useAsync(
@@ -128,7 +130,11 @@ export function CommunityMembers({
                     <LivePresenceLabel person={member} />
                   </div>
 
-                  {rights?.can_manage_ranks && member.id !== ownerId ? (
+                  {/* Your own rank is not yours to set, whatever you are
+                      allowed to do to other people - `set_member_rank`
+                      refuses it, and a dropdown that always fails is
+                      worse than no dropdown. */}
+                  {rights?.can_manage_ranks && member.id !== ownerId && member.id !== me?.id ? (
                     <>
                       <label className="sr-only" htmlFor={`rank-${member.id}`}>
                         Rank for {member.display_name}

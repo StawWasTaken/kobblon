@@ -25648,3 +25648,35 @@ rows use.
 
 Same rule as before, one step further: a row that borrows a colour borrows
 all of it.
+
+## Round four hundred and two - a rank with the right can finally use it
+
+Migration **`0366_a_rank_with_the_right_can_use_it.sql`**, and it is two
+fixes of the same shape: a permission that did not mean what it said.
+
+**One.** Staw, holding a rank carrying every permission there is: "i cant
+edit one even tho my rank has all the perms in it". `rename_community`
+asked `community_members.role` - the old enum, owner or admin - while
+every other door in Communities asks `community_can`, which reads the
+rank. So a Community could hand somebody `can_manage_community` and that
+permission did nothing for the one thing people actually press. It asks
+`community_can(target, 'can_manage_community')` now, the same question as
+everything else; the owner is still always able, because that function
+says so.
+
+**Two.** Staw: "even if you have the perms to do that, you cant change
+your own role." `set_member_rank` guarded the owner and nobody else, so
+anybody with `can_manage_ranks` could move **themselves** into a rank
+carrying all the other permissions - one permission quietly meaning every
+permission. Your own rank is now refused outright, the owner included: it
+costs them nothing, since they can do everything anyway, and it keeps the
+rule one sentence with no exception in it. The members list stops drawing
+the dropdown on your own row to match.
+
+Applied twice here and checked under three identities: a rank with the
+right renames, the same person is refused their own rank and still ranks
+somebody else, and a plain member is refused the rename.
+
+**If the applications call `set_member_rank` with the caller as the
+target, it now raises** - that is the only thing in here that can break a
+caller.
