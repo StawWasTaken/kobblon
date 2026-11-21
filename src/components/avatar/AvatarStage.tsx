@@ -132,7 +132,28 @@ export function AvatarStage({
          * pass has always checked, handed over so the engine can check it
          * after each await rather than this file checking it afterwards.
          */
-        undress = await dressFrom(body, look ?? { body: null, pieces: [] }, () => wanted)
+        /*
+         * Anything it could not put on is said out loud.
+         *
+         * The stage has always skipped a piece that would not load, which
+         * is right - one haircut should not take the whole figure down -
+         * but it skipped it in silence, so "the hair issue" arrives as a
+         * screenshot of a bald avatar and nothing to go on. The engine
+         * now tries three times before giving up; this is what is left
+         * after that, and it names the piece and why.
+         */
+        undress = await dressFrom(
+          body,
+          look ?? { body: null, pieces: [] },
+          () => wanted,
+          (miss) => {
+            console.warn(
+              `[avatar] not drawn: ${miss.piece.slot}`,
+              miss.piece.name ?? miss.piece.itemId ?? '',
+              '-', miss.why,
+            )
+          },
+        )
 
         if (!wanted) return
 

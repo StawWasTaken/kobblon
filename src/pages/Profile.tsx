@@ -20,13 +20,11 @@ import { ReportDialog } from '@/components/social/ReportDialog'
 import { SendBrixDialog } from '@/components/social/SendBrixDialog'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { BadgeTile } from '@/components/social/BadgeGrid'
-import { Playtime } from '@/components/profile/Playtime'
 import { ClipShelf } from '@/components/clips/ClipCard'
 import { useChatDock } from '@/components/chat/ChatDock'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { Menu } from '@/components/ui/Menu'
-import { Tooltip } from '@/components/ui/Tooltip'
 import { Shop } from '@/components/catalog/Shop'
 import { Tabs } from '@/components/ui/Tabs'
 import { Places } from '@/components/social/Places'
@@ -39,6 +37,7 @@ import { Textarea } from '@/components/ui/Input'
 import { ColourPicker } from '@/components/ui/ColourPicker'
 import { GuestGate } from '@/components/ui/GuestGate'
 import { useAuth } from '@/hooks/useAuth'
+import { useNameMarks } from '@/hooks/useNameMarks'
 import { useAsync } from '@/hooks/useAsync'
 import { useCanonicalPath } from '@/hooks/useCanonicalPath'
 import { useTitle, useSocialCard } from '@/hooks/useTitle'
@@ -53,12 +52,12 @@ import {
   askBestFriend, answerBestFriend, unbestFriend, cancelFriendRequest,
   getThought, setThought, clearThought,
 } from '@/lib/api'
-import { formatCount } from '@/lib/format'
+import { playedFor, formatCount } from '@/lib/format'
 import { communityLink, profileLink, worldLink } from '@/lib/links'
 import { cn } from '@/lib/cn'
 import { GoneProfile } from '@/components/social/GoneProfile'
 import { avatarOf, goneHandle, isGone } from '@/lib/avatars'
-import { NameMarks, Verified } from '@/components/brand/Verified'
+import { NameMark, NameMarks, Verified, type MarkName } from '@/components/brand/Verified'
 import { FaceGrid } from '@/components/social/PersonCard'
 import { ActivityLine } from '@/components/social/Whereabouts'
 import { useWhereabouts } from '@/hooks/usePresenceStore'
@@ -100,6 +99,18 @@ function Heading({ icon, name, children, aside }: {
 }
 
 /** A number that earned its place, said in words rather than stacked in a wall. */
+/**
+ * The marks, in the order they are drawn after a name, each with what it
+ * means. The words are `MARKS`' own `says` - one wording, here and in the
+ * tooltip, rather than a second copy to drift from it.
+ */
+const MARK_WORDS: [MarkName, string][] = [
+  ['verified', 'Verified by Kobblon'],
+  ['staff', 'Kobblon staff'],
+  ['klub', 'In Klub Kobblon'],
+  ['guest', 'A guest account'],
+]
+
 function Fact({ icon, children }: { icon: IconDefinition; children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-sm text-white/60">
@@ -173,6 +184,9 @@ export default function Profile() {
     [user?.id, user?.discord_display],
   )
   const communities = useAsync(async () => (user ? listMemberCommunities(user.id) : []), [user?.id])
+  /* What they wear after their name, from `name_marks` and nowhere else -
+     the same answer the marks beside the heading are drawn from. */
+  const wears = useNameMarks(user?.id, user?.username)
   /*
    * The Worlds they kept.
    *
@@ -601,25 +615,6 @@ export default function Profile() {
                     : <><Glyph icon={faCircleInfo} className="text-xs" />Read more</>}
                 </button>
 
-                {/* Somebody's Discord, when they have said which one is
-                    theirs and Discord has agreed. */}
-                {user.discord_display && (
-                  <Tooltip
-                    label={
-                      handle.data
-                        ? `@${handle.data} on Discord`
-                        : isMe
-                          ? 'Only you can see your handle. Change that in Settings.'
-                          : 'Their Discord handle is not shown to you.'
-                    }
-                    side="top"
-                  >
-                    <p className="inline-flex cursor-default items-center gap-2 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-1 text-xs font-bold">
-                      <Glyph icon={faDiscord} className="text-[#5865F2]" />
-                      {user.discord_display}
-                    </p>
-                  </Tooltip>
-                )}
               </div>
             </div>
 
@@ -1059,30 +1054,6 @@ export default function Profile() {
             </section>
           )}
 
-          {/*
-            * Hours, and the number they add up to.
-            *
-            * Staw's note: Steam's hook is the hours, Xbox's is the score,
-            * and we had per-World badges that added up to nothing. It sits
-            * above Badges because it is the same sentence - what they have
-            * put in, then what they got for it.
-            *
-            * Drawn once there is something to draw. A profile that has
-            * never played says "under a minute" and a zero, which is a way
-            * of telling somebody they have done nothing.
-            */}
-          {!!hours.data && (hours.data[1] > 0 || hours.data[2] > 0) && (
-            <section>
-              <Heading icon={faClock}>Hours</Heading>
-              <Playtime
-                worlds={hours.data[0]}
-                total={hours.data[1]}
-                score={hours.data[2]}
-                loading={hours.loading}
-              />
-            </section>
-          )}
-
           {!!(badges.data?.length || worldBadges.data?.length) && (
             <section>
               <Heading icon={faAward} aside={
@@ -1199,6 +1170,94 @@ export default function Profile() {
               <p className="text-sm text-muted">Nothing but this one.</p>
             )}
           </section>
+
+          {/*
+            * Hours, in words.
+            *
+            * It was a band of its own on the page - two big tiles and a
+            * list of Worlds with their art. Staw moved it in here and
+            * asked for text only, which is the right call for a card this
+            * narrow: the number is the point, and a cover picture beside
+            * it is furniture.
+            */}
+          {!!hours.data && (hours.data[1] > 0 || hours.data[2] > 0) && (
+            <section>
+              <h3 className="mb-2 font-display text-base font-extrabold">Hours</h3>
+              <div className="space-y-1.5">
+                <Fact icon={faClock}>
+                  {playedFor(hours.data[1])} played
+                </Fact>
+                <br />
+                <Fact icon={faAward}>
+                  {formatCount(hours.data[2])} score
+                </Fact>
+              </div>
+
+              {!!hours.data[0].length && (
+                <ul className="mt-2.5 space-y-1 text-sm">
+                  {hours.data[0].map((one) => (
+                    <li key={one.world_id} className="flex items-baseline justify-between gap-3">
+                      <span className="min-w-0 truncate text-white/75">{one.name}</span>
+                      <span className="shrink-0 font-bold tabular-nums text-white/55">
+                        {playedFor(one.seconds)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {/*
+            * The marks after their name, written out.
+            *
+            * The same answer `NameMarks` draws - `name_marks`, the
+            * database and nothing else - said in words, because a tick and
+            * a hard hat at twelve pixels are a quiz. Nothing is listed for
+            * somebody who wears none; an empty heading saying so is worse
+            * than no heading.
+            */}
+          {!!wears?.length && (
+            <section>
+              <h3 className="mb-2 font-display text-base font-extrabold">Kobblon badges</h3>
+              <ul className="space-y-1.5">
+                {MARK_WORDS.filter(([which]) => wears.includes(which)).map(([which, says]) => (
+                  <li key={which} className="flex items-center gap-2 text-sm text-white/75">
+                    <NameMark which={which} />
+                    {says}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/*
+            * Connections.
+            *
+            * Only what you are allowed to see: `discord_handle_of` decides
+            * that in the database, against the visibility they chose, and
+            * a handle that comes back null is not shown as a greyed-out
+            * row saying somebody has a Discord - that would be the thing
+            * the setting is for, leaked as a hint.
+            */}
+          {(handle.data || (isMe && user.discord_display)) && (
+            <section>
+              <h3 className="mb-2 font-display text-base font-extrabold">Connections</h3>
+              <p className="inline-flex items-center gap-2 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-1.5 text-sm font-bold">
+                <Glyph icon={faDiscord} className="text-[#5865F2]" />
+                {handle.data ? `@${handle.data}` : user.discord_display}
+              </p>
+              {isMe && (
+                <p className="mt-1.5 text-xs text-muted">
+                  {user.discord_visibility === 'everyone'
+                    ? 'Everyone can see this.'
+                    : user.discord_visibility === 'friends'
+                      ? 'Your friends can see this.'
+                      : 'Only you can see this. Change that in Settings.'}
+                </p>
+              )}
+            </section>
+          )}
 
           <section>
             <h3 className="mb-2 font-display text-base font-extrabold">Numbers</h3>

@@ -25584,3 +25584,43 @@ Three things it deliberately does not do:
 `onAttend`. If your Launcher's dock mounts it and wants the same
 behaviour, that is the whole of the contract; left out, a window behaves
 exactly as before.
+
+## Round three hundred and ninety-nine - a piece that will not load is tried again, and the About card earns its keep
+
+Two things, and the first one is shared.
+
+**Hair, again.** Staw sent a profile with a haircut worn, listed and
+thumbnailed, and no hair on the figure. `dressFrom` skips a piece whose
+file did not arrive - right for a stage, one hat must not take the person
+down - but it skipped on the **first** failure, and a mesh is the biggest
+thing a look loads with the most signable address. One slow answer and
+that head stayed bare for as long as the page was open.
+
+- **`dressFrom` now tries three times** for a mesh, a texture and a
+  painted-on picture: straight away, then 350ms, then 900ms, asking
+  `alive()` before each go so a body nobody is looking at stops trying.
+  This is in the engine, so the Launcher and the Workspace get it by
+  pulling.
+- **`AvatarStage` passes `onMissing`** and writes what it could not draw
+  to the console - the slot, the piece and why. The parameter has existed
+  since round 342 and had no callers on the stage, which is why "the hair
+  issue" keeps arriving as a screenshot with nothing to go on.
+
+**The profile's About card.** Staw: move the hours in here, text only, and
+add the badges and the connections.
+
+- The **Hours band is off the page**. The card says "24 min played" and
+  the score as two lines, then the Worlds as a plain name-and-time list.
+  `src/components/profile/Playtime.tsx` and its preview are deleted - two
+  designs of one thing is how this project ends up with two of everything.
+- **Kobblon badges**, written out: verified, staff, Klub, guest, from
+  `name_marks` and nowhere else - the same answer the marks beside the
+  name are drawn from, in words, because a tick and a hard hat at twelve
+  pixels are a quiz.
+- **Connections**: the Discord handle, and **only when the database says
+  so**. `discord_handle_of` decides against the visibility they chose; a
+  null answer draws nothing at all rather than a greyed row admitting
+  somebody has a Discord, which is the fact the setting exists to hide.
+  **The old chip beside the bio showed `discord_display` to everybody**
+  regardless of that setting - it is gone, and that is a leak closed, not
+  a layout change.

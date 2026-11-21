@@ -111,6 +111,32 @@ export type Missing = {
  * taken is freed on the way out - a half-dressed body is not left holding
  * textures for a World nobody is in.
  */
+/**
+ * Try again, because most of these failures are the network having a
+ * moment rather than the file not existing.
+ *
+ * A haircut is the case that keeps coming back: a mesh is the biggest
+ * thing a look loads, its address is signed and can arrive a beat late,
+ * and one `null` meant a bald head for as long as that page was open.
+ * Three goes, a third of a second and then a second apart - still fast
+ * enough that a person sees a head and then hair rather than a spinner,
+ * and `alive` is asked before each one so a body nobody is looking at
+ * stops trying.
+ */
+async function keepTrying<T>(
+  get: () => Promise<T | null>,
+  alive: () => boolean,
+): Promise<T | null> {
+  const waits = [350, 900]
+  for (let go = 0; ; go += 1) {
+    const got = await get().catch(() => null)
+    if (got) return got
+    if (go >= waits.length || !alive()) return null
+    await new Promise((done) => setTimeout(done, waits[go]))
+    if (!alive()) return null
+  }
+}
+
 export async function dressFrom(
   body: K6,
   look: WornLook,
@@ -195,9 +221,12 @@ export async function dressFrom(
        * face that was saved flat on white. A shirt does not: a shirt's
        * white is the shirt.
        */
-      const picture = piece.slot === 'face'
-        ? await loadFacePicture(piece.imageUrl)
-        : await new THREE.TextureLoader().loadAsync(piece.imageUrl).catch(() => null)
+      const picture = await keepTrying(
+        () => (piece.slot === 'face'
+          ? loadFacePicture(piece.imageUrl as string)
+          : new THREE.TextureLoader().loadAsync(piece.imageUrl as string)),
+        alive,
+      )
       if (!alive()) { if (picture) picture.dispose(); undo(); return () => {} }
       if (!picture) { onMissing?.({ piece, why: 'its picture did not load', passing: true }); continue }
       textures.push(picture)
@@ -211,17 +240,22 @@ export async function dressFrom(
     if (!socket) { onMissing?.({ piece, why: `nothing hangs from ${piece.slot}`, passing: false }); continue }
     if (!piece.meshUrl) { onMissing?.({ piece, why: 'its model has no address', passing: true }); continue }
 
-    const model = await loadMesh(
-      piece.meshUrl,
-      (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl),
-    ).catch(() => null)
+    const model = await keepTrying(
+      () => loadMesh(
+        piece.meshUrl as string,
+        (piece.meshFormat as 'obj' | 'gltf' | undefined) ?? formatOf(piece.meshUrl as string),
+      ),
+      alive,
+    )
     if (!alive()) { if (model) releaseMesh(model); undo(); return () => {} }
     if (!model) { onMissing?.({ piece, why: 'its model did not load', passing: true }); continue }
     borrowed.push(model)
 
     if (piece.textureUrl) {
-      const skin = await new THREE.TextureLoader()
-        .loadAsync(piece.textureUrl).catch(() => null)
+      const skin = await keepTrying(
+        () => new THREE.TextureLoader().loadAsync(piece.textureUrl as string),
+        alive,
+      )
       if (!alive()) { if (skin) skin.dispose(); undo(); return () => {} }
       if (skin) {
         textures.push(skin)
