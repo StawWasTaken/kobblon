@@ -19,6 +19,7 @@ import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { NameMarks } from '@/components/brand/Verified'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
+import { useWhereabouts } from '@/hooks/usePresenceStore'
 import { useThoughts } from '@/hooks/useThoughtStore'
 
 export function CommunityMembers({
@@ -50,6 +51,9 @@ export function CommunityMembers({
 
   /* What the members are thinking, for the line under each name. */
   useThoughts(roster.data ?? [])
+  /* And where they are, which the channel cannot see for anybody in
+     the Launcher. */
+  useWhereabouts(roster.data ?? [])
 
   return (
     <div className="space-y-6">

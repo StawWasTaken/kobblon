@@ -36,6 +36,7 @@ import type { Conversation, Message } from '@/types/db'
 import { avatarOf, nameOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
+import { useWhereabouts } from '@/hooks/usePresenceStore'
 import { useThoughts } from '@/hooks/useThoughtStore'
 import { useParty } from '@/hooks/useParty'
 import { PartyWiring } from '@/components/social/PartyDock'
@@ -184,6 +185,9 @@ function Window({
 
   /* What they are thinking, which is what the line under a name says. */
   useThoughts(conversation.members)
+  /* And where they are, which the channel cannot see for anybody in
+     the Launcher. */
+  useWhereabouts(conversation.members)
 
   const name = renamed === undefined
     ? conversationName(conversation)

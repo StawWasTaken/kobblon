@@ -301,13 +301,31 @@ export function useWhereabouts(people: Array<{ id?: string | null } | null | und
     }
 
     void ask()
-    /* Inside the window the rows are good for, so an answer is replaced
-       before it goes stale rather than after. */
-    const again = window.setInterval(() => void ask(), 60 * 1000)
+    /*
+     * Often, because this is the only way the site hears about anybody in
+     * the Launcher.
+     *
+     * A browser says what it is doing the moment it changes, over the
+     * channel; the Launcher cannot - it writes a heartbeat into the
+     * database and tells no tab anything. Until it joins `kobblon:here`
+     * itself, "instant" here means asking on a short clock, and a minute
+     * was long enough for somebody to start playing, be asked about, and
+     * still read as Online for another fifty seconds.
+     */
+    const again = window.setInterval(() => {
+      if (document.visibilityState === 'hidden') return
+      void ask()
+    }, 20 * 1000)
+
+    /* Back on screen: ask now rather than showing whatever was true when
+       the tab was put away. */
+    const wake = () => { if (document.visibilityState === 'visible') void ask() }
+    document.addEventListener('visibilitychange', wake)
 
     return () => {
       wanted = false
       window.clearInterval(again)
+      document.removeEventListener('visibilitychange', wake)
     }
   }, [key])
 }

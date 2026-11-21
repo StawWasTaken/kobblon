@@ -25493,3 +25493,42 @@ website had two such places and both now pass it through. If your Launcher
 draws presence from a chat row, it has the same bug until this migration
 is applied, and the rule from 394 still stands: group, sort and label by
 `presenceNow`, never by a row's `is_online` alone.
+
+## Round three hundred and ninety-six - instant, and the half of it that is yours
+
+Staw: thoughts instant, and playing a World or working in the Workspace
+visible everywhere the moment it happens.
+
+**What was actually broken on the website.**
+
+- **The friends dock never asked.** `whereIs` - the roster half of
+  presence, the only half that can see the Launcher - is filled by
+  `useWhereabouts`, and the dock did not call it. Nor did it call
+  `useThoughts`. So a friend playing a World read as Online in the dock,
+  and a thought showed up there only when some other list on the page had
+  happened to ask about that person. Both are wired now, along with the
+  community roster and the open conversation.
+- **The roster was re-asked once a minute**, which is long enough to start
+  playing and still read as Online for another fifty seconds. Twenty
+  seconds now, paused while the tab is hidden, and asked again the moment
+  it comes back.
+
+Thoughts were already instant where they were asked for at all:
+`thoughts` is in the realtime publication with `replica identity full`
+since 0356, and the tab hears every change. Nothing changed there.
+
+**The half that is yours, and it is the whole of "instant".** The browser
+channel `kobblon:here` is instant because a browser can speak. The
+Launcher and the Workspace cannot: they write a heartbeat into the
+database and tell nobody's tab anything, so the website can only ask the
+roster on a clock - twenty seconds, not instant.
+
+**If the Launcher and the Workspace join that channel, it becomes
+instant.** It is `supabase.channel('kobblon:here', { config: { presence:
+{ key: <user id> } } })`, tracking `{ id, activity: 'around' |
+'building', in_space_id }` - `usePresenceChannel` in
+`@/hooks/usePresenceStore` is the website's implementation and the shape
+to copy. The Workspace sending `activity: 'building'` is what makes
+"working in the Workspace" show up at all; today the site cannot know it.
+Nothing else needs to change on either side - `presenceNow` already
+prefers the roster, then the channel, then the row.

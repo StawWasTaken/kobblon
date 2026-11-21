@@ -9,7 +9,10 @@ import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConversationFace, soloOf } from '@/components/chat/ConversationFace'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
-import { presenceNow, useLivePresence, usePresenceVersion } from '@/hooks/usePresenceStore'
+import {
+  presenceNow, useLivePresence, usePresenceVersion, useWhereabouts,
+} from '@/hooks/usePresenceStore'
+import { useThoughts } from '@/hooks/useThoughtStore'
 import { useParty } from '@/hooks/useParty'
 import { conversationName } from '@/lib/api'
 import { avatarOf, nameOf } from '@/lib/avatars'
@@ -59,6 +62,19 @@ export function FriendsWindow({
   /* The sort below reads presence outside a hook, so this is what makes
      the list move when somebody arrives or leaves. */
   usePresenceVersion()
+  /*
+   * And this is what makes a friend who is *playing* show as playing. The
+   * channel cannot see the Launcher; the roster can, and it has to be
+   * asked. The dock drew the one list on this site that never asked.
+   */
+  useWhereabouts(conversations.flatMap((one) => one.members))
+  /*
+   * And what they are thinking. The dock drew thoughts out of the store
+   * without ever putting anybody into it - so a line showed up only when
+   * some other list on the page had happened to ask about that person,
+   * and for anybody else the dock showed nothing and kept showing nothing.
+   */
+  useThoughts(conversations.flatMap((one) => one.members))
 
   const looking = term.trim().toLowerCase()
   const shown = conversations.filter((c) =>
