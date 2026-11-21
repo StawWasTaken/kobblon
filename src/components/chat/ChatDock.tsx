@@ -136,11 +136,23 @@ function useRemembered(key: string, fallback: boolean) {
 }
 
 function Window({
-  conversation, onClose, onOpened, full,
+  conversation, onClose, onOpened, full, unattended, onAttend,
 }: {
   conversation: Conversation
   onClose: () => void
   onOpened: (conversationId: string) => void
+  /**
+   * This window opened itself because something arrived, not because
+   * anybody asked for it.
+   *
+   * It matters for one thing: an opened window marks the conversation
+   * read, and a window that opened while you were reading another page
+   * has not been read by anybody. So an unattended one leaves the count
+   * alone until it is touched - a press, a focus, or writing in it.
+   */
+  unattended?: boolean
+  /** Touched, so it counts as read from here on. */
+  onAttend?: () => void
   /**
    * Filling the screen instead of sitting in the corner.
    *
@@ -238,9 +250,9 @@ function Window({
     listMessages(conversation.id)
       .then((rows) => active && setMessages(rows))
       .finally(() => active && setLoading(false))
-    if (profile) markConversationRead(conversation.id, profile.id)
+    if (profile && !unattended) markConversationRead(conversation.id, profile.id)
     return () => { active = false }
-  }, [conversation.id, profile, pending])
+  }, [conversation.id, profile, pending, unattended])
 
   useEffect(() => {
     if (pending) return
@@ -321,10 +333,23 @@ function Window({
     }
   }
 
+  /* Touched: read it, and tell the dock so the window stops being one
+     that nobody has looked at. */
+  const attend = () => {
+    if (!unattended) return
+    if (profile) markConversationRead(conversation.id, profile.id)
+    onAttend?.()
+  }
+
   return (
     <section
+      onPointerDown={attend}
+      onFocusCapture={attend}
       className={cn(
         'pointer-events-auto flex flex-col overflow-hidden border-ink-line bg-ink-card',
+        /* A window that opened itself says so: the same lit edge the
+           unread rows wear, until somebody looks at it. */
+        unattended && !full && 'ring-2 ring-brand-bright/70',
         full
           ? 'h-full w-full'
           /*
@@ -988,11 +1013,72 @@ export function ChatDock({ children }: { children: ReactNode }) {
     return () => { wanted = false }
   }, [myParty?.id, shutParty])
 
+  /*
+   * Windows that opened themselves, and have not been looked at.
+   *
+   * Kept apart from `openIds` because the difference is not "is it on
+   * screen" but "did anybody ask for it": only these skip marking the
+   * conversation read, and only these wear the lit edge.
+   */
+  const [unattended, setUnattended] = useState<string[]>([])
+  /*
+   * Read through refs, not captured.
+   *
+   * The subscription is set up once per sign-in; the width and the
+   * standing both change while it is up. Closing over either would make
+   * this effect re-subscribe every time somebody rotated a phone, and -
+   * worse - the version that did not re-subscribe would be deciding with
+   * whatever both were when the channel was opened. The trap this project
+   * keeps falling into, in its usual disguise.
+   */
+  const narrowRef = useRef(false)
+  const quietRef = useRef(false)
+  const attend = useCallback((id: string) => {
+    setUnattended((all) => all.filter((one) => one !== id))
+  }, [])
+
   useEffect(() => {
     if (!profile) return
     const channel = supabase
       .channel('dock-conversations')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, load)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          load()
+
+          /*
+           * Somebody wrote to you, so their window is already there.
+           *
+           * Staw: "when you chat with someone then their dock about you
+           * opens too (instantly)". The row only reaches this tab if the
+           * policy on `messages` lets this account read it, which means a
+           * conversation it is in - so there is nothing here deciding who
+           * may make a window appear on somebody's screen; the database
+           * decided that before the event was sent.
+           *
+           * Three things it deliberately does not do. It does not open on
+           * a phone, where a window is the whole screen and this would be
+           * a message taking over the page somebody was reading. It does
+           * not open while chat is suspended, because the window would be
+           * a locked bar and a box that refuses. And it does not mark
+           * anything read - see `unattended` above.
+           */
+          const row = payload.new as Message
+          if (!row?.conversation_id) return
+          if (row.sender_id === profile.id) return
+          if (narrowRef.current) return
+          if (quietRef.current) return
+
+          setOpenIds((all) => {
+            if (all.includes(row.conversation_id)) return all
+            setUnattended((was) => (was.includes(row.conversation_id)
+              ? was
+              : [...was, row.conversation_id]))
+            return [row.conversation_id, ...all].slice(0, MAX_OPEN)
+          })
+        },
+      )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [profile, load])
@@ -1046,6 +1132,11 @@ export function ChatDock({ children }: { children: ReactNode }) {
   const signedIn = !!profile && !profile.is_guest
   const docked = signedIn && !narrow
 
+  /* Kept current for the subscription above, which must not close over
+     either of them. */
+  narrowRef.current = narrow
+  quietRef.current = Boolean(quiet.standing && !quiet.standing.over)
+
   const value = useMemo(
     () => ({ openConversation, quiet, openChat, chatOpen: !!phone, chatUnread: unread }),
     [openConversation, quiet, openChat, phone, unread],
@@ -1074,9 +1165,12 @@ export function ChatDock({ children }: { children: ReactNode }) {
               <Window
                 key={id}
                 conversation={conversation}
+                unattended={unattended.includes(id)}
+                onAttend={() => attend(id)}
                 onClose={() => {
                   if (conversation.party_id) setShutParty(conversation.party_id)
                   setOpenIds((all) => all.filter((open) => open !== id))
+                  attend(id)
                 }}
                 onOpened={(real) => {
                   setOpenIds((all) => all.map((open) => (open === id ? real : open)))

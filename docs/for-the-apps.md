@@ -25552,3 +25552,35 @@ separator's padding came down to `py-1.5`. If your thread wraps rows the
 same way, check it for the same double margin - the row has always carried
 its own and still does; nothing about `MessageRow`'s props or markup
 changed.
+
+## Round three hundred and ninety-eight - their window opens on your side too
+
+Staw: "when you chat with someone then their dock about you opens too
+(instantly)".
+
+The dock already listened to every `messages` insert to keep its list
+fresh. It now also **opens that conversation's window on the receiving
+side** the moment the row lands - the same event, used for the thing it
+was already telling us.
+
+Who may make a window appear on somebody's screen is not decided here:
+the row only reaches a tab if the policy on `messages` lets that account
+read it, which means a conversation it is in. There is no new door.
+
+Three things it deliberately does not do:
+
+- **Not on a phone.** A window there is the whole screen, and a message
+  taking over the page somebody is reading is not a dock opening, it is an
+  interruption.
+- **Not while chat is suspended** - the window would be a locked bar over
+  a box that refuses.
+- **Not read.** A window that opened itself is `unattended`: it skips the
+  mark-read it would normally do on opening, wears a lit edge, and counts
+  as read only once it is touched - a press, a focus, or writing in it.
+  Opening a window is not the same as somebody having looked at it, and
+  the unread count must keep meaning what it says.
+
+`Window` takes two new optional props for this, `unattended` and
+`onAttend`. If your Launcher's dock mounts it and wants the same
+behaviour, that is the whole of the contract; left out, a window behaves
+exactly as before.
