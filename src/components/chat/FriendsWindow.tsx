@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/States'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { ConversationFace, soloOf } from '@/components/chat/ConversationFace'
 import { LivePresenceLabel } from '@/components/ui/PersonAvatar'
-import { useLivePresence } from '@/hooks/usePresenceStore'
+import { presenceNow, useLivePresence, usePresenceVersion } from '@/hooks/usePresenceStore'
 import { useParty } from '@/hooks/useParty'
 import { conversationName } from '@/lib/api'
 import { avatarOf, nameOf } from '@/lib/avatars'
@@ -56,6 +56,9 @@ export function FriendsWindow({
 }) {
   const [term, setTerm] = useState('')
   const { party, invites } = useParty()
+  /* The sort below reads presence outside a hook, so this is what makes
+     the list move when somebody arrives or leaves. */
+  usePresenceVersion()
 
   const looking = term.trim().toLowerCase()
   const shown = conversations.filter((c) =>
@@ -232,12 +235,24 @@ function ByPresence({ conversations, onOpen }: {
   )
 }
 
-/* Read outside a component, so the sort does not call a hook in a loop. */
+/*
+ * Where a row belongs, read outside a component so the sort does not call
+ * a hook in a loop.
+ *
+ * `presenceNow` and nothing else. This used to read `is_online` off the
+ * row the conversation list was fetched with, while the label under the
+ * name and the dot on the picture both read the live roster - so a friend
+ * who had closed their tab an hour ago sat under ONLINE with a grey dot
+ * beside their name, which is the thing Staw photographed. One question,
+ * one answer, three places.
+ *
+ * It needs `usePresenceVersion()` in the component that sorts with it, or
+ * the grouping is a photograph taken when the list arrived.
+ */
 function presenceOf(conversation: Conversation) {
   const solo = soloOf(conversation)
   if (!solo) return 'online' as const
-  if (solo.in_space_id) return 'in-space' as const
-  return solo.is_online ? ('online' as const) : ('offline' as const)
+  return presenceNow(solo)
 }
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
@@ -282,7 +297,7 @@ function RowLine({ conversation, onOpen, dim }: {
           */}
         <span className={cn('block truncate text-xs', conversation.ignored && 'blur-[3px]')}>
           {solo
-            ? <LivePresenceLabel person={solo} />
+            ? <LivePresenceLabel person={solo} dot={false} />
             : <span className="text-muted">{conversation.last_message ?? 'No messages yet'}</span>}
         </span>
       </span>

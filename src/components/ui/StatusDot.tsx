@@ -111,10 +111,20 @@ export function StatusDot({
   )
 }
 
-export function PresenceLabel({ presence }: { presence: Presence }) {
+export function PresenceLabel({ presence, dot = true }: {
+  presence: Presence
+  /**
+   * Whether the words carry their own dot.
+   *
+   * Off where the picture beside them already has one - a row in the
+   * friends dock was wearing two dots of the same colour an inch apart,
+   * which reads as two different facts rather than one said twice.
+   */
+  dot?: boolean
+}) {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted">
-      <StatusDot presence={presence} size="md" />
+      {dot && <StatusDot presence={presence} size="md" />}
       {presenceWords[presence]}
     </span>
   )

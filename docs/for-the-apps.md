@@ -25442,3 +25442,27 @@ one, so the props below are yours too.
   Both kinds of row now wear the same 48px tile, so a list of people and
   Worlds reads as one list.
 - Kobby is 64px in the header, and the title is a size up.
+
+## Round three hundred and ninety-four - the dock's status, from one source
+
+Staw photographed the friends dock with three people under ONLINE, each
+wearing a grey offline dot on their picture. Both were right about
+different things, which is the whole bug.
+
+**The dock sorted on `is_online` from the row the conversation list was
+fetched with, while the dot on the picture and the words under the name
+both read `presenceNow` - the live roster.** A friend who closed their tab
+after that fetch was online to the heading and offline to everything else.
+The sort now calls `presenceNow` too, and `FriendsWindow` calls
+`usePresenceVersion()` so the grouping moves when somebody arrives or
+leaves instead of being a photograph taken when the list arrived.
+
+**This is the rule, and it is the one that keeps biting here:** anything
+that groups, sorts or labels by presence asks `presenceNow`. A row's
+`is_online` is what was true when that row was fetched, which is not a
+question anybody is asking.
+
+Also: `PresenceLabel` and `LivePresenceLabel` take `dot` (default true).
+The dock's rows pass `dot={false}` - the picture beside the words already
+carries one, and two dots of the same colour an inch apart read as two
+facts rather than one said twice.

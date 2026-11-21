@@ -64,13 +64,17 @@ const dots: Record<keyof typeof sizes, 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'>
  * Workspace the mark says so and the thought still gets the words, which is
  * what a status is for.
  */
-export function LivePresenceLabel({ person }: { person: Parameters<typeof useLivePresence>[0] }) {
+export function LivePresenceLabel({ person, dot = true }: {
+  person: Parameters<typeof useLivePresence>[0]
+  /** Off where the picture beside the words already carries the dot. */
+  dot?: boolean
+}) {
   const presence = useLivePresence(person)
   const mind = useThought(person?.id)
   /* Not here, nothing to say: a status belongs to somebody who is around. */
   const thought = presence === 'offline' ? null : mind
 
-  if (!thought) return <PresenceLabel presence={presence} />
+  if (!thought) return <PresenceLabel presence={presence} dot={dot} />
 
   const doing = presence === 'in-space' ? 'playing' : presence === 'building' ? 'building' : null
   /*
@@ -90,7 +94,7 @@ export function LivePresenceLabel({ person }: { person: Parameters<typeof useLiv
         <Icon name="playing" label="Playing" tone="#1CAE71" className="h-3.5 w-3.5 shrink-0" />
       ) : doing === 'building' ? (
         <Glyph icon={faHammer} className="shrink-0 text-mini text-warn-bright" aria-label="Building" />
-      ) : !wearing ? (
+      ) : !wearing && dot ? (
         <StatusDot presence={presence} size="md" />
       ) : null}
       {doing && !wearing && <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />}
