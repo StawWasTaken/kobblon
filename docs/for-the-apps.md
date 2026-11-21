@@ -25680,3 +25680,32 @@ somebody else, and a plain member is refused the rename.
 **If the applications call `set_member_rank` with the caller as the
 target, it now raises** - that is the only thing in here that can break a
 caller.
+
+## Round four hundred and three - Settings, the way the World page went
+
+Staw: redesign Settings "like we did for the worlds page, a redesign in a
+xbox/steam way but with a kobblon theme". Same move as that one - the page
+opens on what it is about, and the navigation says enough to choose from.
+
+- **The account comes first.** A new `AccountCard` in
+  `@/components/settings/Panel`: the face, the name with its marks, the
+  handle, and two facts beside it - Brix and when they joined - then a way
+  to their page. A shared computer is the normal case on this platform, so
+  "whose settings are these" is the first question rather than a detail.
+- **The rail says what is in each room.** `SettingsRail`, in the same
+  module: an icon tile, the name in the pixel font and **a line of its
+  own** - "Privacy: who may find you, write to you, see you". A console's
+  settings list is six words and a sentence each, because the word alone
+  does not tell anybody what is behind it. The chosen one is the site's
+  blue with the lip under it, the same "this is the one" as the avatar
+  page's drawers and the World page's tabs. The sentence is dropped from
+  the scrolling row a phone gets, where there is no room for it.
+  **`BrowseRail` is untouched and stays the five browsing pages' column** -
+  there a row is a filter and a count, which is all it needs to say.
+- **`Line` draws its mark in a tile**, the way every row on the rebuilt
+  bell does, red for the rows that undo something; and `Panel` puts a rule
+  under its heading. Both are shared shapes, so every settings row on the
+  site changed with them - including any the Workspace mounts.
+- Account's rows carry marks now (handle, picture, email, birthday, names
+  you have used), because a column of tiles with three gaps in it reads as
+  three rows that are missing something.
