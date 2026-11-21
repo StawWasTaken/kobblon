@@ -550,6 +550,7 @@ function Window({
               display_name: profile.display_name,
               avatar_url: profile.avatar_url,
               is_online: true,
+              last_seen_at: new Date().toISOString(),
               in_space_id: profile.in_space_id,
               closed_at: null,
               is_banned: false,
@@ -714,6 +715,7 @@ function Window({
                             avatar_url: profile.avatar_url,
                             is_guest: profile.is_guest,
                             is_online: profile.is_online,
+                            last_seen_at: profile.last_seen_at,
                             in_space_id: profile.in_space_id,
                           }
                         : conversation.members.find((member) => member.id === m.sender_id)

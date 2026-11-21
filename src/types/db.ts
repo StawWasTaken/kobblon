@@ -616,6 +616,13 @@ export type ConversationMember = Pick<
   Profile,
   'id' | 'username' | 'display_name' | 'avatar_url' | 'is_online' | 'in_space_id'
   /*
+   * When they were last heard from. 0365 adds it, because `is_online`
+   * with nothing to date it by is a flag that never comes down: a browser
+   * closed without saying goodbye leaves it true for ever, and the chat
+   * list was the one list drawing presence without it.
+   */
+  | 'last_seen_at'
+  /*
    * Whether there is still anybody behind the name. 0292 adds both to what
    * `my_conversations` hands back; before it they are undefined, and
    * `isGone` reads that as "still here", which is what the dock did

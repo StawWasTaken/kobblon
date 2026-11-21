@@ -25466,3 +25466,30 @@ Also: `PresenceLabel` and `LivePresenceLabel` take `dot` (default true).
 The dock's rows pass `dot={false}` - the picture beside the words already
 carries one, and two dots of the same colour an inch apart read as two
 facts rather than one said twice.
+
+## Round three hundred and ninety-five - the chat list says when it last heard
+
+Round 394 was the wrong half of this. Staw, correctly: the dock says
+everybody is online while nothing else on the site agrees.
+
+**The cause.** `presenceOf` believes `is_online` only while `last_seen_at`
+is fresh, because a browser closed without saying goodbye leaves that flag
+true for ever. Every list on the site reads rows carrying that column -
+except the chat list. `my_conversations` built its members payload with
+`is_online` and **no `last_seen_at`**, so the one list that could not tell
+a stale flag from a true one was the friends dock. Hence grey dots on the
+home strip and ONLINE in the dock, for the same people, at the same
+moment.
+
+**Migration `0365_the_chat_list_says_when_it_last_heard.sql`** adds
+`last_seen_at` to that payload. `create or replace` - the columns and
+their types are unchanged, the members json gains a key, which is not a
+return type. Applied twice here and checked under two signed-in
+identities.
+
+**For you:** `ConversationMember` gains `last_seen_at`, and anything of
+yours that builds one of those objects by hand must carry it - the
+website had two such places and both now pass it through. If your Launcher
+draws presence from a chat row, it has the same bug until this migration
+is applied, and the rule from 394 still stands: group, sort and label by
+`presenceNow`, never by a row's `is_online` alone.

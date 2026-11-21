@@ -673,6 +673,8 @@ export async function chatRoster(): Promise<Conversation[]> {
         display_name: person.display_name,
         avatar_url: person.avatar_url,
         is_online: person.is_online,
+        /* Dated, or `presenceOf` believes a flag nobody ever lowers. */
+        last_seen_at: person.last_seen_at,
         in_space_id: person.in_space_id,
       }],
     }))
