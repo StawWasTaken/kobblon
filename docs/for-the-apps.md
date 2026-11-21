@@ -25624,3 +25624,15 @@ add the badges and the connections.
   **The old chip beside the bio showed `discord_display` to everybody**
   regardless of that setting - it is gone, and that is a leak closed, not
   a layout change.
+
+## Round four hundred - the party row wears the party mark
+
+Small one. "Ask into party" on the hover card carried Font Awesome's
+person-with-a-plus, which is what a friend request wears everywhere on
+this platform - so the row read as "add them" beside a row that is not
+that. It is Staw's `party` mark now, in the party's green, the same mark
+the dock's face, the pinned strip and the invite card already use.
+
+Nothing shared changed; mentioned because the rule behind it is shared:
+where a mark of Staw's exists for a thing, that thing wears it, and a
+borrowed glyph that already means something else is worse than no glyph.
