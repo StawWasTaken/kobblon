@@ -34,9 +34,7 @@ export function Panel({ title, note, children }: {
 }) {
   return (
     <section className="space-y-4">
-      {/* The name of the room, with the rule under it that says where it
-          starts. Same shape as every other heading on the platform. */}
-      <div className="border-b-2 border-ink-line pb-3">
+      <div>
         <h2 className="font-display text-xl font-extrabold sm:text-2xl">{title}</h2>
         {note && <p className="mt-1 text-sm leading-relaxed text-muted">{note}</p>}
       </div>
@@ -101,21 +99,11 @@ export function Line({
 
   const inside = (
     <>
-      {/* The mark sits in a tile rather than loose beside the words.
-          A console's settings list is a column of tiles and the tile is
-          what makes a row a row - a bare glyph at four columns wide reads
-          as punctuation. Red for the rows that undo something. */}
       {icon && (
-        <span
-          className={cn(
-            'grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-b-[3px]',
-            danger
-              ? 'border-danger/40 bg-danger/15 text-danger'
-              : 'border-ink-line bg-ink-raised text-brand-bright',
-          )}
-        >
-          <Glyph icon={icon} className="text-sm" />
-        </span>
+        <Glyph
+          icon={icon}
+          className={cn('mt-0.5 w-4 shrink-0 text-sm', danger ? 'text-danger' : 'text-brand-bright')}
+        />
       )}
 
       <span className="min-w-0 flex-1">
@@ -239,134 +227,5 @@ export function PageTop({ title, note, aside, action }: {
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </header>
-  )
-}
-
-/**
- * Who is signed in, at the top of their own settings.
- *
- * The Xbox idea, in Kobblon's clothes: a settings page opens on the
- * account it is about, not on a word. A shared machine is the normal case
- * here - this platform is played by people who share a computer with a
- * sibling - and "whose account am I changing" is the first question, not
- * a detail.
- *
- * It is a strip rather than a hero: the art is one face, the words are a
- * name and a handle, and the rest of the room goes to whatever is on the
- * right. Nothing in it is a control except what the caller puts there.
- */
-export function AccountCard({ face, name, marks, handle, facts, action }: {
-  face: ReactNode
-  name: ReactNode
-  /** The marks that go after a name, drawn by whoever has them. */
-  marks?: ReactNode
-  handle: string
-  /** Short, factual, two or three: here since, Brix, what they are on. */
-  facts?: { label: string; value: ReactNode }[]
-  action?: ReactNode
-}) {
-  return (
-    <section className="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
-      <span className="shrink-0">{face}</span>
-
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 truncate font-display text-xl font-extrabold">
-          {name}
-          {marks}
-        </p>
-        <p className="truncate text-sm text-muted">@{handle}</p>
-      </div>
-
-      {!!facts?.length && (
-        <dl className="flex shrink-0 flex-wrap gap-2">
-          {facts.map((one) => (
-            <div
-              key={one.label}
-              className="rounded-xl border-2 border-b-[3px] border-ink-line bg-ink-raised px-3 py-1.5"
-            >
-              <dt className="text-tiny font-extrabold uppercase tracking-wide text-muted">
-                {one.label}
-              </dt>
-              <dd className="font-display text-sm font-extrabold tabular-nums">{one.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-
-      {action && <div className="shrink-0">{action}</div>}
-    </section>
-  )
-}
-
-/**
- * The rail, for a page whose sections need a sentence each.
- *
- * `BrowseRail` is the five browsing pages' column and stays theirs: there
- * a row is a filter and a count, and a count is the whole of what it needs
- * to say. A settings section is a room, and "Privacy" alone does not tell
- * anybody whether who-can-message-me is behind it. So the rows here carry
- * a line of their own, the way a console's settings list does.
- *
- * The chosen one wears the site's blue with the lip under it - the same
- * "this is the one" as the avatar page's drawers, the World page's tabs
- * and the filter rail on the bell.
- */
-export function SettingsRail<T extends string>({ label, items, value, onChange }: {
-  label: string
-  items: { value: T; label: string; note: string; icon: IconDefinition }[]
-  value: T
-  onChange: (next: T) => void
-}) {
-  return (
-    <nav
-      aria-label={label}
-      className={cn(
-        'flex gap-2 overflow-x-auto pb-1 kob-scroll',
-        'lg:block lg:space-y-1.5 lg:overflow-visible lg:pb-0',
-      )}
-    >
-      {items.map((one) => {
-        const on = one.value === value
-        return (
-          <button
-            key={one.value}
-            type="button"
-            onClick={() => onChange(one.value)}
-            aria-current={on}
-            className={cn(
-              'flex shrink-0 items-center gap-3 rounded-2xl border-2 border-b-4 px-3 py-2.5 text-left transition-colors',
-              'lg:w-full lg:shrink',
-              on
-                ? 'border-brand-deep bg-brand text-on-art'
-                : 'border-ink-line bg-ink-card text-white/70 hover:border-brand/50 hover:text-white',
-            )}
-          >
-            <span
-              className={cn(
-                'grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2',
-                on ? 'border-white/25 bg-white/15 text-on-art' : 'border-ink-line bg-ink-raised text-brand-bright',
-              )}
-            >
-              <Glyph icon={one.icon} />
-            </span>
-
-            <span className="min-w-0">
-              <span className="block font-display text-sm font-extrabold leading-tight">
-                {one.label}
-              </span>
-              {/* The sentence is the point of this rail, and it is the
-                  first thing a phone has no room for - so it is kept for
-                  the column and dropped from the scrolling row. */}
-              <span className={cn(
-                'mt-0.5 hidden text-xs leading-snug lg:block',
-                on ? 'text-on-art/75' : 'text-muted',
-              )}>
-                {one.note}
-              </span>
-            </span>
-          </button>
-        )
-      })}
-    </nav>
   )
 }

@@ -6,18 +6,12 @@ import {
   faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
   faMoon, faSun, faDesktop, faLink, faHeadset, faScroll, faCircleCheck,
   faTriangleExclamation, faKey, faArrowUpRightFromSquare, faClock, faEye,
-  faAt, faEnvelope, faCakeCandles, faIdBadge, faImage,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
-import { BrowseFrame } from '@/components/browse/BrowseRail'
-import {
-  Panel, Group, Line, Choice, PageTop, AccountCard, SettingsRail,
-} from '@/components/settings/Panel'
+import { BrowseRail, BrowseFrame } from '@/components/browse/BrowseRail'
+import { Panel, Group, Line, Choice, PageTop } from '@/components/settings/Panel'
 import { Button } from '@/components/ui/Button'
-import { PersonAvatar } from '@/components/ui/PersonAvatar'
-import { NameMarks } from '@/components/brand/Verified'
-import { formatCount } from '@/lib/format'
 import { DiscordLink } from '@/components/social/DiscordLink'
 import { Input } from '@/components/ui/Input'
 import { Dialog } from '@/components/ui/Dialog'
@@ -77,22 +71,13 @@ import { APPEARANCES, LOOKS, type Appearance } from '@/lib/appearances'
 
 type Section = 'Account' | 'Security' | 'Privacy' | 'Connections' | 'Appearance' | 'Safety'
 
-/*
- * Each room says what is in it.
- *
- * Staw asked for this page the way the World page went: a console's
- * settings rather than a list of words. A console's list is the six words
- * **and a line each**, because "Privacy" on its own does not tell anybody
- * whether who-can-message-me is behind it, and the cost of finding out is
- * a press and a page.
- */
-const sections: { name: Section; icon: IconDefinition; note: string }[] = [
-  { name: 'Account', icon: faUser, note: 'Your name, your handle, your age.' },
-  { name: 'Security', icon: faLock, note: 'Password, email, signing out.' },
-  { name: 'Privacy', icon: faEye, note: 'Who may find you, write to you, see you.' },
-  { name: 'Connections', icon: faLink, note: 'Discord, and who sees it.' },
-  { name: 'Appearance', icon: faPalette, note: 'Light or dark, and how big.' },
-  { name: 'Safety', icon: faShieldHalved, note: 'Reports, standing, the rules.' },
+const sections: { name: Section; icon: IconDefinition }[] = [
+  { name: 'Account', icon: faUser },
+  { name: 'Security', icon: faLock },
+  { name: 'Privacy', icon: faEye },
+  { name: 'Connections', icon: faLink },
+  { name: 'Appearance', icon: faPalette },
+  { name: 'Safety', icon: faShieldHalved },
 ]
 
 /* ------------------------------------------------------------------ account */
@@ -243,7 +228,6 @@ function Account() {
 
           <Line
             label="Username"
-            icon={faAt}
             value={`@${profile.username}`}
             action={
               <Button size="sm" variant="subtle" icon={faPen} onClick={() => setRenaming(true)}>
@@ -254,19 +238,17 @@ function Account() {
 
           <Line
             label="Picture, bio and colour"
-            icon={faImage}
             to={profileLink(profile)}
           />
         </Group>
       </form>
 
       <Group>
-        <Line label="Email" icon={faEnvelope} value={session?.user.email ?? 'Not set'} />
-        {born && <Line label="Birthday" icon={faCakeCandles} value={born} />}
+        <Line label="Email" value={session?.user.email ?? 'Not set'} />
+        {born && <Line label="Birthday" value={born} />}
         {!!history.data?.length && (
           <Line
             label="Names you have used"
-            icon={faIdBadge}
             value={history.data.map((row) => `@${row.username}`).join(', ')}
           />
         )}
@@ -710,54 +692,23 @@ function Safety() {
 export default function Settings() {
   useTitle('Settings')
   const [section, setSection] = useState<Section>('Account')
-  const { profile } = useAuth()
 
   return (
-    <Page className="space-y-5">
-      <PageTop title="Settings" />
-
+    <Page className="space-y-6">
       {/*
-       * The account this page is about, before anything it can change.
-       *
-       * A shared computer is the normal case on this platform, so "whose
-       * settings are these" is the first question rather than a detail -
-       * and the three facts beside the name are the ones somebody checks
-       * here anyway: when they joined, what they are holding, and whether
-       * the account is a real one yet.
+       * One line, where there was a gradient panel with an avatar, a name,
+       * a handle and a button in it. The avatar is here because a settings
+       * page should say whose account is open - a shared machine is the
+       * normal case for this platform - and nothing else is, because the
+       * rail says what the page holds and the panel says where you are.
        */}
-      {profile && (
-        <AccountCard
-          face={<PersonAvatar person={profile} size="lg" />}
-          name={profile.display_name}
-          marks={<NameMarks person={profile} className="text-base" />}
-          handle={profile.username}
-          facts={[
-            { label: 'Brix', value: formatCount(profile.pixels ?? 0) },
-            {
-              label: 'Here since',
-              value: new Date(profile.created_at).toLocaleDateString('en-GB', {
-                month: 'short', year: 'numeric',
-              }),
-            },
-          ]}
-          action={
-            <Button to={`/u/${profile.username}`} variant="subtle" size="sm">
-              Your page
-            </Button>
-          }
-        />
-      )}
+      <PageTop title="Settings" />
 
       <BrowseFrame
         rail={
-          <SettingsRail
+          <BrowseRail
             label="Settings sections"
-            items={sections.map((one) => ({
-              value: one.name,
-              label: one.name,
-              note: one.note,
-              icon: one.icon,
-            }))}
+            items={sections.map((one) => ({ value: one.name, label: one.name, icon: one.icon }))}
             value={section}
             onChange={setSection}
           />
@@ -768,12 +719,15 @@ export default function Settings() {
          * puts it rather than centred in the slack: a panel that slides
          * sideways as the window grows is a panel nobody can aim at twice.
          */}
+        {/* Every panel says its own name and what it is for, so there is
+            nothing to repeat here for the phone, where the rail has been
+            scrolled past by the time anything is read. */}
         <div className="min-w-0 max-w-2xl">
           {section === 'Account' && <Account />}
           {section === 'Security' && <Security />}
           {section === 'Privacy' && <Privacy />}
           {section === 'Connections' && (
-            <Panel title="Connections" note="Other accounts you have said are yours.">
+            <Panel title="Connections">
               <DiscordLink />
             </Panel>
           )}
