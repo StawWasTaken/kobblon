@@ -14,15 +14,26 @@ const options: { value: Exclude<Gender, ''>; label: string; icon: IconDefinition
 export function GenderPicker({
   value,
   onChange,
+  bare,
 }: {
   value: Gender
   onChange: (next: Gender) => void
+  /**
+   * Without its own legend, for a row that is already labelled.
+   *
+   * Settings puts it in a row called Gender, and the picker printing
+   * "GENDER optional" inside that row said the word twice. Signup has no
+   * row round it and keeps the legend.
+   */
+  bare?: boolean
 }) {
   return (
     <fieldset>
-      <legend className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
-        Gender <span className="font-medium normal-case text-white/30">optional</span>
-      </legend>
+      {!bare && (
+        <legend className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
+          Gender <span className="font-medium normal-case text-white/30">optional</span>
+        </legend>
+      )}
       <div className="grid grid-cols-3 gap-2">
         {options.map((option) => {
           const active = value === option.value

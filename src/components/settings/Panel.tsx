@@ -229,3 +229,196 @@ export function PageTop({ title, note, aside, action }: {
     </header>
   )
 }
+
+/*
+ * ---------------------------------------------------------------------
+ * The settings page's own shapes, approved from a preview.
+ *
+ * `Panel`, `Group` and `Line` above are still Support's and Standing's -
+ * those two are lists of cards and read correctly as cards. The settings
+ * page is a long column with rules in it, which is what a console's
+ * settings are, and Staw approved that shape from
+ * `tools/site/settings-preview`. These are the four it is built from.
+ */
+
+/** The name of the room, with its mark, once at the top. */
+export function Title({ icon, children }: { icon: IconDefinition; children: ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2.5 font-display text-2xl font-extrabold">
+      <span className="grid h-9 w-9 place-items-center rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised text-base text-brand-bright">
+        <Glyph icon={icon} />
+      </span>
+      {children}
+    </h2>
+  )
+}
+
+/** A few words over the rows they belong to, and a rule out to the edge. */
+export function Head({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pb-1 pt-6 first:pt-1">
+      <h3 className="shrink-0 font-display text-tiny font-extrabold uppercase tracking-[0.18em] text-white/40">
+        {children}
+      </h3>
+      <span className="h-px flex-1 bg-ink-line" />
+    </div>
+  )
+}
+
+/**
+ * One setting: what it is, what it is set to, and the way to change it.
+ *
+ * No card round it: the rule under it is what separates it from the next
+ * one. A mark only where the row is about a state somebody checks at a
+ * glance - a standing, a link - never on every line.
+ */
+export function SettingRow({
+  label, note, value, action, to, onClick, danger,
+}: {
+  label: ReactNode
+  note?: ReactNode
+  value?: ReactNode
+  action?: ReactNode
+  to?: string
+  onClick?: () => void
+  danger?: boolean
+}) {
+  const leads = !!to || !!onClick
+  const inside = (
+    <>
+      <span className="min-w-0 flex-1">
+        <span className={cn('block text-sm font-bold', danger && 'text-danger')}>{label}</span>
+        {note && <span className="mt-0.5 block text-xs leading-snug text-muted">{note}</span>}
+      </span>
+      {value !== undefined && (
+        <span className="shrink-0 text-sm text-white/60">{value}</span>
+      )}
+      {action}
+      {leads && <Glyph icon={faChevronRight} className="shrink-0 text-xs text-muted" />}
+    </>
+  )
+  const shape = cn(
+    'flex w-full items-center gap-4 border-b border-ink-line px-1 py-3.5 text-left last:border-0',
+    leads && 'transition-colors hover:bg-ink-hover',
+  )
+  if (to) return <Link to={to} className={shape}>{inside}</Link>
+  if (onClick) return <button type="button" onClick={onClick} className={shape}>{inside}</button>
+  return <div className={shape}>{inside}</div>
+}
+
+/** A row whose right-hand side is a control rather than an answer. */
+export function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-4 border-b border-ink-line px-1 py-3.5 last:border-0">
+      <span className="w-40 shrink-0 text-sm font-bold">{label}</span>
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * A choice, with the lip.
+ *
+ * The avatar page's drawers are the shape - two-pixel border, four under
+ * it, the one you are on in Kobblon blue with a deeper lip - and the one
+ * that is off keeps the same thickness in a quiet colour, so the row does
+ * not jump by three pixels when it is pressed. Staw: "the selectors look
+ * a bit too flat you could do like we did in the avatar page".
+ */
+export function Pick({ on, icon, swatch, title, note, onClick, disabled, stack }: {
+  on: boolean
+  icon?: IconDefinition
+  swatch?: ReactNode
+  title: string
+  note?: string
+  onClick: () => void
+  disabled?: boolean
+  /** The art over the name rather than beside it, for a shelf of many. */
+  stack?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      disabled={disabled}
+      className={cn(
+        'kob-press flex rounded-2xl border-2 transition-colors disabled:opacity-60',
+        stack
+          ? 'w-full flex-col items-center gap-2 px-2 py-3'
+          : 'items-center gap-3 px-3.5 py-3 text-left',
+        on
+          ? 'border-brand-deep border-b-[6px] bg-brand text-on-art'
+          : 'border-ink-line border-b-4 bg-ink-card text-white/75 hover:border-brand/50 hover:text-white',
+      )}
+    >
+      {swatch ?? (icon && (
+        <span className={cn(
+          'grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2',
+          on ? 'border-white/25 bg-white/15' : 'border-ink-line bg-ink-raised text-brand-bright',
+        )}>
+          <Glyph icon={icon} />
+        </span>
+      ))}
+      <span className={cn('min-w-0', stack && 'w-full text-center')}>
+        <span className={cn(
+          'block font-display font-extrabold leading-tight',
+          stack ? 'truncate text-xs' : 'text-sm',
+        )}>
+          {title}
+        </span>
+        {note && !stack && (
+          <span className={cn('mt-0.5 block text-xs leading-snug', on ? 'text-on-art/75' : 'text-muted')}>
+            {note}
+          </span>
+        )}
+      </span>
+    </button>
+  )
+}
+
+/**
+ * The rail: one card with a row for each room, ending where the rooms do.
+ *
+ * Staw asked for both halves of that - "make this into a common card
+ * thingy instead of multiple ones", and then that the card stop at the
+ * last row rather than running down the page.
+ */
+export function SettingsRail<T extends string>({ label, items, value, onChange }: {
+  label: string
+  items: { value: T; label: string; icon: IconDefinition }[]
+  value: T
+  onChange: (next: T) => void
+}) {
+  return (
+    <nav
+      aria-label={label}
+      className={cn(
+        'flex gap-1 overflow-x-auto pb-1 kob-scroll',
+        'lg:block lg:h-fit lg:space-y-1 lg:overflow-visible lg:rounded-2xl',
+        'lg:border-2 lg:border-b-4 lg:border-ink-line lg:bg-ink-card lg:p-2',
+      )}
+    >
+      {items.map((one) => {
+        const on = one.value === value
+        return (
+          <button
+            key={one.value}
+            type="button"
+            onClick={() => onChange(one.value)}
+            aria-current={on}
+            className={cn(
+              'kob-press flex shrink-0 items-center gap-2.5 rounded-xl border-2 border-b-[5px] px-3 py-2 text-left text-sm font-bold transition-colors lg:w-full',
+              on
+                ? 'border-brand-deep bg-brand text-on-art'
+                : 'border-transparent text-white/65 hover:bg-ink-hover hover:text-white',
+            )}
+          >
+            <Glyph icon={one.icon} className={cn('w-4 text-xs', !on && 'text-brand-bright')} />
+            {one.label}
+          </button>
+        )
+      })}
+    </nav>
+  )
+}

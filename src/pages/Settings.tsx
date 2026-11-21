@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import { Switch } from '@/components/ui/Switch'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { Logomark } from '@/components/brand/Wordmark'
 import {
   faRightFromBracket, faUser, faLock, faShieldHalved, faPen, faCheck, faPalette,
@@ -9,8 +10,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Page } from '@/components/layout/AppShell'
-import { BrowseRail, BrowseFrame } from '@/components/browse/BrowseRail'
-import { Panel, Group, Line, Choice, PageTop } from '@/components/settings/Panel'
+import { BrowseFrame } from '@/components/browse/BrowseRail'
+import {
+  PageTop, Title, Head, SettingRow, Field, Pick, SettingsRail,
+} from '@/components/settings/Panel'
 import { Button } from '@/components/ui/Button'
 import { DiscordLink } from '@/components/social/DiscordLink'
 import { Input } from '@/components/ui/Input'
@@ -33,8 +36,6 @@ import { supabase } from '@/lib/supabase'
 import { currency } from '@/lib/currency'
 import { cn } from '@/lib/cn'
 import { useTitle } from '@/hooks/useTitle'
-import { Avatar } from '@/components/ui/Avatar'
-import { avatarOf } from '@/lib/avatars'
 import { profileLink } from '@/lib/links'
 import { useAppearance } from '@/hooks/useAppearance'
 import { APPEARANCES, LOOKS, type Appearance } from '@/lib/appearances'
@@ -177,82 +178,60 @@ function Account() {
     : null
 
   return (
-    <Panel title="Account">
-      {/* Whose account is open, which a shared machine makes worth saying,
-          and the one door out of here to the page it is all drawn on. */}
-      <Group>
-        <Line
-          label={profile.display_name}
-          value={`@${profile.username}`}
-          to={profileLink(profile)}
-          action={
-            <Avatar
-              src={avatarOf(profile)}
-              personId={profile.id}
-              name={profile.display_name}
-              size="md"
-              className="rounded-xl"
-            />
-          }
-        />
-      </Group>
+    <>
+      <Title icon={faUser}>Account</Title>
 
+      <Head>Who you are</Head>
       <form onSubmit={save}>
-        <Group>
-          <div className="space-y-3 px-5 py-4">
-            <div className="max-w-sm">
+        <Field label="Display name">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-0 max-w-sm flex-1">
               <Input
-                label="Display name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={32}
                 required
               />
             </div>
-            {/*
-              * The signup answer, changeable: a girl's Newbie wears the
-              * Waisted Torso, and a question you can only answer once is a
-              * question half the people answer wrongly. The picker draws
-              * its own label.
-              */}
-            <div className="max-w-sm">
-              <GenderPicker value={gender} onChange={setGender} />
-            </div>
-
-            {changed && (
-              <div className="flex justify-end">
-                <Button type="submit" size="sm" loading={saving}>Save</Button>
-              </div>
-            )}
+            {changed && <Button type="submit" size="sm" loading={saving}>Save</Button>}
           </div>
+        </Field>
 
-          <Line
-            label="Username"
-            value={`@${profile.username}`}
-            action={
-              <Button size="sm" variant="subtle" icon={faPen} onClick={() => setRenaming(true)}>
-                Change
-              </Button>
-            }
-          />
+        <Field label="Username">
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-sm text-white/70">@{profile.username}</p>
+            <Button size="sm" variant="subtle" icon={faPen} onClick={() => setRenaming(true)}>
+              Change
+            </Button>
+          </div>
+        </Field>
 
-          <Line
-            label="Picture, bio and colour"
-            to={profileLink(profile)}
-          />
-        </Group>
+        {/*
+          * The signup answer, changeable: a girl's Newbie wears the
+          * Waisted Torso, and a question you can only answer once is a
+          * question half the people answer wrongly.
+          */}
+        <Field label="Gender">
+          <div className="max-w-md">
+            <GenderPicker bare value={gender} onChange={setGender} />
+          </div>
+        </Field>
       </form>
 
-      <Group>
-        <Line label="Email" value={session?.user.email ?? 'Not set'} />
-        {born && <Line label="Birthday" value={born} />}
-        {!!history.data?.length && (
-          <Line
-            label="Names you have used"
-            value={history.data.map((row) => `@${row.username}`).join(', ')}
-          />
-        )}
-      </Group>
+      <Head>On record</Head>
+      <SettingRow label="Email" value={session?.user.email ?? 'Not set'} />
+      {born && <SettingRow label="Birthday" value={born} />}
+      {!!history.data?.length && (
+        <SettingRow
+          label="Names you have used"
+          value={history.data.map((row) => `@${row.username}`).join(', ')}
+        />
+      )}
+      <SettingRow
+        label="Picture, bio and colour"
+        note="All three live on your page."
+        to={profileLink(profile)}
+      />
 
       <Dialog
         open={renaming}
@@ -338,7 +317,7 @@ function Account() {
           </p>
         )}
       </Dialog>
-    </Panel>
+    </>
   )
 }
 
@@ -366,25 +345,26 @@ function Security() {
   }
 
   return (
-    <Panel title="Security">
-      <Group>
-        <Line
-          label="Password"
-          note="At least eight characters. You will stay signed in here."
-          icon={faKey}
-          action={<Button size="sm" variant="subtle" onClick={() => setOpen(true)}>Change</Button>}
-        />
-        <Line
-          label="Log out"
-          note="Ends this session on this device only."
-          icon={faRightFromBracket}
-          action={
-            <Button size="sm" variant="subtle" icon={faRightFromBracket} onClick={() => signOut()}>
-              Log out
-            </Button>
-          }
-        />
-      </Group>
+    <>
+      <Title icon={faLock}>Security</Title>
+
+      <Head>Getting in</Head>
+      <SettingRow
+        label="Password"
+        note="At least eight characters. You will stay signed in here."
+        action={<Button size="sm" variant="subtle" icon={faKey} onClick={() => setOpen(true)}>Change</Button>}
+      />
+
+      <Head>This device</Head>
+      <SettingRow
+        label="Log out"
+        note="Ends this session on this device only."
+        action={
+          <Button size="sm" variant="subtle" icon={faRightFromBracket} onClick={() => signOut()}>
+            Log out
+          </Button>
+        }
+      />
 
       <Dialog
         open={open}
@@ -422,7 +402,7 @@ function Security() {
           )}
         </div>
       </Dialog>
-    </Panel>
+    </>
   )
 }
 
@@ -499,21 +479,22 @@ export function Looks() {
   const missing = APPEARANCES.filter((one) => !owned.includes(one))
 
   return (
-    <div className="space-y-8">
-      <Panel title="Appearance">
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          {modes.map((mode) => (
-            <Choice
-              key={mode.value}
-              on={theme === mode.value}
-              onClick={() => setTheme(mode.value)}
-              swatch={<ModeSwatch which={mode.value} icon={mode.icon} />}
-              title={mode.label}
-              note={mode.note}
-            />
-          ))}
-        </div>
-      </Panel>
+    <>
+      <Title icon={faPalette}>Appearance</Title>
+
+      <Head>Light or dark</Head>
+      <div className="grid gap-2.5 py-2 sm:grid-cols-3">
+        {modes.map((mode) => (
+          <Pick
+            key={mode.value}
+            on={theme === mode.value}
+            onClick={() => setTheme(mode.value)}
+            swatch={<ModeSwatch which={mode.value} icon={mode.icon} />}
+            title={mode.label}
+            note={mode.note}
+          />
+        ))}
+      </div>
 
       {/*
        * One lever, not two. Kobblon's type scale and its spacing scale are
@@ -522,20 +503,19 @@ export function Looks() {
        * was would be bigger words in a box built for smaller ones, which is
        * crowding rather than comfort.
        */}
-      <Panel title="Size">
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          {TEXT_SIZES.map((one) => (
-            <Choice
-              key={one}
-              on={size === one}
-              onClick={() => setSize(one)}
-              swatch={<SizeSwatch px={sizes[one].px} />}
-              title={sizes[one].label}
-              note={sizes[one].note}
-            />
-          ))}
-        </div>
-      </Panel>
+      <Head>Size</Head>
+      <div className="grid gap-2.5 py-2 sm:grid-cols-3">
+        {TEXT_SIZES.map((one) => (
+          <Pick
+            key={one}
+            on={size === one}
+            onClick={() => setSize(one)}
+            swatch={<SizeSwatch px={sizes[one].px} />}
+            title={sizes[one].label}
+            note={sizes[one].note}
+          />
+        ))}
+      </div>
 
       {/*
        * The appearances somebody actually has, and nothing else. One that
@@ -543,37 +523,43 @@ export function Looks() {
        * control that cannot do anything is worse than no control, and
        * "here is a thing you cannot have" is not news for a settings page.
        * When each comes round is said instead, because that can be acted on.
+       *
+       * Drawn as tiles rather than as rows. Staw: there will be a lot of
+       * these, and a shelf of marks takes five across where a rectangle
+       * with a sentence in it took two. The sentence is the tooltip.
        */}
-      <Panel title="Theme appearances">
-        <div className="grid gap-2.5 sm:grid-cols-2">
-          {mine.map((one) => (
-            <Choice
-              key={one}
+      <Head>Theme appearances</Head>
+      <div className="grid grid-cols-3 gap-2.5 py-2 sm:grid-cols-5">
+        {mine.map((one) => (
+          <Tooltip key={one} label={LOOKS[one].note} side="top">
+            <Pick
+              stack
               on={appearance === one}
               disabled={changing === one}
               onClick={() => void put(one)}
+              title={LOOKS[one].name}
               swatch={
                 /* The mark on its own bar colour. `data-appearance` on the
                    swatch is what makes each tile show its own appearance
                    rather than the one being worn. */
                 <span
                   data-appearance={one}
-                  className="grid h-10 w-10 place-items-center rounded-xl bg-chrome"
+                  className="grid h-12 w-12 place-items-center rounded-xl border-2 border-ink-line bg-chrome"
                 >
-                  <Logomark className="h-6" />
+                  <Logomark className="h-7" />
                 </span>
               }
-              title={LOOKS[one].name}
-              note={LOOKS[one].note}
             />
-          ))}
-        </div>
+          </Tooltip>
+        ))}
+      </div>
 
-        {!!missing.length && (
-          <p className="text-xs text-muted">{missing.map((one) => LOOKS[one].when).join(' ')}</p>
-        )}
-      </Panel>
-    </div>
+      {!!missing.length && (
+        <p className="px-1 pb-2 text-xs text-muted">
+          {missing.map((one) => LOOKS[one].when).join(' ')}
+        </p>
+      )}
+    </>
   )
 }
 
@@ -630,15 +616,17 @@ function Privacy() {
   )
 
   return (
-    <Panel title="Privacy">
-      <div className="space-y-2">
+    <>
+      <Title icon={faEye}>Privacy</Title>
+      <Head>Everyone, or friends only</Head>
+      <div className="space-y-2 py-2">
         {row('Your thought', profile.thought_privacy, (next) => void save({ thought_privacy: next }))}
         {row('The World you are in', profile.where_privacy, (next) => void save({ where_privacy: next }))}
         {row('Joining you', profile.join_privacy, (next) => void save({ join_privacy: next }))}
         {profile.discord_id
           && row('Your Discord handle', profile.discord_visibility, (next) => void save({ discord_visibility: next }))}
       </div>
-    </Panel>
+    </>
   )
 }
 
@@ -650,63 +638,55 @@ function Safety() {
   const clear = (standing.data?.level ?? 'clear') === 'clear'
 
   return (
-    <Panel title="Safety">
-      <Group>
-        <Line
-          label="Where you stand"
-          note={
-            standing.loading
-              ? 'Checking.'
-              : standing.data?.headline ?? 'Nothing on record. Carry on.'
-          }
-          icon={clear ? faCircleCheck : faTriangleExclamation}
-          to="/standing"
-          danger={!clear}
-        />
-      </Group>
+    <>
+      <Title icon={faShieldHalved}>Safety</Title>
 
-      <Group>
-        <Line
-          label="Write to us"
-          icon={faHeadset}
-          to="/support"
-        />
-        <Line
-          label="Policies"
-          icon={faScroll}
-          to="/policies"
-        />
-        <Line
-          label="Moderation and appeals"
-          icon={faArrowUpRightFromSquare}
-          to="/policies/moderation"
-        />
-      </Group>
+      <Head>Your standing</Head>
+      <SettingRow
+        label={standing.data?.headline ?? (standing.loading ? 'Checking' : 'Nothing on record')}
+        note={clear ? 'No warnings, no suspensions. Carry on.' : 'Press for what it means and what to do.'}
+        value={
+          <Glyph
+            icon={clear ? faCircleCheck : faTriangleExclamation}
+            className={clear ? 'text-space' : 'text-danger'}
+          />
+        }
+        to="/standing"
+        danger={!clear}
+      />
 
-    </Panel>
+      <Head>If something is wrong</Head>
+      <SettingRow
+        label="Write to us"
+        note="Reports are anonymous to the person reported."
+        value={<Glyph icon={faHeadset} className="text-muted" />}
+        to="/support"
+      />
+      <SettingRow
+        label="Policies"
+        value={<Glyph icon={faScroll} className="text-muted" />}
+        to="/policies"
+      />
+      <SettingRow
+        label="Moderation and appeals"
+        value={<Glyph icon={faArrowUpRightFromSquare} className="text-muted" />}
+        to="/policies/moderation"
+      />
+    </>
   )
 }
-
-/* --------------------------------------------------------------------- page */
 
 export default function Settings() {
   useTitle('Settings')
   const [section, setSection] = useState<Section>('Account')
 
   return (
-    <Page className="space-y-6">
-      {/*
-       * One line, where there was a gradient panel with an avatar, a name,
-       * a handle and a button in it. The avatar is here because a settings
-       * page should say whose account is open - a shared machine is the
-       * normal case for this platform - and nothing else is, because the
-       * rail says what the page holds and the panel says where you are.
-       */}
+    <Page className="space-y-5">
       <PageTop title="Settings" />
 
       <BrowseFrame
         rail={
-          <BrowseRail
+          <SettingsRail
             label="Settings sections"
             items={sections.map((one) => ({ value: one.name, label: one.name, icon: one.icon }))}
             value={section}
@@ -719,17 +699,16 @@ export default function Settings() {
          * puts it rather than centred in the slack: a panel that slides
          * sideways as the window grows is a panel nobody can aim at twice.
          */}
-        {/* Every panel says its own name and what it is for, so there is
-            nothing to repeat here for the phone, where the rail has been
-            scrolled past by the time anything is read. */}
-        <div className="min-w-0 max-w-2xl">
+        <div className="min-w-0 max-w-3xl">
           {section === 'Account' && <Account />}
           {section === 'Security' && <Security />}
           {section === 'Privacy' && <Privacy />}
           {section === 'Connections' && (
-            <Panel title="Connections">
+            <>
+              <Title icon={faLink}>Connections</Title>
+              <Head>Linked</Head>
               <DiscordLink />
-            </Panel>
+            </>
           )}
           {section === 'Appearance' && <Looks />}
           {section === 'Safety' && <Safety />}

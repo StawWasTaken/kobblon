@@ -59,6 +59,17 @@ export const kobbyArt = {
    */
   building: asset('/mascot/under_construction.png'),
   /*
+   * The default avatar, drawn: who you are the minute you join with an
+   * ordinary account, arms out, nothing worn yet.
+   *
+   * Staw drew it for the pages that explain Kobblon to somebody who has
+   * not got one - What is Kobblon, the landing page - and it is in the
+   * set now so those pages can reach for it when they are rebuilt. It is
+   * not an empty state and must not be used as one: a hole in a page is
+   * the lighthouse, and this is a person.
+   */
+  newbie: asset('/mascot/newbie.png'),
+  /*
    * Kobby's own face, which is not one of the five and is not an empty
    * state: it is the 28-pixel mark beside "Ask Kobby" in the staff panel,
    * where it names the auto-admin rather than filling a hole in a page.

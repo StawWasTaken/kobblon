@@ -400,7 +400,7 @@ function Preview() {
               Staw: "make this into a common card thingy instead of
               multiple ones" - six bordered pills down a column read as six
               separate things, when the rail is one thing with six rows. */}
-          <nav className="flex gap-1 overflow-x-auto pb-1 kob-scroll lg:block lg:space-y-1 lg:overflow-visible lg:rounded-2xl lg:border-2 lg:border-b-4 lg:border-ink-line lg:bg-ink-card lg:p-2">
+          <nav className="flex gap-1 overflow-x-auto pb-1 kob-scroll lg:block lg:space-y-1 lg:overflow-visible lg:h-fit lg:rounded-2xl lg:border-2 lg:border-b-4 lg:border-ink-line lg:bg-ink-card lg:p-2">
             {ROOMS.map((one) => {
               const on = one.name === room
               return (

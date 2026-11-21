@@ -25709,3 +25709,43 @@ opens on what it is about, and the navigation says enough to choose from.
 - Account's rows carry marks now (handle, picture, email, birthday, names
   you have used), because a column of tiles with three gaps in it reads as
   three rows that are missing something.
+
+## Round four hundred and four - Settings, approved from a preview, and a new mascot
+
+**The way this works now.** Staw: a redesign goes up as a preview first
+and ships once he says yes. The first Settings rebuild went straight to
+the site and was wrong on three counts; three previews later this one was
+approved. `tools/site/settings-preview` is the drawing it came from.
+
+**The page.** A long column with rules in it rather than cards inside a
+panel inside a frame. Five shapes, all exported from
+`@/components/settings/Panel` so the applications can mount them:
+
+- **`Title`** - the room's name with its mark in a tile.
+- **`Head`** - a few words and a rule, over the rows they belong to.
+- **`SettingRow`** - what it is, what it is set to, the way to change it.
+  No card: the rule under it is the separator. A mark only where the row
+  is about a state somebody checks at a glance.
+- **`Field`** - the same row with a control on the right.
+- **`Pick`** - a choice with the avatar page's lip: two-pixel border, four
+  under it, the chosen one in Kobblon blue with a deeper lip and the one
+  that is off keeping the same thickness, so nothing jumps when pressed.
+  `stack` draws it as a tile for a shelf of many.
+- **`SettingsRail`** - one card with a row per room, ending where the rooms
+  do.
+
+**`Panel`, `Group` and `Line` are unchanged** and are still what Support
+and Standing are built from - those two are lists of cards and read
+correctly as cards. Two row shapes on purpose, not by drift.
+
+Also: **theme appearances are tiles now**, five across, the mark over the
+name, the sentence in the tooltip - there will be a lot of them and a
+rectangle each does not scale. And `GenderPicker` takes `bare`, for a row
+that already carries the word Gender.
+
+**New mascot: `newbie`.** Staw drew the default avatar - who you are the
+minute you join with an ordinary account - and it is in `kobbyArt` as
+`newbie`, at `/mascot/newbie.png`. It is for the pages that explain
+Kobblon to somebody who has not got an account yet, when those are
+rebuilt. **It is not an empty state**: a hole in a page is the lighthouse,
+and this is a person.
