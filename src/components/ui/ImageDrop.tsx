@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import { faImage, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Cropper } from '@/components/ui/Cropper'
@@ -14,6 +15,8 @@ export function ImageDrop({
   existing,
   aspect = 'square',
   required,
+  busy,
+  under,
   onChange,
 }: {
   label: string
@@ -22,6 +25,10 @@ export function ImageDrop({
   existing?: string | null
   aspect?: 'square' | 'wide'
   required?: boolean
+  /** Something is being uploaded, so nothing else may be chosen yet. */
+  busy?: boolean
+  /** A line under the words, for where this picture turns up. */
+  under?: ReactNode
   onChange: (next: File | null) => void
 }) {
   const input = useRef<HTMLInputElement>(null)
@@ -82,7 +89,8 @@ export function ImageDrop({
         {label}
         {required && <span className="ml-1 text-danger">*</span>}
       </p>
-      {note && <p className="mb-2 text-xs text-muted">{note}</p>}
+      {note && <p className="mb-1 text-xs text-muted">{note}</p>}
+      {under && <p className="mb-2">{under}</p>}
       {file?.type === 'image/gif' && (
         <p className="mb-2 text-xs text-space-bright">
           A GIF is kept as it is, so it keeps moving. It is not cropped.
@@ -123,7 +131,8 @@ export function ImageDrop({
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="rounded-lg border-2 border-b-4 border-ink-line bg-ink-card px-3 py-1.5 text-xs font-bold transition-colors hover:bg-ink-hover"
+            disabled={busy}
+            className="rounded-lg border-2 border-b-4 border-ink-line bg-ink-card px-3 py-1.5 text-xs font-bold transition-colors hover:bg-ink-hover disabled:opacity-50"
           >
             Select an image from your computer
           </button>

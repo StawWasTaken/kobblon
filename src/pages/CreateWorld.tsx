@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { Tooltip } from '@/components/ui/Tooltip'
 import {
-  faArrowUpRightFromSquare, faBell, faCheck, faCopy, faImage, faLink, faPlus,
-  faTrash, faUpload, faVideo, faCircleCheck, faCircleXmark, faPen,
+  faArrowUpRightFromSquare, faBell, faCheck, faCopy, faLink, faPlus,
+  faTrash, faVideo, faCircleCheck, faCircleXmark, faPen,
   faEye, faBookmark, faThumbsUp, faCircleExclamation,
   faArrowLeft, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
@@ -19,7 +18,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { MakeThings } from '@/components/worlds/MakeThings'
 import { ErrorState, Skeleton } from '@/components/ui/States'
-import { Cropper } from '@/components/ui/Cropper'
+import { ImageDrop } from '@/components/ui/ImageDrop'
 import { DEFAULT_WORLD_EMBLEM, DEFAULT_WORLD_THUMBNAIL } from '@/lib/worldart'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -50,69 +49,6 @@ const maturities: { value: WorldMaturity; label: string; note: string }[] = [
   { value: 'moderate', label: 'Moderate', note: 'Repeated violence, or frightening scenes' },
   { value: 'strong', label: 'Strong', note: 'Strong violence or themes for older players' },
 ]
-
-/**
- * One of the two pictures a World wears, with the shape it is cut to and
- * where it turns up.
- *
- * Saying where each one shows is the point: the page had one uploader
- * called "emblem" that saved into the wide slot, and nobody could have
- * known from looking at it.
- */
-function ArtSlot({ title, note, shape, art, where, busy, onPick, onClear, children }: {
-  title: string
-  note: string
-  shape: 'square' | 'wide'
-  art: string | null
-  where: string
-  busy: boolean
-  onPick?: () => void
-  onClear?: () => void
-  /** What to say instead of a button, where the picture is not set here. */
-  children?: ReactNode
-}) {
-  const fallback = shape === 'square' ? DEFAULT_WORLD_EMBLEM : DEFAULT_WORLD_THUMBNAIL
-  return (
-    <div className="flex flex-wrap items-start gap-4 border-b border-ink-line p-4 last:border-0">
-      <span className={cn(
-        'grid shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media',
-        shape === 'square' ? 'h-24 w-24' : 'h-24 w-[10.65rem]',
-      )}>
-        {/*
-          * Not an empty grey box: what a World wears when nobody has given
-          * it a picture is a drawing of Staw's, and it is what everybody
-          * else is already seeing, so this page shows it too.
-          */}
-        <img src={art ?? fallback} alt="" className="h-full w-full object-cover" />
-      </span>
-
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 font-display text-base font-extrabold">
-          {title}
-          {art
-            ? <Flag tone="bg-space/15 text-space-bright" icon={faCircleCheck}>Set</Flag>
-            : <Flag tone="bg-ink-raised text-white/55" icon={faImage}>Default</Flag>}
-        </p>
-        <p className="mt-1 text-xs leading-snug text-muted">{note}</p>
-        <p className="mt-1 text-mini font-bold uppercase tracking-wide text-white/35">{where}</p>
-
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          {onPick && (
-            <Button size="sm" variant="subtle" icon={faUpload} disabled={busy} onClick={onPick}>
-              {art ? 'Change it' : 'Choose a picture'}
-            </Button>
-          )}
-          {onClear && (
-            <Button size="sm" variant="ghost" icon={faTrash} disabled={busy} onClick={onClear}>
-              Take it off
-            </Button>
-          )}
-          {children}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function CreateWorld() {
   /*
@@ -162,9 +98,7 @@ export default function CreateWorld() {
    * cut it. Better the person who chose the picture decides which part
    * survives than the browser deciding for them.
    */
-  const [cropping, setCropping] = useState<{ file: File; slot: 'emblem' | 'cover' } | null>(null)
 
-  const emblemInput = useRef<HTMLInputElement>(null)
   const shotInput = useRef<HTMLInputElement>(null)
 
   // The form starts as what the World already says, not as blanks that would
@@ -420,42 +354,72 @@ export default function CreateWorld() {
       {/* ------------------------------------------------------------ art */}
       <section>
         <Head>How it looks</Head>
-        <Sheet>
-          <ArtSlot
-            title="Emblem"
-            shape="square"
-            art={art.emblem}
-            note="A square picture. Cut to a square here, so nothing is squashed later."
-            where="Lists · tiles · the Launcher · your Worlds"
-            busy={busy}
-            onPick={() => emblemInput.current?.click()}
-            onClear={art.emblem ? () => void clearArt('emblem') : undefined}
-          />
-          <ArtSlot
-            title="Thumbnail"
-            shape="wide"
-            art={art.cover}
-            note="The first of the pictures below. If that one is a video, it plays with the sound off."
-            where="Its own page · Discover · what gets shared"
-            busy={busy}
-          >
-            <span className="text-xs text-muted">
-              {art.cover ? 'Set from the first picture below.' : 'Add a picture below and it becomes this.'}
-            </span>
-          </ArtSlot>
-        </Sheet>
+        <Sheet className="p-4">
+          <div className="grid gap-5 sm:grid-cols-2">
+            {/*
+              * The same piece a Community sets its emblem with: drag it in
+              * or pick it, cut to shape, a GIF kept whole so it keeps
+              * moving. Two ways of choosing a picture on one site is two
+              * products, and this one was already the better of them.
+              */}
+            <ImageDrop
+              label="Emblem"
+              note="Square. Cut to shape when you pick it."
+              under={(
+                <span className="text-mini font-bold uppercase tracking-wide text-white/35">
+                  Lists · tiles · the Launcher · your Worlds
+                </span>
+              )}
+              file={null}
+              existing={art.emblem ?? DEFAULT_WORLD_EMBLEM}
+              busy={busy}
+              onChange={(chosen) => {
+                if (chosen) void setArt(chosen, 'emblem')
+                else if (art.emblem) void clearArt('emblem')
+              }}
+            />
 
-        <input
-          ref={emblemInput}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            e.target.value = ''
-            if (file) setCropping({ file, slot: 'emblem' })
-          }}
-        />
+            {/* Shown rather than set: it is the first of the pictures below. */}
+            <div>
+              <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">
+                Thumbnail
+              </p>
+              <p className="mb-1 text-xs text-muted">
+                The first of the pictures below. If that one is a video, it plays with the
+                sound off.
+              </p>
+              <p className="mb-2 text-mini font-bold uppercase tracking-wide text-white/35">
+                Its own page · Discover · what gets shared
+              </p>
+
+              <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-ink-line bg-ink-raised p-4 sm:flex-row">
+                <span className="h-20 w-40 shrink-0 overflow-hidden rounded-lg bg-ink-hover">
+                  {art.cover && world.cover_is_video ? (
+                    <video
+                      src={art.cover}
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={art.cover ?? DEFAULT_WORLD_THUMBNAIL}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </span>
+                <p className="flex-1 text-center text-sm text-white/70 sm:text-left">
+                  {art.cover
+                    ? 'Set from the first picture below. Move another one first to change it.'
+                    : 'Add a picture below and it becomes this. Until then, Worlds wear Kobblon\u2019s.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Sheet>
       </section>
 
       {/* -------------------------------------------------------- gallery */}
@@ -694,19 +658,6 @@ export default function CreateWorld() {
         </Sheet>
       </section>
 
-      {/* Square for the emblem, 16/9 for the thumbnail: the cut belongs to
-          the slot, so neither picture is squashed where it is shown. */}
-      <Cropper
-        file={cropping?.file ?? null}
-        open={Boolean(cropping)}
-        aspect={cropping?.slot === 'cover' ? 16 / 9 : 1}
-        onCancel={() => setCropping(null)}
-        onDone={(cut) => {
-          const slot = cropping?.slot ?? 'emblem'
-          setCropping(null)
-          void setArt(cut, slot)
-        }}
-      />
 
     </div>
   )

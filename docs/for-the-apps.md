@@ -25969,3 +25969,21 @@ fetch may have been this**, not the file.
 setup page draws Staw's default World art rather than an empty box, and
 says Default rather than Missing - it is what everybody else is already
 seeing, so the page that sets it should show it too.
+
+## Round four hundred and ten - one way of choosing a picture
+
+`ImageDrop` has moved from `@/components/community/ImageDrop` to
+**`@/components/ui/ImageDrop`**. Same component, same props, two more:
+`busy` (something is uploading, so nothing else may be chosen) and `under`
+(a line under the words, for saying where the picture turns up).
+
+Why it moved: a World's emblem was being chosen through a bare file input
+with a cropper bolted on beside it, while a Community's emblem went
+through this - drag it in or pick it, a size limit with a sentence when it
+is over, **a GIF kept whole so it keeps moving**, and the cropper at the
+right shape. Two ways of doing one thing on one site is two products, and
+this was already the better of them. The World setup page uses it now.
+
+**If the Workspace asks for a picture anywhere, this is the piece**, and
+it is in `@/components/ui` with the rest of the shared set rather than
+inside Communities where nothing else could reasonably import it.
