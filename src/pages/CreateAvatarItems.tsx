@@ -29,7 +29,7 @@ import { Choices } from '@/components/ui/Choices'
 import { Menu } from '@/components/ui/Menu'
 import { Dialog } from '@/components/ui/Dialog'
 import { DateTimeField } from '@/components/ui/DateTimeField'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { HubTop, Chip } from '@/components/create/HubShapes'
 import { Skeleton } from '@/components/ui/States'
 import { useToast } from '@/components/ui/Toast'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -536,11 +536,11 @@ export default function CreateAvatarItems() {
 
   return (
     <Page className="space-y-5">
-      <PageHeader
+      <HubTop
+        icon={faShirt}
         title="Things to Wear"
         lead="Shirts, trousers, t-decals, accessories and hair, for the Catalog."
-        icon={faShirt}
-        actions={<Button to="/catalog" variant="subtle" icon={faStore}>The Catalog</Button>}
+        action={<Button to="/catalog" variant="subtle" icon={faStore}>The Catalog</Button>}
       />
 
       {/*
@@ -570,16 +570,12 @@ export default function CreateAvatarItems() {
             aria-label="Search what you have made"
             className="min-w-[14rem] flex-1"
           />
-          <Choices
-            label="Which of yours"
-            tone="soft"
-            value={showArchived ? 'away' : 'out'}
-            onChange={(next) => setShowArchived(next === 'away')}
-            options={[
-              { value: 'out', label: 'In the Catalog', icon: faStore },
-              { value: 'away', label: `Put away${putAway ? ` (${putAway})` : ''}`, icon: faBoxArchive },
-            ]}
-          />
+          <Chip on={!showArchived} icon={faStore} onClick={() => setShowArchived(false)}>
+            In the Catalog
+          </Chip>
+          <Chip on={showArchived} icon={faBoxArchive} onClick={() => setShowArchived(true)}>
+            {`Put away${putAway ? ` (${putAway})` : ''}`}
+          </Chip>
         </div>
       )}
 
@@ -600,7 +596,7 @@ export default function CreateAvatarItems() {
               * them reading as flat was the whole of Staw's complaint.
               */
             className={cn(
-              'group grid aspect-[3/4] place-items-center gap-2 rounded-xl border-2 border-dashed',
+              'group grid aspect-[3/4] place-items-center gap-2 rounded-2xl border-2 border-b-4 border-dashed',
               'border-ink-line bg-ink-raised text-white/60 transition-colors',
               'hover:border-brand/60 hover:bg-ink-hover hover:text-white',
             )}

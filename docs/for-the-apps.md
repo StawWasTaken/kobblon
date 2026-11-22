@@ -25784,3 +25784,51 @@ not, it goes in a later migration.**
 **Not shipped, for information:** the Creator Hub's eight pages are being
 redesigned and the drawing is at `tools/site/hub-preview.html?page=…`.
 Nothing of it has landed, and the round that lands it will say what moved.
+
+## Round four hundred and six - the Creator Hub, rebuilt on five shapes
+
+Approved from `tools/site/hub-preview` and shipped. The Hub was eight
+pages that looked like eight products - one opened with a hero, one with
+five number tiles, one with a plain heading, one with a form. All eight
+are drawn from the same five pieces now, and they are **exported, so the
+Workspace can use them**: `@/components/create/HubShapes`.
+
+- **`HubTop`** - the mark in a tile, the name in the pixel face, one line
+  of lead, the single action on the right. Every page of the Hub opens
+  with exactly this.
+- **`Stat`** - one number with its mark and the lip, for a strip across
+  the top. The front page, My Uploads, Ads and Analytics all use it.
+- **`Head`** - small caps, a rule out to the edge, an optional way to the
+  rest. It replaces `SectionHeader` inside the Hub.
+- **`Sheet`** + **`HubRow`** - one card per section, rows separated by
+  rules. **No card inside a card anywhere in the Hub any more.**
+- **`Chip`** - a filter with the lip, chosen one in Kobblon blue. It
+  replaces `Choices` on every Hub page.
+
+Also exported from there: `Flag`, `LiveFlag` and `HubTile`, for "live",
+"in review", "showing" and a square of art in a row.
+
+**The rail is a sidebar, not a card.** Staw: keep it like Communities. So
+`CreateRail` is flush against the page with a rule down its right, and a
+row is a picture, a name and a second line, as a Community row is. Its
+eight rooms are grouped under three headings - what you have made, what
+you build with, how it is doing - and `createSections` still exports the
+flat list, same shape as before, in that new order.
+
+**`SettingsRail` is the same sidebar now**, for the same reason. It is
+still the same component with the same props; only its drawing changed.
+On a phone it stays a scrolling row of chips, because there is no margin
+to be flush against.
+
+**Two components you may be drawing:** `WorldWork` wears the **wide**
+picture now (`worldThumbnail`, 16/9) rather than a square emblem - a World
+should look the same here, on its own page and in the Launcher - and
+carries its content number and Set it up / Open. `UploadLine` is a whole
+row that leads to the asset, with its number, how many times it has been
+taken, and its state as a `Flag`.
+
+**Nothing was invented to fill a shape.** No sales count or earnings on
+Things to Wear, because nothing counts avatar sales; no span switch on
+Analytics, because there is no span filter server-side; "Asking to use"
+is still a number rather than a link, because there is still no requests
+page. If you build any of those, say so and the Hub will show them.

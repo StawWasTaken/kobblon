@@ -3,19 +3,20 @@ import { Link, Outlet, useOutletContext, useSearchParams } from 'react-router-do
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faUpload, faMagnifyingGlass, faCircleCheck, faBoxArchive, faTrash, faEllipsis,
-  faBoxOpen, faXmark, faChartSimple, faShapes,
+  faBoxOpen, faXmark, faShapes, faGaugeHigh, faEye, faHandPointer, faGear,
+  faPen, faClock, faThumbsUp, faArrowUpRightFromSquare, faChartSimple,
 } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import { worldIcon } from '@/lib/naming'
+import {
+  HubTop, Stat, Head, Sheet, HubRow, Chip, Flag, LiveFlag, HubTile,
+} from '@/components/create/HubShapes'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { worldEmblem } from '@/lib/worldart'
 import { Select } from '@/components/ui/Select'
-import { Choices } from '@/components/ui/Choices'
 import { Menu } from '@/components/ui/Menu'
 import { Confirm } from '@/components/ui/Confirm'
 import { useToast } from '@/components/ui/Toast'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { SidePanel, Fact } from '@/components/ui/SidePanel'
-import { SectionHeader } from '@/components/ui/SectionHeader'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { GuestGate } from '@/components/ui/GuestGate'
 import { AssetTile, contentTag, kindIcons, kindLabels } from '@/components/create/AssetTile'
@@ -37,7 +38,6 @@ import {
 } from '@/lib/api'
 import type { AssetSort, WorldShelf } from '@/lib/api'
 import { formatCount, timeAgo } from '@/lib/format'
-import { cn } from '@/lib/cn'
 import type { AssetKind, World } from '@/types/db'
 
 type HubContext = {
@@ -125,6 +125,8 @@ export function CreateOverview() {
   }, [mine])
 
   const visits = (worlds.data ?? []).reduce((sum, world) => sum + (world.visit_count ?? 0), 0)
+  const unpublished = (worlds.data ?? []).filter((world) => !world.is_published).length
+  const waiting = (mine.data ?? []).filter((one) => one.status === 'pending').length
   const uses = (rows.data ?? []).reduce((sum, row) => sum + Number(row.uses ?? 0), 0)
   const views = (rows.data ?? []).reduce((sum, row) => sum + Number(row.views ?? 0), 0)
 
@@ -134,141 +136,156 @@ export function CreateOverview() {
   )
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
-            {target ? target.name : 'Creator Hub'}
-          </h1>
-          <p className="mt-1.5 text-muted">
-            {target
-              ? 'Everything this Community has made. What it sells fills its funds.'
-              : 'Everything you have made, and everything you are allowed to build with.'}
-          </p>
-        </div>
-        <GuestGate action="upload">
-          <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
-        </GuestGate>
-      </header>
+    <div className="space-y-7">
+      <HubTop
+        icon={faGaugeHigh}
+        title={target ? target.name : 'Creator Hub'}
+        lead={target
+          ? 'Everything this Community has made. What it sells fills its funds.'
+          : 'Everything you have made, and everything you are allowed to build with.'}
+        action={(
+          <GuestGate action="upload">
+            <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
+          </GuestGate>
+        )}
+      />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
-        <div className="min-w-0 space-y-8">
-          {/*
-            * A Community cannot own a World yet, so working as one this
-            * section would be an empty shelf that looks broken. It is left
-            * out rather than drawn empty, and My Worlds says why.
-            */}
-          {!target && (
-            <section>
-              <div className="mb-3 flex items-center gap-3">
-                <h2 className="font-display text-xl font-extrabold">What you are building</h2>
-                <Link to="/create/worlds" className="ml-auto text-xs font-bold text-link hover:underline">
-                  All my Worlds
-                </Link>
-              </div>
+      {/*
+        * The numbers were a panel down the side you had to look for. They
+        * are a strip now - read in one pass, above the work rather than
+        * instead of it, and still not the biggest thing on the page.
+        */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+        {!target && (
+          <Stat
+            icon={worldIcon}
+            label="Worlds"
+            value={formatCount(worlds.data?.length ?? 0)}
+            note={unpublished > 0 ? `${formatCount(unpublished)} not published` : undefined}
+          />
+        )}
+        {!target && <Stat icon={faEye} label="Visits" value={formatCount(visits)} />}
+        <Stat
+          icon={faUpload}
+          label="Uploads"
+          value={formatCount(mine.data?.length ?? 0)}
+          note={waiting > 0 ? `${formatCount(waiting)} in review` : undefined}
+        />
+        <Stat icon={faEye} label="Views" value={formatCount(views)} />
+        <Stat icon={faHandPointer} label="Uses" value={formatCount(uses)} />
+        {!target && (
+          <Stat
+            icon={faBoxOpen}
+            label="Owned"
+            value={formatCount(inventory.data?.length ?? 0)}
+            note="Yours to build with"
+          />
+        )}
+      </div>
 
-              {worlds.loading && (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 rounded-2xl" />)}
-                </div>
-              )}
+      {/*
+        * A Community cannot own a World yet, so working as one this
+        * section would be an empty shelf that looks broken. It is left
+        * out rather than drawn empty, and My Worlds says why.
+        */}
+      {!target && (
+        <section>
+          <Head all="All my Worlds" to="/create/worlds">What you are building</Head>
 
-              {!worlds.loading && !worlds.data?.length && (
-                <Card>
-                  <EmptyState
-                    mood="noResults"
-                    title="No Worlds yet"
-                    body="Worlds are built in Kobblon Workspace on the desktop. Publish one there and it turns up here, ready to be set up and put in front of people."
-                    action={<Button variant="subtle" to="/download">Get Workspace</Button>}
-                  />
-                </Card>
-              )}
-
-              {!!worlds.data?.length && (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {worlds.data.slice(0, 3).map((world) => (
-                    <WorldWork key={world.id} world={world} onMissing={noWorkspace} />
-                  ))}
-                </div>
-              )}
-            </section>
+          {worlds.loading && (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {[0, 1, 2].map((i) => <Skeleton key={i} className="h-60 rounded-2xl" />)}
+            </div>
           )}
 
-          <section>
-            <div className="mb-3 flex items-center gap-3">
-              <h2 className="font-display text-xl font-extrabold">Latest uploads</h2>
-              <Link to="/create/uploads" className="ml-auto text-xs font-bold text-link hover:underline">
-                All uploads
-              </Link>
+          {!worlds.loading && !worlds.data?.length && (
+            <Sheet>
+              <EmptyState
+                mood="noResults"
+                title="No Worlds yet"
+                body="Worlds are built in Kobblon Workspace on the desktop. Publish one there and it turns up here, ready to be set up and put in front of people."
+                action={<Button variant="subtle" to="/download">Get Workspace</Button>}
+              />
+            </Sheet>
+          )}
+
+          {!!worlds.data?.length && (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {worlds.data.slice(0, 3).map((world) => (
+                <WorldWork key={world.id} world={world} onMissing={noWorkspace} />
+              ))}
             </div>
+          )}
+        </section>
+      )}
 
-            <Card className="overflow-hidden">
-              {mine.loading && (
-                <div className="space-y-2 p-4">{[0, 1].map((i) => <Skeleton key={i} className="h-12" />)}</div>
-              )}
-              {!mine.loading && !mine.data?.length && (
-                <EmptyState
-                  mood="noResults"
-                  title="Nothing uploaded yet"
-                  body="Pictures, sounds, meshes and fonts you put in here are what you build with, and what you can sell."
-                  action={
-                    <GuestGate action="upload">
-                      <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload something</Button>
-                    </GuestGate>
-                  }
-                />
-              )}
-              {!!mine.data?.length && (
-                <ul>
-                  {mine.data.slice(0, 6).map((item) => <UploadLine key={item.id} item={item} />)}
-                </ul>
-              )}
-            </Card>
-          </section>
-        </div>
+      <section>
+        <Head all="All uploads" to="/create/uploads">Latest uploads</Head>
 
-        <aside className="space-y-4 max-lg:order-first lg:sticky lg:top-[4.5rem]">
-          <SidePanel
-            icon={faChartSimple}
-            title="The numbers"
-            to="/create/analytics"
-            all="All of your numbers"
-          >
-            <dl className="divide-y divide-ink-line">
-              {!target && <Fact label="Worlds" value={formatCount(worlds.data?.length ?? 0)} />}
-              {!target && <Fact label="Visits to your Worlds" value={formatCount(visits)} />}
-              <Fact label="Uploads" value={formatCount(mine.data?.length ?? 0)} />
-              <Fact label="Views of your content" value={formatCount(views)} />
-              <Fact label="Uses of your content" value={formatCount(uses)} />
-            </dl>
-            {!rows.data?.length && (
-              <p className="mt-2 text-mini leading-snug text-muted">
-                Views and uses start counting once people find your work.
-              </p>
-            )}
-          </SidePanel>
+        <Sheet>
+          {mine.loading && (
+            <div className="space-y-2 p-4">{[0, 1].map((i) => <Skeleton key={i} className="h-12" />)}</div>
+          )}
+          {!mine.loading && !mine.data?.length && (
+            <EmptyState
+              mood="noResults"
+              title="Nothing uploaded yet"
+              body="Pictures, sounds, meshes and fonts you put in here are what you build with, and what you can sell."
+              action={
+                <GuestGate action="upload">
+                  <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload something</Button>
+                </GuestGate>
+              }
+            />
+          )}
+          {!!mine.data?.length && (
+            <ul>
+              {mine.data.slice(0, 6).map((item) => <UploadLine key={item.id} item={item} />)}
+            </ul>
+          )}
+        </Sheet>
+      </section>
 
-          <SidePanel
+      {/* The two shelves that are not your own work: what you can take, and
+          what you have taken. A row each, because neither is a number. */}
+      <section>
+        <Head>Where to get more</Head>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Shortcut
+            icon={faShapes}
+            title="Marketplace"
+            note="Everything anybody on Kobblon has put up to be built with, free and paid."
+            to="/create/marketplace"
+          />
+          <Shortcut
             icon={faBoxOpen}
-            title="Yours to build with"
+            title="Inventory"
+            note={`${formatCount(inventory.data?.length ?? 0)} things you own, from the Marketplace and your own uploads.`}
             to="/create/inventory"
-            all="Open your inventory"
-          >
-            <p className="font-display text-2xl font-extrabold tabular-nums">
-              {formatCount(inventory.data?.length ?? 0)}
-            </p>
-            <p className="text-xs text-muted">
-              Things you own, from the Marketplace and your own uploads.
-            </p>
-          </SidePanel>
+          />
+        </div>
+      </section>
+    </div>
+  )
+}
 
-          <SidePanel icon={faShapes} title="Need something" to="/create/marketplace" all="Open the Marketplace">
-            <p className="text-xs leading-relaxed text-muted">
-              Everything anybody on Kobblon has put up to be built with, free and paid.
-            </p>
-          </SidePanel>
-        </aside>
+/** One of the two places to get more, on the front page. */
+function Shortcut({ icon, title, note, to }: {
+  icon: IconDefinition
+  title: string
+  note: string
+  to: string
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-ink-line bg-ink-raised text-brand-bright">
+        <Glyph icon={icon} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-display text-base font-extrabold">{title}</p>
+        <p className="mt-0.5 text-xs leading-snug text-muted">{note}</p>
       </div>
+      <Button size="sm" variant="subtle" to={to}>Open it</Button>
     </div>
   )
 }
@@ -307,9 +324,11 @@ export function CreateWorlds() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
+      <HubTop
+        icon={worldIcon}
         title={target ? `${target.name}'s Worlds` : 'My Worlds'}
-        lead="Built in Creator, played in the Launcher, and set up here or there."
+        lead="Built in Kobblon Workspace, played in the Launcher, and set up here or there."
+        action={<Button variant="subtle" icon={faArrowUpRightFromSquare} to="/download">Get Workspace</Button>}
       />
 
       {/*
@@ -318,26 +337,27 @@ export function CreateWorlds() {
         * saying so beats an empty list that looks broken.
         */}
       {target ? (
-        <Card>
+        <Sheet>
           <EmptyState
             mood="noResults"
             title="Worlds are not handed to Communities yet"
-            body={`A World belongs to whoever built it. Switch back to yourself to see yours.`}
+            body="A World belongs to whoever built it. Switch back to yourself to see yours."
           />
-        </Card>
+        </Sheet>
       ) : (
         <>
-          <Choices
-            label="Which of your Worlds"
-            value={shelf}
-            options={shelves}
-            onChange={(value) => setShelf(value as WorldShelf)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            {shelves.map((one) => (
+              <Chip key={one.value} on={shelf === one.value} onClick={() => setShelf(one.value)}>
+                {one.label}
+              </Chip>
+            ))}
+          </div>
 
-          {worlds.loading && <Skeleton className="h-32" />}
+          {worlds.loading && <Skeleton className="h-32 rounded-2xl" />}
 
           {!worlds.loading && !worlds.data?.length && (
-            <Card>
+            <Sheet>
               <EmptyState
                 mood="noResults"
                 title={shelf === 'archived' ? 'Nothing put away' : 'No Worlds yet'}
@@ -348,73 +368,86 @@ export function CreateWorlds() {
                   ? undefined
                   : <Button variant="subtle" to="/download">Get Workspace</Button>}
               />
-            </Card>
+            </Sheet>
           )}
 
           {!!worlds.data?.length && (
-            <Card className="overflow-hidden">
-              <ul>
-                {worlds.data.map((world) => (
-                  <li
-                    key={world.id}
-                    className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0"
-                  >
-                    <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-brand-ink">
-                      <img src={worldEmblem(world)} alt="" className="h-full w-full object-cover" />
+            <Sheet>
+              {worlds.data.map((world) => (
+                <HubRow key={world.id} className="py-3.5">
+                  <HubTile src={worldEmblem(world)} />
+
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <Link
+                        to={`/create/worlds/${world.id}`}
+                        className="truncate text-sm font-extrabold hover:text-link"
+                      >
+                        {world.name}
+                      </Link>
+                      {world.is_published
+                        ? <LiveFlag />
+                        : <Flag tone="bg-ink-raised text-white/55" icon={faPen}>Draft</Flag>}
+                      {world.archived_at && (
+                        <Flag tone="bg-ink-raised text-white/55" icon={faBoxArchive}>Archived</Flag>
+                      )}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold">{world.name}</span>
-                      {/*
-                        * The same six things Creator shows in its own list,
-                        * in the same order, read from the same my_worlds():
-                        * a World that looks like one thing on the desktop
-                        * and another here is two products.
-                        */}
-                      <span className="block truncate text-xs text-muted">
-                        {/* Out in the world, so it is said in the colour
-                            Kobblon says alive in. */}
-                        {world.is_published && (
-                          <span className="mr-1.5 inline-flex items-center gap-1 font-bold text-space-bright">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-space-bright" />
-                            Live
-                          </span>
-                        )}
-                        {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
-                        {world.is_published ? '' : ' · not published'}
-                        {world.archived_at ? ' · archived' : ''}
-                        {' · '}
+
+                    <span className="mt-0.5 block truncate font-mono text-mini text-muted">
+                      {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
+                    </span>
+
+                    {/*
+                      * The same facts Workspace shows in its own list, in
+                      * the same order, read from the same my_worlds(): a
+                      * World that looks like one thing on the desktop and
+                      * another here is two products.
+                      */}
+                    <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-mini font-bold text-muted">
+                      <span className="inline-flex items-center gap-1">
+                        <Glyph icon={faEye} />
                         {formatCount(world.visit_count)} {world.visit_count === 1 ? 'visit' : 'visits'}
-                        {world.updated_at ? ` · saved ${timeAgo(world.updated_at)}` : ''}
-                        {` · ${formatCount(world.like_count ?? 0)} ${world.like_count === 1 ? 'like' : 'likes'}`}
                       </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Glyph icon={faThumbsUp} on />
+                        {formatCount(world.like_count ?? 0)} {world.like_count === 1 ? 'like' : 'likes'}
+                      </span>
+                      {world.updated_at && (
+                        <span className="inline-flex items-center gap-1">
+                          <Glyph icon={faClock} />
+                          saved {timeAgo(world.updated_at)}
+                        </span>
+                      )}
                     </span>
+                  </span>
 
-                    <Button size="sm" variant="ghost" to={`/create/worlds/${world.id}`}>Configure</Button>
+                  <Button size="sm" variant="subtle" icon={faGear} to={`/create/worlds/${world.id}`}>
+                    Set it up
+                  </Button>
 
-                    <Menu
-                      label={`More for ${world.name}`}
-                      trigger={<Glyph icon={faEllipsis} />}
-                      items={[
-                        {
-                          label: world.archived_at ? 'Take out of the archive' : 'Archive',
-                          icon: faBoxArchive,
-                          onSelect: () => void run(
-                            () => archiveWorld(world.id, !world.archived_at),
-                            world.archived_at ? 'Back in use.' : 'Put away.',
-                          ),
-                        },
-                        {
-                          label: 'Delete',
-                          icon: faTrash,
-                          danger: true,
-                          onSelect: () => setRemoving(world),
-                        },
-                      ]}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </Card>
+                  <Menu
+                    label={`More for ${world.name}`}
+                    trigger={<Glyph icon={faEllipsis} />}
+                    items={[
+                      {
+                        label: world.archived_at ? 'Take out of the archive' : 'Archive',
+                        icon: faBoxArchive,
+                        onSelect: () => void run(
+                          () => archiveWorld(world.id, !world.archived_at),
+                          world.archived_at ? 'Back in use.' : 'Put away.',
+                        ),
+                      },
+                      {
+                        label: 'Delete',
+                        icon: faTrash,
+                        danger: true,
+                        onSelect: () => setRemoving(world),
+                      },
+                    ]}
+                  />
+                </HubRow>
+              ))}
+            </Sheet>
           )}
         </>
       )}
@@ -502,111 +535,91 @@ export function CreateMarketplace() {
 
   return (
     <div className="space-y-6">
+      <HubTop
+        icon={faShapes}
+        title="Creator Marketplace"
+        lead="Pictures, sounds, video, fonts and models, made by people here."
+        action={(
+          <GuestGate action="upload">
+            <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
+          </GuestGate>
+        )}
+      />
+
       {/* The search is the page, so it opens the page rather than sitting in
-          a corner of it. */}
-      <section className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-5 py-7 sm:px-8 sm:py-9">
-
+          a corner of it - in the Hub's own card now rather than a hero of
+          its own, because every other page here wears this one. */}
+      <section className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-4 sm:p-5">
         <div className="relative">
-          <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Creator Marketplace</h1>
-          <p className="mt-1.5 max-w-xl text-sm text-muted">
-            Pictures, sounds, video, fonts and models, made by people here.
-          </p>
-
-          <div className="mt-5 flex flex-col gap-3 lg:flex-row">
-            <div className="relative flex-1">
-              <Glyph
-                icon={faMagnifyingGlass}
-                className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-white/35"
-              />
-              <input
-                ref={field}
-                value={term}
-                onChange={(e) => setTerm(e.target.value)}
-                placeholder="Search by name, by what it is, or by who made it"
-                aria-label="Search the marketplace"
-                className="h-14 w-full rounded-2xl border-2 border-b-4 border-ink-line bg-ink-raised pl-12 pr-24 text-base font-semibold transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
-              />
-              {term ? (
-                <button
-                  onClick={() => setTerm('')}
-                  aria-label="Clear the search"
-                  className="absolute right-4 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
-                >
-                  <Glyph icon={faXmark} />
-                </button>
-              ) : (
-                <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-lg border-2 border-ink-line px-2 py-0.5 text-mini font-bold text-white/35 sm:block">
-                  /
-                </kbd>
-              )}
-            </div>
-
-            <GuestGate action="upload">
-              <Button size="lg" icon={faUpload} onClick={openUpload} disabled={!profile}>
-                Upload
-              </Button>
-            </GuestGate>
-          </div>
-
-          {/* Who made it */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">Made by</span>
-
+          <Glyph
+            icon={faMagnifyingGlass}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/35"
+          />
+          <input
+            ref={field}
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="Search by name, by what it is, or by who made it"
+            aria-label="Search the marketplace"
+            className="h-14 w-full rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised pl-12 pr-24 text-base font-semibold transition-colors placeholder:font-normal placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
+          />
+          {term ? (
             <button
-              onClick={() => { setMaker(''); setMakerDraft('') }}
-              aria-pressed={!maker}
-              className={cn(
-                'h-8 rounded-lg px-3 text-xs font-bold transition-colors',
-                !maker ? 'bg-brand text-onbrand' : 'bg-ink-hover text-white/65 hover:text-white',
-              )}
+              onClick={() => setTerm('')}
+              aria-label="Clear the search"
+              className="absolute right-4 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-white/45 transition-colors hover:bg-ink-hover hover:text-white"
             >
-              Anybody
+              <Glyph icon={faXmark} />
             </button>
+          ) : (
+            <kbd className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-lg border-2 border-ink-line px-2 py-0.5 text-mini font-bold text-white/35 sm:block">
+              /
+            </kbd>
+          )}
+        </div>
 
-            <button
-              onClick={() => { setMaker('kobblon'); setMakerDraft('kobblon') }}
-              aria-pressed={maker.toLowerCase() === 'kobblon'}
-              className={cn(
-                'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-colors',
-                maker.toLowerCase() === 'kobblon'
-                  ? 'bg-brand text-onbrand'
-                  : 'bg-ink-hover text-white/65 hover:text-white',
-              )}
-            >
-              <Glyph icon={faCircleCheck} className="text-[#4d68ff]" />
-              Kobblon
-            </button>
+        {/* Who made it */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-mini font-extrabold uppercase tracking-wide text-muted">Made by</span>
 
-            <form
-              onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
-              className="flex items-center gap-1.5"
-            >
-              <span className="text-xs text-muted">@</span>
-              <input
-                value={makerDraft}
-                onChange={(e) => setMakerDraft(e.target.value)}
-                onBlur={() => setMaker(makerDraft.trim())}
-                placeholder="somebody"
-                aria-label="Made by which person"
-                className="h-8 w-32 rounded-lg border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 text-xs font-semibold placeholder:text-white/30 focus:border-brand-bright focus:outline-none"
-              />
-            </form>
-          </div>
+          <Chip on={!maker} onClick={() => { setMaker(''); setMakerDraft('') }}>Anybody</Chip>
+          <Chip
+            on={maker.toLowerCase() === 'kobblon'}
+            icon={faCircleCheck}
+            onClick={() => { setMaker('kobblon'); setMakerDraft('kobblon') }}
+          >
+            Kobblon
+          </Chip>
+
+          <form
+            onSubmit={(e) => { e.preventDefault(); setMaker(makerDraft.trim()) }}
+            className="inline-flex h-9 items-center gap-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-2.5"
+          >
+            <span className="text-xs text-muted">@</span>
+            <input
+              value={makerDraft}
+              onChange={(e) => setMakerDraft(e.target.value)}
+              onBlur={() => setMaker(makerDraft.trim())}
+              placeholder="somebody"
+              aria-label="Made by which person"
+              className="w-28 bg-transparent text-xs font-semibold placeholder:text-white/30 focus:outline-none"
+            />
+          </form>
         </div>
       </section>
 
       {/* What kind of thing, and in what order */}
       <div className="sticky kob-under-bar z-20 -mx-4 flex flex-wrap items-center gap-2 bg-ink/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <Choices
-          label="What kind of content"
-          value={kind}
-          options={kinds.map((k) => ({
-            value: k,
-            label: k === 'all' ? 'Everything' : kindLabels[k],
-            icon: k === 'all' ? undefined : kindIcons[k],
-          }))}
-          onChange={(next) => setKind(next)}
-        />
+        {kinds.map((one) => (
+          <Chip
+            key={one}
+            on={kind === one}
+            icon={one === 'all' ? undefined : kindIcons[one]}
+            onClick={() => setKind(one)}
+          >
+            {one === 'all' ? 'Everything' : kindLabels[one]}
+          </Chip>
+        ))}
 
         <div className="ml-auto flex items-center gap-2">
           <Select
@@ -633,9 +646,9 @@ export function CreateMarketplace() {
               ? 'Looking'
               : `${formatCount(market.data?.length ?? 0)} ${market.data?.length === 1 ? 'result' : 'results'}`}
           </span>
-          {debounced && <Chip onClear={() => setTerm('')}>&ldquo;{debounced}&rdquo;</Chip>}
-          {maker && <Chip onClear={() => { setMaker(''); setMakerDraft('') }}>by @{maker}</Chip>}
-          {kind !== 'all' && <Chip onClear={() => setKind('all')}>{kindLabels[kind]}</Chip>}
+          {debounced && <Crumb onClear={() => setTerm('')}>&ldquo;{debounced}&rdquo;</Crumb>}
+          {maker && <Crumb onClear={() => { setMaker(''); setMakerDraft('') }}>by @{maker}</Crumb>}
+          {kind !== 'all' && <Crumb onClear={() => setKind('all')}>{kindLabels[kind]}</Crumb>}
           <button onClick={clearAll} className="text-xs font-bold text-link hover:underline">
             Clear all
           </button>
@@ -645,14 +658,9 @@ export function CreateMarketplace() {
       {/* Kobblon's own shelf, when nothing has been asked for */}
       {!filtering && !!official.data?.length && (
         <section>
-          <SectionHeader title="Made by Kobblon" icon={faCircleCheck}>
-            <button
-              onClick={() => { setMaker('kobblon'); setMakerDraft('kobblon') }}
-              className="text-xs font-bold text-link hover:underline"
-            >
-              See all
-            </button>
-          </SectionHeader>
+          <Head all="See all" onAll={() => { setMaker('kobblon'); setMakerDraft('kobblon') }}>
+            Made by Kobblon
+          </Head>
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 kob-scroll">
             {official.data.map((item) => (
               <div key={item.id} className="w-40 shrink-0 sm:w-44">
@@ -664,12 +672,12 @@ export function CreateMarketplace() {
       )}
 
       {!filtering && (
-        <h2 className="font-display text-xl font-extrabold">
+        <Head>
           {sort === 'new' ? 'Just uploaded'
             : sort === 'used' ? 'Used the most'
               : sort === 'rated' ? 'Rated the best'
                 : 'Cheapest first'}
-        </h2>
+        </Head>
       )}
 
       {market.loading && (
@@ -681,9 +689,9 @@ export function CreateMarketplace() {
       {market.error && <ErrorState message={market.error} onRetry={market.reload} />}
 
       {!market.loading && !market.error && !market.data?.length && (
-        <Card>
+        <Sheet>
           <EmptyState
-            mood={filtering ? 'noResults' : 'noResults'}
+            mood="noResults"
             title={filtering ? 'Kobby could not find anything' : 'Nothing here yet'}
             body={
               filtering
@@ -694,7 +702,7 @@ export function CreateMarketplace() {
               ? <Button variant="subtle" onClick={clearAll}>Clear the filters</Button>
               : undefined}
           />
-        </Card>
+        </Sheet>
       )}
 
       {!!market.data?.length && (
@@ -707,7 +715,7 @@ export function CreateMarketplace() {
 }
 
 /** One thing you have asked for, with a way to take it back off. */
-function Chip({ children, onClear }: { children: React.ReactNode; onClear: () => void }) {
+function Crumb({ children, onClear }: { children: React.ReactNode; onClear: () => void }) {
   return (
     <span className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-ink-hover px-2.5 text-xs font-bold">
       {children}
@@ -729,21 +737,29 @@ export function CreateInventory() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
+      <HubTop
+        icon={faBoxOpen}
         title="Inventory"
         lead={"Your own work and everything you have taken from the marketplace, Kobblon's "
           + 'included. Copy an id and paste it into a World.'}
+        action={<Button variant="subtle" icon={faShapes} to="/create/marketplace">Marketplace</Button>}
       />
 
-      <Choices
-        label="What kind of content"
-        value={kind}
-        options={kinds.map((k) => ({
-          value: k,
-          label: k === 'all' ? 'Everything' : kindLabels[k],
-        }))}
-        onChange={(next) => setKind(next)}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        {kinds.map((one) => (
+          <Chip
+            key={one}
+            on={kind === one}
+            icon={one === 'all' ? undefined : kindIcons[one]}
+            onClick={() => setKind(one)}
+          >
+            {one === 'all' ? 'Everything' : kindLabels[one]}
+          </Chip>
+        ))}
+        <span className="ml-auto text-xs font-bold text-muted">
+          {formatCount(shown.length)} {shown.length === 1 ? 'thing' : 'things'}
+        </span>
+      </div>
 
       {inventory.loading && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
@@ -752,14 +768,14 @@ export function CreateInventory() {
       )}
 
       {!inventory.loading && !shown.length && (
-        <Card>
+        <Sheet>
           <EmptyState
             mood="noResults"
             title="Nothing here yet"
             body="Take something from the marketplace and it lands here, free or paid."
             action={<Button to="/create/marketplace">Open the marketplace</Button>}
           />
-        </Card>
+        </Sheet>
       )}
 
       {!!shown.length && (
@@ -784,66 +800,97 @@ export function CreateAnalytics() {
     [profile?.id, target?.id],
   )
 
+  const views = (rows.data ?? []).reduce((sum, row) => sum + Number(row.views ?? 0), 0)
+  const uses = (rows.data ?? []).reduce((sum, row) => sum + Number(row.uses ?? 0), 0)
+  const asking = (rows.data ?? []).reduce((sum, row) => sum + Number(row.pending_requests ?? 0), 0)
+  const askedOn = (rows.data ?? []).filter((row) => Number(row.pending_requests ?? 0) > 0).length
+
   return (
     <div className="space-y-5">
-      <PageHeader
+      <HubTop
+        icon={faChartSimple}
         title="Analytics"
         lead="Counted as they happen, not as unique people. Open an item for its last thirty days."
+        action={<Button variant="subtle" icon={faUpload} to="/create/uploads">My Uploads</Button>}
       />
 
-      {rows.loading && <Skeleton className="h-40" />}
+      {!!rows.data?.length && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat icon={faEye} label="Views" value={formatCount(views)} />
+          <Stat icon={faHandPointer} label="Uses" value={formatCount(uses)} />
+          <Stat icon={faUpload} label="Items counted" value={formatCount(rows.data.length)} />
+          <Stat
+            icon={faClock}
+            tone={asking > 0 ? 'text-warn-bright' : undefined}
+            label="Asking to use"
+            value={formatCount(asking)}
+            note={askedOn > 0 ? `Across ${askedOn} ${askedOn === 1 ? 'item' : 'items'}` : undefined}
+          />
+        </div>
+      )}
+
+      {rows.loading && <Skeleton className="h-40 rounded-2xl" />}
 
       {!rows.loading && !rows.data?.length && (
-        <Card>
+        <Sheet>
           <EmptyState
             mood="noResults"
             title="Nothing to measure yet"
             body="Upload something and its numbers appear here."
           />
-        </Card>
+        </Sheet>
       )}
 
       {!!rows.data?.length && (
-        <Card className="overflow-hidden">
-          <div className="hidden grid-cols-[1fr_5rem_5rem_6rem] gap-3 border-b border-ink-line px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-muted sm:grid">
+        <Sheet>
+          <div className="hidden grid-cols-[1fr_6rem_6rem_7rem] gap-3 border-b-2 border-ink-line bg-ink-raised/60 px-4 py-2.5 text-mini font-extrabold uppercase tracking-wide text-muted sm:grid">
             <span>Item</span>
             <span className="text-right">Views</span>
             <span className="text-right">Uses</span>
-            <span className="text-right">Requests</span>
+            <span className="text-right">Asking to use</span>
           </div>
           <ul>
             {rows.data.map((row) => (
               <li
                 key={row.asset_id}
-                className="grid grid-cols-[1fr_auto] gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0 sm:grid-cols-[1fr_5rem_5rem_6rem]"
+                className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-ink-line px-4 py-3 transition-colors last:border-0 hover:bg-ink-hover sm:grid-cols-[1fr_6rem_6rem_7rem]"
               >
-                <span className="min-w-0">
-                  <Link
-                    to={`/create/${contentTag(row.kind, row.content_id)}`}
-                    className="block truncate text-sm font-bold hover:text-link"
-                  >
-                    {row.name}
-                  </Link>
-                  <span className="font-mono text-xs text-muted">
-                    {contentTag(row.kind, row.content_id)}
+                <span className="flex min-w-0 items-center gap-3">
+                  <HubTile size="sm">
+                    <Glyph icon={kindIcons[row.kind]} className="text-brand-bright" />
+                  </HubTile>
+                  <span className="min-w-0">
+                    <Link
+                      to={`/create/${contentTag(row.kind, row.content_id)}`}
+                      className="block truncate text-sm font-bold hover:text-link"
+                    >
+                      {row.name}
+                    </Link>
+                    <span className="block font-mono text-mini text-muted">
+                      {contentTag(row.kind, row.content_id)}
+                    </span>
                   </span>
                 </span>
-                <span className="text-right text-sm tabular-nums">{formatCount(Number(row.views))}</span>
-                <span className="hidden text-right text-sm tabular-nums sm:block">
+                <span className="text-right text-sm font-bold tabular-nums">
+                  {formatCount(Number(row.views))}
+                </span>
+                <span className="hidden text-right text-sm font-bold tabular-nums sm:block">
                   {formatCount(Number(row.uses))}
                 </span>
-                <span className="hidden text-right text-sm tabular-nums sm:block">
-                  {/* A number, not a link. There is no requests page and
-                      no function behind one, and a link to a page nobody
-                      built lands on the content route below it and reads
-                      as a broken asset. When requests get a screen, this
-                      becomes a link again. */}
-                  {formatCount(Number(row.pending_requests))}
+                <span className="hidden text-right text-sm font-bold tabular-nums sm:block">
+                  {/* A number, not a link. There is no requests page and no
+                      function behind one, and a link to a page nobody built
+                      lands on the content route below it and reads as a
+                      broken asset. When requests get a screen, this becomes
+                      a link again. */}
+                  {Number(row.pending_requests) > 0
+                    ? <span className="text-warn-bright">{formatCount(Number(row.pending_requests))}</span>
+                    : <span className="text-muted">0</span>}
                 </span>
               </li>
             ))}
           </ul>
-        </Card>
+        </Sheet>
       )}
     </div>
   )

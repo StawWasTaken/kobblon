@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
-import { faCube } from '@fortawesome/free-solid-svg-icons'
+import { faCube, faGear, faPen } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
+import { Flag, LiveFlag } from '@/components/create/HubShapes'
 import { editInWorkspace } from '@/lib/app'
-import { worldEmblem } from '@/lib/worldart'
+import { worldThumbnail } from '@/lib/worldart'
 import { formatCount, timeAgo } from '@/lib/format'
 import type { World } from '@/types/db'
 
@@ -19,30 +20,37 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
   return (
     <article className="group overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60">
       <Link to={`/create/worlds/${world.id}`} className="block">
-        <span className="relative block aspect-square w-full overflow-hidden bg-brand-ink">
-          <img src={worldEmblem(world)} alt="" className="h-full w-full object-cover" />
-          {/* Out in the world, said in the colour Kobblon says alive in. */}
-          {world.is_published && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-ink/80 px-2 py-0.5 text-tiny font-bold text-space-bright backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-space-bright" />
-              Live
-            </span>
-          )}
+        {/* The wide picture, because that is what a World wears on its own
+            page and in the Launcher - a square here and a cover there is
+            two ideas of what a World looks like. */}
+        <span className="relative block aspect-video w-full overflow-hidden bg-brand-ink">
+          <img src={worldThumbnail(world)} alt="" className="h-full w-full object-cover" />
+          <span className="absolute left-2 top-2">
+            {world.is_published
+              ? <LiveFlag />
+              : <Flag tone="bg-ink/85 text-white/60" icon={faPen}>Draft</Flag>}
+          </span>
         </span>
       </Link>
 
       <div className="p-3">
-        <Link to={`/create/worlds/${world.id}`} className="block truncate text-sm font-bold hover:underline">
+        <Link to={`/create/worlds/${world.id}`} className="block truncate font-display text-base font-extrabold hover:underline">
           {world.name}
         </Link>
+        <p className="mt-0.5 truncate font-mono text-mini text-muted">
+          {world.content_id ? `WLD-${world.content_id}` : 'No number yet'}
+        </p>
         <p className="mt-0.5 truncate text-xs text-muted">
           {world.is_published
-            ? `${formatCount(world.visit_count)} ${world.visit_count === 1 ? 'visit' : 'visits'}`
+            ? `${formatCount(world.visit_count ?? 0)} ${world.visit_count === 1 ? 'visit' : 'visits'}`
             : 'Not published'}
           {world.updated_at ? ` · saved ${timeAgo(world.updated_at)}` : ''}
         </p>
 
         <div className="mt-3 flex gap-2">
+          <Button size="sm" variant="subtle" className="flex-1" icon={faGear} to={`/create/worlds/${world.id}`}>
+            Set it up
+          </Button>
           {/*
             * Building happens on the desktop, so this hands the World over
             * rather than pretending a browser tab can open it. If Workspace
@@ -50,14 +58,12 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
             */}
           <Button
             size="sm"
-            variant="subtle"
-            className="flex-1"
+            variant="ghost"
             icon={faCube}
             onClick={() => { void editInWorkspace(world.id, onMissing) }}
           >
             Open
           </Button>
-          <Button size="sm" variant="ghost" to={`/create/worlds/${world.id}`}>Set up</Button>
         </div>
       </div>
     </article>

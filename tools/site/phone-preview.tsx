@@ -33,7 +33,11 @@ import Standing from '@/pages/Standing'
 import Support from '@/pages/Support'
 import MyAvatar from '@/pages/MyAvatar'
 import Admin from '@/pages/Admin'
-import CreateHub, { CreateOverview, CreateWorlds, CreateInventory } from '@/pages/CreateHub'
+import CreateHub, {
+  CreateOverview, CreateWorlds, CreateInventory, CreateMarketplace, CreateAnalytics,
+} from '@/pages/CreateHub'
+import CreateUploads from '@/pages/CreateUploads'
+import CreateAds from '@/pages/CreateAds'
 import '@/index.css'
 
 /*
@@ -98,6 +102,15 @@ export const PAGES: Record<string, { at: string; show: () => React.JSX.Element }
   standing: { at: '/standing', show: Standing },
   support: { at: '/support', show: Support },
   staff: { at: '/staff', show: Admin },
+  /* The Hub is a layout with children, so `at` carries the room and the
+     routes below mount the layout rather than the page. */
+  create: { at: '/create', show: Home },
+  'create-worlds': { at: '/create/worlds', show: Home },
+  'create-uploads': { at: '/create/uploads', show: Home },
+  'create-marketplace': { at: '/create/marketplace', show: Home },
+  'create-inventory': { at: '/create/inventory', show: Home },
+  'create-ads': { at: '/create/ads', show: Home },
+  'create-analytics': { at: '/create/analytics', show: Home },
 }
 
 const which = new URLSearchParams(location.search).get('page') ?? 'home'
@@ -119,7 +132,11 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/create" element={<CreateHub />}>
                   <Route index element={<CreateOverview />} />
                   <Route path="worlds" element={<CreateWorlds />} />
+                  <Route path="uploads" element={<CreateUploads />} />
+                  <Route path="marketplace" element={<CreateMarketplace />} />
                   <Route path="inventory" element={<CreateInventory />} />
+                  <Route path="ads" element={<CreateAds />} />
+                  <Route path="analytics" element={<CreateAnalytics />} />
                 </Route>
               ) : (
                 <Route path="*" element={<Shown />} />

@@ -6,7 +6,7 @@ import {
   faClock,
 } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { HubTop, Stat, Sheet, Flag, LiveFlag } from '@/components/create/HubShapes'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
@@ -165,6 +165,9 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 font-display text-lg font-extrabold">
             <span className="truncate">{campaign.name}</span>
+            {campaign.is_running
+              ? <LiveFlag />
+              : <Flag tone="bg-ink-raised text-white/55" icon={faStop}>Finished</Flag>}
             <button
               onClick={onRename}
               aria-label="Rename this campaign"
@@ -200,7 +203,7 @@ function CampaignCard({ campaign, onChanged, onRenew, onRemove, onRename, onCloc
             )}
           </div>
 
-          <div className="mt-2 h-1.5 w-full max-w-md overflow-hidden rounded-full bg-ink-raised">
+          <div className="mt-2.5 h-2 w-full max-w-md overflow-hidden rounded-full border-2 border-ink-line bg-ink-raised">
             <span
               style={{
                 width: `${Math.min(100, (campaign.spent / Math.max(1, campaign.budget - campaign.refunded)) * 100)}%`,
@@ -396,34 +399,60 @@ export default function CreateAds() {
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Ads</h1>
-          <p className="mt-1.5 max-w-xl text-sm text-muted">
-            A campaign holds the name, the {currency.plural} and the clock, up to a month of it. The ads
-            inside it are the work:
-            as many as you like, each with its own decal, shape and destination, changed or
-            rested without touching what you paid.
-          </p>
-        </div>
+      <HubTop
+        icon={faRectangleAd}
+        title="Ads"
+        lead={`A campaign holds the name, the ${currency.plural} and the clock, up to a month of it. `
+          + 'The ads inside it are the work: as many as you like, each with its own decal, shape '
+          + 'and destination, changed or rested without touching what you paid.'}
+        action={(
+          <Button icon={faPlus} onClick={() => setStarting(true)} disabled={!profile}>
+            Start a campaign
+          </Button>
+        )}
+      />
 
-        <Button icon={faPlus} onClick={() => setStarting(true)} disabled={!profile}>
-          Start a campaign
-        </Button>
-      </header>
+      {/* How the whole lot is doing, before the campaigns one by one. */}
+      {!!campaigns.data?.length && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat
+            icon={faRectangleAd}
+            label="Running"
+            value={formatCount(campaigns.data.filter((one) => one.is_running).length)}
+            note={`of ${formatCount(campaigns.data.length)}`}
+          />
+          <Stat
+            icon={faEye}
+            label="Views"
+            value={formatCount(campaigns.data.reduce((sum, one) => sum + one.views, 0))}
+          />
+          <Stat
+            icon={faHandPointer}
+            label="Presses"
+            value={formatCount(campaigns.data.reduce((sum, one) => sum + one.clicks, 0))}
+          />
+          <Stat
+            icon={faHourglassHalf}
+            label={`${currency.plural} left`}
+            value={formatCount(campaigns.data.reduce(
+              (sum, one) => sum + Math.max(0, one.budget - one.spent - one.refunded), 0,
+            ))}
+          />
+        </div>
+      )}
 
       {campaigns.loading && <Skeleton className="h-40 rounded-2xl" />}
       {campaigns.error && <ErrorState message={campaigns.error} onRetry={campaigns.reload} />}
 
       {!campaigns.loading && !campaigns.data?.length && (
-        <Card>
+        <Sheet>
           <EmptyState
             mood="noResults"
             title="No campaigns yet"
             body={`Some ${currency.plural} and a month at most, shown across Kobblon.`}
             action={<Button icon={faRectangleAd} onClick={() => setStarting(true)}>Start one</Button>}
           />
-        </Card>
+        </Sheet>
       )}
 
       {!!campaigns.data?.length && (

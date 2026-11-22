@@ -4,10 +4,8 @@ import {
   faUpload, faMagnifyingGlass, faTableCellsLarge, faList,
   faCircleCheck, faCircleXmark, faClock, faHardDrive, faFileArrowDown,
 } from '@fortawesome/free-solid-svg-icons'
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { Choices } from '@/components/ui/Choices'
+import { HubTop, Stat, Sheet, Chip } from '@/components/create/HubShapes'
 import { Input } from '@/components/ui/Input'
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/States'
 import { GuestGate } from '@/components/ui/GuestGate'
@@ -30,23 +28,6 @@ const kinds: (AssetKind | 'all')[] = ['all', 'image', 'audio', 'video', 'font', 
 const states: (ModerationStatus | 'all')[] = ['all', 'approved', 'pending', 'rejected']
 
 /* ------------------------------------------------------------------ page */
-
-function Tally({ icon, label, value, tone }: {
-  icon: IconDefinition
-  label: string
-  value: string
-  tone?: string
-}) {
-  return (
-    <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3">
-      <p className="flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
-        <Glyph icon={icon} className={tone} />
-        {label}
-      </p>
-      <p className="mt-1 font-display text-2xl font-extrabold tabular-nums">{value}</p>
-    </div>
-  )
-}
 
 export default function CreateUploads() {
   useTitle('My Uploads', CREATE)
@@ -129,21 +110,18 @@ export default function CreateUploads() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
-            {target ? `${target.name}'s uploads` : 'My Uploads'}
-          </h1>
-          <p className="mt-1.5 max-w-xl text-sm text-muted">
-            {target
-              ? `Everything uploaded for ${target.name}, by anybody who builds for it. Open one to rename it, list it, or see who is asking to use it.`
-              : 'Everything you have put into the Creator Hub, with its number and where it stands. Open one to rename it, list it, or see who is asking to use it.'}
-          </p>
-        </div>
-        <GuestGate action="upload">
-          <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
-        </GuestGate>
-      </header>
+      <HubTop
+        icon={faUpload}
+        title={target ? `${target.name}'s uploads` : 'My Uploads'}
+        lead={target
+          ? `Everything uploaded for ${target.name}, by anybody who builds for it. Open one to rename it, list it, or see who is asking to use it.`
+          : 'Everything you have put into the Creator Hub, with its number and where it stands. Open one to rename it, list it, or see who is asking to use it.'}
+        action={(
+          <GuestGate action="upload">
+            <Button icon={faUpload} onClick={openUpload} disabled={!profile}>Upload</Button>
+          </GuestGate>
+        )}
+      />
 
       {target && (
         /*
@@ -169,11 +147,11 @@ export default function CreateUploads() {
 
       {!!all.length && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <Tally icon={faCircleCheck} tone="text-space-bright" label="Live" value={formatCount(sums.live)} />
-          <Tally icon={faClock} tone="text-warn-bright" label="In review" value={formatCount(sums.waiting)} />
-          <Tally icon={faCircleXmark} tone="text-danger" label="Turned down" value={formatCount(sums.refused)} />
-          <Tally icon={faHardDrive} label="Room used" value={size(sums.bytes)} />
-          <Tally icon={faFileArrowDown} label="Taken" value={formatCount(sums.taken)} />
+          <Stat icon={faCircleCheck} tone="text-space-bright" label="Live" value={formatCount(sums.live)} />
+          <Stat icon={faClock} tone="text-warn-bright" label="In review" value={formatCount(sums.waiting)} />
+          <Stat icon={faCircleXmark} tone="text-danger" label="Turned down" value={formatCount(sums.refused)} />
+          <Stat icon={faHardDrive} label="Room used" value={size(sums.bytes)} />
+          <Stat icon={faFileArrowDown} label="Taken" value={formatCount(sums.taken)} />
         </div>
       )}
 
@@ -188,7 +166,7 @@ export default function CreateUploads() {
               aria-label="Search your uploads"
               className="flex-1"
             />
-            <div className="flex shrink-0 items-center gap-0.5 rounded-lg border-2 border-ink-line p-0.5">
+            <div className="flex shrink-0 items-center gap-1 rounded-xl border-2 border-b-4 border-ink-line bg-ink-card p-1">
               {([
                 { on: asGrid, icon: faTableCellsLarge, label: 'As cards', act: () => setAsGrid(true) },
                 { on: !asGrid, icon: faList, label: 'As a list', act: () => setAsGrid(false) },
@@ -199,8 +177,8 @@ export default function CreateUploads() {
                   aria-label={one.label}
                   aria-pressed={one.on}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg text-xs transition-colors',
-                    one.on ? 'bg-brand text-onbrand' : 'text-white/50 hover:text-white',
+                    'grid h-8 w-9 place-items-center rounded-lg text-xs transition-colors',
+                    one.on ? 'bg-brand text-on-art' : 'text-white/45 hover:text-white',
                   )}
                 >
                   <Glyph icon={one.icon} />
@@ -210,28 +188,17 @@ export default function CreateUploads() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Choices
-              size="sm"
-              label="What kind of content"
-              value={kind}
-              options={kinds.map((one) => ({
-                value: one,
-                label: one === 'all' ? 'Everything' : `${kindLabels[one]}s`,
-              }))}
-              onChange={(next) => setKind(next)}
-            />
-            <span className="mx-1 hidden h-5 w-px bg-ink-line sm:block" />
-            <Choices
-              size="sm"
-              tone="soft"
-              label="Which state"
-              value={state}
-              options={states.map((one) => ({
-                value: one,
-                label: one === 'all' ? 'Any state' : statusLook[one].label,
-              }))}
-              onChange={(next) => setState(next)}
-            />
+            {kinds.map((one) => (
+              <Chip key={one} on={kind === one} onClick={() => setKind(one)}>
+                {one === 'all' ? 'Everything' : `${kindLabels[one]}s`}
+              </Chip>
+            ))}
+            <span className="mx-1 hidden h-6 w-px bg-ink-line sm:block" />
+            {states.map((one) => (
+              <Chip key={one} on={state === one} onClick={() => setState(one)}>
+                {one === 'all' ? 'Any state' : statusLook[one].label}
+              </Chip>
+            ))}
           </div>
         </div>
       )}
@@ -244,18 +211,18 @@ export default function CreateUploads() {
       {mine.error && <ErrorState message={mine.error} onRetry={mine.reload} />}
 
       {!mine.loading && !all.length && (
-        <Card>
+        <Sheet>
           <EmptyState
             mood="noResults"
             title="Nothing uploaded yet"
             body="Decals, sounds, video, fonts and models. Each one gets a number, and that is how it is used."
             action={<Button icon={faUpload} onClick={openUpload}>Upload something</Button>}
           />
-        </Card>
+        </Sheet>
       )}
 
       {!mine.loading && !!all.length && !shown.length && (
-        <Card>
+        <Sheet>
           <EmptyState
             mood="noResults"
             title="Nothing here"
@@ -269,7 +236,7 @@ export default function CreateUploads() {
               </Button>
             }
           />
-        </Card>
+        </Sheet>
       )}
 
       {!!shown.length && (asGrid ? (
@@ -277,9 +244,9 @@ export default function CreateUploads() {
           {shown.map((item) => <UploadCard key={item.id} item={item} />)}
         </div>
       ) : (
-        <Card className="overflow-hidden">
+        <Sheet>
           <ul>{shown.map((item) => <UploadLine key={item.id} item={item} />)}</ul>
-        </Card>
+        </Sheet>
       ))}
 
       {!!shown.length && shown.length !== all.length && (

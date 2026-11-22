@@ -378,11 +378,15 @@ export function Pick({ on, icon, swatch, title, note, onClick, disabled, stack }
 }
 
 /**
- * The rail: one card with a row for each room, ending where the rooms do.
+ * The rail: a row for each room, the way the Creator Hub and Communities
+ * draw theirs.
  *
- * Staw asked for both halves of that - "make this into a common card
- * thingy instead of multiple ones", and then that the card stop at the
- * last row rather than running down the page.
+ * It was a card in the margin. Staw: "for the settings page you can also
+ * turn this into a sidebar (like on the creator hub & communities)" - so
+ * it is flush against the page with a rule down its right, the mark in a
+ * tile beside the name, and the room you are in in the same quiet blue
+ * those two use. On a phone it stays a scrolling row of pressable chips,
+ * because there is no margin to be flush against.
  */
 export function SettingsRail<T extends string>({ label, items, value, onChange }: {
   label: string
@@ -395,8 +399,8 @@ export function SettingsRail<T extends string>({ label, items, value, onChange }
       aria-label={label}
       className={cn(
         'flex gap-1 overflow-x-auto pb-1 kob-scroll',
-        'lg:block lg:h-fit lg:space-y-1 lg:overflow-visible lg:rounded-2xl',
-        'lg:border-2 lg:border-b-4 lg:border-ink-line lg:bg-ink-card lg:p-2',
+        'lg:block lg:h-fit lg:space-y-0.5 lg:overflow-visible',
+        'lg:border-r lg:border-ink-line lg:pr-3',
       )}
     >
       {items.map((one) => {
@@ -408,14 +412,28 @@ export function SettingsRail<T extends string>({ label, items, value, onChange }
             onClick={() => onChange(one.value)}
             aria-current={on}
             className={cn(
-              'kob-press flex shrink-0 items-center gap-2.5 rounded-xl border-2 border-b-[5px] px-3 py-2 text-left text-sm font-bold transition-colors lg:w-full',
+              'flex shrink-0 items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors lg:w-full',
+              /* The phone row keeps the lip, because a chip with no edge in
+                 a scrolling row is not obviously pressable. */
+              'max-lg:border-2 max-lg:border-b-4 max-lg:px-3',
               on
-                ? 'border-brand-deep bg-brand text-on-art'
-                : 'border-transparent text-white/65 hover:bg-ink-hover hover:text-white',
+                ? 'bg-brand/20 max-lg:border-brand-deep max-lg:bg-brand max-lg:text-on-art'
+                : 'hover:bg-ink-hover max-lg:border-ink-line',
             )}
           >
-            <Glyph icon={one.icon} className={cn('w-4 text-xs', !on && 'text-brand-bright')} />
-            {one.label}
+            <span className={cn(
+              'grid h-8 w-8 shrink-0 place-items-center rounded-lg max-lg:hidden',
+              on ? 'bg-brand text-on-art' : 'bg-ink-raised text-brand-bright',
+            )}>
+              <Glyph icon={one.icon} />
+            </span>
+            <Glyph icon={one.icon} className="hidden text-xs max-lg:block" />
+            <span className={cn(
+              'truncate text-sm font-bold',
+              on ? 'text-white' : 'text-link max-lg:text-white/70',
+            )}>
+              {one.label}
+            </span>
           </button>
         )
       })}

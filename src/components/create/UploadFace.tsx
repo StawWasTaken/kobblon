@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faLock, faArrowDown, faCircleCheck, faCircleXmark, faClock, faHardDrive, faPlay,
+  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { Flag } from '@/components/create/HubShapes'
 import { contentTag, kindIcons, kindLabels } from '@/components/create/AssetTile'
 import { useSignedUrl } from '@/hooks/useSignedUrl'
 import { formatCount, timeAgo } from '@/lib/format'
@@ -187,33 +189,39 @@ export function UploadLine({ item }: { item: OwnAsset }) {
   const tag = contentTag(item.kind, item.content_id)
 
   return (
-    <li className="flex items-center gap-3 border-b border-ink-line/70 px-4 py-3 last:border-0 hover:bg-ink-hover/50">
-      <span className="h-10 w-14 shrink-0 overflow-hidden rounded-lg bg-media">
-        <Preview item={item} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <Link
-          to={tag ? `/create/${tag}` : '/create/uploads'}
-          className="block truncate text-sm font-bold hover:text-link"
-        >
-          {item.name}
-        </Link>
-        <p className={cn('flex flex-wrap items-center gap-1.5 text-xs', look.tone)}>
-          <Glyph icon={look.icon} />
-          {look.label}
-          <span className="text-muted">
-            · {kindLabels[item.kind]} · {timeAgo(item.created_at)}
+    <li>
+      <Link
+        to={tag ? `/create/${tag}` : '/create/uploads'}
+        className="flex items-center gap-3 border-b border-ink-line px-4 py-3 transition-colors last:border-0 hover:bg-ink-hover"
+      >
+        <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border-2 border-ink-line bg-media">
+          <Preview item={item} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-bold">{item.name}</span>
+          <span className="block truncate font-mono text-mini text-muted">
+            {tag} · {kindLabels[item.kind]} · {timeAgo(item.created_at)}
             {item.uploaded_by && <> · by {item.uploaded_by}</>}
           </span>
-          {!item.is_public && (
-            <span className="inline-flex items-center gap-1 text-muted">
-              <Glyph icon={faLock} /> Unlisted
-            </span>
+        </span>
+
+        {!item.is_public && (
+          <Flag tone="bg-ink-raised text-white/55" icon={faLock}>Unlisted</Flag>
+        )}
+        <span className="hidden shrink-0 text-xs tabular-nums text-muted sm:block">
+          {formatCount(item.download_count ?? 0)} taken
+        </span>
+        <Flag
+          tone={cn(
+            'bg-ink-raised',
+            look.tone,
           )}
-        </p>
-      </div>
-      <span className="hidden text-xs text-muted sm:block">{size(item.byte_size)}</span>
-      <span className="hidden font-mono text-xs text-muted sm:block">{tag}</span>
+          icon={look.icon}
+        >
+          {look.label}
+        </Flag>
+        <Glyph icon={faChevronRight} className="shrink-0 text-xs text-muted" />
+      </Link>
     </li>
   )
 }
