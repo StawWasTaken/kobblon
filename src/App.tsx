@@ -34,7 +34,6 @@ const CreateUploads = lazyPage(() => import('@/pages/CreateUploads'))
 const CreateMarketplace = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateMarketplace })))
 const CreateInventory = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateInventory })))
 const CreateAnalytics = lazyPage(() => import('@/pages/CreateHub').then((m) => ({ default: m.CreateAnalytics })))
-const CreatorPage = lazyPage(() => import('@/pages/CreatorPage'))
 const EventPage = lazyPage(() => import('@/pages/EventPage'))
 const ClipPage = lazyPage(() => import('@/pages/ClipPage'))
 const People = lazyPage(() => import('@/pages/People'))
@@ -289,7 +288,6 @@ export default function App() {
                       `:tag` route below, or a page called "avatar" would be
                       read as somebody's content number. */}
                   <Route path="avatar" element={<CreateAvatarItems />} />
-                  <Route path="creator/:username" element={<CreatorPage />} />
                   {/* Setting a World up: the same job Creator does on the
                       desktop, through the same function. */}
                   <Route path="worlds/:id" element={<CreateWorld />} />

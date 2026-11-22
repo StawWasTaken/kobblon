@@ -42,6 +42,10 @@ export const UI_ICONS = [
   /* Staw's own: two people with a play mark beside them. A party is people
      who are going somewhere together, which is exactly that drawing. */
   'party',
+  /* A page with a magnifying glass over it: what an overview is, here and
+     anywhere else one turns up. Staw drew it for the Creator Hub's front
+     page and the rule is general - every overview wears this. */
+  'overview',
   'search-user', 'send', 'thumbs-down-stroke',
   'thumbs-down', 'thumbs-up-stroke', 'thumbs-up', 'user', 'users', 'voice-user',
   /*

@@ -25749,3 +25749,38 @@ minute you join with an ordinary account - and it is in `kobbyArt` as
 Kobblon to somebody who has not got an account yet, when those are
 rebuilt. **It is not an empty state**: a hole in a page is the lighthouse,
 and this is a person.
+
+## Round four hundred and five - a new icon, and the creator page is gone
+
+Two changes that matter to you, and a proposal that does not yet.
+
+**`overview` is a new Kobblon icon.** Staw drew a page with a magnifying
+glass over it, and the rule he set is general: **every overview wears this
+one**, here and in the Workspace. It is `public/icons/ui/overview.png`,
+registered in `UI_ICONS`, so `<Icon name="overview" />` draws it. Three
+Font Awesome names land on it through `Glyph` -
+`faGaugeHigh`, `faMagnifyingGlassChart` and `file-magnifying-glass` - so a
+call site that already said `faGaugeHigh` for an overview now draws
+Staw's picture with nothing changed. If the Workspace has an overview
+panel with a borrowed glyph on it, this is the one it should wear.
+
+**The creator page is deleted.** `/create/creator/:username` and
+`src/pages/CreatorPage.tsx` are gone. It was a second, thinner shelf of
+exactly what the Marketplace already searches, so seeing everything one
+person has made is now that search with their name in it:
+**`/create/marketplace?by=<username>`**. The Marketplace reads `by` out of
+the address on mount, as it always has. Everything that pointed at a
+creator page points there instead - an asset's byline, its maker row, the
+"more from them" arrow, and the button in a profile's Creations tab, which
+now reads "Everything they have made".
+
+**What is deliberately left alone:** `creator_page(target text)` is still
+in the database and `getCreatorPage` is still exported from `@/lib/api`.
+Nothing on the website calls either any more. They are not dropped because
+dropping a function you do not own the callers of is how a panel goes
+blank somewhere else - **if you call it, say so and it stays; if you do
+not, it goes in a later migration.**
+
+**Not shipped, for information:** the Creator Hub's eight pages are being
+redesigned and the drawing is at `tools/site/hub-preview.html?page=…`.
+Nothing of it has landed, and the round that lands it will say what moved.

@@ -851,14 +851,16 @@ export default function Profile() {
         <div className="space-y-10">
           {/*
             * Staw: "the 'their creator page' goes in the 'creations' tab".
-            * It was on the shop's heading row, and a creator page is the
-            * other half of this tab rather than of that one - everything
-            * they have made, theirs to arrange.
+            *
+            * There is no creator page any more - it was a second, thinner
+            * shelf of the same content the Marketplace already searches, so
+            * seeing everything somebody has made is that search with their
+            * name in it rather than a page of its own.
             */}
           <div className="space-y-4">
             <div className="flex items-center justify-end">
-              <Button size="sm" variant="subtle" icon={faShapes} to={`/create/creator/${user.username}`}>
-                Their creator page
+              <Button size="sm" variant="subtle" icon={faShapes} to={`/create/marketplace?by=${user.username}`}>
+                Everything they have made
               </Button>
             </div>
 

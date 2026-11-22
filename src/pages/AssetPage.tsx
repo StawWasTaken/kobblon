@@ -494,7 +494,7 @@ export default function AssetPage() {
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
             <Link
-              to={`/create/creator/${asset.creator_username}`}
+              to={`/create/marketplace?by=${asset.creator_username}`}
               className="inline-flex items-center gap-1.5 hover:text-white"
             >
               By @{asset.creator_username}
@@ -710,7 +710,7 @@ export default function AssetPage() {
           />
 
           <Link
-            to={`/create/creator/${asset.creator_username}`}
+            to={`/create/marketplace?by=${asset.creator_username}`}
             className="flex items-center gap-2 text-sm font-bold hover:text-link"
           >
             <Avatar
@@ -949,7 +949,7 @@ export default function AssetPage() {
           <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-extrabold">
             More from {asset.creator_display_name}, and more like this
             <Link
-              to={`/create/creator/${asset.creator_username}`}
+              to={`/create/marketplace?by=${asset.creator_username}`}
               aria-label={`Everything by ${asset.creator_display_name}`}
               className="text-sm text-white/40 transition-colors hover:text-white"
             >

@@ -41,72 +41,107 @@ import '@/index.css'
 
 type Key = 'overview' | 'worlds' | 'uploads' | 'marketplace' | 'avatar' | 'inventory' | 'ads' | 'analytics'
 
-const ROOMS: { key: Key; to: string; label: string; icon: IconDefinition; count?: number }[] = [
-  { key: 'overview', to: '/create', label: 'Overview', icon: faGaugeHigh },
-  { key: 'worlds', to: '/create/worlds', label: 'My Worlds', icon: worldIcon, count: 3 },
-  { key: 'uploads', to: '/create/uploads', label: 'My Uploads', icon: faUpload, count: 24 },
-  { key: 'marketplace', to: '/create/marketplace', label: 'Marketplace', icon: faShapes },
-  { key: 'avatar', to: '/create/avatar', label: 'Things to Wear', icon: faShirt, count: 7 },
-  { key: 'inventory', to: '/create/inventory', label: 'Inventory', icon: faBoxOpen, count: 61 },
-  { key: 'ads', to: '/create/ads', label: 'Ads', icon: faRectangleAd, count: 2 },
-  { key: 'analytics', to: '/create/analytics', label: 'Analytics', icon: faChartSimple },
+const GROUPS: { head: string; rooms: { key: Key; label: string; icon: IconDefinition; note: string; count?: number }[] }[] = [
+  {
+    head: 'What you have made',
+    rooms: [
+      { key: 'overview', label: 'Overview', icon: faGaugeHigh, note: 'Everything at a glance' },
+      { key: 'worlds', label: 'My Worlds', icon: worldIcon, note: 'The Worlds you build', count: 3 },
+      { key: 'uploads', label: 'My Uploads', icon: faUpload, note: 'What you have put in', count: 24 },
+      { key: 'avatar', label: 'Things to Wear', icon: faShirt, note: 'For the Catalog', count: 7 },
+    ],
+  },
+  {
+    head: 'What you build with',
+    rooms: [
+      { key: 'marketplace', label: 'Marketplace', icon: faShapes, note: 'Anything anybody has made' },
+      { key: 'inventory', label: 'Inventory', icon: faBoxOpen, note: 'Everything you own', count: 61 },
+    ],
+  },
+  {
+    head: 'How it is doing',
+    rooms: [
+      { key: 'ads', label: 'Ads', icon: faRectangleAd, note: 'Your work, in front of people', count: 2 },
+      { key: 'analytics', label: 'Analytics', icon: faChartSimple, note: 'Views and uses, counted' },
+    ],
+  },
 ]
 
 /* ------------------------------------------------------------- the shapes */
 
-/** The rooms of the Hub, one card, ending where the rooms do. */
+/*
+ * The rooms of the Hub.
+ *
+ * Staw: "instead of making it into something like in settings, id like to
+ * keep a sidebar like in communities" - so it is the Communities rail's
+ * shape, flush against the page with a rule down its right rather than a
+ * card floating in the margin: a heading, a search, headings over groups,
+ * and a row that is a picture, a name and a second line.
+ */
 function HubRail({ here, go }: { here: Key; go: (k: Key) => void }) {
   return (
-    <nav
+    <aside
       aria-label="Creator Hub"
-      className="hidden w-60 shrink-0 lg:block lg:h-fit lg:rounded-2xl lg:border-2 lg:border-b-4 lg:border-ink-line lg:bg-ink-card lg:p-2"
+      className="hidden w-72 shrink-0 flex-col self-stretch border-r border-ink-line px-3 pb-6 pt-4 lg:flex"
     >
-      <p className="px-2 pb-1.5 pt-1 font-display text-base font-extrabold">Creator Hub</p>
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <h2 className="font-display text-base font-extrabold">Creator Hub</h2>
+        <button className="text-xs font-bold text-link hover:underline">Get Workspace</button>
+      </div>
 
-      {/* Who you are building as. It decides what every page below holds,
-          so it sits above them rather than inside one of them. */}
+      {/* Who you are building as, which decides what every page below holds. */}
       <button
         type="button"
-        className="kob-press mb-2 flex w-full items-center gap-2.5 rounded-xl border-2 border-b-4 border-ink-line bg-ink-raised px-2.5 py-2 text-left transition-colors hover:border-brand/50"
+        className="mb-3 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-ink-hover"
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-ink text-tiny font-extrabold text-brand-bright">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-ink text-xs font-extrabold text-brand-bright">
           SW
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-mini font-extrabold uppercase tracking-wide text-muted">Building as</span>
-          <span className="block truncate text-xs font-bold">@staw</span>
+          <span className="block truncate text-sm font-bold text-link">@staw</span>
+          <span className="block text-xs text-muted">Building as yourself</span>
         </span>
         <Glyph icon={faChevronRight} className="text-tiny text-muted" />
       </button>
 
-      <div className="space-y-1">
-        {ROOMS.map((room) => {
-          const on = room.key === here
-          return (
-            <button
-              key={room.key}
-              type="button"
-              onClick={() => go(room.key)}
-              aria-current={on}
-              className={cn(
-                'kob-press flex w-full items-center gap-2.5 rounded-xl border-2 border-b-[5px] px-3 py-2 text-left text-sm font-bold transition-colors',
-                on
-                  ? 'border-brand-deep bg-brand text-on-art'
-                  : 'border-transparent text-white/65 hover:bg-ink-hover hover:text-white',
-              )}
-            >
-              <Glyph icon={room.icon} className={cn('w-4 text-xs', !on && 'text-brand-bright')} />
-              <span className="flex-1">{room.label}</span>
-              {room.count !== undefined && (
-                <span className={cn('text-mini font-extrabold tabular-nums', on ? 'text-on-art/70' : 'text-muted')}>
-                  {room.count}
+      {GROUPS.map((group) => (
+        <div key={group.head}>
+          <p className="px-2 pb-1 pt-3 font-display text-tiny uppercase tracking-wider text-muted">
+            {group.head}
+          </p>
+          {group.rooms.map((room) => {
+            const on = room.key === here
+            return (
+              <button
+                key={room.key}
+                type="button"
+                onClick={() => go(room.key)}
+                aria-current={on}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors',
+                  on ? 'bg-brand/20' : 'hover:bg-ink-hover',
+                )}
+              >
+                <span className={cn(
+                  'grid h-10 w-10 shrink-0 place-items-center rounded-lg',
+                  on ? 'bg-brand text-on-art' : 'bg-ink-raised text-brand-bright',
+                )}>
+                  <Glyph icon={room.icon} />
                 </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </nav>
+                <span className="min-w-0 flex-1">
+                  <span className={cn('block truncate text-sm font-bold', on ? 'text-white' : 'text-link')}>
+                    {room.label}
+                  </span>
+                  <span className="block truncate text-xs text-muted">
+                    {room.count !== undefined ? `${room.count} · ${room.note}` : room.note}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      ))}
+    </aside>
   )
 }
 
@@ -949,11 +984,9 @@ function Preview() {
   const [here, setHere] = useState<Key>(asked && PAGES[asked] ? asked : 'overview')
   const Page = PAGES[here]
   return (
-    <div className="min-h-screen bg-ink text-white">
-      <div className="mx-auto flex max-w-[1400px] items-start gap-6 px-6 py-7">
-        <HubRail here={here} go={setHere} />
-        <main className="min-w-0 flex-1"><Page /></main>
-      </div>
+    <div className="flex min-h-screen items-stretch bg-ink text-white">
+      <HubRail here={here} go={setHere} />
+      <main className="min-w-0 flex-1 px-6 py-7"><Page /></main>
     </div>
   )
 }

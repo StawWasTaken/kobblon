@@ -105,6 +105,11 @@ const OURS: Record<string, KobIcon> = {
      they appear - rail, search, Create, the boards. */
   'earth-europe': 'world',
   shapes: 'assets',
+  /* An overview is a page looked at closely, and Staw drew it: so both of
+     Font Awesome's ways of saying it land on the same drawing. */
+  'file-magnifying-glass': 'overview',
+  'magnifying-glass-chart': 'overview',
+  'gauge-high': 'overview',
 
   /*
    * Deliberately absent, each for a reason:
