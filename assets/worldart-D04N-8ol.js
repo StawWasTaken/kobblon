@@ -1,0 +1,1 @@
+import{f as e}from"./useTitle-CGxBIMcB.js";var t=e(`/brand/world-emblem.png`),n=e(`/brand/world-thumbnail.png`);function r(e){return e.emblem_url??e.cover_url??t}function i(e){return e.cover_url??e.emblem_url??n}export{i,n,r,t};
