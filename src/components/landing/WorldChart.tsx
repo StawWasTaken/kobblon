@@ -4,6 +4,7 @@ import { WorldStats } from '@/components/worlds/WorldStats'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { worldLink } from '@/lib/links'
 import { worldThumbnail } from '@/lib/worldart'
+import { WorldArt } from '@/components/worlds/WorldArt'
 import { Skeleton } from '@/components/ui/States'
 import type { World } from '@/types/db'
 
@@ -33,12 +34,16 @@ function Row({ world, rank }: { world: World; rank: number }) {
         </span>
 
         <span className="block aspect-[16/10] overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-media">
-          <img
-            src={worldThumbnail(world)}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
-          />
+          {world.cover_is_video && world.cover_url ? (
+            <WorldArt world={world} />
+          ) : (
+            <img
+              src={worldThumbnail(world)}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
+            />
+          )}
         </span>
 
         <span className="min-w-0">

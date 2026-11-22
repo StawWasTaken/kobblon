@@ -8,6 +8,7 @@ import { worldLink } from '@/lib/links'
 import { WorldStats } from '@/components/worlds/WorldStats'
 import { cn } from '@/lib/cn'
 import { worldEmblem, worldThumbnail } from '@/lib/worldart'
+import { WorldArt } from '@/components/worlds/WorldArt'
 import type { World } from '@/types/db'
 
 /**
@@ -28,10 +29,13 @@ import type { World } from '@/types/db'
 
 
 function Cover({ world, className }: { world: World; className?: string }) {
-  const art = worldThumbnail(world)
+  // Its first picture may be a video, and then it plays muted here too.
+  if (world.cover_is_video && world.cover_url) {
+    return <WorldArt world={world} alt={world.name} />
+  }
   return (
     <Picture
-      src={art}
+      src={worldThumbnail(world)}
       alt={world.name}
       className="h-full w-full"
       pictureClassName={cn('transition-transform duration-500', className)}

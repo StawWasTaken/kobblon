@@ -9,6 +9,7 @@ import { WorldStats } from '@/components/worlds/WorldStats'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { cn } from '@/lib/cn'
 import { worldEmblem, worldThumbnail } from '@/lib/worldart'
+import { WorldArt } from '@/components/worlds/WorldArt'
 import type { World } from '@/types/db'
 
 /**
@@ -138,12 +139,18 @@ export function WorldFeature({ world }: { world: World }) {
       to={worldLink(world)}
       className="group relative block aspect-[16/9] w-72 shrink-0 overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media sm:w-[22rem]"
     >
-      <Picture
-        src={worldThumbnail(world)}
-        alt={world.name}
-        className="h-full w-full"
-        pictureClassName="transition-transform duration-500 group-hover:scale-[1.04]"
-      />
+      {/* A World's first picture may be a video, and then it plays muted
+          wherever the World is drawn wide. */}
+      {world.cover_is_video && world.cover_url ? (
+        <WorldArt world={world} alt={world.name} />
+      ) : (
+        <Picture
+          src={worldThumbnail(world)}
+          alt={world.name}
+          className="h-full w-full"
+          pictureClassName="transition-transform duration-500 group-hover:scale-[1.04]"
+        />
+      )}
 
       <span className="absolute inset-x-0 bottom-0 flex items-end gap-2.5 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3 pt-10">
         <Picture

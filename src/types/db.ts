@@ -924,8 +924,18 @@ export type World = {
   creator_name: string | null
   /** The owner's handle, kept in step by 0348. What a byline credits. */
   creator_username?: string | null
+  /**
+   * The wide picture: the first of the pictures a World shows of itself,
+   * kept in step by a trigger (0368). Not something anybody sets by hand.
+   */
   cover_url: string | null
-  /** The square mark. Null falls back to the cover, which is wide. */
+  /**
+   * Whether that first one is a video. A page cannot draw an <img> at an
+   * .mp4 and has to know before it tries; where it is true the thumbnail
+   * plays muted, wherever it is shown.
+   */
+  cover_is_video?: boolean
+  /** The square mark, which is set by hand. It is not one of the pictures. */
   emblem_url: string | null
   /**
    * What it runs on, said by whoever built it: any of `computer`, `phone`,

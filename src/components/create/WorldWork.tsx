@@ -3,7 +3,7 @@ import { faCube, faGear, faPen } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@/components/ui/Button'
 import { Flag, LiveFlag } from '@/components/create/HubShapes'
 import { editInWorkspace } from '@/lib/app'
-import { worldThumbnail } from '@/lib/worldart'
+import { WorldArt } from '@/components/worlds/WorldArt'
 import { formatCount, timeAgo } from '@/lib/format'
 import { worldTag } from '@/lib/kinds'
 import type { World } from '@/types/db'
@@ -25,7 +25,7 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
             page and in the Launcher - a square here and a cover there is
             two ideas of what a World looks like. */}
         <span className="relative block aspect-video w-full overflow-hidden bg-brand-ink">
-          <img src={worldThumbnail(world)} alt="" className="h-full w-full object-cover" />
+          <WorldArt world={world} />
           <span className="absolute left-2 top-2">
             {world.is_published
               ? <LiveFlag />

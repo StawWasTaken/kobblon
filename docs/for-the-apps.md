@@ -25886,3 +25886,52 @@ shows its pictures in - plain updates through `world_media`'s existing
 owner policy, no new function. And `Stat` in `@/components/create/HubShapes`
 takes a `mark` as well as an `icon`, for the places where the mark is one
 of Staw's drawings rather than a glyph.
+
+## Round four hundred and eight - nobody could upload a World's pictures
+
+**Read this one even if you touch nothing here.** It is a bug, it is a
+year old, and it is in a place that reads as correct.
+
+The storage policy on the `worlds` bucket, from 0076, said:
+
+    exists (select 1 from public.worlds w
+             where w.id::text = (storage.foldername(name))[1]
+               and w.owner_id = auth.uid())
+
+`public.worlds` has a `name` column, so inside that subquery `name` is
+**the World's name**, not the file being written. Postgres resolves an
+unqualified column against the inner query first and nothing warns. Every
+upload to that bucket was therefore refused, with "new row violates
+row-level security policy", which names nothing. **If the Workspace has
+ever failed to upload a World's emblem, thumbnail or manifest, this is
+why** - it was never your side.
+
+**0368** asks the question outside the subquery instead: one
+security-definer function, `public.world_is_mine(uuid)`, called by the
+write, replace and delete policies. A moderator may now fix a World's
+pictures too. Nothing else about who may write changes.
+
+**And the thumbnail model changed.** Staw: a World does not get a
+thumbnail uploaded separately - **the first of the pictures it shows is
+its thumbnail**, and if that first one is a video it plays **muted**
+wherever the World is drawn.
+
+- `worlds.cover_url` is no longer something anybody sets. A trigger keeps
+  it as the first row of `world_media` (by `position`, then `created_at`),
+  and clears it when there are none. **Every reader keeps reading
+  `cover_url` and needs no change.**
+- **`worlds.cover_is_video`** is new: true when that first one is a video.
+  A page cannot draw an `<img>` at an .mp4, so it has to ask first. The
+  website has one component for this, `WorldArt`, and it renders a muted,
+  looping, `playsInline` video with `preload="metadata"`.
+- **`configure_world`'s `cover` argument still exists and still works**,
+  but setting it is pointless now: the next change to that World's media
+  overwrites it. Set the emblem through `emblem` (0367) and add pictures
+  as `world_media` rows.
+- The website's setup page has one uploader now - the emblem - and the
+  gallery, whose first tile is labelled "Thumbnail".
+
+**What the Workspace should do:** stop setting a World's wide picture
+directly; add it as a `world_media` row at position 0. Draw a World wide
+from `cover_url`, and when `cover_is_video` is true play it muted rather
+than drawing a picture at it.

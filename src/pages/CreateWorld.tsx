@@ -154,7 +154,6 @@ export default function CreateWorld() {
   const [cropping, setCropping] = useState<{ file: File; slot: 'emblem' | 'cover' } | null>(null)
 
   const emblemInput = useRef<HTMLInputElement>(null)
-  const coverInput = useRef<HTMLInputElement>(null)
   const shotInput = useRef<HTMLInputElement>(null)
 
   // The form starts as what the World already says, not as blanks that would
@@ -269,7 +268,7 @@ export default function CreateWorld() {
     { done: (world.description ?? '').trim().length >= 20, what: 'A description people can read before deciding' },
     { done: !!world.genre, what: 'A genre, so Discover knows where to put it' },
     { done: !!art.emblem, what: 'An emblem, for lists and tiles' },
-    { done: !!art.cover, what: 'A thumbnail, for its own page and Discover' },
+    { done: (media.data?.length ?? 0) > 0, what: 'At least one picture of it, the first being its thumbnail' },
     /* Null, not empty, is what a World published before the column says,
        and that means all four - so it is not a thing anybody has to fix. */
     { done: (world.devices?.length ?? everyDevice.length) > 0, what: 'At least one thing it runs on' },
@@ -421,16 +420,6 @@ export default function CreateWorld() {
             onPick={() => emblemInput.current?.click()}
             onClear={art.emblem ? () => void clearArt('emblem') : undefined}
           />
-          <ArtSlot
-            title="Thumbnail"
-            shape="wide"
-            art={art.cover}
-            note="A wide picture, 16 by 9. This is the big one at the top of its page."
-            where="Its own page · Discover · what gets shared"
-            busy={busy}
-            onPick={() => coverInput.current?.click()}
-            onClear={art.cover ? () => void clearArt('cover') : undefined}
-          />
         </Sheet>
 
         <input
@@ -444,25 +433,25 @@ export default function CreateWorld() {
             if (file) setCropping({ file, slot: 'emblem' })
           }}
         />
-        <input
-          ref={coverInput}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            e.target.value = ''
-            if (file) setCropping({ file, slot: 'cover' })
-          }}
-        />
       </section>
 
       {/* -------------------------------------------------------- gallery */}
       <section>
         <Head>What its page shows</Head>
         <Sheet className="p-4">
-          <p className="mb-3 text-xs text-muted">
+          {/*
+            * Staw: "we dont need to upload a main thumbnail separatedly but
+            * in the all the thumbnails, the one thats first is the main
+            * thumbnail". So there is no second uploader - the first of
+            * these is what the World wears everywhere it is drawn wide, and
+            * a trigger keeps `cover_url` in step with it (0368).
+            */}
+          <p className="mb-3 text-xs leading-relaxed text-muted">
             Up to twelve pictures and videos, in this order. The arrows move one along.
+            <span className="block text-white/70">
+              The first one is this World&rsquo;s thumbnail, everywhere it is shown. If it is a
+              video, it plays with the sound off.
+            </span>
           </p>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -480,7 +469,7 @@ export default function CreateWorld() {
                 )}
 
                 <span className="absolute bottom-1.5 left-1.5 rounded-lg bg-ink/80 px-1.5 text-mini font-bold tabular-nums">
-                  {at + 1}
+                  {at === 0 ? 'Thumbnail' : at + 1}
                 </span>
 
                 <div className="absolute inset-x-1.5 top-1.5 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">

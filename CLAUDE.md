@@ -192,3 +192,35 @@ Related, same day, same cause: this schema's local `auth.uid()` reads
 `request.jwt.claim.sub`. A harness that sets `request.jwt.claims` as JSON is
 silently anonymous, and its "signed-in" assertions pass for the wrong reason.
 Before trusting any identity check, `select auth.uid()` and look at it.
+
+## The fifth trap: a column name that means something else inside a subquery
+
+A storage policy on the `worlds` bucket read:
+
+```sql
+exists (select 1 from public.worlds w
+         where w.id::text = (storage.foldername(name))[1]
+           and w.owner_id = auth.uid())
+```
+
+`public.worlds` has a `name` column. Inside that subquery `name` is
+**`w.name`** - the World's name - not `storage.objects.name`, the file
+being written. Postgres resolves an unqualified column against the inner
+query first, it is a legal reference, and nothing warns. So every upload
+asked whether some World's id equalled the first folder of its own *name*,
+which is never true. **Nobody could upload a World's pictures for a year**,
+and the only thing anybody saw was "new row violates row-level security
+policy", which names nothing.
+
+What makes it survive: it reads as correct, and it is correct everywhere
+else in this schema - the other buckets compare the folder to `auth.uid()`
+with no subquery at all, and the two that do have a subquery happen to
+write `storage.objects.name` in full.
+
+The shape: **an unqualified column inside a subquery over a table that has
+a column of that name.** The check is not "does this policy look right".
+It is **"turn row-level security on and insert the row as a real identity
+that should be allowed"** - a policy nobody has watched succeed has not
+been tested. And note the local harness does not have RLS enabled on
+`storage.objects` by default, so a check there passes for the wrong
+reason: `alter table storage.objects enable row level security` first.

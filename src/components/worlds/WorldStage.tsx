@@ -157,10 +157,16 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
               </div>
             </div>
           ) : here.kind === 'video' ? (
+            /* Muted, playing, looping - Staw's rule for a World's video
+               wherever it is drawn. The controls stay, so somebody who
+               wants to hear it can turn it up. */
             <video
               key={here.id}
               src={here.url}
               controls
+              muted
+              autoPlay
+              loop
               playsInline
               preload="metadata"
               className="h-full w-full object-cover"
