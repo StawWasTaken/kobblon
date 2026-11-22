@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import { faPlus, faCopy, faAward, faBagShopping } from '@fortawesome/free-solid-svg-icons'
 import { Card } from '@/components/ui/Card'
+import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { CurrencyMark } from '@/components/brand/Currency'
@@ -94,6 +95,7 @@ export function MakeThings({
         ? await makeWorldBadge(worldId, name.trim(), about.trim() || null)
         : await makeWorldPass(worldId, name.trim(), about.trim() || null, Math.max(0, Number(price) || 0))
       setName(''); setAbout(''); setPrice('0')
+      setOpen(false)
       await load()
       toast(`Made. Its number is ${number}.`, 'success')
     } catch (err) {
@@ -116,13 +118,30 @@ export function MakeThings({
               : 'Things this World sells. Check for one from a script using its number.'}
           </p>
         </div>
-        <Button variant="ghost" icon={faPlus} onClick={() => setOpen((was) => !was)}>
-          {open ? 'Never mind' : `New ${badge ? 'badge' : 'gamepass'}`}
+        <Button variant="ghost" icon={faPlus} onClick={() => setOpen(true)}>
+          New {badge ? 'badge' : 'gamepass'}
         </Button>
       </div>
 
-      {open && (
-        <div className="mt-4 space-y-3 rounded-2xl border-2 border-ink-line p-4">
+      <Dialog
+        open={open}
+        onClose={() => { if (!busy) setOpen(false) }}
+        title={badge ? 'New badge' : 'New gamepass'}
+        description={badge
+          ? 'It gets a number as soon as you make it, and a script awards it by that number.'
+          : 'It gets a number as soon as you make it, and a script checks for it by that number.'}
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="ghost" disabled={busy} onClick={() => setOpen(false)}>
+              Never mind
+            </Button>
+            <Button variant="primary" disabled={busy} onClick={() => void make()}>
+              {busy ? 'Making…' : `Make the ${badge ? 'badge' : 'gamepass'}`}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
           <Field label="Name">
             <Input value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} maxLength={48} />
           </Field>
@@ -139,11 +158,8 @@ export function MakeThings({
               />
             </Field>
           )}
-          <Button variant="primary" disabled={busy} onClick={() => void make()}>
-            {busy ? 'Making…' : `Make the ${badge ? 'badge' : 'gamepass'}`}
-          </Button>
         </div>
-      )}
+      </Dialog>
 
       {made.length > 0 && (
         <ul className="mt-4 space-y-2">

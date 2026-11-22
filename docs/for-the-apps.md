@@ -26052,3 +26052,35 @@ already downloaded, and nothing in a page can change that.
 Also: the World page's arrows now appear on a video as well. They were
 hidden on one, which left somebody stuck on the video with no way back to
 the pictures.
+
+## Round four hundred and thirteen - the gallery moves on by itself, and making a badge is a popup
+
+Two small things on the website, both worth copying in the Workspace.
+
+**The World page's gallery advances on its own.** `WorldGallery` in
+`@/components/worlds/WorldStage` now steps to the next picture after six
+seconds, or fifteen when the one showing is a clip, so a World whose second
+picture is the one worth seeing gets seen without anybody pressing anything.
+It wraps round. It holds while somebody is pointing at it or has tabbed into
+it - moving the thing a person is reaching for is why these get switched off -
+and it does nothing at all when the machine asks for reduced motion. No new
+props: mount it the way you already do and you get this. `WorldStage`, the
+21/8 banner handed over in round 342, is unchanged and still cuts rather than
+fades.
+
+The delay is read at the moment the timer is set, from the shot showing, not
+held from the first render - the trap this project keeps falling into, and a
+gallery whose first picture is a clip would otherwise run on the clip's
+fifteen seconds for every picture after it.
+
+**Making a badge or a gamepass is a popup card now.** `MakeThings` used to
+unfold the form inside its own card, which pushed the list of things already
+made off the screen at the moment you wanted to check you were not making a
+second one of the same. It is `Dialog` from `@/components/ui/Dialog` now:
+the plus opens the card, Escape or Never mind closes it, and it closes itself
+once the thing is made and the toast says its number. The `opened` prop still
+works - the add tile on the World page still lands here with the card already
+up. Nothing about `makeWorldBadge` or `makeWorldPass` changed.
+
+Still waiting on Staw: `0370_a_video_still_has_a_picture.sql`, which adds
+`world_media.poster_path`. Until it runs, adding a video fails on insert.

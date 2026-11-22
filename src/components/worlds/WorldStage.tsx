@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
 import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { faChevronLeft, faChevronRight, faPlay } from '@fortawesome/free-solid-svg-icons'
@@ -153,13 +153,41 @@ export function WorldStage({
  */
 export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
   const [at, setAt] = useState(0)
+  const [held, setHeld] = useState(false)
   const many = shots.length > 1
   const here = shots[Math.min(at, shots.length - 1)]
   const step = (by: number) => setAt((i) => (i + by + shots.length) % shots.length)
 
+  /*
+   * The gallery moves on by itself, so a World whose second picture is the
+   * one worth seeing gets seen without anybody pressing anything.
+   *
+   * The delay is asked for at the moment it is set rather than held: the
+   * clip showing decides it, and a clip deserves longer than a picture.
+   * It stops while somebody is pointing at it or has tabbed into it -
+   * moving the thing a person is reaching for is the whole reason these
+   * get turned off - and it does nothing at all for somebody who has asked
+   * their machine for less movement.
+   */
+  const onVideo = here?.kind === 'video'
+  const step1 = useRef(step)
+  useEffect(() => { step1.current = step })
+  useEffect(() => {
+    if (!many || held) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setTimeout(() => step1.current(1), onVideo ? 15000 : 6000)
+    return () => window.clearTimeout(timer)
+  }, [at, held, many, onVideo])
+
   return (
     <div className="min-w-0">
-      <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media">
+      <div
+        className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-media"
+        onPointerEnter={() => setHeld(true)}
+        onPointerLeave={() => setHeld(false)}
+        onFocusCapture={() => setHeld(true)}
+        onBlurCapture={() => setHeld(false)}
+      >
         <div className="relative aspect-video">
           {!here ? (
             <div className="grid h-full w-full place-items-center">
