@@ -38,21 +38,36 @@ export function HubTop({ icon, title, lead, action }: {
   )
 }
 
-/** One number, with its mark and the lip. */
-export function Stat({ icon, label, value, tone, note }: {
-  icon: IconDefinition
+/**
+ * One number, with its mark and the lip.
+ *
+ * `mark` is for the places where the mark is one of Staw's drawings rather
+ * than a glyph - a pressed thumb, somebody playing - because those carry
+ * their own colours and `Glyph` only reaches for them when the call site
+ * says which state it is in.
+ */
+export function Stat({ icon, mark, label, value, tone, note, big }: {
+  icon?: IconDefinition
+  mark?: ReactNode
   label: string
   value: string
   tone?: string
   note?: string
+  /** The number in Kobblon's green, for a count of people in there now. */
+  big?: boolean
 }) {
   return (
     <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3">
       <p className="flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
-        <Glyph icon={icon} className={tone ?? 'text-brand-bright'} />
+        {mark ?? (icon && <Glyph icon={icon} className={tone ?? 'text-brand-bright'} />)}
         {label}
       </p>
-      <p className="mt-1 font-display text-2xl font-extrabold tabular-nums">{value}</p>
+      <p className={cn(
+        'mt-1 font-display text-2xl font-extrabold tabular-nums',
+        big && 'text-space-bright',
+      )}>
+        {value}
+      </p>
       {note && <p className="text-mini leading-snug text-muted">{note}</p>}
     </div>
   )

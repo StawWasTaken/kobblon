@@ -148,19 +148,23 @@ function Setup() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {/* Somebody in there right now, in Staw's own drawing - the same
-            mark and the same word its page uses. */}
-        <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3">
-          <p className="flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
-            <Icon name="playing" className="h-3.5 w-3.5" />
-            Playing
-          </p>
-          <p className="mt-1 font-display text-2xl font-extrabold tabular-nums text-space-bright">412</p>
-        </div>
+        {/* Somebody in there right now: Staw's own mark, in the green
+            Kobblon says alive in, over a number in the same green. */}
+        <Stat
+          mark={<Icon name="playing" tone="#1CAE71" className="h-3.5 w-3.5" />}
+          label="Playing"
+          value="412"
+          big
+        />
         <Stat icon={faEye} label="Visits" value="1.3M" />
-        {/* The filled thumb is Staw's own drawing, the one the rating bar
-            shows once you have pressed it. */}
-        <Stat icon={faThumbsUp} label="Likes" value="24.1K" />
+        {/* `on` is what makes this Staw's pressed thumb rather than Font
+            Awesome's: without it Glyph keeps the borrowed glyph, because an
+            icon that claims a state it has not been told about is a lie. */}
+        <Stat
+          mark={<Glyph icon={faThumbsUp} on className="text-brand-bright" />}
+          label="Likes"
+          value="24.1K"
+        />
         {/* The same marks this World's own page wears: an award for a
             badge, a bag for a gamepass. Two drawings of one thing is two
             ideas of what it is. */}
