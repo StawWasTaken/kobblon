@@ -25935,3 +25935,37 @@ wherever the World is drawn.
 directly; add it as a `world_media` row at position 0. Draw a World wide
 from `cover_url`, and when `cover_is_video` is true play it muted rather
 than drawing a picture at it.
+
+## Round four hundred and nine - the addresses the database writes were wrong
+
+**A second reason a World's picture never appeared, and it is not the
+policy from the last round.**
+
+`public.storage_base()` answers `app.settings.storage_url` when that is
+set on the database, and otherwise falls back to
+`https://kobblon.supabase.co/storage/v1/object/public`. That fallback was
+a name somebody guessed; this project is `sdnjdgeqrhzkyfyohcsz`. So unless
+the setting happens to be set, **every address the database writes points
+at a host nobody owns** - the upload works, the row is written, and the
+picture never loads.
+
+It stayed hidden because the one place the website builds a storage
+address itself, `worldFileUrl`, reads `VITE_SUPABASE_URL` and is right.
+Only the addresses written *by the database* are wrong, which is exactly
+the set somebody experiences as "I uploaded it and nothing appeared":
+`worlds.cover_url`, `worlds.emblem_url`, `worlds.manifest_url`.
+
+**0369** points the fallback at this project and repairs the rows already
+written with the old host, prefix only, so a World keeps the picture it
+chose. A database whose setting was right all along is untouched by both
+halves.
+
+**What this means for you:** if the Workspace has a host written down
+anywhere for storage, check it is `sdnjdgeqrhzkyfyohcsz.supabase.co`. And
+`manifest_url` is in the repaired set - **a World whose manifest would not
+fetch may have been this**, not the file.
+
+**Also in this round:** where a World has no emblem or no thumbnail, the
+setup page draws Staw's default World art rather than an empty box, and
+says Default rather than Missing - it is what everybody else is already
+seeing, so the page that sets it should show it too.

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
@@ -19,6 +20,7 @@ import { Input, Textarea } from '@/components/ui/Input'
 import { MakeThings } from '@/components/worlds/MakeThings'
 import { ErrorState, Skeleton } from '@/components/ui/States'
 import { Cropper } from '@/components/ui/Cropper'
+import { DEFAULT_WORLD_EMBLEM, DEFAULT_WORLD_THUMBNAIL } from '@/lib/worldart'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -57,25 +59,31 @@ const maturities: { value: WorldMaturity; label: string; note: string }[] = [
  * called "emblem" that saved into the wide slot, and nobody could have
  * known from looking at it.
  */
-function ArtSlot({ title, note, shape, art, where, busy, onPick, onClear }: {
+function ArtSlot({ title, note, shape, art, where, busy, onPick, onClear, children }: {
   title: string
   note: string
   shape: 'square' | 'wide'
   art: string | null
   where: string
   busy: boolean
-  onPick: () => void
+  onPick?: () => void
   onClear?: () => void
+  /** What to say instead of a button, where the picture is not set here. */
+  children?: ReactNode
 }) {
+  const fallback = shape === 'square' ? DEFAULT_WORLD_EMBLEM : DEFAULT_WORLD_THUMBNAIL
   return (
     <div className="flex flex-wrap items-start gap-4 border-b border-ink-line p-4 last:border-0">
       <span className={cn(
         'grid shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media',
         shape === 'square' ? 'h-24 w-24' : 'h-24 w-[10.65rem]',
       )}>
-        {art
-          ? <img src={art} alt="" className="h-full w-full object-cover" />
-          : <Glyph icon={faImage} className="text-xl text-white/25" />}
+        {/*
+          * Not an empty grey box: what a World wears when nobody has given
+          * it a picture is a drawing of Staw's, and it is what everybody
+          * else is already seeing, so this page shows it too.
+          */}
+        <img src={art ?? fallback} alt="" className="h-full w-full object-cover" />
       </span>
 
       <div className="min-w-0 flex-1">
@@ -83,20 +91,23 @@ function ArtSlot({ title, note, shape, art, where, busy, onPick, onClear }: {
           {title}
           {art
             ? <Flag tone="bg-space/15 text-space-bright" icon={faCircleCheck}>Set</Flag>
-            : <Flag tone="bg-warn/15 text-warn-bright" icon={faCircleExclamation}>Missing</Flag>}
+            : <Flag tone="bg-ink-raised text-white/55" icon={faImage}>Default</Flag>}
         </p>
         <p className="mt-1 text-xs leading-snug text-muted">{note}</p>
         <p className="mt-1 text-mini font-bold uppercase tracking-wide text-white/35">{where}</p>
 
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <Button size="sm" variant="subtle" icon={faUpload} disabled={busy} onClick={onPick}>
-            {art ? 'Change it' : 'Choose a picture'}
-          </Button>
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {onPick && (
+            <Button size="sm" variant="subtle" icon={faUpload} disabled={busy} onClick={onPick}>
+              {art ? 'Change it' : 'Choose a picture'}
+            </Button>
+          )}
           {onClear && (
             <Button size="sm" variant="ghost" icon={faTrash} disabled={busy} onClick={onClear}>
               Take it off
             </Button>
           )}
+          {children}
         </div>
       </div>
     </div>
@@ -420,6 +431,18 @@ export default function CreateWorld() {
             onPick={() => emblemInput.current?.click()}
             onClear={art.emblem ? () => void clearArt('emblem') : undefined}
           />
+          <ArtSlot
+            title="Thumbnail"
+            shape="wide"
+            art={art.cover}
+            note="The first of the pictures below. If that one is a video, it plays with the sound off."
+            where="Its own page · Discover · what gets shared"
+            busy={busy}
+          >
+            <span className="text-xs text-muted">
+              {art.cover ? 'Set from the first picture below.' : 'Add a picture below and it becomes this.'}
+            </span>
+          </ArtSlot>
         </Sheet>
 
         <input
