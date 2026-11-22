@@ -24,13 +24,15 @@ import { MemoryRouter } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import {
   faLink, faCopy, faArrowUpRightFromSquare, faImage, faPlus, faTrash,
-  faCheck, faXmark, faUpload, faBell, faCrop, faVideo, faGripVertical,
-  faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faCertificate,
-  faTicket, faPen, faEye, faThumbsUp, faCircleExclamation,
+  faCircleCheck, faCircleXmark, faUpload, faBell, faCrop, faVideo, faGripVertical,
+  faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faAward,
+  faBagShopping, faPen, faEye, faThumbsUp, faCircleExclamation, faBookmark,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { worldIcon } from '@/lib/naming'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/brand/Icon'
+import { CurrencyMark } from '@/components/brand/Currency'
 import { Input, Textarea } from '@/components/ui/Input'
 import { HubTop, Stat, Head, Sheet, Chip, Flag, LiveFlag } from '@/components/create/HubShapes'
 import { DEFAULT_WORLD_EMBLEM, DEFAULT_WORLD_THUMBNAIL } from '@/lib/worldart'
@@ -63,7 +65,7 @@ function ArtSlot({ title, note, shape, art, where, set }: {
         <p className="flex items-center gap-2 font-display text-base font-extrabold">
           {title}
           {set
-            ? <Flag tone="bg-space/15 text-space-bright" icon={faCheck}>Set</Flag>
+            ? <Flag tone="bg-space/15 text-space-bright" icon={faCircleCheck}>Set</Flag>
             : <Flag tone="bg-warn/15 text-warn-bright" icon={faCircleExclamation}>Missing</Flag>}
         </p>
         <p className="mt-1 text-xs leading-snug text-muted">{note}</p>
@@ -89,7 +91,7 @@ function Need({ done, children }: { done: boolean; children: React.ReactNode }) 
         'grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2',
         done ? 'border-space/40 bg-space/15 text-space-bright' : 'border-ink-line bg-ink-raised text-white/30',
       )}>
-        <Glyph icon={done ? faCheck : faXmark} className="text-tiny" />
+        <Glyph icon={done ? faCircleCheck : faCircleXmark} className="text-tiny" />
       </span>
       <span className={done ? 'text-white/70' : 'font-bold text-white'}>{children}</span>
     </li>
@@ -145,11 +147,25 @@ function Setup() {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {/* Somebody in there right now, in Staw's own drawing - the same
+            mark and the same word its page uses. */}
+        <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3">
+          <p className="flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
+            <Icon name="playing" className="h-3.5 w-3.5" />
+            Playing
+          </p>
+          <p className="mt-1 font-display text-2xl font-extrabold tabular-nums text-space-bright">412</p>
+        </div>
         <Stat icon={faEye} label="Visits" value="1.3M" />
+        {/* The filled thumb is Staw's own drawing, the one the rating bar
+            shows once you have pressed it. */}
         <Stat icon={faThumbsUp} label="Likes" value="24.1K" />
-        <Stat icon={faCertificate} label="Badges" value="4" />
-        <Stat icon={faTicket} label="Passes" value="1" />
+        {/* The same marks this World's own page wears: an award for a
+            badge, a bag for a gamepass. Two drawings of one thing is two
+            ideas of what it is. */}
+        <Stat icon={faBookmark} label="Saved" value="8,120" />
+        <Stat icon={faAward} label="Badges" value="4" />
       </div>
 
       {/* ------------------------------------------------------- what */}
@@ -294,11 +310,11 @@ function Setup() {
 
       {/* ----------------------------------------------------- things */}
       <section id="things">
-        <Head>Badges and passes</Head>
+        <Head>Badges and gamepasses</Head>
         <Sheet>
           {[
-            { icon: faCertificate, name: 'Reached the top', note: 'Badge · given by the World · 1,204 awarded' },
-            { icon: faTicket, name: 'Skip the queue', note: 'Pass · 50 Brix · 318 sold' },
+            { icon: faAward, name: 'Reached the top', note: 'Badge · given by the World · 1,204 earned' },
+            { icon: faBagShopping, name: 'Skip the queue', note: 'Gamepass · 318 sold', price: 50 },
           ].map((one) => (
             <div key={one.name} className="flex items-center gap-3 border-b border-ink-line px-4 py-3 last:border-0">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-ink-line bg-ink-raised text-brand-bright">
@@ -306,14 +322,19 @@ function Setup() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold">{one.name}</span>
-                <span className="block truncate text-mini text-muted">{one.note}</span>
+                <span className="flex items-center gap-1 truncate text-mini text-muted">
+                  {one.price !== undefined && (
+                    <><CurrencyMark className="mr-0.5" />{one.price} · </>
+                  )}
+                  {one.note}
+                </span>
               </span>
               <Button size="sm" variant="ghost" icon={faPen}>Change</Button>
             </div>
           ))}
           <div className="flex gap-2 p-3">
             <Button size="sm" variant="subtle" icon={faPlus} className="flex-1">Make a badge</Button>
-            <Button size="sm" variant="subtle" icon={faPlus} className="flex-1">Make a pass</Button>
+            <Button size="sm" variant="subtle" icon={faPlus} className="flex-1">Make a gamepass</Button>
           </div>
         </Sheet>
       </section>
