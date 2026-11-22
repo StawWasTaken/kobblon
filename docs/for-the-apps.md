@@ -25987,3 +25987,23 @@ this was already the better of them. The World setup page uses it now.
 **If the Workspace asks for a picture anywhere, this is the piece**, and
 it is in `@/components/ui` with the rest of the shared set rather than
 inside Communities where nothing else could reasonably import it.
+
+## Round four hundred and eleven - a World's pictures were being shown twice
+
+**A direct consequence of 0368, and worth knowing if you draw a World's
+gallery.** The World page built its strip as "the thumbnail, then the
+pictures" - which was right while a thumbnail was something set apart from
+them. Since 0368 the thumbnail **is** the first of those pictures, so
+every uploaded picture appeared twice, the first one of them in both
+places.
+
+The page builds the strip from `world_media` alone now, and falls back to
+a single frame from `cover_url` (or Kobblon's default art) only when a
+World has no pictures of its own, so the page still has something where
+its gallery goes. **If the Workspace shows a World's pictures, do the
+same: the media list is the whole list.**
+
+Also, the arrows cross-fade now rather than cut: every picture is stacked
+and the one showing is the one at full opacity. A video is mounted only
+while it is the one showing - four videos loading at once to show one of
+them is a page that stops answering on a phone.

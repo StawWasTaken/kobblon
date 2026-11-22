@@ -156,23 +156,54 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
                 <p className="mt-3 text-sm text-muted">Nothing to show of this World yet.</p>
               </div>
             </div>
-          ) : here.kind === 'video' ? (
-            /* Muted, playing, looping - Staw's rule for a World's video
-               wherever it is drawn. The controls stay, so somebody who
-               wants to hear it can turn it up. */
-            <video
-              key={here.id}
-              src={here.url}
-              controls
-              muted
-              autoPlay
-              loop
-              playsInline
-              preload="metadata"
-              className="h-full w-full object-cover"
-            />
           ) : (
-            <img src={here.url} alt={name} className="h-full w-full object-cover" />
+            /*
+              * All of them stacked, one visible: that is what makes the
+              * arrows fade from one picture to the next rather than cut.
+              * A picture is drawn whether or not it is the one showing, so
+              * the next one is already there to fade to - but a video is
+              * mounted only while it is the one showing, because four
+              * videos loading at once to show one of them is a page that
+              * stops answering on a phone.
+              */
+            shots.map((shot, i) => {
+              const showing = i === Math.min(at, shots.length - 1)
+              return (
+                <div
+                  key={shot.id}
+                  aria-hidden={!showing}
+                  className={cn(
+                    'absolute inset-0 transition-opacity duration-300 ease-out',
+                    showing ? 'opacity-100' : 'pointer-events-none opacity-0',
+                  )}
+                >
+                  {shot.kind === 'video' ? (
+                    showing && (
+                      /* Muted, playing, looping - Staw's rule for a World's
+                         video wherever it is drawn. The controls stay, so
+                         somebody who wants to hear it can turn it up. */
+                      <video
+                        src={shot.url}
+                        controls
+                        muted
+                        autoPlay
+                        loop
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    )
+                  ) : (
+                    <img
+                      src={shot.url}
+                      alt={showing ? name : ''}
+                      loading={i === 0 ? undefined : 'lazy'}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+              )
+            })
           )}
 
           {many && here?.kind !== 'video' && ([-1, 1] as const).map((by) => (

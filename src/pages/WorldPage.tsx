@@ -309,15 +309,28 @@ export default function WorldPage() {
   const canRate = Boolean(profile) && (standing.data?.visited || opinion !== null)
   const owner = thing.owner
 
-  /* The emblem leads, because it is what a World chose to be known by. */
-  const shots: Shot[] = [
-    { id: 'emblem', kind: 'image' as const, url: thing.cover_url ?? DEFAULT_WORLD_THUMBNAIL },
-    ...(media.data ?? []).map((one) => ({
+  /*
+   * What this World shows of itself, in the order it chose.
+   *
+   * The thumbnail is not prepended any more. It used to be, back when a
+   * World's picture was a thing somebody set apart from these; since 0368
+   * the thumbnail *is* the first of these, so putting it in front showed
+   * every uploaded picture twice.
+   *
+   * A World with nothing of its own still gets one frame, so the page has
+   * something where its pictures go rather than a hole.
+   */
+  const shots: Shot[] = (media.data ?? []).length
+    ? (media.data ?? []).map((one) => ({
       id: one.id,
       kind: one.kind,
       url: worldFileUrl(one.path),
-    })),
-  ]
+    }))
+    : [{
+      id: 'default',
+      kind: thing.cover_is_video ? ('video' as const) : ('image' as const),
+      url: thing.cover_url ?? DEFAULT_WORLD_THUMBNAIL,
+    }]
 
   const genre = genres.data?.find((one) => one.id === thing.genre)
 
