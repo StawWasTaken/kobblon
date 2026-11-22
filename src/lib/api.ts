@@ -3417,8 +3417,17 @@ export async function configureWorld(id: string, changes: {
   description?: string
   genre?: string | null
   maturity?: WorldMaturity
-  /** A path inside this World's own folder, or '' to take the emblem off. */
+  /**
+   * The wide picture, 16/9: a path inside this World's own folder, or ''
+   * to take it off. This is the one at the top of its page.
+   */
   cover?: string
+  /**
+   * The square one, same rule. Two pictures because a World is drawn both
+   * ways and one cut to a square was being stretched across the other
+   * (0367).
+   */
+  emblem?: string
   /** What it runs on. Left out, it is left alone; never empty (0343). */
   devices?: WorldDevice[]
 }): Promise<World> {
@@ -3430,6 +3439,7 @@ export async function configureWorld(id: string, changes: {
     maturity: changes.maturity ?? null,
     cover: changes.cover ?? null,
     runs_on: changes.devices ?? null,
+    emblem: changes.emblem ?? null,
   })) as World
 }
 
@@ -3825,6 +3835,21 @@ export async function addWorldMedium(
     .from('world_media')
     .insert({ world_id: worldId, kind, path, position })
   if (error) throw new Error(error.message)
+}
+
+/**
+ * The order a World shows its pictures in.
+ *
+ * Plain updates rather than a function: `world_media` has an update policy
+ * that already asks whether the World is yours (0080), so the rule is
+ * enforced in the one place it was written rather than copied into a
+ * second one that can drift from it.
+ */
+export async function setWorldMediaOrder(ids: string[]) {
+  for (const [at, id] of ids.entries()) {
+    const { error } = await supabase.from('world_media').update({ position: at }).eq('id', id)
+    if (error) throw new Error(error.message)
+  }
 }
 
 /** And taken off again, file and row together. */

@@ -25832,3 +25832,57 @@ Things to Wear, because nothing counts avatar sales; no span switch on
 Analytics, because there is no span filter server-side; "Asking to use"
 is still a number rather than a link, because there is still no requests
 page. If you build any of those, say so and the Hub will show them.
+
+## Round four hundred and seven - a World has two pictures, and an address
+
+Shipped on the website, approved from `tools/site/world-setup-preview`.
+**The first part of this is a bug both sides have been living with.**
+
+**`worlds.emblem_url` has never been written by anything.** It is the
+square picture; `cover_url` is the wide one; every reader on both sides
+does `coalesce(emblem_url, cover_url)`. The website's setup page called
+its one uploader "emblem", cut the picture to a **square**, and saved it
+into **`cover_url`** - so every World on Kobblon is a square stretched
+across every 16/9 slot it appears in: Discover, the top of its own page,
+anything shared.
+
+**Migration 0367** gives `configure_world` an eighth argument, `emblem`,
+with the same rule `cover` has always had: a path inside that World's own
+folder, never an address. Signature now:
+
+    configure_world(which uuid, called text, about text, genre text,
+                    maturity text, cover text, runs_on text[], emblem text)
+
+The old seven-argument version is **dropped**, not kept beside it - two
+overloads differing by one defaulted argument is a call nobody can
+resolve. **If the Workspace calls `configure_world` positionally it will
+not break (the new argument is last and defaults to null), but a call
+that sets a World's picture needs changing.**
+
+**What the Workspace should do:** set them as two. The square goes to
+`emblem`, the wide one to `cover`, in the same call. Do not set one and
+rely on the fallback - that is the bug we are undoing. Draw a World square
+from `emblem_url` and wide from `cover_url`, falling back only for Worlds
+made before this. Nothing is migrated: an existing World keeps its picture
+as its cover, and setting an emblem fills the empty column at last.
+
+**The address of the setup page is the World's number now.**
+`/create/worlds/WLD-1069`, with a bare `1069` and the old uuid both still
+answering, because links already sent have to land. `worldTag(content_id)`
+and `worldNumber(ref)` are in `@/lib/kinds` beside the asset ones. Every
+link the website writes says the number.
+
+**Publishing says what a World needs.** The page now lists six things
+before the Publish button - a name, a description of at least twenty
+characters, a genre, an emblem, a thumbnail, something it runs on - with
+the count of what is left. **It does not block publishing**: a World can
+go out half-dressed if somebody means it to, it just stops that being a
+surprise. **If the Workspace publishes a World, ask for the same six in
+the same words**, so a World cannot be put out from one window in a state
+the other would warn about.
+
+**Also:** `setWorldMediaOrder(ids)` in `@/lib/api` sets the order a World
+shows its pictures in - plain updates through `world_media`'s existing
+owner policy, no new function. And `Stat` in `@/components/create/HubShapes`
+takes a `mark` as well as an `icon`, for the places where the mark is one
+of Staw's drawings rather than a glyph.

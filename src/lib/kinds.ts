@@ -93,6 +93,21 @@ export const avatarNumber = (tag: string): number | null => {
   return Number.isFinite(found) && found > 0 ? found : null
 }
 
+/**
+ * A World's number, the way the rest of the product says it.
+ *
+ * The Hub's setup page used to be addressed by the row's uuid, which is
+ * the only place on Kobblon that did: an asset is `/create/DCL-88120` and
+ * a World's own page is `/worlds/1069/…`. `worldNumber` reads WLD-1069, a
+ * bare 1069, or neither, so links already sent still land.
+ */
+export const worldTag = (id: number | null | undefined) => (id ? `WLD-${id}` : '')
+
+export const worldNumber = (ref: string): number | null => {
+  const found = Number(String(ref).trim().replace(/^[Ww][Ll][Dd]-/, ''))
+  return Number.isFinite(found) && found > 0 ? found : null
+}
+
 /** The number every piece of content carries, with its kind in front. */
 export const contentTag = (kind: AssetKind, id: number | null) =>
   id ? `${kindCodes[kind]}-${id}` : ''

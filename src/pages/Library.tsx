@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState, ErrorState, SpaceCardSkeleton } from '@/components/ui/States'
 import { WorldCard } from '@/components/worlds/WorldCard'
 import { formatCount } from '@/lib/format'
+import { worldTag } from '@/lib/kinds'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -188,7 +189,7 @@ export default function Library() {
                 {shelf !== 'Saved' && (
                   <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/tile:opacity-100">
                     <Link
-                      to={`/create/worlds/${world.id}`}
+                      to={`/create/worlds/${worldTag(world.content_id) || world.id}`}
                       aria-label={`Configure ${world.name}`}
                       title="Configure"
                       className={cn('grid h-8 w-8 place-items-center', overlayButton)}

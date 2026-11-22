@@ -38,6 +38,7 @@ import CreateHub, {
 } from '@/pages/CreateHub'
 import CreateUploads from '@/pages/CreateUploads'
 import CreateAds from '@/pages/CreateAds'
+import CreateWorld from '@/pages/CreateWorld'
 import '@/index.css'
 
 /*
@@ -111,6 +112,7 @@ export const PAGES: Record<string, { at: string; show: () => React.JSX.Element }
   'create-inventory': { at: '/create/inventory', show: Home },
   'create-ads': { at: '/create/ads', show: Home },
   'create-analytics': { at: '/create/analytics', show: Home },
+  'create-world': { at: '/create/worlds/WLD-2000', show: Home },
 }
 
 const which = new URLSearchParams(location.search).get('page') ?? 'home'
@@ -132,6 +134,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/create" element={<CreateHub />}>
                   <Route index element={<CreateOverview />} />
                   <Route path="worlds" element={<CreateWorlds />} />
+                  <Route path="worlds/:id" element={<CreateWorld />} />
                   <Route path="uploads" element={<CreateUploads />} />
                   <Route path="marketplace" element={<CreateMarketplace />} />
                   <Route path="inventory" element={<CreateInventory />} />

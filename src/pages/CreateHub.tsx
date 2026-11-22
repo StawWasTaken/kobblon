@@ -8,6 +8,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { worldIcon } from '@/lib/naming'
+import { worldTag } from '@/lib/kinds'
 import {
   HubTop, Stat, Head, Sheet, HubRow, Chip, Flag, LiveFlag, HubTile,
 } from '@/components/create/HubShapes'
@@ -380,7 +381,7 @@ export function CreateWorlds() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <Link
-                        to={`/create/worlds/${world.id}`}
+                        to={`/create/worlds/${worldTag(world.content_id) || world.id}`}
                         className="truncate text-sm font-extrabold hover:text-link"
                       >
                         {world.name}
@@ -421,7 +422,7 @@ export function CreateWorlds() {
                     </span>
                   </span>
 
-                  <Button size="sm" variant="subtle" icon={faGear} to={`/create/worlds/${world.id}`}>
+                  <Button size="sm" variant="subtle" icon={faGear} to={`/create/worlds/${worldTag(world.content_id) || world.id}`}>
                     Set it up
                   </Button>
 

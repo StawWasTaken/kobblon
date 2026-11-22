@@ -39,7 +39,7 @@ import {
 } from '@/lib/api'
 import { play, editInWorkspace } from '@/lib/app'
 import { profileLink, worldLink } from '@/lib/links'
-import { deviceLabels } from '@/lib/kinds'
+import { deviceLabels, worldTag } from '@/lib/kinds'
 import { DEFAULT_WORLD_THUMBNAIL, worldEmblem } from '@/lib/worldart'
 import { asset } from '@/lib/asset'
 
@@ -550,7 +550,7 @@ export default function WorldPage() {
             onNotify={tell}
             signedIn={!!profile}
             mine={mine}
-            editTo={`/create/worlds/${thing.id}`}
+            editTo={`/create/worlds/${worldTag(thing.content_id) || thing.id}`}
             onWorkspace={() => { void editInWorkspace(thing.id, () => setHanding('missing')) }}
             onCopyLink={() => {
               void navigator.clipboard?.writeText(window.location.href)
@@ -644,11 +644,23 @@ export default function WorldPage() {
           )}
 
           {tab === 'Badges' && (
-            <WorldThings kind="badges" badges={badges.data ?? []} mine={mine} worldId={thing.id} />
+            <WorldThings
+              kind="badges"
+              badges={badges.data ?? []}
+              mine={mine}
+              worldId={thing.id}
+              worldNumber={worldTag(thing.content_id)}
+            />
           )}
 
           {tab === 'Store' && (
-            <WorldThings kind="shop" passes={passes.data ?? []} mine={mine} worldId={thing.id} />
+            <WorldThings
+              kind="shop"
+              passes={passes.data ?? []}
+              mine={mine}
+              worldId={thing.id}
+              worldNumber={worldTag(thing.content_id)}
+            />
           )}
 
           {/*

@@ -5,6 +5,7 @@ import { Flag, LiveFlag } from '@/components/create/HubShapes'
 import { editInWorkspace } from '@/lib/app'
 import { worldThumbnail } from '@/lib/worldart'
 import { formatCount, timeAgo } from '@/lib/format'
+import { worldTag } from '@/lib/kinds'
 import type { World } from '@/types/db'
 
 /*
@@ -19,7 +20,7 @@ import type { World } from '@/types/db'
 export function WorldWork({ world, onMissing }: { world: World; onMissing: () => void }) {
   return (
     <article className="group overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card transition-colors hover:border-brand/60">
-      <Link to={`/create/worlds/${world.id}`} className="block">
+      <Link to={`/create/worlds/${worldTag(world.content_id) || world.id}`} className="block">
         {/* The wide picture, because that is what a World wears on its own
             page and in the Launcher - a square here and a cover there is
             two ideas of what a World looks like. */}
@@ -34,7 +35,7 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
       </Link>
 
       <div className="p-3">
-        <Link to={`/create/worlds/${world.id}`} className="block truncate font-display text-base font-extrabold hover:underline">
+        <Link to={`/create/worlds/${worldTag(world.content_id) || world.id}`} className="block truncate font-display text-base font-extrabold hover:underline">
           {world.name}
         </Link>
         <p className="mt-0.5 truncate font-mono text-mini text-muted">
@@ -48,7 +49,7 @@ export function WorldWork({ world, onMissing }: { world: World; onMissing: () =>
         </p>
 
         <div className="mt-3 flex gap-2">
-          <Button size="sm" variant="subtle" className="flex-1" icon={faGear} to={`/create/worlds/${world.id}`}>
+          <Button size="sm" variant="subtle" className="flex-1" icon={faGear} to={`/create/worlds/${worldTag(world.content_id) || world.id}`}>
             Set it up
           </Button>
           {/*

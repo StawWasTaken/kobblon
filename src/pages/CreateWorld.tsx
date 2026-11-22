@@ -5,17 +5,18 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Tooltip } from '@/components/ui/Tooltip'
 import {
   faArrowUpRightFromSquare, faBell, faCheck, faCopy, faImage, faLink, faPlus,
-  faTrash, faUpload, faVideo,
+  faTrash, faUpload, faVideo, faCircleCheck, faCircleXmark, faPen,
+  faEye, faBookmark, faThumbsUp, faCircleExclamation,
+  faArrowLeft, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
+import {
+  HubTop, Stat, Head, Sheet, Chip, Flag, LiveFlag,
+} from '@/components/create/HubShapes'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { MakeThings } from '@/components/worlds/MakeThings'
-import { Select } from '@/components/ui/Select'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { SectionHeader } from '@/components/ui/SectionHeader'
 import { ErrorState, Skeleton } from '@/components/ui/States'
 import { Cropper } from '@/components/ui/Cropper'
 import { useToast } from '@/components/ui/Toast'
@@ -24,10 +25,12 @@ import { useAsync } from '@/hooks/useAsync'
 import { useTitle, CREATE_ICON, useFavicon } from '@/hooks/useTitle'
 import {
   addWorldMedium, announceWorldUpdate, configureWorld, myWorlds, publishWorld,
-  removeWorldMedium, uploadWorldFile, worldFileUrl, worldGenres, worldMedia,
+  removeWorldMedium, setWorldMediaOrder, uploadWorldFile, worldFileUrl,
+  worldGenres, worldMedia,
 } from '@/lib/api'
 import { worldLink } from '@/lib/links'
-import { deviceIcons, deviceLabels, everyDevice } from '@/lib/kinds'
+import { deviceIcons, deviceLabels, everyDevice, worldTag, worldNumber } from '@/lib/kinds'
+import { formatCount } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { WorldDevice, WorldMaturity } from '@/types/db'
 
@@ -46,17 +49,67 @@ const maturities: { value: WorldMaturity; label: string; note: string }[] = [
   { value: 'strong', label: 'Strong', note: 'Strong violence or themes for older players' },
 ]
 
-/** A Select carries its label for a screen reader, not on the page. */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * One of the two pictures a World wears, with the shape it is cut to and
+ * where it turns up.
+ *
+ * Saying where each one shows is the point: the page had one uploader
+ * called "emblem" that saved into the wide slot, and nobody could have
+ * known from looking at it.
+ */
+function ArtSlot({ title, note, shape, art, where, busy, onPick, onClear }: {
+  title: string
+  note: string
+  shape: 'square' | 'wide'
+  art: string | null
+  where: string
+  busy: boolean
+  onPick: () => void
+  onClear?: () => void
+}) {
   return (
-    <div>
-      <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted">{label}</p>
-      {children}
+    <div className="flex flex-wrap items-start gap-4 border-b border-ink-line p-4 last:border-0">
+      <span className={cn(
+        'grid shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media',
+        shape === 'square' ? 'h-24 w-24' : 'h-24 w-[10.65rem]',
+      )}>
+        {art
+          ? <img src={art} alt="" className="h-full w-full object-cover" />
+          : <Glyph icon={faImage} className="text-xl text-white/25" />}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2 font-display text-base font-extrabold">
+          {title}
+          {art
+            ? <Flag tone="bg-space/15 text-space-bright" icon={faCircleCheck}>Set</Flag>
+            : <Flag tone="bg-warn/15 text-warn-bright" icon={faCircleExclamation}>Missing</Flag>}
+        </p>
+        <p className="mt-1 text-xs leading-snug text-muted">{note}</p>
+        <p className="mt-1 text-mini font-bold uppercase tracking-wide text-white/35">{where}</p>
+
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <Button size="sm" variant="subtle" icon={faUpload} disabled={busy} onClick={onPick}>
+            {art ? 'Change it' : 'Choose a picture'}
+          </Button>
+          {onClear && (
+            <Button size="sm" variant="ghost" icon={faTrash} disabled={busy} onClick={onClear}>
+              Take it off
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
 export default function CreateWorld() {
+  /*
+   * `WLD-1069`, a bare `1069`, or the row's uuid. The uuid is what this
+   * page was addressed by for its whole life, so links already sent still
+   * land; everything the site writes now says the number, which is what
+   * the rest of the product calls a World.
+   */
   const { id = '' } = useParams()
   const navigate = useNavigate()
   /*
@@ -71,7 +124,10 @@ export default function CreateWorld() {
   useFavicon(CREATE_ICON)
 
   const worlds = useAsync(async () => (profile ? myWorlds() : []), [profile?.id])
-  const world = worlds.data?.find((one) => one.id === id) ?? null
+  const wanted = worldNumber(id)
+  const world = worlds.data?.find(
+    (one) => one.id === id || (wanted !== null && one.content_id === wanted),
+  ) ?? null
   const genres = useAsync(worldGenres, [])
   const media = useAsync(async () => (world ? worldMedia(world.id) : []), [world?.id])
 
@@ -95,9 +151,10 @@ export default function CreateWorld() {
    * cut it. Better the person who chose the picture decides which part
    * survives than the browser deciding for them.
    */
-  const [cropping, setCropping] = useState<File | null>(null)
+  const [cropping, setCropping] = useState<{ file: File; slot: 'emblem' | 'cover' } | null>(null)
 
   const emblemInput = useRef<HTMLInputElement>(null)
+  const coverInput = useRef<HTMLInputElement>(null)
   const shotInput = useRef<HTMLInputElement>(null)
 
   // The form starts as what the World already says, not as blanks that would
@@ -165,10 +222,35 @@ export default function CreateWorld() {
     'Saved.',
   )
 
-  const pickEmblem = (file: File) => run(async () => {
-    const path = await uploadWorldFile(world.id, file, 'emblem')
-    await configureWorld(world.id, { cover: path })
-  }, 'Emblem set.')
+  /*
+   * Two pictures, two shapes, two columns.
+   *
+   * This page used to cut one picture square and save it to `cover_url`,
+   * the wide slot, while `emblem_url` - which every reader coalesces to
+   * first - was never written by anything. So a square was being stretched
+   * across every 16/9 cover on Kobblon. 0367 gave `configure_world` the
+   * second argument; this gives the page the second uploader.
+   */
+  const setArt = (file: File, slot: 'emblem' | 'cover') => run(async () => {
+    const path = await uploadWorldFile(world.id, file, slot)
+    await configureWorld(world.id, slot === 'emblem' ? { emblem: path } : { cover: path })
+  }, slot === 'emblem' ? 'Emblem set.' : 'Thumbnail set.')
+
+  const clearArt = (slot: 'emblem' | 'cover') => run(
+    () => configureWorld(world.id, slot === 'emblem' ? { emblem: '' } : { cover: '' }),
+    'Taken off.',
+  )
+
+  /** Moving one picture along the row it is shown in. */
+  const shift = (at: number, by: number) => {
+    const order = (media.data ?? []).map((one) => one.id)
+    const to = at + by
+    if (to < 0 || to >= order.length) return
+    const moved = [...order]
+    const [one] = moved.splice(at, 1)
+    moved.splice(to, 0, one)
+    void run(() => setWorldMediaOrder(moved), 'Moved.')
+  }
 
   const addShot = (file: File) => run(async () => {
     const kind = file.type.startsWith('video/') ? 'video' : 'image'
@@ -176,209 +258,272 @@ export default function CreateWorld() {
     await addWorldMedium(world.id, kind, path, (media.data?.length ?? 0))
   }, 'Added.')
 
+  const art = {
+    emblem: world.emblem_url,
+    // Worlds set up before 0367 have their one picture in the cover.
+    cover: world.cover_url,
+  }
+
+  const needs = [
+    { done: !!world.name.trim(), what: 'A name' },
+    { done: (world.description ?? '').trim().length >= 20, what: 'A description people can read before deciding' },
+    { done: !!world.genre, what: 'A genre, so Discover knows where to put it' },
+    { done: !!art.emblem, what: 'An emblem, for lists and tiles' },
+    { done: !!art.cover, what: 'A thumbnail, for its own page and Discover' },
+    /* Null, not empty, is what a World published before the column says,
+       and that means all four - so it is not a thing anybody has to fix. */
+    { done: (world.devices?.length ?? everyDevice.length) > 0, what: 'At least one thing it runs on' },
+  ]
+  const left = needs.filter((one) => !one.done).length
+
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="space-y-7">
+      <HubTop
+        icon={worldIcon}
         title={world.name}
-        lead="Creator writes the scene; this is everything else."
+        lead="Workspace writes the scene; this is everything else about it - what it is called, what it looks like, who it is for, and whether it is out."
+        action={(
+          <Button variant="subtle" icon={faArrowUpRightFromSquare} onClick={() => navigate(here)}>
+            Open its page
+          </Button>
+        )}
       />
 
+      {/* Where it stands, and the thing people come to this page for. */}
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={world.is_published ? 'space' : 'warm'}>
-          {world.is_published ? 'Published' : 'Not published'}
-        </Badge>
-        {world.content_id ? <Badge tone="neutral">WLD-{world.content_id}</Badge> : null}
-      </div>
+        {world.is_published
+          ? <LiveFlag />
+          : <Flag tone="bg-ink-raised text-white/60" icon={faPen}>Not published</Flag>}
+        {world.content_id
+          ? <Flag tone="bg-ink-raised text-white/60" icon={worldIcon}>{worldTag(world.content_id)}</Flag>
+          : null}
 
-      {/*
-        * Where this World lives, in full, because the thing somebody wants
-        * from this page more than anything else is the link to send people.
-        */}
-      <Card className="flex flex-wrap items-center gap-3 p-4">
-        <Glyph icon={faLink} className="text-muted" />
-        <code className="min-w-0 flex-1 truncate rounded-lg bg-ink-raised px-3 py-2 text-xs text-white/80">
-          {address}
-        </code>
-        <Button
-          size="sm"
-          variant="subtle"
-          icon={copied ? faCheck : faCopy}
-          onClick={() => void copy()}
-        >
-          {copied ? 'Copied' : 'Copy'}
-        </Button>
-        <Button size="sm" variant="ghost" icon={faArrowUpRightFromSquare} onClick={() => navigate(here)}>
-          Open
-        </Button>
+        <span className="ml-auto flex min-w-0 items-center gap-2">
+          <Glyph icon={faLink} className="text-muted" />
+          <code className="min-w-0 truncate rounded-lg border-2 border-ink-line bg-ink-raised px-3 py-1.5 text-xs text-white/80">
+            {address}
+          </code>
+          <Button
+            size="sm"
+            variant="subtle"
+            icon={copied ? faCheck : faCopy}
+            onClick={() => void copy()}
+          >
+            {copied ? 'Copied' : 'Copy'}
+          </Button>
+        </span>
         {!world.is_published && (
           <p className="w-full text-xs text-muted">
-            This address only answers for you until the World is published.
+            That address only answers for you until the World is published.
           </p>
         )}
-      </Card>
+      </div>
 
-      <Card className="space-y-4 p-5">
-        <SectionHeader title="What it is" />
-
-        <Input
-          label="Name"
-          value={name}
-          maxLength={48}
-          onChange={(e) => setName(e.target.value)}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat icon={faEye} label="Visits" value={formatCount(world.visit_count ?? 0)} />
+        <Stat
+          mark={<Glyph icon={faThumbsUp} on className="text-brand-bright" />}
+          label="Likes"
+          value={formatCount(world.like_count ?? 0)}
         />
-
-        <Textarea
-          label="Description"
-          labelNote="What somebody reads before deciding"
-          rows={5}
-          maxLength={600}
-          value={about}
-          onChange={(e) => setAbout(e.target.value)}
+        <Stat icon={faBookmark} label="Saved" value={formatCount(world.favourite_count ?? 0)} />
+        <Stat
+          icon={faCircleCheck}
+          label="Runs on"
+          value={String((world.devices?.length ? world.devices : everyDevice).length)}
+          note={(world.devices?.length ? world.devices : everyDevice)
+            .map((one) => deviceLabels[one]).join(', ')}
         />
+      </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Genre">
-            <Select
-              label="Genre"
-              value={genre}
-              onChange={setGenre}
-              options={[
-                { value: '', label: 'Not set' },
-                ...(genres.data ?? []).map((one) => ({ value: one.id, label: one.label })),
-              ]}
-            />
-          </Field>
-          <Field label="Maturity">
-            <Select
-              label="Maturity"
-              value={maturity}
-              onChange={(value) => setMaturity(value as WorldMaturity)}
-              options={maturities.map((one) => ({
-                value: one.value, label: one.label, note: one.note,
-              }))}
-            />
-          </Field>
-        </div>
-
-        <Field label="What it runs on">
-          {/*
-            * Four toggles rather than a dropdown: it is not one answer, it
-            * is four yes-or-nos, and a dropdown that takes several is a
-            * control nobody reads correctly. The last one cannot be turned
-            * off - a World that runs on nothing is a World nobody can find,
-            * and the database refuses it anyway (0343), so it is said here
-            * rather than discovered by pressing Save.
-            */}
-          <div className="flex flex-wrap gap-2">
-            {everyDevice.map((one) => {
-              const on = devices.includes(one)
-              const last = on && devices.length === 1
-              return (
-                <Tooltip key={one} label={last ? 'It has to run on something' : deviceLabels[one]}>
-                  <button
-                    type="button"
-                    aria-pressed={on}
-                    disabled={last}
-                    onClick={() => setDevices((was) => (
-                      was.includes(one) ? was.filter((x) => x !== one) : [...was, one]
-                    ))}
-                    className={cn(
-                      'inline-flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors',
-                      on
-                        ? 'border-brand bg-brand/15 text-brand-bright'
-                        : 'border-ink-line text-muted hover:border-white/25 hover:text-white',
-                      last && 'cursor-default',
-                    )}
-                  >
-                    <Glyph icon={deviceIcons[one]} />
-                    {deviceLabels[one]}
-                  </button>
-                </Tooltip>
-              )
-            })}
-          </div>
-          <p className="mt-2 text-xs text-muted">
-            Discover lets people keep the Worlds that run on what they are holding.
-          </p>
-        </Field>
-
-        <div className="flex justify-end">
-          <Button variant="yes" onClick={save} disabled={busy || !name.trim()}>Save</Button>
-        </div>
-      </Card>
-
-      <Card className="space-y-4 p-5">
-        <SectionHeader title="How it looks" />
-        <p className="text-sm text-muted">
-          The emblem is what this World is known by, everywhere it appears. The rest is what
-          somebody sees on its page, in the order they are added here.
-        </p>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-b-4 border-ink-line bg-media">
-            {world.cover_url
-              ? <img src={world.cover_url} alt="" className="h-full w-full object-cover" />
-              : <Glyph icon={faImage} className="text-white/30" />}
-          </span>
-          <div>
-            <Button
-              size="sm"
-              variant="subtle"
-              icon={faUpload}
-              disabled={busy}
-              onClick={() => emblemInput.current?.click()}
-            >
-              {world.cover_url ? 'Change the emblem' : 'Set an emblem'}
-            </Button>
-            <p className="mt-1.5 text-xs text-muted">A square picture works best.</p>
-          </div>
-          <input
-            ref={emblemInput}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              e.target.value = ''
-              if (file) setCropping(file)
-            }}
+      {/* ----------------------------------------------------------- what */}
+      <section>
+        <Head>What it is</Head>
+        <Sheet className="space-y-4 p-4">
+          <Input
+            label="Name"
+            value={name}
+            maxLength={48}
+            onChange={(e) => setName(e.target.value)}
           />
-        </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {(media.data ?? []).map((one) => (
-            <div
-              key={one.id}
-              className="group relative aspect-video overflow-hidden rounded-lg border-2 border-ink-line bg-media"
-            >
-              {one.kind === 'video' ? (
-                <span className="grid h-full w-full place-items-center text-white/50">
-                  <Glyph icon={faVideo} />
-                </span>
-              ) : (
-                <img src={worldFileUrl(one.path)} alt="" className="h-full w-full object-cover" />
+          <Textarea
+            label="Description"
+            labelNote="What somebody reads before deciding"
+            rows={5}
+            maxLength={600}
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+          />
+
+          <div>
+            <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">Genre</p>
+            {genres.loading
+              ? <Skeleton className="h-9 w-64" />
+              : (
+                <div className="flex flex-wrap gap-2">
+                  {(genres.data ?? []).map((one) => (
+                    <Chip key={one.id} on={genre === one.id} onClick={() => setGenre(one.id)}>
+                      {one.label}
+                    </Chip>
+                  ))}
+                </div>
               )}
-              <button
-                onClick={() => void run(() => removeWorldMedium(one), 'Taken off.')}
-                disabled={busy}
-                aria-label="Take this off the page"
-                className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-xs text-white opacity-0 transition-opacity hover:bg-danger group-hover:opacity-100"
-              >
-                <Glyph icon={faTrash} />
-              </button>
-            </div>
-          ))}
+          </div>
 
-          <button
-            onClick={() => shotInput.current?.click()}
-            disabled={busy || (media.data?.length ?? 0) >= 12}
-            className="grid aspect-video place-items-center rounded-lg border-2 border-dashed border-ink-line text-sm text-muted transition-colors hover:border-white/30 hover:text-white disabled:opacity-40"
-          >
-            <span className="flex flex-col items-center gap-1">
-              <Glyph icon={faPlus} />
-              Add
-            </span>
-          </button>
+          <div>
+            <p className="mb-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
+              Who it is for
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {maturities.map((one) => (
+                <button
+                  key={one.value}
+                  type="button"
+                  onClick={() => setMaturity(one.value)}
+                  aria-pressed={maturity === one.value}
+                  className={cn(
+                    'kob-press rounded-xl border-2 px-3 py-2 text-left transition-colors',
+                    maturity === one.value
+                      ? 'border-brand-deep border-b-[6px] bg-brand text-on-art'
+                      : 'border-ink-line border-b-4 bg-ink-card hover:border-brand/50',
+                  )}
+                >
+                  <span className="block font-display text-sm font-extrabold">{one.label}</span>
+                  <span className={cn(
+                    'mt-0.5 block text-mini leading-snug',
+                    maturity === one.value ? 'text-on-art/75' : 'text-muted',
+                  )}>
+                    {one.note}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button variant="yes" onClick={save} disabled={busy || !name.trim()}>Save</Button>
+          </div>
+        </Sheet>
+      </section>
+
+      {/* ------------------------------------------------------------ art */}
+      <section>
+        <Head>How it looks</Head>
+        <Sheet>
+          <ArtSlot
+            title="Emblem"
+            shape="square"
+            art={art.emblem}
+            note="A square picture. Cut to a square here, so nothing is squashed later."
+            where="Lists · tiles · the Launcher · your Worlds"
+            busy={busy}
+            onPick={() => emblemInput.current?.click()}
+            onClear={art.emblem ? () => void clearArt('emblem') : undefined}
+          />
+          <ArtSlot
+            title="Thumbnail"
+            shape="wide"
+            art={art.cover}
+            note="A wide picture, 16 by 9. This is the big one at the top of its page."
+            where="Its own page · Discover · what gets shared"
+            busy={busy}
+            onPick={() => coverInput.current?.click()}
+            onClear={art.cover ? () => void clearArt('cover') : undefined}
+          />
+        </Sheet>
+
+        <input
+          ref={emblemInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) setCropping({ file, slot: 'emblem' })
+          }}
+        />
+        <input
+          ref={coverInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) setCropping({ file, slot: 'cover' })
+          }}
+        />
+      </section>
+
+      {/* -------------------------------------------------------- gallery */}
+      <section>
+        <Head>What its page shows</Head>
+        <Sheet className="p-4">
+          <p className="mb-3 text-xs text-muted">
+            Up to twelve pictures and videos, in this order. The arrows move one along.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {(media.data ?? []).map((one, at) => (
+              <div
+                key={one.id}
+                className="group relative aspect-video overflow-hidden rounded-xl border-2 border-ink-line bg-media"
+              >
+                {one.kind === 'video' ? (
+                  <span className="grid h-full w-full place-items-center text-white/50">
+                    <Glyph icon={faVideo} />
+                  </span>
+                ) : (
+                  <img src={worldFileUrl(one.path)} alt="" className="h-full w-full object-cover" />
+                )}
+
+                <span className="absolute bottom-1.5 left-1.5 rounded-lg bg-ink/80 px-1.5 text-mini font-bold tabular-nums">
+                  {at + 1}
+                </span>
+
+                <div className="absolute inset-x-1.5 top-1.5 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                  <button
+                    onClick={() => shift(at, -1)}
+                    disabled={busy || at === 0}
+                    aria-label="Move this one earlier"
+                    className="grid h-7 w-7 place-items-center rounded-lg bg-ink/80 text-tiny text-white/70 hover:text-white disabled:opacity-30"
+                  >
+                    <Glyph icon={faArrowLeft} />
+                  </button>
+                  <button
+                    onClick={() => shift(at, 1)}
+                    disabled={busy || at === (media.data?.length ?? 0) - 1}
+                    aria-label="Move this one later"
+                    className="grid h-7 w-7 place-items-center rounded-lg bg-ink/80 text-tiny text-white/70 hover:text-white disabled:opacity-30"
+                  >
+                    <Glyph icon={faArrowRight} />
+                  </button>
+                  <button
+                    onClick={() => void run(() => removeWorldMedium(one), 'Taken off.')}
+                    disabled={busy}
+                    aria-label="Take this off the page"
+                    className="ml-auto grid h-7 w-7 place-items-center rounded-lg bg-ink/80 text-tiny text-white/70 hover:bg-danger hover:text-white"
+                  >
+                    <Glyph icon={faTrash} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              onClick={() => shotInput.current?.click()}
+              disabled={busy || (media.data?.length ?? 0) >= 12}
+              className="grid aspect-video place-items-center rounded-xl border-2 border-b-4 border-dashed border-ink-line bg-ink-raised text-sm text-muted transition-colors hover:border-brand/60 hover:text-white disabled:opacity-40"
+            >
+              <span className="flex flex-col items-center gap-1">
+                <Glyph icon={faPlus} />
+                Add
+              </span>
+            </button>
+          </div>
+
           <input
             ref={shotInput}
             type="file"
@@ -390,77 +535,167 @@ export default function CreateWorld() {
               if (file) void addShot(file)
             }}
           />
-        </div>
-      </Card>
+        </Sheet>
+      </section>
 
-      {world.is_published && (
-        <Card className="space-y-4 p-5">
-          <SectionHeader title="Tell people it changed" />
-          <p className="text-sm text-muted">
-            Everybody who pressed Notify on this World gets one notification, and it
-            takes them here. Once every six hours, because a World that announces
-            itself all day is a World people switch off.
+      {/* ----------------------------------------------------------- runs */}
+      <section>
+        <Head>What it runs on</Head>
+        <Sheet className="p-4">
+          {/*
+            * Four yes-or-nos rather than a dropdown, and the last one
+            * cannot be turned off: a World that runs on nothing is a World
+            * nobody can find, and the database refuses it anyway (0343).
+            */}
+          <div className="flex flex-wrap gap-2">
+            {everyDevice.map((one) => {
+              const on = devices.includes(one)
+              const last = on && devices.length === 1
+              return (
+                <Tooltip key={one} label={last ? 'It has to run on something' : deviceLabels[one]}>
+                  <Chip
+                    on={on}
+                    icon={deviceIcons[one]}
+                    onClick={() => {
+                      if (last) return
+                      setDevices((was) => (
+                        was.includes(one) ? was.filter((x) => x !== one) : [...was, one]
+                      ))
+                    }}
+                  >
+                    {deviceLabels[one]}
+                  </Chip>
+                </Tooltip>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            Discover lets people keep the Worlds that run on what they are holding. Save when you
+            have changed it.
           </p>
-          <Input
-            label="What changed"
-            labelNote="Left empty, it just says the World was updated"
-            value={announcement}
-            maxLength={200}
-            onChange={(e) => setAnnouncement(e.target.value)}
-          />
-          <div className="flex justify-end">
+        </Sheet>
+      </section>
+
+      {/* --------------------------------------------------------- things */}
+      <section>
+        <Head>Badges and gamepasses</Head>
+        <MakeThings worldId={world.id} kind="badge" opened={make === 'badge'} />
+        <MakeThings worldId={world.id} kind="pass" opened={make === 'pass'} />
+      </section>
+
+      {/* ------------------------------------------------------------ out */}
+      <section>
+        <Head>Putting it out</Head>
+        <Sheet>
+          <div className="flex flex-wrap items-center gap-4 border-b-2 border-ink-line p-4">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-base font-extrabold">
+                {world.is_published ? 'This World is out' : 'This World is not out yet'}
+              </p>
+              <p className="mt-0.5 text-sm text-muted">
+                {world.is_published
+                  ? 'Anybody can find it and play it. Taking it back in hides the page and stops the Launcher opening it.'
+                  : 'Nobody but you can see it. Publishing puts it on Kobblon and lets the Launcher open it.'}
+              </p>
+            </div>
             <Button
-              icon={faBell}
-              variant="subtle"
+              variant={world.is_published ? 'ghost' : 'primary'}
               disabled={busy}
-              onClick={() => void run(async () => {
-                const told = await announceWorldUpdate(world.id, announcement)
-                setAnnouncement('')
-                return told
-              }, 'Everybody watching has been told.')}
+              onClick={() => void run(
+                () => publishWorld(world.id, !world.is_published),
+                world.is_published ? 'Taken back in.' : 'Published.',
+              )}
             >
-              Announce an update
+              {world.is_published ? 'Take it back in' : 'Publish'}
             </Button>
           </div>
-        </Card>
-      )}
 
+          {/*
+            * The checklist, which the page did not have: publishing was one
+            * press that said nothing about what a World needs first, and
+            * Worlds went out with no description, no genre and no picture.
+            * It does not block the button - a World can go out half-dressed
+            * if somebody means it to - it just stops that being a surprise.
+            */}
+          <div className="border-b-2 border-ink-line">
+            <p className="flex items-center gap-2 px-4 pb-1 pt-3 font-display text-tiny font-extrabold uppercase tracking-[0.18em] text-white/40">
+              Before it goes out
+              {left > 0 && (
+                <Flag tone="bg-warn/15 text-warn-bright" icon={faCircleExclamation}>
+                  {left} left
+                </Flag>
+              )}
+            </p>
+            <ul>
+              {needs.map((one) => (
+                <li
+                  key={one.what}
+                  className="flex items-center gap-2.5 border-b border-ink-line px-4 py-2.5 text-sm last:border-0"
+                >
+                  <span className={cn(
+                    'grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2',
+                    one.done
+                      ? 'border-space/40 bg-space/15 text-space-bright'
+                      : 'border-ink-line bg-ink-raised text-white/30',
+                  )}>
+                    <Glyph icon={one.done ? faCircleCheck : faCircleXmark} className="text-tiny" />
+                  </span>
+                  <span className={one.done ? 'text-white/70' : 'font-bold text-white'}>
+                    {one.what}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {world.is_published && (
+            <div className="space-y-3 p-4">
+              <p className="font-display text-sm font-extrabold">Tell people it changed</p>
+              <p className="text-xs leading-relaxed text-muted">
+                Everybody who pressed Notify on this World gets one notification, and it takes
+                them here. Once every six hours, because a World that announces itself all day is
+                a World people switch off.
+              </p>
+              <Input
+                label="What changed"
+                labelNote="Left empty, it just says the World was updated"
+                value={announcement}
+                maxLength={200}
+                onChange={(e) => setAnnouncement(e.target.value)}
+              />
+              <div className="flex justify-end">
+                <Button
+                  icon={faBell}
+                  variant="subtle"
+                  disabled={busy}
+                  onClick={() => void run(async () => {
+                    const told = await announceWorldUpdate(world.id, announcement)
+                    setAnnouncement('')
+                    return told
+                  }, 'Everybody watching has been told.')}
+                >
+                  Announce an update
+                </Button>
+              </div>
+            </div>
+          )}
+        </Sheet>
+      </section>
+
+      {/* Square for the emblem, 16/9 for the thumbnail: the cut belongs to
+          the slot, so neither picture is squashed where it is shown. */}
       <Cropper
-        file={cropping}
+        file={cropping?.file ?? null}
         open={Boolean(cropping)}
-        aspect={1}
+        aspect={cropping?.slot === 'cover' ? 16 / 9 : 1}
         onCancel={() => setCropping(null)}
         onDone={(cut) => {
+          const slot = cropping?.slot ?? 'emblem'
           setCropping(null)
-          void pickEmblem(cut)
+          void setArt(cut, slot)
         }}
       />
 
-      <MakeThings worldId={world.id} kind="badge" opened={make === 'badge'} />
-      <MakeThings worldId={world.id} kind="pass" opened={make === 'pass'} />
-
-      <Card className="flex flex-wrap items-center gap-4 p-5">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-extrabold">
-            {world.is_published ? 'This World is out' : 'This World is not out yet'}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {world.is_published
-              ? 'Anybody can find it and play it. Taking it back in hides the page and stops the Launcher opening it.'
-              : 'Nobody but you can see it. Publishing puts it on Kobblon and lets the Launcher open it.'}
-          </p>
-        </div>
-        <Button
-          variant={world.is_published ? 'ghost' : 'primary'}
-          disabled={busy}
-          onClick={() => void run(
-            () => publishWorld(world.id, !world.is_published),
-            world.is_published ? 'Taken back in.' : 'Published.',
-          )}
-        >
-          {world.is_published ? 'Take it back in' : 'Publish'}
-        </Button>
-      </Card>
     </div>
   )
 }

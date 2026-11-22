@@ -58,7 +58,10 @@ export function Stat({ icon, mark, label, value, tone, note, big }: {
 }) {
   return (
     <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card px-4 py-3">
-      <p className="flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide text-muted">
+      <p className={cn(
+        'flex items-center gap-1.5 text-mini font-extrabold uppercase tracking-wide',
+        big ? 'text-space-bright' : 'text-muted',
+      )}>
         {mark ?? (icon && <Glyph icon={icon} className={tone ?? 'text-brand-bright'} />)}
         {label}
       </p>

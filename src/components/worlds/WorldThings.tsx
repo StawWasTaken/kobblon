@@ -71,17 +71,19 @@ const GRID = 'flex flex-wrap justify-start gap-2'
  * two drifted the moment one of them gained anything.
  */
 export function WorldThings({
-  kind, badges, passes, mine, worldId,
+  kind, badges, passes, mine, worldId, worldNumber,
 }: {
   kind: 'badges' | 'shop'
   badges?: WorldBadge[]
   passes?: WorldPass[]
   mine: boolean
   worldId: string
+  /** `WLD-1069`, which is how the Hub addresses a World now. */
+  worldNumber?: string
 }) {
   const badge = kind === 'badges'
   const made = badge ? (badges ?? []) : (passes ?? [])
-  const to = `/create/worlds/${worldId}?make=${badge ? 'badge' : 'pass'}`
+  const to = `/create/worlds/${worldNumber || worldId}?make=${badge ? 'badge' : 'pass'}`
   const says = badge ? 'Create a badge' : 'Create a gamepass'
 
   /*
