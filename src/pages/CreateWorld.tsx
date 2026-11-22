@@ -5,7 +5,7 @@ import { Glyph } from '@/components/brand/Glyph'
 import { Tooltip } from '@/components/ui/Tooltip'
 import {
   faArrowUpRightFromSquare, faBell, faCheck, faCopy, faLink, faPlus,
-  faTrash, faVideo, faCircleCheck, faCircleXmark, faPen,
+  faTrash, faPlay, faCircleCheck, faCircleXmark, faPen,
   faEye, faBookmark, faThumbsUp, faCircleExclamation,
   faArrowLeft, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons'
@@ -20,6 +20,7 @@ import { MakeThings } from '@/components/worlds/MakeThings'
 import { ErrorState, Skeleton } from '@/components/ui/States'
 import { ImageDrop } from '@/components/ui/ImageDrop'
 import { DEFAULT_WORLD_EMBLEM, DEFAULT_WORLD_THUMBNAIL } from '@/lib/worldart'
+import { previewOf, PREVIEW_EXTENSION, PREVIEW_TYPE } from '@/lib/preview'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -196,10 +197,35 @@ export default function CreateWorld() {
     void run(() => setWorldMediaOrder(moved), 'Moved.')
   }
 
+  /*
+   * A video is added with a still drawn from it, a quarter of the way in -
+   * the same frame the Creator Hub draws for its cards, and for the same
+   * reason: the first frame of a video is so often black that a still of
+   * it tells nobody anything.
+   *
+   * That frame is what every page except this World's own shows (0370), so
+   * nothing but the player has to cope with a film. If the frame will not
+   * draw - a codec the browser will not open - the video still goes up and
+   * the pages fall back to it; a World whose picture is missing is worse
+   * than a card that has to try.
+   */
   const addShot = (file: File) => run(async () => {
     const kind = file.type.startsWith('video/') ? 'video' : 'image'
     const path = await uploadWorldFile(world.id, file, 'shot')
-    await addWorldMedium(world.id, kind, path, (media.data?.length ?? 0))
+
+    let poster: string | null = null
+    if (kind === 'video') {
+      const still = await previewOf(file, 'video').catch(() => null)
+      if (still) {
+        poster = await uploadWorldFile(
+          world.id,
+          new File([still], `poster.${PREVIEW_EXTENSION}`, { type: PREVIEW_TYPE }),
+          'poster',
+        ).catch(() => null)
+      }
+    }
+
+    await addWorldMedium(world.id, kind, path, (media.data?.length ?? 0), poster)
   }, 'Added.')
 
   const art = {
@@ -447,12 +473,17 @@ export default function CreateWorld() {
                 key={one.id}
                 className="group relative aspect-video overflow-hidden rounded-xl border-2 border-ink-line bg-media"
               >
-                {one.kind === 'video' ? (
-                  <span className="grid h-full w-full place-items-center text-white/50">
-                    <Glyph icon={faVideo} />
+                <img
+                  src={worldFileUrl(one.poster_path ?? one.path)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                {one.kind === 'video' && (
+                  <span className="pointer-events-none absolute inset-0 grid place-items-center">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-black/60 text-xs text-white/90">
+                      <Glyph icon={faPlay} />
+                    </span>
                   </span>
-                ) : (
-                  <img src={worldFileUrl(one.path)} alt="" className="h-full w-full object-cover" />
                 )}
 
                 <span className="absolute bottom-1.5 left-1.5 rounded-lg bg-ink/80 px-1.5 text-mini font-bold tabular-nums">

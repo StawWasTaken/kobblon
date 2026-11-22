@@ -6,7 +6,7 @@
  * not just the advert it was changed for.
  */
 import { createRoot } from 'react-dom/client'
-import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import '@/index.css'
 
 const clip = '/brand/kobblon-its-free.mp4'

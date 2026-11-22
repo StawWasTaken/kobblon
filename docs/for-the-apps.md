@@ -26007,3 +26007,48 @@ Also, the arrows cross-fade now rather than cut: every picture is stacked
 and the one showing is the one at full opacity. A video is mounted only
 while it is the one showing - four videos loading at once to show one of
 them is a page that stops answering on a phone.
+
+## Round four hundred and twelve - one rule for a video thumbnail
+
+**This replaces what round 408 said**, and it is a meaning change: a video
+thumbnail is **a still frame everywhere, and the film plays only on the
+World's own page, in Kobblon's player.**
+
+Round 408 said a video thumbnail plays muted wherever the World is drawn.
+In practice that was three behaviours: a card written for an `<img>` shows
+a broken picture, a card that does play it shows navy for as long as the
+first frames take to arrive, and a shelf of twelve downloads twelve videos
+to show twelve thumbnails. Staw asked for one common thing, and this is
+it.
+
+**0370** adds **`world_media.poster_path`**, a still drawn from the video
+in the browser when it is added - a quarter of the way in, the same frame
+`previewOf` already draws for the Creator Hub's cards, because the first
+frame of a video is so often black. The trigger that keeps
+`worlds.cover_url` in step now points it at **the poster** when the first
+picture is a video, falling back to the film for a video that has no
+poster.
+
+So: **`cover_url` is always something you can draw as a picture.**
+`cover_is_video` stays and now means "this still came from a video",
+which is what tells a card to draw a play mark on it. The website's
+`WorldArt` does exactly that and never mounts a video.
+
+**What the Workspace should do:** draw `cover_url` as a picture, always.
+If `cover_is_video` is true, put a play mark on it. When it uploads a
+video as one of a World's pictures, draw a frame and send it as
+`poster_path` in the same row - `previewOf(file, 'video')` in
+`@/lib/preview` returns that frame as a webp blob.
+
+**`MediaPlayer` has moved** from `@/components/create/MediaPlayer` to
+**`@/components/ui/MediaPlayer`**, with `ImageDrop`, because it is the
+site's video player rather than the Creator Hub's: the World page uses it
+now too, and it should be the only one either side mounts. It blocks the
+context menu over the whole picture and asks the browser for no download
+button. **Say plainly what that is worth: it discourages saving the file,
+it does not prevent it** - anything a browser can play, a browser has
+already downloaded, and nothing in a page can change that.
+
+Also: the World page's arrows now appear on a video as well. They were
+hidden on one, which left somebody stuck on the video with no way back to
+the pictures.

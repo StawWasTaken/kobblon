@@ -3670,7 +3670,7 @@ export async function alsoJoined(worldId: string, howMany = 6): Promise<AlsoJoin
 export async function worldMedia(worldId: string): Promise<WorldMedium[]> {
   const { data, error } = await supabase
     .from('world_media')
-    .select('id, world_id, position, kind, path, created_at')
+    .select('id, world_id, position, kind, path, poster_path, created_at')
     .eq('world_id', worldId)
     .order('position')
   if (error) throw new Error(error.message)
@@ -3830,10 +3830,17 @@ export async function uploadWorldFile(worldId: string, file: File, as: string) {
 /** Something a World shows of itself, added to the end of what it shows. */
 export async function addWorldMedium(
   worldId: string, kind: 'image' | 'video', path: string, position: number,
+  /**
+   * A still drawn from the video, for every page that shows the World
+   * rather than plays it (0370). Without one a card has to cope with a
+   * film, which is where the black frames and the broken pictures came
+   * from.
+   */
+  posterPath?: string | null,
 ) {
   const { error } = await supabase
     .from('world_media')
-    .insert({ world_id: worldId, kind, path, position })
+    .insert({ world_id: worldId, kind, path, position, poster_path: posterPath ?? null })
   if (error) throw new Error(error.message)
 }
 
@@ -3857,7 +3864,8 @@ export async function removeWorldMedium(medium: WorldMedium) {
   const { error } = await supabase.from('world_media').delete().eq('id', medium.id)
   if (error) throw new Error(error.message)
   // A row with no file is a broken picture; a file with no row is litter.
-  await supabase.storage.from('worlds').remove([medium.path]).catch(() => null)
+  const files = [medium.path, ...(medium.poster_path ? [medium.poster_path] : [])]
+  await supabase.storage.from('worlds').remove(files).catch(() => null)
 }
 
 // ------------------------------------------------------------------ staff

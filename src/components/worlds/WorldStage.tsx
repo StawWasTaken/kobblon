@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { Glyph } from '@/components/brand/Glyph'
+import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { faChevronLeft, faChevronRight, faPlay } from '@fortawesome/free-solid-svg-icons'
 import { worldIcon } from '@/lib/naming'
 import { cn } from '@/lib/cn'
 
-export type Shot = { id: string; kind: 'image' | 'video'; url: string }
+export type Shot = {
+  id: string
+  kind: 'image' | 'video'
+  url: string
+  /** A video's still, drawn when it was added, so it opens on a frame. */
+  poster?: string | null
+}
 
 /**
  * A World, shown the size it deserves.
@@ -99,13 +106,18 @@ export function WorldStage({
                     : 'border-on-art/25 opacity-70 hover:opacity-100',
                 )}
               >
-                {shot.kind === 'video' ? (
-                  <span className="grid h-full w-full place-items-center bg-black/60 text-on-art/80">
-                    <Glyph icon={faPlay} className="text-tiny" />
-                  </span>
-                ) : (
-                  <img src={shot.url} alt="" className="h-full w-full object-cover" />
-                )}
+                <span className="relative block h-full w-full">
+                  <img
+                    src={shot.poster ?? shot.url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                  {shot.kind === 'video' && (
+                    <span className="absolute inset-0 grid place-items-center bg-black/35 text-on-art/90">
+                      <Glyph icon={faPlay} className="text-tiny" />
+                    </span>
+                  )}
+                </span>
               </button>
             ))}
           </div>
@@ -179,18 +191,19 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
                 >
                   {shot.kind === 'video' ? (
                     showing && (
-                      /* Muted, playing, looping - Staw's rule for a World's
-                         video wherever it is drawn. The controls stay, so
-                         somebody who wants to hear it can turn it up. */
-                      <video
+                      /*
+                        * Kobblon's own player, the one the Creator Hub
+                        * uses - one video player on the site rather than
+                        * two. It starts silent and moving, blocks the menu
+                        * that offers to save the file, and asks the browser
+                        * not to put a download button on it.
+                        */
+                      <MediaPlayer
                         src={shot.url}
-                        controls
-                        muted
-                        autoPlay
-                        loop
-                        playsInline
-                        preload="metadata"
-                        className="h-full w-full object-cover"
+                        kind="video"
+                        poster={shot.poster ?? undefined}
+                        ambient
+                        className="h-full w-full rounded-none border-0"
                       />
                     )
                   ) : (
@@ -206,7 +219,10 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
             })
           )}
 
-          {many && here?.kind !== 'video' && ([-1, 1] as const).map((by) => (
+          {/* The arrows are for moving between pictures, and a video is one
+              of the pictures: hiding them on a video left somebody stuck on
+              it with no way back. */}
+          {many && ([-1, 1] as const).map((by) => (
             <button
               key={by}
               onClick={() => step(by)}
@@ -243,13 +259,21 @@ export function WorldGallery({ shots, name }: { shots: Shot[]; name: string }) {
                 i === at ? 'border-brand' : 'border-ink-line hover:border-brand/50',
               )}
             >
-              {shot.kind === 'video' ? (
-                <span className="grid h-full w-full place-items-center bg-black/60 text-on-art/80">
-                  <Glyph icon={faPlay} className="text-tiny" />
-                </span>
-              ) : (
-                <img src={shot.url} alt="" className="h-full w-full object-cover" />
-              )}
+              {/* A video's tile is its own still with a play mark, not a
+                  black square with a play mark - the strip is for telling
+                  the pictures apart. */}
+              <span className="relative block h-full w-full">
+                <img
+                  src={shot.poster ?? shot.url}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                {shot.kind === 'video' && (
+                  <span className="absolute inset-0 grid place-items-center bg-black/35 text-on-art/90">
+                    <Glyph icon={faPlay} className="text-tiny" />
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </div>

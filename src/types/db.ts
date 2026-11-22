@@ -999,6 +999,8 @@ export type WorldMedium = {
   /** A path inside the `worlds` bucket, never an address. */
   path: string
   created_at: string
+  /** A still drawn from a video, for the pages that show rather than play it. */
+  poster_path?: string | null
 }
 
 /**

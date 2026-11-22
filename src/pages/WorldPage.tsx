@@ -325,6 +325,7 @@ export default function WorldPage() {
       id: one.id,
       kind: one.kind,
       url: worldFileUrl(one.path),
+      poster: one.poster_path ? worldFileUrl(one.poster_path) : null,
     }))
     : [{
       id: 'default',

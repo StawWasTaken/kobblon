@@ -6,7 +6,7 @@ import {
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { Flag } from '@/components/create/HubShapes'
 import { contentTag, kindIcons, kindLabels } from '@/components/create/AssetTile'
 import { useSignedUrl } from '@/hooks/useSignedUrl'

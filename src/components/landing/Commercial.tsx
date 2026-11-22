@@ -15,7 +15,7 @@
  * and this section is well below the fold, so a download that starts on
  * arrival is paid for by everybody who never gets here.
  */
-import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { Band } from '@/components/about/Band'
 import { Reveal } from '@/components/about/Reveal'
 import { Eyebrow, Title } from '@/components/about/Type'

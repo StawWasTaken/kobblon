@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Glyph } from '@/components/brand/Glyph'
 import { faXmark, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
-import { MediaPlayer } from '@/components/create/MediaPlayer'
+import { MediaPlayer } from '@/components/ui/MediaPlayer'
 import { forumImageUrl, isForumClip } from '@/lib/api'
 import { cn } from '@/lib/cn'
 
