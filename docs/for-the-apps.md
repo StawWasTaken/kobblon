@@ -26190,3 +26190,13 @@ being short says that by itself.
 Nothing in the database changed. `0371_klub_kobblon_can_be_bought.sql` is
 still the migration waiting to be run, and `0370_a_video_still_has_a_picture.sql`
 before it.
+
+## Round four hundred and sixteen - no balance on the Klub header
+
+Staw: the Brix balance is off the Klub page's header. It was a second
+number competing with four prices directly under it, and the balance is
+already in the topbar on every page. The amount still shows where it
+decides something: inside the payment popup, under Pay in Brix, next to
+what the plan costs.
+
+Nothing else changed.

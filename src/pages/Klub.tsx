@@ -110,7 +110,7 @@ export default function Klub() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
         />
-        <div className="relative flex flex-wrap items-end justify-between gap-4 p-5 sm:p-7">
+        <div className="relative p-5 sm:p-7">
           <div className="min-w-0">
             <Icon name="klub-badge" className="h-9 w-9" />
             <h1 className="mt-3 font-display text-3xl font-extrabold leading-none sm:text-4xl">
@@ -124,12 +124,6 @@ export default function Klub() {
                 : 'The membership.'}
             </p>
           </div>
-          {here && (
-            <p className="flex items-center gap-2 rounded-xl border-2 border-on-art/15 bg-black/35 px-4 py-2.5 font-display text-lg font-extrabold tabular-nums text-on-art backdrop-blur-sm">
-              <CurrencyMark className="h-5 w-5" />
-              {formatCount(here.brix)}
-            </p>
-          )}
         </div>
       </header>
 
