@@ -26200,3 +26200,32 @@ decides something: inside the payment popup, under Pay in Brix, next to
 what the plan costs.
 
 Nothing else changed.
+
+## Round four hundred and seventeen - paying is a page, and it asks first
+
+Three changes, and the first two are shapes worth copying.
+
+**Paying is its own screen.** `/klub/pay/<plan code>`, with the way back at
+the top - the same `BackLink` a Catalog item has. Left, what was picked:
+the plan, what it costs in euros, what that is in Brix, how many months,
+and whether it is added to the end of what somebody already has. Right,
+the ways to pay. The popup 415 used is gone. A membership is not a yes/no
+over the top of the prices.
+
+**Both ways ask before they take anything.** Picking a way of paying opens
+a `Confirm`: what it costs, how many months, when it starts, and that
+there is no refund. Written for both ways from the start, so the card path
+is the right shape the day there is a processor - that row is still off and
+still says Paused, because there is none.
+
+**The cheapest plan is the one in blue.** Its capsule is Kobblon's brand
+blue and its button is the primary one; the rest are grey. Which plan that
+is comes from the rows - lowest `cents / months` - rather than being
+written into one of them, so it follows a price change on its own.
+
+Also: the reacting perk wears Staw's own `reaction-smile`, painted flat
+rather than its yellow, instead of a Font Awesome face. The coloured face
+is what a reaction looks like once somebody has pressed it; this is the
+unpressed one.
+
+Nothing in the database changed.

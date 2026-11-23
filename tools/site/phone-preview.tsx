@@ -28,6 +28,7 @@ import Library from '@/pages/Library'
 import Quests from '@/pages/Quests'
 import Brix from '@/pages/Brix'
 import Klub from '@/pages/Klub'
+import KlubPay from '@/pages/KlubPay'
 import BrixCodes from '@/pages/BrixCodes'
 import Inbox from '@/pages/Inbox'
 import Standing from '@/pages/Standing'
@@ -100,6 +101,7 @@ export const PAGES: Record<string, { at: string; show: () => React.JSX.Element }
   quests: { at: '/quests', show: Quests },
   brix: { at: '/brix', show: Brix },
   klub: { at: '/klub', show: Klub },
+  klubpay: { at: '/klub/pay/1y', show: KlubPay },
   codes: { at: '/brix/codes', show: BrixCodes },
   inbox: { at: '/inbox', show: Inbox },
   standing: { at: '/standing', show: Standing },
@@ -143,6 +145,10 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="ads" element={<CreateAds />} />
                   <Route path="analytics" element={<CreateAnalytics />} />
                 </Route>
+              ) : which === 'klubpay' ? (
+                /* This one reads its plan out of the address, so it is
+                   mounted at its real pattern rather than at `*`. */
+                <Route path="/klub/pay/:plan" element={<KlubPay />} />
               ) : (
                 <Route path="*" element={<Shown />} />
               )}

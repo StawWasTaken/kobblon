@@ -1,12 +1,10 @@
 import { useState } from 'react'
-import { faCreditCard, faFaceSmile, faGift } from '@fortawesome/free-solid-svg-icons'
+import { faGift } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { Icon } from '@/components/brand/Icon'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Dialog } from '@/components/ui/Dialog'
 import { ErrorState, Skeleton } from '@/components/ui/States'
-import { GuestGate } from '@/components/ui/GuestGate'
 import { CurrencyMark } from '@/components/brand/Currency'
 import { KlubMark } from '@/components/brand/Verified'
 import { useToast } from '@/components/ui/Toast'
@@ -14,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { useTitle } from '@/hooks/useTitle'
 import {
-  buyKlub, claimKlubOffer, klubOffers, klubPlans, myKlub,
+  claimKlubOffer, klubOffers, klubPlans, myKlub,
   type KlubPlan,
 } from '@/lib/api'
 import { formatCount } from '@/lib/format'
@@ -45,7 +43,10 @@ const monthly = (plan: KlubPlan) => euros(Math.round(plan.cents / plan.months))
 /** What a membership does. Both of these are enforced by the server. */
 const perks = [
   { title: 'The gold hard hat by your name', mark: true },
-  { title: 'Reacting to Worlds and clips', icon: faFaceSmile },
+  /* The reaction face itself, and with no `tone` it is painted the colour
+     of the row rather than its own yellow: the coloured one is what a face
+     looks like once somebody has pressed it. */
+  { title: 'Reacting to Worlds and clips', face: 'reaction-smile' as const },
 ] as const
 
 export default function Klub() {
@@ -57,11 +58,16 @@ export default function Klub() {
   const offers = useAsync(() => klubOffers(), [])
   const mine = useAsync(async () => (profile ? myKlub() : null), [profile?.id])
 
-  const [paying, setPaying] = useState<KlubPlan | null>(null)
   const [busy, setBusy] = useState(false)
 
   const here = mine.data
   const running = here && here.tier !== 'none'
+
+  /* Cheapest by the month, worked out from the rows rather than written
+     into one of them, so it follows a price change on its own. */
+  const best = (plans.data ?? []).reduce<KlubPlan | null>(
+    (low, one) => (!low || one.cents / one.months < low.cents / low.months ? one : low), null,
+  )?.code
 
   /* The offers this account can take right now. The server says which. */
   const open = (offers.data ?? []).filter((one) => (here?.offers ?? []).includes(one.code))
@@ -81,23 +87,6 @@ export default function Klub() {
       toast('That offer is not for this account.')
     }
   }
-
-  const buy = async () => {
-    if (!paying) return
-    setBusy(true)
-    try {
-      const until = await buyKlub(paying.code)
-      mine.reload()
-      toast(`In the Klub until ${day(until)}.`, 'success')
-      setPaying(null)
-    } catch (err) {
-      toast((err as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const afford = paying && here ? here.brix >= paying.brix : true
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
@@ -136,7 +125,14 @@ export default function Klub() {
           {plans.data.map((plan) => (
             <Card key={plan.code} className="relative flex flex-col p-5">
               {plan.flag && (
-                <span className="absolute -top-3 left-5 rounded-full border-2 border-ink-line bg-ink-raised px-2.5 py-0.5 text-mini font-extrabold uppercase tracking-wide text-muted">
+                <span className={cn(
+                  'absolute -top-3 left-5 rounded-full border-2 px-2.5 py-0.5 text-mini font-extrabold uppercase tracking-wide',
+                  /* The cheapest by the month is the one Kobblon is
+                     pointing at, so it is the one in Kobblon's blue. */
+                  best === plan.code
+                    ? 'border-brand-deep bg-brand text-on-art'
+                    : 'border-ink-line bg-ink-raised text-muted',
+                )}>
                   {plan.flag}
                 </span>
               )}
@@ -150,11 +146,14 @@ export default function Klub() {
                 {formatCount(plan.brix)} in Brix
               </p>
               <div className="flex-1" />
-              <GuestGate action="buy Klub">
-                <Button variant="subtle" block className="mt-4" onClick={() => setPaying(plan)}>
-                  Choose
-                </Button>
-              </GuestGate>
+              <Button
+                variant={best === plan.code ? 'primary' : 'subtle'}
+                block
+                className="mt-4"
+                to={`/klub/pay/${plan.code}`}
+              >
+                Choose
+              </Button>
             </Card>
           ))}
         </div>
@@ -200,7 +199,7 @@ export default function Klub() {
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink-raised">
                 {'mark' in perk
                   ? <KlubMark className="h-5 w-5" />
-                  : <Glyph icon={perk.icon} className="text-brand-bright" />}
+                  : <Icon name={perk.face} className="h-5 w-5 text-brand-bright" />}
               </span>
               <span className="text-sm font-bold">{perk.title}</span>
             </Card>
@@ -208,56 +207,6 @@ export default function Klub() {
         </div>
       </section>
 
-      {/* -------------------------------------------------------- paying */}
-      <Dialog
-        open={paying !== null}
-        onClose={() => { if (!busy) setPaying(null) }}
-        title="How you are paying"
-        description={paying ? `${paying.label} of Klub Kobblon, ${euros(paying.cents)}.` : undefined}
-      >
-        <div className="space-y-2">
-          {/*
-            * Cards first, because that is where an eye goes, and disabled,
-            * because there is no processor. A row that says "paused" and
-            * cannot be pressed is honest about the same thing a card form
-            * with nothing behind it would lie about.
-            */}
-          <button
-            type="button"
-            disabled
-            className="flex w-full cursor-not-allowed items-center gap-3 rounded-xl border-2 border-ink-line bg-ink-raised/60 px-4 py-3 text-left opacity-60"
-          >
-            <Glyph icon={faCreditCard} className="w-5 text-muted" />
-            <span className="min-w-0 flex-1 text-sm font-bold">Credit or debit card</span>
-            <span className="rounded-full border-2 border-ink-line px-2 py-0.5 text-mini font-extrabold uppercase tracking-wide text-muted">
-              Paused
-            </span>
-          </button>
-
-          <button
-            type="button"
-            disabled={busy || !afford}
-            onClick={() => void buy()}
-            className={cn(
-              'flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors',
-              afford
-                ? 'border-ink-line bg-ink-raised hover:border-brand hover:bg-brand/10'
-                : 'cursor-not-allowed border-ink-line bg-ink-raised/60 opacity-60',
-            )}
-          >
-            <CurrencyMark className="h-5 w-5" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold">
-                {busy ? 'Paying…' : 'Pay in Brix'}
-              </span>
-              <span className="block text-xs text-muted">
-                {paying && `${formatCount(paying.brix)} Brix`}
-                {here && !afford && ` - you have ${formatCount(here.brix)}`}
-              </span>
-            </span>
-          </button>
-        </div>
-      </Dialog>
     </div>
   )
 }

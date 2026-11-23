@@ -78,6 +78,7 @@ const Catalog = lazyPage(() => import('@/pages/Catalog'))
 const CreateAvatarItems = lazyPage(() => import('@/pages/CreateAvatarItems'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
 const Klub = lazyPage(() => import('@/pages/Klub'))
+const KlubPay = lazyPage(() => import('@/pages/KlubPay'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
 const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
 const Leaderboards = lazyPage(() => import('@/pages/Leaderboards'))
@@ -266,6 +267,7 @@ export default function App() {
                     able to see what the membership is before they make an
                     account to take it. */}
                 <Route path="/klub" element={<Klub />} />
+                <Route path="/klub/pay/:plan" element={<KlubPay />} />
 
                 <Route element={<RequireAuth />}>
                   <Route path="/standing" element={<Standing />} />
