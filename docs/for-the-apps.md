@@ -26229,3 +26229,19 @@ is what a reaction looks like once somebody has pressed it; this is the
 unpressed one.
 
 Nothing in the database changed.
+
+## Round four hundred and eighteen - the storage note is on every page
+
+`CookieNote` was mounted by the landing page, the forum's shell and the At
+Kobblon shell, which meant the part of Kobblon somebody actually spends
+time in - the signed-in side - never said what it keeps on their device.
+`AppShell` mounts it now, so it is on every page of the site.
+
+One prop: `lifted`, which the signed-in shell passes because a phone there
+has a bar across the foot. The lift holds to `lg`, not `sm` - the bar is
+`lg:hidden`, and a `sm:bottom-6` would have dropped the card back onto it
+on a tablet, since a later breakpoint wins whatever order the classes are
+written in.
+
+Nothing it says changed, and it is still dismissed into the same storage it
+is about.

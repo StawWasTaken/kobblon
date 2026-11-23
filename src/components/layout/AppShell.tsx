@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { standingShuts } from '@/components/social/StandingGate'
 import { AppSidebar, SidebarContent } from './AppSidebar'
+import { CookieNote } from './CookieNote'
 import { AppTopbar } from './AppTopbar'
 import { PhoneBar } from './PhoneBar'
 import { NoticeBar } from './NoticeBar'
@@ -126,6 +127,9 @@ export function AppShell() {
       {/* A friend request that arrives while you are doing something else. */}
       <FriendRequestWatcher />
       <GuestNudge />
+      {/* The storage note is the whole site's, not just the At Kobblon
+          side's: these are the pages somebody actually spends time on. */}
+      <CookieNote lifted />
       <SetPasswordCard />
     </ChatDock>
   )
