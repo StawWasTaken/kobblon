@@ -135,16 +135,18 @@ export function BrixShell({
   return (
     <Page className="space-y-5">
       <header className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
-        {/* Two lights rather than a flat panel: the brand one behind the
-            words, a cooler one behind the balance, so the two halves of the
-            header read as two things. */}
-        <span
+        {/* Staw's waves, the same picture the Klub card in the rail wears.
+            It fades to nothing down the panel, so the tabs at the foot sit
+            on the card rather than on a photograph. */}
+        <img
+          src="/brand/waves.png"
+          alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute -left-24 -top-28 h-72 w-72 rounded-full bg-brand/25 blur-3xl"
+          className="pointer-events-none absolute inset-x-0 top-0 h-full w-full object-cover object-top"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-20 h-64 w-64 rounded-full bg-space/15 blur-3xl"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-ink-card/40 to-ink-card"
         />
 
         <div className="relative flex flex-wrap items-end justify-between gap-5 p-5 pb-4 sm:p-8 sm:pb-5">

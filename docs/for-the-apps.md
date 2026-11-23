@@ -26151,3 +26151,42 @@ side, both already true before this round. The page says in as many words
 that those two are everything, because a list of perks that do not work is
 the fake functionality this project has a rule against. When something new
 becomes a Klub thing, it needs a line here and a row on that page.
+
+## Round four hundred and fifteen - the Klub page, as Staw wanted it
+
+Round 414 drew it wrong. Staw: "too wordy, looks AI-generated, bad design
+choice". Four changes, and they are all changes an application showing the
+Klub should copy.
+
+**Plans at the top, priced in euros.** The four cards sit directly under
+the header: the euro price large, what that is by the month under it, the
+Brix price as a line beneath. `klub_plans.cents` is the number on the card
+now and `brix` the aside - the opposite of what 414 did. The button is the
+grey one (`subtle`), not a ghost.
+
+**An offer is claimed by pressing a button.** 414 called
+`claim_klub_offer` on arrival, which meant turning up was the whole act.
+It is a green button on the offer strip now - "Claim the free year",
+"Claim 3 months". Nothing about the function changed; only when it is
+called. If you show the Klub, put it behind a press too.
+
+**Where cards are named.** There is no payment card above the prices any
+more. Picking a plan opens a popup - "How you are paying" - with two rows:
+Credit or debit card, marked **Paused** and not pressable, and Pay in Brix
+with the price and your balance. That is the only place cards are
+mentioned. The row is a lie the platform is comfortable with: cards have
+never worked, and "paused" is what it says.
+
+**`/brand/waves.png`** is Staw's own artwork and is now the background of
+the Klub header, the Brix header (`BrixShell`) and the Klub card in the
+rail. It is in `public/brand/` with the rest of his pictures, so an
+application can use it as well. Dark overlay under any text that sits on
+it.
+
+Words were cut everywhere else: the perks are two lines with an icon each,
+and the paragraph explaining that the list is honest is gone - the list
+being short says that by itself.
+
+Nothing in the database changed. `0371_klub_kobblon_can_be_bought.sql` is
+still the migration waiting to be run, and `0370_a_video_still_has_a_picture.sql`
+before it.

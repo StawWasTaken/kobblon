@@ -128,20 +128,33 @@ function KlubCard({ onNavigate }: { onNavigate?: () => void }) {
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'mt-4 block rounded-xl border-2 p-3.5 transition-colors',
+          'relative mt-4 block overflow-hidden rounded-xl border-2 p-3.5 transition-colors',
           isActive
-            ? 'border-onbrand/40 bg-onbrand/15'
-            : 'border-onbrand/15 bg-onbrand/[0.06] hover:border-onbrand/30 hover:bg-onbrand/10',
+            ? 'border-onbrand/40'
+            : 'border-onbrand/15 hover:border-onbrand/35',
         )
       }
     >
+      {/* Staw's waves behind it, so the one card in a rail of rows looks
+          like the offer it is rather than a row with a border on it. */}
+      <img
+        src="/brand/waves.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 to-black/20"
+      />
+      <span className="relative block">
       <Icon name="klub-badge" className="h-6 w-6" />
-      <p className="mt-2 text-sm font-extrabold leading-snug text-onbrand">
+      <p className="mt-2 text-sm font-extrabold leading-snug text-on-art">
         {running
           ? 'You are in Klub Kobblon.'
           : 'More of Kobblon, for less. Join Klub Kobblon.'}
       </p>
-      <p className="mt-1 text-xs leading-snug text-onbrand/55">
+      <p className="mt-1 text-xs leading-snug text-on-art/70">
         {running
           ? (mine!.tier === 'life'
             ? 'For life.'
@@ -150,9 +163,10 @@ function KlubCard({ onNavigate }: { onNavigate?: () => void }) {
             ? 'Your free year is waiting.'
             : free ?? 'A hard hat by your name, and the run of the Klub.'}
       </p>
-      <p className="mt-2 text-xs font-bold text-lede underline underline-offset-2">
+      <p className="mt-2 text-xs font-bold text-on-art underline underline-offset-2">
         {running ? 'See the Klub' : 'Take a look'}
       </p>
+      </span>
     </NavLink>
   )
 }
