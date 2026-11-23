@@ -143,6 +143,12 @@ export const answers: Record<string, unknown> = {
     suspended: 3, closed: 1, warnings_week: 12,
   },
 
+  /* Klub Kobblon: a fresh account with the launch year still to take. */
+  my_klub: [{
+    tier: 'none', until: null, is_trial: false, since: null,
+    brix: 6000, offers: ['launch'],
+  }],
+
   my_worlds: worlds.slice(0, 5),
   quests_mine: [
     { id: 'q1', name: 'Play three Worlds', counted: 'worlds_played', goal: 3, done: 1, reward: 50, claimed: false },
@@ -153,6 +159,28 @@ export const answers: Record<string, unknown> = {
 
 
 export const rowsFor: Record<string, unknown[]> = {
+  klub_plans: [
+    { code: '3m', months: 3, brix: 1500, cents: 1499, label: 'Three months', flag: null, sort: 1 },
+    { code: '6m', months: 6, brix: 2800, cents: 2799, label: 'Six months', flag: null, sort: 2 },
+    { code: '1y', months: 12, brix: 5000, cents: 4999, label: 'One year', flag: 'Best liked', sort: 3 },
+    { code: '2y', months: 24, brix: 9000, cents: 8999, label: 'Two years', flag: 'Cheapest by the month', sort: 4 },
+  ],
+  klub_offers: [
+    {
+      code: 'launch', months: 12,
+      opens: '2026-11-23T00:00:00Z', closes: '2027-01-01T00:00:00Z',
+      wants: 'fresh', as_trial: true,
+      title: 'A free year, for turning up early',
+      says: 'Everybody who opens this page before the first of January 2027 gets a year of Klub Kobblon, free. No card, nothing to cancel.',
+    },
+    {
+      code: 'festive', months: 3,
+      opens: '2026-12-25T00:00:00Z', closes: '2027-01-06T00:00:00Z',
+      wants: 'running', as_trial: false,
+      title: 'Three months on the house',
+      says: 'Between Christmas Day and the fifth of January, anybody whose Klub is already running gets three months added to the end of it. Paid or free, it adds to what you have left.',
+    },
+  ],
   profiles: people,
   communities,
   worlds,

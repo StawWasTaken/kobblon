@@ -26084,3 +26084,70 @@ up. Nothing about `makeWorldBadge` or `makeWorldPass` changed.
 
 Still waiting on Staw: `0370_a_video_still_has_a_picture.sql`, which adds
 `world_media.poster_path`. Until it runs, adding a video fails on insert.
+
+## Round four hundred and fourteen - Klub Kobblon can be got
+
+The membership has been in the database since 0235 and there has never been
+a way to get one. There is now: `/klub`, a card in the rail that leads to
+it, and two free offers the launch carries.
+
+**Migration `0371_klub_kobblon_can_be_bought.sql`. Staw has not run it
+yet** - until he does, the page loads and says the plans did not load,
+which is the honest failure rather than a blank.
+
+**What the database grew.**
+
+- `klub_plans` - what a length of Klub costs. `code, months, brix, cents,
+  label, flag, sort`. Readable by anybody, writable by nobody: a page that
+  sends its own price is a page that sets it. Four rows: `3m` 1500 Brix,
+  `6m` 2800, `1y` 5000, `2y` 9000. By the month that is 500 / 467 / 417 /
+  375, so every longer plan is cheaper by the month than the one above it.
+- `klub_offers` - the free windows, as dates rather than as code. `launch`
+  gives twelve months to anybody with no membership, from today to the 1st
+  of January 2027. `festive` gives three months to anybody whose membership
+  is **already running**, from Christmas Day to the 6th of January 2027.
+  Three months added to a free year is still a free year; three added to a
+  paid one is still paid.
+- `klub_events` - what happened to one account's membership and why. Your
+  own rows only. A unique index makes an offer once per account rather than
+  a check somebody has to remember to write.
+- `profiles.klub_is_trial` - whether the time on the clock was paid for.
+  The tier cannot say so, because a trial of Klub **is** Klub while it runs.
+
+**The functions, which are what you call:**
+
+- `my_klub()` → one row: `tier, until, is_trial, since, brix, offers`.
+  `offers` is the codes this account could take **right now**, worked out
+  by the server. Do not work that out in an application: whether an offer
+  is open to somebody depends on their tier, their history and the clock.
+- `claim_klub_offer(which text)` → `given | had | shut | wrong | gone`. It
+  answers with a word rather than raising, because none of those are
+  faults. The website calls it on arrival, which is what "everybody who
+  turns up gets it" means. If the Workspace or the Launcher ever shows the
+  Klub, call it there too - it is safe to call on every launch.
+- `buy_klub(plan text)` → the date it now runs to. Brix only. Price read
+  from the table, never from the caller.
+- `klub_add_months` is internal and granted to nobody. It is the only thing
+  in the schema that moves `klub_until`, so the rule about adding to what is
+  left rather than replacing it is written once: it extends from the later
+  of now and where the membership runs to.
+
+**A hole this closed, said plainly.** `guard_profile_update` did not pin
+`membership`, `klub_until` or `klub_since`. `profiles` is updatable by its
+owner, so until this migration one update against your own row was a free
+Klub Life. It pins all four now, and the Klub functions raise
+`kobbleston.klub` around their writes the way `move_pixels` raises
+`kobbleston.money` - the third trap, handled the way this project handles
+it. If an application reads membership off a profile row to decide
+anything: do not. Ask `in_the_klub` or `my_klub`.
+
+**Cards.** There is no card processor, so nothing takes a card. The page
+names the euro price each plan would be - a hundred Brix to the euro - and
+says cards are paused. Do not build a card field on your side either.
+
+**What Klub actually unlocks, which is the whole list:** the gold hard hat
+beside the name, and reacting to Worlds and clips. Both enforced server
+side, both already true before this round. The page says in as many words
+that those two are everything, because a list of perks that do not work is
+the fake functionality this project has a rule against. When something new
+becomes a Klub thing, it needs a line here and a row on that page.

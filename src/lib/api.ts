@@ -5838,6 +5838,89 @@ export async function inTheKlub(
   })) as boolean
 }
 
+/* ------------------------------------------------------------ Klub Kobblon */
+
+export type KlubPlan = {
+  code: string
+  months: number
+  /** What it costs in Brix. The price the platform can actually take. */
+  brix: number
+  /** What the same plan would be in cents of euro, for the day cards work. */
+  cents: number
+  label: string
+  flag: string | null
+  sort: number
+}
+
+export type KlubOffer = {
+  code: string
+  months: number
+  opens: string
+  closes: string
+  wants: 'fresh' | 'running'
+  as_trial: boolean
+  title: string
+  says: string
+}
+
+export type MyKlub = {
+  tier: 'none' | 'lite' | 'klub' | 'life'
+  until: string | null
+  is_trial: boolean
+  since: string | null
+  brix: number
+  /** The offers this account could take right now, by code. */
+  offers: string[]
+}
+
+/** What a length of Klub costs. Priced by the server, read by the page. */
+export async function klubPlans(): Promise<KlubPlan[]> {
+  return unwrap(await supabase
+    .from('klub_plans')
+    .select('code, months, brix, cents, label, flag, sort')
+    .eq('is_offered', true)
+    .order('sort')) as KlubPlan[]
+}
+
+/** The free windows, with their own dates and their own words. */
+export async function klubOffers(): Promise<KlubOffer[]> {
+  return unwrap(await supabase
+    .from('klub_offers')
+    .select('code, months, opens, closes, wants, as_trial, title, says')
+    .order('opens')) as KlubOffer[]
+}
+
+/**
+ * Where this account stands, and which offers are open to it.
+ *
+ * One call, and every answer worked out by the server: whether an offer is
+ * open to *you* is not a thing a page can decide, and a page that decides
+ * it is a page that shows a free year to somebody who cannot have one.
+ */
+export async function myKlub(): Promise<MyKlub | null> {
+  const rows = unwrap(await supabase.rpc('my_klub')) as MyKlub[] | null
+  return rows?.[0] ?? null
+}
+
+/**
+ * Taking a free offer, which is what opening the page does.
+ *
+ * None of the refusals are faults - turning up twice is not an error - so
+ * this answers with a word rather than throwing: `given`, `had`, `shut`,
+ * `wrong` or `gone`.
+ */
+export async function claimKlubOffer(
+  which: string,
+): Promise<'given' | 'had' | 'shut' | 'wrong' | 'gone'> {
+  return unwrap(await supabase.rpc('claim_klub_offer', { which })) as
+    'given' | 'had' | 'shut' | 'wrong' | 'gone'
+}
+
+/** Paying for Klub in Brix. Returns the date it now runs to. */
+export async function buyKlub(plan: string): Promise<string> {
+  return unwrap(await supabase.rpc('buy_klub', { plan })) as string
+}
+
 /**
  * The eleven faces, in the order they are offered.
  *

@@ -77,6 +77,7 @@ const Library = lazyPage(() => import('@/pages/Library'))
 const Catalog = lazyPage(() => import('@/pages/Catalog'))
 const CreateAvatarItems = lazyPage(() => import('@/pages/CreateAvatarItems'))
 const Brix = lazyPage(() => import('@/pages/Brix'))
+const Klub = lazyPage(() => import('@/pages/Klub'))
 const DiscordJump = lazyPage(() => import('@/pages/DiscordJump'))
 const BrixCodes = lazyPage(() => import('@/pages/BrixCodes'))
 const Leaderboards = lazyPage(() => import('@/pages/Leaderboards'))
@@ -261,6 +262,11 @@ export default function App() {
                   * `AppShell`'s own list of pages a suspension must not
                   * close already names it.
                   */}
+                {/* Klub Kobblon is read by anybody - a visitor has to be
+                    able to see what the membership is before they make an
+                    account to take it. */}
+                <Route path="/klub" element={<Klub />} />
+
                 <Route element={<RequireAuth />}>
                   <Route path="/standing" element={<Standing />} />
                   <Route path="/standing/:id" element={<StandingItem />} />

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
+import { Icon } from '@/components/brand/Icon'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import { unreadMail } from '@/lib/api'
+import { unreadMail, klubOffers, myKlub, type MyKlub } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { outNav, sideNav, topNav } from './nav'
 import { profileLink } from '@/lib/links'
@@ -78,6 +79,82 @@ export function useMailCount() {
   }, [profile])
 
   return count
+}
+
+
+/**
+ * Klub Kobblon, offered in the rail.
+ *
+ * The one card in a rail of rows, because it is the one thing here that is
+ * not a place you already have - it is an offer, and an offer that looks
+ * like a navigation row is an offer nobody reads.
+ *
+ * It says what is true for whoever is reading it: the free year while that
+ * window is open, the date yours runs to once you have one, and the plain
+ * offer the rest of the time. All three come from the server - `my_klub`
+ * decides whether an offer is open to this account, never this card.
+ */
+function KlubCard({ onNavigate }: { onNavigate?: () => void }) {
+  const { profile } = useAuth()
+  const [mine, setMine] = useState<MyKlub | null>(null)
+  const [free, setFree] = useState<string | null>(null)
+
+  useEffect(() => {
+    let wanted = true
+    void (async () => {
+      /* A visitor has no membership to read, so the card asks the offers
+         table instead and says what is on. */
+      if (!profile) {
+        const open = await klubOffers().catch(() => [])
+        const now = Date.now()
+        const one = open.find((o) => (
+          o.wants === 'fresh' && now >= Date.parse(o.opens) && now < Date.parse(o.closes)
+        ))
+        if (wanted) setFree(one ? `${one.months} months free` : null)
+        return
+      }
+      const here = await myKlub().catch(() => null)
+      if (wanted) setMine(here)
+    })()
+    return () => { wanted = false }
+  }, [profile?.id])
+
+  const running = mine && mine.tier !== 'none'
+  const offered = (mine?.offers ?? []).length > 0
+
+  return (
+    <NavLink
+      to="/klub"
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cn(
+          'mt-4 block rounded-xl border-2 p-3.5 transition-colors',
+          isActive
+            ? 'border-onbrand/40 bg-onbrand/15'
+            : 'border-onbrand/15 bg-onbrand/[0.06] hover:border-onbrand/30 hover:bg-onbrand/10',
+        )
+      }
+    >
+      <Icon name="klub-badge" className="h-6 w-6" />
+      <p className="mt-2 text-sm font-extrabold leading-snug text-onbrand">
+        {running
+          ? 'You are in Klub Kobblon.'
+          : 'More of Kobblon, for less. Join Klub Kobblon.'}
+      </p>
+      <p className="mt-1 text-xs leading-snug text-onbrand/55">
+        {running
+          ? (mine!.tier === 'life'
+            ? 'For life.'
+            : `Runs to ${new Date(mine!.until!).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}.`)
+          : offered
+            ? 'Your free year is waiting.'
+            : free ?? 'A hard hat by your name, and the run of the Klub.'}
+      </p>
+      <p className="mt-2 text-xs font-bold text-lede underline underline-offset-2">
+        {running ? 'See the Klub' : 'Take a look'}
+      </p>
+    </NavLink>
+  )
 }
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -160,6 +237,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </NavLink>
           ))}
         </div>
+
+        <KlubCard onNavigate={onNavigate} />
 
         <p className="px-3.5 pb-1 pt-5 font-display text-tiny font-extrabold uppercase tracking-[0.2em] text-onbrand/40">
           At Kobblon
