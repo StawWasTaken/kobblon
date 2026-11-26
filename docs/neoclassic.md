@@ -4,6 +4,10 @@ A Kobblon word, defined by Staw. It decides what gets built and what a
 thing looks like when it is, so it is written down rather than remembered
 differently by each of us.
 
+This is the look and the taste. What the platform is *for* - human-made,
+honest, heavily simplified, no bots - is `vision.md`, and where the two
+disagree that one wins.
+
 ## What it means
 
 **It rejects corporate minimalism.** The black and white enterprise look,

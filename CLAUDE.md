@@ -130,7 +130,12 @@ grants in the same file**, and a check that reads the table as
 
 ## Ethos
 
-`docs/neoclassic.md` holds it. The working rules that come out of it: copy the
+`docs/vision.md` holds what Kobblon is **for**: a 3-D toy with Duolingo's
+spine and a fever dream's face, no corporate fluff and no fake numbers,
+heavily simplified, made by people rather than generated, and no bots. It
+wins over anything else in docs when they disagree.
+
+`docs/neoclassic.md` holds the look. The working rules that come out of it: copy the
 system, not the look; build only what a week-old platform needs; nothing
 sterile; and no fake functionality — a control that implies something the
 runtime does not do is worse than no control. Blue is Kobblon, green is yes.

@@ -1,7 +1,10 @@
 # Where Kobblon is going
 
-The product direction, kept here so the work has one place to point at. When
-this and anything else disagree, this wins.
+The product direction, kept here so the work has one place to point at.
+
+One document sits above it: `vision.md`, which holds what Kobblon is for
+and what it refuses. Where this and that disagree, that one wins. Where
+this and anything else disagree, this one does.
 
 ## What Kobblon is
 
