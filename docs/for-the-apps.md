@@ -26350,3 +26350,32 @@ Three things in there that are worth having if you ever mount this with
   matrix that picks the mark picks whether there is a reveal at all.
 
 Nothing else changed, and the still mark is untouched.
+
+## Round four hundred and twenty-two - the download page is two doors
+
+`/download` is the last At Kobblon page onto the shared `AtTop`, and the
+one that needed more than a tidy-up: **it only had half of what it is
+for.** It listed the Launcher, while What is Kobblon sends anybody who
+wants to build to `/download` for Kobblon Workspace, which the page had
+never mentioned.
+
+Two programs now, side by side, each a door: the app's own desktop icon
+(`favicon.png` on the Launcher, `favicon-create.png` on Workspace, Staw's
+call), what it is for, the three platforms as chips across the foot, and
+the state said once with a dot beside it. Brand blue behind the one you
+play in and `craft` violet behind the one you build in, which is the
+colour the design system already gives the workshop - so the two are told
+apart before a word is read.
+
+The rule Staw set for this page the first time still holds: "its just a
+download page." No header, no presentation, and nothing is a button until
+there is a file behind it.
+
+**For your side**, the only thing that matters here is the wording, so
+that the three places that describe these two programs agree: the
+Launcher is what opens when somebody presses Play; Workspace is where a
+World is made and publishes to the site in about two minutes. If either
+sentence stops being true, this page is one of the places to change.
+
+The At Kobblon side is now five pages on one shape: What is Kobblon,
+Forum, Support, Policies, Download.
