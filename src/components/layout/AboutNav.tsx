@@ -161,20 +161,24 @@ export function AboutNav({ className, measure, style }: {
           * The pixels, in the corner. Staw: "idk in a corner i want the
           * animated blue pixels stuff".
           *
-          * The same canvas the top of every At Kobblon page opens with, so
-          * the bar is made of the same thing the page under it is rather
-          * than carrying a decoration of its own. It is on the right, where
-          * the bar has no words, and faded out towards the middle so it
-          * never ends up behind one - a grid of lit cells under "Download"
-          * is the one place this could cost legibility.
+          * Blue and quiet, and only while the bar is see-through. Drawn
+          * `pale` at six tenths over a nearly solid bar it stopped reading
+          * as lit pixels and started reading as a dead grid stuck to the
+          * corner - Staw's word for the whole bar was that it needed
+          * polishing, and this was the loudest thing on it.
+          *
+          * Clipped on itself rather than by the pill, because the pill
+          * holds a menu and `overflow-hidden` there would cut it off.
           */}
         <span
           aria-hidden="true"
-          /* Clipped on itself rather than by the pill: the pill holds the
-             Company menu, and `overflow-hidden` there cuts that off. */
-          className="pointer-events-none absolute inset-y-0 right-0 w-44 overflow-hidden rounded-r-2xl opacity-60 [mask-image:linear-gradient(to_right,transparent,black_75%,black)]"
+          className={cn(
+            'pointer-events-none absolute inset-y-0 right-0 w-40 overflow-hidden rounded-r-2xl',
+            'transition-opacity duration-300 [mask-image:linear-gradient(to_right,transparent,black_80%,black)]',
+            moved || open ? 'opacity-0' : 'opacity-40',
+          )}
         >
-          <PixelField tone="pale" className="h-full w-full" />
+          <PixelField className="h-full w-full" />
         </span>
 
         <button
@@ -201,15 +205,22 @@ export function AboutNav({ className, measure, style }: {
                   key={one.to}
                   to={one.to}
                   className={cn(
-                    'pointer-events-auto relative rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                    here(one.to) ? 'text-white' : 'text-white/60 hover:text-white',
+                    'pointer-events-auto relative rounded-xl px-3.5 py-2 text-sm font-bold transition-colors',
+                    here(one.to)
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/60 hover:bg-white/[0.07] hover:text-white',
                   )}
                 >
                   {one.label}
-                  {/* The page you are on, marked under the word rather than behind it. */}
+                  {/*
+                   * The page you are on wears a filled chip and a mark
+                   * under it. The mark alone was a two-pixel line under one
+                   * word in a row of five, which is the kind of "current
+                   * page" nobody finds without looking for it.
+                   */}
                   <span
                     className={cn(
-                      'absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-brand-bright transition-opacity',
+                      'absolute inset-x-4 -bottom-1 h-[3px] rounded-full bg-brand-bright transition-opacity',
                       here(one.to) ? 'opacity-100' : 'opacity-0',
                     )}
                   />
@@ -237,13 +248,12 @@ export function AboutNav({ className, measure, style }: {
           </span>
         ) : (
           <>
-            <Link
-              to="/login"
-              className="ml-auto text-sm font-bold text-white/55 transition-colors hover:text-brand-bright"
-            >
-              Log in
-            </Link>
-            <Button to="/signup" size="sm" variant="yes">Sign up</Button>
+            <span className="ml-auto flex items-center gap-2">
+              <Button to="/login" size="sm" variant="subtle" className="hidden sm:inline-flex">
+                Log in
+              </Button>
+              <Button to="/signup" size="sm" variant="yes">Sign up</Button>
+            </span>
           </>
         )}
       </div>

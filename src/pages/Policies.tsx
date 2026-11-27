@@ -1,19 +1,15 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { Glyph } from '@/components/brand/Glyph'
-import {
-  faArrowRight, faScaleBalanced, faShieldHalved, faCircleInfo,
-} from '@fortawesome/free-solid-svg-icons'
+import { Icon } from '@/components/brand/Icon'
+import { FACE_COLOUR } from '@/components/social/Reactions'
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { StoryPage } from '@/components/layout/StoryPage'
 import { AboutShell } from '@/components/layout/AboutShell'
-import { Band, Lane } from '@/components/about/Band'
-import { Reveal } from '@/components/about/Reveal'
-import { Parallax } from '@/components/about/Parallax'
-import { Floaters } from '@/components/about/Floaters'
-import { BandHead } from '@/components/about/Type'
+import { AtTop } from '@/components/about/AtTop'
 import { AskKobby } from '@/components/about/AskKobby'
 import { policies, policyBySlug } from '@/content/policies'
 import { useAtTitle } from '@/hooks/useTitle'
-import { asset } from '@/lib/asset'
+import { cn } from '@/lib/cn'
 
 const readable = (day: string) =>
   new Date(day).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
@@ -38,150 +34,106 @@ export function PolicyPage() {
   )
 }
 
-/** Every rule in one place, which is the thing a policy hub is for. */
+/** One of our faces, placed by a wrapper of our own - see `About`. */
+function Face({ face, className, turn, size = 'h-16 w-16' }: {
+  face: keyof typeof FACE_COLOUR; className?: string; turn: number; size?: string
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('pointer-events-none absolute select-none', className)}
+      style={{ transform: `rotate(${turn}deg)` }}
+    >
+      <Icon name={`reaction-${face}` as 'reaction-smile'} tone={FACE_COLOUR[face]} className={size} />
+    </span>
+  )
+}
+
+/**
+ * Every rule in one place, which is the thing a policy hub is for.
+ *
+ * It was a washed opening, a band, a `BandHead` with an eyebrow over it and
+ * then nine cards in a grid, three thousand pixels tall and mostly air.
+ * Staw, on the whole At Kobblon side: too corporate, simplify, and make the
+ * pages look like each other.
+ *
+ * So: the shared `AtTop`, the bar Kobby answers in straight away, and the
+ * nine documents as **one list**. A list is run down with an eye; a grid of
+ * nine cards is read across, which is the wrong motion for "find the one I
+ * came for".
+ */
 export default function PolicyHub() {
   useAtTitle('Policies')
 
   return (
     <AboutShell
-      backdrop={
-        /*
-         * Shapes rather than a World, and that is the one deliberate
-         * difference from the other openings on this side: a photograph of
-         * somewhere somebody built, over a page about rules, is a picture
-         * chosen to make the rules look like something else.
-         */
-        <Parallax strength={70} className="absolute inset-0">
-          <img
-            src={asset('/brand/background.png')}
-            alt=""
-            aria-hidden="true"
-            className="h-[115%] w-full object-cover"
-          />
-        </Parallax>
-      }
-      hero={
-        <Lane className="flex min-h-[62vh] flex-col justify-center py-24 text-center">
-          {/* Here on arrival, not scrolled in. Somebody opens this page
-              because they are looking for a document, and a title that is
-              not there yet is a page that looks like it failed to load. */}
-          <Reveal>
-            <h1 className="font-display text-[clamp(2.3rem,6vw,4.75rem)] font-extrabold leading-[0.95] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
-              Everything,
-              <br />
-              <span className="text-brand-bright">written down</span>.
-            </h1>
-          </Reveal>
-          {/*
-           * Staw moved the bar up here, in place of the lead line and the
-           * count: the first thing somebody wants on a page of nine legal
-           * documents is to not have to read nine legal documents, and a
-           * sentence telling them the documents are readable is not that.
-           * It is still only a bar, so the title is still the page.
-           */}
-          <Reveal delay={200}>
-            <AskKobby className="mx-auto mt-10 max-w-xl text-left" />
-          </Reveal>
-        </Lane>
+      top={
+        <AtTop
+          title={<>The rules.<br />All of them.</>}
+          says="Nine documents. Written to be read, not to be agreed to."
+        >
+          <AskKobby className="mt-7 max-w-xl text-left" />
+          <Face face="sunglasses" turn={-12} className="bottom-8 right-10 hidden sm:block" />
+        </AtTop>
       }
     >
-      {/* ------------------------------------------------------ the policies */}
-      <Band tone="raised" edge decor={<Floaters />}>
-        <Reveal>
-          <BandHead eyebrow="All of them" title="Read any of it." />
-        </Reveal>
-
-        {/*
-         * Numbered, because nine of anything is a list and a list that is
-         * not numbered is a wall. The number is also the thing support says
-         * out loud when it points somebody at one of these.
-         */}
-        <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {policies.map((policy, at) => (
-            <Reveal key={policy.slug} delay={(at % 3) * 70} className="h-full">
+      <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
+        <ul className="divide-y-2 divide-ink-line overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card">
+          {policies.map((policy) => (
+            <li key={policy.slug}>
               <Link
                 to={`/policies/${policy.slug}`}
-                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/70 p-7 transition-[border-color,background-color,transform] hover:-translate-y-1 hover:border-brand-bright/50 hover:bg-ink-card"
+                className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-ink-hover"
               >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-3 -top-4 font-display text-7xl font-extrabold leading-none text-white/[0.05] transition-colors group-hover:text-brand-bright/15"
-                >
-                  {String(at + 1).padStart(2, '0')}
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-lg font-extrabold leading-tight">
+                    {policy.title}
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm text-muted">{policy.blurb}</span>
                 </span>
-                <p className="relative text-mini font-extrabold uppercase tracking-[0.18em] text-brand-bright">
-                  {policy.eyebrow}
-                </p>
-                <h3 className="relative mt-3 font-display text-2xl font-extrabold leading-tight">
-                  {policy.title}
-                </h3>
-                <p className="relative mt-3 flex-1 leading-relaxed text-white/55">{policy.blurb}</p>
-                <p className="relative mt-7 flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white/30">
-                  <span className="tabular-nums">{readable(policy.updated)}</span>
-                  <Glyph
-                    icon={faArrowRight}
-                    className="ml-auto text-sm text-link transition-transform group-hover:translate-x-1"
-                  />
-                </p>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </Band>
-
-      {/* ------------------------- where the rules stop being reading */}
-      <Band tone="night" edge>
-        <Reveal>
-          <BandHead
-            eyebrow="And then"
-            title="When a rule is about you."
-            lead="Two pages do the rest: one says where your account stands, the other puts you in front of a person."
-          />
-        </Reveal>
-        <div className="mt-12 grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              to: '/standing',
-              icon: faScaleBalanced,
-              name: 'Where you stand',
-              body: 'Every decision against your account, what it switched off, and how to appeal it.',
-            },
-            {
-              to: '/support',
-              icon: faShieldHalved,
-              name: 'Write to us',
-              body: 'A ticket goes to a person, and the reply lands in your Kobblon inbox.',
-            },
-          ].map((one, at) => (
-            <Reveal key={one.to} delay={at * 70} className="h-full">
-              <Link
-                to={one.to}
-                className="group flex h-full items-start gap-5 rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/60 p-7 transition-[border-color,transform] hover:-translate-y-1 hover:border-brand-bright/50"
-              >
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand/15 text-xl text-brand-bright">
-                  <Glyph icon={one.icon} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-display text-xl font-extrabold">{one.name}</span>
-                  <span className="mt-2 block leading-relaxed text-white/55">{one.body}</span>
+                <span className="hidden shrink-0 text-mini font-bold uppercase tracking-wide text-muted sm:block">
+                  {readable(policy.updated)}
                 </span>
                 <Glyph
                   icon={faArrowRight}
-                  className="ml-auto mt-3 shrink-0 text-link transition-transform group-hover:translate-x-1"
+                  className="shrink-0 text-link transition-transform group-hover:translate-x-1"
                 />
               </Link>
-            </Reveal>
+            </li>
           ))}
+        </ul>
+
+        {/* The two doors that matter when a rule is about you. */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Link
+            to="/standing"
+            className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6 transition-colors hover:border-brand"
+          >
+            <p className="font-display text-xl font-extrabold leading-none">Where you stand</p>
+            <p className="mt-2.5 text-sm leading-relaxed text-muted">
+              Every decision against your account, what it switched off, and how to
+              argue with it.
+            </p>
+          </Link>
+          <Link
+            to="/support"
+            className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6 transition-colors hover:border-brand"
+          >
+            <Face face="shocked" turn={10} className="right-3 top-3 opacity-90" size="h-12 w-12" />
+            <p className="font-display text-xl font-extrabold leading-none">Write to a person</p>
+            <p className="mt-2.5 max-w-[20rem] text-sm leading-relaxed text-muted">
+              Not a bot and not a form that goes nowhere. The reply lands in your
+              Kobblon inbox.
+            </p>
+          </Link>
         </div>
 
-        <Reveal delay={140}>
-          <p className="mt-10 flex items-start gap-3 rounded-2xl border-2 border-b-4 border-white/10 bg-white/[0.03] p-6 text-sm leading-relaxed text-white/45">
-            <Glyph icon={faCircleInfo} className="mt-0.5 shrink-0 text-white/30" />
-            These pages say what actually happens. They have not been through a lawyer yet, and
-            will be before Kobblon opens widely.
-          </p>
-        </Reveal>
-      </Band>
+        <p className="mt-6 text-sm leading-relaxed text-muted">
+          These say what actually happens. They have not been through a lawyer yet,
+          and they will be before Kobblon opens widely. We would rather tell you that
+          than pretend.
+        </p>
+      </div>
     </AboutShell>
   )
 }

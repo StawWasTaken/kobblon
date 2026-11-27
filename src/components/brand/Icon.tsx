@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
 
@@ -178,6 +179,63 @@ const DETAILS: Partial<Record<UiIcon, { part: string; colour: string }[]>> = {
  */
 const FLAT_MARKS = new Set<string>(['workspace/spawn'])
 
+
+/**
+ * A mask that is not painted until the browser has the picture.
+ *
+ * A masked span with its fill already set and its mask still downloading
+ * is **a solid rectangle of that colour**, because an unresolved mask
+ * masks nothing. On a fast local server nobody ever sees it; over the
+ * network it is a flash, and if the request fails it never goes away.
+ * Staw saw it on the live About page: a red rounded square behind the
+ * heart-eyes face, which is the hearts layer painted without its mask.
+ *
+ * So each layer waits for its own image. The face underneath carries the
+ * shape, so a detail arriving a moment later reads as the face filling in
+ * rather than as a square appearing.
+ */
+function useMaskReady(url: string) {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    setReady(false)
+    let wanted = true
+    const picture = new Image()
+    picture.onload = () => { if (wanted) setReady(true) }
+    /* A mask that will never arrive is left unpainted rather than drawn as
+       a block: a missing eye is a face, a red square is a bug. */
+    picture.src = url
+    /* Already in the cache: `onload` does not fire again for a complete
+       image in some browsers, so the state is taken from the image. */
+    if (picture.complete && picture.naturalWidth > 0) setReady(true)
+    return () => { wanted = false }
+  }, [url])
+
+  return ready
+}
+
+/** One painted layer of an icon: a colour, through a mask, once it is here. */
+function Layer({ url, colour }: { url: string; colour: string }) {
+  const ready = useMaskReady(url)
+  return (
+    <span
+      aria-hidden
+      className="absolute inset-0"
+      style={{
+        backgroundColor: ready ? colour : 'transparent',
+        maskImage: `url(${url})`,
+        WebkitMaskImage: `url(${url})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+      }}
+    />
+  )
+}
+
 export function Icon({
   name, label, title, tone, style, className,
 }: {
@@ -210,6 +268,7 @@ export function Icon({
   className?: string
 }) {
   const url = iconUrl(name)
+  const ready = useMaskReady(url)
   /*
    * Undefined means "nobody said", which is the case that was wrong.
    * `null` is somebody saying "as drawn", which is a different answer and
@@ -242,7 +301,11 @@ export function Icon({
         className={cn('inline-block align-[-0.125em]', missingSize(className), className)}
         style={{
           ...style,
-          backgroundColor: paint === 'currentColor' ? 'currentColor' : paint,
+          /* Transparent until the mask is here, for the reason in
+             `useMaskReady`: a fill with no mask is a rectangle. */
+          backgroundColor: ready
+            ? (paint === 'currentColor' ? 'currentColor' : paint)
+            : 'transparent',
           maskImage: `url(${url})`,
           WebkitMaskImage: `url(${url})`,
           maskSize: 'contain',
@@ -269,20 +332,9 @@ export function Icon({
         {/* Kobblon's black behind the face, so a mouth is a mouth rather
             than a window onto the page. */}
         {holes && (
-          <span
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              backgroundColor: 'rgb(var(--art-ink))',
-              maskImage: `url(${asset(`/icons/ui/${name}-fill.png`)})`,
-              WebkitMaskImage: `url(${asset(`/icons/ui/${name}-fill.png`)})`,
-              maskSize: 'contain',
-              WebkitMaskSize: 'contain',
-              maskRepeat: 'no-repeat',
-              WebkitMaskRepeat: 'no-repeat',
-              maskPosition: 'center',
-              WebkitMaskPosition: 'center',
-            }}
+          <Layer
+            url={asset(`/icons/ui/${name}-fill.png`)}
+            colour="rgb(var(--art-ink))"
           />
         )}
 
@@ -292,37 +344,12 @@ export function Icon({
           * and sizing both would be the icon drawn at its own size inside
           * a box of the asked-for one.
           */}
-        <span
-          aria-hidden
-          className="absolute inset-0"
-          style={{
-            backgroundColor: paint,
-            maskImage: `url(${url})`,
-            WebkitMaskImage: `url(${url})`,
-            maskSize: 'contain',
-            WebkitMaskSize: 'contain',
-            maskRepeat: 'no-repeat',
-            WebkitMaskRepeat: 'no-repeat',
-            maskPosition: 'center',
-            WebkitMaskPosition: 'center',
-          }}
-        />
+        <Layer url={url} colour={paint} />
         {(details ?? []).map((one) => (
-          <span
+          <Layer
             key={one.part}
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              backgroundColor: one.colour,
-              maskImage: `url(${asset(`/icons/ui/${one.part}.png`)})`,
-              WebkitMaskImage: `url(${asset(`/icons/ui/${one.part}.png`)})`,
-              maskSize: 'contain',
-              WebkitMaskSize: 'contain',
-              maskRepeat: 'no-repeat',
-              WebkitMaskRepeat: 'no-repeat',
-              maskPosition: 'center',
-              WebkitMaskPosition: 'center',
-            }}
+            url={asset(`/icons/ui/${one.part}.png`)}
+            colour={one.colour}
           />
         ))}
       </span>

@@ -3,6 +3,7 @@ import { Icon } from '@/components/brand/Icon'
 import { FACE_COLOUR } from '@/components/social/Reactions'
 import { Button } from '@/components/ui/Button'
 import { AboutShell } from '@/components/layout/AboutShell'
+import { AtTop } from '@/components/about/AtTop'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import { asset } from '@/lib/asset'
 import { cn } from '@/lib/cn'
@@ -72,40 +73,39 @@ export default function About() {
   })
 
   return (
-    <AboutShell>
+    <AboutShell
+      top={
+        <AtTop
+          art="/about/towers-sunset.webp"
+          tall
+          title={
+            <>
+              <img
+                src={asset('/about/wordmark-brush.webp')}
+                alt="Kobblon"
+                className="mb-6 w-[min(70vw,22rem)] select-none"
+              />
+              People build things here.
+              <br />
+              Then they stand inside them.
+            </>
+          }
+        >
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Button to="/signup" variant="yes" size="lg">Make an account</Button>
+            <Button to="/discover" variant="subtle" size="lg">Look around first</Button>
+          </div>
+
+          {/* The faces live on the opening rather than loose on the page:
+              placed against the picture they read as dropped on it, and
+              nothing can push them off the side of a narrow window. */}
+          <Face face="heart-eyes" turn={-14} className="right-10 top-28 hidden sm:block" />
+          <Face face="sunglasses" turn={12} className="bottom-10 right-28 hidden sm:block" size="h-16 w-16" />
+        </AtTop>
+      }
+    >
       <div className="relative overflow-hidden bg-ink">
-      <img
-        src={asset('/about/towers-sunset.webp')}
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] w-full object-cover"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] bg-gradient-to-b from-brand-ink/40 via-ink/70 to-ink"
-      />
-
-      <Face face="heart-eyes" turn={-14} className="left-[5%] top-[7rem]" />
-      <Face face="sunglasses" turn={12} className="right-[7%] top-[5rem]" />
-
-      <div className="relative mx-auto max-w-4xl px-5 pb-20 pt-16 sm:pt-24">
-        <img
-          src={asset('/about/wordmark-brush.webp')}
-          alt="Kobblon"
-          className="mx-auto w-[min(80vw,30rem)] select-none"
-        />
-
-        <p className="mx-auto mt-8 max-w-2xl text-center font-display text-2xl font-extrabold leading-[1.1] text-on-art sm:text-4xl">
-          People build things here.
-          <br />
-          Then they stand inside them.
-        </p>
-
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button to="/signup" variant="yes" size="lg">Make an account</Button>
-          <Button to="/discover" variant="subtle" size="lg">Look around first</Button>
-        </div>
-
+        <div className="relative mx-auto max-w-5xl px-5 py-12 sm:px-8">
         {/* ------------------------------------------------- the one claim */}
         <div className="relative mt-20 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-7 sm:p-9">

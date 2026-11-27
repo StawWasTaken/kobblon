@@ -5,20 +5,16 @@ import {
   faHeadset, faPlus, faScaleBalanced, faScroll, faArrowRight, faCircleInfo,
   faDesktop, faMobileScreen, faTabletScreenButton, faGamepad, faRocket,
   faCircleQuestion, faCheck, faUser, faEnvelope, faLock,
-  faBolt, faArrowLeft, faPaperPlane, faMinus,
+  faBolt, faArrowLeft, faPaperPlane,
   faBriefcase, faHandshake, faChartLine, faNewspaper,
 } from '@fortawesome/free-solid-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import { AboutShell } from '@/components/layout/AboutShell'
+import { AtTop } from '@/components/about/AtTop'
 import { StoryPage } from '@/components/layout/StoryPage'
 import { Band, Lane } from '@/components/about/Band'
-import { BandHead } from '@/components/about/Type'
-import { Reveal } from '@/components/about/Reveal'
-import { Parallax } from '@/components/about/Parallax'
-import { Floaters } from '@/components/about/Floaters'
 import { AskKobby } from '@/components/about/AskKobby'
 import { helpArticles, helpBySlug, openers } from '@/content/help'
-import { asset } from '@/lib/asset'
 import { Panel, Group, Line } from '@/components/settings/Panel'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -720,147 +716,55 @@ export function TicketCard({
  * the same icons, so the word somebody picks here is the word they would
  * pick on the form if the answer is not in the list.
  */
-function Faq() {
-  const [subject, setSubject] = useState<TicketTopic | 'all'>('all')
-  const [open, setOpen] = useState<string | null>(null)
+/*
+ * The four groups the help articles sit in.
+ *
+ * The page before this listed every section of every article in one flat
+ * column - thirty rows, each under a small grey ACCOUNT or MONEY - which
+ * is the help centre every company has and a wall nobody reads. The
+ * sections went back inside the articles, where they already were.
+ *
+ * Four groups rather than one per topic: most topics hold a single
+ * article, and one heading over one card, six times, is a list of
+ * headings.
+ */
+const HELP_GROUPS: { topics: string[]; name: string }[] = [
+  { topics: ['account'], name: 'Your account' },
+  { topics: ['money', 'creator'], name: 'Brix, buying and building' },
+  { topics: ['safety', 'privacy'], name: 'Safety and what is held about you' },
+  { topics: ['bug', 'other'], name: 'Everything else' },
+]
 
-  /* One flat list: a question, its answer, and the article it came out of. */
-  const questions = helpArticles.flatMap((article) =>
-    article.sections.map((section) => ({
-      key: `${article.slug}-${section.id}`,
-      section,
-      article,
-    })),
-  )
-
-  const shown = subject === 'all'
-    ? questions
-    : questions.filter((one) => one.article.topic === subject)
-
-  /* Only the subjects that have a question under them. A chip that filters
-     to nothing is a chip that teaches people the filter is broken. */
-  const have = new Set<string>(helpArticles.map((one) => one.topic))
-
+/** Everything written down, grouped by what it is about. */
+function HelpShelf() {
   return (
-    <Lane className="mt-12">
-      <div className="flex flex-wrap justify-center gap-2">
-        <FaqChip
-          icon={faCircleQuestion}
-          label="Everything"
-          on={subject === 'all'}
-          onClick={() => { setSubject('all'); setOpen(null) }}
-        />
-        {topics.filter((one) => have.has(one.value)).map((one) => (
-          <FaqChip
-            key={one.value}
-            icon={one.icon}
-            label={one.short}
-            on={subject === one.value}
-            onClick={() => { setSubject(one.value); setOpen(null) }}
-          />
-        ))}
-      </div>
-
-      {/*
-        * One column, hairlines between the questions and nothing around
-        * them. A question in a card of its own is a card somebody has to
-        * read the edges of; a list reads as a list and can be run down with
-        * the eye, which is the whole behaviour an FAQ is for.
-        */}
-      <div className="mt-10 divide-y divide-white/10 border-y border-white/10">
-        {shown.map((one) => {
-          const showing = open === one.key
-          return (
-            <div key={one.key}>
-              <button
-                type="button"
-                onClick={() => setOpen(showing ? null : one.key)}
-                aria-expanded={showing}
-                className="group flex w-full items-center gap-4 py-5 text-left"
-              >
-                <span className={cn(
-                  'grid size-8 shrink-0 place-items-center rounded-full border-2 text-mini transition-colors',
-                  showing
-                    ? 'border-brand-bright bg-brand text-on-art'
-                    : 'border-white/15 bg-white/[0.04] text-white/45 group-hover:border-brand-bright/60 group-hover:text-white',
-                )}>
-                  <Glyph icon={showing ? faMinus : faPlus} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-lg font-extrabold leading-snug">
-                    {one.section.heading}
+    <div className="space-y-8">
+      {HELP_GROUPS.map((group) => {
+        const mine = helpArticles.filter((one) => group.topics.includes(one.topic))
+        if (mine.length === 0) return null
+        return (
+          <section key={group.name}>
+            <h2 className="font-display text-xl font-extrabold">{group.name}</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {mine.map((one) => (
+                <Link
+                  key={one.slug}
+                  to={`/support/h/${one.slug}`}
+                  className="group rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-5 transition-colors hover:border-brand"
+                >
+                  <p className="font-display text-lg font-extrabold leading-tight">{one.title}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{one.blurb}</p>
+                  <span className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-link">
+                    Read it
+                    <Glyph icon={faArrowRight} className="transition-transform group-hover:translate-x-1" />
                   </span>
-                  <span className="mt-0.5 block text-mini font-extrabold uppercase tracking-[0.18em] text-white/35">
-                    {one.article.eyebrow}
-                  </span>
-                </span>
-              </button>
-
-              {showing && (
-                <div className="pb-7 pl-12 pr-2">
-                  <div className="space-y-3 leading-relaxed text-white/60">
-                    {one.section.body.map((line, at) => <p key={at}>{line}</p>)}
-                  </div>
-
-                  {!!one.section.points?.length && (
-                    <ul className="mt-4 space-y-2">
-                      {one.section.points.map((point) => (
-                        <li key={point.label} className="flex gap-2.5 text-sm">
-                          <Glyph icon={faCheck} className="mt-1 text-mini text-space-bright" />
-                          <span>
-                            <span className="font-bold">{point.label}</span>
-                            {point.note && <span className="text-white/50"> - {point.note}</span>}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <Link
-                    to={`/support/h/${one.article.slug}`}
-                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-link hover:underline"
-                  >
-                    More in “{one.article.title}”
-                    <Glyph icon={faArrowRight} className="text-mini" />
-                  </Link>
-                </div>
-              )}
+                </Link>
+              ))}
             </div>
-          )
-        })}
-      </div>
-
-      <p className="mt-8 text-center text-sm text-white/40">
-        Nothing here? Ask the box at the top, or
-        {' '}
-        <a href="#write" className="font-bold text-link hover:underline">write to a person</a>.
-      </p>
-    </Lane>
-  )
-}
-
-/** One subject across the top of the questions. */
-function FaqChip({ icon, label, on, onClick }: {
-  icon: IconDefinition
-  label: string
-  on: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={on}
-      className={cn(
-        'inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition-colors',
-        on
-          ? 'border-brand-bright bg-brand text-on-art'
-          : 'border-white/12 bg-white/[0.04] text-white/60 hover:border-white/25 hover:text-white',
-      )}
-    >
-      <Glyph icon={icon} className="text-mini" />
-      {label}
-    </button>
+          </section>
+        )
+      })}
+    </div>
   )
 }
 
@@ -942,56 +846,28 @@ export default function Support() {
      * Somebody locked out cannot sign in to say so.
      */
     <AboutShell
-      backdrop={
-        <Parallax strength={70} className="absolute inset-0">
-          <img
-            src={asset('/brand/background.png')}
-            alt=""
-            aria-hidden="true"
-            className="h-[115%] w-full object-cover"
+      top={
+        <AtTop
+          title={<>What has<br />gone wrong?</>}
+          says="The things people actually write in about, and a way to reach a person when none of them is it."
+        >
+          <AskKobby
+            tone="support"
+            size="open"
+            openers={openers}
+            className="mt-7 w-full max-w-2xl text-left"
           />
-        </Parallax>
-      }
-      hero={
-        <Lane className="flex min-h-[52vh] flex-col justify-center py-20 text-center">
-          <Reveal>
-            <h1 className="font-display text-[clamp(1.9rem,4.6vw,3.4rem)] font-extrabold leading-[1.05] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
-              Welcome to Kobblon support,
-              <br className="hidden sm:block" />{' '}
-              <span className="text-brand-bright">ask us anything</span>.
-            </h1>
-          </Reveal>
-          {/* The box and its three questions, left-aligned inside a centred
-              column: the heading is a banner and wants the middle, and a
-              question somebody is about to type does not. */}
-          <Reveal delay={160}>
-            <AskKobby
-              tone="support"
-              size="open"
-              openers={openers}
-              className="mx-auto mt-9 w-full max-w-2xl text-left"
-            />
-          </Reveal>
-          <Reveal delay={260}>
-            <p className="mx-auto mt-6 flex items-center justify-center gap-2 text-sm text-white/45">
-              <Glyph icon={faLock} className="text-mini" />
-              Kobblon never asks for your password, here or anywhere else.
-            </p>
-          </Reveal>
-        </Lane>
+          <p className="mt-5 flex items-center gap-2 text-sm text-on-art/60">
+            <Glyph icon={faLock} className="text-mini" />
+            Kobblon never asks for your password, here or anywhere else.
+          </p>
+        </AtTop>
       }
     >
       {/* ------------------------------------------------ the questions */}
-      <Band tone="raised" edge decor={<Floaters />}>
-        <Reveal>
-          <BandHead
-            eyebrow="Answers"
-            title="Questions people actually ask."
-            lead="Every one of these is answered here in full, and Kobby answers out of the same words. Pick a subject, or open the one that sounds like yours."
-          />
-        </Reveal>
-        <Faq />
-      </Band>
+      <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
+        <HelpShelf />
+      </div>
 
       <Band tone="night" edge id="write">
         <Lane className="space-y-8">

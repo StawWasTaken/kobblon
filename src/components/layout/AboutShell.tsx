@@ -34,10 +34,19 @@ import { cn } from '@/lib/cn'
  * visitor has never had the chance to choose.
  */
 export function AboutShell({
-  hero, backdrop, pin, children, className,
+  hero, top, backdrop, pin, children, className,
 }: {
   /** The washed opening of the page. A `Hero`, usually. */
   hero?: ReactNode
+  /**
+   * The page's own opening, drawn by the page rather than by the shell -
+   * an `AtTop`. It slides under the floating bar exactly as a hero does.
+   *
+   * Without this a page that passes no `hero` starts with a strip of flat
+   * `ink` above its first pixel, because the bar is only pulled up over an
+   * opening. Staw, twice now: "theres a big black bar ontop".
+   */
+  top?: ReactNode
   /**
    * A picture behind the whole opening, under the wash and the gradients.
    * For the page that opens on something somebody built rather than on a
@@ -121,7 +130,9 @@ export function AboutShell({
         * line. The two numbers are the bar measured at both widths, where
         * the top padding differs.
         */}
-      <AboutNav measure={bar} style={hero ? { marginBottom: -barHigh } : undefined} />
+      <AboutNav measure={bar} style={hero || top ? { marginBottom: -barHigh } : undefined} />
+
+      {top}
 
       {hero && (
         <div

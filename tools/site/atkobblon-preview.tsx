@@ -16,6 +16,7 @@ import Safety from '@/pages/inside/Safety'
 import Players from '@/pages/inside/Players'
 import Economy from '@/pages/inside/Economy'
 import Policies from '@/pages/Policies'
+import Support from '@/pages/Support'
 import Download from '@/pages/Download'
 
 import '@/index.css'
@@ -28,6 +29,7 @@ const PAGES: Record<string, { at: string; show: () => React.JSX.Element }> = {
   players: { at: '/about/players', show: Players },
   economy: { at: '/about/economy', show: Economy },
   policies: { at: '/policies', show: Policies },
+  support: { at: '/support', show: Support },
   download: { at: '/download', show: Download },
 
 }

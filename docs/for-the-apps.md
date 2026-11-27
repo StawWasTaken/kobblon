@@ -26286,3 +26286,40 @@ Policies, Download.
 - Positioning classes handed to `Icon` land on the paint, not on the box.
   `absolute top-[15%]` on an icon put every one of them in the corner of
   the page. Anything placed absolutely needs its own wrapper span.
+
+## Round four hundred and twenty - one top for every At Kobblon page, and a mask that waits
+
+Four things, and the first is a bug in `Icon` that the Workspace has too.
+
+**A masked icon painted a solid rectangle while its mask was downloading.**
+`Icon` paints a colour through a CSS mask, and an unresolved mask masks
+nothing - so for as long as the picture is in flight the element is a
+filled block of that colour, and if the request fails it stays one. Staw
+saw it live: a red rounded square behind the heart-eyes face, which is the
+hearts layer with no mask on it. Every layer now waits for its own image
+(`useMaskReady`) and paints transparent until it arrives, so a detail that
+is slow reads as the face filling in. **If you draw masked icons on your
+side, do the same** - this is not a Kobblon-page problem, it is how the
+technique behaves on a slow connection.
+
+**`AtTop`, in `@/components/about/AtTop`** - the opening every At Kobblon
+page now wears: a picture full width, the title in the pixel face over it,
+one line, and whatever that page opens with. Props only, no router, no
+provider, so it mounts anywhere. Staw: "all pages must be similar too".
+What is Kobblon, Policies and Support are all this shape now.
+
+**The black bar across the top is fixed, properly this time.** `AboutShell`
+only pulled its bar up over a `hero`, so a page that passed none started
+with a strip of flat `ink` above its first pixel. It takes a `top` as well
+now and pulls up for either.
+
+**The bar itself**: the current page wears a filled chip rather than a
+two-pixel underline nobody found, the pixel corner is blue and fades out
+once the page has moved rather than sitting there as a grey grid, and
+signed out it is two proper buttons instead of a text link beside one.
+
+**Policies and the help centre, rebuilt.** Policies is one list of nine
+documents instead of a grid of nine cards; the help centre is nine
+articles in four groups instead of thirty rows in one flat column, each
+under a small grey ACCOUNT or MONEY. Both are about a third of the height
+they were and neither has a band left on it.
