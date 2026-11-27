@@ -42,7 +42,7 @@ const apps = {
   creator: {
     name: 'Kobblon Workspace',
     short: 'Workspace',
-    mark: '/brand/favicon-create.png',
+    mark: '/brand/favicon-creator.png',
     scheme: 'kobblon-creator',
   },
 } as const

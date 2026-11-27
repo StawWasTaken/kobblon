@@ -26421,3 +26421,26 @@ no page where he is shown big yet.
 
 The five situation drawings - lighthouse, construction worker,
 notification, Brix, sunglasses - are untouched, and so is `newbie`.
+
+## Round four hundred and twenty-five - one Create mark, not two
+
+Staw, looking at the download page: "when i go to the download page it
+seems like youre using an older version of this favicon." He is right,
+and the cause is that `public/brand/` holds **two files of the same
+mark**:
+
+- `favicon-creator.png` - the current one, with the burst behind the K.
+  It is what the Creator Hub's own pages wear in the tab (`CREATE_ICON`
+  in `@/hooks/useTitle`).
+- `favicon-create.png` - the flat one it replaced. Nothing should draw
+  it.
+
+The flat one was on the Workspace door of the download page and on the
+Workspace sign-in page, so the same program wore two different marks
+depending on where you met it. Both say `favicon-creator.png` now, and
+nothing in the website draws the flat file any more. It stays on disk -
+it is Staw's - but if anything on your side reaches for
+`favicon-create.png`, move it.
+
+The pair now reads as a pair: the same burst behind the same K, blue for
+the Launcher and black for Workspace.

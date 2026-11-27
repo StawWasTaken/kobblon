@@ -140,7 +140,18 @@ export default function Download() {
             edge="border-ink-line"
           />
           <Door
-            icon="/brand/favicon-create.png"
+            /*
+             * `favicon-creator.png`, not `favicon-create.png`.
+             *
+             * There are two files of the same mark in `public/brand/` and
+             * only one of them is current: the Creator Hub's tab icon is
+             * the newer drawing, with the burst behind the K, and
+             * `favicon-create.png` is the flat one it replaced. Staw
+             * spotted the older one here: "when i go to the download page
+             * it seems like youre using an older version of this favicon".
+             * Nothing draws the flat one any more.
+             */
+            icon="/brand/favicon-creator.png"
             who="To build"
             name="Kobblon Workspace"
             what="Where a World is made: parts, scripts, sounds, the lot. Publish from here and the World is on the site two minutes later."
