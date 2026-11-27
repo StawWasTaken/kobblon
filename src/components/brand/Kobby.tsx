@@ -70,12 +70,23 @@ export const kobbyArt = {
    */
   newbie: asset('/mascot/newbie.png'),
   /*
-   * Kobby's own face, which is not one of the five and is not an empty
-   * state: it is the 28-pixel mark beside "Ask Kobby" in the staff panel,
-   * where it names the auto-admin rather than filling a hole in a page.
-   * Staw replaced the situation drawings; this is a label.
+   * Kobby himself, who is a Kobbot now.
+   *
+   * Staw: "kobby must now not be the old ugly image of kobby but the new
+   * cool gif of a kobbot model 'kobbot1' that we'll name kobby". So the
+   * blue blob at `/brand/kobby.png` is retired - the file stays where it
+   * is, nothing draws it any more - and this is his idle: a white robot
+   * with the K on his chest, 250x480, two and a half seconds, looping.
+   *
+   * The loop is right here where a logo reveal's was not: an idle is a
+   * character breathing, and a character who stops breathing after one
+   * go is a character who has died in the corner of the page.
+   *
+   * He is not one of the five situation drawings and is not an empty
+   * state: this is a label - the mark beside "Ask Kobby" - and a hole in
+   * a page is still the lighthouse.
    */
-  default: asset('/brand/kobby.png'),
+  default: asset('/mascot/kobby.gif'),
 } as const
 
 export type KobbyMood = keyof typeof kobbyArt

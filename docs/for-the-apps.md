@@ -26394,3 +26394,30 @@ nobody passes is a prop somebody passes by accident later.
 always was. If you ever draw it yourself, the two things that cost time
 here are worth knowing: it loops for ever, and its last frames are not the
 finished name.
+
+## Round four hundred and twenty-four - Kobby is a Kobbot
+
+Staw: "kobby must now not be the old ugly image of kobby but the new cool
+gif of a kobbot model 'kobbot1' that we'll name kobby."
+
+`kobbyArt.default` is `/mascot/kobby.gif` now - his Kobbot1 idle, 250x480,
+sixty frames, two and a half seconds, looping. The old blue blob at
+`/brand/kobby.png` is retired: the file stays where it is and nothing
+draws it any more. **If anything on your side draws `/brand/kobby.png`,
+move it.**
+
+The loop is right here where the logo reveal's was not, which is worth
+saying because 421 and 423 were about exactly that: an idle is a
+character breathing. A character who stops breathing after one go has
+died in the corner of the page.
+
+Where he actually appears today: the "Ask Kobby" bar on Policies and
+Support, and two marks in the console. All four are around thirty pixels,
+and he reads at that size - white body, blue eyes, the K on his chest -
+but it does mean a 278KB loop is being drawn as a label. Said out loud
+because it is a real cost and the fix, if Staw wants one, is a still
+frame for the small marks and the idle wherever he is shown big. He has
+no page where he is shown big yet.
+
+The five situation drawings - lighthouse, construction worker,
+notification, Brix, sunglasses - are untouched, and so is `newbie`.
