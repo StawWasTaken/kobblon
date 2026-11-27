@@ -1,0 +1,53 @@
+/*
+ * The toy box, as a layer over what we already have.
+ *
+ * Nothing here is a new layout. Every rule takes a shape the site already
+ * draws - the card, the lip under it, a shelf heading, a button - and
+ * makes it louder: a thicker stroke, a lip in the section's own colour
+ * rather than grey, a marker under the heading, a squish on press.
+ *
+ * It hangs off `[data-toy]` and a `--accent` set per section, so turning
+ * it off is one attribute and recolouring a whole page is one variable.
+ * That is the point of showing it this way: the dark theme, the top bar,
+ * the rail and every component underneath are untouched.
+ */
+[data-toy] {
+  --toy-stroke: rgb(var(--ink-line));
+  --toy-lip: 6px;
+}
+
+/* The card: same card, thicker edge, coloured lip. */
+[data-toy] .border-2.border-ink-line,
+[data-toy] .border-2.border-b-4.border-ink-line {
+  border-width: 2px;
+  border-bottom-width: var(--toy-lip);
+  border-bottom-color: var(--accent);
+}
+
+/* A shelf heading gets the marker under it. */
+[data-toy] .font-display.text-xl,
+[data-toy] .font-display.text-2xl {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-size: 100% 6px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  padding: 0 3px 2px;
+}
+
+/* Buttons squish onto their own lip and spring back. */
+[data-toy] button:not([disabled]),
+[data-toy] a[class*='rounded-full'] {
+  transition: transform 170ms cubic-bezier(.3, 1.6, .5, 1);
+}
+[data-toy] button:not([disabled]):active {
+  transform: translateY(3px);
+  transition-duration: 60ms;
+}
+
+/* A world tile leans a little, and leans back under the pointer. */
+[data-toy] .toy-tilt { transform: rotate(var(--toy-turn, -1deg)); transition: transform 170ms ease; }
+[data-toy] .toy-tilt:hover { transform: rotate(0deg) translateY(-4px) scale(1.01); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-toy] .toy-tilt, [data-toy] button { transition: none; }
+}
