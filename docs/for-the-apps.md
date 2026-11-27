@@ -26379,3 +26379,18 @@ sentence stops being true, this page is one of the places to change.
 
 The At Kobblon side is now five pages on one shape: What is Kobblon,
 Forum, Support, Policies, Download.
+
+## Round four hundred and twenty-three - the reveal is off again
+
+Round 421 is withdrawn. Staw: "lets just cancel the gif loading thingy
+just keep the normal logo as it is on the at kobblon pages."
+
+`Wordmark` has no `reveal` prop any more and the bar does not roll for
+one: the still mark is what every page draws, in every appearance, as it
+was before 421. The whole thing is gone rather than switched off - a prop
+nobody passes is a prop somebody passes by accident later.
+
+`logo-reveal.gif` is untouched in `public/brand/` and still used where it
+always was. If you ever draw it yourself, the two things that cost time
+here are worth knowing: it loops for ever, and its last frames are not the
+finished name.

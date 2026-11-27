@@ -114,19 +114,6 @@ export function AboutNav({ className, measure, style }: {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
 
-  /*
-   * Sometimes the name draws itself in, sometimes it is just there.
-   *
-   * Staw: "make that the wordmark also uses the gif sometimes and
-   * sometimes the normal wordmark". Rolled once, on mount, rather than on
-   * every render - a mark that re-rolls as the page re-renders is a mark
-   * that starts its animation again when somebody opens the menu.
-   *
-   * One in three. Often enough to be noticed by somebody who visits the
-   * side twice, rare enough that it stays a surprise rather than becoming
-   * the loading screen of every page.
-   */
-  const [reveal] = useState(() => Math.random() < 0.34)
   const [moved, setMoved] = useState(false)
 
   useEffect(() => {
@@ -205,7 +192,7 @@ export function AboutNav({ className, measure, style }: {
           <Glyph icon={open ? faXmark : faBars} className="text-lg" />
         </button>
 
-        <Wordmark to="/" className="h-6" always reveal={reveal} />
+        <Wordmark to="/" className="h-6" always />
 
         {/* The middle, the way the reference has it: the words are the
             bar's centre of gravity, not a tail on the wordmark. `absolute`
