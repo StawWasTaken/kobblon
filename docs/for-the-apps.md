@@ -26323,3 +26323,30 @@ documents instead of a grid of nine cards; the help centre is nine
 articles in four groups instead of thirty rows in one flat column, each
 under a small grey ACCOUNT or MONEY. Both are about a third of the height
 they were and neither has a band left on it.
+
+## Round four hundred and twenty-one - the name draws itself in, sometimes
+
+`Wordmark` takes a `reveal` prop. When it is on, Staw's `logo-reveal.gif`
+plays once and then hands over to the still mark; when it is off, nothing
+changes. The At Kobblon bar rolls for it on each load - about one visit in
+three - so it is a flourish rather than a splash screen.
+
+Three things in there that are worth having if you ever mount this with
+`reveal`:
+
+- **The GIF loops for ever and its last frames are not the finished name.**
+  Left alone the bar re-animates every four seconds. The frame delays add
+  up to 3.95 seconds, so the swap is at 3.8 and the still mark takes over
+  on the frame where the name is whole.
+- **It is drawn over the still mark, not in place of it**, at 250% height.
+  The animation is on a 420x215 canvas with the name floating in the
+  middle, so at the bar's own height the letters came out a third of the
+  size and then jumped when the still one arrived. Sized and centred on
+  the still mark, the handover is invisible and nothing in the bar moves.
+- **Only the default appearance has one.** The seasonal reveals are 1.5MB
+  and 5MB, which is not a navigation bar's worth of picture, so a season
+  keeps its still drawing. That falls out of `.kob-mark` on its own: the
+  reveal carries `data-look="default"` with a copy per mode, so the same
+  matrix that picks the mark picks whether there is a reveal at all.
+
+Nothing else changed, and the still mark is untouched.
