@@ -26245,3 +26245,44 @@ written in.
 
 Nothing it says changed, and it is still dismissed into the same storage it
 is about.
+
+## Round four hundred and nineteen - What is Kobblon, and the end of the Company menu
+
+Staw, on the At Kobblon side: "its still too corporate to me right now ...
+we need to remove some and redesign some (more simplistic, and have a more
+user-friendly, fever-dream like vibe)". None of this is shared code, so it
+is here for the record and for the words, which the applications do borrow.
+
+**`/about` is one screen now.** It was six thousand pixels of five bands -
+picture on one side, a heading and two grey lines and a ghost button on the
+other, alternating. That shape is the corporate marketing page. It is
+eighteen hundred pixels and it says five things: the name over something
+somebody built, one sentence, the three claims from `docs/vision.md`, what
+is inside, and how to build one.
+
+The three claims are the ones worth copying into anything that describes
+Kobblon: **a person made every single thing on this site**, **no bots -
+if it says four people are playing, it is four people**, and **free**.
+
+A note on what went wrong in the first draft, because it is a shape worth
+recognising: three equal cards in a row, each a bold label over one tidy
+line. Staw called it AI-ish and he is right - evenly spaced thirds with a
+label and a caption is what a machine writes. The fix was to make it
+uneven and to put a person in the sentences.
+
+**The Inner Stock page is deleted.** `/inner-stock` now redirects to
+`/about`; the page, its chart component and its footer link are gone. The
+data and the console section are untouched - this is the public page only,
+and nothing in the schema changed.
+
+**The Company menu is gone with it.** With the Inner Stock removed it held
+one item, so the bar is five plain words: What is Kobblon, Forum, Support,
+Policies, Download.
+
+**Two bugs in `Icon` worth knowing**, because the Workspace uses it:
+
+- `className="h-auto"` paints **nothing**. The icon is a CSS mask, and a
+  mask with no height has no box to paint into. Give it both axes.
+- Positioning classes handed to `Icon` land on the paint, not on the box.
+  `absolute top-[15%]` on an icon put every one of them in the corner of
+  the page. Anything placed absolutely needs its own wrapper span.

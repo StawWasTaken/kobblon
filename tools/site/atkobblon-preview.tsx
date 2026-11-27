@@ -17,7 +17,7 @@ import Players from '@/pages/inside/Players'
 import Economy from '@/pages/inside/Economy'
 import Policies from '@/pages/Policies'
 import Download from '@/pages/Download'
-import InnerStock from '@/pages/InnerStock'
+
 import '@/index.css'
 
 const out = { profile: null, session: null, loading: false } as unknown as AuthValue
@@ -29,7 +29,7 @@ const PAGES: Record<string, { at: string; show: () => React.JSX.Element }> = {
   economy: { at: '/about/economy', show: Economy },
   policies: { at: '/policies', show: Policies },
   download: { at: '/download', show: Download },
-  stock: { at: '/inner-stock', show: InnerStock },
+
 }
 
 const which = new URLSearchParams(location.search).get('page') ?? 'about'

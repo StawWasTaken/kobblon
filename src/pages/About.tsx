@@ -1,456 +1,247 @@
 import { Link } from 'react-router-dom'
-import { faArrowRight, faArrowDown } from '@fortawesome/free-solid-svg-icons'
-import { Glyph } from '@/components/brand/Glyph'
-import { Icon, type KobIcon } from '@/components/brand/Icon'
-import { TopicCard, useAnnouncements, useTopTopics } from '@/components/forum/TopicCard'
+import { Icon } from '@/components/brand/Icon'
+import { FACE_COLOUR } from '@/components/social/Reactions'
 import { Button } from '@/components/ui/Button'
-import { kobbyArt } from '@/components/brand/Kobby'
 import { AboutShell } from '@/components/layout/AboutShell'
-import { Band, Lane } from '@/components/about/Band'
-import { Reveal } from '@/components/about/Reveal'
-import { StatTile } from '@/components/about/Tally'
-import { Figure } from '@/components/about/Figure'
-import { GlassCard } from '@/components/about/GlassCard'
-import { Floaters } from '@/components/about/Floaters'
-import { Parallax } from '@/components/about/Parallax'
-import { ScrollIn } from '@/components/about/ScrollIn'
-import { PixelGrid } from '@/components/about/Motif'
-import { BandHead, Title } from '@/components/about/Type'
-import { useAsync } from '@/hooks/useAsync'
 import { useAtTitle, useSocialCard } from '@/hooks/useTitle'
 import { asset } from '@/lib/asset'
-import { getPlatformStats } from '@/lib/api'
-import { currency } from '@/lib/currency'
+import { cn } from '@/lib/cn'
 
 /**
  * What is Kobblon, for somebody who has never heard of it.
  *
- * The page is a scroll, in Staw's order: a few words over something
- * somebody built, then the paragraph that says what this is, then the
- * numbers, then Worlds, then what keeps it safe, then Workspace, then
- * what it runs on, then Communities, then the rules, then where news is said.
+ * **One screen.** The page this replaces was six thousand pixels of five
+ * bands - picture on one side, a heading and two grey lines and a ghost
+ * button on the other, alternating. That shape is the corporate marketing
+ * page, and the things Kobblon actually has that nobody else does - the
+ * can, the faces, somebody new looking up at the whole thing - were buried
+ * inside it. Staw: it "could belong to any company".
  *
- * Three rules for anybody editing it:
+ * The draft before this one had the same fault in miniature: three equal
+ * cards in a row, each a bold label over one tidy line. Three of anything,
+ * evenly spaced, with a label and a caption, is the shape a machine
+ * writes. So the middle is deliberately uneven - one claim taking half the
+ * page, two smaller ones stacked beside it - and the sentences have a
+ * person in them.
  *
- *   * **A band is a heading, one line, and the way in.** If a second
- *     sentence is needed to make the first land, the first is wrong.
- *   * **The numbers come from the database.** Write with confidence; do
- *     not invent a figure anybody can check against Discover.
- *   * **This is not the landing page in other words.** The landing page
- *     shows you the site. This one says what the site is.
+ * Two rules for anybody editing it:
+ *
+ *   * **Everything on it has to be true today.** The three claims are
+ *     straight out of `docs/vision.md` and they are the reason to choose
+ *     Kobblon: made by people, no bots, free. Nothing aspirational.
+ *   * **Do not add a band.** If something new has to be said, something
+ *     already here says it less well and should go.
  */
 
-/**
- * The three pieces underneath, one line each.
- *
- * Staw: being inside Kobblon is "being able to play with other players
- * while being safe and able to have an economy system". So these three are
- * not three features picked out of a list - they are the three halves of
- * the same sentence, and each one now has a page of its own that says it
- * properly rather than pointing at the part of the app that does it.
- */
-const inside = [
-  {
-    to: '/about/safety',
-    art: '/about/report.webp',
-    name: 'Safety',
-    alt: 'A blue flag, raised',
-    body: 'Report anything, anywhere, and it goes to a person. Your name never travels with it.',
-  },
-  {
-    to: '/about/players',
-    art: '/about/play.webp',
-    name: 'Players',
-    alt: 'A player and a play mark',
-    body: 'Every World here was built and published by somebody. Walk into any of them.',
-  },
-  {
-    to: '/about/economy',
-    art: '/about/brix.webp',
-    name: 'Economy',
-    alt: 'A blue Kobblon brick',
-    body: `${currency.plural} earned playing and selling, spent on what other people made.`,
-  },
-]
-
-/**
- * What a person can do about somebody else, and what Kobblon does about
- * both of them. Every one of these is built and working today.
- */
-const safety: { icon: KobIcon; name: string; body: string }[] = [
-  { icon: 'report', name: 'Report', body: 'Anything, anywhere, and it goes to a person. Who reported it is never shown.' },
-  { icon: 'remove-user', name: 'Block', body: 'They cannot write to you, find you, or follow you into a World.' },
-  { icon: 'cross-user', name: 'Ignore', body: 'Quieter than a block: you simply stop seeing them.' },
-  { icon: 'admin', name: 'Moderation', body: 'Decisions come with a reason, and every one of them can be appealed.' },
-]
+function Face({ face, className, turn, size = 'h-14 w-14 sm:h-20 sm:w-20' }: {
+  face: keyof typeof FACE_COLOUR
+  className?: string
+  turn: number
+  size?: string
+}) {
+  /*
+   * The placing goes on a span of our own rather than on `Icon`.
+   *
+   * `Icon` paints a mask and, for the faces with something inside them -
+   * the hearts, the tongue, the tears - stacks more than one span to do
+   * it. The classes handed to it land on the paint, not on the box, so
+   * `absolute top-[15%]` was being resolved against the icon itself and
+   * every face piled up in the corner of the page.
+   */
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('pointer-events-none absolute select-none', className)}
+      style={{ transform: `rotate(${turn}deg)` }}
+    >
+      <Icon
+        name={`reaction-${face}` as 'reaction-smile'}
+        tone={FACE_COLOUR[face]}
+        className={size}
+      />
+    </span>
+  )
+}
 
 export default function About() {
   useAtTitle('What is Kobblon')
-  /* Three real posts in the forum band, and no band at all without them. */
-  const talk = useTopTopics(3)
-  const news = useAnnouncements(3)
   useSocialCard({
     title: 'What is Kobblon',
-    description: 'An online sandbox platform filled with user-generated 3D worlds.',
+    description: 'Worlds built by the people who play them. Made by people, no bots, free.',
     image: null,
   })
 
-  const stats = useAsync(() => getPlatformStats(), [])
-  const it = stats.data
-
   return (
-    <AboutShell
-      /*
-       * One extra screen of holding. The title is fully in at about
-       * two-thirds of it, so the opening keeps still for a moment after it
-       * has arrived and then hands the page over - which is the bit that
-       * makes it read as "it let go" rather than as "it stuck".
-       */
-      pin={1}
-      backdrop={
-        <Parallax strength={90} className="absolute inset-0">
+    <AboutShell>
+      <div className="relative overflow-hidden bg-ink">
+      <img
+        src={asset('/about/towers-sunset.webp')}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] w-full object-cover"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] bg-gradient-to-b from-brand-ink/40 via-ink/70 to-ink"
+      />
+
+      <Face face="heart-eyes" turn={-14} className="left-[5%] top-[7rem]" />
+      <Face face="sunglasses" turn={12} className="right-[7%] top-[5rem]" />
+
+      <div className="relative mx-auto max-w-4xl px-5 pb-20 pt-16 sm:pt-24">
+        <img
+          src={asset('/about/wordmark-brush.webp')}
+          alt="Kobblon"
+          className="mx-auto w-[min(80vw,30rem)] select-none"
+        />
+
+        <p className="mx-auto mt-8 max-w-2xl text-center font-display text-2xl font-extrabold leading-[1.1] text-on-art sm:text-4xl">
+          People build things here.
+          <br />
+          Then they stand inside them.
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button to="/signup" variant="yes" size="lg">Make an account</Button>
+          <Button to="/discover" variant="subtle" size="lg">Look around first</Button>
+        </div>
+
+        {/* ------------------------------------------------- the one claim */}
+        <div className="relative mt-20 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-7 sm:p-9">
+            <Face face="skull" turn={9} className="right-6 top-6 opacity-80" size="h-16 w-16" />
+            <p className="font-display text-3xl font-extrabold leading-[1.05] text-white sm:text-4xl">
+              A person made
+              <br />
+              every single thing
+              <br />
+              on this website.
+            </p>
+            <p className="mt-5 max-w-md text-lede leading-relaxed text-muted">
+              Every World, every hat, every face, every word. Nothing on Kobblon
+              was generated and nothing on Kobblon ever will be. We are the
+              other thing.
+            </p>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6">
+              <p className="font-display text-xl font-extrabold leading-none">No bots. None.</p>
+              <p className="mt-2.5 text-sm leading-relaxed text-muted">
+                If it says four people are playing, it is four people. We would
+                rather look quiet than lie about it.
+              </p>
+            </div>
+            <div className="rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6">
+              <p className="font-display text-xl font-extrabold leading-none">Free, and not the bad kind.</p>
+              <p className="mt-2.5 text-sm leading-relaxed text-muted">
+                Make an account, build a World, put it out. Nothing is paywalled
+                on the way in.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* --------------------------------------------- what is in there */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <Link
+            to="/discover"
+            className="group relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6 transition-colors hover:border-brand"
+          >
+            <p className="font-display text-xl font-extrabold leading-none">Worlds</p>
+            <p className="mt-2.5 text-sm leading-relaxed text-muted">
+              Obbies, tycoons, hangouts, things nobody has a word for yet. Walk
+              into any of them.
+            </p>
+            <span className="mt-4 inline-block text-sm font-bold text-link">Discover →</span>
+          </Link>
+
+          <Link
+            to="/communities"
+            className="group relative overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6 transition-colors hover:border-brand"
+          >
+            <Face face="laugh" turn={-10} className="right-4 top-4 opacity-90" size="h-12 w-12" />
+            <p className="font-display text-xl font-extrabold leading-none">Communities</p>
+            <p className="mt-2.5 max-w-[22rem] text-sm leading-relaxed text-muted">
+              Fan clubs, build teams and whatever else people start. Each one
+              has a wall and a bank.
+            </p>
+            <span className="mt-4 inline-block text-sm font-bold text-link">Have a look →</span>
+          </Link>
+        </div>
+
+        {/* ------------------------------------------------------ safety */}
+        <div className="mt-6 flex flex-wrap items-center gap-5 rounded-2xl border-2 border-b-4 border-ink-line bg-ink-card p-6">
           <img
-            src={asset('/about/towers-sunset.webp')}
+            src={asset('/mascot/construction_worker.png')}
             alt=""
             aria-hidden="true"
-            className="h-[115%] w-full object-cover object-top"
+            className="w-16 shrink-0 select-none"
           />
-        </Parallax>
-      }
-      hero={
-        <Lane className="flex h-full flex-col justify-center py-24 text-center">
-          {/* ScrollIn rather than Reveal: this is the first screen, so it is
-              already on screen at load and a Reveal would have finished before
-              anybody scrolled. Staw wants it to arrive on the way down, and
-              the shell holds the page still while it does. */}
-          <ScrollIn over={0.66}>
-            <h1 className="font-display text-[clamp(2.6rem,7vw,5.5rem)] font-extrabold leading-[0.95] tracking-tight drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
-              Everything you see here,
-              <br />
-              <span className="text-brand-bright">somebody made it</span>.
-            </h1>
-          </ScrollIn>
-          <Reveal delay={260}>
-            <p className="mt-10 flex items-center justify-center gap-2.5 text-mini font-extrabold uppercase tracking-[0.22em] text-white/50">
-              Keep going
-              <Glyph icon={faArrowDown} className="text-xs" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-lg font-extrabold leading-none">
+              Report anything, anywhere. A person reads it.
             </p>
-          </Reveal>
-        </Lane>
-      }
-    >
-      {/* ----------------------------------------------- what this actually is */}
-      <Band tone="night" edge>
-        <Reveal className="mx-auto max-w-3xl text-center">
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Your name never travels with a report. Moderation is people, and
+              the only thing a machine does here is point one of them at it.
+            </p>
+          </div>
+          <Link to="/policies" className="text-sm font-bold text-link underline underline-offset-4">
+            The rules
+          </Link>
+        </div>
+
+        {/* ------------------------------------------------- build one */}
+        <div className="relative mt-6 overflow-hidden rounded-2xl border-2 border-b-4 border-ink-line">
           <img
-            src={asset('/about/wordmark-brush.webp')}
-            alt="Kobblon"
-            className="mx-auto h-12 w-auto sm:h-16"
+            src={asset('/brand/waves.png')}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover"
           />
-          <p className="mt-9 text-xl leading-relaxed text-white/70 sm:text-2xl">
-            Worlds built by the people who play them. Make something, play everything else,
-            and bring your friends.
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Button to="/signup" variant="yes" size="lg">Make an account</Button>
-            <Button to="/discover" variant="subtle" size="lg">Look around</Button>
-          </div>
-        </Reveal>
-      </Band>
-
-      {/* ------------------------------------------------------- the numbers */}
-      {it && (
-        <Band tone="raised" edge decor={<Floaters />}>
-          <Reveal className="relative z-10">
-            <BandHead eyebrow="Kobblon today" title="Counted this minute." />
-          </Reveal>
-          <div className="relative z-10 mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { value: it.published_spaces, label: 'Worlds published', icon: 'world' as KobIcon },
-              { value: it.total_visits, label: 'Visits', icon: 'click' as KobIcon },
-              { value: it.total_accounts, label: 'People', icon: 'people' as KobIcon },
-              { value: it.people_online, label: 'Online now', icon: 'circle-user' as KobIcon },
-            ].map((one, at) => (
-              <Reveal key={one.label} delay={at * 70}>
-                <StatTile value={one.value} label={one.label} icon={one.icon} delay={at * 70} />
-              </Reveal>
-            ))}
-          </div>
-        </Band>
-      )}
-
-      {/* ----------------------------------------------------------- worlds */}
-      <Band tone="night" edge>
-        <div className="grid items-center gap-14 lg:grid-cols-[1.1fr_1fr]">
-          <Reveal>
-            <Parallax strength={56}>
-              <Figure
-                src="/brand/landing-towers.webp"
-                alt="Two towers built in Kobblon, standing on open ground under a blue sky"
-                ratio="wide"
-              />
-            </Parallax>
-          </Reveal>
-          <Reveal delay={90}>
-            <BandHead
-              title="Worlds"
-              lead="Every world on Kobblon was built and published by one person. Walk in and see what they did with it."
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-black/45" />
+          <div className="relative flex flex-col items-center gap-6 p-7 sm:flex-row sm:p-9">
+            <img
+              src={asset('/about/can.png')}
+              alt=""
+              aria-hidden="true"
+              className="w-28 shrink-0 select-none drop-shadow-2xl sm:w-36"
+              style={{ transform: 'rotate(-6deg)' }}
             />
-            <div className="mt-8">
-              <Button to="/discover" variant="subtle">Discover</Button>
-            </div>
-          </Reveal>
-        </div>
-      </Band>
-
-      {/* ----------------------------------------------------------- safety */}
-      <Band tone="raised" edge>
-        <Reveal>
-          <BandHead
-            title="Our People Come First"
-            lead="Four things, all of them built and working today."
-          />
-        </Reveal>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {safety.map((one, at) => (
-            <Reveal key={one.name} delay={at * 70} className="h-full">
-              <div className="relative h-full overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 p-7">
-                <PixelGrid from="bottom-right" className="opacity-30" />
-                <Icon name={one.icon} tone="currentColor" className="relative h-7 w-7 text-brand-bright" />
-                <p className="relative mt-5 font-display text-xl font-extrabold">{one.name}</p>
-                <p className="relative mt-3 leading-relaxed text-white/55">{one.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-        <Reveal delay={200}>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button to="/policies/moderation" variant="subtle">How moderation works</Button>
-            <Button to="/standing" variant="ghost">Where you stand</Button>
-          </div>
-        </Reveal>
-      </Band>
-
-      {/* -------------------------------------------------------- Workspace */}
-      <Band tone="night" edge>
-        <div className="grid items-center gap-14 lg:grid-cols-[1fr_1.15fr]">
-          <Reveal>
-            <BandHead
-              title="Workspace"
-              lead="Worlds are built in Kobblon Workspace on the desktop. Publish one there and it is here, ready for people."
-            />
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button to="/create" variant="subtle">Start building</Button>
-              <Button to="/download" variant="ghost">Get Workspace</Button>
-            </div>
-          </Reveal>
-
-          <Reveal delay={90}>
-            <div className="relative">
-              <Parallax strength={48}>
-                <Figure
-                  src="/about/workspace.webp"
-                  alt="The Kobblon K"
-                  ratio="wide"
-                />
-              </Parallax>
-              {/* Standing at the corner of the banner. Staw asked for the
-                  worker here rather than the guest with the hammer. */}
-              <img
-                src={kobbyArt.construction}
-                alt=""
-                aria-hidden="true"
-                className="pointer-events-none absolute -bottom-10 -left-8 hidden w-24 drop-shadow-[0_18px_30px_rgba(0,0,0,0.6)] sm:block lg:-left-14 lg:w-32"
-              />
-            </div>
-          </Reveal>
-        </div>
-      </Band>
-
-      {/* --------------------------------------------------- inside Kobblon */}
-      <Band tone="raised" edge>
-        <Reveal>
-          <BandHead title="Inside Kobblon" />
-        </Reveal>
-        <div className="mt-12 grid gap-4 lg:grid-cols-3">
-          {inside.map((one, at) => (
-            <Reveal key={one.name} delay={at * 80}>
-              <Parallax strength={[22, 40, 28][at]}>
-                <GlassCard
-                  to={one.to}
-                  art={one.art}
-                  alt={one.alt}
-                  name={one.name}
-                  body={one.body}
-                />
-              </Parallax>
-            </Reveal>
-          ))}
-        </div>
-      </Band>
-
-      {/* ------------------------------------------------------ communities */}
-      <Band tone="night" edge decor={<Floaters />}>
-        <div className="relative z-10 grid items-center gap-14 lg:grid-cols-[1fr_1fr]">
-          <Reveal>
-            <BandHead
-              eyebrow="Communities"
-              title="Hang out together."
-              lead="Fan clubs, build teams and hobby corners, each with a wall, ranks and funds of its own."
-            />
-            <div className="mt-8">
-              <Button to="/communities" variant="subtle">See them</Button>
-            </div>
-          </Reveal>
-          <Reveal delay={90}>
-            {/* Something somebody made and sells, rather than a stock
-                illustration of people being friends. */}
-            <div className="relative grid place-items-center">
-              <div className="absolute h-48 w-48 rounded-full bg-brand/30 blur-3xl" />
-              <Parallax strength={34}>
-                <img
-                  src={asset('/about/can.png')}
-                  alt="A drinks can somebody made and put in the Catalog"
-                  className="relative w-40 drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] sm:w-52"
-                />
-              </Parallax>
-            </div>
-          </Reveal>
-        </div>
-      </Band>
-
-      {/* ------------------------------------------------------------ forum */}
-      {/*
-        * Post cards, not a list.
-        *
-        * Staw: "for the what is kobblon page i was more expecting to see
-        * post cards rather than this". The band above this one is three
-        * big cards with pictures in them and the band below is policies in
-        * cards; five thin bordered rows in between read as a settings
-        * panel that had wandered in. Three real posts, in the shape this
-        * page uses for everything else.
-        *
-        * The whole band goes when the forum is quiet. An At Kobblon page
-        * saying "where it gets decided" over an empty rectangle is worse
-        * than not making the claim.
-        */}
-      {!!talk.length && (
-        <Band tone="night" edge>
-          <Reveal>
-            <div className="flex flex-wrap items-end justify-between gap-6">
-              <BandHead
-                eyebrow="Community Forum"
-                title="Where it gets decided."
-                lead="Most of what is on this page started as somebody asking for it on the forum."
-              />
-              <Button to="/forum" variant="subtle" iconRight={faArrowRight}>
-                Open the forum
-              </Button>
-            </div>
-          </Reveal>
-
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
-            {talk.slice(0, 3).map((topic, at) => (
-              <Reveal key={topic.id} delay={at * 80}>
-                <TopicCard topic={topic} look="glass" className="h-full" />
-              </Reveal>
-            ))}
-          </div>
-        </Band>
-      )}
-
-      {/* --------------------------------------------------------- policies */}
-      <Band tone="raised" edge>
-        <Reveal>
-          <BandHead title="Policies" />
-        </Reveal>
-        <div className="mt-10 grid gap-3 sm:grid-cols-3">
-          {[
-            { to: '/policies/terms', name: 'Terms of Service', body: 'The deal between you and Kobblon.' },
-            { to: '/policies/guidelines', name: 'Community Guidelines', body: 'What is fine here, and what is not.' },
-            { to: '/policies/privacy', name: 'Privacy', body: 'What is kept about you, and who can see it.' },
-          ].map((one, at) => (
-            <Reveal key={one.to} delay={at * 70} className="h-full">
-              <Link
-                to={one.to}
-                className="group flex h-full items-center gap-4 rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/50 px-6 py-5 transition-colors hover:border-brand-bright/50"
-              >
-                <span className="min-w-0">
-                  <span className="block font-display text-lg font-extrabold">{one.name}</span>
-                  <span className="mt-1 block text-sm text-white/50">{one.body}</span>
-                </span>
-                <Glyph
-                  icon={faArrowRight}
-                  className="ml-auto text-sm text-brand-bright transition-transform group-hover:translate-x-1"
-                />
-              </Link>
-            </Reveal>
-          ))}
-        </div>
-      </Band>
-
-      {/* ------------------------------------------------- where it is said */}
-      {/*
-        * One card: where Kobblon says things, and the last few things it
-        * said.
-        *
-        * It was two - a band of announcement cards headed "What we are
-        * doing." and then a panel pointing at the board. Staw: "i want you
-        * to put the announcement posts into this card ... get rid of 'What
-        * we are doing.'". He is right that they were one idea wearing two
-        * headings; the posts are the evidence for the sentence above them,
-        * so they belong under it rather than in a band of their own.
-        *
-        * The card stays when nothing has been announced - only the row of
-        * posts goes. A stranger still needs telling where to listen, and
-        * the Discord is still true on a quiet week.
-        */}
-      <Band tone="night" edge>
-        <Reveal>
-          <div className="relative overflow-hidden rounded-2xl border-2 border-b-4 border-white/10 bg-ink-card/40 p-7 sm:p-9">
-            <PixelGrid from="top-left" className="opacity-30" />
-            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-              <div className="min-w-0 flex-1">
-                <p className="text-mini font-extrabold uppercase tracking-[0.22em] text-brand-bright">
-                  Keeping up
-                </p>
-                <Title className="mt-4">Where things get said.</Title>
-                <p className="mt-4 max-w-md leading-relaxed text-white/55">
-                  Releases and decisions go on the forum, where you can reply to them. The
-                  Discord hears them first.
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col gap-3 sm:items-end">
-                <Button to="/forum/c/announcements" variant="subtle" iconRight={faArrowRight}>
-                  Announcements
-                </Button>
-                <a
-                  href="https://discord.gg/SsjvR6rmez"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-extrabold text-link hover:underline"
+            <div className="min-w-0">
+              <p className="font-display text-2xl font-extrabold leading-none text-on-art">
+                Go on then. Build one.
+              </p>
+              <p className="mt-3 text-lede leading-relaxed text-on-art/75">
+                Worlds are built in Kobblon Workspace, on the desktop. Publish
+                one and it is here, ready for people, two minutes later.
+              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Button to="/download" variant="primary">Get Workspace</Button>
+                <Link
+                  to="/create"
+                  className="text-sm font-bold text-on-art/70 underline underline-offset-4 transition-colors hover:text-on-art"
                 >
-                  Join the Discord
-                </a>
+                  or start in the Creator Hub
+                </Link>
               </div>
             </div>
-
-            {!!news.length && (
-              <div className="relative mt-8 grid gap-4 border-t border-white/10 pt-8 md:grid-cols-3">
-                {news.map((topic) => (
-                  <TopicCard
-                    key={topic.id}
-                    topic={topic}
-                    look="glass"
-                    showBoard={false}
-                    className="h-full"
-                  />
-                ))}
-              </div>
-            )}
           </div>
-        </Reveal>
-      </Band>
+        </div>
+
+        {/* Somebody new, looking up at the whole thing. */}
+        <div className="mt-14 text-center">
+          <img
+            src={asset('/mascot/newbie.png')}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none mx-auto w-28 select-none"
+          />
+          <p className="mt-3 font-display text-lg font-extrabold">See you in there.</p>
+        </div>
+      </div>
+      </div>
     </AboutShell>
   )
 }

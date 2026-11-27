@@ -52,7 +52,6 @@ const Inbox = lazyPage(() => import('@/pages/Inbox'))
 const Support = lazyPage(() => import('@/pages/Support'))
 const HelpPage = lazyPage(() => import('@/pages/Support').then((m) => ({ default: m.HelpPage })))
 const Download = lazyPage(() => import('@/pages/Download'))
-const InnerStock = lazyPage(() => import('@/pages/InnerStock'))
 /* The design system, at its own address: every token and every shared
    component, with no account and no database behind it. */
 const StyleGuide = lazyPage(() => import('@/pages/StyleGuide'))
@@ -194,7 +193,10 @@ export default function App() {
               <Route path="/about/economy" element={<InsideEconomy />} />
               <Route path="/policies" element={<PolicyHub />} />
               <Route path="/download" element={<Download />} />
-              <Route path="/inner-stock" element={<InnerStock />} />
+              {/* The Inner Stock page is gone - Staw, cutting the corporate
+                  side of At Kobblon. The old address lands on What is
+                  Kobblon rather than on nothing. */}
+              <Route path="/inner-stock" element={<Navigate to="/about" replace />} />
               <Route path="/style" element={<StyleGuide />} />
               {/* The forum is an At Kobblon page: readable by anybody,
                   writable by anybody signed in. The order matters - /new

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 import {
-  faBars, faXmark, faChevronDown, faChartLine, faScaleBalanced, faCircleInfo,
+  faBars, faXmark, faChevronDown, faScaleBalanced, faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons'
 import { Glyph } from '@/components/brand/Glyph'
 import { PixelField } from '@/components/brand/PixelField'
@@ -72,27 +72,19 @@ import { cn } from '@/lib/cn'
 export type AboutLink = { to: string; label: string }
 export type AboutEntry = AboutLink & { under?: AboutLink[] }
 
-/** The pages behind "Company": true about Kobblon, read once, not visited. */
-const COMPANY: AboutLink[] = [
-  { to: '/inner-stock', label: 'Inner Stock' },
-  { to: '/policies', label: 'Policies' },
-]
-
 /*
  * What each page behind a group actually is, for the menu rows.
  *
- * Here rather than on `AboutLink`, because the bar itself has no room for a
- * line of description and nothing else reads these - a field on the shared
- * type would be a field every caller has to fill in for a bar that ignores
- * it.
+ * Nothing is behind a group today - "Company" held the Inner Stock page
+ * and Policies, and with the Inner Stock gone a dropdown holding one item
+ * is a dropdown that should be a link. These stay because `under` still
+ * exists on the type and the next group to turn up will want them.
  */
 const UNDER_WORDS: Record<string, string> = {
-  '/inner-stock': 'What Kobblon is worth, and who owns it.',
   '/policies': 'The Terms, the Privacy notice and the Guidelines.',
 }
 
 const UNDER_ART: Record<string, IconDefinition> = {
-  '/inner-stock': faChartLine,
   '/policies': faScaleBalanced,
 }
 
@@ -100,7 +92,7 @@ export const ABOUT_NAV: AboutEntry[] = [
   { to: '/about', label: 'What is Kobblon' },
   { to: '/forum', label: 'Forum' },
   { to: '/support', label: 'Support' },
-  { to: '/inner-stock', label: 'Company', under: COMPANY },
+  { to: '/policies', label: 'Policies' },
   { to: '/download', label: 'Download' },
 ]
 
