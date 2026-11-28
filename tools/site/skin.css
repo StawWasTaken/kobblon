@@ -1,0 +1,136 @@
+/*
+ * A reskin, not a redraw.
+ *
+ * Every page keeps its layout, its elements and its words. What changes
+ * is the surface treatment of the shapes we already have: the card gains
+ * a glossy top and a solid coloured lip, the stroke thickens, the page
+ * stops being flat black, the buttons look pressable and the headings
+ * get a mark beside them.
+ *
+ * It is a stylesheet rather than a component so it reaches every page at
+ * once and so taking it off is removing one import.
+ */
+
+[data-skin] {
+  /* The colour a page's furniture takes. Set per page, not per card. */
+  --skin: 27 52 232;
+  --skin-deep: 18 34 149;
+}
+
+/* ------------------------------------------------------------ the page */
+
+/* Flat near-black is the thing that reads as a void. A faint vertical
+   lift and a stud grid give it a floor without lightening the theme. */
+[data-skin] .bg-ink {
+  background-image:
+    radial-gradient(circle at 12px 12px, rgb(255 255 255 / 0.018) 2px, transparent 3px),
+    linear-gradient(180deg, rgb(var(--skin) / 0.07), transparent 520px);
+  background-size: 34px 34px, 100% 100%;
+}
+
+/* ----------------------------------------------------------- the cards */
+
+/*
+ * Our card already has a stroke and a four-pixel bottom border. The skin
+ * keeps both and makes the bottom one mean something: a solid lip in the
+ * page's colour, with a hairline of light across the top so the surface
+ * looks lit from above rather than printed.
+ */
+[data-skin] .bg-ink-card {
+  border-bottom-width: 6px;
+  border-bottom-color: rgb(var(--skin));
+  background-image: linear-gradient(180deg, rgb(var(--skin) / 0.10), rgb(var(--skin) / 0.02) 40%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    0 3px 0 rgb(0 0 0 / 0.55);
+}
+
+/* A picture inside a panel is a thing in a frame, so it gets the stroke
+   the panel has rather than meeting the edge unannounced. */
+[data-skin] .bg-ink-card img:not([aria-hidden='true']) {
+  border: 2px solid rgb(var(--ink-line));
+  border-radius: 0.6rem;
+}
+
+/*
+ * A heading becomes the panel's title bar.
+ *
+ * The old site named every block across the top of it, and that naming
+ * is most of what made a page feel like a notice board instead of a
+ * sheet. Our headings are already there and already first in the card,
+ * so the skin only has to draw them that way: a rule under the heading
+ * in the page's colour, and a brick in front of it.
+ */
+[data-skin] .bg-ink-card .font-display.text-xl,
+[data-skin] .bg-ink-card .font-display.text-lg,
+[data-skin] .bg-ink-card .font-display.text-2xl {
+  display: block;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+  border-bottom: 2px solid rgb(var(--skin) / 0.55);
+}
+[data-skin] .bg-ink-card .font-display.text-xl::before,
+[data-skin] .bg-ink-card .font-display.text-lg::before,
+[data-skin] .bg-ink-card .font-display.text-2xl::before {
+  content: '';
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-right: 0.55rem;
+  vertical-align: 0.02em;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgb(var(--skin) / 0.95), rgb(var(--skin-deep)));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+/* --------------------------------------------------------- the buttons */
+
+/*
+ * The buttons keep their colours and their sizes. The skin adds the gloss
+ * and the squish: a light wash over the top half, a solid edge underneath,
+ * and a press that puts the button down onto that edge.
+ */
+[data-skin] a[class*='rounded-full'],
+[data-skin] button[class*='rounded-full'] {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0) 55%);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.45);
+  transition: transform 170ms cubic-bezier(.3, 1.6, .5, 1), box-shadow 170ms ease;
+}
+[data-skin] a[class*='rounded-full']:active,
+[data-skin] button[class*='rounded-full']:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgb(0 0 0 / 0.45);
+  transition-duration: 60ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-skin] a[class*='rounded-full'],
+  [data-skin] button[class*='rounded-full'] { transition: none; }
+}
+
+/*
+ * And where the heading is a child of the panel itself, it becomes the
+ * panel's strip for real: a filled bar across the top of the card.
+ *
+ * The pull-out distance has to match the card's own padding, which is
+ * why this is written once per padding step rather than as one rule -
+ * the padding is a class on the card, so the skin can read it. A heading
+ * nested deeper (the wide row, where it sits beside a picture) keeps the
+ * rule-and-brick treatment above instead; a bar there would cut the row
+ * in half.
+ */
+[data-skin] .bg-ink-card.p-5 > .font-display,
+[data-skin] .bg-ink-card.p-6 > .font-display,
+[data-skin] .bg-ink-card.p-7 > .font-display {
+  background: linear-gradient(180deg, rgb(var(--skin) / 0.95), rgb(var(--skin-deep)));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+  border-bottom: 2px solid rgb(0 0 0 / 0.35);
+  color: rgb(var(--on-art));
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  text-align: left;
+}
+[data-skin] .bg-ink-card.p-5 > .font-display { margin: -1.25rem -1.25rem 1rem; padding-left: 1.25rem; padding-right: 1.25rem; }
+[data-skin] .bg-ink-card.p-6 > .font-display { margin: -1.5rem -1.5rem 1.1rem; padding-left: 1.5rem; padding-right: 1.5rem; }
+[data-skin] .bg-ink-card.p-7 > .font-display { margin: -1.75rem -1.75rem 1.2rem; padding-left: 1.75rem; padding-right: 1.75rem; }
+[data-skin] .bg-ink-card > .font-display::before { display: none; }
